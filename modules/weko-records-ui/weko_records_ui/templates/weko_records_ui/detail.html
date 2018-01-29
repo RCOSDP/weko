@@ -1,0 +1,134 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.MARC21_BASE_TEMPLATE %}
+
+{%- block page_body %}
+<div class="container">
+  <div class="row">
+    {%- block record_body %}
+    <div class="body col-sm-12 col-md-9">
+      {%- block record_title %}
+      <h4 class="title">{{ record.get('item_title', _('No title')) }}</h4>
+      {%- endblock %}
+      {%- block record_author %}
+      <table class="table table-bordered table-striped">
+        {%- if item_type_info -%}
+          <tr>
+            <th>{{_('item type')}}</th>
+            <td>{{ item_type_info }}</td>
+          </tr>
+        {% endif %}
+        {%- for k, m in record.items() %}
+          {%- if m is not string and '_oai' != k  %}
+            <tr>
+              <th>{{ m['attribute_name'] }}</th>
+              <td>{%- for k in m['attribute_value'] %}
+                    {{ k }}
+                   {% endfor %}
+                  {%- for lst in m['attribute_value_mlt'] %}
+                      {%- for v in lst.values() %}
+                       {%- if v|length > 1  %}
+                        {{ v }}<br>
+                       {% endif %}
+                      {% endfor %}
+                  {% endfor %}
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+        </table>
+      {%- if files -%}
+          <table class="table table-striped" >
+            <thead>
+              <tr class="">
+                <th>{{_('Name')}}</th>
+                <th>{{_('Size')}}</th>
+              </tr>
+            </thead>
+            <tbody>
+                {%- for file in files -%}
+                {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.display_name) %}
+                  <tr class="">
+                    <td>
+                      <span class="filename">
+                        <a class="forcewrap" href="{{file_url}}">{{ file.display_name }}</a>
+                      </span>
+                    </td>
+                    <td class="nowrap">{{ file.size|filesizeformat }}</td>
+                    <td class="nowrap">
+                      <span class="pull-right">
+                          <a class="btn btn-xs btn-default" href="{{file_url}}"><i class="fa fa-download"></i> {{_("Download")}}</a>
+                      </span>
+                    </td>
+                  </tr>
+                {%- endfor -%}
+            </tbody>
+          </table>
+      {%- endif %}
+      {%- if 'main_entry_personal_name' in record %}
+      <p class="record_authors">
+        <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>
+        {%- for author in record.get('added_entry_personal_name', []) %}
+        , <i>{{ author['personal_name'] }}</i>
+        {% endfor %}
+      </p>
+      {% endif %}
+      {%- endblock %}
+      {%- block record_summary %}
+      {%- for summary in record.get('summary', []) %}
+      <p class="summary">{{ summary['summary'] }}</p>
+      {% endfor %}
+      {%- endblock %}
+    </div><!-- /.body -->
+    {%- endblock %}
+    {%- block record_extra_info %}
+    <div class="extra-info col-sm-12 col-md-3">
+      <dl>
+        {%- if pid %}
+        {%- block record_control_number %}
+        <dt>{{ _('Control number') }}</dt>
+        <dd>{{ record.get('control_number', pid.value) }}</dd>
+        {%- endblock %}
+        {% endif %}
+        {%- if 'publication_distribution_imprint' in record %}
+        {%- block record_publication_date %}
+        <dt>{{ _('Publication date') }}</dt>
+        <dd>{{ record['publication_distribution_imprint'][0]['date_of_publication_distribution'][0] }}</dd>
+        {%- endblock %}
+        {% endif %}
+        {%- if '$schema' in record %}
+        {%- block record_schema %}
+        <dt>{{ _('Schema') }}</dt>
+        <dd>
+          <a target="_blank" href="{{ record['$schema'] }}">
+            {{ record['$schema'] }}
+          </a>
+        </dd>
+        {%- endblock %}
+        {% endif %}
+        {%- include "invenio_records_ui/export_well.html" %}
+      </dl>
+    </div><!-- /.extra-info -->
+    {%- endblock %}
+  </div><!-- /.row -->
+</div><!-- /.container -->
+{%- endblock %}

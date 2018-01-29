@@ -1,0 +1,68 @@
+# English translations for weko-admin.
+# Copyright (C) 2017 National Institute of Informatics.
+# This file is distributed under the same license as the WEKO-Admin
+# project.
+# FIRST AUTHOR <wekosoftware@nii.ac.jp>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko_admin 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2018-01-04 16:17+0100\n"
+"PO-Revision-Date: 2018-01-04 16:19+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.1.1\n"
+
+#: lifetime.html
+msgid "Set lifetime for"
+msgstr "Set lifetime for"
+
+#: lifetime.html
+msgid "Current"
+msgstr "Current"
+
+#: lifetime.html
+msgid "Cancel"
+msgstr "Cancel"
+
+#: lifetime.html
+msgid "Update"
+msgstr "Update"
+
+#: weko_admin/views.py:101
+msgid "15 mins"
+msgstr "15 minutes"
+
+#: weko_admin/views.py:102
+msgid "30 mins"
+msgstr "30 minutes"
+
+#: weko_admin/views.py:103
+msgid "45 mins"
+msgstr "45 minutes"
+
+#: weko_admin/views.py:104
+msgid "60 mins"
+msgstr "1 hour"
+
+#: weko_admin/views.py:105
+msgid "180 mins"
+msgstr "3 hours"
+
+#: weko_admin/views.py:106
+msgid "360 mins"
+msgstr "6 hours"
+
+#: weko_admin/views.py:107
+msgid "720 mins"
+msgstr "12 hours"
+
+#: weko_admin/views.py:108
+msgid "1440 mins"
+msgstr "1 day"

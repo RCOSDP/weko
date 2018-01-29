@@ -1,0 +1,4 @@
+elasticsearch_dsl<3.0.0,>=2.0.0
+invenio-search>=1.0.0b4
+invenio-records>=1.0.0b4
+invenio-records-rest==1.0.0b3

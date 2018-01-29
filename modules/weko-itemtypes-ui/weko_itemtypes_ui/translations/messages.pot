@@ -1,0 +1,76 @@
+# Translations template for weko-itemtypes-ui.
+# Copyright (C) 2018 National Institute of Informatics
+# This file is distributed under the same license as the weko-itemtypes-ui
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2018-01-19 12:07+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: weko_itemtypes_ui/views.py:98 weko_itemtypes_ui/views.py:145
+msgid "Header Error"
+msgstr ""
+
+#: weko_itemtypes_ui/views.py:108 weko_itemtypes_ui/views.py:155
+msgid "Fail"
+msgstr ""
+
+#: weko_itemtypes_ui/views.py:109 weko_itemtypes_ui/views.py:156
+msgid "Success"
+msgstr ""
+
+#: weko_itemtypes_ui/views.py:124
+msgid "You do not even have an itemtype."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/error.html:34
+msgid "Register Itemtype"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:39
+msgid "itemtype list"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:60
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:66
+msgid "Sending"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:74
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:80
+msgid "Result"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:80
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:86
+msgid "Close"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:38
+msgid "create itemtype"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:47
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:49
+msgid "itemtype name"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:53
+msgid "JSONSchema"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:59
+msgid "SchemaForm"
+msgstr ""
+

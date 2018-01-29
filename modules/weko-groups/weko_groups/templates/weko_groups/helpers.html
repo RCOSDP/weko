@@ -1,0 +1,80 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{#
+Search field component.
+
+Data submitted will occure as `q` in query string.
+#}
+{%- macro searchbar() %}
+<ul class="list-group">
+  <div class="list-group-item">
+      <form  method="get" class="input-group input-group-sm">
+        <input name="q" class="form-control" type="text" value="{{ q }}">
+        <span class="input-group-btn">
+          <button class="btn btn-primary" type=submit>
+            <i class="fa fa-fw fa-search"></i><span>&nbsp;{{ _("Search") }}</span>
+          </button>
+        </span>
+      </form>
+    </div>
+</ul>
+{%- endmacro%}
+
+{#
+Component containing information about no data found with a button
+used to create data.
+
+:param str btn: button content
+:param str btn_icon: button icon class
+:param str btn_href: button href
+:param str heading: component heading
+:param str content: component content
+#}
+{%- macro emptyprompt(btn, btn_icon, btn_href, heading, content) %}
+<div id="emptyprompt" class="list-group">
+  <div class="list-group-item">
+    <div class="row" align="center">
+      <h1>{{ heading }}</h1>
+      <p>
+        {{ content }}
+      </p>
+      <div>
+        <a href="{{ btn_href }}" class="btn btn-default btn-lg"><i class="{{ btn_icon }}"></i> {{ btn }}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{%- endmacro%}
+
+{#
+Component containing information about empty search result.
+
+:param str heading: component heading
+#}
+{%- macro emptysearch(heading) %}
+<div class="list-group">
+  <div class="list-group-item">
+    <div class="row" align="center">
+      <h1>{{ heading }}</h1>
+    </div>
+  </div>
+</div>
+{%- endmacro%}

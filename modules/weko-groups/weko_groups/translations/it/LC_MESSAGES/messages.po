@@ -1,0 +1,385 @@
+# Translations template for weko-groups.
+# Copyright (C) 2015 CERN
+# This file is distributed under the same license as the
+# WEKO-Groups project.
+# FIRST AUTHOR <wekosoftware@nii.ac.jp>, 2017.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-groups 1.0.0.dev20160000\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2016-08-19 11:14+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Alizee Pace <alizee.pace@gmail.com>, 2016\n"
+"Language-Team: Italian (https://www.transifex.com/inveniosoftware/teams/23537/it/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: weko_groups/forms.py:82
+msgid ""
+"Required. Provide list of the emails of the users you wish to be added. Put "
+"each email in new line."
+msgstr ""
+"Obbligatorio. Lista gli indirizzi email degli utenti che vorresti "
+"aggiungere. Metti ogni indirizzo su una nuova linea."
+
+#: weko_groups/models.py:56
+msgid "Users can self-subscribe."
+msgstr "Gli utenti possono abbonarsi loro stessi."
+
+#: weko_groups/models.py:58
+msgid "Users can self-subscribe but requires administrator approval."
+msgstr ""
+"Gli utenti possono abbonarsi loro stessi ma necessitano l'approvazione del "
+"amministratore."
+
+#: weko_groups/models.py:60
+msgid "Subscription is by administrator invitation only."
+msgstr "L'abbonamento si fa solo su invito del amministratore."
+
+#: weko_groups/models.py:90
+msgid "Group membership is fully public."
+msgstr "L'adesione al gruppo è pubblica."
+
+#: weko_groups/models.py:92
+msgid "Only group members can view other members."
+msgstr "Solo i membri del gruppo possono vedere gli altri membri."
+
+#: weko_groups/models.py:94
+msgid "Only administrators can view members."
+msgstr "Solo gli amministratori possono vedere i membri."
+
+#: weko_groups/models.py:134
+msgid "Public"
+msgstr "Pubblico"
+
+#: weko_groups/models.py:135
+msgid "Group members"
+msgstr "Membri del gruppo"
+
+#: weko_groups/models.py:136
+msgid "Group admins"
+msgstr "Amministratori del gruppo"
+
+#: weko_groups/models.py:141
+msgid "Open"
+msgstr "Aperto"
+
+#: weko_groups/models.py:142
+msgid "Open with approval"
+msgstr "Aperto con approvazione"
+
+#: weko_groups/models.py:143
+msgid "Closed"
+msgstr "Chiuso"
+
+#: weko_groups/models.py:154
+#: weko_groups/templates/weko_groups/index.html:63
+msgid "Name"
+msgstr "Nome"
+
+#: weko_groups/models.py:155
+msgid "Required. A name of a group."
+msgstr "Obbligatorio. Un nome per il gruppo."
+
+#: weko_groups/models.py:162
+msgid "Description"
+msgstr "Descrizione"
+
+#: weko_groups/models.py:163
+msgid "Optional. A short description of the group. Default: Empty"
+msgstr "Ozionale. Una breve descrizione del gruppo. Per esclusione: Vuoto."
+
+#: weko_groups/models.py:175
+msgid "Privacy Policy"
+msgstr "Politica di Confidenzialità"
+
+#: weko_groups/models.py:185
+msgid "Subscription Policy"
+msgstr "Politica di Abbonamento"
+
+#: weko_groups/models.py:507
+msgid "Pending admin approval"
+msgstr "Approvazione del amministratore in sospeso"
+
+#: weko_groups/models.py:508
+msgid "Pending member approval"
+msgstr "Approvazione di adesione in sospeso"
+
+#: weko_groups/models.py:509
+msgid "Active"
+msgstr "Attivo"
+
+#: weko_groups/views.py:63
+#, python-format
+msgid "%(icon)s My Groups"
+msgstr "%(icon)s I Miei Gruppi"
+
+#: weko_groups/views.py:67
+msgid "Groups"
+msgstr "Gruppi"
+
+#: weko_groups/templates/weko_groups/index.html:44
+#: weko_groups/views.py:95
+msgid "Requests"
+msgstr "Richieste"
+
+#: weko_groups/templates/weko_groups/index.html:42
+#: weko_groups/views.py:113
+msgid "Invitations"
+msgstr "Inviti"
+
+#: weko_groups/views.py:130 weko_groups/views.py:402
+msgid "New"
+msgstr "Nuovo"
+
+#: weko_groups/views.py:140
+#, python-format
+msgid "Group \"%(name)s\" created"
+msgstr "Gruppo \"%(name)s\" creato"
+
+#: weko_groups/views.py:143
+msgid "Group creation failure"
+msgstr "Creazione del gruppo fallita"
+
+#: weko_groups/templates/weko_groups/index.html:87
+#: weko_groups/templates/weko_groups/members.html:32
+#: weko_groups/views.py:154 weko_groups/views.py:157
+msgid "Manage"
+msgstr "Gestire"
+
+#: weko_groups/views.py:169
+#, python-format
+msgid "Group \"%(name)s\" was updated"
+msgstr "Gruppo \"%(name)s\" aggiornato"
+
+#: weko_groups/views.py:180
+#, python-format
+msgid "You cannot edit group %(group_name)s"
+msgstr "Non puoi modificare il gruppo %(group_name)s"
+
+#: weko_groups/views.py:207
+#, python-format
+msgid "Successfully removed group \"%(group_name)s\""
+msgstr "Il gruppo \"%(group_name)s\" è stato ritirato con succeso"
+
+#: weko_groups/views.py:212
+#, python-format
+msgid "You cannot delete the group %(group_name)s"
+msgstr "Non puoi eliminare il gruppo %(group_name)s"
+
+#: weko_groups/templates/weko_groups/index.html:64
+#: weko_groups/templates/weko_groups/index.html:95
+#: weko_groups/templates/weko_groups/new.html:31
+#: weko_groups/views.py:224 weko_groups/views.py:227
+msgid "Members"
+msgstr "Membri"
+
+#: weko_groups/views.py:256
+#, python-format
+msgid "You are not allowed to see members of this group %(group_name)s."
+msgstr "Non ti è permesso vedere i membri del gruppo %(group_name)s."
+
+#: weko_groups/views.py:279
+#, python-format
+msgid "You have successfully left %(group_name)s group."
+msgstr "Hai lasciato il gruppo %(group_name)s con successo."
+
+#: weko_groups/views.py:288
+#, python-format
+msgid "You cannot leave the group %(group_name)s"
+msgstr "Non puoi lasciare il gruppo %(group_name)s"
+
+#: weko_groups/views.py:312
+#, python-format
+msgid "%(user)s accepted to %(name)s group."
+msgstr "%(user)s accettato nel gruppo %(name)s."
+
+#: weko_groups/views.py:318
+#, python-format
+msgid "You cannot approve memberships for the group %(group_name)s"
+msgstr "Non puoi approvare adesioni per il gruppo %(group_name)s"
+
+#: weko_groups/views.py:342
+#, python-format
+msgid "User %(user_email)s was removed from %(group_name)s group."
+msgstr "L'utente %(user_email)s è stato eliminato del gruppo %(group_name)s."
+
+#: weko_groups/views.py:347
+#, python-format
+msgid "You cannot delete users of the group %(group_name)s"
+msgstr "Non puoi eliminare utenti del gruppo %(group_name)s"
+
+#: weko_groups/views.py:371
+#, python-format
+msgid "You are now part of %(name)s group."
+msgstr "Fai addesso parte del gruppo %(name)s."
+
+#: weko_groups/views.py:394
+#, python-format
+msgid "You have rejected invitation to %(name)s group."
+msgstr "Hai rifiutato l'invito del gruppo %(name)s."
+
+#: weko_groups/views.py:413
+msgid "Requests sent!"
+msgstr "Richiesta mandata!"
+
+#: weko_groups/views.py:423
+#, python-format
+msgid ""
+"You cannot invite users or yourself (i.e. join) to the group %(group_name)s"
+msgstr ""
+"Non puoi invitare né utenti né te stesso a unirsi al gruppo %(group_name)s"
+
+#: weko_groups/templates/weko_groups/helpers.html:32
+msgid "Search"
+msgstr "Ricerca"
+
+#: weko_groups/templates/weko_groups/index.html:30
+msgid "My Groups"
+msgstr "I Miei Gruppi"
+
+#: weko_groups/templates/weko_groups/index.html:33
+#: weko_groups/templates/weko_groups/index.html:49
+msgid "New group"
+msgstr "Nuovo gruppo"
+
+#: weko_groups/templates/weko_groups/index.html:37
+msgid ""
+"List of groups your are currently admin or member of. While being in "
+"particular group you gain special privileges, which enables you to get more "
+"involved in growth of the community."
+msgstr ""
+"Lista dei gruppo di cui sei membro o amministratore. Quando sei in un gruppo"
+" particolare, guadagni alcuni privilegi che ti permettono di essere più "
+"coinvolto nel sviluppo della comunità."
+
+#: weko_groups/templates/weko_groups/index.html:51
+msgid "Go ahead and create new group!"
+msgstr "Crea il tuo gruppo!"
+
+#: weko_groups/templates/weko_groups/index.html:55
+msgid "No results found."
+msgstr "Nessun risultato."
+
+#: weko_groups/templates/weko_groups/index.html:82
+msgid "Leave"
+msgstr "Lasciare"
+
+#: weko_groups/templates/weko_groups/index.html:90
+#: weko_groups/templates/weko_groups/members.html:33
+#: weko_groups/templates/weko_groups/new_member.html:45
+msgid "Invite"
+msgstr "Invita"
+
+#: weko_groups/templates/weko_groups/members.html:42
+msgid "No results found"
+msgstr "Nessun risultato"
+
+#: weko_groups/templates/weko_groups/members.html:50
+msgid "Username"
+msgstr "Nome utente"
+
+#: weko_groups/templates/weko_groups/members.html:51
+msgid "Email"
+msgstr "Email"
+
+#: weko_groups/templates/weko_groups/members.html:54
+#: weko_groups/templates/weko_groups/members.html:56
+msgid "Status"
+msgstr "Stato"
+
+#: weko_groups/templates/weko_groups/members.html:71
+msgid "Remove"
+msgstr "Elimina"
+
+#: weko_groups/templates/weko_groups/members.html:74
+msgid "Revoke"
+msgstr "Revoca"
+
+#: weko_groups/templates/weko_groups/new.html:50
+#: weko_groups/templates/weko_groups/new.html:83
+msgid "Delete"
+msgstr "Cancella"
+
+#: weko_groups/templates/weko_groups/new.html:54
+msgid "Update"
+msgstr "Aggiorna"
+
+#: weko_groups/templates/weko_groups/new.html:54
+msgid "Create"
+msgstr "Crea"
+
+#: weko_groups/templates/weko_groups/new.html:57
+#: weko_groups/templates/weko_groups/new.html:79
+#: weko_groups/templates/weko_groups/new_member.html:42
+msgid "Cancel"
+msgstr "Annulla"
+
+#: weko_groups/templates/weko_groups/new.html:68
+msgid "Group deletion"
+msgstr "Cancella il gruppo"
+
+#: weko_groups/templates/weko_groups/new.html:71
+msgid "You are about to "
+msgstr "Stai per"
+
+#: weko_groups/templates/weko_groups/new.html:72
+msgid "delete"
+msgstr "cancellare"
+
+#: weko_groups/templates/weko_groups/new.html:75
+msgid "This action cannot be undone. Are you sure you want to proceed?"
+msgstr ""
+"Quest'operazione non può essere annulata. Sei sicuro di voler procedere?"
+
+#: weko_groups/templates/weko_groups/new_member.html:33
+msgid ""
+"Specifies email addresses of the users you would like to add to your group. "
+"Each user will be sent invitation."
+msgstr ""
+"Specifica l'indirizzo email degli utenti che voresti aggiungere al tuo "
+"gruppo. Ogni utente ricevere un invito."
+
+#: weko_groups/templates/weko_groups/paginate.html:97
+#, python-format
+msgid "Displaying items %(start)d - %(stop)d out of %(total)d"
+msgstr "Visualizzando elementi %(start)d - %(stop)d su %(total)d"
+
+#: weko_groups/templates/weko_groups/pending.html:30
+msgid "Pending invitations"
+msgstr "Inviti in sospeso"
+
+#: weko_groups/templates/weko_groups/pending.html:30
+msgid "Pending requests"
+msgstr "Richieste in sospeso"
+
+#: weko_groups/templates/weko_groups/pending.html:36
+msgid ""
+"Invitations you received from communities admins. Click accept in order to "
+"become a member of the particular team or reject to cancel a pending "
+"invitation."
+msgstr ""
+"Inviti ricevuti da amministratori di comunità. Fai click su acceta per "
+"unirti al gruppo o rifuta per cancellare l'invito."
+
+#: weko_groups/templates/weko_groups/pending.html:50
+msgid "Group"
+msgstr "Gruppo"
+
+#: weko_groups/templates/weko_groups/pending.html:52
+msgid "User"
+msgstr "Utente"
+
+#: weko_groups/templates/weko_groups/pending.html:74
+msgid "Reject"
+msgstr "Rifuta"
+
+#: weko_groups/templates/weko_groups/pending.html:81
+msgid "Accept"
+msgstr "Accetta"

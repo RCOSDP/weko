@@ -1,0 +1,72 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+
+notifications:
+  email: false
+
+sudo: false
+
+language: python
+
+cache:
+  - pip
+
+env:
+  - REQUIREMENTS=lowest
+  - REQUIREMENTS=release
+  - REQUIREMENTS=devel
+
+python:
+  - "2.7"
+  - "3.5"
+  - "pypy"
+
+matrix:
+  allow_failures:
+    - python: pypy
+  fast_finish: true
+
+before_install:
+  - "travis_retry pip install --upgrade pip setuptools py"
+  - "travis_retry pip install twine wheel coveralls requirements-builder"
+  - "requirements-builder --level=min -e all setup.py > .travis-lowest-requirements.txt"
+  - "requirements-builder --level=pypi -e all setup.py > .travis-release-requirements.txt"
+  - "requirements-builder --level=dev -e all --req requirements-devel.txt setup.py > .travis-devel-requirements.txt"
+
+install:
+  - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
+  - "travis_retry pip install -e .[all]"
+
+script:
+  - "./run-tests.sh"
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: lnielsen
+  password:
+    secure: EiSkFS6W8N7Fr04uEDIfB8ko7u2LgcspXGFcQtAxhvNQkqY2avqopUN8e/atQzyHZw2dVpacLU7KJCND8zRSwTSG65B9mu1is35wJSnu9N55jpIhkQcUrCw7Tzk6PMdgReujMBbEx5hXNqFJ945b5Ceq32gU65iNmUHzePAY4fJ3mZBXElJLjfDcvRR7nEEmz+C792aerSFgElilVUEKqgIMBV249bS+YXjMr2BRQdwtApq7B7cLtsJ0UcXzUyU1gAv6oJpD1WVCMjuUSQUdw0Jv25jKLpCzEeYN8gm/JdIGPuAmt2ukeMovByb7yZYL1cZKgslbc0elG9KsDwIjhy24Taz8PXKnXI1YtV4DoM7FGHPBUz603ZeWc5DgEfRl8iWzWBQmUCZBnhTrOcFHq7Pf+ZQzbEdpA9G2btJHTyTsVqL2w/Rt14EgywiPhMcYi9EZRLmZ6DMlTFnmZEqV5TcZvZqfAgPSxP3dotfkS/xr6T2a1vkDLoqXqc5lJn7LC+dXg/+bwLsowHHzYJhnf6ZVllGzLVuWLORhgcT1sYD+WyjIybvmuPBzM0pkXGWvOyY6+DDlOH2hja1OAikYzhWVAk3BIMCS5UE9fA6u3aOZOz3eBAc3SRwRKQscr06Rb8WDA/DRdLHgKJ86Uyp0XM/GPO/uTSitqsfZnhYFLK0=
+  distributions: "sdist bdist_wheel"
+  on:
+    tags: true
+    python: "2.7"
+    condition: $REQUIREMENTS = release

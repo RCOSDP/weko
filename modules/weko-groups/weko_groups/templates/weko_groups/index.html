@@ -1,0 +1,111 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends "weko_groups/settings/base.html" %}
+
+{%- import "weko_groups/settings/helpers.html" as helpers with context -%}
+{%- from "weko_groups/helpers.html" import searchbar with context -%}
+{%- from "weko_groups/helpers.html" import emptyprompt with context -%}
+{%- from "weko_groups/helpers.html" import emptysearch with context -%}
+
+{% set panel_title = _("My Groups") %}
+{% set panel_icon = "fa fa-group fa-fw" %}
+
+{%- block settings_body %}
+{%- if groups.items|length > 0 %}
+{{ helpers.panel_start(
+    _('Add Groups'),
+    with_body=False,
+    icon='fa fa-plus fa-fw',
+    btn=_('New group') if groups.items|length > 0 else "", btn_icon='fa fa-plus', btn_href=url_for('.new')
+   ) }}
+{%- endif %}
+<div class="panel-body">
+  {%- block groups_description %}
+  {{ _('List of groups your are currently admin or member of. While being in particular group you gain special privileges, which enables you to get more involved in growth of the community.') }}
+  {%- endblock groups_description %}
+  <hr>
+  <div class="btn-toolbar">
+    <a class="btn btn-primary btn-sm pull-right" href="{{ url_for('.invitations') }}">
+      <i class="fa fa-fw fa-envelope"></i> {{ _("Invitations") }} <span class="badge">{{ invitations }}</span></a>
+    <a class="btn btn-primary btn-sm pull-right" href="{{ url_for('.requests') }}">
+      <i class="fa fa-fw fa-reply"></i> {{ _("Requests") }} <span class="badge">{{ requests }}</span></a>
+  </div>
+</div>
+{%- if groups.items|length == 0 and not q %}
+  {{ emptyprompt(
+    btn=_('New group'), btn_icon='fa fa-fw fa-plus',
+    btn_href=url_for('.new'),
+    heading=_('Go ahead and create new group!')
+    ) }}
+{%- elif groups.items|length == 0 and q %}
+  {{ searchbar() }}
+  {{ emptysearch(heading=_("No results found.")) }}
+{%- else %}
+  {{ searchbar() }}
+  {%- block groups_list %}
+  <form id="leave-form"></form>
+  <table class="table table-striped table-hover table-groups">
+    <thead>
+      <tr>
+        <th class="col-md-6">{{ _("Name") }}</th>
+        <th class="col-md-1">{{ _("Members") }}</th>
+        <th class="col-md-5"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {%- for group in groups.items %}
+      <tr>
+        <td data-group-id="{{ group.id if group.is_admin(current_user) else '' }}">
+          <div>
+            <b>{{group.get_id()}}-{{ group.name }}</b>
+          </div>
+          <br>
+          <small>{{ group.description|truncate(200, True)|safe }}</small>
+        </td>
+        <td class="text-center vcenter">{{ group.members_count() }}</td>
+        <td class="text-center btn-toolbar vcenter">
+          {%- if group.is_member(current_user) %}
+          <button class="btn btn-xs btn-danger pull-right" type="submit" form="leave-form" formaction="{{ url_for('.leave', group_id=group.id) }}" formmethod="POST">
+            <i class="fa fa-fw fa-chain-broken"></i>{{ _("Leave") }}
+          </button>
+          {%- endif %}
+          {%- if group.is_admin(current_user) %}
+          <a class="btn btn-xs btn-default pull-right" href="{{ url_for('.manage',  group_id=group.id) }}">
+            <i class="fa fa-fw fa fa-wrench"></i> {{ _("Manage") }}
+          </a>
+          <a class="btn btn-xs btn-default pull-right" href="{{ url_for('.new_member', group_id=group.id) }}">
+            <i class="fa fa-fw fa fa-plus"></i> {{ _("Invite") }}
+          </a>
+          {%- endif %}
+          {%- if group.can_see_members(current_user) %}
+          <a class="btn btn-xs btn-default pull-right" href="{{ url_for('.members', group_id=group.id) }}">
+            <i class="fa fa-fw fa-users"></i> {{ _("Members") }}
+          </a>
+          {%- endif %}
+        </td>
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+  {%- endblock groups_list %}
+{%- endif %}
+{{ helpers.panel_end(with_body=False) }}
+{%- endblock settings_body%}

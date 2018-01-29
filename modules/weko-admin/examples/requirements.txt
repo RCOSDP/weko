@@ -1,0 +1,11 @@
+Flask-Collect==1.2.2
+Flask-Assets>=0.12
+Flask-Admin>=1.5.0
+Flask-Menu>=0.6.0
+invenio-access>=1.0.0b1
+invenio-assets>=1.0.0b6
+invenio-admin>=1.0.0b4
+invenio-accounts>=1.0.0b3
+invenio-db>=1.0.0b9
+invenio-mail>=1.0.0b1
+invenio-i18n>=1.0.0b4

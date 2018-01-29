@@ -1,0 +1,95 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends "weko_groups/settings/base.html" %}
+
+{%- import "weko_groups/settings/helpers.html" as helpers with context %}
+{%- from "weko_groups/_macros.html" import render_field with context %}
+
+{% set panel_title = _("My Groups") %}
+{% set panel_icon = "fa fa-group fa-fw" %}
+
+{%- block settings_body %}
+{%- set header = (group.name + " <small class='text-muted'>Manage</small>") if group else "New group" -%}
+{{ helpers.panel_start(
+    _(header),
+    with_body=False,
+    icon='fa fa-users fa-fw',
+    btn=_('Members') if group else "", btn_icon='fa fa-users', btn_href=url_for('.members', group_id=group.id) if group else "",
+   ) }}
+<div class="panel-body">
+  {%- block description %}
+  {% if group %}
+  Customize existing group.
+  {% else %}
+  Go ahead a create your group, to which then you would be able to add new members.
+  {% endif %}
+  {%- endblock %}
+</div>
+<form role="form" method="POST" class="list-group-item">
+  {%- for field in form %}
+    {{ render_field(field, show_description=True) }}
+  {%- endfor %}
+  <hr>
+  <div class="btn-toolbar">
+    {%- if group -%}
+    <a class="btn btn-danger" data-toggle="modal" data-target="#delete-group-modal">
+      <i class="fa fa-trash-o"></i> {{ _('Delete') }}
+    </a>
+    {%- endif %}
+    <button type="submit" class="btn btn-primary pull-right">
+      <i class="fa fa-check"></i> {{ _('Update') if group else _('Create') }}
+    </button>
+    <a href="{{ url_for('.index') }}" class="btn btn-default pull-right">
+      <i class="fa fa-times"></i> {{ _('Cancel') }}
+    </a>
+  </div>
+</form>
+{{ helpers.panel_end() }}
+{%- if group %}
+<div id="delete-group-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{{ _('Group deletion') }}</h4>
+      </div>
+      <div class="modal-body">
+        <p>{{ _("You are about to ") }}
+          <strong class=text-danger>{{ _("delete") }}</strong>
+          <strong>{{ group.name }}</strong>
+        </p>
+        <p>{{ _("This action cannot be undone. Are you sure you want to proceed?") }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default pull-left" data-dismiss="modal">
+          <i class="fa fa-times"></i> {{ _("Cancel") }}
+        </button>
+        <form action="{{ url_for('.delete', group_id=group.id) }}" method="post">
+          <button class="btn btn-danger">
+            <i class="fa fa-trash-o"></i> {{ _("Delete") }}
+          </button>
+        </form>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{%- endif %}
+{%- endblock %}

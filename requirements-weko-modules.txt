@@ -1,0 +1,10 @@
+-e /code/modules/weko-itemtypes-ui
+-e /code/modules/weko-items-ui
+-e /code/modules/weko-accounts
+-e /code/modules/weko-admin
+-e /code/modules/weko-logging
+-e /code/modules/weko-groups
+-e /code/modules/weko-search-ui
+-e /code/modules/weko-records
+-e /code/modules/weko-records-ui
+-e /code/modules/weko-items-rest
