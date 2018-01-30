@@ -65,7 +65,7 @@ messages may be yourself!
 Submitting a pull request
 -------------------------
 
-All proposed changes to any of the Invenio modules are made as GitHub pull
+All proposed changes to any of the WEKO3 modules are made as GitHub pull
 requests, if this is the first time you are making a contribution using
 GitHub, please check `this <https://guides.github.com/activities/forking/>`_.
 

@@ -2,7 +2,7 @@
 
 Setting up your development environment
 =======================================
-Some rules should be applied when developing for Invenio. Here are some hints
+Some rules should be applied when developing for WEKO3. Here are some hints
 to set up your environment so these rules will be respected.
 
 Git

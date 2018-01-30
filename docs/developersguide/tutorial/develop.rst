@@ -1,30 +1,30 @@
 ..
-    This file is part of Invenio.
-    Copyright (C) 2017 CERN.
+    This file is part of WEKO3.
+    Copyright (C) 2017 National Institute of Informatics.
 
-    Invenio is free software; you can redistribute it
+    WEKO3 is free software; you can redistribute it
     and/or modify it under the terms of the GNU General Public License as
     published by the Free Software Foundation; either version 2 of the
     License, or (at your option) any later version.
 
-    Invenio is distributed in the hope that it will be
+    WEKO3 is distributed in the hope that it will be
     useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
     General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Invenio; if not, write to the
+    along with WEKO3; if not, write to the
     Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
     MA 02111-1307, USA.
 
-    In applying this license, CERN does not
+    In applying this license, National Institute of Informatics does not
     waive the privileges and immunities granted to it by virtue of its status
     as an Intergovernmental Organization or submit itself to any jurisdiction.
 
 Develop a module
 ================
 
-The goal of this tutorial is to add data to Invenio v3. We'll create a
+The goal of this tutorial is to add data to WEKO3 v3. We'll create a
 form that inserts the data in the database. Also we will touch different
 part of the development process such as:
 
@@ -81,7 +81,7 @@ The ``views.py`` registers all the views of our application
 
 .. code-block:: python
 
-    """Invenio module that adds more fun to the platform."""
+    """WEKO3 module that adds more fun to the platform."""
 
     from __future__ import absolute_import, print_function
 
@@ -104,7 +104,7 @@ The ``views.py`` registers all the views of our application
         """Basic view."""
         return render_template(
             "invenio_unicorn/index.html",
-            module_name=_('Invenio-Unicorn'))
+            module_name=_('WEKO3-Unicorn'))
 
 
     @blueprint.route('/create', methods=['GET', 'POST'])

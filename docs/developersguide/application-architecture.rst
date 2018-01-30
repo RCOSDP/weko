@@ -1,17 +1,17 @@
 Application architecture
 ========================
-Invenio is at the core an application built on-top of the Flask web
-development framework, and fully understanding Invenio's architectual design
+WEKO3 is at the core an application built on-top of the Flask web
+development framework, and fully understanding WEKO3's architectual design
 requires you to understand core concepts from Flask which will briefly be
 covered here.
 
 The Flask application is exposed via different *application interfaces*
 depending on if the application is running in a webserver, CLI or job queue.
 
-Invenio adds a powerful *application factory* on top of Flask, which takes
-care of dynamically assembling an Invenio application from the many individual
-modules that makes up Invenio, and which also allow you to easily extend
-Invenio with your own modules.
+WEKO3 adds a powerful *application factory* on top of Flask, which takes
+care of dynamically assembling an WEKO3 application from the many individual
+modules that makes up WEKO3, and which also allow you to easily extend
+WEKO3 with your own modules.
 
 Core concepts
 -------------
@@ -53,7 +53,7 @@ You can save above code in a file ``app.py`` and run the application:
 
 .. rubric:: Application and blueprint
 
-Invenio is a large application built up of many smaller individual modules. The
+WEKO3 is a large application built up of many smaller individual modules. The
 way Flask allows you to build modular applications is via *blueprints*.
 In above example we have a small blueprint which just have one *view*
 (``my_user_agent``), which returns the browser's user agent sting.
@@ -106,9 +106,9 @@ In each of the above interfaces, a Flask application needs to be created.
 A common pattern for large Flask applications is to move the application
 creation into a factory function, named an **application factory**.
 
-Invenio provides a powerful application factory for Flask which is capable of
+WEKO3 provides a powerful application factory for Flask which is capable of
 dynamically assembling an application. In order to illustrate the basics of
-what the Invenio application factory does, have a look at the following
+what the WEKO3 application factory does, have a look at the following
 example:
 
 .. code-block:: python
@@ -136,13 +136,13 @@ example:
 
 The example illustrates two blueprints, which are statically registered on the
 Flask application blueprint inside the application factory. It is essentially
-this part that the Invenio application factory takes care of for you. Invenio
-will automatically discover all your installed Invenio modules and register
+this part that the WEKO3 application factory takes care of for you. WEKO3
+will automatically discover all your installed WEKO3 modules and register
 them on your application.
 
 Assembly phases
 ---------------
-The Invenio application factory assembles your application in five phases:
+The WEKO3 application factory assembles your application in five phases:
 
 1. **Application creation**: Besides creating the Flask application object,
    this phase will also ensure your instance folder exists, as well as route
@@ -154,23 +154,23 @@ The Invenio application factory assembles your application in five phases:
 3. **URL converter loading**: In this phase, the application will load any of
    your URL converts. This phase is usually only needed for some few specific
    cases.
-4. **Flask extensions loading**: In this phase all the Invenio modules which
+4. **Flask extensions loading**: In this phase all the WEKO3 modules which
    provides Flask extensions will initialize the extension. Usually the
    extensions will provide default configuration values they need, unless the
    user already set them.
 5. **Blueprints loading**: After all extensions have been loaded, the factory
-   will end with registering all the blueprints provided by the Invenio modules
+   will end with registering all the blueprints provided by the WEKO3 modules
    on the application.
 
 Understanding above application assembly phases, what they do, and how you
-can plug into them is essential for fully mastering Invenio development.
+can plug into them is essential for fully mastering WEKO3 development.
 
 .. note::
 
     **No loading order within a phase**
 
     It's very important to know, that within each phase, there is **no order**
-    in how the Invenio modules are loaded. Say, with in the Flask extensions
+    in how the WEKO3 modules are loaded. Say, with in the Flask extensions
     loading phase, there's no way to specify that one extension has to be
     loaded before another extension.
 
@@ -180,16 +180,16 @@ can plug into them is essential for fully mastering Invenio development.
 Module discovery
 ----------------
 In each of the application assembly phases, the Invneio factory automatically
-discover your installed Invenio modules. The way this works, is via Python
-**entry points**. When you install the Python package for an Invenio module,
+discover your installed WEKO3 modules. The way this works, is via Python
+**entry points**. When you install the Python package for an WEKO3 module,
 the package describes via entry points which Flask extensions, blueprints etc.
 that this module provides. The section :ref:`extending-invenio` describes in
-more detail how you use the entry points to extend Invenio.
+more detail how you use the entry points to extend WEKO3.
 
 WSGI: UI and REST
 -----------------
 Each of the application interfaces (WSGI, CLI, Celery) may need slightly
-different Flask applications. The Invenio application factory is in charge
+different Flask applications. The WEKO3 application factory is in charge
 of assembling these applications, which is done through the five assembly
 phases.
 
@@ -198,7 +198,7 @@ The WSGI application is however also split up into two Flask applications:
 - **UI:** Flask application responsible for processing all user facing views.
 - **REST:** Flask application responsible for processing all REST API requests.
 
-The reason to split the frontend part of Invenio into two separate applications
+The reason to split the frontend part of WEKO3 into two separate applications
 is partly
 
 - to be able to run the REST API in one domain (``api.example.org``) and the
@@ -212,9 +212,9 @@ application.
 
 Implementation
 --------------
-The following Invenio modules are each responsible for implementing parts of
+The following WEKO3 modules are each responsible for implementing parts of
 above application architecture, and it is highly advisable to dig deeper into
-these modules if you want a better understanding of the Invenio application
+these modules if you want a better understanding of the WEKO3 application
 architecture:
 
 - `Invenio-Base <https://invenio-base.readthedocs.io>`_: Implements the Invenio

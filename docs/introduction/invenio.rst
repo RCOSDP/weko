@@ -1,24 +1,24 @@
-.. This file is part of Invenio
-   Copyright (C) 2015 CERN.
+.. This file is part of WEKO3
+   Copyright (C) 2017 National Institute of Informatics.
 
-   Invenio is free software; you can redistribute it and/or
+   WEKO3 is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
    published by the Free Software Foundation; either version 2 of the
    License, or (at your option) any later version.
 
-   Invenio is distributed in the hope that it will be useful, but
+   WEKO3 is distributed in the hope that it will be useful, but
    WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with Invenio; if not, write to the Free Software Foundation, Inc.,
+   along with WEKO3; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 
 .. _introduction:
 
-What is Invenio?
+What is WEKO3?
 ================
 
 .. todo::
@@ -38,7 +38,7 @@ Navigable collection tree
 * Documents organised in collections
 * Regular and virtual collection trees
 * Customizable portalboxes for each collection
-* At CERN, over 1,000,000 documents in 700 collections
+* At National Institute of Informatics, over 1,000,000 documents in 700 collections
 
 .. raw:: html
 
@@ -103,7 +103,7 @@ Multiple output formats
   <br clear="all" />
 
 
-Who is using Invenio?
+Who is using WEKO3?
 =====================
 .. todo::
 

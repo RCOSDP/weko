@@ -1,13 +1,13 @@
 .. _install_invenio:
 
-Install Invenio
+Install WEKO3
 ===============
 
 Now that all the prerequisites have been set up in :ref:`install_prerequisites`,
-we can proceed with the installation of the Invenio itself. The installation is
+we can proceed with the installation of the WEKO3 itself. The installation is
 happening on the web node (192.168.50.10).
 
-We start by creating and configuring a new Invenio instance, continue by
+We start by creating and configuring a new WEKO3 instance, continue by
 populating it with some example records, and finally we start the web
 application. This can be done in an automated unattended way by running the
 following scripts:
@@ -21,12 +21,12 @@ following scripts:
 
 .. note::
 
-   If you want to install the very-bleeding-edge Invenio packages from GitHub,
+   If you want to install the very-bleeding-edge WEKO3 packages from GitHub,
    you can run the ``create-instance.sh`` script with the ``--devel`` argument::
 
      ./scripts/create-instance.sh --devel
 
-Let’s see in detail about every Invenio installation step.
+Let’s see in detail about every WEKO3 installation step.
 
 Create instance
 ~~~~~~~~~~~~~~~

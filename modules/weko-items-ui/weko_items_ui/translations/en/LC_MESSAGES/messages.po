@@ -1,5 +1,5 @@
 # English translations for weko-items-ui.
-# Copyright (C) 2015 CERN
+# Copyright (C) 2017 National Institute of Informatics
 # This file is distributed under the same license as the
 # weko-items-ui project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2015.

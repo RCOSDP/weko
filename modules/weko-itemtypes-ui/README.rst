@@ -36,7 +36,7 @@
 .. image:: https://img.shields.io/github/license/wekosoftware/weko-itemtypes-ui.svg
         :target: https://github.com/wekosoftware/weko-itemtypes-ui/blob/master/LICENSE
 
-Invenio module that adds more fun to the platform.
+WEKO3 module that adds more fun to the platform.
 
 *This is an experimental developer preview release.*
 

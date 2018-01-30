@@ -15,7 +15,7 @@ Merging pull requests
 .. _beware-of-inter-service-relations:
 
 3. **Beware of inter-service relations.** Changing pre-existing tests? Perhaps
-   this pull request does not fit the needs of other Invenio services.
+   this pull request does not fit the needs of other WEKO3 services.
 
 .. _avoid-self-merges:
 

@@ -3,7 +3,7 @@ Reviewing pull requests
 
 Remember you are not a police officer. You are here to help the contributor
 get their code integrated and ensure they have a great experience contributing
-to Invenio.
+to WEKO3.
 
 
 
@@ -24,7 +24,7 @@ to Invenio.
 .. _beware-of-inter-service-relations:
 
 3. **Beware of inter-service relations.** Changing pre-existing tests? Perhaps
-   this pull request does not fit the needs of other Invenio services.
+   this pull request does not fit the needs of other WEKO3 services.
 
 .. _avoid-self-merges:
 

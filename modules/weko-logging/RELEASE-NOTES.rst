@@ -7,7 +7,7 @@ WEKO-Logging v0.1.0 was released on TBD, 2017.
 About
 -----
 
-Invenio module that adds more fun to the platform.
+WEKO3 module that adds more fun to the platform.
 
 *This is an experimental developer preview release.*
 

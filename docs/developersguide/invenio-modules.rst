@@ -1,10 +1,10 @@
 .. _invenio-module-layout:
 
-Invenio module layout
+WEKO3 module layout
 =====================
 
 This page summarizes the standard structure and naming conventions of a
-module in Invenio v3.0. It serves as a reference point when developing
+module in WEKO3 v3.0. It serves as a reference point when developing
 a new module or enhancing an existing one.
 
 A simple module may have the following folder structure::
@@ -55,7 +55,7 @@ On the top, the list of the requirements:
 
 Depending on your needs, you can install only part of the requirements, or everything (``pip install invenio-foo[all]``).
 
-Then, in the ``setup()`` function, you have the description of your module with the values entered in the Cookiecutter. At the end, you can find the ``entrypoints`` section. For the moment, there is only the registration in the Invenio application, and the translations.
+Then, in the ``setup()`` function, you have the description of your module with the values entered in the Cookiecutter. At the end, you can find the ``entrypoints`` section. For the moment, there is only the registration in the WEKO3 application, and the translations.
 
 MANIFEST.in
 +++++++++++
@@ -99,7 +99,7 @@ All your config variables should be declared in this file. Thus, if we look for 
 ext.py
 >>>>>>
 
-This is a specific file that you shouldn't touch except if you want to have advanced features. It contains a class that registers your module into the Invenio application, and load your default config variables.
+This is a specific file that you shouldn't touch except if you want to have advanced features. It contains a class that registers your module into the WEKO3 application, and load your default config variables.
 
 version.py
 >>>>>>>>>>
@@ -124,8 +124,8 @@ If your module needs JavaScript or CSS files, they should go in a folder called 
 Module naming conventions
 -------------------------
 
-Invenio modules are standalone independent components that implement some
-functionality used by the rest of the Invenio ecosystem. The modules provide API
+WEKO3 modules are standalone independent components that implement some
+functionality used by the rest of the WEKO3 ecosystem. The modules provide API
 to other modules and use API of other modules.
 
 A module is usually called:

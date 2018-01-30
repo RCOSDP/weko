@@ -1,18 +1,18 @@
-..  This file is part of Invenio
-    Copyright (C) 2015, 2016, 2017 CERN.
+..  This file is part of WEKO3
+    Copyright (C) 2017 National Institute of Informatics
 
-    Invenio is free software; you can redistribute it and/or
+    WEKO3 is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
     published by the Free Software Foundation; either version 2 of the
     License, or (at your option) any later version.
 
-    Invenio is distributed in the hope that it will be useful, but
+    WEKO3 is distributed in the hope that it will be useful, but
     WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
     General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Invenio; if not, write to the Free Software Foundation, Inc.,
+    along with WEKO3; if not, write to the Free Software Foundation, Inc.,
     59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 Releases
@@ -21,21 +21,21 @@ Releases
 We follow `semantic versioning <http://semver.org/>`_ and `PEP-0440
 <https://www.python.org/dev/peps/pep-0440/>`_ release numbering practices.
 
-Invenio v3.x
+WEKO3 v3.x
 ------------
 
 *Unreleased*
 
-Invenio v3.0 will be released when the Invenio code base is fully split into a
+WEKO3 v3.0 will be released when the WEKO3 code base is fully split into a
 set of standalone independent Python packages.
 
-Invenio v2.x
+WEKO3 v2.x
 ------------
 
 *Semi-stable*
 
-Invenio v2.x code base is a hybrid architecture that uses Flask web
-development framework combined with Invenio v1.x framework.
+WEKO3 v2.x code base is a hybrid architecture that uses Flask web
+development framework combined with WEKO3 v1.x framework.
 
 .. note::
 
@@ -44,12 +44,12 @@ development framework combined with Invenio v1.x framework.
 
 Released versions include:
 
-Invenio v2.1:
+WEKO3 v2.1:
 
 * `v2.1.1 <https://github.com/inveniosoftware/invenio/releases/tag/v2.1.1>`_ - released 2015-09-01
 * `v2.1.0 <https://github.com/inveniosoftware/invenio/releases/tag/v2.1.0>`_ - released 2015-06-16
 
-Invenio v2.0:
+WEKO3 v2.0:
 
 * `v2.0.6 <https://github.com/inveniosoftware/invenio/releases/tag/v2.0.6>`_ - released 2015-09-01
 * `v2.0.5 <https://github.com/inveniosoftware/invenio/releases/tag/v2.0.5>`_ - released 2015-07-17
@@ -59,17 +59,17 @@ Invenio v2.0:
 * `v2.0.1 <https://github.com/inveniosoftware/invenio/releases/tag/v2.0.1>`_ - released 2015-03-20
 * `v2.0.0 <https://github.com/inveniosoftware/invenio/releases/tag/v2.0.0>`_ - released 2015-03-04
 
-Invenio v1.x
+WEKO3 v1.x
 ------------
 
 *Stable*
 
-Invenio v1.x code base is suitable for stable production. It uses legacy
+WEKO3 v1.x code base is suitable for stable production. It uses legacy
 technology and custom web development framework.
 
 .. note::
 
-    Invenio v1.x is in feature freeze and will only receive important bug and
+    WEKO3 v1.x is in feature freeze and will only receive important bug and
     security fixes.
 
 Released versions include:

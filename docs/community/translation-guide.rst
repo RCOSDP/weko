@@ -3,12 +3,12 @@
 Translation guide
 =================
 
-Invenio has been translated to more than 25 languages.
+WEKO3 has been translated to more than 25 languages.
 
 Transifex
 ---------
 
-All Invenio internationalisation and localisation efforts are happening on the
+All WEKO3 internationalisation and localisation efforts are happening on the
 `Transifex <https://www.transifex.com/>`_ collaborative localisation platform.
 
 You can start by exploring `Invenio project dashboard
@@ -33,7 +33,7 @@ All contributions with translating phrases or with reviewing translations are
 very appreciated!
 
 Please read `Getting started as a translator
-<https://docs.transifex.com/getting-started/translators>`_ and join Invenio
+<https://docs.transifex.com/getting-started/translators>`_ and join WEKO3
 project on Transifex.
 
 Developers

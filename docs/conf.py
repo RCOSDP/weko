@@ -311,7 +311,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'invenio', u'Invenio Documentation',
+  (master_doc, 'invenio', u'WEKO3 Documentation',
    author, 'invenio', 'Weko module platform.',
    'Miscellaneous'),
 ]

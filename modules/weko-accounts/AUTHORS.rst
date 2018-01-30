@@ -20,6 +20,6 @@
 Authors
 =======
 
-Invenio module that adds more fun to the platform.
+WEKO3 module that adds more fun to the platform.
 
 - National Institute of Informatics <wekosoftware@nii.ac.jp>

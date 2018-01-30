@@ -1,7 +1,7 @@
 Bootstrapping with cookiecutter
 ===============================
 
-Invenio 3 has a tool to create a module from scratch, which allows you to have all the files needed for your new module. It is a template for Cookiecutter.
+WEKO3 3 has a tool to create a module from scratch, which allows you to have all the files needed for your new module. It is a template for Cookiecutter.
 
 First, you need to install Cookiecutter, which is available on PyPI (the ``-U`` option will upgrade it if it is already installed):
 
@@ -26,7 +26,7 @@ This will first clone the template from git to your current directory. Then, Coo
     package_name [invenio_unicorn]:
     github_repo [inveniosoftware/invenio-unicorn]:
     description [Invenio module that adds more fun to the platform.]:
-    author_name [CERN]: Nice Unicorn
+    author_name [National Institute of Informatics]: Nice Unicorn
     author_email [info@inveniosoftware.org]: nice@unicorn.com
     year [2017]:
     copyright_holder [Nice Unicorn]:

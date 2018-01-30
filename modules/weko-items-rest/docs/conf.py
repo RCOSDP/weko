@@ -129,7 +129,7 @@ todo_include_todos = False
 html_theme = 'alabaster'
 
 html_theme_options = {
-    'description': 'Invenio module that adds more fun to the platform.',
+    'description': 'WEKO3 module that adds more fun to the platform.',
     'github_user': 'inveniosoftware',
     'github_repo': 'weko-items-rest',
     'github_button': False,

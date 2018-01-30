@@ -28,8 +28,9 @@ Meetings
 
 Invenio Developer Forum
 ~~~~~~~~~~~~~~~~~~~~~~~
-Monday afternoons at 16:00 CET/CEST time we meet physically at CERN and
-virtually over videoconference to discuss interesting development topics.
+Monday afternoons at 16:00 CET/CEST time we meet physically at National Institute
+of Informatics and virtually over videoconference to discuss interesting development
+topics.
 
 You can join our Monday forums from anywhere via videoconference. Here the
 steps:

@@ -5,7 +5,7 @@ Install, run and test
 
 As soon as you have run the Cookiecutter, you have a valid module that can be installed. In this section, we are going to see how to install the module, run the tests, run the example application and build the documentation.
 
-Before that, we need to **stop** any running Invenio instance.
+Before that, we need to **stop** any running WEKO3 instance.
 
 Install the module
 ------------------

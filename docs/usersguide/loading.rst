@@ -6,7 +6,7 @@ Loading content
 Loading records
 ---------------
 
-In the Invenio demo site example using ILS flavour, we have seen the ``invenio
+In the WEKO3 demo site example using ILS flavour, we have seen the ``invenio
 marc21`` command that can load records directly from a MARCXML file.
 
 You can use ``dojson`` to convert MARCXML format to its JSON representation:
@@ -48,13 +48,13 @@ You can load JSON records using the ``invenio records`` command:
 
 The new record that we have just uploaded got the UUID
 efac2fc2-29af-40bb-a85e-77af0349c0fe that uniquely identifies it inside the
-Invenio record database. It was also minted persistent identifiers ``recid``
+WEKO3 record database. It was also minted persistent identifiers ``recid``
 representing record ID and ``oaiid`` representing OAI ID.
 
 UUIDs and PIDs
 --------------
 
-Objects managed by Invenio use "internal" UUID identifiers and "external"
+Objects managed by WEKO3 use "internal" UUID identifiers and "external"
 persistent identifiers (PIDs).
 
 Starting from a persistent identifier, you can see which UUID a persistent

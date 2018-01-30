@@ -1,9 +1,9 @@
 Setting up a repository
 =======================
 
-First, reach out to the Invenio architects and agree on scope and name of
+First, reach out to the WEKO3 architects and agree on scope and name of
 the new repository. The architects are their to help you and to ensure that
-the module fits into the larger Invenio ecosystem.
+the module fits into the larger WEKO3 ecosystem.
 
 New repositories can be created in either the
 `inveniosoftware <https://github.com/inveniosoftware>`_ or the
@@ -21,7 +21,7 @@ repository which will be setup in the following manner:
     - Description and homepage (link to readthedocs.io) *must* be set.
     - Issues *must* be enabled.
     - Wiki *should* be disabled (except in rare circumstances such as the main
-      Invenio repository).
+      WEKO3 repository).
     - Merge button: *must* disallow merge commits, allow squash and allow
       rebase merging.
 * **Teams**: A team named ``<repository-name>-maintainers`` *must* exists with
@@ -60,14 +60,14 @@ We use the following other external services:
 - `Python Package Index <https://pypi.org>`_ for releasing Python packages.
 - `NPM <https://npmjs.com>`_ for releasing JavaScript packags.
 - `ReadTheDocs <https://readthedocs.org>`_ for hosting documentation.
-- `Transifex <https://www.transifex.com>`_ for translating Invenio.
+- `Transifex <https://www.transifex.com>`_ for translating WEKO3.
 
 Bootstrapping
 -------------
 New repositories should in most cases be bootstrapped using one of our
 templates. These templates encodes many best practices, setups above external
 services correctly and ensure a coherent package structure throughout the
-Invenio project.
+WEKO3 project.
 
 Python
 ~~~~~~

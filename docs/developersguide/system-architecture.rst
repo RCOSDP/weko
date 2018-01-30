@@ -2,14 +2,14 @@ System architecture
 ===================
 
 
-Invenio v3.x
+WEKO3 v3.x
 ------------
 
 .. admonition:: CAVEAT LECTOR
 
-   Invenio v3.0 alpha is a bleeding-edge developer preview version.
+   WEKO3 v3.0 alpha is a bleeding-edge developer preview version.
 
-Invenio v3.0 build on top of `Flask`_ web development framework, using `Jinja2`_
+WEKO3 v3.0 build on top of `Flask`_ web development framework, using `Jinja2`_
 template engine, `SQLAlchemy`_ Object Relational Mapper, `JSONSchema`_ data
 model, `PostgreSQL`_ database for persistence, and `Elasticsearch`_ for
 information retrieval.
@@ -21,31 +21,31 @@ information retrieval.
 .. _PostgreSQL: http://www.postgresql.org/
 .. _Elasticsearch: https://www.elastic.co/products/elasticsearch
 
-Invenio's architecture is modular. The code base is split into more than 50
+WEKO3's architecture is modular. The code base is split into more than 50
 independent components that are `released independently on PyPI
 <https://pypi.python.org/pypi?:action=search&term=inveniosoftware&submit=search>`_.
 This ensures strict separation of components that talk among themselves over API
 and permits rapid development of independent components by independent teams.
 
-Invenio compontents, named *modules*, can be roughly split in three categories:
+WEKO3 compontents, named *modules*, can be roughly split in three categories:
 
 1. **base modules** provide interfaces to the Flask ecosystem, the Database, and
-   other system tools and technologies that the Invenio ecosystem uses. Example:
-   ``Invenio-Celery`` that talks to the Celery worker system.
+   other system tools and technologies that the WEKO3 ecosystem uses. Example:
+   ``WEKO3-Celery`` that talks to the Celery worker system.
 
 2. **core feature modules** provide most common functionality that each digital
-   library instance is likely interested in using. Example: ``Invenio-Records``
+   library instance is likely interested in using. Example: ``WEKO3-Records``
    provide record object store.
 
 3. **additional feature modules** offer additional functionality suitable for
    various particular use cases, such as the Integrated Library System, the
-   Multimedia Store, or the Data Repository. Example: ``Invenio-Circulation``
+   Multimedia Store, or the Data Repository. Example: ``WEKO3-Circulation``
    offers circulation and holdings capabilities.
 
-Here is a basic bird-eye overview of available Invenio components and their
+Here is a basic bird-eye overview of available WEKO3 components and their
 dependencies: (*work in progress*)
 
-.. 
+..
    digraph invenio3 {
      size="20.0 20.0";
      ratio="compress";

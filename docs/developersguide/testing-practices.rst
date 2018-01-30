@@ -1,7 +1,7 @@
 Testing practices
 =================
 
-It is a good practice to add test cases to each Invenio module. Tests are
+It is a good practice to add test cases to each WEKO3 module. Tests are
 normally organized in:
 
 1. unit and functional testing: test cases run against the Flask app defined in
@@ -11,7 +11,7 @@ normally organized in:
 2. end-to-end functional testing: run by launching a browser and a live server
    on the test Flask app and executing test cases through `Selenium`_.
 
-Invenio uses `pytest`_ as test framework.
+WEKO3 uses `pytest`_ as test framework.
 
 .. _Selenium: http://www.seleniumhq.org/
 .. _pytest: https://pypi.python.org/pypi/pytest
@@ -26,7 +26,7 @@ End-to-end functional testing
 
 To run end-to-end tests, the requirements are:
 
-- Invenio installed, with modules that are covered by the tests
+- WEKO3 installed, with modules that are covered by the tests
 - an Elastic Search running instance
 - a Redis running instance
 - a web browser driver (check `Selenium WebDriver`_ documentation to see how to

@@ -1,18 +1,18 @@
-..  This file is part of Invenio
-    Copyright (C) 2014, 2015, 2016, 2017 CERN.
+..  This file is part of WEKO3
+    Copyright (C) 2017 National Institute of Informatics.
 
-    Invenio is free software; you can redistribute it and/or
+    WEKO3 is free software; you can redistribute it and/or
     modify it under the terms of the GNU General Public License as
     published by the Free Software Foundation; either version 2 of the
     License, or (at your option) any later version.
 
-    Invenio is distributed in the hope that it will be useful, but
+    WEKO3 is distributed in the hope that it will be useful, but
     WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
     General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Invenio; if not, write to the Free Software Foundation, Inc.,
+    along with WEKO3; if not, write to the Free Software Foundation, Inc.,
     59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 .. _installation_detailed:
@@ -27,7 +27,7 @@ Detailed installation guide
 Introduction
 ------------
 
-In this installation guide, we'll create an Invenio digital library instance
+In this installation guide, we'll create an WEKO3 digital library instance
 using a multi-machine setup where separate services (such as the database server
 and the web server) run on separate dedicated machines. Such a multi-machine
 setup emulates to what one would typically use in production. (However, it is
@@ -39,7 +39,7 @@ We'll use six dedicated machines running the following services:
 ============= ============= ====================
 node          IP            runs
 ============= ============= ====================
-web           192.168.50.10 Invenio web application
+web           192.168.50.10 WEKO3 web application
 postgresql    192.168.50.11 `PostgreSQL <http://www.postgresql.org/>`_ database server
 redis         192.168.50.12 `Redis <http://redis.io/>`_ caching service
 elasticsearch 192.168.50.13 `Elasticsearch <https://www.elastic.co/products/elasticsearch>`_ information retrieval service
@@ -49,13 +49,13 @@ worker        192.168.50.15 `Celery <http://www.celeryproject.org/>`_ worker nod
 
 The instructions below are tested on Ubuntu 14.04 LTS (Trusty Tahr) and CentOS 7
 operating systems. For other operating systems such as Mac OS X, you may want to
-check out the "kickstart" set of scripts coming with the Invenio source code
+check out the "kickstart" set of scripts coming with the WEKO3 source code
 that perform the below-quoted installation steps in an unattended automated way.
 
 Environment variables
 ---------------------
 
-Let's define some useful environment variables that will describe our Invenio
+Let's define some useful environment variables that will describe our WEKO3
 instance setup:
 
 .. glossary::
@@ -64,25 +64,25 @@ instance setup:
      The IP address of the Web server node.
 
    INVENIO_WEB_INSTANCE
-     The name of your Invenio instance that will be created. Usually equal to
+     The name of your WEKO3 instance that will be created. Usually equal to
      the name of the Python virtual environment.
 
    INVENIO_WEB_VENV
-     The name of the Python virtual environment where Invenio will be installed.
-     Usually equal to the name of the Invenio instance.
+     The name of the Python virtual environment where WEKO3 will be installed.
+     Usually equal to the name of the WEKO3 instance.
 
    INVENIO_USER_EMAIL
-     The email address of a user account that will be created on the Invenio
+     The email address of a user account that will be created on the WEKO3
      instance.
 
    INVENIO_USER_PASS
-     The password of this Invenio user.
+     The password of this WEKO3 user.
 
    INVENIO_POSTGRESQL_HOST
      The IP address of the PostgreSQL database server.
 
    INVENIO_POSTGRESQL_DBNAME
-     The database name that will hold persistent data of our Invenio instance.
+     The database name that will hold persistent data of our WEKO3 instance.
 
    INVENIO_POSTGRESQL_DBUSER
      The database user name used to connect to the database server.
@@ -114,7 +114,7 @@ Let us save this configuration in a file called ``.inveniorc`` for future use.
 Web
 ---
 
-The web application node (192.168.50.10) is where the main Invenio application
+The web application node (192.168.50.10) is where the main WEKO3 application
 will be running. We need to provision it with some system dependencies in order
 to be able to install various underlying Python and JavaScript libraries.
 
@@ -169,7 +169,7 @@ follows:
    :end-before: # sphinxdoc-add-nodejs-external-repository-centos7-end
    :literal:
 
-Fourth, all the common prerequisite software libraries and packages that Invenio
+Fourth, all the common prerequisite software libraries and packages that WEKO3
 needs are installed:
 
 * on Ubuntu 14.04 LTS (Trusty Tahr):
@@ -258,10 +258,10 @@ Finally, let's clean after ourselves:
 Database
 --------
 
-The database server (192.168.50.11) will hold persistent data of our Invenio
-installation, such as bibliographic records or user accounts. Invenio supports
+The database server (192.168.50.11) will hold persistent data of our WEKO3
+installation, such as bibliographic records or user accounts. WEKO3 supports
 MySQL, PostgreSQL, and SQLite databases. In this tutorial, we shall use
-PostgreSQL that is the recommended database platform for Invenio.
+PostgreSQL that is the recommended database platform for WEKO3.
 
 The database server node can be set up in an automated unattended way by running
 the following script:
@@ -365,7 +365,7 @@ Elasticsearch
 
 The Elasticsearch server (192.168.50.13) is used to index and search
 bibliographic records, fulltext documents, and other various interesting
-information managed by our Invenio digital library instance.
+information managed by our WEKO3 digital library instance.
 
 The Elasticsearch server can be set up in an automated unattended way by running
 the following script:
@@ -505,14 +505,14 @@ Finally, let's clean after ourselves:
    :end-before: # sphinxdoc-install-worker-cleanup-centos7-end
    :literal:
 
-Invenio
+WEKO3
 -------
 
 Now that all the prerequisites have been set up, we can proceed with the
-installation of the Invenio itself. The installation is happening on the web
+installation of the WEKO3 itself. The installation is happening on the web
 node (192.168.50.10).
 
-We start by creating and configuring a new Invenio instance, continue by
+We start by creating and configuring a new WEKO3 instance, continue by
 populating it with some example records, and finally we start the web
 application. This can be done in an automated unattended way by running the
 following scripts:
@@ -526,25 +526,25 @@ following scripts:
 
 .. note::
 
-   If you want to install the very-bleeding-edge Invenio packages from GitHub,
+   If you want to install the very-bleeding-edge WEKO3 packages from GitHub,
    you can run the ``create-instance.sh`` script with the ``--devel`` argument::
 
      ./scripts/create-instance.sh --devel
 
-Let’s see in detail about every Invenio installation step.
+Let’s see in detail about every WEKO3 installation step.
 
 Create instance
 ~~~~~~~~~~~~~~~
 
 We start by creating a fresh new Python virtual environment that will hold our
-brand new Invenio v3.0 instance:
+brand new WEKO3 v3.0 instance:
 
 .. include:: ../../scripts/create-instance.sh
    :start-after: # sphinxdoc-create-virtual-environment-begin
    :end-before: # sphinxdoc-create-virtual-environment-end
    :literal:
 
-We continue by installing Invenio v3.0 Integrated Library System flavour demo
+We continue by installing WEKO3 v3.0 Integrated Library System flavour demo
 site from PyPI:
 
 .. include:: ../../scripts/create-instance.sh
@@ -562,21 +562,21 @@ dependent services in our multi-server environment:
    :literal:
 
 In the instance folder, we run Npm to install any JavaScript libraries that
-Invenio needs:
+WEKO3 needs:
 
 .. include:: ../../scripts/create-instance.sh
    :start-after: # sphinxdoc-run-npm-begin
    :end-before: # sphinxdoc-run-npm-end
    :literal:
 
-We can now collect and build CSS/JS assets of our Invenio instance:
+We can now collect and build CSS/JS assets of our WEKO3 instance:
 
 .. include:: ../../scripts/create-instance.sh
    :start-after: # sphinxdoc-collect-and-build-assets-begin
    :end-before: # sphinxdoc-collect-and-build-assets-end
    :literal:
 
-Our first new Invenio instance is created and ready for loading some example
+Our first new WEKO3 instance is created and ready for loading some example
 records.
 
 Populate instance
@@ -605,7 +605,7 @@ We can now create the Elasticsearch indexes and initialise the indexing queue:
    :end-before: # sphinxdoc-index-initialisation-end
    :literal:
 
-We proceed by populating our Invenio demo instance with some example demo
+We proceed by populating our WEKO3 demo instance with some example demo
 MARCXML records:
 
 .. include:: ../../scripts/populate-instance.sh
@@ -643,4 +643,4 @@ and we can access them via REST API:
    curl -i -H "Accept: application/json" \
         http://${INVENIO_WEB_HOST}/api/records/1
 
-We are done! Our first Invenio v3.0 demo instance is fully up and running.
+We are done! Our first WEKO3 v3.0 demo instance is fully up and running.

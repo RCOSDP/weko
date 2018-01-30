@@ -1,18 +1,18 @@
-.. This file is part of Invenio
-   Copyright (C) 2015, 2016 CERN.
+.. This file is part of WEKO3
+   Copyright (C) 2017 National Institute of Informatics
 
-   Invenio is free software; you can redistribute it and/or
+   WEKO3 is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
    published by the Free Software Foundation; either version 2 of the
    License, or (at your option) any later version.
 
-   Invenio is distributed in the hope that it will be useful, but
+   WEKO3 is distributed in the hope that it will be useful, but
    WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
    General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with Invenio; if not, write to the Free Software Foundation, Inc.,
+   along with WEKO3; if not, write to the Free Software Foundation, Inc.,
    59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 
 Managing issues
@@ -20,10 +20,10 @@ Managing issues
 
 The purpose of `issue triage process
 <https://en.wikipedia.org/w/index.php?title=Software_bug&redirect=no#Bug_management>`_
-is to make sure all the Invenio issues and tasks are well described, sorted out
+is to make sure all the WEKO3 issues and tasks are well described, sorted out
 according to priorities into timely milestones, and that they have well assigned
 a responsible person to tackle them. The triage process is done collectively by
-the representatives of various Invenio distributed teams. The triage team
+the representatives of various WEKO3 distributed teams. The triage team
 members make sure of the big picture, cross-consider issues and tasks among
 interested services, help to note down, understand, prioritise, and follow-upon
 them.
@@ -115,10 +115,10 @@ issue properties:
 
 * branch:
 
-  - `maint-x.y`: issue applies to Invenio maint-x.y branch
-  - `master`: issue applies to Invenio master branch
-  - `next`: issue applies to Invenio next branch
-  - `pu`: issue applies to Invenio pu branch
+  - `maint-x.y`: issue applies to WEKO3 maint-x.y branch
+  - `master`: issue applies to WEKO3 master branch
+  - `next`: issue applies to WEKO3 next branch
+  - `pu`: issue applies to WEKO3 pu branch
 
 * version:
 
@@ -127,13 +127,13 @@ issue properties:
   - etc
 
 The label types and values are coming from our Trac past and may be
-amended e.g. to take into account new component names in Invenio v2.0.
+amended e.g. to take into account new component names in WEKO3 v2.0.
 
 Milestones and releases
 -----------------------
 
 Issues may be attributed milestones that are closely related with
-feature-dependent and/or time-dependent release schedule of Invenio
+feature-dependent and/or time-dependent release schedule of WEKO3
 releases.
 
 There are two kinds of milestones: "release-oriented" milestones (say
@@ -149,7 +149,7 @@ out of which the issue can be later cherry-picked and moved to one of
 the concrete release-oriented milestones depending on available
 resources.
 
-Example: after Invenio v1.4.0 is released, all incoming bug reports
+Example: after WEKO3 v1.4.0 is released, all incoming bug reports
 for this version will go to the "someday" milestone for this release
 series, i.e. to "v1.4.x".  A new XSS vulnerability issue will go
 straight to the next milestone "v1.4.1" because its release is urgent.
@@ -163,7 +163,7 @@ periodically review issues in a given release series and decide upon
 the set of issues going into a concrete release-oriented milestone
 (say these 15 issues for v1.4.1 milestone) after which the issue set
 is freezed and a sprint may be co-organised to meet the target
-deadline.  Once all the issues have been solved, a new Invenio bug-fix
+deadline.  Once all the issues have been solved, a new WEKO3 bug-fix
 release v1.4.1 is published and the release-oriented triaging cycle
 starts anew with v1.4.2.
 

@@ -4,7 +4,7 @@ Creating a data model
 Use Cases
 ---------
 
-Invenio datamodel is designed for one pattern which is common to many
+WEKO3 datamodel is designed for one pattern which is common to many
 different use cases: store and provide access to some **Records**, be it
 *Bibliographic* publications like research papers, a list of *Grants* or some
 *Authorities* like authors. Those resources are referenced
@@ -14,7 +14,7 @@ by **Persistent Identifiers** and use a specific **format** for their
 |
 |
 
-.. 
+..
     digraph {
         {
         "Bibliographic" [shape ="ellipse"];
@@ -39,13 +39,13 @@ by **Persistent Identifiers** and use a specific **format** for their
 Records storage:
 ----------------
 
-Invenio stores Record metadata as JSON, uses `JSON Schemas <http://json-schema.org/>`_
+WEKO3 stores Record metadata as JSON, uses `JSON Schemas <http://json-schema.org/>`_
 for the formats and it can support any type of Persistent Identifier.
 
 |
 |
 
-.. 
+..
     digraph {
         {
         "Record" [label="Record (JSON metadata)" shape ="ellipse"];
@@ -60,7 +60,7 @@ for the formats and it can support any type of Persistent Identifier.
 |
 
 The JSON Schemas enable to define complex constraints which must be satisfied
-each time a record is created or modified. Invenio provides JSON Schemas for
+each time a record is created or modified. WEKO3 provides JSON Schemas for
 MARC 21 but custom JSON Schemas can also be used.
 
 The rest of this documentation will show how to store and give access to
@@ -75,7 +75,7 @@ Here is an example of such a record in the JSON format:
 .. code-block:: json
 
     {
-        "title": "CERN new accelerator",
+        "title": "National Institute of Informatics new accelerator",
         "description": "It now accelerates muffins."
     }
 
@@ -117,7 +117,7 @@ can be added if needed.
 
 Every record has a reference to the JSON Schema which validates it. In our
 example, the :code:`$schema` field will be the URL pointing to the JSON
-Schema. The *invenio-jsonschemas* module enables Invenio to serve JSON Schemas
+Schema. The *invenio-jsonschemas* module enables WEKO3 to serve JSON Schemas
 as static files.
 
 We will explain :ref:`in the next part<pid_minting>` why we added the
@@ -139,7 +139,7 @@ Different things can happen to published records. For example they can be:
   one version. Users can be redirected from the deleted version to the one
   which was kept.
 
-Invenio uses the concept of **Persistent Identifiers**, often abbreviated as
+WEKO3 uses the concept of **Persistent Identifiers**, often abbreviated as
 **PID**. Those identifiers expose records to the outside world.
 
 They are for example used in URLs. A typical User Interface url is of the
@@ -153,17 +153,17 @@ Note that the *invenio-records-ui* module enables to customize the URL
 (ex: :code:`http://authors/<PID>`), but it always contain the PID.
 
 Persistent Identifiers can have different types and reflect Persistent
-Identifiers existing outside of Invenio such as DOI or ORCID. They can
+Identifiers existing outside of WEKO3 such as DOI or ORCID. They can
 also be completely custom.
 
-Many Invenio modules such as *invenio-records-ui* enable to have different
+Many WEKO3 modules such as *invenio-records-ui* enable to have different
 configuration for each PID type. This for example enables to have one URL for
 authors and another for research papers.
 
 .. note:: **Records can have multiple Persistent Identifiers**
 
     One use case for multiple PIDs per records is systems which migrate from
-    Invenio version 1 where records were referenced with incremental integers
+    WEKO3 version 1 where records were referenced with incremental integers
     (ex: :code:`http://records/1`). For backward compatibility reasons it is
     possible to keep internal PIDs which still use integers. The
     *invenio-pidstore* module provides everything needed for this use case. Our
@@ -183,7 +183,7 @@ authors and another for research papers.
 REST API:
 ^^^^^^^^^
 
-Invenio enables access and modification of records via a REST API. This API
+WEKO3 enables access and modification of records via a REST API. This API
 is provided by the *invenio-records-rest* module, which uses Persistent
 Identifiers too.
 
@@ -232,7 +232,7 @@ It is then possible to register this serializer for requestes of type
 .. code-block:: console
 
     $ curl -H "Accept:text/plain" -XGET 'http://myinvenio.com/api/custom_records/custom_pid_1'
-    CERN new accelerator
+    National Institute of Informatics new accelerator
 
 Serializers not only enable to output records in a specific format but also
 to remove fields, add fields or do any other transformation before showing
@@ -243,7 +243,7 @@ Search:
 ^^^^^^^
 
 Users need to find records easily. Often this means to type a few words
-and get a list of results ordered by their relevance. Invenio uses
+and get a list of results ordered by their relevance. WEKO3 uses
 Elasticsearch as its search engine. It needs to be configured in order to
 find the records as expected.
 
@@ -292,7 +292,7 @@ documentation.
 Linking records:
 ----------------
 
-Invenio provides tools to link records one to another.
+WEKO3 provides tools to link records one to another.
 
 We can extend our example by adding a "references" field which will contain
 a list of references to other records.
@@ -302,7 +302,7 @@ When creating a record the user would give this as input:
 .. code-block:: json
 
     {
-        "title": "CERN new accelerator",
+        "title": "National Institute of Informatics new accelerator",
         "description": "It now accelerates muffins.",
         "references": [
             {"$ref": "http://myinvenio.com/custom_records/custom_pid_1#/title" },
@@ -332,7 +332,7 @@ The corresponding JSON Schema would be:
                 "type": "string",
                 "description": "Description for record."
             },
-            "references": { 
+            "references": {
                 "type": "array",
                 "items": {
                     "type": "object"
@@ -349,7 +349,7 @@ The corresponding JSON Schema would be:
 
 
 
-Invenio provide tools to dereference those JSON references and replace them
+WEKO3 provide tools to dereference those JSON references and replace them
 with the referenced value. The output would then look like this:
 
 .. code-block:: console
@@ -363,7 +363,7 @@ with the referenced value. The output would then look like this:
     "metadata": {
         "$schema": "http://myinvenio.com/schema/custom_record/custom-record-v1.0.0.json",
         "custom_pid": "custom_pid_1",
-        "title": "CERN new accelerator",
+        "title": "National Institute of Informatics new accelerator",
         "description": "It now accelerates muffins."
         "references": [
             "This is the title of record custom_pid_1",

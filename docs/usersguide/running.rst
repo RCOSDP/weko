@@ -1,10 +1,10 @@
-Running Invenio
+Running WEKO3
 ===============
 
-Understanding Invenio components
+Understanding WEKO3 components
 --------------------------------
 
-Invenio dems site consists of many components. To see which ones the Invenio
+WEKO3 dems site consists of many components. To see which ones the WEKO3
 demo site uses, you can do:
 
 .. code-block:: console

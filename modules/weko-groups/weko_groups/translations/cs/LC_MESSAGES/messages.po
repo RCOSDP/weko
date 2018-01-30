@@ -1,5 +1,5 @@
 # Translations template for weko-groups.
-# Copyright (C) 2015 CERN
+# Copyright (C) 2017 National Institute of Informatics
 # This file is distributed under the same license as the
 # WEKO-Groups project.
 # FIRST AUTHOR <wekosoftware@nii.ac.jp>, 2017.

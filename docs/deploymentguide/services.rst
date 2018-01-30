@@ -4,11 +4,11 @@ Services
 In this documentation we will provide you an overview of the different services needed to run invenio.
 We will explain what are their roles in the global architecture, and why they have been selected.
 
-Invenio 3 has been designed to be highly scalable, low latency, and fast, therefore all the underlying services need to be respecting the same goals.
+WEKO3 3 has been designed to be highly scalable, low latency, and fast, therefore all the underlying services need to be respecting the same goals.
 
 Here is an overview of the system:
 
-.. 
+..
     digraph {
         {
         "PostgreSQL" [shape ="cylinder"];
@@ -29,7 +29,7 @@ Here is an overview of the system:
 Elasticsearch
 -------------
 
-Invenio 3 is an external search engine service. It will take care of everything related to the search as indexing, ranking, searching.
+WEKO3 3 is an external search engine service. It will take care of everything related to the search as indexing, ranking, searching.
 It contains and ingest document under the form of JSON, but it is able to respect type. To be able to determine the data structure that you want to ingests and the type of the containing information, it requires you to create a mapping.
 
 **A mapping** is a simple JSON structure which describes how should look an indexed document.
@@ -52,19 +52,19 @@ For example:
       }
    }
 
-You can basically store in Elasticsearch almost everything, so it also means that you can make searchable almost any data on your Invenio 3 instances.
+You can basically store in Elasticsearch almost everything, so it also means that you can make searchable almost any data on your WEKO3 3 instances.
 
 Elastic search is highly scalable, which means that it can spread the load on several instances of elasticsearch.
 In production you will always try to have a dedicated Elasticsearch cluster. Indeed, without it, it is not revealing its full power. Each node is running several instances of Elasticsearch, this unit is named "Shards" it can either be replica instances or production ones.
 
-This allow Invenio 3 to handle really large amount of records and keep the search time low.
+This allow WEKO3 3 to handle really large amount of records and keep the search time low.
 You can find more information here_.
 
 .. _here: https://www.elastic.co/guide/en/elasticsearch/reference/current/getting-started.html
 
 Summary of elasticsearch position in Invenio3:
 
-.. 
+..
     digraph {
         {
         "PostgreSQL" [shape ="cylinder"];
@@ -76,7 +76,7 @@ Summary of elasticsearch position in Invenio3:
 
 PostgreSQL
 ----------
-PostgreSQL is currently the database selected for Invenio 3, it is replacing mysql/mariadb in Invenio 1, the version must be 9.4 or newer.
+PostgreSQL is currently the database selected for WEKO3 3, it is replacing mysql/mariadb in Invenio 1, the version must be 9.4 or newer.
 
 Elasticsearch is used to index and search data, but it is not here to persistently store data. It also doesn't include a transactional system to manage concurrent requests. We use a database to store in a persistent way data, Elasticsearch would feed from the database, before to be able to answer search requests.
 
@@ -88,7 +88,7 @@ PostgreSQL is abstracted in Invenio 3 code thanks to the use of the framework SQ
 
 Summary of PostgreSQL in Invenio 3:
 
-.. 
+..
     digraph {
         {
         "PostgreSQL" [shape ="cylinder"];
@@ -110,7 +110,7 @@ In the case of Invenio 3 the messaging queue is used to transmit messages betwee
 
 Summary of RabbitMQ in Invenio 3:
 
-.. 
+..
     digraph {
       "RabbitMQ" -> "Invenio3" [dir=both label = "Write/Read messages"];
       "RabbitMQ" -> "Celery" [dir=both label = "Write/Read messages"];
@@ -135,7 +135,7 @@ It can be hard to know what is running in Celery which tasks did succeed and whi
 Summary of Celery in Invenio 3:
 
 
-.. 
+..
     digraph {
       "RabbitMQ" -> "Invenio3" [dir=both label = "Write/Read messages"];
       "RabbitMQ" -> "Celery" [dir=both label = "Write/Read messages"];
@@ -152,7 +152,7 @@ Redis is again a service which is really scalable it is possible to have it on s
 
 Summary of Redis in Invenio 3:
 
-.. 
+..
     digraph {
       "Invenio3" -> "Redis" [label = "Cache data"];
     }
@@ -174,7 +174,7 @@ HAProxy is a load balancer that will distribute HTTP requests amongst several se
 
 Summary of Nginx and HAProxy in Invenio 3:
 
-.. 
+..
     digraph {
       "HAProxy" -> "Nginx" [label = "Balance load"];
       "User" -> "HAProxy" [label = "Browse Invenio"];

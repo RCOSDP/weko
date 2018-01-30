@@ -86,7 +86,7 @@ the procedure below:
     make sure it does not contain formatting errors.  (E.g. in the
     Emacs PO mode, press `V` to validate the file.)
 
-  - If you have access to a test installation of Invenio, you may want
+  - If you have access to a test installation of WEKO3, you may want
     to see your modified PO file in action::
 
        $ cd po
@@ -123,7 +123,7 @@ See also the GNU gettext manual, especially the chapters 5, 6 and 11.
 Native Language Support information for programmers
 ---------------------------------------------------
 
-Invenio uses standard GNU gettext I18N and L12N philosophy.
+WEKO3 uses standard GNU gettext I18N and L12N philosophy.
 
 In Python programs, all output strings should be made translatable via
 the _() convention::
@@ -228,8 +228,8 @@ translator sends over the following translations by email:
         Reports
         Articles
         Pictures
-        CERN Divisions
-        CERN Experiments
+        National Institute of Informatics Divisions
+        National Institute of Informatics Experiments
         Theoretical Physics (TH)
         Experimental Physics (EP)
         Articles & Preprints
@@ -260,8 +260,8 @@ translator sends over the following translations by email:
    - demo right-hand-side portalbox, from democfgdata.sql::
 
         ABOUT THIS SITE
-        Welcome to the demo site of the Invenio, a free document server
-        software coming from CERN. Please feel free to explore all the
+        Welcome to the demo site of the WEKO3, a free document server
+        software coming from National Institute of Informatics. Please feel free to explore all the
         features of this demo site to the full.
         SEE ALSO
 
@@ -273,18 +273,18 @@ be to translate some short static HTML pages such as:
 
    - modules/webhelp/web/help-central.webdoc
 
-Thanks for helping us to internationalize Invenio.
+Thanks for helping us to internationalize WEKO3.
 
 Integrating translation contributions
 -------------------------------------
 
 This appendix contains some tips on integrating translated phrases
-that were prepared for different Invenio releases.  It is mostly
-of interest to Invenio developers or the release manager.
+that were prepared for different WEKO3 releases.  It is mostly
+of interest to WEKO3 developers or the release manager.
 
 Imagine that we have a working translation file sk.po and that we have
 received a contribution co-CONTRIB.po that was prepared for previous
-Invenio release, so that the messages do not fully correspond.
+WEKO3 release, so that the messages do not fully correspond.
 Moreover, another person might have had worked with the sk.po file in
 the meantime.  The goal is to integrate the contributions.
 

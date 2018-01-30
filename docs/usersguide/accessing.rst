@@ -73,10 +73,10 @@ Multiple output formats
 -----------------------
 
 You can obtain information in other formats by setting an appropriate Accept
-header. Invenio REST API endpoint will read this information and invoke
+header. WEKO3 REST API endpoint will read this information and invoke
 appropriate record serialisation.
 
-For example, the Invenio demo site runs an ILS flavour and so returns MARCXML by
+For example, the WEKO3 demo site runs an ILS flavour and so returns MARCXML by
 default:
 
 .. code-block:: console
@@ -172,7 +172,7 @@ Using Python:
 Searching records
 -----------------
 
-Invenio instance can be searched programmatically via the REST API endpoint:
+WEKO3 instance can be searched programmatically via the REST API endpoint:
 
 .. code-block:: console
 

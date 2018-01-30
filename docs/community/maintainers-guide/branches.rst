@@ -30,7 +30,7 @@ tag in that specific version series. After fixes are merged into the
 maintenance branch, the maintenance branches are merged upwards through newer
 maintenance branches and finally into master.
 
-Bug and security fixes should be applied to the earliest supported Invenio
+Bug and security fixes should be applied to the earliest supported WEKO3
 version. Like the master branch, only architects and maintainers can merge
 code into the maintenance branches.
 

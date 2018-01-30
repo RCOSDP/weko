@@ -1,15 +1,15 @@
 .. _configure_invenio:
 
-Configure Invenio
+Configure WEKO3
 =================
 
-After having installed Invenio demo site in :ref:`install_invenio`, let us see
+After having installed WEKO3 demo site in :ref:`install_invenio`, let us see
 briefly the instance configuration.
 
 Configure instance
 ------------------
 
-Invenio instance can be configured by editing ``invenio.cfg`` configuration
+WEKO3 instance can be configured by editing ``invenio.cfg`` configuration
 file. Here is an example:
 
 .. code-block:: console

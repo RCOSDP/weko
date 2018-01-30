@@ -1,9 +1,9 @@
 Overview
 ========
 
-The goal of the maintainer system is to share the load of maintaining Invenio,
-spread Invenio experise and mentor new contributors. Overall maintainers are
-key to ensuring that Invenio has a welcoming, responsive, collaborative open and
+The goal of the maintainer system is to share the load of maintaining WEKO3,
+spread WEKO3 experise and mentor new contributors. Overall maintainers are
+key to ensuring that WEKO3 has a welcoming, responsive, collaborative open and
 transparent community.
 
 The maintainer system is designed to allow contributors to progressively take
@@ -13,9 +13,9 @@ to perform their tasks.
 
 What is a maintainer?
 ---------------------
-Maintainers are first and foremost service people. They help drive Invenio
+Maintainers are first and foremost service people. They help drive WEKO3
 development forward and ensure newcomers as well as long-time contributors have
-a great experience when contributing to Invenio, which is key to Invenio's
+a great experience when contributing to WEKO3, which is key to WEKO3's
 longterm success.
 
 Maintainers are not only developers. We also need maintainers for translations,
@@ -23,7 +23,7 @@ the website, forums, interest groups etc.
 
 **Taks:**
 
-- Help contributors get their contributions integrated in Invenio.
+- Help contributors get their contributions integrated in WEKO3.
 - Answer questions and help users in e.g. the chat rooms (see
   :ref:`communication-channels`).
 - Manage issues, assignments and milestones.
@@ -32,22 +32,22 @@ the website, forums, interest groups etc.
 - Participate in feature development, bug fixing and proactively verfies if
   nightly builds are failing.
 - Be the domain expert on a specific topic (e.g. know the architecture of a
-  module and how it fits into the rest of Invenio).
+  module and how it fits into the rest of WEKO3).
 - Help scout for and train for potential new maintainers.
 
 What is an architect?
 ---------------------
 Architects are like normal maintainers, they just maintain many more
-repositories and have larger overview over the Invenio architecture and
-ecosystem. Architects shapes and drives the overall Invenio technical
+repositories and have larger overview over the WEKO3 architecture and
+ecosystem. Architects shapes and drives the overall WEKO3 technical
 architecture.
 
 **Tasks (in addition to maintainer tasks):**
 
 - Provide mentorship for maintainers.
-- Determine the overall Invenio architecture and ecosystem and ensure coherence
-  thoughout the Invenio development.
-- Be the Invenio experts and know of use cases and interdependencies between
+- Determine the overall WEKO3 architecture and ecosystem and ensure coherence
+  thoughout the WEKO3 development.
+- Be the WEKO3 experts and know of use cases and interdependencies between
   different modules.
 - Signs off on new releases in their respective repositories.
 
@@ -57,7 +57,7 @@ Don't forget: being a maintainer is a time investment. Make sure you will
 have time to make yourself available. You don't have to be a maintainer to
 make a difference on the project!
 
-Still sounds like something for you? Get in contact with one the Invenio
+Still sounds like something for you? Get in contact with one the WEKO3
 product manager, one of the architects or one of the project coordinators. They
 will help you through the process. See :ref:`communication-channels`.
 
@@ -68,5 +68,5 @@ down gracefully. Try to help find a new maintainer (if you don't alrady have a
 co-maintainer) and help hand-over pending tasks and knowledge to the existing
 or new maintainers.
 
-As soon as you know you want to step down, please notify the Invenio product
+As soon as you know you want to step down, please notify the WEKO3 product
 manager or one of the architects team members so we can help in the transition.
