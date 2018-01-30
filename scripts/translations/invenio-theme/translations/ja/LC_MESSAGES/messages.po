@@ -1,0 +1,91 @@
+# Japanese translations for invenio-theme.
+# Copyright (C) 2018 CERN
+# This file is distributed under the same license as the invenio-theme
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-theme 1.0.0b4\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2018-01-26 16:58+0900\n"
+"PO-Revision-Date: 2018-01-26 16:59+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: invenio_theme/ext.py:81
+msgid "Home"
+msgstr "ホーム"
+
+#: invenio_theme/templates/invenio_theme/401.html:28
+msgid "Unauthorized"
+msgstr "未承認"
+
+#: invenio_theme/templates/invenio_theme/401.html:29
+msgid "You need to be authenticated to view this page."
+msgstr "このページを閲覧するには承認が必要です。"
+
+#: invenio_theme/templates/invenio_theme/403.html:28
+msgid "Permission required"
+msgstr "権限が必要です"
+
+#: invenio_theme/templates/invenio_theme/403.html:29
+msgid "You do not have sufficient permissions to view this page."
+msgstr "このページを閲覧する必要な権限がありません。"
+
+#: invenio_theme/templates/invenio_theme/404.html:28
+msgid "Page not found"
+msgstr "ページ未検出"
+
+#: invenio_theme/templates/invenio_theme/404.html:29
+msgid "The page you are looking for could not be found."
+msgstr "ページが見つかりません。"
+
+#: invenio_theme/templates/invenio_theme/500.html:28
+msgid "Internal server error"
+msgstr "サーバ内部エラー"
+
+#: invenio_theme/templates/invenio_theme/500.html:30
+msgid "Error identifier"
+msgstr "識別子エラー"
+
+#: invenio_theme/templates/invenio_theme/admin_header.html:86
+msgid "Logout"
+msgstr "ログアウト"
+
+#: invenio_theme/templates/invenio_theme/footer.html:37
+#, python-format
+msgid "Powered by <a href=\"%(link)s\">Invenio</a>"
+msgstr "Powered by <a href=\"%(link)s\">Invenio</a>"
+
+#: invenio_theme/templates/invenio_theme/header.html:31
+msgid "Toggle navigation"
+msgstr "ナビゲーション切り替え"
+
+#: invenio_theme/templates/invenio_theme/header.html:53
+msgid "Search"
+msgstr "検索"
+
+#: invenio_theme/templates/invenio_theme/header_login.html:27
+msgid "Log in"
+msgstr "ログイン"
+
+#: invenio_theme/templates/invenio_theme/header_login.html:28
+msgid "Sign up"
+msgstr "登録"
+
+#: invenio_theme/templates/invenio_theme/header_login.html:45
+#: invenio_theme/templates/invenio_theme/header_login.html:49
+msgid "Log out"
+msgstr "ログアウト"
+
+#: invenio_theme/templates/invenio_theme/page_settings.html:34
+msgid "Settings"
+msgstr "設定"
+

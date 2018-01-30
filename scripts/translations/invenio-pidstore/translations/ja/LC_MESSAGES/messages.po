@@ -1,0 +1,73 @@
+# Japanese translations for invenio-pidstore.
+# Copyright (C) 2016 CERN
+# This file is distributed under the same license as the invenio-pidstore
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-pidstore 1.0.0b2\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2016-07-26 08:52+0000\n"
+"PO-Revision-Date: 2018-01-26 16:10+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: invenio_pidstore/admin.py:41
+msgid "View"
+msgstr "ビュー"
+
+#: invenio_pidstore/admin.py:66
+msgid "PID Type"
+msgstr "PID タイプ"
+
+#: invenio_pidstore/admin.py:67
+msgid "PID"
+msgstr "PID"
+
+#: invenio_pidstore/admin.py:68
+msgid "Provider"
+msgstr "プロバイダー"
+
+#: invenio_pidstore/admin.py:69 invenio_pidstore/admin.py:76
+msgid "Status"
+msgstr "状態"
+
+#: invenio_pidstore/admin.py:70
+msgid "Object Type"
+msgstr "オブジェクト タイプ"
+
+#: invenio_pidstore/admin.py:71 invenio_pidstore/admin.py:75
+msgid "Object UUID"
+msgstr "オブジェクト UUID"
+
+#: invenio_pidstore/admin.py:88
+msgid "Records"
+msgstr "レコード"
+
+#: invenio_pidstore/models.py:52
+msgid "New"
+msgstr "新規"
+
+#: invenio_pidstore/models.py:53
+msgid "Reserved"
+msgstr "予約済み"
+
+#: invenio_pidstore/models.py:54
+msgid "Registered"
+msgstr "登録された"
+
+#: invenio_pidstore/models.py:55
+msgid "Redirected"
+msgstr "リダイレクトされた"
+
+#: invenio_pidstore/models.py:56
+msgid "Deleted"
+msgstr "削除された"
+

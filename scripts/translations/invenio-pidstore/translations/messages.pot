@@ -1,0 +1,72 @@
+# Translations template for invenio-pidstore.
+# Copyright (C) 2016 CERN
+# This file is distributed under the same license as the invenio-pidstore
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-pidstore 1.0.0b2\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2016-07-26 08:52+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+
+#: invenio_pidstore/admin.py:41
+msgid "View"
+msgstr ""
+
+#: invenio_pidstore/admin.py:66
+msgid "PID Type"
+msgstr ""
+
+#: invenio_pidstore/admin.py:67
+msgid "PID"
+msgstr ""
+
+#: invenio_pidstore/admin.py:68
+msgid "Provider"
+msgstr ""
+
+#: invenio_pidstore/admin.py:69 invenio_pidstore/admin.py:76
+msgid "Status"
+msgstr ""
+
+#: invenio_pidstore/admin.py:70
+msgid "Object Type"
+msgstr ""
+
+#: invenio_pidstore/admin.py:71 invenio_pidstore/admin.py:75
+msgid "Object UUID"
+msgstr ""
+
+#: invenio_pidstore/admin.py:88
+msgid "Records"
+msgstr ""
+
+#: invenio_pidstore/models.py:52
+msgid "New"
+msgstr ""
+
+#: invenio_pidstore/models.py:53
+msgid "Reserved"
+msgstr ""
+
+#: invenio_pidstore/models.py:54
+msgid "Registered"
+msgstr ""
+
+#: invenio_pidstore/models.py:55
+msgid "Redirected"
+msgstr ""
+
+#: invenio_pidstore/models.py:56
+msgid "Deleted"
+msgstr ""
+

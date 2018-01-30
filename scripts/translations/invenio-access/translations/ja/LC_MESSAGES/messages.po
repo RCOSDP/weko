@@ -1,0 +1,37 @@
+# Japanese translations for invenio-access.
+# Copyright (C) 2016 CERN
+# This file is distributed under the same license as the invenio-access
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-access 1.0.0a10.dev20160722\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2016-08-18 14:05+0200\n"
+"PO-Revision-Date: 2018-01-26 13:58+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: invenio_access/admin.py:57
+msgid "Email"
+msgstr "Eメール"
+
+#: invenio_access/admin.py:58
+msgid "User ID"
+msgstr "ユーザー ID"
+
+#: invenio_access/admin.py:92
+msgid "Role Name"
+msgstr "ロール名前"
+
+#: invenio_access/admin.py:99 invenio_access/admin.py:105
+msgid "User Management"
+msgstr "ユーザー管理"
+

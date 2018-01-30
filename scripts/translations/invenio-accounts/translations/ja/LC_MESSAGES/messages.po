@@ -1,0 +1,209 @@
+# Japanese translations for invenio-accounts.
+# Copyright (C) 2017 CERN
+# This file is distributed under the same license as the invenio-accounts
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-accounts 1.0.0b3\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2017-03-20 13:08+0100\n"
+"PO-Revision-Date: 2018-01-26 14:35+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: invenio_accounts/admin.py:74
+msgid "Current Login IP"
+msgstr "現在のログインIP"
+
+#: invenio_accounts/admin.py:75
+msgid "Last Login IP"
+msgstr "前回のログインIP"
+
+#: invenio_accounts/admin.py:78
+msgid "Inactivate"
+msgstr "無効"
+
+#: invenio_accounts/admin.py:79
+msgid "Are you sure you want to inactivate selected users?"
+msgstr "選択したユーザーを無効化してよろしいですか？"
+
+#: invenio_accounts/admin.py:88 invenio_accounts/admin.py:111
+msgid "Cannot find user."
+msgstr "ユーザーが見つかりません"
+
+#: invenio_accounts/admin.py:92 invenio_accounts/admin.py:115
+msgid "User(s) were successfully inactivated."
+msgstr "ユーザーを無効化しました"
+
+#: invenio_accounts/admin.py:98
+msgid "Failed to inactivate users."
+msgstr "ユーザーが無効化できませんでした"
+
+#: invenio_accounts/admin.py:101
+msgid "Activate"
+msgstr "有効"
+
+#: invenio_accounts/admin.py:102
+msgid "Are you sure you want to activate selected users?"
+msgstr "選択したユーザーを有効化してよろしいですか？"
+
+#: invenio_accounts/admin.py:121
+msgid "Failed to activate users."
+msgstr "ユーザーが有効化できませんでした"
+
+#: invenio_accounts/admin.py:143 invenio_accounts/admin.py:149
+msgid "User Management"
+msgstr "ユーザー管理"
+
+#: invenio_accounts/forms.py:38
+msgid "Please complete the reCAPTCHA."
+msgstr "再収集を完了してください"
+
+#: invenio_accounts/views.py:78
+msgid "Account"
+msgstr "アカウント"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:29
+#: invenio_accounts/views.py:83 invenio_accounts/views.py:101
+msgid "Change password"
+msgstr "パスワード変更"
+
+#. NOTE: Menu item text (icon replaced by a user icon).
+#: invenio_accounts/views.py:91
+#, python-format
+msgid "%(icon)s Change password"
+msgstr "%(icon)s パスワード変更"
+
+#. NOTE: Menu item text (icon replaced by a user icon).
+#: invenio_accounts/views.py:123
+#, python-format
+msgid "%(icon)s Security"
+msgstr "%(icon)s セキュリティ"
+
+#: invenio_accounts/views.py:125
+msgid "Security"
+msgstr "セキュリティ"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:38
+msgid "Current password"
+msgstr "現在のパスワード"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:42
+msgid "New password"
+msgstr "新規パスワード"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:46
+msgid "Confirm new password"
+msgstr "新規パスワード確認"
+
+#: invenio_accounts/templates/invenio_accounts/change_password.html:50
+msgid "Change Password"
+msgstr "パスワード変更"
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:35
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:45
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:36
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:46
+msgid "Reset Password"
+msgstr "リセットパスワード"
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:41
+msgid ""
+"Enter your email address below and we will send you a link to reset your "
+"password."
+msgstr ""
+"メールアドレスを入力していただき、パスワードリセット用のリンクをお送りいた"
+"します。"
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:53
+#: invenio_accounts/templates/invenio_accounts/login_user.html:43
+#: invenio_accounts/templates/invenio_accounts/register_user.html:54
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:54
+msgid "Log In"
+msgstr "ログイン"
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:53
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:54
+msgid "or"
+msgstr "または"
+
+#: invenio_accounts/templates/invenio_accounts/forgot_password.html:53
+#: invenio_accounts/templates/invenio_accounts/login_user.html:51
+#: invenio_accounts/templates/invenio_accounts/register_user.html:48
+#: invenio_accounts/templates/invenio_accounts/reset_password.html:54
+msgid "Sign Up"
+msgstr "登録"
+
+#: invenio_accounts/templates/invenio_accounts/login_user.html:34
+msgid "Log in to account"
+msgstr "アカウントにログインする"
+
+#: invenio_accounts/templates/invenio_accounts/login_user.html:51
+#, python-format
+msgid "New to %(sitename)s?"
+msgstr "はじめての %(sitename)s?"
+
+#: invenio_accounts/templates/invenio_accounts/login_user.html:58
+msgid "Forgot password?"
+msgstr "パスワード忘れました？"
+
+#: invenio_accounts/templates/invenio_accounts/register_user.html:34
+#, python-format
+msgid "Sign up for a %(sitename)s account!"
+msgstr "%(sitename)sのアカウントを登録する!"
+
+#: invenio_accounts/templates/invenio_accounts/register_user.html:53
+msgid "Already have an account?"
+msgstr "アカウントをお持ちの方？"
+
+#: invenio_accounts/templates/invenio_accounts/send_confirmation.html:35
+msgid "Resend Confirmation Email"
+msgstr "確認メールを再送信する"
+
+#: invenio_accounts/templates/invenio_accounts/send_confirmation.html:36
+msgid ""
+"Enter your email address below and we will send you an email confirmation"
+" link."
+msgstr ""
+"メールアドレスを入力していただき、メール確認用のリンクをお送りいた"
+"します。"
+
+#: invenio_accounts/templates/invenio_accounts/send_confirmation.html:41
+msgid "Send Confirmation"
+msgstr "確認を送信する"
+
+#: invenio_accounts/templates/invenio_accounts/settings/security.html:27
+msgid "Sessions"
+msgstr "セッション"
+
+#: invenio_accounts/templates/invenio_accounts/settings/security.html:32
+msgid "Revoke"
+msgstr "撤回"
+
+#: invenio_accounts/templates/invenio_accounts/settings/security.html:36
+msgid "This is a list of devices that have logged into your account."
+msgstr "あなたのアカウントにログインしたディバイス"
+
+#: invenio_accounts/templates/invenio_accounts/settings/security.html:50
+msgid "Session identifier"
+msgstr "セッション識別子"
+
+#: invenio_accounts/templates/invenio_accounts/settings/security.html:52
+msgid "Signed in"
+msgstr "サインインしている"
+
+#: invenio_accounts/templates/invenio_accounts/settings/security.html:54
+msgid "current session"
+msgstr "現在のセッション"
+
+#: invenio_accounts/templates/invenio_accounts/settings/security.html:62
+msgid "Logout"
+msgstr "ログアウト"

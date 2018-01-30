@@ -1,0 +1,90 @@
+# Translations template for invenio-theme.
+# Copyright (C) 2018 CERN
+# This file is distributed under the same license as the invenio-theme
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-theme 1.0.0b4\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2018-01-26 16:58+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: invenio_theme/ext.py:81
+msgid "Home"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/401.html:28
+msgid "Unauthorized"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/401.html:29
+msgid "You need to be authenticated to view this page."
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/403.html:28
+msgid "Permission required"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/403.html:29
+msgid "You do not have sufficient permissions to view this page."
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/404.html:28
+msgid "Page not found"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/404.html:29
+msgid "The page you are looking for could not be found."
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/500.html:28
+msgid "Internal server error"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/500.html:30
+msgid "Error identifier"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/admin_header.html:86
+msgid "Logout"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/footer.html:37
+#, python-format
+msgid "Powered by <a href=\"%(link)s\">Invenio</a>"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/header.html:31
+msgid "Toggle navigation"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/header.html:53
+msgid "Search"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/header_login.html:27
+msgid "Log in"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/header_login.html:28
+msgid "Sign up"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/header_login.html:45
+#: invenio_theme/templates/invenio_theme/header_login.html:49
+msgid "Log out"
+msgstr ""
+
+#: invenio_theme/templates/invenio_theme/page_settings.html:34
+msgid "Settings"
+msgstr ""
+
