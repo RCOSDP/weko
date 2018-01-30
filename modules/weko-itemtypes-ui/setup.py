@@ -96,6 +96,8 @@ setup(
             'weko_itemtypes_ui_js = weko_itemtypes_ui.bundles:js',
             'weko_itemtypes_mapping_ui_js'
             ' = weko_itemtypes_ui.bundles:js_mapping',
+            'weko_itemtypes_property_ui_js'
+            ' = weko_itemtypes_ui.bundles:js_property',
             'weko_itemtypes_ui_dependencies_js'
             ' = weko_itemtypes_ui.bundles:js_dependencies',
             'weko_itemtypes_ui_schema_editor_js'

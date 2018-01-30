@@ -349,10 +349,100 @@ class FileMetadata(db.Model, Timestamp):
     }
 
 
+class ItemTypeProperty(db.Model, Timestamp):
+    """Represent an itemtype property.
+
+    The ItemTypeProperty object contains a ``created`` and  a ``updated``
+    properties that are automatically updated.
+    """
+
+    __tablename__ = 'item_type_property'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+    """Identifier of itemtype property."""
+
+    name = db.Column(
+        db.Text,
+        nullable=False,
+        unique=True
+    )
+    """Name identifier of itemtype property."""
+
+    schema = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Store schema in JSON format.
+    When you create a new ``ItemTypeProperty`` the ``schema`` field value should never be
+    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
+    record metadata has been deleted.
+    """
+
+    form = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Store schema form (single) in JSON format.
+    When you create a new ``ItemTypeProperty`` the ``form`` field value should never be
+    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
+    record metadata has been deleted.
+    """
+
+    forms = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Store schema form (array) in JSON format.
+    When you create a new ``ItemTypeProperty`` the ``forms`` field value should never be
+    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
+    record metadata has been deleted.
+    """
+
+    delflg = db.Column(db.Boolean(name='delFlg'),
+                       default=False, nullable=False)
+    """record delete flag
+    """
+
+
 __all__ = (
     'ItemType',
     'ItemTypeName',
     'ItemTypeMapping',
+    'ItemTypeProperty',
     'ItemMetadata',
     'FileMetadata',
 )

@@ -87,8 +87,9 @@ JSONSchemaEditor.prototype = {
 	init: function init() {
 		var self = this;
 		var data = this.options.startval || {};
+		var editor = this.options.editor || false;
 
-		this.react = ReactDOM.render(React.createElement(SchemaObject, { onChange: this.onChange, data: data }), self.element);
+		this.react = ReactDOM.render(React.createElement(SchemaObject, { onChange: this.onChange, data: data, editor: editor }), self.element);
 		this.callbacks = {};
 	},
 	on: function on(event, callback) {
@@ -98,9 +99,9 @@ JSONSchemaEditor.prototype = {
 	getValue: function getValue() {
 		return this.react.export();
 	},
-	setValue: function setValue(data) {
-		var self = this;
-		this.react = ReactDOM.render(React.createElement(SchemaObject, { onChange: this.onChange, data: data }), self.element);
+	setValue: function setValue(options) {
+		this.options = options;
+		this.init();
 	}
 };
 
@@ -261,14 +262,14 @@ var SchemaSelect = React.createClass({
 	}
 });
 
-var mapping = function mapping(name, data, changeHandler) {
+var mapping = function mapping(name, data, editor, changeHandler) {
 	return {
-		text: React.createElement(SchemaText, { onChange: changeHandler, ref: name, data: data }),
-		textarea: React.createElement(SchemaTextarea, { onChange: changeHandler, ref: name, data: data }),
-		checkboxes: React.createElement(SchemaCheckboxes, { onChange: changeHandler, ref: name, data: data }),
-		radios: React.createElement(SchemaRadios, { onChange: changeHandler, ref: name, data: data }),
-		select: React.createElement(SchemaSelect, { onChange: changeHandler, ref: name, data: data }),
-		object: React.createElement(SchemaObject, { onChange: changeHandler, ref: name, data: data })
+		text: React.createElement(SchemaText, { onChange: changeHandler, ref: name, data: data, editor: editor }),
+		textarea: React.createElement(SchemaTextarea, { onChange: changeHandler, ref: name, data: data, editor: editor }),
+		checkboxes: React.createElement(SchemaCheckboxes, { onChange: changeHandler, ref: name, data: data, editor: editor }),
+		radios: React.createElement(SchemaRadios, { onChange: changeHandler, ref: name, data: data, editor: editor }),
+		select: React.createElement(SchemaSelect, { onChange: changeHandler, ref: name, data: data, editor: editor }),
+		object: React.createElement(SchemaObject, { onChange: changeHandler, ref: name, data: data, editor: editor })
 	}[data.format];
 };
 
@@ -295,6 +296,11 @@ var SchemaObject = React.createClass({
 			return item;
 		});
 		data.inputErrs = []; // 记录页面入力错误
+		if (schema.hasOwnProperty('editor')) {
+			data.editor = schema.editor;
+		} else {
+			data.editor = true;
+		}
 		return data;
 	},
 	// 已加载组件收到新的参数时调用
@@ -412,123 +418,152 @@ var SchemaObject = React.createClass({
 
 		return this;
 	},
-	render: function render() {
+	expandProp: function expandProp() {
 		var _this2 = this;
 
 		var self = this;
-		return React.createElement(
-			'div',
-			{ className: 'panel panel-default' },
-			React.createElement(
+		return this.state.properties.map(function (value, index) {
+			if (_this2.state.propertyDels[index]) return;
+			var itemKey = self.state.propertyItems[index];
+			var copiedState = JSON.parse(JSON.stringify(self.state.properties[index]));
+			var optionForm = mapping('subitem' + index, copiedState, self.state.editor, self.onChange);
+			return React.createElement(
 				'div',
-				{ className: 'panel-body' },
-				this.state.properties.map(function (value, index) {
-					if (_this2.state.propertyDels[index]) return;
-					var itemKey = self.state.propertyItems[index];
-					var copiedState = JSON.parse(JSON.stringify(self.state.properties[index]));
-					var optionForm = mapping('subitem' + index, copiedState, self.onChange);
-					return React.createElement(
+				{ key: index },
+				React.createElement(
+					'div',
+					{ className: 'col-md-12 col-lg-12' },
+					React.createElement(
 						'div',
-						{ key: index },
+						{ className: 'form-inline' },
 						React.createElement(
 							'div',
-							{ className: 'col-md-12 col-lg-12' },
+							{ className: self.state.inputErrs.indexOf(itemKey) != -1 ? "form-group has-error" : "form-group", 'data-index': index },
 							React.createElement(
-								'div',
-								{ className: 'form-inline' },
+								'label',
+								{ className: 'sr-only', htmlFor: "input_" + itemKey },
+								'input'
+							),
+							React.createElement('input', { type: 'text', name: 'field', className: 'form-control', id: "input_" + itemKey, onChange: self.changeItem, value: value.title })
+						),
+						React.createElement(
+							'div',
+							{ className: 'form-group media-right', 'data-index': index },
+							React.createElement(
+								'label',
+								{ className: 'sr-only', htmlFor: "select_" + itemKey },
+								'input'
+							),
+							React.createElement(
+								'select',
+								{ name: 'type', className: 'form-control', id: "select_" + itemKey, onChange: self.changeItem, value: value.format },
 								React.createElement(
-									'div',
-									{ className: self.state.inputErrs.indexOf(itemKey) != -1 ? "form-group has-error" : "form-group", 'data-index': index },
-									React.createElement(
-										'label',
-										{ className: 'sr-only', htmlFor: "input_" + itemKey },
-										'input'
-									),
-									React.createElement('input', { type: 'text', name: 'field', className: 'form-control', id: "input_" + itemKey, onChange: self.changeItem, value: value.title })
+									'option',
+									{ value: 'text' },
+									'\u30C6\u30AD\u30B9\u30C8'
 								),
 								React.createElement(
-									'div',
-									{ className: 'form-group media-right', 'data-index': index },
-									React.createElement(
-										'label',
-										{ className: 'sr-only', htmlFor: "select_" + itemKey },
-										'input'
-									),
-									React.createElement(
-										'select',
-										{ name: 'type', className: 'form-control', id: "select_" + itemKey, onChange: self.changeItem, value: value.format },
-										React.createElement(
-											'option',
-											{ value: 'text' },
-											'\u30C6\u30AD\u30B9\u30C8'
-										),
-										React.createElement(
-											'option',
-											{ value: 'textarea' },
-											'\u30C6\u30AD\u30B9\u30C8\u30A8\u30EA\u30A2'
-										),
-										React.createElement(
-											'option',
-											{ value: 'checkboxes' },
-											'\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9'
-										),
-										React.createElement(
-											'option',
-											{ value: 'radios' },
-											'\u30E9\u30B8\u30AA'
-										),
-										React.createElement(
-											'option',
-											{ value: 'select' },
-											'\u30D7\u30EB\u30C0\u30A6\u30F3'
-										),
-										React.createElement(
-											'option',
-											{ value: 'object' },
-											'\u30AA\u30D6\u30B8\u30A7\u30AF\u30C8'
-										)
-									)
+									'option',
+									{ value: 'textarea' },
+									'\u30C6\u30AD\u30B9\u30C8\u30A8\u30EA\u30A2'
 								),
 								React.createElement(
-									'div',
-									{ className: 'checkbox  media-right' },
-									React.createElement(
-										'label',
-										null,
-										React.createElement('input', { type: 'checkbox', name: itemKey, onChange: self.changeRequired, checked: self.state.required.indexOf(itemKey) != -1 }),
-										' Required'
-									)
+									'option',
+									{ value: 'checkboxes' },
+									'\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9'
 								),
 								React.createElement(
-									'div',
-									{ className: 'form-group media-right', 'data-index': index },
-									React.createElement(
-										'button',
-										{ type: 'button', id: 'btn_' + itemKey, className: 'btn btn-default', 'data-index': index, onClick: self.deleteItem },
-										React.createElement('span', { className: 'glyphicon glyphicon-remove' })
-									)
+									'option',
+									{ value: 'radios' },
+									'\u30E9\u30B8\u30AA'
+								),
+								React.createElement(
+									'option',
+									{ value: 'select' },
+									'\u30D7\u30EB\u30C0\u30A6\u30F3'
+								),
+								React.createElement(
+									'option',
+									{ value: 'object' },
+									'\u30AA\u30D6\u30B8\u30A7\u30AF\u30C8'
 								)
 							)
 						),
 						React.createElement(
 							'div',
-							{ className: 'col-md-12 col-lg-12 h6' },
-							optionForm
+							{ className: 'checkbox  media-right' },
+							React.createElement(
+								'label',
+								null,
+								React.createElement('input', { type: 'checkbox', name: itemKey, onChange: self.changeRequired, checked: self.state.required.indexOf(itemKey) != -1 }),
+								' Required'
+							)
 						),
-						React.createElement('hr', { className: 'col-md-10 col-lg-10 h6' })
-					);
-				}),
+						React.createElement(
+							'div',
+							{ className: self.state.editor ? "form-group media-right" : "hide", 'data-index': index },
+							React.createElement(
+								'button',
+								{ type: 'button', id: 'btn_' + itemKey, className: 'btn btn-default', 'data-index': index, onClick: self.deleteItem },
+								React.createElement('span', { className: 'glyphicon glyphicon-remove' })
+							)
+						)
+					)
+				),
 				React.createElement(
 					'div',
-					{ className: 'col-md-6 col-lg-6' },
+					{ className: 'col-md-12 col-lg-12 h6' },
+					optionForm
+				),
+				React.createElement('hr', { className: 'col-md-10 col-lg-10 h6' })
+			);
+		});
+	},
+	render: function render() {
+		var self = this;
+		if (self.state.editor) {
+			return React.createElement(
+				'div',
+				{ className: 'panel panel-default' },
+				React.createElement(
+					'div',
+					{ className: 'panel-body' },
+					this.expandProp(),
 					React.createElement(
-						'button',
-						{ className: 'btn btn-default navbar-text', onClick: self.add },
-						'\u8FFD\u52A0'
+						'div',
+						{ className: self.state.editor ? "col-md-6 col-lg-6" : "hide" },
+						React.createElement(
+							'button',
+							{ className: 'btn btn-default navbar-text', onClick: self.add },
+							'\u8FFD\u52A0'
+						)
 					)
 				)
-			)
-		);
+			);
+		} else {
+			return React.createElement(
+				'div',
+				{ className: 'panel panel-default' },
+				React.createElement(
+					'div',
+					{ className: 'panel-body' },
+					React.createElement(
+						'fieldset',
+						{ disabled: true },
+						this.expandProp(),
+						React.createElement(
+							'div',
+							{ className: self.state.editor ? "col-md-6 col-lg-6" : "hide" },
+							React.createElement(
+								'button',
+								{ className: 'btn btn-default navbar-text', onClick: self.add },
+								'\u8FFD\u52A0'
+							)
+						)
+					)
+				)
+			);
+		}
 	}
 });
 

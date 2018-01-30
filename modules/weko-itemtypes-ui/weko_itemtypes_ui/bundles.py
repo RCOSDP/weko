@@ -55,6 +55,12 @@ js = Bundle(
     output="gen/itemtypes_ui.js"
 )
 
+js_property = Bundle(
+    'js/weko_itemtypes_ui/create_property.js',
+    filters='requirejs',
+    output="gen/itemtypes_ui_property.js"
+)
+
 js_mapping = Bundle(
     'js/weko_itemtypes_ui/app.js',
     filters='requirejs',

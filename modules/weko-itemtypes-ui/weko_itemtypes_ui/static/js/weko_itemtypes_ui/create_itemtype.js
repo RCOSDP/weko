@@ -10,8 +10,11 @@
         schema:{}           //   生成したschemaの情報を保存する
       }
     }
+    properties_obj = {}     // 作成したメタデータ項目タイプ
+    select_option = '';
     page_json_editor = {}   //   一時的editorオブジェクトの保存
     url_update_schema = '/itemtypes/register';
+    // デフォルトマッピングのテンプレート
     mapping_value = {
       "display_lang_type": "",
       "dublin_core_mapping": "",
@@ -115,9 +118,9 @@
         tmp.option = {}
         tmp.option.required = $('#chk_'+row_id+'_0').is(':checked')?true:false;
         tmp.option.multiple = $('#chk_'+row_id+'_1').is(':checked')?true:false;
-        tmp.option.showlist = $('#chk_'+row_id+'_2').is(':checked')?true:false;
-        tmp.option.crtf = $('#chk_'+row_id+'_3').is(':checked')?true:false;
         tmp.option.hidden = $('#chk_'+row_id+'_4').is(':checked')?true:false;
+        tmp.option.showlist = tmp.option.hidden?false:($('#chk_'+row_id+'_2').is(':checked')?true:false);
+        tmp.option.crtf = tmp.option.hidden?false:($('#chk_'+row_id+'_3').is(':checked')?true:false);
         page_global.table_row_map.mapping[row_id] = mapping_value;
         if(tmp.option.required) {
           page_global.table_row_map.schema.required.push(row_id);
@@ -302,7 +305,7 @@
               titleMap: titleMap_tmp
             });
           }
-        } else if(tmp.input_type == 'object') {
+        } else if(tmp.input_type.indexOf('cus_') != -1) {
           editor = page_json_editor['schema_'+row_id];
           page_global.schemaeditor.schema[row_id] = editor.getValue();
           if(tmp.option.multiple) {
@@ -317,6 +320,9 @@
                 required: page_global.schemaeditor.schema[row_id].required
               }
             }
+            page_global.table_row_map.form.push(
+              JSON.parse(JSON.stringify(properties_obj[tmp.input_type.substr(4)].forms).replace(/parentkey/gi, row_id))
+            );
           } else {
             page_global.table_row_map.schema.properties[row_id] = {
               type: "object",
@@ -324,8 +330,9 @@
               properties: page_global.schemaeditor.schema[row_id].properties,
               required: page_global.schemaeditor.schema[row_id].required
             }
+            page_global.table_row_map.form.push(
+              JSON.parse(JSON.stringify(properties_obj[tmp.input_type.substr(4)].form).replace(/parentkey/gi, row_id)));
           }
-          page_global.table_row_map.form.push({key: row_id});
         }
 
         page_global.meta_list[row_id] = tmp;
@@ -342,13 +349,7 @@
           + '<td><div class="form-inline"><div class="form-group">'
           + '  <label class="sr-only" for="select_input_type_'+row_id+'">select_input_type</label>'
           + '  <select class="form-control change_input_type" id="select_input_type_' + row_id + '" metaid="' + row_id + '">'
-          + '    <option value="text" selected>テキスト</option>'
-          + '    <option value="textarea">テキストエリア</option>'
-          + '    <option value="checkboxes">チェックボックス</option>'
-          + '    <option value="radios">選択式(ラジオ)</option>'
-          + '    <option value="select">選択式(プルダウン)</option>'
-          + '    <option value="datetime">日付</option>'
-          + '    <option value="object">オブジェクト</option>'
+          + select_option
           + '  </select>'
           + '  </div></div>'
           + '  <div class="hide" id="arr_size_' + row_id + '">'
@@ -360,7 +361,7 @@
           + '      </div>'
           + '      <div class="form-group">'
           + '        <label for="maxItems_'+row_id+'">maxItems</label>'
-          + '        <input type="number" class="form-control" id="maxItems_'+row_id+'" placeholder="" value="2">'
+          + '        <input type="number" class="form-control" id="maxItems_'+row_id+'" placeholder="" value="9999">'
           + '      </div>'
           + '    </form>'
           + '    </div></div>'
@@ -413,6 +414,20 @@
           $('#arr_size_' + row_id).addClass('hide');
         }
       });
+      // チェックボックス「非表示」が選択状態になると、
+      $('#tbody_itemtype').on('click', 'tr td #chk_'+row_id+'_4', function(){
+        if($('#chk_'+row_id+'_4').is(':checked')) {
+          $('#chk_prev_' + row_id + '_2').addClass('disabled');
+          $('#chk_' + row_id + '_2').attr('disabled', true);
+          $('#chk_prev_' + row_id + '_3').addClass('disabled');
+          $('#chk_' + row_id + '_3').attr('disabled', true);
+        } else {
+          $('#chk_prev_' + row_id + '_2').removeClass('disabled');
+          $('#chk_' + row_id + '_2').attr('disabled', false);
+          $('#chk_prev_' + row_id + '_3').removeClass('disabled');
+          $('#chk_' + row_id + '_3').attr('disabled', false);
+        }
+      });
     }
 
     $('#tbody_itemtype').on('click', '.sortable_up', function(){
@@ -461,20 +476,16 @@
     // itemtype select input change
     $('#tbody_itemtype').on('change', '.change_input_type', function(){
       var meta_id = $(this).attr('metaid');
-      if('object' == $(this).val()) {
-        product = {
-          type: "object",
-          properties: {},
-          required: []
-        }
-        product.properties['sub'+meta_id] = {"type": "string","format": "text"}
-        $('#chk_prev_' + meta_id + '_1').addClass('disabled');
-        $('#chk_' + meta_id + '_1').attr('disabled', true);
+      if($(this).val().indexOf('cus_') != -1) {
+        product = properties_obj[$(this).val().substr(4)].schema;
+        $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
+        $('#chk_' + meta_id + '_1').attr('disabled', false);
         render_object('schema_'+meta_id, product);
       } else if('checkboxes' == $(this).val() || 'radios' == $(this).val()
               || 'select' == $(this).val()){
-        $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
-        $('#chk_' + meta_id + '_1').attr('disabled', false);
+        $('#chk_prev_' + meta_id + '_1').addClass('disabled');
+        $('#chk_' + meta_id + '_1').attr('disabled', true);
+        $('#chk_' + meta_id + '_1').attr('checked', false);
         render_select('schema_'+meta_id, '');
       } else {
         $('#chk_prev_' + meta_id + '_1').removeClass('disabled');
@@ -502,7 +513,8 @@
     function render_object(elementId, initschema) {
       element = document.getElementById(elementId);
       var editor = new JSONSchemaEditor(element, {
-        startval: initschema
+        startval: initschema,
+        editor: false
       });
       page_json_editor[elementId] = editor;
     }
@@ -526,6 +538,28 @@
       });
     }
 
+    select_option = '<option value="text" selected>テキスト</option>'
+                  + '<option value="textarea">テキストエリア</option>'
+                  + '<option value="checkboxes">チェックボックス</option>'
+                  + '<option value="radios">選択式(ラジオ)</option>'
+                  + '<option value="select">選択式(プルダウン)</option>'
+                  + '<option value="datetime">日付</option>';
+    // 作成したメタデータ項目タイプの取得
+    $.ajax({
+      method: 'GET',
+      url: '/itemtypes/property/list',
+      async: false,
+      success: function(data, status){
+        properties_obj = data;
+        Object.entries(data).forEach(([key, value]) => {
+          select_option = select_option + '<option value="cus_'+key+'">'+value.name+'</option>'
+        });
+      },
+      error: function(status, error){
+        console.log(error);
+      }
+    });
+
     if($('#item-type-lists').val().length > 0) {
       $.get('/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
         $.each(data.table_row, function(idx, row_id){
@@ -539,17 +573,24 @@
           $('#chk_'+row_id+'_2').attr('checked', data.meta_list[row_id].option.showlist);
           $('#chk_'+row_id+'_3').attr('checked', data.meta_list[row_id].option.crtf);
           $('#chk_'+row_id+'_4').attr('checked', data.meta_list[row_id].option.hidden);
+          if(data.meta_list[row_id].option.hidden) {
+            $('#chk_prev_' + row_id + '_2').addClass('disabled');
+            $('#chk_' + row_id + '_2').attr('disabled', true);
+            $('#chk_prev_' + row_id + '_3').addClass('disabled');
+            $('#chk_' + row_id + '_3').attr('disabled', true);
+          }
 
           if(data.meta_list[row_id].option.multiple) {
             $('#arr_size_' + row_id).removeClass('hide');
           }
 
-          if('object' == data.meta_list[row_id].input_type) {
-            $('#chk_prev_' + row_id + '_1').addClass('disabled');
-            $('#chk_' + row_id + '_1').attr('disabled', true);
-            render_object('schema_'+row_id, data.schemaeditor.schema[row_id]);
+          if(data.meta_list[row_id].input_type.indexOf('cus_') != -1) {
+            //render_object('schema_'+row_id, data.schemaeditor.schema[row_id]);
+            render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
           } else if('checkboxes' == data.meta_list[row_id].input_type || 'radios' == data.meta_list[row_id].input_type
                   || 'select' == data.meta_list[row_id].input_type){
+            $('#chk_prev_' + row_id + '_1').addClass('disabled');
+            $('#chk_' + row_id + '_1').attr('disabled', true);
             render_select('schema_'+row_id, data.meta_list[row_id].input_value);
           } else {
             render_empty('schema_'+row_id);
