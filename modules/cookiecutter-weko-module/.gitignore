@@ -1,0 +1,19 @@
+*~
+*.py[cod]
+
+# Idea software family
+.idea/
+
+# Packages
+*.egg
+*.egg-info
+.eggs
+__pycache__
+
+# Unit test / coverage reports
+.cache
+.coverage
+.tox
+
+# doc
+docs/_build

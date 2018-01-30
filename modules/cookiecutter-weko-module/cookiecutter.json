@@ -1,0 +1,16 @@
+{
+    "project_name": "WEKO-FunGenerator",
+    "project_shortname": "{{ cookiecutter.project_name | lower | replace(' ', '-') }}",
+    "package_name": "{{ cookiecutter.project_shortname | replace('-', '_') }}",
+    "github_repo": "wekosoftware/{{ cookiecutter.project_shortname  }}",
+    "description": "Module of {{ cookiecutter.project_name | lower }}.",
+    "author_name": "National Institute of Informatics",
+    "author_email": "wekosoftware@nii.ac.jp",
+    "year": "2017",
+    "copyright_holder": "{{ cookiecutter.author_name }}",
+    "copyright_by_intergovernmental": false,
+    "superproject": "WEKO3",
+    "transifex_project": "{{ cookiecutter.project_shortname }}",
+    "extension_class": "{{ cookiecutter.project_name | replace('WEKO', 'Weko') | replace('-', '') | replace(' ', '') }}",
+    "config_prefix": "{{ cookiecutter.project_name | replace('Invenio-', '') | replace('-', '_') | upper }}"
+}

@@ -1,0 +1,14 @@
+{% include 'misc/header.py' %}
+# TODO: Generate this manifest file by running the following commands:
+#
+#  git init
+#  git add -A
+#  pip install -e .[all]
+#  check-manifest -u
+
+# Check manifest will not automatically add these two files:
+include .dockerignore
+include .editorconfig
+include .tx/config
+prune docs/_build
+recursive-include {{ cookiecutter.package_name }} *.po *.pot *.mo

@@ -1,0 +1,12 @@
+components:
+- docs
+- global
+- installation
+- skeleton
+- tests
+- travis
+exclude_author_names:
+- Jiri Kuncar <jiri.kuncar@gmail.com>
+- Javier Delgado <JavierDelgado@outlook.com>
+- Sami Hiltunen <git@hiltunen.io>
+- Sami Hiltunen <Sami Hiltunen sami.mikael.hiltunen@cern.ch>
