@@ -6,11 +6,11 @@ the new repository. The architects are their to help you and to ensure that
 the module fits into the larger WEKO3 ecosystem.
 
 New repositories can be created in either the
-`inveniosoftware <https://github.com/inveniosoftware>`_ or the
-`inveniosoftware-contrib <https://github.com/inveniosoftware-contrib>`_  GitHub
-organisations. Repositories in inveniosoftware must be managed according to the
+`weko3software <https://>`_ or the
+`weko3software-contrib <https://>`_  GitHub
+organisations. Repositories in weko3software must be managed according to the
 contributor, style and maintainers guides. Repositories in
-inveniosoftware-contrib are free to apply any rules they like.
+weko3software-contrib are free to apply any rules they like.
 
 GitHub
 ------
@@ -47,7 +47,7 @@ repository which will be setup in the following manner:
   *must* be present in the repository.
 
 The repository setup and manage is fully automated via the
-`MetaInvenio <https://github.com/inveniosoftware/metainvenio>`_ scripts.
+`MetaWeko <https://>`_ scripts.
 
 Other services
 --------------
