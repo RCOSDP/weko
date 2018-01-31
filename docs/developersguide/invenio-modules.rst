@@ -4,7 +4,7 @@ WEKO3 module layout
 =====================
 
 This page summarizes the standard structure and naming conventions of a
-module in WEKO3 v3.0. It serves as a reference point when developing
+module in WEKO3. It serves as a reference point when developing
 a new module or enhancing an existing one.
 
 A simple module may have the following folder structure::

@@ -2,14 +2,14 @@ System architecture
 ===================
 
 
-WEKO3 v3.x
+WEKO3
 ------------
 
 .. admonition:: CAVEAT LECTOR
 
-   WEKO3 v3.0 alpha is a bleeding-edge developer preview version.
+   WEKO3 alpha is a bleeding-edge developer preview version.
 
-WEKO3 v3.0 build on top of `Flask`_ web development framework, using `Jinja2`_
+WEKO3 build on top of `Flask`_ web development framework, using `Jinja2`_
 template engine, `SQLAlchemy`_ Object Relational Mapper, `JSONSchema`_ data
 model, `PostgreSQL`_ database for persistence, and `Elasticsearch`_ for
 information retrieval.
