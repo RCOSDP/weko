@@ -127,7 +127,10 @@ def get_item(rejson, pid):
 
 
 def tojunii2(records):
-    """Convert to junii2 json."""
+    """Convert to junii2 json.
+
+    :param records:
+    """
     j = dict()
     for k, y in records.items():
         if isinstance(y, dict):
@@ -201,7 +204,11 @@ def get_value(obj):
 
 
 def del_dupl(jd, dpd):
-    """Merge duble key."""
+    """Merge duble key.
+
+    :param jd:
+    :param dpd:
+    """
     if dpd:
         if len(jd) == 0:
             jd.update(dpd)

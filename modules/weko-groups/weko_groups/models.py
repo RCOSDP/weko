@@ -937,7 +937,10 @@ class Timestamp(object):
 
 
 def resolve_admin_type(admin):
-    """Determine admin type."""
+    """Determine admin type.
+
+    :param admin:
+    """
     if admin is current_user or isinstance(admin, UserMixin):
         return 'User'
     else:

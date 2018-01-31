@@ -53,7 +53,10 @@ class StyleNotFoundRESTError(RESTException):
     code = 400
 
     def __init__(self, style=None, **kwargs):
-        """Initialize exception."""
+        """Initialize exception.
+
+        :param style:
+        """
         super(RESTException, self).__init__(**kwargs)
         self.description = 'Style{0}could not be found.'.format(
             ' "{0}" '.format(style) if style else ' ')

@@ -35,6 +35,7 @@ def login_listener(app, user):
     def logger_user_session_login(response):
         """Regenerate current session and add to the SessionActivity table.
 
+        :param response:
         .. note:: `flask.session.regenerate()` actually calls Flask-KVSession's
             `flask_kvsession.KVSession.regenerate`.
         """
@@ -57,6 +58,7 @@ def logout_listener(app, user):
     def logger_user_session_logout(response):
         """Regenerate current session and add to the SessionActivity table.
 
+        :param response:
         .. note:: `flask.session.regenerate()` actually calls Flask-KVSession's
             `flask_kvsession.KVSession.regenerate`.
         """

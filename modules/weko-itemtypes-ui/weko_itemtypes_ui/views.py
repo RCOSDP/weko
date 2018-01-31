@@ -86,7 +86,10 @@ def get_locale():
 @blueprint.route("/register", methods=['GET'])
 @need_permissions()
 def index(item_type_id=0):
-    """Renders an item type register view."""
+    """Renders an item type register view.
+
+    :param item_type_id: Item type i. Default 0.
+    """
     lists = ItemTypes.get_latest()
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE'],
