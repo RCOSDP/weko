@@ -63,23 +63,10 @@ def edit():
     current_app.logger.debug(data.get('index_tree'))
     current_app.logger.debug(json.loads(data.get('index_tree')))
     result = IndexTrees.update(tree=tree_info)
+    if result is None:
+        return jsonify(msg=_('Fail'))
     indexes = get_all_children(tree_info)
     result = Indexes.create(indexes=indexes)
     if result is None:
         return jsonify(msg=_('Fail'))
-    return jsonify(msg=_('Success'))
-
-
-@blueprint.route("/edit_test", methods=['GET'])
-def edit_test():
-    """Update the index tree."""
-    # data = request.get_json()
-    # current_app.logger.debug(data.get('index_tree'))
-    # current_app.logger.debug(json.loads(data.get('index_tree')))
-    indexes = [{'id':'1', 'parent':'0','children':'1,2,3'},
-               {'id':'2', 'parent':'1','children':'4,2,3'},
-               {'id':'3', 'parent': '1', 'children':'4,2,3'}
-               ]
-    current_app.logger.debug(indexes)
-    result = Indexes.create(indexes=indexes)
     return jsonify(msg=_('Success'))
