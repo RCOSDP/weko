@@ -537,14 +537,14 @@ Create instance
 ~~~~~~~~~~~~~~~
 
 We start by creating a fresh new Python virtual environment that will hold our
-brand new WEKO3 v3.0 instance:
+brand new WEKO3 instance:
 
 .. include:: ../../scripts/create-instance.sh
    :start-after: # sphinxdoc-create-virtual-environment-begin
    :end-before: # sphinxdoc-create-virtual-environment-end
    :literal:
 
-We continue by installing WEKO3 v3.0 Integrated Library System flavour demo
+We continue by installing WEKO3 Integrated Library System flavour demo
 site from PyPI:
 
 .. include:: ../../scripts/create-instance.sh
@@ -643,4 +643,4 @@ and we can access them via REST API:
    curl -i -H "Accept: application/json" \
         http://${INVENIO_WEB_HOST}/api/records/1
 
-We are done! Our first WEKO3 v3.0 demo instance is fully up and running.
+We are done! Our first WEKO3 demo instance is fully up and running.
