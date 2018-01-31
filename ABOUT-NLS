@@ -41,14 +41,14 @@ Weko is currently available in the following languages::
    zh_CN = Chinese (China)
    zh_TW = Chinese (Taiwan)
 
-If you are installing Invenio and you want to enable/disable some
+If you are installing WEKO3 and you want to enable/disable some
 languages, please just follow the standard installation procedure as
 described in the INSTALL file.  The default language of the
 installation as well as the list of all user-seen languages can be
-selected in the general invenio.conf file, see variables CFG_SITE_LANG
+selected in the general weko.conf file, see variables CFG_SITE_LANG
 and CFG_SITE_LANGS.
 
-(Please note that some runtime Invenio daemons -- such as webcoll,
+(Please note that some runtime WEKO3 daemons -- such as webcoll,
 responsible for updating the collection cache, running every hour or
 so -- may work twice as long when twice as many user-seen languages
 are selected, because it creates collection cache page elements for
@@ -59,7 +59,7 @@ setup, you may want to try to limit the list of selected languages.)
 Native Language Support information for translators
 ---------------------------------------------------
 
-If you want to contibute a translation to Invenio, then please follow
+If you want to contibute a translation to WEKO3, then please follow
 the procedure below:
 
  - Please check out the existence of po/LL.po file for your language,
@@ -67,7 +67,7 @@ the procedure below:
     Greek).  If such a file exists, then this language is already
     supported, in which case you may want to review the existing
     translation (see below).  If the file does not exist yet, then you
-    can create an empty one by copying the invenio.pot template file
+    can create an empty one by copying the weko.pot template file
     into LL.po that you can review as described in the next item.
     (Please note that you would have to translate some dynamic
     elements that are currently not located in the PO file, see the
@@ -114,7 +114,7 @@ the procedure below:
     ``make``.  End of note to developers.)
 
   - Please contribute your translation by emailing the file to
-    <info@inveniosoftware.org>.  You help is greatly appreciated and
+    <info@wekosoftware.org>.  You help is greatly appreciated and
     will be properly credited in the THANKS file.
 
 See also the GNU gettext manual, especially the chapters 5, 6 and 11.
@@ -216,7 +216,7 @@ some dynamic elements that aren't located in PO files.
 The development team can edit the respective files ourself, if the
 translator sends over the following translations by email:
 
-   - demo server name, from invenio.conf::
+   - demo server name, from weko.conf::
 
         Atlantis Institute of Fictive Science
 
@@ -291,7 +291,7 @@ the meantime.  The goal is to integrate the contributions.
 Firstly, check whether the contributed file sk-CONTRIB.po was indeed
 prepared for different software release version::
 
-   $ msgcmp --use-fuzzy --use-untranslated sk-CONTRIB.po invenio.pot
+   $ msgcmp --use-fuzzy --use-untranslated sk-CONTRIB.po weko.pot
 
 If yes, then join its translations with the ones in the latest sk.po file::
 
@@ -299,10 +299,10 @@ If yes, then join its translations with the ones in the latest sk.po file::
 
 and update the message references::
 
-   $ msgmerge sk-TMP.po invenio.pot > sk-NEW.po
+   $ msgmerge sk-TMP.po weko.pot > sk-NEW.po
 
 This will give the new file sk-NEW.po that should now be msgcmp'rable
-to invenio.pot.
+to weko.pot.
 
 Lastly, we will have to go manually through sk-NEW.po in order to
 resolve potential translation conflicts (marked via ``#-#-#-#-#``
