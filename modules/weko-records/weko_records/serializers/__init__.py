@@ -37,7 +37,11 @@ Junii2_v2 = WEKOXMLSerializer(xslt_filename=xslt_junii2)
 #: Jpcoar serializer.
 Jpcoar_v1 = WEKOXMLSerializer(xslt_filename=xslt_jpcoar)
 
+#: dublincore serializer.
+dublincore_v2  = WEKOXMLSerializer(xslt_filename=xslt_dublincore_oai)
+
 # OAI-PMH record serializers.
 # ===========================
 oaipmh_junii2_v2 = Junii2_v2.serialize_oaipmh
 oaipmh_jpcoar_v1 = Jpcoar_v1.serialize_oaipmh
+oaipmh_dublincore_v2 = dublincore_v2.serialize_oaipmh

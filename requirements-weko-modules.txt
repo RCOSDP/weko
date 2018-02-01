@@ -8,3 +8,4 @@
 -e /code/modules/weko-records
 -e /code/modules/weko-records-ui
 -e /code/modules/weko-items-rest
+-e /code/modules/weko-schema-ui

@@ -32,5 +32,10 @@ OAISERVER_METADATA_FORMATS = {
         'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
         'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
         'serializer': 'weko_records.serializers.oaipmh_jpcoar_v1',
+    },
+    'oai_dc': {
+        'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+        'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
+        'serializer': 'weko_records.serializers.oaipmh_dublincore_v2',
     }
 }

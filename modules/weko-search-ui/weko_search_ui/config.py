@@ -129,6 +129,11 @@ RECORDS_UI_EXPORT_FORMATS = {
             serializer='weko_records.serializers.Jpcoar_v1',
             order=2,
         ),
+        'dc': dict(
+            title='DublinCore',
+            serializer='weko_records.serializers.dublincore_v2',
+            order=3,
+        ),
         'json': dict(
             title='JSON',
             serializer='invenio_records_rest.serializers.json_v1',

@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "title": "Comment",
+  "properties": {
+    "name": {
+      "title": "Schema Name",
+      "type": "string",
+      "description": "Name of Schema."
+    },
+    "root_name": {
+      "title": "Root Name",
+      "type": "string",
+      "description": "Schema's root element name."
+    },
+    "comment": {
+      "title": "Comment",
+      "type": "string",
+      "maxLength": 20,
+      "validationMessage": "Don't be greedy!"
+    }
+  },
+  "required": [
+    "name",
+    "root_name"
+  ]
+}

@@ -59,11 +59,11 @@
                                     </xsl:element>
                                 </xsl:if>
                             </xsl:when>
-                            <xsl:otherwise>
+                            <xsl:when test="$j2='creator'">
                                 <xsl:element name="{$j2}">
                                     <xsl:value-of select="concat(family,',',name)"></xsl:value-of>
                                 </xsl:element>
-                            </xsl:otherwise>
+                            </xsl:when>
                         </xsl:choose>
                     </xsl:for-each>
                 </xsl:if>

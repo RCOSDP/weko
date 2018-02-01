@@ -1,0 +1,9 @@
+[
+  "name",
+  "root_name",
+  {
+    "key": "comment",
+    "type": "textarea",
+    "placeholder": "Make a comment"
+  }
+]
