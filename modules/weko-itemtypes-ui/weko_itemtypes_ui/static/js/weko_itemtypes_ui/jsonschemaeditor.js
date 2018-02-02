@@ -121,6 +121,14 @@ var SchemaTextarea = React.createClass({
 	}
 });
 
+var SchemaDateTime = React.createClass({
+	displayName: 'SchemaDateTime',
+
+	render: function render() {
+		return React.createElement('div', null);
+	}
+});
+
 var SchemaCheckboxes = React.createClass({
 	displayName: 'SchemaCheckboxes',
 
@@ -269,6 +277,7 @@ var mapping = function mapping(name, data, editor, changeHandler) {
 		checkboxes: React.createElement(SchemaCheckboxes, { onChange: changeHandler, ref: name, data: data, editor: editor }),
 		radios: React.createElement(SchemaRadios, { onChange: changeHandler, ref: name, data: data, editor: editor }),
 		select: React.createElement(SchemaSelect, { onChange: changeHandler, ref: name, data: data, editor: editor }),
+		datetime: React.createElement(SchemaDateTime, { onChange: changeHandler, ref: name, data: data, editor: editor }),
 		object: React.createElement(SchemaObject, { onChange: changeHandler, ref: name, data: data, editor: editor })
 	}[data.format];
 };
@@ -380,7 +389,7 @@ var SchemaObject = React.createClass({
 			if (_this.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
-				if ('text' === value.format || 'textarea' === value.format) {
+				if ('text' === value.format || 'textarea' === value.format || 'datetime' === value.format) {
 					properties[itemKey] = value;
 				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
 					properties[itemKey] = self.refs['subitem' + index].export();
@@ -481,6 +490,11 @@ var SchemaObject = React.createClass({
 									'option',
 									{ value: 'select' },
 									'\u30D7\u30EB\u30C0\u30A6\u30F3'
+								),
+								React.createElement(
+									'option',
+									{ value: 'datetime' },
+									'\u65E5\u4ED8'
 								),
 								React.createElement(
 									'option',

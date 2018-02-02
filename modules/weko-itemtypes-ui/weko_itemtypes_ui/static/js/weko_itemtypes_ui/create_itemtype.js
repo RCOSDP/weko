@@ -3,6 +3,7 @@
     "bootstrap"
   ],function() {
     page_global = {
+      upload_file: false,
       table_row: [],        // 追加した行番号を保存する(元々順番)
       table_row_map: {},    // 生成したschemaとformの情報を保存する
       meta_list: {},        // 追加した行の情報を保存する(セットした詳細情報)
@@ -42,7 +43,6 @@
 
     $('.radio_versionup').on('click', function(){
       if($(this).val() == 'upt') {
-        //$('#itemtype_name').val($('#item-type-lists').find("option:selected").text());
         url_update_schema = '/itemtypes/'+$('#item-type-lists').val()+'/register';
       } else {
         url_update_schema = '/itemtypes/register';
@@ -84,6 +84,70 @@
         required: []
       };
 
+      // コンテンツ本体
+      if(page_global.upload_file) {
+        page_global.table_row_map.schema.properties["filemeta"] = {
+          type:"array",
+          title:"コンテンツ本体",
+          items:{
+            type: "object",
+            properties: {
+              filename: {
+                type: "string",
+                title: "表示名"
+              },
+              displaytype: {
+                type: "string",
+                title: "表示形式",
+                enum: ["detail","simple","preview"]
+              },
+              licensetype: {
+                type: "string",
+                title: "ライセンス",
+                enum: ["license_free","license_0","license_1","license_2","license_3","license_4","license_5"]
+              },
+              groups: {
+                type: "string",
+                title: "グループ名"
+              }
+            }
+          }
+        }
+        page_global.table_row_map.form.push({
+          key:"filemeta",
+          title:"コンテンツ本体",
+          add: "New",
+          style: {
+            add: "btn-success"
+          },
+          items: [
+            "filemeta[].filename",
+            {
+              key: "filemeta[].displaytype",
+              type: "select",
+              titleMap: [
+                {value: "detail", name: "詳細表示"},
+                {value: "simple", name: "簡易表示"},
+                {value: "preview", name: "プレビュー"}
+              ]
+            },
+            {
+              key: "filemeta[].licensetype",
+              type: "select",
+              titleMap: [
+                {value: "license_free", name: "自由入力"},
+                {value: "license_0", name: "Creative Commons : 表示"},
+                {value: "license_1", name: "Creative Commons : 表示 - 継承"},
+                {value: "license_2", name: "Creative Commons : 表示 - 改変禁止"},
+                {value: "license_3", name: "Creative Commons : 表示 - 非営利"},
+                {value: "license_4", name: "Creative Commons : 表示 - 非営利 - 継承"},
+                {value: "license_5", name: "Creative Commons : 表示 - 非営利 - 改変禁止"}
+              ]
+            },
+            "filemeta[].groups"
+          ]
+        });
+      }
       // タイトルなどを追加する
       page_global.table_row_map.schema.properties["title_ja"] = {type:"string",title:"タイトル",format:"text"}
       page_global.table_row_map.schema.properties["title_en"] = {type:"string",title:"タイトル(英)",format:"text"}
@@ -473,6 +537,14 @@
       $('#btn_down_'+page_global.table_row[page_global.table_row.length-1]).addClass('disabled');
     }
 
+    $('#chk_upload_file').on('change', function(){
+      if($('#chk_upload_file').is(':checked')) {
+        page_global.upload_file = true;
+      } else {
+        page_global.upload_file = false;
+      }
+    });
+
     // itemtype select input change
     $('#tbody_itemtype').on('change', '.change_input_type', function(){
       var meta_id = $(this).attr('metaid');
@@ -562,6 +634,8 @@
 
     if($('#item-type-lists').val().length > 0) {
       $.get('/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
+        page_global.upload_file = data.upload_file;
+        $('#chk_upload_file').attr('checked', data.upload_file);
         $.each(data.table_row, function(idx, row_id){
           new_meta_row(row_id);
           $('#txt_title_'+row_id).val(data.meta_list[row_id].title);
@@ -585,7 +659,6 @@
           }
 
           if(data.meta_list[row_id].input_type.indexOf('cus_') != -1) {
-            //render_object('schema_'+row_id, data.schemaeditor.schema[row_id]);
             render_object('schema_'+row_id, properties_obj[data.meta_list[row_id].input_type.substr(4)].schema);
           } else if('checkboxes' == data.meta_list[row_id].input_type || 'radios' == data.meta_list[row_id].input_type
                   || 'select' == data.meta_list[row_id].input_type){
