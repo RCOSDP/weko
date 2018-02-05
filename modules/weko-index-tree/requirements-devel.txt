@@ -17,25 +17,9 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-
-"""Bundles for weko-items-ui."""
-
-from flask_assets import Bundle
-from invenio_assets import NpmBundle
-
-js_dependencies_angularjs = NpmBundle(
-    'js/weko_items_ui/inline.bundle.js',
-    'js/weko_items_ui/polyfills.bundle.js',
-    'js/weko_items_ui/main.bundle.js',
-)
-
-js_dependencies = NpmBundle(
-    js_dependencies_angularjs,
-    output='gen/items_ui.dependencies.js',
-)
-
-js = Bundle(
-    'js/weko_items_ui/app.js',
-    filters='jsmin',
-    output="gen/items_ui.%(version)s.js",
-)
+#
+# TODO: Add development versions of some important dependencies here to get a
+#       warning when there are breaking upstream changes, e.g.:
+#
+#     -e git+git://github.com/mitsuhiko/werkzeug.git#egg=Werkzeug
+#     -e git+git://github.com/mitsuhiko/jinja2.git#egg=Jinja2

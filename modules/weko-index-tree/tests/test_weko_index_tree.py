@@ -18,24 +18,36 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Bundles for weko-items-ui."""
+"""Module tests."""
 
-from flask_assets import Bundle
-from invenio_assets import NpmBundle
+from flask import Flask
 
-js_dependencies_angularjs = NpmBundle(
-    'js/weko_items_ui/inline.bundle.js',
-    'js/weko_items_ui/polyfills.bundle.js',
-    'js/weko_items_ui/main.bundle.js',
-)
+from weko_index_tree import WekoIndexTree
 
-js_dependencies = NpmBundle(
-    js_dependencies_angularjs,
-    output='gen/items_ui.dependencies.js',
-)
 
-js = Bundle(
-    'js/weko_items_ui/app.js',
-    filters='jsmin',
-    output="gen/items_ui.%(version)s.js",
-)
+def test_version():
+    """Test version import."""
+    from weko_index_tree import __version__
+    assert __version__
+
+
+def test_init():
+    """Test extension initialization."""
+    app = Flask('testapp')
+    ext = WekoIndexTree(app)
+    assert 'weko-index-tree' in app.extensions
+
+    app = Flask('testapp')
+    ext = WekoIndexTree()
+    assert 'weko-index-tree' not in app.extensions
+    ext.init_app(app)
+    assert 'weko-index-tree' in app.extensions
+
+
+def test_view(app):
+    """Test view."""
+    WekoIndexTree(app)
+    with app.test_client() as client:
+        res = client.get("/")
+        assert res.status_code == 200
+        assert 'Welcome to weko-index-tree' in str(res.data)

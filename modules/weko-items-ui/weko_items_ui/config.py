@@ -20,7 +20,7 @@
 
 """Configuration for weko-items-ui."""
 
-WEKO_ITEMS_UI_BASE_TEMPLATE = 'weko_items_ui/base.html'
+WEKO_ITEMS_UI_BASE_TEMPLATE = 'weko_items_ui/page.html'
 """Default base template for the item page."""
 
 WEKO_ITEMS_UI_FORM_TEMPLATE = 'weko_items_ui/edit.html'

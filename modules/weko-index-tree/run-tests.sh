@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 # -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
@@ -18,24 +19,8 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Bundles for weko-items-ui."""
-
-from flask_assets import Bundle
-from invenio_assets import NpmBundle
-
-js_dependencies_angularjs = NpmBundle(
-    'js/weko_items_ui/inline.bundle.js',
-    'js/weko_items_ui/polyfills.bundle.js',
-    'js/weko_items_ui/main.bundle.js',
-)
-
-js_dependencies = NpmBundle(
-    js_dependencies_angularjs,
-    output='gen/items_ui.dependencies.js',
-)
-
-js = Bundle(
-    'js/weko_items_ui/app.js',
-    filters='jsmin',
-    output="gen/items_ui.%(version)s.js",
-)
+pydocstyle weko_index_tree tests docs && \
+isort -rc -c -df && \
+check-manifest --ignore ".travis-*" && \
+sphinx-build -qnNW docs docs/_build/html && \
+python setup.py test

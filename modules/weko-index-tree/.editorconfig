@@ -18,24 +18,36 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Bundles for weko-items-ui."""
+root = true
 
-from flask_assets import Bundle
-from invenio_assets import NpmBundle
+[*]
+indent_style = space
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
 
-js_dependencies_angularjs = NpmBundle(
-    'js/weko_items_ui/inline.bundle.js',
-    'js/weko_items_ui/polyfills.bundle.js',
-    'js/weko_items_ui/main.bundle.js',
-)
+# Python files
+[*.py]
+indent_size = 4
+# isort plugin configuration
+known_first_party = weko_index_tree
+multi_line_output = 2
+default_section = THIRDPARTY
+skip = .eggs
 
-js_dependencies = NpmBundle(
-    js_dependencies_angularjs,
-    output='gen/items_ui.dependencies.js',
-)
+# RST files (used by sphinx)
+[*.rst]
+indent_size = 4
 
-js = Bundle(
-    'js/weko_items_ui/app.js',
-    filters='jsmin',
-    output="gen/items_ui.%(version)s.js",
-)
+# CSS, HTML, JS, JSON, YML
+[*.{css,html,js,json,yml}]
+indent_size = 2
+
+# Matches the exact files either package.json or .travis.yml
+[{package.json,.travis.yml}]
+indent_size = 2
+
+# Dockerfile
+[Dockerfile]
+indent_size = 4

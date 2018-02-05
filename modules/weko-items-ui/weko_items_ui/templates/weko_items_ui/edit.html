@@ -27,6 +27,7 @@
 
 {%- block javascript %}
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -94,6 +95,7 @@
               <invenio-files-list
                 template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
               ></invenio-files-list>
+              <app-root>Loading...</app-root>
               <invenio-records-form
                 form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
                 form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"

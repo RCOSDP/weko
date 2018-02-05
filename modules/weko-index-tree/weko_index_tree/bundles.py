@@ -18,24 +18,23 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Bundles for weko-items-ui."""
+"""Bundles for weko-index-tree."""
 
 from flask_assets import Bundle
-from invenio_assets import NpmBundle
 
-js_dependencies_angularjs = NpmBundle(
-    'js/weko_items_ui/inline.bundle.js',
-    'js/weko_items_ui/polyfills.bundle.js',
-    'js/weko_items_ui/main.bundle.js',
+style = Bundle(
+    'css/weko_index_tree/jsontreeview.css',
+    filters='cleancss',
+    output="gen/index_tree_view.%(version)s.css"
 )
 
-js_dependencies = NpmBundle(
-    js_dependencies_angularjs,
-    output='gen/items_ui.dependencies.js',
+js_treeview = Bundle(
+    'js/weko_index_tree/jsontreeview.js',
+    output="gen/index_tree_view.js"
 )
 
 js = Bundle(
-    'js/weko_items_ui/app.js',
-    filters='jsmin',
-    output="gen/items_ui.%(version)s.js",
+    'js/weko_index_tree/app.js',
+    filters='requirejs',
+    output="gen/index_tree.%(version)s.js"
 )

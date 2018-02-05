@@ -18,24 +18,48 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Bundles for weko-items-ui."""
+"""Minimal Flask application example.
 
-from flask_assets import Bundle
-from invenio_assets import NpmBundle
+SPHINX-START
 
-js_dependencies_angularjs = NpmBundle(
-    'js/weko_items_ui/inline.bundle.js',
-    'js/weko_items_ui/polyfills.bundle.js',
-    'js/weko_items_ui/main.bundle.js',
-)
+First install weko-index-tree, setup the application and load
+fixture data by running:
 
-js_dependencies = NpmBundle(
-    js_dependencies_angularjs,
-    output='gen/items_ui.dependencies.js',
-)
+.. code-block:: console
 
-js = Bundle(
-    'js/weko_items_ui/app.js',
-    filters='jsmin',
-    output="gen/items_ui.%(version)s.js",
-)
+   $ pip install -e .[all]
+   $ cd examples
+   $ ./app-setup.sh
+   $ ./app-fixtures.sh
+
+Next, start the development server:
+
+.. code-block:: console
+
+   $ export FLASK_APP=app.py FLASK_DEBUG=1
+   $ flask run
+
+and open the example application in your browser:
+
+.. code-block:: console
+
+    $ open http://127.0.0.1:5000/
+
+To reset the example application run:
+
+.. code-block:: console
+
+    $ ./app-teardown.sh
+
+SPHINX-END
+"""
+
+from flask import Flask
+from flask_babelex import Babel
+
+from weko_index_tree import WekoIndexTree
+
+# Create Flask application
+app = Flask(__name__)
+Babel(app)
+WekoIndexTree(app)

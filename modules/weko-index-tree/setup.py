@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""UI for creating items."""
+"""Module of weko-index-tree."""
 
 import os
 
@@ -56,7 +56,6 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.2',
-    'invenio-assets>=1.0.0b7',
 ]
 
 packages = find_packages()
@@ -64,34 +63,35 @@ packages = find_packages()
 
 # Get the version string. Cannot be done with import!
 g = {}
-with open(os.path.join('weko_items_ui', 'version.py'), 'rt') as fp:
+with open(os.path.join('weko_index_tree', 'version.py'), 'rt') as fp:
     exec(fp.read(), g)
     version = g['__version__']
 
 setup(
-    name='weko-items-ui',
+    name='weko-index-tree',
     version=version,
     description=__doc__,
     long_description=readme + '\n\n' + history,
-    keywords='weko items ui',
+    keywords='weko index tree',
     license='GPLv2',
     author='National Institute of Informatics',
     author_email='wekosoftware@nii.ac.jp',
-    url='https://github.com/wekosoftware/weko-items-ui',
+    url='https://github.com/wekosoftware/weko-index-tree',
     packages=packages,
     zip_safe=False,
     include_package_data=True,
     platforms='any',
     entry_points={
         'invenio_base.apps': [
-            'weko_items_ui = weko_items_ui:WekoItemsUI',
+            'weko_index_tree = weko_index_tree:WekoIndexTree',
         ],
         'invenio_i18n.translations': [
-            'messages = weko_items_ui',
+            'messages = weko_index_tree',
         ],
         'invenio_assets.bundles': [
-            'weko_items_ui_js_dependencies = weko_items_ui.bundles:js_dependencies',
-            'weko_items_ui_js = weko_items_ui.bundles:js',
+            'weko_index_tree_css = weko_index_tree.bundles:style',
+            'weko_index_tree_view = weko_index_tree.bundles:js_treeview',
+            'weko_index_tree_js = weko_index_tree.bundles:js',
         ],
     },
     extras_require=extras_require,

@@ -18,24 +18,38 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Bundles for weko-items-ui."""
+"""Pytest configuration."""
 
-from flask_assets import Bundle
-from invenio_assets import NpmBundle
+import shutil
+import tempfile
 
-js_dependencies_angularjs = NpmBundle(
-    'js/weko_items_ui/inline.bundle.js',
-    'js/weko_items_ui/polyfills.bundle.js',
-    'js/weko_items_ui/main.bundle.js',
-)
+import pytest
+from flask import Flask
+from flask_babelex import Babel
 
-js_dependencies = NpmBundle(
-    js_dependencies_angularjs,
-    output='gen/items_ui.dependencies.js',
-)
 
-js = Bundle(
-    'js/weko_items_ui/app.js',
-    filters='jsmin',
-    output="gen/items_ui.%(version)s.js",
-)
+@pytest.yield_fixture()
+def instance_path():
+    """Temporary instance path."""
+    path = tempfile.mkdtemp()
+    yield path
+    shutil.rmtree(path)
+
+
+@pytest.fixture()
+def base_app(instance_path):
+    """Flask application fixture."""
+    app_ = Flask('testapp', instance_path=instance_path)
+    app_.config.update(
+        SECRET_KEY='SECRET_KEY',
+        TESTING=True,
+    )
+    Babel(app_)
+    return app_
+
+
+@pytest.yield_fixture()
+def app(base_app):
+    """Flask application fixture."""
+    with base_app.app_context():
+        yield base_app

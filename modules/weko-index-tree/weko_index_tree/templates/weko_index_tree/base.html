@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-#
+{#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -17,25 +16,13 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-
-"""Bundles for weko-items-ui."""
-
-from flask_assets import Bundle
-from invenio_assets import NpmBundle
-
-js_dependencies_angularjs = NpmBundle(
-    'js/weko_items_ui/inline.bundle.js',
-    'js/weko_items_ui/polyfills.bundle.js',
-    'js/weko_items_ui/main.bundle.js',
-)
-
-js_dependencies = NpmBundle(
-    js_dependencies_angularjs,
-    output='gen/items_ui.dependencies.js',
-)
-
-js = Bundle(
-    'js/weko_items_ui/app.js',
-    filters='jsmin',
-    output="gen/items_ui.%(version)s.js",
-)
+#}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    {%- block page_body %}{%- endblock page_body %}
+  </body>
+</html>
