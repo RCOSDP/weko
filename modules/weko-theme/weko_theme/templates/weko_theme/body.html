@@ -23,10 +23,14 @@
     <div class="col-sm-12 col-md-12 col-md-12">
       <div class="panel panel-default">
         <div class="panel-heading">
-          {% include "weko_theme/body_title.html" %}
+          {%- block body_title %}
+            {% include "weko_theme/body_title.html" %}
+          {%- endblock body_title %}
         </div>
         <div class="panel-body">
-          {% include "weko_theme/body_center.html" %}
+          {%- block body_center %}
+            {% include "weko_theme/body_center.html" %}
+          {%- endblock body_center %}
         </div>
       </div>
     </div>

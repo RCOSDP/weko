@@ -41,7 +41,9 @@ def index():
     """Render the index tree edit page."""
     result = IndexTrees.get()
     current_app.logger.debug(result)
-    index_tree = json.dumps(result.tree, indent=4, ensure_ascii=False)
+    index_tree = []
+    if result is not None:
+        index_tree = json.dumps(result.tree, indent=4, ensure_ascii=False)
     current_app.logger.debug(index_tree)
     return render_template(
         current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'],

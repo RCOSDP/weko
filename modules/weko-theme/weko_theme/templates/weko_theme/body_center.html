@@ -19,10 +19,8 @@
 #}
 
 {%- block body_center %}
-{% include "weko_theme/body_tabs.html" %}
-
-
-{% block page_main %}
-  {% include "weko_theme/body_main.html" %}
-{% endblock page_main %}
+  {% include "weko_theme/body_tabs.html" %}
+  {% block page_main %}
+    {% include "weko_theme/body_main.html" %}
+  {% endblock page_main %}
 {%- endblock body_center %}
