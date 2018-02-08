@@ -74,11 +74,17 @@ def get_image_src(mimetype):
     src = ""
     if "text/" in mimetype:
         src = "icon_16_txt.jpg"
-    elif "doc" in mimetype or "docx" in mimetype:
+    elif "application/msword" in mimetype:
         src = "icon_16_doc.jpg"
-    elif "xls" in mimetype or "xlsx" in mimetype:
+    elif "wordprocessingml.document" in mimetype:
+        src = "icon_16_doc.jpg"
+    elif "application/vnd.ms-excel" in mimetype:
         src = "icon_16_xls.jpg"
-    elif "ppt" in mimetype:
+    elif "spreadsheetml.sheet" in mimetype:
+        src = "icon_16_xls.jpg"
+    elif "application/vnd.ms-powerpoint" in mimetype:
+        src = "icon_16_ppt.jpg"
+    elif "presentationml.presentation" in mimetype:
         src = "icon_16_ppt.jpg"
     elif "zip" in mimetype or "rar" in mimetype:
         src = "icon_16_txt.jpg"

@@ -97,7 +97,7 @@ def get_item(rejson, pid):
 
                 jrc = tojunii2(ju)
 
-                title = jrc.get("title_jp") or jrc.get("title_en")
+                title = rejson.get("title_ja") or rejson.get("title_en")
                 dc.update(dict(item_title=title))
                 dc.update(dict(control_number=pid))
 
