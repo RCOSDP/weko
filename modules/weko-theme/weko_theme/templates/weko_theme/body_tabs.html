@@ -18,17 +18,11 @@
 # MA 02111-1307, USA.
 #}
 
-<div class="container">
-  <div class="row">
-    <div class="col-sm-12 col-md-12 col-md-12">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          {% include "weko_theme/body_title.html" %}
-        </div>
-        <div class="panel-body">
-          {% include "weko_theme/body_center.html" %}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+{%- block page_body_tabs %}
+<ul class="nav nav-tabs">
+  <li role="presentation" class="active"><a href="#top_div_content"  data-toggle="tab">{{_('トップ')}}</a></li>
+  <li role="presentation"><a href="./items/">{{_('アイテム登録')}}</a></li>
+  <li role="presentation"><a href="#" data-toggle="tab">{{_('ワークフロー')}}</a></li>
+  <li role="presentation"><a href="#" data-toggle="tab">{{_('ランキング')}}</a></li>
+</ul>
+{%- endblock page_body_tabs%}

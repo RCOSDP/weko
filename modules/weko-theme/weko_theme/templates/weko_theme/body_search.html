@@ -18,42 +18,42 @@
 # MA 02111-1307, USA.
 #}
 
-<div class="h4 row">
-  <div class="col-xs-18 col-md-12">
-   {%- block frontpage_form %}
-    <form action="/search">
-      <div class="form-group">
-        <div class="input-group">
-          <input type="text" name="q" class="input-lg form-control" placeholder="{{_('Type and press enter to search')}}">
-          <div class="input-group-btn">
-            <button type="submit" class="btn btn-lg btn-default"><i class="fa fa-search"></i></button>
+<div class="col-xs-18 col-md-12">
+ {%- block frontpage_form %}
+  <form action="/search">
+    <div class="form-group">
+      <div class="input-group">
+        <input type="text" name="q" class="input-lg form-control" placeholder="{{_('Type and press enter to search')}}">
+        <div class="input-group-btn">
+          <button type="submit" class="btn btn-lg btn-default"><i class="fa fa-search"></i></button>
+        </div>
+      </div>
+      <div class="h4 row">
+        <div class="col-sm-2">
+          <button id="detail_search_main" type="button" class="btn btn-lg btn-info" data-toggle="collapse" data-target="#demo_detail">
+            <i class="fa fa-search-plus"></i>
+            {{_('Detail search')}}
+          </button>
+        </div>
+        <div class="h4 col-sm-8">
+          <div class="from-inline">
+            <label class="radio-inline">
+              <input type="radio" name="search_type" id="search_type_fulltext" value="0" checked> {{_('Full text')}}
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="search_type" id="search_type_keyword" value="1"> {{_('Keyword')}}
+            </label>
           </div>
         </div>
-        <div class="h4 row">
-          <div class="col-sm-4">
-            <button id="detail_search_main" type="button" class="btn btn-lg btn-info" data-toggle="collapse" data-target="#demo_detail">
-              <i class="fa fa-search-plus"></i>
-              {{_('Detail search')}}
-            </button>
-          </div>
-          <div class="h4 col-sm-8 radio-inline">
-            <label class="col-sm-4">
-              <input type="radio" id="search_type_fulltext" value="1">{{_('Full text')}}
-            </label>
-            <label class="col-sm-4">
-              <input type="radio" id="search_type_keyword" value="1">{{_('Keyword')}}
-            </label>
-          </div>
-          <div class="col-xs-18 col-md-12">
-            <div id="demo_detail" class="col-xs-18 col-md-12 collapse">
-              {%- block detail_search %}
-              {% include "weko_theme/body_search_detail.html" %}
-              {%- endblock detail_search %}
-            </div>
+        <div class="col-xs-18 col-md-12">
+          <div id="demo_detail" class="col-xs-18 col-md-12 collapse">
+            {%- block detail_search %}
+            {% include "weko_theme/body_search_detail.html" %}
+            {%- endblock detail_search %}
           </div>
         </div>
       </div>
-    </form>
-    {%- endblock frontpage_form %}
-  </div>
+    </div>
+  </form>
+  {%- endblock frontpage_form %}
 </div>

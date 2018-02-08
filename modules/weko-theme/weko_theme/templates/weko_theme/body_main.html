@@ -19,11 +19,30 @@
 #}
 
 <div class="row">
-  {% block page_index %}
-{% include "weko_theme/body_index.html" %}
-  {% endblock page_index %}
-
-  {% block page_contents %}
-{% include "weko_theme/body_contents.html" %}
-  {% endblock page_contents %}
+  <div class="col-sm-12 col-md-12">
+    <div id="myTabContent" class="tab-content">
+      <div class="tab-pane fade in active" id="top_div_content">
+        {%- block top_page_content%}
+          <div class="h4 row">
+            {%- block toppage_search %}
+              {% include "weko_theme/body_search.html" %}
+            {%- endblock toppage_search %}
+          </div>
+          <div class="h4 row">
+            {% block page_index %}
+              {% include "weko_theme/body_index.html" %}
+            {% endblock page_index %}
+            {% block page_contents %}
+              {% include "weko_theme/body_contents.html" %}
+            {% endblock page_contents %}
+          </div>
+        {%- endblock top_page_content%}
+      </div>
+      <div class="tab-pane fade" id="item_div_content">
+        {%- block item_register_page_content%}
+          <h4>item register</h4>
+        {%- endblock item_register_page_content%}
+      </div>
+    </div>
+  </div>
 </div>
