@@ -34,7 +34,7 @@
     {%- endif %}
     {%- endblock head_meta %}
     {%- block head_title %}
-    {%- set title = title or _(config.THEME_SITENAME) or _('Invenio') %}
+    {%- set title = _(title) or _(config.THEME_SITENAME) or _('Weko3') %}
     <title>{{title}}</title>
     {%- endblock head_title %}
     {%- block head_links %}
@@ -46,7 +46,7 @@
     <link rel="alternate" hreflang="{{ alt_ln }}" href="{{ alternate_url }}"/>
         {%- endfor %}
       {%- endif %}
-    {%- endblock %}
+    {%- endblock head_links_langs %}
     {%- block head_apple_icons %}
     {%- for size in [144, 114, 72, 57] %}
       {%- set icon_name = 'apple-touch-icon-%d-precomposed.png' | format(size) %}
@@ -88,7 +88,7 @@
 {% include config.THEME_JAVASCRIPT_TEMPLATE %}
     {%- endblock javascript %}
     {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE %}
-    {%- endblock %}
+    {%- endblock trackingcode %}
     {%- endblock body %}
   </body>
 </html>

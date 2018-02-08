@@ -42,7 +42,7 @@
 {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
         <div class="navbar-form navbar-right">
           {%- if config.I18N_LANGUAGES %}
-          {% from "invenio_i18n/macros/language_selector.html" import language_selector_dropdown %}
+          {% from "weko_theme/macros/language_selector.html" import language_selector_dropdown %}
           {{ language_selector_dropdown() }}
           {%- endif %}
         </div>
