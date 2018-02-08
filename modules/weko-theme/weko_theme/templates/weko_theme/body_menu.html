@@ -17,7 +17,22 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
-
+{%- block page_menu %}
+  {%- block page_menu_right %}
+  <div class="pull-right">
+    <button type="button" id="itemtype-edit" class="btn btn-danger">
+      <i class="fa fa-gear"></i>
+      {{_('Edit')}}
+    </button>
+  </div>
+  {%- endblock page_menu_right %}
+{%- block page_menu_title %}
+  {%- if title %}
+    <p>{{ title }}</p>
+  {%- endif%}
+{%- endblock page_menu_title %}
+{%- endblock page_menu %}
+<!--
 <div class="h4 row">
   <div class="h4 col-xs-3 col-md-2 pull-right">
     <button type="button" id="itemtype-edit" class="btn btn-danger pull-right">
@@ -50,3 +65,4 @@
     </div>
   </div>
 </div>
+-->

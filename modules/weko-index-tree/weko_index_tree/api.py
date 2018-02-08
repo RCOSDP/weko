@@ -33,7 +33,7 @@ class IndexTrees(object):
         """Update the index tree structure. Create if not exists.
 
         :param tree: the index tree structure in JSON format.
-        :returns: The :class:`IndexTree` instance.
+        :returns: The :class:`IndexTree` instance or None.
         """
         assert tree
         index_tree = cls.get()
@@ -67,43 +67,48 @@ class Indexes(object):
 
     @classmethod
     def create(cls, indexes=[]):
-        """Update the index tree structure. Create if not exists.
+        """Create the indexes. Delete all indexes before creation.
 
-        :param indexes: the index tree structure in JSON format.
-        :returns: The :class:`IndexTree` instance.
+        :param indexes: the index information.
+        :returns: The :class:`Index` instance lists or None.
         """
         cls.delete_all()
         index_list = []
-        current_app.logger.debug(indexes)
-        current_app.logger.debug(indexes[0])
-        for i in indexes:
-            current_app.logger.debug(i)
-            current_app.logger.debug(i['id'])
         try:
             with db.session.begin_nested():
                 for i in indexes:
                     index_list.append(Index(id=i['id'], parent=i['parent'],
                                             children=i['children']))
-                    # db.session.add(Index(id=i['id'], parent=i['parent'],children=i['children']))
-                    current_app.logger.debug(i)
-                current_app.logger.debug(index_list)
                 db.session.add_all(index_list)
             db.session.commit()
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-            current_app.logger.debug(index_list)
             return None
         return index_list
 
     @classmethod
     def delete_all(cls):
-        """Delete all rows of indexes."""
-        # # with db.session.no_autoflush:
-        # #     indexes = Index.query.all()
-        # # current_app.logger.debug(len(indexes))
-        # if len(indexes) > 0:
-        with db.session.begin_nested():
-            # db.session.qdelete_all(indexes)
-            Index.query.delete()
-        # db.session.commit()
+        """Delete all indexes."""
+        Index.query.delete()
+
+    @classmethod
+    def get_all_descendants(cls, parent_id):
+        """Get all descendants of indexes.
+
+        :param parent_id: Identifier of the parent index.
+        :returns: Type of dictionary.
+            Format: {'child1':['child1', 'grandson1', ...],
+                    'child2':['child2', 'grandson2', ...],
+                    ...}
+        """
+        result = {}
+        with db.session.no_autoflush:
+            indexes = Index.query.filter_by(parent=parent_id)
+        for i in indexes:
+            if i.children is '':
+                result[i.id] = [i.id]
+            else:
+                result[i.id] = [i.id] + i.children.split(',')
+        current_app.logger.debug(result)
+        return result

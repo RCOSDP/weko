@@ -19,9 +19,16 @@
 #}
 
 <div class="container">
-    {%- block page_menu %}
-{% include "weko_theme/body_menu.html" %}
-    {%- endblock page_menu %}
+  <div class="row">
+    <div class="col-sm-12 col-md-12 col-md-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          {% include "weko_theme/body_menu.html" %}
+        </div>
+        <div class="panel-body"></div>
+      </div>
+    </div>
+  </div>
 
     {%- block toppage_search %}
 {% include "weko_theme/body_search.html" %}
