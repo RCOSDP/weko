@@ -623,7 +623,7 @@
       async: false,
       success: function(data, status){
         properties_obj = data;
-        Object.entries(data).forEach(([key, value]) => {
+        Object.entries(data).forEach(function(key, value) {
           select_option = select_option + '<option value="cus_'+key+'">'+value.name+'</option>'
         });
       },
