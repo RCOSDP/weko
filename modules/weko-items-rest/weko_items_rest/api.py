@@ -85,45 +85,76 @@ def get_item(rejson, pid):
 
     if dc:
         dc.update(dict(item_type_id=item_type_id))
-        with db.session.begin_nested():
-            # get item identifier by pid
-            pid_ = PersistentIdentifier.get("recid", pid)
-            item_id = pid_.object_uuid
 
-            if 'control_number' in dc:
-                del dc['control_number']
+        try:
+            with db.session.begin_nested():
+                # get item identifier by pid
+                pid_ = PersistentIdentifier.get("recid", pid)
+                item_id = pid_.object_uuid
 
-            jrc = tojunii2(ju)
+                if 'control_number' in dc:
+                    del dc['control_number']
 
-            dc.update(dict(item_title=jrc.get("title")))
-            dc.update(dict(control_number=pid))
+                jrc = tojunii2(ju)
 
-            oaid = current_pidstore.minters['oaiid'](item_id, dc)
-            record = Record.create(dc, id_=item_id)
+                title = jrc.get("title_jp") or jrc.get("title_en")
+                dc.update(dict(item_title=title))
+                dc.update(dict(control_number=pid))
 
-            ItemsMetadata.create(rejson, id_=item_id, item_type_id=item_type_id)
+                oaid = current_pidstore.minters['oaiid'](item_id, dc)
+                record = Record.create(dc, id_=item_id)
 
-        db.session.commit()
+                ItemsMetadata.create(rejson, id_=item_id, item_type_id=item_type_id)
 
-        jrc.update(dict(control_number=pid))
-        jrc.update(dict(_oai={"id": oaid.pid_value}))
+                # update FilesMetadata TBL
+                update_file_metadata(rejson, fjson)
 
-        indexer = RecordIndexer()
-        jrc.update(
-            {"_created": pytz.utc.localize(record.created)
-                .isoformat() if record.created else None})
+            db.session.commit()
 
-        jrc.update(
-            {"_updated": pytz.utc.localize(record.updated)
-                .isoformat() if record.updated else None})
-        indexer.client.index(id=str(item_id),
-                             index="weko",
-                             doc_type="item",
-                             body=jrc,
-                             )
+            jrc.update(dict(control_number=pid))
+            jrc.update(dict(_oai={"id": oaid.pid_value}))
 
-        # put the item data to ElasticSearch
-        upload_file(fjson, item_id)
+            indexer = RecordIndexer()
+            jrc.update(
+                {"_created": pytz.utc.localize(record.created)
+                    .isoformat() if record.created else None})
+
+            jrc.update(
+                {"_updated": pytz.utc.localize(record.updated)
+                    .isoformat() if record.updated else None})
+
+            # put the item data to ElasticSearch
+            indexer.client.index(id=str(item_id),
+                                 index="weko",
+                                 doc_type="item",
+                                 body=jrc,
+                                 )
+
+            # put the file metadata to ElasticSearch
+            upload_file(fjson, item_id)
+        except:
+            db.session.rollback()
+            #TODO rollback es
+            raise
+
+def update_file_metadata(rejson, fjson):
+    """ update FilesMetadata's json
+    :param fm: file metadata
+    :param fjson: FilesMetadata's json obj
+    """
+    # get file metadata
+    fm = rejson.get("filemeta")
+    for lst in fm:
+        if isinstance(lst, dict):
+            fn = lst.get("filename")
+            for fj in fjson:
+                for k, v in fj.model.json.items():
+                    if fn in str(v):
+                        jsn = fj.model.json.copy()
+                        jsn.update(lst)
+                        FilesMetadata.update_data(fj.id, jsn)
+                        break
+
 
 
 def tojunii2(records):

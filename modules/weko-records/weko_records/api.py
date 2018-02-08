@@ -1123,7 +1123,7 @@ class FilesMetadata(RecordBase):
         data = apply_patch(dict(self), patch)
         return self.__class__(data, model=self.model)
 
-    def update_data(id, con):
+    def update_data(id, jsn):
         """Patch record metadata.
 
         :params patch: Dictionary of record metadata.
@@ -1132,7 +1132,7 @@ class FilesMetadata(RecordBase):
         from sqlalchemy import update
         with db.session.begin_nested():
             stmt = update(FileMetadata).where(
-                FileMetadata.id == id).values(contents=con)
+                FileMetadata.id == id).values(json=jsn)
             db.session.execute(stmt)
 
     def commit(self, **kwargs):

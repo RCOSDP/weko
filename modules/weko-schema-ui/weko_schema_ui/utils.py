@@ -53,47 +53,57 @@ def create_xml(record, xsd, ns):
     """"""
     E = ElementMaker(namespace=ns.get(""), nsmap=ns)
 
-    for el in xsd.items():
-        if isinstance(el, dict()):
-            pass
-        elif isinstance(el, str):
-            ""
-    klst = []
-    def get_key_list(kn, nodes):
-        # if no child
-        if isinstance(nodes, str) and len(nodes.keys()) == 1:
-            return [j for j in nodes.keys()]
-
-        for k, v in nodes.items():
-            if k != "type" and isinstance(v, dict):
-                klst.append(get_key_list(k, v))
+    # get a element name list for order
+    elst = to_list(xsd)
 
 
 
-
-    def dump_record(nodes):
-        """"""
-
-        # if no child
-        if isinstance(nodes, str) and len(nodes.keys()) == 1:
-            return [j for j in nodes.keys()]
-
-        for k, v in nodes.items():
-            if k != "type" and isinstance(v, dict):
-                dump_record(v)
-
-
-def get_value(record, key):
+def get_value_list(record):
+    """Get a schema values List
+    :param record: schema dict
+    """
     vlst = []
-    def get_key(r):
-
-        if isinstance(r, str):
-            return record
-
-        for k, v in r.items():
-            vlst.append(get_key(v))
+    for k, v in record["metadata"].items():
+        if isinstance(v, dict):
+            pass
 
     return vlst
+
+
+def to_list(xsd):
+    """Get a elementName List
+    :param xsd: schema dict
+    """
+    elst = []
+    klst = []
+
+    def get_element(str):
+        return str.split(":")[-1] if ":" in str else str
+
+    def get_key_list(nodes):
+        # if no child
+        if len(nodes.keys()) == 1:
+            str = ""
+            for lst in klst:
+                str = str + "." + get_element(lst)
+            elst.append(str[1:])
+
+            klst.pop(-1)
+            return
+
+        for k, v in nodes.items():
+            if k != "type" and isinstance(v, dict):
+                klst.append(k)
+                get_key_list(v)
+
+        if len(klst) > 0:
+            klst.pop(-1)
+
+    get_key_list(xsd)
+
+    return elst
+
+
 
 
 def get_mapping(records, smn):

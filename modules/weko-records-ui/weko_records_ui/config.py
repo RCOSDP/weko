@@ -40,4 +40,9 @@ RECORDS_UI_ENDPOINTS = dict(
         route='/record/<pid_value>/files/<path:filename>',
         view_imp='weko_records.fd.file_download_ui',
     ),
+    recid_preview=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/preview/<path:filename>',
+        view_imp='weko_records.fd.file_preview_ui',
+    ),
 )

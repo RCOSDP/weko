@@ -56,6 +56,8 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.2',
+    'invenio-previewer>=1.0.0a11',
+    'PyPDF2>=1.26.0',
 ]
 
 packages = find_packages()

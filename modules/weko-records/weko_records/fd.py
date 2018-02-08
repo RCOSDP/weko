@@ -21,6 +21,7 @@
 """Utilities for download file."""
 
 import unicodedata
+import mimetypes
 
 from flask import abort, current_app, render_template, request
 from flask_security import current_user
@@ -60,6 +61,74 @@ def weko_view_method(pid, record, template=None, **kwargs):
         item_type_info=item_type_info
     )
 
+def prepare_response(pid_value, fd=True):
+    """
+     prepare response data and header
+    :param pid_value:
+    :param full:
+    :return:
+    """
+
+    fn = request.view_args.get("filename")
+
+    flst = FilesMetadata.get_records(pid_value)
+    for fj in flst:
+        if fj.dumps().get("display_name") == fn:
+            stream = fj.model.contents[:]
+            displaytype = fj.model.json.get("displaytype")
+            file_name = fj.model.json.get("file_name")
+            break
+
+    headers = Headers()
+    headers['Content-Length'] = len(stream)
+    try:
+        filenames = {'filename': fn.encode('latin-1')}
+    except UnicodeEncodeError:
+        filenames = {'filename*': "UTF-8''%s" % url_quote(fn)}
+        encoded_filename = (unicodedata.normalize('NFKD', fn)
+            .encode('latin-1', 'ignore'))
+        if encoded_filename:
+            filenames['filename'] = encoded_filename
+
+    if fd:
+        headers.add('Content-Disposition', 'attachment', **filenames)
+        mimetype = 'application/octet-stream'
+    else:
+        headers['Content-Type'] = 'text/plain; charset=utf-8'
+        headers.add('Content-Disposition', 'inline')
+        mimetype = mimetypes.guess_type(request.view_args.get("filename"))[0]
+        if 'detail' in displaytype and '.pdf' in file_name:
+            from PyPDF2.pdf import PdfFileWriter, PdfFileReader
+            import io
+            source = PdfFileReader(io.BytesIO(stream), strict=True)
+            fp = source.getPage(0)
+            writer = PdfFileWriter()
+            writer.addPage(fp)
+            f = io.BytesIO()
+            writer.write(f)
+            stream = f.getvalue()
+
+    rv = current_app.response_class(
+        stream,
+        mimetype=mimetype,
+        headers=headers,
+        direct_passthrough=True,
+    )
+
+    return rv
+
+
+def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
+    """
+
+    :param pid:
+    :param record:
+    :param _record_file_factory:
+    :param kwargs:
+    :return:
+    """
+
+    return prepare_response(pid.pid_value, False)
 
 def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
     r"""Dowload file.
@@ -69,6 +138,9 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
     :param _record_file_factory: record file factory object
     :param \*\*kwargs: Additional view arguments based on URL rule.
     """
+
+    return prepare_response(pid.pid_value)
+
     fn = request.view_args.get("filename")
 
     # Check permissions

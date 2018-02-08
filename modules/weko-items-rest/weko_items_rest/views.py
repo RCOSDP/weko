@@ -66,6 +66,40 @@ def get_locale():
     return request.accept_languages.best_match(['ja', 'ja_JP', 'en'])
 
 
+def get_image_src(mimetype):
+    """ Get image src by file type
+    :param mimetype:
+    :return src: dict
+    """
+    src = ""
+    if "text/" in mimetype:
+        src = "icon_16_txt.jpg"
+    elif "doc" in mimetype or "docx" in mimetype:
+        src = "icon_16_doc.jpg"
+    elif "xls" in mimetype or "xlsx" in mimetype:
+        src = "icon_16_xls.jpg"
+    elif "ppt" in mimetype:
+        src = "icon_16_ppt.jpg"
+    elif "zip" in mimetype or "rar" in mimetype:
+        src = "icon_16_txt.jpg"
+    elif "audio/" in mimetype:
+        src = "icon_16_music.jpg"
+    elif "xml" in mimetype:
+        src = "icon_16_xml.jpg"
+    elif "image/" in mimetype:
+        src = "icon_16_picture.jpg"
+    elif "pdf" in mimetype:
+        src = "icon_16_pdf.jpg"
+    elif "video/" in mimetype:
+        if "flv" in mimetype:
+            src = "icon_16_flash.jpg"
+        else:
+            src = "icon_16_movie.jpg"
+    else:
+        src = "icon_16_others.jpg"
+
+    return dict(image_src="/static/images/icon/" + src)
+
 def elasticsearch_query_parsing_exception_handler(error):
     """
     Handle query parsing exceptions from ElasticSearch.
@@ -908,7 +942,7 @@ class FilePutResource(ContentNegotiatedMethodView):
 
         #. TODO: hash
 
-        hash = hashlib.sha256(request.data).hexdigest()
+        sha256 = hashlib.sha256(request.data).hexdigest()
 
         if size > 0:
             url = request.host_url + current_app.config[
@@ -916,7 +950,11 @@ class FilePutResource(ContentNegotiatedMethodView):
 
             jsc = dict(display_name=fn)
             jsc.update(dict(file_name=url))
+            jsc.update(dict(preview=url.replace("/files/", "/preview/")))
             jsc.update(dict(size=size))
+            jsc.update(dict(checksum=sha256))
+            jsc.update(dict(mimetype=request.mimetype))
+            jsc.update(get_image_src(request.mimetype))
 
             # Create record
             record = self.record_class.create(data=jsc, con=request.data,
