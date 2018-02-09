@@ -139,39 +139,12 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
     :param \*\*kwargs: Additional view arguments based on URL rule.
     """
 
-    return prepare_response(pid.pid_value)
-
     fn = request.view_args.get("filename")
 
     # Check permissions
     check_download_permission(record, fn)
 
-    flst = FilesMetadata.get_records(pid.pid_value)
-    for fj in flst:
-        if fj.dumps().get("display_name") == fn:
-            stream = fj.model.contents[:]
-            break
-
-    headers = Headers()
-    headers['Content-Length'] = len(stream)
-    try:
-        filenames = {'filename': fn.encode('latin-1')}
-    except UnicodeEncodeError:
-        filenames = {'filename*': "UTF-8''%s" % url_quote(fn)}
-        encoded_filename = (unicodedata.normalize('NFKD', fn)
-            .encode('latin-1', 'ignore'))
-        if encoded_filename:
-            filenames['filename'] = encoded_filename
-
-    headers.add('Content-Disposition', 'attachment', **filenames)
-    rv = current_app.response_class(
-        stream,
-        mimetype='application/octet-stream',
-        headers=headers,
-        direct_passthrough=True,
-    )
-
-    return rv
+    return prepare_response(pid.pid_value)
 
 
 def check_download_permission(record, fn):

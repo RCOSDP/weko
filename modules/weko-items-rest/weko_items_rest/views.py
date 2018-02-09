@@ -946,7 +946,6 @@ class FilePutResource(ContentNegotiatedMethodView):
 
             jsc = dict(display_name=fn)
             jsc.update(dict(file_name=url))
-            jsc.update(dict(preview=url.replace("/files/", "/preview/")))
             jsc.update(dict(size=size))
             jsc.update(dict(checksum=sha256))
             jsc.update(dict(mimetype=request.mimetype))
