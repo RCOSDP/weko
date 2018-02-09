@@ -39,4 +39,9 @@ def index():
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
     )
 
-
+@blueprint.route('/edit')
+def edit():
+    """Simplistic front page view."""
+    return render_template(
+        current_app.config['BASE_EDIT_TEMPLATE'],
+    )

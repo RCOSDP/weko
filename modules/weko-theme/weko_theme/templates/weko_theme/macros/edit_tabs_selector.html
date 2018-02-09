@@ -18,11 +18,9 @@
 # MA 02111-1307, USA.
 #}
 
-{%- block page_body_tabs %}
-<ul class="nav nav-tabs">
-  <li role="presentation"><a href="#top_div_content" data-toggle="tab">{{_('トップ')}}</a></li>
-  <li role="presentation" class="active"><a href="#item_div_content" data-toggle="tab">{{_('アイテム登録')}}</a></li>
-  <li role="presentation"><a href="#" data-toggle="tab">{{_('ワークフロー')}}</a></li>
-  <li role="presentation"><a href="#" data-toggle="tab">{{_('ランキング')}}</a></li>
-</ul>
-{%- endblock page_body_tabs%}
+{% macro tabs_selector(tab_name='アイテムタイプ') %}
+  {% set tabs_list = [('アイテムタイプ', '/'),('アイテム管理', '/items/'),('ツリー編集','/'),('査読／承認','/'),('インポート','/'),('レポート','/'),('管理','/'),('著者名典拠','/'),('ブロックスタイル','/')] %}
+  {% for (name, href) in tabs_list %}
+    <li role="presentation" {% if tab_name == name %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>
+  {% endfor %}
+{% endmacro %}

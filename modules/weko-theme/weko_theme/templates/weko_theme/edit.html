@@ -17,12 +17,20 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
+{%- extends "weko_theme/body.html" %}
 
-{%- block page_body_tabs %}
-<ul class="nav nav-tabs">
-  <li role="presentation"><a href="#top_div_content" data-toggle="tab">{{_('トップ')}}</a></li>
-  <li role="presentation" class="active"><a href="#item_div_content" data-toggle="tab">{{_('アイテム登録')}}</a></li>
-  <li role="presentation"><a href="#" data-toggle="tab">{{_('ワークフロー')}}</a></li>
-  <li role="presentation"><a href="#" data-toggle="tab">{{_('ランキング')}}</a></li>
-</ul>
-{%- endblock page_body_tabs%}
+{%- block body_center %}
+  <ul class="nav nav-tabs">
+  {%- block page_body_tabs %}
+    {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {%- endblock page_body_tabs%}
+  </ul>
+  <div class="row">
+    <div class="col-sm-12 col-md-12">
+      <div id="myTabContent" class="tab-content">
+        {%- block page_body_main %}
+        {%- endblock page_body_main %}
+      </div>
+    </div>
+  </div>
+{%- endblock body_center %}

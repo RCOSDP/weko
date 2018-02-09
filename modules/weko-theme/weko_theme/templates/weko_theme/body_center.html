@@ -18,9 +18,45 @@
 # MA 02111-1307, USA.
 #}
 
+{%- extends "body.html" %}
+
 {%- block body_center %}
-  {% include "weko_theme/body_tabs.html" %}
+  {%- block page_body_tabs %}
+  <ul class="nav nav-tabs">
+    <li role="presentation"><a href="#top_div_content" data-toggle="tab">{{_('トップ')}}</a></li>
+    <li role="presentation" class="active"><a href="#item_div_content" data-toggle="tab">{{_('アイテム登録')}}</a></li>
+    <li role="presentation"><a href="#" data-toggle="tab">{{_('ワークフロー')}}</a></li>
+    <li role="presentation"><a href="#" data-toggle="tab">{{_('ランキング')}}</a></li>
+  </ul>
+  {%- endblock page_body_tabs%}
   {% block page_main %}
-    {% include "weko_theme/body_main.html" %}
+    <div class="row">
+      <div class="col-sm-12 col-md-12">
+        <div id="myTabContent" class="tab-content">
+          <div class="tab-pane fade in active" id="top_div_content">
+            {%- block top_page_content%}
+              <div class="h4 row">
+                {%- block toppage_search %}
+                  {% include "weko_theme/body_search.html" %}
+                {%- endblock toppage_search %}
+              </div>
+              <div class="h4 row">
+                {% block page_index %}
+                  {% include "weko_theme/body_index.html" %}
+                {% endblock page_index %}
+                {% block page_contents %}
+                  {% include "weko_theme/body_contents.html" %}
+                {% endblock page_contents %}
+              </div>
+            {%- endblock top_page_content%}
+          </div>
+          <div class="tab-pane fade" id="item_div_content">
+            {%- block item_register_page_content%}
+              <h4>item register</h4>
+            {%- endblock item_register_page_content%}
+          </div>
+        </div>
+      </div>
+    </div>
   {% endblock page_main %}
 {%- endblock body_center %}

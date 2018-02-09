@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
+{%- extends config.BASE_TEMPLATE %}
 
 {%- block css %}
   {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
@@ -33,28 +33,27 @@
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body %}
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('items') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
   <div class="container">
     <div class="row">
       <div class="col-sm-12 col-md-12 col-lg-10">
-        <div class="panel">
-          <div class="panel-body">
-            <div class="form-inline">
-            <div class="form-group">
-              <label for="item-type-lists">{{_('itemtype list')}}</label>
-              <select class="form-control" id="item-type-lists">
-                {% for list in lists %}
-                <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
-                {% endfor %}
-              </select>
-            </div>
-          </div>
+        <div class="form-inline h6">
+          <div class="form-group">
+            <label for="item-type-lists">{{_('itemtype list')}}</label>
+            <select class="form-control" id="item-type-lists">
+              {% for list in lists %}
+              <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+              {% endfor %}
+            </select>
           </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="container">
     <div class="row">
       <div class="col-md-12">
         <div id="invenio-records">
@@ -71,8 +70,8 @@
             <invenio-records-alert
               template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
             </invenio-records-alert>
-            <div ng-hide="false">
-              <div ng-show="true">
+            <div class="row" ng-hide="false">
+              <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'POST'])">送信</button></li>
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
@@ -84,8 +83,8 @@
               form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
               template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
             </invenio-records-form>
-            <div ng-hide="false">
-              <div ng-show="true">
+            <div class="row" ng-hide="false">
+              <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'POST'])">送信</button></li>
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
@@ -97,5 +96,5 @@
       </div>
     </div>
   </div>
-{%- endblock page_body %}
+{%- endblock page_body_main %}
 

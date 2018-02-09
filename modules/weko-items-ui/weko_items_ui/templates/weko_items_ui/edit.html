@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
+{%- extends config.BASE_TEMPLATE %}
 
 {%- block css %}
   {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
@@ -33,86 +33,87 @@
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body %}
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-12 col-md-12 col-lg-10">
-        <div class="panel">
-          <div class="panel-body">
-            <div class="form-inline">
-            <div class="form-group">
-              <label for="item-type-lists">{{_('itemtype list')}}</label>
-              <select class="form-control" id="item-type-lists">
-                {% for list in lists %}
-                <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
-                {% endfor %}
-              </select>
-            </div>
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('items') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+  <div class="row">
+    <div class="col-sm-12 col-md-12 col-lg-10">
+      <div class="panel">
+        <div class="panel-body">
+          <div class="form-inline">
+          <div class="form-group">
+            <label for="item-type-lists">{{_('itemtype list')}}</label>
+            <select class="form-control" id="item-type-lists">
+              {% for list in lists %}
+              <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+              {% endfor %}
+            </select>
           </div>
-          </div>
+        </div>
         </div>
       </div>
     </div>
   </div>
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12">
-        <div id="invenio-records">
-          <invenio-files-uploader
-            method="PUT"
-            endpoint="/bpi/files"
-            {% if pid %}
-              action="{{ config.DEPOSIT_RECORDS_API|format(pid_value=pid.pid_value) }}"
-            {% else %}
-              initialization="/api/item/files/"
-            {% endif %}
+  <div class="row">
+    <div class="col-md-12">
+      <div id="invenio-records">
+        <invenio-files-uploader
+          method="PUT"
+          endpoint="/bpi/files"
+          {% if pid %}
+            action="{{ config.DEPOSIT_RECORDS_API|format(pid_value=pid.pid_value) }}"
+          {% else %}
+            initialization="/api/item/files/"
+          {% endif %}
+          extra-params='{"headers":{"Content-Type": "application/json"}}'
+        >
+          <invenio-records
+            initialization="/api/item/files/"
+            response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
             extra-params='{"headers":{"Content-Type": "application/json"}}'
-          >
-            <invenio-records
-              initialization="/api/item/files/"
-              response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
-              extra-params='{"headers":{"Content-Type": "application/json"}}'
-              form="{{ schemaform }}"
-              record='{}'
-              schema="{{ jsonschema }}">
-              <invenio-records-loading
-                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
-              </invenio-records-loading>
-              <invenio-records-alert
-                template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
-              </invenio-records-alert>
-              <div ng-hide="false">
-                <div ng-show="true">
-                  <ul class="list-inline text-right">
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'POST'])">送信</button></li>
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
-                  </ul>
-                </div>
+            form="{{ schemaform }}"
+            record='{}'
+            schema="{{ jsonschema }}">
+            <invenio-records-loading
+              template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+            </invenio-records-loading>
+            <invenio-records-alert
+              template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+            </invenio-records-alert>
+            <div ng-hide="false">
+              <div ng-show="true">
+                <ul class="list-inline text-right">
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'POST'])">送信</button></li>
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
+                </ul>
               </div>
-              <invenio-files-upload-zone
-                template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
-              </invenio-files-upload-zone>
-              <invenio-files-list
-                template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
-              ></invenio-files-list>
-              <invenio-records-form
-                form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
-                form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
-                template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
-              </invenio-records-form>
-              <div ng-hide="false">
-                <div ng-show="true">
-                  <ul class="list-inline text-right">
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'POST'])">送信</button></li>
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
-                  </ul>
-                </div>
+            </div>
+            <invenio-files-upload-zone
+              template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+            </invenio-files-upload-zone>
+            <invenio-files-list
+              template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
+            ></invenio-files-list>
+            <invenio-records-form
+              form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+              form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
+              template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
+            </invenio-records-form>
+            <div ng-hide="false">
+              <div ng-show="true">
+                <ul class="list-inline text-right">
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'POST'])">送信</button></li>
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
+                </ul>
               </div>
-            </invenio-records>
-          </invenio-files-uploader>
-        </div>
+            </div>
+          </invenio-records>
+        </invenio-files-uploader>
       </div>
     </div>
   </div>
-{%- endblock page_body %}
+{%- endblock page_body_main %}
 

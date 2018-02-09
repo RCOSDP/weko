@@ -21,6 +21,9 @@
 """Configuration for weko-theme."""
 
 BASE_TEMPLATE = 'weko_theme/page.html'
+"""Base template for user facing pages."""
+
+BASE_EDIT_TEMPLATE = 'weko_theme/edit.html'
 """Base template for user facing pages.
 
 The template provides a basic skeleton which takes care of loading assets,

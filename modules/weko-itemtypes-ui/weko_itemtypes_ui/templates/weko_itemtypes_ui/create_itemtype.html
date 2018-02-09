@@ -34,7 +34,12 @@
   {% assets "weko_itemtypes_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body %}
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('アイテムタイプ') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
 <div class="container">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
@@ -292,7 +297,9 @@
     </div>
   </div>
 </div>
-
+{%- endblock page_body_main %}
+{%- block page_body %}
+{{  super() }}
 <!-- modal start -->
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog" role="document">

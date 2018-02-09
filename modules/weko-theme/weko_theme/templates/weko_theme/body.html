@@ -18,21 +18,35 @@
 # MA 02111-1307, USA.
 #}
 
+{%- extends "weko_theme/base.html" %}
+
+{%- block page_body %}
 <div class="container">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-md-12">
       <div class="panel panel-default">
         <div class="panel-heading">
           {%- block body_title %}
-            {% include "weko_theme/body_title.html" %}
+            {%- block body_title_right %}
+            <div class="pull-right">
+              <button type="button" id="itemtype-edit" class="btn btn-danger">
+                <i class="fa fa-gear"></i>
+                {{_('Edit')}}
+              </button>
+            </div>
+            {%- endblock body_title_right %}
+            {%- block body_title_left %}
+              <h5><strong><p class="text-uppercase">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
+            {%- endblock body_title_left %}
           {%- endblock body_title %}
         </div>
         <div class="panel-body">
           {%- block body_center %}
-            {% include "weko_theme/body_center.html" %}
+            {#% include "weko_theme/body_center.html" %#}
           {%- endblock body_center %}
         </div>
       </div>
     </div>
   </div>
 </div>
+{%- endblock page_body %}

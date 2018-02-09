@@ -976,24 +976,41 @@ var TreeViewChild = function (_React$Component) {
 
     _this.state = {
       data: props.data,
+      parents: props.parents.slice() || [],
       onClick: props.onClick
     };
     return _this;
   }
 
+  // 新しいパラメータがロードしたコンポーネントにパスされると、実行する。
+
+
   _createClass(TreeViewChild, [{
+    key: 'componentWillReceiveProps',
+    value: function componentWillReceiveProps(newProps) {
+      this.setState({
+        data: newProps.data,
+        parents: newProps.parents.slice() || [],
+        onClick: newProps.onClick
+      });
+    }
+  }, {
     key: 'handleToggle',
     value: function handleToggle(event) {
       var idx = event.target.parentElement.dataset.index;
-      this.state.data[idx].expand = !this.state.data[idx].expand;
-      this.setState(this.state);
+      var newData = this.state.data.slice();
+      newData[idx].expand = !this.state.data[idx].expand;
+      this.setState(function () {
+        return { data: newData };
+      });
     }
   }, {
     key: 'handleClick',
     value: function handleClick(event) {
       var node = {
         id: event.target.id,
-        text: event.target.textContent
+        title: event.target.textContent,
+        parents: this.state.parents
       };
       this.state.onClick(node);
     }
@@ -1004,6 +1021,8 @@ var TreeViewChild = function (_React$Component) {
 
       var childli = this.state.data.map(function (node, index) {
         if (node.nodes.length > 0) {
+          var parents = _this2.state.parents.slice();
+          parents.push({ id: node.id, title: node.title });
           return _react2.default.createElement(
             'li',
             { id: 'li_' + node.id, key: node.id, 'data-index': index },
@@ -1020,7 +1039,7 @@ var TreeViewChild = function (_React$Component) {
             _react2.default.createElement(
               'ul',
               { className: node.expand ? 'nav nav-pills nav-stacked indentation' : 'nav nav-pills nav-stacked indentation hide' },
-              _react2.default.createElement(TreeViewChild, { onClick: _this2.state.onClick, data: node.nodes })
+              _react2.default.createElement(TreeViewChild, { onClick: _this2.state.onClick, data: node.nodes, parents: parents })
             )
           );
         } else {
@@ -1063,7 +1082,18 @@ var TreeView = function (_React$Component2) {
     return _this3;
   }
 
+  // 新しいパラメータがロードしたコンポーネントにパスされると、実行する。
+
+
   _createClass(TreeView, [{
+    key: 'componentWillReceiveProps',
+    value: function componentWillReceiveProps(newProps) {
+      this.setState({
+        data: newProps.data,
+        onClick: newProps.onClick
+      });
+    }
+  }, {
     key: 'render',
     value: function render() {
       return _react2.default.createElement(
@@ -1072,7 +1102,7 @@ var TreeView = function (_React$Component2) {
         _react2.default.createElement(
           'ul',
           { className: 'nav nav-pills nav-stacked' },
-          _react2.default.createElement(TreeViewChild, { onClick: this.state.onClick, data: this.state.data })
+          _react2.default.createElement(TreeViewChild, { onClick: this.state.onClick, data: this.state.data, parents: [] })
         )
       );
     }
