@@ -44,13 +44,203 @@
   <div class="col-sm-10 col-md-10 col-lg-10">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title">{{_('Index Tree')}}</h3>
+        <h3 class="panel-title">{{_('Edit Index Tree')}}</h3>
       </div>
       <div class="panel-body">
-        <textarea class="form-control" rows="30" id="index-tree">{{ index_tree }}</textarea>
+        <div class="panel-group">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('インデックス')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <form class="form-horizontal">
+                    <div class="input-group">
+                      <span class="input-group-addon">日本語</span>
+                      <input type="text" class="form-control" id="inputTitle_ja" placeholder="">
+                    </div>
+                    <div class="row-line-space"></div>
+                    <div class="input-group">
+                      <span class="input-group-addon">英語</span>
+                      <input type="text" class="form-control" id="inputTitle_en" placeholder="">
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('コメント')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <textarea class="form-control" rows="3" id="inputComment"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('公開')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="publish_repos">
+                      公開する(公開日を指定)
+                    </label>
+                  </div>
+                  <input type="date" class="form-control hide" name="publish_date" id="publish_date">
+                  <div class="checkbox">
+                    <span class="indent"></span>
+                    <label>
+                      <input type="checkbox" id="pubdate_recursive">
+                      子インデックスの公開日にも再帰的に反映させる
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('RSSアイコン')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="rss_display">
+                      表示する
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('PDFカバーページ')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="create_cover_flag">
+                      作成する
+                    </label>
+                  </div>
+                  <div class="checkbox">
+                    <span class="indent"></span>
+                    <label>
+                      <input type="checkbox" id="create_cover_recursive">
+                      子インデックスのPDFカバーページにも再帰的に反映させる
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('ハーベスト公開')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="harvest_public_state">
+                      公開する
+                    </label>
+                  </div>
+                  <label class="text-danger">※所属しているアイテムのメタデータを外部に公開しない場合はチェックをOFFにしてください</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('ONLINE ISSN')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <input type="text" class="form-control" name="online_issn" id="online_issn" value="">
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="biblio_flag">
+                      このインデックス直下のアイテムの利用統計を集計する
+                    </label>
+                  </div>
+                  <label class="text-danger">※所属しているアイテムのメタデータを外部に公開しない場合はチェックをOFFにしてください</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('検索結果表示形式')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <label class="radio-inline">
+                    <input type="radio" name="display_type" id="display_type_0" value="0" checked> 一覧形式
+                  </label>
+                  <label class="radio-inline">
+                    <input type="radio" name="display_type" id="display_type_1" value="1"> 目次形式
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('インデックスリンク')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <label class="radio-inline">
+                    <input type="radio" name="select_index_list_display" id="select_index_list_display_0" value="1"> 表示する
+                  </label>
+                  <label class="radio-inline">
+                    <input type="radio" name="select_index_list_display" id="select_index_list_display_1" value="0" checked> 表示しない
+                  </label>
+                  <fieldset id="select_index_list_display" disabled>
+                    <div class="input-group">
+                      <span class="input-group-addon">一覧表示名</span>
+                      <input type="text" class="form-control" id="select_index_list_name_ja" placeholder="">
+                    </div>
+                    <div class="row-line-space"></div>
+                    <div class="input-group">
+                      <span class="input-group-addon">一覧表示名(英)</span>
+                      <input type="text" class="form-control" id="select_index_list_name_en" placeholder="">
+                    </div>
+                  </fieldset>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('OpenSearch URI')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <input type="text" class="form-control" name="opensearch_uri" id="opensearch_uri" value="">
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('サムネイル')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <span id="thumbnail_file_helpBlock" class="help-block">
+                    <label>ファイルサイズ : 2MB</label><br>
+                    <label>画像サイズ : 横1024px × 縦1280px </label><br>
+                    <label>ファイルタイプ : gif, jpg, jpe, jpeg, png, bmp, tiff, tif</label>
+                  </span>
+                  <input type="file" name="thumbnail_file" id="thumbnail_file" value=""  aria-describedby="thumbnail_file_helpBlock">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="panel-footer">
-        <button id="index-tree-submit" class="btn btn-default">{{_('sending')}}</button>
+        <button id="index-detail-submit" class="btn btn-default">{{_('sending')}}</button>
       </div>
     </div>
   </div>
@@ -76,4 +266,3 @@
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 {%- endblock page_body %}
-

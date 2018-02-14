@@ -25,3 +25,6 @@ WEKO_INDEX_TREE_BASE_TEMPLATE = 'weko_index_tree/base.html'
 
 WEKO_INDEX_TREE_INDEX_TEMPLATE = 'weko_index_tree/index.html'
 """Index template for the index tree page."""
+
+WEKO_INDEX_TREE_EDIT_TEMPLATE = 'weko_index_tree/tree_edit.html'
+"""Index template for the index tree page."""

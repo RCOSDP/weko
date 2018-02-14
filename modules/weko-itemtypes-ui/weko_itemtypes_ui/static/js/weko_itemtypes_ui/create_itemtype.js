@@ -622,8 +622,8 @@
       async: false,
       success: function(data, status){
         properties_obj = data;
-        Object.entries(data).forEach(function([key, value]) {
-          select_option = select_option + '<option value="cus_'+key+'">'+value.name+'</option>'
+        Object.keys(data).forEach(function(key) {
+          select_option = select_option + '<option value="cus_'+key+'">'+data[key].name+'</option>'
         });
       },
       error: function(status, error){

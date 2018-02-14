@@ -24,6 +24,7 @@ from datetime import datetime
 
 from invenio_db import db
 from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.inspection import inspect
 from sqlalchemy_utils.types import JSONType
 
 
@@ -85,7 +86,19 @@ class IndexTree(db.Model, Timestamp):
     """Store the index tree structure in JSON format."""
 
 
-class Index(db.Model, Timestamp):
+class Serializer(object):
+    """Serializer for JSON serializable
+
+    """
+    def serialize(self):
+        return {c: getattr(self, c) for c in inspect(self).attrs.keys()}
+
+    @staticmethod
+    def serialize_list(l):
+        return [m.serialize() for m in l]
+
+
+class Index(db.Model, Timestamp, Serializer):
     """Represent an index.
 
     The Index object contains a ``created`` and  a ``updated``
@@ -95,16 +108,16 @@ class Index(db.Model, Timestamp):
     __tablename__ = 'index'
 
     id = db.Column(
-        db.Text,
+        db.Integer,
         primary_key=True,
         unique=True
     )
     """Identifier of the index."""
 
     parent = db.Column(
-        db.Text,
+        db.Integer,
         nullable=False,
-        default=''
+        default=0
     )
     """Parent Information of the index."""
 
@@ -114,3 +127,251 @@ class Index(db.Model, Timestamp):
         default=''
     )
     """Children Information of the index."""
+
+    index_name = db.Column(
+        db.Text,
+        nullable=False,
+        default=''
+    )
+    """Name of the index."""
+
+    index_name_english = db.Column(
+        db.Text,
+        nullable=False,
+        default=''
+    )
+    """English Name of the index."""
+
+    comment = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Comment of the index."""
+
+    contents = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0
+    )
+    """Contents of the index."""
+
+    private_contents = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0
+    )
+    """Private Contents of the index."""
+
+    public_state = db.Column(
+        db.Boolean(name='public_state'),
+        nullable=True,
+        default=False
+    )
+    """Public State of the index."""
+
+    public_date = db.Column(
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        nullable=True
+    )
+    """Public Date of the index."""
+
+    recursive_public_state = db.Column(
+        db.Boolean(name='recursive_public_state'),
+        nullable=True,
+        default=False
+    )
+    """Recursive Public State of the index."""
+
+    access_role = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Access Role of the index."""
+
+    access_group = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Access Group of the index."""
+
+    exclusive_acl_role = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Exclusive Acl Role of the index."""
+
+    exclusive_acl_group = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Exclusive Acl Group of the index."""
+
+    display_type = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0
+    )
+    """Display Type of the index."""
+
+    rss_display = db.Column(
+        db.Boolean(name='rss_display'),
+        nullable=True,
+        default=False
+    )
+    """RSS Display of the index."""
+
+    select_index_list_display = db.Column(
+        db.Boolean(name='select_index_list_display'),
+        nullable=True,
+        default=False
+    )
+    """Select Index List Display of the index."""
+
+    select_index_list_name = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Select Index List Name of the index."""
+
+    select_index_list_name_english = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Select Index List Name of the index."""
+
+    thumbnail = db.Column(
+        db.LargeBinary,
+        nullable=True
+    )
+    """Thumbnail of the index."""
+
+    thumbnail_name = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Thumbnail Name of the index."""
+
+    thumbnail_mime_type = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Thumbnail MIME Type of the index."""
+
+    repository_id = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0
+    )
+    """Repository ID of the index."""
+
+    set_spec = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Set spec of the index."""
+
+    create_cover_flag = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0
+    )
+    """Create cover flag of the index."""
+
+    harvest_public_state = db.Column(
+        db.Boolean(name='harvest_public_state'),
+        nullable=True,
+        default=False
+    )
+    """Harvest public state of the index."""
+
+    owner_user_id = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0
+    )
+    """Owner user id of the index."""
+
+    biblio_flag = db.Column(
+        db.Boolean(name='biblioFlag'),
+        nullable=True,
+        default=False
+    )
+    """Biblio flag of the index."""
+
+    online_issn = db.Column(
+        db.Text,
+        nullable=True,
+        default=''
+    )
+    """Online issn of the index."""
+
+    ins_user_id = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0
+    )
+    """Insert user id of the index."""
+
+    mod_user_id = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0
+    )
+    """Modify user id of the index."""
+
+    del_user_id = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0
+    )
+    """Delete user id of the index."""
+
+    ins_date = db.Column(
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        nullable=True,
+        default=datetime.utcnow
+    )
+    """Insert date of the index."""
+
+    mod_date = db.Column(
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        nullable=True
+    )
+    """Modify date of the index."""
+
+    del_date = db.Column(
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        nullable=True
+    )
+    """Delete date of the index."""
+
+    is_delete = db.Column(
+        db.Boolean(name='delete_flag'),
+        nullable=True,
+        default=False
+    )
+    """Delete flag of the index."""
+
+    def serialize(self):
+        obj = Serializer.serialize(self)
+        del obj['is_delete']
+        del obj['del_date']
+        del obj['mod_date']
+        del obj['ins_date']
+        del obj['del_user_id']
+        del obj['mod_user_id']
+        del obj['ins_user_id']
+        del obj['owner_user_id']
+        del obj['updated']
+        del obj['created']
+        return obj

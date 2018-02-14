@@ -36,11 +36,20 @@
     margin: -10px 0;
 }
 
+input[type="date"] {
+    width: 180px;
+}
+
+span.indent {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
 .p-top-20 {
     padding-top: 20px;
 }
 
-.m-top-5 {
+.m-top-5, .row-line-space {
     margin-top: 5px;
 }
 

@@ -93,6 +93,12 @@ setup(
             'weko_index_tree_view = weko_index_tree.bundles:js_treeview',
             'weko_index_tree_js = weko_index_tree.bundles:js',
         ],
+        'invenio_db.alembic': [
+            'weko_index_tree = weko_index_tree:alembic',
+        ],
+        'invenio_db.models': [
+            'weko_index_tree = weko_index_tree.models',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

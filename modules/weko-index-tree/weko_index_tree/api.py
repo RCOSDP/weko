@@ -20,8 +20,11 @@
 
 """API for weko-index-tree."""
 
+from datetime import datetime
+
 from invenio_db import db
 from flask import current_app
+from flask_login import current_user
 from .models import Index, IndexTree
 
 
@@ -77,9 +80,22 @@ class Indexes(object):
         try:
             with db.session.begin_nested():
                 for i in indexes:
-                    index_list.append(Index(id=i['id'], parent=i['parent'],
-                                            children=i['children']))
-                db.session.add_all(index_list)
+                    index = Index.query.filter_by(id=i['id']).first()
+                    if index is not None:
+                        index.parent = i['parent']
+                        index.children = i['children']
+                        index.is_delete = False
+                        db.session.merge(index)
+                    else:
+                        index_list.append(
+                            Index(id=i['id'],
+                                  parent=i['parent'],
+                                  children=i['children'],
+                                  owner_user_id=current_user.get_id(),
+                                  ins_user_id=current_user.get_id(),
+                                  ins_date=datetime.utcnow()))
+                if len(index_list) > 0:
+                    db.session.add_all(index_list)
             db.session.commit()
         except Exception as ex:
             current_app.logger.debug(ex)
@@ -90,7 +106,8 @@ class Indexes(object):
     @classmethod
     def delete_all(cls):
         """Delete all indexes."""
-        Index.query.delete()
+        # Index.query.delete()
+        Index.query.update({'is_delete': True})
 
     @classmethod
     def get_all_descendants(cls, parent_id):
@@ -112,3 +129,50 @@ class Indexes(object):
                 result[i.id] = [i.id] + i.children.split(',')
         current_app.logger.debug(result)
         return result
+
+    @classmethod
+    def get_detail_by_id(cls, index_id):
+        """Get detail info of index by index_id
+
+        :param index_id:
+        :return: Type of Index
+        """
+        index = Index.query.filter_by(id=index_id, is_delete=False).first()
+        return index
+
+    @classmethod
+    def upt_detail_by_id(cls, index_id, **detail):
+        try:
+            with db.session.begin_nested():
+                index = Index.query.filter_by(id=index_id).first()
+                if index is None:
+                    return None
+                for k in detail.keys():
+                    setattr(index, k, detail.get(k))
+                index.mod_user_id = current_user.get_id()
+                index.mod_date = datetime.utcnow()
+                db.session.merge(index)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+            return None
+        return index
+
+    @classmethod
+    def del_by_indexid(cls, index_id):
+        try:
+            with db.session.begin_nested():
+                index = Index.query.filter_by(id=index_id).first()
+                if index is None:
+                    return None
+                index.is_delete = True
+                index.del_date = datetime.utcnow()
+                index.del_user_id = current_user.get_id()
+                db.session.merge(index)
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+            return None
+        return True
