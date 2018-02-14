@@ -36,7 +36,6 @@ bundle as an example):
 
 from flask_assets import Bundle
 
-
 css = Bundle(
     'css/weko_theme/theme.scss',
     'css/weko_theme/jsontreeview.css',
@@ -51,10 +50,13 @@ js_treeview = Bundle(
 )
 
 js = Bundle(
-    'js/weko_theme/app.js',
+    'js/weko_theme/base.js',
     filters='requirejs',
     output="gen/weko_theme.%(version)s.js",
 )
 
-
-
+js_top_page = Bundle(
+    'js/weko_theme/top_page.js',
+    filters='requirejs',
+    output="gen/weko_top_page.%(version)s.js",
+)

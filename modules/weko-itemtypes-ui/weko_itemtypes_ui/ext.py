@@ -49,7 +49,7 @@ class WekoItemtypesUI(object):
         :param app: The Flask application.
         """
         # Use theme's base template if theme is installed
-        if 'BASE_TEMPLATE' in app.config:
+        if 'BASE_EDIT_TEMPLATE' in app.config:
             app.config.setdefault(
                 'WEKO_ITEMTYPES_UI_BASE_TEMPLATE',
                 app.config['BASE_EDIT_TEMPLATE'],

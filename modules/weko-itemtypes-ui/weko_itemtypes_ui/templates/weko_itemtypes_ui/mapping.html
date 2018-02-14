@@ -29,8 +29,12 @@
   {% assets "weko_itemtypes_mapping_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body %}
-<div class="container">
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('アイテムタイプ') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-10">
       <div class="panel panel-info">
@@ -44,6 +48,7 @@
                 {% endfor %}
               </select>
             </div>
+            <a type="button" class="btn btn-default pull-right" href="{{ url_for('weko_itemtypes_ui.index') }}">{{ _('Item Types') }}</a>
           </div>
         </div>
       </div>
@@ -66,8 +71,9 @@
       </div>
     </div>
   </div>
-</div>
-
+{%- endblock page_body_main%}
+{%- block page_body%}
+{{ super() }}
 <!-- modal start -->
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog" role="document">

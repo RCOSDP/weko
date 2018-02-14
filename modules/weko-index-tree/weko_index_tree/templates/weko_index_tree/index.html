@@ -31,30 +31,33 @@
   {% assets "weko_index_tree_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body %}
-<div class="container">
-  <div class="row">
-    <div class="col-sm-2 col-md-2 col-lg-2">
-      <div id="index_tree"></div>
-    </div>
-    <div class="col-sm-10 col-md-10 col-lg-10">
-      <div class="form-horizontal">
-        <div class="form-group">
-          <label for="index-tree" class="col-sm-2 control-label">{{_('Index Tree')}}</label>
-          <div class="col-sm-10">
-            <textarea class="form-control" rows="30" id="index-tree">{{ index_tree }}</textarea>
-          </div>
-        </div>
-        <div class="form-group">
-          <div class="col-sm-offset-2 col-sm-12 col-md-12 col-lg-10">
-            <button id="index-tree-submit" class="btn btn-default">{{_('sending')}}</button>
-          </div>
-        </div>
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('ツリー編集') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+<div class="row">
+  <div class="col-sm-2 col-md-2 col-lg-2">
+    <div id="index_tree"></div>
+  </div>
+  <div class="col-sm-10 col-md-10 col-lg-10">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">{{_('Index Tree')}}</h3>
+      </div>
+      <div class="panel-body">
+        <textarea class="form-control" rows="30" id="index-tree">{{ index_tree }}</textarea>
+      </div>
+      <div class="panel-footer">
+        <button id="index-tree-submit" class="btn btn-default">{{_('sending')}}</button>
       </div>
     </div>
   </div>
 </div>
-
+{%- endblock page_body_main %}
+{%- block page_body %}
+{{ super() }}
 <!-- modal start -->
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog" role="document">

@@ -27,14 +27,10 @@
       <div class="panel panel-default">
         <div class="panel-heading">
           {%- block body_title %}
-            {%- block body_title_right %}
             <div class="pull-right">
-              <button type="button" id="itemtype-edit" class="btn btn-danger">
-                <i class="fa fa-gear"></i>
-                {{_('Edit')}}
-              </button>
-            </div>
+            {%- block body_title_right %}
             {%- endblock body_title_right %}
+            </div>
             {%- block body_title_left %}
               <h5><strong><p class="text-uppercase">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
             {%- endblock body_title_left %}

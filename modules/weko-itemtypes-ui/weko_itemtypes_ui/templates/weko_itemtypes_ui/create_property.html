@@ -29,12 +29,16 @@
   <script src="/static/node_modules/react/dist/react.js"></script>
   <script src="/static/node_modules/react-dom/dist/react-dom.js"></script>
   <script src="/static/js/weko_itemtypes_ui/jsonschemaeditor.js"></script>
-{{ super() }}
+  {{ super() }}
   {% assets "weko_itemtypes_property_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body %}
-<div class="container">
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('アイテムタイプ') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="panel panel-info">
@@ -49,13 +53,14 @@
                 {% endfor %}
               </select>
             </div>
+            <a type="button" class="btn btn-default pull-right" href="{{ url_for('weko_itemtypes_ui.index') }}">{{ _('Item Types') }}</a>
           </div>
         </div>
       </div>
     </div>
   </div>
   <div class="row">
-    <div class="col-sm-12 col-md-12 col-lg-10">
+    <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="panel panel-default">
         <div class="panel-heading">
           <div class="form-inline">
@@ -71,52 +76,56 @@
       </div>
     </div>
   </div>
-  <div class="panel panel-default">
-    <div class="panel-body">
-      <div class="row">
-        <div class="col-sm-12 col-md-12 col-lg-12">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title">{{_('Json Schema')}}</h3>
-              <button type="button" class="btn btn-default" id="previews">
-                <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> {{_('Refresh')}}
-              </button>
-            </div>
-            <div class="panel-body">
-              <pre class="pre-scrollable" id="schema_json"></pre>
+  <div class="row">
+    <div class="col-sm-12 col-md-12 col-lg-11">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-sm-12 col-md-12 col-lg-12">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <button type="button" class="btn btn-default" id="previews">
+                    <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> {{_('Json Schema')}}
+                  </button>
+                </div>
+                <div class="panel-body">
+                  <pre class="pre-scrollable" id="schema_json"></pre>
+                </div>
+              </div>
             </div>
           </div>
+          <div class="row">
+            <div class="col-sm-12 col-md-6 col-lg-6">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h3 class="panel-title">Form(単数)</h3>
+                </div>
+                <div class="panel-body">
+                  <textarea class="form-control pre-scrollable" rows="50" id="form1_json"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-12 col-md-6 col-lg-6">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h3 class="panel-title">Form(複数)</h3>
+                </div>
+                <div class="panel-body">
+                  <textarea class="form-control pre-scrollable" rows="50" id="form2_json"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-footer">
+          <button class="btn btn-default" id="sending">{{_('Sending')}}</button>
         </div>
       </div>
-      <div class="row">
-        <div class="col-sm-12 col-md-6 col-lg-6">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title">Form(単数)</h3>
-            </div>
-            <div class="panel-body">
-              <textarea class="form-control pre-scrollable" rows="50" id="form1_json"></textarea>
-            </div>
-          </div>
-        </div>
-        <div class="col-sm-12 col-md-6 col-lg-6">
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title">Form(複数)</h3>
-            </div>
-            <div class="panel-body">
-              <textarea class="form-control pre-scrollable" rows="50" id="form2_json"></textarea>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="panel-footer">
-      <button class="btn btn-default" id="sending">{{_('Sending')}}</button>
     </div>
   </div>
-</div>
-
+{%- endblock page_body_main%}
+{%- block page_body%}
+{{ super() }}
 <!-- modal start -->
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog" role="document">

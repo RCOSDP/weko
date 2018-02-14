@@ -40,7 +40,6 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
-<div class="container">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="panel panel-info">
@@ -55,14 +54,17 @@
                 {% endfor %}
               </select>
             </div>
+            <a type="button" class="btn btn-default pull-right" href="{{ url_for('weko_itemtypes_ui.custom_property') }}">{{ _('New Property') }}</a>
+            <a type="button" class="btn btn-default pull-right" href="{{ url_for('weko_itemtypes_ui.mapping_index') }}">{{ _('Mapping') }}</a>
           </div>
         </div>
       </div>
     </div>
   </div>
+<div class="container">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
-      <div class="row margin-5-7">
+      <div class="row">
         <div class="alert alert-danger hide" role="alert" id="itemtype_name_warning">
           <strong>{{_(Warning)}}:</strong> {{_('アイテムタイプ名が空白です')}}
         </div>
@@ -252,11 +254,11 @@
         <div class="col-sm-3 col-md-3 col-lg-3 pull-right">
           <button type="button" class="btn btn-default btn-block" id="btn_create_itemtype_schema">{{_('Sending')}}</button>
         </div>
-        <div class="col-sm-3 col-md-3 col-lg-3 pull-right">
+        <div class="col-sm-3 col-md-3 col-lg-3 pull-right hide">
           <button type="button" class="btn btn-default btn-block" id="btn_previews_itemtype_schema">{{_('Previews')}}</button>
         </div>
       </div>
-      <div class="panel panel-default">
+      <div class="panel panel-default hide">
         <div class="panel-body">
           <div class="row">
             <div class="col-sm-12 col-md-6 col-lg-6">

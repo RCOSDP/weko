@@ -20,7 +20,7 @@
 
 """Configuration for weko-theme."""
 
-BASE_TEMPLATE = 'weko_theme/page.html'
+BASE_PAGE_TEMPLATE = 'weko_theme/page.html'
 """Base template for user facing pages."""
 
 BASE_EDIT_TEMPLATE = 'weko_theme/edit.html'

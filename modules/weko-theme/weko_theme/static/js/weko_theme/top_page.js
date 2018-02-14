@@ -1,10 +1,6 @@
 require([
   "jquery",
   ], function() {
-  $('#itemtype-edit').on('click', function(){
-    window.location.href = '/itemtypes/';
-  });
-
   function getItemsByIndex(node) {
     refreshBreak(node);
   }

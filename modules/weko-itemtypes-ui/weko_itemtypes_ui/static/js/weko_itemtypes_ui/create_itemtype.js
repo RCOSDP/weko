@@ -50,13 +50,7 @@
     });
 
     $('#item-type-lists').on('change', function(){
-      //add by ryuu.
-      var pathName = document.location.pathname;
-      var index = pathName.substr(1).indexOf("/");
-      var result = pathname.substr(0,index+1);
-      //update by ryuu.
-      // window.location.href = '/itemtypes/' + $('#item-type-lists').val();
-      window.location.href = "www.google.co.jp";//result + '/itemtypes/' + $('#item-type-lists').val();
+      window.location.href = '/itemtypes/' + $('#item-type-lists').val();
     });
     $('#btn_create_itemtype_schema').on('click', function(){
       if($('#itemtype_name').val() == "") {
