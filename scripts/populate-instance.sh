@@ -115,5 +115,5 @@ ${INVENIO_WEB_INSTANCE} index queue init
 # sphinxdoc-index-initialisation-end
 
 # sphinxdoc-populate-with-demo-records-begin
-${INVENIO_WEB_INSTANCE} demo init
+#${INVENIO_WEB_INSTANCE} demo init
 # sphinxdoc-populate-with-demo-records-end
