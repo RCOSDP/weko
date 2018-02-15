@@ -21,16 +21,15 @@
 {%- extends config.WEKO_SCHEMA_UI_BASE_TEMPLATE %}
 
 {%- block css %}
-{% assets "invenio_deposit_css" %}
-<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {{ super() }}
 {%- endblock css %}
 
 {%- block javascript %}
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {{ super() }}
-  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{{ super() }}
+{% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body %}
@@ -39,7 +38,7 @@
     <div class="row">
       <div class="body col-sm-12 col-md-9">
         <h4 class="title">{{ _('OAI Schema') }}</h4>
-        {% if not records %} No Schema .. Please add your greatist schema {% endif %}
+        {% if not records %} No Schema .. Please add your greatest schema {% endif %}
         {%- if records -%}
         <table class="table table-bordered table-striped">
           <thead>
@@ -50,18 +49,25 @@
           </tr>
           </thead>
           <tbody>
-          {%- for r in records -%}
-          <tr class="">
-            <td class="nowrap">{{ r.schema_name }}</td>
-            <td class="nowrap">{{ r.root_name }}</td>
-            <td class="forcewrap">
-              <span class="pull-left">
-                <a class="btn btn-info" href="{{m_url}}"><i class="fa fa-hand-o-right"></i> {{_("Go Mapping")}}</a>
-                <a class="btn btn-danger" ng-click="doDel('{{del_url + r.pid}}')"><i class="fa fa fa-cut"></i> {{_("Delete")}}</a>
-              </span>
-            </td>
-          </tr>
-          {%- endfor -%}
+          <form class="form form-inline" action="{{ url_for('.delete')}}" method="POST">
+            <div class="form-group">
+              {%- for r in records -%}
+              {% if r.dis == 'disabled' %}{% set pid = '#' %}{% else %}{% set pid = r.pid %}{% endif %}
+              <tr class="">
+                <td class="nowrap">{{ r.schema_name }}</td>
+                <td class="nowrap">{{ r.root_name }}</td>
+                <td class="forcewrap">
+                  <span class="pull-left">
+                          <a class="btn btn-info" href="{{url_for('weko_itemtypes_ui.mapping_index')}}">
+                            <i class="fa fa-hand-o-right"></i> {{_("Go Mapping")}}</a>
+                          <button class="btn btn-danger" name="pid" type="submit" value="{{pid}}" {{r.dis}}><i
+                            class="fa fa fa-cut"></i> {{_("Delete")}}</a></button>
+                  </span>
+                </td>
+              </tr>
+              {%- endfor -%}
+            </div>
+          </form>
           </tbody>
         </table>
         {%- endif %}

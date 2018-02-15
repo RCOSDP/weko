@@ -2,6 +2,11 @@
   "type": "object",
   "title": "Comment",
   "properties": {
+    "file_name": {
+      "title": "File Name",
+      "type": "string",
+      "description": "Full Name of Schema File (only one)."
+    },
     "name": {
       "title": "Schema Name",
       "type": "string",
@@ -20,6 +25,7 @@
     }
   },
   "required": [
+    "file_name",
     "name",
     "root_name"
   ]

@@ -26,8 +26,8 @@ from invenio_records_rest.serializers.marshmallow import MarshmallowSerializer
 from ..utils import dumps, dumps_etree
 
 
-class WekoXmlSerializer(MarshmallowSerializer):
-    """WekoXml serializer."""
+class WekoXMLSerializer(MarshmallowSerializer):
+    """WekoXML serializer."""
 
     def __init__(self, xslt_filename=None, schema_class=None,
                  replace_refs=False):
@@ -44,7 +44,7 @@ class WekoXmlSerializer(MarshmallowSerializer):
             xslt_filename else {}
 
         self.schema_class = schema_class
-        super(WekoXmlSerializer, self).__init__(replace_refs=replace_refs)
+        super(WekoXMLSerializer, self).__init__(replace_refs=replace_refs)
 
     def serialize(self, pid, record, links_factory=None):
         """Serialize a single record and persistent identifier.
@@ -59,7 +59,7 @@ class WekoXmlSerializer(MarshmallowSerializer):
         return dumps(self.transform_record(pid, record, links_factory),
                      **self.dumps_kwargs)
 
-    def serialize_oaipmh(self, pid, record):
+    def serialize_oaipmh(self, pid, record, schema_type):
         """Serialize a single record for OAI-PMH.
 
         :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
@@ -71,4 +71,4 @@ class WekoXmlSerializer(MarshmallowSerializer):
             if isinstance(record['_source'], Record) \
             else self.transform_search_hit(pid, record)
 
-        return dumps_etree(obj, **self.dumps_kwargs)
+        return dumps_etree(obj, schema_type)

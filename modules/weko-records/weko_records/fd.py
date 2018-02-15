@@ -97,16 +97,16 @@ def prepare_response(pid_value, fd=True):
         headers['Content-Type'] = 'text/plain; charset=utf-8'
         headers.add('Content-Disposition', 'inline')
         mimetype = mimetypes.guess_type(request.view_args.get("filename"))[0]
-        if 'detail' in displaytype and '.pdf' in file_name:
-            from PyPDF2.pdf import PdfFileWriter, PdfFileReader
-            import io
-            source = PdfFileReader(io.BytesIO(stream), strict=True)
-            fp = source.getPage(0)
-            writer = PdfFileWriter()
-            writer.addPage(fp)
-            f = io.BytesIO()
-            writer.write(f)
-            stream = f.getvalue()
+        # if 'detail' in displaytype and '.pdf' in file_name:
+        #     from PyPDF2.pdf import PdfFileWriter, PdfFileReader
+        #     import io
+        #     source = PdfFileReader(io.BytesIO(stream), strict=True)
+        #     fp = source.getPage(0)
+        #     writer = PdfFileWriter()
+        #     writer.addPage(fp)
+        #     f = io.BytesIO()
+        #     writer.write(f)
+        #     stream = f.getvalue()
 
     rv = current_app.response_class(
         stream,

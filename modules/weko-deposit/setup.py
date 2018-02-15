@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Module for displaying records."""
+"""Module of weko-deposit."""
 
 import os
 
@@ -56,8 +56,6 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.2',
-    # 'invenio-previewer>=1.0.0a11',
-    'PyPDF2>=1.26.0',
 ]
 
 packages = find_packages()
@@ -65,36 +63,30 @@ packages = find_packages()
 
 # Get the version string. Cannot be done with import!
 g = {}
-with open(os.path.join('weko_records_ui', 'version.py'), 'rt') as fp:
+with open(os.path.join('weko_deposit', 'version.py'), 'rt') as fp:
     exec(fp.read(), g)
     version = g['__version__']
 
 setup(
-    name='weko-records-ui',
+    name='weko-deposit',
     version=version,
     description=__doc__,
     long_description=readme + '\n\n' + history,
-    keywords='weko records ui',
+    keywords='weko deposit',
     license='GPLv2',
     author='National Institute of Informatics',
     author_email='wekosoftware@nii.ac.jp',
-    url='https://github.com/wekosoftware/weko-records-ui',
+    url='https://github.com/wekosoftware/weko-deposit',
     packages=packages,
     zip_safe=False,
     include_package_data=True,
     platforms='any',
     entry_points={
         'invenio_base.apps': [
-            'weko_records_ui = weko_records_ui:WekoRecordsUI',
+            'weko_deposit = weko_deposit:WekoDeposit',
         ],
         'invenio_i18n.translations': [
-            'messages = weko_records_ui',
-        ],
-        'invenio_config.module': [
-            'weko_records_ui = weko_records_ui.config',
-        ],
-        'invenio_assets.bundles': [
-            'weko_records_ui_js = weko_records_ui.bundles:js',
+            'messages = weko_deposit',
         ],
     },
     extras_require=extras_require,

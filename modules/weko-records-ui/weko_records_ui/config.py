@@ -32,7 +32,7 @@ RECORDS_UI_ENDPOINTS = dict(
     recid_export=dict(
         pid_type='recid',
         route="/records/<pid_value>/export/<format>",
-        view_imp="invenio_records_ui.views.export",
+        view_imp="weko_records_ui.views.export",
         template="weko_records_ui/export.html",
     ),
     recid_files=dict(
@@ -46,3 +46,58 @@ RECORDS_UI_ENDPOINTS = dict(
         view_imp='weko_records.fd.file_preview_ui',
     ),
 )
+
+RECORDS_UI_EXPORT_FORMATS = {
+    'recid': {
+        'junii2': dict(
+            title='JUNII2',
+            serializer='weko_schema_ui.serializers.WekoCommonSchema',
+            order=1,
+        ),
+        'jpcoar': dict(
+            title='JPCOAR',
+            serializer='weko_schema_ui.serializers.WekoCommonSchema',
+            order=2,
+        ),
+        'dc': dict(
+            title='DublinCore',
+            serializer='weko_schema_ui.serializers.WekoCommonSchema',
+            order=3,
+        ),
+        'json': dict(
+            title='JSON',
+            serializer='invenio_records_rest.serializers.json_v1',
+            order=4,
+        ),
+    }
+}
+
+OAISERVER_METADATA_FORMATS = {
+    'junii2': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': "junii2",
+            }
+        ),
+        'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
+        'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+    },
+    'jpcoar': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': "jpcoar",
+            }
+        ),
+        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
+        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
+    },
+    'oai_dc': {
+        'serializer': (
+            'weko_schema_ui.utils:dumps_oai_etree', {
+                'schema_type': "dc",
+            }
+        ),
+        'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+        'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
+    }
+}

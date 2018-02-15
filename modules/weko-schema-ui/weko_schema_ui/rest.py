@@ -21,12 +21,13 @@
 """Blueprint for schema rest."""
 
 import json, uuid, shutil
+import os.path
 
-from copy import deepcopy
-from functools import partial
+# from copy import deepcopy
+# from functools import partial
 
 from flask import Blueprint, abort, current_app, jsonify, request, \
-    url_for
+    url_for, redirect
 from invenio_db import db
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore.errors import PIDInvalidAction
@@ -43,15 +44,9 @@ from invenio_rest.views import create_api_errorhandler
 from webargs import fields
 from webargs.flaskparser import use_kwargs
 from werkzeug.utils import secure_filename
-from invenio_records_rest.errors import InvalidDataRESTError, InvalidQueryRESTError, \
-    JSONSchemaValidationError, MaxResultWindowRESTError, \
-    PatchJSONFailureRESTError, PIDResolveRESTError, \
-    SuggestMissingContextRESTError, SuggestNoCompletionsRESTError, \
-    UnsupportedMediaRESTError
+from invenio_records_rest.errors import InvalidDataRESTError, UnsupportedMediaRESTError
 from invenio_files_rest.storage import PyFSFileStorage
-from .api import WekoSchema
-from .schema import SchemaConventer
-from .views import schema_list_render
+from .schema import SchemaConverter
 
 
 def create_error_handlers(blueprint):
@@ -196,16 +191,45 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             data.pop('$schema')
             sn = data.get('name')
 
-            fn = furl + sn + ".xsd"
+            if not os.path.exists(furl):
+                return jsonify({'status': 'Please upload file first.'})
 
-            xsd = SchemaConventer(fn, data.get('root_name'))
-            self.record_class.create(pid, sn+"_mapping", data, xsd.to_dict(), xsd.namespaces)
-            db.session.commit()
+            fn = data.get('file_name')
+            fn = furl + (fn if "." in fn else fn + ".xsd")
+
+            xsd = SchemaConverter(fn, data.get('root_name'))
+            try:
+                self.record_class.create(pid, sn+"_mapping", data, xsd.to_dict(), xsd.namespaces)
+                db.session.commit()
+            except:
+                abort(400, 'Schema of the same name already exists.')
+
+            #set the schema to be vaild
+            # for k, v in current_app.config["RECORDS_UI_EXPORT_FORMATS"].items():
+            #     if isinstance(v, dict):
+            #         for k1, v1 in v.items():
+            #             if isinstance(v1, dict):
+            #                 v1 = v1.copy()
+            #                 v1["title"] = sn.upper()
+            #                 v1["order"] = len(v)
+            #                 v.update({sn: v1})
+            #                 break
+            for k, v in current_app.config["OAISERVER_METADATA_FORMATS"].items():
+                if isinstance(v, dict):
+                    v1 = v.copy()
+                    lst = list(v1["serializer"])
+                    lst[1]["schema_type"] = sn
+                    v1["serializer"] = tuple(lst)
+                    v1["namespace"] = ""
+                    v1["schema"] = ""
+                    v.update(v1)
+                    break
+
 
             # move out those files from tmp folder
             shutil.move(furl, dst)
 
-            return jsonify({'status': 'success'})
+            return jsonify({'status': 'uploaded successfully.'})
         else:
             # the first post
 
@@ -220,7 +244,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             links['bucket'] = request.base_url + "put/" + str(pid.object_uuid)
 
             response = current_app.response_class(json.dumps({"links":links}), mimetype=request.mimetype)
-            response.status_code = 200
+            response.status_code = 201
             return response
 
     # @need_record_permission('create_permission_factory')
@@ -233,7 +257,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
         fn = request.view_args['key']
 
         # if ".xsd" not in fn:
-        #     abort(401,"aaaa")
+        #     abort(405, "Xsd File only !!")
 
         pid = request.view_args['pid_value']
         furl = self.xsd_location_folder + "tmp/" + pid + "/" + fn

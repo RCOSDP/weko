@@ -54,6 +54,8 @@ def export(pid, record, template=None, **kwargs):
     elif fmt is None:
         abort(404)
     else:
+        if "json" not in schema_type:
+            record.update({"@export_schema_type": schema_type})
         serializer = obj_or_import_string(fmt['serializer'])
         data = serializer.serialize(pid, record)
         if isinstance(data, six.binary_type):

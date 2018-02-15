@@ -95,7 +95,7 @@ class WekoSchema(RecordBase):
             if not with_deleted:
                 query = query.filter(OAIServerSchema.xsd != None)  # noqa
             obj = query.one()
-            return cls(obj.json, model=obj)
+            return cls(obj.form_data, model=obj)
 
     @classmethod
     def get_record_by_name(cls, name, with_deleted=False):
@@ -111,8 +111,8 @@ class WekoSchema(RecordBase):
             query = OAIServerSchema.query.filter_by(schema_name=name, isvalid=True)
             if not with_deleted:
                 query = query.filter(OAIServerSchema.xsd != None)  # noqa
-            obj = query.one()
-            return cls(obj.json, model=obj)
+            obj = query.one_or_none()
+            return cls(obj.form_data, model=obj) if obj else None
 
     @classmethod
     def get_records(cls, ids, with_deleted=False):
@@ -127,7 +127,7 @@ class WekoSchema(RecordBase):
             if not with_deleted:
                 query = query.filter(OAIServerSchema.xsd != None)  # noqa
 
-            return [cls(obj.json, model=obj) for obj in query.all()]
+            return [cls(obj.form_data, model=obj) for obj in query.all()]
 
     @classmethod
     def get_all(cls, with_deleted=False):
@@ -193,4 +193,5 @@ class WekoSchema(RecordBase):
             obj = OAIServerSchema.query.filter_by(id=pid).one()
         db.session.delete(obj)
         db.session.commit()
+        return obj.schema_name
 
