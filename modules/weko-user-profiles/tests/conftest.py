@@ -20,36 +20,79 @@
 
 """Pytest configuration."""
 
+import os
 import shutil
 import tempfile
 
 import pytest
 from flask import Flask
 from flask_babelex import Babel
+from flask_mail import Mail
+from flask_menu import Menu
+from invenio_accounts import InvenioAccounts
+from invenio_accounts.views import blueprint as accounts_blueprint
+from invenio_db import InvenioDB, db
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
+
+from weko_user_profiles import WekoUserProfiles
+from weko_user_profiles.views import blueprint_ui_init
 
 
 @pytest.yield_fixture()
-def instance_path():
-    """Temporary instance path."""
-    path = tempfile.mkdtemp()
-    yield path
-    shutil.rmtree(path)
-
-
-@pytest.fixture()
-def base_app(instance_path):
+def base_app():
     """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
-    app_.config.update(
-        SECRET_KEY='SECRET_KEY',
+    instance_path = tempfile.mkdtemp()
+    base_app = Flask(__name__, instance_path=instance_path)
+
+    base_app.config.update(
+        ACCOUNTS_USE_CELERY=False,
+        LOGIN_DISABLED=False,
+        SECRET_KEY='testing_key',
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'sqlite://'),
+        TEST_USER_EMAIL='test_user@example.com',
+        TEST_USER_PASSWORD='test_password',
         TESTING=True,
+        WTF_CSRF_ENABLED=False,
     )
-    Babel(app_)
+    Babel(base_app)
+    Mail(base_app)
+    Menu(base_app)
+    InvenioDB(base_app)
+    InvenioAccounts(base_app)
+    base_app.register_blueprint(accounts_blueprint)
+
+    with base_app.app_context():
+        if str(db.engine.url) != "sqlite://" and \
+                not database_exists(str(db.engine.url)):
+            create_database(str(db.engine.url))
+        db.create_all()
+
+    yield base_app
+
+    with base_app.app_context():
+        drop_database(str(db.engine.url))
+    shutil.rmtree(instance_path)
+
+
+def _init_userprofiles_app(app_):
+    """Init UserProfiles modules."""
+    WekoUserProfiles(app_)
+    app_.register_blueprint(blueprint_ui_init)
     return app_
 
 
-@pytest.yield_fixture()
+@pytest.fixture
 def app(base_app):
-    """Flask application fixture."""
-    with base_app.app_context():
-        yield base_app
+    """Flask application."""
+    return _init_userprofiles_app(base_app)
+
+
+@pytest.fixture
+def app_with_csrf(base_app):
+    """Flask application with CSRF security enabled."""
+    base_app.config.update(
+        WTF_CSRF_ENABLED=True,
+    )
+    return _init_userprofiles_app(base_app)

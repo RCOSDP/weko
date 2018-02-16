@@ -18,12 +18,30 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Module of weko-user-profiles."""
+"""Validators for user profiles."""
 
-from .api import current_userprofile
-from .ext import WekoUserProfiles
-from .models import AnonymousUserProfile, UserProfile
-from .version import __version__
+import re
 
-__all__ = ('__version__', 'WekoUserProfiles', 'AnonymousUserProfile',
-           'UserProfile', 'current_userprofile')
+from flask_babelex import lazy_gettext as _
+
+username_regex = re.compile('^[a-zA-Z][a-zA-Z0-9-_]{2}[a-zA-Z0-9-_]*$')
+"""Username rules."""
+
+USERNAME_RULES = _(
+    'Username must start with a letter, be at least three characters long and'
+    ' only contain alphanumeric characters, dashes and underscores.')
+"""Description of username validation rules.
+
+.. note:: Used for both form help text and for form validation error."""
+
+
+def validate_username(username):
+    """Validate the username.
+
+    See :data:`~.username_regex` to know which rules are applied.
+
+    :param username: A username.
+    :raises ValueError: If validation fails.
+    """
+    if not username_regex.match(username):
+        raise ValueError(USERNAME_RULES)

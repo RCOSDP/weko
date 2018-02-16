@@ -1,0 +1,114 @@
+# English translations for invenio-userprofiles.
+# Copyright (C) 2015 CERN
+# This file is distributed under the same license as the
+# invenio-userprofiles project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-userprofiles 1.0.0.dev20150000\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2015-11-27 01:17+0100\n"
+"PO-Revision-Date: 2015-11-24 13:19+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.1.1\n"
+
+#. NOTE: Form field label
+#: invenio_userprofiles/forms.py:60
+msgid "Username"
+msgstr ""
+
+#. NOTE: Form field help text
+#: invenio_userprofiles/forms.py:62
+#, python-format
+msgid "Required. %(username_rules)s"
+msgstr ""
+
+#. NOTE: Form label
+#: invenio_userprofiles/forms.py:69
+msgid "Full name"
+msgstr ""
+
+#. NOTE: Form validation error.
+#: invenio_userprofiles/forms.py:83
+msgid "Username already exists."
+msgstr ""
+
+#. NOTE: Form field label
+#: invenio_userprofiles/forms.py:93
+msgid "Email address"
+msgstr ""
+
+#. NOTE: Form field label
+#: invenio_userprofiles/forms.py:105
+msgid "Re-enter email address"
+msgstr ""
+
+#. NOTE: Form field help text
+#: invenio_userprofiles/forms.py:107
+msgid "Please re-enter your email address."
+msgstr ""
+
+#. NOTE: Form validation error.
+#: invenio_userprofiles/forms.py:112
+msgid "Email addresses do not match."
+msgstr ""
+
+#. NOTE: Form button label
+#: invenio_userprofiles/forms.py:121
+msgid "Send verification email"
+msgstr ""
+
+#. NOTE: Used for both form help text and for form validation error.
+#: invenio_userprofiles/validators.py:36
+msgid ""
+"Username must start with a letter, be at least three characters long and "
+"only contain alphanumeric characters, dashes and underscores."
+msgstr ""
+
+#: invenio_userprofiles/views.py:53
+msgid "User Profile"
+msgstr ""
+
+#. NOTE: Menu item text (icon replaced by a user icon).
+#: invenio_userprofiles/views.py:59
+#, python-format
+msgid "%(icon)s Profile"
+msgstr ""
+
+#. NOTE: Flash message.
+#: invenio_userprofiles/views.py:110
+msgid "Verification email sent."
+msgstr ""
+
+#. NOTE: Flash message after successful update of profile.
+#: invenio_userprofiles/views.py:137
+#, python-format
+msgid ""
+"Profile was updated. We have sent a verification email to %(email)s. "
+"Please check it."
+msgstr ""
+
+#. NOTE: Flash message after successful update of profile.
+#: invenio_userprofiles/views.py:143
+msgid "Profile was updated."
+msgstr ""
+
+#: invenio_userprofiles/templates/invenio_userprofiles/settings/profile.html:34
+msgid "You have not yet verified your email address."
+msgstr ""
+
+#: invenio_userprofiles/templates/invenio_userprofiles/settings/profile.html:49
+msgid "Cancel"
+msgstr ""
+
+#: invenio_userprofiles/templates/invenio_userprofiles/settings/profile.html:50
+msgid "Update profile"
+msgstr ""
+

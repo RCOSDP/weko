@@ -18,12 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Module of weko-user-profiles."""
-
-from .api import current_userprofile
-from .ext import WekoUserProfiles
-from .models import AnonymousUserProfile, UserProfile
-from .version import __version__
-
-__all__ = ('__version__', 'WekoUserProfiles', 'AnonymousUserProfile',
-           'UserProfile', 'current_userprofile')
+invenio-access>=1.0.0a12
+invenio-assets>=1.0.0b6
+invenio-theme>=1.0.0b2
+invenio-mail>=1.0.0b1

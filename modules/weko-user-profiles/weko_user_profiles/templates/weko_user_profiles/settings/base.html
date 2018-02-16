@@ -17,11 +17,8 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
-
-{%- extends config.WEKO_USER_PROFILES_BASE_TEMPLATE %}
+{%- extends "weko_user_profiles/base.html" %}
 
 {%- block page_body %}
-TODO: Example template, please remove if you do not need it.
-{{_('Welcome to %(module_name)s', module_name=module_name)}}
-{%- endblock %}
-
+{%- block settings_form %}{%- endblock settings_form %}
+{%- endblock page_body %}

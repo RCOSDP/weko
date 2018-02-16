@@ -21,7 +21,7 @@
 """Flask extension for weko-user-profiles."""
 
 from . import config
-from .views import blueprint
+from .api import current_userprofile
 
 
 class WekoUserProfiles(object):
@@ -41,7 +41,9 @@ class WekoUserProfiles(object):
         :param app: The Flask application.
         """
         self.init_config(app)
-        app.register_blueprint(blueprint)
+        # Register current_profile
+        app.context_processor(lambda: dict(
+            current_userprofile=current_userprofile))
         app.extensions['weko-user-profiles'] = self
 
     def init_config(self, app):
@@ -49,12 +51,33 @@ class WekoUserProfiles(object):
 
         :param app: The Flask application.
         """
-        # Use theme's base template if theme is installed
-        if 'BASE_TEMPLATE' in app.config:
-            app.config.setdefault(
-                'WEKO_USER_PROFILES_BASE_TEMPLATE',
-                app.config['BASE_TEMPLATE'],
-            )
+        excludes = [
+            'USERPROFILES_BASE_TEMPLATE',
+            'USERPROFILES_SETTINGS_TEMPLATE',
+        ]
         for k in dir(config):
-            if k.startswith('WEKO_USER_PROFILES_'):
+            if k.startswith('USERPROFILES_') and k not in excludes:
                 app.config.setdefault(k, getattr(config, k))
+
+        app.config.setdefault('USERPROFILES', True)
+
+        app.config.setdefault(
+            'USERPROFILES_BASE_TEMPLATE',
+            app.config.get('BASE_TEMPLATE',
+                           'weko_user_profiles/base.html'))
+
+        app.config.setdefault(
+            'USERPROFILES_SETTINGS_TEMPLATE',
+            app.config.get('SETTINGS_TEMPLATE',
+                           'weko_user_profiles/settings/base.html'))
+
+        if app.config['USERPROFILES_EXTEND_SECURITY_FORMS']:
+            app.config.setdefault(
+                'USERPROFILES_REGISTER_USER_BASE_TEMPLATE',
+                app.config.get(
+                    'SECURITY_REGISTER_USER_TEMPLATE',
+                    'invenio_accounts/register_user.html'
+                )
+            )
+            app.config['SECURITY_REGISTER_USER_TEMPLATE'] = \
+                'weko_user_profiles/register_user.html'

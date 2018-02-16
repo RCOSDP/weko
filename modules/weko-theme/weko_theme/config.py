@@ -34,6 +34,9 @@ template allows to change design and layout of WEKO3.
 THEME_HEADER_TEMPLATE = 'weko_theme/header.html'
 """Header template which is normally included in :data:`BASE_TEMPLATE`."""
 
+THEME_HEADER_LOGIN_TEMPLATE = 'weko_theme/header_login.html'
+"""Header login template, included in :data:`THEME_HEADER_TEMPLATE`."""
+
 THEME_BODY_TEMPLATE = 'weko_theme/body.html'
 """Body template which is normally included in :data:`BASE_TEMPLATE`."""
 

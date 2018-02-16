@@ -11,3 +11,4 @@
 -e /code/modules/weko-items-rest
 -e /code/modules/weko-schema-ui
 -e /code/modules/weko-index-tree
+-e /code/modules/weko-user-profiles

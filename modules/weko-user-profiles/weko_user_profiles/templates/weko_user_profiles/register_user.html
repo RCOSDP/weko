@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-#
+{#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -17,13 +16,15 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
+#}
 
-"""Module of weko-user-profiles."""
+{%- extends config.USERPROFILES_REGISTER_USER_BASE_TEMPLATE %}
 
-from .api import current_userprofile
-from .ext import WekoUserProfiles
-from .models import AnonymousUserProfile, UserProfile
-from .version import __version__
+{% from "invenio_accounts/_macros.html" import render_field %}
 
-__all__ = ('__version__', 'WekoUserProfiles', 'AnonymousUserProfile',
-           'UserProfile', 'current_userprofile')
+{% block registration_form_fields %}
+{%- with form = register_user_form %}
+{{ render_field(form.profile, icon="glyphicon glyphicon-lock", errormsg=False) }}
+{%- endwith %}
+{{ super() }}
+{% endblock %}

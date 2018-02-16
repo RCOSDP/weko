@@ -21,15 +21,19 @@
 """Module of weko-user-profiles."""
 
 import os
+import sys
 
 from setuptools import find_packages, setup
+from setuptools.command.test import test as TestCommand
 
 readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
+    'SQLAlchemy-Continuum>=1.2.1',
     'check-manifest>=0.25',
     'coverage>=4.0',
+    'invenio-i18n>=1.0.0b2',
     'isort>=4.2.2',
     'pydocstyle>=1.0.0',
     'pytest-cache>=1.0',
@@ -39,14 +43,29 @@ tests_require = [
 ]
 
 extras_require = {
+    'admin': [
+        'invenio-admin>=1.0.0b1',
+    ],
     'docs': [
         'Sphinx>=1.5.1',
+        'invenio-mail>=1.0.0b1',
+    ],
+    'mysql': [
+        'invenio-db[mysql]>=1.0.0b3',
+    ],
+    'postgresql': [
+        'invenio-db[postgresql]>=1.0.0b3',
+    ],
+    'sqlite': [
+        'invenio-db>=1.0.0b3',
     ],
     'tests': tests_require,
 }
 
 extras_require['all'] = []
-for reqs in extras_require.values():
+for name, reqs in extras_require.items():
+    if name in ('mysql', 'postgresql', 'sqlite'):
+        continue
     extras_require['all'].extend(reqs)
 
 setup_requires = [
@@ -55,7 +74,14 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
+    'Flask-BabelEx>=0.9.3',
+    'Flask-Breadcrumbs>=0.3.0',
+    'Flask-Mail>=0.9.1',
+    'Flask-Menu>=0.4.0',
+    'Flask-WTF>=0.13.1',
+    'Flask>=0.11.1',
+    'invenio-accounts>=1.0.0b3',
+    'WTForms>=2.0.1',
 ]
 
 packages = find_packages()
@@ -82,8 +108,26 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'invenio_admin.views': [
+            'invenio_userprofiles_view = '
+            'weko_user_profiles.admin:user_profile_adminview',
+        ],
+        'invenio_base.api_apps': [
+            'weko_user_profiles = weko_user_profiles:WekoUserProfiles',
+        ],
+        'invenio_base.api_blueprints': [
+            'weko_user_profiles'
+            ' = weko_user_profiles.views:blueprint_api_init',
+        ],
         'invenio_base.apps': [
             'weko_user_profiles = weko_user_profiles:WekoUserProfiles',
+        ],
+        'invenio_base.blueprints': [
+            'weko_user_profiles'
+            ' = weko_user_profiles.views:blueprint_ui_init',
+        ],
+        'invenio_db.models': [
+            'weko_user_profiles = weko_user_profiles.models',
         ],
         'invenio_i18n.translations': [
             'messages = weko_user_profiles',
