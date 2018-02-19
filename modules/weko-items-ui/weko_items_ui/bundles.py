@@ -23,6 +23,12 @@
 from flask_assets import Bundle
 from invenio_assets import NpmBundle
 
+indextree_style = Bundle(
+    'css/weko_items_ui/indextree.bundle.css',
+    filters='cleancss',
+    output="gen/indextree_ui.%(version)s.css"
+)
+
 js_dependencies_angularjs = NpmBundle(
     'js/weko_items_ui/inline.bundle.js',
     'js/weko_items_ui/polyfills.bundle.js',

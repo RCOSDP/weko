@@ -22,6 +22,7 @@
 
 {%- block css %}
   {{ super() }}
+  {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_index_tree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
@@ -38,10 +39,10 @@
 
 {%- block page_body_main %}
 <div class="row">
-  <div class="col-sm-2 col-md-2 col-lg-2">
+  <div class="col-sm-3 col-md-3 col-lg-3">
     <div id="index_tree"></div>
   </div>
-  <div class="col-sm-10 col-md-10 col-lg-10">
+  <div class="col-sm-9 col-md-9 col-lg-9">
     <div class="panel panel-default">
       <div class="panel-heading">
         <h3 class="panel-title">{{_('Edit Index Tree')}}</h3>
@@ -53,7 +54,7 @@
               <div class="row">
                 <div class="col-sm-2 col-md-2">{{_('インデックス')}}</div>
                 <div class="col-sm-10 col-md-10">
-                  <form class="form-horizontal">
+                  <div class="form-horizontal">
                     <div class="input-group">
                       <span class="input-group-addon">日本語</span>
                       <input type="text" class="form-control" id="inputTitle_ja" placeholder="">
@@ -63,7 +64,7 @@
                       <span class="input-group-addon">英語</span>
                       <input type="text" class="form-control" id="inputTitle_en" placeholder="">
                     </div>
-                  </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -215,6 +216,235 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('閲覧権限')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <h4><strong>{{_('権限(ベース権限)')}}</strong></h4>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-5 col-md-5">
+                      <div class="form-group">
+                        <label for="exclusive_acl_role_name">{{_('閲覧権限なし')}}</label>
+                        <select multiple class="form-control" id="exclusive_acl_role_name"></select>
+                      </div>
+                    </div>
+                    <div class="col-sm-1 col-md-">
+                      <label class="m-top-20"></label>
+                      <div class="btn-group-vertical" role="group" aria-label="">
+                        <button type="button" class="btn btn-default sortable_up" id="btn_up_acl_role">
+                          <span class="glyphicon glyphicon-forward" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="btn btn-default sortable_down" id="btn_down_acl_role">
+                          <span class="glyphicon glyphicon-backward" aria-hidden="true"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-sm-5 col-md-5">
+                      <div class="form-group">
+                        <label for="acl_role_name">{{_('閲覧権限あり')}}</label>
+                        <select multiple class="form-control" id="acl_role_name">
+                          <option value="0" disabled>システム管理者</option>
+                          <option value="1">主担</option>
+                          <option value="2">モデレータ</option>
+                          <option value="3">一般</option>
+                          <option value="4">ゲスト</option>
+                          <option value="5">事務局</option>
+                          <option value="6" disabled>管理者</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <h4><strong>{{_('権限(ルーム権限)')}}</strong></h4>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <span class="indent"></span>
+                      <label>{{_('閲覧権限あり')}}</label><br>
+                      <span class="indent"></span>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" id="acl_room_auth4" value="4" checked disabled> 主担
+                      </label>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth3" value="3" checked> モデレータ
+                      </label>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth2" value="2" checked> 一般
+                      </label>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth1" value="1" checked> ゲスト
+                      </label>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth0" value="0" checked> 未ログイン
+                      </label>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <h4><strong>{{_('グループ')}}</strong></h4>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-5 col-md-5">
+                      <div class="form-group">
+                        <label for="exclusive_acl_group_name">{{_('閲覧権限なし')}}</label>
+                        <select multiple class="form-control" id="exclusive_acl_group_name"></select>
+                      </div>
+                    </div>
+                    <div class="col-sm-1 col-md-">
+                      <label class="m-top-20"></label>
+                      <div class="btn-group-vertical" role="group" aria-label="">
+                        <button type="button" class="btn btn-default sortable_up" id="btn_up_acl_group">
+                          <span class="glyphicon glyphicon-forward" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="btn btn-default sortable_down" id="btn_down_acl_group">
+                          <span class="glyphicon glyphicon-backward" aria-hidden="true"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-sm-5 col-md-5">
+                      <div class="form-group">
+                        <label for="acl_group_name">{{_('閲覧権限あり')}}</label>
+                        <select multiple class="form-control" id="acl_group_name">
+                          <option>非会員</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                <div class="col-sm-2 col-md-2">{{_('投稿権限')}}</div>
+                <div class="col-sm-10 col-md-10">
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <h4><strong>{{_('権限(ベース権限)')}}</strong></h4>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-5 col-md-5">
+                      <div class="form-group">
+                        <label for="exclusive_access_role_name">{{_('閲覧権限なし')}}</label>
+                        <select multiple class="form-control" id="exclusive_access_role_name">
+                          <option vlaue="4">ゲスト</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-sm-1 col-md-1">
+                      <label class="m-top-20"></label>
+                      <div class="btn-group-vertical" role="group" aria-label="">
+                        <button type="button" class="btn btn-default sortable_up" id="btn_up_access_role">
+                          <span class="glyphicon glyphicon-forward" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="btn btn-default sortable_down" id="btn_down_access_role">
+                          <span class="glyphicon glyphicon-backward" aria-hidden="true"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-sm-5 col-md-5">
+                      <div class="form-group">
+                        <label for="acl_role_name">{{_('閲覧権限あり')}}</label>
+                        <select multiple class="form-control" id="access_role_name">
+                          <option value="0">システム管理者</option>
+                          <option value="1">主担</option>
+                          <option value="2">モデレータ</option>
+                          <option value="3">一般</option>
+                          <option value="5">事務局</option>
+                          <option value="6">管理者</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <span class="indent"></span>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" id="aclRoleIds_recursive" value="1"> 子インデックスのルーム権限にも再帰的に反映させる
+                      </label>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <h4><strong>{{_('権限(ルーム権限)')}}</strong></h4>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <span class="indent"></span>
+                      <label>{{_('閲覧権限あり')}}</label><br>
+                      <span class="indent"></span>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" id="access_room_auth4" value="4" checked disabled> 主担
+                      </label>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" name="access_room_auth" id="access_room_auth3" value="3"> モデレータ
+                      </label>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" name="access_room_auth" id="access_room_auth2" value="2"> 一般
+                      </label><br>
+                      <span class="indent"></span>
+                      <span class="indent"></span>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" id="aclRoomAuth_recursive" value="1"> 子インデックスのルーム権限にも再帰的に反映させる
+                      </label>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <h4><strong>{{_('グループ')}}</strong></h4>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-5 col-md-5">
+                      <div class="form-group">
+                        <label for="exclusive_access_group_name">{{_('閲覧権限なし')}}</label>
+                        <select multiple class="form-control" id="exclusive_access_group_name">
+                          <option>非会員</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-sm-1 col-md-1">
+                      <label class="m-top-20"></label>
+                      <div class="btn-group-vertical" role="group" aria-label="">
+                        <button type="button" class="btn btn-default sortable_up" id="btn_up_access_group">
+                          <span class="glyphicon glyphicon-forward" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="btn btn-default sortable_down" id="btn_down_access_group">
+                          <span class="glyphicon glyphicon-backward" aria-hidden="true"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="col-sm-5 col-md-5">
+                      <div class="form-group">
+                        <label for="acl_group_name">{{_('閲覧権限あり')}}</label>
+                        <select multiple class="form-control" id="access_group_name">
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-sm-12 col-md-12">
+                      <span class="indent"></span>
+                      <label class="checkbox-inline">
+                        <input type="checkbox" id="aclGroupIds_recursive" value="1"> 子インデックスのルーム権限にも再帰的に反映させる
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
                 <div class="col-sm-2 col-md-2">{{_('OpenSearch URI')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <input type="text" class="form-control" name="opensearch_uri" id="opensearch_uri" value="">
@@ -222,7 +452,7 @@
               </div>
             </div>
           </div>
-          <div class="panel panel-default">
+          <div class="panel panel-default hide">
             <div class="panel-body">
               <div class="row">
                 <div class="col-sm-2 col-md-2">{{_('サムネイル')}}</div>
@@ -232,7 +462,16 @@
                     <label>画像サイズ : 横1024px × 縦1280px </label><br>
                     <label>ファイルタイプ : gif, jpg, jpe, jpeg, png, bmp, tiff, tif</label>
                   </span>
-                  <input type="file" name="thumbnail_file" id="thumbnail_file" value=""  aria-describedby="thumbnail_file_helpBlock">
+                  <div id="thumbnail_upload">
+                    <form method="post" target="_top" action="/indextree/thumbnail/0" id="attachment_form" enctype="multipart/form-data">
+                      <input type="file" name="thumbnail_file" id="thumbnail_file" value=""  aria-describedby="thumbnail_file_helpBlock">
+                    </form>
+                  </div>
+                  <div id="thumbnail_edit" class="hide">
+                    <img src="" class="img-thumbnail" id="thumbnail_img">
+                    <button class="btn btn-default">{{_('編集')}}</button>
+                    <button class="btn btn-default">{{_('削除')}}</button>
+                  </div>
                 </div>
               </div>
             </div>

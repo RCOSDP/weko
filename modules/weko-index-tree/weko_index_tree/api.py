@@ -160,6 +160,14 @@ class Indexes(object):
         return index
 
     @classmethod
+    def get_Thumbnail_by_id(cls, index_id):
+        try:
+            index = Index.query.filter_by(id=index_id).first()
+        except Exception as ex:
+            return None
+        return index.thumbnail
+
+    @classmethod
     def del_by_indexid(cls, index_id):
         try:
             with db.session.begin_nested():

@@ -24,6 +24,7 @@ from flask import Blueprint, current_app, json, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from werkzeug.utils import secure_filename
 
 from .api import Indexes, IndexTrees
 from .utils import get_all_children
@@ -42,13 +43,17 @@ blueprint = Blueprint(
 def index():
     """Render the index tree edit page."""
     return render_template(
-        current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'])
+        current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'],
+        treeJson=[]
+    )
 
 
 @blueprint.route("/jsonmapping", methods=['GET'])
 def get_indexjson():
     """provide the index tree json for top page."""
     result = IndexTrees.get()
+    if result is None:
+        return jsonify([])
     return jsonify(result.tree)
 
 
@@ -72,6 +77,34 @@ def upt_index_detail(index_id=0):
         result = Indexes.upt_detail_by_id(index_id, **data)
     if result is None:
         return jsonify(code=400, msg='param error')
+    return jsonify(result.serialize())
+
+
+@blueprint.route("/thumbnail/<int:index_id>", methods=['GET'])
+@login_required
+def get_index_thumbnail(index_id=0):
+    result = None
+    if index_id > 0:
+        result = Indexes.get_Thumbnail_by_id(index_id)
+    if result is None:
+        return jsonify(code=400, msg='param error')
+    return result
+
+
+@blueprint.route("/thumbnail/<int:index_id>", methods=['POST'])
+@login_required
+def upt_index_thumbnail(index_id=0):
+    file = request.files['thumbnail_file']
+    data = {
+        'thumbnail': file.read(),
+        'thumbnail_name': secure_filename(file.filename),
+        'thumbnail_mime_type': file.content_type
+    }
+    result = None
+    if index_id > 0:
+        result = Indexes.upt_detail_by_id(index_id, **data)
+    if result is None:
+        return jsonify(code=400, msg='param error', data=data)
     return jsonify(result.serialize())
 
 
