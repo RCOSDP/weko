@@ -33,9 +33,3 @@ WEKO_ITEMTYPES_UI_MAPPING_TEMPLATE = 'weko_itemtypes_ui/mapping.html'
 
 WEKO_ITEMTYPES_UI_ERROR_TEMPLATE = 'weko_itemtypes_ui/error.html'
 """Error template for the item type page."""
-
-BABEL_DEFAULT_LOCALE = 'en'
-"""Babel default Locale."""
-
-BABEL_DEFAULT_TIMEZONE = 'UTC'
-"""Babel default timezone."""

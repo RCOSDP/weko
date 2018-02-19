@@ -22,9 +22,8 @@
 
 # the templates and static folders as well as the test case.
 
-from flask import Blueprint, render_template, request, Flask
+from flask import Blueprint, render_template, request, Flask, current_app
 from flask_babelex import gettext as _
-from flask_babelex import Babel
 
 
 blueprint = Blueprint(
@@ -34,14 +33,6 @@ blueprint = Blueprint(
     static_folder='static',
     url_prefix="/weko",
 )
-
-app = Flask(__name__)
-babel = Babel(app)
-
-
-@babel.localeselector
-def get_locale():
-    return request.accept_languages.best_match(['ja', 'ja_JP', 'en'])
 
 
 @blueprint.route("/")

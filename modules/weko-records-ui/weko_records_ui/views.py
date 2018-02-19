@@ -31,13 +31,6 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
 )
-app = Flask(__name__)
-babel = Babel(app)
-
-
-@babel.localeselector
-def get_locale():
-    return request.accept_languages.best_match(['ja', 'ja_JP', 'en'])
 
 
 def export(pid, record, template=None, **kwargs):

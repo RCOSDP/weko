@@ -31,9 +31,3 @@ WEKO_ADMIN_SETTINGS_TEMPLATE = None
 
 WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
 """Settings base templates for weko-admin module."""
-
-BABEL_DEFAULT_LOCALE = 'en'
-"""Babel default Locale."""
-
-BABEL_DEFAULT_TIMEZONE = 'UTC'
-"""Babel default timezone."""

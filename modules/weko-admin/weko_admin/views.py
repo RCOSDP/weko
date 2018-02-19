@@ -44,14 +44,6 @@ blueprint = Blueprint(
     url_prefix='/accounts/settings',
 )
 
-app = Flask(__name__)
-babel = Babel(app)
-
-
-@babel.localeselector
-def get_locale():
-    return request.accept_languages.best_match(['ja', 'ja_JP', 'en'])
-
 
 @blueprint.route('/session/lifetime/<int:minutes>', methods=['GET'])
 def set_lifetime(minutes):

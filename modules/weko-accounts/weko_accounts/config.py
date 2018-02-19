@@ -25,9 +25,3 @@ WEKO_ACCOUNTS_LOGGER_ENABLED = True
 
 WEKO_ACCOUNTS_BASE_TEMPLATE = 'weko_accounts/base.html'
 """Default base template for the demo page."""
-
-BABEL_DEFAULT_LOCALE = 'en'
-"""Babel default Locale."""
-
-BABEL_DEFAULT_TIMEZONE = 'UTC'
-"""Babel default timezone."""

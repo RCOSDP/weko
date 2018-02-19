@@ -39,9 +39,6 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-app = Flask(__name__)
-babel = Babel(app)
-
 
 def check_permission(permission, hidden=True):
     """Check if permission is allowed.
@@ -78,11 +75,6 @@ def need_permissions(hidden=False):
         return decorate
 
     return decorator_builder
-
-
-@babel.localeselector
-def get_locale():
-    return request.accept_languages.best_match(['ja', 'ja_JP', 'en'])
 
 
 @blueprint.route("/", methods=['GET'])

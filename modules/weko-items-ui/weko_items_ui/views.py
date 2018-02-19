@@ -34,14 +34,6 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-app = Flask(__name__)
-babel = Babel(app)
-
-
-@babel.localeselector
-def get_locale():
-    return request.accept_languages.best_match(['ja', 'ja_JP', 'en'])
-
 
 @blueprint.route("/", methods=['GET'])
 @blueprint.route("/<int:item_type_id>", methods=['GET'])

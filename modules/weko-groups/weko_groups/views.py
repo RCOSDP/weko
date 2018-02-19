@@ -44,8 +44,6 @@ blueprint = Blueprint(
     url_prefix='/accounts/settings/groups',
 )
 
-app = Flask(__name__)
-babel = Babel(app)
 
 # default_breadcrumb_root(blueprint, '.settings.groups')
 
@@ -60,11 +58,6 @@ def get_group_name(id_group):
     group = Group.query.get(id_group)
     if group is not None:
         return group.name
-
-
-@babel.localeselector
-def get_locale():
-    return request.accept_languages.best_match(['ja', 'ja_JP', 'en'])
 
 
 @blueprint.route('/groupcount', methods=['GET'])
