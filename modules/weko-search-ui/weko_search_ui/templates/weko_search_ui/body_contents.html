@@ -22,6 +22,9 @@
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
     <h3 class="panel-title">{{_('検索結果')}}</h3>
+    <invenio-search-count
+     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_COUNT) }}">
+    </invenio-search-count>
   </div>
   <div class="panel-body">
     <div id="index_item_list">
@@ -36,8 +39,8 @@
         </select>
         <button type="button" class="btn btn-primary">{{_('実行')}}</button>
         <div class="pull-right">
-          <div class="form-group">
-            <label for="sort_item">表示順</label>
+          <div class="form-group hide">
+            <label for="sort_item">{{_('表示順')}}</label>
             <select class="form-control" id="sort_item">
               <option value="1">タイトル（昇順）</option>
               <option value="2">タイトル（降順）</option>
@@ -59,6 +62,22 @@
               <option value="18">カスタム（降順）</option>
             </select>
           </div>
+          {%- block search_sort_select scoped %}
+          {{_('表示順')}}:
+          <invenio-search-select-box
+             sort-key="sort"
+             available-options='{{ sort_options|format_sortoptions|safe }}'
+             template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SELECT_BOX) }}"
+            >
+          </invenio-search-select-box>
+          {%- endblock search_sort_select %}
+          {%- block search_sort_order scoped %}
+          <invenio-search-sort-order
+           sort-key="sort"
+           template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SORT_ORDER) }}"
+          >
+          </invenio-search-sort-order>
+          {%- endblock search_sort_order %}
           <div class="form-group">
             <label for="page_count">表示数</label>
             <select class="form-control" id="page_count">
@@ -81,28 +100,34 @@
                search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
               >
                 <div class="row">
+                  {%- block search_facets %}
+                  <div class="col-xs-12 col-md-2">
+                    {%- block search_range %}
+                    <invenio-search-range
+                     options='{{ config.SEARCH_UI_JSTEMPLATE_RANGE_OPTIONS | tojson }}'
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RANGE) }}">
+                    </invenio-search-range>
+                    {%- endblock search_range %}
+                    <invenio-search-facets
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_FACETS) }}">
+                    </invenio-search-facets>
+                  </div>
+                  {%- endblock search_facets %}
                   {%- block search_body %}
-                  <div class="col-xs-12 col-md-9 col-md-push-3">
+                  <div class="col-xs-12 col-md-10">
                     {%- block search_header %}
-                    <div class="row">
+                    <div class="row hide">
                       {%- block search_count %}
-                      <div class="col-md-3 col-sm-12">
+                      <div class="col-md-6 col-sm-12">
                         <invenio-search-count
                          template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_COUNT) }}">
                         </invenio-search-count>
                       </div>
                       {%- endblock search_count %}
-                      {%- block search_pagination_top %}
-                      <div class="col-md-6 col-sm-12 text-center">
-                        <invenio-search-pagination
-                          template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_PAGINATION) }}">
-                        </invenio-search-pagination>
-                      </div>
-                      {%- endblock search_pagination_top %}
                       {%- block search_sort %}
                       {%- set sort_options = config.get('RECORDS_REST_SORT_OPTIONS', {}).get(config.SEARCH_UI_SEARCH_INDEX) %}
                       {%- if sort_options %}
-                      <div class="col-md-3 col-sm-12 text-right">
+                      <div class="col-md-6 col-sm-12 text-right">
                         {%- block search_sort_select scoped %}
                         Sort by:
                         <invenio-search-select-box
@@ -142,28 +167,8 @@
                      template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RESULTS) }}">
                     </invenio-search-results>
                     {%- endblock search_results %}
-                    {%- block search_pagination_bottom %}
-                    <div align="center">
-                      <invenio-search-pagination
-                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_PAGINATION) }}">
-                      </invenio-search-pagination>
-                    </div>
-                    {%- endblock search_pagination_bottom %}
                   </div>
                   {%- endblock search_body %}
-                  {%- block search_facets %}
-                  <div class="col-md-3 col-md-pull-9 col-xs-12">
-                    {%- block search_range %}
-                    <invenio-search-range
-                     options='{{ config.SEARCH_UI_JSTEMPLATE_RANGE_OPTIONS | tojson }}'
-                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RANGE) }}">
-                    </invenio-search-range>
-                    {%- endblock search_range %}
-                    <invenio-search-facets
-                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_FACETS) }}">
-                    </invenio-search-facets>
-                  </div>
-                  {%- endblock search_facets %}
                 </div>
               </invenio-search>
             </div>
@@ -172,25 +177,13 @@
       </div>
     </div>
     <div class="text-center">
+      {%- block search_pagination_top %}
       <nav aria-label="Page navigation">
-        <ul class="pagination">
-          <li>
-            <a href="#" aria-label="Previous">
-              <span aria-hidden="true">&laquo;</span>
-            </a>
-          </li>
-          <li><a href="#">1</a></li>
-          <li><a href="#">2</a></li>
-          <li><a href="#">3</a></li>
-          <li><a href="#">4</a></li>
-          <li><a href="#">5</a></li>
-          <li>
-            <a href="#" aria-label="Next">
-              <span aria-hidden="true">&raquo;</span>
-            </a>
-          </li>
-        </ul>
+        <invenio-search-pagination
+         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_PAGINATION) }}">
+        </invenio-search-pagination>
       </nav>
+      {%- endblock search_pagination_top %}
     </div>
   </div>
 </div>
