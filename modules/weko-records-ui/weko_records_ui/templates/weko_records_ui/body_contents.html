@@ -61,7 +61,7 @@
                 <tr class="">
                   <td class="">{{file.filename}}</td>
                   <td class="" rowspan="2">
-                    {%- if 'detail' in file.displaytype or 'preview' in file.displaytype -%}
+                    {%- if not 'simple' in file.displaytype -%}
                     {{file.licensetype}}
                     {%- endif -%}
                   </td>
@@ -79,7 +79,7 @@
                       </span>
                   </td>
                 </tr>
-                {%- if 'detail' in file.displaytype or 'preview' in file.displaytype -%}
+                {%- if not 'simple' in file.displaytype -%}
                 <tr class="">
                   <td colspan="2">
                     <div class="panel panel-default" id="preview_{{loop.index}}">
@@ -93,7 +93,7 @@
                       </div>
                       <div id="collapse_{{loop.index}}" class="panel-collapse collapse">
                         <div class="embed-responsive embed-responsive-16by9">
-                          <embed src="{{file.preview}}"/>
+                          <embed src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.display_name) }}"/>
                         </div>
                       </div>
                     </div>
