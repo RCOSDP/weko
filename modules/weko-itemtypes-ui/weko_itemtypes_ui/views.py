@@ -127,9 +127,7 @@ def register(item_type_id=0):
                                       'schema'),
                                   form=data.get('table_row_map').get('form'),
                                   render=data)
-        if item_type_id == 0:
-            item_type_id = record.model.id
-        Mapping.create(item_type_id=item_type_id,
+        Mapping.create(item_type_id=record.model.id,
                        mapping=data.get('table_row_map').get('mapping'))
         db.session.commit()
     except:
