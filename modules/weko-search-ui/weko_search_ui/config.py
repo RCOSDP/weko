@@ -39,6 +39,12 @@ WEKO_SEARCH_UI_JSTEMPLATE_RESULTS = 'templates/weko_search_ui/weko.html'
 
 WEKO_SEARCH_UI_JSTEMPLATE_COUNT = 'templates/weko_search_ui/count.html'
 
+SEARCH_UI_JSTEMPLATE_PAGINATION = 'templates/weko_search_ui/pagination.html'
+
+SEARCH_UI_JSTEMPLATE_SELECT_BOX = 'templates/weko_search_ui/selectbox.html'
+
+SEARCH_UI_JSTEMPLATE_SORT_ORDER = 'templates/weko_search_ui/togglebutton.html'
+
 RECORDS_REST_ENDPOINTS = copy.deepcopy(RECORDS_REST_ENDPOINTS)
 RECORDS_REST_ENDPOINTS['recid']['search_factory_imp'] = \
     'weko_search_ui.query.es_search_factory'

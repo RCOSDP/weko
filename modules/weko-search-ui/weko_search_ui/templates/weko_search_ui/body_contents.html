@@ -75,7 +75,7 @@
             {%- block search_sort %}
               {%- set sort_options = config.get('RECORDS_REST_SORT_OPTIONS', {}).get(config.SEARCH_UI_SEARCH_INDEX) %}
               {%- if sort_options %}
-              <div class="col-md-6 col-sm-12 text-right">
+              <div class="form-group">
                 {%- block search_sort_select scoped %}
                 {{_('表示順')}}:
                 <invenio-search-select-box
@@ -154,11 +154,9 @@
       </div>
       <div class="text-center">
         {%- block search_pagination_top %}
-        <nav aria-label="Page navigation">
-          <invenio-search-pagination
-           template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_PAGINATION) }}">
-          </invenio-search-pagination>
-        </nav>
+        <invenio-search-pagination
+         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_PAGINATION) }}">
+        </invenio-search-pagination>
         {%- endblock search_pagination_top %}
       </div>
     </div>
