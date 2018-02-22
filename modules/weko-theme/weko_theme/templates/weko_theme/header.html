@@ -38,6 +38,7 @@
         {%- endif %}
         {%- endblock %}
       </div>
+      {%- endblock navbar_search %}
       <ul class="nav navbar-nav">
         {%- for item in current_menu.submenu('main').children|sort(attribute='order') if item.visible recursive %}
         {%- if item.children %}
@@ -50,6 +51,7 @@
         {%- endif %}
         {%- endfor %}
       </ul>
+      {%- endblock navbar_nav %}
       {%- block navbar_right %}
 {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
       {%- endblock navbar_right %}
