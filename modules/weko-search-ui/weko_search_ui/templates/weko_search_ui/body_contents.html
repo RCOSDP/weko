@@ -22,9 +22,13 @@
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
     <h3 class="panel-title">{{_('検索結果')}}</h3>
-    <invenio-search-count
-     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_COUNT) }}">
-    </invenio-search-count>
+    {%- block search_count %}
+    <div class="col-md-6 col-sm-12">
+      <invenio-search-count
+       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_COUNT) }}">
+      </invenio-search-count>
+    </div>
+    {%- endblock search_count %}
   </div>
   <div class="panel-body">
     <div id="index_item_list">
@@ -62,22 +66,29 @@
               <option value="18">カスタム（降順）</option>
             </select>
           </div>
-          {%- block search_sort_select scoped %}
-          {{_('表示順')}}:
-          <invenio-search-select-box
-             sort-key="sort"
-             available-options='{{ sort_options|format_sortoptions|safe }}'
-             template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SELECT_BOX) }}"
-            >
-          </invenio-search-select-box>
-          {%- endblock search_sort_select %}
-          {%- block search_sort_order scoped %}
-          <invenio-search-sort-order
-           sort-key="sort"
-           template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SORT_ORDER) }}"
-          >
-          </invenio-search-sort-order>
-          {%- endblock search_sort_order %}
+          {%- block search_sort %}
+            {%- set sort_options = config.get('RECORDS_REST_SORT_OPTIONS', {}).get(config.SEARCH_UI_SEARCH_INDEX) %}
+            {%- if sort_options %}
+            <div class="col-md-6 col-sm-12 text-right">
+              {%- block search_sort_select scoped %}
+              {{_('表示順')}}:
+              <invenio-search-select-box
+                 sort-key="sort"
+                 available-options='{{ sort_options|format_sortoptions|safe }}'
+                 template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SELECT_BOX) }}"
+                >
+              </invenio-search-select-box>
+              {%- endblock search_sort_select %}
+              {%- block search_sort_order scoped %}
+              <invenio-search-sort-order
+               sort-key="sort"
+               template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SORT_ORDER) }}"
+              >
+              </invenio-search-sort-order>
+              {%- endblock search_sort_order %}
+            </div>
+            {%- endif %}
+          {%- endblock search_sort %}
           <div class="form-group">
             <label for="page_count">表示数</label>
             <select class="form-control" id="page_count">
@@ -116,38 +127,6 @@
                   {%- block search_body %}
                   <div class="col-xs-12 col-md-10">
                     {%- block search_header %}
-                    <div class="row hide">
-                      {%- block search_count %}
-                      <div class="col-md-6 col-sm-12">
-                        <invenio-search-count
-                         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_COUNT) }}">
-                        </invenio-search-count>
-                      </div>
-                      {%- endblock search_count %}
-                      {%- block search_sort %}
-                      {%- set sort_options = config.get('RECORDS_REST_SORT_OPTIONS', {}).get(config.SEARCH_UI_SEARCH_INDEX) %}
-                      {%- if sort_options %}
-                      <div class="col-md-6 col-sm-12 text-right">
-                        {%- block search_sort_select scoped %}
-                        Sort by:
-                        <invenio-search-select-box
-                           sort-key="sort"
-                           available-options='{{ sort_options|format_sortoptions|safe }}'
-                           template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SELECT_BOX) }}"
-                          >
-                        </invenio-search-select-box>
-                        {%- endblock search_sort_select %}
-                        {%- block search_sort_order scoped %}
-                        <invenio-search-sort-order
-                         sort-key="sort"
-                         template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SORT_ORDER) }}"
-                        >
-                        </invenio-search-sort-order>
-                        {%- endblock search_sort_order %}
-                      </div>
-                      {%- endif %}
-                      {%- endblock search_sort %}
-                    </div>
                     <hr class="no-margin-top" />
                     {%- endblock search_header %}
                     {%- block search_error %}
