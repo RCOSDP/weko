@@ -31,6 +31,6 @@ js = Bundle(
 
 styles = Bundle(
     'css/groups/groups.less',
-    filters='less,cleancss',
+    filters='cleancss',
     output='groups.css'
 )
