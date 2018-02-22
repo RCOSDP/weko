@@ -133,7 +133,7 @@ def register(item_type_id=0):
     except:
         db.session.rollback()
         return jsonify(msg=_('Fail'))
-    current_app.logger.debug('itemtype register: {}'.format(item_type_id));
+    current_app.logger.debug('itemtype register: {}'.format(item_type_id))
     return jsonify(msg=_('Success'))
 
 
