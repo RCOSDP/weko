@@ -38,6 +38,20 @@
         {%- endif %}
         {%- endblock %}
       </div>
+      {%- block navbar_nav %}
+      <ul class="nav navbar-nav">
+        {%- for item in current_menu.submenu('main').children|sort(attribute='order') if item.visible recursive %}
+        {%- if item.children %}
+        <li class="dropdown{{ ' active' if item.active else ''}}">
+          <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" href="{{ item.url }}">{{ item.text|safe }} <b class="caret"></b></a>
+          <ul class="dropdown-menu">{{ loop(item.children|sort(attribute='order')) }}</ul>
+        </li>
+        {%- else %}
+          <li{{ ' class="active"'|safe if item.active and loop.depth == 1 else '' }}><a href="{{ item.url }}">{{ item.text|safe }}</a></li>
+        {%- endif %}
+        {%- endfor %}
+      </ul>
+      {%- endblock navbar_nav %}
       {%- block navbar_right %}
 {%- include config.THEME_HEADER_LOGIN_TEMPLATE %}
       {%- endblock navbar_right %}

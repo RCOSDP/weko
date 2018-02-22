@@ -50,10 +50,10 @@ class WekoSearchUI(object):
         :param app: The Flask application.
         """
         # Use theme's base template if theme is installed
-        if 'BASE_TEMPLATE' in app.config:
+        if 'BASE_PAGE_TEMPLATE' in app.config:
             app.config.setdefault(
-                'WEKO_SEARCH_UI_BASE_TEMPLATE',
-                app.config['BASE_TEMPLATE'],
+                'WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE',
+                app.config['BASE_PAGE_TEMPLATE'],
             )
         app.config.update(
             SEARCH_UI_SEARCH_TEMPLATE=getattr(

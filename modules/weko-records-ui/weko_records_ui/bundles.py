@@ -1,4 +1,5 @@
-{#
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,14 +17,13 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
 
+"""WEKO3 module docstring."""
 
-{%- extends config.BASE_TEMPLATE %}
+from flask_assets import Bundle
 
-{%- block page_header %}
-{%- include "weko_search_ui/header_frontpage.html" %}
-{%- endblock page_header %}
-
-{%- block page_body %}
-{%- endblock %}
+js = Bundle(
+    'js/weko_records_ui/detail.js',
+    filters='jsmin',
+    output="gen/weko_records_ui.%(version)s.js",
+)

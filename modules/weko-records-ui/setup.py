@@ -93,6 +93,9 @@ setup(
         'invenio_config.module': [
             'weko_records_ui = weko_records_ui.config',
         ],
+        'invenio_assets.bundles': [
+            'weko_records_ui_js = weko_records_ui.bundles:js',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
