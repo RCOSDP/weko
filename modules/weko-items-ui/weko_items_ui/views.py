@@ -23,7 +23,6 @@
 from flask import Blueprint, current_app, flash, json, jsonify, redirect, \
     render_template, request, url_for, Flask
 from flask_babelex import gettext as _
-from flask_babelex import Babel
 from weko_records.api import ItemTypes
 
 blueprint = Blueprint(

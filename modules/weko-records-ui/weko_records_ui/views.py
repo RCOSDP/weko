@@ -22,7 +22,6 @@
 
 import six
 from flask import Blueprint, current_app, abort, request, render_template, Flask
-from flask_babelex import Babel
 from invenio_records_ui.utils import obj_or_import_string
 
 blueprint = Blueprint(

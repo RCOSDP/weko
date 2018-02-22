@@ -22,7 +22,6 @@
 
 
 from flask import Blueprint, request, Flask
-from flask_babelex import Babel
 
 blueprint = Blueprint(
     'weko_search_ui',

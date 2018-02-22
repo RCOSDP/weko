@@ -25,7 +25,6 @@ from datetime import timedelta
 from flask import Blueprint, current_app, flash, jsonify, render_template, \
     request, session, Flask
 from flask_babelex import lazy_gettext as _
-from flask_babelex import Babel
 from flask_breadcrumbs import default_breadcrumb_root, register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu

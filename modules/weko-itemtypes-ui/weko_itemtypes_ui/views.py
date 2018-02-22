@@ -25,7 +25,6 @@ from functools import wraps
 from flask import Blueprint, abort, current_app, json, jsonify, redirect, \
     render_template, request, url_for, Flask
 from flask_babelex import gettext as _
-from flask_babelex import Babel
 from flask_login import current_user
 from invenio_db import db
 from weko_records.api import ItemTypes, ItemTypeProps, Mapping

@@ -32,7 +32,6 @@ from flask import Blueprint, abort, current_app, jsonify, make_response, \
     request, url_for, Flask, flash
 from flask.views import MethodView
 from flask_babelex import gettext as _
-from flask_babelex import Babel
 from invenio_db import db
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
