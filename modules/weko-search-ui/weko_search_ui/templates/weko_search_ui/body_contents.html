@@ -27,9 +27,9 @@
   >
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
-      <h3 class="panel-title">{{_('検索結果')}}</h3>
+      <span class="panel-title">{{_('検索結果')}}</span>
       {%- block search_count %}
-      <div class="col-md-6 col-sm-12">
+      <div class="pull-right">
         <invenio-search-count
          template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_COUNT) }}">
         </invenio-search-count>
