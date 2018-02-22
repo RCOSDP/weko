@@ -19,143 +19,31 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.MARC21_BASE_TEMPLATE %}
+{%- extends config.WEKO_RECORDS_UI_BASE_TEMPLATE %}
 
-{%- block page_body %}
-<div class="container">
+{%- block javascript %}
+  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('top') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
   <div class="row">
-    {%- block record_body %}
-    <div class="body col-sm-12 col-md-9">
-      {%- block record_title %}
-      <h4 class="title">{{ record.get('item_title', _('No title')) }}</h4>
-      {%- endblock %}
-      {%- block record_author %}
-      {%- if files -%}
-      <table class="table table-bordered table-striped">
-        <thead>
-        <tr class="">
-          <th>{{_('Name')}} / {{_('File')}}</th>
-          <th>{{_('License')}}</th>
-        </tr>
-        </thead>
-        <tbody>
-        {%- for file in files -%}
-        {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-        filename=file.display_name) %}
-        <tr class="">
-          <td class="">{{file.filename}}</td>
-          <td class="" rowspan="2">
-            {%- if 'detail' in file.displaytype or 'preview' in file.displaytype -%}
-            {{file.licensetype}}
-            {%- endif -%}
-          </td>
-        </tr>
-        <tr class="">
-          <td>
-              <span class="filename">
-                <img src="{{file.image_src}}"/>
-                <a class="forcewrap"
-                   href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
-                <span>[ 0 downloads ]</span><br>
-                <span>sha256:{{file.checksum}}</span>
-              </span>
-          </td>
-        </tr>
-        {%- if 'detail' in file.displaytype or 'preview' in file.displaytype -%}
-        <tr class="">
-          <td colspan="2">
-            <div class="panel panel-default" id="preview">
-              <div class="panel-heading">
-                <a class="panel-toggle" data-toggle="collapse" href="#{{loop.index}}">
-                  {{_('Preview')}}
-                  <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
-                  <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
-                </a>
-              </div>
-              <div id="{{loop.index}}" class="collapse">
-                <div class="embed-responsive embed-responsive-16by9">
-                  <embed src="{{file.preview}}"/>
-                </div>
-              </div>
-            </div>
-          </td>
-        </tr>
-        {%- endif -%}
-        {%- endfor -%}
-        </tbody>
-      </table>
-      {%- endif %}
-      <table class="table table-bordered table-striped">
-        {%- if item_type_info -%}
-          <tr>
-            <th>{{_('item type')}}</th>
-            <td>{{ item_type_info }}</td>
-          </tr>
-        {% endif %}
-        {%- for k, m in record.items() %}
-          {%- if m is not string and '_oai' != k and 'filemeta' != k %}
-            <tr>
-              <th>{{ m['attribute_name'] }}</th>
-              <td>{%- for k in m['attribute_value'] %}
-                    {{ k }}
-                   {% endfor %}
-                  {%- for lst in m['attribute_value_mlt'] %}
-                      {%- for v in lst.values() %}
-                       {%- if v|length > 1  %}
-                        {{ v }}<br>
-                       {% endif %}
-                      {% endfor %}
-                  {% endfor %}
-              </td>
-            </tr>
-          {% endif %}
-        {% endfor %}
-        </table>
-      {%- if 'main_entry_personal_name' in record %}
-      <p class="record_authors">
-        <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>
-        {%- for author in record.get('added_entry_personal_name', []) %}
-        , <i>{{ author['personal_name'] }}</i>
-        {% endfor %}
-      </p>
-      {% endif %}
-      {%- endblock %}
-      {%- block record_summary %}
-      {%- for summary in record.get('summary', []) %}
-      <p class="summary">{{ summary['summary'] }}</p>
-      {% endfor %}
-      {%- endblock %}
-    </div><!-- /.body -->
-    {%- endblock %}
-    {%- block record_extra_info %}
-    <div class="extra-info col-sm-12 col-md-3">
-      <dl>
-        {%- if pid %}
-        {%- block record_control_number %}
-        <dt>{{ _('Control number') }}</dt>
-        <dd>{{ record.get('control_number', pid.value) }}</dd>
-        {%- endblock %}
-        {% endif %}
-        {%- if 'publication_distribution_imprint' in record %}
-        {%- block record_publication_date %}
-        <dt>{{ _('Publication date') }}</dt>
-        <dd>{{ record['publication_distribution_imprint'][0]['date_of_publication_distribution'][0] }}</dd>
-        {%- endblock %}
-        {% endif %}
-        {%- if '$schema' in record %}
-        {%- block record_schema %}
-        <dt>{{ _('Schema') }}</dt>
-        <dd>
-          <a target="_blank" href="{{ record['$schema'] }}">
-            {{ record['$schema'] }}
-          </a>
-        </dd>
-        {%- endblock %}
-        {% endif %}
-        {%- include "invenio_records_ui/export_well.html" %}
-      </dl>
-    </div><!-- /.extra-info -->
-    {%- endblock %}
-  </div><!-- /.row -->
-</div><!-- /.container -->
-{%- endblock %}
+    <div class="col-sm-12 col-md-12 col-lg-12">
+      {% include "weko_theme/body_search.html" %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-3 col-md-3 col-lg-3">
+      {% include "weko_theme/body_index.html" %}
+    </div>
+    <div class="col-sm-9 col-md-9 col-lg-9 m-top-20">
+      {% include "weko_records_ui/body_contents.html" %}
+    </div>
+  </div>
+{%- endblock page_body_main %}

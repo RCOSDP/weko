@@ -1,0 +1,187 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+<div class="panel-group">
+<div class="panel panel-default">
+  <div class="panel-heading clearfix">
+    <h3 class="panel-title">{{_('インデックス')}}</h3>
+  </div>
+  <div class="panel-body">
+    <div class="panel_bread">
+      <ol class="breadcrumb">
+        <li class="active"></li>
+      </ol>
+    </div>
+  </div>
+</div>
+<div class="panel panel-default">
+  <div class="panel-heading clearfix">
+    <h3 class="panel-title">{{_('アイテム')}}</h3>
+  </div>
+  <div class="panel-body">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <div class="form-inline">
+          <a href="#"><span class="glyphicon glyphicon-file" aria-hidden="true"></span> {{ record.get('item_title', _('No title')) }}</a>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="col-sm-9 col-md-9">
+            {%- block record_author %}
+              {%- if files -%}
+              <table class="table table-bordered table-striped">
+                <thead>
+                <tr class="">
+                  <th>{{_('Name')}} / {{_('File')}}</th>
+                  <th>{{_('License')}}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {%- for file in files -%}
+                {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                filename=file.display_name) %}
+                <tr class="">
+                  <td class="">{{file.filename}}</td>
+                  <td class="" rowspan="2">
+                    {%- if 'detail' in file.displaytype or 'preview' in file.displaytype -%}
+                    {{file.licensetype}}
+                    {%- endif -%}
+                  </td>
+                </tr>
+                <tr class="">
+                  <td>
+                      <span class="filename">
+                        <img src="{{file.image_src}}"/>
+                        <a class="forcewrap"
+                           href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+                        <span>[ 0 downloads ]</span><br>
+                        <dl><dt>sha256:</dt>
+                            <dd>{{file.checksum}}</dd>
+                        </dl>
+                      </span>
+                  </td>
+                </tr>
+                {%- if 'detail' in file.displaytype or 'preview' in file.displaytype -%}
+                <tr class="">
+                  <td colspan="2">
+                    <div class="panel panel-default" id="preview">
+                      <div class="panel-heading">
+                        <a class="panel-toggle" data-toggle="collapse" href="#{{loop.index}}">
+                          {{_('Preview')}}
+                          <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
+                          <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
+                        </a>
+                      </div>
+                      <div id="{{loop.index}}" class="collapse">
+                        <div class="embed-responsive embed-responsive-16by9">
+                          <embed src="{{file.preview}}"/>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {%- endif -%}
+                {%- endfor -%}
+                </tbody>
+              </table>
+              {%- endif %}
+              <table class="table table-bordered table-striped">
+              {%- if item_type_info -%}
+                <tr>
+                  <th>{{_('item type')}}</th>
+                  <td>{{ item_type_info }}</td>
+                </tr>
+              {% endif %}
+              {%- for k, m in record.items() %}
+                {%- if m is not string and '_oai' != k and 'filemeta' != k %}
+                  <tr>
+                    <th>{{ m['attribute_name'] }}</th>
+                    <td>
+                      {%- for k in m['attribute_value'] %}
+                        {{ k }}
+                      {% endfor %}
+                      {%- for lst in m['attribute_value_mlt'] %}
+                        {%- for v in lst.values() %}
+                          {%- if v|length > 1  %}
+                            {{ v }}<br>
+                          {% endif %}
+                        {% endfor %}
+                      {% endfor %}
+                    </td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+              </table>
+              {%- if 'main_entry_personal_name' in record %}
+              <p class="record_authors">
+                <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>
+                {%- for author in record.get('added_entry_personal_name', []) %}
+                , <i>{{ author['personal_name'] }}</i>
+                {% endfor %}
+              </p>
+              {% endif %}
+            {%- endblock %}
+            <div class="text-center">
+              <button type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('戻る')}}</button>
+              <button type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('編集')}}</button>
+              <button type="button" class="btn btn-danger btn-sm">
+                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>{{_('削除')}}</button>
+            </div>
+          </div>
+          <div class="col-sm-3 col-md-3">
+            {%- block record_extra_info %}
+            <div class="extra-info">
+              <dl>
+                {%- if pid %}
+                {%- block record_control_number %}
+                <dt>{{ _('Control number') }}</dt>
+                <dd>{{ record.get('control_number', pid.value) }}</dd>
+                {%- endblock %}
+                {% endif %}
+                {%- if 'publication_distribution_imprint' in record %}
+                {%- block record_publication_date %}
+                <dt>{{ _('Publication date') }}</dt>
+                <dd>{{ record['publication_distribution_imprint'][0]['date_of_publication_distribution'][0] }}</dd>
+                {%- endblock %}
+                {% endif %}
+                {%- if '$schema' in record %}
+                {%- block record_schema %}
+                <dt>{{ _('Schema') }}</dt>
+                <dd>
+                  <a target="_blank" href="{{ record['$schema'] }}">
+                    {{ record['$schema'] }}
+                  </a>
+                </dd>
+                {%- endblock %}
+                {% endif %}
+                {%- include "invenio_records_ui/export_well.html" %}
+              </dl>
+            </div><!-- /.extra-info -->
+            {%- endblock record_extra_info %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

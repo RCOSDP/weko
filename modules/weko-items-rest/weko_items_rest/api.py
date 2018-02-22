@@ -143,7 +143,7 @@ def update_file_metadata(rejson, fjson):
     :param fjson: FilesMetadata's json obj
     """
     # get file metadata
-    fm = rejson.get("filemeta")
+    fm = rejson.get("filemeta", [])
     for lst in fm:
         if isinstance(lst, dict):
             fn = lst.get("filename")
