@@ -38,7 +38,7 @@
         {%- endif %}
         {%- endblock %}
       </div>
-      {%- endblock navbar_search %}
+      {%- block navbar_nav %}
       <ul class="nav navbar-nav">
         {%- for item in current_menu.submenu('main').children|sort(attribute='order') if item.visible recursive %}
         {%- if item.children %}
