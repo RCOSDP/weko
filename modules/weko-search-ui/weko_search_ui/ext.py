@@ -52,7 +52,7 @@ class WekoSearchUI(object):
         # Use theme's base template if theme is installed
         if 'BASE_PAGE_TEMPLATE' in app.config:
             app.config.setdefault(
-                'WEKO_SEARCH_UI_BASE_TEMPLATE',
+                'WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE',
                 app.config['BASE_PAGE_TEMPLATE'],
             )
         app.config.update(
