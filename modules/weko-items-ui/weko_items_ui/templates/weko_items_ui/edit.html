@@ -61,16 +61,20 @@
       <div id="invenio-records">
         <invenio-files-uploader
           method="PUT"
-          endpoint="/bpi/files"
+          endpoint="{{ config.DEPOSIT_FILES_API }}"
           {% if pid %}
             action="{{ config.DEPOSIT_RECORDS_API|format(pid_value=pid.pid_value) }}"
           {% else %}
-            initialization="/api/item/files/"
+            initialization="{{ config.DEPOSIT_SEARCH_API }}"
           {% endif %}
           extra-params='{"headers":{"Content-Type": "application/json"}}'
         >
           <invenio-records
-            initialization="/api/item/files/"
+            {%- if pid %}
+              initialization="{{ config.DEPOSIT_RECORDS_API.format(pid_value=pid.pid_value) }}"
+            {%- else %}
+              initialization="{{ config.DEPOSIT_SEARCH_API }}"
+            {%- endif %}
             response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
             extra-params='{"headers":{"Content-Type": "application/json"}}'
             form="{{ schemaform }}"
@@ -85,7 +89,7 @@
             <div ng-hide="false">
               <div ng-show="true">
                 <ul class="list-inline text-right">
-                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'POST'])">送信</button></li>
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'PUT'])">送信</button></li>
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
                 </ul>
               </div>
@@ -104,7 +108,7 @@
             <div ng-hide="false">
               <div ng-show="true">
                 <ul class="list-inline text-right">
-                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'POST'])">送信</button></li>
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'PUT'])">送信</button></li>
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
                 </ul>
               </div>

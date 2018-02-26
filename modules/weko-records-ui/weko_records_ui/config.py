@@ -26,24 +26,28 @@ RECORDS_UI_ENDPOINTS = dict(
     recid=dict(
         pid_type='recid',
         route="/records/<pid_value>",
-        view_imp="weko_records.fd.weko_view_method",
-        template="weko_records_ui/detail.html",
+        # view_imp='weko_records.fd.weko_view_method',
+        template='weko_records_ui/detail.html',
+        record_class='weko_deposit.api:WekoRecord',
     ),
     recid_export=dict(
         pid_type='recid',
         route="/records/<pid_value>/export/<format>",
-        view_imp="weko_records_ui.views.export",
-        template="weko_records_ui/export.html",
+        view_imp='weko_records_ui.views.export',
+        template='weko_records_ui/export.html',
+        record_class='weko_deposit.api:WekoRecord',
     ),
     recid_files=dict(
         pid_type='recid',
         route='/record/<pid_value>/files/<path:filename>',
         view_imp='weko_records.fd.file_download_ui',
+        record_class='weko_deposit.api:WekoRecord',
     ),
     recid_preview=dict(
         pid_type='recid',
         route='/record/<pid_value>/preview/<path:filename>',
-        view_imp='weko_records.fd.file_preview_ui',
+        view_imp='invenio_previewer.views.preview',
+        record_class='weko_deposit.api:WekoRecord',
     ),
 )
 

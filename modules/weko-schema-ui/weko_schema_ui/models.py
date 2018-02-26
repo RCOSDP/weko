@@ -30,7 +30,6 @@ from invenio_db import db
 from invenio_records.models import Timestamp
 
 
-
 class OAIServerSchema(db.Model, Timestamp):
     """Represent a OAIServer Schema.
 
@@ -106,19 +105,19 @@ class OAIServerSchema(db.Model, Timestamp):
     """NameSpace for xml"""
 
     isvalid = db.Column(
-        db.Boolean,
+        db.Boolean(name='isvalid'),
         nullable=False,
         default=lambda: False
     )
 
     is_mapping = db.Column(
-        db.Boolean,
+        db.Boolean(name='is_mapping'),
         nullable=False,
         default=lambda: False
     )
 
     isfixed = db.Column(
-        db.Boolean,
+        db.Boolean(name='isfixed'),
         nullable=False,
         default=lambda: False
     )

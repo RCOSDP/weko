@@ -85,8 +85,14 @@ setup(
         'invenio_base.apps': [
             'weko_deposit = weko_deposit:WekoDeposit',
         ],
-        'invenio_i18n.translations': [
-            'messages = weko_deposit',
+        'invenio_config.module': [
+            'weko_deposit = weko_deposit.config',
+        ],
+        'invenio_pidstore.fetchers': [
+            'weko_deposit_fetcher = weko_deposit.pidstore:weko_deposit_fetcher',
+        ],
+        'invenio_pidstore.minters': [
+            'weko_deposit_minter = weko_deposit.pidstore:weko_deposit_minter',
         ],
     },
     extras_require=extras_require,

@@ -32,9 +32,9 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route("/")
-def index():
-    """Render a basic view."""
-    return render_template(
-        "weko_deposit/index.html",
-        module_name=_('weko-deposit'))
+# @blueprint.route("/")
+# def index():
+#     """Render a basic view."""
+#     return render_template(
+#         "weko_deposit/index.html",
+#         module_name=_('weko-deposit'))

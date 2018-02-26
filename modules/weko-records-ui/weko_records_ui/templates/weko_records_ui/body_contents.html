@@ -46,6 +46,7 @@
         <div class="row">
           <div class="col-sm-9 col-md-9">
             {%- block record_author %}
+            {%- set files = record.files -%}
               {%- if files -%}
               <table class="table table-bordered table-striped">
                 <thead>
@@ -55,45 +56,59 @@
                 </tr>
                 </thead>
                 <tbody>
-                {%- for file in files -%}
+                {%- for file in files|sort(attribute='key') -%}
+                {%- set img = file.mimetype | get_image_src -%}
                 {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                filename=file.display_name) %}
+                filename=file.key) %}
                 <tr class="">
                   <td class="">{{file.filename}}</td>
                   <td class="" rowspan="2">
                     {%- if not 'simple' in file.displaytype -%}
-                    {{file.licensetype}}
+                    {% set lst = file.licensetype | get_license_icon %}
+                    <img src="{{lst[0]}}"/><br>
+                    {{ lst[1] }}
                     {%- endif -%}
                   </td>
                 </tr>
                 <tr class="">
                   <td>
                       <span class="filename">
-                        <img src="{{file.image_src}}"/>
+                        <img src="{{img}}"/>
                         <a class="forcewrap"
                            href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
                         <span>[ 0 downloads ]</span><br>
-                        <dl><dt>sha256:</dt>
-                            <dd>{{file.checksum}}</dd>
-                        </dl>
+                        <span>{{file.checksum}}</span>
                       </span>
                   </td>
                 </tr>
                 {%- if not 'simple' in file.displaytype -%}
                 <tr class="">
                   <td colspan="2">
-                    <div class="panel panel-default" id="preview_{{loop.index}}">
+                    <div class="panel panel-default" id="preview">
                       <div class="panel-heading">
-                        <a class="panel-toggle" data-toggle="collapse" data-parent="#preview_{{loop.index}}"
-                           href="#collapse_{{loop.index}}" aria-expanded="false"  aria-controls="collapse_{{loop.index}}">
+                        <a class="panel-toggle" data-toggle="collapse" href="#{{loop.index}}">
                           {{_('Preview')}}
                           <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
                           <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
                         </a>
                       </div>
-                      <div id="collapse_{{loop.index}}" class="panel-collapse collapse">
+                      <div id="{{loop.index}}" class="collapse">
                         <div class="embed-responsive embed-responsive-16by9">
-                          <embed src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.display_name) }}"/>
+                          {%- if 'audio' in file.mimetype -%}
+                            <audio controls preload="auto">
+                              <source src="{{file_url}}" type="{{file.mimetype}}">
+                            </audio>
+                          {%- elif 'video' in file.mimetype -%}
+                            <video controls>
+                              <source src="{{file_url}}" type="{{file.mimetype}}">
+                            </video>
+                          {%- elif 'text' in file.mimetype -%}
+                            <object data="{{file_url}}" type="{{file.mimetype}}"/>
+                          {%- else -%}
+                            <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
+                                  src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
+                            </iframe>
+                          {%- endif -%}
                         </div>
                       </div>
                     </div>

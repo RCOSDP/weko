@@ -65,3 +65,87 @@ def export(pid, record, template=None, **kwargs):
             template, pid=pid, record=record, data=data,
             format_title=fmt['title'],
         )
+
+
+@blueprint.app_template_filter("get_image_src")
+def get_image_src(mimetype):
+    """ Get image src by file type
+    :param mimetype:
+    :return src: dict
+    """
+    src = ""
+    if "text/" in mimetype:
+        src = "icon_16_txt.jpg"
+    elif "officedocument.wordprocessingml" in mimetype:
+        src = "icon_16_doc.jpg"
+    elif "officedocument.spreadsheetml" in mimetype:
+        src = "icon_16_xls.jpg"
+    elif "officedocument.presentationml" in mimetype:
+        src = "icon_16_ppt.jpg"
+    elif "msword" in mimetype:
+        src = "icon_16_doc.jpg"
+    elif "excel" in mimetype:
+        src = "icon_16_xls.jpg"
+    elif "powerpoint" in mimetype:
+        src = "icon_16_ppt.jpg"
+    elif "zip" in mimetype or "rar" in mimetype:
+        src = "icon_16_txt.jpg"
+    elif "audio/" in mimetype:
+        src = "icon_16_music.jpg"
+    elif "xml" in mimetype:
+        src = "icon_16_xml.jpg"
+    elif "image/" in mimetype:
+        src = "icon_16_picture.jpg"
+    elif "pdf" in mimetype:
+        src = "icon_16_pdf.jpg"
+    elif "video/" in mimetype:
+        if "flv" in mimetype:
+            src = "icon_16_flash.jpg"
+        else:
+            src = "icon_16_movie.jpg"
+    else:
+        src = "icon_16_others.jpg"
+
+    return "/static/images/icon/" + src
+
+
+@blueprint.app_template_filter("get_license_icon")
+def get_license_icon(type):
+    """
+     Get License type icon
+    :param type:
+    :return:
+    """
+    lic_dict = {
+        "license_1": "Creative Commons : 表示",
+        "license_2": "Creative Commons : 表示 - 継承",
+        "license_3": "Creative Commons : 表示 - 改変禁止",
+        "license_4": "Creative Commons : 表示 - 非営利",
+        "license_5": "Creative Commons : 表示 - 非営利 - 継承",
+        "license_6": "Creative Commons : 表示 - 非営利 - 改変禁止",
+    }
+
+    src = ""
+    if "license_free" in type:
+        src = ""
+    elif "license_0" in type:
+        src = "88x31(1).png"
+    elif "license_1" in type:
+        src = "88x31(2).png"
+    elif "license_2" in type:
+        src = "88x31(3).png"
+    elif "license_3" in type:
+        src = "88x31(4).png"
+    elif "license_4" in type:
+        src = "88x31(5).png"
+    elif "license_5" in type:
+        src = "88x31(6).png"
+    else:
+        src = ""
+
+    lst = []
+    src = "/static/images/default/" + src if len(src) > 0 else ""
+    lst.append(src)
+    lst.append(lic_dict.get(type, ""))
+
+    return lst

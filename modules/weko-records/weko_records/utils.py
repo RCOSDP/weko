@@ -18,137 +18,275 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Utilities for converting to MARC21."""
+"""Item API."""
 
-import pkg_resources
-from dojson._compat import iteritems, string_types
-from lxml import etree
-from lxml.builder import ElementMaker
+import base64
 
-from .api import Mapping
+import pytz
+from invenio_db import db
+from invenio_indexer.api import RecordIndexer
+from invenio_pidstore import current_pidstore
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_records.api import Record
+from .api import FilesMetadata, ItemsMetadata, ItemTypes, Mapping
 
 
-def dumps_etree(records, xslt_filename=None):
-    """Dump records into a etree.
+def save_item_metadata(rejson, pid):
+    """Save the item.
 
-    :param records: records
-    :param xslt_filename: xslt filename
+    :param rejson: json from item form post.
+    :param pid: pid value.
     """
-    E = ElementMaker()
+    dc = dict()
+    ju = dict()
+    item = dict()
+    ar = []
 
-    get_mapping(records)
+    if not isinstance(rejson, dict) or rejson.get("$schema") is None:
+        return
 
-    def dump_record(record):
-        """Dump a single record."""
-        root = E.root()
+    item_id = pid.object_uuid
+    pid = pid.pid_value
 
-        def make_emt(ky, obj):
-            item = etree.Element(ky)
-            if isinstance(obj, dict):
-                for k, v in obj.items():
-                    if isinstance(v, list):
-                        for lst in v:
-                            if isinstance(lst, dict):
-                                item.append(make_emt(k, lst))
-                            else:
-                                ele = etree.Element(k)
-                                ele.text = lst
-                                item.append(ele)
+    # find the item type identifier
+    index = rejson["$schema"].rfind('/')
+    item_type_id = rejson["$schema"][index + 1:len(rejson["$schema"])]
 
-                    elif isinstance(v, (dict)):
-                        item.append(make_emt(k, v))
-                    elif ky == "control_number" or ky == "_oai":
-                        pass
-                    else:
-                        ele = etree.Element(k)
-                        ele.text = v
-                        item.append(ele)
-            return item
+    # get itemtype mapping file json data
+    ojson = ItemTypes.get_record(item_type_id)
+    mjson = Mapping.get_record(item_type_id)
+    # fjson = FilesMetadata.get_records(pid)
 
-        items = iteritems(record["metadata"])
-        for k, v in items:
-            root.append(make_emt(k, v))
-
-        return root
-
-    if isinstance(records, dict):
-        root = dump_record(records)
-
-    if xslt_filename is not None:
-        ns = etree.FunctionNamespace("http://mydomain.org/myfunctions")
-        ns["change_name"] = change_name
-        ns["tokenize"] = tokenize
-        xslt_root = etree.parse(open(xslt_filename))
-        transform = etree.XSLT(xslt_root)
-        root = transform(root).getroot()
-
-    return root
-
-
-def dumps(records, xslt_filename=None, **kwargs):
-    """Dump records into a MarcXML file.
-
-    :param records: records
-    :param xslt_filename: xslt filename
-    """
-    root = dumps_etree(records=records, xslt_filename=xslt_filename)
-    return etree.tostring(
-        root,
-        pretty_print=True,
-        xml_declaration=True,
-        encoding='UTF-8',
-        **kwargs
-    )
-
-
-def get_mapping(records):
-    """Get mappings.
-
-    :param records: records
-    """
-    if isinstance(records, dict):
-        id = records["metadata"].pop("item_type_id")
-        mjson = Mapping.get_record(id)
+    if ojson and mjson:
         mp = mjson.dumps()
-        if mjson:
-            for k, v in records["metadata"].items():
-                if isinstance(v, dict) and k != "_oai":
-                    v.update(mp.get(k))
+        rejson.get("$schema")
+        for k, v in rejson.items():
+            if k == "$schema" or \
+                mp.get(k) is None:
+                continue
+
+            item.clear()
+            item["attribute_name"] = ojson["properties"][k]["title"] \
+                if ojson["properties"][k].get("title") is not None else k
+            if isinstance(v, list):
+                if len(v) > 0 and isinstance(v[0], dict):
+                    item["attribute_value_mlt"] = v
+                else:
+                    item["attribute_value"] = v
+            elif isinstance(v, dict):
+                ar.append(v)
+                item["attribute_value"] = ar
+                ar = []
+            else:
+                item["attribute_value"] = v
+
+            dc[k] = item.copy()
+            item.update(mp.get(k))
+            ju[k] = item.copy()
+
+    del ojson, mjson
+
+    if dc:
+        # get the tile name to detail page
+        title = rejson.get("title_ja") or rejson.get("title_en")
+
+        if 'control_number' in dc:
+            del dc['control_number']
+
+        dc.update(dict(item_title=title))
+        dc.update(dict(item_type_id=item_type_id))
+        dc.update(dict(control_number=pid))
+
+        # convert to junii2 schema for es
+        jrc = tojunii2(ju)
+        oaid = current_pidstore.minters['oaiid'](item_id, dc)
+
+        jrc.update(dict(control_number=pid))
+        jrc.update(dict(_oai={"id": oaid.pid_value}))
+
+        # with db.session.begin_nested():
+        #     record = ItemsMetadata.create(rejson, id_=item_id, item_type_id=item_type_id)
+        # create Record metadata
+        # record = Record.create(dc, id_=item_id)
+        # update_file_metadata(rejson, fjson)
+
+        # jrc.update(
+        #     {"_created": pytz.utc.localize(record.created)
+        #         .isoformat() if record.created else None})
+        #
+        # jrc.update(
+        #     {"_updated": pytz.utc.localize(record.updated)
+        #         .isoformat() if record.updated else None})
+
+        # # Upload  item metadata to ElasticSearch
+        # upload_metadata(jrc, item_id)
+        # # Upload  file metadata to ElasticSearch
+        # upload_file(fjson, item_id)
+
+    return dc, jrc
 
 
-def change_name(context, name):
-    """Dump records into a MarcXML file.
+def save_items_data(rejson, item_id, item_type_id):
+    """"""
+    with db.session.begin_nested():
+        ItemsMetadata.create(rejson, id_=item_id, item_type_id=item_type_id)
 
-    :param context: context
-    :param name: record key
+
+def upload_metadata(jrc, item_id):
     """
-    cname = ""
-
-    if name == "description" or name == "date" or name == "version" or \
-            name == "geoLocation":
-        cname = "datacite:"
-    elif name == "title" or name == "rights" or name == "publisher" or \
-            name == "language" or name == "type":
-        cname = "dc:"
-    elif name == "dissertationNumber" or name == "degreeName" or \
-            name == "dateGranted":
-        cname = "dcndl:"
-    elif name == "alternative" or name == "accessRights" or \
-            name == "temporal":
-        cname = "dcterms:"
-    elif name == "versionType":
-        cname = "openaire:"
-    else:
-        cname = "jpcoar:"
-
-    return cname + name
-
-
-def tokenize(context, s, par):
-    """Split s by par.
-
-    :param context: context
-    :param s: str
-    :param par: key
+    Upload the item data to ElasticSearch
+    :param jrc:
+    :param item_id:
     """
-    return s.split(par)
+    indexer = RecordIndexer()
+    indexer.client.index(id=str(item_id),
+                         index="weko",
+                         doc_type="item",
+                         body=jrc,
+                         )
+
+
+def upload_file(fjson, uuid):
+    """Upload file  to ElasticSearch.
+
+    :param fjson: file json info
+    :param uuid: uuid
+    """
+    if fjson is None or len(fjson) == 0:
+        return
+
+    indexer = RecordIndexer()
+    for fj in fjson:
+        strb = base64.b64encode(fj.model.contents[:]).decode("utf-8")
+        fjs = fj.dumps()
+        fjs.update({"file": strb})
+        fjs.update(
+            {"_created": pytz.utc.localize(fj.created)
+                .isoformat() if fj.created else None})
+
+        fjs.update(
+            {"_updated": pytz.utc.localize(fj.updated)
+                .isoformat() if fj.updated else None})
+
+        indexer.client.index(id=str(fj.id),
+                             index="weko",
+                             doc_type="content",
+                             parent=uuid,
+                             body=fjs,
+                             )
+
+
+def update_file_metadata(rejson, fjson):
+    """ update FilesMetadata's json
+    :param fm: file metadata
+    :param fjson: FilesMetadata's json obj
+    """
+    # get file metadata
+    fm = rejson.get("filemeta")
+    for lst in fm:
+        if isinstance(lst, dict):
+            fn = lst.get("filename")
+            for fj in fjson:
+                for k, v in fj.model.json.items():
+                    if fn in str(v):
+                        jsn = fj.model.json.copy()
+                        jsn.update(lst)
+                        FilesMetadata.update_data(fj.id, jsn)
+                        break
+
+
+def tojunii2(records):
+    """Convert to junii2 json.
+
+    :param records:
+    """
+    j = dict()
+    for k, y in records.items():
+        if isinstance(y, dict):
+            if k != "item":
+                del_dupl(j, get_value(y))
+            else:
+                for ke, ve in y.items():
+                    if isinstance(ve, dict):
+                        del_dupl(j, get_value(ve))
+
+    return j
+
+
+def get_value(obj):
+    """Get value."""
+    j = dict()
+    if isinstance(obj, dict):
+        obj.pop("display_lang_type")
+        obj.pop("jpcoar_mapping")
+        obj.pop("dublin_core_mapping")
+        obj.pop("lido_mapping")
+        obj.pop("lom_mapping")
+        itn = obj.pop("junii2_mapping")
+
+        if itn != "":
+            if obj.get("attribute_value_mlt"):
+                s = "attribute_value_mlt"
+                if isinstance(obj[s], list):
+                    if itn == "jtitle,volume,issue,spage,epage,dateofissued":
+                        itnl = itn.split(",")
+
+                        j[itnl[0]] = obj[s][0].get("biblio_name")
+                        j[itnl[1]] = obj[s][0].get("volume")
+                        j[itnl[2]] = obj[s][0].get("issue")
+                        j[itnl[3]] = obj[s][0].get("start_page")
+                        j[itnl[4]] = obj[s][0].get("end_page")
+                        j[itnl[5]] = obj[s][0].get("date_of_issued")[0:11]
+                    else:
+                        creator = []
+                        for lst in obj[s]:
+                            if isinstance(lst, dict):
+                                fn1 = lst.get("family")
+                                fn2 = lst.get("name")
+
+                                if fn1 and fn2:
+                                    fn = fn1 + "," + fn2
+                                    creator.append(fn)
+
+                                fn = lst.get("file_name")
+                                if fn:
+                                    creator.append(fn)
+
+                        j[itn] = creator
+            if obj.get("attribute_value"):
+                if isinstance(obj["attribute_value"], list):
+                    if len(obj["attribute_value"]) > 1:
+                        j[itn] = obj["attribute_value"]
+                    else:
+                        j[itn] = obj["attribute_value"][0]
+                elif itn == "title" or itn == "NIItype" or itn == "URI":
+                    j[itn] = obj["attribute_value"]
+                else:
+                    kc = []
+                    kc.append(obj["attribute_value"])
+                    j[itn] = kc
+
+        else:
+            j = None
+
+    return j
+
+
+def del_dupl(jd, dpd):
+    """Merge duble key.
+
+    :param jd:
+    :param dpd:
+    """
+    if dpd:
+        if len(jd) == 0:
+            jd.update(dpd)
+        else:
+            kc = dpd.keys()
+            for key in dpd.keys():
+                pass
+            arr = jd.get(key)
+            if arr:
+                arr.extend(dpd.get(key))
+            else:
+                jd.update(dpd)

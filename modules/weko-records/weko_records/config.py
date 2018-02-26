@@ -21,21 +21,3 @@
 """weko records config file."""
 
 WEKO_RECORDS_PERMISSION_FACTORY = 'weko_records.permissions.permission_factory'
-
-OAISERVER_METADATA_FORMATS = {
-    'junii2': {
-        'namespace': 'http://irdb.nii.ac.jp/oai',
-        'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
-        'serializer': 'weko_records.serializers.oaipmh_junii2_v2',
-    },
-    'jpcoar': {
-        'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
-        'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
-        'serializer': 'weko_records.serializers.oaipmh_jpcoar_v1',
-    },
-    'oai_dc': {
-        'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
-        'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
-        'serializer': 'weko_records.serializers.oaipmh_dublincore_v2',
-    }
-}

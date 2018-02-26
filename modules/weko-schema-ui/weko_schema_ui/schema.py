@@ -201,6 +201,8 @@ class SchemaTree:
 
             if isinstance(self._record, dict):
                 id = self._record.pop("item_type_id")
+                self._record.pop("_buckets", {})
+                self._record.pop("_deposit", {})
                 mjson = Mapping.get_record(id)
                 mp = mjson.dumps()
                 if mjson:
@@ -266,6 +268,8 @@ class SchemaTree:
                     # List of dict
                     atr_vm = v.get('attribute_value_mlt')
                     if atr_v:
+                        if isinstance(atr_v, list):
+                            atr_v = " ".join(atr_v)
                         set_value(mpdic, atr_v)
                         vlst.append(mpdic)
                     elif atr_vm:
