@@ -98,7 +98,7 @@ set -o nounset
 
 # sphinxdoc-create-database-begin
 ${INVENIO_WEB_INSTANCE} db init
-${INVENIO_WEB_INSTANCE} db create
+${INVENIO_WEB_INSTANCE} db create -v
 # sphinxdoc-create-database-end
 
 # sphinxdoc-create-user-account-begin
@@ -107,6 +107,13 @@ ${INVENIO_WEB_INSTANCE} users create \
        --password "${INVENIO_USER_PASS}" \
        --active
 # sphinxdoc-create-user-account-end
+
+# sphinxdoc-create-files-location-begin
+${INVENIO_WEB_INSTANCE} files location \
+       "${INVENIO_FILES_LOCATION_NAME}" \
+       "${INVENIO_FILES_LOCATION_URI}" \
+       --default
+# sphinxdoc-create-files-location-end
 
 # sphinxdoc-index-initialisation-begin
 ${INVENIO_WEB_INSTANCE} index init

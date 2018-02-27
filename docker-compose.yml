@@ -38,6 +38,8 @@ web:
     - INVENIO_ELASTICSEARCH_HOST=elasticsearch
     - INVENIO_RABBITMQ_HOST=rabbitmq
     - INVENIO_WORKER_HOST=127.0.0.1
+    - INVENIO_FILES_LOCATION_NAME=local
+    - INVENIO_FILES_LOCATION_URI=/var/tmp
   volumes_from:
     - static
   links:

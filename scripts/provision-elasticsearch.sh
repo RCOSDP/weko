@@ -126,6 +126,7 @@ enabled=1" | \
 install_plugins () {
     # sphinxdoc-install-elasticsearch-plugins-begin
     $sudo /usr/share/elasticsearch/bin/plugin install -b mapper-attachments
+    $sudo /usr/share/elasticsearch/bin/plugin install analysis-kuromoji
     # sphinxdoc-install-elasticsearch-plugins-end
 }
 
