@@ -1,0 +1,117 @@
+# Translations template for invenio-files-rest.
+# Copyright (C) 2016 CERN
+# This file is distributed under the same license as the invenio-files-rest
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2016.
+# 
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: invenio-files-rest 1.0.0a9.dev20160823\n"
+"Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
+"POT-Creation-Date: 2016-08-25 10:02+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Jiří Kunčar <jiri.kuncar@gmail.com>, 2016\n"
+"Language-Team: Italian (https://www.transifex.com/inveniosoftware/teams/23537/it/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.3.4\n"
+"Language: it\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: invenio_files_rest/admin.py:48
+msgid "Invalid location name."
+msgstr "Nome della località non valido."
+
+#: invenio_files_rest/admin.py:76 invenio_files_rest/admin.py:198
+#: invenio_files_rest/admin.py:254
+msgid "ID"
+msgstr "ID"
+
+#: invenio_files_rest/admin.py:77 invenio_files_rest/admin.py:156
+#: invenio_files_rest/admin.py:199
+msgid "URI"
+msgstr "URI"
+
+#: invenio_files_rest/admin.py:114
+msgid "UUID"
+msgstr "UUID"
+
+#: invenio_files_rest/admin.py:115
+msgid "Location"
+msgstr "Località"
+
+#: invenio_files_rest/admin.py:116
+msgid "Storage Class"
+msgstr "Classe di Memorizzazione"
+
+#: invenio_files_rest/admin.py:154
+msgid "Version"
+msgstr "Versione"
+
+#: invenio_files_rest/admin.py:155
+msgid "File UUID"
+msgstr "UUID del file"
+
+#: invenio_files_rest/admin.py:157
+msgid "Size"
+msgstr "Dimensione"
+
+#: invenio_files_rest/admin.py:158
+msgid "Deleted"
+msgstr "Eliminato"
+
+#: invenio_files_rest/admin.py:159
+msgid "Checksum"
+msgstr "Checksum"
+
+#: invenio_files_rest/admin.py:160
+msgid "Readable"
+msgstr "Leggibile"
+
+#: invenio_files_rest/admin.py:161
+msgid "Storage class"
+msgstr "Classe di memorizzazione"
+
+#: invenio_files_rest/admin.py:162
+msgid "Objects"
+msgstr "Oggetti"
+
+#: invenio_files_rest/admin.py:163 invenio_files_rest/admin.py:256
+msgid "File"
+msgstr "File"
+
+#: invenio_files_rest/admin.py:200
+msgid "Fixity"
+msgstr "Fissità"
+
+#: invenio_files_rest/admin.py:201
+msgid "Checked"
+msgstr "Controllato"
+
+#: invenio_files_rest/admin.py:219
+msgid "Run fixity check"
+msgstr "Lancia la verifica di fissità"
+
+#: invenio_files_rest/admin.py:228
+msgid "Cannot find file instance."
+msgstr "Impossibile di trovare un instanza di file."
+
+#: invenio_files_rest/admin.py:232
+msgid "Fixity check(s) sent to queue."
+msgstr "Controlli di fissità inviati alla coda."
+
+#: invenio_files_rest/admin.py:237
+msgid "Failed to run fixity checks."
+msgstr "Impossibile di lanciare i controlli di fissità."
+
+#: invenio_files_rest/admin.py:255
+msgid "Complete"
+msgstr "Completo"
+
+#: invenio_files_rest/admin.py:271 invenio_files_rest/admin.py:275
+#: invenio_files_rest/admin.py:279 invenio_files_rest/admin.py:283
+#: invenio_files_rest/admin.py:287
+msgid "Files"
+msgstr "File"

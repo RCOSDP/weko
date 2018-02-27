@@ -57,7 +57,6 @@ invenio-celery==1.0.0b3
 invenio-config==1.0.0b3
 invenio-db==1.0.0b8
 invenio-deposit==1.0.0a8
-invenio-files-rest==1.0.0a22
 invenio-formatter==1.0.0b3
 invenio-i18n==1.0.0b4
 invenio-indexer==1.0.0a10

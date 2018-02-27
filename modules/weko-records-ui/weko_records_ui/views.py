@@ -89,7 +89,7 @@ def get_image_src(mimetype):
     elif "powerpoint" in mimetype:
         src = "icon_16_ppt.jpg"
     elif "zip" in mimetype or "rar" in mimetype:
-        src = "icon_16_txt.jpg"
+        src = "icon_16_zip.jpg"
     elif "audio/" in mimetype:
         src = "icon_16_music.jpg"
     elif "xml" in mimetype:

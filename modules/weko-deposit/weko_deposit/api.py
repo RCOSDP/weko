@@ -33,7 +33,7 @@ from weko_records.utils import save_item_metadata, save_items_data, upload_metad
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 # from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
 # from invenio_pidrelations.contrib.versioning import PIDVersioning
-from .models import WekoObjectVersion
+# from .models import WekoObjectVersion
 
 PRESERVE_FIELDS = (
     '_deposit',
@@ -49,19 +49,19 @@ PRESERVE_FIELDS = (
 )
 
 
-def sorted_files_from_bucket(bucket, keys=None):
-    """Return files from bucket sorted by given keys.
-
-    :param bucket: :class:`~invenio_files_rest.models.Bucket` containing the
-        files.
-    :param keys: Keys order to be used.
-    :returns: Sorted list of bucket items.
-    """
-    keys = keys or []
-    total = len(keys)
-    sortby = dict(zip(keys, range(total)))
-    values = WekoObjectVersion.get_by_bucket(bucket).all()
-    return sorted(values, key=lambda x: sortby.get(x.key, total))
+# def sorted_files_from_bucket(bucket, keys=None):
+#     """Return files from bucket sorted by given keys.
+#
+#     :param bucket: :class:`~invenio_files_rest.models.Bucket` containing the
+#         files.
+#     :param keys: Keys order to be used.
+#     :returns: Sorted list of bucket items.
+#     """
+#     keys = keys or []
+#     total = len(keys)
+#     sortby = dict(zip(keys, range(total)))
+#     values = WekoObjectVersion.get_by_bucket(bucket).all()
+#     return sorted(values, key=lambda x: sortby.get(x.key, total))
 
 
 class WekoFileObject(FileObject):
@@ -80,20 +80,20 @@ class WekoFileObject(FileObject):
         return self.data
 
 
-class WekoFilesIterator(FilesIterator):
-    """ extend  FilesIterator for detail page"""
-
-    def __iter__(self):
-        """"""
-        self._it = iter(sorted_files_from_bucket(self.bucket, self.keys))
-        return self
-
-    def __getitem__(self, key):
-        """Get a specific file."""
-        obj = WekoObjectVersion.get(self.bucket, key)
-        if obj:
-            return self.file_cls(obj, self.filesmap.get(obj.key, {}))
-        raise KeyError(key)
+# class WekoFilesIterator(FilesIterator):
+#     """ extend  FilesIterator for detail page"""
+#
+#     def __iter__(self):
+#         """"""
+#         self._it = iter(sorted_files_from_bucket(self.bucket, self.keys))
+#         return self
+#
+#     def __getitem__(self, key):
+#         """Get a specific file."""
+#         obj = WekoObjectVersion.get(self.bucket, key)
+#         if obj:
+#             return self.file_cls(obj, self.filesmap.get(obj.key, {}))
+#         raise KeyError(key)
 
 
 class WekoIndexer(object):
@@ -110,7 +110,7 @@ class WekoDeposit(Deposit):
 
     indexer = WekoIndexer()
 
-    files_iter_cls = WekoFilesIterator
+    # files_iter_cls = WekoFilesIterator
 
     deposit_fetcher = staticmethod(weko_deposit_fetcher)
 
@@ -189,7 +189,7 @@ class WekoRecord(Record):
 
     file_cls = WekoFileObject
 
-    files_iter_cls = WekoFilesIterator
+    # files_iter_cls = WekoFilesIterator
 
     record_fetcher = staticmethod(weko_deposit_fetcher)
 

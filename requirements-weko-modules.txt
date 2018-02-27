@@ -1,3 +1,4 @@
+-e /code/modules/invenio-files-rest
 -e /code/modules/weko-theme
 -e /code/modules/weko-itemtypes-ui
 -e /code/modules/weko-items-ui
@@ -12,3 +13,4 @@
 -e /code/modules/weko-schema-ui
 -e /code/modules/weko-index-tree
 -e /code/modules/weko-user-profiles
+-e /code/modules/weko-deposit
