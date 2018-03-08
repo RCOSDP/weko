@@ -150,6 +150,7 @@ class SchemaConverter:
             path = self.rootname + "/*" if ':' in self.rootname \
                 else '{%s}%s/*' % (tagns, nsp if nsp else self.rootname)
             elements = schema_data.findall(path)
+            elements = schema_data.findall('*/*') if len(elements) < 1 else elements
         except:
             abort(400, "Error creating Schema: Can not find element")
         else:
