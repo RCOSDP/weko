@@ -218,7 +218,7 @@ def get_value(obj):
     if isinstance(obj, dict):
         obj.pop("display_lang_type")
         obj.pop("jpcoar_mapping")
-        obj.pop("dublin_core_mapping")
+        obj.pop("dc_mapping")
         obj.pop("lido_mapping")
         obj.pop("lom_mapping")
         itn = obj.pop("junii2_mapping")
