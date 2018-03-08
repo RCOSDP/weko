@@ -18,7 +18,7 @@
     // デフォルトマッピングのテンプレート
     mapping_value = {
       "display_lang_type": "",
-      "dublin_core_mapping": "",
+      "dc_mapping": "",
       "jpcoar_mapping": "",
       "junii2_mapping": "",
       "lido_mapping": "",
@@ -147,7 +147,7 @@
           ]
         });
         page_global.table_row_map.mapping['filemeta'] = {
-                                                            "dublin_core_mapping": {
+                                                            "dc_mapping": {
                                                                 "subject": "filename"
                                                             },
                                                             "lom_mapping": "",
@@ -180,7 +180,7 @@
       page_global.table_row_map.schema.required.push("lang");
       page_global.table_row_map.schema.required.push("pubdate");
       page_global.table_row_map.mapping['title_ja'] = {
-                                                          "dublin_core_mapping": {
+                                                          "dc_mapping": {
                                                               "title": ""
                                                           },
                                                           "lom_mapping": "",
@@ -195,7 +195,7 @@
                                                           "display_lang_type": ""
                                                       };
       page_global.table_row_map.mapping['title_en'] = {
-                                                          "dublin_core_mapping": {
+                                                          "dc_mapping": {
                                                               "alternative": ""
                                                           },
                                                           "lom_mapping": "",
@@ -214,7 +214,7 @@
                                                           "display_lang_type": ""
                                                       };
       page_global.table_row_map.mapping['lang'] = {
-                                                "dublin_core_mapping": {
+                                                "dc_mapping": {
                                                     "language": ""
                                                 },
                                                 "lom_mapping": "",
@@ -229,7 +229,7 @@
                                                 "display_lang_type": ""
                                             };
       page_global.table_row_map.mapping['pubdate'] = {
-                                                "dublin_core_mapping": {
+                                                "dc_mapping": {
                                                     "date": ""
                                                 },
                                                 "lom_mapping": "",
@@ -248,7 +248,7 @@
                                                 "display_lang_type": ""
                                             };
       page_global.table_row_map.mapping['keywords'] = {
-                                                "dublin_core_mapping": {
+                                                "dc_mapping": {
                                                     "subject": ""
                                                 },
                                                 "lom_mapping": "",
@@ -268,7 +268,7 @@
                                                 "display_lang_type": ""
                                             };
       page_global.table_row_map.mapping['keywords_en'] = {
-                                                "dublin_core_mapping": {
+                                                "dc_mapping": {
                                                     "subject": {}
                                                 },
                                                 "lom_mapping": "",
