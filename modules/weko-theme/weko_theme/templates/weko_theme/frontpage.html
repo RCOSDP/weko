@@ -20,10 +20,19 @@
 
 {%- extends config.BASE_PAGE_TEMPLATE %}
 
-{%- block javascript %}
-  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- block css %}
   {{ super() }}
+  {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_search_ui_css" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -32,6 +41,7 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
+  <div class="hide" id="cur_index_id">{{index_id}}</div>
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-12">
       {% include "weko_theme/body_search.html" %}

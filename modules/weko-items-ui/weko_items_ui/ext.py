@@ -21,7 +21,21 @@
 """Flask extension for weko-items-ui."""
 
 from . import config
+from .permissions import item_permission
 from .views import blueprint
+
+
+class _WekoItemsUIState(object):
+    """WekoItemsUI state."""
+
+    def __init__(self, app, permission):
+        """Initialize state.
+
+        :param app: The Flask application.
+        :param permission: The permission to restrict access.
+        """
+        self.app = app
+        self.permission = permission
 
 
 class WekoItemsUI(object):
@@ -42,7 +56,8 @@ class WekoItemsUI(object):
         """
         self.init_config(app)
         app.register_blueprint(blueprint)
-        app.extensions['weko-items-ui'] = self
+        state = _WekoItemsUIState(app, item_permission)
+        app.extensions['weko-items-ui'] = state
 
     def init_config(self, app):
         """Initialize configuration.

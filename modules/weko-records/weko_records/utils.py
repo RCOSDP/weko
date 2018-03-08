@@ -61,8 +61,7 @@ def save_item_metadata(rejson, pid):
         mp = mjson.dumps()
         rejson.get("$schema")
         for k, v in rejson.items():
-            if k == "$schema" or \
-                mp.get(k) is None:
+            if k == "$schema" or mp.get(k) is None:
                 continue
 
             item.clear()
@@ -264,7 +263,11 @@ def get_value(obj):
                 else:
                     kc = []
                     kc.append(obj["attribute_value"])
-                    j[itn] = kc
+                    if isinstance(itn, dict):
+                        for k in itn.keys():
+                            j[k] = kc
+                    else:
+                        j[itn] = kc
 
         else:
             j = None

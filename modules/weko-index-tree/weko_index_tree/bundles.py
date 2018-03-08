@@ -21,15 +21,18 @@
 """Bundles for weko-index-tree."""
 
 from flask_assets import Bundle
+from invenio_assets import NpmBundle
 
 style = Bundle(
-    'css/weko_index_tree/jsontreeview.css',
+    'css/weko_index_tree/styles.bundle.css',
     filters='cleancss',
     output="gen/index_tree_view.%(version)s.css"
 )
 
-js_treeview = Bundle(
-    'js/weko_index_tree/jsontreeview.js',
+js_treeview = NpmBundle(
+    'js/weko_index_tree/inline.bundle.js',
+    'js/weko_index_tree/polyfills.bundle.js',
+    'js/weko_index_tree/main.bundle.js',
     output="gen/index_tree_view.js"
 )
 

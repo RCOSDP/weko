@@ -44,12 +44,12 @@ def get_all_children(tree_json):
 def _get_all_children(tree_json, parent=0, child_list={}, parent_info={}):
     children = []
     for tree in tree_json:
-        if len(tree['nodes']) > 0:
+        if len(tree['children']) > 0:
             # contains children
             children.append(str(tree.get('id')))
             children.extend(
                 _get_all_children(
-                    tree.get('nodes'), tree.get('id'),
+                    tree.get('children'), tree.get('id'),
                     child_list, parent_info))
         else:
             children.append(str(tree.get('id')))

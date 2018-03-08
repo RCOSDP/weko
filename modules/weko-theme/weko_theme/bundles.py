@@ -38,14 +38,16 @@ from flask_assets import Bundle
 
 css = Bundle(
     'css/weko_theme/theme.scss',
-    'css/weko_theme/jsontreeview.css',
+    'css/weko_theme/styles.bundle.css',
     filters='cleancssurl',
     output='gen/weko_theme.%(version)s.css',
 )
 """Default CSS bundle ."""
 
 js_treeview = Bundle(
-    'js/weko_theme/jsontreeview.js',
+    'js/weko_theme/inline.bundle.js',
+    'js/weko_theme/polyfills.bundle.js',
+    'js/weko_theme/main.bundle.js',
     output="gen/index_tree_view.js"
 )
 

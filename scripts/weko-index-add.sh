@@ -58,6 +58,9 @@ curl -X PUT \
             "stop",
             "cjk_width"
           ]
+        },
+        "paths": {
+          "tokenizer": "path_hierarchy"
         }
       }
     }
@@ -68,6 +71,16 @@ curl -X PUT \
         "enabled": true
       },
       "properties": {
+        "path": {
+          "type": "string",
+          "index": "not_analyzed",
+          "fields": {
+            "tree": {
+              "type": "string",
+              "analyzer": "paths"
+            }
+          }
+        },
         "item_id": {
           "type": "string"
         },
@@ -430,5 +443,6 @@ curl -X PUT \
       }
     }
   }
-}'
+}
+'
 

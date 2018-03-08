@@ -98,10 +98,6 @@ setup(
         'invenio_config.module': [
             'weko_records = weko_records.config',
         ],
-        'invenio_access.actions': [
-            'item_type_access'
-            ' = weko_records.permissions:action_item_type_access',
-        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

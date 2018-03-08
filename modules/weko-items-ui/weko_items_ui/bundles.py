@@ -25,6 +25,7 @@ from invenio_assets import NpmBundle
 
 indextree_style = Bundle(
     'css/weko_items_ui/indextree.bundle.css',
+    'css/weko_items_ui/styles.bundle.css',
     filters='cleancss',
     output="gen/indextree_ui.%(version)s.css"
 )

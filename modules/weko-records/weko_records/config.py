@@ -20,4 +20,3 @@
 
 """weko records config file."""
 
-WEKO_RECORDS_PERMISSION_FACTORY = 'weko_records.permissions.permission_factory'

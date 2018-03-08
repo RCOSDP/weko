@@ -26,6 +26,8 @@ from invenio_db import db
 from flask import current_app
 from flask_login import current_user
 from .models import Index, IndexTree
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql.expression import literal_column, func
 
 
 class IndexTrees(object):
@@ -184,3 +186,63 @@ class Indexes(object):
             db.session.rollback()
             return None
         return True
+
+    @classmethod
+    def get_path_list(cls, node_lst):
+        recursive_t = cls.recu_query()
+        q = db.session.query(recursive_t).filter(
+            recursive_t.c.cid.in_(node_lst)).all()
+        return q
+
+    @classmethod
+    def get_path_name(cls, node_path):
+        recursive_t = cls.recu_query()
+        q = db.session.query(recursive_t).filter(
+            recursive_t.c.path.in_(node_path)). \
+            order_by(recursive_t.c.path).all()
+        return q
+
+    @classmethod
+    def get_self_list(cls, node_path):
+        index = node_path.rfind('/')
+        pid = node_path[index + 1:]
+        recursive_t = cls.recu_query()
+        q = db.session.query(recursive_t).filter(
+            db.or_(recursive_t.c.pid == pid,
+                   recursive_t.c.cid == pid)). \
+            order_by(recursive_t.c.path).all()
+        return q
+
+    @classmethod
+    def get_self_path(cls, node_id):
+        """"""
+        recursive_t = cls.recu_query()
+        return db.session.query(recursive_t).filter(
+            recursive_t.c.cid == str(node_id)).one_or_none()
+
+    @classmethod
+    def recu_query(cls):
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+            func.cast(Index.id, db.Text).label("path"),
+            Index.index_name.label("name"),
+            literal_column("1", db.Integer).label("lev")).filter(
+            Index.parent == 0,
+            Index.is_delete == False). \
+            cte(name="recursive_t", recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec")
+        test_alias = aliased(Index, name="t")
+        recursive_t = recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                rec_alias.c.name + '/' + test_alias.index_name,
+                rec_alias.c.lev + 1).filter(
+                test_alias.parent == rec_alias.c.cid,
+                test_alias.is_delete == False)
+        )
+
+        return recursive_t

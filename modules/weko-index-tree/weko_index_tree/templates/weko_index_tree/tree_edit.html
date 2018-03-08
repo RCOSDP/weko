@@ -20,8 +20,8 @@
 {%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
 
 {%- block css %}
-  {{ super() }}
   {% assets "weko_index_tree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
 {%- endblock css %}
 
 {%- block javascript %}

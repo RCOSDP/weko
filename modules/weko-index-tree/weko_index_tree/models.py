@@ -63,7 +63,7 @@ class IndexTree(db.Model, Timestamp):
     __tablename__ = 'index_tree'
 
     id = db.Column(
-        db.Integer(),
+        db.Integer,
         primary_key=True,
         autoincrement=True
     )
@@ -108,10 +108,10 @@ class Index(db.Model, Timestamp, Serializer):
 
     __tablename__ = 'index'
 
-    id = db.Column(db.Integer, primary_key=True, unique=True)
+    id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    parent = db.Column(db.Integer, nullable=False, default=0)
+    parent = db.Column(db.BigInteger, nullable=False, default=0)
     """Parent Information of the index."""
 
     children = db.Column(db.Text, nullable=False, default='')

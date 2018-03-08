@@ -20,7 +20,7 @@
 
 """Links for record serialization."""
 
-from flask import request
+from flask import request, current_app
 
 
 def default_links_factory(pid):
@@ -32,6 +32,7 @@ def default_links_factory(pid):
     url = request.base_url + pid.pid_value
     links = dict(self=url)
     links['bucket'] = request.base_url + "put/" + pid.pid_value
+    links['index'] = '/items/index/' + pid.pid_value
     return links
 
 
@@ -42,6 +43,7 @@ def default_links_factory_with_additional(additional_links):
            returned object.
     :returns: A link generation factory.
     """
+
     def factory(pid):
         links = default_links_factory(pid)
         for link in additional_links:

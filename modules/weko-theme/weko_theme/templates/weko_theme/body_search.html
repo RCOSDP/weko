@@ -32,7 +32,7 @@
   <div class="row">
     <div class="col-sm-12 col-md-6 col-lg-6">
       <div class="form-inline">
-        <button id="detail_search_main" type="button" class="btn btn-info" data-toggle="collapse" data-target="#search_detail">
+        <button id="detail_search_main" type="button" class="btn btn-info">
           <i class="fa fa-search-plus"></i>
           {{_('Detail search')}}
         </button>
@@ -46,12 +46,12 @@
     </div>
   </div>
 </form>
-<form action="/search">
-  <div class="row">
-    <div class="col-sm-12 col-md-11 col-lg-11">
-      <div id="search_detail" class="collapse">
-        {% include "weko_theme/body_search_detail.html" %}
+<div id="search_detail">
+  <form id="search_detail_form" action="/search">
+    <div class="row">
+      <div id="search_detail_metadata" class="collapse col-sm-12 col-md-11 col-lg-11">
+          {% include "weko_theme/body_search_detail.html" %}
       </div>
     </div>
-  </div>
-</form>
+  </form>
+</div>

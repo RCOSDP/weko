@@ -24,10 +24,19 @@
     <h3 class="panel-title">{{_('インデックス')}}</h3>
   </div>
   <div class="panel-body">
-    <div class="panel_bread">
-      <ol class="breadcrumb">
-        <li class="active"></li>
-      </ol>
+    <pre class="hide">{{record|tojson}}</pre>
+    <div class="panel_bread" id="panel_bread">
+      {%- if record.navi -%}
+        {%- for nav in record.navi -%}
+        <ol class="breadcrumb">
+          {%- set name = nav.name.split('/') -%}
+          {%- set p = nav.path.split('/') -%}
+          {%- for n in name -%}
+            <li><a href={{url_for("weko_search_ui.search")+"?q="+p[loop.index-1]}}>{{n}}</a></li>
+          {%- endfor -%}
+        </ol>
+        {%- endfor -%}
+      {%- endif -%}
     </div>
   </div>
 </div>
@@ -46,7 +55,8 @@
         <div class="row">
           <div class="col-sm-9 col-md-9">
             {%- block record_author %}
-            {%- set files = record.files -%}
+              {%- set files = record.files -%}
+              {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
               {%- if files -%}
               <table class="table table-bordered table-striped">
                 <thead>
@@ -120,14 +130,14 @@
               </table>
               {%- endif %}
               <table class="table table-bordered table-striped">
-              {%- if item_type_info -%}
+              {% if record.item_type_info %}
                 <tr>
                   <th>{{_('item type')}}</th>
-                  <td>{{ item_type_info }}</td>
+                  <td>{{ record.item_type_info }}</td>
                 </tr>
               {% endif %}
               {%- for k, m in record.items() %}
-                {%- if m is not string and '_oai' != k and 'filemeta' != k %}
+                {%- if m is not string and k not in ignore_meta %}
                   <tr>
                     <th>{{ m['attribute_name'] }}</th>
                     <td>
@@ -156,12 +166,14 @@
               {% endif %}
             {%- endblock %}
             <div class="text-center">
-              <button type="button" class="btn btn-default" id="btn_back">
-                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('戻る')}}</button>
-              <button type="button" class="btn btn-default" id="btn_edit">
-                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('編集')}}</button>
-              <button type="button" class="btn btn-danger btn-sm" id="btn_delete">
-                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>{{_('削除')}}</button>
+              <a class="btn btn-default" id="btn_back" href="#" >
+                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('戻る')}}</a>
+              {% if record.editable %}
+              <a class="btn btn-default" id="btn_edit" href="{{ '/item/edit/'+pid.pid_value }}">
+                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('編集')}}</a>
+              <a class="btn btn-danger btn-sm" id="btn_delete" href="#">
+                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>{{_('削除')}}</a>
+              {% endif %}
             </div>
           </div>
           <div class="col-sm-3 col-md-3">
@@ -190,7 +202,7 @@
                 </dd>
                 {%- endblock %}
                 {% endif %}
-                {%- include "invenio_records_ui/export_well.html" %}
+                {%- include "weko_records_ui/export_well.html" %}
               </dl>
             </div><!-- /.extra-info -->
             {%- endblock record_extra_info %}

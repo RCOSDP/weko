@@ -21,9 +21,9 @@
 {%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
 
 {%- block css %}
-  {{ super() }}
   {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_index_tree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -38,6 +38,15 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
+<div class="row">
+  <div class="hide" id="get_tree_json">{{ get_tree_json }}</div>
+  <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
+  <div class="hide" id="mod_tree_detail">{{ mod_tree_detail }}</div>
+  <app-root-tree-hensyu></app-root-tree-hensyu>
+</div>
+{%- endblock page_body_main %}
+
+{%- block page_body_main_bak %}
 <div class="row">
   <div class="col-sm-3 col-md-3 col-lg-3">
     <div id="index_tree"></div>
@@ -484,8 +493,8 @@
     </div>
   </div>
 </div>
-{%- endblock page_body_main %}
-{%- block page_body %}
+{%- endblock page_body_main_bak %}
+{%- block page_body_bak %}
 {{ super() }}
 <!-- modal start -->
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
@@ -504,4 +513,4 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-{%- endblock page_body %}
+{%- endblock page_body_bak %}

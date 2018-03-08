@@ -20,8 +20,7 @@
 
 """Blueprint for weko-search-ui."""
 
-
-from flask import Blueprint, request, Flask
+from flask import Blueprint, current_app, request, render_template
 
 blueprint = Blueprint(
     'weko_search_ui',
@@ -30,3 +29,10 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
+
+@blueprint.route("/search/index")
+def search():
+    """ Index Search page ui."""
+    cur_index_id = request.args.get('q', '')
+    return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
+                           index_id=cur_index_id)

@@ -147,23 +147,31 @@
           ]
         });
         page_global.table_row_map.mapping['filemeta'] = {
-                                                        "dublin_core_mapping": "",
-                                                        "lom_mapping": "",
-                                                        "jpcoar_mapping": "file.url",
-                                                        "lido_mapping": "",
-                                                        "spase_mapping": "",
-                                                        "junii2_mapping": "fullTextURL",
-                                                        "display_lang_type": ""
-                                                      };
+                                                            "dublin_core_mapping": {
+                                                                "subject": "filename"
+                                                            },
+                                                            "lom_mapping": "",
+                                                            "jpcoar_mapping": {
+                                                                "file": {
+                                                                    "URI": "filename"
+                                                                }
+                                                            },
+                                                            "lido_mapping": "",
+                                                            "spase_mapping": "",
+                                                            "junii2_mapping": {
+                                                                "fullTextURL": "filename"
+                                                            },
+                                                            "display_lang_type": ""
+                                                        };
       }
       // タイトルなどを追加する
       page_global.table_row_map.schema.properties["title_ja"] = {type:"string",title:"タイトル",format:"text"}
       page_global.table_row_map.schema.properties["title_en"] = {type:"string",title:"タイトル(英)",format:"text"}
       page_global.table_row_map.form.push({type:"fieldset",title:"タイトル",items:[{type:"text",key:"title_ja",title:"タイトル",required:true},{type:"text",key:"title_en",title:"タイトル(英)",required:true}]});
-      page_global.table_row_map.schema.properties["lang"] = {type:"string",title:"言語",format:"text"}
-      page_global.table_row_map.form.push({key:"lang",type:"text",title:"言語","required": true});
+      page_global.table_row_map.schema.properties["lang"] = {type:"string",title:"言語",format:"select",enum:["en","ja"]}
+      page_global.table_row_map.form.push({key:"lang",type:"select",title:"言語",required: true,titleMap:{"en":"英語","ja":"日本語"}});
       page_global.table_row_map.schema.properties["pubdate"] = {type:"string",title:"公開日",format:"datetime"}
-      page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日","required": true,"format": "yyyy-MM-dd","templateUrl": "/static/templates/weko_deposit/datepicker.html"});
+      page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日",required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
       page_global.table_row_map.schema.properties["keywords"] = {type:"string",title:"キーワード",format:"text"}
       page_global.table_row_map.schema.properties["keywords_en"] = {type:"string",title:"キーワード(英)",format:"text"}
       page_global.table_row_map.form.push({type:"fieldset",title:"キーワード",items:[{type:"text",key:"keywords",title:"キーワード"},{type:"text",key:"keywords_en",title:"キーワード(英)"}]});
@@ -172,73 +180,113 @@
       page_global.table_row_map.schema.required.push("lang");
       page_global.table_row_map.schema.required.push("pubdate");
       page_global.table_row_map.mapping['title_ja'] = {
-                                                        "dublin_core_mapping": "",
-                                                        "lom_mapping": "",
-                                                        "jpcoar_mapping": "title",
-                                                        "lido_mapping": "",
-                                                        "spase_mapping": "",
-                                                        "junii2_mapping": "title",
-                                                        "display_lang_type": ""
-                                                      };
-      page_global.table_row_map.mapping['title_en'] = {
-                                                          "dublin_core_mapping": "title",
+                                                          "dublin_core_mapping": {
+                                                              "title": ""
+                                                          },
                                                           "lom_mapping": "",
-                                                          "jpcoar_mapping": "alternative",
+                                                          "jpcoar_mapping": {
+                                                              "title": ""
+                                                          },
                                                           "lido_mapping": "",
                                                           "spase_mapping": "",
-                                                          "junii2_mapping": "alternative",
-                                                          "display_lang_type": ""
-                                                        };
-      page_global.table_row_map.mapping['lang'] = {
-                                                    "dublin_core_mapping": "",
-                                                    "lom_mapping": "",
-                                                    "jpcoar_mapping": "language",
-                                                    "lido_mapping": "",
-                                                    "spase_mapping": "",
-                                                    "junii2_mapping": "language",
-                                                    "display_lang_type": ""
-                                                  };
-      page_global.table_row_map.mapping['pubdate'] = {
-                                                        "dublin_core_mapping": "date",
-                                                        "lom_mapping": "",
-                                                        "jpcoar_mapping": "date",
-                                                        "lido_mapping": "",
-                                                        "spase_mapping": "",
-                                                        "junii2_mapping": "date",
-                                                        "display_lang_type": ""
-                                                      };
-      page_global.table_row_map.mapping['keywords'] = {
-                                                          "display_lang_type": "",
-                                                          "dublin_core_mapping": "subject",
-                                                          "jpcoar_mapping": {
-                                                            "subject": {
-                                                              "@attributes": {
-                                                                "jpcoar:subjectScheme": "LCC",
-                                                                "jpcoar:subjectURI": "http://localhost"
-                                                              }
-                                                            }
+                                                          "junii2_mapping": {
+                                                              "title": ""
                                                           },
-                                                          "junii2_mapping": "subject",
-                                                          "lido_mapping": "",
+                                                          "display_lang_type": ""
+                                                      };
+      page_global.table_row_map.mapping['title_en'] = {
+                                                          "dublin_core_mapping": {
+                                                              "alternative": ""
+                                                          },
                                                           "lom_mapping": "",
-                                                          "spase_mapping": ""
-                                                        };
-      page_global.table_row_map.mapping['keywords_en'] = {
-                                                            "display_lang_type": "",
-                                                            "dublin_core_mapping": "subject",
-                                                            "jpcoar_mapping": {
-                                                              "rightsHolder": {
-                                                                "rightsHolderName": {},
-                                                                "@attributes": {
-                                                                  "xml:lang": "haha"
-                                                                }
+                                                          "jpcoar_mapping": {
+                                                              "alternative": {
+                                                                  "@attributes": {
+                                                                      "xml:lang": "ja"
+                                                                  }
                                                               }
-                                                            },
-                                                            "junii2_mapping": "subject",
-                                                            "lido_mapping": "",
-                                                            "lom_mapping": "",
-                                                            "spase_mapping": ""
-                                                          };
+                                                          },
+                                                          "lido_mapping": "",
+                                                          "spase_mapping": "",
+                                                          "junii2_mapping": {
+                                                              "alternative": ""
+                                                          },
+                                                          "display_lang_type": ""
+                                                      };
+      page_global.table_row_map.mapping['lang'] = {
+                                                "dublin_core_mapping": {
+                                                    "language": ""
+                                                },
+                                                "lom_mapping": "",
+                                                "jpcoar_mapping": {
+                                                    "language": ""
+                                                },
+                                                "lido_mapping": "",
+                                                "spase_mapping": "",
+                                                "junii2_mapping": {
+                                                    "language": ""
+                                                },
+                                                "display_lang_type": ""
+                                            };
+      page_global.table_row_map.mapping['pubdate'] = {
+                                                "dublin_core_mapping": {
+                                                    "date": ""
+                                                },
+                                                "lom_mapping": "",
+                                                "jpcoar_mapping": {
+                                                    "date": {
+                                                        "@attributes": {
+                                                            "dateType": "Accepted"
+                                                        }
+                                                    }
+                                                },
+                                                "lido_mapping": "",
+                                                "spase_mapping": "",
+                                                "junii2_mapping": {
+                                                    "date": ""
+                                                },
+                                                "display_lang_type": ""
+                                            };
+      page_global.table_row_map.mapping['keywords'] = {
+                                                "dublin_core_mapping": {
+                                                    "subject": ""
+                                                },
+                                                "lom_mapping": "",
+                                                "jpcoar_mapping": {
+                                                    "subject": {
+                                                        "@attributes": {
+                                                            "jpcoar:subjectScheme": "LCC",
+                                                            "jpcoar:subjectURI": "http://localhost"
+                                                        }
+                                                    }
+                                                },
+                                                "lido_mapping": "",
+                                                "spase_mapping": "",
+                                                "junii2_mapping": {
+                                                    "subject": ""
+                                                },
+                                                "display_lang_type": ""
+                                            };
+      page_global.table_row_map.mapping['keywords_en'] = {
+                                                "dublin_core_mapping": {
+                                                    "subject": {}
+                                                },
+                                                "lom_mapping": "",
+                                                "jpcoar_mapping": {
+                                                    "rightsHolder": {
+                                                        "@attributes": {
+                                                            "xml:lang": "haha"
+                                                        },
+                                                        "rightsHolderName": {}
+                                                    }
+                                                },
+                                                "lido_mapping": "",
+                                                "spase_mapping": "",
+                                                "junii2_mapping": {
+                                                    "subject": ""
+                                                },
+                                                "display_lang_type": ""
+                                            };
 
       // テーブルの行をトラバースし、マップに追加する
       err_input_id = []

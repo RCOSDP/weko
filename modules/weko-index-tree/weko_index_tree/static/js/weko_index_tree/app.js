@@ -390,5 +390,5 @@ require([
     });
   }
 
-  refreshIndexTree();
+  //refreshIndexTree();
 });

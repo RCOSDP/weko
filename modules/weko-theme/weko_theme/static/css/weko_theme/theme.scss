@@ -36,6 +36,10 @@
     margin: -10px 0;
 }
 
+.badge {
+    font-size: 10px;
+}
+
 input[type="date"] {
     width: 180px;
 }
@@ -49,6 +53,14 @@ dl dd {
     padding-left: 5px;
     word-wrap: break-word;
     word-break: break-all;
+}
+
+.panel_bread .breadcrumb {
+    margin-bottom: 5px;
+}
+
+.flow-root {
+    display: flow-root;
 }
 
 .p-top-20 {

@@ -11,7 +11,7 @@ require([
     node.parents && node.parents.forEach(function(element){
       tmp = tmp + '<li><a href="#'+element.id+'">'+element.title+'</a></li>';
     });
-    tmp = tmp + '<li class="active">'+node.title+'</a></li>';
+    tmp = tmp + '<li class="active">'+node.title+'</li>';
     tmp = tmp + '</ol>';
     $('.panel_bread').html(tmp);
   }
@@ -30,5 +30,5 @@ require([
       }
     });
   }
-  refreshIndexTree();
+  //refreshIndexTree();
 });

@@ -23,33 +23,33 @@
       <div class="row">
         <div class="form-group col-sm-3">
           <label for="search_title">{{_('Title')}}</label>
-          <input type="text" class="form-control" id="search_title" placeholder="">
+          <input type="text" class="form-control" id="search_title" name="search_title" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="search_creator">{{_('Author or Author id')}}</label>
-          <input type="text" class="form-control" id="search_creator" placeholder="">
+          <input type="text" class="form-control" id="search_creator" name="search_creator" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="subject">{{_('Keyword')}}</label>
-          <input type="text" class="form-control" id="subject" placeholder="">
+          <input type="text" class="form-control" id="subject" name="subject" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="search_sh">{{_('Subject terms')}}</label>
-          <input type="text" class="form-control" id="search_sh" placeholder="">
+          <input type="text" class="form-control" id="search_sh" name="search_sh" placeholder="">
         </div>
       </div>
       <div class="row">
         <div class="form-group col-sm-3">
           <label for="description">{{_('Abstract')}}</label>
-          <input type="text" class="form-control" id="description" placeholder="">
+          <input type="text" class="form-control" id="description" name="description" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="search_publishe">{{_('Publisher')}}</label>
-          <input type="text" class="form-control" id="search_publishe" placeholder="">
+          <input type="text" class="form-control" id="search_publishe" name="search_publishe" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="search_contributor">{{_('Contributors or Author id')}}</label>
-          <input type="text" class="form-control" id="search_contributor" placeholder="">
+          <input type="text" class="form-control" id="search_contributor" name="search_contributor" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="datepicker">{{_('Contents created date')}}</label>
@@ -63,25 +63,25 @@
       <div class="row">
         <div class="form-group col-sm-3">
           <label for="itemtype">{{_('Item type')}}</label>
-          <input type="text" class="form-control" id="itemtype" placeholder="">
+          <input type="text" class="form-control" id="itemtype" name="itemtype" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="format">{{_('Format')}}</label>
-          <input type="text" class="form-control" id="format" placeholder="">
+          <input type="text" class="form-control" id="format" name="format" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="search_id">ID</label>
-          <input type="text" class="form-control" id="search_id" placeholder="">
+          <input type="text" class="form-control" id="search_id" name="search_id" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="jtitle">{{_('Journal title')}}</label>
-          <input type="text" class="form-control" id="jtitle" placeholder="">
+          <input type="text" class="form-control" id="jtitle" name="jtitle" placeholder="">
         </div>
       </div>
       <div class="row">
         <div class="form-group col-sm-3">
           <label for="language">{{_('Language')}}</label>
-          <select class="form-control" id="language">
+          <select class="form-control" id="language" name="language">
             <option></option>
             <option>{{_('Japanese')}}</option>
             <option>{{_('English')}}</option>
@@ -110,25 +110,25 @@
         </div>
         <div class="form-group col-sm-3">
           <label for="search_spatial">{{_('Region')}}</label>
-          <input type="text" class="form-control" id="search_spatial" placeholder="">
+          <input type="text" class="form-control" id="search_spatial" name="search_spatial" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="search_temporal">{{_('Period')}}</label>
-          <input type="text" class="form-control" id="search_temporal" placeholder="">
+          <input type="text" class="form-control" id="search_temporal" name="search_temporal" placeholder="">
         </div>
       </div>
       <div class="row">
         <div class="form-group col-sm-3">
           <label for="rights">{{_('Right')}}</label>
-          <input type="text" class="form-control" id="rights" placeholder="">
+          <input type="text" class="form-control" id="rights" name="rights" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="textversion">{{_('Author version flag')}}</label>
-          <input type="text" class="form-control" id="textversion" placeholder="">
+          <input type="text" class="form-control" id="textversion" name="textversion" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="grantid">{{_('Academic degree number')}}</label>
-          <input type="text" class="form-control" id="grantid" placeholder="">
+          <input type="text" class="form-control" id="grantid" name="grantid" placeholder="">
         </div>
         <div class="form-group col-sm-3">
           <label for="dateofgranted">{{_('Academic degree date')}}</label>
@@ -142,23 +142,23 @@
       <div class="row">
         <div class="form-group col-sm-3">
           <label for="degreename">{{_('Degree name')}}</label>
-          <input type="text" class="form-control" id="degreename" placeholder="">
+          <input type="text" class="form-control" id="degreename" name="degreename" placeholder="">
         </div>
         <div class="form-group col-sm-6">
           <label for="grantor">{{_('Institution for academic degree')}}</label>
-          <input type="text" class="form-control" id="grantor" placeholder="">
+          <input type="text" class="form-control" id="grantor" name="grantor" placeholder="">
         </div>
         <div class="form-group col-sm-3 p-top-20">
           <div class="checkbox">
             <label>
-              <input type="checkbox" id="NIItype" value="1">{{_('Resource type')}}
+              <input type="checkbox" id="NIItype" name="NIItype" value="1">{{_('Resource type')}}
             </label>
           </div>
         </div>
       </div>
       <div class="row">
         <div class="col-sm-3">
-          <button id="detail-search-btn" type="submit" class="btn btn-primary btn-block">{{_('Search')}}</button>
+          <button id="detail-search-btn" type="submit" class="btn btn-primary btn-block">{{_('DetailSearch')}}</button>
         </div>
       </div>
   </div>

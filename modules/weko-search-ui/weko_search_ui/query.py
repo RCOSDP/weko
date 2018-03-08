@@ -20,22 +20,25 @@
 
 """Query factories for REST API."""
 
+import json
 from datetime import datetime
-from functools import partial
+from werkzeug.datastructures import MultiDict
 
 from elasticsearch_dsl.query import Q
 from flask import current_app, request
 from invenio_records_rest.errors import InvalidQueryRESTError
+from weko_index_tree.api import Indexes
 
 
 def default_search_factory(self, search, query_parser=None):
-    """Parse query using Weko-Query-Parser.
+    """Parse query using Weko-Query-Parser. MetaData Search.
 
     :param self: REST view.
     :param search: Elastic search DSL search instance.
     :param query_parser: Query parser. (Default: ``None``)
     :returns: Tuple with search instance and URL arguments.
     """
+
     def _get_dsearch_query():
         kw = ['search_title', 'search_creator', 'subject', 'search_sh',
               'description', 'search_publisher', 'search_contributor',
@@ -82,7 +85,7 @@ def default_search_factory(self, search, query_parser=None):
         return Q('bool', must=mut)
 
     def _default_parser(qstr=None):
-        """Default parser that uses the Q() from elasticsearch_dsl.
+        """Default parser that uses the Q() from elasticsearch_dsl. Full text.
 
         :param qstr: Query string.
         :returns: Query parser.
@@ -137,17 +140,77 @@ def default_search_factory(self, search, query_parser=None):
     return search, urlkwargs
 
 
-es_search_factory = default_search_factory
+def item_path_search_factory(self, search):
+    """Parse query using Weko-Query-Parser.
 
-
-def weko_search_parser(search_factory):
-    """Set the default search factory to use Weko-query-parser.
-
-    :param search_factory: Search factory.
-    :returns: Partial function.
+    :param self: REST view.
+    :param search: Elastic search DSL search instance.
+    :returns: Tuple with search instance and URL arguments.
     """
-    from invenio_query_parser.contrib.elasticsearch import IQ
-    return partial(default_search_factory, query_parser=IQ)
+    query_q = {
+        "query": {
+            "match": {
+                "path.tree": "@index"
+            }
+        },
+        "aggs": {
+            "path": {
+                "terms": {
+                    "field": "path.tree",
+                    "include": "@index|@index/[^/]+"
+                },
+                "aggs": {
+                    "date_range": {
+                        "range": {
+                            "field": "date",
+                            "format": "YYYY-MM-DD",
+                            "ranges": [
+                                {
+                                    "from": "now/d"
+                                },
+                                {
+                                    "to": "now/d"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "post_filter": {
+            "term": {
+                "path": "@index"
+            }
+        }
+    }
+
+    q = request.values.get('q')
+    index_id = Indexes.get_self_path(q).path if "/" not in q else q
+    query_q = json.dumps(query_q).replace("@index", index_id)
+    query_q = json.loads(query_q)
+
+    urlkwargs = MultiDict()
+    try:
+        # Aggregations.
+        extr = search._extra.copy()
+        search.update_from_dict(query_q)
+        search._extra.update(extr)
+    except SyntaxError:
+        current_app.logger.debug(
+            "Failed parsing query: {0}".format(
+                request.values.get('q', '')),
+            exc_info=True)
+        raise InvalidQueryRESTError()
+
+    from invenio_records_rest.sorter import default_sorter_factory
+    search_index = search._index[0]
+    search, sortkwargs = default_sorter_factory(search, search_index)
+    for key, value in sortkwargs.items():
+        urlkwargs.add(key, value)
+
+    urlkwargs.add('q', query_q)
+    return search, urlkwargs
 
 
-weko_search_factory = weko_search_parser(default_search_factory)
+weko_search_factory = item_path_search_factory
+es_search_factory = default_search_factory

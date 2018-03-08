@@ -18,15 +18,15 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Proxy definitions."""
+"""Permissions for items."""
 
-from flask import current_app
-from werkzeug.local import LocalProxy
+from invenio_access import action_factory, Permission
 
-current_weko_records = LocalProxy(
-    lambda: current_app.extensions['weko-records'])
-"""Helper proxy to access files rest state object."""
+action_item_access = action_factory('item-access')
+item_permission = Permission(action_item_access)
 
-current_permission_factory = LocalProxy(
-    lambda: current_weko_records.permission_factory)
-"""Helper proxy to access to the configured permission factory."""
+
+def edit_permission_factory(record, **kwargs):
+    def can(self):
+        return item_permission.can()
+    return type('EditPermissionChecker', (), {'can': can})()

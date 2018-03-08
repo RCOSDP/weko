@@ -92,6 +92,9 @@ setup(
         'invenio_base.apps': [
             'weko_search_ui = weko_search_ui:WekoSearchUI',
         ],
+        'invenio_base.api_apps': [
+            'weko_search_rest = weko_search_ui:WekoSearchREST',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_search_ui',
         ],

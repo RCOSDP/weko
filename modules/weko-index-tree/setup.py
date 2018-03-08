@@ -99,6 +99,10 @@ setup(
         'invenio_db.models': [
             'weko_index_tree = weko_index_tree.models',
         ],
+        'invenio_access.actions': [
+            'index_tree_access = '
+            'weko_index_tree.permissions:action_index_tree_access',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

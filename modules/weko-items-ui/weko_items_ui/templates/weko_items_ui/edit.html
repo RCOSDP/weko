@@ -38,27 +38,27 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
+  {%- if pid %}
+  {%- else %}
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-10">
-      <div class="panel">
-        <div class="panel-body">
-          <div class="form-inline">
-          <div class="form-group">
-            <label for="item-type-lists">{{_('itemtype list')}}</label>
-            <select class="form-control" id="item-type-lists">
-              {% for list in lists %}
-              <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
+      <div class="form-inline h6">
+        <div class="form-group">
+          <label for="item-type-lists">{{_('itemtype list')}}</label>
+          <select class="form-control" id="item-type-lists">
+            {% for list in lists %}
+            <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+            {% endfor %}
+          </select>
         </div>
       </div>
     </div>
   </div>
+  {%- endif %}
   <div class="row">
     <div class="col-md-12">
       <div id="invenio-records">
+        {%- if need_file %}
         <invenio-files-uploader
           method="PUT"
           endpoint="{{ config.DEPOSIT_FILES_API }}"
@@ -69,6 +69,7 @@
           {% endif %}
           extra-params='{"headers":{"Content-Type": "application/json"}}'
         >
+        {%- endif %}
           <invenio-records
             {%- if pid %}
               initialization="{{ config.DEPOSIT_RECORDS_API.format(pid_value=pid.pid_value) }}"
@@ -78,7 +79,7 @@
             response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
             extra-params='{"headers":{"Content-Type": "application/json"}}'
             form="{{ schemaform }}"
-            record='{}'
+            record='{{ record | tojson }}'
             schema="{{ jsonschema }}">
             <invenio-records-loading
               template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
@@ -86,35 +87,43 @@
             <invenio-records-alert
               template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
             </invenio-records-alert>
-            <div ng-hide="false">
-              <div ng-show="true">
+            <div class="row" ng-hide="false">
+              <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'PUT'])">送信</button></li>
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
                 </ul>
               </div>
             </div>
-            <invenio-files-upload-zone
-              template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
-            </invenio-files-upload-zone>
-            <invenio-files-list
-              template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
-            ></invenio-files-list>
+            {%- if need_file %}
+            <div class="row" ng-hide="false">
+              <div class="col-sm-9" ng-show="true">
+                <invenio-files-upload-zone
+                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
+                </invenio-files-upload-zone>
+                <invenio-files-list
+                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
+                ></invenio-files-list>
+              </div>
+            </div>
+            {%- endif %}
             <invenio-records-form
               form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
               form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
               template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
             </invenio-records-form>
-            <div ng-hide="false">
-              <div ng-show="true">
+            <div class="row" ng-hide="false">
+              <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
-                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'PUT'])">送信</button></li>
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['index', 'PUT'], 'r')">次へ</button></li>
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
                 </ul>
               </div>
             </div>
           </invenio-records>
+        {%- if need_file %}
         </invenio-files-uploader>
+        {%- endif %}
       </div>
     </div>
   </div>

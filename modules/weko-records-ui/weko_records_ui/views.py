@@ -21,7 +21,7 @@
 """Blueprint for weko-records-ui."""
 
 import six
-from flask import Blueprint, current_app, abort, request, render_template, Flask
+from flask import Blueprint, current_app, abort, request, render_template, Flask, make_response
 from invenio_records_ui.utils import obj_or_import_string
 
 blueprint = Blueprint(
@@ -61,10 +61,13 @@ def export(pid, record, template=None, **kwargs):
         if isinstance(data, six.binary_type):
             data = data.decode('utf8')
 
-        return render_template(
-            template, pid=pid, record=record, data=data,
-            format_title=fmt['title'],
-        )
+        # return render_template(
+        #     template, pid=pid, record=record, data=data,
+        #     format_title=fmt['title'],
+        # )
+        response = make_response(data)
+        response.headers['Content-Type'] = 'text/xml' if "json" not in schema_type else 'text/plain'
+        return response
 
 
 @blueprint.app_template_filter("get_image_src")

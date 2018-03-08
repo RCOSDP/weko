@@ -32,6 +32,11 @@ WEKO_MAX_FILE_SIZE = WEKO_BUCKET_QUOTA_SIZE
 FILES_REST_STORAGE_FACTORY = 'weko_deposit.storage.pyfs_storage_factory'
 """Import path of factory used to create a storage instance."""
 
+WEKO_DEPOSIT_ITEMS_CACHE_PREFIX = 'cache_itemsIndex_{pid_value}'
+""" cache items prifix info"""
+
+WEKO_DEPOSIT_ITEMS_CACHE_TTL = 300
+""" cache default timeout 5 minutes"""
 
 _PID = 'pid(depid,record_class="weko_deposit.api:WekoDeposit")'
 
@@ -40,6 +45,7 @@ DEPOSIT_SEARCH_API = '/api/deposits/items'
 
 #: Template for deposit records API.
 DEPOSIT_RECORDS_API = '/api/deposits/items/{pid_value}'
+DEPOSIT_RECORDS_EDIT_API = '/deposits/items/index/{pid_value}'
 
 DEPOSIT_REST_ENDPOINTS = dict(
     depid=dict(
@@ -65,7 +71,7 @@ DEPOSIT_REST_ENDPOINTS = dict(
         file_list_route='/deposits/items/<{0}:pid_value>/files'.format(_PID),
         file_item_route='/deposits/items/<{0}:pid_value>/files/<path:key>'.format(_PID),
         default_media_type='application/json',
-        links_factory_imp='invenio_deposit.links:deposit_links_factory',
+        links_factory_imp='weko_deposit.links:links_factory',
         max_result_window=10000,
         # create_permission_factory_imp='',
         # read_permission_factory_imp='',
@@ -73,6 +79,17 @@ DEPOSIT_REST_ENDPOINTS = dict(
         # delete_permission_factory_imp='',
     )
 )
+
+DEPOSIT_RECORDS_UI_ENDPOINTS = {
+    'depid': {
+        'pid_type': 'depid',
+        'route': '/item/edit/<pid_value>',
+        'template': 'weko_items_ui/edit.html',
+        'record_class': 'weko_deposit.api:WekoDeposit',
+        'view_imp': 'weko_items_ui.views.default_view_method',
+        'permission_factory_imp': 'weko_items_ui.permissions:edit_permission_factory',
+    },
+}
 
 RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY = None
 RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY = None

@@ -35,7 +35,6 @@ env:
   - REQUIREMENTS=devel
 
 python:
-  - "2.7"
   - "3.5"
 
 before_install:
@@ -64,5 +63,5 @@ deploy:
   distributions: "sdist bdist_wheel"
   on:
     tags: true
-    python: "2.7"
+    python: "3.5"
     condition: $REQUIREMENTS = release

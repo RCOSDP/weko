@@ -40,6 +40,9 @@ web:
     - INVENIO_WORKER_HOST=127.0.0.1
     - INVENIO_FILES_LOCATION_NAME=local
     - INVENIO_FILES_LOCATION_URI=/var/tmp
+    - INVENIO_ROLE_SYSTEM=System Administrator
+    - INVENIO_ROLE_REPOSITORY=Repository Administrator
+    - INVENIO_ROLE_CONTRIBUTOR=Contributor
   volumes_from:
     - static
   links:

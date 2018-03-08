@@ -104,6 +104,10 @@ setup(
             ' = weko_itemtypes_ui.bundles:js_schema_editor',
             'weko_itemtypes_ui_css = weko_itemtypes_ui.bundles:style',
         ],
+        'invenio_access.actions': [
+            'item_type_access = '
+            'weko_itemtypes_ui.permissions:action_item_type_access',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

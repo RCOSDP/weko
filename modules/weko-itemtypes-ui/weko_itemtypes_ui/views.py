@@ -20,15 +20,14 @@
 
 """Blueprint for weko-itemtypes-ui."""
 
-from functools import wraps
-
-from flask import Blueprint, abort, current_app, json, jsonify, redirect, \
-    render_template, request, url_for, Flask
+from flask import abort, Blueprint, current_app, json, jsonify, redirect, \
+    render_template, request, url_for, Flask, make_response
 from flask_babelex import gettext as _
-from flask_login import current_user
+from flask_login import login_required, current_user
 from invenio_db import db
 from weko_records.api import ItemTypes, ItemTypeProps, Mapping
-from weko_records.proxies import current_permission_factory
+
+from .permissions import item_type_permission
 
 blueprint = Blueprint(
     'weko_itemtypes_ui',
@@ -39,47 +38,11 @@ blueprint = Blueprint(
 )
 
 
-def check_permission(permission, hidden=True):
-    """Check if permission is allowed.
-
-    If permission fails then the connection is aborted.
-
-    :param permission: The permission to check.
-    :param hidden: Determine if a 404 error (``True``) or 401/403 error
-        (``False``) should be returned if the permission is rejected (i.e.
-        hide or reveal the existence of a particular object).
-    """
-    if permission is not None and not permission().can():
-        if hidden:
-            abort(404)
-        else:
-            if current_user.is_authenticated:
-                abort(403,
-                      'You do not have a permission for itemtype')
-            abort(401)
-
-
-def need_permissions(hidden=False):
-    """Get permission for buckets or abort.
-
-    :param hidden: Determine which kind of error to return. (Default: ``False``)
-    """
-
-    def decorator_builder(f):
-        @wraps(f)
-        def decorate(*args, **kwargs):
-            check_permission(current_permission_factory, hidden=hidden)
-            return f(*args, **kwargs)
-
-        return decorate
-
-    return decorator_builder
-
-
 @blueprint.route("/", methods=['GET'])
 @blueprint.route("/<int:item_type_id>", methods=['GET'])
 @blueprint.route("/register", methods=['GET'])
-@need_permissions()
+@login_required
+@item_type_permission.require(http_exception=403)
 def index(item_type_id=0):
     """Renders an item type register view.
 
@@ -94,7 +57,8 @@ def index(item_type_id=0):
 
 
 @blueprint.route("/<int:item_type_id>/render", methods=['GET'])
-@need_permissions()
+@login_required
+@item_type_permission.require(http_exception=403)
 def render(item_type_id=0):
     result = None
     if item_type_id > 0:
@@ -113,6 +77,8 @@ def render(item_type_id=0):
 
 @blueprint.route("/register", methods=['POST'])
 @blueprint.route("/<int:item_type_id>/register", methods=['POST'])
+@login_required
+@item_type_permission.require(http_exception=403)
 def register(item_type_id=0):
     """Register an item type."""
     if request.headers['Content-Type'] != 'application/json':
@@ -138,7 +104,8 @@ def register(item_type_id=0):
 
 
 @blueprint.route("/property", methods=['GET'])
-@need_permissions()
+@login_required
+@item_type_permission.require(http_exception=403)
 def custom_property(property_id=0):
     """Renders an primitive property view."""
     lists = ItemTypeProps.get_records([])
@@ -149,7 +116,8 @@ def custom_property(property_id=0):
 
 
 @blueprint.route("/property/list", methods=['GET'])
-@need_permissions()
+@login_required
+@item_type_permission.require(http_exception=403)
 def get_property_list(property_id=0):
     """Renders an primitive property view."""
     props = ItemTypeProps.get_records([])
@@ -166,7 +134,8 @@ def get_property_list(property_id=0):
 
 
 @blueprint.route("/property/<int:property_id>", methods=['GET'])
-@need_permissions()
+@login_required
+@item_type_permission.require(http_exception=403)
 def get_property(property_id=0):
     """Renders an primitive property view."""
     prop = ItemTypeProps.get_record(property_id)
@@ -181,6 +150,8 @@ def get_property(property_id=0):
 
 @blueprint.route("/property", methods=['POST'])
 @blueprint.route("/property/<int:property_id>", methods=['POST'])
+@login_required
+@item_type_permission.require(http_exception=403)
 def custom_property_new(property_id=0):
     """Register an item type."""
     if request.headers['Content-Type'] != 'application/json':
@@ -204,6 +175,8 @@ def custom_property_new(property_id=0):
 
 @blueprint.route("/mapping", methods=['GET'])
 @blueprint.route("/mapping/<int:ItemTypeID>", methods=['GET'])
+@login_required
+@item_type_permission.require(http_exception=403)
 def mapping_index(ItemTypeID=0):
     """Renders an item type mapping view.
 
@@ -230,6 +203,8 @@ def mapping_index(ItemTypeID=0):
 
 
 @blueprint.route("/mapping", methods=['POST'])
+@login_required
+@item_type_permission.require(http_exception=403)
 def mapping_register():
     """Register an item type mapping."""
     if request.headers['Content-Type'] != 'application/json':

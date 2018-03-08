@@ -20,13 +20,14 @@
 
 """Blueprint for weko-index-tree."""
 
-from flask import Blueprint, current_app, json, jsonify, render_template, \
-    request
+from flask import Blueprint, current_app, flash, json, jsonify, \
+    render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 
 from .api import Indexes, IndexTrees
+from .permissions import index_tree_permission
 from .utils import get_all_children
 
 blueprint = Blueprint(
@@ -40,11 +41,14 @@ blueprint = Blueprint(
 
 @blueprint.route("/")
 @login_required
+@index_tree_permission.require(http_exception=403)
 def index():
     """Render the index tree edit page."""
     return render_template(
         current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'],
-        treeJson=[]
+        get_tree_json=url_for('.get_indexjson'),
+        upt_tree_json=url_for('.edit'),
+        mod_tree_detail=url_for('.upt_index_detail', index_id=0)[:-1]
     )
 
 
@@ -59,6 +63,7 @@ def get_indexjson():
 
 @blueprint.route("/detail/<int:index_id>", methods=['GET'])
 @login_required
+@index_tree_permission.require(http_exception=403)
 def get_index_detail(index_id=0):
     result = None
     if index_id > 0:
@@ -70,6 +75,7 @@ def get_index_detail(index_id=0):
 
 @blueprint.route("/detail/<int:index_id>", methods=['POST'])
 @login_required
+@index_tree_permission.require(http_exception=403)
 def upt_index_detail(index_id=0):
     data = request.get_json()
     result = None
@@ -77,11 +83,13 @@ def upt_index_detail(index_id=0):
         result = Indexes.upt_detail_by_id(index_id, **data)
     if result is None:
         return jsonify(code=400, msg='param error')
+    flash(_('update index detail info success.'), category='success')
     return jsonify(result.serialize())
 
 
 @blueprint.route("/thumbnail/<int:index_id>", methods=['GET'])
 @login_required
+@index_tree_permission.require(http_exception=403)
 def get_index_thumbnail(index_id=0):
     result = None
     if index_id > 0:
@@ -93,6 +101,7 @@ def get_index_thumbnail(index_id=0):
 
 @blueprint.route("/thumbnail/<int:index_id>", methods=['POST'])
 @login_required
+@index_tree_permission.require(http_exception=403)
 def upt_index_thumbnail(index_id=0):
     file = request.files['thumbnail_file']
     data = {
@@ -110,6 +119,7 @@ def upt_index_thumbnail(index_id=0):
 
 @blueprint.route("/detail/<int:index_id>", methods=['DELETE'])
 @login_required
+@index_tree_permission.require(http_exception=403)
 def del_index_detail(index_id=0):
     result = None
     if index_id > 0:
@@ -123,6 +133,7 @@ def del_index_detail(index_id=0):
 
 @blueprint.route("/edit", methods=['GET'])
 @login_required
+@index_tree_permission.require(http_exception=403)
 def edit_get():
     """Render the index tree edit page."""
     result = IndexTrees.get()
@@ -134,12 +145,13 @@ def edit_get():
         index_tree=index_tree)
 
 
-@blueprint.route("/edit", methods=['POST'])
+@blueprint.route("/edit", methods=['POST', 'PUT'])
 @login_required
+@index_tree_permission.require(http_exception=403)
 def edit():
     """Update the index tree."""
-    data = request.get_json()
-    tree_info = json.loads(data.get('index_tree'))
+    tree_info = request.get_json()
+    #    tree_info = json.loads(str(data))
     result = IndexTrees.update(tree=tree_info)
     if result is None:
         return jsonify(msg=_('Fail'))

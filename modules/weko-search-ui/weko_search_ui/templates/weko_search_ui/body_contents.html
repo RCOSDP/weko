@@ -20,14 +20,29 @@
 
 <div id="invenio-search">
   <invenio-search
-   search-endpoint="{{ config.SEARCH_UI_SEARCH_API }}"
+   {%- if index_id %}
+     search-endpoint="{{ config.WEKO_SEARCH_UI_SEARCH_INDEX_API }}"
+   {%- else %}
+     search-endpoint="{{ config.SEARCH_UI_SEARCH_API }}"
+   {%- endif %}
    search-extra-params='{% if search_extra_params %}{{search_extra_params|tojson}}{% endif %}'
    search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
    search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
   >
+  {%- block search_index_results %}
+  <invenio-search-results
+   template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_INDEX) }}">
+  </invenio-search-results>
+  {%- endblock search_index_results %}
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
-      <span class="panel-title">{{_('検索結果')}}</span>
+      <span class="panel-title">
+        {%- if index_id %}
+        {{_('アイテムリスト')}}
+        {%- else %}
+        {{_('検索結果')}}
+        {%- endif %}
+      </span>
       {%- block search_count %}
       <div class="pull-right">
         <invenio-search-count
@@ -38,8 +53,13 @@
     </div>
     <div class="panel-body">
       <div id="index_item_list">
-        <div class="form-inline">
-          <select class="form-control" id="goExportORPrint">
+        {%- if index_id %}
+          <invenio-search-results
+           template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_BREAD) }}">
+          </invenio-search-results>
+        {%- endif %}
+        <div class="form-inline flow-root">
+          <select class="form-control hide" id="goExportORPrint">
             <option value="check_Export">チェックしたアイテムをExport</option>
             <option value="view_Export">表示中の全てのアイテムをExport</option>
             <option value="all_Export">このインデックスの全てのアイテムをExport</option>
@@ -47,7 +67,7 @@
             <option value="view_print">表示中の全てのアイテムを印刷</option>
             <option value="all_print">このインデックスの全てのアイテムを印刷</option>
           </select>
-          <button type="button" class="btn btn-primary">{{_('実行')}}</button>
+          <button type="button" class="btn btn-primary hide">{{_('実行')}}</button>
           <div class="pull-right">
             <div class="form-group hide">
               <label for="sort_item">{{_('表示順')}}</label>
@@ -110,44 +130,28 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                    {%- block search_facets %}
-                    <div class="col-xs-12 col-md-2">
-                      {%- block search_range %}
-                      <invenio-search-range
-                       options='{{ config.SEARCH_UI_JSTEMPLATE_RANGE_OPTIONS | tojson }}'
-                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RANGE) }}">
-                      </invenio-search-range>
-                      {%- endblock search_range %}
-                      <invenio-search-facets
-                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_FACETS) }}">
-                      </invenio-search-facets>
-                    </div>
-                    {%- endblock search_facets %}
-                    {%- block search_body %}
-                    <div class="col-xs-12 col-md-10">
-                      {%- block search_header %}
-                      <hr class="no-margin-top" />
-                      {%- endblock search_header %}
-                      {%- block search_error %}
-                      <invenio-search-error
-                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
-                       message="{{ _('Search failed.') }}">
-                      </invenio-search-error>
-                      {%- endblock search_error %}
-                      {%- block search_loading %}
-                      <invenio-search-loading
-                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
-                       message="{{ _('Loading...') }}">
-                      </invenio-search-loading>
-                      {%- endblock search_loading %}
-                      {%- block search_results %}
-                      <invenio-search-results
-                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RESULTS) }}">
-                      </invenio-search-results>
-                      {%- endblock search_results %}
-                    </div>
-                    {%- endblock search_body %}
+                {%- block search_item_result %}
+                  <div class="col-xs-12 col-md-12">
+                    {%- block search_error %}
+                    <invenio-search-error
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
+                     message="{{ _('Search failed.') }}">
+                    </invenio-search-error>
+                    {%- endblock search_error %}
+                    {%- block search_loading %}
+                    <invenio-search-loading
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
+                     message="{{ _('Loading...') }}">
+                    </invenio-search-loading>
+                    {%- endblock search_loading %}
+                    {%- block search_results %}
+                    <invenio-search-results
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RESULTS) }}">
+                    </invenio-search-results>
+                    {%- endblock search_results %}
                   </div>
+                {%- endblock search_item_result %}
+              </div>
             </div>
           </div>
         </div>

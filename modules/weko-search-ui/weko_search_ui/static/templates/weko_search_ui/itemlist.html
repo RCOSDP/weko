@@ -1,0 +1,43 @@
+<div class="panel panel-default" ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
+  <div class="panel-heading">
+    <div class="form-inline">
+      <div class="checkbox hide">
+        <label>
+          <input type="checkbox" id="item_id_1" value="option1" aria-label="...">
+        </label>
+      </div>
+      <a target="_self" ng-href="/records/{{ record.id }}">
+        <span class="glyphicon glyphicon-file" aria-hidden="true"></span> {{ record.metadata.title[0] }}</a>
+    </div>
+  </div>
+  <div class="panel-body">
+    <span ng-if="record.metadata.alternative.length > 0"> タイトル(英): {{ record.metadata.alternative[0] }} </span>
+    <span ng-if="record.metadata.language.length > 0"> 言語: {{ record.metadata.language[0] }} </span>
+    <span ng-if="record.metadata.date.length > 0"> 公開日: {{ record.metadata.date[0] }} </span>
+    <span ng-if="record.metadata.subject.length > 0"> キーワード: {{ record.metadata.subject.toString()  }} </span>
+    <div class="pull-right">
+      <ul class="list-inline">
+        <li ng-show="record.metadata.publisher.length > 0">
+          <a ng-click="showAuthors=!showAuthors">
+            {{ showAuthors ? 'Hide authors' : 'Show authors' }}
+          </a>
+        </li>
+        <li>
+          <a ng-click="showSource=!showSource">
+            {{ showSource ? 'Hide source' : 'Show source' }}
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div ng-hide="!showAuthors">
+      <ul>
+        <div ng-repeat='author in record.metadata.creator'>
+          <li>{{ author }}</li>
+        </div>
+      </ul>
+    </div>
+    <div ng-hide="!showSource">
+      <pre class="pre-scrollable">{{ record | json }}</pre>
+    </div>
+  </div>
+</div>

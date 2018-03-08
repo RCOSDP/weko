@@ -22,5 +22,6 @@
 
 from .ext import WekoItemsUI
 from .version import __version__
+from .proxies import current_weko_items_ui
 
-__all__ = ('__version__', 'WekoItemsUI')
+__all__ = ('__version__', 'WekoItemsUI', 'current_weko_items_ui')

@@ -23,8 +23,10 @@
 import re
 
 from lxml import etree
+from lxml.etree import Element, ElementTree, SubElement
 from .schema import SchemaTree
 from invenio_records_ui.utils import obj_or_import_string
+from invenio_oaiserver.response import verb, NS_OAIPMH, header,NSMAP,NS_OAIPMH_XSD,NS_XSI
 
 
 def dumps_oai_etree(pid, records, **kwargs):
@@ -62,7 +64,9 @@ def dumps(records, schema_type=None, **kwargs):
     if records["metadata"].get("@export_schema_type"):
         est = records["metadata"].pop("@export_schema_type")
 
-    root = dumps_etree(records=records, schema_type=est)
+    oid = records["metadata"].get('_oai').get('id')
+    root = export_tree(record=records, metadataPrefix=est, identifier=oid, verb='GetRecord')
+    # root = dumps_etree(records=records, schema_type=est)
     return etree.tostring(
         root,
         pretty_print=True,
@@ -71,3 +75,30 @@ def dumps(records, schema_type=None, **kwargs):
         **kwargs
     )
 
+
+def export_tree(record, **kwargs):
+    """Create OAI-PMH response for verb Identify."""
+    e_tree, e_getrecord = verb(**kwargs)
+    e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
+
+    import dateutil.parser
+    header(
+        e_record,
+        identifier=record.get('control_number'),
+        datestamp=dateutil.parser.parse(record.get('updated')),
+        sets=record.get('_oai', {}).get('sets', []),
+    )
+    e_metadata = SubElement(e_record,
+                            etree.QName(NS_OAIPMH, 'metadata'))
+    e_metadata.append(dumps_etree(records=record, schema_type=kwargs['metadataPrefix']))
+
+    root = e_tree.getroot()
+    e_oaipmh = Element(etree.QName(NS_OAIPMH, 'OAI-PMH'), nsmap=NSMAP)
+    e_oaipmh.set(etree.QName(NS_XSI, 'schemaLocation'),
+                 '{0} {1}'.format(NS_OAIPMH, NS_OAIPMH_XSD))
+    e_tree = ElementTree(element=e_oaipmh)
+    for e in root.getchildren():
+        e_oaipmh.append(e)
+    root.clear()
+
+    return e_tree

@@ -20,22 +20,7 @@
 
 """weko records extension."""
 
-from werkzeug import import_string
-
 from . import config
-
-
-class _WekoRecordsState(object):
-    """WekoRecords state."""
-
-    def __init__(self, app, permission_factory):
-        """Initialize state.
-
-        :param app: The Flask application.
-        :param permission_factory: The permission factory to restrict access.
-        """
-        self.app = app
-        self.permission_factory = permission_factory
 
 
 class WekoRecords(object):
@@ -55,11 +40,7 @@ class WekoRecords(object):
         :param app: The Flask application.
         """
         self.init_config(app)
-        default_permission_factory = app.config[
-            'WEKO_RECORDS_PERMISSION_FACTORY']
-        permission_factory = import_string(default_permission_factory)
-        state = _WekoRecordsState(app, permission_factory)
-        app.extensions['weko-records'] = state
+        app.extensions['weko-records'] = self
 
     def init_config(self, app):
         """Initialize configuration.

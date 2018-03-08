@@ -24,6 +24,9 @@ import copy
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
 from invenio_records_rest.facets import terms_filter
+from invenio_search import RecordsSearch
+
+WEKO_SEARCH_UI_SEARCH_INDEX_API = '/api/index/'
 
 WEKO_SEARCH_UI_BASE_TEMPLATE = 'weko_search_ui/base.html'
 """Default base template for the demo page."""
@@ -35,7 +38,11 @@ WEKO_SEARCH_UI_THEME_FRONTPAGE_TEMPLATE = \
 WEKO_SEARCH_UI_SEARCH_TEMPLATE = 'weko_search_ui/search.html'
 """Reset search_ui_search config"""
 
-WEKO_SEARCH_UI_JSTEMPLATE_RESULTS = 'templates/weko_search_ui/weko.html'
+WEKO_SEARCH_UI_JSTEMPLATE_RESULTS = 'templates/weko_search_ui/itemlist.html'
+
+WEKO_SEARCH_UI_JSTEMPLATE_INDEX = 'templates/weko_search_ui/indexlist.html'
+
+WEKO_SEARCH_UI_JSTEMPLATE_BREAD = 'templates/weko_search_ui/breadcrumb.html'
 
 WEKO_SEARCH_UI_JSTEMPLATE_COUNT = 'templates/weko_search_ui/count.html'
 
@@ -123,3 +130,28 @@ RECORDS_REST_SORT_OPTIONS = dict(
     )
 )
 
+
+WEKO_SEARCH_REST_ENDPOINTS = dict(
+    recid=dict(
+        pid_type='recid',
+        pid_minter='recid',
+        pid_fetcher='recid',
+        search_class=RecordsSearch,
+        search_index='weko',
+        search_type='item',
+        search_factory_imp='weko_search_ui.query.weko_search_factory',
+        # record_class='',
+        record_serializers={
+            'application/json': ('invenio_records_rest.serializers'
+                                 ':json_v1_response'),
+        },
+        search_serializers={
+            'application/json': ('invenio_records_rest.serializers'
+                                 ':json_v1_search'),
+        },
+        index_route='/index/',
+        links_factory_imp='weko_search_ui.links:default_links_factory',
+        default_media_type='application/json',
+        max_result_window=10000,
+    ),
+)
