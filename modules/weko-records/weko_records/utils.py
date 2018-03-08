@@ -250,8 +250,11 @@ def get_value(obj):
                                 fn = lst.get("file_name")
                                 if fn:
                                     creator.append(fn)
-
-                        j[itn] = creator
+                        if isinstance(itn, dict):
+                            for k in itn.keys():
+                                j[k] = creator
+                        else:
+                            j[itn] = creator
             if obj.get("attribute_value"):
                 if isinstance(obj["attribute_value"], list):
                     if len(obj["attribute_value"]) > 1:
