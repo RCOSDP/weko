@@ -26,7 +26,7 @@
                       (_('インポート'),'/'),
                       (_('レポート'),'/'),
                       (_('管理'),'/'),
-                      (_('著者名典拠'),'/'),
+                      (_('著者DB'),url_for('weko_authors.index')),
                       (_('ブロックスタイル'),'/')] %}
   {% for (name, href) in tabs_list %}
     <li role="presentation" {% if tab_name == name %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>

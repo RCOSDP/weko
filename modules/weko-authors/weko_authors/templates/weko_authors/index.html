@@ -20,8 +20,11 @@
 
 {%- extends config.WEKO_AUTHORS_BASE_TEMPLATE %}
 
-{%- block page_body %}
-TODO: Example template, please remove if you do not need it.
-{{_('Welcome to %(module_name)s', module_name=module_name)}}
-{%- endblock %}
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('著者DB') }}
+{%- endblock page_body_tabs%}
 
+{%- block page_body_main %}
+TODO: Example template, please remove if you do not need it.
+{%- endblock page_body_main%}

@@ -21,12 +21,13 @@
 """Blueprint for weko-authors."""
 
 
-from flask import Blueprint, render_template
+from flask import Blueprint, current_app, render_template
 from flask_babelex import gettext as _
 
 blueprint = Blueprint(
     'weko_authors',
     __name__,
+    url_prefix='/authors',
     template_folder='templates',
     static_folder='static',
 )
@@ -36,5 +37,4 @@ blueprint = Blueprint(
 def index():
     """Render a basic view."""
     return render_template(
-        "weko_authors/index.html",
-        module_name=_('weko-authors'))
+        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
