@@ -128,6 +128,21 @@ ${INVENIO_WEB_INSTANCE} access \
        allow "item-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-bucket-update" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-delete" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-delete-version" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
 # sphinxdoc-set-role-access-end
 
 # sphinxdoc-create-user-account-begin
