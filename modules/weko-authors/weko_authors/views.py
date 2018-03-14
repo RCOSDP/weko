@@ -52,7 +52,7 @@ def edit(item_type_id=0):
     data = request.get_json()
 
     indexer = RecordIndexer()
-    indexer.client.index(id=1,
+    indexer.client.index(
                          index="author",
                          doc_type="author",
                          body=data,
