@@ -89,7 +89,7 @@ setup(
             'messages = weko_authors',
         ],
         'invenio_search.mappings': [
-            'author = weko_authors.mappings.jpcoar',
+            'author = weko_authors.mappings:jpcoar',
         ],
     },
     extras_require=extras_require,
