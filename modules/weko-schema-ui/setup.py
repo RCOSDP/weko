@@ -97,7 +97,7 @@ setup(
             'weko_schema_ui_js = weko_schema_ui.bundles:js',
         ],
         'invenio_search.mappings': [
-            'weko = weko_schema_ui.mappings',
+            'junii2 = weko_schema_ui.mappings',
         ],
     },
     extras_require=extras_require,
