@@ -21,8 +21,9 @@
 """Blueprint for weko-authors."""
 
 
-from flask import Blueprint, current_app, render_template
+from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
+from invenio_indexer.api import RecordIndexer
 
 blueprint = Blueprint(
     'weko_authors',
@@ -38,3 +39,36 @@ def index():
     """Render a basic view."""
     return render_template(
         current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
+
+
+@blueprint.route("/edit", methods=['POST'])
+# @blueprint.route("/<int:item_type_id>/register", methods=['POST'])
+def edit(item_type_id=0):
+    """Register an item type."""
+    if request.headers['Content-Type'] != 'application/json':
+        current_app.logger.debug(request.headers['Content-Type'])
+        return jsonify(msg=_('Header Error'))
+
+    data = request.get_json()
+
+    indexer = RecordIndexer()
+    indexer.client.index(id=1,
+                         index="author",
+                         doc_type="author",
+                         body=data,
+                         )
+    # try:
+    #     record = ItemTypes.update(id_=item_type_id,
+    #                               name=data.get('table_row_map').get('name'),
+    #                               schema=data.get('table_row_map').get(
+    #                                   'schema'),
+    #                               form=data.get('table_row_map').get('form'),
+    #                               render=data)
+    #     Mapping.create(item_type_id=record.model.id,
+    #                    mapping=data.get('table_row_map').get('mapping'))
+    #     db.session.commit()
+    # except:
+    #     db.session.rollback()
+    #     return jsonify(msg=_('Fail'))
+    # current_app.logger.debug('itemtype register: {}'.format(item_type_id))
+    return jsonify(msg=_('Success'))
