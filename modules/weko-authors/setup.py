@@ -88,6 +88,9 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_authors',
         ],
+        'invenio_search.mappings': [
+            'author = weko_authors.mappings',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
