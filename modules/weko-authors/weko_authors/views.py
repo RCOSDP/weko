@@ -82,7 +82,7 @@ def get(item_type_id=0):
       "query": {
         "bool": {
           "must": [{"match": {"title": "python"}}],
-          "must_not": [{"match": {"description": "beta"}}]
+          "must_not": [{"match": {"description": "beta"}}],
           "filter": [{"term": {"category": "search"}}]
         }
       },
