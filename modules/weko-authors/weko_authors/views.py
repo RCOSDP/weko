@@ -43,7 +43,7 @@ def index():
 
 @blueprint.route("/add", methods=['POST'])
 # @blueprint.route("/<int:item_type_id>/register", methods=['POST'])
-def edit(item_type_id=0):
+def add(item_type_id=0):
     """Register an item type."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
