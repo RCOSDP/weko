@@ -43,11 +43,10 @@
     <div class="row">
       <div class="body col-sm-12 col-md-9">
         <h4 class="title">{{ _('OAI Schema') }}</h4>
-        <a href="url_for('weko_schema_ui.list')">111</a>
-        <a class="btn btn-default" href="url_for('weko_schema_ui.index')">
+        <a class="btn btn-default" href="{{ url_for('weko_schema_ui.index') }}">
           <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
           {{_('Add Schema')}}
-        </a>
+        </a><br/>
         {% if not records %} No Schema .. Please add your greatest schema {% endif %}
         {%- if records -%}
         <table class="table table-bordered table-striped">
