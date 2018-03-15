@@ -19,7 +19,7 @@
 #}
 
 {% macro tabs_selector(tab_value='top') %}
-  {% set tabs_list = ['top', 'Top', '/'),
+  {% set tabs_list = [('top', 'Top', '/'),
                       ('item', 'Item Registration', url_for('weko_items_ui.index')),
                       ('ranking', 'Ranking','/'),
                       ('author', 'Author Management', url_for('weko_authors.index'))] %}
