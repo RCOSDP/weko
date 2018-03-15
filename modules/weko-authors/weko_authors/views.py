@@ -87,8 +87,9 @@ def get(item_type_id=0):
     #                                 }
     #                             }
     #                         )
-    a = Search(using=indexer.client, index="author").query("match", title="python")
+    s = Search(using=indexer.client, index="author").query("match", title="python")
     # a = current_search.query()
-    current_app.logger.debug(type(a))
-    current_app.logger.debug(a)
+    response = s.execute()
+    current_app.logger.debug(type(response))
+    current_app.logger.debug(response)
     return jsonify(msg=_('Success'))
