@@ -19,8 +19,8 @@
 #}
 
 {% macro tabs_selector(tab_value='アイテムタイプ') %}
-  {% set tabs_list = [('item type', 'Item Type', url_for('weko_itemtypes_ui.index')),
-                      ('schema management', 'Schema Management', url_for('weko_schema_ui.list')),
+  {% set tabs_list = [('schema management', 'Schema Management', url_for('weko_schema_ui.list')),
+                      ('item type', 'Item Type', url_for('weko_itemtypes_ui.index')),
                       ('item management', 'Item Management', '/'),
                       ('edit tree', 'Edit Tree', url_for('weko_index_tree.index')),
                       ('review/accept', 'Review/Accept', '/'),
