@@ -74,6 +74,6 @@ def get(item_type_id=0):
     #                      doc_type="author",
     #                      body=data,
     #                      )
-    a = indexer.client.query()
+    a = indexer.client.search.query()
     current_app.logger.debug(type(a))
     return jsonify(msg=_('Success'))
