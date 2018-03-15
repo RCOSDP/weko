@@ -92,4 +92,5 @@ def get(item_type_id=0):
     response = s.execute()
     current_app.logger.debug(type(response))
     current_app.logger.debug(response)
+    return response
     return jsonify(msg=_('Success'))
