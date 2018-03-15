@@ -28,6 +28,8 @@ from invenio_indexer.api import RecordIndexer
 
 from .permissions import author_permission
 
+from invenio_search import current_search
+
 blueprint = Blueprint(
     'weko_authors',
     __name__,
@@ -74,6 +76,7 @@ def get(item_type_id=0):
     #                      doc_type="author",
     #                      body=data,
     #                      )
-    a = indexer.client.search.query()
+    # a = indexer.client.search.query()
+    a = current_search.query()
     current_app.logger.debug(type(a))
     return jsonify(msg=_('Success'))
