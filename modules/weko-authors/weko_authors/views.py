@@ -21,7 +21,7 @@
 """Blueprint for weko-authors."""
 
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, json, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_indexer.api import RecordIndexer
@@ -90,6 +90,7 @@ def get(item_type_id=0):
     s = Search(using=indexer.client, index="author")
     # a = current_search.query()
     response = s.execute()
+    return json.dumps(response)
     current_app.logger.debug(type(response))
     current_app.logger.debug(response)
     list = []
