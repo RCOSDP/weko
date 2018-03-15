@@ -21,7 +21,7 @@
 """Blueprint for weko-authors."""
 
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, json, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_indexer.api import RecordIndexer
@@ -53,7 +53,7 @@ def index():
 @login_required
 @author_permission.require(http_exception=403)
 def add():
-    """Register an item type."""
+    """Add an author."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
@@ -69,27 +69,8 @@ def add():
 @blueprint.route("/get", methods=['GET'])
 @login_required
 @author_permission.require(http_exception=403)
-def get(item_type_id=0):
-    """Register an item type."""
+def get():
+    """Get all authors."""
     indexer = RecordIndexer()
-    # indexer.client.index(
-    #                      index="author",
-    #                      doc_type="author",
-    #                      body=data,
-    #                      )
-    # a = indexer.client.get(index="author", doc_type="author", body={})
-    # a = indexer.client.get(index="author",
-    #                         body={
-    #                                 "query": {
-    #                                     "match": {
-    #                                         "title": "fox"
-    #                                     }
-    #                                 }
-    #                             }
-    #                         )
-    s = Search(using=indexer.client, index="author")
-    # a = current_search.query()
-    response = s.execute()
-    current_app.logger.debug(type(response))
-    current_app.logger.debug(response)
-    return jsonify(msg=_('Success'))
+    result = indexer.client.search(index="author")
+    return json.dumps(result, indent=4, ensure_ascii=False)
