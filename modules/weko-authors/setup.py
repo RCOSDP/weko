@@ -95,6 +95,9 @@ setup(
             'weko_authors_css = weko_authors.bundles:css',
             'weko_authors_js = weko_authors.bundles:js',
         ],
+        'invenio_access.actions': [
+            'author_access = weko_authors.permissions:action_author_access',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

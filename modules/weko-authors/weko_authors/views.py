@@ -23,7 +23,10 @@
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
+from flask_login import login_required
 from invenio_indexer.api import RecordIndexer
+
+from .permissions import author_permission
 
 blueprint = Blueprint(
     'weko_authors',
@@ -35,6 +38,8 @@ blueprint = Blueprint(
 
 
 @blueprint.route("/")
+@login_required
+@author_permission.require(http_exception=403)
 def index():
     """Render a basic view."""
     return render_template(
@@ -42,33 +47,33 @@ def index():
 
 
 @blueprint.route("/add", methods=['POST'])
-# @blueprint.route("/<int:item_type_id>/register", methods=['POST'])
-def add(item_type_id=0):
+@login_required
+@author_permission.require(http_exception=403)
+def add():
     """Register an item type."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-
     indexer = RecordIndexer()
-    indexer.client.index(
-                         index="author",
+    indexer.client.index(index="author",
                          doc_type="author",
-                         body=data,
-                         )
-    # try:
-    #     record = ItemTypes.update(id_=item_type_id,
-    #                               name=data.get('table_row_map').get('name'),
-    #                               schema=data.get('table_row_map').get(
-    #                                   'schema'),
-    #                               form=data.get('table_row_map').get('form'),
-    #                               render=data)
-    #     Mapping.create(item_type_id=record.model.id,
-    #                    mapping=data.get('table_row_map').get('mapping'))
-    #     db.session.commit()
-    # except:
-    #     db.session.rollback()
-    #     return jsonify(msg=_('Fail'))
-    # current_app.logger.debug('itemtype register: {}'.format(item_type_id))
+                         body=data,)
+    return jsonify(msg=_('Success'))
+
+
+@blueprint.route("/get", methods=['GET'])
+@login_required
+@author_permission.require(http_exception=403)
+def get(item_type_id=0):
+    """Register an item type."""
+    indexer = RecordIndexer()
+    # indexer.client.index(
+    #                      index="author",
+    #                      doc_type="author",
+    #                      body=data,
+    #                      )
+    a = indexer.client.query()
+    current_app.logger.debug(type(a))
     return jsonify(msg=_('Success'))
