@@ -1,4 +1,5 @@
-{#
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,25 +17,22 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
 
-{%- extends config.WEKO_AUTHORS_BASE_TEMPLATE %}
+"""Bundles for weko-authors."""
 
-{%- block css %}
-  {% assets "weko_author_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-  {{ super() }}
-{%- endblock css %}
+from flask_assets import Bundle
+from invenio_assets import NpmBundle
 
-{%- block javascript %}
-  {{ super() }}
-  {% assets "weko_author_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
+css = Bundle(
+    'css/weko_authors/styles.bundle.css',
+    filters='cleancss',
+    output="gen/author.%(version)s.css"
+)
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('著者DB') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
-<app-tyosya></app-tyosya>
-{%- endblock page_body_main%}
+js = NpmBundle(
+    'js/weko_authors/inline.bundle.js',
+    'js/weko_authors/polyfills.bundle.js',
+    'js/weko_authors/main.bundle.js',
+    filters='jsmin',
+    output="gen/author.%(version)s.js",
+)
