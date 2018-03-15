@@ -72,33 +72,5 @@ def add():
 def get(item_type_id=0):
     """Register an item type."""
     indexer = RecordIndexer()
-    # indexer.client.index(
-    #                      index="author",
-    #                      doc_type="author",
-    #                      body=data,
-    #                      )
-    # a = indexer.client.get(index="author", doc_type="author", body={})
-    # a = indexer.client.get(index="author",
-    #                         body={
-    #                                 "query": {
-    #                                     "match": {
-    #                                         "title": "fox"
-    #                                     }
-    #                                 }
-    #                             }
-    #                         )
-    a = indexer.client.search(index="author")
-    current_app.logger.debug(a)
-    return json.dumps(a)
-    s = Search(using=indexer.client, index="author")
-    # a = current_search.query()
-    response = s.execute()
-    return json.dumps(response)
-    current_app.logger.debug(type(response))
-    current_app.logger.debug(response)
-    list = []
-    for hit in response:
-        current_app.logger.debug(hit.meta)
-        list.append(hit.source)
-    return jsonify(list)
-    return jsonify(msg=_('Success'))
+    result = indexer.client.search(index="author")
+    return json.dumps(result, indent=4, ensure_ascii=False)
