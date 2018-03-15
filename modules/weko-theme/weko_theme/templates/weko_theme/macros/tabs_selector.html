@@ -19,10 +19,10 @@
 #}
 
 {% macro tabs_selector(tab_name='top') %}
-  {% set tabs_list = [(_('top'), '/'),
-                      (_('items'), url_for('weko_items_ui.index')),
-                      (_('ranking'),'/'),
-                      (_('authors'), url_for('weko_authors.index'))] %}
+  {% set tabs_list = [(_('Top'), '/'),
+                      (_('Item Registration'), url_for('weko_items_ui.index')),
+                      (_('Ranking'),'/'),
+                      (_('Author Management'), url_for('weko_authors.index'))] %}
   {% for (name, href) in tabs_list %}
     <li role="presentation" {% if tab_name == name %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>
   {% endfor %}

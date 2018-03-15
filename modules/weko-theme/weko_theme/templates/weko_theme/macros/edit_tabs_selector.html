@@ -20,13 +20,13 @@
 
 {% macro tabs_selector(tab_name='アイテムタイプ') %}
   {% set tabs_list = [(_('アイテムタイプ'), url_for('weko_itemtypes_ui.index')),
+                      (_('スキーマ'), url_for('weko_authors.index')),
                       (_('アイテム管理'), '/items/'),
                       (_('ツリー編集'), url_for('weko_index_tree.index')),
                       (_('査読／承認'),'/'),
                       (_('インポート'),'/'),
                       (_('レポート'),'/'),
                       (_('管理'),'/'),
-                      (_('著者DB'), url_for('weko_authors.index')),
                       (_('ブロックスタイル'),'/')] %}
   {% for (name, href) in tabs_list %}
     <li role="presentation" {% if tab_name == name %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>
