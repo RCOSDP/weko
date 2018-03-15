@@ -21,8 +21,8 @@
 {%- extends config.WEKO_AUTHORS_BASE_TEMPLATE %}
 
 {%- block css %}
-  {% assets "weko_authors_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
+  {% assets "weko_authors_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
