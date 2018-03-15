@@ -76,7 +76,25 @@ def get(item_type_id=0):
     #                      doc_type="author",
     #                      body=data,
     #                      )
-    a = indexer.client.get(index="author", doc_type="author", body={})
+    # a = indexer.client.get(index="author", doc_type="author", body={})
+    a = indexer.client.get(index="author",
+                            body={
+      "query": {
+        "bool": {
+          "must": [{"match": {"title": "python"}}],
+          "must_not": [{"match": {"description": "beta"}}]
+          "filter": [{"term": {"category": "search"}}]
+        }
+      },
+      "aggs" : {
+        "per_tag": {
+          "terms": {"field": "tags"},
+          "aggs": {
+            "max_lines": {"max": {"field": "lines"}}
+          }
+        }
+      }
+    })
     # a = current_search.query()
     current_app.logger.debug(type(a))
     return jsonify(msg=_('Success'))
