@@ -87,6 +87,9 @@ def get(item_type_id=0):
     #                                 }
     #                             }
     #                         )
+    a = indexer.client.search(index="author")
+    current_app.logger.debug(a)
+    return json.dumps(a)
     s = Search(using=indexer.client, index="author")
     # a = current_search.query()
     response = s.execute()
