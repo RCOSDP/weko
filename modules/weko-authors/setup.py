@@ -92,8 +92,8 @@ setup(
             'author = weko_authors.mappings',
         ],
         'invenio_assets.bundles': [
-            'weko_author_css = weko_author.bundles:css',
-            'weko_author_js = weko_author.bundles:js',
+            'weko_authors_css = weko_authors.bundles:css',
+            'weko_authors_js = weko_authors.bundles:js',
         ],
     },
     extras_require=extras_require,

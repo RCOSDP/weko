@@ -21,13 +21,13 @@
 {%- extends config.WEKO_AUTHORS_BASE_TEMPLATE %}
 
 {%- block css %}
-  {% assets "weko_author_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_authors_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_author_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_authors_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
