@@ -79,14 +79,13 @@ def get(item_type_id=0):
     # a = indexer.client.get(index="author", doc_type="author", body={})
     a = indexer.client.get(index="author",
                             body={
-                                {
                                     "query": {
                                         "match": {
                                             "title": "fox"
                                         }
                                     }
                                 }
-                            })
+                            )
 
     # a = current_search.query()
     current_app.logger.debug(type(a))
