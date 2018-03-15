@@ -87,7 +87,7 @@ def get(item_type_id=0):
     #                                 }
     #                             }
     #                         )
-    s = Search(using=indexer.client, index="author").query("match", title="python")
+    s = Search(using=indexer.client, index="author")
     # a = current_search.query()
     response = s.execute()
     current_app.logger.debug(type(response))
