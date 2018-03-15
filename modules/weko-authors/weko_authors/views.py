@@ -94,7 +94,7 @@ def get(item_type_id=0):
     current_app.logger.debug(response)
     list = []
     for hit in response:
-        current_app.logger.debug(hit)
-        list.append(hit.title)
+        current_app.logger.debug(hit.meta)
+        list.append(hit.meta)
     return jsonify(list)
     return jsonify(msg=_('Success'))
