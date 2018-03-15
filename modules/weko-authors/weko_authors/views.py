@@ -41,7 +41,7 @@ def index():
         current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
 
 
-@blueprint.route("/edit", methods=['POST'])
+@blueprint.route("/add", methods=['POST'])
 # @blueprint.route("/<int:item_type_id>/register", methods=['POST'])
 def edit(item_type_id=0):
     """Register an item type."""
