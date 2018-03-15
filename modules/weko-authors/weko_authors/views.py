@@ -53,7 +53,7 @@ def index():
 @login_required
 @author_permission.require(http_exception=403)
 def add():
-    """Register an item type."""
+    """Add an author."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg=_('Header Error'))
@@ -69,8 +69,8 @@ def add():
 @blueprint.route("/get", methods=['GET'])
 @login_required
 @author_permission.require(http_exception=403)
-def get(item_type_id=0):
-    """Register an item type."""
+def get():
+    """Get all authors."""
     indexer = RecordIndexer()
     result = indexer.client.search(index="author")
     return json.dumps(result, indent=4, ensure_ascii=False)
