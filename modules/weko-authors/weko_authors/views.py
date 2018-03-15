@@ -29,6 +29,7 @@ from invenio_indexer.api import RecordIndexer
 from .permissions import author_permission
 
 from invenio_search import current_search
+from elasticsearch_dsl import Search, Q
 
 blueprint = Blueprint(
     'weko_authors',
@@ -77,16 +78,17 @@ def get(item_type_id=0):
     #                      body=data,
     #                      )
     # a = indexer.client.get(index="author", doc_type="author", body={})
-    a = indexer.client.get(index="author",
-                            body={
-                                    "query": {
-                                        "match": {
-                                            "title": "fox"
-                                        }
-                                    }
-                                }
-                            )
-
+    # a = indexer.client.get(index="author",
+    #                         body={
+    #                                 "query": {
+    #                                     "match": {
+    #                                         "title": "fox"
+    #                                     }
+    #                                 }
+    #                             }
+    #                         )
+    a = Search(using=indexer.client, index="author").query("match", title="python")
     # a = current_search.query()
     current_app.logger.debug(type(a))
+    current_app.logger.debug(a)
     return jsonify(msg=_('Success'))
