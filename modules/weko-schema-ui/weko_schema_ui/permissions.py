@@ -1,4 +1,5 @@
-{#
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,12 +17,10 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
 
-{%- extends config.WEKO_SCHEMA_UI_BASE_TEMPLATE %}
+"""Permissions for schemas."""
 
-{%- block page_body %}
-TODO: Example template, please remove if you do not need it.
-{{_('Welcome to %(module_name)s', module_name=module_name)}}
-{%- endblock %}
+from invenio_access import action_factory, Permission
 
+action_schema_access = action_factory('schema-access')
+schema_permission = Permission(action_schema_access)

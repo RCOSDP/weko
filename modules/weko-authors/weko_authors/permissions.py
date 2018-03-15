@@ -1,4 +1,5 @@
-{#
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,27 +17,10 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
 
-{%- extends config.WEKO_AUTHORS_BASE_TEMPLATE %}
+"""Permissions for schemas."""
 
-{%- block css %}
-  {{ super() }}
-  {% assets "weko_authors_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{%- endblock css %}
+from invenio_access import action_factory, Permission
 
-{%- block javascript %}
-  {{ super() }}
-  {% assets "weko_authors_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
-
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('author') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
-<div class="row">
-<app-tyosya></app-tyosya>
-</div>
-{%- endblock page_body_main%}
+action_author_access = action_factory('author-access')
+author_permission = Permission(action_author_access)
