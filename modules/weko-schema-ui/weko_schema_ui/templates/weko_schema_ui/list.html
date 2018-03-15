@@ -32,7 +32,12 @@
 {% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body %}
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('schema management') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
 <div class="container">
   <div ng-app="myApp" ng-controller="mp" ng-csp>
     <div class="row">
@@ -75,5 +80,5 @@
     </div>
   </div>
 </div>
-{%- endblock %}
+{%- endblock page_body_main %}
 
