@@ -178,10 +178,10 @@ setup_nginx_ubuntu14 () {
     $sudo apt-get install -y nginx
 
     # configure Nginx web server:
-    $sudo cp -f "$scriptpathname/../nginx/invenio.conf" /etc/nginx/sites-available/
-    $sudo sed -i "s,/home/invenio/,/home/$(whoami)/,g" /etc/nginx/sites-available/invenio.conf
+    $sudo cp -f "$scriptpathname/../nginx/weko.conf" /etc/nginx/sites-available/
+    $sudo sed -i "s,/home/invenio/,/home/$(whoami)/,g" /etc/nginx/sites-available/weko.conf
     $sudo rm /etc/nginx/sites-enabled/default
-    $sudo ln -s /etc/nginx/sites-available/invenio.conf /etc/nginx/sites-enabled/
+    $sudo ln -s /etc/nginx/sites-available/weko.conf /etc/nginx/sites-enabled/
     $sudo /usr/sbin/service nginx restart
     # sphinxdoc-install-web-nginx-ubuntu14-end
 }
@@ -192,8 +192,8 @@ setup_nginx_centos7 () {
     $sudo yum install -y nginx
 
     # configure Nginx web server:
-    $sudo cp "$scriptpathname/../nginx/invenio.conf" /etc/nginx/conf.d/
-    $sudo sed -i "s,/home/invenio/,/home/$(whoami)/,g" /etc/nginx/conf.d/invenio.conf
+    $sudo cp "$scriptpathname/../nginx/weko.conf" /etc/nginx/conf.d/
+    $sudo sed -i "s,/home/invenio/,/home/$(whoami)/,g" /etc/nginx/conf.d/weko.conf
 
     # add SELinux permissions if necessary:
     if $sudo getenforce | grep -q 'Enforcing'; then

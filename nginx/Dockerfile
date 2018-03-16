@@ -20,4 +20,4 @@
 
 FROM nginx
 RUN rm /etc/nginx/conf.d/default.conf
-ADD invenio.conf /etc/nginx/conf.d/
+ADD weko.conf /etc/nginx/conf.d/
