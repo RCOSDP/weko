@@ -46,13 +46,22 @@ blueprint = Blueprint(
 def index():
     """Render a basic view."""
     return render_template(
+        current_app.config['WEKO_AUTHORS_LIST_TEMPLATE'])
+
+
+@blueprint.route("/add", methods=['GET'])
+@login_required
+@author_permission.require(http_exception=403)
+def add():
+    """Render an adding author view."""
+    return render_template(
         current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
 
 
 @blueprint.route("/add", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
-def add():
+def create():
     """Add an author."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])

@@ -23,6 +23,8 @@
 WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'
 """Default base template for the author page."""
 
+WEKO_AUTHORS_LIST_TEMPLATE = 'weko_authors/list.html'
+"""List template for the author page."""
+
 WEKO_AUTHORS_EDIT_TEMPLATE = 'weko_authors/edit.html'
 """Edit template for the author page."""
-
