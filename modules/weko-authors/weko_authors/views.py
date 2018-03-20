@@ -68,6 +68,7 @@ def create():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
+    current_app.logger.debug(data)
     indexer = RecordIndexer()
     indexer.client.index(index="author",
                          doc_type="author",
