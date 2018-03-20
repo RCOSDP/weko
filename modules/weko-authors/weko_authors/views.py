@@ -75,7 +75,7 @@ def create():
     indexer = RecordIndexer()
     indexer.client.index(index="author",
                          doc_type="author",
-                         body=data,)
+                         body=json.dumps(data),)
     return jsonify(msg=_('Success'))
 
 
