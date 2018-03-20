@@ -63,7 +63,7 @@
   "mappings": {
     "jpcoar-v1.0.0": {
       "properties": {
-        "authorNameInfo": {
+        "authorNameInfo1": {
           "type": "nested",
           "properties": {
             "familyName": {
@@ -89,7 +89,7 @@
             }
           }
         },
-        "authorIdInfo": {
+        "authorIdInfo2": {
           "type": "nested",
           "properties": {
             "authorId": {
@@ -105,7 +105,7 @@
             }
           }
         },
-        "emailInfo": {
+        "emailInfo3": {
           "type": "nested",
           "properties": {
             "email": {
