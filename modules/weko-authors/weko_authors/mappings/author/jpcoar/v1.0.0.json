@@ -106,7 +106,7 @@
           }
         },
         "emailInfo": {
-          "type": "nested",
+          "type": "object",
           "properties": {
             "email": {
               "type": "string"
