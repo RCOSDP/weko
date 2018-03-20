@@ -80,6 +80,9 @@ def create():
 @author_permission.require(http_exception=403)
 def get():
     """Get all authors."""
+    data = request.get_json()
+    current_app.logger.debug(data)
     indexer = RecordIndexer()
     result = indexer.client.search(index="author")
+    current_app.logger.debug(result)
     return json.dumps(result, indent=4, ensure_ascii=False)
