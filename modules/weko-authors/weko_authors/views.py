@@ -69,6 +69,9 @@ def create():
 
     data = request.get_json()
     current_app.logger.debug(data)
+    current_app.logger.debug(type(data))
+    current_app.logger.debug(type(json.dumps(data)))
+    current_app.logger.debug(json.dumps(data))
     indexer = RecordIndexer()
     indexer.client.index(index="author",
                          doc_type="author",
