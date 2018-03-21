@@ -87,7 +87,7 @@ def create():
     return jsonify(msg=_('Success'))
 
 
-@blueprint_api.route("/get", methods=['GET'])
+@blueprint_api.route("/search", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
 def get():
