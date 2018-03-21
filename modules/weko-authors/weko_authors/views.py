@@ -42,7 +42,7 @@ blueprint = Blueprint(
 blueprint_api = Blueprint(
     'weko_authors',
     __name__,
-    # url_prefix='/authors',
+    url_prefix='/authors',
     template_folder='templates',
     static_folder='static',
 )
