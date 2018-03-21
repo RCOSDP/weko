@@ -25,7 +25,6 @@ from invenio_assets import NpmBundle
 
 css = Bundle(
     'css/weko_authors/styles.bundle.css',
-    'css/weko_authors/styles.search.bundle.css',
     filters='cleancss',
     output="gen/author.%(version)s.css"
 )
@@ -34,9 +33,19 @@ js = NpmBundle(
     'js/weko_authors/inline.bundle.js',
     'js/weko_authors/polyfills.bundle.js',
     'js/weko_authors/main.bundle.js',
+    filters='jsmin',
+    output="gen/author.%(version)s.js",
+)
+author_search_css = Bundle(
+    'css/weko_authors/styles.search.bundle.css',
+    filters='cleancss',
+    output="gen/authorSearch.%(version)s.css"
+)
+
+author_search_js = NpmBundle(
     'js/weko_authors/inline.search.bundle.js',
     'js/weko_authors/polyfills.search.bundle.js',
     'js/weko_authors/main.search.bundle.js',
     filters='jsmin',
-    output="gen/author.%(version)s.js",
+    output="gen/authorSearch.%(version)s.js",
 )
