@@ -66,7 +66,7 @@ def add():
         current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
 
 
-@blueprint_api.route("/addadd", methods=['POST'])
+@blueprint_api.route("/add", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
 def create():
@@ -87,7 +87,7 @@ def create():
     return jsonify(msg=_('Success'))
 
 
-@blueprint_api.route("/getget", methods=['GET'])
+@blueprint_api.route("/get", methods=['GET'])
 @login_required
 @author_permission.require(http_exception=403)
 def get():

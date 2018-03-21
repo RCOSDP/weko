@@ -85,12 +85,6 @@ setup(
         'invenio_base.apps': [
             'weko_authors = weko_authors:WekoAuthors',
         ],
-        # 'invenio_base.blueprints': [
-        #     'weko_authors = weko_authors.views:blueprint',
-        # ],
-        # 'invenio_base.api_apps': [
-        #     'weko_authors = weko_authors:WekoAuthors',
-        # ],
         'invenio_base.api_blueprints': [
             'weko_authors = weko_authors.views:blueprint_api',
         ],
