@@ -94,7 +94,15 @@ def get():
     """Get all authors."""
     data = request.get_json()
     current_app.logger.debug(data)
+    body = {
+        "query": {
+            "match": {
+                "_all": data.get('search')
+
+            }
+        }
+    }
     indexer = RecordIndexer()
-    result = indexer.client.search(index="author")
-    current_app.logger.debug(result)
+    result = indexer.client.search(index="author", body=body)
+    current_app.logger.debug(type(result))
     return json.dumps(result, indent=4, ensure_ascii=False)
