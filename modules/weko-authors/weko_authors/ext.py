@@ -41,7 +41,7 @@ class WekoAuthors(object):
         :param app: The Flask application.
         """
         self.init_config(app)
-        app.register_blueprint(blueprint)
+        # app.register_blueprint(blueprint)
         app.extensions['weko-authors'] = self
 
     def init_config(self, app):
