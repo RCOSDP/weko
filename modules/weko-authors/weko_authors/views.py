@@ -94,13 +94,14 @@ def get():
     """Get all authors."""
     data = request.get_json()
     current_app.logger.debug(data)
+    search = data.get('searchKey') or ''
     size = data.get('numOfPage') or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE']
     num = data.get('pageNumber') or 1
-    offset = (int(num) - 1) * size if int(num) > 0 else 0
+    offset = (int(num) - 1) * size if int(num) > 1 else 0
     body = {
         "query": {
             "match": {
-                "_all": data.get('searchKey')
+                "_all": search
 
             }
         },
