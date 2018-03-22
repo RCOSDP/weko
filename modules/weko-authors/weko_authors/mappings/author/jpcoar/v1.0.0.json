@@ -63,7 +63,7 @@
   "mappings": {
     "jpcoar-v1.0.0": {
       "properties": {
-        "authorNameInfo1": {
+        "authorNameInfo": {
           "type": "object",
           "properties": {
             "familyName": {
@@ -89,7 +89,7 @@
             }
           }
         },
-        "authorIdInfo2": {
+        "authorIdInfo": {
           "type": "object",
           "properties": {
             "authorId": {
