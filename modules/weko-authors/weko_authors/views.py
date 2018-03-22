@@ -94,15 +94,22 @@ def get():
     """Get all authors."""
     data = request.get_json()
     current_app.logger.debug(data)
+    size = data.get('numOfPage') or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE']
+    num = data.get('pageNumber')
+    offset = (num - 1) * size
     body = {
         "query": {
             "match": {
-                "_all": data.get('search')
+                "_all": data.get('searchKey')
 
             }
-        }
+        },
+        "from": offset,
+        "size": size
     }
+    current_app.logger.debug(body)
     indexer = RecordIndexer()
     result = indexer.client.search(index="author", body=body)
     current_app.logger.debug(type(result))
-    return json.dumps(result, indent=4, ensure_ascii=False)
+    current_app.logger.debug(result)
+    return json.dumps(result)
