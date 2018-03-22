@@ -96,7 +96,7 @@ def get():
     current_app.logger.debug(data)
     size = data.get('NumOfpage')
     num = data.get('pageNumber')
-    offset = (num - 1) * size - 1
+    offset = (num - 1) * size
     body = {
         "query": {
             "match": {
