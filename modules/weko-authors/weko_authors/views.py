@@ -95,6 +95,9 @@ def get():
     data = request.get_json()
     current_app.logger.debug(data)
     search = data.get('searchKey') or ''
+    query = {"match_all": {}}
+    if search:
+        query = {"match": {"_all": search}}
     size = data.get('numOfPage') or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE']
     num = data.get('pageNumber') or 1
     offset = (int(num) - 1) * size if int(num) > 1 else 0
@@ -109,12 +112,7 @@ def get():
         }
 
     body = {
-        "query": {
-            "match": {
-                "_all": search
-
-            }
-        },
+        "query": query,
         "from": offset,
         "size": size,
         "sort": sort
