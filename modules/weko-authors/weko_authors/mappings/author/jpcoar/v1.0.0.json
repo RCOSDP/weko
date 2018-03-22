@@ -63,34 +63,53 @@
   "mappings": {
     "jpcoar-v1.0.0": {
       "properties": {
-
-        "authorIdInfo": {
-          "type": "nested",
+        "authorNameInfo1": {
+          "type": "object",
           "properties": {
-            "type": "object",
-            "properties": {
-              "authorId": {
-                "type": "string"
-              },
-              "idType": {
-                "type": "string",
-                "index": "no"
-              },
-              "authorIdShowFlg": {
-                "type": "string",
-                "index": "no"
-              }
+            "familyName": {
+              "type": "string"
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "fullName": {
+              "type": "string"
+            },
+            "language": {
+              "type": "string",
+              "index":  "no"
+            },
+            "nameFormat": {
+              "type": "string",
+              "index":  "no"
+            },
+            "nameShowFlg": {
+              "type": "string",
+              "index":  "no"
+            }
+          }
+        },
+        "authorIdInfo2": {
+          "type": "object",
+          "properties": {
+            "authorId": {
+              "type": "string"
+            },
+            "idType": {
+              "type": "string",
+              "index":  "no"
+            },
+            "authorIdShowFlg": {
+              "type": "string",
+              "index":  "no"
             }
           }
         },
         "emailInfo": {
-          "type": "nested",
+          "type": "object",
           "properties": {
-            "type": "object",
-            "properties": {
-              "email": {
-                "type": "string"
-              }
+            "email": {
+              "type": "string"
             }
           }
         }
