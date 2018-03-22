@@ -98,6 +98,16 @@ def get():
     size = data.get('numOfPage') or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE']
     num = data.get('pageNumber') or 1
     offset = (int(num) - 1) * size if int(num) > 1 else 0
+    sort_key = data.get('sortKey') or ''
+    sort_order = data.get('sortOrder') or ''
+    sort = {}
+    if sort_key and sort_order:
+        current_app.logger.debug(sort_key and sort_order)
+        current_app.logger.debug(bool(sort_key and sort_order))
+        sort = {
+            sort_key: {"order": sort_order}
+        }
+
     body = {
         "query": {
             "match": {
@@ -106,7 +116,8 @@ def get():
             }
         },
         "from": offset,
-        "size": size
+        "size": size,
+        "sort": sort
     }
     current_app.logger.debug(body)
     indexer = RecordIndexer()

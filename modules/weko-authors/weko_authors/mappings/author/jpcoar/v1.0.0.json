@@ -63,35 +63,7 @@
   "mappings": {
     "jpcoar-v1.0.0": {
       "properties": {
-        "authorNameInfo": {
-          "type": "nested",
-          "properties": {
-            "type": "object",
-            "properties": {
-              "familyName": {
-                "type": "string"
-              },
-              "firstName": {
-                "type": "string"
-              },
-              "fullName": {
-                "type": "string"
-              },
-              "language": {
-                "type": "string",
-                "index": "no"
-              },
-              "nameFormat": {
-                "type": "string",
-                "index": "no"
-              },
-              "nameShowFlg": {
-                "type": "string",
-                "index": "no"
-              }
-            }
-          }
-        },
+
         "authorIdInfo": {
           "type": "nested",
           "properties": {
