@@ -20,19 +20,22 @@
 
 """Weko Deposit API."""
 
+import redis
+
+from invenio_indexer.api import RecordIndexer
 from flask import current_app, abort, json
+from collections import OrderedDict
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
 from invenio_files_rest.models import Bucket, MultipartObject, Part
+from invenio_files_rest.models import ObjectVersion
 from invenio_records_files.models import RecordsBuckets
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_files.api import FileObject, FilesIterator, Record, \
     _writable
-import redis
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, ItemsMetadata
-from weko_records.utils import save_item_metadata, save_items_data, \
-    upload_metadata
+from weko_records.utils import save_item_metadata, find_items
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 
 # from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
@@ -55,21 +58,6 @@ PRESERVE_FIELDS = (
 )
 
 
-# def sorted_files_from_bucket(bucket, keys=None):
-#     """Return files from bucket sorted by given keys.
-#
-#     :param bucket: :class:`~invenio_files_rest.models.Bucket` containing the
-#         files.
-#     :param keys: Keys order to be used.
-#     :returns: Sorted list of bucket items.
-#     """
-#     keys = keys or []
-#     total = len(keys)
-#     sortby = dict(zip(keys, range(total)))
-#     values = WekoObjectVersion.get_by_bucket(bucket).all()
-#     return sorted(values, key=lambda x: sortby.get(x.key, total))
-
-
 class WekoFileObject(FileObject):
     """extend  FileObject for detail page """
 
@@ -87,30 +75,62 @@ class WekoFileObject(FileObject):
         return self.data
 
 
-# class WekoFilesIterator(FilesIterator):
-#     """ extend  FilesIterator for detail page"""
-#
-#     def __iter__(self):
-#         """"""
-#         self._it = iter(sorted_files_from_bucket(self.bucket, self.keys))
-#         return self
-#
-#     def __getitem__(self, key):
-#         """Get a specific file."""
-#         obj = WekoObjectVersion.get(self.bucket, key)
-#         if obj:
-#             return self.file_cls(obj, self.filesmap.get(obj.key, {}))
-#         raise KeyError(key)
-
-
-class WekoIndexer(object):
+class WekoIndexer(RecordIndexer):
     """"""
 
+    def get_es_index(self):
+        # Elastic search settings
+        self.es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+        self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
+        self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
+
+    def upload_metadata(self, jrc, item_id):
+        """
+        Upload the item data to ElasticSearch
+        :param jrc:
+        :param item_id:
+        """
+        # delete the item when it is exist
+        if self.client.exists(id=str(item_id), index=self.es_index,
+                              doc_type=self.es_doc_type):
+            self.client.delete(id=str(item_id), index=self.es_index,
+                               doc_type=self.es_doc_type)
+
+        self.client.index(id=str(item_id),
+                          index=self.es_index,
+                          doc_type=self.es_doc_type,
+                          body=jrc,
+                          )
+
+    def delete_file_index(self, body, parent_id):
+        for lst in body:
+            try:
+                self.client.delete(id=str(lst),
+                                   index=self.es_index,
+                                   doc_type=self.file_doc_type,
+                                   routing=parent_id)
+            except:
+                pass
+
     def index(self, record):
-        pass
+        self.get_es_index()
 
     def delete(self, record):
         pass
+
+    def get_count_by_index_id(self, tree_path):
+        search_query = {
+            "query": {
+                "term": {
+                    "path.tree": tree_path
+                }
+            }
+        }
+        self.get_es_index()
+        search_result = self.client.count(index=self.es_index,
+                                          doc_type=self.es_doc_type,
+                                          body=search_query)
+        return search_result.get('count')
 
 
 class WekoDeposit(Deposit):
@@ -118,11 +138,13 @@ class WekoDeposit(Deposit):
 
     indexer = WekoIndexer()
 
-    # files_iter_cls = WekoFilesIterator
-
     deposit_fetcher = staticmethod(weko_deposit_fetcher)
 
     deposit_minter = staticmethod(weko_deposit_minter)
+
+    @property
+    def item_metadata(self):
+        return ItemsMetadata.get_record(self.id).dumps()
 
     @classmethod
     def create(cls, data, id_=None):
@@ -179,13 +201,20 @@ class WekoDeposit(Deposit):
         except:
             abort(400, "Failed to register item")
 
-        dc, jrc = save_item_metadata(data, self.pid)
+        dc, jrc, is_edit = save_item_metadata(data, self.pid)
         self.data = data
         self.jrc = jrc
+        self.is_edit = is_edit
 
         # Save Index Path on ES
         jrc.update(dict(path=td))
         dc.update(dict(path=td))
+
+        # default to set no publish status
+        if not is_edit:
+            ps = dict(publish_status='1')
+            jrc.update(ps)
+            dc.update(ps)
 
         super(WekoDeposit, self).update(dc)
 
@@ -199,32 +228,56 @@ class WekoDeposit(Deposit):
 
         super(WekoDeposit, self).commit(*args, **kwargs)
         if self.data and len(self.data):
-            fmd = self.data.get("filemeta")
-            save_items_data(self.data, self.pid.object_uuid,
-                            self.get('item_type_id'))
+            # save item metadata
+            self.save_or_update_item_metadata()
 
             if self.jrc and len(self.jrc):
                 # upload item metadata to Elasticsearch
-                upload_metadata(self.jrc, self.pid.object_uuid)
-            for file in self.files:
-                if isinstance(fmd, list):
-                    for lst in fmd:
-                        if file.obj.key == lst.get('filename'):
-                            lst.update({'mimetype': file.obj.mimetype})
+                self.indexer.upload_metadata(self.jrc, self.pid.object_uuid)
 
-                            # update file_files's json
-                            file.obj.file.update_json(lst)
+                # upload file content to Elasticsearch
+                self.upload_files()
 
-                            # upload file metadata to Elasticsearch
-                            file.obj.file.upload_file(lst,
-                                                      str(file.obj.file_id),
-                                                      self.pid.object_uuid,
-                                                      'weko', 'content')
-                            break
+    def upload_files(self):
+        fmd = self.data.get("filemeta")
 
-    @property
-    def item_metadata(self):
-        return ItemsMetadata.get_record(self.id).dumps()
+        # delete old file index when edit item
+        self.delete_old_file_index()
+        for file in self.files:
+            if isinstance(fmd, list):
+                for lst in fmd:
+                    if file.obj.key == lst.get('filename'):
+                        lst.update({'mimetype': file.obj.mimetype})
+
+                        # update file_files's json
+                        file.obj.file.update_json(lst)
+
+                        # upload file metadata to Elasticsearch
+                        file.obj.file.upload_file(lst, str(file.obj.file_id),
+                                                  self.pid.object_uuid,
+                                                  self.indexer.es_index,
+                                                  self.indexer.file_doc_type)
+                        break
+
+    def save_or_update_item_metadata(self):
+        if self.is_edit:
+            obj = ItemsMetadata.get_record(self.id)
+            obj.update(self.data)
+            obj.commit()
+        else:
+            ItemsMetadata.create(self.data, id_=self.pid.object_uuid,
+                                 item_type_id=self.get('item_type_id'))
+
+    def delete_old_file_index(self):
+        if self.is_edit:
+            lst = ObjectVersion.get_by_bucket(
+                self.files.bucket, True).filter_by(is_head=False).all()
+            klst = []
+            for obj in lst:
+                if obj.file_id:
+                    klst.append(obj.file_id)
+            if len(klst) > 0:
+                self.indexer.delete_file_index(klst, self.pid.object_uuid)
 
 
 class WekoRecord(Record):
@@ -257,4 +310,36 @@ class WekoRecord(Record):
     def editable(self):
         """Return the permission of modifying item."""
         return current_weko_items_ui.permission.can()
+
+    @property
+    def items_show_list(self):
+        ojson = ItemTypes.get_record(self.get('item_type_id'))
+        items = []
+        solst = find_items(ojson.model.form)
+
+        for lst in solst:
+            key = lst[0]
+            val = self.get(key)
+            if not val:
+                continue
+            mlt = val.get('attribute_value_mlt')
+            if mlt:
+                nval = dict()
+                nval['attribute_name'] = val.get('attribute_name')
+                if isinstance(mlt, list):
+                    new_mlt = []
+                    for lst in mlt:
+                        jv = OrderedDict()
+                        for l in solst:
+                            k = l[0][l[0].rfind('.')+1:]
+                            vl = lst.get(k)
+                            if vl:
+                                jv.update({l[1]: vl})
+                        new_mlt.append(jv)
+                nval['attribute_value_mlt'] = new_mlt
+                items.append(nval)
+            else:
+                items.append(val)
+
+        return items
 

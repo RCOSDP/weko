@@ -18,17 +18,17 @@
 # MA 02111-1307, USA.
 #}
 
-{% macro tabs_selector(tab_name='アイテムタイプ') %}
-  {% set tabs_list = [(_('アイテムタイプ'), url_for('weko_itemtypes_ui.index')),
-                      (_('アイテム管理'), '/items/'),
-                      (_('ツリー編集'),url_for('weko_index_tree.index')),
-                      (_('査読／承認'),'/'),
-                      (_('インポート'),'/'),
-                      (_('レポート'),'/'),
-                      (_('管理'),'/'),
-                      (_('著者名典拠'),'/'),
-                      (_('ブロックスタイル'),'/')] %}
-  {% for (name, href) in tabs_list %}
-    <li role="presentation" {% if tab_name == name %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>
+{% macro tabs_selector(tab_value='アイテムタイプ') %}
+  {% set tabs_list = [('schema management', 'Schema Management', url_for('weko_schema_ui.list')),
+                      ('item type', 'Item Type', url_for('weko_itemtypes_ui.index')),
+                      ('item management', 'Item Management', '/'),
+                      ('edit tree', 'Edit Tree', url_for('weko_index_tree.index')),
+                      ('review/accept', 'Review/Accept', '/'),
+                      ('import', 'Import', '/'),
+                      ('report', 'Report', '/'),
+                      ('management', 'Management', '/'),
+                      ('block style', 'Block style', '/')] %}
+  {% for (value, name, href) in tabs_list %}
+    <li role="presentation" {% if tab_value == value %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>
   {% endfor %}
 {% endmacro %}

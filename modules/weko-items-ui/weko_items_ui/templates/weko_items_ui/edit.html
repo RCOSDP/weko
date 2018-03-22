@@ -34,7 +34,7 @@
 
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('items') }}
+  {{ tabs_selector('item') }}
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
@@ -63,7 +63,8 @@
           method="PUT"
           endpoint="{{ config.DEPOSIT_FILES_API }}"
           {% if pid %}
-            action="{{ config.DEPOSIT_RECORDS_API|format(pid_value=pid.pid_value) }}"
+            initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+            files='{{files|tojson}}'
           {% else %}
             initialization="{{ config.DEPOSIT_SEARCH_API }}"
           {% endif %}
@@ -72,7 +73,7 @@
         {%- endif %}
           <invenio-records
             {%- if pid %}
-              initialization="{{ config.DEPOSIT_RECORDS_API.format(pid_value=pid.pid_value) }}"
+              initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
             {%- else %}
               initialization="{{ config.DEPOSIT_SEARCH_API }}"
             {%- endif %}

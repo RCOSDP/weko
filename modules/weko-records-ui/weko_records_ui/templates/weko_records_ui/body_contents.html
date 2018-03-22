@@ -63,7 +63,7 @@
                 <thead>
                 <tr class="">
                   <th>{{_('Name')}} / {{_('File')}}</th>
-                  <th>{{_('License')}}</th>
+                  <th class="license">{{_('License')}}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -75,9 +75,13 @@
                   <td class="">{{file.filename}}</td>
                   <td class="" rowspan="2">
                     {%- if not 'simple' in file.displaytype -%}
-                    {% set lst = file.licensetype | get_license_icon %}
-                    <img src="{{lst[0]}}"/><br>
-                    {{ lst[1] }}
+                    {%- if 'license_free' == file.licensetype -%}
+                      <span class="break-word">{{ file.licensefree }}</span>
+                    {%- else %}
+                      {% set lst = file.licensetype | get_license_icon %}
+                      <img src="{{lst[0]}}"/><br>
+                      {{ lst[1] }}
+                      {%- endif %}
                     {%- endif -%}
                   </td>
                 </tr>
@@ -88,11 +92,34 @@
                         <a class="forcewrap"
                            href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
                         <span>[ 0 downloads ]</span><br>
-                        <span>{{file.checksum}}</span>
+                        <span>{{file.checksum.split(':')[0]}}</span>
+                        <span class="break-word">{{file.checksum.split(':')[1]}}</span>
                       </span>
                   </td>
                 </tr>
-                {%- if not 'simple' in file.displaytype -%}
+                {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
+                <tr class="">
+                  <td colspan="2">
+                    <div class="panel panel-default" id="preview_de">
+                      <div class="panel-heading">
+                        <a class="panel-toggle" data-toggle="collapse" href="#{{loop.index}}">
+                          {{_('Preview')}}
+                          <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
+                          <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
+                        </a>
+                      </div>
+                      <div id="{{loop.index}}" class="collapse">
+                        <div class="embed-responsive embed-responsive-16by9">
+                            <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
+                                  src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
+                            </iframe>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                {%- endif -%}
+                {%- if 'preview' in file.displaytype -%}
                 <tr class="">
                   <td colspan="2">
                     <div class="panel panel-default" id="preview">
@@ -137,25 +164,37 @@
                   <td>{{ record.item_type_info }}</td>
                 </tr>
               {% endif %}
-              {%- for k, m in record.items() %}
-                {%- if m is not string and k not in ignore_meta %}
+                {%- for lst in record.items_show_list %}
                   <tr>
-                    <th>{{ m['attribute_name'] }}</th>
+                    <th>{{ lst['attribute_name'] }}</th>
                     <td>
-                      {%- for k in m['attribute_value'] %}
-                        {{ k }}
+                      {%- for key in lst['attribute_value'] %}
+                        {{ key }}
                       {% endfor %}
-                      {%- for lst in m['attribute_value_mlt'] %}
-                        {%- for v in lst.values() %}
-                          {%- if v|length > 1  %}
-                            {{ v }}<br>
-                          {% endif %}
+                      {%- for l in lst['attribute_value_mlt'] %}
+                        {%- for k, v in l.items() %}
+                           {{ k}} : {{ v }}<br>
                         {% endfor %}
+                      {% if not loop.last %}
+                      <br>
+                      {% endif %}
                       {% endfor %}
                     </td>
                   </tr>
+                {% endfor %}
+                {% if record.pubdate %}
+                  <tr>
+                    <th>{{_('Publish/Private status')}}</th>
+                    <td>
+                      <div>
+                        <p id="public_status">{{_('Public')}}</p>
+                        <button id="public_status_btn" type="button" class="btn btn-info">
+                          {{_('Change to Private')}}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
                 {% endif %}
-              {% endfor %}
               </table>
               {%- if 'main_entry_personal_name' in record %}
               <p class="record_authors">
@@ -166,6 +205,7 @@
               </p>
               {% endif %}
             {%- endblock %}
+
             <div class="text-center">
               <a class="btn btn-default" id="btn_back" href="#" >
                 <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('戻る')}}</a>

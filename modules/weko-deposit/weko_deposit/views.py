@@ -34,13 +34,6 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route("/deposits/index/<string:pid>", methods=['GET'])
-def index(pid):
-    """Render a basic view."""
-    return render_template(
-        "weko_deposit/t.html", record={}, pid=pid)
-
-
 @blueprint.route("/deposits/items/index/<string:pid>", methods=['PUT', 'POST'])
 def wokao(pid):
     """Render a basic view."""

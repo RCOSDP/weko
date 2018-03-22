@@ -56,3 +56,37 @@ def _get_all_children(tree_json, parent=0, child_list={}, parent_info={}):
         parent_info[tree.get('id')] = str(parent)
     child_list[parent] = children
     return children
+
+
+def reset_tree(path, tree):
+    """"""
+
+    def set_checked(id_tp, tree):
+        if len(id_tp) == 0:
+            return
+
+        if isinstance(tree, list):
+            for lst in tree:
+                if isinstance(lst, dict):
+                    id = lst.get('id', '')
+                    if id in id_tp:
+                        settings = lst.get('settings')
+                        if isinstance(settings, dict) and settings.get('checked') is not None:
+                            settings['checked'] = True
+                            id_tp.remove(id)
+                            break
+                    else:
+                        set_checked(id_tp, lst.get('children', []))
+
+    if path:
+        id_tp = []
+        if isinstance(path, list):
+            for lp in path:
+                id = lp.split('/')[-1]
+                id_tp.append(id)
+        else:
+            id = path.split('/')[-1]
+            id_tp.append(id)
+
+        set_checked(id_tp, tree)
+

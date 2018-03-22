@@ -22,6 +22,7 @@
 
 from . import config
 from .views import blueprint
+from .rest import create_blueprint
 
 
 class WekoDeposit(object):
@@ -58,3 +59,30 @@ class WekoDeposit(object):
         for k in dir(config):
             if k.startswith('WEKO_DEPOSIT_'):
                 app.config.setdefault(k, getattr(config, k))
+
+
+class WekoDepositREST(object):
+    """
+      Weko Deposit Rest Obj
+    """
+    def __init__(self, app=None):
+        """Extension initialization.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        if app:
+            self.init_app(app)
+
+    def init_app(self, app):
+        """Flask application initialization.
+
+        Initialize the REST endpoints.  Connect all signals if
+        `DEPOSIT_REGISTER_SIGNALS` is True.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        blueprint = create_blueprint(app,
+            app.config['WEKO_DEPOSIT_REST_ENDPOINTS']
+        )
+        app.register_blueprint(blueprint)
+        app.extensions['weko-deposit-rest'] = self

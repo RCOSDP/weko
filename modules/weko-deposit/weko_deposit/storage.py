@@ -59,13 +59,18 @@ class WekoFileStorage(PyFSFileStorage):
         # fjson.update(
         #     {"_updated": pytz.utc.localize(fj.updated)
         #         .isoformat() if fj.updated else None})
+        # delete the item when it is exist
+
+        es_index = "weko"
+        es_doc_type = "content"
 
         indexer.client.index(id=str(id),
-                             index="weko",
-                             doc_type="content",
+                             index=es_index,
+                             doc_type=es_doc_type,
                              parent=uuid,
                              body=fjson,
                              )
+
 
 def make_path(base_uri, path, filename, path_dimensions, split_length):
     """Generate a path as base location for file instance.

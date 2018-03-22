@@ -117,6 +117,10 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_REPOSITORY}"
 
 ${INVENIO_WEB_INSTANCE} access \
+       allow "schema-access" \
+       role "${INVENIO_ROLE_REPOSITORY}"
+
+${INVENIO_WEB_INSTANCE} access \
        allow "index-tree-access" \
        role "${INVENIO_ROLE_REPOSITORY}"
 
@@ -126,6 +130,26 @@ ${INVENIO_WEB_INSTANCE} access \
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "item-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "author-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-bucket-update" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-delete" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-delete-version" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 # sphinxdoc-set-role-access-end

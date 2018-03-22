@@ -22,15 +22,17 @@
 
 import os
 
-from flask import Blueprint, current_app, flash, json, jsonify, redirect, \
-    render_template, request, url_for, g
-from flask_babelex import gettext as _
-from flask_login import login_required, current_user
 import redis
-from simplekv.memory.redisstore import RedisStore
-from weko_records.api import ItemTypes, WekoRecord
-from .permissions import item_permission
+from flask import Blueprint, current_app, flash, json, jsonify, redirect, \
+    render_template, request, session, url_for
+from flask_babelex import gettext as _
+from flask_login import login_required
 from invenio_records_ui.signals import record_viewed
+from simplekv.memory.redisstore import RedisStore
+from weko_groups.api import Group
+from weko_records.api import ItemTypes
+
+from .permissions import item_permission
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -73,7 +75,8 @@ def index(item_type_id=0):
         jsonschema=json_schema,
         schemaform=schema_form,
         lists=lists,
-        id=item_type_id
+        id=item_type_id,
+        files=[]
     )
 
 
@@ -103,6 +106,12 @@ def get_json_schema(item_type_id=0):
     result = None
     if item_type_id > 0:
         result = ItemTypes.get_record(item_type_id)
+        if 'filemeta' in json.dumps(result):
+            group_list = Group.get_group_list()
+            group_enum = list(group_list.keys())
+            filemeta_group = result.get('properties').get('filemeta').get(
+                'items').get('properties').get('groups')
+            filemeta_group['enum'] = group_enum
     current_app.logger.debug(result)
     if result is None:
         return '{}'
@@ -119,13 +128,37 @@ def get_schema_form(item_type_id=0):
     :return: The json object.
     """
     current_app.logger.debug(item_type_id)
+    cur_lang = 'default'
+    if current_app.config['I18N_SESSION_KEY'] in session:
+        cur_lang = session[current_app.config['I18N_SESSION_KEY']]
+    current_app.logger.debug('cur_lang: ' + cur_lang)
     result = None
     if item_type_id > 0:
         result = ItemTypes.get_by_id(item_type_id)
     if result is None:
         return '["*"]'
-    current_app.logger.debug(jsonify(result.form))
-    return jsonify(result.form)
+    current_app.logger.debug(result.form)
+    schema_form = result.form
+    filemeta_form = schema_form[0]
+    if 'filemeta' == filemeta_form.get('key'):
+        group_list = Group.get_group_list()
+        filemeta_form_group = filemeta_form.get('items')[4]
+        filemeta_form_group['type'] = 'select'
+        filemeta_form_group['titleMap'] = group_list
+    if 'default' != cur_lang:
+        for elem in schema_form:
+            if 'title_i18n' in elem:
+                if cur_lang in elem['title_i18n']:
+                    if len(elem['title_i18n'][cur_lang]) > 0:
+                        elem['title'] = elem['title_i18n'][cur_lang]
+            if 'type' in elem and 'fieldset' == elem['type']:
+                for sub_elem in elem['items']:
+                    if 'title_i18n' in sub_elem:
+                        if cur_lang in sub_elem['title_i18n']:
+                            if len(sub_elem['title_i18n'][cur_lang]) > 0:
+                                sub_elem['title'] = sub_elem['title_i18n'][
+                                    cur_lang]
+    return jsonify(schema_form)
 
 
 @blueprint.route("/index/<int:pid_value>", methods=['GET', 'PUT', 'POST'])
@@ -197,6 +230,33 @@ def default_view_method(pid, record, template=None):
         jsonschema=json_schema,
         schemaform=schema_form,
         lists=lists,
-        id=item_type_id
-        # pid=pid
+        id=item_type_id,
+        files=to_files_js(record),
+        pid=pid
     )
+
+
+def to_files_js(record):
+    """List files in a deposit."""
+    res = []
+
+    for f in record.files:
+        res.append({
+            'key': f.key,
+            'version_id': f.version_id,
+            'checksum': f.file.checksum,
+            'size': f.file.size,
+            'completed': True,
+            'progress': 100,
+            'links': {
+                'self': (
+                    current_app.config['DEPOSIT_FILES_API'] +
+                    u'/{bucket}/{key}?versionId={version_id}'.format(
+                        bucket=f.bucket_id,
+                        key=f.key,
+                        version_id=f.version_id,
+                    )),
+            }
+        })
+
+    return res

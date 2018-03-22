@@ -28,6 +28,7 @@ from .schema import SchemaConverter
 from invenio_db import db
 
 from .api import WekoSchema
+from .permissions import schema_permission
 
 blueprint = Blueprint(
     'weko_schema_ui',
@@ -39,7 +40,8 @@ blueprint = Blueprint(
 
 @blueprint.route("/schema", methods=['GET'])
 @blueprint.route("/schema/", methods=['GET'])
-# @login_required
+@login_required
+@schema_permission.require(http_exception=403)
 def index():
     """Render a basic view."""
     return render_template(current_app.config['WEKO_SCHEMA_UI_UPLOAD'], record={})
@@ -47,7 +49,8 @@ def index():
 
 @blueprint.route("/schema/list", methods=['GET'])
 @blueprint.route("/schema/list/", methods=['GET'])
-# @login_required
+@login_required
+@schema_permission.require(http_exception=403)
 def list():
     """Render a schema list view."""
     records = schema_list_render()
@@ -56,6 +59,8 @@ def list():
 
 @blueprint.route("/schema", methods=['POST'])
 @blueprint.route("/schema/<pid>", methods=['POST'])
+@login_required
+@schema_permission.require(http_exception=403)
 def delete(pid=None):
     """aaa"""
     pid = pid or request.values.get('pid')

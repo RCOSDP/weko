@@ -217,7 +217,10 @@ class SchemaTree:
         return rec
 
     def create_xml(self):
-        """"""
+        """
+        create schema xml tree
+        :return:
+        """
         def get_element(str):
             return str.split(":")[-1] if ":" in str else str
 
@@ -269,8 +272,6 @@ class SchemaTree:
                     # List of dict
                     atr_vm = v.get('attribute_value_mlt')
                     if atr_v:
-                        if isinstance(atr_v, list):
-                            atr_v = " ".join(atr_v)
                         set_value(mpdic, atr_v)
                         vlst.append(mpdic)
                     elif atr_vm:

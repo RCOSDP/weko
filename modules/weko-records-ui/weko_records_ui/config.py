@@ -83,8 +83,8 @@ OAISERVER_METADATA_FORMATS = {
                 'schema_type': "junii2",
             }
         ),
-        'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
-        'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+        'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
+        'namespace': 'http://irdb.nii.ac.jp/oai',
     },
     'jpcoar': {
         'serializer': (

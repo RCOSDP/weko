@@ -20,15 +20,20 @@
 
 """Blueprint for weko-index-tree."""
 
-from flask import Blueprint, current_app, flash, json, jsonify, \
+import requests
+
+from flask import Blueprint, current_app, json, jsonify, \
     render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from werkzeug.utils import secure_filename
+from functools import wraps
+from sqlalchemy.exc import SQLAlchemyError
+from invenio_records_rest.errors import PIDResolveRESTError
 
-from .api import Indexes, IndexTrees
+from .api import Indexes, IndexTrees, ItemRecord
 from .permissions import index_tree_permission
-from .utils import get_all_children
+from .utils import get_all_children, reset_tree
 
 blueprint = Blueprint(
     'weko_index_tree',
@@ -37,6 +42,20 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
 )
+
+
+def pass_record(f):
+    """Decorator to retrieve persistent identifier and record."""
+
+    @wraps(f)
+    def inner(pid_value, *args, **kwargs):
+        try:
+            pid, record = request.view_args['pid_value'].data
+            return f(pid=pid, record=record, *args, **kwargs)
+        except SQLAlchemyError:
+            raise PIDResolveRESTError(pid)
+
+    return inner
 
 
 @blueprint.route("/")
@@ -61,6 +80,26 @@ def get_indexjson():
     return jsonify(result.tree)
 
 
+@blueprint.route(
+    '/jsonmapping/<pid(recid,record_class='
+    '"weko_deposit.api:WekoRecord"):pid_value>',
+    methods=['GET']
+)
+@pass_record
+def get_indexjson_by_pid(pid, record):
+    """provide the index tree json for top page."""
+    result = IndexTrees.get()
+    if result is None:
+        return jsonify([])
+    tree = result.tree
+
+    # edite mode
+    if record.get('_oai'):
+        reset_tree(record.get('path'), tree)
+
+    return jsonify(tree)
+
+
 @blueprint.route("/detail/<int:index_id>", methods=['GET'])
 @login_required
 @index_tree_permission.require(http_exception=403)
@@ -83,7 +122,6 @@ def upt_index_detail(index_id=0):
         result = Indexes.upt_detail_by_id(index_id, **data)
     if result is None:
         return jsonify(code=400, msg='param error')
-    flash(_('update index detail info success.'), category='success')
     return jsonify(result.serialize())
 
 
@@ -124,11 +162,27 @@ def del_index_detail(index_id=0):
     result = None
     if index_id > 0:
         """check if item belongs to the index"""
-        # TODO
+        # index_children_count = Indexes.has_children(index_id)
+        # if index_children_count > 0:
+        #     return jsonify(code=1, msg='have children index')
+        # tree_obj = Indexes.get_self_path(index_id)
+        # if tree_obj is None:
+        #     # the index has be removed
+        #     return jsonify(code=0, msg=_('success'), data={'count': 0})
+        # tree_path = tree_obj.path if tree_obj is not None else '0'
+        # weko_indexer = ItemRecord()
+        # item_count = weko_indexer.get_count_by_index_id(tree_path=tree_path)
+        # if item_count > 0:
+        #     return jsonify(code=1, msg='have children items')
         result = Indexes.del_by_indexid(index_id)
+        weko_indexer = ItemRecord()
+        count_del, count_upt = \
+            weko_indexer.del_items_by_index_id(str(index_id),
+                                               with_children=True)
     if result is None:
         return jsonify(code=400, msg='param error')
-    return jsonify(code=0, msg='delete success')
+    return jsonify(code=0, msg='delete success',
+                   data={'count_del': count_del, 'count_upt': count_upt})
 
 
 @blueprint.route("/edit", methods=['GET'])
@@ -160,3 +214,25 @@ def edit():
     if result is None:
         return jsonify(msg=_('Fail'))
     return jsonify(msg=_('Success'))
+
+
+@blueprint.route("/items/count/<tree_id>", methods=['GET'])
+def items_count(tree_id):
+    tree_obj = Indexes.get_self_path(tree_id)
+    if tree_obj is None:
+        return jsonify(code=0, msg=_('success'), data={'count': 0})
+    tree_path = tree_obj.path if tree_obj is not None else '0'
+    weko_indexer = ItemRecord()
+    item_count = weko_indexer.get_count_by_index_id(tree_path=tree_path)
+    return jsonify(code=0, msg=_('success'),
+                   data={'count': item_count})
+
+
+@blueprint.route("/move/<child_id>/<parent_id>", methods=['GET'])
+def move_up(child_id, parent_id):
+    index_children_count = Indexes.has_children(parent_id)
+    weko_indexer = ItemRecord()
+    count_del, count_upt = weko_indexer.del_items_by_index_id(child_id)
+    return jsonify(code=0, msg=_('success'),
+                   data={'count': index_children_count, 'del': count_del,
+                         'upt': count_upt})

@@ -23,6 +23,8 @@
 # WEKO_DEPOSIT_BASE_TEMPLATE = 'weko_deposit/base.html'
 # """Default base template for the demo page."""
 
+import copy
+
 WEKO_BUCKET_QUOTA_SIZE = 50 * 1000 * 1000 * 1000  # 50 GB
 """Maximum quota per bucket."""
 
@@ -45,7 +47,7 @@ DEPOSIT_SEARCH_API = '/api/deposits/items'
 
 #: Template for deposit records API.
 DEPOSIT_RECORDS_API = '/api/deposits/items/{pid_value}'
-DEPOSIT_RECORDS_EDIT_API = '/deposits/items/index/{pid_value}'
+DEPOSIT_RECORDS_EDIT_API = '/api/deposits/redirect/{pid_value}'
 
 DEPOSIT_REST_ENDPOINTS = dict(
     depid=dict(
@@ -79,6 +81,10 @@ DEPOSIT_REST_ENDPOINTS = dict(
         # delete_permission_factory_imp='',
     )
 )
+
+# for redirect to next page(index select)
+WEKO_DEPOSIT_REST_ENDPOINTS = copy.deepcopy(DEPOSIT_REST_ENDPOINTS)
+WEKO_DEPOSIT_REST_ENDPOINTS['depid']['rdc_rout'] = '/deposits/redirect/<{0}:pid_value>'.format(_PID)
 
 DEPOSIT_RECORDS_UI_ENDPOINTS = {
     'depid': {

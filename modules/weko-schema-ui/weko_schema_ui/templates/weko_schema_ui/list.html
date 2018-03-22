@@ -32,12 +32,21 @@
 {% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body %}
-<div class="container">
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('schema management') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+<div>
   <div ng-app="myApp" ng-controller="mp" ng-csp>
     <div class="row">
       <div class="body col-sm-12 col-md-9">
         <h4 class="title">{{ _('OAI Schema') }}</h4>
+        <a class="btn btn-default" href="{{ url_for('weko_schema_ui.index') }}">
+          <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+          {{_('Add Schema')}}
+        </a>
         {% if not records %} No Schema .. Please add your greatest schema {% endif %}
         {%- if records -%}
         <table class="table table-bordered table-striped">
@@ -75,5 +84,5 @@
     </div>
   </div>
 </div>
-{%- endblock %}
+{%- endblock page_body_main %}
 
