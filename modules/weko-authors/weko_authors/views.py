@@ -95,8 +95,8 @@ def get():
     data = request.get_json()
     current_app.logger.debug(data)
     size = data.get('numOfPage') or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE']
-    num = int(data.get('pageNumber')) if int(data.get('pageNumber')) > 0 else 1
-    offset = (num - 1) * size
+    num = data.get('pageNumber') or 1
+    offset = (int(num) - 1) * size if int(num) > 0 else 0
     body = {
         "query": {
             "match": {
