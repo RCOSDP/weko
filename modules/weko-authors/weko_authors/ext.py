@@ -21,7 +21,7 @@
 """Flask extension for weko-authors."""
 
 from . import config
-from .views import blueprint
+from .views import blueprint, blueprint_api
 
 
 class WekoAuthors(object):
@@ -42,6 +42,7 @@ class WekoAuthors(object):
         """
         self.init_config(app)
         app.register_blueprint(blueprint)
+        app.register_blueprint(blueprint_api)
         app.extensions['weko-authors'] = self
 
     def init_config(self, app):
