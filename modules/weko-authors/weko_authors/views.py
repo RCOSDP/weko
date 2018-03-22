@@ -94,14 +94,20 @@ def get():
     """Get all authors."""
     data = request.get_json()
     current_app.logger.debug(data)
+    size = data.get('NumOfpage')
+    num = data.get('pageNumber')
+    offset = (num - 1) * size - 1
     body = {
         "query": {
             "match": {
                 "_all": data.get('searchKey')
 
             }
-        }
+        },
+        "from": offset,
+        "size": size
     }
+    current_app.logger.debug(body)
     indexer = RecordIndexer()
     result = indexer.client.search(index="author", body=body)
     current_app.logger.debug(type(result))
