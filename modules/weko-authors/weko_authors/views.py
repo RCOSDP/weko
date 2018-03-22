@@ -94,7 +94,7 @@ def get():
     """Get all authors."""
     data = request.get_json()
     current_app.logger.debug(data)
-    size = data.get('NumOfpage')
+    size = data.get('numOfPage') or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE']
     num = data.get('pageNumber')
     offset = (num - 1) * size
     body = {

@@ -28,3 +28,6 @@ WEKO_AUTHORS_LIST_TEMPLATE = 'weko_authors/list.html'
 
 WEKO_AUTHORS_EDIT_TEMPLATE = 'weko_authors/edit.html'
 """Edit template for the author page."""
+
+WEKO_AUTHORS_NUM_OF_PAGE = 25
+"""Default number of author search results that display in one page."""
