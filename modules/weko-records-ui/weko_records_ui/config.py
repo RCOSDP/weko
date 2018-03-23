@@ -21,6 +21,7 @@
 """Configuration for weko-records-ui."""
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
+WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
 
 RECORDS_UI_ENDPOINTS = dict(
     recid=dict(
@@ -48,6 +49,14 @@ RECORDS_UI_ENDPOINTS = dict(
         route='/record/<pid_value>/preview/<path:filename>',
         view_imp='invenio_previewer.views.preview',
         record_class='weko_deposit.api:WekoRecord',
+    ),
+    recid_publish=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/publish',
+        view_imp='weko_records_ui.views.publish',
+        template='weko_records_ui/detail.html',
+        record_class='weko_deposit.api:WekoRecord',
+        methods=['POST'],
     ),
 )
 

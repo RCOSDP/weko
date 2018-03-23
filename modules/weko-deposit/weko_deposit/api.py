@@ -84,21 +84,23 @@ class WekoIndexer(RecordIndexer):
         self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
         self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
 
-    def upload_metadata(self, jrc, item_id):
+    def upload_metadata(self, jrc, item_id, revision_id):
         """
         Upload the item data to ElasticSearch
         :param jrc:
         :param item_id:
         """
         # delete the item when it is exist
-        if self.client.exists(id=str(item_id), index=self.es_index,
-                              doc_type=self.es_doc_type):
-            self.client.delete(id=str(item_id), index=self.es_index,
-                               doc_type=self.es_doc_type)
+        # if self.client.exists(id=str(item_id), index=self.es_index,
+        #                       doc_type=self.es_doc_type):
+        #     self.client.delete(id=str(item_id), index=self.es_index,
+        #                        doc_type=self.es_doc_type)
 
         self.client.index(id=str(item_id),
                           index=self.es_index,
                           doc_type=self.es_doc_type,
+                          version=revision_id + 1,
+                          version_type=self._version_type,
                           body=jrc,
                           )
 
@@ -111,6 +113,18 @@ class WekoIndexer(RecordIndexer):
                                    routing=parent_id)
             except:
                 pass
+
+    def update_publish_status(self, record):
+        self.get_es_index()
+        pst = 'publish_status'
+        body = {'doc': {pst: record.get(pst)}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(record.id),
+            version=record.revision_id,
+            body=body
+        )
 
     def index(self, record):
         self.get_es_index()
@@ -210,7 +224,7 @@ class WekoDeposit(Deposit):
         jrc.update(dict(path=td))
         dc.update(dict(path=td))
 
-        # default to set no publish status
+        # default to set private status
         if not is_edit:
             ps = dict(publish_status='1')
             jrc.update(ps)
@@ -233,7 +247,7 @@ class WekoDeposit(Deposit):
 
             if self.jrc and len(self.jrc):
                 # upload item metadata to Elasticsearch
-                self.indexer.upload_metadata(self.jrc, self.pid.object_uuid)
+                self.indexer.upload_metadata(self.jrc, self.pid.object_uuid, self.revision_id)
 
                 # upload file content to Elasticsearch
                 self.upload_files()

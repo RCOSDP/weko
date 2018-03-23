@@ -54,8 +54,8 @@ def default_search_factory(self, search, query_parser=None):
         """"""
         # Permission check by publish date and status
         shuld = []
-        if qs:
-            for s in qs.split(" "):
+        if qstr:
+            for s in qstr.split(" "):
                 shuld.append({'query_string': dict(query=s)})
         if not is_perm:
             return Q('bool', should=shuld, must=_get_permission_filter())

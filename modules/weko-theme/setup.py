@@ -94,6 +94,9 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_theme',
         ],
+        'invenio_config.module': [
+            'weko_theme = weko_theme.config',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

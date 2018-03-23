@@ -21,7 +21,7 @@
 """Blueprint for weko-records-ui."""
 
 import six
-from flask import Blueprint, current_app, abort, request, render_template, Flask, make_response
+from flask import Blueprint, current_app, abort, request, redirect, url_for, make_response,render_template
 from invenio_records_ui.utils import obj_or_import_string
 
 blueprint = Blueprint(
@@ -30,6 +30,40 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
 )
+
+
+def publish(pid, record, template=None, **kwargs):
+    r"""Record publish  status change view.
+
+    Change record publish status with given status and renders record export template.
+
+    :param pid: PID object.
+    :param record: Record object.
+    :param template: Template to render.
+    :param \*\*kwargs: Additional view arguments based on URL rule.
+    :return: The rendered template.
+    """
+
+    from invenio_db import db
+    from weko_deposit.api import WekoIndexer
+    status = request.values.get('status')
+    publish_status = record.get('publish_status')
+    if not publish_status:
+        record.update({'publish_status':(status or '0')})
+    else:
+        record['publish_status'] = (status or '0')
+
+    record.commit()
+    db.session.commit()
+
+    indexer = WekoIndexer()
+    indexer.update_publish_status(record)
+
+    return redirect(url_for(".recid", pid_value=pid.pid_value))
+
+    # resp = make_response(render_template(template,  pid=pid, record=record,))
+    # resp.headers.extend(dict(location=url_for(".recid", pid_value=pid.pid_value)))
+    # return resp
 
 
 def export(pid, record, template=None, **kwargs):

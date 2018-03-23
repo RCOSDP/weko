@@ -184,13 +184,34 @@
                 {% endfor %}
                 {% if record.pubdate %}
                   <tr>
-                    <th>{{_('Publish/Private status')}}</th>
+                    <th>{{_('Publish Status')}}</th>
+                    {%- set pubs = record.get('publish_status','1') -%}
+                    {% if record.editable %}
+                    {%- set dis = '' -%}
+                    {% else %}
+                    {%- set dis = 'disabled' -%}
+                    {% endif %}
                     <td>
                       <div>
-                        <p id="public_status">{{_('Public')}}</p>
-                        <button id="public_status_btn" type="button" class="btn btn-info">
-                          {{_('Change to Private')}}
-                        </button>
+                        <form class="form form-inline"
+                              action="{{ url_for('invenio_records_ui.recid_publish',
+                              pid_value=pid.pid_value) }}"
+                              method="POST">
+                          {% if record.editable %}
+                             {% if '0' in pubs %}
+                              <button class="btn btn-default" type="submit" name="status" value="1">
+                                {{_('Privating')}}
+                              </button>  {{_('Publish')}}
+                             {% else %}
+                              <button class="btn btn-default" type="submit" name="status" value="0">
+                                {{_('Publishing')}}
+                              </button>  {{_('Private')}}
+                             {% endif %}
+                          {% else %}
+                              {% if '0' in pubs %}{{_('Publish')}}{% else %}{{_('Private')}}
+                          {% endif %}
+                          {% endif %}
+                        </form>
                       </div>
                     </td>
                   </tr>
