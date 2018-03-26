@@ -227,7 +227,7 @@ class SchemaTree:
         def get_value_list():
 
             def analysis(field):
-                exp = (',')
+                exp = (',', )
                 return exp[0], field.split(exp[0])
 
             def set_value(nd, nv):
@@ -244,23 +244,33 @@ class SchemaTree:
 
                             set_value(va, nv)
 
-            # def set_key_value(nd, nk, nv):
-            #     if isinstance(nd, dict):
-            #         for ke, va in nd.items():
-            #             if ke != self._atr:
-            #                 if ke == nk:
-            #                     nd[ke] = nv
-            #                     return
-            #                 set_key_value(va, nk, nv)
+            def set_mapping_value(lst, mpdic):
+                mlst = []
+                for ky, vl in mpdic.items():
+                    vlc = copy.deepcopy(vl)
+                    for z, y in get_key_value(vlc):
+                        # if is attributes node
+                        if y == self._atr:
+                            for k1, v1 in z.items():
+                                z[k1] = lst.get(v1, v1)
+                        else:
+                            # if vl have expression or formula
+                            exp, lk = analysis(z.get(self._v))
+                            ava = ""
+                            for val in lk:
+                                ava = ava + exp + lst.get(val)
+                            z[self._v] = ava[1:]
+                    mlst.append({ky: vlc})
+                return mlst
 
-            def get_key_value(nd):
+            def get_key_value(nd, key=None):
                 if isinstance(nd, dict):
                     for ke, va in nd.items():
-                        if ke != self._atr:
-                            if isinstance(va, str):
-                                yield nd
-                            for z in get_key_value(va):
-                                yield z
+                        if ke == self._v or isinstance(va, str):
+                            yield nd, key
+                        else:
+                            for z, y in get_key_value(va, ke):
+                                yield z, y
 
             vlst = []
             for k, v in self._record.items():
@@ -275,21 +285,13 @@ class SchemaTree:
                         set_value(mpdic, atr_v)
                         vlst.append(mpdic)
                     elif atr_vm:
-                        if isinstance(mpdic, dict):
-                            for lst in atr_vm:
-                                if isinstance(lst, dict):
-                                    for ky, vl in mpdic.items():
-                                        vlc = copy.deepcopy(vl)
-                                        for z in get_key_value(vlc):
-                                            # if vl have expression or formula
-                                            exp, lk = analysis(z.get(self._v))
-                                            ava = ""
-                                            for val in lk:
-                                                ava = ava + exp + lst.get(val)
-                                            z[self._v] = ava[1:]
-
-                                        vlst.append({ky: vlc})
-
+                        for lst in atr_vm:
+                            if isinstance(lst, dict):
+                                if isinstance(mpdic, list):
+                                    for mlst in mpdic:
+                                        vlst.extend(set_mapping_value(lst, mlst))
+                                elif isinstance(mpdic, dict):
+                                    vlst.extend(set_mapping_value(lst, mpdic))
             return vlst
 
         def check_node(node):
@@ -319,12 +321,11 @@ class SchemaTree:
                 val = node.get(self._v)
                 if val:
                     atr = node.get(self._atr)
-                    for lst in val:
-                        index = val.index(lst)
+                    for i in range(len(val)):
                         chld = etree.Element(kname, None, ns)
-                        chld.text = lst
-                        if atr and len(atr) > index:
-                            for k2, v2 in atr[index].items():
+                        chld.text = val[i]
+                        if atr and len(atr) > i:
+                            for k2, v2 in atr[i].items():
                                 chld.set(get_prefix(k2), v2)
                         tree.append(chld)
                 else:

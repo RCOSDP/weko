@@ -168,9 +168,13 @@
                   <tr>
                     <th>{{ lst['attribute_name'] }}</th>
                     <td>
-                      {%- for key in lst['attribute_value'] %}
-                        {{ key }}
-                      {% endfor %}
+                      {% if lst['attribute_value'] is string %}
+                        {{ lst['attribute_value'] }}
+                      {% else %}
+                        {%- for key in lst['attribute_value'] %}
+                          {{ key }}
+                        {% endfor %}
+                      {% endif %}
                       {%- for l in lst['attribute_value_mlt'] %}
                         {%- for k, v in l.items() %}
                            {{ k}} : {{ v }}<br>
