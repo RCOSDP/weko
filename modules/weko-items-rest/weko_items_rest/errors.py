@@ -38,7 +38,7 @@ class MaxResultWindowRESTError(RESTException):
 # Query
 #
 class InvalidQueryRESTError(RESTException):
-    """Invalid query syntax."""
+    """Invalid query syntax error."""
 
     code = 400
     description = 'Invalid query syntax.'

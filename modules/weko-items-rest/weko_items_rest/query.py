@@ -73,7 +73,7 @@ es_search_factory = default_search_factory
 def invenio_search_parser(search_factory):
     """Set the default search factory to use invenio-query-parser.
 
-    :param search_factory: factory for search
+    :param search_factory: factory for search.
     """
     from invenio_query_parser.contrib.elasticsearch import IQ
     return partial(default_search_factory, query_parser=IQ)
