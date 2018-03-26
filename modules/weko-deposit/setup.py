@@ -85,6 +85,9 @@ setup(
         'invenio_base.apps': [
             'weko_deposit = weko_deposit:WekoDeposit',
         ],
+        'invenio_base.api_apps': [
+            'weko_deposit_rest = weko_deposit:WekoDepositREST',
+        ],
         'invenio_config.module': [
             'weko_deposit = weko_deposit.config',
         ],

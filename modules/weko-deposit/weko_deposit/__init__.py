@@ -20,7 +20,7 @@
 
 """Module of weko-deposit."""
 
-from .ext import WekoDeposit
+from .ext import WekoDeposit, WekoDepositREST
 from .version import __version__
 
-__all__ = ('__version__', 'WekoDeposit')
+__all__ = ('__version__', 'WekoDeposit', 'WekoDepositREST')

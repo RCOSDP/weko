@@ -22,7 +22,7 @@ features:
   `CHANGES` file.
 - **License:** `GPL 2 <https://www.gnu.org/licenses/gpl-2.0.html>`_ file and
   headers. Headers optionally include a special paragraph for
-  Intergovernmental Organizations like CERN. Provides these headers as
+  Intergovernmental Organizations like National Institute of Informatics. Provides these headers as
   reusable files for Python and reStructuredText.
 - **Installation:** Installation script written as `setup.py` and a
   requirements calculator for different levels (`min`, `pypi`, `dev`).

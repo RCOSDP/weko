@@ -18,12 +18,12 @@
 # MA 02111-1307, USA.
 #}
 
-{% macro tabs_selector(tab_name='top') %}
-  {% set tabs_list = [(_('top'), '/'),
-                      (_('items'), url_for('weko_items_ui.index')),
-                      (_('workflow'),'/'),
-                      (_('ranking'),'/')] %}
-  {% for (name, href) in tabs_list %}
-    <li role="presentation" {% if tab_name == name %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>
+{% macro tabs_selector(tab_value='top') %}
+  {% set tabs_list = [('top', 'Top', '/'),
+                      ('item', 'Item Registration', url_for('weko_items_ui.index')),
+                      ('ranking', 'Ranking', '/'),
+                      ('author', 'Author Management', url_for('weko_authors.index'))] %}
+  {% for (value, name, href) in tabs_list %}
+    <li role="presentation" {% if tab_value == value %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>
   {% endfor %}
 {% endmacro %}

@@ -928,7 +928,7 @@ class ItemsMetadata(RecordBase):
                 record=self
             )
 
-            self.validate(**kwargs)
+            # self.validate(**kwargs)
 
             self.model.json = dict(self)
             flag_modified(self.model, 'json')

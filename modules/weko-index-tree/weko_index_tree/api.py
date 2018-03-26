@@ -20,14 +20,17 @@
 
 """API for weko-index-tree."""
 
+import re
 from datetime import datetime
 
-from invenio_db import db
 from flask import current_app
 from flask_login import current_user
-from .models import Index, IndexTree
+from invenio_db import db
+from invenio_indexer.api import RecordIndexer
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.expression import literal_column, func
+
+from .models import Index, IndexTree
 
 
 class IndexTrees(object):
@@ -246,3 +249,97 @@ class Indexes(object):
         )
 
         return recursive_t
+
+    @classmethod
+    def has_children(cls, parent_id):
+        children_count = Index.query.filter_by(parent=parent_id).count()
+        return children_count
+
+    @classmethod
+    def get_all_descendants_id(cls, parent_id):
+        descendant = Index.query.filter_by(id=parent_id).one_or_none()
+        if descendant is None:
+            return None
+        return descendant.split(',')
+
+
+class ItemRecord(RecordIndexer):
+    @staticmethod
+    def get_es_index():
+        index, doc_type = current_app.config['SEARCH_UI_SEARCH_INDEX'], \
+                          current_app.config['INDEXER_DEFAULT_DOCTYPE']
+        return index, doc_type
+
+    def get_count_by_index_id(self, tree_path):
+        search_query = {
+            "query": {
+                "term": {
+                    "path.tree": tree_path
+                }
+            }
+        }
+        index, doc_type = ItemRecord.get_es_index()
+        search_result = self.client.count(index=index,
+                                          doc_type=doc_type,
+                                          body=search_query)
+        return search_result.get('count')
+
+    def del_items_by_index_id(self, index_id, with_children=False):
+        """
+        Delete item record for ES and DB by index_id
+        :param index_id: the index id for delete
+        :param with_children: True: delete the children of the index
+                               False: move the children to parent leaf
+        :return: the count of delete and update
+                  Format: count_del, count_upt
+        """
+        count_del, count_upt = 0, 0
+        # if with_children:
+        #     descendant = Indexes.get_all_descendants_id(index_id)
+        #     descendant.append(index_id)
+        #     tree_obj = Indexes.get_path_list(descendant)
+        # else:
+        #     tree_obj = Indexes.get_self_path(index_id)
+        # if tree_obj is None:
+        #     return count_del, count_upt
+        # tree_path = tree_obj.path if tree_obj is not None else '0'
+        search_query = {
+            "query": {
+                "wildcard": {
+                    "path.tree": '*' + index_id + '*'
+                }
+            },
+            "_source": "path"
+        }
+        index, doc_type = ItemRecord.get_es_index()
+        search_result = self.client.search(index=index,
+                                           doc_type=doc_type,
+                                           body=search_query)
+        search_records = search_result.get('hits')
+        search_count = search_records.get('total')
+        if search_count <= 0:
+            return count_del, count_upt
+        regx_match = '/' + index_id
+        search_records = search_records.get('hits')
+        for record in search_records:
+            record_id = record.get('_id')
+            record_path = record.get('_source').get('path')
+            upt_tree = []
+            for path in record_path:
+                if not with_children:
+                    # move descendants to forebear
+                    upt_tree.append(re.sub(regx_match, '', path))
+                else:
+                    # delete all descendants
+                    if re.search(regx_match, path) is None:
+                        upt_tree.append(path)
+            if len(upt_tree) == 0:
+                self.delete_by_id(record_id)
+                count_del += 1
+            else:
+                self.client.update(index=index,
+                                   doc_type=doc_type,
+                                   id=record_id,
+                                   body={"doc": {"path": upt_tree}})
+            count_upt += 1
+        return count_del, count_upt

@@ -1,4 +1,5 @@
-{#
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,12 +17,17 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
 
-{%- extends config.WEKO_SCHEMA_UI_BASE_TEMPLATE %}
+"""Configuration for weko-authors."""
 
-{%- block page_body %}
-TODO: Example template, please remove if you do not need it.
-{{_('Welcome to %(module_name)s', module_name=module_name)}}
-{%- endblock %}
+WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'
+"""Default base template for the author page."""
 
+WEKO_AUTHORS_LIST_TEMPLATE = 'weko_authors/list.html'
+"""List template for the author page."""
+
+WEKO_AUTHORS_EDIT_TEMPLATE = 'weko_authors/edit.html'
+"""Edit template for the author page."""
+
+WEKO_AUTHORS_NUM_OF_PAGE = 25
+"""Default number of author search results that display in one page."""

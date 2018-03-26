@@ -28,6 +28,7 @@ from elasticsearch_dsl.query import Q
 from flask import current_app, request
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
+from .permissions import search_permission
 
 
 def default_search_factory(self, search, query_parser=None):
@@ -39,7 +40,33 @@ def default_search_factory(self, search, query_parser=None):
     :returns: Tuple with search instance and URL arguments.
     """
 
+    # check permission
+    is_perm = search_permission.can()
+
+    def _get_permission_filter():
+        mut = []
+        if not is_perm:
+            mut.append(Q('match', publish_status='0'))
+            mut.append(Q('range', date={'lte': 'now/d'}))
+        return mut
+
+    def _get_simple_query(qstr=None):
+        """"""
+        # Permission check by publish date and status
+        shuld = []
+        if qs:
+            for s in qs.split(" "):
+                shuld.append({'query_string': dict(query=s)})
+        if not is_perm:
+            return Q('bool', should=shuld, must=_get_permission_filter())
+        else:
+            if len(shuld) > 1:
+                return Q('bool', should=shuld)
+            else:
+                return Q('query_string', query=qstr)
+
     def _get_dsearch_query():
+        """for detail search"""
         kw = ['search_title', 'search_creator', 'subject', 'search_sh',
               'description', 'search_publisher', 'search_contributor',
               'itemtype', 'NIItype', 'format', 'search_id', 'jtitle',
@@ -75,10 +102,15 @@ def default_search_factory(self, search, query_parser=None):
             qd["range"] = qd1
             mut.append(qd)
 
+        # Permission check by publish date and status
+        mt = _get_permission_filter()
+        if len(mt) > 0:
+            mut.extend(mt)
+
         qs = request.values.get('q')
         if qs:
             for s in qs.split(" "):
-                mut.append({"query_string": dict(query=s)})
+                mut.append({'query_string': dict(query=s)})
 
         del qv, qd, qd1
 
@@ -90,14 +122,10 @@ def default_search_factory(self, search, query_parser=None):
         :param qstr: Query string.
         :returns: Query parser.
         """
-        nd = datetime.today().strftime('%Y-%m-%d')
+
+        mt = _get_permission_filter()
         if qstr:
-            return Q(
-                'filtered',
-                query=Q(
-                    'bool',
-                    should=[
-                        Q('has_child', type='content', query=Q('bool', must=[
+            shuld = [Q('has_child', type='content', query=Q('bool', must=[
                             Q('multi_match', query=qstr,
                               fields=['file.content.en*^1.5',
                                       'file.content.jp'], type='most_fields',
@@ -105,21 +133,38 @@ def default_search_factory(self, search, query_parser=None):
                           inner_hits={'fields': ['file.content']}),
                         Q('query_string', query=qstr)
                     ]
-                ),
-                # filter=Q('range', date={'lte': nd})
-            )
 
-        return Q()
+            if len(mt) > 0:
+                qur = Q('filtered', query=Q('bool', should=shuld, must=mt))
+
+            else:
+                qur = Q('filtered', query=Q('bool', should=shuld))
+        else:
+            if len(mt) > 0:
+                mt.append(Q())
+                qur = Q('bool', must=mt)
+            else:
+                qur = Q()
+        return qur
 
     from invenio_records_rest.facets import default_facets_factory
     from invenio_records_rest.sorter import default_sorter_factory
 
     query_parser = query_parser or _default_parser
 
+    search_type = request.values.get('search_type')
     qs = request.values.get('q')
-    query_q = _get_dsearch_query()
-    if (len(query_q.must) == 1 and qs) or (len(query_q.must) < 1 and not qs):
-        query_q = query_parser(qs)
+
+    if search_type:
+        # full text search
+        if '0' in search_type:
+            query_q = query_parser(qs)
+        else:
+            # simple search
+            query_q = _get_simple_query(qs)
+    else:
+        # detail search
+        query_q = _get_dsearch_query()
 
     try:
         search = search.query(query_q)
@@ -147,6 +192,10 @@ def item_path_search_factory(self, search):
     :param search: Elastic search DSL search instance.
     :returns: Tuple with search instance and URL arguments.
     """
+
+    # check permission
+    is_perm = search_permission.can()
+
     query_q = {
         "query": {
             "match": {
@@ -183,6 +232,13 @@ def item_path_search_factory(self, search):
             }
         }
     }
+
+    if not is_perm:
+        mut = []
+        mut.append({'match': {'publish_status': '0'}})
+        mut.append({'range': {'date': {'lte': 'now/d'}}})
+        mut.append({'term': query_q['post_filter'].pop('term')})
+        query_q['post_filter']['bool'] = {'must': mut}
 
     q = request.values.get('q')
     index_id = Indexes.get_self_path(q).path if "/" not in q else q

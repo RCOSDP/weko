@@ -96,6 +96,13 @@ setup(
         'invenio_assets.bundles': [
             'weko_schema_ui_js = weko_schema_ui.bundles:js',
         ],
+        'invenio_search.mappings': [
+            'weko = weko_schema_ui.mappings',
+        ],
+        'invenio_access.actions': [
+            'schema_access = '
+            'weko_schema_ui.permissions:action_schema_access',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

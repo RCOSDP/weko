@@ -1,9 +1,4 @@
-curl -X PUT \
-  http://elasticsearch:9200/weko \
-  -H 'cache-control: no-cache' \
-  -H 'content-type: application/json' \
-  -H 'postman-token: 345ae1e1-de4e-6bb6-3f9c-69569bddc686' \
-  -d '{
+{
   "settings": {
     "number_of_shards": 1,
     "number_of_replicas": 0,
@@ -444,5 +439,3 @@ curl -X PUT \
     }
   }
 }
-'
-

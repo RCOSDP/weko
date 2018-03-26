@@ -314,7 +314,7 @@ class Group(db.Model):
         grouplist = Group.query.all()
         obj = {}
         for k in grouplist:
-            obj[k.id] = k.name
+            obj[str(k.id)] = k.name
         return obj
 
     @classmethod

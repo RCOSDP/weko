@@ -20,15 +20,14 @@
 
 """Item API."""
 
-import base64
-
+import re
 import pytz
-from invenio_db import db
-from invenio_indexer.api import RecordIndexer
+
+from flask import current_app
 from invenio_pidstore import current_pidstore
-from invenio_pidstore.models import PersistentIdentifier
-from invenio_records.api import Record
-from .api import FilesMetadata, ItemsMetadata, ItemTypes, Mapping
+from invenio_pidstore.ext import pid_exists
+from collections import OrderedDict
+from .api import ItemTypes, Mapping
 
 
 def save_item_metadata(rejson, pid):
@@ -37,8 +36,8 @@ def save_item_metadata(rejson, pid):
     :param rejson: json from item form post.
     :param pid: pid value.
     """
-    dc = dict()
-    ju = dict()
+    dc = OrderedDict()
+    ju = OrderedDict()
     item = dict()
     ar = []
 
@@ -50,13 +49,15 @@ def save_item_metadata(rejson, pid):
 
     # find the item type identifier
     index = rejson["$schema"].rfind('/')
-    item_type_id = rejson["$schema"][index + 1:len(rejson["$schema"])]
+    item_type_id = rejson["$schema"][index + 1:]
 
     # get itemtype mapping file json data
     ojson = ItemTypes.get_record(item_type_id)
     mjson = Mapping.get_record(item_type_id)
     # fjson = FilesMetadata.get_records(pid)
 
+    # sort items
+    rejson = sort_records(rejson, ojson.model.form)
     if ojson and mjson:
         mp = mjson.dumps()
         rejson.get("$schema")
@@ -74,16 +75,15 @@ def save_item_metadata(rejson, pid):
                     item["attribute_value"] = v
             elif isinstance(v, dict):
                 ar.append(v)
-                item["attribute_value"] = ar
+                item["attribute_value_mlt"] = ar
                 ar = []
             else:
                 item["attribute_value"] = v
 
+            reset_items(item.get("attribute_value_mlt"))
             dc[k] = item.copy()
             item.update(mp.get(k))
             ju[k] = item.copy()
-
-    del ojson, mjson
 
     if dc:
         # get the tile name to detail page
@@ -97,11 +97,19 @@ def save_item_metadata(rejson, pid):
         dc.update(dict(control_number=pid))
 
         # convert to junii2 schema for es
-        jrc = tojunii2(ju)
-        oaid = current_pidstore.minters['oaiid'](item_id, dc)
+        current_app.logger.debug(ju)
+        jrc = to_junii2(ju, ojson.model)
+
+        make_itemlist_desc(jrc)
+
+        oai_value = current_app.config.get('OAISERVER_ID_PREFIX', '') + str(pid)
+        is_edit = pid_exists(oai_value, 'oai')
+        if not is_edit:
+            oaid = current_pidstore.minters['oaiid'](item_id, dc)
+            oai_value = oaid.pid_value
 
         jrc.update(dict(control_number=pid))
-        jrc.update(dict(_oai={"id": oaid.pid_value}))
+        jrc.update(dict(_oai={"id": oai_value}))
 
         # with db.session.begin_nested():
         #     record = ItemsMetadata.create(rejson, id_=item_id, item_type_id=item_type_id)
@@ -122,174 +130,271 @@ def save_item_metadata(rejson, pid):
         # # Upload  file metadata to ElasticSearch
         # upload_file(fjson, item_id)
 
-    return dc, jrc
+    del ojson, mjson
+    return dc, jrc, is_edit
 
 
-def save_items_data(rejson, item_id, item_type_id):
-    """"""
-    with db.session.begin_nested():
-        ItemsMetadata.create(rejson, id_=item_id, item_type_id=item_type_id)
-
-
-def upload_metadata(jrc, item_id):
+def to_junii2(records, model):
     """
-    Upload the item data to ElasticSearch
-    :param jrc:
-    :param item_id:
-    """
-    indexer = RecordIndexer()
-    indexer.client.index(id=str(item_id),
-                         index="weko",
-                         doc_type="item",
-                         body=jrc,
-                         )
-
-
-def upload_file(fjson, uuid):
-    """Upload file  to ElasticSearch.
-
-    :param fjson: file json info
-    :param uuid: uuid
-    """
-    if fjson is None or len(fjson) == 0:
-        return
-
-    indexer = RecordIndexer()
-    for fj in fjson:
-        strb = base64.b64encode(fj.model.contents[:]).decode("utf-8")
-        fjs = fj.dumps()
-        fjs.update({"file": strb})
-        fjs.update(
-            {"_created": pytz.utc.localize(fj.created)
-                .isoformat() if fj.created else None})
-
-        fjs.update(
-            {"_updated": pytz.utc.localize(fj.updated)
-                .isoformat() if fj.updated else None})
-
-        indexer.client.index(id=str(fj.id),
-                             index="weko",
-                             doc_type="content",
-                             parent=uuid,
-                             body=fjs,
-                             )
-
-
-def update_file_metadata(rejson, fjson):
-    """ update FilesMetadata's json
-    :param fm: file metadata
-    :param fjson: FilesMetadata's json obj
-    """
-    # get file metadata
-    fm = rejson.get("filemeta")
-    for lst in fm:
-        if isinstance(lst, dict):
-            fn = lst.get("filename")
-            for fj in fjson:
-                for k, v in fj.model.json.items():
-                    if fn in str(v):
-                        jsn = fj.model.json.copy()
-                        jsn.update(lst)
-                        FilesMetadata.update_data(fj.id, jsn)
-                        break
-
-
-def tojunii2(records):
-    """Convert to junii2 json.
-
+    Convert to junii2 json.
     :param records:
+    :param render:
+    :return: j
     """
+    render = model.render
+    meta_lst = render.get("meta_list", {}) if isinstance(render, dict) else {}
+    meta_fix = render.get("meta_fix", {}) if isinstance(render, dict) else {}
+    op_flg = False if (len(meta_lst) == 0 or len(meta_fix) == 0) else True
+
     j = dict()
-    for k, y in records.items():
-        if isinstance(y, dict):
-            if k != "item":
-                del_dupl(j, get_value(y))
-            else:
-                for ke, ve in y.items():
-                    if isinstance(ve, dict):
-                        del_dupl(j, get_value(ve))
+    op = dict()
+    ttp = dict()
+    _v = "@value"
+    idx = 0
 
-    return j
+    def analysis(field):
+        index = 1
+        exp = (",",)
+        return exp[0], field.split(exp[0])
 
-
-def get_value(obj):
-    """Get value."""
-    j = dict()
-    if isinstance(obj, dict):
-        obj.pop("display_lang_type")
-        obj.pop("jpcoar_mapping")
-        obj.pop("dublin_core_mapping")
-        obj.pop("lido_mapping")
-        obj.pop("lom_mapping")
-        itn = obj.pop("junii2_mapping")
-
-        if itn != "":
-            if obj.get("attribute_value_mlt"):
-                s = "attribute_value_mlt"
-                if isinstance(obj[s], list):
-                    if itn == "jtitle,volume,issue,spage,epage,dateofissued":
-                        itnl = itn.split(",")
-
-                        j[itnl[0]] = obj[s][0].get("biblio_name")
-                        j[itnl[1]] = obj[s][0].get("volume")
-                        j[itnl[2]] = obj[s][0].get("issue")
-                        j[itnl[3]] = obj[s][0].get("start_page")
-                        j[itnl[4]] = obj[s][0].get("end_page")
-                        j[itnl[5]] = obj[s][0].get("date_of_issued")[0:11]
-                    else:
-                        creator = []
-                        for lst in obj[s]:
-                            if isinstance(lst, dict):
-                                fn1 = lst.get("family")
-                                fn2 = lst.get("name")
-
-                                if fn1 and fn2:
-                                    fn = fn1 + "," + fn2
-                                    creator.append(fn)
-
-                                fn = lst.get("file_name")
-                                if fn:
-                                    creator.append(fn)
-
-                        j[itn] = creator
-            if obj.get("attribute_value"):
-                if isinstance(obj["attribute_value"], list):
-                    if len(obj["attribute_value"]) > 1:
-                        j[itn] = obj["attribute_value"]
-                    else:
-                        j[itn] = obj["attribute_value"][0]
-                elif itn == "title" or itn == "NIItype" or itn == "URI":
-                    j[itn] = obj["attribute_value"]
+    def merge_field(key, val, k):
+        """
+        Merge duble key.
+        :param key: junii2 key
+        :param val: value of list
+        :param k:   item key
+        :return:
+        """
+        nonlocal idx
+        # if exist key
+        arr = j.get(key)
+        arr2 = op.get(key)
+        opts = (meta_lst.get(k) or meta_fix.get(k) or {}).get("option", {})
+        opts['_ori_key'] = k
+        opts['_ori_title'] = (meta_lst.get(k) or meta_fix.get(k) or {}).get(
+            "title", "")
+        ttp.update({k: key})
+        if arr:
+            if isinstance(arr, list):
+                if isinstance(val, list):
+                    arr.extend(val)
                 else:
-                    kc = []
-                    kc.append(obj["attribute_value"])
-                    if isinstance(itn, dict):
-                        for k in itn.keys():
-                            j[k] = kc
+                    arr.append(val)
+            else:
+                tmp = []
+                tmp.append(arr)
+                if isinstance(val, list):
+                    tmp.extend(val)
+                else:
+                    tmp.append(val)
+                j[key] = tmp
+
+            if op_flg:
+                if isinstance(arr2, dict):
+                    if not arr2.get('0'):
+                        op[key] = {}
+                        op[key].update({'0': arr2})
+                    idx = len(op[key])
+                    if isinstance(val, list):
+                        for i in range(len(val)):
+                            idx = idx + i
+                            op[key].update({str(idx): opts})
                     else:
-                        j[itn] = kc
-
+                        op[key].update({str(idx): opts})
         else:
-            j = None
+            j[key] = val
+            if op_flg:
+                if isinstance(val, list):
+                    op[key] = {}
+                    for i in range(len(val)):
+                        op[key].update({str(i): opts})
+                else:
+                    op[key] = opts
 
+    for k, y in records.items():
+        if isinstance(y, dict) and not re.match("^_\*?", k):
+            mpdic = y.get("junii2_mapping")
+            if isinstance(mpdic, dict):
+                # List or string
+                atr_v = y.get('attribute_value')
+                # List of dict
+                atr_vm = y.get('attribute_value_mlt')
+                for k1, v1 in mpdic.items():
+                    if atr_v:
+                        if isinstance(atr_v, list):
+                            # checkbox array
+                            merge_field(k1, ','.join(atr_v), k)
+                        else:
+                            merge_field(k1, atr_v, k)
+                    elif atr_vm:
+                        if isinstance(v1, dict) and _v in v1:
+                            # filemeta
+                            vle = v1.get(_v)
+                            if isinstance(vle, str):
+                                # if vl have expression or formula
+                                exp, lk = analysis(vle)
+                                alt = []
+                                for lst in atr_vm:
+                                    if isinstance(lst, dict):
+                                        ava = ""
+                                        for val in lk:
+                                            ava = ava + exp + lst.get(val)
+                                        alt.append(ava[1:])
+                                merge_field(k1, alt, k)
+                        elif isinstance(v1, str):
+                            atr_vm_str = ''
+                            for atr_vm_li in atr_vm:
+                                if isinstance(atr_vm_li,
+                                              dict) and 'interim' in atr_vm_li:
+                                    # text array
+                                    atr_vm_str = atr_vm_str + atr_vm_li.get(
+                                        'interim') + ','
+                            atr_vm_str = atr_vm_str[:-1] if len(
+                                atr_vm_str) > 0 else atr_vm_str
+                            merge_field(k1, atr_vm_str, k)
+    if len(op) > 0:
+        j.update({"_options": sort_op(op, ttp, model.form)})
     return j
 
 
-def del_dupl(jd, dpd):
-    """Merge duble key.
+def make_itemlist_desc(es_record):
+    rlt = ""
+    src = es_record
+    op = src.pop("_options", {})
+    ignore_meta = ('title', 'alternative', 'fullTextURL')
+    if isinstance(op, dict):
+        src["_comment"] = []
+        for k, v in sorted(op.items(),
+                           key=lambda x: x[1]['index'] if x[1].get(
+                               'index') else x[0]):
+            if k in ignore_meta:
+                continue
+            # item value
+            vals = src.get(k)
+            if isinstance(vals, list):
+                # index, options
+                v.pop('index', "")
+                for k1, v1 in sorted(v.items()):
+                    i = int(k1)
+                    if i < len(vals):
+                        crtf = v1.get("crtf")
+                        showlist = v1.get("showlist")
+                        hidden = v1.get("hidden")
+                        is_show = False if hidden else showlist
+                        # list index value
+                        if is_show:
+                            rlt = rlt + ((vals[i] + ",") if not crtf
+                                         else vals[i] + "\n")
+            elif isinstance(vals, str):
+                crtf = v.get("crtf")
+                showlist = v.get("showlist")
+                hidden = v.get("hidden")
+                is_show = False if hidden else showlist
+                if is_show:
+                    rlt = rlt + ((vals + ",") if not crtf
+                                 else vals + "\n")
+        if len(rlt) > 0:
+            if rlt[-1] == ',':
+                rlt = rlt[:-1]
+            src['_comment'] = rlt.split('\n')
+            if len(src['_comment'][-1]) == 0:
+                src['_comment'].pop()
 
-    :param jd:
-    :param dpd:
+
+def sort_records(records, form):
     """
-    if dpd:
-        if len(jd) == 0:
-            jd.update(dpd)
-        else:
-            kc = dpd.keys()
-            for key in dpd.keys():
-                pass
-            arr = jd.get(key)
-            if arr:
-                arr.extend(dpd.get(key))
-            else:
-                jd.update(dpd)
+    sort records
+    :param records:
+    :param form:
+    :return:
+    """
+    odd = OrderedDict()
+    if isinstance(records, dict) and isinstance(form, list):
+        for k in find_items(form):
+            val = records.get(k[0])
+            if val:
+                odd.update({k[0]: val})
+        # save schema link
+        odd.update({"$schema": records.get("$schema")})
+        del records
+        return odd
+    else:
+        return records
+
+
+def sort_op(record, kd, form):
+    """
+    sort options dict
+    :param record:
+    :param kd:
+    :param form:
+    :return:
+    """
+    odd = OrderedDict()
+    if isinstance(record, dict) and isinstance(form, list):
+        index = 0
+        for k in find_items(form):
+            # mapping target key
+            key = kd.get(k[0])
+            if not odd.get(key) and record.get(key):
+                index += 1
+                val = record.pop(key, {})
+                val['index'] = index
+                odd.update({key: val})
+
+        record.clear()
+        del record
+        return odd
+    else:
+        return record
+
+
+def find_items(form):
+    """
+    find sorted items
+    :param form:
+    :return: list
+    """
+    lst = []
+
+    def find_key(node):
+        if isinstance(node, dict):
+            key = node.get('key')
+            title = node.get('title')
+            type = node.get('type')
+            if key and title:
+                # title = title[title.rfind('.')+1:]
+                yield [key, title]
+            for v in node.values():
+                if isinstance(v, list):
+                    for k in find_key(v):
+                        yield k
+        elif isinstance(node, list):
+            for n in node:
+                for k in find_key(n):
+                    yield k
+
+    for x in find_key(form):
+        lst.append(x)
+
+    return lst
+
+
+def get_item_lst(node, j):
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if isinstance(v, dict):
+                get_item_lst(v, j)
+            elif isinstance(v, str):
+                j.update({k: v})
+
+
+def reset_items(nlst):
+    """"""
+    if isinstance(nlst, list):
+        for k in range(len(nlst)):
+            j = dict()
+            get_item_lst(nlst[k], j)
+            nlst[k].clear()
+            nlst[k] = j
+

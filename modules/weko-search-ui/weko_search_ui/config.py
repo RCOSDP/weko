@@ -55,6 +55,10 @@ SEARCH_UI_JSTEMPLATE_SORT_ORDER = 'templates/weko_search_ui/togglebutton.html'
 RECORDS_REST_ENDPOINTS = copy.deepcopy(RECORDS_REST_ENDPOINTS)
 RECORDS_REST_ENDPOINTS['recid']['search_factory_imp'] = \
     'weko_search_ui.query.es_search_factory'
+RECORDS_REST_ENDPOINTS['recid']['search_serializers'] = {
+    'application/json': ('weko_records.serializers'
+                         ':json_v1_search'),
+}
 
 RECORDS_REST_ENDPOINTS['recid']['search_index'] = 'weko'
 RECORDS_REST_ENDPOINTS['recid']['search_type'] = 'item'
@@ -62,6 +66,7 @@ RECORDS_REST_ENDPOINTS['recid']['search_type'] = 'item'
 INDEXER_DEFAULT_INDEX = 'weko'
 INDEXER_DEFAULT_DOCTYPE = 'item'
 INDEXER_DEFAULT_DOC_TYPE = 'item'
+INDEXER_FILE_DOC_TYPE = 'content'
 
 SEARCH_UI_SEARCH_INDEX = 'weko'
 
@@ -130,7 +135,6 @@ RECORDS_REST_SORT_OPTIONS = dict(
     )
 )
 
-
 WEKO_SEARCH_REST_ENDPOINTS = dict(
     recid=dict(
         pid_type='recid',
@@ -146,7 +150,7 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
                                  ':json_v1_response'),
         },
         search_serializers={
-            'application/json': ('invenio_records_rest.serializers'
+            'application/json': ('weko_records.serializers'
                                  ':json_v1_search'),
         },
         index_route='/index/',

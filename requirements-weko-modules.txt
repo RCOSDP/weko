@@ -13,3 +13,4 @@
 -e /code/modules/weko-index-tree
 -e /code/modules/weko-user-profiles
 -e /code/modules/weko-deposit
+-e /code/modules/weko-authors
