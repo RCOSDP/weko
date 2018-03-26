@@ -90,7 +90,7 @@
             <div class="row" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
-                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['self', 'PUT'])">送信</button></li>
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['index', 'PUT'], 'r')">次へ</button></li>
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">削除</button></li>
                 </ul>
               </div>
