@@ -59,7 +59,7 @@ PRESERVE_FIELDS = (
 
 
 class WekoFileObject(FileObject):
-    """extend  FileObject for detail page """
+    """Extend FileObject for detail page."""
 
     def __init__(self, obj, data):
         """Bind to current bucket."""
