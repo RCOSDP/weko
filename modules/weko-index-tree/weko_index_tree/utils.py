@@ -22,6 +22,16 @@
 
 
 def get_all_children(tree_json):
+    """
+    Get children and parent for the index tree
+
+    :param tree_json: the json data that updated by front page
+    :return: list(dict): [{
+                        "id": index_id,
+                        "parent": parent_id,
+                        "children": decendants_id
+                    },]
+    """
     result = []
     child_list = {}
     parent_info = {}
@@ -42,6 +52,15 @@ def get_all_children(tree_json):
 
 
 def _get_all_children(tree_json, parent=0, child_list={}, parent_info={}):
+    """
+    Parse the json data
+
+    :param tree_json: the index tree info
+    :param parent: the parent id
+    :param child_list: the children info
+    :param parent_info: the parent info
+    :return:thd type of dict which contains the children and the parent info
+    """
     children = []
     for tree in tree_json:
         if len(tree['children']) > 0:
@@ -59,21 +78,34 @@ def _get_all_children(tree_json, parent=0, child_list={}, parent_info={}):
 
 
 def reset_tree(path, tree):
-    """"""
+    """
+    Reset the state of checked
+
+    :param path:
+    :param tree:
+    :return: the dict of index tree
+    """
 
     def set_checked(id_tp, tree):
+        """set the state of the index
+
+        :param id_tp: has be reseted tree info
+        :param tree: the index tree info for reset
+        :return:
+        """
         if len(id_tp) == 0:
             return
 
         if isinstance(tree, list):
             for lst in tree:
                 if isinstance(lst, dict):
-                    id = lst.get('id', '')
-                    if id in id_tp:
+                    tree_id = lst.get('id', '')
+                    if tree_id in id_tp:
                         settings = lst.get('settings')
-                        if isinstance(settings, dict) and settings.get('checked') is not None:
+                        if isinstance(settings, dict) and settings.get(
+                            'checked') is not None:
                             settings['checked'] = True
-                            id_tp.remove(id)
+                            id_tp.remove(tree_id)
                             break
                     else:
                         set_checked(id_tp, lst.get('children', []))
@@ -82,11 +114,10 @@ def reset_tree(path, tree):
         id_tp = []
         if isinstance(path, list):
             for lp in path:
-                id = lp.split('/')[-1]
-                id_tp.append(id)
+                index_id = lp.split('/')[-1]
+                id_tp.append(index_id)
         else:
-            id = path.split('/')[-1]
-            id_tp.append(id)
+            index_id = path.split('/')[-1]
+            id_tp.append(index_id)
 
         set_checked(id_tp, tree)
-
