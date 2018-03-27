@@ -2,6 +2,24 @@ require([
   "jquery",
   ], function() {
     $(document).ready(function() {
+        //add by ryuu. for redemine #3359 start
+        //検索ボタンをクリックすると、画面の検索条件を表示するまま
+        //入力値を再設定
+        $('#search_simple :input:not(:checkbox)').each(function(){
+          if ($(this).attr('id') in sessionStorage){
+            var input = sessionStorage.getItem($(this).attr('id'), '');
+            if (input !== null && input !== ''){
+              $(this).val(input);
+            }
+          }
+        })
+        //入力値をseesionStorageに保存する
+        $('#top-search-btn').on('click', function(){
+          $('#search_simple :input:not(:checkbox)').each(function(){
+            sessionStorage.setItem($(this).attr('id'), $(this).val());
+          })
+        });
+        //add by ryuu. for redemine #3359 end
         //入力あったら、入力値入って展開したまま
         $('#search_detail_metadata :input:not(:checkbox)').each(function(){
           if ($(this).attr('id') in sessionStorage){
