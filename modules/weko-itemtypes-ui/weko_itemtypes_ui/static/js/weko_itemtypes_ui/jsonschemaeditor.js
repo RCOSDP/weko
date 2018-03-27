@@ -86,16 +86,26 @@ JSONSchemaEditor.prototype = {
 	constructor: JSONSchemaEditor,
 	init: function init() {
 		var self = this;
-		var data = this.options.startval || {};
-		var editor = this.options.editor || false;
+		var data = self.options.startval || {};
+		var editor = self.options.editor || false;
 
-		this.react = ReactDOM.render(React.createElement(SchemaObject, { onChange: this.onChange, data: data, editor: editor }), self.element);
+		this.react = ReactDOM.render(React.createElement(SchemaObject, { onChange: self.onChange, data: data, editor: editor }), self.element);
 		this.callbacks = {};
 	},
 	on: function on(event, callback) {
 		this.react.on(event, callback);
 	},
 	onChange: function onChange() {},
+	exportForm: function exportForm() {
+		var parentkey = 'parentkey';
+		var parentkey_pre = parentkey + '.';
+		var items = this.react.exportForm(parentkey_pre);
+		return {
+			items: items,
+			key: parentkey,
+			type: "fieldset"
+		};
+	},
 	getValue: function getValue() {
 		return this.react.export();
 	},
@@ -151,6 +161,17 @@ var SchemaCheckboxes = React.createClass({
 		this.state.enum = event.target.value;
 		this.setState(this.state);
 	},
+	exportTitleMap: function exportTitleMap() {
+		var titleMap = [];
+		var arr = [];
+		if (this.state.enum.length > 0) {
+			arr = this.state.enum.split('|');
+		}
+		arr.forEach(function (element) {
+			titleMap.push({ value: element, name: element });
+		});
+		return titleMap;
+	},
 	export: function _export() {
 		var arr = [];
 		if (this.state.enum.length > 0) {
@@ -197,6 +218,17 @@ var SchemaRadios = React.createClass({
 	handleChange: function handleChange(event) {
 		this.state.enum = event.target.value;
 		this.setState(this.state);
+	},
+	exportTitleMap: function exportTitleMap() {
+		var titleMap = [];
+		var arr = [];
+		if (this.state.enum.length > 0) {
+			arr = this.state.enum.split('|');
+		}
+		arr.forEach(function (element) {
+			titleMap.push({ value: element, name: element });
+		});
+		return titleMap;
 	},
 	export: function _export() {
 		var arr = [];
@@ -245,6 +277,17 @@ var SchemaSelect = React.createClass({
 		this.state.enum = event.target.value;
 		this.setState(this.state);
 	},
+	exportTitleMap: function exportTitleMap() {
+		var titleMap = [];
+		var arr = [];
+		if (this.state.enum.length > 0) {
+			arr = this.state.enum.split('|');
+		}
+		arr.forEach(function (element) {
+			titleMap.push({ value: element, name: element });
+		});
+		return titleMap;
+	},
 	export: function _export() {
 		var arr = [];
 		if (this.state.enum.length > 0) {
@@ -278,27 +321,57 @@ var mapping = function mapping(name, data, editor, changeHandler) {
 		radios: React.createElement(SchemaRadios, { onChange: changeHandler, ref: name, data: data, editor: editor }),
 		select: React.createElement(SchemaSelect, { onChange: changeHandler, ref: name, data: data, editor: editor }),
 		datetime: React.createElement(SchemaDateTime, { onChange: changeHandler, ref: name, data: data, editor: editor }),
+		array: React.createElement(SchemaArray, { onChange: changeHandler, ref: name, data: data, editor: editor }),
 		object: React.createElement(SchemaObject, { onChange: changeHandler, ref: name, data: data, editor: editor })
 	}[data.format];
 };
 
-var SchemaObject = React.createClass({
-	displayName: 'SchemaObject',
+var SchemaArray = React.createClass({
+	displayName: 'SchemaArray',
 
 	getInitialState: function getInitialState() {
 		return this.propsToState(this.props);
 	},
+	propsToState: function propsToState(props) {
+		var data = props.data;
+		data.refname = "obj_array";
+		data.onChange = props.onChange;
+		data.editor = props.editor;
+		return data;
+	},
+	exportForm: function exportForm(parent_Key) {
+		var self = this;
+		return self.refs[self.state.refname].exportForm(parent_Key);
+	},
+	export: function _export() {
+		var self = this;
+		return self.refs[self.state.refname].export();
+	},
+	render: function render() {
+		return React.createElement(SchemaObject, { onChange: this.state.changeHandler, ref: this.state.refname, data: this.state.items, editor: this.state.editor });
+	}
+});
+
+var SchemaObject = React.createClass({
+	displayName: 'SchemaObject',
+
+	jsonDeepCopy: function jsonDeepCopy(src_json) {
+		return JSON.parse(JSON.stringify(src_json));
+	},
+	getInitialState: function getInitialState() {
+		return this.propsToState(this.props);
+	},
 	propsToState: function propsToState(schema) {
-		var data = schema;
+		var data = this.jsonDeepCopy(schema);
 		if (schema.hasOwnProperty('data')) {
 			data = schema.data;
 		}
 		data.properties = data.properties || {};
 		data.required = data.required || [];
-		data.propertyItems = [];
-		data.propertyDels = [];
+		data.propertyItems = data.propertyItems || [];
+		data.propertyDels = data.propertyDels || [];
 		// convert from object to array
-		data.properties = Object.keys(data.properties).map(function (name) {
+		data.properties = Object.keys(data.properties).map(function (name, index) {
 			data.propertyItems.push(name);
 			data.propertyDels.push(false);
 			var item = data.properties[name];
@@ -343,6 +416,19 @@ var SchemaObject = React.createClass({
 				};
 			} else if ('checkboxes' === event.target.value || 'radios' === event.target.value || 'select' === event.target.value) {
 				this.state.properties[i].enum = [];
+			} else if ('array' === event.target.value) {
+				this.state.properties[i].type = event.target.value;
+				this.state.properties[i].format = event.target.value;
+				this.state.properties[i].items = {
+					type: "object",
+					format: "object",
+					properties: {}
+				};
+				this.state.properties[i].items.properties['subitem_' + Date.now()] = {
+					type: "string",
+					format: "text",
+					title: ""
+				};
 			} else {
 				this.state.properties[i].type = 'string';
 			}
@@ -366,7 +452,9 @@ var SchemaObject = React.createClass({
 		this.setState(this.state);
 	},
 	onChange: function onChange() {
-		this.props.onChange();
+		if (undefined != this.props.onChange) {
+			this.props.onChange();
+		}
 		this.trigger('change');
 	},
 	// 组件完全加载到DOM后执行
@@ -379,14 +467,74 @@ var SchemaObject = React.createClass({
 		this.state.propertyItems.push('subitem_' + Date.now());
 		this.setState(this.state);
 	},
-	export: function _export() {
+	exportForm: function exportForm(parent_Key) {
 		var _this = this;
+
+		var self = this;
+		var parentkey = parent_Key;
+		var form = [];
+		var forms = [];
+
+		self.state.properties.map(function (value, index) {
+			if (_this.state.propertyDels[index]) return;
+			var itemKey = self.state.propertyItems[index];
+			if (value.title.length > 0) {
+				var sub_form = {};
+				if ('text' === value.format || 'textarea' === value.format) {
+					sub_form = {
+						key: parentkey + itemKey,
+						type: value.format,
+						title: value.title
+					};
+				} else if ('datetime' === value.format) {
+					sub_form = {
+						key: parentkey + itemKey,
+						type: "template",
+						format: "yyyy-MM-dd",
+						templateUrl: "/static/templates/weko_deposit/datepicker.html",
+						title: value.title
+					};
+				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
+					sub_form = {
+						key: parentkey + itemKey,
+						type: value.format,
+						title: value.title,
+						titleMap: self.refs['subitem' + index].exportTitleMap()
+					};
+				} else if ('array' === value.format) {
+					sub_form = {
+						key: parentkey + itemKey,
+						add: "New",
+						style: {
+							add: "btn-success"
+						},
+						title: value.title,
+						items: self.refs['subitem' + index].exportForm(parentkey + itemKey + '[].')
+					};
+				} else {
+					// Object
+					if (typeof self.refs['subitem' + index] != 'undefined') {
+						sub_form = {
+							key: parentkey + itemKey,
+							type: "fieldset",
+							title: value.title,
+							items: self.refs['subitem' + index].exportForm(parentkey + itemKey + '.')
+						};
+					}
+				}
+				form.push(sub_form);
+			}
+		});
+		return form;
+	},
+	export: function _export() {
+		var _this2 = this;
 
 		var self = this;
 		var properties = {};
 
 		self.state.properties.map(function (value, index) {
-			if (_this.state.propertyDels[index]) return;
+			if (_this2.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
 				if ('text' === value.format || 'textarea' === value.format || 'datetime' === value.format) {
@@ -394,6 +542,9 @@ var SchemaObject = React.createClass({
 				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
 					properties[itemKey] = self.refs['subitem' + index].export();
 					properties[itemKey].title = value.title;
+				} else if ('array' === value.format) {
+					properties[itemKey] = { type: "array", format: "array", items: {}, title: value.title };
+					properties[itemKey].items = self.refs['subitem' + index].export();
 				} else {
 					// Object
 					if (typeof self.refs['subitem' + index] != 'undefined') {
@@ -428,11 +579,11 @@ var SchemaObject = React.createClass({
 		return this;
 	},
 	expandProp: function expandProp() {
-		var _this2 = this;
+		var _this3 = this;
 
 		var self = this;
 		return this.state.properties.map(function (value, index) {
-			if (_this2.state.propertyDels[index]) return;
+			if (_this3.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			var copiedState = JSON.parse(JSON.stringify(self.state.properties[index]));
 			var optionForm = mapping('subitem' + index, copiedState, self.state.editor, self.onChange);
@@ -495,6 +646,11 @@ var SchemaObject = React.createClass({
 									'option',
 									{ value: 'datetime' },
 									'\u65E5\u4ED8'
+								),
+								React.createElement(
+									'option',
+									{ value: 'array' },
+									'\u30EA\u30B9\u30C8'
 								),
 								React.createElement(
 									'option',
