@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Package Initialization for weko-admin."""
+"""Package initialization for weko-admin."""
 
 from .ext import WekoAdmin
 from .version import __version__
