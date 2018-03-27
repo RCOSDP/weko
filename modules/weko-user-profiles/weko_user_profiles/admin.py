@@ -26,8 +26,8 @@
 from flask_admin.contrib.sqla import ModelView
 from wtforms import SelectField
 
-from .models import UserProfile
 from .config import USERPROFILES_LANGUAGE_LIST, USERPROFILES_TIMEZONE_LIST
+from .models import UserProfile
 
 
 def _(x):

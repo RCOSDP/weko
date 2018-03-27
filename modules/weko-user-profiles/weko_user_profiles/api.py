@@ -24,8 +24,9 @@ from flask import g
 from flask_security import current_user
 from werkzeug.local import LocalProxy
 
+from .config import USERPROFILES_LANGUAGE_DEFAULT, \
+    USERPROFILES_TIMEZONE_DEFAULT
 from .models import AnonymousUserProfile, UserProfile
-from .config import USERPROFILES_LANGUAGE_DEFAULT, USERPROFILES_TIMEZONE_DEFAULT
 
 
 def _get_current_userprofile():
