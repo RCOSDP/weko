@@ -38,7 +38,8 @@ class IndexTrees(object):
 
     @classmethod
     def update(cls, tree=None):
-        """Update the index tree structure. Create if not exists.
+        """
+        Update the index tree structure. Create if not exists.
 
         :param tree: the index tree structure in JSON format.
         :returns: The :class:`IndexTree` instance or None.
@@ -75,7 +76,8 @@ class Indexes(object):
 
     @classmethod
     def create(cls, indexes=[]):
-        """Create the indexes. Delete all indexes before creation.
+        """
+        Create the indexes. Delete all indexes before creation.
 
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
@@ -110,13 +112,15 @@ class Indexes(object):
 
     @classmethod
     def delete_all(cls):
-        """Delete all indexes."""
-        # Index.query.delete()
+        """
+        Delete all indexes."""
+
         Index.query.update({'is_delete': True})
 
     @classmethod
     def get_all_descendants(cls, parent_id):
-        """Get all descendants of indexes.
+        """
+        Get all descendants of indexes.
 
         :param parent_id: Identifier of the parent index.
         :returns: Type of dictionary.
@@ -137,9 +141,10 @@ class Indexes(object):
 
     @classmethod
     def get_detail_by_id(cls, index_id):
-        """Get detail info of index by index_id
+        """
+        Get detail info of index by index_id
 
-        :param index_id:
+        :param index_id: Identifier of the index.
         :return: Type of Index
         """
         index = Index.query.filter_by(id=index_id, is_delete=False).first()
@@ -147,6 +152,13 @@ class Indexes(object):
 
     @classmethod
     def upt_detail_by_id(cls, index_id, **detail):
+        """
+        Update the index detail info
+
+        :param index_id: Identifier of the index.
+        :param detail: new index info for update
+        :return: Updated index info
+        """
         try:
             with db.session.begin_nested():
                 index = Index.query.filter_by(id=index_id).first()
@@ -166,6 +178,12 @@ class Indexes(object):
 
     @classmethod
     def get_Thumbnail_by_id(cls, index_id):
+        """
+        Get the thumbnail of index by index id
+
+        :param index_id: Identifier of the index.
+        :return: the binary data of thumbnail
+        """
         try:
             index = Index.query.filter_by(id=index_id).first()
         except Exception as ex:
@@ -174,6 +192,12 @@ class Indexes(object):
 
     @classmethod
     def del_by_indexid(cls, index_id):
+        """
+        Delete the index by index id
+
+        :param index_id: Identifier of the index.
+        :return: bool True: Delete success None: Delete failed
+        """
         try:
             with db.session.begin_nested():
                 index = Index.query.filter_by(id=index_id).first()
@@ -192,6 +216,12 @@ class Indexes(object):
 
     @classmethod
     def get_path_list(cls, node_lst):
+        """
+        Get index tree info
+
+        :param node_lst: Identifier list of the index.
+        :return: the list of index
+        """
         recursive_t = cls.recu_query()
         q = db.session.query(recursive_t).filter(
             recursive_t.c.cid.in_(node_lst)).all()
@@ -199,6 +229,12 @@ class Indexes(object):
 
     @classmethod
     def get_path_name(cls, node_path):
+        """
+        Get index title info
+
+        :param node_path: Identifier list of the index.
+        :return: the list of index
+        """
         recursive_t = cls.recu_query()
         q = db.session.query(recursive_t).filter(
             recursive_t.c.path.in_(node_path)). \
@@ -207,6 +243,12 @@ class Indexes(object):
 
     @classmethod
     def get_self_list(cls, node_path):
+        """
+        Get index list info
+
+        :param node_path: Identifier of the index.
+        :return: the list of index
+        """
         index = node_path.rfind('/')
         pid = node_path[index + 1:]
         recursive_t = cls.recu_query()
@@ -218,13 +260,23 @@ class Indexes(object):
 
     @classmethod
     def get_self_path(cls, node_id):
-        """"""
+        """
+        Get index view path info
+
+        :param node_id: Identifier of the index.
+        :return: the type of Index
+        """
         recursive_t = cls.recu_query()
         return db.session.query(recursive_t).filter(
             recursive_t.c.cid == str(node_id)).one_or_none()
 
     @classmethod
     def recu_query(cls):
+        """
+        Init select condition of index
+
+        :return: the query of db.session
+        """
         recursive_t = db.session.query(
             Index.parent.label("pid"),
             Index.id.label("cid"),
@@ -252,11 +304,23 @@ class Indexes(object):
 
     @classmethod
     def has_children(cls, parent_id):
+        """
+        Check if has children branch
+
+        :param parent_id: Identifier of the index.
+        :return: the count of the children branch
+        """
         children_count = Index.query.filter_by(parent=parent_id).count()
         return children_count
 
     @classmethod
     def get_all_descendants_id(cls, parent_id):
+        """
+        Get all of descendants id for parent
+
+        :param parent_id: Identifier of the index.
+        :return: the id list of all descendant
+        """
         descendant = Index.query.filter_by(id=parent_id).one_or_none()
         if descendant is None:
             return None
@@ -266,11 +330,22 @@ class Indexes(object):
 class ItemRecord(RecordIndexer):
     @staticmethod
     def get_es_index():
+        """
+        Get the index and doc type of elasticsearch
+
+        :return: index,doc_type
+        """
         index, doc_type = current_app.config['SEARCH_UI_SEARCH_INDEX'], \
                           current_app.config['INDEXER_DEFAULT_DOCTYPE']
         return index, doc_type
 
     def get_count_by_index_id(self, tree_path):
+        """
+        Get the count of item which belong to the index
+
+        :param tree_path: Identifier of the index.
+        :return:the count of item
+        """
         search_query = {
             "query": {
                 "term": {
@@ -287,6 +362,7 @@ class ItemRecord(RecordIndexer):
     def del_items_by_index_id(self, index_id, with_children=False):
         """
         Delete item record for ES and DB by index_id
+
         :param index_id: the index id for delete
         :param with_children: True: delete the children of the index
                                False: move the children to parent leaf
@@ -294,15 +370,6 @@ class ItemRecord(RecordIndexer):
                   Format: count_del, count_upt
         """
         count_del, count_upt = 0, 0
-        # if with_children:
-        #     descendant = Indexes.get_all_descendants_id(index_id)
-        #     descendant.append(index_id)
-        #     tree_obj = Indexes.get_path_list(descendant)
-        # else:
-        #     tree_obj = Indexes.get_self_path(index_id)
-        # if tree_obj is None:
-        #     return count_del, count_upt
-        # tree_path = tree_obj.path if tree_obj is not None else '0'
         search_query = {
             "query": {
                 "wildcard": {

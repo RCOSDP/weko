@@ -63,6 +63,7 @@ def pass_record(f):
 @index_tree_permission.require(http_exception=403)
 def index():
     """Render the index tree edit page."""
+
     return render_template(
         current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'],
         get_tree_json=url_for('.get_indexjson'),
@@ -74,6 +75,7 @@ def index():
 @blueprint.route("/jsonmapping", methods=['GET'])
 def get_indexjson():
     """provide the index tree json for top page."""
+
     result = IndexTrees.get()
     if result is None:
         return jsonify([])
@@ -88,6 +90,7 @@ def get_indexjson():
 @pass_record
 def get_indexjson_by_pid(pid, record):
     """provide the index tree json for top page."""
+
     result = IndexTrees.get()
     if result is None:
         return jsonify([])
@@ -104,6 +107,12 @@ def get_indexjson_by_pid(pid, record):
 @login_required
 @index_tree_permission.require(http_exception=403)
 def get_index_detail(index_id=0):
+    """
+    Get the detail info by index_id
+
+    :param index_id: Indentifier of index
+    :return: the json data of index detail info
+    """
     result = None
     if index_id > 0:
         result = Indexes.get_detail_by_id(index_id)
@@ -116,6 +125,12 @@ def get_index_detail(index_id=0):
 @login_required
 @index_tree_permission.require(http_exception=403)
 def upt_index_detail(index_id=0):
+    """
+    Update the detail info
+
+    :param index_id: Indentifier of index
+    :return: updated json data of index detail info
+    """
     data = request.get_json()
     result = None
     if index_id > 0:
@@ -129,6 +144,12 @@ def upt_index_detail(index_id=0):
 @login_required
 @index_tree_permission.require(http_exception=403)
 def get_index_thumbnail(index_id=0):
+    """
+    Get thumbnail info
+
+    :param index_id: Indentifier of index
+    :return: binary data for thumbnail
+    """
     result = None
     if index_id > 0:
         result = Indexes.get_Thumbnail_by_id(index_id)
@@ -141,6 +162,12 @@ def get_index_thumbnail(index_id=0):
 @login_required
 @index_tree_permission.require(http_exception=403)
 def upt_index_thumbnail(index_id=0):
+    """
+    Update the thumbnail of index
+
+    :param index_id: Indentifier of index
+    :return: updated detail info of index
+    """
     file = request.files['thumbnail_file']
     data = {
         'thumbnail': file.read(),
@@ -159,6 +186,12 @@ def upt_index_thumbnail(index_id=0):
 @login_required
 @index_tree_permission.require(http_exception=403)
 def del_index_detail(index_id=0):
+    """
+    Delete the index
+
+    :param index_id: Indentifier of index
+    :return: delete info
+    """
     result = None
     if index_id > 0:
         """check if item belongs to the index"""
@@ -190,6 +223,7 @@ def del_index_detail(index_id=0):
 @index_tree_permission.require(http_exception=403)
 def edit_get():
     """Render the index tree edit page."""
+
     result = IndexTrees.get()
     index_tree = []
     if result is not None:
@@ -204,6 +238,7 @@ def edit_get():
 @index_tree_permission.require(http_exception=403)
 def edit():
     """Update the index tree."""
+
     tree_info = request.get_json()
     #    tree_info = json.loads(str(data))
     result = IndexTrees.update(tree=tree_info)
@@ -218,6 +253,12 @@ def edit():
 
 @blueprint.route("/items/count/<tree_id>", methods=['GET'])
 def items_count(tree_id):
+    """
+    Get the count of item which belongs to the index
+
+    :param tree_id: Indentifier of index
+    :return: the count of item
+    """
     tree_obj = Indexes.get_self_path(tree_id)
     if tree_obj is None:
         return jsonify(code=0, msg=_('success'), data={'count': 0})
@@ -230,6 +271,13 @@ def items_count(tree_id):
 
 @blueprint.route("/move/<child_id>/<parent_id>", methods=['GET'])
 def move_up(child_id, parent_id):
+    """
+    Move the branch of children to the branch of parent
+
+    :param child_id: Indentifier of child index
+    :param parent_id: Indentifier of parent index
+    :return: the count info of updated index
+    """
     index_children_count = Indexes.has_children(parent_id)
     weko_indexer = ItemRecord()
     count_del, count_upt = weko_indexer.del_items_by_index_id(child_id)

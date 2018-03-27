@@ -87,20 +87,32 @@ class IndexTree(db.Model, Timestamp):
 
 
 class Serializer(object):
-    """Serializer for JSON serializable
+    """
+    Serializer for JSON serializable
 
     """
 
     def serialize(self):
+        """
+        Get all props for a model
+
+        :return: the dict of props
+        """
         return {c: getattr(self, c) for c in inspect(self).attrs.keys()}
 
     @staticmethod
     def serialize_list(l):
+        """
+        Get all props for inputed model
+        :param l: the list of object
+        :return: the dict of props
+        """
         return [m.serialize() for m in l]
 
 
 class Index(db.Model, Timestamp, Serializer):
-    """Represent an index.
+    """
+    Represent an index.
 
     The Index object contains a ``created`` and  a ``updated``
     properties that are automatically updated.
@@ -271,6 +283,11 @@ class Index(db.Model, Timestamp, Serializer):
     """Delete flag of the index."""
 
     def serialize(self):
+        """
+        Serialize the object
+
+        :return: the dict of object
+        """
         obj = Serializer.serialize(self)
         del obj['is_delete']
         del obj['del_date']

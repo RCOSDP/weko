@@ -366,6 +366,7 @@ def pass_record(f):
 
 
 def before_upload(f):
+    """Decorator to wrap functions before upload."""
     @wraps(f)
     def file_maxsize(self, *args, **kwargs):
         size = len(request.data)
@@ -428,7 +429,6 @@ class RecordsListOptionsResource(MethodView):
     def __init__(self, search_index=None, max_result_window=None,
                  default_media_type=None, search_media_types=None,
                  item_media_types=None):
-        """Initialize method view."""
         self.search_index = search_index
         self.max_result_window = max_result_window or 10000
         self.default_media_type = default_media_type
@@ -471,7 +471,6 @@ class RecordsListResource(ContentNegotiatedMethodView):
                  search_serializers=None, default_media_type=None,
                  max_result_window=None, search_factory=None,
                  item_links_factory=None, record_class=None, **kwargs):
-        """Constructor."""
         super(RecordsListResource, self).__init__(
             method_serializers={
                 'GET': search_serializers,
@@ -608,7 +607,7 @@ class RecordResource(ContentNegotiatedMethodView):
                  links_factory=None,
                  loaders=None, search_class=None,
                  **kwargs):
-        """Constructor.
+        """Initiation of RecordResource.
 
         :param resolver: Persistent identifier resolver instance.
         :param read_permission_factory: permission factory for read
@@ -787,13 +786,13 @@ class FilePutResource(ContentNegotiatedMethodView):
         """Constructor.
 
         :param resolver: Persistent identifier resolver instance.
-        :param read_permission_factory: permission factory for read
-        :param update_permission_factory: permission factory for update
-        :param delete_permission_factory: permission factory for delete
-        :param default_media_type: default media_type
-        :param links_factory: links_factory
-        :param loaders: loaders
-        :param search_class: search_class
+        :param read_permission_factory: permission factory for read.
+        :param update_permission_factory: permission factory for update.
+        :param delete_permission_factory: permission factory for delete.
+        :param default_media_type: default media_type.
+        :param links_factory: links_factory.
+        :param loaders: loaders.
+        :param search_class: search_class.
         """
         super(FilePutResource, self).__init__(
             method_serializers={
@@ -978,7 +977,6 @@ class ItemsListResource(ContentNegotiatedMethodView):
                  search_serializers=None, default_media_type=None,
                  max_result_window=None, search_factory=None,
                  item_links_factory=None, record_class=None, **kwargs):
-        """Constructor."""
         super(ItemsListResource, self).__init__(
             method_serializers={
                 'GET': search_serializers,
@@ -1095,7 +1093,6 @@ class SuggestResource(MethodView):
     view_name = '{0}_suggest'
 
     def __init__(self, suggesters, search_class=None, **kwargs):
-        """Constructor."""
         self.suggesters = suggesters
         self.search_class = search_class
 

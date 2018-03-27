@@ -138,7 +138,8 @@ def get_item(rejson, pid):
             raise
 
 def update_file_metadata(rejson, fjson):
-    """ update FilesMetadata's json
+    """ Update FilesMetadata's json.
+
     :param fm: file metadata
     :param fjson: FilesMetadata's json obj
     """
@@ -257,8 +258,8 @@ def del_dupl(jd, dpd):
 def upload_file(fjson, uuid):
     """Upload file.
 
-    :param fjson: file json info
-    :param uuid: uuid
+    :param fjson: file json info.
+    :param uuid: uuid.
     """
     if fjson is None or len(fjson) == 0:
         return

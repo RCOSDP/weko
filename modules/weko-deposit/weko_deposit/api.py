@@ -20,29 +20,24 @@
 
 """Weko Deposit API."""
 
-import redis
-
-from invenio_indexer.api import RecordIndexer
-from flask import current_app, abort, json
 from collections import OrderedDict
-from invenio_db import db
-from invenio_deposit.api import Deposit, index, preserve
-from invenio_files_rest.models import Bucket, MultipartObject, Part
-from invenio_files_rest.models import ObjectVersion
-from invenio_records_files.models import RecordsBuckets
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from invenio_records_files.api import FileObject, FilesIterator, Record, \
-    _writable
-from simplekv.memory.redisstore import RedisStore
-from weko_records.api import ItemTypes, ItemsMetadata
-from weko_records.utils import save_item_metadata, find_items, set_timestamp
-from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 
-# from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
-# from invenio_pidrelations.contrib.versioning import PIDVersioning
-# from .models import WekoObjectVersion
+import redis
+from flask import current_app, abort, json
+from invenio_deposit.api import Deposit, preserve
+from invenio_files_rest.models import Bucket
+from invenio_files_rest.models import ObjectVersion
+from invenio_indexer.api import RecordIndexer
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_records_files.api import FileObject, Record
+from invenio_records_files.models import RecordsBuckets
+from simplekv.memory.redisstore import RedisStore
 from weko_index_tree.api import Indexes
 from weko_items_ui import current_weko_items_ui
+from weko_records.api import ItemTypes, ItemsMetadata
+from weko_records.utils import save_item_metadata, find_items, set_timestamp
+
+from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 
 PRESERVE_FIELDS = (
     '_deposit',
@@ -59,7 +54,7 @@ PRESERVE_FIELDS = (
 
 
 class WekoFileObject(FileObject):
-    """extend  FileObject for detail page """
+    """Extend FileObject for detail page."""
 
     def __init__(self, obj, data):
         """Bind to current bucket."""
@@ -76,10 +71,10 @@ class WekoFileObject(FileObject):
 
 
 class WekoIndexer(RecordIndexer):
-    """"""
+    """Provide an interface for indexing records in Elasticsearch."""
 
     def get_es_index(self):
-        # Elastic search settings
+        """Elastic search settings"""
         self.es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
         self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
         self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
@@ -87,8 +82,9 @@ class WekoIndexer(RecordIndexer):
     def upload_metadata(self, jrc, item_id, revision_id):
         """
         Upload the item data to ElasticSearch
+
         :param jrc:
-        :param item_id:
+        :param item_id: item id.
         """
         # delete the item when it is exist
         # if self.client.exists(id=str(item_id), index=self.es_index,
@@ -105,6 +101,11 @@ class WekoIndexer(RecordIndexer):
                           )
 
     def delete_file_index(self, body, parent_id):
+        """Delete file index in Elastic search.
+
+        :param body:
+        :param parent_id: Parent item id.
+        """
         for lst in body:
             try:
                 self.client.delete(id=str(lst),
@@ -127,12 +128,26 @@ class WekoIndexer(RecordIndexer):
         )
 
     def index(self, record):
+        """Index a record.
+
+        :param record: Record instance.
+        """
         self.get_es_index()
 
     def delete(self, record):
+        """Delete a record.
+
+        Not utilized.
+
+        :param record: Record instance.
+        """
         pass
 
     def get_count_by_index_id(self, tree_path):
+        """Get count by index id.
+
+        :param tree_path: Tree_path instance.
+        """
         search_query = {
             "query": {
                 "term": {
@@ -158,6 +173,7 @@ class WekoDeposit(Deposit):
 
     @property
     def item_metadata(self):
+        """Return the Item metadata."""
         return ItemsMetadata.get_record(self.id).dumps()
 
     @classmethod
@@ -248,12 +264,14 @@ class WekoDeposit(Deposit):
             if self.jrc and len(self.jrc):
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
-                self.indexer.upload_metadata(self.jrc, self.pid.object_uuid, self.revision_id)
+                self.indexer.upload_metadata(self.jrc, self.pid.object_uuid,
+                                             self.revision_id)
 
                 # upload file content to Elasticsearch
                 self.upload_files()
 
     def upload_files(self):
+        """Upload files."""
         fmd = self.data.get("filemeta")
 
         # delete old file index when edit item
@@ -275,6 +293,12 @@ class WekoDeposit(Deposit):
                         break
 
     def save_or_update_item_metadata(self):
+        """Save or update item metadata.
+
+        Save when register a new item type,
+        Update when edit an item type.
+
+        """
         if self.is_edit:
             obj = ItemsMetadata.get_record(self.id)
             obj.update(self.data)
@@ -284,6 +308,7 @@ class WekoDeposit(Deposit):
                                  item_type_id=self.get('item_type_id'))
 
     def delete_old_file_index(self):
+        """Delete old file index before file upload when edit am item."""
         if self.is_edit:
             lst = ObjectVersion.get_by_bucket(
                 self.files.bucket, True).filter_by(is_head=False).all()
@@ -296,7 +321,7 @@ class WekoDeposit(Deposit):
 
 
 class WekoRecord(Record):
-    """ extend Record obj for record ui"""
+    """Extend Record obj for record ui."""
 
     file_cls = WekoFileObject
 
@@ -312,7 +337,7 @@ class WekoRecord(Record):
 
     @property
     def navi(self):
-        """"""
+        """Return the path name."""
         return Indexes.get_path_name(self.get('path', []))
 
     @property
@@ -328,6 +353,7 @@ class WekoRecord(Record):
 
     @property
     def items_show_list(self):
+        """Return the item show list."""
         ojson = ItemTypes.get_record(self.get('item_type_id'))
         items = []
         solst = find_items(ojson.model.form)
@@ -346,7 +372,7 @@ class WekoRecord(Record):
                     for lst in mlt:
                         jv = OrderedDict()
                         for l in solst:
-                            k = l[0][l[0].rfind('.')+1:]
+                            k = l[0][l[0].rfind('.') + 1:]
                             vl = lst.get(k)
                             if vl:
                                 jv.update({l[1]: vl})
@@ -357,4 +383,3 @@ class WekoRecord(Record):
                 items.append(val)
 
         return items
-
