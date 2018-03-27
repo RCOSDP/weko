@@ -20,7 +20,7 @@
 
 """Permissions for index tree."""
 
-from invenio_access import action_factory, Permission
+from invenio_access import Permission, action_factory
 
 action_index_tree_access = action_factory('index-tree-access')
 index_tree_permission = Permission(action_index_tree_access)

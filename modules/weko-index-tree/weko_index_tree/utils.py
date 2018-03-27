@@ -85,9 +85,8 @@ def reset_tree(path, tree):
     :param tree:
     :return: The dict of index tree.
     """
-
     def set_checked(id_tp, tree):
-        """Set the state of the index
+        """Set the state of the index.
 
         :param id_tp: Reset tree info.
         :param tree: The index tree info for reset.

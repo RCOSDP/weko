@@ -28,7 +28,7 @@ from flask_login import current_user
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql.expression import literal_column, func
+from sqlalchemy.sql.expression import func, literal_column
 
 from .models import Index, IndexTree
 
@@ -113,7 +113,6 @@ class Indexes(object):
     @classmethod
     def delete_all(cls):
         """Delete all indexes."""
-
         Index.query.update({'is_delete': True})
 
     @classmethod
@@ -304,7 +303,7 @@ class Indexes(object):
     @classmethod
     def has_children(cls, parent_id):
         """
-        Check if has children branch
+        Check if has children branch.
 
         :param parent_id: Identifier of the index.
         :return: the count of the children branch
@@ -315,7 +314,7 @@ class Indexes(object):
     @classmethod
     def get_all_descendants_id(cls, parent_id):
         """
-        Get all of descendants id for parent
+        Get all of descendants id for parent.
 
         :param parent_id: Identifier of the index.
         :return: the id list of all descendant
@@ -327,6 +326,8 @@ class Indexes(object):
 
 
 class ItemRecord(RecordIndexer):
+    """Item Record."""
+
     @staticmethod
     def get_es_index():
         """
@@ -340,7 +341,7 @@ class ItemRecord(RecordIndexer):
 
     def get_count_by_index_id(self, tree_path):
         """
-        Get the count of item which belong to the index
+        Get the count of item which belong to the index.
 
         :param tree_path: Identifier of the index.
         :return: The count of item.

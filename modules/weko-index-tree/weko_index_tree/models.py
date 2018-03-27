@@ -93,14 +93,11 @@ class IndexTree(db.Model, Timestamp):
 
 
 class Serializer(object):
-    """
-    Serializer for JSON serializable
-
-    """
+    """Serializer for JSON serializable."""
 
     def serialize(self):
         """
-        Get all props for a model
+        Get all props for a model.
 
         :return: the dict of props
         """

@@ -20,16 +20,16 @@
 
 """Blueprint for weko-index-tree."""
 
-import requests
+from functools import wraps
 
-from flask import Blueprint, current_app, json, jsonify, \
-    render_template, request, url_for
+import requests
+from flask import Blueprint, current_app, json, jsonify, render_template, \
+    request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
-from werkzeug.utils import secure_filename
-from functools import wraps
-from sqlalchemy.exc import SQLAlchemyError
 from invenio_records_rest.errors import PIDResolveRESTError
+from sqlalchemy.exc import SQLAlchemyError
+from werkzeug.utils import secure_filename
 
 from .api import Indexes, IndexTrees, ItemRecord
 from .permissions import index_tree_permission
@@ -46,7 +46,6 @@ blueprint = Blueprint(
 
 def pass_record(f):
     """Decorator to retrieve persistent identifier and record."""
-
     @wraps(f)
     def inner(pid_value, *args, **kwargs):
         try:
@@ -63,7 +62,6 @@ def pass_record(f):
 @index_tree_permission.require(http_exception=403)
 def index():
     """Render the index tree edit page."""
-
     return render_template(
         current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'],
         get_tree_json=url_for('.get_indexjson'),
@@ -75,7 +73,6 @@ def index():
 @blueprint.route("/jsonmapping", methods=['GET'])
 def get_indexjson():
     """Provide the index tree json for top page."""
-
     result = IndexTrees.get()
     if result is None:
         return jsonify([])
@@ -90,7 +87,6 @@ def get_indexjson():
 @pass_record
 def get_indexjson_by_pid(pid, record):
     """Provide the index tree json for top page."""
-
     result = IndexTrees.get()
     if result is None:
         return jsonify([])
@@ -108,7 +104,7 @@ def get_indexjson_by_pid(pid, record):
 @index_tree_permission.require(http_exception=403)
 def get_index_detail(index_id=0):
     """
-    Get the detail info by index_id
+    Get the detail info by index_id.
 
     :param index_id: Indentifier of index
     :return: the json data of index detail info
@@ -126,7 +122,7 @@ def get_index_detail(index_id=0):
 @index_tree_permission.require(http_exception=403)
 def upt_index_detail(index_id=0):
     """
-    Update the detail info
+    Update the detail info.
 
     :param index_id: Indentifier of index
     :return: updated json data of index detail info
@@ -145,7 +141,7 @@ def upt_index_detail(index_id=0):
 @index_tree_permission.require(http_exception=403)
 def get_index_thumbnail(index_id=0):
     """
-    Get thumbnail info
+    Get thumbnail info.
 
     :param index_id: Indentifier of index
     :return: binary data for thumbnail
@@ -163,7 +159,7 @@ def get_index_thumbnail(index_id=0):
 @index_tree_permission.require(http_exception=403)
 def upt_index_thumbnail(index_id=0):
     """
-    Update the thumbnail of index
+    Update the thumbnail of index.
 
     :param index_id: Indentifier of index
     :return: updated detail info of index
@@ -187,7 +183,7 @@ def upt_index_thumbnail(index_id=0):
 @index_tree_permission.require(http_exception=403)
 def del_index_detail(index_id=0):
     """
-    Delete the index
+    Delete the index.
 
     :param index_id: Indentifier of index
     :return: delete info
@@ -223,7 +219,6 @@ def del_index_detail(index_id=0):
 @index_tree_permission.require(http_exception=403)
 def edit_get():
     """Render the index tree edit page."""
-
     result = IndexTrees.get()
     index_tree = []
     if result is not None:
@@ -238,7 +233,6 @@ def edit_get():
 @index_tree_permission.require(http_exception=403)
 def edit():
     """Update the index tree."""
-
     tree_info = request.get_json()
     #    tree_info = json.loads(str(data))
     result = IndexTrees.update(tree=tree_info)
@@ -254,7 +248,7 @@ def edit():
 @blueprint.route("/items/count/<tree_id>", methods=['GET'])
 def items_count(tree_id):
     """
-    Get the count of item which belongs to the index
+    Get the count of item which belongs to the index.
 
     :param tree_id: Indentifier of index
     :return: the count of item
@@ -272,7 +266,7 @@ def items_count(tree_id):
 @blueprint.route("/move/<child_id>/<parent_id>", methods=['GET'])
 def move_up(child_id, parent_id):
     """
-    Move the branch of children to the branch of parent
+    Move the branch of children to the branch of parent.
 
     :param child_id: Indentifier of child index
     :param parent_id: Indentifier of parent index
