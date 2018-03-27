@@ -18,14 +18,14 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""weko-index-tree utils module"""
+"""Module of weko-index-tree utils."""
 
 
 def get_all_children(tree_json):
     """
-    Get children and parent for the index tree
+    Get children and parent for the index tree.
 
-    :param tree_json: the json data that updated by front page
+    :param tree_json: Json data that updated by front page.
     :return: list(dict): [{
                         "id": index_id,
                         "parent": parent_id,
@@ -53,13 +53,13 @@ def get_all_children(tree_json):
 
 def _get_all_children(tree_json, parent=0, child_list={}, parent_info={}):
     """
-    Parse the json data
+    Parse the json data.
 
-    :param tree_json: the index tree info
-    :param parent: the parent id
-    :param child_list: the children info
-    :param parent_info: the parent info
-    :return:thd type of dict which contains the children and the parent info
+    :param tree_json: The index tree info.
+    :param parent: The parent id.
+    :param child_list: The children info.
+    :param parent_info: The parent info.
+    :return:Type of dict which contains the children and the parent info.
     """
     children = []
     for tree in tree_json:
@@ -79,19 +79,18 @@ def _get_all_children(tree_json, parent=0, child_list={}, parent_info={}):
 
 def reset_tree(path, tree):
     """
-    Reset the state of checked
+    Reset the state of checked.
 
     :param path:
     :param tree:
-    :return: the dict of index tree
+    :return: The dict of index tree.
     """
 
     def set_checked(id_tp, tree):
-        """set the state of the index
+        """Set the state of the index
 
-        :param id_tp: has be reseted tree info
-        :param tree: the index tree info for reset
-        :return:
+        :param id_tp: Reset tree info.
+        :param tree: The index tree info for reset.
         """
         if len(id_tp) == 0:
             return
