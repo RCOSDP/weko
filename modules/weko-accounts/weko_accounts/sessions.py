@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Sessions for weko-accounts."""
+"""Setting of weko sessions."""
 
 from flask import after_this_request, current_app, session
 
