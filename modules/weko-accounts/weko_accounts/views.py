@@ -26,9 +26,8 @@ flask Blueprint.
 """
 
 
-from flask import Blueprint, render_template, request, Flask, current_app
+from flask import Blueprint, Flask, current_app, render_template, request
 from flask_babelex import gettext as _
-
 
 blueprint = Blueprint(
     'weko_accounts',

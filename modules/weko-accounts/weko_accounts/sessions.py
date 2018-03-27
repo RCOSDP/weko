@@ -31,7 +31,6 @@ def login_listener(app, user):
     :param app: The Flask application.
     :param user: The :class:`invenio_accounts.models.User` instance.
     """
-
     @after_this_request
     def logger_user_session_login(response):
         """Regenerate current session and add to the SessionActivity table.
@@ -55,7 +54,6 @@ def logout_listener(app, user):
     :param app: The Flask application.
     :param user: The :class:`invenio_accounts.models.User` instance.
     """
-
     @after_this_request
     def logger_user_session_logout(response):
         """Regenerate current session and add to the SessionActivity table.
