@@ -99,12 +99,21 @@ JSONSchemaEditor.prototype = {
 	exportForm: function exportForm() {
 		var parentkey = 'parentkey';
 		var parentkey_pre = parentkey + '.';
-		var items = this.react.exportForm(parentkey_pre);
-		return {
-			items: items,
-			key: parentkey,
-			type: "fieldset"
-		};
+		var parentkeys_pre = parentkey + '[].';
+		var item = this.react.exportForm(parentkey_pre);
+		var items = this.react.exportForm(parentkeys_pre);
+		return { form: {
+				items: item,
+				key: parentkey,
+				type: "fieldset"
+			}, forms: {
+				items: items,
+				key: parentkey,
+				add: "New",
+				style: {
+					add: "btn-success"
+				}
+			} };
 	},
 	getValue: function getValue() {
 		return this.react.export();
