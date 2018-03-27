@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Blueprint for weko-user-profiles."""
+"""VIews for weko-user-profiles."""
 
 
 from flask import Blueprint, current_app, flash, render_template, request

@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Flask extension for weko-user-profiles."""
+"""Extensions for weko-user-profiles."""
 
 from . import config
 from .api import current_userprofile
