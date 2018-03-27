@@ -115,14 +115,14 @@ def save_item_metadata(rejson, pid):
     return dc, jrc, is_edit
 
 
-def set_timestamp(jrc, record):
+def set_timestamp(jrc, created, updated):
     jrc.update(
-        {"_created": pytz.utc.localize(record.created)
-            .isoformat() if record.created else None})
+        {"_created": pytz.utc.localize(created)
+            .isoformat() if created else None})
 
     jrc.update(
-        {"_updated": pytz.utc.localize(record.updated)
-            .isoformat() if record.updated else None})
+        {"_updated": pytz.utc.localize(updated)
+            .isoformat() if updated else None})
 
 
 def to_junii2(records, model):

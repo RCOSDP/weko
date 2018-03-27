@@ -247,7 +247,7 @@ class WekoDeposit(Deposit):
 
             if self.jrc and len(self.jrc):
                 # upload item metadata to Elasticsearch
-                set_timestamp(self.jrc, self.dumps())
+                set_timestamp(self.jrc, self.created, self.updated)
                 self.indexer.upload_metadata(self.jrc, self.pid.object_uuid, self.revision_id)
 
                 # upload file content to Elasticsearch
