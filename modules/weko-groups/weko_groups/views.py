@@ -21,8 +21,8 @@
 
 """Groups Settings Blueprint."""
 
-from flask import Blueprint, current_app, flash, jsonify, redirect, \
-    render_template, request, url_for, Flask
+from flask import Blueprint, Flask, current_app, flash, jsonify, redirect, \
+    render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_breadcrumbs import default_breadcrumb_root, register_breadcrumb
 from flask_login import current_user, login_required
