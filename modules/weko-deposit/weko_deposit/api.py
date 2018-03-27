@@ -35,7 +35,7 @@ from invenio_records_files.api import FileObject, FilesIterator, Record, \
     _writable
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, ItemsMetadata
-from weko_records.utils import save_item_metadata, find_items
+from weko_records.utils import save_item_metadata, find_items, set_timestamp
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 
 # from invenio_pidrelations.contrib.records import RecordDraft, index_siblings
@@ -247,6 +247,7 @@ class WekoDeposit(Deposit):
 
             if self.jrc and len(self.jrc):
                 # upload item metadata to Elasticsearch
+                set_timestamp(self.jrc, self.dumps())
                 self.indexer.upload_metadata(self.jrc, self.pid.object_uuid, self.revision_id)
 
                 # upload file content to Elasticsearch

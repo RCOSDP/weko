@@ -107,7 +107,7 @@ OAISERVER_METADATA_FORMATS = {
     'oai_dc': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
-                'schema_type': "dc",
+                'schema_type': "oai_dc",
             }
         ),
         'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',

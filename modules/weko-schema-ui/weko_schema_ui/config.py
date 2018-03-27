@@ -39,16 +39,6 @@ WEKO_SCHEMA_UI_FILES_API = '/api/schemas/files'
 WEKO_SCHEMA_UI_DEFAULT_SCHEMAFORM = 'json/weko_schema_ui/form.json'
 WEKO_SCHEMA_UI_FORM_JSONSCHEMA = 'json/weko_schema_ui/schema.json'
 
-# WEKO_SCHEMA_UI_ENDPOINTS = {
-#     'depid': {
-#         'pid_type': 'depid',
-#         'route': '/schemas/<pid_value>',
-#         'template': 'weko_schema_ui/upload.html',
-#         'record_class': 'invenio_deposit.api:Deposit',
-#         'view_imp': 'weko_schema_ui.views.default_view_method',
-#     },
-# }
-
 WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER = '{0}/static/xsd/'
 
 _PID = 'pid(depid,record_class="weko_schema_ui.api:WekoSchema")'
@@ -73,58 +63,3 @@ WEKO_SCHEMA_REST_ENDPOINTS = {
 """Basic REST deposit configuration."""
 
 WEKO_SCHEMA_UI_RESPONSE_MESSAGES = {}
-
-# OAISERVER_METADATA_FORMATS = {
-#     'junii2': {
-#         'serializer': (
-#             'weko_schema_ui.utils:dumps_oai_etree', {
-#                 'schema_type': "junii2",
-#             }
-#         ),
-#         'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
-#         'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
-#     },
-#     'jpcoar': {
-#         'serializer': (
-#             'weko_schema_ui.utils:dumps_oai_etree', {
-#                 'schema_type': "jpcoar",
-#             }
-#         ),
-#         'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
-#         'schema': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/jpcoar_scm.xsd',
-#     },
-#     'oai_dc': {
-#         'serializer': (
-#             'weko_schema_ui.utils:dumps_oai_etree', {
-#                 'schema_type': "dc",
-#             }
-#         ),
-#         'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
-#         'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
-#     }
-# }
-#
-# RECORDS_UI_EXPORT_FORMATS = {
-#     'recid': {
-#         'junii2': dict(
-#             title='JUNII2',
-#             serializer='weko_schema_ui.serializers.WekoCommonSchema',
-#             order=1,
-#         ),
-#         'jpcoar': dict(
-#             title='JPCOAR',
-#             serializer='weko_schema_ui.serializers.WekoCommonSchema',
-#             order=2,
-#         ),
-#         'dc': dict(
-#             title='DublinCore',
-#             serializer='weko_schema_ui.serializers.WekoCommonSchema',
-#             order=3,
-#         ),
-#         'json': dict(
-#             title='JSON',
-#             serializer='invenio_records_rest.serializers.json_v1',
-#             order=4,
-#         ),
-#     }
-# }

@@ -52,18 +52,17 @@ def default_search_factory(self, search, query_parser=None):
 
     def _get_simple_query(qstr=None):
         """"""
-        # Permission check by publish date and status
-        shuld = []
         if qstr:
-            for s in qstr.split(" "):
-                shuld.append({'query_string': dict(query=s)})
-        if not is_perm:
-            return Q('bool', should=shuld, must=_get_permission_filter())
+            q_s = Q('query_string', query=qstr, default_operator='and')
         else:
-            if len(shuld) > 1:
-                return Q('bool', should=shuld)
-            else:
-                return Q('query_string', query=qstr)
+            q_s = Q()
+
+        # Permission check by publish date and status
+        if is_perm:
+            must = _get_permission_filter()
+            must.append(q_s)
+            q_s = Q('bool', must=must)
+        return q_s
 
     def _get_dsearch_query():
         """for detail search"""
@@ -82,7 +81,7 @@ def default_search_factory(self, search, query_parser=None):
         for k in kw:
             kv = request.values.get(k)
             if kv:
-                mut.append(dict(match={k: kv}))
+                mut.append(Q('query_string', query=kv, default_operator='and', default_field=k))
 
         i = 0
         while i < 6:
@@ -109,8 +108,7 @@ def default_search_factory(self, search, query_parser=None):
 
         qs = request.values.get('q')
         if qs:
-            for s in qs.split(" "):
-                mut.append({'query_string': dict(query=s)})
+            mut.append(Q('query_string', query=qs, default_operator='and'))
 
         del qv, qd, qd1
 
@@ -122,16 +120,15 @@ def default_search_factory(self, search, query_parser=None):
         :param qstr: Query string.
         :returns: Query parser.
         """
-
         mt = _get_permission_filter()
         if qstr:
-            shuld = [Q('has_child', type='content', query=Q('bool', must=[
-                            Q('multi_match', query=qstr,
+            q_s = Q('query_string', query=qstr, default_operator='and')
+            shuld = [Q('has_child', type='content', query=Q('bool', should=[
+                            Q('multi_match', query=qstr, operator='and',
                               fields=['file.content.en*^1.5',
                                       'file.content.jp'], type='most_fields',
-                              minimum_should_match='75%')]),
-                          inner_hits={'fields': ['file.content']}),
-                        Q('query_string', query=qstr)
+                              minimum_should_match='75%'),
+                          q_s])), q_s
                     ]
 
             if len(mt) > 0:

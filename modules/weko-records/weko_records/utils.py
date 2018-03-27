@@ -111,27 +111,18 @@ def save_item_metadata(rejson, pid):
         jrc.update(dict(control_number=pid))
         jrc.update(dict(_oai={"id": oai_value}))
 
-        # with db.session.begin_nested():
-        #     record = ItemsMetadata.create(rejson, id_=item_id, item_type_id=item_type_id)
-        # create Record metadata
-        # record = Record.create(dc, id_=item_id)
-        # update_file_metadata(rejson, fjson)
-
-        # jrc.update(
-        #     {"_created": pytz.utc.localize(record.created)
-        #         .isoformat() if record.created else None})
-        #
-        # jrc.update(
-        #     {"_updated": pytz.utc.localize(record.updated)
-        #         .isoformat() if record.updated else None})
-
-        # # Upload  item metadata to ElasticSearch
-        # upload_metadata(jrc, item_id)
-        # # Upload  file metadata to ElasticSearch
-        # upload_file(fjson, item_id)
-
     del ojson, mjson
     return dc, jrc, is_edit
+
+
+def set_timestamp(jrc, record):
+    jrc.update(
+        {"_created": pytz.utc.localize(record.created)
+            .isoformat() if record.created else None})
+
+    jrc.update(
+        {"_updated": pytz.utc.localize(record.updated)
+            .isoformat() if record.updated else None})
 
 
 def to_junii2(records, model):
