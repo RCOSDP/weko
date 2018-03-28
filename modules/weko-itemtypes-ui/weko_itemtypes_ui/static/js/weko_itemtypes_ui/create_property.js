@@ -17,8 +17,8 @@ require([
       schema = editor.getValue();
       forms = editor.exportForm();
       $('#schema_json').text(JSON.stringify(schema, null, 4));
-      $('#form1_json').text(JSON.stringify(forms.form, null, 4));
-      $('#form2_json').text(JSON.stringify(forms.forms, null, 4));
+      $('#form1_json').val(JSON.stringify(forms.form, null, 4));
+      $('#form2_json').val(JSON.stringify(forms.forms, null, 4));
     });
     $('#sending').on('click', function(){
       let data = {
