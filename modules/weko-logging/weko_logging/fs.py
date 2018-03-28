@@ -18,10 +18,10 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Weko filesystem logging module.
+"""Weko logging filesystem handler.
 
-This extension is automatically installed via ``weko_base.apps`` and
-``weko_base.api_apps`` entry points.
+This extension is automatically installed via ``invenio_base.apps`` and
+``invenio_base.api_apps`` entry points.
 """
 
 import logging
@@ -51,7 +51,7 @@ class WekoLoggingFS(WekoLoggingBase):
 
     def init_config(self, app):
         """
-        Initialize config.
+        Initialize configuration.
 
         :param app: The flask application.
         """

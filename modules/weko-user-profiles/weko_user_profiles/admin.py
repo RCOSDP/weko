@@ -36,7 +36,7 @@ def _(x):
 
 
 class UserProfileView(ModelView):
-    """Userprofiles view. Links User ID to user/full/display name."""
+    """Userprofiles view. Link User ID to user/full/display name."""
 
     can_view_details = True
     can_create = False

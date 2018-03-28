@@ -112,8 +112,7 @@ class Indexes(object):
 
     @classmethod
     def delete_all(cls):
-        """
-        Delete all indexes."""
+        """Delete all indexes."""
 
         Index.query.update({'is_delete': True})
 
@@ -142,10 +141,10 @@ class Indexes(object):
     @classmethod
     def get_detail_by_id(cls, index_id):
         """
-        Get detail info of index by index_id
+        Get detail info of index by index_id.
 
         :param index_id: Identifier of the index.
-        :return: Type of Index
+        :return: Type of Index.
         """
         index = Index.query.filter_by(id=index_id, is_delete=False).first()
         return index
@@ -153,10 +152,10 @@ class Indexes(object):
     @classmethod
     def upt_detail_by_id(cls, index_id, **detail):
         """
-        Update the index detail info
+        Update the index detail info.
 
         :param index_id: Identifier of the index.
-        :param detail: new index info for update
+        :param detail: new index info for update.
         :return: Updated index info
         """
         try:
@@ -179,10 +178,10 @@ class Indexes(object):
     @classmethod
     def get_Thumbnail_by_id(cls, index_id):
         """
-        Get the thumbnail of index by index id
+        Get the thumbnail of index by index id.
 
         :param index_id: Identifier of the index.
-        :return: the binary data of thumbnail
+        :return: the binary data of thumbnail.
         """
         try:
             index = Index.query.filter_by(id=index_id).first()
@@ -193,7 +192,7 @@ class Indexes(object):
     @classmethod
     def del_by_indexid(cls, index_id):
         """
-        Delete the index by index id
+        Delete the index by index id.
 
         :param index_id: Identifier of the index.
         :return: bool True: Delete success None: Delete failed
@@ -217,10 +216,10 @@ class Indexes(object):
     @classmethod
     def get_path_list(cls, node_lst):
         """
-        Get index tree info
+        Get index tree info.
 
         :param node_lst: Identifier list of the index.
-        :return: the list of index
+        :return: the list of index.
         """
         recursive_t = cls.recu_query()
         q = db.session.query(recursive_t).filter(
@@ -230,10 +229,10 @@ class Indexes(object):
     @classmethod
     def get_path_name(cls, node_path):
         """
-        Get index title info
+        Get index title info.
 
         :param node_path: Identifier list of the index.
-        :return: the list of index
+        :return: the list of index.
         """
         recursive_t = cls.recu_query()
         q = db.session.query(recursive_t).filter(
@@ -244,10 +243,10 @@ class Indexes(object):
     @classmethod
     def get_self_list(cls, node_path):
         """
-        Get index list info
+        Get index list info.
 
         :param node_path: Identifier of the index.
-        :return: the list of index
+        :return: the list of index.
         """
         index = node_path.rfind('/')
         pid = node_path[index + 1:]
@@ -261,10 +260,10 @@ class Indexes(object):
     @classmethod
     def get_self_path(cls, node_id):
         """
-        Get index view path info
+        Get index view path info.
 
         :param node_id: Identifier of the index.
-        :return: the type of Index
+        :return: the type of Index.
         """
         recursive_t = cls.recu_query()
         return db.session.query(recursive_t).filter(
@@ -273,9 +272,9 @@ class Indexes(object):
     @classmethod
     def recu_query(cls):
         """
-        Init select condition of index
+        Init select condition of index.
 
-        :return: the query of db.session
+        :return: the query of db.session.
         """
         recursive_t = db.session.query(
             Index.parent.label("pid"),
@@ -331,9 +330,9 @@ class ItemRecord(RecordIndexer):
     @staticmethod
     def get_es_index():
         """
-        Get the index and doc type of elasticsearch
+        Get the index and doc type of Elasticsearch.
 
-        :return: index,doc_type
+        :return: index,doc_type.
         """
         index, doc_type = current_app.config['SEARCH_UI_SEARCH_INDEX'], \
                           current_app.config['INDEXER_DEFAULT_DOCTYPE']
@@ -344,7 +343,7 @@ class ItemRecord(RecordIndexer):
         Get the count of item which belong to the index
 
         :param tree_path: Identifier of the index.
-        :return:the count of item
+        :return: The count of item.
         """
         search_query = {
             "query": {
@@ -361,13 +360,13 @@ class ItemRecord(RecordIndexer):
 
     def del_items_by_index_id(self, index_id, with_children=False):
         """
-        Delete item record for ES and DB by index_id
+        Delete item record for ES and DB by index_id.
 
-        :param index_id: the index id for delete
-        :param with_children: True: delete the children of the index
-                               False: move the children to parent leaf
-        :return: the count of delete and update
-                  Format: count_del, count_upt
+        :param index_id: The index id for delete.
+        :param with_children: True: delete the children of the index.
+                               False: move the children to parent leaf.
+        :return: The count of delete and update.
+                  Format: count_del, count_upt.
         """
         count_del, count_upt = 0, 0
         search_query = {

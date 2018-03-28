@@ -74,7 +74,7 @@ def index():
 
 @blueprint.route("/jsonmapping", methods=['GET'])
 def get_indexjson():
-    """provide the index tree json for top page."""
+    """Provide the index tree json for top page."""
 
     result = IndexTrees.get()
     if result is None:
@@ -89,7 +89,7 @@ def get_indexjson():
 )
 @pass_record
 def get_indexjson_by_pid(pid, record):
-    """provide the index tree json for top page."""
+    """Provide the index tree json for top page."""
 
     result = IndexTrees.get()
     if result is None:

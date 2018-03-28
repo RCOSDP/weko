@@ -18,18 +18,18 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Blueprint for weko-authors."""
+"""Views for weko-authors."""
 
 
-from flask import Blueprint, current_app, json, jsonify, render_template, request
+from elasticsearch_dsl import Q, Search
+from flask import Blueprint, current_app, json, jsonify, render_template, \
+    request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_indexer.api import RecordIndexer
+from invenio_search import current_search
 
 from .permissions import author_permission
-
-from invenio_search import current_search
-from elasticsearch_dsl import Search, Q
 
 blueprint = Blueprint(
     'weko_authors',

@@ -18,13 +18,16 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Data views for weko-accounts."""
+"""
+Views for weko-accounts.
 
-# the templates and static folders as well as the test case.
+Set the templates and static folders as well as the test case by
+flask Blueprint.
+"""
 
-from flask import Blueprint, render_template, request, Flask, current_app
+
+from flask import Blueprint, Flask, current_app, render_template, request
 from flask_babelex import gettext as _
-
 
 blueprint = Blueprint(
     'weko_accounts',

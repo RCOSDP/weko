@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Data views for weko-admin."""
+"""Views for weko-admin."""
 
 from datetime import timedelta
 
@@ -47,7 +47,7 @@ blueprint = Blueprint(
 @blueprint.route('/session/lifetime/<int:minutes>', methods=['GET'])
 def set_lifetime(minutes):
     """
-    Update session lifetime to db.
+    Update session lifetime in db.
 
     :param minutes:
     :return: Session lifetime updated message.

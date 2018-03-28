@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Sessions for weko-accounts."""
+"""Setting of weko sessions."""
 
 from flask import after_this_request, current_app, session
 
@@ -31,7 +31,6 @@ def login_listener(app, user):
     :param app: The Flask application.
     :param user: The :class:`invenio_accounts.models.User` instance.
     """
-
     @after_this_request
     def logger_user_session_login(response):
         """Regenerate current session and add to the SessionActivity table.
@@ -55,7 +54,6 @@ def logout_listener(app, user):
     :param app: The Flask application.
     :param user: The :class:`invenio_accounts.models.User` instance.
     """
-
     @after_this_request
     def logger_user_session_logout(response):
         """Regenerate current session and add to the SessionActivity table.

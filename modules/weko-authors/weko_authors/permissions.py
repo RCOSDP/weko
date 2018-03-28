@@ -20,7 +20,7 @@
 
 """Permissions for schemas."""
 
-from invenio_access import action_factory, Permission
+from invenio_access import Permission, action_factory
 
 action_author_access = action_factory('author-access')
 author_permission = Permission(action_author_access)

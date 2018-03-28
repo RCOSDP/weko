@@ -49,7 +49,13 @@ class Timestamp(object):
 
 @db.event.listens_for(Timestamp, 'before_update', propagate=True)
 def timestamp_before_update(mapper, connection, target):
-    """Update `updated` property with current time on `before_update` event."""
+    """
+    Update `updated` property with current time on `before_update` event.
+
+    :param mapper;
+    :param connection:
+    :param target:
+    """
     target.updated = datetime.utcnow()
 
 
@@ -103,7 +109,8 @@ class Serializer(object):
     @staticmethod
     def serialize_list(l):
         """
-        Get all props for inputed model
+        Get all props for inputted model.
+
         :param l: the list of object
         :return: the dict of props
         """
@@ -227,7 +234,7 @@ class Index(db.Model, Timestamp, Serializer):
 
     aclRoomAuth_recursive = db.Column(db.Boolean(name='aclRoomAuth'),
                                       nullable=True, default=False)
-    """aclRoomAuth of the index."""
+    """Acl RoomAuth of the index."""
 
     exclusive_access_group = db.Column(db.Text, nullable=True, default='')
     """Exclusive Access Group of the index."""
@@ -237,7 +244,7 @@ class Index(db.Model, Timestamp, Serializer):
 
     aclGroupIds_recursive = db.Column(db.Boolean(name='aclGroupIds'),
                                       nullable=True, default=False)
-    """aclGroupIds of the index."""
+    """Acl GroupIds of the index."""
 
     opensearch_uri = db.Column(db.Text, nullable=True, default='')
     """Open Search URI of the index."""
@@ -284,9 +291,9 @@ class Index(db.Model, Timestamp, Serializer):
 
     def serialize(self):
         """
-        Serialize the object
+        Serialize the object.
 
-        :return: the dict of object
+        :return: The dict of object.
         """
         obj = Serializer.serialize(self)
         del obj['is_delete']
