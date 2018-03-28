@@ -684,7 +684,8 @@ class Membership(db.Model):
         Get a group's members.
 
         :param group_or_id:
-        :param bool with_invitations: Verify if group has invitations. Default False.
+        :param bool with_invitations:
+                    Verify if group has invitations. Default False.
         :returns: Group members.
         """
         if isinstance(group_or_id, Group):
