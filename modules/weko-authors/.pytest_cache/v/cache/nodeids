@@ -3,7 +3,6 @@
   "tests/test_weko_authors.py",
   "tests/test_weko_authors.py::test_version",
   "tests/test_weko_authors.py::test_init",
-  "tests/test_weko_authors.py::test_view",
   "weko_authors/__init__.py",
   "weko_authors/bundles.py",
   "weko_authors/config.py",

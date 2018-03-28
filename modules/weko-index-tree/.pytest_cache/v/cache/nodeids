@@ -1,0 +1,17 @@
+[
+  "tests/conftest.py",
+  "tests/test_weko_index_tree.py",
+  "tests/test_weko_index_tree.py::test_version",
+  "tests/test_weko_index_tree.py::test_init",
+  "tests/test_weko_index_tree.py::test_view",
+  "weko_index_tree/__init__.py",
+  "weko_index_tree/api.py",
+  "weko_index_tree/bundles.py",
+  "weko_index_tree/config.py",
+  "weko_index_tree/ext.py",
+  "weko_index_tree/models.py",
+  "weko_index_tree/permissions.py",
+  "weko_index_tree/utils.py",
+  "weko_index_tree/version.py",
+  "weko_index_tree/views.py"
+]

@@ -1,0 +1,6 @@
+{
+  "tests/test_weko_index_tree.py::test_init": true,
+  "tests/test_weko_index_tree.py::test_view": true,
+  "weko_index_tree/api.py": true,
+  "weko_index_tree/utils.py": true
+}
