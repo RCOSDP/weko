@@ -35,6 +35,7 @@ blueprint = Blueprint(
 
 
 @blueprint.route("/schema", methods=['GET'])
+@blueprint.route("/schema/", methods=['GET'])
 @login_required
 @schema_permission.require(http_exception=403)
 def index():
@@ -43,6 +44,7 @@ def index():
 
 
 @blueprint.route("/schema/list", methods=['GET'])
+@blueprint.route("/schema/list/", methods=['GET'])
 @login_required
 @schema_permission.require(http_exception=403)
 def list():
