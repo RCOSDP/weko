@@ -63,3 +63,6 @@ WEKO_SCHEMA_REST_ENDPOINTS = {
 """Basic REST deposit configuration."""
 
 WEKO_SCHEMA_UI_RESPONSE_MESSAGES = {}
+
+WEKO_SCHEMA_CACHE_PREFIX = 'cache_{schema_name}'
+""" cache items prifix info"""

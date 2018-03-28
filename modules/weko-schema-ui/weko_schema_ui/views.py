@@ -20,13 +20,9 @@
 
 """Blueprint for weko-schema-ui."""
 
-import shutil, json
 from flask import Blueprint, render_template, current_app, request, redirect, url_for
-from flask_babelex import gettext as _
 from flask_login import login_required
-from .schema import SchemaConverter
-from invenio_db import db
-
+from .schema import delete_schema_cache
 from .api import WekoSchema
 from .permissions import schema_permission
 
@@ -39,7 +35,6 @@ blueprint = Blueprint(
 
 
 @blueprint.route("/schema", methods=['GET'])
-@blueprint.route("/schema/", methods=['GET'])
 @login_required
 @schema_permission.require(http_exception=403)
 def index():
@@ -48,7 +43,6 @@ def index():
 
 
 @blueprint.route("/schema/list", methods=['GET'])
-@blueprint.route("/schema/list/", methods=['GET'])
 @login_required
 @schema_permission.require(http_exception=403)
 def list():
@@ -65,6 +59,9 @@ def delete(pid=None):
     """aaa"""
     pid = pid or request.values.get('pid')
     schema_name = WekoSchema.delete_by_id(pid)
+    # delete schema cache on redis
+    delete_schema_cache(schema_name)
+
     schema_name = schema_name.replace("_mapping", "")
     # for k, v in current_app.config["RECORDS_UI_EXPORT_FORMATS"].items():
     #     if isinstance(v, dict):
@@ -80,7 +77,12 @@ def delete(pid=None):
 
 
 def schema_list_render(pid=None, **kwargs):
-    """aaa"""
+    """
+    return records for template
+    :param pid:
+    :param kwargs:
+    :return: records
+    """
 
     lst = WekoSchema.get_all()
 
@@ -96,25 +98,3 @@ def schema_list_render(pid=None, **kwargs):
 
     return records
 
-
-# @blueprint.route("/schemas/<pid>", methods=['POST'])
-# def save(pid):
-#     """"""
-#     xsd_location_folder = current_app.config['WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER']. \
-#         format(current_app.config['INSTANCE_PATH'])
-#     furl = xsd_location_folder + "tmp/" + pid + "/"
-#     dst = xsd_location_folder + pid + "/"
-#     data = request.get_json()
-#     data.pop('$schema')
-#     sn = data.get('name')
-#
-#     fn = furl + sn + ".xsd"
-#
-#     xsd = SchemaConverter(fn, data.get('root_name'))
-#     WekoSchema.create(pid, sn + "_mapping", data, xsd.to_dict(), xsd.namespaces)
-#     db.session.commit()
-#
-#     # move out those files from tmp folder
-#     shutil.move(furl, dst)
-#
-#     return redirect(url_for(".list"), code=303)
