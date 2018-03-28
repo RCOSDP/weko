@@ -1,0 +1,15 @@
+[
+  "tests/conftest.py",
+  "tests/test_weko_admin.py",
+  "tests/test_weko_admin.py::test_version",
+  "tests/test_weko_admin.py::test_init",
+  "tests/test_weko_admin.py::test_view",
+  "tests/test_weko_admin.py::test_set_lifetime",
+  "weko_admin/__init__.py",
+  "weko_admin/cli.py",
+  "weko_admin/config.py",
+  "weko_admin/ext.py",
+  "weko_admin/models.py",
+  "weko_admin/version.py",
+  "weko_admin/views.py"
+]

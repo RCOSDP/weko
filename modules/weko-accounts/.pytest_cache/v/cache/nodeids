@@ -1,0 +1,14 @@
+[
+  "tests/conftest.py",
+  "tests/test_weko_accounts.py",
+  "tests/test_weko_accounts.py::test_version",
+  "tests/test_weko_accounts.py::test_init",
+  "tests/test_weko_accounts.py::test_view",
+  "weko_accounts/__init__.py",
+  "weko_accounts/config.py",
+  "weko_accounts/ext.py",
+  "weko_accounts/sessions.py",
+  "weko_accounts/utils.py",
+  "weko_accounts/version.py",
+  "weko_accounts/views.py"
+]
