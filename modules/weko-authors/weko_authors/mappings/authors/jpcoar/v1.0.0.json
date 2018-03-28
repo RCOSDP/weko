@@ -61,7 +61,7 @@
     }
   },
   "mappings": {
-    "jpcoar-v1.0.0": {
+    "author": {
       "properties": {
         "authorNameInfo": {
           "type": "object",
@@ -73,7 +73,13 @@
               "type": "string"
             },
             "fullName": {
-              "type": "string"
+              "type": "string",
+              "fields": {
+                "raw": {
+                  "type": "string",
+                  "index": "not_analyzed"
+                }
+              }
             },
             "language": {
               "type": "string",
@@ -84,8 +90,7 @@
               "index":  "no"
             },
             "nameShowFlg": {
-              "type": "string",
-              "index":  "no"
+              "type": "boolean"
             }
           }
         },
@@ -100,8 +105,7 @@
               "index":  "no"
             },
             "authorIdShowFlg": {
-              "type": "string",
-              "index":  "no"
+              "type": "boolean"
             }
           }
         },
@@ -109,7 +113,13 @@
           "type": "object",
           "properties": {
             "email": {
-              "type": "string"
+              "type": "string",
+              "fields": {
+                "raw": {
+                  "type": "string",
+                  "index": "not_analyzed"
+                }
+              }
             }
           }
         }

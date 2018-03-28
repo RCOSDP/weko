@@ -81,7 +81,7 @@ def create():
     current_app.logger.debug(type(json.dumps(data)))
     current_app.logger.debug(json.dumps(data))
     indexer = RecordIndexer()
-    indexer.client.index(index="author",
+    indexer.client.index(index="authors",
                          doc_type="author",
                          body=data,)
     return jsonify(msg=_('Success'))
@@ -95,10 +95,18 @@ def get():
     data = request.get_json()
     current_app.logger.debug(data)
 
-    search = data.get('searchKey') or ''
+    search_key = data.get('searchKey') or ''
     query = {"match_all": {}}
-    if search:
-        query = {"match": {"_all": search}}
+
+    if search_key:
+        search_keys = search_key.split(" ")
+        current_app.logger.debug(search_keys)
+        current_app.logger.debug(len(search_keys))
+        match = []
+        for key in search_keys:
+            if key:
+                match.append({"match": {"_all": key}})
+        query = {"bool": {"must": match}}
 
     size = (data.get('numOfPage') or
             current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
@@ -109,7 +117,7 @@ def get():
     sort_order = data.get('sortOrder') or ''
     sort = {}
     if sort_key and sort_order:
-        sort = {sort_key: {"order": sort_order}}
+        sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
 
     body = {
         "query": query,
@@ -119,5 +127,5 @@ def get():
     }
     current_app.logger.debug(body)
     indexer = RecordIndexer()
-    result = indexer.client.search(index="author", body=body)
+    result = indexer.client.search(index="authors", body=body)
     return json.dumps(result)

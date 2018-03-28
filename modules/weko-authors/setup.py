@@ -98,7 +98,7 @@ setup(
             'messages = weko_authors',
         ],
         'invenio_search.mappings': [
-            'author = weko_authors.mappings',
+            'authors = weko_authors.mappings',
         ],
         'invenio_assets.bundles': [
             'weko_authors_css = weko_authors.bundles:css',
