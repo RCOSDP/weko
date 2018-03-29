@@ -47,7 +47,7 @@ RECORDS_UI_ENDPOINTS = dict(
     recid_preview=dict(
         pid_type='recid',
         route='/record/<pid_value>/preview/<path:filename>',
-        view_imp='invenio_previewer.views.preview',
+        view_imp='weko_records_ui.preview.preview',
         record_class='weko_deposit.api:WekoRecord',
     ),
     recid_publish=dict(
