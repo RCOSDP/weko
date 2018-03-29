@@ -110,6 +110,8 @@ def save_item_metadata(rejson, pid):
 
         jrc.update(dict(control_number=pid))
         jrc.update(dict(_oai={"id": oai_value}))
+        jrc.update(dict(_item_metadata=dc))
+        jrc.update(dict(itemtype=ojson.model.item_type_name.name))
 
     del ojson, mjson
     return dc, jrc, is_edit

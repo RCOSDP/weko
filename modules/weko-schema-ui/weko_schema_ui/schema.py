@@ -20,6 +20,7 @@
 
 """Blueprint for schema rest."""
 
+import redis
 import xmlschema, json, copy
 
 from lxml import etree
@@ -29,6 +30,7 @@ from .api import WekoSchema
 
 from flask import abort, current_app
 from collections import OrderedDict
+from simplekv.memory.redisstore import RedisStore
 from xmlschema.components import (XsdAtomicRestriction, XsdSingleFacet, XsdPatternsFacet, XsdEnumerationFacet,
                                   XsdGroup, XsdAtomicBuiltin, XsdUnion
                                   )
@@ -185,18 +187,20 @@ class SchemaTree:
         """
         self._record = record["metadata"]
         self._schema_name = schema_name
-        self._schema_obj = self.get_mapping_data()
+        self._root_name, self._ns, self._schema_obj = self.get_mapping_data()
         self._v = "@value"
         self._atr = "@attributes"
 
     def get_mapping_data(self):
         """
-        :return:
+         Get mapping info and return  schema and schema's root name namespace
+        :return: root name, namespace and schema
         """
-        rec = WekoSchema.get_record_by_name(self._schema_name)
+        # Get Schema info
+        rec = cache_schema(self._schema_name)
 
         if not rec:
-            return None
+            return None, None, None
 
         def get_mapping():
 
@@ -213,8 +217,7 @@ class SchemaTree:
 
         # inject mappings info to record
         get_mapping()
-        rec.model.xsd = json.loads(rec.model.xsd, object_pairs_hook=OrderedDict)
-        return rec
+        return rec.get('root_name'), rec.get('namespaces'), rec.get('schema')
 
     def create_xml(self):
         """
@@ -351,10 +354,10 @@ class SchemaTree:
             return root
 
         node_tree = self.find_nodes(get_value_list())
-        ns = self._schema_obj.model.namespaces
+        ns = self._ns
         if not ns.get("xml"):
             ns.update({"xml": "http://www.w3.org/XML/1998/namespace"})
-        rootname = self._schema_obj.get('root_name')
+        rootname = self._root_name
         if ":" in rootname:
             rootname = rootname.split(":")[-1]
             E = ElementMaker(namespace=ns.pop(""), nsmap=ns)
@@ -403,7 +406,7 @@ class SchemaTree:
             if len(klst) > 0:
                 klst.pop(-1)
 
-        get_key_list(self._schema_obj.model.xsd)
+        get_key_list(self._schema_obj)
 
         return elst
 
@@ -457,7 +460,7 @@ class SchemaTree:
         gdc = OrderedDict()
         vlst = []
         alst = []
-        ndic = copy.deepcopy(self._schema_obj.model.xsd)
+        ndic = copy.deepcopy(self._schema_obj)
         # delete type dict
         del_type(ndic)
         tlst = self.to_list()
@@ -496,3 +499,59 @@ class SchemaTree:
                     alst.clear()
         return ndic
 
+
+def cache_schema(schema_name, delete=False):
+    """
+    cache the schema to Redis
+    :param schema_name:
+    :return:
+    """
+
+    def get_schema():
+        rec = WekoSchema.get_record_by_name(schema_name)
+        if rec:
+            dstore = dict()
+            dstore['root_name'] = rec.get('root_name')
+            dstore['namespaces'] = rec.model.namespaces.copy()
+            dstore['schema'] = json.loads(rec.model.xsd, object_pairs_hook=OrderedDict)
+            rec.model.namespaces.clear()
+            del rec
+            return dstore
+
+    try:
+        # schema cached on Redis by schema name
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
+        cache_key = current_app.config[
+            'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
+        data_str = datastore.get(cache_key)
+        data = json.loads(data_str.decode('utf-8'), object_pairs_hook=OrderedDict)
+        if delete:
+            datastore.delete(cache_key)
+    except:
+        try:
+            schema = get_schema()
+            if schema:
+                datastore.put(cache_key, json.dumps(schema))
+        except:
+            return get_schema()
+        else:
+            return schema
+    return data
+
+
+def delete_schema_cache(schema_name):
+    """
+    delete schema cache on redis
+    :param schema_name:
+    :return:
+    """
+    try:
+        # schema cached on Redis by schema name
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
+        cache_key = current_app.config[
+            'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
+        datastore.delete(cache_key)
+    except:
+        pass

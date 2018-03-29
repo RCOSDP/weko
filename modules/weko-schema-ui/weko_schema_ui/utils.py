@@ -48,6 +48,8 @@ def dumps_etree(records, schema_type):
     :returns: A LXML Element instance.
     """
     if schema_type:
+        if records.get('metadata', {}).get('_item_metadata'):
+            records['metadata'] = records['metadata'].get('_item_metadata', {})
         scname = schema_type if re.search("\*?_mapping", schema_type) else schema_type + "_mapping"
         stree = SchemaTree(records, scname)
         return stree.create_xml()
