@@ -212,7 +212,7 @@ class SchemaTree:
                 mp = mjson.dumps()
                 if mjson:
                     for k, v in self._record.items():
-                        if isinstance(v, dict) and k != "_oai":
+                        if isinstance(v, dict) and mp.get(k) and k != "_oai":
                             v.update({self._schema_name: mp.get(k).get(self._schema_name)})
 
         # inject mappings info to record
@@ -246,6 +246,20 @@ class SchemaTree:
                                     return
 
                             set_value(va, nv)
+
+            def get_sub_item_value(atr_vm, key):
+                if isinstance(atr_vm, dict):
+                    for ke, va in atr_vm.items():
+                        if key == ke:
+                            yield va
+                        else:
+                            for z in get_sub_item_value(va, key):
+                                yield z
+                elif isinstance(atr_vm, list):
+                    for n in atr_vm:
+                        for k in get_sub_item_value(n, key):
+                            yield k
+
 
             def set_mapping_value(lst, mpdic):
                 mlst = []
@@ -288,13 +302,45 @@ class SchemaTree:
                         set_value(mpdic, atr_v)
                         vlst.append(mpdic)
                     elif atr_vm:
-                        for lst in atr_vm:
-                            if isinstance(lst, dict):
-                                if isinstance(mpdic, list):
-                                    for mlst in mpdic:
-                                        vlst.extend(set_mapping_value(lst, mlst))
-                                elif isinstance(mpdic, dict):
-                                    vlst.extend(set_mapping_value(lst, mpdic))
+                        if isinstance(mpdic, dict):
+                            for ky, vl in mpdic.items():
+                                vlc = copy.deepcopy(vl)
+                                for z, y in get_key_value(vlc):
+                                    # if it`s attributes node
+                                    if y == self._atr:
+                                        for k1, v1 in z.items():
+                                            if 'item' not in v1:
+                                                continue
+                                            klst = []
+                                            for k in get_sub_item_value(atr_vm, v1):
+                                                klst.append(k)
+                                            if len(klst) > 0:
+                                                z[k1] = klst if len(klst) > 1 else klst[0]
+                                    else:
+                                        # if vl have expression or formula
+                                        exp, lk = analysis(z.get(self._v))
+
+                                        nlst = []
+                                        for val in lk:
+                                            klst = []
+                                            for k in get_sub_item_value(atr_vm, val):
+                                                klst.append(k)
+                                            nlst.append(klst)
+
+                                        if len(nlst) > 0:
+                                            if len(lk) == 1:
+                                                z[self._v] = klst if len(klst) > 1 else klst[0]
+                                            else:
+                                                i = 0
+                                                vst = []
+                                                while i < len(nlst):
+                                                    ava = ""
+                                                    for n in nlst:
+                                                        ava = ava + exp + n[i]
+                                                    i += 1
+                                                    vst.append(ava[1:])
+                                                z[self._v] = vst if len(vst) > 1 else vst[0]
+                                vlst.append({ky: vlc})
             return vlst
 
         def check_node(node):
@@ -319,6 +365,23 @@ class SchemaTree:
                 pre = str
             return pre
 
+        def get_atr(atr, p=None):
+            if isinstance(atr, dict):
+                for k, v in atr.items():
+                    if isinstance(v, list):
+                        for x, y in get_atr(atr, k):
+                            yield x, y
+                    else:
+                        yield k, v
+            elif isinstance(atr, list):
+                if not p:
+                    for node in atr:
+                        for x, y in get_atr(node):
+                            yield x, y
+                else:
+                    for kv in atr:
+                        yield p, kv
+
         def set_children(kname, node, tree):
             if isinstance(node, dict):
                 val = node.get(self._v)
@@ -327,9 +390,12 @@ class SchemaTree:
                     for i in range(len(val)):
                         chld = etree.Element(kname, None, ns)
                         chld.text = val[i]
-                        if atr and len(atr) > i:
-                            for k2, v2 in atr[i].items():
-                                chld.set(get_prefix(k2), v2)
+                        if atr:
+                            k, v = next(get_atr(atr))
+                            chld.set(get_prefix(k), v)
+                        # if atr and len(atr) > i:
+                        #     for k2, v2 in atr[i].items():
+                        #         chld.set(get_prefix(k2), v2)
                         tree.append(chld)
                 else:
                     if check_node(node):
@@ -480,9 +546,15 @@ class SchemaTree:
                             atr = d.get(self._atr)
                             if len(node) == 0:
                                 if val:
-                                    vlst.append(val)
+                                    if isinstance(val, list):
+                                        vlst.extend(val)
+                                    else:
+                                        vlst.append(val)
                                 if atr:
-                                    alst.append(atr)
+                                    if isinstance(atr, list):
+                                        alst.extend(atr)
+                                    else:
+                                        alst.append(atr)
                             else:
                                 if not node.get(self._atr) and atr:
                                     node.update(OrderedDict({self._atr: atr}))
