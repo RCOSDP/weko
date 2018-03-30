@@ -21,14 +21,13 @@
     // デフォルトマッピングのテンプレート
     mapping_value = {
       "display_lang_type": "",
-      "dc_mapping": "",
+      "oai_dc_mapping": "",
       "jpcoar_mapping": "",
       "junii2_mapping": {"source":""},
       "lido_mapping": "",
       "lom_mapping": "",
       "spase_mapping": ""
     }
-
 
     $('#myModal').modal({
       show: false
@@ -162,7 +161,7 @@
           ]
         });
         page_global.table_row_map.mapping['filemeta'] = {
-                                                            "dc_mapping": {
+                                                            "oai_dc_mapping": {
                                                                 "subject": {"@value":"filename"}
                                                             },
                                                             "lom_mapping": "",
@@ -196,7 +195,7 @@
       page_global.table_row_map.schema.required.push("lang");
       page_global.table_row_map.schema.required.push("pubdate");
       page_global.table_row_map.mapping['title_ja'] = {
-                                                          "dc_mapping": {
+                                                          "oai_dc_mapping": {
                                                               "title": ""
                                                           },
                                                           "lom_mapping": "",
@@ -211,7 +210,7 @@
                                                           "display_lang_type": ""
                                                       };
       page_global.table_row_map.mapping['title_en'] = {
-                                                          "dc_mapping": {
+                                                          "oai_dc_mapping": {
                                                               "alternative": ""
                                                           },
                                                           "lom_mapping": "",
@@ -230,7 +229,7 @@
                                                           "display_lang_type": ""
                                                       };
       page_global.table_row_map.mapping['lang'] = {
-                                                "dc_mapping": {
+                                                "oai_dc_mapping": {
                                                     "language": ""
                                                 },
                                                 "lom_mapping": "",
@@ -245,7 +244,7 @@
                                                 "display_lang_type": ""
                                             };
       page_global.table_row_map.mapping['pubdate'] = {
-                                                "dc_mapping": {
+                                                "oai_dc_mapping": {
                                                     "date": ""
                                                 },
                                                 "lom_mapping": "",
@@ -264,7 +263,7 @@
                                                 "display_lang_type": ""
                                             };
       page_global.table_row_map.mapping['keywords'] = {
-                                                "dc_mapping": {
+                                                "oai_dc_mapping": {
                                                     "subject": ""
                                                 },
                                                 "lom_mapping": "",
@@ -284,7 +283,7 @@
                                                 "display_lang_type": ""
                                             };
       page_global.table_row_map.mapping['keywords_en'] = {
-                                                "dc_mapping": {
+                                                "oai_dc_mapping": {
                                                     "subject": {}
                                                 },
                                                 "lom_mapping": "",
