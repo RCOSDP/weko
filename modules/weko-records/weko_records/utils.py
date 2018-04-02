@@ -80,7 +80,6 @@ def save_item_metadata(rejson, pid):
             else:
                 item["attribute_value"] = v
 
-            reset_items(item.get("attribute_value_mlt"))
             dc[k] = item.copy()
             item.update(mp.get(k))
             ju[k] = item.copy()
