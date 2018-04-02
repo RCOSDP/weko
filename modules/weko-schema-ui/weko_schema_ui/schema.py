@@ -365,37 +365,53 @@ class SchemaTree:
                 pre = str
             return pre
 
-        def get_atr(atr, p=None):
-            if isinstance(atr, dict):
-                for k, v in atr.items():
-                    if isinstance(v, list):
-                        for x, y in get_atr(atr, k):
-                            yield x, y
+        def get_atr_list(alst):
+            nlst = []
+
+            def get_count(node):
+                if isinstance(node, dict):
+                    for k, v in node.items():
+                        if isinstance(v, list):
+                            yield len(v)
+
+            def get_list(atr, index=0):
+                if isinstance(atr, dict):
+                    for k, v in atr.items():
+                        if isinstance(v, str):
+                            yield k, v
+                        elif isinstance(v, list):
+                            if len(v) > index:
+                                yield k, v[index]
+                            else:
+                                yield k, ''
+
+            if isinstance(alst, list):
+                for atr in alst:
+                    clst = []
+                    for x in get_count(atr):
+                        clst.append(x)
+                    if clst:
+                        count = max(clst)
+                        for i in range(count):
+                            dtr = dict()
+                            for k1, v1 in get_list(atr, i):
+                                dtr.update({k1: v1})
+                            nlst.append(dtr)
                     else:
-                        yield k, v
-            elif isinstance(atr, list):
-                if not p:
-                    for node in atr:
-                        for x, y in get_atr(node):
-                            yield x, y
-                else:
-                    for kv in atr:
-                        yield p, kv
+                        nlst.append(atr)
+            return nlst
 
         def set_children(kname, node, tree):
             if isinstance(node, dict):
                 val = node.get(self._v)
                 if val:
-                    atr = node.get(self._atr)
+                    atr = get_atr_list(node.get(self._atr))
                     for i in range(len(val)):
                         chld = etree.Element(kname, None, ns)
                         chld.text = val[i]
-                        if atr:
-                            k, v = next(get_atr(atr))
-                            chld.set(get_prefix(k), v)
-                        # if atr and len(atr) > i:
-                        #     for k2, v2 in atr[i].items():
-                        #         chld.set(get_prefix(k2), v2)
+                        if atr and len(atr) > i:
+                            for k2, v2 in atr[i].items():
+                                chld.set(get_prefix(k2), v2)
                         tree.append(chld)
                 else:
                     if check_node(node):
