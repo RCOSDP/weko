@@ -88,7 +88,7 @@ def zip_preview(file):
         for k, v in children.items():
             name = k.encode('utf-16be')
             encode = chardet.detect(name).get('encoding')
-            if '1252' in encode:
+            if encode and '1252' in encode:
                 name = k.encode('cp437').decode('cp932')
                 v['name'] = name
                 tree['children'][name] = v
