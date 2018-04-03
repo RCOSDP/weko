@@ -37,11 +37,6 @@
 
 {%- block page_body_main %}
   <div class="row">
-    <div class="col-sm-12 col-md-12 col-lg-12">
-      {% include "weko_theme/body_search.html" %}
-    </div>
-  </div>
-  <div class="row">
     <div class="hide" id="post_url">{{ config.DEPOSIT_RECORDS_API.format(pid_value=pid_value) }}</div>
     <app-root-tree></app-root-tree>
   </div>
