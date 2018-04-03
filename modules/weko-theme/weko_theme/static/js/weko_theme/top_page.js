@@ -57,15 +57,18 @@ require([
       }
     }
 
-    //フォーム提出
+    //Url query コントロール
     function SearchSubmit(){
       $('#search-form').submit(function(event){
-        var que = ''
-        var query = ''
+        var que = '';
+        var query= '';
         $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
           if ($(this).val() !== ''){
             query += $(this).serialize() + '&';
           }
+        });
+        $('#search_type :input:checked').each(function(){
+          query += $(this).serialize() + '&';
         });
         window.location.href = ('search?page=1&size=20&' + query).slice(0,-1);
         // process the form
