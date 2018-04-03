@@ -5,41 +5,59 @@ require([
 
     });
 
-    $(document).ready(function() {
-      //入力あったら、入力値入って展開したまま
-      function ArrangeSearch(){
-        var btn = sessionStorage.getItem('btn', '');
-        if (btn !== null && btn !== ''){
-          if (btn == 'detail-search'){
-            $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
-              if ($(this).attr('id') in sessionStorage){
-                var input = sessionStorage.getItem($(this).attr('id'), '');
-                if (input !== null && input !== ''){
-                  $(this).val(input);
-                  if (!$('#search_detail').hasClass('expanded')){
-                    $('#top-search-btn').addClass('hidden');
-                    $('#search_simple').removeClass('input-group');
-                    $('#search_detail_metadata').collapse('show');
-                  }else{
-                    $('#search_detail_metadata').collapse('hide');
-                  }
+    function GetUrlParam(sParam){
+      var sPageURL = window.location.search.substring(1);
+      var sURLVariables = sPageURL.split('&');
+      for (var i = 0; i< sURLVariables.length; i++){
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam){
+          return sParameterName[1];
+        }
+      }
+      return '0';
+    }
+
+    function ArrangeSearch(){
+      var SearchType = GetUrlParam('search_type');
+      if (SearchType == '0'){
+        $('#search_type_fulltext').prop('checked', true);
+      }else{
+        $('#search_type_keyword').prop('checked', true);
+      }
+      var btn = sessionStorage.getItem('btn', '');
+      if (btn !== null && btn !== ''){
+        if (btn == 'detail-search'){
+          $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
+            if ($(this).attr('id') in sessionStorage){
+              var input = sessionStorage.getItem($(this).attr('id'), '');
+              if (input !== null && input !== ''){
+                $(this).val(input);
+                if (!$('#search_detail').hasClass('expanded')){
+                  $('#top-search-btn').addClass('hidden');
+                  $('#search_simple').removeClass('input-group');
+                  $('#search_detail_metadata').collapse('show');
+                }else{
+                  $('#search_detail_metadata').collapse('hide');
                 }
               }
-            });
-          }else{
-            if (btn == 'simple-search'){
-              if ($('#q').attr('id') in sessionStorage){
-                var input = sessionStorage.getItem($('#q').attr('id'), '');
-                if (input !== null && input !== ''){
-                  $('#search_detail_metadata').collapse('hide');
-                  $('#q').val(input);
-                }
+            }
+          });
+        }else{
+          if (btn == 'simple-search'){
+            if ($('#q').attr('id') in sessionStorage){
+              var input = sessionStorage.getItem($('#q').attr('id'), '');
+              if (input !== null && input !== ''){
+                $('#search_detail_metadata').collapse('hide');
+                $('#q').val(input);
               }
             }
           }
         }
       }
+    }
 
+    $(document).ready(function() {
+      //入力あったら、入力値入って展開したまま
       ArrangeSearch();
 
       //簡易検索ボタン
