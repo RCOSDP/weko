@@ -260,3 +260,15 @@ def to_files_js(record):
         })
 
     return res
+
+
+@blueprint.route("/demo", methods=['GET'])
+@login_required
+def index_demo():
+    """Renders an item test data upload view.
+
+    :return: The rendered template.
+    """
+    return render_template(
+        current_app.config['WEKO_ITEMS_UI_DEMO_TEMPLATE']
+    )

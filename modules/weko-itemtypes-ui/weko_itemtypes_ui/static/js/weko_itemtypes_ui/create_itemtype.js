@@ -125,7 +125,10 @@
             add: "btn-success"
           },
           items: [
-            "filemeta[].filename",
+            {
+              key: "filemeta[].filename",
+              type: "text"
+            },
             {
               key: "filemeta[].displaytype",
               type: "select",
@@ -188,7 +191,6 @@
       page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
       page_global.table_row_map.schema.properties["keywords"] = {type:"string",title:"キーワード",format:"text"}
       page_global.table_row_map.schema.properties["keywords_en"] = {type:"string",title:"キーワード(英)",format:"text"}
-//      page_global.table_row_map.form.push({type:"fieldset",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},items:[{type:"text",key:"keywords",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},{type:"text",key:"keywords_en",title:"キーワード(英)"}]});
       page_global.table_row_map.form.push({type:"fieldset",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},items:[{type:"text",key:"keywords",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},required:true},{type:"text",key:"keywords_en",title:"キーワード(英)",title_i18n:{ja:"タイトル(英)",en:"keywords"},required:true}]});
       page_global.table_row_map.schema.required.push("title_ja");
       page_global.table_row_map.schema.required.push("title_en");
