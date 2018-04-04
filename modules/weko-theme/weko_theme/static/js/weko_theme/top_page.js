@@ -5,33 +5,54 @@ require([
 
     });
 
+    //urlからパラメタ―の値を取得
     function GetUrlParam(sParam){
-      var sPageURL = window.location.search.substring(1);
-      var sURLVariables = sPageURL.split('&');
-      for (var i = 0; i< sURLVariables.length; i++){
-        var sParameterName = sURLVariables[i].split('=');
-        if (sParameterName[0] == sParam){
-          return sParameterName[1];
+      var sURL = window.location.search.substring(1);
+      var sURLVars = sURL.split('&');
+      for (var i = 0; i< sURLVars.length; i++){
+        var sParamArr = sURLVars[i].split('=');
+        if (sParamArr[0] == sParam){
+          return sParamArr[1];
         }
       }
-      return '0';
+      return false;
     }
 
+    //urlからパラメタ―のキーを取得する
+    function IsParamKey(sParam){
+      var sURL = window.location.search.substring(1);
+      var sURLVars = sURL.split('&');
+      for (var i = 0; i< sURLVars.length; i++){
+        var sParamArr = sURLVars[i].split('=');
+        if (sParamArr[0] == sParam){
+          return true;
+        }
+      }
+      return false;
+    }
+
+    //入力あったら、入力値入って展開したまま
     function ArrangeSearch(){
      //ラジオボタン
       var SearchType = GetUrlParam('search_type');
-      if (SearchType == '0'){
-        $('#search_type_fulltext').prop('checked', true);
+      if (SearchType){
+        if (SearchType == '0'){
+          $('#search_type_fulltext').prop('checked', true);
+        }else{
+          $('#search_type_keyword').prop('checked', true);
+        }
       }else{
-        $('#search_type_keyword').prop('checked', true);
+        $('#search_type_fulltext').prop('checked', true);
       }
+
+      //詳細検索展開するか否か
       var btn = sessionStorage.getItem('btn', '');
       if (btn !== null && btn !== ''){
         if (btn == 'detail-search'){
           $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
-            if ($(this).attr('id') in sessionStorage){
-              var input = sessionStorage.getItem($(this).attr('id'), '');
-              if (input !== null && input !== ''){
+            if (IsParamKey($(this).attr('id'))){
+              var input = GetUrlParam($(this).attr('id'));
+              if (input && input !== ''){
                 $(this).val(input);
                 if (!$('#search_detail').hasClass('expanded')){
                   $('#top-search-btn').addClass('hidden');
@@ -45,9 +66,9 @@ require([
           });
         }else{
           if (btn == 'simple-search'){
-            if ($('#q').attr('id') in sessionStorage){
-              var input = sessionStorage.getItem($('#q').attr('id'), '');
-              if (input !== null && input !== ''){
+            if (IsParamKey($('#q').attr('id'))){
+              var input = GetUrlParam($('#q').attr('id'));
+              if (input && input !== ''){
                 $('#search_detail_metadata').collapse('hide');
                 $('#q').val(input);
               }
@@ -60,64 +81,41 @@ require([
     //Url query コントロール
     function SearchSubmit(){
       $('#search-form').submit(function(event){
-        var que = '';
         var query= '';
-        $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
-          if ($(this).val() !== ''){
-            query += $(this).serialize() + '&';
-          }
-        });
         $('#search_type :input:checked').each(function(){
           query += $(this).serialize() + '&';
         });
-        window.location.href = ('search?page=1&size=20&' + query).slice(0,-1);
-        // process the form
-//        $.ajax({
-//            type        : 'POST', // define the type of HTTP verb we want to use (POST for our form)
-//            url         : '/search', // the url where we want to POST
-//            data        : query, // our data object
-////            dataType    : 'json', // what type of data do we expect back from the server
-////                        encode          : true,
-//            success     : function(data){
-//              alert(data);
-//            }
-//        })
-//            // using the done promise callback
-//            .done(function(data) {
-//              alert(data);
-//              // log data to the console so we can see
-//              console.log(data);
-//              window.location.reload(true);
-//              // here we will handle errors and validation messages
-//            })
-//            .fail(function(data){
-//              alert("fail");
-//              var myJSO = JSON.stringify(data);
-//              alert(myJSO);
-//              window.location.reload(true);
-//            });
-
+        query += $('#q').serialize() + '&';
+        var btn = sessionStorage.getItem('btn', '');
+        if (btn == 'detail-search'){
+          $('#search_detail_metadata :input:not(:checkbox)').each(function(){
+            if ($(this).val() !== ''){
+              query += $(this).serialize() + '&';
+            }
+          });
+        }
+        window.location.href = ('/search?page=1&size=20&' + query).slice(0,-1);
         // stop the form from submitting the normal way and refreshing the page
         event.preventDefault();
       })
     }
 
     $(document).ready(function() {
-      //入力あったら、入力値入って展開したまま
+
       ArrangeSearch();
 
       //簡易検索ボタン
       $('#top-search-btn').on('click', function(){
         sessionStorage.setItem('btn', 'simple-search');
-        if ($('#q').val() !== ''){
-          sessionStorage.setItem($('#q').attr('id'), $('#q').val());
-        }else{
-          sessionStorage.removeItem($('#q').attr('id'));
-        }
-        $('#search_detail_metadata :input:not(:checkbox)').each(function(){
-          $(this).val('');
-          sessionStorage.removeItem($(this).attr('id'));
-        });
+//        if ($('#q').val() !== ''){
+//          sessionStorage.setItem($('#q').attr('id'), $('#q').val());
+//        }else{
+//          sessionStorage.removeItem($('#q').attr('id'));
+//        }
+//        $('#search_detail_metadata :input:not(:checkbox)').each(function(){
+//          $(this).val('');
+//          sessionStorage.removeItem($(this).attr('id'));
+//        });
         SearchSubmit();
       });
 
@@ -137,13 +135,13 @@ require([
       //詳細検索ボタン：入力値をseesionStorageに保存する
       $('#detail-search-btn').on('click', function(){
         sessionStorage.setItem('btn', 'detail-search');
-        $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
-          if ($(this).val() !== ''){
-            sessionStorage.setItem($(this).attr('id'), $(this).val());
-          }else{
-            sessionStorage.removeItem($(this).attr('id'));
-          }
-        })
+//        $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
+//          if ($(this).val() !== ''){
+//            sessionStorage.setItem($(this).attr('id'), $(this).val());
+//          }else{
+//            sessionStorage.removeItem($(this).attr('id'));
+//          }
+//        })
         SearchSubmit();
       });
 
@@ -151,8 +149,7 @@ require([
       $('#clear-search-btn').on('click', function(){
         $('#search_detail_metadata :input:not(:checkbox)').each(function(){
           $(this).val('');
-          sessionStorage.removeItem($(this).attr('id'));
-//            sessionStorage.setItem($(this).attr('id'), '');
+//          sessionStorage.removeItem($(this).attr('id'));
         })
       });
 
