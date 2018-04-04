@@ -19,11 +19,10 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit Storage."""
-import os, base64, hashlib, pytz
+import os, base64, hashlib
 
 from flask import current_app
 from invenio_files_rest.storage.pyfs import PyFSFileStorage
-from invenio_indexer.api import RecordIndexer
 from invenio_files_rest.storage.base import StorageError
 
 
@@ -37,12 +36,11 @@ class WekoFileStorage(PyFSFileStorage):
         """
         return 'sha256', hashlib.sha256()
 
-    def upload_file(self, fjson, id, uuid, index, doc_type):
+    def upload_file(self, fjson):
         """"""
         if fjson is None or len(fjson) == 0:
             return
 
-        indexer = RecordIndexer()
         try:
             fp = self.open(mode='rb')
         except Exception as e:
@@ -52,25 +50,6 @@ class WekoFileStorage(PyFSFileStorage):
         fp.close()
 
         fjson.update({"file": strb})
-        # fjson.update(
-        #     {"_created": pytz.utc.localize(fj.created)
-        #         .isoformat() if fj.created else None})
-        #
-        # fjson.update(
-        #     {"_updated": pytz.utc.localize(fj.updated)
-        #         .isoformat() if fj.updated else None})
-        # delete the item when it is exist
-
-        es_index = "weko"
-        es_doc_type = "content"
-
-        indexer.client.index(id=str(id),
-                             index=es_index,
-                             doc_type=es_doc_type,
-                             parent=uuid,
-                             body=fjson,
-                             )
-
 
 def make_path(base_uri, path, filename, path_dimensions, split_length):
     """Generate a path as base location for file instance.

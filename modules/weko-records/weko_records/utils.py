@@ -343,9 +343,9 @@ def sort_op(record, kd, form):
 
 def find_items(form):
     """
-    find sorted items
+    find sorted items into a list
     :param form:
-    :return: list
+    :return: lst
     """
     lst = []
 
@@ -353,10 +353,10 @@ def find_items(form):
         if isinstance(node, dict):
             key = node.get('key')
             title = node.get('title')
-            type = node.get('type')
-            if key and title:
+            # type = node.get('type')
+            if key:
                 # title = title[title.rfind('.')+1:]
-                yield [key, title]
+                yield [key, title or ""]
             for v in node.values():
                 if isinstance(v, list):
                     for k in find_key(v):
@@ -372,21 +372,64 @@ def find_items(form):
     return lst
 
 
-def get_item_lst(node, j):
-    if isinstance(node, dict):
-        for k, v in node.items():
-            if isinstance(v, dict):
-                get_item_lst(v, j)
-            elif isinstance(v, str):
-                j.update({k: v})
+def get_all_items(nlst, klst):
+    """
+    convert and sort item list
+    :param nlst:
+    :param klst:
+    :return: alst
+    """
+    alst = []
+
+    def get_name(key):
+        for lst in klst:
+            k = lst[0].split('.')[-1]
+            if key == k:
+                return lst[1]
+
+    def get_items(nlst):
+        if isinstance(nlst, dict):
+            for k, v in nlst.items():
+                if isinstance(v, str):
+                    alst.append({get_name(k): v})
+                else:
+                    get_items(v)
+        elif isinstance(nlst, list):
+            for lst in nlst:
+                get_items(lst)
+
+    to_orderdict(nlst, klst)
+    get_items(nlst)
+    return alst
 
 
-def reset_items(nlst):
-    """"""
-    if isinstance(nlst, list):
-        for k in range(len(nlst)):
-            j = dict()
-            get_item_lst(nlst[k], j)
-            nlst[k].clear()
-            nlst[k] = j
+def to_orderdict(alst, klst):
+    """
+    sort item list
+    :param alst:
+    :param klst:
+    """
+    if isinstance(alst, list):
+        for i in range(len(alst)):
+            if isinstance(alst[i], dict):
+                alst.insert(i, OrderedDict(alst.pop(i)))
+                to_orderdict(alst[i], klst)
+    elif isinstance(alst, dict):
+        nlst=[]
+        if isinstance(klst, list):
+            for lst in klst:
+                key = lst[0].split('.')[-1]
+                val = alst.pop(key, {})
+                if val:
+                    if isinstance(val, dict):
+                        val = OrderedDict(val)
+                    nlst.append({key: val})
+                if not alst:
+                    break
 
+            while len(nlst) > 0:
+                alst.update(nlst.pop(0))
+
+            for k, v in alst.items():
+                if not isinstance(v, str):
+                    to_orderdict(v, klst)

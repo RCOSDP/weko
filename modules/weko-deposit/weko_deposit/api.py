@@ -35,7 +35,7 @@ from simplekv.memory.redisstore import RedisStore
 from weko_index_tree.api import Indexes
 from weko_items_ui import current_weko_items_ui
 from weko_records.api import ItemTypes, ItemsMetadata
-from weko_records.utils import save_item_metadata, find_items, set_timestamp
+from weko_records.utils import save_item_metadata, find_items, set_timestamp, get_all_items
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 
@@ -264,33 +264,34 @@ class WekoDeposit(Deposit):
             if self.jrc and len(self.jrc):
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
-                self.indexer.upload_metadata(self.jrc, self.pid.object_uuid,
-                                             self.revision_id)
 
                 # upload file content to Elasticsearch
-                self.upload_files()
+                self.get_content_files()
+                self.indexer.upload_metadata(self.jrc, self.pid.object_uuid,
+                                             self.revision_id)
+                # remove large base64 files for release memory
+                if self.jrc.get('content'):
+                    for content in self.jrc['content']:
+                        del content['file']
 
-    def upload_files(self):
+    def get_content_files(self):
         """Upload files."""
         fmd = self.data.get("filemeta")
+        if fmd:
+            fmd = fmd.copy()
+            for file in self.files:
+                if isinstance(fmd, list):
+                    for lst in fmd:
+                        if file.obj.key == lst.get('filename'):
+                            lst.update({'mimetype': file.obj.mimetype})
 
-        # delete old file index when edit item
-        self.delete_old_file_index()
-        for file in self.files:
-            if isinstance(fmd, list):
-                for lst in fmd:
-                    if file.obj.key == lst.get('filename'):
-                        lst.update({'mimetype': file.obj.mimetype})
+                            # update file_files's json
+                            file.obj.file.update_json(lst)
 
-                        # update file_files's json
-                        file.obj.file.update_json(lst)
-
-                        # upload file metadata to Elasticsearch
-                        file.obj.file.upload_file(lst, str(file.obj.file_id),
-                                                  self.pid.object_uuid,
-                                                  self.indexer.es_index,
-                                                  self.indexer.file_doc_type)
-                        break
+                            # upload file metadata to Elasticsearch
+                            file.obj.file.upload_file(lst)
+                            break
+            self.jrc.update({"content": fmd})
 
     def save_or_update_item_metadata(self):
         """Save or update item metadata.
@@ -316,7 +317,7 @@ class WekoDeposit(Deposit):
             for obj in lst:
                 if obj.file_id:
                     klst.append(obj.file_id)
-            if len(klst) > 0:
+            if klst:
                 self.indexer.delete_file_index(klst, self.pid.object_uuid)
 
 
@@ -359,27 +360,18 @@ class WekoRecord(Record):
         solst = find_items(ojson.model.form)
 
         for lst in solst:
-            key = lst[0]
+            key = lst[0].split('.')[-1]
+
             val = self.get(key)
             if not val:
                 continue
+
             mlt = val.get('attribute_value_mlt')
             if mlt:
                 nval = dict()
                 nval['attribute_name'] = val.get('attribute_name')
-                if isinstance(mlt, list):
-                    new_mlt = []
-                    for lst in mlt:
-                        jv = OrderedDict()
-                        for l in solst:
-                            k = l[0][l[0].rfind('.') + 1:]
-                            vl = lst.get(k)
-                            if vl:
-                                jv.update({l[1]: vl})
-                        new_mlt.append(jv)
-                nval['attribute_value_mlt'] = new_mlt
+                nval['attribute_value_mlt'] = get_all_items(mlt, solst)
                 items.append(nval)
             else:
                 items.append(val)
-
         return items

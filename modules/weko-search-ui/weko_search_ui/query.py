@@ -50,21 +50,7 @@ def default_search_factory(self, search, query_parser=None):
             mut.append(Q('range', date={'lte': 'now/d'}))
         return mut
 
-    def _get_simple_query(qstr=None):
-        """"""
-        if qstr:
-            q_s = Q('query_string', query=qstr, default_operator='and')
-        else:
-            q_s = Q()
-
-        # Permission check by publish date and status
-        if is_perm:
-            must = _get_permission_filter()
-            must.append(q_s)
-            q_s = Q('bool', must=must)
-        return q_s
-
-    def _get_dsearch_query():
+    def _get_dsearch_query(qs=None):
         """for detail search"""
         kw = ['search_title', 'search_creator', 'subject', 'search_sh',
               'description', 'search_publisher', 'search_contributor',
@@ -101,43 +87,41 @@ def default_search_factory(self, search, query_parser=None):
             qd["range"] = qd1
             mut.append(qd)
 
-        # Permission check by publish date and status
+        # add  Permission filter by publish date and status
         mt = _get_permission_filter()
-        if len(mt) > 0:
+        if mt:
             mut.extend(mt)
 
-        qs = request.values.get('q')
         if qs:
-            mut.append(Q('query_string', query=qs, default_operator='and'))
+            mut.append(Q('query_string', query=qs, default_operator='and', fields=['search_*', 'search_*.ja']))
 
         del qv, qd, qd1
 
-        return Q('bool', must=mut)
+        return Q('bool', must=mut), mut
 
     def _default_parser(qstr=None):
-        """Default parser that uses the Q() from elasticsearch_dsl. Full text.
+        """Default parser that uses the Q() from elasticsearch_dsl. Full text Search.
 
         :param qstr: Query string.
         :returns: Query parser.
         """
+        # add  Permission filter by publish date and status
         mt = _get_permission_filter()
+        # multi keyword search filter
+        kmt = _get_dsearch_query()[1]
+        if kmt:
+            mt.append(kmt)
+
         if qstr:
-            q_s = Q('query_string', query=qstr, default_operator='and')
-            shuld = [Q('has_child', type='content', query=Q('bool', should=[
-                            Q('multi_match', query=qstr, operator='and',
-                              fields=['file.content.en*^1.5',
-                                      'file.content.jp'], type='most_fields',
-                              minimum_should_match='75%'),
-                          q_s])), q_s
-                    ]
-
-            if len(mt) > 0:
-                qur = Q('filtered', query=Q('bool', should=shuld, must=mt))
-
-            else:
-                qur = Q('filtered', query=Q('bool', should=shuld))
+            q_s = Q('multi_match', query=qstr, operator='and',
+                    fields=['content.file.content^1.5',
+                            'content.file.content.ja^1.2',
+                            '_all'],
+                    type='most_fields', minimum_should_match='75%')
+            mt.append(q_s)
+            qur = Q('bool', must=mt)
         else:
-            if len(mt) > 0:
+            if mt:
                 mt.append(Q())
                 qur = Q('bool', must=mt)
             else:
@@ -152,16 +136,19 @@ def default_search_factory(self, search, query_parser=None):
     search_type = request.values.get('search_type')
     qs = request.values.get('q')
 
-    if search_type:
-        # full text search
-        if '0' in search_type:
+    # full text search
+    if search_type and '0' in search_type:
+        if qs:
             query_q = query_parser(qs)
         else:
-            # simple search
-            query_q = _get_simple_query(qs)
+            # detail search
+            query_q = _get_dsearch_query()[0]
     else:
-        # detail search
-        query_q = _get_dsearch_query()
+        # simple search
+        query_q = _get_dsearch_query(qs)[0]
+
+    src = {'_source': {'exclude': ['content', '_item_metadata']}}
+    search.update_from_dict(src)
 
     try:
         search = search.query(query_q)

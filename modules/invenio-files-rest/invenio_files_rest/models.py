@@ -842,17 +842,13 @@ class FileInstance(db.Model, Timestamp):
         """
         self.json = jsn
 
-    def upload_file(self, fjson, id, uuid, index, doc_type, **kwargs):
+    def upload_file(self, fjson, **kwargs):
         """
           Put file to Elasticsearch
         :param fjson:
-        :param id:
-        :param uuid:
-        :param index:
-        :param doc_type:
         :param kwargs:
         """
-        self.storage(**kwargs).upload_file(fjson, id, uuid, index, doc_type)
+        self.storage(**kwargs).upload_file(fjson)
 
 
 class ObjectVersion(db.Model, Timestamp):
