@@ -29,7 +29,7 @@
 {% set panel_icon = "fa fa-group fa-fw" %}
 
 {%- block settings_body %}
-{%- if groups.items|length > 0 %}
+{%- if groups.items|length > 0 and is_admin %}
 {{ helpers.panel_start(
     _('Add Groups'),
     with_body=False,
@@ -50,11 +50,13 @@
   </div>
 </div>
 {%- if groups.items|length == 0 and not q %}
-  {{ emptyprompt(
-    btn=_('New group'), btn_icon='fa fa-fw fa-plus',
-    btn_href=url_for('.new'),
-    heading=_('Go ahead and create new group!')
-    ) }}
+  {%- if is_admin %}
+    {{ emptyprompt(
+      btn=_('New group'), btn_icon='fa fa-fw fa-plus',
+      btn_href=url_for('.new'),
+      heading=_('Go ahead and create new group!')
+      ) }}
+  {%- endif %}
 {%- elif groups.items|length == 0 and q %}
   {{ searchbar() }}
   {{ emptysearch(heading=_("No results found.")) }}
