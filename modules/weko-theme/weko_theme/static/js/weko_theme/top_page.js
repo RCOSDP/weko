@@ -97,7 +97,7 @@ require([
             }
           });
         }
-        window.location.href = ('/search?page=1&size=20&' + query).slice(0,-1);
+        window.location.href = ('/search/index?page=1&size=20&indextree=0&' + query).slice(0,-1);
         // stop the form from submitting the normal way and refreshing the page
         event.preventDefault();
       })
