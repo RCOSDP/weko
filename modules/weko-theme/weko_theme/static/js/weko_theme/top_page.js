@@ -33,22 +33,11 @@ require([
 
     //入力あったら、入力値入って展開したまま
     function ArrangeSearch(){
-     //ラジオボタン
+      //ラジオボタン
+      //詳細検索展開するか否か
+      var btn = sessionStorage.getItem('btn', '');
       var SearchType = GetUrlParam('search_type');
       if (SearchType){
-        if (SearchType == '0'){
-          $('#search_type_fulltext').prop('checked', true);
-        }else{
-          $('#search_type_keyword').prop('checked', true);
-        }
-      }else{
-        $('#search_type_fulltext').prop('checked', true);
-      }
-
-      //詳細検索展開するか否か
-      var indextree = IsParamKey('indextree');
-      var btn = sessionStorage.getItem('btn', '');
-      if (indextree){
         if (btn !== null && btn !== ''){
           if (btn == 'detail-search'){
             $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
@@ -78,7 +67,15 @@ require([
             }
           }
         }
+        if (SearchType == '0'){
+          $('#search_type_fulltext').prop('checked', true);
+        }else{
+          $('#search_type_keyword').prop('checked', true);
+        }
+      }else{
+        $('#search_type_fulltext').prop('checked', true);
       }
+
     }
 
     //Url query コントロール
@@ -97,7 +94,7 @@ require([
             }
           });
         }
-        window.location.href = ('/search/index?page=1&size=20&indextree=0&' + query).slice(0,-1);
+        window.location.href = ('/search/index?page=1&size=20&' + query).slice(0,-1);
         // stop the form from submitting the normal way and refreshing the page
         event.preventDefault();
       })
