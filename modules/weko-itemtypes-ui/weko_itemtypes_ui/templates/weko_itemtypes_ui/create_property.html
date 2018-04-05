@@ -87,9 +87,11 @@
                   <button type="button" class="btn btn-default" id="previews">
                     <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> {{_('Json Schema')}}
                   </button>
+                  <button type="button" class="btn btn-default" id="rebuild"> {{_('Reset')}} </button>
                 </div>
                 <div class="panel-body">
-                  <pre class="pre-scrollable" id="schema_json"></pre>
+                  <!--<pre class="pre-scrollable" id="schema_json"></pre>-->
+                  <textarea class="form-control pre-scrollable" rows="50" id="schema_json"></textarea>
                 </div>
               </div>
             </div>

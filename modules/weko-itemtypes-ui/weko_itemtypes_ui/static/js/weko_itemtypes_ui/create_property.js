@@ -16,7 +16,7 @@ require([
     $('#previews').on('click', function(){
       schema = editor.getValue();
       forms = editor.exportForm();
-      $('#schema_json').text(JSON.stringify(schema, null, 4));
+      $('#schema_json').val(JSON.stringify(schema, null, 4));
       $('#form1_json').val(JSON.stringify(forms.form, null, 4));
       $('#form2_json').val(JSON.stringify(forms.forms, null, 4));
     });
@@ -55,7 +55,7 @@ require([
         $.get(url, function(data, status){
           url_update_schema = '/itemtypes/property/'+data.id;
           $('#property_name').val(data.name);
-          $('#schema_json').text(JSON.stringify(data.schema, null, 4));
+          $('#schema_json').val(JSON.stringify(data.schema, null, 4));
           $('#form1_json').val(JSON.stringify(data.form, null, 4));
           $('#form2_json').val(JSON.stringify(data.forms, null, 4));
           editor.setValue({
@@ -66,11 +66,24 @@ require([
       } else {
         url_update_schema = '/itemtypes/property';
         $('#property_name').val('');
-        $('#schema_json').text('');
+        $('#schema_json').val('');
         $('#form1_json').val('');
         $('#form2_json').val('');
         editor.setValue({
           startval: initschema,
+          editor: true
+        });
+      }
+    });
+
+    // create from json data
+    $('#rebuild').on('click', function(){
+      schema_json_val = $('#schema_json').val();
+      if(schema_json_val.length > 0) {
+        schema_json = null;
+        schema_json = JSON.parse(schema_json_val);
+        editor.setValue({
+          startval: schema_json,
           editor: true
         });
       }

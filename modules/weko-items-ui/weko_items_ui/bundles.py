@@ -46,3 +46,8 @@ js = Bundle(
     filters='jsmin',
     output="gen/items_ui.%(version)s.js",
 )
+
+demo_js = Bundle(
+    'js/weko_items_ui/demo.js',
+    output="gen/items_ui_demo.js",
+)
