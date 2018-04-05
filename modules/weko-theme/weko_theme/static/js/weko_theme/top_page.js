@@ -12,7 +12,7 @@ require([
       for (var i = 0; i< sURLVars.length; i++){
         var sParamArr = sURLVars[i].split('=');
         if (sParamArr[0] == sParam){
-          return sParamArr[1];
+          return decodeURIComponent(sParamArr[1]);
         }
       }
       return false;
@@ -51,7 +51,7 @@ require([
         if (btn == 'detail-search'){
           $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
             if (IsParamKey($(this).attr('id'))){
-              var input = GetUrlParam($(this).attr('id'));
+              var input = decodeURIComponent( GetUrlParam($(this).attr('id')) );
               if (input && input !== ''){
                 $(this).val(input);
                 if (!$('#search_detail').hasClass('expanded')){
@@ -85,12 +85,12 @@ require([
         $('#search_type :input:checked').each(function(){
           query += $(this).serialize() + '&';
         });
-        query += $('#q').serialize() + '&';
+        query += $('#q').serialize().replace(/\+/g,'%20') + '&';
         var btn = sessionStorage.getItem('btn', '');
         if (btn == 'detail-search'){
           $('#search_detail_metadata :input:not(:checkbox)').each(function(){
             if ($(this).val() !== ''){
-              query += $(this).serialize() + '&';
+              query += $(this).serialize().replace(/\+/g,'%20') + '&';
             }
           });
         }
@@ -107,15 +107,6 @@ require([
       //簡易検索ボタン
       $('#top-search-btn').on('click', function(){
         sessionStorage.setItem('btn', 'simple-search');
-//        if ($('#q').val() !== ''){
-//          sessionStorage.setItem($('#q').attr('id'), $('#q').val());
-//        }else{
-//          sessionStorage.removeItem($('#q').attr('id'));
-//        }
-//        $('#search_detail_metadata :input:not(:checkbox)').each(function(){
-//          $(this).val('');
-//          sessionStorage.removeItem($(this).attr('id'));
-//        });
         SearchSubmit();
       });
 
@@ -135,13 +126,6 @@ require([
       //詳細検索ボタン：入力値をseesionStorageに保存する
       $('#detail-search-btn').on('click', function(){
         sessionStorage.setItem('btn', 'detail-search');
-//        $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
-//          if ($(this).val() !== ''){
-//            sessionStorage.setItem($(this).attr('id'), $(this).val());
-//          }else{
-//            sessionStorage.removeItem($(this).attr('id'));
-//          }
-//        })
         SearchSubmit();
       });
 
@@ -149,7 +133,6 @@ require([
       $('#clear-search-btn').on('click', function(){
         $('#search_detail_metadata :input:not(:checkbox)').each(function(){
           $(this).val('');
-//          sessionStorage.removeItem($(this).attr('id'));
         })
       });
 
