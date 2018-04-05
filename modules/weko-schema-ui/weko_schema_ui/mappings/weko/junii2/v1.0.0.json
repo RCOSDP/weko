@@ -63,7 +63,8 @@
   "mappings": {
     "item": {
       "_all": {
-        "enabled": true
+        "enabled": true,
+        "analyzer": "ngram_analyzer"
       },
       "properties": {
         "path": {
@@ -77,146 +78,182 @@
           }
         },
         "item_id": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "itemtype": {
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
+        },
+        "publish_status": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "_oai": {
+          "properties": {
+            "id": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "sets": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "updated": {
+              "type": "date"
+            }
+          }
         },
         "control_number": {
-          "type": "string"
-        },
-        "publish_date": {
-          "type": "date",
-          "format": "yyyy-MM-dd"
-        },
-        "create_date": {
-          "type": "date",
-          "format": "yyyy-MM-dd HH:mm:ss"
-        },
-        "review_date": {
-          "type": "date",
-          "format": "yyyy-MM-dd HH:mm:ss"
-        },
-        "update_date": {
-          "type": "date",
-          "format": "yyyy-MM-dd HH:mm:ss"
+          "type": "string",
+          "index": "not_analyzed"
         },
         "BSH": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "DDC": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "NDLC": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "isbn": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "issn": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "LCC": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "LCSH": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "MeSH": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "NAID": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "NCID": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "NDC": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "NDLSH": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "NIIspatial": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_spatial"
           ]
         },
         "NIIsubject": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "NIItemporal": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_temporal"
           ]
         },
         "NIItype": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "UDC": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_sh"
           ]
         },
         "URI": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "alternative": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_title"
           ]
         },
         "contributor": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_contributor"
           ]
         },
         "creator": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_creator"
           ]
@@ -234,103 +271,155 @@
           "format": "yyyy-MM-dd"
         },
         "degreename": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "description": {
           "type": "string",
-          "analyzer": "ja_analyzer"
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "doi": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "format": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "fullTextURL": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "grantid": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "grantor": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "ichushi": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "identifier": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "type": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "jtitle": {
           "type": "string",
-          "analyzer": "ja_analyzer"
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "language": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "pmid": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "publisher": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_publisher"
           ]
         },
         "rights": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "selfDOI": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_id"
           ]
         },
         "spatial": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_spatial"
           ]
         },
         "subject": {
           "type": "string",
-          "analyzer": "ja_analyzer"
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "temporal": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_temporal"
           ]
         },
         "textversion": {
-          "type": "string"
+          "type": "string",
+          "index": "not_analyzed",
+          "copy_to": [
+            "search_other"
+          ]
         },
         "title": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_title"
           ]
         },
         "weko_creator_id": {
           "type": "string",
+          "index": "not_analyzed",
           "copy_to": [
             "search_creator",
             "search_publisher",
@@ -339,28 +428,142 @@
         },
         "search_title": {
           "type": "string",
-          "analyzer": "ja_analyzer"
+          "fields": {
+            "ja": {
+              "type": "string",
+              "analyzer": "ja_analyzer"
+            }
+          }
         },
         "search_creator": {
-          "type": "string"
+          "type": "string",
+          "fields": {
+            "ja": {
+              "type": "string",
+              "analyzer": "ja_analyzer"
+            }
+          }
         },
         "search_sh": {
-          "type": "string"
+          "type": "string",
+          "fields": {
+            "ja": {
+              "type": "string",
+              "analyzer": "ja_analyzer"
+            }
+          }
         },
         "search_publisher": {
-          "type": "string"
+          "type": "string",
+          "fields": {
+            "ja": {
+              "type": "string",
+              "analyzer": "ja_analyzer"
+            }
+          }
         },
         "search_contributor": {
-          "type": "string"
+          "type": "string",
+          "fields": {
+            "ja": {
+              "type": "string",
+              "analyzer": "ja_analyzer"
+            }
+          }
         },
         "search_id": {
           "type": "string"
         },
         "search_spatial": {
-          "type": "string"
+          "type": "string",
+          "fields": {
+            "ja": {
+              "type": "string",
+              "analyzer": "ja_analyzer"
+            }
+          }
         },
         "search_temporal": {
-          "type": "string"
+          "type": "string",
+          "fields": {
+            "ja": {
+              "type": "string",
+              "analyzer": "ja_analyzer"
+            }
+          }
+        },
+        "search_other": {
+          "type": "string",
+          "fields": {
+            "ja": {
+              "type": "string",
+              "analyzer": "ja_analyzer"
+            }
+          }
+        },
+        "content": {
+          "type": "nested",
+          "properties": {
+            "file_id": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "groups": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "file_name": {
+              "type": "string",
+              "fields": {
+                "ja": {
+                  "type": "string",
+                  "analyzer": "ja_analyzer"
+                }
+              }
+            },
+            "display_name": {
+              "type": "string",
+              "fields": {
+                "ja": {
+                  "type": "string",
+                  "analyzer": "ja_analyzer"
+                }
+              }
+            },
+            "mime_type": {
+              "type": "string",
+              "index": "not_analyzed"
+            },
+            "license_notation": {
+              "type": "string"
+            },
+            "open_date": {
+              "type": "date",
+              "format": "yyyy-MM-dd"
+            },
+            "version_id": {
+              "type": "string",
+              "index": "no"
+            },
+            "file": {
+              "type": "attachment",
+              "fields": {
+                "content": {
+                  "type": "string",
+                  "term_vector": "with_positions_offsets",
+                  "store": true,
+                  "fields": {
+                    "ja": {
+                      "type": "string",
+                      "term_vector": "with_positions_offsets",
+                      "store": "yes",
+                      "analyzer": "ja_analyzer"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       },
       "dynamic_templates": [
@@ -369,73 +572,29 @@
             "match_mapping_type": "string",
             "mapping": {
               "type": "string",
+              "index": "no"
+            }
+          }
+        },
+        {
+          "boolean": {
+            "match_mapping_type": "boolean",
+            "mapping": {
+              "type": "boolean",
               "index": "not_analyzed"
+            }
+          }
+        },
+        {
+          "object": {
+            "match_mapping_type": "object",
+            "mapping": {
+              "type": "object",
+              "index": "no"
             }
           }
         }
       ]
-    },
-    "content": {
-      "_all": {
-        "enabled": true
-      },
-      "_parent": {
-        "type": "item"
-      },
-      "properties": {
-        "item_id": {
-          "type": "string"
-        },
-        "file_id": {
-          "type": "string"
-        },
-        "file_name": {
-          "type": "string"
-        },
-        "display_name": {
-          "type": "string"
-        },
-        "mime_type": {
-          "type": "string"
-        },
-        "license_notation": {
-          "type": "string"
-        },
-        "open_date": {
-          "type": "date",
-          "format": "yyyy-MM-dd"
-        },
-        "version_id": {
-          "type": "string"
-        },
-        "fullTextURL": {
-          "type": "string"
-        },
-        "file": {
-          "type": "attachment",
-          "fields": {
-            "content": {
-              "type": "string",
-              "term_vector": "with_positions_offsets",
-              "store": true,
-              "fields": {
-                "jp": {
-                  "type": "string",
-                  "term_vector": "with_positions_offsets",
-                  "store": "yes",
-                  "analyzer": "ja_analyzer"
-                },
-                "en": {
-                  "type": "string",
-                  "term_vector": "with_positions_offsets",
-                  "store": "yes",
-                  "analyzer": "ngram_analyzer"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   }
 }

@@ -20,6 +20,7 @@
 
 """Weko Deposit Storage."""
 import os, base64, hashlib
+import cchardet as chardet
 
 from flask import current_app
 from invenio_files_rest.storage.pyfs import PyFSFileStorage
@@ -46,10 +47,16 @@ class WekoFileStorage(PyFSFileStorage):
         except Exception as e:
             raise StorageError('Could not send file: {}'.format(e))
 
-        strb = base64.b64encode(fp.read()).decode("utf-8")
+        s = fp.read()
+        ecd = chardet.detect(s).get('encoding')
+        if ecd and '1252' in ecd:
+            s = str(s, 'cp932').encode('utf-8')
+
+        strb = base64.b64encode(s).decode("utf-8")
         fp.close()
 
         fjson.update({"file": strb})
+
 
 def make_path(base_uri, path, filename, path_dimensions, split_length):
     """Generate a path as base location for file instance.

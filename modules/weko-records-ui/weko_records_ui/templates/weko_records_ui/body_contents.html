@@ -177,7 +177,11 @@
                       {% endif %}
                       {%- for l in lst['attribute_value_mlt'] %}
                         {%- for k, v in l.items() %}
-                           {{ k}} : {{ v }}<br>
+                          {% if k is none or '' in k %}
+                            {{ v }}<br>
+                          {% else %}
+                            {{ k }} : {{ v }}<br>
+                          {% endif %}
                         {% endfor %}
                       {% endfor %}
                     </td>

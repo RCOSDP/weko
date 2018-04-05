@@ -110,7 +110,7 @@ def default_search_factory(self, search, query_parser=None):
         # multi keyword search filter
         kmt = _get_dsearch_query()[1]
         if kmt:
-            mt.append(kmt)
+            mt.extend(kmt)
 
         if qstr:
             q_s = Q('multi_match', query=qstr, operator='and',

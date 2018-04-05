@@ -25,13 +25,13 @@
 <ul class="list-inline">
   {%- for slug, fmt in formats %}
   {%- if 'JSON' not in fmt['title'] %}
-    <!--<li><a-->
-      <!--href="{{ url_for('invenio_oaiserver.response')+'?verb=GetRecord&metadataPrefix='+slug+'&identifier='+record['_oai'].id }}">-->
-      <!--<img src="/static/images/default/oai_pmh.png" alt="OAI-PMH" />-->
-    <!--</a>{{fmt['title']}}</li>-->
-    <li><a href="{{ url_for('invenio_records_ui.recid_export', pid_value=pid.pid_value, format=slug) }}" target="_blank">
-      <img src="/static/images/default/oai_pmh.png" alt="OAI-PMH" /></a>{{fmt['title']}}
-    </li>
+    <li><a
+      href="{{ url_for('invenio_oaiserver.response')+'?verb=GetRecord&metadataPrefix='+slug+'&identifier='+record['_oai'].id }}">
+      <img src="/static/images/default/oai_pmh.png" alt="OAI-PMH" />
+    </a>{{fmt['title']}}</li>
+    <!--<li><a href="{{ url_for('invenio_records_ui.recid_export', pid_value=pid.pid_value, format=slug) }}" target="_blank">-->
+      <!--<img src="/static/images/default/oai_pmh.png" alt="OAI-PMH" /></a>{{fmt['title']}}-->
+    <!--</li>-->
   {%- endif %}
   {%- endfor %}
 </ul>

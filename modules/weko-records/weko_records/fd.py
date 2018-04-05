@@ -166,7 +166,7 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
     obj = fileobj.obj
 
     # Check group permission
-    check_download_permission(fileobj['groups'])
+    check_download_permission(fileobj.get('groups'))
 
     # Check permissions
     ObjectResource.check_object_permission(obj)
@@ -188,7 +188,7 @@ def check_download_permission(group_id):
     :param group_id: Group_id
     """
     user_id = current_user.get_id()
-    if not group_id:
+    if group_id:
         if user_id:
             query = Group.query.filter_by(name=group_id).join(Membership)\
                 .filter_by(user_id=user_id, state=MembershipState.ACTIVE)

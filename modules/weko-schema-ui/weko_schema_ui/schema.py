@@ -28,7 +28,7 @@ from lxml.builder import ElementMaker
 from weko_records.api import Mapping
 from .api import WekoSchema
 
-from flask import abort, current_app
+from flask import abort, current_app, url_for, request
 from collections import OrderedDict
 from simplekv.memory.redisstore import RedisStore
 from xmlschema.components import (XsdAtomicRestriction, XsdSingleFacet, XsdPatternsFacet, XsdEnumerationFacet,
@@ -260,25 +260,17 @@ class SchemaTree:
                         for k in get_sub_item_value(n, key):
                             yield k
 
-
-            def set_mapping_value(lst, mpdic):
-                mlst = []
-                for ky, vl in mpdic.items():
-                    vlc = copy.deepcopy(vl)
-                    for z, y in get_key_value(vlc):
-                        # if is attributes node
-                        if y == self._atr:
-                            for k1, v1 in z.items():
-                                z[k1] = lst.get(v1, v1)
-                        else:
-                            # if vl have expression or formula
-                            exp, lk = analysis(z.get(self._v))
-                            ava = ""
-                            for val in lk:
-                                ava = ava + exp + lst.get(val)
-                            z[self._v] = ava[1:]
-                    mlst.append({ky: vlc})
-                return mlst
+            def get_url(z, key, val):
+                if 'filemeta' in key:
+                    attr = z.get(self._atr, {}).get('jpcoar:objectType', '')
+                    if 'fulltext' in attr:
+                        pid = self._record.get('control_number')
+                        return request.host_url[:-1] + url_for('invenio_records_ui.recid_files',
+                                                               pid_value=pid, filename=val)
+                    else:
+                        return val
+                else:
+                    return val
 
             def get_key_value(nd, key=None):
                 if isinstance(nd, dict):
@@ -323,8 +315,8 @@ class SchemaTree:
                                         nlst = []
                                         for val in lk:
                                             klst = []
-                                            for k in get_sub_item_value(atr_vm, val):
-                                                klst.append(k)
+                                            for k3 in get_sub_item_value(atr_vm, val):
+                                                klst.append(get_url(z, k, k3))
                                             nlst.append(klst)
 
                                         if len(nlst) > 0:
