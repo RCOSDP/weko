@@ -190,7 +190,7 @@ def check_download_permission(group_id):
     user_id = current_user.get_id()
     if group_id:
         if user_id:
-            query = Group.query.filter_by(name=group_id).join(Membership)\
+            query = Group.query.filter_by(group_id=group_id).join(Membership)\
                 .filter_by(user_id=user_id, state=MembershipState.ACTIVE)
             if query.count() < 1:
                 abort(403)
