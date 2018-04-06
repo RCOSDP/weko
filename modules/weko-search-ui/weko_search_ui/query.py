@@ -97,7 +97,7 @@ def default_search_factory(self, search, query_parser=None):
 
         del qv, qd, qd1
 
-        return Q('bool', must=mut), mut
+        return Q('bool', must=mut) if mut else Q(), mut
 
     def _default_parser(qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl. Full text Search.
@@ -148,7 +148,9 @@ def default_search_factory(self, search, query_parser=None):
         query_q = _get_dsearch_query(qs)[0]
 
     src = {'_source': {'exclude': ['content', '_item_metadata']}}
-    search.update_from_dict(src)
+    # extr = search._extra.copy()
+    # search.update_from_dict(src)
+    search._extra.update(src)
 
     try:
         search = search.query(query_q)
