@@ -33,9 +33,40 @@ require([
 
     //入力あったら、入力値入って展開したまま
     function ArrangeSearch(){
-     //ラジオボタン
+      //ラジオボタン
+      //詳細検索展開するか否か
+      var btn = sessionStorage.getItem('btn', '');
       var SearchType = GetUrlParam('search_type');
       if (SearchType){
+        if (btn !== null && btn !== ''){
+          if (btn == 'detail-search'){
+            $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
+              if (IsParamKey($(this).attr('id'))){
+                var input = GetUrlParam($(this).attr('id'));
+                if (input && input !== ''){
+                  $(this).val(input);
+                  if (!$('#search_detail').hasClass('expanded')){
+                    $('#top-search-btn').addClass('hidden');
+                    $('#search_simple').removeClass('input-group');
+                    $('#search_detail_metadata').collapse('show');
+                  }else{
+                    $('#search_detail_metadata').collapse('hide');
+                  }
+                }
+              }
+            });
+          }else{
+            if (btn == 'simple-search'){
+              if (IsParamKey($('#q').attr('id'))){
+                var input = GetUrlParam($('#q').attr('id'));
+                if (input && input !== ''){
+                  $('#search_detail_metadata').collapse('hide');
+                  $('#q').val(input);
+                }
+              }
+            }
+          }
+        }
         if (SearchType == '0'){
           $('#search_type_fulltext').prop('checked', true);
         }else{
@@ -45,37 +76,6 @@ require([
         $('#search_type_fulltext').prop('checked', true);
       }
 
-      //詳細検索展開するか否か
-      var btn = sessionStorage.getItem('btn', '');
-      if (btn !== null && btn !== ''){
-        if (btn == 'detail-search'){
-          $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
-            if (IsParamKey($(this).attr('id'))){
-              var input = decodeURIComponent( GetUrlParam($(this).attr('id')) );
-              if (input && input !== ''){
-                $(this).val(input);
-                if (!$('#search_detail').hasClass('expanded')){
-                  $('#top-search-btn').addClass('hidden');
-                  $('#search_simple').removeClass('input-group');
-                  $('#search_detail_metadata').collapse('show');
-                }else{
-                  $('#search_detail_metadata').collapse('hide');
-                }
-              }
-            }
-          });
-        }else{
-          if (btn == 'simple-search'){
-            if (IsParamKey($('#q').attr('id'))){
-              var input = GetUrlParam($('#q').attr('id'));
-              if (input && input !== ''){
-                $('#search_detail_metadata').collapse('hide');
-                $('#q').val(input);
-              }
-            }
-          }
-        }
-      }
     }
 
     //Url query コントロール
@@ -94,7 +94,7 @@ require([
             }
           });
         }
-        window.location.href = ('/search/index?page=1&size=20&indextree=0&' + query).slice(0,-1);
+        window.location.href = ('/search/index?page=1&size=20&' + query).slice(0,-1);
         // stop the form from submitting the normal way and refreshing the page
         event.preventDefault();
       })
