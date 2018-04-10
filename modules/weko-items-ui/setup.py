@@ -96,6 +96,8 @@ setup(
             'weko_items_ui.bundles:js_dependencies',
             'weko_items_ui_js = weko_items_ui.bundles:js',
             'weko_items_ui_demo_js = weko_items_ui.bundles:demo_js',
+            'weko_items_authors_search_css = weko_items_ui.bundles:items_author_search_css',
+            'weko_items_authors_search_js = weko_items_ui.bundles:items_author_search_js',
         ],
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',
