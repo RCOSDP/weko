@@ -28,56 +28,29 @@ from invenio_records.api import RecordBase
 from invenio_records.errors import MissingModelError
 from .models import OAIServerSchema
 
+
 class WekoSchema(RecordBase):
     """Define API for Weko Schema creation and manipulation."""
 
     @classmethod
-    def create(cls, uuid, sname, fdata, xsd, ns=None, isvalid=True):
-        r"""Create a new record instance and store it in the database.
-
-        #. Send a signal :data:`weko_records.signals.before_record_insert`
-           with the new record as parameter.
-
-        #. Validate the new record data.
-
-        #. Add the new record in the database.
-
-        #. Send a signal :data:`weko_records.signals.after_record_insert`
-           with the new created record as parameter.
-
-        :Keyword Arguments:
-          * **format_checker** --
-            An instance of the class :class:`jsonschema.FormatChecker`, which
-            contains validation rules for formats. See
-            :func:`~weko_records.api.RecordBase.validate` for more details.
-
-          * **validator** --
-            A :class:`jsonschema.IValidator` class that will be used to
-            validate the record. See
-            :func:`~weko_records.api.RecordBase.validate` for more details.
-
-        :param name: Name of item type.
-        :param schema: Schema in JSON format.
-        :param form: Form in JSON format.
-        :returns: A new :class:`Record` instance.
+    def create(cls, uuid, sname, fdata, xsd, schema, ns=None, isvalid=True):
+        """
+        create a schema record stored in db
+        :param uuid:
+        :param sname:
+        :param fdata:
+        :param xsd:
+        :param schema:
+        :param ns:
+        :param isvalid:
+        :return:
         """
         with db.session.begin_nested():
             record = cls(fdata)
-
-            # before_record_insert.send(
-            #     current_app._get_current_object(),
-            #     record=record,
-            # )
-
-            # record.validate(**kwargs)
-
-            record.model = OAIServerSchema(id=uuid, schema_name=sname, form_data=fdata, xsd=xsd, namespaces=ns, isvalid=isvalid)
+            record.model = OAIServerSchema(id=uuid, schema_name=sname, form_data=fdata, xsd=xsd,
+                                           namespaces=ns, schema_location=schema, isvalid=isvalid)
             db.session.add(record.model)
 
-        # after_record_insert.send(
-        #     current_app._get_current_object(),
-        #     record=record,
-        # )
         return record
 
     @classmethod

@@ -17,6 +17,11 @@
       "type": "string",
       "description": "Schema's root element name."
     },
+    "xsd_file": {
+      "title": "Schema Location",
+      "type": "string",
+      "description": "Schema's xsd file URL."
+    },
     "comment": {
       "title": "Comment",
       "type": "string",

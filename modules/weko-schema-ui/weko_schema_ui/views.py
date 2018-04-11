@@ -22,8 +22,7 @@
 
 from flask import Blueprint, render_template, current_app, request, redirect, url_for
 from flask_login import login_required
-from .schema import delete_schema_cache
-from .api import WekoSchema
+from .schema import delete_schema_cache, schema_list_render, delete_schema
 from .permissions import schema_permission
 
 blueprint = Blueprint(
@@ -43,6 +42,16 @@ def index():
     return render_template(current_app.config['WEKO_SCHEMA_UI_UPLOAD'], record={})
 
 
+# @blueprint.route("/schema/formats/edit", methods=['GET'])
+# @login_required
+# @schema_permission.require(http_exception=403)
+# def formats():
+#     """Render a format edit view."""
+#     # record = {"schemas": [{"fmo": {"prefix": "11", "namespace": "22", "schema": "33"}},
+#     #           {"fmo": {"prefix": "44", "namespace": "55", "schema": "66"}}]}
+#     return render_template(current_app.config['WEKO_SCHEMA_UI_FORMAT_EDIT'], record={})
+
+
 @blueprint.route("/schema/list", methods=['GET'])
 @blueprint.route("/schema/list/", methods=['GET'])
 @login_required
@@ -60,7 +69,7 @@ def list():
 def delete(pid=None):
     """aaa"""
     pid = pid or request.values.get('pid')
-    schema_name = WekoSchema.delete_by_id(pid)
+    schema_name = delete_schema(pid)
     # delete schema cache on redis
     delete_schema_cache(schema_name)
 
@@ -77,26 +86,4 @@ def delete(pid=None):
 
     return redirect(url_for(".list"))
 
-
-def schema_list_render(pid=None, **kwargs):
-    """
-    return records for template
-    :param pid:
-    :param kwargs:
-    :return: records
-    """
-
-    lst = WekoSchema.get_all()
-
-    records = []
-    for r in lst:
-        sc = r.form_data.copy()
-        sc.update(dict(schema_name=r.schema_name))
-        sc.update(dict(pid=str(r.id)))
-        sc.update(dict(dis="disabled" if r.isfixed else None))
-        records.append(sc)
-
-    del lst
-
-    return records
 

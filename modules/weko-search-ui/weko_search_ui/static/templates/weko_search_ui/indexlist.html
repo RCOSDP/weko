@@ -1,7 +1,7 @@
 <div class="panel panel-default"
      ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && vm.invenioSearchResults.aggregations.path.buckets[0].length > 1">
   <div class="panel-heading clearfix">
-    <h3 class="panel-title">インデックスリスト</h3>
+    <h3 class="panel-title">{{_('Index List')}}</h3>
   </div>
   <div class="panel-body">
     <div class="panel_bread">
@@ -17,8 +17,8 @@
       <ul class="list-group">
         <a class="list-group-item" ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0] track by $index"
            ng-if="!$first" ng-href="/search/index?page=1&size=20&q={{ index_path.key.split('/').pop() }}">
-          <span class="badge">非公開 {{index_path.date_range.un_pub_cnt}} 件</span>
-          <span class="badge">公開 {{index_path.date_range.pub_cnt}} 件</span>
+          <span class="badge">{{_('Private')}}{{index_path.date_range.un_pub_cnt}} {{_('Cases')}}</span>
+          <span class="badge">{{_('Public')}}{{index_path.date_range.pub_cnt}} {{_('Cases')}}</span>
           <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
           {{ index_path.name.split('/').pop() }}
         </a>

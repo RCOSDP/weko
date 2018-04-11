@@ -38,9 +38,9 @@
     <div class="panel-heading clearfix">
       <span class="panel-title">
         {%- if index_id %}
-        {{_('アイテムリスト')}}
+        {{_('Item Lists')}}
         {%- else %}
-        {{_('検索結果')}}
+        {{_('Search Results')}}
         {%- endif %}
       </span>
       {%- block search_count %}
@@ -60,36 +60,36 @@
         {%- endif %}
         <div class="form-inline flow-root">
           <select class="form-control hide" id="goExportORPrint">
-            <option value="check_Export">チェックしたアイテムをExport</option>
-            <option value="view_Export">表示中の全てのアイテムをExport</option>
-            <option value="all_Export">このインデックスの全てのアイテムをExport</option>
-            <option value="check_print">チェックしたアイテムを印刷</option>
-            <option value="view_print">表示中の全てのアイテムを印刷</option>
-            <option value="all_print">このインデックスの全てのアイテムを印刷</option>
+            <option value="check_Export">{{_('Export Checked Items')}}</option>
+            <option value="view_Export">{{_('Export All Displayed Items')}}</option>
+            <option value="all_Export">{{_('Export All Items Of This Index')}}</option>
+            <option value="check_print">{{_('Print Checked Items')}}</option>
+            <option value="view_print">{{_('Print All Displayed Items')}}</option>
+            <option value="all_print">{{_('Print All Items Of This Index')}}</option>
           </select>
-          <button type="button" class="btn btn-primary hide">{{_('実行')}}</button>
+          <button type="button" class="btn btn-primary hide">{{_('Execution')}}</button>
           <div class="pull-right">
             <div class="form-group hide">
-              <label for="sort_item">{{_('表示順')}}</label>
+              <label for="sort_item">{{_('Display Order')}}</label>
               <select class="form-control" id="sort_item">
-                <option value="1">タイトル（昇順）</option>
-                <option value="2">タイトル（降順）</option>
-                <option value="3">登録者（昇順）</option>
-                <option value="4">登録者（降順）</option>
-                <option value="5">アイテムタイプ（昇順）</option>
-                <option value="6">アイテムタイプ（降順）</option>
-                <option value="7" selected="selected">ID（昇順）</option>
-                <option value="8">ID（降順）</option>
-                <option value="9">更新日時（昇順）</option>
-                <option value="10">更新日時（降順）</option>
-                <option value="11">作成日時（昇順）</option>
-                <option value="12">作成日時（降順）</option>
-                <option value="13">査読日時（昇順）</option>
-                <option value="14">査読日時（降順）</option>
-                <option value="15">出版年（昇順）</option>
-                <option value="16">出版年（降順）</option>
-                <option value="17">カスタム（昇順）</option>
-                <option value="18">カスタム（降順）</option>
+                <option value="1">{{_('Title(Ascending)')}}</option>
+                <option value="2">{{_('Title(Descending)')}}</option>
+                <option value="3">{{_('Registrant(Ascending)')}}</option>
+                <option value="4">{{_('Registrant(Descending)')}}</option>
+                <option value="5">{{_('Item Types(Asending)')}}</option>
+                <option value="6">{{_('Item Types(Descending)')}}</option>
+                <option value="7" selected="selected">{{_('ID(Ascending)')}}</option>
+                <option value="8">{{_('ID(Descending)')}}</option>
+                <option value="9">{{_('Modified Date and Time(Ascending)')}}</option>
+                <option value="10">{{_('Modified Date and Time(Descending)')}}</option>
+                <option value="11">{{_('Created Date and Time(Ascending)')}}</option>
+                <option value="12">{{_('Created Date and Time(Descending)')}}</option>
+                <option value="13">{{_('Review Date and Time(Ascending)')}}</option>
+                <option value="14">{{_('Review Date and Time(Descending)')}}</option>
+                <option value="15">{{_('Published Year(Ascending)')}}</option>
+                <option value="16">{{_('Published Year(Descending)')}}</option>
+                <option value="17">{{_('Custom(Ascending)')}}</option>
+                <option value="18">{{_('Custom(Descending)')}}</option>
               </select>
             </div>
             {%- block search_sort %}
@@ -97,7 +97,7 @@
               {%- if sort_options %}
               <div class="form-group">
                 {%- block search_sort_select scoped %}
-                {{_('表示順')}}:
+                {{_('Display Order')}}:
                 <invenio-search-select-box
                    sort-key="sort"
                    available-options='{{ sort_options|format_sortoptions|safe }}'
@@ -116,7 +116,7 @@
               {%- endif %}
             {%- endblock search_sort %}
             <div class="form-group">
-              <label for="page_count">表示数</label>
+              <label for="page_count">{{_('Display Number')}}</label>
               <select class="form-control" id="page_count">
                 <option value="20">20</option>
                 <option value="50">50</option>

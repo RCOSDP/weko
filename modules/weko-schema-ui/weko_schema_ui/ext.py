@@ -23,6 +23,7 @@
 from . import config
 from .views import blueprint
 from .rest import create_blueprint
+from .schema import reset_oai_metadata_formats
 
 
 class WekoSchemaUI(object):
@@ -59,11 +60,11 @@ class WekoSchemaUI(object):
         for k in dir(config):
             if k.startswith('WEKO_SCHEMA_'):
                 app.config.setdefault(k, getattr(config, k))
+        reset_oai_metadata_formats(app)
 
 
 class WekoSchemaREST(object):
     """weko-schema-rest extension."""
-
 
     def __init__(self, app=None):
         """Extension initialization.

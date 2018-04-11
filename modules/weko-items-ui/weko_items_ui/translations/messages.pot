@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-items-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-01-22 15:28+0900\n"
+"POT-Creation-Date: 2018-04-11 17:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,13 +18,38 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_items_ui/views.py:59
+#: weko_items_ui/views.py:175
+msgid "invalide request"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/demo.html:42
+msgid "Item Test Data"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/demo.html:49
+msgid "sending"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:47
+msgid "itemtype list"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:94
+#: weko_items_ui/templates/weko_items_ui/edit.html:119
+msgid "Next"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:95
+#: weko_items_ui/templates/weko_items_ui/edit.html:120
+msgid "Delete"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/error.html:33
 msgid "You do not even have an itemtype."
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:41
-#: weko_items_ui/templates/weko_items_ui/edit_nofile.html:41
-msgid "itemtype list"
+#: weko_items_ui/templates/weko_items_ui/error.html:34
+msgid "Go to"
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/error.html:34

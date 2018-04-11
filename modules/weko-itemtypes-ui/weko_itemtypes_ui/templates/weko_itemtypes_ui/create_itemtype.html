@@ -66,55 +66,55 @@
     <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="row">
         <div class="alert alert-danger hide" role="alert" id="itemtype_name_warning">
-          <strong>{{_(Warning)}}:</strong> {{_('アイテムタイプ名が空白です')}}
+          <strong>{{_(Warning)}}:</strong> {{_('Item type name is blank.')}}
         </div>
         <form class="form-inline">
           <div class="form-group mr-5">
-            <label for="itemtype_name">{{_('アイテムタイプ')}}:</label>
+            <label for="itemtype_name">{{_('Item Types')}}:</label>
             <input type="text" class="form-control" id="itemtype_name" placeholder="{{_('input new itemtype name')}}" value="">＊
           </div>
           <label class="radio-inline">
-            <input type="radio" name="radio_versionup" class="radio_versionup" id="upt_version" value="upt"> バージョンアップ
+            <input type="radio" name="radio_versionup" class="radio_versionup" id="upt_version" value="upt">{{_('Version Upgrade')}}
           </label>
           <label class="radio-inline">
-            <input type="radio" name="radio_versionup" class="radio_versionup" id="new_version" value="new" checked> 新規登録
+            <input type="radio" name="radio_versionup" class="radio_versionup" id="new_version" value="new" checked>{{_('New Registration')}}
           </label>
         </form>
       </div>
       <div class="row table-responsive">
         <div class="checkbox media-right">
-          <label><input type="checkbox" id="chk_upload_file" value="filemeta">{{_('コンテンツ本体を登録しますか？')}}</label>
+          <label><input type="checkbox" id="chk_upload_file" value="filemeta">{{_('Do you want to register the content？')}}</label>
         </div>
         <table class="table table-striped table-bordered table-hover table-condensed">
           <thead>
             <tr class="info">
-              <th class="width-150">{{_('項目名')}}</th>
-              <th>{{_('属性')}}</th>
-              <th class="width-150">{{_('オプション')}}</th>
-              <th class="width-50">{{_('入替')}}</th>
-              <th class="width-71">{{_('削除')}}</th>
+              <th class="width-150">{{_('Item Name')}}</th>
+              <th>{{_('Attribute')}}</th>
+              <th class="width-150">{{_('Option')}}</th>
+              <th class="width-50">{{_('Replacement')}}</th>
+              <th class="width-71">{{_('Delete')}}</th>
             </tr>
           </thead>
           <tbody id="tbody_itemtype">
             <tr>
-              <td>{{_('タイトル')}}</td>
-              <td>{{_('テキスト')}}</td>
+              <td>{{_('Title')}}</td>
+              <td>{{_('Text')}}</td>
               <td>
                 <fieldset disabled>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_0" value="required" checked>{{_('必須')}}</label>
+                  <label><input type="checkbox" id="chk_title_0" value="required" checked>{{_('Required')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_1" value="multiple">{{_('複数可')}}</label>
+                  <label><input type="checkbox" id="chk_title_1" value="multiple">{{_('Multiple')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_2" value="showlist" checked>{{_('一覧表示')}}</label>
+                  <label><input type="checkbox" id="chk_title_2" value="showlist" checked>{{_('List Display')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_3" value="crtf" checked>{{_('改行指定')}}</label>
+                  <label><input type="checkbox" id="chk_title_3" value="crtf" checked>{{_('Specify Newline')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_4" value="hidden">{{_('非表示')}}</label>
+                  <label><input type="checkbox" id="chk_title_4" value="hidden">{{_('Hide')}}</label>
                 </div>
                 </fieldset>
               </td>
@@ -122,24 +122,24 @@
               <td>　</td>
             </tr>
             <tr>
-              <td>{{_('タイトル(英)')}}</td>
-              <td>{{_('テキスト')}}</td>
+              <td>{{_('Title(English)')}}</td>
+              <td>{{_('Text')}}</td>
               <td>
                 <fieldset disabled>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_0" value="required" checked>{{_('必須')}}</label>
+                  <label><input type="checkbox" id="chk_title_en_0" value="required" checked>{{_('Required')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_1" value="multiple">{{_('複数可')}}</label>
+                  <label><input type="checkbox" id="chk_title_en_1" value="multiple">{{_('Multiple')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_2" value="showlist" checked>{{_('一覧表示')}}</label>
+                  <label><input type="checkbox" id="chk_title_en_2" value="showlist" checked>{{_('List Display')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_3" value="crtf" checked>{{_('改行指定')}}</label>
+                  <label><input type="checkbox" id="chk_title_en_3" value="crtf" checked>{{_('Specify Newline')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_4" value="hidden">{{_('非表示')}}</label>
+                  <label><input type="checkbox" id="chk_title_en_4" value="hidden">{{_('Hide')}}</label>
                 </div>
                 </fieldset>
               </td>
@@ -147,24 +147,24 @@
               <td>　</td>
             </tr>
             <tr>
-              <td>{{_('言語')}}</td>
-              <td>{{_('テキスト')}}</td>
+              <td>{{_('Language')}}</td>
+              <td>{{_('Text')}}</td>
               <td>
                 <fieldset disabled>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_0" value="required" checked>{{_('必須')}}</label>
+                  <label><input type="checkbox" id="chk_lang_0" value="required" checked>{{_('Required')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_1" value="multiple">{{_('複数可')}}</label>
+                  <label><input type="checkbox" id="chk_lang_1" value="multiple">{{_('Multiple')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_2" value="showlist">{{_('一覧表示')}}</label>
+                  <label><input type="checkbox" id="chk_lang_2" value="showlist">{{_('List Display')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_3" value="crtf">{{_('改行指定')}}</label>
+                  <label><input type="checkbox" id="chk_lang_3" value="crtf">{{_('Specify Newline')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_4" value="hidden">{{_('非表示')}}</label>
+                  <label><input type="checkbox" id="chk_lang_4" value="hidden">{{_('Hide')}}</label>
                 </div>
                 </fieldset>
               </td>
@@ -172,24 +172,24 @@
               <td>　</td>
             </tr>
             <tr>
-              <td>{{_('公開日')}}</td>
-              <td>{{_('日付')}}</td>
+              <td>{{_('Publish Date')}}</td>
+              <td>{{_('Date')}}</td>
               <td>
                 <fieldset disabled>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_0" value="required" checked>{{_('必須')}}</label>
+                  <label><input type="checkbox" id="chk_pubdate_0" value="required" checked>{{_('Required')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_1" value="multiple">{{_('複数可')}}</label>
+                  <label><input type="checkbox" id="chk_pubdate_1" value="multiple">{{_('Multiple')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_2" value="showlist">{{_('一覧表示')}}</label>
+                  <label><input type="checkbox" id="chk_pubdate_2" value="showlist">{{_('List Display')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_3" value="crtf">{{_('改行指定')}}</label>
+                  <label><input type="checkbox" id="chk_pubdate_3" value="crtf">{{_('Specify Newline')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_4" value="hidden">{{_('非表示')}}</label>
+                  <label><input type="checkbox" id="chk_pubdate_4" value="hidden">{{_('Hide')}}</label>
                 </div>
                 </fieldset>
               </td>
@@ -197,24 +197,24 @@
               <td>　</td>
             </tr>
             <tr>
-              <td>{{_('キーワード')}}</td>
-              <td>{{_('テキスト')}}</td>
+              <td>{{_('Keyword')}}</td>
+              <td>{{_('Text')}}</td>
               <td>
                 <fieldset disabled>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_0" value="required">{{_('必須')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_0" value="required">{{_('Required')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_1" value="multiple">{{_('複数可')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_1" value="multiple">{{_('Multiple')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_2" value="showlist">{{_('一覧表示')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_2" value="showlist">{{_('List Display')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_3" value="crtf">{{_('改行指定')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_3" value="crtf">{{_('Specify Newline')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_4" value="hidden">{{_('非表示')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_4" value="hidden">{{_('Hide')}}</label>
                 </div>
                 </fieldset>
               </td>
@@ -222,24 +222,24 @@
               <td>　</td>
             </tr>
             <tr>
-              <td>{{_('キーワード(英)')}}</td>
-              <td>{{_('テキスト')}}</td>
+              <td>{{_('Keyword(English)')}}</td>
+              <td>{{_('Text')}}</td>
               <td>
                 <fieldset disabled>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_0" value="required">{{_('必須')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_en_0" value="required">{{_('Required')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_1" value="multiple">{{_('複数可')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_en_1" value="multiple">{{_('Multiple')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_2" value="showlist">{{_('一覧表示')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_en_2" value="showlist">{{_('List Display')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_3" value="crtf">{{_('改行指定')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_en_3" value="crtf">{{_('Specify Newline')}}</label>
                 </div>
                 <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_4" value="hidden">{{_('非表示')}}</label>
+                  <label><input type="checkbox" id="chk_keyword_en_4" value="hidden">{{_('Hide')}}</label>
                 </div>
                 </fieldset>
               </td>
@@ -249,13 +249,13 @@
           </tbody>
         </table>
         <div class="col-sm-3 col-md-3 col-lg-3">
-          <button type="button" class="btn btn-default btn-block" id="btn_new_itemtype_meta">{{_('メタデータ追加')}}</button>
+          <button type="button" class="btn btn-default btn-block" id="btn_new_itemtype_meta">{{_('Add Metadata')}}</button>
         </div>
         <div class="col-sm-3 col-md-3 col-lg-3 pull-right">
           <button type="button" class="btn btn-default btn-block" id="btn_create_itemtype_schema">{{_('Sending')}}</button>
         </div>
         <div class="col-sm-3 col-md-3 col-lg-3 pull-right hide">
-          <button type="button" class="btn btn-default btn-block" id="btn_previews_itemtype_schema">{{_('Previews')}}</button>
+          <button type="button" class="btn btn-default btn-block" id="btn_previews_itemtype_schema">{{_('Preview')}}</button>
         </div>
       </div>
       <div class="panel panel-default hide">

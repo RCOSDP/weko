@@ -1,15 +1,15 @@
-# Translations template for weko-accounts.
+# Translations template for weko-authors.
 # Copyright (C) 2018 National Institute of Informatics
-# This file is distributed under the same license as the weko-accounts
+# This file is distributed under the same license as the weko-authors
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
+"Project-Id-Version: weko-authors 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-10 18:01+0900\n"
+"POT-Creation-Date: 2018-04-10 15:26+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,16 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#. NOTE: This is a note to a translator.
-#: weko_accounts/ext.py:41
-msgid "A translation string"
+#: weko_authors/views.py:76
+msgid "Header Error"
 msgstr ""
 
-#: weko_accounts/views.py:46
-msgid "WEKO-Accounts"
-msgstr ""
-
-#: weko_accounts/templates/weko_accounts/index.html:24
-msgid "Welcome to"
+#: weko_authors/views.py:87
+msgid "Success"
 msgstr ""
 

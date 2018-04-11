@@ -56,6 +56,7 @@ WEKO_SCHEMA_REST_ENDPOINTS = {
         'schemas_route': '/schemas/',
         'schema_route': '/schemas/<pid_value>',
         'schemas_put_route': '/schemas/put/<pid_value>/<path:key>',
+        # 'schemas_formats_route': '/schemas/formats/',
         'default_media_type': 'application/json',
         'max_result_window': 10000,
     },
@@ -66,3 +67,10 @@ WEKO_SCHEMA_UI_RESPONSE_MESSAGES = {}
 
 WEKO_SCHEMA_CACHE_PREFIX = 'cache_{schema_name}'
 """ cache items prifix info"""
+
+# WEKO_SCHEMA_UI_FORMAT_EDIT = 'weko_schema_ui/edit.html'
+# WEKO_SCHEMA_UI_FORMAT_EDIT_API = '/api/schemas/'
+# """URL of search endpoint for schemas."""
+#
+# WEKO_SCHEMA_UI_FORMAT_SCHEMAFORM = 'json/weko_schema_ui/format_form.json'
+# WEKO_SCHEMA_UI_FORMAT_FORM_JSONSCHEMA = 'json/weko_schema_ui/format_schema.json'

@@ -115,6 +115,17 @@ def create_blueprint(endpoints):
             ctx=ctx,
         )
 
+        # schema_formats_edit = SchemaFormatEditResource.as_view(
+        #     SchemaFormatEditResource.view_name.format(endpoint),
+        #     ctx=ctx,
+        # )
+        #
+        # blueprint.add_url_rule(
+        #     options.pop('schemas_formats_route'),
+        #     view_func=schema_formats_edit,
+        #     methods=['POST'],
+        # )
+
         blueprint.add_url_rule(
             options.pop('schemas_route'),
             view_func=schema_xsd_files,
@@ -199,7 +210,8 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
 
             xsd = SchemaConverter(fn, data.get('root_name'))
             try:
-                self.record_class.create(pid, sn+"_mapping", data, xsd.to_dict(), xsd.namespaces)
+                self.record_class.create(pid, sn+"_mapping", data, xsd.to_dict(), data.get('xsd_file'),
+                                         xsd.namespaces)
                 db.session.commit()
             except:
                 abort(400, 'Schema of the same name already exists.')
@@ -214,17 +226,17 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             #                 v1["order"] = len(v)
             #                 v.update({sn: v1})
             #                 break
-            for k, v in current_app.config["OAISERVER_METADATA_FORMATS"].items():
-                if isinstance(v, dict):
-                    v1 = v.copy()
-                    lst = list(v1["serializer"])
-                    lst[1]["schema_type"] = sn
-                    v1["serializer"] = tuple(lst)
-                    v1["namespace"] = ""
-                    v1["schema"] = ""
-                    v.update(v1)
-                    break
 
+            # update oai metadata formats
+            oad = current_app.config.get('OAISERVER_METADATA_FORMATS', {})
+            sel = list(oad.values())[0].get('serializer')
+            scm = dict()
+            if isinstance(xsd.namespaces, dict):
+                ns = xsd.namespaces.get('') or xsd.namespaces.get(sn)
+            scm.update({'namespace': ns})
+            scm.update({'schema': data.get('xsd_file')})
+            scm.update({'serializer': (sel[0], {'schema_type': sn})})
+            oad.update({sn: scm})
 
             # move out those files from tmp folder
             shutil.move(furl, dst)
@@ -243,7 +255,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             links = dict(self=url)
             links['bucket'] = request.base_url + "put/" + str(pid.object_uuid)
 
-            response = current_app.response_class(json.dumps({"links":links}), mimetype=request.mimetype)
+            response = current_app.response_class(json.dumps({"links": links}), mimetype=request.mimetype)
             response.status_code = 201
             return response
 
@@ -271,7 +283,6 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
         else:
             pass
 
-
         jd = {"key": fn, "mimetype": request.mimetype, "links": {},
               "size": bytes_written}
         data = dict(key=fn, mimetype='text/plain')
@@ -279,3 +290,32 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
                                               mimetype='application/json')
         response.status_code = 200
         return response
+
+
+class SchemaFormatEditResource(ContentNegotiatedMethodView):
+    """
+    Edit metadata formats for OAI ListMetadataFormats
+    """
+    view_name = '{0}_formats_edit'
+
+    def __init__(self, ctx, *args, **kwargs):
+        """Constructor."""
+        super(SchemaFormatEditResource, self).__init__(
+            *args,
+            **kwargs
+        )
+        for key, value in ctx.items():
+            setattr(self, key, value)
+
+    def post(self, **kwargs):
+        """
+
+        :param kwargs:
+        :return:
+        """
+        if request.mimetype not in self.loaders:
+            raise UnsupportedMediaRESTError(request.mimetype)
+
+        data = self.loaders[request.mimetype]()
+        if data is None:
+            raise InvalidDataRESTError()

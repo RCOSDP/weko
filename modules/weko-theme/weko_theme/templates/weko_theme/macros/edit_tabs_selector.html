@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{% macro tabs_selector(tab_value='アイテムタイプ') %}
+{% macro tabs_selector(tab_value='Item Type') %}
   {% set tabs_list = [('schema management', 'Schema Management', url_for('weko_schema_ui.list')),
                       ('item type', 'Item Type', url_for('weko_itemtypes_ui.index')),
                       ('item management', 'Item Management', '/'),

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-01-22 14:39+0900\n"
+"POT-Creation-Date: 2018-04-11 15:16+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,28 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_search_ui/templates/weko_search_ui/header.html:26
-msgid "Search"
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:41
+msgid "Item Lists"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/header.html:31
-msgid "DetailSearch"
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:43
+msgid "Search Results"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:70
+msgid "Execution"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:73
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:100
+msgid "Display Order"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:138
+msgid "Search failed."
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:144
+msgid "Loading..."
 msgstr ""
 

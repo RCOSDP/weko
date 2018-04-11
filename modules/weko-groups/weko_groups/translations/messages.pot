@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-groups 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-01-22 11:01+0900\n"
+"POT-Creation-Date: 2018-04-10 18:14+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -72,7 +72,7 @@ msgstr ""
 msgid "Closed"
 msgstr ""
 
-#: weko_groups/models.py:176 weko_groups/templates/weko_groups/index.html:68
+#: weko_groups/models.py:176 weko_groups/templates/weko_groups/index.html:70
 msgid "Name"
 msgstr ""
 
@@ -114,118 +114,118 @@ msgid "%(icon)s Groups"
 msgstr ""
 
 #: weko_groups/templates/weko_groups/new_member.html:27
-#: weko_groups/templates/weko_groups/pending.html:30 weko_groups/views.py:105
+#: weko_groups/templates/weko_groups/pending.html:30 weko_groups/views.py:104
 msgid "Groups"
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:49 weko_groups/views.py:133
+#: weko_groups/templates/weko_groups/index.html:49 weko_groups/views.py:134
 msgid "Requests"
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:47 weko_groups/views.py:154
+#: weko_groups/templates/weko_groups/index.html:47 weko_groups/views.py:155
 msgid "Invitations"
 msgstr ""
 
-#: weko_groups/views.py:171
+#: weko_groups/views.py:172
 msgid "New"
 msgstr ""
 
-#: weko_groups/views.py:188
+#: weko_groups/views.py:189
 #, python-format
 msgid "Group \"%(name)s\" created"
 msgstr ""
 
-#: weko_groups/views.py:191
+#: weko_groups/views.py:192
 msgid "Group creation failure"
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:92
-#: weko_groups/templates/weko_groups/members.html:35 weko_groups/views.py:202
-#: weko_groups/views.py:205
+#: weko_groups/templates/weko_groups/index.html:94
+#: weko_groups/templates/weko_groups/members.html:35 weko_groups/views.py:203
+#: weko_groups/views.py:206
 msgid "Manage"
 msgstr ""
 
-#: weko_groups/views.py:223
+#: weko_groups/views.py:224
 #, python-format
 msgid "Group \"%(name)s\" was updated"
 msgstr ""
 
-#: weko_groups/views.py:234
+#: weko_groups/views.py:235
 #, python-format
 msgid "You cannot edit group %(group_name)s"
 msgstr ""
 
-#: weko_groups/views.py:266
+#: weko_groups/views.py:267
 #, python-format
 msgid "Successfully removed group \"%(group_name)s\""
 msgstr ""
 
-#: weko_groups/views.py:271
+#: weko_groups/views.py:272
 #, python-format
 msgid "You cannot delete the group %(group_name)s"
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:69
-#: weko_groups/templates/weko_groups/index.html:100
-#: weko_groups/templates/weko_groups/new.html:35 weko_groups/views.py:283
-#: weko_groups/views.py:286
+#: weko_groups/templates/weko_groups/index.html:71
+#: weko_groups/templates/weko_groups/index.html:102
+#: weko_groups/templates/weko_groups/new.html:35 weko_groups/views.py:284
+#: weko_groups/views.py:287
 msgid "Members"
 msgstr ""
 
-#: weko_groups/views.py:320
+#: weko_groups/views.py:321
 #, python-format
 msgid "You are not allowed to see members of this group %(group_name)s."
 msgstr ""
 
-#: weko_groups/views.py:348
+#: weko_groups/views.py:349
 #, python-format
 msgid "You have successfully left %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:357
+#: weko_groups/views.py:358
 #, python-format
 msgid "You cannot leave the group %(group_name)s"
 msgstr ""
 
-#: weko_groups/views.py:387
+#: weko_groups/views.py:388
 #, python-format
-msgid "%(user)s accepted to %(name)s group."
+msgid "%(user)s accepted to %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:393
+#: weko_groups/views.py:394
 #, python-format
 msgid "You cannot approve memberships for the group %(group_name)s"
 msgstr ""
 
-#: weko_groups/views.py:423
+#: weko_groups/views.py:424
 #, python-format
 msgid "User %(user_email)s was removed from %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:428
+#: weko_groups/views.py:429
 #, python-format
 msgid "You cannot delete users of the group %(group_name)s"
 msgstr ""
 
-#: weko_groups/views.py:457
+#: weko_groups/views.py:458
 #, python-format
-msgid "You are now part of %(name)s group."
+msgid "You are now part of %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:485
+#: weko_groups/views.py:486
 #, python-format
-msgid "You have rejected invitation to %(name)s group."
+msgid "You have rejected invitation to %(group_name)s group."
 msgstr ""
 
-#: weko_groups/views.py:496
+#: weko_groups/views.py:497
 msgid "NewMember"
 msgstr ""
 
-#: weko_groups/views.py:513
+#: weko_groups/views.py:514
 msgid "Requests sent!"
 msgstr ""
 
-#: weko_groups/views.py:523
+#: weko_groups/views.py:524
 #, python-format
 msgid ""
 "You cannot invite users or yourself (i.e. join) to the group "
@@ -246,7 +246,7 @@ msgid "Add Groups"
 msgstr ""
 
 #: weko_groups/templates/weko_groups/index.html:37
-#: weko_groups/templates/weko_groups/index.html:54
+#: weko_groups/templates/weko_groups/index.html:55
 msgid "New group"
 msgstr ""
 
@@ -257,19 +257,19 @@ msgid ""
 "more involved in growth of the community."
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:56
+#: weko_groups/templates/weko_groups/index.html:57
 msgid "Go ahead and create new group!"
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:60
+#: weko_groups/templates/weko_groups/index.html:62
 msgid "No results found."
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:87
+#: weko_groups/templates/weko_groups/index.html:89
 msgid "Leave"
 msgstr ""
 
-#: weko_groups/templates/weko_groups/index.html:95
+#: weko_groups/templates/weko_groups/index.html:97
 #: weko_groups/templates/weko_groups/members.html:36
 #: weko_groups/templates/weko_groups/new_member.html:50
 msgid "Invite"

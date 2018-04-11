@@ -1,0 +1,255 @@
+# Translations template for weko-theme.
+# Copyright (C) 2018 National Institute of Informatics
+# This file is distributed under the same license as the weko-theme project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2018-04-11 16:37+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: weko_theme/templates/weko_theme/body_contents.html:35
+msgid "Item list"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:55
+msgid "Execution"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:58
+#: weko_theme/templates/weko_theme/body_contents.html:85
+msgid "Display order"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:123
+msgid "Search failed."
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:129
+msgid "Loading..."
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_index.html:24
+msgid "Index Link"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_index.html:30
+msgid "Add Links"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_index.html:37
+msgid "Index Tree"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search.html:25
+msgid "Type and press enter to search"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search.html:37
+msgid "Detail search"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search.html:40
+msgid "Full text"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search.html:43
+#: weko_theme/templates/weko_theme/body_search_detail.html:33
+msgid "Keyword"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:25
+msgid "Title"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:29
+msgid "Author or Author id"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:37
+msgid "Subject terms"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:43
+msgid "Abstract"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:47
+msgid "Publisher"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:51
+msgid "Contributors or Author id"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:55
+msgid "Contents created date"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:65
+msgid "Item type"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:69
+msgid "Format"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:77
+msgid "Journal title"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:83
+msgid "Language"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:86
+msgid "Japanese"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:87
+msgid "English"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:88
+msgid "French"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:89
+msgid "Italian"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:90
+msgid "German"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:91
+msgid "Spanish"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:92
+msgid "Chinese"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:93
+msgid "Russian"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:94
+msgid "Latin"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:95
+msgid "Malay"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:96
+msgid "Esperanto"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:97
+msgid "Arabian"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:98
+msgid "Greek"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:99
+msgid "Korean"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:100
+msgid "Other languages"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:104
+msgid "Publish date"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:112
+msgid "Region"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:116
+msgid "Period"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:122
+msgid "Right"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:126
+msgid "Author version flag"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:130
+msgid "Academic degree number"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:134
+msgid "Academic degree date"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:144
+msgid "Degree name"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:148
+msgid "Institution for academic degree"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:154
+msgid "Resource type"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:161
+msgid "DetailSearch"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:164
+msgid "Clear"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/edit.html:25
+msgid "End edit"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/footer.html:28
+#, python-format
+msgid "<p>Powered by <a href=\"%(link)s\">CERN Data Centre & Invenio</a><p>"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/header.html:28
+msgid "Toggle navigation"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/header_login.html:23
+msgid "Log in"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/header_login.html:24
+msgid "Sign up"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/header_login.html:41
+#: weko_theme/templates/weko_theme/header_login.html:45
+msgid "Log out"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/page.html:25
+msgid "Edit"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/macros/language_selector.html:26
+msgid "Language:"
+msgstr ""
+

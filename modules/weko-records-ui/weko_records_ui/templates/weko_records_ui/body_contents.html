@@ -22,7 +22,7 @@
 <div class="panel-group">
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
-    <h3 class="panel-title">{{_('インデックス')}}</h3>
+    <h3 class="panel-title">{{_('Index')}}</h3>
   </div>
   <div class="panel-body">
     <pre class="hide">{{record|tojson}}</pre>
@@ -43,7 +43,7 @@
 </div>
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
-    <h3 class="panel-title">{{_('アイテム')}}</h3>
+    <h3 class="panel-title">{{_('Item')}}</h3>
   </div>
   <div class="panel-body">
     <div class="panel panel-default">
@@ -234,12 +234,12 @@
 
             <div class="text-center">
               <a class="btn btn-default" id="btn_back" href="#" >
-                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('戻る')}}</a>
+                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</a>
               {% if record.editable %}
               <a class="btn btn-default" id="btn_edit" href="{{ '/item/edit/'+pid.pid_value }}">
-                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('編集')}}</a>
+                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Edit')}}</a>
               <a class="btn btn-danger btn-sm" id="btn_delete" href="#">
-                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>{{_('削除')}}</a>
+                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>{{_('Delete')}}</a>
               {% endif %}
             </div>
           </div>

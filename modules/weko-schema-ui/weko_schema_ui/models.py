@@ -50,7 +50,7 @@ class OAIServerSchema(db.Model, Timestamp):
     """schema identifier."""
 
     schema_name = db.Column(
-        db.Text,
+        db.String(255),
         nullable=False,
         unique=True
     )
@@ -103,6 +103,11 @@ class OAIServerSchema(db.Model, Timestamp):
         nullable=True
     )
     """NameSpace for xml"""
+
+    schema_location = db.Column(
+        db.String(255)
+    )
+    """Schema Url"""
 
     isvalid = db.Column(
         db.Boolean(name='isvalid'),

@@ -3,11 +3,12 @@
 # This file is distributed under the same license as the weko-admin project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 #
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-01-19 20:04+0900\n"
+"POT-Creation-Date: 2018-04-10 18:09+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,48 +21,48 @@ msgstr ""
 msgid "A translation string"
 msgstr ""
 
-#: weko_admin/views.py:79
+#: weko_admin/views.py:70
 #, python-format
 msgid "%(icon)s Session"
 msgstr ""
 
-#: weko_admin/views.py:84
+#: weko_admin/views.py:75
 msgid "Session"
 msgstr ""
 
-#: weko_admin/views.py:106
+#: weko_admin/views.py:97
 msgid "Session lifetime was updated."
 msgstr ""
 
-#: weko_admin/views.py:110
+#: weko_admin/views.py:101
 msgid "15 mins"
 msgstr ""
 
-#: weko_admin/views.py:111
+#: weko_admin/views.py:102
 msgid "30 mins"
 msgstr ""
 
-#: weko_admin/views.py:112
+#: weko_admin/views.py:103
 msgid "45 mins"
 msgstr ""
 
-#: weko_admin/views.py:113
+#: weko_admin/views.py:104
 msgid "60 mins"
 msgstr ""
 
-#: weko_admin/views.py:114
+#: weko_admin/views.py:105
 msgid "180 mins"
 msgstr ""
 
-#: weko_admin/views.py:115
+#: weko_admin/views.py:106
 msgid "360 mins"
 msgstr ""
 
-#: weko_admin/views.py:116
+#: weko_admin/views.py:107
 msgid "720 mins"
 msgstr ""
 
-#: weko_admin/views.py:117
+#: weko_admin/views.py:108
 msgid "1440 mins"
 msgstr ""
 

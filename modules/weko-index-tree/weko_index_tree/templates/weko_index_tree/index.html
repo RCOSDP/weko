@@ -61,16 +61,16 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('インデックス')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('Index')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <div class="form-horizontal">
                     <div class="input-group">
-                      <span class="input-group-addon">日本語</span>
+                      <span class="input-group-addon">{{_('Japanese')}}</span>
                       <input type="text" class="form-control" id="inputTitle_ja" placeholder="">
                     </div>
                     <div class="row-line-space"></div>
                     <div class="input-group">
-                      <span class="input-group-addon">英語</span>
+                      <span class="input-group-addon">{{_('English')}}</span>
                       <input type="text" class="form-control" id="inputTitle_en" placeholder="">
                     </div>
                   </div>
@@ -81,7 +81,7 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('コメント')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('Comment')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <textarea class="form-control" rows="3" id="inputComment"></textarea>
                 </div>
@@ -91,12 +91,12 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('公開')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('Release')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <div class="checkbox">
                     <label>
                       <input type="checkbox" id="publish_repos">
-                      公開する(公開日を指定)
+                      {{_('Disclose(An opening to the public day is designated.))')}}
                     </label>
                   </div>
                   <input type="date" class="form-control hide" name="publish_date" id="publish_date">
@@ -104,7 +104,7 @@
                     <span class="indent"></span>
                     <label>
                       <input type="checkbox" id="pubdate_recursive">
-                      子インデックスの公開日にも再帰的に反映させる
+                      {{_('I also make them reflect recursively on an opening to the public day of a child index.')}}
                     </label>
                   </div>
                 </div>
@@ -114,12 +114,12 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('RSSアイコン')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('RSS icon')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <div class="checkbox">
                     <label>
                       <input type="checkbox" id="rss_display">
-                      表示する
+                      {{_('It\'s indicated.')}}
                     </label>
                   </div>
                 </div>
@@ -129,19 +129,19 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('PDFカバーページ')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('PDF cover page')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <div class="checkbox">
                     <label>
                       <input type="checkbox" id="create_cover_flag">
-                      作成する
+                      {{_('It\'s made.')}}
                     </label>
                   </div>
                   <div class="checkbox">
                     <span class="indent"></span>
                     <label>
                       <input type="checkbox" id="create_cover_recursive">
-                      子インデックスのPDFカバーページにも再帰的に反映させる
+                      {{_('I also make a PDF cover page of a child index reflected recursively.')}}
                     </label>
                   </div>
                 </div>
@@ -151,15 +151,15 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('ハーベスト公開')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('Harvest opening to the public')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <div class="checkbox">
                     <label>
                       <input type="checkbox" id="harvest_public_state">
-                      公開する
+                      {{_('It\'s opened.')}}
                     </label>
                   </div>
-                  <label class="text-danger">※所属しているアイテムのメタデータを外部に公開しない場合はチェックをOFFにしてください</label>
+                  <label class="text-danger">{{_('* When not exhibiting metadata of the item to which you belong in outside, please turn off a check.')}}</label>
                 </div>
               </div>
             </div>
@@ -173,10 +173,10 @@
                   <div class="checkbox">
                     <label>
                       <input type="checkbox" id="biblio_flag">
-                      このインデックス直下のアイテムの利用統計を集計する
+                      {{_('Use statistics of an item of this index falling plumb down is totaled.')}}
                     </label>
                   </div>
-                  <label class="text-danger">※所属しているアイテムのメタデータを外部に公開しない場合はチェックをOFFにしてください</label>
+                  <label class="text-danger">{{_('* When not exhibiting metadata of the item to which you belong in outside, please turn off a check.')}}</label>
                 </div>
               </div>
             </div>
@@ -184,13 +184,13 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('検索結果表示形式')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('Search result display style')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <label class="radio-inline">
-                    <input type="radio" name="display_type" id="display_type_0" value="0" checked> 一覧形式
+                    <input type="radio" name="display_type" id="display_type_0" value="0" checked>{{_('The list form')}}
                   </label>
                   <label class="radio-inline">
-                    <input type="radio" name="display_type" id="display_type_1" value="1"> 目次形式
+                    <input type="radio" name="display_type" id="display_type_1" value="1">{{_('The form of contents')}}
                   </label>
                 </div>
               </div>
@@ -199,22 +199,22 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('インデックスリンク')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('Index link')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <label class="radio-inline">
-                    <input type="radio" name="select_index_list_display" id="select_index_list_display_0" value="1"> 表示する
+                    <input type="radio" name="select_index_list_display" id="select_index_list_display_0" value="1">{{_('It\'s indicated.')}}
                   </label>
                   <label class="radio-inline">
-                    <input type="radio" name="select_index_list_display" id="select_index_list_display_1" value="0" checked> 表示しない
+                    <input type="radio" name="select_index_list_display" id="select_index_list_display_1" value="0" checked>{{_('It isn\'t indicated.')}}
                   </label>
                   <fieldset id="select_index_list_display" disabled>
                     <div class="input-group">
-                      <span class="input-group-addon">一覧表示名</span>
+                      <span class="input-group-addon">{{_('List display name (Japanese)')}}</span>
                       <input type="text" class="form-control" id="select_index_list_name_ja" placeholder="">
                     </div>
                     <div class="row-line-space"></div>
                     <div class="input-group">
-                      <span class="input-group-addon">一覧表示名(英)</span>
+                      <span class="input-group-addon">{{_('List display name (English)')}}</span>
                       <input type="text" class="form-control" id="select_index_list_name_en" placeholder="">
                     </div>
                   </fieldset>
@@ -225,17 +225,17 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('閲覧権限')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('Reading right')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <div class="row">
                     <div class="col-sm-12 col-md-12">
-                      <h4><strong>{{_('権限(ベース権限)')}}</strong></h4>
+                      <h4><strong>{{_('Right (base right)')}}</strong></h4>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-5 col-md-5">
                       <div class="form-group">
-                        <label for="exclusive_acl_role_name">{{_('閲覧権限なし')}}</label>
+                        <label for="exclusive_acl_role_name">{{_('Without reading right')}}</label>
                         <select multiple class="form-control" id="exclusive_acl_role_name"></select>
                       </div>
                     </div>
@@ -252,55 +252,55 @@
                     </div>
                     <div class="col-sm-5 col-md-5">
                       <div class="form-group">
-                        <label for="acl_role_name">{{_('閲覧権限あり')}}</label>
+                        <label for="acl_role_name">{{_('With reading right')}}</label>
                         <select multiple class="form-control" id="acl_role_name">
-                          <option value="0" disabled>システム管理者</option>
-                          <option value="1">主担</option>
-                          <option value="2">モデレータ</option>
-                          <option value="3">一般</option>
-                          <option value="4">ゲスト</option>
-                          <option value="5">事務局</option>
-                          <option value="6" disabled>管理者</option>
+                          <option value="0" disabled>{{_('System administrator')}}</option>
+                          <option value="1">{{_('Project manager')}}</option>
+                          <option value="2">{{_('Moderator')}}</option>
+                          <option value="3">{{_('General')}}</option>
+                          <option value="4">{{_('Guest')}}</option>
+                          <option value="5">{{_('Secretariat')}}</option>
+                          <option value="6" disabled>{{_('Administrator')}}</option>
                         </select>
                       </div>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-12 col-md-12">
-                      <h4><strong>{{_('権限(ルーム権限)')}}</strong></h4>
+                      <h4><strong>{{_('Right (room right)')}}</strong></h4>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-12 col-md-12">
                       <span class="indent"></span>
-                      <label>{{_('閲覧権限あり')}}</label><br>
+                      <label>{{_('With reading right')}}</label><br>
                       <span class="indent"></span>
                       <label class="checkbox-inline">
-                        <input type="checkbox" id="acl_room_auth4" value="4" checked disabled> 主担
+                        <input type="checkbox" id="acl_room_auth4" value="4" checked disabled>{{_('Project manager')}}
                       </label>
                       <label class="checkbox-inline">
-                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth3" value="3" checked> モデレータ
+                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth3" value="3" checked>{{_('Moderator')}}
                       </label>
                       <label class="checkbox-inline">
-                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth2" value="2" checked> 一般
+                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth2" value="2" checked>{{_('General')}}
                       </label>
                       <label class="checkbox-inline">
-                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth1" value="1" checked> ゲスト
+                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth1" value="1" checked>{{_('Guest')}}
                       </label>
                       <label class="checkbox-inline">
-                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth0" value="0" checked> 未ログイン
+                        <input type="checkbox" name="acl_room_auth" id="acl_room_auth0" value="0" checked>{{_('Not logged in')}}
                       </label>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-12 col-md-12">
-                      <h4><strong>{{_('グループ')}}</strong></h4>
+                      <h4><strong>{{_('group')}}</strong></h4>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-5 col-md-5">
                       <div class="form-group">
-                        <label for="exclusive_acl_group_name">{{_('閲覧権限なし')}}</label>
+                        <label for="exclusive_acl_group_name">{{_('View without authority')}}</label>
                         <select multiple class="form-control" id="exclusive_acl_group_name"></select>
                       </div>
                     </div>
@@ -317,9 +317,9 @@
                     </div>
                     <div class="col-sm-5 col-md-5">
                       <div class="form-group">
-                        <label for="acl_group_name">{{_('閲覧権限あり')}}</label>
+                        <label for="acl_group_name">{{_('There viewing rights')}}</label>
                         <select multiple class="form-control" id="acl_group_name">
-                          <option>非会員</option>
+                          <option>{{_('Non-members')}}</option>
                         </select>
                       </div>
                     </div>
@@ -331,19 +331,19 @@
           <div class="panel panel-default">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('投稿権限')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('Contribution right')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <div class="row">
                     <div class="col-sm-12 col-md-12">
-                      <h4><strong>{{_('権限(ベース権限)')}}</strong></h4>
+                      <h4><strong>{{_('Right (base right)')}}</strong></h4>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-5 col-md-5">
                       <div class="form-group">
-                        <label for="exclusive_access_role_name">{{_('閲覧権限なし')}}</label>
+                        <label for="exclusive_access_role_name">{{_('Without reading right')}}</label>
                         <select multiple class="form-control" id="exclusive_access_role_name">
-                          <option vlaue="4">ゲスト</option>
+                          <option vlaue="4">{{_('Guest')}}</option>
                         </select>
                       </div>
                     </div>
@@ -360,14 +360,14 @@
                     </div>
                     <div class="col-sm-5 col-md-5">
                       <div class="form-group">
-                        <label for="acl_role_name">{{_('閲覧権限あり')}}</label>
+                        <label for="acl_role_name">{{_('With reading right')}}</label>
                         <select multiple class="form-control" id="access_role_name">
-                          <option value="0">システム管理者</option>
-                          <option value="1">主担</option>
-                          <option value="2">モデレータ</option>
-                          <option value="3">一般</option>
-                          <option value="5">事務局</option>
-                          <option value="6">管理者</option>
+                          <option value="0">{{_('System administrator')}}</option>
+                          <option value="1">{{_('Project manager')}}</option>
+                          <option value="2">{{_('Moderator')}}</option>
+                          <option value="3">{{_('General')}}</option>
+                          <option value="5">{{_('Secretariat')}}</option>
+                          <option value="6">{{_('Administrator')}}</option>
                         </select>
                       </div>
                     </div>
@@ -376,47 +376,47 @@
                     <div class="col-sm-12 col-md-12">
                       <span class="indent"></span>
                       <label class="checkbox-inline">
-                        <input type="checkbox" id="aclRoleIds_recursive" value="1"> 子インデックスのルーム権限にも再帰的に反映させる
+                        <input type="checkbox" id="aclRoleIds_recursive" value="1">{{_('I also make a room right of a child index reflected recursively.')}}
                       </label>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-12 col-md-12">
-                      <h4><strong>{{_('権限(ルーム権限)')}}</strong></h4>
+                      <h4><strong>{{_('Right (room right)')}}</strong></h4>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-12 col-md-12">
                       <span class="indent"></span>
-                      <label>{{_('閲覧権限あり')}}</label><br>
+                      <label>{{_('With reading right')}}</label><br>
                       <span class="indent"></span>
                       <label class="checkbox-inline">
-                        <input type="checkbox" id="access_room_auth4" value="4" checked disabled> 主担
+                        <input type="checkbox" id="access_room_auth4" value="4" checked disabled>{{_('Project manager')}}
                       </label>
                       <label class="checkbox-inline">
-                        <input type="checkbox" name="access_room_auth" id="access_room_auth3" value="3"> モデレータ
+                        <input type="checkbox" name="access_room_auth" id="access_room_auth3" value="3">{{_('Moderator')}}
                       </label>
                       <label class="checkbox-inline">
-                        <input type="checkbox" name="access_room_auth" id="access_room_auth2" value="2"> 一般
+                        <input type="checkbox" name="access_room_auth" id="access_room_auth2" value="2">{{_('General')}}
                       </label><br>
                       <span class="indent"></span>
                       <span class="indent"></span>
                       <label class="checkbox-inline">
-                        <input type="checkbox" id="aclRoomAuth_recursive" value="1"> 子インデックスのルーム権限にも再帰的に反映させる
+                        <input type="checkbox" id="aclRoomAuth_recursive" value="1">{{_('I also make a room right of a child index reflected recursively.')}}
                       </label>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-12 col-md-12">
-                      <h4><strong>{{_('グループ')}}</strong></h4>
+                      <h4><strong>{{_('Group')}}</strong></h4>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-sm-5 col-md-5">
                       <div class="form-group">
-                        <label for="exclusive_access_group_name">{{_('閲覧権限なし')}}</label>
+                        <label for="exclusive_access_group_name">{{_('Without reading right')}}</label>
                         <select multiple class="form-control" id="exclusive_access_group_name">
-                          <option>非会員</option>
+                          <option>{{_('Non-member')}}</option>
                         </select>
                       </div>
                     </div>
@@ -433,7 +433,7 @@
                     </div>
                     <div class="col-sm-5 col-md-5">
                       <div class="form-group">
-                        <label for="acl_group_name">{{_('閲覧権限あり')}}</label>
+                        <label for="acl_group_name">{{_('With reading right')}}</label>
                         <select multiple class="form-control" id="access_group_name">
                         </select>
                       </div>
@@ -443,7 +443,7 @@
                     <div class="col-sm-12 col-md-12">
                       <span class="indent"></span>
                       <label class="checkbox-inline">
-                        <input type="checkbox" id="aclGroupIds_recursive" value="1"> 子インデックスのルーム権限にも再帰的に反映させる
+                        <input type="checkbox" id="aclGroupIds_recursive" value="1">{{_('I also make a room right of a child index reflected recursively.')}}
                       </label>
                     </div>
                   </div>
@@ -464,12 +464,12 @@
           <div class="panel panel-default hide">
             <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 col-md-2">{{_('サムネイル')}}</div>
+                <div class="col-sm-2 col-md-2">{{_('Thumbnail')}}</div>
                 <div class="col-sm-10 col-md-10">
                   <span id="thumbnail_file_helpBlock" class="help-block">
-                    <label>ファイルサイズ : 2MB</label><br>
-                    <label>画像サイズ : 横1024px × 縦1280px </label><br>
-                    <label>ファイルタイプ : gif, jpg, jpe, jpeg, png, bmp, tiff, tif</label>
+                    <label>{{_('A file size: 2MB')}}</label><br>
+                    <label>{{_('The picture size: The side 1024px x lengthwise 1280px')}}</label><br>
+                    <label>{{_('File type: gif, jpg, jpe, jpeg, png, bmp, tiff, tif')}}</label>
                   </span>
                   <div id="thumbnail_upload">
                     <form method="post" target="_top" action="/indextree/thumbnail/0" id="attachment_form" enctype="multipart/form-data">
@@ -478,8 +478,8 @@
                   </div>
                   <div id="thumbnail_edit" class="hide">
                     <img src="" class="img-thumbnail" id="thumbnail_img">
-                    <button class="btn btn-default">{{_('編集')}}</button>
-                    <button class="btn btn-default">{{_('削除')}}</button>
+                    <button class="btn btn-default">{{_('Edit')}}</button>
+                    <button class="btn btn-default">{{_('Delete')}}</button>
                   </div>
                 </div>
               </div>

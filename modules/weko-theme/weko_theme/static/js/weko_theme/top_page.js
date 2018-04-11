@@ -31,55 +31,85 @@ require([
       return false;
     }
 
-    //入力あったら、入力値入って展開したまま
+    //サーチ入力の表示
     function ArrangeSearch(){
-      //ラジオボタン
-      //詳細検索展開するか否か
-      var btn = sessionStorage.getItem('btn', '');
+      var btn = sessionStorage.getItem('btn', false);
       var SearchType = GetUrlParam('search_type');
-      if (SearchType){
-        if (btn !== null && btn !== ''){
-          if (btn == 'detail-search'){
-            $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
-              if (IsParamKey($(this).attr('id'))){
-                var input = GetUrlParam($(this).attr('id'));
-                if (input && input !== ''){
-                  $(this).val(input);
-                  if (!$('#search_detail').hasClass('expanded')){
-                    $('#top-search-btn').addClass('hidden');
-                    $('#search_simple').removeClass('input-group');
-                    $('#search_detail_metadata').collapse('show');
-                  }else{
-                    $('#search_detail_metadata').collapse('hide');
-                  }
-                }
-              }
-            });
+      var input = '';
+      var IsRec = window.location.pathname.includes('records');
+
+      $('#search_detail_metadata :input:not(:checkbox), #q, #search_type :input').each(function(){
+        if (IsRec){
+          input = sessionStorage.getItem($(this).attr('id'), '');
+        }else{
+          if (SearchType){
+            if (IsParamKey($(this).attr('id'))){
+              input = GetUrlParam($(this).attr('id'));
+            }
           }else{
-            if (btn == 'simple-search'){
-              if (IsParamKey($('#q').attr('id'))){
-                var input = GetUrlParam($('#q').attr('id'));
-                if (input && input !== ''){
+            sessionStorage.removeItem($(this).attr('id'));
+          }
+        }
+
+        //詳細展開 値入力残
+        if (btn){
+          if (btn == 'detail-search'){
+            if (IsParamKey($(this).attr('id')) || IsRec){
+              if (input && input !== ''){
+                $(this).val(input);
+                if (!$('#search_detail').hasClass('expanded')){
+                  $('#top-search-btn').addClass('hidden');
+                  $('#search_simple').removeClass('input-group');
+                  $('#search_detail_metadata').collapse('show');
+                }else{
                   $('#search_detail_metadata').collapse('hide');
-                  $('#q').val(input);
                 }
               }
             }
+          }else{
+            if (btn == 'simple-search'){
+              input = sessionStorage.getItem('q', false);
+              if (input){
+                $('#search_detail_metadata').collapse('hide');
+                $('#q').val(input);
+              }
+            }
           }
+        }else{
+          $('#search_type_fulltext').prop('checked', true);
         }
+      });
+
+      //サーチラジオボタンの位置
+      if (SearchType){
         if (SearchType == '0'){
           $('#search_type_fulltext').prop('checked', true);
         }else{
           $('#search_type_keyword').prop('checked', true);
         }
       }else{
-        $('#search_type_fulltext').prop('checked', true);
+        if (IsRec){
+          var search_type = sessionStorage.getItem('search_type', false)
+          if (search_type && search_type == '1'){
+            $('#search_type_keyword').prop('checked', true);
+          }else{
+            $('#search_type_fulltext').prop('checked', true);
+          }
+        }else{
+          $('#search_type_fulltext').prop('checked', true);
+          sessionStorage.removeItem('search_type');
+        }
       }
 
     }
 
     //Url query コントロール
     function SearchSubmit(){
+      if ($('#search_type_fulltext').prop('checked')){
+        sessionStorage.setItem('search_type', '0');
+      }else{
+        sessionStorage.setItem('search_type', '1');
+      }
       $('#search-form').submit(function(event){
         var query= '';
         $('#search_type :input:checked').each(function(){
@@ -135,6 +165,19 @@ require([
           $(this).val('');
         })
       });
+
+      //アイテム検索結果 (search_ui/static/templates/itemlist.html)
+      $('#search_detail_metadata :input:not(:checkbox), #q').on('change', function(){
+        $('#search_detail_metadata :input:not(:checkbox), #q').each(function(){
+          if ($(this).val() !== ''){
+            sessionStorage.setItem($(this).attr('id'), $(this).val());
+          }else{
+            sessionStorage.removeItem($(this).attr('id'));
+          }
+        });
+      });
+
+//      #search_type :input[name="search_type"]
 
     });
 });

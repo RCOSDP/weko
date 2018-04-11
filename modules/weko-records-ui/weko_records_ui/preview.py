@@ -65,16 +65,16 @@ def preview(pid, record, template=None, **kwargs):
         return zip_preview(fileobj)
     else:
         for plugin in current_previewer.iter_previewers(
-                previewers=[file_previewer] if file_previewer else None):
+            previewers=[file_previewer] if file_previewer else None):
             if plugin.can_preview(fileobj):
                 try:
                     return plugin.preview(fileobj)
                 except Exception:
                     current_app.logger.warning(
                         ('Preview failed for {key}, in {pid_type}:{pid_value}'
-                         .format(key=fileobj.file.key,
-                                 pid_type=fileobj.pid.pid_type,
-                                 pid_value=fileobj.pid.pid_value)),
+                            .format(key=fileobj.file.key,
+                                    pid_type=fileobj.pid.pid_type,
+                                    pid_value=fileobj.pid.pid_value)),
                         exc_info=True)
         return default.preview(fileobj)
 
@@ -86,13 +86,16 @@ def zip_preview(file):
         children = tree.pop('children', {})
         tree['children'] = {}
         for k, v in children.items():
-            name = k.encode('utf-16be')
-            encode = chardet.detect(name).get('encoding')
-            if encode and '1252' in encode:
-                name = k.encode('cp437').decode('cp932')
+            try:
+                name = k.encode('cp437')
+                encode = chardet.detect(name).get('encoding')
+                if 'ISO-8859-1' in encode or 'WINDOWS-1252' in encode:
+                    name = name.decode('cp932')
+                else:
+                    name = name.decode(encode)
                 v['name'] = name
                 tree['children'][name] = v
-            else:
+            except:
                 tree['children'].update({k: v})
 
     list = children_to_list(tree)['children']
