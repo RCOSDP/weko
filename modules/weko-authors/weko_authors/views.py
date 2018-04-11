@@ -129,3 +129,53 @@ def get():
     indexer = RecordIndexer()
     result = indexer.client.search(index="authors", body=body)
     return json.dumps(result)
+
+
+@blueprint_api.route("/input", methods=['POST'])
+@login_required
+@author_permission.require(http_exception=403)
+def mapping():
+    """Transfer the author to JPCOAR format."""
+    data = request.get_json()
+    current_app.logger.debug(data)
+
+    # get author data
+    author_id = data.get('id') or ''
+    indexer = RecordIndexer()
+    result = indexer.client.get(index="authors", id=author_id)
+
+    # transfer to JPCOAR format
+    res = {'familyNames': [], 'givenNames': [], 'creatorNames': [],
+           'nameIdentifiers': []}
+
+    name_info = result.get('_source').get('authorNameInfo')
+    for i in name_info:
+        if i.get('nameShowFlg') == 'true':
+            if i.get('nameFormat') == 'familyNmAndNm':
+                tmp = {'familyName': i.get('familyName'),
+                       'lang': i.get('language')}
+                res['familyNames'].append(tmp)
+                tmp = {'givenName': i.get('firstName'),
+                       'lang': i.get('language')}
+                res['givenNames'].append(tmp)
+            else:
+                tmp = {'creatorName': i.get('fullName'),
+                       'lang': i.get('language')}
+                res['creatorNames'].append(tmp)
+
+    id_info = result.get('_source').get('authorIdInfo')
+    for j in id_info:
+        if j.get('authorIdShowFlg') == 'true':
+            tmp = {'nameIdentifier': j.get('authorId'),
+                   'nameIdentifierScheme': j.get('idType'),
+                   'nameIdentifierURI': ''}
+            res['nameIdentifiers'].append(tmp)
+
+    # remove empty element
+    last = {}
+    for k, v in res.items():
+        if v:
+            last[k] = v
+
+    current_app.logger.debug([last])
+    return json.dumps([last])
