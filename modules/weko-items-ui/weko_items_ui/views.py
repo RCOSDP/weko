@@ -142,7 +142,7 @@ def get_schema_form(item_type_id=0):
     filemeta_form = schema_form[0]
     if 'filemeta' == filemeta_form.get('key'):
         group_list = Group.get_group_list()
-        filemeta_form_group = filemeta_form.get('items')[4]
+        filemeta_form_group = filemeta_form.get('items')[-1]
         filemeta_form_group['type'] = 'select'
         filemeta_form_group['titleMap'] = group_list
     if 'default' != cur_lang:

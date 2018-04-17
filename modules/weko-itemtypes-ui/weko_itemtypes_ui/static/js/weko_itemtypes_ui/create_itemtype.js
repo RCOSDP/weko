@@ -110,6 +110,15 @@
               licensefree: {
                 type: "string"
               },
+              accessrole: {
+                type: "string",
+                title: "アクセス",
+                enum: ["open_access","open_date","open_login","open_no"]
+              },
+              accessdate: {
+                type: "string",
+                title: "公開日"
+              },
               groups: {
                 type: "string",
                 title: "グループ名"
@@ -127,11 +136,15 @@
           items: [
             {
               key: "filemeta[].filename",
-              type: "text"
+              type: "text",
+              title: "表示名",
+              title_i18n:{ja:"表示名",en:"FileName"}
             },
             {
               key: "filemeta[].displaytype",
               type: "select",
+              title: "表示形式",
+              title_i18n:{ja:"表示形式",en:"Preview"},
               titleMap: [
                 {value: "detail", name: "詳細表示"},
                 {value: "simple", name: "簡易表示"},
@@ -141,6 +154,8 @@
             {
               key: "filemeta[].licensetype",
               type: "select",
+              title: "ライセンス",
+              title_i18n:{ja:"ライセンス",en:"License"},
               titleMap: [
                 {value: "license_free", name: "自由入力"},
                 {value: "license_0", name: "Creative Commons : 表示"},
@@ -158,8 +173,32 @@
               condition: "model.filemeta[arrayIndex].licensetype == 'license_free'"
             },
             {
+              key: "filemeta[].accessrole",
+              type: "radios",
+              title: "アクセス",
+              title_i18n:{ja:"アクセス",en:"Access"},
+              titleMap: [
+                {value: "open_access", name: "オープンアクセス"},
+                {value: "open_date", name: "オープンアクセス日を指定する"},
+                {value: "open_login", name: "ログインユーザのみ"},
+                {value: "open_no", name: "公開しない"}
+              ]
+            },
+            {
+              key: "filemeta[].accessdate",
+              title: "公開日",
+              title_i18n:{ja:"公開日",en:"Opendate"},
+              type: "template",
+              format: "yyyy-MM-dd",
+              templateUrl: "/static/templates/weko_deposit/datepicker.html",
+              condition: "model.filemeta[arrayIndex].accessrole == 'open_date'"
+            },
+            {
               key: "filemeta[].groups",
-              type: "text"
+              title: "グループ",
+              title_i18n:{ja:"グループ",en:"Group"},
+              type: "text",
+              condition: "model.filemeta[arrayIndex].accessrole == 'open_date' || model.filemeta[arrayIndex].accessrole == 'open_login'"
             }
           ]
         });
