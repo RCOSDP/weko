@@ -226,10 +226,16 @@ def item_path_search_factory(self, search):
         mut.append({'term': query_q['post_filter'].pop('term')})
         query_q['post_filter']['bool'] = {'must': mut}
 
+    # create search query
     q = request.values.get('q')
-    index_id = Indexes.get_self_path(q).path if "/" not in q else q
-    query_q = json.dumps(query_q).replace("@index", index_id)
-    query_q = json.loads(query_q)
+    if q:
+        try:
+            fp = Indexes.get_self_path(q)
+            if fp:
+                query_q = json.dumps(query_q).replace("@index", fp.path)
+                query_q = json.loads(query_q)
+        except:
+            pass
 
     urlkwargs = MultiDict()
     try:

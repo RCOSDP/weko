@@ -83,7 +83,6 @@
         },
         "itemtype": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
@@ -218,7 +217,6 @@
         },
         "NIItype": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
@@ -272,14 +270,12 @@
         },
         "degreename": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
         },
         "description": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
@@ -293,7 +289,6 @@
         },
         "format": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
@@ -307,14 +302,12 @@
         },
         "grantid": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
         },
         "grantor": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
@@ -342,14 +335,12 @@
         },
         "jtitle": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
         },
         "language": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
@@ -370,7 +361,6 @@
         },
         "rights": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
@@ -391,7 +381,6 @@
         },
         "subject": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
@@ -405,7 +394,6 @@
         },
         "textversion": {
           "type": "string",
-          "index": "not_analyzed",
           "copy_to": [
             "search_other"
           ]
