@@ -52,8 +52,12 @@ require([
          if(arrayFlg){
            var arrLth = $rootScope.recordsVM.invenioRecordsModel[modelId].length;
            for(var i=0;i<arrLth;i++){
-             var obj = $rootScope.recordsVM.invenioRecordsModel[modelId][i].authorNameInfo;
-             if(JSON.stringify(obj[0])=='{}'){
+//             var obj = $rootScope.recordsVM.invenioRecordsModel[modelId][i].authorNameInfo;
+             var objCreatorNames = $rootScope.recordsVM.invenioRecordsModel[modelId][i].creatorNames;
+             var objFamilyNames = $rootScope.recordsVM.invenioRecordsModel[modelId][i].familyNames;
+             var objGivenNames = $rootScope.recordsVM.invenioRecordsModel[modelId][i].givenNames;
+//             if(JSON.stringify(obj[0])=='{}'){
+             if(JSON.stringify(objCreatorNames[0])=='{}'&&JSON.stringify(objFamilyNames[0])=='{}'&&JSON.stringify(objGivenNames[0])=='{}'){
                 updateIndex = i;
                 break;
              }
