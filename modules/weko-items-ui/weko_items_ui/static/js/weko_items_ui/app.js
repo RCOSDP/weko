@@ -53,7 +53,7 @@ require([
            var arrLth = $rootScope.recordsVM.invenioRecordsModel[modelId].length;
            for(var i=0;i<arrLth;i++){
              var obj = $rootScope.recordsVM.invenioRecordsModel[modelId][i].authorNameInfo;
-             if(obj[0]=={}){
+             if(JSON.stringify(obj[0])=='{}'){
                 updateIndex = i;
                 break;
              }
