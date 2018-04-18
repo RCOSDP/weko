@@ -30,6 +30,7 @@ RECORDS_UI_ENDPOINTS = dict(
         # view_imp='weko_records.fd.weko_view_method',
         template='weko_records_ui/detail.html',
         record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions:page_permission_factory',
     ),
     recid_export=dict(
         pid_type='recid',

@@ -82,23 +82,28 @@ def preview(pid, record, template=None, **kwargs):
 def zip_preview(file):
     """Return appropriate template and pass the file and an embed flag."""
     tree, limit_reached, error = make_tree(file)
-    if isinstance(tree, dict):
-        children = tree.pop('children', {})
-        tree['children'] = {}
-        for k, v in children.items():
-            try:
-                name = k.encode('cp437')
-                encode = chardet.detect(name).get('encoding')
-                if 'ISO-8859-1' in encode or 'WINDOWS-1252' in encode:
-                    name = name.decode('cp932')
-                else:
-                    name = name.decode(encode)
-                v['name'] = name
-                tree['children'][name] = v
-            except:
-                tree['children'].update({k: v})
+    import json
+    # if isinstance(tree, dict):
+    #     children = tree.pop('children', {})
+    #     tree['children'] = {}
+    #     for k, v in children.items():
+    #         try:
+    #             name = k.encode('cp437')
+    #             encode = chardet.detect(name).get('encoding')
+    #             current_app.logger.debug(('----ok-------------{name}, {ex}'.format(name=k, ex=encode)), exc_info=True)
+    #             if 'ISO-8859-1' in encode or 'WINDOWS-1252' in encode:
+    #                 name = name.decode('cp932')
+    #             else:
+    #                 name = name.decode(encode)
+    #             v['name'] = name
+    #             tree['children'][name] = v
+    #         except:
+    #             current_app.logger.debug('-xxxxxxxx----------------{name}, {encode}'.format(name=k,
+    #                                encode=chardet.detect(k.encode('cp437')).get('encoding')))
+    #             tree['children'].update({k: v})
 
     list = children_to_list(tree)['children']
+    current_app.logger.debug(('----json-------------{ex}'.format(ex=json.dumps(list))), exc_info=True)
     return render_template(
         "invenio_previewer/zip.html",
         file=file,
