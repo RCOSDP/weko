@@ -62,9 +62,9 @@ require([
                 break;
              }
            }
-           $rootScope.recordsVM.invenioRecordsModel[modelId][updateIndex]=authorInfoObj;
+           $rootScope.recordsVM.invenioRecordsModel[modelId][updateIndex]=authorInfoObj[0];
          }else{
-            $rootScope.recordsVM.invenioRecordsModel[modelId]=authorInfoObj;
+            $rootScope.recordsVM.invenioRecordsModel[modelId]=authorInfoObj[0];
          }
          //画面にデータを設定する
          $("#btn_id").text('');
