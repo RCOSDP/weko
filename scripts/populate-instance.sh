@@ -190,16 +190,6 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
-       allow "search-access" \
-       role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "detail-page-access" \
-       role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}"
-
-${INVENIO_WEB_INSTANCE} access \
        allow "files-rest-bucket-update" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
@@ -213,9 +203,19 @@ ${INVENIO_WEB_INSTANCE} access \
        allow "files-rest-object-delete-version" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
-# sphinxdoc-set-role-access-end
 
-${INVENIO_WEB_INSTANCE} access \
+${INVENIO_WEB_INSTANCE} wekoaccess \
+       allow "search-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} wekoaccess \
+       allow "detail-page-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} wekoaccess \
        allow "author-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
+# sphinxdoc-set-role-access-end
