@@ -1,14 +1,15 @@
 # English translations for weko-records-ui.
-# Copyright (C) 2017 National Institute of Informatics
-# This file is distributed under the same license as the
-# weko-records-ui project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+# Copyright (C) 2018 National Institute of Informatics
+# This file is distributed under the same license as the weko-records-ui
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 #
-
+msgid ""
+msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2016-08-25 11:14+0200\n"
-"PO-Revision-Date: 2015-10-09 17:08+0200\n"
+"POT-Creation-Date: 2018-04-11 19:55+0900\n"
+"PO-Revision-Date: 2018-04-12 18:06+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
@@ -16,25 +17,93 @@
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.3.4\n"
+"Generated-By: Babel 2.5.1\n"
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:25
+msgid "Index"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:46
+msgid "Item"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:52
 msgid "No title"
-msgstr "No title"
+msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:65
 msgid "Name"
-msgstr "Name"
+msgstr ""
 
-msgid "Size"
-msgstr "Size"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:65
+msgid "File"
+msgstr ""
 
-msgid "Download"
-msgstr "Download"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:66
+msgid "License"
+msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:106
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:128
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:34
+msgid "Preview"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:163
+msgid "item type"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:192
+msgid "Publish Status"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:208
+msgid "Privating"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:209
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:216
+msgid "Publish"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:212
+msgid "Publishing"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:213
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:216
+msgid "Private"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:237
+msgid "Back"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:240
+msgid "Edit"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:242
+msgid "Delete"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:252
 msgid "Control number"
-msgstr "Control number"
+msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:258
 msgid "Publication date"
-msgstr "Publication date"
+msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:264
 msgid "Schema"
-msgstr "Schema"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/export_well.html:24
+msgid "OAI-PMH"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/export_well.html:38
+msgid "Export"
+msgstr ""
+

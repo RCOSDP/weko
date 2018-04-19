@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-01-19 12:07+0900\n"
+"POT-Creation-Date: 2018-04-11 19:54+0900\n"
 "PO-Revision-Date: 2018-01-18 18:48+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,59 +19,233 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_itemtypes_ui/views.py:98 weko_itemtypes_ui/views.py:145
+#: weko_itemtypes_ui/views.py:86 weko_itemtypes_ui/views.py:159
+#: weko_itemtypes_ui/views.py:212
 msgid "Header Error"
-msgstr "ヘーダーエラー"
+msgstr "ヘッダ誤り"
 
-#: weko_itemtypes_ui/views.py:108 weko_itemtypes_ui/views.py:155
+#: weko_itemtypes_ui/views.py:101 weko_itemtypes_ui/views.py:172
+#: weko_itemtypes_ui/views.py:222
 msgid "Fail"
 msgstr "失敗"
 
-#: weko_itemtypes_ui/views.py:109 weko_itemtypes_ui/views.py:156
+#: weko_itemtypes_ui/views.py:103 weko_itemtypes_ui/views.py:173
+#: weko_itemtypes_ui/views.py:223
 msgid "Success"
 msgstr "成功"
 
-#: weko_itemtypes_ui/views.py:124
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:57
+msgid "New Property"
+msgstr "新しいプロパティ"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:58
+msgid "Mapping"
+msgstr "マッピング"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:69
+#, fuzzy
+msgid "Item type name is blank."
+msgstr "アイテムタイプ名が空白です。"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:73
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:56
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:51
+#, fuzzy
+msgid "Item Types"
+msgstr "アイテムタイプ"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:74
+#, fuzzy
+msgid "input new itemtype name"
+msgstr "新しいアイテムタイプ名を入力してください。"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:77
+msgid "Version Upgrade"
+msgstr "バージョンアップ"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:80
+msgid "New Registration"
+msgstr "新規登録"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:86
+msgid "Do you want to register the content？"
+msgstr "コンテンツ本体を登録しますか？"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:91
+#, fuzzy
+msgid "Item Name"
+msgstr "項目名"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:92
+msgid "Attribute"
+msgstr "属性"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:93
+msgid "Option"
+msgstr "オプション"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:94
+msgid "Replacement"
+msgstr "入替"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:95
+msgid "Delete"
+msgstr "削除"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:100
+msgid "Title"
+msgstr "タイトル"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:101
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:126
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:151
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:201
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:226
+msgid "Text"
+msgstr "テキスト"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:105
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:130
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:155
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:180
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:205
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:230
+msgid "Required"
+msgstr "必須"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:108
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:133
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:158
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:183
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:208
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:233
+msgid "Multiple"
+msgstr "複数可"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:111
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:136
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:161
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:186
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:211
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:236
+msgid "List Display"
+msgstr "一覧表示"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:114
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:139
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:164
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:189
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:214
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:239
+msgid "Specify Newline"
+msgstr "改行指定"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:117
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:142
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:167
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:192
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:217
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:242
+msgid "Hide"
+msgstr "非表示"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:125
+msgid "Title(English)"
+msgstr "タイトル(英)"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:150
+msgid "Language"
+msgstr "言語"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:175
+msgid "Publish Date"
+msgstr "公開日"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:176
+msgid "Date"
+msgstr "日付"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:200
+msgid "Keyword"
+msgstr "キーワード"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:225
+msgid "Keyword(English)"
+msgstr "キーワード(英)"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:252
+msgid "Add Metadata"
+msgstr "メタデータ追加"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:255
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:123
+msgid "Sending"
+msgstr "送信"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:258
+msgid "Preview"
+msgstr "プレビュー"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:311
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:137
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:83
+msgid "Result"
+msgstr "結果"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:317
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:143
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:89
+msgid "Close"
+msgstr "閉じる"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:68
+#, fuzzy
+msgid "Property Name"
+msgstr "プロパティ名"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:88
+msgid "Json Schema"
+msgstr "JSONスキーマ"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:90
+msgid "Reset"
+msgstr "リセット"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:103
+msgid "Form(Singular)"
+msgstr "Form(単数)"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:113
+msgid "Form(Multiple)"
+msgstr "Form(複数)"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/error.html:33
 msgid "You do not even have an itemtype."
 msgstr "アイテムタイプが見つけられない"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/error.html:34
+msgid "Go to"
+msgstr "移動"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/error.html:34
 msgid "Register Itemtype"
 msgstr "アイテムタイプをレジストする"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:39
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:44
 msgid "itemtype list"
 msgstr "アイテムタイプ リスト"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:60
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:66
-msgid "Sending"
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:68
+#, fuzzy
+msgid "sending"
 msgstr "送信"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:74
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:80
-msgid "Result"
-msgstr "結果"
+#~ msgid "create itemtype"
+#~ msgstr "アイテムタイプ作成"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:80
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:86
-msgid "Close"
-msgstr "閉じる"
+#~ msgid "JSONSchema"
+#~ msgstr "JSONスキーマ"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:38
-msgid "create itemtype"
-msgstr "アイテムタイプ作成"
-
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:47
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:49
-msgid "itemtype name"
-msgstr "アイテムタイプ名前"
-
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:53
-msgid "JSONSchema"
-msgstr "JSONスキーマ"
-
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/register.html:59
-msgid "SchemaForm"
-msgstr "スキーマフォーム"
+#~ msgid "SchemaForm"
+#~ msgstr "スキーマフォーム"
 

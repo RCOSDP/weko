@@ -1,18 +1,19 @@
-# Translations template for weko-user-profiles.
+# Japanese translations for weko-user-profiles.
 # Copyright (C) 2018 National Institute of Informatics
 # This file is distributed under the same license as the weko-user-profiles
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-user-profiles 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
 "POT-Creation-Date: 2018-04-11 19:56+0900\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2018-04-12 10:55+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -21,33 +22,33 @@ msgstr ""
 #. NOTE: Form field label
 #: weko_user_profiles/admin.py:66 weko_user_profiles/forms.py:59
 msgid "Username"
-msgstr ""
+msgstr "ユーザー名"
 
 #. NOTE: Form label
 #: weko_user_profiles/admin.py:67 weko_user_profiles/forms.py:73
 msgid "Timezone"
-msgstr ""
+msgstr "タイムゾーン"
 
 #. NOTE: Form label
 #: weko_user_profiles/admin.py:68 weko_user_profiles/forms.py:80
 msgid "Language"
-msgstr ""
+msgstr "言語"
 
 #: weko_user_profiles/admin.py:93
 msgid "User Management"
-msgstr ""
+msgstr "ユーザー管理"
 
 #: weko_user_profiles/config.py:47
 msgid "(GMT-12:00) Eniwetok, Kwajalein"
-msgstr ""
+msgstr "(GMT-12:00) エニウェトク環礁，クェゼリン環礁"
 
 #: weko_user_profiles/config.py:48
 msgid "(GMT-11:00) Midway Island, Samoa"
-msgstr ""
+msgstr "(GMT-11:00) ミッドウェー島，サモア"
 
 #: weko_user_profiles/config.py:49
 msgid "(GMT-10:00) Hawaii"
-msgstr ""
+msgstr "(GMT-10:00) ハワイ州"
 
 #: weko_user_profiles/config.py:50
 msgid "(GMT-9:00) Alaska"
@@ -214,22 +215,24 @@ msgid ""
 "Username must start with a letter, be at least three characters long and "
 "only contain alphanumeric characters, dashes and underscores."
 msgstr ""
+"ユーザーネームは最低3文字であり"
+"英数字、ハイフン、アンダースコアを含む。"
 
 #. NOTE: Menu item text (icon replaced by a user icon).
 #: weko_user_profiles/views.py:93
 #, python-format
 msgid "%(icon)s Profile"
-msgstr ""
+msgstr "%(icon)s プロフィール"
 
 #: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:24
 #: weko_user_profiles/views.py:96
 msgid "Profile"
-msgstr ""
+msgstr "プロフィール"
 
 #. NOTE: Flash message.
 #: weko_user_profiles/views.py:143
 msgid "Verification email sent."
-msgstr ""
+msgstr "確認メールを送信しました。"
 
 #. NOTE: Flash message after successful update of profile.
 #: weko_user_profiles/views.py:172
@@ -238,21 +241,23 @@ msgid ""
 "Profile was updated. We have sent a verification email to %(email)s. "
 "Please check it."
 msgstr ""
+"プロフィールを更新しました。我々は %(email)s に確認メールを送信しました。"
+"どうぞ、それをチェックしてください。"
 
 #. NOTE: Flash message after successful update of profile.
 #: weko_user_profiles/views.py:178
 msgid "Profile was updated."
-msgstr ""
+msgstr "プロフィールを更新しました。"
 
 #: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:32
 msgid "You have not yet verified your email address."
-msgstr ""
+msgstr "あなたはまだあなたのメールアドレスを確認していません。"
 
 #: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:47
 msgid "Cancel"
-msgstr ""
+msgstr "キャンセル"
 
 #: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:48
 msgid "Update profile"
-msgstr ""
+msgstr "プロフィールを更新"
 
