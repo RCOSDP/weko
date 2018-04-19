@@ -49,7 +49,7 @@ require([
          var modelId = $('#btn_id').text();
          var authorInfoObj = JSON.parse(authorInfo);
          var updateIndex = 0;
-         if(arrayFlg){
+         if(arrayFlg == 'true'){
            if(authorInfoObj[0].hasOwnProperty('affiliation')){
              $rootScope.recordsVM.invenioRecordsModel[modelId][0].affiliation = authorInfoObj[0].affiliation;
            }
