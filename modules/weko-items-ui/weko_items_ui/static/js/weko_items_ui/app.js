@@ -50,34 +50,35 @@ require([
          var authorInfoObj = JSON.parse(authorInfo);
          var updateIndex = 0;
          if(arrayFlg){
-           var arrLth = $rootScope.recordsVM.invenioRecordsModel[modelId].length;
-           for(var i=0;i<arrLth;i++){
-//             var obj = $rootScope.recordsVM.invenioRecordsModel[modelId][i].authorNameInfo;
-             var objCreatorNames = '';
-             var objFamilyNames = '';
-             var objGivenNames = '';
-             if($rootScope.recordsVM.invenioRecordsModel[modelId][i].hasOwnProperty('creatorNames')){
-                objCreatorNames = JSON.stringify($rootScope.recordsVM.invenioRecordsModel[modelId][i].creatorNames[0]);
-             }else{
-                objCreatorNames = '{}';
-             }
-             if($rootScope.recordsVM.invenioRecordsModel[modelId][i].hasOwnProperty('familyNames')){
-                objFamilyNames = JSON.stringify($rootScope.recordsVM.invenioRecordsModel[modelId][i].familyNames[0]);
-             }else{
-                objFamilyNames = '{}';
-             }
-             if($rootScope.recordsVM.invenioRecordsModel[modelId][i].hasOwnProperty('givenNames')){
-                objGivenNames = JSON.stringify($rootScope.recordsVM.invenioRecordsModel[modelId][i].givenNames[0]);
-             }else{
-                objGivenNames = '{}';
-             }
-//             if(JSON.stringify(obj[0])=='{}'){
-             if(objCreatorNames=='{}' && objFamilyNames=='{}' && objGivenNames=='{}'){
-                updateIndex = i;
-                break;
-             }
-           }
-           $rootScope.recordsVM.invenioRecordsModel[modelId][updateIndex]=authorInfoObj[0];
+//           var arrLth = $rootScope.recordsVM.invenioRecordsModel[modelId].length;
+//           for(var i=0;i<arrLth;i++){
+////             var obj = $rootScope.recordsVM.invenioRecordsModel[modelId][i].authorNameInfo;
+//             var objCreatorNames = '';
+//             var objFamilyNames = '';
+//             var objGivenNames = '';
+//             if($rootScope.recordsVM.invenioRecordsModel[modelId][i].hasOwnProperty('creatorNames')){
+//                objCreatorNames = JSON.stringify($rootScope.recordsVM.invenioRecordsModel[modelId][i].creatorNames[0]);
+//             }else{
+//                objCreatorNames = '{}';
+//             }
+//             if($rootScope.recordsVM.invenioRecordsModel[modelId][i].hasOwnProperty('familyNames')){
+//                objFamilyNames = JSON.stringify($rootScope.recordsVM.invenioRecordsModel[modelId][i].familyNames[0]);
+//             }else{
+//                objFamilyNames = '{}';
+//             }
+//             if($rootScope.recordsVM.invenioRecordsModel[modelId][i].hasOwnProperty('givenNames')){
+//                objGivenNames = JSON.stringify($rootScope.recordsVM.invenioRecordsModel[modelId][i].givenNames[0]);
+//             }else{
+//                objGivenNames = '{}';
+//             }
+////             if(JSON.stringify(obj[0])=='{}'){
+//             if(objCreatorNames=='{}' && objFamilyNames=='{}' && objGivenNames=='{}'){
+//                updateIndex = i;
+//                break;
+//             }
+//           }
+//           $rootScope.recordsVM.invenioRecordsModel[modelId][updateIndex]=authorInfoObj[0];
+           $rootScope.recordsVM.invenioRecordsModel[modelId][0]=authorInfoObj[0];
          }else{
             $rootScope.recordsVM.invenioRecordsModel[modelId]=authorInfoObj[0];
          }
