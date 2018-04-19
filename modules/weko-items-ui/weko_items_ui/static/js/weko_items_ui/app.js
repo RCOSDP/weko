@@ -53,11 +53,26 @@ require([
            var arrLth = $rootScope.recordsVM.invenioRecordsModel[modelId].length;
            for(var i=0;i<arrLth;i++){
 //             var obj = $rootScope.recordsVM.invenioRecordsModel[modelId][i].authorNameInfo;
-             var objCreatorNames = $rootScope.recordsVM.invenioRecordsModel[modelId][i].creatorNames;
-             var objFamilyNames = $rootScope.recordsVM.invenioRecordsModel[modelId][i].familyNames;
-             var objGivenNames = $rootScope.recordsVM.invenioRecordsModel[modelId][i].givenNames;
+             var objCreatorNames = '';
+             var objFamilyNames = '';
+             var objGivenNames = '';
+             if($rootScope.recordsVM.invenioRecordsModel[modelId][i].hasOwnProperty('creatorNames')){
+                objCreatorNames = JSON.stringify($rootScope.recordsVM.invenioRecordsModel[modelId][i].creatorNames[0]);
+             }else{
+                objCreatorNames = '{}';
+             }
+             if($rootScope.recordsVM.invenioRecordsModel[modelId][i].hasOwnProperty('familyNames')){
+                objFamilyNames = JSON.stringify($rootScope.recordsVM.invenioRecordsModel[modelId][i].familyNames[0]);
+             }else{
+                objFamilyNames = '{}';
+             }
+             if($rootScope.recordsVM.invenioRecordsModel[modelId][i].hasOwnProperty('givenNames')){
+                objGivenNames = JSON.stringify($rootScope.recordsVM.invenioRecordsModel[modelId][i].givenNames[0]);
+             }else{
+                objGivenNames = '{}';
+             }
 //             if(JSON.stringify(obj[0])=='{}'){
-             if(JSON.stringify(objCreatorNames[0])=='{}'&&JSON.stringify(objFamilyNames[0])=='{}'&&JSON.stringify(objGivenNames[0])=='{}'){
+             if(objCreatorNames=='{}' && objFamilyNames=='{}' && objGivenNames=='{}'){
                 updateIndex = i;
                 break;
              }
