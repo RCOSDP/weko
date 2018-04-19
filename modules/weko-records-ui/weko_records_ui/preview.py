@@ -25,7 +25,7 @@ from flask import abort, current_app, request, render_template
 from invenio_previewer.api import PreviewFile
 from invenio_previewer.extensions import default
 from invenio_previewer.proxies import current_previewer
-from invenio_previewer.extensions.zip import make_tree, children_to_list
+from invenio_previewer.extensions.zip import make_tree
 
 
 def preview(pid, record, template=None, **kwargs):
@@ -79,37 +79,46 @@ def preview(pid, record, template=None, **kwargs):
         return default.preview(fileobj)
 
 
+def children_to_list(node):
+    """Organize children structure."""
+
+    # to decode garbled zip file name
+    name = node.get('name')
+    if name:
+        node['name'] = decode_name(name)
+    if node['type'] == 'item' and len(node['children']) == 0:
+        del node['children']
+    else:
+        node['type'] = 'folder'
+        node['children'] = list(node['children'].values())
+        node['children'].sort(key=lambda x: x['name'])
+        node['children'] = map(children_to_list, node['children'])
+    return node
+
+
 def zip_preview(file):
     """Return appropriate template and pass the file and an embed flag."""
     tree, limit_reached, error = make_tree(file)
-    import json
-    # if isinstance(tree, dict):
-    #     children = tree.pop('children', {})
-    #     tree['children'] = {}
-    #     for k, v in children.items():
-    #         try:
-    #             name = k.encode('cp437')
-    #             encode = chardet.detect(name).get('encoding')
-    #             current_app.logger.debug(('----ok-------------{name}, {ex}'.format(name=k, ex=encode)), exc_info=True)
-    #             if 'ISO-8859-1' in encode or 'WINDOWS-1252' in encode:
-    #                 name = name.decode('cp932')
-    #             else:
-    #                 name = name.decode(encode)
-    #             v['name'] = name
-    #             tree['children'][name] = v
-    #         except:
-    #             current_app.logger.debug('-xxxxxxxx----------------{name}, {encode}'.format(name=k,
-    #                                encode=chardet.detect(k.encode('cp437')).get('encoding')))
-    #             tree['children'].update({k: v})
-
-    list = children_to_list(tree)['children']
-    current_app.logger.debug(('----json-------------{ex}'.format(ex=json.dumps(list))), exc_info=True)
+    lst = children_to_list(tree)['children']
     return render_template(
         "invenio_previewer/zip.html",
         file=file,
-        tree=list,
+        tree=lst,
         limit_reached=limit_reached,
         error=error,
         js_bundles=current_previewer.js_bundles + ['previewer_fullscreen_js'],
         css_bundles=current_previewer.css_bundles,
     )
+
+
+def decode_name(k):
+    try:
+        name = k.encode('cp437')
+        encode = chardet.detect(name).get('encoding')
+        if 'ISO-8859-1' in encode or 'WINDOWS-1252' in encode:
+            name = name.decode('cp932')
+        else:
+            name = name.decode(encode)
+        return name
+    except:
+        return k
