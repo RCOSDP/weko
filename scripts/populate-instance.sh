@@ -144,11 +144,6 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
-       allow "author-access" \
-       role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}"
-
-${INVENIO_WEB_INSTANCE} access \
        allow "files-rest-bucket-update" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
@@ -218,3 +213,8 @@ ${INVENIO_WEB_INSTANCE} users create \
        --password "${INVENIO_USER_PASS}" \
        --active
 # sphinxdoc-create-test-data-end
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "author-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
