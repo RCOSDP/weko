@@ -1,0 +1,263 @@
+# Japanese translations for weko-user-profiles.
+# Copyright (C) 2018 National Institute of Informatics
+# This file is distributed under the same license as the weko-user-profiles
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-user-profiles 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2018-04-11 19:56+0900\n"
+"PO-Revision-Date: 2018-04-12 10:55+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#. NOTE: Form field label
+#: weko_user_profiles/admin.py:66 weko_user_profiles/forms.py:59
+msgid "Username"
+msgstr "ユーザー名"
+
+#. NOTE: Form label
+#: weko_user_profiles/admin.py:67 weko_user_profiles/forms.py:73
+msgid "Timezone"
+msgstr "タイムゾーン"
+
+#. NOTE: Form label
+#: weko_user_profiles/admin.py:68 weko_user_profiles/forms.py:80
+msgid "Language"
+msgstr "言語"
+
+#: weko_user_profiles/admin.py:93
+msgid "User Management"
+msgstr "ユーザー管理"
+
+#: weko_user_profiles/config.py:47
+msgid "(GMT-12:00) Eniwetok, Kwajalein"
+msgstr "(GMT-12:00) エニウェトク環礁，クェゼリン環礁"
+
+#: weko_user_profiles/config.py:48
+msgid "(GMT-11:00) Midway Island, Samoa"
+msgstr "(GMT-11:00) ミッドウェー島，サモア"
+
+#: weko_user_profiles/config.py:49
+msgid "(GMT-10:00) Hawaii"
+msgstr "(GMT-10:00) ハワイ州"
+
+#: weko_user_profiles/config.py:50
+msgid "(GMT-9:00) Alaska"
+msgstr ""
+
+#: weko_user_profiles/config.py:51
+msgid "(GMT-8:00) Pacific Time (US & Canada)"
+msgstr ""
+
+#: weko_user_profiles/config.py:52
+msgid "(GMT-7:00) Mountain Time (US & Canada)"
+msgstr ""
+
+#: weko_user_profiles/config.py:53
+msgid "(GMT-6:00) Central Time (US & Canada), Mexico City"
+msgstr ""
+
+#: weko_user_profiles/config.py:54
+msgid "(GMT-5:00) Eastern Time (US & Canada), Bogota, Lima, Quito"
+msgstr ""
+
+#: weko_user_profiles/config.py:55
+msgid "(GMT-4:00) Atlantic Time (Canada), Caracas, La Paz"
+msgstr ""
+
+#: weko_user_profiles/config.py:56
+msgid "(GMT-3:30) Newfoundland"
+msgstr ""
+
+#: weko_user_profiles/config.py:57
+msgid "(GMT-3:00) Brasilia, Buenos Aires, Georgetown"
+msgstr ""
+
+#: weko_user_profiles/config.py:58
+msgid "(GMT-2:00) Mid-Atlantic"
+msgstr ""
+
+#: weko_user_profiles/config.py:59
+msgid "(GMT-1:00) Azores, Cape Verde Islands"
+msgstr ""
+
+#: weko_user_profiles/config.py:60
+msgid "(GMT) Greenwich Mean Time, London, Dublin, Lisbon, Casablanca, Monrovia"
+msgstr ""
+
+#: weko_user_profiles/config.py:62
+msgid "(GMT+1:00) Amsterdam, Berlin, Rome, Copenhagen, Brussels, Madrid, Paris"
+msgstr ""
+
+#: weko_user_profiles/config.py:64
+msgid "(GMT+2:00) Athens, Istanbul, Minsk, Helsinki, Jerusalem, South Africa"
+msgstr ""
+
+#: weko_user_profiles/config.py:66
+msgid "(GMT+3:00) Baghdad, Kuwait, Riyadh, Moscow, St. Petersburg"
+msgstr ""
+
+#: weko_user_profiles/config.py:67
+msgid "(GMT+3:30) Tehran"
+msgstr ""
+
+#: weko_user_profiles/config.py:68
+msgid "(GMT+4:00) Abu Dhabi, Muscat, Baku, Tbilisi"
+msgstr ""
+
+#: weko_user_profiles/config.py:69
+msgid "(GMT+4:30) Kabul"
+msgstr ""
+
+#: weko_user_profiles/config.py:70
+msgid "(GMT+5:00) Ekaterinburg, Islamabad, Karachi, Tashkent"
+msgstr ""
+
+#: weko_user_profiles/config.py:71
+msgid "(GMT+5:30) Bombay, Calcutta, Madras, New Delhi"
+msgstr ""
+
+#: weko_user_profiles/config.py:72
+msgid "(GMT+6:00) Almaty, Dhaka, Colombo"
+msgstr ""
+
+#: weko_user_profiles/config.py:73
+msgid "(GMT+7:00) Bangkok, Hanoi, Jakarta"
+msgstr ""
+
+#: weko_user_profiles/config.py:74
+msgid "(GMT+8:00) Beijing, Perth, Singapore, Hong Kong, Urumqi, Taipei"
+msgstr ""
+
+#: weko_user_profiles/config.py:76
+msgid "(GMT+9:00) Tokyo, Seoul, Osaka, Sapporo, Yakutsk"
+msgstr ""
+
+#: weko_user_profiles/config.py:77
+msgid "(GMT+9:30) Adelaide, Darwin"
+msgstr ""
+
+#: weko_user_profiles/config.py:78
+msgid "(GMT+10:00) Brisbane, Canberra, Melbourne, Sydney,Guam, Vlasdiostok"
+msgstr ""
+
+#: weko_user_profiles/config.py:80
+msgid "(GMT+11:00) Magadan, Solomon Islands, New Caledonia"
+msgstr ""
+
+#: weko_user_profiles/config.py:81
+msgid "(GMT+12:00) Auckland, Wellington, Fiji, Kamchatka,Marshall Island"
+msgstr ""
+
+#: weko_user_profiles/config.py:89
+msgid "Automatic"
+msgstr ""
+
+#: weko_user_profiles/config.py:90
+msgid "Japanese"
+msgstr ""
+
+#: weko_user_profiles/config.py:91
+msgid "English"
+msgstr ""
+
+#. NOTE: Form field help text
+#: weko_user_profiles/forms.py:61
+#, python-format
+msgid "Required. %(username_rules)s"
+msgstr ""
+
+#: weko_user_profiles/forms.py:63
+msgid "Username not provided."
+msgstr ""
+
+#. NOTE: Form validation error.
+#: weko_user_profiles/forms.py:98
+msgid "Username already exists."
+msgstr ""
+
+#. NOTE: Form field label
+#: weko_user_profiles/forms.py:108
+msgid "Email address"
+msgstr ""
+
+#. NOTE: Form field label
+#: weko_user_profiles/forms.py:120
+msgid "Re-enter email address"
+msgstr ""
+
+#. NOTE: Form field help text
+#: weko_user_profiles/forms.py:122
+msgid "Please re-enter your email address."
+msgstr ""
+
+#. NOTE: Form validation error.
+#: weko_user_profiles/forms.py:127
+msgid "Email addresses do not match."
+msgstr ""
+
+#. NOTE: Form button label
+#: weko_user_profiles/forms.py:136
+msgid "Resend verification email"
+msgstr ""
+
+#: weko_user_profiles/validators.py:30
+msgid ""
+"Username must start with a letter, be at least three characters long and "
+"only contain alphanumeric characters, dashes and underscores."
+msgstr ""
+"ユーザーネームは最低3文字であり"
+"英数字、ハイフン、アンダースコアを含む。"
+
+#. NOTE: Menu item text (icon replaced by a user icon).
+#: weko_user_profiles/views.py:93
+#, python-format
+msgid "%(icon)s Profile"
+msgstr "%(icon)s プロフィール"
+
+#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:24
+#: weko_user_profiles/views.py:96
+msgid "Profile"
+msgstr "プロフィール"
+
+#. NOTE: Flash message.
+#: weko_user_profiles/views.py:143
+msgid "Verification email sent."
+msgstr "確認メールを送信しました。"
+
+#. NOTE: Flash message after successful update of profile.
+#: weko_user_profiles/views.py:172
+#, python-format
+msgid ""
+"Profile was updated. We have sent a verification email to %(email)s. "
+"Please check it."
+msgstr ""
+"プロフィールを更新しました。我々は %(email)s に確認メールを送信しました。"
+"どうぞ、それをチェックしてください。"
+
+#. NOTE: Flash message after successful update of profile.
+#: weko_user_profiles/views.py:178
+msgid "Profile was updated."
+msgstr "プロフィールを更新しました。"
+
+#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:32
+msgid "You have not yet verified your email address."
+msgstr "あなたはまだあなたのメールアドレスを確認していません。"
+
+#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:47
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:48
+msgid "Update profile"
+msgstr "プロフィールを更新"
+

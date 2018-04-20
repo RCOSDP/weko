@@ -22,6 +22,7 @@
 
 {%- block css %}
   {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
 {%- endblock css %}
 
@@ -30,6 +31,7 @@
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %};
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -57,7 +59,7 @@
   {%- endif %}
   <div class="row">
     <div class="col-md-12">
-      <div id="invenio-records">
+      <div id="weko-records">
         {%- if need_file %}
         <invenio-files-uploader
           method="PUT"
@@ -108,11 +110,19 @@
               </div>
             </div>
             {%- endif %}
-            <invenio-records-form
-              form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
-              form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
-              template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
-            </invenio-records-form>
+            <div ng-controller="WekoRecordsCtrl">
+              <!--add by ryuu. start 20180410-->
+              <div ng-show="false" type="text" id="btn_id" ></div>
+              <div ng-show="false" type="text" id="author_info" ></div>
+              <div ng-show="false" type="text" id="array_flg" ></div>
+              <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
+              <!--add by ryuu. end 20180410-->
+              <invenio-records-form
+                form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+                form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
+                template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
+              </invenio-records-form>
+            </div>
             <div class="row" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
@@ -129,4 +139,19 @@
     </div>
   </div>
 {%- endblock page_body_main %}
+{%- block page_body %}
+{{ super() }}
+<div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+  <div class="modal-dialog modelWidth" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        <app-author-search></app-author-search>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">{{_('Close')}}</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{%- endblock page_body %}
 

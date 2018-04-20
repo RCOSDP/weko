@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-01-19 13:58+0900\n"
+"POT-Creation-Date: 2018-04-11 19:50+0900\n"
 "PO-Revision-Date: 2018-01-19 13:59+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -22,18 +22,16 @@ msgstr ""
 #. NOTE: This is a note to a translator.
 #: weko_accounts/ext.py:41
 msgid "A translation string"
-msgstr ""
+msgstr "翻訳文字列"
 
-#: weko_accounts/views.py:52
+#: weko_accounts/views.py:46
 msgid "WEKO-Accounts"
-msgstr ""
+msgstr "WEKOアカウント"
 
 #: weko_accounts/templates/weko_accounts/index.html:24
 msgid "Welcome to"
 msgstr "ようこそ"
 
-#: weko_accounts/templates/weko_accounts/index.html:24
-#, python-format
-msgid "%(module_name)s"
-msgstr ""
+#~ msgid "%(module_name)s"
+#~ msgstr ""
 

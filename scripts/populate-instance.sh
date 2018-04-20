@@ -93,10 +93,11 @@ source "$(which virtualenvwrapper.sh)"
 workon "${INVENIO_WEB_VENV}"
 
 # quit on errors and unbound symbols:
-set -o errexit
+# set -o errexit
 set -o nounset
 
 # sphinxdoc-create-database-begin
+${INVENIO_WEB_INSTANCE} db drop --yes-i-know
 ${INVENIO_WEB_INSTANCE} db init
 ${INVENIO_WEB_INSTANCE} db create -v
 # sphinxdoc-create-database-end
@@ -106,53 +107,6 @@ ${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_SYSTEM}"
 ${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_REPOSITORY}"
 ${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_CONTRIBUTOR}"
 # sphinxdoc-create-roles-end
-
-# sphinxdoc-set-role-access-begin
-${INVENIO_WEB_INSTANCE} access \
-       allow "superuser-access" \
-       role "${INVENIO_ROLE_SYSTEM}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "admin-access" \
-       role "${INVENIO_ROLE_REPOSITORY}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "schema-access" \
-       role "${INVENIO_ROLE_REPOSITORY}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "index-tree-access" \
-       role "${INVENIO_ROLE_REPOSITORY}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "item-type-access" \
-       role "${INVENIO_ROLE_REPOSITORY}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "item-access" \
-       role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "author-access" \
-       role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "files-rest-bucket-update" \
-       role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "files-rest-object-delete" \
-       role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}"
-
-${INVENIO_WEB_INSTANCE} access \
-       allow "files-rest-object-delete-version" \
-       role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}"
-# sphinxdoc-set-role-access-end
 
 # sphinxdoc-create-user-account-begin
 ${INVENIO_WEB_INSTANCE} users create \
@@ -208,3 +162,60 @@ ${INVENIO_WEB_INSTANCE} users create \
        --password "${INVENIO_USER_PASS}" \
        --active
 # sphinxdoc-create-test-data-end
+
+# sphinxdoc-set-role-access-begin
+${INVENIO_WEB_INSTANCE} access \
+       allow "superuser-access" \
+       role "${INVENIO_ROLE_SYSTEM}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "admin-access" \
+       role "${INVENIO_ROLE_REPOSITORY}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "schema-access" \
+       role "${INVENIO_ROLE_REPOSITORY}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "index-tree-access" \
+       role "${INVENIO_ROLE_REPOSITORY}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "item-type-access" \
+       role "${INVENIO_ROLE_REPOSITORY}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "item-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-bucket-update" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-delete" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-delete-version" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} wekoaccess \
+       allow "search-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} wekoaccess \
+       allow "detail-page-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} wekoaccess \
+       allow "author-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+# sphinxdoc-set-role-access-end

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-01-22 15:00+0900\n"
+"POT-Creation-Date: 2018-04-12 18:34+0900\n"
 "PO-Revision-Date: 2018-01-22 15:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,33 +19,97 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_records_ui/templates/weko_records_ui/detail.html:30
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:25
+msgid "Index"
+msgstr "インデックス"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:46
+msgid "Item"
+msgstr "アイテム"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:52
 msgid "No title"
 msgstr "タイトルなし"
 
-#: weko_records_ui/templates/weko_records_ui/detail.html:57
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:65
 msgid "Name"
 msgstr "名前"
 
-#: weko_records_ui/templates/weko_records_ui/detail.html:58
-msgid "Size"
-msgstr "サイズ"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:65
+msgid "File"
+msgstr "ファイル"
 
-#: weko_records_ui/templates/weko_records_ui/detail.html:73
-msgid "Download"
-msgstr "ダウンロード"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:66
+msgid "License"
+msgstr "ライセンス"
 
-#: weko_records_ui/templates/weko_records_ui/detail.html:102
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:106
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:128
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:34
+msgid "Preview"
+msgstr "プレビュー"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:163
+msgid "item type"
+msgstr "アイテムタイプ"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:192
+msgid "Publish Status"
+msgstr "公開ステータス"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:208
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:213
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:216
+msgid "Private"
+msgstr "非公開"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:209
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:212
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:216
+msgid "Publish"
+msgstr "公開"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:237
+msgid "Back"
+msgstr "戻る"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:240
+msgid "Edit"
+msgstr "編集"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:242
+msgid "Delete"
+msgstr "削除"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:252
 msgid "Control number"
 msgstr "管理番号"
 
-#: weko_records_ui/templates/weko_records_ui/detail.html:108
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:258
 msgid "Publication date"
 msgstr "公開日"
 
-#: weko_records_ui/templates/weko_records_ui/detail.html:114
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:264
 msgid "Schema"
 msgstr "スキーマ"
 
+#: weko_records_ui/templates/weko_records_ui/export_well.html:24
+msgid "OAI-PMH"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/export_well.html:38
 msgid "Export"
 msgstr "エクスポート"
+
+#~ msgid "Size"
+#~ msgstr "サイズ"
+
+#~ msgid "Download"
+#~ msgstr "ダウンロード"
+
+#~ msgid "Privating"
+#~ msgstr "非公開"
+
+#~ msgid "Publishing"
+#~ msgstr "公開"
+

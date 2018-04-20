@@ -99,6 +99,23 @@ static:
   build: .
   volumes:
     - /home/invenio/.virtualenvs/invenio/var/instance/static
+    - /code/modules/invenio-files-rest/invenio_files_rest.egg-info
+    - /code/modules/weko-theme/weko_theme.egg-info
+    - /code/modules/weko-itemtypes-ui/weko_itemtypes_ui.egg-info
+    - /code/modules/weko-items-ui/weko_items_ui.egg-info
+    - /code/modules/weko-accounts/weko_accounts.egg-info
+    - /code/modules/weko-admin/weko_admin.egg-info
+    - /code/modules/weko-logging/weko_logging.egg-info
+    - /code/modules/weko-groups/weko_groups.egg-info
+    - /code/modules/weko-search-ui/weko_search_ui.egg-info
+    - /code/modules/weko-records/weko_records.egg-info
+    - /code/modules/weko-records-ui/weko_records_ui.egg-info
+    - /code/modules/weko-schema-ui/weko_schema_ui.egg-info
+    - /code/modules/weko-index-tree/weko_index_tree.egg-info
+    - /code/modules/weko-user-profiles/weko_user_profiles.egg-info
+    - /code/modules/weko-deposit/weko_deposit.egg-info
+    - /code/modules/weko-authors/weko_authors.egg-info
+    - .:/code
   user: invenio
 
 clamav:

@@ -175,7 +175,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         """
 
         page = request.values.get('page', 1, type=int)
-        size = request.values.get('size', 10, type=int)
+        size = request.values.get('size', 20, type=int)
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
 
@@ -210,29 +210,34 @@ class IndexSearchResource(ContentNegotiatedMethodView):
 
         # aggs result identify
         rd = search_result.to_dict()
-        paths = Indexes.get_self_list(request.values.get('q'))
-        agp = rd["aggregations"]["path"]["buckets"]
-        nlst = []
+        q = request.values.get('q')
+        if q:
+            try:
+                paths = Indexes.get_self_list(q)
+            except:
+                paths = []
+            agp = rd["aggregations"]["path"]["buckets"]
+            nlst = []
 
-        for p in paths:
-            m = 0
-            for k in range(len(agp)):
-                if p.path == agp[k].get("key"):
-                    agp[k]["name"] = p.name
-                    date_range = agp[k].pop("date_range")
-                    pub = dict()
-                    for d in date_range['buckets']:
-                        pub["pub_cnt" if d.get("to") else "un_pub_cnt"] = d.get("doc_count")
-                    agp[k]["date_range"] = pub
-                    nlst.append(agp.pop(k))
-                    m = 1
-                    break
-            if m == 0:
-                nd = {'doc_count': 0, 'key': p.path, 'name': p.name, \
-                      'date_range': {'pub_cnt': 0, 'un_pub_cnt': 0}}
-                nlst.append(nd)
-        agp.clear()
-        agp.append(nlst)
+            for p in paths:
+                m = 0
+                for k in range(len(agp)):
+                    if p.path == agp[k].get("key"):
+                        agp[k]["name"] = p.name
+                        date_range = agp[k].pop("date_range")
+                        pub = dict()
+                        for d in date_range['buckets']:
+                            pub["pub_cnt" if d.get("to") else "un_pub_cnt"] = d.get("doc_count")
+                        agp[k]["date_range"] = pub
+                        nlst.append(agp.pop(k))
+                        m = 1
+                        break
+                if m == 0:
+                    nd = {'doc_count': 0, 'key': p.path, 'name': p.name, \
+                          'date_range': {'pub_cnt': 0, 'un_pub_cnt': 0}}
+                    nlst.append(nd)
+            agp.clear()
+            agp.append(nlst)
 
         return self.make_response(
             pid_fetcher=self.pid_fetcher,

@@ -33,7 +33,7 @@ blueprint = Blueprint(
 @blueprint.route("/search/index")
 def search():
     """ Index Search page ui."""
-    indextree = request.args.get('search_type', '')
-    cur_index_id = '' if '' != indextree else request.args.get('q', '')
+    search_type = request.args.get('search_type', '0')
+    cur_index_id = search_type if search_type not in ('0', '1', ) else None
     return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
                            index_id=cur_index_id)

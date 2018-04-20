@@ -86,8 +86,10 @@ JSONSchemaEditor.prototype = {
 	constructor: JSONSchemaEditor,
 	init: function init() {
 		var self = this;
-		var data = self.options.startval || {};
+		var startval = self.options.startval || {};
 		var editor = self.options.editor || false;
+
+		var data = JSON.parse(JSON.stringify(startval));
 
 		this.react = ReactDOM.render(React.createElement(SchemaObject, { onChange: self.onChange, data: data, editor: editor }), self.element);
 		this.callbacks = {};
@@ -371,22 +373,23 @@ var SchemaObject = React.createClass({
 		return this.propsToState(this.props);
 	},
 	propsToState: function propsToState(schema) {
-		var data = this.jsonDeepCopy(schema);
+		var data = schema;
 		if (schema.hasOwnProperty('data')) {
 			data = schema.data;
 		}
-		data.properties = data.properties || {};
+		//data.properties = data.properties || {};
+		data.propertyNames = [];
 		data.required = data.required || [];
-		data.propertyItems = data.propertyItems || [];
-		data.propertyDels = data.propertyDels || [];
+		data.propertyItems = []; // data.propertyItems || [];
+		data.propertyDels = []; // data.propertyDels || [];
 		// convert from object to array
-		data.properties = Object.keys(data.properties).map(function (name, index) {
+		data.propertyNames = Object.keys(data.properties).map(function (name, index) {
 			data.propertyItems.push(name);
 			data.propertyDels.push(false);
 			var item = data.properties[name];
 			return item;
 		});
-		data.inputErrs = []; // 记录页面入力错误
+		data.inputErrs = []; // error input element
 		if (schema.hasOwnProperty('editor')) {
 			data.editor = schema.editor;
 		} else {
@@ -394,13 +397,13 @@ var SchemaObject = React.createClass({
 		}
 		return data;
 	},
-	// 已加载组件收到新的参数时调用
+
 	componentWillReceiveProps: function componentWillReceiveProps(newProps) {
 		this.setState(this.propsToState(newProps));
 	},
 	deleteItem: function deleteItem(event) {
-		// parentElement 返回母节点
-		// dataset H5自定义属性 data-xxx
+		// parentElement
+		// dataset H5 custom property data-xxx
 		var i = event.target.parentElement.dataset.index;
 		var requiredIndex = this.state.required.indexOf(this.state.propertyItems[i]);
 		if (requiredIndex !== -1) {
@@ -416,34 +419,36 @@ var SchemaObject = React.createClass({
 		var i = event.target.parentElement.dataset.index;
 		if (event.target.name == 'type') {
 			if ('object' === event.target.value) {
-				this.state.properties[i].type = event.target.value;
-				this.state.properties[i].properties = {};
-				this.state.properties[i].properties['subitem_' + Date.now()] = {
+				this.state.propertyNames[i].type = event.target.value;
+				this.state.propertyNames[i].properties = {};
+				this.state.propertyNames[i].properties['subitem_' + Date.now()] = {
 					type: "string",
 					format: "text",
 					title: ""
 				};
 			} else if ('checkboxes' === event.target.value || 'radios' === event.target.value || 'select' === event.target.value) {
-				this.state.properties[i].enum = [];
+				this.state.propertyNames[i].enum = [];
 			} else if ('array' === event.target.value) {
-				this.state.properties[i].type = event.target.value;
-				this.state.properties[i].format = event.target.value;
-				this.state.properties[i].items = {
+				this.state.propertyNames[i].type = event.target.value;
+				this.state.propertyNames[i].format = event.target.value;
+				this.state.propertyNames[i].items = {
 					type: "object",
 					format: "object",
 					properties: {}
 				};
-				this.state.properties[i].items.properties['subitem_' + Date.now()] = {
+				this.state.propertyNames[i].items.properties['subitem_' + Date.now()] = {
 					type: "string",
 					format: "text",
 					title: ""
 				};
 			} else {
-				this.state.properties[i].type = 'string';
+				this.state.propertyNames[i].type = 'string';
 			}
-			this.state.properties[i].format = event.target.value;
+			this.state.propertyNames[i].format = event.target.value;
+			this.state.properties[this.state.propertyItems[i]] = this.state.propertyNames[i];
 		} else if (event.target.name == 'field') {
-			this.state.properties[i].title = event.target.value;
+			this.state.propertyNames[i].title = event.target.value;
+			this.state.properties[this.state.propertyItems[i]].title = event.target.value;
 			if (event.target.value.length == 0) {
 				this.state.inputErrs.push(this.state.propertyItems[i]);
 			} else if (this.state.inputErrs.indexOf(this.state.propertyItems[i]) != -1) {
@@ -457,23 +462,25 @@ var SchemaObject = React.createClass({
 			var i = this.state.required.indexOf(event.target.name);
 			this.state.required.splice(i, 1);
 		}
-		this.state = this.propsToState(this.export());
+		//this.state = this.propsToState(this.export());
 		this.setState(this.state);
 	},
 	onChange: function onChange() {
-		if (undefined != this.props.onChange) {
-			this.props.onChange();
-		}
+		//if(undefined != this.props.onChange) {
+		//  this.props.onChange();
+		//}
 		this.trigger('change');
 	},
-	// 组件完全加载到DOM后执行
+
 	componentDidUpdate: function componentDidUpdate() {
 		this.onChange();
 	},
 	add: function add() {
-		this.state = this.propsToState(this.export());
-		this.state.properties.push({ type: 'string', format: 'text', title: '' });
-		this.state.propertyItems.push('subitem_' + Date.now());
+		var newKey = 'subitem_' + Date.now();
+		//this.state = this.propsToState(this.export());
+		this.state.propertyNames.push({ type: 'string', format: 'text', title: '' });
+		this.state.propertyItems.push(newKey);
+		this.state.properties[newKey] = { type: 'string', format: 'text', title: '' };
 		this.setState(this.state);
 	},
 	exportForm: function exportForm(parent_Key) {
@@ -484,7 +491,7 @@ var SchemaObject = React.createClass({
 		var form = [];
 		var forms = [];
 
-		self.state.properties.map(function (value, index) {
+		self.state.propertyNames.map(function (value, index) {
 			if (_this.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
@@ -542,7 +549,7 @@ var SchemaObject = React.createClass({
 		var self = this;
 		var properties = {};
 
-		self.state.properties.map(function (value, index) {
+		self.state.propertyNames.map(function (value, index) {
 			if (_this2.state.propertyDels[index]) return;
 			var itemKey = self.state.propertyItems[index];
 			if (value.title.length > 0) {
@@ -591,112 +598,116 @@ var SchemaObject = React.createClass({
 		var _this3 = this;
 
 		var self = this;
-		return this.state.properties.map(function (value, index) {
-			if (_this3.state.propertyDels[index]) return;
-			var itemKey = self.state.propertyItems[index];
-			var copiedState = JSON.parse(JSON.stringify(self.state.properties[index]));
-			var optionForm = mapping('subitem' + index, copiedState, self.state.editor, self.onChange);
-			return React.createElement(
-				'div',
-				{ key: index },
-				React.createElement(
+		return (
+			//this.state.propertyNames.map((value, index) => {
+			Object.keys(self.state.properties).map(function (name, index) {
+				if (_this3.state.propertyDels[index]) return;
+				var value = self.state.properties[name];
+				var itemKey = self.state.propertyItems[index];
+				var copiedState = self.state.properties[name]; // JSON.parse(JSON.stringify(self.state.properties[index]));
+				var optionForm = mapping('subitem' + index, copiedState, self.state.editor, self.onChange);
+				return React.createElement(
 					'div',
-					{ className: 'col-md-12 col-lg-12' },
+					{ key: index },
 					React.createElement(
 						'div',
-						{ className: 'form-inline' },
+						{ className: 'col-md-12 col-lg-12' },
 						React.createElement(
 							'div',
-							{ className: self.state.inputErrs.indexOf(itemKey) != -1 ? "form-group has-error" : "form-group", 'data-index': index },
+							{ className: 'form-inline' },
 							React.createElement(
-								'label',
-								{ className: 'sr-only', htmlFor: "input_" + itemKey },
-								'input'
-							),
-							React.createElement('input', { type: 'text', name: 'field', className: 'form-control', id: "input_" + itemKey, onChange: self.changeItem, value: value.title })
-						),
-						React.createElement(
-							'div',
-							{ className: 'form-group media-right', 'data-index': index },
-							React.createElement(
-								'label',
-								{ className: 'sr-only', htmlFor: "select_" + itemKey },
-								'input'
+								'div',
+								{ className: self.state.inputErrs.indexOf(itemKey) != -1 ? "form-group has-error" : "form-group", 'data-index': index },
+								React.createElement(
+									'label',
+									{ className: 'sr-only', htmlFor: "input_" + itemKey },
+									'input'
+								),
+								React.createElement('input', { type: 'text', name: 'field', className: 'form-control', id: "input_" + itemKey, onChange: self.changeItem, value: value.title })
 							),
 							React.createElement(
-								'select',
-								{ name: 'type', className: 'form-control', id: "select_" + itemKey, onChange: self.changeItem, value: value.format },
+								'div',
+								{ className: 'form-group media-right', 'data-index': index },
 								React.createElement(
-									'option',
-									{ value: 'text' },
-									'\u30C6\u30AD\u30B9\u30C8'
+									'label',
+									{ className: 'sr-only', htmlFor: "select_" + itemKey },
+									'input'
 								),
 								React.createElement(
-									'option',
-									{ value: 'textarea' },
-									'\u30C6\u30AD\u30B9\u30C8\u30A8\u30EA\u30A2'
-								),
+									'select',
+									{ name: 'type', className: 'form-control', id: "select_" + itemKey, onChange: self.changeItem, value: value.format },
+									React.createElement(
+										'option',
+										{ value: 'text' },
+										'\u30C6\u30AD\u30B9\u30C8'
+									),
+									React.createElement(
+										'option',
+										{ value: 'textarea' },
+										'\u30C6\u30AD\u30B9\u30C8\u30A8\u30EA\u30A2'
+									),
+									React.createElement(
+										'option',
+										{ value: 'checkboxes' },
+										'\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9'
+									),
+									React.createElement(
+										'option',
+										{ value: 'radios' },
+										'\u30E9\u30B8\u30AA'
+									),
+									React.createElement(
+										'option',
+										{ value: 'select' },
+										'\u30D7\u30EB\u30C0\u30A6\u30F3'
+									),
+									React.createElement(
+										'option',
+										{ value: 'datetime' },
+										'\u65E5\u4ED8'
+									),
+									React.createElement(
+										'option',
+										{ value: 'array' },
+										'\u30EA\u30B9\u30C8'
+									),
+									React.createElement(
+										'option',
+										{ value: 'object' },
+										'\u30AA\u30D6\u30B8\u30A7\u30AF\u30C8'
+									)
+								)
+							),
+							React.createElement(
+								'div',
+								{ className: 'checkbox  media-right' },
 								React.createElement(
-									'option',
-									{ value: 'checkboxes' },
-									'\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9'
-								),
+									'label',
+									null,
+									React.createElement('input', { type: 'checkbox', name: itemKey, onChange: self.changeRequired, checked: self.state.required.indexOf(itemKey) != -1 }),
+									' Required'
+								)
+							),
+							React.createElement(
+								'div',
+								{ className: self.state.editor ? "form-group media-right" : "hide", 'data-index': index },
 								React.createElement(
-									'option',
-									{ value: 'radios' },
-									'\u30E9\u30B8\u30AA'
-								),
-								React.createElement(
-									'option',
-									{ value: 'select' },
-									'\u30D7\u30EB\u30C0\u30A6\u30F3'
-								),
-								React.createElement(
-									'option',
-									{ value: 'datetime' },
-									'\u65E5\u4ED8'
-								),
-								React.createElement(
-									'option',
-									{ value: 'array' },
-									'\u30EA\u30B9\u30C8'
-								),
-								React.createElement(
-									'option',
-									{ value: 'object' },
-									'\u30AA\u30D6\u30B8\u30A7\u30AF\u30C8'
+									'button',
+									{ type: 'button', id: 'btn_' + itemKey, className: 'btn btn-default', 'data-index': index, onClick: self.deleteItem },
+									React.createElement('span', { className: 'glyphicon glyphicon-remove' })
 								)
 							)
-						),
-						React.createElement(
-							'div',
-							{ className: 'checkbox  media-right' },
-							React.createElement(
-								'label',
-								null,
-								React.createElement('input', { type: 'checkbox', name: itemKey, onChange: self.changeRequired, checked: self.state.required.indexOf(itemKey) != -1 }),
-								' Required'
-							)
-						),
-						React.createElement(
-							'div',
-							{ className: self.state.editor ? "form-group media-right" : "hide", 'data-index': index },
-							React.createElement(
-								'button',
-								{ type: 'button', id: 'btn_' + itemKey, className: 'btn btn-default', 'data-index': index, onClick: self.deleteItem },
-								React.createElement('span', { className: 'glyphicon glyphicon-remove' })
-							)
 						)
-					)
-				),
-				React.createElement(
-					'div',
-					{ className: 'col-md-12 col-lg-12 h6' },
-					optionForm
-				),
-				React.createElement('hr', { className: 'col-md-10 col-lg-10 h6' })
-			);
-		});
+					),
+					React.createElement(
+						'div',
+						{ className: 'col-md-12 col-lg-12 h6' },
+						optionForm
+					),
+					React.createElement('hr', { className: 'col-md-10 col-lg-10 h6' })
+				);
+			})
+		);
 	},
 	render: function render() {
 		var self = this;

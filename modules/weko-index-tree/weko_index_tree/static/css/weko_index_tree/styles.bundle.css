@@ -13,10 +13,28 @@
 
 /* node value setting */tree-internal .tree .node-value{display:inline-block;color:#f30202;
   /* 追加 */
-  /* background-color: #ab47bc; */-webkit-text-fill-color:#050505}tree-internal .tree .node-value:after{display:block;padding-top:-3px;width:0;height:2px;background-color:#212121;content:"";-webkit-transition:width .3s;transition:width .3s}tree-internal .tree .node-value:hover:after{width:100%;background-color:#fd0f07}tree-internal .tree .node-left-menu{display:inline-block;height:100%;width:auto
-  /* 追加 */}tree-internal .tree .node-left-menu span:before{content:"\2026";color:#f50808}tree-internal .tree .node-selected:after{width:100%;background-color:#fd2407}
-
-/*  */tree-internal .tree .folding{width:20px;display:inline-block;line-height:1px;padding:0 5px;font-weight:700}tree-internal .tree .folding.node-collapsed{cursor:pointer}tree-internal .tree .folding.node-collapsed:before{content:"\25B6";
+  /* background-color: #ab47bc; */-webkit-text-fill-color:#050505}tree-internal .tree .node-value:after{display:block;padding-top:-3px;width:0;height:2px;background-color:#212121;content:"";-webkit-transition:width .3s;transition:width .3s}tree-internal .tree .node-value:hover:after{width:100%;background-color:#1cfd07}tree-internal .tree .node-left-menu{display:inline-block;height:100%;width:auto
+  /* 追加 */}tree-internal .tree .node-left-menu span:before{content:"\2026";color:#f50808}tree-internal .tree .node-selected:after{width:100%;background-color:#fd2407}tree-internal .tree .folding{width:20px;display:inline-block;line-height:1px;padding:0 5px;font-weight:700}tree-internal .tree .folding.node-collapsed{cursor:pointer}tree-internal .tree .folding.node-collapsed:before{content:"\25B6";
   /* content: '\271A'; */color:red}tree-internal .tree .folding.node-expanded{cursor:pointer}tree-internal .tree .folding.node-expanded:before{content:"\25BC";	
   /* content: '\2013'; */color:#757575}tree-internal .tree .folding.node-empty{
   /* color: #212121; */text-align:center;font-size:.89em}tree-internal .tree .folding.node-empty:before{content:"\25B6";-webkit-text-fill-color:#909190}tree-internal .tree .folding.node-leaf{color:#f80909;text-align:center;font-size:.89em}tree-internal .tree .folding.node-leaf:before{content:"\25CF";color:#757575}tree-internal ul.rootless{padding:0}tree-internal div.rootless{display:none!important}tree-internal .loading-children:after{content:" loading ...";color:#6a1b9a;font-style:italic;font-size:.9em;-webkit-animation-name:loading-children;animation-name:loading-children;-webkit-animation-duration:2s;animation-duration:2s;-webkit-animation-timing-function:ease-in-out;animation-timing-function:ease-in-out;-webkit-animation-iteration-count:infinite;animation-iteration-count:infinite}@-webkit-keyframes loading-children{0%{color:#f3e5f5}12.5%{color:#e1bee7}25%{color:#ce93d8}37.5%{color:#ba68c8}50%{color:#ab47bc}62.5%{color:#9c27b0}75%{color:#8e24aa}87.5%{color:#7b1fa2}to{color:#6a1b9a}}@keyframes loading-children{0%{color:#f3e5f5}12.5%{color:#e1bee7}25%{color:#ce93d8}37.5%{color:#ba68c8}50%{color:#ab47bc}62.5%{color:#9c27b0}75%{color:#8e24aa}87.5%{color:#7b1fa2}to{color:#6a1b9a}}
+
+/* add at 0326 start*/
+
+/* div value setting */
+
+/* tree-internal .tree li div .node-value:hover {
+  display: inline-block;
+  box-sizing: border-box;
+  background-color: #d9edf7;
+  -webkit-text-fill-color:  #fc6907;
+}
+
+tree-internal .tree li div .node-selected {
+  display: inline-block;
+  box-sizing: border-box;
+  background-color: #d9edf7;
+  -webkit-text-fill-color: #fc0707;
+} */
+
+/* add at 0326  end */

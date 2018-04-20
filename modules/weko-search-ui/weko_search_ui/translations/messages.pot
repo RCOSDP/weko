@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 15:16+0900\n"
+"POT-Creation-Date: 2018-04-11 19:55+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,6 +26,30 @@ msgstr ""
 msgid "Search Results"
 msgstr ""
 
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:63
+msgid "Export Checked Items"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:64
+msgid "Export All Displayed Items"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:65
+msgid "Export All Items Of This Index"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:66
+msgid "Print Checked Items"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:67
+msgid "Print All Displayed Items"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:68
+msgid "Print All Items Of This Index"
+msgstr ""
+
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:70
 msgid "Execution"
 msgstr ""
@@ -33,6 +57,82 @@ msgstr ""
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:73
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:100
 msgid "Display Order"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:75
+msgid "Title(Ascending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:76
+msgid "Title(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:77
+msgid "Registrant(Ascending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:78
+msgid "Registrant(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:79
+msgid "Item Types(Asending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:80
+msgid "Item Types(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:81
+msgid "ID(Ascending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:82
+msgid "ID(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:83
+msgid "Modified Date and Time(Ascending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:84
+msgid "Modified Date and Time(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:85
+msgid "Created Date and Time(Ascending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:86
+msgid "Created Date and Time(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:87
+msgid "Review Date and Time(Ascending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:88
+msgid "Review Date and Time(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:89
+msgid "Published Year(Ascending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:90
+msgid "Published Year(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:91
+msgid "Custom(Ascending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:92
+msgid "Custom(Descending)"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:119
+msgid "Display Number"
 msgstr ""
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:138

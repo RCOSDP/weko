@@ -1,0 +1,356 @@
+# Japanese translations for weko-theme.
+# Copyright (C) 2018 National Institute of Informatics
+# This file is distributed under the same license as the weko-theme project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2018-04-11 19:56+0900\n"
+"PO-Revision-Date: 2018-04-12 18:01+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: weko_theme/templates/weko_theme/body_contents.html:35
+msgid "Item list"
+msgstr "アイテムリスト"
+
+#: weko_theme/templates/weko_theme/body_contents.html:48
+msgid "Export Checked Items"
+msgstr "チェックしたアイテムをExport"
+
+#: weko_theme/templates/weko_theme/body_contents.html:49
+msgid "Export All Displayed Items"
+msgstr "表示中の全てのアイテムをExport"
+
+#: weko_theme/templates/weko_theme/body_contents.html:50
+msgid "Export All Items Of This Index"
+msgstr "このインデックスの全てのアイテムをExport"
+
+#: weko_theme/templates/weko_theme/body_contents.html:51
+msgid "Print Checked Items"
+msgstr "チェックしたアイテムを印刷"
+
+#: weko_theme/templates/weko_theme/body_contents.html:52
+msgid "Print All Displayed Items"
+msgstr "表示中の全てのアイテムを印刷"
+
+#: weko_theme/templates/weko_theme/body_contents.html:53
+msgid "Print All Items Of This Index"
+msgstr "このインデックスの全てのアイテムを印刷"
+
+#: weko_theme/templates/weko_theme/body_contents.html:55
+msgid "Execution"
+msgstr "実行"
+
+#: weko_theme/templates/weko_theme/body_contents.html:58
+#: weko_theme/templates/weko_theme/body_contents.html:85
+msgid "Display order"
+msgstr "表示順"
+
+#: weko_theme/templates/weko_theme/body_contents.html:60
+msgid "Title(Ascending)"
+msgstr "タイトル（昇順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:61
+msgid "Title(Descending)"
+msgstr "タイトル（降順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:62
+msgid "Registrant(Ascending)"
+msgstr "登録者（昇順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:63
+msgid "Registrant(Descending)"
+msgstr "登録者（降順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:64
+msgid "Item Types(Asending)"
+msgstr "アイテムタイプ（昇順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:65
+msgid "Item Types(Descending)"
+msgstr "アイテムタイプ（降順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:66
+msgid "ID(Ascending)"
+msgstr "ID（昇順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:67
+msgid "ID(Descending)"
+msgstr "ID（降順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:68
+msgid "Modified Date and Time(Ascending)"
+msgstr "更新日時（昇順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:69
+msgid "Modified Date and Time(Descending)"
+msgstr "更新日時（降順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:70
+msgid "Created Date and Time(Ascending)"
+msgstr "作成日時（昇順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:71
+msgid "Created Date and Time(Descending)"
+msgstr "作成日時（降順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:72
+msgid "Review Date and Time(Ascending)"
+msgstr "査読日時（昇順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:73
+msgid "Review Date and Time(Descending)"
+msgstr "査読日時（降順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:74
+msgid "Published Year(Ascending)"
+msgstr "出版年（昇順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:75
+msgid "Published Year(Descending)"
+msgstr "出版年（降順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:76
+msgid "Custom(Ascending)"
+msgstr "カスタム（昇順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:77
+msgid "Custom(Descending)"
+msgstr "カスタム（降順）"
+
+#: weko_theme/templates/weko_theme/body_contents.html:104
+msgid "The number of display"
+msgstr "表示数"
+
+#: weko_theme/templates/weko_theme/body_contents.html:123
+msgid "Search failed."
+msgstr "検索に失敗しました。"
+
+#: weko_theme/templates/weko_theme/body_contents.html:129
+msgid "Loading..."
+msgstr "読み込み中"
+
+#: weko_theme/templates/weko_theme/body_index.html:24
+msgid "Index Link"
+msgstr "インデックスリンク"
+
+#: weko_theme/templates/weko_theme/body_index.html:30
+msgid "Add Links"
+msgstr "追加のリンク"
+
+#: weko_theme/templates/weko_theme/body_index.html:37
+msgid "Index Tree"
+msgstr "インデックスツリー"
+
+#: weko_theme/templates/weko_theme/body_search.html:25
+msgid "Type and press enter to search"
+msgstr "入力してEnterキーを押して検索してください。"
+
+#: weko_theme/templates/weko_theme/body_search.html:37
+msgid "Detail search"
+msgstr "詳細検索"
+
+#: weko_theme/templates/weko_theme/body_search.html:40
+msgid "Full text"
+msgstr "全文"
+
+#: weko_theme/templates/weko_theme/body_search.html:43
+#: weko_theme/templates/weko_theme/body_search_detail.html:33
+msgid "Keyword"
+msgstr "キーワード"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:25
+msgid "Title"
+msgstr "タイトル"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:29
+msgid "Author or Author id"
+msgstr "著者又は著者のID"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:37
+msgid "Subject terms"
+msgstr "件名"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:43
+msgid "Abstract"
+msgstr "抽象"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:47
+msgid "Publisher"
+msgstr "出版社"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:51
+msgid "Contributors or Author id"
+msgstr "貢献者又は作者ID"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:55
+msgid "Contents created date"
+msgstr "内容作成日"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:65
+msgid "Item type"
+msgstr "アイテムタイプ"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:69
+msgid "Format"
+msgstr "フォーマット"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:77
+msgid "Journal title"
+msgstr "ジャーナルタイトル"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:83
+msgid "Language"
+msgstr "言語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:86
+msgid "Japanese"
+msgstr "日本語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:87
+msgid "English"
+msgstr "英語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:88
+msgid "French"
+msgstr "フランス語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:89
+msgid "Italian"
+msgstr "イタリア語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:90
+msgid "German"
+msgstr "ドイツ語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:91
+msgid "Spanish"
+msgstr "スペイン語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:92
+msgid "Chinese"
+msgstr "中国語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:93
+msgid "Russian"
+msgstr "ロシア語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:94
+msgid "Latin"
+msgstr "ラテン語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:95
+msgid "Malay"
+msgstr "マレー語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:96
+msgid "Esperanto"
+msgstr "エスペラント語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:97
+msgid "Arabian"
+msgstr "アラビア語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:98
+msgid "Greek"
+msgstr "ギリシャ語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:99
+msgid "Korean"
+msgstr "韓国語"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:100
+msgid "Other languages"
+msgstr "その他"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:104
+msgid "Publish date"
+msgstr "公開日"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:112
+msgid "Region"
+msgstr "地域"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:116
+msgid "Period"
+msgstr "期間"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:122
+msgid "Right"
+msgstr "権利"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:126
+msgid "Author version flag"
+msgstr "著者版フラグ"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:130
+msgid "Academic degree number"
+msgstr "学位番号"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:134
+msgid "Academic degree date"
+msgstr "学位取得日"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:144
+msgid "Degree name"
+msgstr "学位名"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:148
+msgid "Institution for academic degree"
+msgstr "学位取得機関"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:154
+msgid "Resource type"
+msgstr "リソースタイプ"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:161
+msgid "DetailSearch"
+msgstr "詳細検索"
+
+#: weko_theme/templates/weko_theme/body_search_detail.html:164
+msgid "Clear"
+msgstr "クリア"
+
+#: weko_theme/templates/weko_theme/edit.html:25
+msgid "End edit"
+msgstr "編集終了"
+
+#: weko_theme/templates/weko_theme/footer.html:28
+#, python-format
+msgid "<p>Powered by <a href=\"%(link)s\">CERN Data Centre & Invenio</a><p>"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/header.html:28
+msgid "Toggle navigation"
+msgstr "ナビゲーションを切り替える"
+
+#: weko_theme/templates/weko_theme/header_login.html:23
+msgid "Log in"
+msgstr "ログイン"
+
+#: weko_theme/templates/weko_theme/header_login.html:24
+msgid "Sign up"
+msgstr "サインアップ"
+
+#: weko_theme/templates/weko_theme/header_login.html:41
+#: weko_theme/templates/weko_theme/header_login.html:45
+msgid "Log out"
+msgstr "ログアウトログアウト"
+
+#: weko_theme/templates/weko_theme/page.html:25
+msgid "Edit"
+msgstr "編集"
+
+#: weko_theme/templates/weko_theme/macros/language_selector.html:26
+msgid "Language:"
+msgstr "言語："
+

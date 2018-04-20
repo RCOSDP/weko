@@ -110,13 +110,13 @@ RECORDS_REST_SORT_OPTIONS = dict(
         ),
         upd=dict(
             title='Update date',
-            fields=['update_date'],
+            fields=['_updated'],
             default_order='asc',
             order=5,
         ),
         createdate=dict(
             title='Create date',
-            fields=['create_date'],
+            fields=['_created'],
             default_order='asc',
             order=6,
         ),
@@ -128,7 +128,7 @@ RECORDS_REST_SORT_OPTIONS = dict(
         ),
         publish_date=dict(
             title='Publish date',
-            fields=['publish_date'],
+            fields=['date'],
             default_order='asc',
             order=8,
         )

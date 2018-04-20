@@ -1,0 +1,26 @@
+# Japanese translations for weko-deposit.
+# Copyright (C) 2018 National Institute of Informatics
+# This file is distributed under the same license as the weko-deposit
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-deposit 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2018-04-11 19:52+0900\n"
+"PO-Revision-Date: 2018-04-12 10:41+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: weko_deposit/templates/weko_deposit/index.html:25
+#, python-format
+msgid "Welcome to %(module_name)s"
+msgstr "%(module_name)s へようこそ！"
+

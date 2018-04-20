@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 16:37+0900\n"
+"POT-Creation-Date: 2018-04-11 19:56+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,6 +21,30 @@ msgstr ""
 msgid "Item list"
 msgstr ""
 
+#: weko_theme/templates/weko_theme/body_contents.html:48
+msgid "Export Checked Items"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:49
+msgid "Export All Displayed Items"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:50
+msgid "Export All Items Of This Index"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:51
+msgid "Print Checked Items"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:52
+msgid "Print All Displayed Items"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:53
+msgid "Print All Items Of This Index"
+msgstr ""
+
 #: weko_theme/templates/weko_theme/body_contents.html:55
 msgid "Execution"
 msgstr ""
@@ -28,6 +52,82 @@ msgstr ""
 #: weko_theme/templates/weko_theme/body_contents.html:58
 #: weko_theme/templates/weko_theme/body_contents.html:85
 msgid "Display order"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:60
+msgid "Title(Ascending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:61
+msgid "Title(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:62
+msgid "Registrant(Ascending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:63
+msgid "Registrant(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:64
+msgid "Item Types(Asending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:65
+msgid "Item Types(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:66
+msgid "ID(Ascending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:67
+msgid "ID(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:68
+msgid "Modified Date and Time(Ascending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:69
+msgid "Modified Date and Time(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:70
+msgid "Created Date and Time(Ascending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:71
+msgid "Created Date and Time(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:72
+msgid "Review Date and Time(Ascending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:73
+msgid "Review Date and Time(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:74
+msgid "Published Year(Ascending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:75
+msgid "Published Year(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:76
+msgid "Custom(Ascending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:77
+msgid "Custom(Descending)"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/body_contents.html:104
+msgid "The number of display"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/body_contents.html:123
