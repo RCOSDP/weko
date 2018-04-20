@@ -47,12 +47,18 @@ class WekoFileStorage(PyFSFileStorage):
         except Exception as e:
             raise StorageError('Could not send file: {}'.format(e))
 
-        s = fp.read()
-        ecd = chardet.detect(s).get('encoding')
-        if ecd and '1252' in ecd:
-            s = str(s, 'cp932').encode('utf-8')
-
-        strb = base64.b64encode(s).decode("utf-8")
+        mime = fjson.get('mimetype', '')
+        if 'text' in mime:
+            s = fp.read()
+            ecd = chardet.detect(s).get('encoding')
+            if ecd and 'UTF-8' not in ecd:
+                try:
+                    s = s.decode(ecd).encode('utf-8')
+                except:
+                    pass
+            strb = base64.b64encode(s).decode("utf-8")
+        else:
+            strb = base64.b64encode(fp.read()).decode("utf-8")
         fp.close()
 
         fjson.update({"file": strb})
