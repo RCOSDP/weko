@@ -24,14 +24,14 @@ import unicodedata
 import mimetypes
 
 from flask import abort, current_app, render_template, request
-from flask_security import current_user
-from weko_groups.api import Group, Membership, MembershipState
+
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 from invenio_files_rest.views import ObjectResource
 from invenio_records_files.utils import record_file_factory
 
-from .api import FilesMetadata, ItemTypes
+from weko_records.api import FilesMetadata, ItemTypes
+from .permissions import file_permission_factory
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -165,11 +165,12 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
 
     obj = fileobj.obj
 
-    # Check group permission
-    check_download_permission(fileobj.get('groups'))
+    # Check file contents permission
+    if not file_permission_factory(record, fjson=fileobj).can():
+        abort(403)
 
     # Check permissions
-    ObjectResource.check_object_permission(obj)
+    # ObjectResource.check_object_permission(obj)
 
     # Send file.
     return ObjectResource.send_object(
@@ -183,16 +184,3 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
     )
 
 
-def check_download_permission(group_id):
-    """Check download permission.
-    :param group_id: Group_id
-    """
-    user_id = current_user.get_id()
-    if group_id:
-        if user_id:
-            query = Group.query.filter_by(id=group_id).join(Membership)\
-                .filter_by(user_id=user_id, state=MembershipState.ACTIVE)
-            if query.count() < 1:
-                abort(403)
-        else:
-            abort(403)

@@ -241,10 +241,13 @@ class WekoDeposit(Deposit):
         dc.update(dict(path=td))
 
         # default to set private status
-        if not is_edit:
-            ps = dict(publish_status='1')
-            jrc.update(ps)
-            dc.update(ps)
+        # if not is_edit:
+        #     ps = dict(publish_status='1')
+        #     jrc.update(ps)
+        #     dc.update(ps)
+        ps = dict(publish_status='0')
+        jrc.update(ps)
+        dc.update(ps)
 
         super(WekoDeposit, self).update(dc)
 
@@ -274,11 +277,11 @@ class WekoDeposit(Deposit):
                     for content in self.jrc['content']:
                         del content['file']
 
+
     def get_content_files(self):
-        """Upload files."""
+        """Get content file metadata."""
         fmd = self.data.get("filemeta")
         if fmd:
-            fmd = fmd.copy()
             for file in self.files:
                 if isinstance(fmd, list):
                     for lst in fmd:
@@ -309,7 +312,7 @@ class WekoDeposit(Deposit):
                                  item_type_id=self.get('item_type_id'))
 
     def delete_old_file_index(self):
-        """Delete old file index before file upload when edit am item."""
+        """Delete old file index before file upload when edit an item."""
         if self.is_edit:
             lst = ObjectVersion.get_by_bucket(
                 self.files.bucket, True).filter_by(is_head=False).all()
@@ -346,11 +349,6 @@ class WekoRecord(Record):
         """Return the information of item type."""
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return "{}({})".format(item_type.item_type_name.name, item_type.tag)
-
-    @property
-    def editable(self):
-        """Return the permission of modifying item."""
-        return current_weko_items_ui.permission.can()
 
     @property
     def items_show_list(self):

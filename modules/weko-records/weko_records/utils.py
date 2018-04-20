@@ -24,6 +24,7 @@ import re
 import pytz
 
 from flask import current_app
+from flask_security import current_user
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.ext import pid_exists
 from collections import OrderedDict
@@ -111,6 +112,10 @@ def save_item_metadata(rejson, pid):
         jrc.update(dict(_oai={"id": oai_value}))
         jrc.update(dict(_item_metadata=dc))
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
+        # save items's creator to check permission
+        user_id = current_user.get_id()
+        if user_id:
+            jrc.update(dict(weko_creator_id=user_id))
 
     del ojson, mjson
     return dc, jrc, is_edit

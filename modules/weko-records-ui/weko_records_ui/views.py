@@ -23,6 +23,7 @@
 import six
 from flask import Blueprint, current_app, abort, request, redirect, url_for, make_response,render_template
 from invenio_records_ui.utils import obj_or_import_string
+from .permissions import check_created_id
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -186,3 +187,14 @@ def get_license_icon(type):
     lst.append(lic_dict.get(type, ""))
 
     return lst
+
+
+@blueprint.app_template_filter("check_permission")
+def check_permission(record):
+    """
+    Check Permission on Page
+    :param record:
+    :return: result
+    """
+    return check_created_id(record)
+
