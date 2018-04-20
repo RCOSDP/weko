@@ -575,9 +575,17 @@
             properties_obj[tmp.input_type.substr(4)].forms.title = tmp.title;
             properties_obj[tmp.input_type.substr(4)].forms.title_i18n = tmp.title_i18n;
             //add by ryuu. end
-            page_global.table_row_map.form.push(
-              JSON.parse(JSON.stringify(properties_obj[tmp.input_type.substr(4)].forms).replace(/parentkey/gi, row_id))
-            );
+            if(Array.isArray(properties_obj[tmp.input_type.substr(4)].forms)) {
+              properties_obj[tmp.input_type.substr(4)].forms.forEach(function(element){
+                page_global.table_row_map.form.push(
+                  JSON.parse(JSON.stringify(element).replace(/parentkey/gi, row_id))
+                );
+              });
+            } else {
+              page_global.table_row_map.form.push(
+                JSON.parse(JSON.stringify(properties_obj[tmp.input_type.substr(4)].forms).replace(/parentkey/gi, row_id))
+              );
+            }
           } else {
             page_global.table_row_map.schema.properties[row_id] = {
               type: "object",
