@@ -1,5 +1,6 @@
 require([
   "jquery",
+  "bootstrap"
   ], function() {
     $('body').on('load', function(event, data) {
 
@@ -42,7 +43,7 @@ require([
         if (IsRec){
           input = sessionStorage.getItem($(this).attr('id'), '');
         }else{
-          if (SearchType){
+          if (SearchType && SearchType != '2'){
             if (IsParamKey($(this).attr('id'))){
               input = GetUrlParam($(this).attr('id'));
             }
@@ -82,7 +83,7 @@ require([
 
       //サーチラジオボタンの位置
       if (SearchType){
-        if (SearchType == '0'){
+        if (SearchType == '0' || SearchType == '2'){
           $('#search_type_fulltext').prop('checked', true);
         }else{
           $('#search_type_keyword').prop('checked', true);

@@ -1,0 +1,108 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_ADMIN_BASE_TEMPLATE %}
+
+{%- block css %}
+{{ super() }}
+{%- endblock css %}
+
+{%- block javascript %}
+{{ super() }}
+{% assets "weko_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('block style') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+<form id="block_style">
+  <div class="row">
+    <div class="panel-group">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <div class="panel-title">
+            <h3>Color Settings</h3>
+          </div>
+        </div>
+        <div class="panel-body" id="color_setting">
+          <div class="row">
+            <div class="form-group col-sm-3">
+              <!--<div class="input-group">-->
+                <!--<div class="input^group-prepend">-->
+                  <label for="color_background">{{_('Background')}}</label>
+                  <select class="form-control" id="color_background" name="color_background">
+                    <option value="#808080">{{_('Default')}}</option>
+                    <option value="#0000FF">{{_('Blue')}}</option>
+                    <option value="#008000">{{_('Green')}}</option>
+                    <option value="#FFA500">{{_('Orange')}}</option>
+                    <option value="#FFC0CB">{{_('Pink')}}</option>
+                    <option value="#FF0000">{{_('Red')}}</option>
+                  </select>
+                <!--</div>-->
+                <input type="text" class="form-control" id="color_background_hex" disabled>
+              <!--</div>-->
+            </div>
+            <div class="form-group col-sm-3">
+              <label for="color_frameBorder">{{_('Frame Border')}}</label>
+              <select class="form-control" id="color_frameBorder" name="color_frameBorder">
+                <option value="#808080">{{_('Default')}}</option>
+                <option value="#0000FF">{{_('Blue')}}</option>
+                <option value="#008000">{{_('Green')}}</option>
+                <option value="#FFA500">{{_('Orange')}}</option>
+                <option value="#FFC0CB">{{_('Pink')}}</option>
+                <option value="#FF0000">{{_('Red')}}</option>
+              </select>
+              <input type="text" class="form-control" id="color_frameBorder_hex" disabled>
+            </div>
+            <div class="form-group col-sm-3">
+              <label for="color_header">{{_('Header')}}</label>
+              <select class="form-control" id="color_header" name="color_header">
+                <option value="#808080">{{_('Default')}}</option>
+                <option value="#0000FF">{{_('Blue')}}</option>
+                <option value="#008000">{{_('Green')}}</option>
+                <option value="#FFA500">{{_('Orange')}}</option>
+                <option value="#FFC0CB">{{_('Pink')}}</option>
+                <option value="#FF0000">{{_('Red')}}</option>
+              </select>
+              <input type="text" class="form-control" id="color_header_hex" disabled>
+            </div>
+            <div class="form-group col-sm-3">
+              <label for="color_footer">{{_('Footer')}}</label>
+              <select class="form-control" id="color_footer" name="color_footer">
+                <option value="#808080">{{_('Default')}}</option>
+                <option value="#0000FF">{{_('Blue')}}</option>
+                <option value="#008000">{{_('Green')}}</option>
+                <option value="#FFA500">{{_('Orange')}}</option>
+                <option value="#FFC0CB">{{_('Pink')}}</option>
+                <option value="#FF0000">{{_('Red')}}</option>
+              </select>
+              <input type="text" class="form-control" id="color_footer_hex" disabled>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+{%- endblock page_body_main %}

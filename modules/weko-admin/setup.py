@@ -63,6 +63,7 @@ install_requires = [
     'Flask-Mail>=0.9.1',
     'invenio-db>=1.0.0b9',
     'invenio-accounts>=1.0.0b3',
+    'invenio-assets>=1.0.0b7',
 ]
 
 packages = find_packages()
@@ -98,6 +99,9 @@ setup(
         ],
         'invenio_db.alembic': [
             'weko_admin = weko_admin:alembic',
+        ],
+        'invenio_assets.bundles': [
+            'weko_admin_js = weko_admin.bundles:js',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',
