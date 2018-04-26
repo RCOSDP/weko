@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-#
+{#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -17,23 +16,27 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
+#}
 
-"""Configuration for weko-admin."""
+{%- extends config.WEKO_SCHEMA_UI_BASE_TEMPLATE %}
 
-WEKO_ADMIN_DEFAULT_LIFETIME = 60
-""" Session time out setting, default 60 minutes """
+{%- block css %}
+{{ super() }}
+{%- endblock css %}
 
-WEKO_ADMIN_BASE_TEMPLATE = 'weko_admin/base.html'
-"""Base templates for weko-admin module."""
+{%- block javascript %}
+{{ super() }}
+{% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
 
-WEKO_ADMIN_SETTINGS_TEMPLATE = None
-"""Settings base templates for weko-admin module."""
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('management') }}
+{%- endblock page_body_tabs%}
 
-WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
-"""Settings base templates for weko-admin module."""
-
-WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/site_license.html'
-"""Site-license templates."""
-
-WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/block_style.html'
-"""Block-style templates."""
+{%- block page_body_main %}
+<div class="row">
+  haha
+</div>
+{%- endblock page_body_main %}

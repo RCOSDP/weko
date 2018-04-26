@@ -124,3 +124,25 @@ def session_info_offline():
                    lifetime=lifetime_str,
                    _app_lifetime=str(_app.permanent_session_lifetime),
                    current_app_name=current_app.name)
+
+
+@blueprint.route("/admin/site-license")
+@blueprint.route("/admin/site-license/")
+def site_license():
+    """
+    Site license setting page.
+
+    """
+    current_app.logger.info('site-license setting page')
+    return render_template(current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'])
+
+
+@blueprint.route("/admin/block-style")
+@blueprint.route("/admin/block-style/")
+def block_style():
+    """
+    Block style setting page.
+
+    """
+    current_app.logger.info('block style setting page')
+    return render_template(current_app.config['WEKO_ADMIN_BlOCK_STYLE_TEMPLATE'])

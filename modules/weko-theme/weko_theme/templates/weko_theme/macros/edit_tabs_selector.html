@@ -26,8 +26,8 @@
                       ('review/accept', 'Review/Accept', '/'),
                       ('import', 'Import', '/'),
                       ('report', 'Report', '/'),
-                      ('management', 'Management', '/'),
-                      ('block style', 'Block style', '/')] %}
+                      ('management', 'Management', url_for('weko_admin.site_license')),
+                      ('block style', 'Block style', url_for('weko_admin.block_style'))] %}
   {% for (value, name, href) in tabs_list %}
     <li role="presentation" {% if tab_value == value %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>
   {% endfor %}

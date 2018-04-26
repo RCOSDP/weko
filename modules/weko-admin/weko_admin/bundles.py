@@ -18,22 +18,12 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Configuration for weko-admin."""
+"""Bundles for weko-admin-ui."""
 
-WEKO_ADMIN_DEFAULT_LIFETIME = 60
-""" Session time out setting, default 60 minutes """
+from flask_assets import Bundle
 
-WEKO_ADMIN_BASE_TEMPLATE = 'weko_admin/base.html'
-"""Base templates for weko-admin module."""
-
-WEKO_ADMIN_SETTINGS_TEMPLATE = None
-"""Settings base templates for weko-admin module."""
-
-WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
-"""Settings base templates for weko-admin module."""
-
-WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/site_license.html'
-"""Site-license templates."""
-
-WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/block_style.html'
-"""Block-style templates."""
+js = Bundle(
+    'js/weko_admin/block_style.js',
+    filters='requirejs',
+    output="gen/weko_admin_ui.%(version)s.js",
+)
