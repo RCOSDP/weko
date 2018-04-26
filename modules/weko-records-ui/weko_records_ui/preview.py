@@ -115,6 +115,14 @@ def decode_name(k):
     try:
         name = k.encode('cp437')
         encode = chardet.detect(name).get('encoding')
+        current_app.logger.\
+            debug('--mae------name: {name}------------------encode : {ex}'.
+                  format(ex=encode, name=k))
+        if not encode:
+            encode = chardet.detect(k.encode('utf-16be')).get('encoding')
+        current_app.logger.\
+            debug('--------name: {name}------------------encode : {ex}'.
+                  format(ex=encode, name=k))
         if 'ISO-8859-1' in encode or 'WINDOWS-1252' in encode:
             name = name.decode('cp932')
         else:

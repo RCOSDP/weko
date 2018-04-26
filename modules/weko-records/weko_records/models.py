@@ -438,6 +438,77 @@ class ItemTypeProperty(db.Model, Timestamp):
     """
 
 
+class SiteLicenseInfo(db.Model, Timestamp):
+    """
+    Represent a SiteLicenseInfo data.
+    The SiteLicenseInfo object contains a ``created`` and  a ``updated``
+    properties that are automatically updated.
+    """
+    __tablename__ = 'sitelicense_info'
+
+    organization_id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+
+    organization_name = db.Column(
+        db.Text,
+        nullable=False
+    )
+
+    exclude_item_type = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    mail_address = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
+    is_delete = db.Column(db.Boolean(name='is_delete'),
+                       default=False, nullable=False)
+
+    # Relationships definitions
+    addresses = db.relationship('SiteLicenseIpAddress', backref='addresses')
+    """Relationship to SiteLicenseIpAddress."""
+
+
+class SiteLicenseIpAddress(db.Model, Timestamp):
+    """
+    Represent a SiteLicenseIpAddress data.
+    The SiteLicenseIpAddress object contains a ``created`` and  a ``updated``
+    properties that are automatically updated.
+    """
+    __tablename__ = 'sitelicense_ip_address'
+
+    organization_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(SiteLicenseInfo.organization_id, ondelete='RESTRICT'),
+        primary_key=True
+    )
+
+    organization_no = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+
+    start_ip_address = db.Column(
+        db.String(16),
+        nullable=False
+    )
+
+    finish_ip_address = db.Column(
+        db.String(16),
+        nullable=False
+    )
+
+    is_delete = db.Column(db.Boolean(name='is_delete'),
+                       default=False, nullable=False)
+
+
 __all__ = (
     'ItemType',
     'ItemTypeName',
@@ -445,4 +516,6 @@ __all__ = (
     'ItemTypeProperty',
     'ItemMetadata',
     'FileMetadata',
+    'SiteLicenseInfo',
+    'SiteLicenseIpAddress',
 )

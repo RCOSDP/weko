@@ -26,6 +26,7 @@ from werkzeug.datastructures import MultiDict
 
 from elasticsearch_dsl.query import Q
 from flask import current_app, request
+from flask_security import current_user
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
 from .permissions import search_permission
@@ -45,9 +46,21 @@ def default_search_factory(self, search, query_parser=None):
 
     def _get_permission_filter():
         mut = []
+        match = Q('match', publish_status='0')
+        rng = Q('range', date={'lte': 'now/d'})
         if not is_perm:
-            mut.append(Q('match', publish_status='0'))
-            mut.append(Q('range', date={'lte': 'now/d'}))
+            mut.append(match)
+            mut.append(rng)
+        else:
+            user_id, result = check_admin_user()
+            if result:
+                shuld = []
+                shuld.append(Q('match', weko_creator_id=user_id))
+                mut2 = []
+                mut2.append(match)
+                mut2.append(rng)
+                shuld.append(Q('bool', must=mut2))
+                mut.append(Q('bool', should=shuld))
         return mut
 
     def _get_dsearch_query(qs=None):
@@ -179,63 +192,85 @@ def item_path_search_factory(self, search):
     :returns: Tuple with search instance and URL arguments.
     """
 
-    # check permission
-    is_perm = search_permission.can()
-
-    query_q = {
-        "query": {
-            "match": {
-                "path.tree": "@index"
-            }
-        },
-        "aggs": {
-            "path": {
-                "terms": {
-                    "field": "path.tree",
-                    "include": "@index|@index/[^/]+"
-                },
-                "aggs": {
-                    "date_range": {
-                        "range": {
-                            "field": "date",
-                            "format": "YYYY-MM-DD",
-                            "ranges": [
-                                {
-                                    "from": "now/d"
-                                },
-                                {
-                                    "to": "now/d"
-                                }
-                            ]
+    def _get_index_earch_query():
+        query_q = {
+            "_source": {
+                "exclude": ['content', '_item_metadata']
+            },
+            "query": {
+                "match": {
+                    "path.tree": "@index"
+                }
+            },
+            "aggs": {
+                "path": {
+                    "terms": {
+                        "field": "path.tree",
+                        "include": "@index|@index/[^/]+"
+                    },
+                    "aggs": {
+                        "date_range": {
+                            "range": {
+                                "field": "date",
+                                "format": "YYYY-MM-DD",
+                                "ranges": [
+                                    {
+                                        "from": "now/d"
+                                    },
+                                    {
+                                        "to": "now/d"
+                                    }
+                                ]
+                            }
                         }
                     }
                 }
-            }
-        },
-        "post_filter": {
-            "term": {
-                "path": "@index"
+            },
+            "post_filter": {
+                "term": {
+                    "path": "@index"
+                }
             }
         }
-    }
 
-    if not is_perm:
-        mut = []
-        mut.append({'match': {'publish_status': '0'}})
-        mut.append({'range': {'date': {'lte': 'now/d'}}})
-        mut.append({'term': query_q['post_filter'].pop('term')})
-        query_q['post_filter']['bool'] = {'must': mut}
+        # check permission
+        is_perm = search_permission.can()
+        match = {'match': {'publish_status': '0'}}
+        rng = {'range': {'date': {'lte': 'now/d'}}}
+        if not is_perm:
+            mut = []
+            mut.append(match)
+            mut.append(rng)
+            mut.append({'term': query_q['post_filter'].pop('term')})
+            query_q['post_filter']['bool'] = {'must': mut}
+        else:
+            user_id, result = check_admin_user()
+            # if is administrator
+            if result:
+                mut = []
+                mut.append({'term': query_q['post_filter'].pop('term')})
+                shud = []
+                shud.append({'match': {'weko_creator_id': user_id}})
+                mut2 = []
+                mut2.append(match)
+                mut2.append(rng)
+                shud.append({'bool': {'must': mut2}})
+                query_q['post_filter']['bool'] = {'must': mut, 'should': shud}
 
-    # create search query
-    q = request.values.get('q')
-    if q:
-        try:
-            fp = Indexes.get_self_path(q)
-            if fp:
-                query_q = json.dumps(query_q).replace("@index", fp.path)
-                query_q = json.loads(query_q)
-        except:
-            pass
+        # create search query
+        q = request.values.get('q')
+        if q:
+            try:
+                fp = Indexes.get_self_path(q)
+                if fp:
+                    query_q = json.dumps(query_q).replace("@index", fp.path)
+                    query_q = json.loads(query_q)
+            except:
+                pass
+        return query_q
+
+    # create a index search query
+    query_q = _get_index_earch_query()
 
     urlkwargs = MultiDict()
     try:
@@ -258,6 +293,23 @@ def item_path_search_factory(self, search):
 
     urlkwargs.add('q', query_q)
     return search, urlkwargs
+
+
+def check_admin_user():
+    """
+    Check administrator role user.
+    :return: result
+    """
+    result = False
+    user_id = current_user.get_id() \
+        if current_user and current_user.is_authenticated else None
+    if user_id:
+        users = current_app.config['WEKO_PERMISSION_ROLE_USER']
+        for lst in list(current_user.roles or []):
+            # if is administrator
+            if lst.name == users[2]:
+                result = True
+    return user_id, result
 
 
 weko_search_factory = item_path_search_factory

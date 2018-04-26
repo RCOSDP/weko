@@ -840,7 +840,7 @@ class FileInstance(db.Model, Timestamp):
         :param jsn: Dictionary of file metadata.
         :return:
         """
-        self.json = jsn
+        self.json = jsn.copy()
 
     def upload_file(self, fjson, **kwargs):
         """

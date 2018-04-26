@@ -202,7 +202,7 @@
                               action="{{ url_for('invenio_records_ui.recid_publish',
                               pid_value=pid.pid_value) }}"
                               method="POST">
-                          {% if record.editable %}
+                          {% if record | check_permission %}
                              {% if '0' in pubs %}
                               <button class="btn btn-default" type="submit" name="status" value="1">
                                 {{_('Private')}}
@@ -235,7 +235,7 @@
             <div class="text-center">
               <a class="btn btn-default" id="btn_back" href="#" >
                 <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</a>
-              {% if record.editable %}
+              {% if record | check_permission %}
               <a class="btn btn-default" id="btn_edit" href="{{ '/item/edit/'+pid.pid_value }}">
                 <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Edit')}}</a>
               <a class="btn btn-danger btn-sm" id="btn_delete" href="#">

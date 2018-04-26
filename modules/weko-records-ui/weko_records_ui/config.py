@@ -23,11 +23,16 @@
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
 WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
 
+WEKO_PERMISSION_ROLE_USER = ('System Administrator',
+                              'Repository Administrator',
+                              'Administrator',
+                             'General')
+
 RECORDS_UI_ENDPOINTS = dict(
     recid=dict(
         pid_type='recid',
         route="/records/<pid_value>",
-        # view_imp='weko_records.fd.weko_view_method',
+        # view_imp='weko_records_ui.fd.weko_view_method',
         template='weko_records_ui/detail.html',
         record_class='weko_deposit.api:WekoRecord',
         permission_factory_imp='weko_records_ui.permissions:page_permission_factory',
@@ -42,14 +47,16 @@ RECORDS_UI_ENDPOINTS = dict(
     recid_files=dict(
         pid_type='recid',
         route='/record/<pid_value>/files/<path:filename>',
-        view_imp='weko_records.fd.file_download_ui',
+        view_imp='weko_records_ui.fd.file_download_ui',
         record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions:page_permission_factory',
     ),
     recid_preview=dict(
         pid_type='recid',
         route='/record/<pid_value>/preview/<path:filename>',
         view_imp='weko_records_ui.preview.preview',
         record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions:page_permission_factory',
     ),
     recid_publish=dict(
         pid_type='recid',
@@ -57,6 +64,7 @@ RECORDS_UI_ENDPOINTS = dict(
         view_imp='weko_records_ui.views.publish',
         template='weko_records_ui/detail.html',
         record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_items_ui.permissions:edit_permission_factory',
         methods=['POST'],
     ),
 )
