@@ -1,0 +1,87 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+{%- extends config.ACCOUNTS_COVER_TEMPLATE %}
+
+{% block panel %}
+<div class="col-md-6 col-md-offset-3">
+  <div class="panel panel-default">
+    <div class="panel-body">
+      {%- block form_header %}
+      <h3 class="text-center panel-free-title">{{_('test commit shibboleth account') }}</h3>
+      {%- endblock form_header %}
+      {%- block form_outer %}
+      <div class="row navbar-btn"><div class="col-sm-12">
+        <form action={{url_for("weko_accounts.shib_sp_login")}} method="POST">
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="shib_email" name="SHIB_ATTR_MAIL" placeholder="SHIB_ATTR_MAIL" type="text" value="">
+            <i class="fa fa-envelope form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="user_name" name="SHIB_ATTR_USER_NAME" placeholder="SHIB_ATTR_USER_NAME" type="text" value="">
+            <i class="fa fa-pencil form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="login_id" name="SHIB_ATTR_LOGIN_ID" placeholder="SHIB_ATTR_LOGIN_ID" type="text" value="">
+            <i class="fa fa-pencil form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="handle" name="SHIB_ATTR_HANDLE" placeholder="SHIB_ATTR_HANDLE" type="text" value="">
+            <i class="fa fa-pencil form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="auth_name" name="SHIB_ATTR_ROLE_AUTHORITY_NAME" placeholder="SHIB_ATTR_ROLE_AUTHORITY_NAME" type="text" value="">
+            <i class="fa fa-pencil form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="page_name" name="SHIB_ATTR_PAGE_NAME" placeholder="SHIB_ATTR_PAGE_NAME" type="text" value="">
+            <i class="fa fa-pencil form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="active_flag" name="SHIB_ATTR_ACTIVE_FLAG" placeholder="SHIB_ATTR_ACTIVE_FLAG" type="text" value="">
+            <i class="fa fa-pencil form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="ip_range_flag" name="SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG" placeholder="SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG" type="text" value="">
+            <i class="fa fa-pencil form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <div class="form-group form-group-lg has-feedback">
+            <input autofocus="" class="form-control" id="session_id" name="SHIB_ATTR_SESSION_ID" placeholder="SHIB_ATTR_SESSION_ID" type="text" value="">
+            <i class="fa fa-cog form-control-feedback" aria-hidden="true"></i>
+          </div>
+          <button type="submit" class="btn btn-default btn-lg btn-block"><i class="fa fa-sign-in"></i> Shibboleth User</button>
+        </form>
+      </div></div>
+      {%- endblock form_outer %}
+    </div>
+    {%- block registerable %}
+    {%- if security.registerable %}
+    <div class="panel-footer text-center">
+        <h4 class="text-muted">{% trans sitename=config.ACCOUNTS_SITENAME %}New to {{sitename}}?{% endtrans %} <a href="{{url_for('security.register')}}">{{_('Sign Up')}}</a></h4>
+    </div>
+    {%- endif %}
+    {%- endblock %}
+  </div>
+  {%- block recoverable %}
+  {%- if security.recoverable %}
+  <a href="{{url_for('security.forgot_password')}}" class="text-muted">{{_('Forgot password?')}}</a>
+  {%- endif %}
+  {%- endblock %}
+</div>
+{% endblock panel %}

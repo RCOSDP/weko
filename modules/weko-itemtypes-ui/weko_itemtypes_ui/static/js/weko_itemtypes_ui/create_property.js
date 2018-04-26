@@ -21,6 +21,13 @@ require([
       $('#form2_json').val(JSON.stringify(forms.forms, null, 4));
     });
     $('#sending').on('click', function(){
+      let prop_name = $('#property_name').val();
+      if(prop_name.length == 0) {
+        $('#property_name').focus();
+        $('#property_name').parent().addClass('has-error');
+        return;
+      }
+      $('#property_name').parent().removeClass('has-error');
       let data = {
         name: $('#property_name').val(),
         schema: editor.getValue(),

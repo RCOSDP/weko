@@ -24,7 +24,8 @@ from datetime import datetime
 
 from flask import current_app
 from flask_login import current_user, user_logged_in, user_logged_out
-from flask_security.utils import hash_password
+from flask_security.utils import hash_password, verify_password
+from invenio_accounts.models import User
 from invenio_db import db
 from werkzeug.local import LocalProxy
 from weko_user_profiles.models import UserProfile
@@ -52,9 +53,18 @@ class ShibUser(object):
         get weko user info by shibboleth user info
         :return: ShibbolethUser if exists relation else None
         """
-        shib_user = ShibbolethUser.query.filter_by(
-            shib_uid=self.shib_attr['shib_uid']).one_or_none()
+        shib_user = None;
+        if self.shib_attr['shib_mail'] is not None and len(
+            self.shib_attr['shib_mail']) > 0:
+            shib_user = ShibbolethUser.query.filter_by(
+                shib_mail=self.shib_attr['shib_mail']).one_or_none()
         if shib_user is None:
+            # check email info on account_user
+            weko_user = User.query.filter_by(
+                email=self.shib_attr['shib_mail']).one_or_none()
+            if weko_user is not None:
+                # need check weko user info for the same email address
+                return 'chk'
             # new shibboleth user login
             shib_user = self.new_relation_info()
 
@@ -62,6 +72,33 @@ class ShibUser(object):
             self.shib_user = shib_user
             if self.user is None:
                 self.user = shib_user.weko_user
+        return shib_user
+
+    def check_weko_user(self, account, pwd):
+        """
+        check weko user info
+        :param account:
+        :param pwd:
+        :return: Boolean
+        """
+        if account != self.shib_attr['shib_mail']:
+            return False
+        weko_user = _datastore.find_user(email=self.shib_attr['shib_mail'])
+        if weko_user is None:
+            return False
+        if not verify_password(pwd, weko_user.password):
+            return False
+        return True
+
+    def bind_relation_info(self):
+        """
+        create new relation info with the user who belong with the email
+        :return: ShibbolenUser instance
+        """
+        self.user = User.query.filter_by(
+            email=self.shib_attr['shib_mail']).one_or_none()
+        shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
+        self.shib_user = shib_user
         return shib_user
 
     def new_relation_info(self):

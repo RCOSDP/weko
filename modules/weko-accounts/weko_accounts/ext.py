@@ -68,10 +68,14 @@ class WekoAccounts(object):
                 'WEKO_ACCOUNTS_BASE_TEMPLATE',
                 app.config['BASE_TEMPLATE'],
             )
-        app.config['SSO_ATTRIBUTE_MAP'] = config.SSO_ATTRIBUTE_MAP
-        if config.SHIB_ACCOUNTS_LOGGER_ENABLED:
+        app.config['SHIB_ACCOUNTS_LOGIN_ENABLED'] = \
+            config.SHIB_ACCOUNTS_LOGIN_ENABLED
+        if config.SHIB_ACCOUNTS_LOGIN_ENABLED:
             app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
                 config.SECURITY_LOGIN_USER_TEMPLATE
+            app.config['SHIB_ACCOUNTS_LOGIN_CACHE_TTL'] = \
+                config.SHIB_ACCOUNTS_LOGIN_CACHE_TTL
+            app.config['SSO_ATTRIBUTE_MAP'] = config.SSO_ATTRIBUTE_MAP
         for k in dir(config):
             if k.startswith('WEKO_ACCOUNTS_'):
                 app.config.setdefault(k, getattr(config, k))

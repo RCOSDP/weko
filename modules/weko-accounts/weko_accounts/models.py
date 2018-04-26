@@ -32,7 +32,7 @@ class ShibbolethUser(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     """ShibbolethUser identifier."""
 
-    shib_uid = db.Column(db.String(32), unique=True, nullable=False)
+    shib_uid = db.Column(db.String(32), unique=False, nullable=True)
     """SHIB_ATTR_LOGIN_ID"""
 
     weko_uid = db.Column(db.Integer, db.ForeignKey(
