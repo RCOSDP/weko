@@ -84,6 +84,7 @@ setup(
     entry_points={
         'invenio_assets.bundles': [
             'weko_theme_css = weko_theme.bundles:css',
+            'weko_theme_css_bootstrap = weko_theme.bundles:css_bootstrap',
             'weko_theme_js_treeview = weko_theme.bundles:js_treeview',
             'weko_theme_js = weko_theme.bundles:js',
             'weko_theme_js_top_page = weko_theme.bundles:js_top_page',

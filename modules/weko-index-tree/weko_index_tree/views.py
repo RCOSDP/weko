@@ -22,9 +22,9 @@
 
 from functools import wraps
 
-import requests
-from flask import Blueprint, current_app, json, jsonify, render_template, \
-    request, url_for
+import sys
+from flask import abort, Blueprint, current_app, json, jsonify, \
+    render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_records_rest.errors import PIDResolveRESTError
@@ -46,6 +46,7 @@ blueprint = Blueprint(
 
 def pass_record(f):
     """Decorator to retrieve persistent identifier and record."""
+
     @wraps(f)
     def inner(pid_value, *args, **kwargs):
         try:
@@ -73,10 +74,14 @@ def index():
 @blueprint.route("/jsonmapping", methods=['GET'])
 def get_indexjson():
     """Provide the index tree json for top page."""
-    result = IndexTrees.get()
-    if result is None:
-        return jsonify([])
-    return jsonify(result.tree)
+    try:
+        result = IndexTrees.get()
+        if result is None:
+            return jsonify([])
+        return jsonify(result.tree)
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)
 
 
 @blueprint.route(
@@ -219,13 +224,17 @@ def del_index_detail(index_id=0):
 @index_tree_permission.require(http_exception=403)
 def edit_get():
     """Render the index tree edit page."""
-    result = IndexTrees.get()
-    index_tree = []
-    if result is not None:
-        index_tree = json.dumps(result.tree, indent=4, ensure_ascii=False)
-    return render_template(
-        current_app.config['WEKO_INDEX_TREE_EDIT_TEMPLATE'],
-        index_tree=index_tree)
+    try:
+        result = IndexTrees.get()
+        index_tree = []
+        if result is not None:
+            index_tree = json.dumps(result.tree, indent=4, ensure_ascii=False)
+        return render_template(
+            current_app.config['WEKO_INDEX_TREE_EDIT_TEMPLATE'],
+            index_tree=index_tree)
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)
 
 
 @blueprint.route("/edit", methods=['POST', 'PUT'])
@@ -233,16 +242,19 @@ def edit_get():
 @index_tree_permission.require(http_exception=403)
 def edit():
     """Update the index tree."""
-    tree_info = request.get_json()
-    #    tree_info = json.loads(str(data))
-    result = IndexTrees.update(tree=tree_info)
-    if result is None:
-        return jsonify(msg=_('Fail'))
-    indexes = get_all_children(tree_info)
-    result = Indexes.create(indexes=indexes)
-    if result is None:
-        return jsonify(msg=_('Fail'))
-    return jsonify(msg=_('Success'))
+    try:
+        tree_info = request.get_json()
+        result = IndexTrees.update(tree=tree_info)
+        if result is None:
+            return jsonify(msg=_('Fail'))
+        indexes = get_all_children(tree_info)
+        result = Indexes.create(indexes=indexes)
+        if result is None:
+            return jsonify(msg=_('Fail'))
+        return jsonify(msg=_('Success'))
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)
 
 
 @blueprint.route("/items/count/<tree_id>", methods=['GET'])
@@ -253,14 +265,18 @@ def items_count(tree_id):
     :param tree_id: Indentifier of index
     :return: the count of item
     """
-    tree_obj = Indexes.get_self_path(tree_id)
-    if tree_obj is None:
-        return jsonify(code=0, msg=_('success'), data={'count': 0})
-    tree_path = tree_obj.path if tree_obj is not None else '0'
-    weko_indexer = ItemRecord()
-    item_count = weko_indexer.get_count_by_index_id(tree_path=tree_path)
-    return jsonify(code=0, msg=_('success'),
-                   data={'count': item_count})
+    try:
+        tree_obj = Indexes.get_self_path(tree_id)
+        if tree_obj is None:
+            return jsonify(code=0, msg=_('success'), data={'count': 0})
+        tree_path = tree_obj.path if tree_obj is not None else '0'
+        weko_indexer = ItemRecord()
+        item_count = weko_indexer.get_count_by_index_id(tree_path=tree_path)
+        return jsonify(code=0, msg=_('success'),
+                       data={'count': item_count})
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)
 
 
 @blueprint.route("/move/<child_id>/<parent_id>", methods=['GET'])
@@ -272,9 +288,13 @@ def move_up(child_id, parent_id):
     :param parent_id: Indentifier of parent index
     :return: the count info of updated index
     """
-    index_children_count = Indexes.has_children(parent_id)
-    weko_indexer = ItemRecord()
-    count_del, count_upt = weko_indexer.del_items_by_index_id(child_id)
-    return jsonify(code=0, msg=_('success'),
-                   data={'count': index_children_count, 'del': count_del,
-                         'upt': count_upt})
+    try:
+        index_children_count = Indexes.has_children(parent_id)
+        weko_indexer = ItemRecord()
+        count_del, count_upt = weko_indexer.del_items_by_index_id(child_id)
+        return jsonify(code=0, msg=_('success'),
+                       data={'count': index_children_count, 'del': count_del,
+                             'upt': count_upt})
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)

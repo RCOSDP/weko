@@ -1,0 +1,62 @@
+// This file is part of WEKO3.
+// Copyright (C) 2017 National Institute of Informatics.
+//
+// WEKO3 is free software; you can redistribute it
+// and/or modify it under the terms of the GNU General Public License as
+// published by the Free Software Foundation; either version 2 of the
+// License, or (at your option) any later version.
+//
+// WEKO3 is distributed in the hope that it will be
+// useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with WEKO3; if not, write to the
+// Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+// MA 02111-1307, USA.
+
+@import "../../scss/invenio_theme/variables";
+@import "_variables";
+
+// Setting the path to fonts files.
+$icon-font-path: "/static/node_modules/bootstrap-sass/assets/fonts/bootstrap/";
+$fa-font-path: "/static/node_modules/font-awesome/fonts";
+
+@import "../../node_modules/bootstrap-sass/assets/stylesheets/_bootstrap";
+@import "../../node_modules/font-awesome/scss/font-awesome";
+
+@import "../../scss/invenio_theme/type";
+@import "../../scss/invenio_theme/navbar";
+@import "../../scss/invenio_theme/body";
+@import "../../scss/invenio_theme/cover";
+@import "../../scss/invenio_theme/header";
+@import "../../scss/invenio_theme/footer";
+@import "../../scss/invenio_theme/input-icon";
+
+// CSS code to allow `ng-csp="no-inline-css"`
+[ng\:cloak],
+[ng-cloak],
+[data-ng-cloak],
+[x-ng-cloak],
+.ng-cloak,
+.x-ng-cloak,
+.ng-hide:not(.ng-hide-animate) {
+  display: none !important;
+}
+
+ng\:form {
+  display: block;
+}
+
+.ng-animate-shim {
+  visibility:hidden;
+}
+
+.ng-anchor {
+  position:absolute;
+}
+
+#footer {
+  background-color: $footer-default-bg;
+}

@@ -76,10 +76,6 @@ def create():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-    current_app.logger.debug(data)
-    current_app.logger.debug(type(data))
-    current_app.logger.debug(type(json.dumps(data)))
-    current_app.logger.debug(json.dumps(data))
     indexer = RecordIndexer()
     indexer.client.index(index="authors",
                          doc_type="author",
@@ -100,8 +96,6 @@ def get():
 
     if search_key:
         search_keys = search_key.split(" ")
-        current_app.logger.debug(search_keys)
-        current_app.logger.debug(len(search_keys))
         match = []
         for key in search_keys:
             if key:

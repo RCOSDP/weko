@@ -35,6 +35,21 @@ bundle as an example):
 """
 
 from flask_assets import Bundle
+from invenio_assets import NpmBundle
+
+css_bootstrap = NpmBundle(
+    'css/weko_theme/styles.scss',
+    depends=('scss/invenio_theme/*.scss', 'css/weko_theme/_variables.scss',),
+    filters='node-scss,cleancssurl',
+    output='gen/weko_styles.%(version)s.css',
+    npm={
+        'almond': '~0.3.1',
+        'bootstrap-sass': '~3.3.5',
+        'font-awesome': '~4.4.0',
+        'jquery': '~1.9.1',
+    }
+)
+"""Default CSS bundle with Bootstrap and Font-Awesome."""
 
 css = Bundle(
     'css/weko_theme/theme.scss',

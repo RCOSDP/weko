@@ -35,7 +35,6 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
-<form id="block_style">
   <div class="row">
     <div class="panel-group">
       <div class="panel panel-default">
@@ -45,64 +44,70 @@
           </div>
         </div>
         <div class="panel-body" id="color_setting">
-          <div class="row">
-            <div class="form-group col-sm-3">
-              <!--<div class="input-group">-->
-                <!--<div class="input^group-prepend">-->
-                  <label for="color_background">{{_('Background')}}</label>
-                  <select class="form-control" id="color_background" name="color_background">
-                    <option value="#808080">{{_('Default')}}</option>
-                    <option value="#0000FF">{{_('Blue')}}</option>
-                    <option value="#008000">{{_('Green')}}</option>
-                    <option value="#FFA500">{{_('Orange')}}</option>
-                    <option value="#FFC0CB">{{_('Pink')}}</option>
-                    <option value="#FF0000">{{_('Red')}}</option>
-                  </select>
+          <form action={{url_for('weko_admin.block_style')}} method="POST">
+            <div class="row">
+              <div class="col-sm-12">
+                <button type="submit" id="bootstrap_cus1" class="btn btn-primary pull-right">確定</button>
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group col-sm-3">
+                <!--<div class="input-group">-->
+                  <!--<div class="input^group-prepend">-->
+                    <label for="body-bg">{{_('Background')}}</label>
+                    <select class="form-control" id="body-bg" name="body-bg">
+                  <option value="#fff" {% if body_bg == '#fff' %}selected{% endif %}>{{_('Default')}}</option>
+                  <option value="#0000FF" {% if body_bg == '#0000FF' %}selected{% endif %}>{{_('Blue')}}</option>
+                  <option value="#008000" {% if body_bg == '#008000' %}selected{% endif %}>{{_('Green')}}</option>
+                  <option value="#FFA500" {% if body_bg == '#FFA500' %}selected{% endif %}>{{_('Orange')}}</option>
+                  <option value="#FFC0CB" {% if body_bg == '#FFC0CB' %}selected{% endif %}>{{_('Pink')}}</option>
+                  <option value="#FF0000" {% if body_bg == '#FF0000' %}selected{% endif %}>{{_('Red')}}</option>
+                    </select>
+                  <!--</div>-->
+                  <input type="text" class="form-control" id="body-bg_hex" disabled>
                 <!--</div>-->
-                <input type="text" class="form-control" id="color_background_hex" disabled>
-              <!--</div>-->
+              </div>
+              <div class="form-group col-sm-3">
+                <label for="panel-default-border">{{_('Frame Border')}}</label>
+                <select class="form-control" id="panel-default-border" name="panel-default-border">
+                  <option value="#ddd" {% if panel_default_border == '#ddd' %}selected{% endif %}>{{_('Default')}}</option>
+                  <option value="#0000FF" {% if panel_default_border == '#0000FF' %}selected{% endif %}>{{_('Blue')}}</option>
+                  <option value="#008000" {% if panel_default_border == '#008000' %}selected{% endif %}>{{_('Green')}}</option>
+                  <option value="#FFA500" {% if panel_default_border == '#FFA500' %}selected{% endif %}>{{_('Orange')}}</option>
+                  <option value="#FFC0CB" {% if panel_default_border == '#FFC0CB' %}selected{% endif %}>{{_('Pink')}}</option>
+                  <option value="#FF0000" {% if panel_default_border == '#FF0000' %}selected{% endif %}>{{_('Red')}}</option>
+                </select>
+                <input type="text" class="form-control" id="panel-default-border_hex" disabled>
+              </div>
+              <div class="form-group col-sm-3">
+                <label for="navbar-default-bg">{{_('Header')}}</label>
+                <select class="form-control" id="navbar-default-bg" name="navbar-default-bg">
+                  <option value="#f8f8f8" {% if navbar_default_bg == '#f8f8f8' %}selected{% endif %}>{{_('Default')}}</option>
+                  <option value="#0000FF" {% if navbar_default_bg == '#0000FF' %}selected{% endif %}>{{_('Blue')}}</option>
+                  <option value="#008000" {% if navbar_default_bg == '#008000' %}selected{% endif %}>{{_('Green')}}</option>
+                  <option value="#FFA500" {% if navbar_default_bg == '#FFA500' %}selected{% endif %}>{{_('Orange')}}</option>
+                  <option value="#FFC0CB" {% if navbar_default_bg == '#FFC0CB' %}selected{% endif %}>{{_('Pink')}}</option>
+                  <option value="#FF0000" {% if navbar_default_bg == '#FF0000' %}selected{% endif %}>{{_('Red')}}</option>
+                </select>
+                <input type="text" class="form-control" id="navbar-default-bg_hex" disabled>
+              </div>
+              <div class="form-group col-sm-3">
+                <label for="footer-default-bg">{{_('Footer')}}</label>
+                <select class="form-control" id="footer-default-bg" name="footer-default-bg">
+                  <option value="#8a8a8a" {% if footer_default_bg == '#8a8a8a' %}selected{% endif %}>{{_('Default')}}</option>
+                  <option value="#0000FF" {% if footer_default_bg == '#0000FF' %}selected{% endif %}>{{_('Blue')}}</option>
+                  <option value="#008000" {% if footer_default_bg == '#008000' %}selected{% endif %}>{{_('Green')}}</option>
+                  <option value="#FFA500" {% if footer_default_bg == '#FFA500' %}selected{% endif %}>{{_('Orange')}}</option>
+                  <option value="#FFC0CB" {% if footer_default_bg == '#FFC0CB' %}selected{% endif %}>{{_('Pink')}}</option>
+                  <option value="#FF0000" {% if footer_default_bg == '#FF0000' %}selected{% endif %}>{{_('Red')}}</option>
+                </select>
+                <input type="text" class="form-control" id="footer-default-bg_hex" disabled>
+              </div>
             </div>
-            <div class="form-group col-sm-3">
-              <label for="color_frameBorder">{{_('Frame Border')}}</label>
-              <select class="form-control" id="color_frameBorder" name="color_frameBorder">
-                <option value="#808080">{{_('Default')}}</option>
-                <option value="#0000FF">{{_('Blue')}}</option>
-                <option value="#008000">{{_('Green')}}</option>
-                <option value="#FFA500">{{_('Orange')}}</option>
-                <option value="#FFC0CB">{{_('Pink')}}</option>
-                <option value="#FF0000">{{_('Red')}}</option>
-              </select>
-              <input type="text" class="form-control" id="color_frameBorder_hex" disabled>
-            </div>
-            <div class="form-group col-sm-3">
-              <label for="color_header">{{_('Header')}}</label>
-              <select class="form-control" id="color_header" name="color_header">
-                <option value="#808080">{{_('Default')}}</option>
-                <option value="#0000FF">{{_('Blue')}}</option>
-                <option value="#008000">{{_('Green')}}</option>
-                <option value="#FFA500">{{_('Orange')}}</option>
-                <option value="#FFC0CB">{{_('Pink')}}</option>
-                <option value="#FF0000">{{_('Red')}}</option>
-              </select>
-              <input type="text" class="form-control" id="color_header_hex" disabled>
-            </div>
-            <div class="form-group col-sm-3">
-              <label for="color_footer">{{_('Footer')}}</label>
-              <select class="form-control" id="color_footer" name="color_footer">
-                <option value="#808080">{{_('Default')}}</option>
-                <option value="#0000FF">{{_('Blue')}}</option>
-                <option value="#008000">{{_('Green')}}</option>
-                <option value="#FFA500">{{_('Orange')}}</option>
-                <option value="#FFC0CB">{{_('Pink')}}</option>
-                <option value="#FF0000">{{_('Red')}}</option>
-              </select>
-              <input type="text" class="form-control" id="color_footer_hex" disabled>
-            </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
   </div>
-</form>
 
 {%- endblock page_body_main %}

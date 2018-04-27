@@ -20,6 +20,8 @@
 
 """Blueprint for weko-itemtypes-ui."""
 
+import sys
+
 from flask import abort, Blueprint, current_app, json, jsonify, redirect, \
     render_template, request, url_for, Flask, make_response
 from flask_babelex import gettext as _
@@ -183,23 +185,27 @@ def mapping_index(ItemTypeID=0):
     :param ItemTypeID: Item type ID. (Default: 0)
     :return: The rendered template.
     """
-    lists = ItemTypes.get_all()
-    if lists is None or len(lists) == 0:
+    try:
+        lists = ItemTypes.get_all()
+        if lists is None or len(lists) == 0:
+            return render_template(
+                current_app.config['WEKO_ITEMTYPES_UI_ERROR_TEMPLATE']
+            )
+        item_type = ItemTypes.get_by_id(ItemTypeID)
+        if item_type is None:
+            return redirect(url_for('.mapping_index', ItemTypeID=lists[0].id))
+        item_type_mapping = Mapping.get_record(ItemTypeID)
+        mapping = json.dumps(item_type_mapping, indent=4, ensure_ascii=False)
+        current_app.logger.debug(mapping)
         return render_template(
-            current_app.config['WEKO_ITEMTYPES_UI_ERROR_TEMPLATE']
+            current_app.config['WEKO_ITEMTYPES_UI_MAPPING_TEMPLATE'],
+            lists=lists,
+            mapping=mapping,
+            id=ItemTypeID
         )
-    item_type = ItemTypes.get_by_id(ItemTypeID)
-    if item_type is None:
-        return redirect(url_for('.mapping_index', ItemTypeID=lists[0].id))
-    item_type_mapping = Mapping.get_record(ItemTypeID)
-    mapping = json.dumps(item_type_mapping, indent=4, ensure_ascii=False)
-    current_app.logger.debug(mapping)
-    return render_template(
-        current_app.config['WEKO_ITEMTYPES_UI_MAPPING_TEMPLATE'],
-        lists=lists,
-        mapping=mapping,
-        id=ItemTypeID
-    )
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)
 
 
 @blueprint.route("/mapping", methods=['POST'])
