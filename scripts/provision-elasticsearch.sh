@@ -123,6 +123,12 @@ enabled=1" | \
 
 }
 
+provision_elasticsearch_docker () {
+    # register the shared file system repository:
+    echo 'path.repo: "/usr/share/elasticsearch/backups"' | \
+        tee -a /usr/share/elasticsearch/config/elasticsearch.yml
+}
+
 install_plugins () {
     # sphinxdoc-install-elasticsearch-plugins-begin
     $sudo /usr/share/elasticsearch/bin/plugin install -b mapper-attachments
@@ -180,6 +186,7 @@ main () {
             exit 1
         fi
     elif [ "$os_distribution" = "Docker" ]; then
+        provision_elasticsearch_docker
         install_plugins
     else
         echo "[ERROR] Sorry, unsupported distribution ${os_distribution}."

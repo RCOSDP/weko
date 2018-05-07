@@ -20,6 +20,9 @@
 
 # Use Elasticsearch 2.
 FROM elasticsearch:2
+WORKDIR /usr/share/elasticsearch
+RUN mkdir -p backups && \
+    chown -R elasticsearch:elasticsearch ./backups
 COPY scripts/provision-elasticsearch.sh /tmp/
 # Install Elasticsarch plugins:
 RUN /tmp/provision-elasticsearch.sh
