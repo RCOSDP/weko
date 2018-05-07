@@ -22,10 +22,13 @@
 
 from datetime import datetime as dt
 
-from flask import current_app
+from flask import abort, current_app
 from flask_security import current_user
 from invenio_access import Permission, action_factory
 from weko_groups.api import Group, Membership, MembershipState
+from weko_records.api import ItemTypes
+
+from .ipaddr import check_site_license_permission
 
 action_detail_page_access = action_factory('detail-page-access')
 detail_page_permission = Permission(action_detail_page_access)
@@ -54,48 +57,66 @@ def page_permission_factory(record, *args, **kwargs):
 
 def file_permission_factory(record, *args, **kwargs):
     def can(self):
-        fjson = kwargs.get("fjson")
-        return check_file_download_permission(fjson)
+        fjson = kwargs.get('fjson')
+        return check_file_download_permission(record, fjson)
 
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(fjson):
+def check_file_download_permission(record, fjson):
+
+    def site_license_check():
+        # site license permission check
+        obj = ItemTypes.get_by_id(record.get('item_type_id'))
+        if obj.item_type_name.has_site_license:
+            return check_site_license_permission()
+        return False
+
     if fjson:
         is_can = True
         acsrole = fjson.get('accessrole', '')
 
-        # can access
-        if 'open_access' in acsrole:
-            pass
-        # access with open date
-        elif 'open_date' in acsrole:
-            try:
-                adt = fjson.get('accessdate')
-                pdt = dt.strptime(adt, '%Y-%m-%d')
-                is_can = True if dt.today() >= pdt else False
-            except BaseException:
+        try:
+            # can access
+            if 'open_access' in acsrole:
+                pass
+            # access with open date
+            elif 'open_date' in acsrole:
+                try:
+                    adt = fjson.get('accessdate')
+                    pdt = dt.strptime(adt, '%Y-%m-%d')
+                    is_can = True if dt.today() >= pdt else False
+                except:
+                    is_can = False
+
+                if not is_can:
+                    # site license permission check
+                    is_can = site_license_check()
+
+            # access with login user
+            elif 'open_login' in acsrole:
                 is_can = False
-        # access with login user
-        elif 'open_login' in acsrole:
-            is_can = False
-            users = current_app.config['WEKO_PERMISSION_ROLE_USER']
-            for lst in list(current_user.roles or []):
-                if lst.name in users:
-                    is_can = True
-                    break
+                users = current_app.config['WEKO_PERMISSION_ROLE_USER']
+                for lst in list(current_user.roles or []):
+                    if lst.name in users:
+                        is_can = True
+                        break
 
-            is_can = is_can & check_user_group_permission(fjson.get('groups'))
+                is_can = is_can & check_user_group_permission(
+                    fjson.get('groups'))
 
-        #  can not access
-        elif 'open_no' in acsrole:
-            # todo
-            is_can = False
+            #  can not access
+            elif 'open_no' in acsrole:
+                # site license permission check
+                is_can = site_license_check()
+        except:
+            abort(500)
         return is_can
 
 
 def check_user_group_permission(group_id):
     """Check user group  permission.
+
     :param group_id: Group_id
     """
     user_id = current_user.get_id()
@@ -110,8 +131,8 @@ def check_user_group_permission(group_id):
 
 
 def check_publish_status(record):
-    """
-    Check Publish Status.
+    """Check Publish Status.
+
     :param record:
     :return: result
     """
@@ -130,8 +151,8 @@ def check_publish_status(record):
 
 
 def check_created_id(record):
-    """
-    Check Created id.
+    """Check Created id.
+
     :param record:
     :return: result
     """

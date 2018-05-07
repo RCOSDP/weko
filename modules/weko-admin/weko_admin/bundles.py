@@ -24,6 +24,12 @@ from flask_assets import Bundle
 
 js = Bundle(
     'js/weko_admin/block_style.js',
+    'js/weko_admin/app.js',
     filters='requirejs',
     output="gen/weko_admin_ui.%(version)s.js",
 )
+
+# site_license_js = Bundle(
+#     'js/weko_admin/app.js',
+#     output="gen/weko_admin_js.%(version)s.js",
+# )

@@ -71,14 +71,13 @@ class WekoIndexer(RecordIndexer):
     """Provide an interface for indexing records in Elasticsearch."""
 
     def get_es_index(self):
-        """Elastic search settings"""
+        """Elastic search settings."""
         self.es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
         self.es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
         self.file_doc_type = current_app.config['INDEXER_FILE_DOC_TYPE']
 
     def upload_metadata(self, jrc, item_id, revision_id):
-        """
-        Upload the item data to ElasticSearch
+        """Upload the item data to ElasticSearch.
 
         :param jrc:
         :param item_id: item id.
@@ -146,9 +145,9 @@ class WekoIndexer(RecordIndexer):
         :param tree_path: Tree_path instance.
         """
         search_query = {
-            "query": {
-                "term": {
-                    "path.tree": tree_path
+            'query': {
+                'term': {
+                    'path.tree': tree_path
                 }
             }
         }
@@ -183,8 +182,8 @@ class WekoDeposit(Deposit):
             quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
             max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
         )
-        if "$schema" in data:
-            data.pop("$schema")
+        if '$schema' in data:
+            data.pop('$schema')
 
         data['_buckets'] = {'deposit': str(bucket.id)}
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
@@ -206,46 +205,8 @@ class WekoDeposit(Deposit):
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def update(self, *args, **kwargs):
         """Update only drafts."""
-        td = args[0]
 
-        try:
-            datastore = RedisStore(redis.StrictRedis.from_url(
-                current_app.config['CACHE_REDIS_URL']))
-            cache_key = current_app.config[
-                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
-                pid_value=self.pid.pid_value)
-
-            data_str = datastore.get(cache_key)
-            datastore.delete(cache_key)
-            data = json.loads(data_str)
-
-            # td = ['6', '14']
-            plst = Indexes.get_path_list(td)
-            if plst:
-                td.clear()
-                for lst in plst:
-                    td.append(lst.path)
-        except BaseException:
-            abort(400, "Failed to register item")
-
-        dc, jrc, is_edit = save_item_metadata(data, self.pid)
-        self.data = data
-        self.jrc = jrc
-        self.is_edit = is_edit
-
-        # Save Index Path on ES
-        jrc.update(dict(path=td))
-        dc.update(dict(path=td))
-
-        # default to set private status
-        # if not is_edit:
-        #     ps = dict(publish_status='1')
-        #     jrc.update(ps)
-        #     dc.update(ps)
-        ps = dict(publish_status='0')
-        jrc.update(ps)
-        dc.update(ps)
-
+        dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
@@ -276,7 +237,7 @@ class WekoDeposit(Deposit):
 
     def get_content_files(self):
         """Get content file metadata."""
-        fmd = self.data.get("filemeta")
+        fmd = self.data.get('filemeta')
         if fmd:
             for file in self.files:
                 if isinstance(fmd, list):
@@ -288,16 +249,18 @@ class WekoDeposit(Deposit):
                             file.obj.file.update_json(lst)
 
                             # upload file metadata to Elasticsearch
-                            file.obj.file.upload_file(lst)
+                            try:
+                                file.obj.file.upload_file(lst)
+                            except Exception as e:
+                                abort(500, '{}'.format(e.errors))
                             break
-            self.jrc.update({"content": fmd})
+            self.jrc.update({'content': fmd})
 
     def save_or_update_item_metadata(self):
         """Save or update item metadata.
 
-        Save when register a new item type,
-        Update when edit an item type.
-
+        Save when register a new item type, Update when edit an item
+        type.
         """
         if self.is_edit:
             obj = ItemsMetadata.get_record(self.id)
@@ -318,6 +281,52 @@ class WekoDeposit(Deposit):
                     klst.append(obj.file_id)
             if klst:
                 self.indexer.delete_file_index(klst, self.pid.object_uuid)
+
+    def convert_item_metadata(self, index_obj):
+        """
+        1. Convert Item Metadata
+        2. Inject index tree id to dict
+        3. Set Publish Status
+        :param index_obj:
+        :return: dc
+        """
+        try:
+            td = index_obj.get('index', [])
+            actions = index_obj.get('actions', 'private')
+            datastore = RedisStore(redis.StrictRedis.from_url(
+                current_app.config['CACHE_REDIS_URL']))
+            cache_key = current_app.config[
+                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
+                pid_value=self.pid.pid_value)
+
+            data_str = datastore.get(cache_key)
+            datastore.delete(cache_key)
+            data = json.loads(data_str)
+
+            # td = ['6', '14']
+            plst = Indexes.get_path_list(td)
+            if plst:
+                td.clear()
+                for lst in plst:
+                    td.append(lst.path)
+        except:
+            abort(500, 'Failed to register item')
+
+        dc, jrc, is_edit = save_item_metadata(data, self.pid)
+        self.data = data
+        self.jrc = jrc
+        self.is_edit = is_edit
+
+        # Save Index Path on ES
+        jrc.update(dict(path=td))
+        dc.update(dict(path=td))
+
+        pubs = '1' if 'private' in actions else '0'
+        ps = dict(publish_status=pubs)
+        jrc.update(ps)
+        dc.update(ps)
+
+        return dc
 
 
 class WekoRecord(Record):
@@ -344,7 +353,7 @@ class WekoRecord(Record):
     def item_type_info(self):
         """Return the information of item type."""
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
-        return "{}({})".format(item_type.item_type_name.name, item_type.tag)
+        return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
 
     @property
     def items_show_list(self):

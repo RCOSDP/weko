@@ -20,6 +20,7 @@
 
 """Views for weko-admin."""
 
+import json
 import sys
 from datetime import timedelta
 
@@ -31,9 +32,11 @@ from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
 from invenio_admin.proxies import current_admin
+from weko_records.api import ItemTypes, SiteLicense
 from werkzeug.local import LocalProxy
 
 from .models import SessionLifetime
+from .utils import get_response_json
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -146,13 +149,27 @@ def session_info_offline():
                    current_app_name=current_app.name)
 
 
-@blueprint.route('/admin/site-license')
-@blueprint.route('/admin/site-license/')
+@blueprint.route('/admin/site-license', methods=['GET', 'POST'])
+@blueprint.route('/admin/site-license/', methods=['GET', 'POST'])
 def site_license():
     """Site license setting page."""
     current_app.logger.info('site-license setting page')
-    return render_template(
-        current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'])
+    if 'POST' in request.method:
+        try:
+            # update item types
+            SiteLicense.update(request.get_json())
+            return jsonify(code=201, msg='Site license was successfully updated.')
+        except:
+            return jsonify(code=500, msg='Failed to update site')
+
+    # site license list
+    result_list = SiteLicense.get_records()
+    # item types list
+    n_lst = ItemTypes.get_latest()
+    result = get_response_json(result_list, n_lst)
+
+    return render_template(current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
+                           result=json.dumps(result))
 
 
 @blueprint.route('/admin/block-style', methods=['GET', 'POST'])

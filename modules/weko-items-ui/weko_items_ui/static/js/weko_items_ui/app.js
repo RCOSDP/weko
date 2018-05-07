@@ -19,28 +19,6 @@ require([
         $("#array_flg").text(arrayFlg);
         // add by ryuu. end 20180410
         $('#myModal').modal('show');
-        /*
-        $rootScope.recordsVM.invenioRecordsModel[model_id] = '123';
-        $rootScope.recordsVM.invenioRecordsModel['item_1522722977216'] =
-          {"subitem_1522722931599":[{"subitem_1522722942322":"1"},{"subitem_1522722942322":"2"}],"subitem_1522722919975":"1","subitem_1522722927207":"1"};
-        var modalInstance = $modal.open({
-          templateUrl : '/static/templates/weko_items_ui/myModalContent.html',
-          controller : ModalInstanceCtrl,
-          resolve : {
-            items : function() {
-              return $scope.items;
-            }
-          }
-        });
-        modalInstance.opened.then(function() {
-          console.log('modal is opened');
-        });
-        modalInstance.result.then(function(result) {
-          console.log(result);
-          $rootScope.recordsVM.invenioRecordsModel[model_id] = result;
-        }, function(reason) {
-          console.log(reason);
-        });*/
       }
       // add by ryuu. start 20180410
       $scope.setAuthorInfo = function() {
@@ -50,32 +28,7 @@ require([
          var authorInfoObj = JSON.parse(authorInfo);
          var updateIndex = 0;
          if(arrayFlg == 'true'){
-           if(authorInfoObj[0].hasOwnProperty('affiliation')){
-             $rootScope.recordsVM.invenioRecordsModel[modelId][0].affiliation = authorInfoObj[0].affiliation;
-           }
-           if(authorInfoObj[0].hasOwnProperty('creatorAlternatives')){
-             $rootScope.recordsVM.invenioRecordsModel[modelId][0].creatorAlternatives = authorInfoObj[0].creatorAlternatives;
-           }
-           if(authorInfoObj[0].hasOwnProperty('creatorNames')){
-             $rootScope.recordsVM.invenioRecordsModel[modelId][0].creatorNames = authorInfoObj[0].creatorNames;
-           }else{
-             $rootScope.recordsVM.invenioRecordsModel[modelId][0].creatorNames = {};
-           }
-           if(authorInfoObj[0].hasOwnProperty('familyNames')){
-             $rootScope.recordsVM.invenioRecordsModel[modelId][0].familyNames = authorInfoObj[0].familyNames;
-           }else{
-             $rootScope.recordsVM.invenioRecordsModel[modelId][0].familyNames = {};
-           }
-           if(authorInfoObj[0].hasOwnProperty('givenNames')){
-             $rootScope.recordsVM.invenioRecordsModel[modelId][0].givenNames = authorInfoObj[0].givenNames;
-           }else{
-             $rootScope.recordsVM.invenioRecordsModel[modelId][0].givenNames = {};
-           }
-           if(authorInfoObj[0].hasOwnProperty('nameIdentifiers')){
-             $rootScope.recordsVM.invenioRecordsModel[modelId][0].nameIdentifiers = authorInfoObj[0].nameIdentifiers;
-           }
-
-//          $rootScope.recordsVM.invenioRecordsModel[modelId][0]=authorInfoObj[0];
+            $rootScope.recordsVM.invenioRecordsModel[modelId].push(authorInfoObj[0]);
          }else{
              if(authorInfoObj[0].hasOwnProperty('affiliation')){
                $rootScope.recordsVM.invenioRecordsModel[modelId].affiliation = authorInfoObj[0].affiliation;

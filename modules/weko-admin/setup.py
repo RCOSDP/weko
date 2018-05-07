@@ -101,6 +101,7 @@ setup(
         ],
         'invenio_assets.bundles': [
             'weko_admin_js = weko_admin.bundles:js',
+            # 'weko_admin_ui_js = weko_admin.bundles:site_license_js',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

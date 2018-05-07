@@ -33,17 +33,17 @@ from sqlalchemy_utils.types import JSONType, UUIDType
 class Timestamp(object):
     """Timestamp model mix-in with fractional seconds support.
 
-    SQLAlchemy-Utils timestamp model does not have support for fractional
-    seconds.
+    SQLAlchemy-Utils timestamp model does not have support for
+    fractional seconds.
     """
 
     created = db.Column(
-        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), 'mysql'),
         default=datetime.utcnow,
         nullable=False
     )
     updated = db.Column(
-        db.DateTime().with_variant(mysql.DATETIME(fsp=6), "mysql"),
+        db.DateTime().with_variant(mysql.DATETIME(fsp=6), 'mysql'),
         default=datetime.utcnow,
         nullable=False
     )
@@ -87,7 +87,7 @@ class ItemType(db.Model, Timestamp):
     item_type_name = db.relationship(
         'ItemTypeName',
         backref=db.backref('item_type', lazy='dynamic',
-                           order_by=desc("item_type.tag"))
+                           order_by=desc('item_type.tag'))
     )
     """Name information from ItemTypeName class."""
 
@@ -182,6 +182,10 @@ class ItemTypeName(db.Model, Timestamp):
         unique=True
     )
     """Name of item type."""
+
+    has_site_license = db.Column(db.Boolean(name='has_site_license'),
+                                 default=True, nullable=False)
+    """site license identify."""
 
 
 class ItemTypeMapping(db.Model, Timestamp):
@@ -350,8 +354,8 @@ class FileMetadata(db.Model, Timestamp):
 class ItemTypeProperty(db.Model, Timestamp):
     """Represent an itemtype property.
 
-    The ItemTypeProperty object contains a ``created`` and  a ``updated``
-    properties that are automatically updated.
+    The ItemTypeProperty object contains a ``created`` and  a
+    ``updated`` properties that are automatically updated.
     """
 
     __tablename__ = 'item_type_property'
@@ -434,8 +438,8 @@ class ItemTypeProperty(db.Model, Timestamp):
 
 
 class SiteLicenseInfo(db.Model, Timestamp):
-    """
-    Represent a SiteLicenseInfo data.
+    """Represent a SiteLicenseInfo data.
+
     The SiteLicenseInfo object contains a ``created`` and  a ``updated``
     properties that are automatically updated.
     """
@@ -452,7 +456,7 @@ class SiteLicenseInfo(db.Model, Timestamp):
         nullable=False
     )
 
-    exclude_item_type = db.Column(
+    domain_name = db.Column(
         db.Text,
         nullable=True
     )
@@ -462,19 +466,31 @@ class SiteLicenseInfo(db.Model, Timestamp):
         nullable=True
     )
 
-    is_delete = db.Column(db.Boolean(name='is_delete'),
-                          default=False, nullable=False)
-
     # Relationships definitions
-    addresses = db.relationship('SiteLicenseIpAddress', backref='addresses')
+    addresses = db.relationship(
+        'SiteLicenseIpAddress', backref='SiteLicenseInfo')
     """Relationship to SiteLicenseIpAddress."""
+
+    def __iter__(self):
+        sl = {}
+        for name in dir(SiteLicenseInfo):
+            if not name.startswith('__') and not name.startswith('_'):
+                value = getattr(self, name)
+                if isinstance(value, list):
+                    ip_lst = []
+                    for lst in value:
+                        if isinstance(lst, SiteLicenseIpAddress):
+                            ip_lst.append(dict(lst))
+                    yield (name, ip_lst)
+                elif isinstance(value, str):
+                    yield (name, value)
 
 
 class SiteLicenseIpAddress(db.Model, Timestamp):
-    """
-    Represent a SiteLicenseIpAddress data.
-    The SiteLicenseIpAddress object contains a ``created`` and  a ``updated``
-    properties that are automatically updated.
+    """Represent a SiteLicenseIpAddress data.
+
+    The SiteLicenseIpAddress object contains a ``created`` and  a
+    ``updated`` properties that are automatically updated.
     """
     __tablename__ = 'sitelicense_ip_address'
 
@@ -500,8 +516,12 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
         nullable=False
     )
 
-    is_delete = db.Column(db.Boolean(name='is_delete'),
-                          default=False, nullable=False)
+    def __iter__(self):
+        for name in dir(SiteLicenseIpAddress):
+            if not name.startswith('__') and not name.startswith('_'):
+                value = getattr(self, name)
+                if isinstance(value, str):
+                    yield (name, value)
 
 
 __all__ = (

@@ -114,7 +114,7 @@ def create_blueprint(app, endpoints):
         )
 
         blueprint.add_url_rule(
-            options.pop('rdc_rout'),
+            options.pop('rdc_route'),
             view_func=isr,
             methods=['PUT', 'POST'],
         )

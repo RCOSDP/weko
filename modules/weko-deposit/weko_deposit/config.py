@@ -85,7 +85,7 @@ DEPOSIT_REST_ENDPOINTS = dict(
 
 # for redirect to next page(index select)
 WEKO_DEPOSIT_REST_ENDPOINTS = copy.deepcopy(DEPOSIT_REST_ENDPOINTS)
-WEKO_DEPOSIT_REST_ENDPOINTS['depid']['rdc_rout'] = '/deposits/redirect/<{0}:pid_value>'.format(
+WEKO_DEPOSIT_REST_ENDPOINTS['depid']['rdc_route'] = '/deposits/redirect/<{0}:pid_value>'.format(
     _PID)
 
 DEPOSIT_RECORDS_UI_ENDPOINTS = {

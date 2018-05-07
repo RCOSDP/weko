@@ -38,7 +38,7 @@ from werkzeug.local import LocalProxy
 
 from .models import (
     FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, ItemTypeName,
-    ItemTypeProperty)
+    ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress)
 
 _records_state = LocalProxy(
     lambda: current_app.extensions['invenio-records'])
@@ -151,6 +151,41 @@ class RecordBase(dict):
         return deepcopy(dict(self))
 
 
+class ItemTypeNames(RecordBase):
+    """Define API for ItemTypeName creation and manipulation."""
+
+    @classmethod
+    def update(cls, obj):
+
+        def commit(olst, flg):
+            with db.session.begin_nested():
+                for lst in olst:
+                    lst.has_site_license = flg
+                    flag_modified(lst, 'has_site_license')
+                    db.session.merge(lst)
+
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if v and isinstance(v, list):
+                    ids = []
+                    for lst in v:
+                        id = lst.get('id')
+                        if id:
+                            ids.append(id)
+                    olst = cls.get_all_by_id(ids)
+                    commit(olst, True if 'allow' in k else False)
+
+    @classmethod
+    def get_all_by_id(cls, ids):
+        """Retrieve item types by ids.
+
+        :param ids: List of item type IDs.
+        :returns: A list of :class:`ItemTypeName` instances.
+        """
+        with db.session.no_autoflush:
+            return ItemTypeName.query.filter(ItemTypeName.id.in_(ids)).all()
+
+
 class ItemTypes(RecordBase):
     """Define API for item type creation and manipulation."""
 
@@ -232,8 +267,8 @@ class ItemTypes(RecordBase):
                 # Get the item type by identifier
                 result = cls.get_by_id(id_=id_)
                 if result is None:
-                    current_app.logger.debug("Invalid id: {}".format(id_))
-                    raise ValueError(_("Invalid id."))
+                    current_app.logger.debug('Invalid id: {}'.format(id_))
+                    raise ValueError(_('Invalid id.'))
 
                 # Get the latest tag of item type by name identifier
                 result = cls.get_by_name_id(name_id=result.name_id)
@@ -247,8 +282,8 @@ class ItemTypes(RecordBase):
                         name=name).one_or_none()
                     if result is not None:
                         current_app.logger.debug(
-                            "Invalid name: {}".format(name))
-                        raise ValueError(_("Invalid name."))
+                            'Invalid name: {}'.format(name))
+                        raise ValueError(_('Invalid name.'))
                     item_type_name.name = name
         return cls.create(item_type_name=item_type_name, name=name,
                           schema=schema, form=form, render=render, tag=tag)
@@ -842,7 +877,7 @@ class ItemsMetadata(RecordBase):
 
             record.model = ItemMetadata(
                 id=id_,
-                item_type_id=kwargs.get("item_type_id"),
+                item_type_id=kwargs.get('item_type_id'),
                 json=record
             )
 
@@ -1073,8 +1108,8 @@ class FilesMetadata(RecordBase):
             # record.validate(**kwargs)
 
             record.model = FileMetadata(
-                pid=kwargs.get("pid"),
-                json=record, contents=kwargs.get("con"))
+                pid=kwargs.get('pid'),
+                json=record, contents=kwargs.get('con'))
 
             db.session.add(record.model)
 
@@ -1277,6 +1312,61 @@ class RecordRevision(RecordBase):
     def __init__(self, model):
         """Initialize instance with the SQLAlchemy model."""
         super(RecordRevision, self).__init__(model.json, model=model)
+
+
+class SiteLicense(RecordBase):
+    """Define API for SiteLicense creation and manipulation."""
+
+    @classmethod
+    def get_records(cls):
+        """Retrieve multiple records.
+
+        :returns: A list of :class:`Record` instances.
+        """
+        with db.session.no_autoflush:
+            sl_obj = SiteLicenseInfo.query.order_by(
+                SiteLicenseInfo.organization_id).all()
+            return [cls(dict(obj)) for obj in sl_obj]
+
+    @classmethod
+    def update(cls, obj):
+
+        def get_addr(lst, id_):
+            if lst and isinstance(lst, list):
+                sld = []
+                for j in range(len(lst)):
+                    sl = SiteLicenseIpAddress(
+                        organization_id=id_,
+                        organization_no=j+1,
+                        start_ip_address='.'.join(
+                            lst[j].get('start_ip_address')),
+                        finish_ip_address='.'.join(
+                            lst[j].get('finish_ip_address'))
+                    )
+                    sld.append(sl)
+                return sld
+
+        # update has_site_license field on item type name tbl
+        ItemTypeNames.update(obj.get('item_type'))
+        site_license = obj.get('site_license')
+        if site_license and isinstance(site_license, list):
+            sif = []
+            for i in range(len(site_license)):
+                lst = site_license[i]
+                slif = SiteLicenseInfo(organization_id=i+1,
+                                       organization_name=lst.get(
+                                           'organization_name'),
+                                       mail_address=lst.get('mail_address'),
+                                       domain_name=lst.get('domain_name'),
+                                       addresses=get_addr(lst.get('addresses'), i))
+                sif.append(slif)
+
+            # delete all rows first
+            SiteLicenseIpAddress.query.delete()
+            SiteLicenseInfo.query.delete()
+            # add new rows
+            db.session.add_all(sif)
+        db.session.commit()
 
 
 class RevisionsIterator(object):

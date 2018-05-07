@@ -25,13 +25,13 @@ WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
 
 WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Repository Administrator',
-                             'Administrator',
+                             'Contributor',
                              'General')
 
 RECORDS_UI_ENDPOINTS = dict(
     recid=dict(
         pid_type='recid',
-        route="/records/<pid_value>",
+        route='/records/<pid_value>',
         # view_imp='weko_records_ui.fd.weko_view_method',
         template='weko_records_ui/detail.html',
         record_class='weko_deposit.api:WekoRecord',
@@ -40,7 +40,7 @@ RECORDS_UI_ENDPOINTS = dict(
     ),
     recid_export=dict(
         pid_type='recid',
-        route="/records/<pid_value>/export/<format>",
+        route='/records/<pid_value>/export/<format>',
         view_imp='weko_records_ui.views.export',
         template='weko_records_ui/export.html',
         record_class='weko_deposit.api:WekoRecord',
@@ -102,7 +102,7 @@ OAISERVER_METADATA_FORMATS = {
     'junii2': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
-                'schema_type': "junii2",
+                'schema_type': 'junii2',
             }
         ),
         'schema': 'http://irdb.nii.ac.jp/oai/junii2-3-1.xsd',
@@ -111,7 +111,7 @@ OAISERVER_METADATA_FORMATS = {
     'jpcoar': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
-                'schema_type': "jpcoar",
+                'schema_type': 'jpcoar',
             }
         ),
         'namespace': 'https://irdb.nii.ac.jp/schema/jpcoar/1.0/',
@@ -120,7 +120,7 @@ OAISERVER_METADATA_FORMATS = {
     'oai_dc': {
         'serializer': (
             'weko_schema_ui.utils:dumps_oai_etree', {
-                'schema_type': "oai_dc",
+                'schema_type': 'oai_dc',
             }
         ),
         'namespace': 'http://www.openarchives.org/OAI/2.0/oai_dc/',

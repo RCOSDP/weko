@@ -25,18 +25,150 @@
 {%- endblock css %}
 
 {%- block javascript %}
-{{ super() }}
-{% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
 {% assets "weko_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('management') }}
+{% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+{{ tabs_selector('management') }}
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
-<div class="row">
-  haha
+<div id="siteLicense" class="table-responsive">
+  <div ng-init="fetch('{[{{result}}]}')" ng-controller="siteLicenseCtrl">
+    <form id="siteLicenseForm" class="form-inline">
+      <table class="table table-bordered table-striped">
+        <tr>
+          <th class="column-header" colspan=2>{{_('Site License setting')}}</th>
+        </tr>
+        <tr>
+        </tr>
+        <tr>
+          <td colspan="2">
+            {{_('Please specify range of IP address which allow users can download contents without login.')}}
+            <div class="table-responsive" ng-repeat="ipDetail in dbJson.site_license" ng-init="ipIndex = $index">
+              <table class="table table-bordered">
+                <tr>
+                  <th colspan=2>
+                    {{_('Organization Name')}}
+                  </th>
+                  <td>
+                    <input type="text" class="form-control" size="50" name="organization_name"
+                           ng-model="ipDetail.organization_name">
+                  </td>
+                  <td rowspan="4">
+                    <button type="button" class="btn btn-default" ng-click="moveSiteLicenseUp(ipIndex)" ><span class="glyphicon glyphicon-arrow-up"></span>
+                    </button>
+                    <br/>
+                    <button type="button" class="btn btn-default" ng-click="moveSiteLicenseDown(ipIndex)"><span class="glyphicon glyphicon-arrow-down"></span>
+                    </button>
+                  </td>
+                  <td rowspan="4">
+                    <button type="button" class="btn btn-default" ng-click="deleteSiteLicense(ipIndex)"><span class="glyphicon glyphicon-remove"></span>
+                      {{_('Delete')}}
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <th colspan=2>
+                    {{_('E-Mail Address')}}
+                  </th>
+                  <td>
+                    <textarea class="form-control" rows="3" cols="52" name="mail_address"
+                              ng-model="ipDetail.mail_address"></textarea>
+                  </td>
+                </tr>
+                <tr>
+                  <th colspan=2>
+                    {{_('Domain Name')}}
+                  </th>
+                  <td>
+                    <input type="text" class="form-control" size="50" ng-model="ipDetail.domain_name">
+                  </td>
+                </tr>
+                <tr>
+                  <th colspan=2>
+                    {{_('IP Address Range')}}<br/>
+                    {{_('(from - to)')}}
+                  </th>
+                  <td>
+                    <div class="form-group" ng-repeat="ipAddressRangeDetail in ipDetail.addresses" ng-init="rangeIndex = $index">
+                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.start_ip_address[0]" size="1" maxlength="3"> .
+                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.start_ip_address[1]" size="1" maxlength="3"> .
+                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.start_ip_address[2]" size="1" maxlength="3"> .
+                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.start_ip_address[3]" size="1" maxlength="3"> -
+                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.finish_ip_address[0]" size="1" maxlength="3"> .
+                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.finish_ip_address[1]" size="1" maxlength="3"> .
+                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.finish_ip_address[2]" size="1" maxlength="3"> .
+                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.finish_ip_address[3]" size="1" maxlength="3">
+                      <p></p>
+                    </div>
+                    <p></p>
+                    <div class="form-group">
+                      <button type="button" class="btn btn-default" ng-click="addNewRowRange(ipIndex)"><span class="glyphicon glyphicon-plus"></span>
+                        {{_('More Input Row')}}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <div class="form-group">
+              <button type="submit" class="btn btn-default" ng-click="addNewRowSiteLicense()">
+                <span class="glyphicon glyphicon-plus"></span>
+                {{_('More Input Row')}}
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <div>{{_('Please specify item type to be excluded from the site license')}}</div>
+            <div class="table-responsive">
+              <table class="table-condensed">
+                <tr>
+                  <td>
+                    {{_('Allow')}}
+                  </td>
+                  <td>
+                  </td>
+                  <td>
+                    {{_('Deny')}}
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <select multiple name="allow_item_type" id="allow_item_type_name" class="form-control" ng-model="denyId">
+                      <option ng-repeat="data in dbJson.item_type.allow"  value="{[data.id]}">{[data.name]}</option>
+                    </select>
+                  </td>
+                  <td>
+                    <button type="button" class="btn btn-default" ng-click="setDenyToAllow(alowId)">
+                      <span class="glyphicon glyphicon-arrow-left"></span></button>
+                    <br>
+                    <button type="button" class="btn btn-default" ng-click="setAllowToDeny(denyId)">
+                      <span class="glyphicon glyphicon-arrow-right"></span></button>
+                  </td>
+                  <td>
+                    <select multiple name="allow_item_type" id="deny_item_type_name" class="form-control" ng-model="alowId">
+                      <option ng-repeat="data in dbJson.item_type.deny"  value="{[data.id]}">{[data.name]}</option>
+                    </select>
+                    <br/><input type="hidden" name="sitelicense_itemtype" id="not_allow_item_type_id"
+                                value="<{$smarty.session.admin_params.site_license_item_type_id.param_value}>"/>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </form>
+    <div class="form-group">
+      <button type="submit" class="btn btn-default" ng-click="commitData()">
+        <span class="glyphicon glyphicon-save"></span>{{_('Commit')}}
+      </button>
+    </div>
+  </div>
 </div>
 {%- endblock page_body_main %}
