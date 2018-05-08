@@ -147,7 +147,7 @@ def default_search_factory(self, search, query_parser=None):
         # simple search
         query_q = _get_dsearch_query(qs)[0]
 
-    src = {'_source': {'exclude': ['content', '_item_metadata']}}
+    src = {'_source': {'exclude': ['content']}}
     # extr = search._extra.copy()
     # search.update_from_dict(src)
     search._extra.update(src)
