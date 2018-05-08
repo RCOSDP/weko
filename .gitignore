@@ -63,3 +63,8 @@ target/
 
 # Vagrant
 .vagrant
+
+# backup
+scripts/demo/contents/
+scripts/demo/elasticsearch/
+scripts/demo/postgresql/
