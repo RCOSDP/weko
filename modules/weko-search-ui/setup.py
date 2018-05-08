@@ -107,9 +107,9 @@ setup(
             'weko_search_ui_dependencies_js = weko_search_ui.bundles:'
             'js_dependecies',
         ],
-        # 'invenio_access.actions': [
-        #     'search_access = weko_search_ui.permissions:search_permission',
-        # ],
+        'invenio_access.actions': [
+            'search_access = weko_search_ui.permissions:action_search_access',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

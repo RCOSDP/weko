@@ -93,40 +93,14 @@ source "$(which virtualenvwrapper.sh)"
 workon "${INVENIO_WEB_VENV}"
 
 # quit on errors and unbound symbols:
-# set -o errexit
-set -o nounset
+set -o errexit
+# set -o nounset
 
 # sphinxdoc-create-database-begin
 ${INVENIO_WEB_INSTANCE} db drop --yes-i-know
 ${INVENIO_WEB_INSTANCE} db init
 ${INVENIO_WEB_INSTANCE} db create -v
 # sphinxdoc-create-database-end
-
-# sphinxdoc-create-roles-begin
-${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_SYSTEM}"
-${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_REPOSITORY}"
-${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_CONTRIBUTOR}"
-# sphinxdoc-create-roles-end
-
-# sphinxdoc-create-user-account-begin
-${INVENIO_WEB_INSTANCE} users create \
-       "${INVENIO_USER_EMAIL}" \
-       --password "${INVENIO_USER_PASS}" \
-       --active
-# sphinxdoc-create-user-account-end
-
-# sphinxdoc-set-user-role-begin
-${INVENIO_WEB_INSTANCE} roles add \
-       "${INVENIO_USER_EMAIL}" \
-       "${INVENIO_ROLE_SYSTEM}"
-# sphinxdoc-set-user-role-end
-
-# sphinxdoc-create-files-location-begin
-${INVENIO_WEB_INSTANCE} files location \
-       "${INVENIO_FILES_LOCATION_NAME}" \
-       "${INVENIO_FILES_LOCATION_URI}" \
-       --default
-# sphinxdoc-create-files-location-end
 
 # sphinxdoc-index-initialisation-begin
 ${INVENIO_WEB_INSTANCE} index init
@@ -138,30 +112,31 @@ ${INVENIO_WEB_INSTANCE} index queue init
 #${INVENIO_WEB_INSTANCE} demo init
 # sphinxdoc-populate-with-demo-records-end
 
-# sphinxdoc-create-test-data-begin
+# sphinxdoc-create-files-location-begin
+${INVENIO_WEB_INSTANCE} files location \
+       "${INVENIO_FILES_LOCATION_NAME}" \
+       "${INVENIO_FILES_LOCATION_URI}" \
+       --default
+# sphinxdoc-create-files-location-end
+
+# sphinxdoc-create-user-account-begin
 ${INVENIO_WEB_INSTANCE} users create \
-       "test01@hitachi.com" \
+       "${INVENIO_USER_EMAIL}" \
        --password "${INVENIO_USER_PASS}" \
        --active
+# sphinxdoc-create-user-account-end
 
+# sphinxdoc-create-roles-begin
+${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_SYSTEM}"
+${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_REPOSITORY}"
+${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_CONTRIBUTOR}"
+# sphinxdoc-create-roles-end
+
+# sphinxdoc-set-user-role-begin
 ${INVENIO_WEB_INSTANCE} roles add \
-       "test01@hitachi.com" \
-       "${INVENIO_ROLE_REPOSITORY}"
-
-${INVENIO_WEB_INSTANCE} users create \
-       "test02@hitachi.com" \
-       --password "${INVENIO_USER_PASS}" \
-       --active
-
-${INVENIO_WEB_INSTANCE} roles add \
-        "test02@hitachi.com" \
-       "${INVENIO_ROLE_CONTRIBUTOR}"
-
-${INVENIO_WEB_INSTANCE} users create \
-       "test03@hitachi.com" \
-       --password "${INVENIO_USER_PASS}" \
-       --active
-# sphinxdoc-create-test-data-end
+       "${INVENIO_USER_EMAIL}" \
+       "${INVENIO_ROLE_SYSTEM}"
+# sphinxdoc-set-user-role-end
 
 # sphinxdoc-set-role-access-begin
 ${INVENIO_WEB_INSTANCE} access \
@@ -204,18 +179,43 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} wekoaccess \
+${INVENIO_WEB_INSTANCE} access \
        allow "search-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} wekoaccess \
+${INVENIO_WEB_INSTANCE} access \
        allow "detail-page-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
-${INVENIO_WEB_INSTANCE} wekoaccess \
+${INVENIO_WEB_INSTANCE} access \
        allow "author-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 # sphinxdoc-set-role-access-end
+
+##### sphinxdoc-create-test-data-begin
+${INVENIO_WEB_INSTANCE} users create \
+       "test01@hitachi.com" \
+       --password "${INVENIO_USER_PASS}" \
+       --active
+
+${INVENIO_WEB_INSTANCE} roles add \
+       "test01@hitachi.com" \
+       "${INVENIO_ROLE_REPOSITORY}"
+
+${INVENIO_WEB_INSTANCE} users create \
+       "test02@hitachi.com" \
+       --password "${INVENIO_USER_PASS}" \
+       --active
+
+${INVENIO_WEB_INSTANCE} roles add \
+        "test02@hitachi.com" \
+       "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} users create \
+       "test03@hitachi.com" \
+       --password "${INVENIO_USER_PASS}" \
+       --active
+##### sphinxdoc-create-test-data-end

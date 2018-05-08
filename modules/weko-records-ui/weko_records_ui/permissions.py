@@ -26,8 +26,8 @@ from datetime import datetime as dt
 from invenio_access import action_factory, Permission
 from weko_groups.api import Group, Membership, MembershipState
 
-detail_page_access = action_factory('detail-page-access')
-detail_page_permission = Permission(detail_page_access)
+action_detail_page_access = action_factory('detail-page-access')
+detail_page_permission = Permission(action_detail_page_access)
 
 
 def page_permission_factory(record, *args, **kwargs):

@@ -97,7 +97,8 @@ setup(
             'weko_records_ui_js = weko_records_ui.bundles:js',
         ],
         'invenio_access.actions': [
-            'detail_page_access = weko_records_ui.permissions:detail_page_access',
+            'detail_page_access'
+            ' = weko_records_ui.permissions:action_detail_page_access',
         ],
     },
     extras_require=extras_require,
