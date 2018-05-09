@@ -67,17 +67,15 @@ class WekoLoggingFS(WekoLoggingBase):
         # first os.environ
         if app.config['WEKO_LOGGING_FS_LOGFILE'] is not None:
             if 'LOGGING_FS_LOGFILE' in os.environ:
-                app.config['WEKO_LOGGING_FS_LOGFILE'] = \
-                    os.environ.get('LOGGING_FS_LOGFILE',
-                                   app.config['WEKO_LOGGING_FS_LOGFILE'].format(
-                                       instance_path=app.instance_path,
-                                       sys_prefix=sys.prefix,))
+                app.config['WEKO_LOGGING_FS_LOGFILE'] = os.environ.get(
+                    'LOGGING_FS_LOGFILE', app.config['WEKO_LOGGING_FS_LOGFILE'].format(
+                        instance_path=app.instance_path, sys_prefix=sys.prefix,))
             else:
                 app.config['WEKO_LOGGING_FS_LOGFILE'] = \
                     app.config['WEKO_LOGGING_FS_LOGFILE'].format(
                         instance_path=app.instance_path,
                         sys_prefix=sys.prefix,
-                    )
+                )
 
     def install_handler(self, app):
         """

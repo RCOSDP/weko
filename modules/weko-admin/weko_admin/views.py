@@ -21,11 +21,11 @@
 """Views for weko-admin."""
 
 import sys
-
 from datetime import timedelta
 
-from flask import abort, Blueprint, current_app, flash, jsonify, \
-    render_template, request, session
+from flask import (
+    Blueprint, abort, current_app, flash, jsonify, render_template, request,
+    session)
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -54,8 +54,7 @@ def _has_admin_access():
 
 @blueprint.route('/session/lifetime/<int:minutes>', methods=['GET'])
 def set_lifetime(minutes):
-    """
-    Update session lifetime in db.
+    """Update session lifetime in db.
 
     :param minutes:
     :return: Session lifetime updated message.
@@ -70,7 +69,7 @@ def set_lifetime(minutes):
         _app.permanent_session_lifetime = timedelta(
             minutes=db_lifetime.lifetime)
         return jsonify(code=0, msg='Session lifetime was updated.')
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 
@@ -89,8 +88,7 @@ def set_lifetime(minutes):
 )
 @login_required
 def lifetime():
-    """
-    Loading session setting page.
+    """Loading session setting page.
 
     :return: Lifetime in minutes.
     """
@@ -127,15 +125,14 @@ def lifetime():
     except ValueError as valueErr:
         current_app.logger.error(
             'Could not convert data to an integer: {0}'.format(valueErr))
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 
 
-@blueprint.route("/session/offline/info", methods=['GET'])
+@blueprint.route('/session/offline/info', methods=['GET'])
 def session_info_offline():
-    """
-    Get session lifetime from app setting.
+    """Get session lifetime from app setting.
 
     :return: Session information offline in json.
     """
@@ -149,25 +146,19 @@ def session_info_offline():
                    current_app_name=current_app.name)
 
 
-@blueprint.route("/admin/site-license")
-@blueprint.route("/admin/site-license/")
+@blueprint.route('/admin/site-license')
+@blueprint.route('/admin/site-license/')
 def site_license():
-    """
-    Site license setting page.
-
-    """
+    """Site license setting page."""
     current_app.logger.info('site-license setting page')
     return render_template(
         current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'])
 
 
-@blueprint.route("/admin/block-style", methods=['GET', 'POST'])
-@blueprint.route("/admin/block-style/", methods=['GET', 'POST'])
+@blueprint.route('/admin/block-style', methods=['GET', 'POST'])
+@blueprint.route('/admin/block-style/', methods=['GET', 'POST'])
 def block_style():
-    """
-    Block style setting page.
-
-    """
+    """Block style setting page."""
     body_bg = '#fff'
     footer_default_bg = '#8a8a8a'
     navbar_default_bg = '#f8f8f8'
@@ -177,8 +168,10 @@ def block_style():
         if request.method == 'POST':
             form_lines = []
             body_bg = request.form.get('body-bg', '#fff')
-            footer_default_bg = request.form.get('footer-default-bg', '#8a8a8a')
-            navbar_default_bg = request.form.get('navbar-default-bg', '#f8f8f8')
+            footer_default_bg = request.form.get(
+                'footer-default-bg', '#8a8a8a')
+            navbar_default_bg = request.form.get(
+                'navbar-default-bg', '#f8f8f8')
             panel_default_border = request.form.get(
                 'panel-default-border', '#ddd')
             form_lines.append(
@@ -203,7 +196,7 @@ def block_style():
                         navbar_default_bg = line[line.find('#'):-1]
                     if '$panel-default-border:' in line:
                         panel_default_border = line[line.find('#'):-1]
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return render_template(
         current_app.config['WEKO_ADMIN_BlOCK_STYLE_TEMPLATE'],

@@ -22,13 +22,14 @@
 
 import json
 from datetime import datetime
-from werkzeug.datastructures import MultiDict
 
 from elasticsearch_dsl.query import Q
 from flask import current_app, request
 from flask_security import current_user
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
+from werkzeug.datastructures import MultiDict
+
 from .permissions import search_permission
 
 
@@ -80,7 +81,8 @@ def default_search_factory(self, search, query_parser=None):
         for k in kw:
             kv = request.values.get(k)
             if kv:
-                mut.append(Q('query_string', query=kv, default_operator='and', default_field=k))
+                mut.append(Q('query_string', query=kv,
+                             default_operator='and', default_field=k))
 
         i = 0
         while i < 6:
@@ -106,7 +108,8 @@ def default_search_factory(self, search, query_parser=None):
             mut.extend(mt)
 
         if qs:
-            mut.append(Q('query_string', query=qs, default_operator='and', fields=['search_*', 'search_*.ja']))
+            mut.append(Q('query_string', query=qs, default_operator='and', fields=[
+                       'search_*', 'search_*.ja']))
 
         del qv, qd, qd1
 
@@ -265,7 +268,7 @@ def item_path_search_factory(self, search):
                 if fp:
                     query_q = json.dumps(query_q).replace("@index", fp.path)
                     query_q = json.loads(query_q)
-            except:
+            except BaseException:
                 pass
         return query_q
 

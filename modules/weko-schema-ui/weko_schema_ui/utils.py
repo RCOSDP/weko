@@ -22,11 +22,13 @@
 
 import re
 
+from invenio_oaiserver.response import (
+    NS_OAIPMH, NS_OAIPMH_XSD, NS_XSI, NSMAP, header, verb)
+from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
+
 from .schema import SchemaTree
-from invenio_records_ui.utils import obj_or_import_string
-from invenio_oaiserver.response import verb, NS_OAIPMH, header,NSMAP,NS_OAIPMH_XSD,NS_XSI
 
 
 def dumps_oai_etree(pid, records, **kwargs):
@@ -37,7 +39,8 @@ def dumps_oai_etree(pid, records, **kwargs):
     :param schema_type: schema type
     :returns: A LXML Element instance.
     """
-    serializer = obj_or_import_string("weko_schema_ui.serializers.WekoCommonSchema")
+    serializer = obj_or_import_string(
+        "weko_schema_ui.serializers.WekoCommonSchema")
     return serializer.serialize_oaipmh(pid, records, kwargs.get("schema_type"))
 
 
@@ -50,7 +53,8 @@ def dumps_etree(records, schema_type):
     if schema_type:
         if records.get('metadata', {}).get('_item_metadata'):
             records['metadata'] = records['metadata'].get('_item_metadata', {})
-        scname = schema_type if re.search("\*?_mapping", schema_type) else schema_type + "_mapping"
+        scname = schema_type if re.search(
+            "\*?_mapping", schema_type) else schema_type + "_mapping"
         stree = SchemaTree(records, scname)
         return stree.create_xml()
 
@@ -67,7 +71,11 @@ def dumps(records, schema_type=None, **kwargs):
         est = records["metadata"].pop("@export_schema_type")
 
     oid = records["metadata"].get('_oai').get('id')
-    root = export_tree(record=records, metadataPrefix=est, identifier=oid, verb='GetRecord')
+    root = export_tree(
+        record=records,
+        metadataPrefix=est,
+        identifier=oid,
+        verb='GetRecord')
     # root = dumps_etree(records=records, schema_type=est)
     return etree.tostring(
         root,
@@ -92,7 +100,10 @@ def export_tree(record, **kwargs):
     )
     e_metadata = SubElement(e_record,
                             etree.QName(NS_OAIPMH, 'metadata'))
-    e_metadata.append(dumps_etree(records=record, schema_type=kwargs['metadataPrefix']))
+    e_metadata.append(
+        dumps_etree(
+            records=record,
+            schema_type=kwargs['metadataPrefix']))
 
     root = e_tree.getroot()
     e_oaipmh = Element(etree.QName(NS_OAIPMH, 'OAI-PMH'), nsmap=NSMAP)

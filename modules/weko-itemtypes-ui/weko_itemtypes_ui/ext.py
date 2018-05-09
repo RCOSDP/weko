@@ -23,6 +23,7 @@
 from . import config
 from .views import blueprint
 
+
 class WekoItemtypesUI(object):
     """weko-itemtypes-ui extension."""
 
@@ -59,4 +60,3 @@ class WekoItemtypesUI(object):
                 app.config.setdefault(k, getattr(config, k))
             elif k.startswith('BABEL_'):
                 app.config.setdefault(k, getattr(config, k))
-

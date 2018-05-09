@@ -22,12 +22,13 @@
 
 import sys
 
-from flask import abort, Blueprint, current_app, json, jsonify, redirect, \
-    render_template, request, url_for, Flask, make_response
+from flask import (
+    Blueprint, Flask, abort, current_app, json, jsonify, make_response,
+    redirect, render_template, request, url_for)
 from flask_babelex import gettext as _
-from flask_login import login_required, current_user
+from flask_login import login_required
 from invenio_db import db
-from weko_records.api import ItemTypes, ItemTypeProps, Mapping
+from weko_records.api import ItemTypeProps, ItemTypes, Mapping
 
 from .permissions import item_type_permission
 
@@ -40,9 +41,9 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route("/", methods=['GET'])
-@blueprint.route("/<int:item_type_id>", methods=['GET'])
-@blueprint.route("/register", methods=['GET'])
+@blueprint.route('/', methods=['GET'])
+@blueprint.route('/<int:item_type_id>', methods=['GET'])
+@blueprint.route('/register', methods=['GET'])
 @login_required
 @item_type_permission.require(http_exception=403)
 def index(item_type_id=0):
@@ -58,7 +59,7 @@ def index(item_type_id=0):
     )
 
 
-@blueprint.route("/<int:item_type_id>/render", methods=['GET'])
+@blueprint.route('/<int:item_type_id>/render', methods=['GET'])
 @login_required
 @item_type_permission.require(http_exception=403)
 def render(item_type_id=0):
@@ -77,8 +78,8 @@ def render(item_type_id=0):
     return jsonify(result.render)
 
 
-@blueprint.route("/register", methods=['POST'])
-@blueprint.route("/<int:item_type_id>/register", methods=['POST'])
+@blueprint.route('/register', methods=['POST'])
+@blueprint.route('/<int:item_type_id>/register', methods=['POST'])
 @login_required
 @item_type_permission.require(http_exception=403)
 def register(item_type_id=0):
@@ -98,14 +99,14 @@ def register(item_type_id=0):
         Mapping.create(item_type_id=record.model.id,
                        mapping=data.get('table_row_map').get('mapping'))
         db.session.commit()
-    except:
+    except BaseException:
         db.session.rollback()
         return jsonify(msg=_('Fail'))
     current_app.logger.debug('itemtype register: {}'.format(item_type_id))
     return jsonify(msg=_('Success'))
 
 
-@blueprint.route("/property", methods=['GET'])
+@blueprint.route('/property', methods=['GET'])
 @login_required
 @item_type_permission.require(http_exception=403)
 def custom_property(property_id=0):
@@ -117,7 +118,7 @@ def custom_property(property_id=0):
     )
 
 
-@blueprint.route("/property/list", methods=['GET'])
+@blueprint.route('/property/list', methods=['GET'])
 @login_required
 @item_type_permission.require(http_exception=403)
 def get_property_list(property_id=0):
@@ -125,33 +126,26 @@ def get_property_list(property_id=0):
     props = ItemTypeProps.get_records([])
     lists = {}
     for k in props:
-        tmp = {}
-        tmp['name'] = k.name
-        tmp['schema'] = k.schema
-        tmp['form'] = k.form
-        tmp['forms'] = k.forms
+        tmp = {'name': k.name, 'schema': k.schema, 'form': k.form,
+               'forms': k.forms}
         lists[k.id] = tmp
 
     return jsonify(lists)
 
 
-@blueprint.route("/property/<int:property_id>", methods=['GET'])
+@blueprint.route('/property/<int:property_id>', methods=['GET'])
 @login_required
 @item_type_permission.require(http_exception=403)
 def get_property(property_id=0):
     """Renders an primitive property view."""
     prop = ItemTypeProps.get_record(property_id)
-    tmp = {}
-    tmp['id'] = prop.id
-    tmp['name'] = prop.name
-    tmp['schema'] = prop.schema
-    tmp['form'] = prop.form
-    tmp['forms'] = prop.forms
+    tmp = {'id': prop.id, 'name': prop.name, 'schema': prop.schema,
+           'form': prop.form, 'forms': prop.forms}
     return jsonify(tmp)
 
 
-@blueprint.route("/property", methods=['POST'])
-@blueprint.route("/property/<int:property_id>", methods=['POST'])
+@blueprint.route('/property', methods=['POST'])
+@blueprint.route('/property/<int:property_id>', methods=['POST'])
 @login_required
 @item_type_permission.require(http_exception=403)
 def custom_property_new(property_id=0):
@@ -175,8 +169,8 @@ def custom_property_new(property_id=0):
     return jsonify(msg=_('Success'))
 
 
-@blueprint.route("/mapping", methods=['GET'])
-@blueprint.route("/mapping/<int:ItemTypeID>", methods=['GET'])
+@blueprint.route('/mapping', methods=['GET'])
+@blueprint.route('/mapping/<int:ItemTypeID>', methods=['GET'])
 @login_required
 @item_type_permission.require(http_exception=403)
 def mapping_index(ItemTypeID=0):
@@ -208,7 +202,7 @@ def mapping_index(ItemTypeID=0):
     return abort(400)
 
 
-@blueprint.route("/mapping", methods=['POST'])
+@blueprint.route('/mapping', methods=['POST'])
 @login_required
 @item_type_permission.require(http_exception=403)
 def mapping_register():
@@ -223,7 +217,7 @@ def mapping_register():
         Mapping.create(item_type_id=data.get('item_type_id'),
                        mapping=json.loads(data.get('mapping')))
         db.session.commit()
-    except:
+    except BaseException:
         db.session.rollback()
         return jsonify(msg=_('Fail'))
     return jsonify(msg=_('Success'))

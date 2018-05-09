@@ -20,17 +20,16 @@
 
 """Utilities for download file."""
 
-import unicodedata
 import mimetypes
+import unicodedata
 
 from flask import abort, current_app, render_template, request
-
-from werkzeug.datastructures import Headers
-from werkzeug.urls import url_quote
 from invenio_files_rest.views import ObjectResource
 from invenio_records_files.utils import record_file_factory
-
 from weko_records.api import FilesMetadata, ItemTypes
+from werkzeug.datastructures import Headers
+from werkzeug.urls import url_quote
+
 from .permissions import file_permission_factory
 
 
@@ -42,7 +41,6 @@ def weko_view_method(pid, record, template=None, **kwargs):
     :param pid: PID object.
     :param record: Record object.
     :param template: Template to render.
-    :param \*\*kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
     flst = FilesMetadata.get_records(pid.pid_value)
@@ -52,7 +50,7 @@ def weko_view_method(pid, record, template=None, **kwargs):
         for fj in flst:
             frecord.append(fj.dumps())
 
-    item_type=ItemTypes.get_by_id(id_=record['item_type_id'])
+    item_type = ItemTypes.get_by_id(id_=record['item_type_id'])
     item_type_info = "{}({})".format(item_type.item_type_name.name,
                                      item_type.tag)
     return render_template(
@@ -68,7 +66,7 @@ def prepare_response(pid_value, fd=True):
     """
      prepare response data and header
     :param pid_value:
-    :param full:
+    :param fd:
     :return:
     """
 
@@ -89,7 +87,7 @@ def prepare_response(pid_value, fd=True):
     except UnicodeEncodeError:
         filenames = {'filename*': "UTF-8''%s" % url_quote(fn)}
         encoded_filename = (unicodedata.normalize('NFKD', fn)
-            .encode('latin-1', 'ignore'))
+                            .encode('latin-1', 'ignore'))
         if encoded_filename:
             filenames['filename'] = encoded_filename
 
@@ -121,11 +119,10 @@ def prepare_response(pid_value, fd=True):
     return rv
 
 
-def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
+def file_preview_ui(pid, _record_file_factory=None, **kwargs):
     """
 
     :param pid:
-    :param record:
     :param _record_file_factory:
     :param kwargs:
     :return:
@@ -150,6 +147,7 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
             )
         )
 
+    :param _record_file_factory:
     :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
         instance.
     :param record: The record metadata.
@@ -182,5 +180,3 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
             'pid_value': pid.pid_value,
         },
     )
-
-

@@ -21,8 +21,8 @@
 
 """Groups Settings Blueprint."""
 
-from flask import Blueprint, Flask, current_app, flash, jsonify, redirect, \
-    render_template, request, url_for
+from flask import (
+    Blueprint, flash, jsonify, redirect, render_template, request, url_for)
 from flask_babelex import gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -175,7 +175,6 @@ def new():
     """
     Create new group.
 
-    :param group_id: Group id.
     :return: New group page.
     """
     form = GroupForm(request.form)
@@ -540,6 +539,6 @@ def remove_csrf(form):
     """
     map = {}
     for key, val in form.data.items():
-        if (key != 'csrf_token'):
+        if key != 'csrf_token':
             map[key] = val
     return map

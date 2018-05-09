@@ -51,7 +51,7 @@ def get_all_children(tree_json):
     return result
 
 
-def _get_all_children(tree_json, parent=0, child_list={}, parent_info={}):
+def _get_all_children(tree_json, parent=0, child_list=None, parent_info=None):
     """
     Parse the json data.
 
@@ -61,6 +61,10 @@ def _get_all_children(tree_json, parent=0, child_list={}, parent_info={}):
     :param parent_info: The parent info.
     :return:Type of dict which contains the children and the parent info.
     """
+    if parent_info is None:
+        parent_info = {}
+    if child_list is None:
+        child_list = {}
     children = []
     for tree in tree_json:
         if len(tree['children']) > 0:
@@ -85,6 +89,7 @@ def reset_tree(path, tree):
     :param tree:
     :return: The dict of index tree.
     """
+
     def set_checked(id_tp, tree):
         """Set the state of the index.
 
@@ -101,7 +106,7 @@ def reset_tree(path, tree):
                     if tree_id in id_tp:
                         settings = lst.get('settings')
                         if isinstance(settings, dict) and settings.get(
-                            'checked') is not None:
+                                'checked') is not None:
                             settings['checked'] = True
                             id_tp.remove(tree_id)
                             break

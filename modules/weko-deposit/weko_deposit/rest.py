@@ -20,36 +20,17 @@
 
 """Blueprint for Weko deposit rest."""
 
-import json, uuid, shutil
-import os.path
+import json
+
+from flask import Blueprint, abort, current_app, jsonify, request
+from invenio_pidstore import current_pidstore
+from invenio_records.api import Record
+from invenio_records_rest.links import default_links_factory
+from invenio_records_rest.utils import obj_or_import_string
+from invenio_records_rest.views import pass_record
+from invenio_rest import ContentNegotiatedMethodView
 
 # from copy import deepcopy
-from functools import partial
-
-from flask import Blueprint, abort, current_app, jsonify, request, \
-    url_for, redirect
-from invenio_db import db
-from invenio_oauth2server import require_api_auth, require_oauth_scopes
-from invenio_pidstore.errors import PIDInvalidAction
-from invenio_pidstore import current_pidstore
-from invenio_records_rest.utils import obj_or_import_string
-from invenio_records_rest.links import default_links_factory
-from invenio_records.api import Record
-from invenio_records_rest.views import \
-    create_error_handlers as records_rest_error_handlers
-from invenio_records_rest.views import \
-    create_url_rules
-from invenio_records_rest.views import need_record_permission, pass_record
-from invenio_rest import ContentNegotiatedMethodView
-from invenio_rest.views import create_api_errorhandler
-from webargs import fields
-from webargs.flaskparser import use_kwargs
-from werkzeug.utils import secure_filename
-from invenio_records_rest.errors import InvalidDataRESTError, \
-    UnsupportedMediaRESTError
-from invenio_files_rest.storage import PyFSFileStorage
-from invenio_records_rest.errors import MaxResultWindowRESTError
-from weko_index_tree.api import Indexes
 
 
 def create_blueprint(app, endpoints):
@@ -71,7 +52,7 @@ def create_blueprint(app, endpoints):
         if 'record_serializers' in options:
             record_serializers = options.get('record_serializers')
             record_serializers = {mime: obj_or_import_string(func)
-                           for mime, func in record_serializers.items()}
+                                  for mime, func in record_serializers.items()}
         else:
             record_serializers = {}
 
@@ -85,7 +66,8 @@ def create_blueprint(app, endpoints):
         record_class = obj_or_import_string(options.get('record_class'),
                                             default=Record)
         # search_class = obj_or_import_string(options.get('search_class'))
-        # search_factory = obj_or_import_string(options.get('search_factory_imp'))
+        # search_factory = obj_or_import_string(options.get(
+        # 'search_factory_imp'))
 
         search_class_kwargs = {}
         search_class_kwargs['index'] = options.get('search_index')
@@ -171,7 +153,8 @@ class ItemResource(ContentNegotiatedMethodView):
     def post(self, pid, record, **kwargs):
         """"""
         from weko_deposit.links import base_factory
-        response = self.make_response(pid, record, 201, links_factory=base_factory)
+        response = self.make_response(pid, record, 201,
+                                      links_factory=base_factory)
 
         return response
 
@@ -190,7 +173,7 @@ class ItemResource(ContentNegotiatedMethodView):
                 'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
             datastore.put(cache_key, json.dumps(data), ttl_secs=ttl_sec)
-        except:
+        except BaseException:
             abort(400, "Failed to register item")
 
         return jsonify({'status': 'success'})

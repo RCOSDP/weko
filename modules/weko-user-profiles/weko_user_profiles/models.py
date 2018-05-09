@@ -28,7 +28,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from .validators import validate_username
 
 
-class AnonymousUserProfile():
+class AnonymousUserProfile:
     """Anonymous user profile."""
 
     @property

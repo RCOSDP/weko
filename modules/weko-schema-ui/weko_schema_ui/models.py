@@ -23,11 +23,10 @@
 import uuid
 from collections import OrderedDict
 
-from sqlalchemy.dialects import mysql, postgresql
-from sqlalchemy_utils.types import JSONType, UUIDType
-
 from invenio_db import db
 from invenio_records.models import Timestamp
+from sqlalchemy.dialects import postgresql
+from sqlalchemy_utils.types import JSONType, UUIDType
 
 
 class OAIServerSchema(db.Model, Timestamp):

@@ -20,22 +20,19 @@
 
 """Weko Deposit API."""
 
-from collections import OrderedDict
-
 import redis
-from flask import current_app, abort, json
+from flask import abort, current_app, json
 from invenio_deposit.api import Deposit, preserve
-from invenio_files_rest.models import Bucket
-from invenio_files_rest.models import ObjectVersion
+from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from simplekv.memory.redisstore import RedisStore
 from weko_index_tree.api import Indexes
-from weko_items_ui import current_weko_items_ui
-from weko_records.api import ItemTypes, ItemsMetadata
-from weko_records.utils import save_item_metadata, find_items, set_timestamp, get_all_items
+from weko_records.api import ItemsMetadata, ItemTypes
+from weko_records.utils import (
+    find_items, get_all_items, save_item_metadata, set_timestamp)
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 
@@ -112,7 +109,7 @@ class WekoIndexer(RecordIndexer):
                                    index=self.es_index,
                                    doc_type=self.file_doc_type,
                                    routing=parent_id)
-            except:
+            except BaseException:
                 pass
 
     def update_publish_status(self, record):
@@ -228,7 +225,7 @@ class WekoDeposit(Deposit):
                 td.clear()
                 for lst in plst:
                     td.append(lst.path)
-        except:
+        except BaseException:
             abort(400, "Failed to register item")
 
         dc, jrc, is_edit = save_item_metadata(data, self.pid)
@@ -276,7 +273,6 @@ class WekoDeposit(Deposit):
                 if self.jrc.get('content'):
                     for content in self.jrc['content']:
                         del content['file']
-
 
     def get_content_files(self):
         """Get content file metadata."""

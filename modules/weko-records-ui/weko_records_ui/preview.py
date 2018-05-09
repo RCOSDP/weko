@@ -21,11 +21,11 @@
 """Preview for weko-records-ui."""
 
 import cchardet as chardet
-from flask import abort, current_app, request, render_template
+from flask import abort, current_app, render_template, request
 from invenio_previewer.api import PreviewFile
 from invenio_previewer.extensions import default
-from invenio_previewer.proxies import current_previewer
 from invenio_previewer.extensions.zip import make_tree
+from invenio_previewer.proxies import current_previewer
 
 
 def preview(pid, record, template=None, **kwargs):
@@ -72,9 +72,9 @@ def preview(pid, record, template=None, **kwargs):
                 except Exception:
                     current_app.logger.warning(
                         ('Preview failed for {key}, in {pid_type}:{pid_value}'
-                            .format(key=fileobj.file.key,
-                                    pid_type=fileobj.pid.pid_type,
-                                    pid_value=fileobj.pid.pid_value)),
+                         .format(key=fileobj.file.key,
+                                 pid_type=fileobj.pid.pid_type,
+                                 pid_value=fileobj.pid.pid_value)),
                         exc_info=True)
         return default.preview(fileobj)
 
@@ -115,12 +115,12 @@ def decode_name(k):
     try:
         name = k.encode('cp437')
         encode = chardet.detect(name).get('encoding')
-        current_app.logger.\
+        current_app.logger. \
             debug('--mae------name: {name}------------------encode : {ex}'.
                   format(ex=encode, name=k))
         if not encode:
             encode = chardet.detect(k.encode('utf-16be')).get('encoding')
-        current_app.logger.\
+        current_app.logger. \
             debug('--------name: {name}------------------encode : {ex}'.
                   format(ex=encode, name=k))
         if 'ISO-8859-1' in encode or 'WINDOWS-1252' in encode:

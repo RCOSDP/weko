@@ -34,8 +34,7 @@ def links_factory(pid, **kwargs):
 def base_factory(pid, **kwargs):
     """Deposit links factory."""
     links = dict()
-    links['index'] = request.host_url + "api/deposits/redirect/" + pid.pid_value
+    links['index'] = request.host_url + \
+        "api/deposits/redirect/" + pid.pid_value
     links['r'] = request.host_url + "items/index/" + pid.pid_value
     return links
-
-

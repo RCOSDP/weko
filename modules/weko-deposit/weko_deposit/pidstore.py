@@ -21,8 +21,8 @@
 """Weko Deposit Pid Store."""
 
 from invenio_pidstore.fetchers import FetchedPID
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, \
-    RecordIdentifier
+from invenio_pidstore.models import (
+    PersistentIdentifier, PIDStatus, RecordIdentifier)
 
 
 def weko_deposit_minter(record_uuid, data):

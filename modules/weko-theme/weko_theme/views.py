@@ -21,8 +21,7 @@
 """Blueprint for weko-theme."""
 
 
-from flask import Blueprint, render_template, current_app
-
+from flask import Blueprint, current_app, render_template
 
 blueprint = Blueprint(
     'weko_theme',
@@ -38,6 +37,7 @@ def index():
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
     )
+
 
 @blueprint.route('/edit')
 def edit():

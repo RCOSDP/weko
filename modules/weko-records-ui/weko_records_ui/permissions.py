@@ -20,10 +20,11 @@
 
 """Permissions for Detail Page."""
 
+from datetime import datetime as dt
+
 from flask import current_app
 from flask_security import current_user
-from datetime import datetime as dt
-from invenio_access import action_factory, Permission
+from invenio_access import Permission, action_factory
 from weko_groups.api import Group, Membership, MembershipState
 
 action_detail_page_access = action_factory('detail-page-access')
@@ -73,7 +74,7 @@ def check_file_download_permission(fjson):
                 adt = fjson.get('accessdate')
                 pdt = dt.strptime(adt, '%Y-%m-%d')
                 is_can = True if dt.today() >= pdt else False
-            except:
+            except BaseException:
                 is_can = False
         # access with login user
         elif 'open_login' in acsrole:
@@ -120,7 +121,7 @@ def check_publish_status(record):
     try:
         pdt = dt.strptime(pdt, '%Y-%m-%d')
         pdt = True if dt.today() >= pdt else False
-    except:
+    except BaseException:
         pdt = False
     # if it's publish
     if pst and '0' in pst and pdt:

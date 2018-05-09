@@ -29,8 +29,9 @@ import json
 import sys
 
 import redis
-from flask import abort, Blueprint, current_app, render_template, redirect, \
-    request, session, url_for, flash
+from flask import (
+    Blueprint, abort, current_app, flash, redirect, render_template, request,
+    session, url_for)
 from flask_babelex import gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required

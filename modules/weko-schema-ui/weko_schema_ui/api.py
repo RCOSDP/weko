@@ -20,12 +20,10 @@
 
 """Schema API."""
 
-from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import asc, desc
-
 from invenio_db import db
 from invenio_records.api import RecordBase
 from invenio_records.errors import MissingModelError
+
 from .models import OAIServerSchema
 
 
@@ -47,8 +45,11 @@ class WekoSchema(RecordBase):
         """
         with db.session.begin_nested():
             record = cls(fdata)
-            record.model = OAIServerSchema(id=uuid, schema_name=sname, form_data=fdata, xsd=xsd,
-                                           namespaces=ns, schema_location=schema, isvalid=isvalid)
+            record.model = OAIServerSchema(id=uuid, schema_name=sname,
+                                           form_data=fdata, xsd=xsd,
+                                           namespaces=ns,
+                                           schema_location=schema,
+                                           isvalid=isvalid)
             db.session.add(record.model)
 
         return record
@@ -76,12 +77,13 @@ class WekoSchema(RecordBase):
 
         Raise a database exception if the record does not exist.
 
-        :param id_: record ID.
+        :param name:
         :param with_deleted: If `True` then it includes deleted records.
         :returns: The :class:`Record` instance.
         """
         with db.session.no_autoflush:
-            query = OAIServerSchema.query.filter_by(schema_name=name, isvalid=True)
+            query = OAIServerSchema.query.filter_by(schema_name=name,
+                                                    isvalid=True)
             if not with_deleted:
                 query = query.filter(OAIServerSchema.xsd != None)  # noqa
             obj = query.one_or_none()
@@ -114,7 +116,6 @@ class WekoSchema(RecordBase):
             if not with_deleted:
                 query = query.filter(OAIServerSchema.isvalid == True)  # noqa
             return query.all()
-
 
     def delete(self, force=False):
         """Delete a record.
@@ -167,4 +168,3 @@ class WekoSchema(RecordBase):
         db.session.delete(obj)
         db.session.commit()
         return obj.schema_name
-

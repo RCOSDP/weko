@@ -24,8 +24,8 @@ from flask_babelex import gettext as _
 from flask_wtf import FlaskForm
 from sqlalchemy_utils.types.choice import ChoiceType
 from wtforms import RadioField, TextAreaField
-from wtforms.validators import DataRequired, Email, StopValidation, \
-    ValidationError
+from wtforms.validators import (
+    DataRequired, Email, StopValidation, ValidationError)
 from wtforms_alchemy import ClassMap, model_form_factory
 
 from .models import Group

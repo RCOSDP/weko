@@ -20,20 +20,22 @@
 
 """Blueprint for schema rest."""
 
-import redis
-import xmlschema, json, copy
+import copy
+import json
+from collections import OrderedDict
 
+import redis
+import xmlschema
+from flask import abort, current_app, request, url_for
 from lxml import etree
 from lxml.builder import ElementMaker
-from weko_records.api import Mapping
-from .api import WekoSchema
-
-from flask import abort, current_app, url_for, request
-from collections import OrderedDict
 from simplekv.memory.redisstore import RedisStore
-from xmlschema.components import (XsdAtomicRestriction, XsdSingleFacet, XsdPatternsFacet, XsdEnumerationFacet,
-                                  XsdGroup, XsdAtomicBuiltin, XsdUnion
-                                  )
+from weko_records.api import Mapping
+from xmlschema.components import (
+    XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup,
+    XsdPatternsFacet, XsdSingleFacet, XsdUnion)
+
+from .api import WekoSchema
 
 
 class SchemaConverter:
@@ -56,8 +58,9 @@ class SchemaConverter:
                 for k, nsp in schema_data.namespaces.items():
                     if nsp in element_name:
                         if k == "":
-                            k = self.rootname.split(":")[-1] if ":" in self.rootname else self.rootname
-                        return element_name.replace("{"+nsp+"}", k+":")
+                            k = self.rootname.split(
+                                ":")[-1] if ":" in self.rootname else self.rootname
+                        return element_name.replace("{" + nsp + "}", k + ":")
 
             return element_name
 
@@ -85,7 +88,8 @@ class SchemaConverter:
                         rstr.update(OrderedDict(enumeration=va.enumeration))
                     if isinstance(va, XsdSingleFacet):
                         sf = OrderedDict()
-                        vn = va.name.split('(')[0] if "(" in va.name else va.name
+                        vn = va.name.split(
+                            '(')[0] if "(" in va.name else va.name
                         sf[vn] = va.value
                         rstr.update(sf)
 
@@ -106,7 +110,11 @@ class SchemaConverter:
             else:
                 atrlst = []
                 for atrb in type.attributes._attribute_group.values():
-                    attrd = OrderedDict(name=getXSVal(atrb.name), ref=atrb.ref, use=atrb.use)
+                    attrd = OrderedDict(
+                        name=getXSVal(
+                            atrb.name),
+                        ref=atrb.ref,
+                        use=atrb.use)
                     if 'lang' not in atrb.name:
                         attrd.update(get_element_type(atrb.type))
 
@@ -125,8 +133,9 @@ class SchemaConverter:
             for chd in element.iterchildren():
                 ctp = OrderedDict()
                 chn = getXSVal(chd.name)
-                ctp["type"] = OrderedDict(minOccurs=chd.min_occurs, maxOccurs=chd.max_occurs \
-                    if chd.max_occurs else 'unbounded')
+                ctp["type"] = OrderedDict(
+                    minOccurs=chd.min_occurs,
+                    maxOccurs=chd.max_occurs if chd.max_occurs else 'unbounded')
                 ctp["type"].update(get_element_type(chd.type))
 
                 chdsm[chn] = ctp
@@ -138,8 +147,10 @@ class SchemaConverter:
         try:
             schema_file = open(schema_file, encoding='utf-8')
             schema_data = xmlschema.XMLSchema(schema_file)
-        except:
-            abort(400, "Error creating Schema: Can not open xsd file. Please check it!")
+        except BaseException:
+            abort(
+                400,
+                "Error creating Schema: Can not open xsd file. Please check it!")
 
         # namespace
         nsp, tagns = get_namespace(schema_data.namespaces)
@@ -152,8 +163,9 @@ class SchemaConverter:
             path = self.rootname + "/*" if ':' in self.rootname \
                 else '{%s}%s/*' % (tagns, nsp if nsp else self.rootname)
             elements = schema_data.findall(path)
-            elements = schema_data.findall('*/*') if len(elements) < 1 else elements
-        except:
+            elements = schema_data.findall(
+                '*/*') if len(elements) < 1 else elements
+        except BaseException:
             abort(400, "Error creating Schema: Can not find element")
         else:
             if len(elements) > 0:
@@ -162,8 +174,9 @@ class SchemaConverter:
                     # print("%s - %s" % (ems.name, ems.type.name))
                     ename = getXSVal(ems.name)
                     tp = OrderedDict()
-                    tp["type"] = OrderedDict(minOccurs=ems.min_occurs, maxOccurs=ems.max_occurs \
-                        if ems.max_occurs else 'unbounded')
+                    tp["type"] = OrderedDict(
+                        minOccurs=ems.min_occurs,
+                        maxOccurs=ems.max_occurs if ems.max_occurs else 'unbounded')
 
                     tp["type"].update(get_element_type(ems.type))
                     schema[ename] = tp
@@ -213,7 +226,8 @@ class SchemaTree:
                 if mjson:
                     for k, v in self._record.items():
                         if isinstance(v, dict) and mp.get(k) and k != "_oai":
-                            v.update({self._schema_name: mp.get(k).get(self._schema_name)})
+                            v.update({self._schema_name: mp.get(
+                                k).get(self._schema_name)})
 
         # inject mappings info to record
         get_mapping()
@@ -241,7 +255,10 @@ class SchemaTree:
                                 nd[ke] = {self._v: nv}
                                 return
                             else:
-                                if len(va) == 0 or (va.get(self._atr) and not va.get(self._v) and len(va) == 1):
+                                if len(va) == 0 or (
+                                    va.get(
+                                        self._atr) and not va.get(
+                                        self._v) and len(va) == 1):
                                     va.update({self._v: nv})
                                     return
 
@@ -263,11 +280,13 @@ class SchemaTree:
             def get_url(z, key, val):
                 if 'filemeta' in key:
                     attr = z.get(self._atr, {})
-                    attr = attr.get('jpcoar:objectType', '') or attr.get('objectType', '')
+                    attr = attr.get(
+                        'jpcoar:objectType', '') or attr.get(
+                        'objectType', '')
                     if 'fulltext' in attr:
                         pid = self._record.get('control_number')
-                        return request.host_url[:-1] + url_for('invenio_records_ui.recid_files',
-                                                               pid_value=pid, filename=val)
+                        return request.host_url[:-1] + url_for(
+                            'invenio_records_ui.recid_files', pid_value=pid, filename=val)
                     else:
                         return val
                 else:
@@ -329,13 +348,15 @@ class SchemaTree:
                             exp, lk = analysis(z.get(self._v))
                             # if not have expression or formula
                             if len(lk) == 1:
-                                nlst = get_items_value_lst(atr_vm, lk[0].strip())
+                                nlst = get_items_value_lst(
+                                    atr_vm, lk[0].strip())
                                 if nlst:
                                     z[self._v] = nlst
                             else:
                                 nlst = []
                                 for val in lk:
-                                    klst = get_items_value_lst(atr_vm, val.strip())
+                                    klst = get_items_value_lst(
+                                        atr_vm, val.strip())
                                     nlst.append(klst)
 
                                 if nlst:
@@ -392,7 +413,11 @@ class SchemaTree:
                         set_value(mpdic, atr_v)
                         vlst.append(mpdic)
                     elif atr_vm:
-                        if isinstance(atr_vm, list) and isinstance(mpdic, dict):
+                        if isinstance(
+                                atr_vm,
+                                list) and isinstance(
+                                mpdic,
+                                dict):
                             for lst in atr_vm:
                                 vlst.extend(get_mapping_value(mpdic, lst, k))
             return vlst
@@ -604,14 +629,12 @@ class SchemaTree:
                         yield value
 
         def get_path_list(key):
-            klst =[]
+            klst = []
             plst = self.to_list()
             for i in range(len(plst)):
                 if key in plst[i].split('.')[0]:
                     klst.append(plst[i])
             return klst
-
-
 
         gdc = OrderedDict()
         vlst = []
@@ -674,7 +697,8 @@ def cache_schema(schema_name, delete=False):
             dstore = dict()
             dstore['root_name'] = rec.get('root_name')
             dstore['namespaces'] = rec.model.namespaces.copy()
-            dstore['schema'] = json.loads(rec.model.xsd, object_pairs_hook=OrderedDict)
+            dstore['schema'] = json.loads(
+                rec.model.xsd, object_pairs_hook=OrderedDict)
             rec.model.namespaces.clear()
             del rec
             return dstore
@@ -686,15 +710,17 @@ def cache_schema(schema_name, delete=False):
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         data_str = datastore.get(cache_key)
-        data = json.loads(data_str.decode('utf-8'), object_pairs_hook=OrderedDict)
+        data = json.loads(
+            data_str.decode('utf-8'),
+            object_pairs_hook=OrderedDict)
         if delete:
             datastore.delete(cache_key)
-    except:
+    except BaseException:
         try:
             schema = get_schema()
             if schema:
                 datastore.put(cache_key, json.dumps(schema))
-        except:
+        except BaseException:
             return get_schema()
         else:
             return schema
@@ -714,7 +740,7 @@ def delete_schema_cache(schema_name):
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         datastore.delete(cache_key)
-    except:
+    except BaseException:
         pass
 
 
@@ -762,7 +788,7 @@ def reset_oai_metadata_formats(app):
         if isinstance(oad, dict):
             try:
                 obj = WekoSchema.get_all()
-            except:
+            except BaseException:
                 pass
             else:
                 if isinstance(obj, list):
@@ -772,14 +798,17 @@ def reset_oai_metadata_formats(app):
                         if not oad.get(schema_name):
                             scm = dict()
                             if isinstance(lst.namespaces, dict):
-                                ns = lst.namespaces.get('') or lst.namespaces.get(schema_name)
+                                ns = lst.namespaces.get(
+                                    '') or lst.namespaces.get(schema_name)
                                 scm.update({'namespace': ns})
                             scm.update({'schema': lst.schema_location})
-                            scm.update({'serializer': (sel[0], {'schema_type': schema_name})})
+                            scm.update(
+                                {'serializer': (sel[0], {'schema_type': schema_name})})
                             oad.update({schema_name: scm})
                         else:
                             if isinstance(lst.namespaces, dict):
-                                ns = lst.namespaces.get('') or lst.namespaces.get(schema_name)
+                                ns = lst.namespaces.get(
+                                    '') or lst.namespaces.get(schema_name)
                                 if ns:
                                     oad[schema_name]['namespace'] = ns
                             if lst.schema_location:

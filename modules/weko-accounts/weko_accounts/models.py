@@ -20,8 +20,8 @@
 
 """Database models for weko-accounts."""
 
-from invenio_db import db
 from invenio_accounts.models import User
+from invenio_db import db
 
 
 class ShibbolethUser(db.Model):

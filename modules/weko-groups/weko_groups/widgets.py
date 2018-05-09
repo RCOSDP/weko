@@ -36,7 +36,7 @@ class RadioGroupWidget(object):
         html = ""
         for subfield in field:
             label = subfield.label.text
-            if (field.default == subfield.data):
+            if field.default == subfield.data:
                 subfield.checked = True
             else:
                 subfield.checked = False

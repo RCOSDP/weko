@@ -27,8 +27,8 @@ from flask_login import current_user, user_logged_in, user_logged_out
 from flask_security.utils import hash_password, verify_password
 from invenio_accounts.models import User
 from invenio_db import db
-from werkzeug.local import LocalProxy
 from weko_user_profiles.models import UserProfile
+from werkzeug.local import LocalProxy
 
 from .models import ShibbolethUser
 
@@ -53,9 +53,9 @@ class ShibUser(object):
         get weko user info by shibboleth user info
         :return: ShibbolethUser if exists relation else None
         """
-        shib_user = None;
+        shib_user = None
         if self.shib_attr['shib_mail'] is not None and len(
-            self.shib_attr['shib_mail']) > 0:
+                self.shib_attr['shib_mail']) > 0:
             shib_user = ShibbolethUser.query.filter_by(
                 shib_mail=self.shib_attr['shib_mail']).one_or_none()
         if shib_user is None:

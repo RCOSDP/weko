@@ -30,8 +30,9 @@ from flask_security.confirmable import send_confirmation_instructions
 from invenio_db import db
 
 from .api import current_userprofile
-from .forms import EmailProfileForm, ProfileForm, VerificationForm, \
-    confirm_register_form_factory, register_form_factory
+from .forms import (
+    EmailProfileForm, ProfileForm, VerificationForm,
+    confirm_register_form_factory, register_form_factory)
 from .models import UserProfile
 
 blueprint = Blueprint(

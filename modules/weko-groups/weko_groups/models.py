@@ -20,22 +20,18 @@
 
 """Groups data models."""
 
-import uuid
 from datetime import datetime
 
-from flask import current_app
 from flask_babelex import gettext as _
 from flask_login import UserMixin, current_user
 from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy import func
-from sqlalchemy.dialects import mysql, postgresql
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.dialects import mysql
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import asc, desc
 from sqlalchemy_utils import generic_relationship
-from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from .widgets import RadioGroupWidget
@@ -230,6 +226,7 @@ class Group(db.Model):
                subscription_policy=None, is_managed=False, admins=None):
         """Create a new group.
 
+        :param is_managed:
         :param name: Name of group. Required and must be unique.
         :param description: Description of group. Default: ``''``
         :param privacy_policy: PrivacyPolicy
@@ -275,6 +272,7 @@ class Group(db.Model):
                subscription_policy=None, is_managed=None):
         """Update group.
 
+        :param is_managed:
         :param name: Name of group.
         :param description: Description of group.
         :param privacy_policy: PrivacyPolicy
@@ -287,12 +285,12 @@ class Group(db.Model):
             if description is not None:
                 self.description = description
             if (
-                        privacy_policy is not None and
+                privacy_policy is not None and
                     PrivacyPolicy.validate(privacy_policy)
             ):
                 self.privacy_policy = privacy_policy
             if (
-                        subscription_policy is not None and
+                subscription_policy is not None and
                     SubscriptionPolicy.validate(subscription_policy)
             ):
                 self.subscription_policy = subscription_policy
@@ -724,6 +722,7 @@ class Membership(db.Model):
     def order(cls, query, field, s):
         """Modify query as so to order the results.
 
+        :param field:
         :param query: Query object.
         :param str s: Orderinig: ``asc`` or ``desc``.
         :returns: Query object.

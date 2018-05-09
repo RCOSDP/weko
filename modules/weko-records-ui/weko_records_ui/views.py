@@ -21,8 +21,10 @@
 """Blueprint for weko-records-ui."""
 
 import six
-from flask import Blueprint, current_app, abort, request, redirect, url_for, make_response,render_template
+from flask import (
+    Blueprint, abort, current_app, make_response, redirect, request, url_for)
 from invenio_records_ui.utils import obj_or_import_string
+
 from .permissions import check_created_id
 
 blueprint = Blueprint(
@@ -36,7 +38,8 @@ blueprint = Blueprint(
 def publish(pid, record, template=None, **kwargs):
     r"""Record publish  status change view.
 
-    Change record publish status with given status and renders record export template.
+    Change record publish status with given status and renders record export
+    template.
 
     :param pid: PID object.
     :param record: Record object.
@@ -101,7 +104,10 @@ def export(pid, record, template=None, **kwargs):
         #     format_title=fmt['title'],
         # )
         response = make_response(data)
-        response.headers['Content-Type'] = 'text/xml' if "json" not in schema_type else 'text/plain'
+        if "json" not in schema_type:
+            response.headers['Content-Type'] = 'text/xml'
+        else:
+            response.headers['Content-Type'] = 'text/plain'
         return response
 
 
@@ -111,7 +117,6 @@ def get_image_src(mimetype):
     :param mimetype:
     :return src: dict
     """
-    src = ""
     if "text/" in mimetype:
         src = "icon_16_txt.jpg"
     elif "officedocument.wordprocessingml" in mimetype:
@@ -163,7 +168,6 @@ def get_license_icon(type):
         "license_6": "Creative Commons : 表示 - 非営利 - 改変禁止",
     }
 
-    src = ""
     if "license_free" in type:
         src = ""
     elif "license_0" in type:
@@ -197,4 +201,3 @@ def check_permission(record):
     :return: result
     """
     return check_created_id(record)
-

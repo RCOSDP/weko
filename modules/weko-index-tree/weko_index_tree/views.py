@@ -20,11 +20,12 @@
 
 """Blueprint for weko-index-tree."""
 
+import sys
 from functools import wraps
 
-import sys
-from flask import abort, Blueprint, current_app, json, jsonify, \
-    render_template, request, url_for
+from flask import (
+    Blueprint, abort, current_app, json, jsonify, render_template, request,
+    url_for)
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_records_rest.errors import PIDResolveRESTError
@@ -58,7 +59,7 @@ def pass_record(f):
     return inner
 
 
-@blueprint.route("/")
+@blueprint.route('/')
 @login_required
 @index_tree_permission.require(http_exception=403)
 def index():
@@ -71,7 +72,7 @@ def index():
     )
 
 
-@blueprint.route("/jsonmapping", methods=['GET'])
+@blueprint.route('/jsonmapping', methods=['GET'])
 def get_indexjson():
     """Provide the index tree json for top page."""
     try:
@@ -104,12 +105,11 @@ def get_indexjson_by_pid(pid, record):
     return jsonify(tree)
 
 
-@blueprint.route("/detail/<int:index_id>", methods=['GET'])
+@blueprint.route('/detail/<int:index_id>', methods=['GET'])
 @login_required
 @index_tree_permission.require(http_exception=403)
 def get_index_detail(index_id=0):
-    """
-    Get the detail info by index_id.
+    """Get the detail info by index_id.
 
     :param index_id: Indentifier of index
     :return: the json data of index detail info
@@ -122,12 +122,11 @@ def get_index_detail(index_id=0):
     return jsonify(result.serialize())
 
 
-@blueprint.route("/detail/<int:index_id>", methods=['POST'])
+@blueprint.route('/detail/<int:index_id>', methods=['POST'])
 @login_required
 @index_tree_permission.require(http_exception=403)
 def upt_index_detail(index_id=0):
-    """
-    Update the detail info.
+    """Update the detail info.
 
     :param index_id: Indentifier of index
     :return: updated json data of index detail info
@@ -141,30 +140,28 @@ def upt_index_detail(index_id=0):
     return jsonify(result.serialize())
 
 
-@blueprint.route("/thumbnail/<int:index_id>", methods=['GET'])
+@blueprint.route('/thumbnail/<int:index_id>', methods=['GET'])
 @login_required
 @index_tree_permission.require(http_exception=403)
 def get_index_thumbnail(index_id=0):
-    """
-    Get thumbnail info.
+    """Get thumbnail info.
 
     :param index_id: Indentifier of index
     :return: binary data for thumbnail
     """
     result = None
     if index_id > 0:
-        result = Indexes.get_Thumbnail_by_id(index_id)
+        result = Indexes.get_thumbnail_by_id(index_id)
     if result is None:
         return jsonify(code=400, msg='param error')
     return result
 
 
-@blueprint.route("/thumbnail/<int:index_id>", methods=['POST'])
+@blueprint.route('/thumbnail/<int:index_id>', methods=['POST'])
 @login_required
 @index_tree_permission.require(http_exception=403)
 def upt_index_thumbnail(index_id=0):
-    """
-    Update the thumbnail of index.
+    """Update the thumbnail of index.
 
     :param index_id: Indentifier of index
     :return: updated detail info of index
@@ -183,19 +180,18 @@ def upt_index_thumbnail(index_id=0):
     return jsonify(result.serialize())
 
 
-@blueprint.route("/detail/<int:index_id>", methods=['DELETE'])
+@blueprint.route('/detail/<int:index_id>', methods=['DELETE'])
 @login_required
 @index_tree_permission.require(http_exception=403)
 def del_index_detail(index_id=0):
-    """
-    Delete the index.
+    """Delete the index.
 
     :param index_id: Indentifier of index
     :return: delete info
     """
     result = None
     if index_id > 0:
-        """check if item belongs to the index"""
+        """check if item belongs to the index."""
         # index_children_count = Indexes.has_children(index_id)
         # if index_children_count > 0:
         #     return jsonify(code=1, msg='have children index')
@@ -219,7 +215,7 @@ def del_index_detail(index_id=0):
                    data={'count_del': count_del, 'count_upt': count_upt})
 
 
-@blueprint.route("/edit", methods=['GET'])
+@blueprint.route('/edit', methods=['GET'])
 @login_required
 @index_tree_permission.require(http_exception=403)
 def edit_get():
@@ -237,7 +233,7 @@ def edit_get():
     return abort(400)
 
 
-@blueprint.route("/edit", methods=['POST', 'PUT'])
+@blueprint.route('/edit', methods=['POST', 'PUT'])
 @login_required
 @index_tree_permission.require(http_exception=403)
 def edit():
@@ -257,10 +253,9 @@ def edit():
     return abort(400)
 
 
-@blueprint.route("/items/count/<tree_id>", methods=['GET'])
+@blueprint.route('/items/count/<tree_id>', methods=['GET'])
 def items_count(tree_id):
-    """
-    Get the count of item which belongs to the index.
+    """Get the count of item which belongs to the index.
 
     :param tree_id: Indentifier of index
     :return: the count of item
@@ -279,10 +274,9 @@ def items_count(tree_id):
     return abort(400)
 
 
-@blueprint.route("/move/<child_id>/<parent_id>", methods=['GET'])
+@blueprint.route('/move/<child_id>/<parent_id>', methods=['GET'])
 def move_up(child_id, parent_id):
-    """
-    Move the branch of children to the branch of parent.
+    """Move the branch of children to the branch of parent.
 
     :param child_id: Indentifier of child index
     :param parent_id: Indentifier of parent index

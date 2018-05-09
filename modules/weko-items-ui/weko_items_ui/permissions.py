@@ -20,7 +20,7 @@
 
 """Permissions for items."""
 
-from invenio_access import action_factory, Permission
+from invenio_access import Permission, action_factory
 from weko_records_ui.permissions import page_permission_factory
 
 action_item_access = action_factory('item-access')

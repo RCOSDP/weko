@@ -31,8 +31,8 @@
 # class WekoFileInstance(FileInstance):
 #     """Model for storing files.
 #
-#     A file instance represents a file on disk. A file instance may be linked
-#     from many objects, while an object can have one and only one file instance.
+# A file instance represents a file on disk. A file instance may be linked
+# from many objects, while an object can have one and only one file instance.
 #
 #     A file instance also records the storage class, size and checksum of the
 #     file on disk.

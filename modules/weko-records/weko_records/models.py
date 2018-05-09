@@ -25,8 +25,8 @@ from datetime import datetime
 
 from invenio_db import db
 from sqlalchemy.dialects import mysql, postgresql
-from sqlalchemy.sql.expression import asc, desc
-from sqlalchemy.types import BLOB, LargeBinary
+from sqlalchemy.sql.expression import desc
+from sqlalchemy.types import LargeBinary
 from sqlalchemy_utils.types import JSONType, UUIDType
 
 
@@ -105,11 +105,10 @@ class ItemType(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema in JSON format.
-    When you create a new ``item type`` the ``schema`` field value should never be
-    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
-    record metadata has been deleted.
-    """
+    """Store schema in JSON format. When you create a new ``item type`` the 
+    ``schema`` field value should never be ``NULL``. Default value is an 
+    empty dict. ``NULL`` value means that the record metadata has been 
+    deleted. """
 
     form = db.Column(
         db.JSON().with_variant(
@@ -145,11 +144,10 @@ class ItemType(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store page render information in JSON format.
-    When you create a new ``item type`` the ``render`` field value should never be
-    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
-    record metadata has been deleted.
-    """
+    """Store page render information in JSON format. When you create a new 
+    ``item type`` the ``render`` field value should never be ``NULL``. 
+    Default value is an empty dict. ``NULL`` value means that the record 
+    metadata has been deleted. """
 
     tag = db.Column(db.Integer, nullable=False)
     """Tag of item type."""
@@ -386,11 +384,10 @@ class ItemTypeProperty(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema in JSON format.
-    When you create a new ``ItemTypeProperty`` the ``schema`` field value should never be
-    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
-    record metadata has been deleted.
-    """
+    """Store schema in JSON format. When you create a new 
+    ``ItemTypeProperty`` the ``schema`` field value should never be ``NULL``. 
+    Default value is an empty dict. ``NULL`` value means that the record 
+    metadata has been deleted. """
 
     form = db.Column(
         db.JSON().with_variant(
@@ -406,11 +403,10 @@ class ItemTypeProperty(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema form (single) in JSON format.
-    When you create a new ``ItemTypeProperty`` the ``form`` field value should never be
-    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
-    record metadata has been deleted.
-    """
+    """Store schema form (single) in JSON format. When you create a new 
+    ``ItemTypeProperty`` the ``form`` field value should never be ``NULL``. 
+    Default value is an empty dict. ``NULL`` value means that the record 
+    metadata has been deleted. """
 
     forms = db.Column(
         db.JSON().with_variant(
@@ -426,11 +422,10 @@ class ItemTypeProperty(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema form (array) in JSON format.
-    When you create a new ``ItemTypeProperty`` the ``forms`` field value should never be
-    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
-    record metadata has been deleted.
-    """
+    """Store schema form (array) in JSON format. When you create a new 
+    ``ItemTypeProperty`` the ``forms`` field value should never be ``NULL``. 
+    Default value is an empty dict. ``NULL`` value means that the record 
+    metadata has been deleted. """
 
     delflg = db.Column(db.Boolean(name='delFlg'),
                        default=False, nullable=False)
@@ -468,7 +463,7 @@ class SiteLicenseInfo(db.Model, Timestamp):
     )
 
     is_delete = db.Column(db.Boolean(name='is_delete'),
-                       default=False, nullable=False)
+                          default=False, nullable=False)
 
     # Relationships definitions
     addresses = db.relationship('SiteLicenseIpAddress', backref='addresses')
@@ -506,7 +501,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
     )
 
     is_delete = db.Column(db.Boolean(name='is_delete'),
-                       default=False, nullable=False)
+                          default=False, nullable=False)
 
 
 __all__ = (

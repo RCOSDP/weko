@@ -20,7 +20,7 @@
 
 """Blueprint for weko-search-ui."""
 
-from flask import Blueprint, current_app, request, render_template
+from flask import Blueprint, current_app, render_template, request
 
 blueprint = Blueprint(
     'weko_search_ui',

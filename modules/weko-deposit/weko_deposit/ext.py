@@ -21,8 +21,8 @@
 """Flask extension for weko-deposit."""
 
 from . import config
-from .views import blueprint
 from .rest import create_blueprint
+from .views import blueprint
 
 
 class WekoDeposit(object):
@@ -65,6 +65,7 @@ class WekoDepositREST(object):
     """
       Weko Deposit Rest Obj
     """
+
     def __init__(self, app=None):
         """Extension initialization.
 
@@ -82,7 +83,7 @@ class WekoDepositREST(object):
         :param app: An instance of :class:`flask.Flask`.
         """
         blueprint = create_blueprint(app,
-            app.config['WEKO_DEPOSIT_REST_ENDPOINTS']
-        )
+                                     app.config['WEKO_DEPOSIT_REST_ENDPOINTS']
+                                     )
         app.register_blueprint(blueprint)
         app.extensions['weko-deposit-rest'] = self

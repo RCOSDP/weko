@@ -24,8 +24,9 @@ import os
 import sys
 
 import redis
-from flask import abort, Blueprint, current_app, flash, json, jsonify, \
-    redirect, render_template, request, session, url_for
+from flask import (
+    Blueprint, abort, current_app, flash, json, jsonify, redirect,
+    render_template, request, session, url_for)
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_records_ui.signals import record_viewed
@@ -44,8 +45,8 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route("/", methods=['GET'])
-@blueprint.route("/<int:item_type_id>", methods=['GET'])
+@blueprint.route('/', methods=['GET'])
+@blueprint.route('/<int:item_type_id>', methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
 def index(item_type_id=0):
@@ -168,7 +169,7 @@ def get_schema_form(item_type_id=0):
     return abort(400)
 
 
-@blueprint.route("/index/<int:pid_value>", methods=['GET', 'PUT', 'POST'])
+@blueprint.route('/index/<int:pid_value>', methods=['GET', 'PUT', 'POST'])
 @login_required
 @item_permission.require(http_exception=403)
 def items_index(pid_value=0):
@@ -190,7 +191,7 @@ def items_index(pid_value=0):
                 host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
                 port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
         if request.method == 'PUT':
-            """ update index of item info """
+            """update index of item info."""
             item_str = sessionstore.get('item_index_{}'.format(pid_value))
             sessionstore.delete('item_index_{}'.format(pid_value))
             current_app.logger.debug(item_str)
@@ -198,7 +199,7 @@ def items_index(pid_value=0):
             item['index'] = data
             current_app.logger.debug(item)
         elif request.method == 'POST':
-            """ update item data info """
+            """update item data info."""
             current_app.logger.debug(data)
             sessionstore.put('item_index_{}'.format(pid_value), json.dumps(data),
                              ttl_secs=300)
@@ -273,7 +274,7 @@ def to_files_js(record):
     return res
 
 
-@blueprint.route("/demo", methods=['GET'])
+@blueprint.route('/demo', methods=['GET'])
 @login_required
 def index_demo():
     """Renders an item test data upload view.

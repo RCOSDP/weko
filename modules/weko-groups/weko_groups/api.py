@@ -20,8 +20,9 @@
 
 """Groups API."""
 
-from .models import Group, GroupAdmin, Membership, MembershipState, \
-    PrivacyPolicy, SubscriptionPolicy
+from .models import (
+    Group, GroupAdmin, Membership, MembershipState, PrivacyPolicy,
+    SubscriptionPolicy)
 
 __all__ = ('GroupAdmin', 'Group', 'Membership', 'MembershipState',
            'PrivacyPolicy', 'SubscriptionPolicy')

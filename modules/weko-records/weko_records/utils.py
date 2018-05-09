@@ -21,13 +21,14 @@
 """Item API."""
 
 import re
-import pytz
+from collections import OrderedDict
 
+import pytz
 from flask import current_app
 from flask_security import current_user
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.ext import pid_exists
-from collections import OrderedDict
+
 from .api import ItemTypes, Mapping
 
 
@@ -102,7 +103,8 @@ def save_item_metadata(rejson, pid):
 
         make_itemlist_desc(jrc)
 
-        oai_value = current_app.config.get('OAISERVER_ID_PREFIX', '') + str(pid)
+        oai_value = current_app.config.get(
+            'OAISERVER_ID_PREFIX', '') + str(pid)
         is_edit = pid_exists(oai_value, 'oai')
         if not is_edit:
             oaid = current_pidstore.minters['oaiid'](item_id, dc)
@@ -134,8 +136,8 @@ def set_timestamp(jrc, created, updated):
 def to_junii2(records, model):
     """
     Convert to junii2 json.
+    :param model:
     :param records:
-    :param render:
     :return: j
     """
     render = model.render
@@ -178,8 +180,7 @@ def to_junii2(records, model):
                 else:
                     arr.append(val)
             else:
-                tmp = []
-                tmp.append(arr)
+                tmp = [arr]
                 if isinstance(val, list):
                     tmp.extend(val)
                 else:
@@ -420,7 +421,7 @@ def to_orderdict(alst, klst):
                 alst.insert(i, OrderedDict(alst.pop(i)))
                 to_orderdict(alst[i], klst)
     elif isinstance(alst, dict):
-        nlst=[]
+        nlst = []
         if isinstance(klst, list):
             for lst in klst:
                 key = lst[0].split('.')[-1]

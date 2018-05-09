@@ -78,7 +78,7 @@ class SessionLifetime(db.Model):
                 self.is_delete = False
                 db.session.add(self)
             db.session.commit()
-        except:
+        except BaseException:
             db.session.rollback()
             raise
         return self

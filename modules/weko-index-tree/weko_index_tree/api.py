@@ -75,13 +75,15 @@ class Indexes(object):
     """Define API for index tree creation and update."""
 
     @classmethod
-    def create(cls, indexes=[]):
+    def create(cls, indexes=None):
         """
         Create the indexes. Delete all indexes before creation.
 
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
         """
+        if indexes is None:
+            indexes = []
         cls.delete_all()
         index_list = []
         try:
@@ -175,7 +177,7 @@ class Indexes(object):
         return index
 
     @classmethod
-    def get_Thumbnail_by_id(cls, index_id):
+    def get_thumbnail_by_id(cls, index_id):
         """
         Get the thumbnail of index by index id.
 
@@ -282,7 +284,7 @@ class Indexes(object):
             Index.index_name.label("name"),
             literal_column("1", db.Integer).label("lev")).filter(
             Index.parent == 0,
-            Index.is_delete == False). \
+            Index.is_delete is False). \
             cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
@@ -295,7 +297,7 @@ class Indexes(object):
                 rec_alias.c.name + '/' + test_alias.index_name,
                 rec_alias.c.lev + 1).filter(
                 test_alias.parent == rec_alias.c.cid,
-                test_alias.is_delete == False)
+                test_alias.is_delete is False)
         )
 
         return recursive_t
@@ -335,8 +337,8 @@ class ItemRecord(RecordIndexer):
 
         :return: index,doc_type.
         """
-        index, doc_type = current_app.config['SEARCH_UI_SEARCH_INDEX'], \
-                          current_app.config['INDEXER_DEFAULT_DOCTYPE']
+        index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+        doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
         return index, doc_type
 
     def get_count_by_index_id(self, tree_path):

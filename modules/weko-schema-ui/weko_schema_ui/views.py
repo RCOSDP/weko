@@ -20,10 +20,12 @@
 
 """Blueprint for weko-schema-ui."""
 
-from flask import Blueprint, render_template, current_app, request, redirect, url_for
+from flask import (
+    Blueprint, current_app, redirect, render_template, request, url_for)
 from flask_login import login_required
-from .schema import delete_schema_cache, schema_list_render, delete_schema
+
 from .permissions import schema_permission
+from .schema import delete_schema, delete_schema_cache, schema_list_render
 
 blueprint = Blueprint(
     'weko_schema_ui',
@@ -39,7 +41,9 @@ blueprint = Blueprint(
 @schema_permission.require(http_exception=403)
 def index():
     """Render a basic view."""
-    return render_template(current_app.config['WEKO_SCHEMA_UI_UPLOAD'], record={})
+    return render_template(
+        current_app.config['WEKO_SCHEMA_UI_UPLOAD'],
+        record={})
 
 
 # @blueprint.route("/schema/formats/edit", methods=['GET'])
@@ -49,7 +53,8 @@ def index():
 #     """Render a format edit view."""
 #     # record = {"schemas": [{"fmo": {"prefix": "11", "namespace": "22", "schema": "33"}},
 #     #           {"fmo": {"prefix": "44", "namespace": "55", "schema": "66"}}]}
-#     return render_template(current_app.config['WEKO_SCHEMA_UI_FORMAT_EDIT'], record={})
+# return render_template(current_app.config['WEKO_SCHEMA_UI_FORMAT_EDIT'],
+# record={})
 
 
 @blueprint.route("/schema/list", methods=['GET'])
@@ -59,7 +64,9 @@ def index():
 def list():
     """Render a schema list view."""
     records = schema_list_render()
-    return render_template(current_app.config['WEKO_SCHEMA_UI_LIST'], records=records)
+    return render_template(
+        current_app.config['WEKO_SCHEMA_UI_LIST'],
+        records=records)
 
 
 @blueprint.route("/schema", methods=['POST'])
@@ -67,7 +74,10 @@ def list():
 @login_required
 @schema_permission.require(http_exception=403)
 def delete(pid=None):
-    """aaa"""
+    """
+    :param pid:
+    :return:
+    """
     pid = pid or request.values.get('pid')
     schema_name = delete_schema(pid)
     # delete schema cache on redis
@@ -85,5 +95,3 @@ def delete(pid=None):
         oaif.pop(schema_name)
 
     return redirect(url_for(".list"))
-
-

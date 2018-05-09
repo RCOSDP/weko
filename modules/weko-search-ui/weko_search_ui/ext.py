@@ -80,6 +80,7 @@ class WekoSearchREST(object):
     """
       Index Search Rest Obj
     """
+
     def __init__(self, app=None):
         """Extension initialization.
 
@@ -97,8 +98,7 @@ class WekoSearchREST(object):
         :param app: An instance of :class:`flask.Flask`.
         """
         blueprint = create_blueprint(app,
-            app.config['WEKO_SEARCH_REST_ENDPOINTS']
-        )
+                                     app.config['WEKO_SEARCH_REST_ENDPOINTS']
+                                     )
         app.register_blueprint(blueprint)
         app.extensions['weko-search-rest'] = self
-

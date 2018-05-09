@@ -20,36 +20,35 @@
 
 """Blueprint for Index Search rest."""
 
-import json, uuid, shutil
+import json
 import os.path
-
+import shutil
+import uuid
 # from copy import deepcopy
 from functools import partial
 
-from flask import Blueprint, abort, current_app, jsonify, request, \
-    url_for, redirect
+from flask import (
+    Blueprint, abort, current_app, jsonify, redirect, request, url_for)
 from invenio_db import db
+from invenio_files_rest.storage import PyFSFileStorage
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
-from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidstore import current_pidstore
-from invenio_records_rest.utils import obj_or_import_string
-from invenio_records_rest.links import default_links_factory
+from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records.api import Record
+from invenio_records_rest.errors import (
+    InvalidDataRESTError, MaxResultWindowRESTError, UnsupportedMediaRESTError)
+from invenio_records_rest.links import default_links_factory
+from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
-from invenio_records_rest.views import \
-    create_url_rules
-from invenio_records_rest.views import need_record_permission, pass_record
+from invenio_records_rest.views import (
+    create_url_rules, need_record_permission, pass_record)
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from webargs import fields
 from webargs.flaskparser import use_kwargs
-from werkzeug.utils import secure_filename
-from invenio_records_rest.errors import InvalidDataRESTError, \
-    UnsupportedMediaRESTError
-from invenio_files_rest.storage import PyFSFileStorage
-from invenio_records_rest.errors import MaxResultWindowRESTError
 from weko_index_tree.api import Indexes
+from werkzeug.utils import secure_filename
 
 
 def create_blueprint(app, endpoints):
@@ -85,7 +84,8 @@ def create_blueprint(app, endpoints):
         record_class = obj_or_import_string(options.get('record_class'),
                                             default=Record)
         search_class = obj_or_import_string(options.get('search_class'))
-        search_factory = obj_or_import_string(options.get('search_factory_imp'))
+        search_factory = obj_or_import_string(
+            options.get('search_factory_imp'))
 
         search_class_kwargs = {}
         search_class_kwargs['index'] = options.get('search_index')
@@ -204,7 +204,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             links['prev'] = url_for('weko_search_rest.recid_index',
                                     page=page - 1, **urlkwargs)
         if size * page < search_result.hits.total and \
-                    size * page < self.max_result_window:
+                size * page < self.max_result_window:
             links['next'] = url_for('weko_search_rest.recid_index',
                                     page=page + 1, **urlkwargs)
 
@@ -214,7 +214,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         if q:
             try:
                 paths = Indexes.get_self_list(q)
-            except:
+            except BaseException:
                 paths = []
             agp = rd["aggregations"]["path"]["buckets"]
             nlst = []
@@ -227,13 +227,14 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         date_range = agp[k].pop("date_range")
                         pub = dict()
                         for d in date_range['buckets']:
-                            pub["pub_cnt" if d.get("to") else "un_pub_cnt"] = d.get("doc_count")
+                            pub["pub_cnt" if d.get("to") else "un_pub_cnt"] = d.get(
+                                "doc_count")
                         agp[k]["date_range"] = pub
                         nlst.append(agp.pop(k))
                         m = 1
                         break
                 if m == 0:
-                    nd = {'doc_count': 0, 'key': p.path, 'name': p.name, \
+                    nd = {'doc_count': 0, 'key': p.path, 'name': p.name,
                           'date_range': {'pub_cnt': 0, 'un_pub_cnt': 0}}
                     nlst.append(nd)
             agp.clear()
