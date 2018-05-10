@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:56+0900\n"
+"POT-Creation-Date: 2018-05-10 19:34+0900\n"
 "PO-Revision-Date: 2018-04-12 18:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.5.3\n"
 
 #: weko_theme/templates/weko_theme/body_contents.html:35
 msgid "Item list"
@@ -344,7 +344,7 @@ msgstr "サインアップ"
 #: weko_theme/templates/weko_theme/header_login.html:41
 #: weko_theme/templates/weko_theme/header_login.html:45
 msgid "Log out"
-msgstr "ログアウトログアウト"
+msgstr "ログアウト"
 
 #: weko_theme/templates/weko_theme/page.html:25
 msgid "Edit"
@@ -353,4 +353,16 @@ msgstr "編集"
 #: weko_theme/templates/weko_theme/macros/language_selector.html:26
 msgid "Language:"
 msgstr "言語："
+
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:22
+msgid "Top"
+msgstr "トップ"
+
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:23
+msgid "Item Registration"
+msgstr "アイテム登録"
+
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:24
+msgid "Author Management"
+msgstr "著者ＤＢ"
 
