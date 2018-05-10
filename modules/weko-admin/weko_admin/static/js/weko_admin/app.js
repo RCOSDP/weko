@@ -29,12 +29,12 @@
 //                     };
 //
 
-      $scope.fetch=function(result){
-        console.log(result);
-        dbJson = angular.fromJson(result.slice(2,-2));
-        $scope.dbJson = angular.fromJson(result.slice(2,-2));
-        console.log($scope.sl_lst);
-      };
+//      $scope.fetch=function(result){
+//        console.log(result);
+//        dbJson = angular.fromJson(result);
+//        $scope.dbJson = angular.fromJson(result.slice(2,-2));
+//        console.log($scope.dbJson);
+//      };
       // set data of page
       $scope.dbJson = dbJson;
 
