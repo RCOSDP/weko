@@ -239,7 +239,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             # move out those files from tmp folder
             shutil.move(furl, dst)
 
-            return jsonify({'status': 'uploaded successfully.'})
+            return jsonify({'message': 'uploaded successfully.'})
         else:
             # the first post
 

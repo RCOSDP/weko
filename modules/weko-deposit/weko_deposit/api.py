@@ -26,6 +26,7 @@ from invenio_deposit.api import Deposit, preserve
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier
+from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from simplekv.memory.redisstore import RedisStore
@@ -213,6 +214,23 @@ class WekoDeposit(Deposit):
     def clear(self, *args, **kwargs):
         """Clear only drafts."""
         super(WekoDeposit, self).clear(*args, **kwargs)
+
+    def delete(self, force=True, pid=None):
+        """Delete deposit.
+
+        Status required: ``'draft'``.
+
+        :param force: Force deposit delete.  (Default: ``True``)
+        :param pid: Force pid object.  (Default: ``None``)
+        :returns: A new Deposit object.
+        """
+        pid = pid or self.pid
+
+        if self['_deposit'].get('pid'):
+            raise PIDInvalidAction()
+        if pid:
+            pid.delete()
+        return super(Deposit, self).delete(force=force)
 
     def commit(self, *args, **kwargs):
         """Store changes on current instance in database and index it."""

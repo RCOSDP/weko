@@ -278,7 +278,7 @@ class SchemaTree:
                             yield k, x
 
             def get_url(z, key, val):
-                if 'filemeta' in key:
+                if key and 'filemeta' in key:
                     attr = z.get(self._atr, {})
                     attr = attr.get(
                         'jpcoar:objectType', '') or attr.get(
@@ -310,7 +310,7 @@ class SchemaTree:
                         elif isinstance(lst, str):
                             yield lst, atr_list
 
-            def get_items_value_lst(atr_vm, key):
+            def get_items_value_lst(atr_vm, key, z=None, kn=None):
                 klst = []
                 blst = []
                 parent_id = 0
@@ -318,7 +318,7 @@ class SchemaTree:
                     if parent_id != p2 and parent_id != 0:
                         klst.append(blst)
                         blst = []
-                    blst.append(k2)
+                    blst.append(get_url(z, kn, k2))
                     parent_id = p2
                 if blst:
                     klst.append(blst)
@@ -349,14 +349,14 @@ class SchemaTree:
                             # if not have expression or formula
                             if len(lk) == 1:
                                 nlst = get_items_value_lst(
-                                    atr_vm, lk[0].strip())
+                                    atr_vm, lk[0].strip(), z, k)
                                 if nlst:
                                     z[self._v] = nlst
                             else:
                                 nlst = []
                                 for val in lk:
                                     klst = get_items_value_lst(
-                                        atr_vm, val.strip())
+                                        atr_vm, val.strip(), z, k)
                                     nlst.append(klst)
 
                                 if nlst:

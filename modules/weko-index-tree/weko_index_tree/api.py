@@ -284,7 +284,7 @@ class Indexes(object):
             Index.index_name.label("name"),
             literal_column("1", db.Integer).label("lev")).filter(
             Index.parent == 0,
-            Index.is_delete is False). \
+            Index.is_delete == False). \
             cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
@@ -297,7 +297,7 @@ class Indexes(object):
                 rec_alias.c.name + '/' + test_alias.index_name,
                 rec_alias.c.lev + 1).filter(
                 test_alias.parent == rec_alias.c.cid,
-                test_alias.is_delete is False)
+                test_alias.is_delete == False)
         )
 
         return recursive_t

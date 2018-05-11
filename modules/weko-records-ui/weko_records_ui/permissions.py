@@ -69,7 +69,8 @@ def check_file_download_permission(record, fjson):
         # site license permission check
         obj = ItemTypes.get_by_id(record.get('item_type_id'))
         if obj.item_type_name.has_site_license:
-            return check_site_license_permission()
+            return check_site_license_permission() | check_user_group_permission(
+                    fjson.get('groups'))
         return False
 
     if fjson:

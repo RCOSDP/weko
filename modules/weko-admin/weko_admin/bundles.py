@@ -29,7 +29,8 @@ js = Bundle(
     output="gen/weko_admin_ui.%(version)s.js",
 )
 
-# site_license_js = Bundle(
-#     'js/weko_admin/app.js',
-#     output="gen/weko_admin_js.%(version)s.js",
-# )
+css = Bundle(
+    'css/weko_admin/styles.css',
+    output="gen/weko_admin_ui.%(version)s.css",
+)
+

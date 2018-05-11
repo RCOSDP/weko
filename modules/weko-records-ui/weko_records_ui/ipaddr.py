@@ -39,6 +39,7 @@ def check_site_license_permission():
     current_app.logger. \
         debug('-->>>>>>>>>>>>>>>>>>>>>>------------------ip address : {ip_adr}'.
               format(ip_adr=ip_addr))
+
     sl_lst = SiteLicense.get_records()
     if ip_addr:
         for lst in sl_lst:
@@ -56,7 +57,6 @@ def match_ip_addr(addr, ip_addr):
     :param ip_addr:
     :return: True or False
     """
-    dgl = (8, 12, 14, 15,)
 
     s_ddr = addr.get('start_ip_address')
     f_ddr = addr.get('finish_ip_address')
@@ -67,20 +67,16 @@ def match_ip_addr(addr, ip_addr):
     s_ddr = s_ddr.split('.')
     f_ddr = f_ddr.split('.')
 
+    str0 = ""
     str1 = ""
     str2 = ""
-    for i in range(len(ip_addr)):
-        if ip_addr[i] >= s_ddr[i]:
-            str1 += "1"
-        else:
-            str1 += "0"
 
-        if ip_addr[i] <= f_ddr[i]:
-            str2 += "1"
-        else:
-            str2 += "0"
+    for i in range(4):
+        str0 += '{:0>3}'.format(ip_addr[i])
+        str1 += '{:0>3}'.format(s_ddr[i])
+        str2 += '{:0>3}'.format(f_ddr[i])
 
-    if int(str1, 2) in dgl and int(str2, 2) in dgl:
+    if (int(str1) <= int(str0)) and (int(str0) <= int(str2)):
         return True
 
     return False

@@ -25,7 +25,7 @@ import sys
 from datetime import timedelta
 
 from flask import (
-    Blueprint, abort, current_app, flash, jsonify, render_template, request,
+    Blueprint, abort, current_app, flash, jsonify, render_template, request, make_response,
     session)
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
@@ -155,21 +155,28 @@ def site_license():
     """Site license setting page."""
     current_app.logger.info('site-license setting page')
     if 'POST' in request.method:
+        jfy = {}
         try:
-            # update item types
+            # update item types and site license info
             SiteLicense.update(request.get_json())
-            return jsonify(code=201, msg='Site license was successfully updated.')
+            jfy['status'] = 201
+            jfy['message'] = 'Site license was successfully updated.'
         except:
-            return jsonify(code=500, msg='Failed to update site')
+            jfy['status'] = 500
+            jfy['message'] = 'Failed to update site license.'
+        return make_response(jsonify(jfy), jfy['status'])
 
-    # site license list
-    result_list = SiteLicense.get_records()
-    # item types list
-    n_lst = ItemTypes.get_latest()
-    result = get_response_json(result_list, n_lst)
-
-    return render_template(current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
-                           result=json.dumps(result))
+    try:
+        # site license list
+        result_list = SiteLicense.get_records()
+        # item types list
+        n_lst = ItemTypes.get_latest()
+        result = get_response_json(result_list, n_lst)
+        return render_template(
+            current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
+            result=json.dumps(result))
+    except:
+        abort(500)
 
 
 @blueprint.route('/admin/block-style', methods=['GET', 'POST'])
