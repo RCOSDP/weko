@@ -20,9 +20,7 @@
 
 """Blueprint for weko-deposit."""
 
-import redis
-from flask import Blueprint, abort, current_app, json, jsonify, request
-from simplekv.memory.redisstore import RedisStore
+from flask import Blueprint
 
 blueprint = Blueprint(
     'weko_deposit',
@@ -30,22 +28,3 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
 )
-
-
-@blueprint.route("/deposits/items/index/<string:pid>", methods=['PUT', 'POST'])
-def wokao(pid):
-    """Render a basic view."""
-    data = request.get_json()
-
-    try:
-        # item metadata cached on Redis by pid
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
-        cache_key = current_app.config[
-            'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid)
-        ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
-        datastore.put(cache_key, json.dumps(data), ttl_secs=ttl_sec)
-    except BaseException:
-        abort(400, "Failed to register item")
-
-    return jsonify({'status': 'success'})

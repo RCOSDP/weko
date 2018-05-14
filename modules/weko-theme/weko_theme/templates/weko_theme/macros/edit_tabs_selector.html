@@ -18,17 +18,14 @@
 # MA 02111-1307, USA.
 #}
 
-{% macro tabs_selector(tab_value='Item Type') %}
-  {% set tabs_list = [('schema management', 'Schema Management', url_for('weko_schema_ui.list')),
-                      ('item type', 'Item Type', url_for('weko_itemtypes_ui.index')),
-                      ('item management', 'Item Management', '/'),
-                      ('edit tree', 'Edit Tree', url_for('weko_index_tree.index')),
-                      ('review/accept', 'Review/Accept', '/'),
-                      ('import', 'Import', '/'),
-                      ('report', 'Report', '/'),
-                      ('management', 'Management', url_for('weko_admin.site_license')),
-                      ('block style', 'Block style', url_for('weko_admin.block_style'))] %}
-  {% for (value, name, href) in tabs_list %}
-    <li role="presentation" {% if tab_value == value %}class="active"{% endif %}><a href="{{href}}">{{_(name)}}</a></li>
-  {% endfor %}
+{% macro tabs_selector(tab_value='item_type') %}
+    <li role="presentation" {% if tab_value=='item' %}class="active"{% endif %}><a href="{{url_for('weko_items_ui.index')}}">{{ _('Item Registration') }}</a></li>
+    <li role="presentation" {% if tab_value=='schema_management' %}class="active"{% endif %}><a href="{{url_for('weko_schema_ui.list')}}">{{ _('Schema Management') }}</a></li>
+    <li role="presentation" {% if tab_value=='item_type' %}class="active"{% endif %}><a href="{{url_for('weko_itemtypes_ui.index')}}">{{ _('Item Type') }}</a></li>
+    <li role="presentation" {% if tab_value=='item_management' %}class="active"{% endif %}><a href="/">{{ _('Item Management') }}</a></li>
+    <li role="presentation" {% if tab_value=='edit_tree' %}class="active"{% endif %}><a href="{{url_for('weko_index_tree.index')}}">{{ _('Edit Tree') }}</a></li>
+    <li role="presentation" {% if tab_value=='review_accept' %}class="active"{% endif %}><a href="/">{{ _('Review/Accept') }}</a></li>
+    <li role="presentation" {% if tab_value=='import' %}class="active"{% endif %}><a href="/">{{ _('Import') }}</a></li>
+    <li role="presentation" {% if tab_value=='management' %}class="active"{% endif %}><a href="{{url_for('weko_admin.site_license')}}">{{ _('Management') }}</a></li>
+    <li role="presentation" {% if tab_value=='block_style' %}class="active"{% endif %}><a href="{{url_for('weko_admin.block_style')}}">{{ _('Block style') }}</a></li>
 {% endmacro %}
