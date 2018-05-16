@@ -1,0 +1,58 @@
+{
+    "Add": [
+        null,
+        "追加"
+    ],
+    "Delete": [
+        null,
+        "削除"
+    ],
+    "Index_Edit": [
+        null,
+        "インデックス編集"
+    ],
+    "Index": [
+        null,
+        "インデックス"
+    ],
+    "Janpanese": [
+        null,
+        "日本語"
+    ],
+    "English": [
+        null,
+        "英語"
+    ],
+    "Comment": [
+        null,
+        "コメント"
+    ],
+    "Display_Range": [
+        null,
+        "表示範囲"
+    ],
+    "More_Display": [
+        null,
+        "もっと表示"
+    ],
+    "Send": [
+        null,
+        "送信"
+    ],
+     "Choose_Processing":[
+      null,
+      "DELETEインデックス以下のインデックスおよびアイテムに対する処理を選択してください"
+    ],
+     "Delete_all": [
+        null,
+        "すべて削除"
+    ],
+     "Move_items_to_parent_Index": [
+        null,
+        "親インデックスへ移動"
+    ],
+     "Cancle": [
+        null,
+        "キャンセル"
+     ]
+}

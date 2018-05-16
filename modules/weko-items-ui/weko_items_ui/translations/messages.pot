@@ -56,3 +56,59 @@ msgstr ""
 msgid "Register Itemtype"
 msgstr ""
 
+#: app-author-search/src/app/app.component.html:17
+msgid "Author_Add_Author"
+msgstr ""
+
+#: app-author-search/src/app/app.component.html:29
+msgid "Author_Search"
+msgstr ""
+
+#: app-author-search/src/app/app.component.html:68
+msgid "Author_Mail_Address"
+msgstr ""
+
+#: app-author-search/src/app/app.component.html:102
+msgid "Author_Edit"
+msgstr ""
+
+#: app-author-search/src/app/app.component.html:112
+msgid "Author_Search_No_Result"
+msgstr ""
+
+#: app-author-search/src/app/app.component.html:121
+msgid "Author_Page_Previous"
+msgstr ""
+
+#: app-author-search/src/app/app.component.html:130
+msgid "Author_Page_Next"
+msgstr ""
+
+#: app-author-search/src/app/app.component.html:130
+msgid "Author_On_1_Page"
+msgstr ""
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Author_Name"
+msgstr ""
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Author_Import"
+msgstr ""
+
+#: item_edit start
+#: app-author-add/src/app/app.component.html:21
+msgid "Designate_Index"
+msgstr ""
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Send"
+msgstr ""
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Save"
+msgstr ""
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Index_Tree"
+msgstr ""

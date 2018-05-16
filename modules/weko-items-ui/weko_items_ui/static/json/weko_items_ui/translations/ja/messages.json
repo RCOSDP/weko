@@ -1,0 +1,62 @@
+{
+    "Author_Add_Organization": [
+        null,
+        "組織追加"
+    ],
+    "Author_Add_Author": [
+        null,
+        "著者追加"
+    ],
+    "Author_Search": [
+        null,
+        "検索"
+    ],
+    "Author_Mail_Address": [
+        null,
+        "メールアドレス"
+    ],
+    "Author_Edit": [
+        null,
+        "編集"
+    ],
+    "Author_Search_No_Result": [
+        null,
+        "検索結果は0件です。"
+    ],
+    "Author_Page_Previous": [
+        null,
+        "前"
+    ],
+    "Author_Page_Next": [
+        null,
+        "次"
+    ],
+    "Author_On_1_Page": [
+        null,
+        "1ページに:"
+    ],
+    "Author_Name": [
+        null,
+        "氏名"
+    ],
+    "Author_Import": [
+        null,
+        "入力"
+    ],
+    "Designate_Index": [
+        null,
+        "インデックス指定"
+    ],
+    "Send": [
+        null,
+        "送信"
+    ],
+    "Save": [
+        null,
+        "保存"
+    ],
+    "Index_Tree": [
+        null,
+        "インデックスツリー"
+    ]
+}

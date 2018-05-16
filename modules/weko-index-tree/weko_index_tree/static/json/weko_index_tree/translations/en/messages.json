@@ -1,0 +1,58 @@
+{
+    "Add": [
+        null,
+        "Add"
+    ],
+    "Delete": [
+        null,
+        "Delete"
+    ],
+    "Index_Edit": [
+        null,
+        "Index Edit"
+    ],
+    "Index": [
+        null,
+        "Index"
+    ],
+    "Janpanese": [
+        null,
+        "Janpanese"
+    ],
+    "English": [
+        null,
+        "English"
+    ],
+    "Comment": [
+        null,
+        "Comment"
+    ],
+    "Display_Range": [
+        null,
+        "Display Range"
+    ],
+    "More_Display": [
+        null,
+        "More Display"
+    ],
+    "Send": [
+        null,
+        "Send"
+    ],
+    "Choose_Processing":[
+      null,
+      "Please choose processing about index and items!"
+    ],
+     "Delete_all": [
+        null,
+        "Delete all"
+    ],
+     "Move_items_to_parent_Index": [
+        null,
+        "Move items to parent Index"
+    ],
+     "Cancle": [
+        null,
+        "Cancle"
+     ]
+}

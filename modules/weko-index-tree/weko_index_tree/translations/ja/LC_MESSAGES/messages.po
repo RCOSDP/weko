@@ -32,3 +32,58 @@ msgstr "成功"
 msgid "success"
 msgstr "成功"
 
+#: weko_index_tree/views.py:245
+msgid "Add"
+msgstr "追加"
+
+#: weko_index_tree/views.py:245
+msgid "Delete"
+msgstr "削除"
+
+#: weko_index_tree/views.py:245
+msgid "Index_Edit"
+msgstr "インデックス編集"
+
+#: weko_index_tree/views.py:245
+msgid "Index"
+msgstr "インデックス"
+
+#: weko_index_tree/views.py:245
+msgid "Janpanese"
+msgstr "日本語"
+
+#: weko_index_tree/views.py:245
+msgid "English"
+msgstr "英語"
+
+#: weko_index_tree/views.py:245
+msgid "Comment"
+msgstr "コメント"
+
+#: weko_index_tree/views.py:245
+msgid "Display_Range"
+msgstr "表示範囲"
+
+#: weko_index_tree/views.py:245
+msgid "More_Display"
+msgstr "もっと表示"
+
+#: weko_index_tree/views.py:245
+msgid "Send"
+msgstr "送信"
+
+#: weko_index_tree/views.py:245
+msgid "Choose_Processing"
+msgstr "DELETEインデックス以下のインデックスおよびアイテムに対する処理を選択してください"
+
+#: weko_index_tree/views.py:245
+msgid "Delete_all"
+msgstr "すべて削除"
+
+#: weko_index_tree/views.py:245
+msgid "Move_items_to_parent_Index"
+msgstr "親インデックスへ移動"
+
+#: weko_index_tree/views.py:245
+msgid "Cancle"
+msgstr "キャンセル"

@@ -1,0 +1,98 @@
+{
+    "Author_Add_New_Author": [
+        null,
+        "著者追加"
+    ],
+    "Author_Name": [
+        null,
+        "氏名"
+    ],
+    "Author_Display": [
+        null,
+        "表示"
+    ],
+    "Author_Hide": [
+        null,
+        "非表示"
+    ],
+    "Author_Add_Author_Item": [
+        null,
+        "著者項目を追加"
+    ],
+    "Author_ID": [
+        null,
+        "著者ID"
+    ],
+    "Author_Placeholder_authorId": [
+        null,
+        "著者ID"
+    ],
+    "Author_Confirm": [
+        null,
+        "確認"
+    ],
+    "Author_Add_Author_ID": [
+        null,
+        "著者IDを追加"
+    ],
+    "Author_EMail": [
+        null,
+        "E-Mail"
+    ],
+    "Author_Add_EMail": [
+        null,
+        "e-mailを追加"
+    ],
+    "Author_Button_Clear": [
+        null,
+        "取 消"
+    ],
+    "Author_Button_Save": [
+        null,
+        "保存"
+    ],
+    "Author_familyNmAndNm": [
+        null,
+        "姓・名"
+    ],
+    "Author_fullNm": [
+        null,
+        "姓名"
+    ],
+    "Author_Add_Organization": [
+        null,
+        "組織追加"
+    ],
+    "Author_Add_Author": [
+        null,
+        "著者追加"
+    ],
+    "Author_Search": [
+        null,
+        "検索"
+    ],
+    "Author_Mail_Address": [
+        null,
+        "メールアドレス"
+    ],
+    "Author_Edit": [
+        null,
+        "編集"
+    ],
+    "Author_Search_No_Result": [
+        null,
+        "検索結果は0件です。"
+    ],
+    "Author_Page_Previous": [
+        null,
+        "前"
+    ],
+    "Author_Page_Next": [
+        null,
+        "次"
+    ],
+    "Author_On_1_Page": [
+        null,
+        "1ページに:"
+    ]
+}

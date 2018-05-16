@@ -57,3 +57,64 @@ msgstr "移動"
 msgid "Register Itemtype"
 msgstr "アイテムタイプをレジストする"
 
+#: app-author-search start
+#: app-author-search/src/app/app.component.html:11
+msgid "Author_Add_Organization"
+msgstr "組織追加"
+
+#: app-author-search/src/app/app.component.html:17
+msgid "Author_Add_Author"
+msgstr "著者追加"
+
+#: app-author-search/src/app/app.component.html:29
+msgid "Author_Search"
+msgstr "検索"
+
+#: app-author-search/src/app/app.component.html:68
+msgid "Author_Mail_Address"
+msgstr "メールアドレス"
+
+#: app-author-search/src/app/app.component.html:102
+msgid "Author_Edit"
+msgstr "編集"
+
+#: app-author-search/src/app/app.component.html:112
+msgid "Author_Search_No_Result"
+msgstr "検索結果は0件です。"
+
+#: app-author-search/src/app/app.component.html:121
+msgid "Author_Page_Previous"
+msgstr "前"
+
+#: app-author-search/src/app/app.component.html:130
+msgid "Author_Page_Next"
+msgstr "次"
+
+#: app-author-search/src/app/app.component.html:130
+msgid "Author_On_1_Page"
+msgstr "1ページに:"
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Author_Name"
+msgstr "氏名"
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Author_Import"
+msgstr "入力"
+
+#: item_edit start
+#: app-author-add/src/app/app.component.html:21
+msgid "Designate_Index"
+msgstr "インデックス指定"
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Send"
+msgstr "送信"
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Save"
+msgstr "保存"
+
+#: app-author-add/src/app/app.component.html:21
+msgid "Index_Tree"
+msgstr "インデックスツリー"

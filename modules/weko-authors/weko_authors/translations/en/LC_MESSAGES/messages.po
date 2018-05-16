@@ -1,18 +1,19 @@
-# Translations template for weko-authors.
+# English translations for weko-groups.
 # Copyright (C) 2018 National Institute of Informatics
 # This file is distributed under the same license as the weko-authors
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: weko-authors 0.1.0.dev20170000\n"
+"Project-Id-Version: weko-groups 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:51+0900\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"POT-Creation-Date: 2018-01-17 15:19+0900\n"
+"PO-Revision-Date: 2018-01-17 15:20+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -27,96 +28,100 @@ msgid "Success"
 msgstr ""
 
 #: angular i18n add start
-#: app-author-add
+#: app-author-add/src/app/app.component.html:11
+msgid "Author_Add_New_Author"
+msgstr "Add New Author"
+
 #: app-author-add/src/app/app.component.html:21
 msgid "Author_Name"
-msgstr ""
+msgstr "Name"
 
 #: app-author-add/src/app/app.component.html:60
 msgid "Author_Display"
-msgstr ""
+msgstr "Display"
 
 #: app-author-add/src/app/app.component.html:65
 msgid "Author_Hide"
-msgstr ""
+msgstr "Hide"
 
 #: app-author-add/src/app/app.component.html:85
 msgid "Author_Add_Author_Item"
-msgstr ""
+msgstr "Add author item"
 
 #: app-author-add/src/app/app.component.html:101
 msgid "Author_ID"
-msgstr ""
+msgstr "Author ID"
 
 #: app-author-add/src/app/app.component.html:115
 msgid "Author_Placeholder_authorId"
-msgstr ""
+msgstr "Author ID"
 
 #: app-author-add/src/app/app.component.html:122
 msgid "Author_Confirm"
-msgstr ""
+msgstr "Confirm"
 
 #: app-author-add/src/app/app.component.html:158
 msgid "Author_Add_Author_ID"
-msgstr ""
+msgstr "Add a new ID"
 
 #: app-author-add/src/app/app.component.html:173
 msgid "Author_EMail"
-msgstr ""
+msgstr "E-Mail"
 
 #: app-author-add/src/app/app.component.html:198
 msgid "Author_Add_EMail"
-msgstr ""
+msgstr "Add E-mail"
 
 #: app-author-add/src/app/app.component.html:215
 msgid "Author_Button_Clear"
-msgstr ""
+msgstr "Clear"
 
 #: app-author-add/src/app/app.component.html:221
 msgid "Author_Button_Save"
-msgstr ""
+msgstr "Save"
 
 #: app-author-add/src/app/app.component.js:46
 msgid "Author_familyNmAndNm"
-msgstr ""
+msgstr "First and Last Name"
 
 #: app-author-add/src/app/app.component.js:47
 msgid "Author_fullNm"
-msgstr ""
+msgstr "Full Name"
 
 #: app-author-search start
 #: app-author-search/src/app/app.component.html:11
 msgid "Author_Add_Organization"
-msgstr ""
+msgstr "Add Organization"
 
 #: app-author-search/src/app/app.component.html:17
 msgid "Author_Add_Author"
-msgstr ""
+msgstr "Add Author"
 
 #: app-author-search/src/app/app.component.html:29
 msgid "Author_Search"
-msgstr ""
+msgstr "Search"
 
 #: app-author-search/src/app/app.component.html:68
 msgid "Author_Mail_Address"
-msgstr ""
+msgstr "Mail Address"
 
 #: app-author-search/src/app/app.component.html:102
 msgid "Author_Edit"
-msgstr ""
+msgstr "Edit"
 
 #: app-author-search/src/app/app.component.html:112
 msgid "Author_Search_No_Result"
-msgstr ""
+msgstr "Sorry，No results."
 
 #: app-author-search/src/app/app.component.html:121
 msgid "Author_Page_Previous"
-msgstr ""
+msgstr "Previous"
 
 #: app-author-search/src/app/app.component.html:130
 msgid "Author_Page_Next"
-msgstr ""
+msgstr "Next"
 
 #: app-author-search/src/app/app.component.html:130
 msgid "Author_On_1_Page"
-msgstr ""
+msgstr "On 1 Page:"
+

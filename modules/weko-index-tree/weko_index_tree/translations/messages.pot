@@ -31,3 +31,61 @@ msgstr ""
 msgid "success"
 msgstr ""
 
+#: weko_index_tree/views.py:245
+msgid "Add"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Delete"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Index_Edit"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Index"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Janpanese"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "English"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Comment"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Display_Range"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "More_Display"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Send"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Choose_Processing"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Delete_all"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Move_items_to_parent_Index"
+msgstr ""
+
+#: weko_index_tree/views.py:245
+msgid "Cancle"
+msgstr ""
+
+
+
