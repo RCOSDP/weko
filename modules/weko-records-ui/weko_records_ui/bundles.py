@@ -21,9 +21,24 @@
 """WEKO3 module docstring."""
 
 from flask_assets import Bundle
+from invenio_assets import NpmBundle
 
-js = Bundle(
+js_dependencies = NpmBundle(
+    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
+    'node_modules/angular/angular.js',
+    npm={
+        'angular-ui-bootstrap': '~0.13.2',
+    },
+)
+
+js = NpmBundle(
+    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
+    'node_modules/angular/angular.js',
     'js/weko_records_ui/detail.js',
+    'js/weko_records_ui/app.js',
     filters='jsmin',
     output="gen/weko_records_ui.%(version)s.js",
+    npm={
+        'angular-ui-bootstrap': '~0.13.2',
+    },
 )

@@ -22,13 +22,14 @@
 
 import redis
 from flask import abort, current_app, json
-from invenio_deposit.api import Deposit, preserve
+from invenio_db import db
+from invenio_deposit.api import Deposit, preserve, index
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_indexer.api import RecordIndexer
-from invenio_pidstore.models import PersistentIdentifier
-from invenio_pidstore.errors import PIDInvalidAction
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
+from invenio_files_rest.models import Bucket, MultipartObject, Part
 from simplekv.memory.redisstore import RedisStore
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
@@ -138,7 +139,11 @@ class WekoIndexer(RecordIndexer):
 
         :param record: Record instance.
         """
-        pass
+        self.get_es_index()
+
+        self.client.delete(id=str(record.id),
+                           index=self.es_index,
+                           doc_type=self.es_doc_type)
 
     def get_count_by_index_id(self, tree_path):
         """Get count by index id.
@@ -215,6 +220,7 @@ class WekoDeposit(Deposit):
         """Clear only drafts."""
         super(WekoDeposit, self).clear(*args, **kwargs)
 
+    @index(delete=True)
     def delete(self, force=True, pid=None):
         """Delete deposit.
 
@@ -224,13 +230,30 @@ class WekoDeposit(Deposit):
         :param pid: Force pid object.  (Default: ``None``)
         :returns: A new Deposit object.
         """
-        pid = pid or self.pid
 
-        if self['_deposit'].get('pid'):
-            raise PIDInvalidAction()
-        if pid:
-            pid.delete()
-        return super(Deposit, self).delete(force=force)
+        # Delete the recid
+        recid = PersistentIdentifier.get(
+            pid_type='recid', pid_value=self.pid.pid_value)
+
+        if recid.status == PIDStatus.RESERVED:
+            db.session.delete(recid)
+
+        # Completely remove bucket
+        bucket = self.files.bucket
+        with db.session.begin_nested():
+            # Remove Record-Bucket link
+            RecordsBuckets.query.filter_by(record_id=self.id).delete()
+            mp_q = MultipartObject.query_by_bucket(bucket)
+            # Remove multipart objects
+            Part.query.filter(
+                Part.upload_id.in_(mp_q.with_entities(
+                    MultipartObject.upload_id).subquery())
+            ).delete(synchronize_session='fetch')
+            mp_q.delete(synchronize_session='fetch')
+        bucket.locked = False
+        bucket.remove()
+
+        return super(Deposit, self).delete()
 
     def commit(self, *args, **kwargs):
         """Store changes on current instance in database and index it."""
