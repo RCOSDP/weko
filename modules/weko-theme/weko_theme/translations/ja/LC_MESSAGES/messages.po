@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-05-15 13:21+0900\n"
+"POT-Creation-Date: 2018-05-17 20:39+0900\n"
 "PO-Revision-Date: 2018-04-12 18:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -351,42 +351,34 @@ msgid "Edit"
 msgstr "編集"
 
 #: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:22
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:23
-msgid "Item Registration"
-msgstr "アイテム登録"
+msgid "Schema Management"
+msgstr "スキーマ管理"
 
 #: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:23
-#, fuzzy
-msgid "Schema Management"
-msgstr "著者ＤＢ"
-
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:24
-#, fuzzy
 msgid "Item Type"
 msgstr "アイテムタイプ"
 
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:25
-#, fuzzy
+#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:24
 msgid "Item Management"
-msgstr "著者ＤＢ"
+msgstr "アイテム管理"
 
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:26
+#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:25
 msgid "Edit Tree"
 msgstr "ツリー編集"
 
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:27
+#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:26
 msgid "Review/Accept"
 msgstr "査読/承認"
 
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:28
+#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:27
 msgid "Import"
 msgstr "インポート"
 
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:29
+#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:28
 msgid "Management"
 msgstr "管理"
 
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:30
+#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:29
 msgid "Block style"
 msgstr "ブロックスタイル"
 
@@ -398,6 +390,11 @@ msgstr "言語："
 msgid "Top"
 msgstr "トップ"
 
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:23
+msgid "Item Registration"
+msgstr "アイテム登録"
+
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:24
 msgid "Author Management"
 msgstr "著者ＤＢ"
+
