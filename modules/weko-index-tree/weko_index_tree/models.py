@@ -282,7 +282,7 @@ class Index(db.Model, Timestamp, Serializer):
         nullable=True)
     """Delete date of the index."""
 
-    is_delete = db.Column(db.Boolean(name='delete_flag'), nullable=True,
+    is_delete = db.Column(db.Boolean(name='delete_flag'), nullable=False,
                           default=False)
     """Delete flag of the index."""
 

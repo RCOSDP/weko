@@ -25,7 +25,7 @@ from functools import wraps
 
 from flask import (
     Blueprint, abort, current_app, json, jsonify, render_template, request,
-    url_for)
+    make_response, url_for)
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_records_rest.errors import PIDResolveRESTError
@@ -35,6 +35,7 @@ from werkzeug.utils import secure_filename
 from .api import Indexes, IndexTrees, ItemRecord
 from .permissions import index_tree_permission
 from .utils import get_all_children, reset_tree
+from weko_deposit.api import WekoDeposit
 
 blueprint = Blueprint(
     'weko_index_tree',
@@ -181,38 +182,40 @@ def upt_index_thumbnail(index_id=0):
 
 
 @blueprint.route('/detail/<int:index_id>', methods=['DELETE'])
-@login_required
-@index_tree_permission.require(http_exception=403)
+# @login_required
+# @index_tree_permission.require(http_exception=403)
 def del_index_detail(index_id=0):
     """Delete the index.
 
     :param index_id: Indentifier of index
     :return: delete info
     """
-    result = None
+    status = 204
+    msg = 'No such index.'
     if index_id > 0:
-        """check if item belongs to the index."""
-        # index_children_count = Indexes.has_children(index_id)
-        # if index_children_count > 0:
-        #     return jsonify(code=1, msg='have children index')
-        # tree_obj = Indexes.get_self_path(index_id)
-        # if tree_obj is None:
-        #     # the index has be removed
-        #     return jsonify(code=0, msg=_('success'), data={'count': 0})
-        # tree_path = tree_obj.path if tree_obj is not None else '0'
-        # weko_indexer = ItemRecord()
-        # item_count = weko_indexer.get_count_by_index_id(tree_path=tree_path)
-        # if item_count > 0:
-        #     return jsonify(code=1, msg='have children items')
-        result = Indexes.del_by_indexid(index_id)
-        weko_indexer = ItemRecord()
-        count_del, count_upt = \
-            weko_indexer.del_items_by_index_id(str(index_id),
-                                               with_children=True)
-    if result is None:
-        return jsonify(code=400, msg='param error')
-    return jsonify(code=0, msg='delete success',
-                   data={'count_del': count_del, 'count_upt': count_upt})
+        jsn = request.get_json()
+        res = Indexes.get_self_path(index_id)
+        result = Indexes.delete_tree_by_id(index_id)
+        jfy = {}
+        if result:
+            status = 200
+            msg = 'Index deleted Successfully'
+
+            # delete index with move items
+            if jsn and jsn.get("move"):
+                pat = res.path.replace(index_id, "")
+                if pat:
+                    WekoDeposit.update_by_index_tree_id(index_id, pat[:-1])
+                else:
+                    status = 409
+                    msg = 'Can not move items to root index.'
+            else:
+                # delete indexes only
+                WekoDeposit.delete_by_index_tree_id(index_id)
+        else:
+            msg = 'This index has been deleted.'
+
+    return make_response(jsonify({'status': status, 'message': msg}), status)
 
 
 @blueprint.route('/edit', methods=['GET'])

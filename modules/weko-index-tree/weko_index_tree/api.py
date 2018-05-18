@@ -20,7 +20,7 @@
 
 """API for weko-index-tree."""
 
-import re
+import re, json
 from datetime import datetime
 
 from flask import current_app
@@ -29,6 +29,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from sqlalchemy.orm import aliased
 from sqlalchemy.sql.expression import func, literal_column
+from sqlalchemy.orm.attributes import flag_modified
 
 from .models import Index, IndexTree
 
@@ -69,6 +70,24 @@ class IndexTrees(object):
         """
         with db.session.no_autoflush:
             return IndexTree.query.one_or_none()
+
+    @classmethod
+    def delete(cls, index_id):
+
+        def delete_index(lst):
+            if isinstance(lst, list):
+                for i in range(len(lst)):
+                    if isinstance(lst[i], dict):
+                        if str(index_id) == lst[i].get('id'):
+                            lst.pop(i)
+                            return
+                        else:
+                            delete_index(lst[i].get('children'))
+
+        result = cls.get()
+        delete_index(result.tree)
+        flag_modified(result, 'tree')
+        db.session.merge(result)
 
 
 class Indexes(object):
@@ -191,7 +210,7 @@ class Indexes(object):
         return index.thumbnail
 
     @classmethod
-    def del_by_indexid(cls, index_id):
+    def delete_tree_by_id(cls, index_id):
         """
         Delete the index by index id.
 
@@ -199,20 +218,31 @@ class Indexes(object):
         :return: bool True: Delete success None: Delete failed
         """
         try:
-            with db.session.begin_nested():
-                index = Index.query.filter_by(id=index_id).first()
-                if index is None:
-                    return None
-                index.is_delete = True
-                index.del_date = datetime.utcnow()
-                index.del_user_id = current_user.get_id()
-                db.session.merge(index)
-            db.session.commit()
+            with db.session.no_autoflush:
+                recursive_t = cls.recu_query(pid=index_id)
+                obj = db.session.query(recursive_t).\
+                union_all(db.session.query(Index.parent, Index.id,
+                                           literal_column("''", db.Text).label("path"),
+                                           literal_column("''", db.Text).label("name"),
+                                           literal_column("0", db.Integer).label("lev")).
+                          filter(Index.id == index_id,
+                                 Index.is_delete == False)).all()
+
+            if obj:
+                p_lst = [o.cid for o in obj]
+                with db.session.begin_nested():
+                    IndexTrees.delete(index_id)
+                    dct = db.session.query(Index).filter(Index.id.in_(p_lst)).\
+                        delete(synchronize_session='fetch')
+                        # update({Index.is_delete: True, Index.del_date: datetime.utcnow()},
+                        #        synchronize_session=False)
+                db.session.commit()
+                return dct
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
             return None
-        return True
+        return 0
 
     @classmethod
     def get_path_list(cls, node_lst):
@@ -271,7 +301,7 @@ class Indexes(object):
             recursive_t.c.cid == str(node_id)).one_or_none()
 
     @classmethod
-    def recu_query(cls):
+    def recu_query(cls, pid=0):
         """
         Init select condition of index.
 
@@ -283,7 +313,7 @@ class Indexes(object):
             func.cast(Index.id, db.Text).label("path"),
             Index.index_name.label("name"),
             literal_column("1", db.Integer).label("lev")).filter(
-            Index.parent == 0,
+            Index.parent == pid,
             Index.is_delete == False). \
             cte(name="recursive_t", recursive=True)
 
@@ -412,3 +442,4 @@ class ItemRecord(RecordIndexer):
                                    body={"doc": {"path": upt_tree}})
             count_upt += 1
         return count_del, count_upt
+

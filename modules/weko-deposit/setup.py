@@ -97,6 +97,9 @@ setup(
         'invenio_pidstore.minters': [
             'weko_deposit_minter = weko_deposit.pidstore:weko_deposit_minter',
         ],
+        'invenio_celery.tasks': [
+            'weko_deposit = weko_deposit.tasks',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

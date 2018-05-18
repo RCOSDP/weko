@@ -242,10 +242,22 @@ def default_view_method(pid, record, template=None):
         jsonschema=json_schema,
         schemaform=schema_form,
         lists=lists,
+        links=to_links_js(pid),
         id=item_type_id,
         files=to_files_js(record),
         pid=pid
     )
+
+
+def to_links_js(pid):
+    """Get API links."""
+    self_url = current_app.config['DEPOSIT_RECORDS_API'].format(
+        pid_value=pid.pid_value)
+    links = {
+        'self': self_url,
+        'ret': url_for('weko_items_ui.index')
+    }
+    return links
 
 
 def to_files_js(record):

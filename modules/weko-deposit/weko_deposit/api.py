@@ -21,6 +21,7 @@
 """Weko Deposit API."""
 
 import redis
+from datetime import datetime
 from flask import abort, current_app, json
 from invenio_db import db
 from invenio_deposit.api import Deposit, preserve, index
@@ -28,6 +29,7 @@ from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_files.api import FileObject, Record
+from invenio_records_rest.errors import PIDResolveRESTError
 from invenio_records_files.models import RecordsBuckets
 from invenio_files_rest.models import Bucket, MultipartObject, Part
 from simplekv.memory.redisstore import RedisStore
@@ -125,6 +127,18 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
+    def update_path(self, record):
+        self.get_es_index()
+        path = 'path'
+        body = {'doc': {path: record.get(path)}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(record.id),
+            version=record.revision_id,
+            body=body
+        )
+
     def index(self, record):
         """Index a record.
 
@@ -162,6 +176,47 @@ class WekoIndexer(RecordIndexer):
                                           doc_type=self.es_doc_type,
                                           body=search_query)
         return search_result.get('count')
+
+    def get_pid_by_es_scroll(self, index_id):
+        """
+
+        :param index_id:
+        :return: _scroll_id
+        """
+        search_query = {
+            "query": {
+                "match": {
+                    "path.tree": index_id
+                }
+            },
+            "_source": "_id",
+            "size": 3000
+        }
+
+        def get_result(result):
+            if result:
+                hit = result['hits']['hits']
+                if hit:
+                    return [h.get('_id') for h in hit]
+                else:
+                    return None
+            else:
+                return None
+
+        ind, doc_type = self.record_to_index({})
+        search_result = self.client.search(index=ind, doc_type=doc_type,
+                                           body=search_query, scroll='1m')
+        if search_result:
+            res = get_result(search_result)
+            scroll_id = search_result['_scroll_id']
+            if res:
+                yield res
+                while res:
+                    res = self.client.scroll(scroll_id=scroll_id, scroll='1m')
+                    yield res
+
+            self.client.clear_scroll(scroll_id=scroll_id)
+        return None
 
 
 class WekoDeposit(Deposit):
@@ -237,6 +292,9 @@ class WekoDeposit(Deposit):
 
         if recid.status == PIDStatus.RESERVED:
             db.session.delete(recid)
+
+        # if this item has been deleted
+        self.delete_es_index_attempt(recid)
 
         # Completely remove bucket
         bucket = self.files.bucket
@@ -331,8 +389,10 @@ class WekoDeposit(Deposit):
         :param index_obj:
         :return: dc
         """
+        # if this item has been deleted
+        self.delete_es_index_attempt(self.pid)
+
         try:
-            td = index_obj.get('index', [])
             actions = index_obj.get('actions', 'private')
             datastore = RedisStore(redis.StrictRedis.from_url(
                 current_app.config['CACHE_REDIS_URL']))
@@ -343,24 +403,29 @@ class WekoDeposit(Deposit):
             data_str = datastore.get(cache_key)
             datastore.delete(cache_key)
             data = json.loads(data_str)
-
-            # td = ['6', '14']
-            plst = Indexes.get_path_list(td)
-            if plst:
-                td.clear()
-                for lst in plst:
-                    td.append(lst.path)
         except:
             abort(500, 'Failed to register item')
 
+        # Get index path
+        index_lst = index_obj.get('index', [])
+        plst = Indexes.get_path_list(index_lst)
+
+        if not plst or len(index_lst) != len(plst):
+            raise PIDResolveRESTError(description='Any tree index has been deleted')
+
+        index_lst.clear()
+        for lst in plst:
+            index_lst.append(lst.path)
+
+        # convert item meta data
         dc, jrc, is_edit = save_item_metadata(data, self.pid)
         self.data = data
         self.jrc = jrc
         self.is_edit = is_edit
 
         # Save Index Path on ES
-        jrc.update(dict(path=td))
-        dc.update(dict(path=td))
+        jrc.update(dict(path=index_lst))
+        dc.update(dict(path=index_lst))
 
         pubs = '1' if 'private' in actions else '0'
         ps = dict(publish_status=pubs)
@@ -368,6 +433,54 @@ class WekoDeposit(Deposit):
         dc.update(ps)
 
         return dc
+
+    @classmethod
+    def delete_by_index_tree_id(cls, index_id):
+        # first update target pid when index tree id was deleted
+        if cls.update_pid_by_index_tree_id(cls, index_id):
+            from .tasks import delete_items_by_id
+            delete_items_by_id.delay(index_id)
+
+    @classmethod
+    def update_by_index_tree_id(cls, index_id, pat):
+        # update item path only
+        from .tasks import update_items_by_id
+        update_items_by_id.delay(index_id, pat)
+
+    def update_pid_by_index_tree_id(self, index_id):
+        """
+         Update pid by index tree id
+        :param index_id:
+        :return: True: process success False: process failed
+        """
+        p = PersistentIdentifier
+        try:
+            dt = datetime.utcnow()
+            with db.session.begin_nested():
+                for result in self.indexer.get_pid_by_es_scroll(index_id):
+                    db.session.query(p). \
+                        filter(p.object_uuid.in_(result), p.object_type == 'rec'). \
+                        update({p.status: 'D', p.updated: dt},
+                               synchronize_session=False)
+                    result.clear()
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            return False
+
+    def update_item_by_task(self, *args, **kwargs):
+        return super(Deposit, self).commit(*args, **kwargs)
+
+    def delete_es_index_attempt(self, pid):
+        # if this item has been deleted
+        if pid.status == PIDStatus.DELETED:
+            # attempt to delete index on es
+            try:
+                self.indexer.delete(self)
+            except:
+                pass
+            raise PIDResolveRESTError(description='This item has been deleted')
 
 
 class WekoRecord(Record):

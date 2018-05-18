@@ -76,6 +76,7 @@
           <invenio-records
             {%- if pid %}
               initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+              links='{{links|tojson}}'
             {%- else %}
               initialization="{{ config.DEPOSIT_SEARCH_API }}"
             {%- endif %}
@@ -94,6 +95,9 @@
               <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['index', 'PUT'], 'r')">{{_('Next')}}</button></li>
+                  {%- if pid %}
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">{{_('Delete')}}</button></li>
+                  {%- endif %}
                 </ul>
               </div>
             </div>
@@ -126,6 +130,9 @@
               <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['index', 'PUT'], 'r')">{{_('Next')}}</button></li>
+                  {%- if pid %}
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">{{_('Delete')}}</button></li>
+                  {%- endif %}
                 </ul>
               </div>
             </div>
