@@ -35,3 +35,15 @@ def get_remote_addr():
         if address is not None:
             address = address.encode('utf-8').split(b',')[0].strip()
     return address
+
+
+def generate_random_str(length=128):
+    """Generate secret key."""
+    import string
+    import random
+
+    rng = random.SystemRandom()
+    return ''.join(
+        rng.choice(string.ascii_letters + string.digits)
+        for dummy in range(0, length)
+    )

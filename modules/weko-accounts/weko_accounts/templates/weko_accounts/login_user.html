@@ -39,7 +39,7 @@
       </form>
       {%- if config['SHIB_ACCOUNTS_LOGIN_ENABLED'] %}
       <div class="navbar-btn">
-        <a type="button" class="btn btn-default btn-lg btn-block" href={{url_for('weko_accounts.shib_stub_login')}}>
+        <a type="button" class="btn btn-default btn-lg btn-block" href={{url_for('weko_accounts.shib_stub_login', next=request.args.get('next'))}}>
           <i class="fa fa-sign-in"></i> Shibboleth User</a>
       </div>
       {%- endif %}

@@ -31,17 +31,19 @@
       {%- block form_outer %}
       <div class="row navbar-btn"><div class="col-sm-12">
         <form action={{url_for('weko_accounts.confirm_user')}} method="POST">
-          <input type="hidden" name="WEKO_USER_CHK" value="1">
-          <input type="hidden" name="SHIB_ATTR_SESSION_ID" value={{ shib_session_id }}>
+          <input type="hidden" name="csrf_random" value={{ csrf_random }}>
           <div class="form-group form-group-lg has-feedback">
-            <input autofocus="" class="form-control" id="account" name="WEKO_ATTR_ACCOUNT" placeholder="Email Address" type="text" value={{ email }} readonly>
+            <input autofocus="" class="form-control" id="account" name="WEKO_ATTR_ACCOUNT" placeholder="Email Address" type="text" value={{ email }}>
             <i class="fa fa-user form-control-feedback" aria-hidden="true"></i>
           </div>
           <div class="form-group form-group-lg has-feedback">
             <input autofocus="" class="form-control" id="pwd" name="WEKO_ATTR_PWD" placeholder="Password" type="password" value="">
             <i class="fa fa-lock form-control-feedback" aria-hidden="true"></i>
           </div>
-          <button type="submit" class="btn btn-default btn-lg btn-block"><i class="fa fa-sign-in"></i>{{ _('Confirm') }}</button>
+          <button type="submit" class="btn btn-primary btn-lg btn-block"><i class="fa fa-sign-in"></i>{{ _('ログイン (WEKO-IDお持ちの方)') }}</button>
+          <h3 align="center">&mdash; OR &mdash;</h3>
+          <a type="button" class="btn btn-default btn-lg btn-block" href={{url_for('weko_accounts.shib_auto_login')}}>
+            <i class="fa fa-sign-in"></i>{{ _('ログイン (WEKO初回ログインの方)') }}</a>
         </form>
       </div></div>
       {%- endblock form_outer %}
