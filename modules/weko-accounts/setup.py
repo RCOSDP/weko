@@ -91,6 +91,9 @@ setup(
         'invenio_base.apps': [
             'weko_accounts = weko_accounts:WekoAccounts',
         ],
+        'invenio_admin.views': [
+            'weko_accounts_shibboleth = weko_accounts.admin:shib_adminview',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_accounts',
         ],

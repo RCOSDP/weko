@@ -70,7 +70,7 @@ def index():
 
 @blueprint.route('/auto/login', methods=['GET'])
 def shib_auto_login():
-    """create new account and auto login when shibboleth user first login
+    """create new account and auto login when shibboleth user first login.
 
     :return: next url
     """
@@ -104,7 +104,6 @@ def shib_auto_login():
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
-
 
 
 @blueprint.route('/confim/user', methods=['POST'])
@@ -205,7 +204,7 @@ def shib_sp_login():
         """ check the relation of shibboleth user with weko account"""
         next_url = 'weko_accounts.shib_auto_login'
         if rst is None:
-            """relation is not existed, cache shibboleth info to redis"""
+            """relation is not existed, cache shibboleth info to redis."""
             next_url = 'weko_accounts.shib_login'
         query_string = {
             'SHIB_ATTR_SESSION_ID': shib_session_id,
@@ -253,45 +252,3 @@ def parse_attributes():
             if required:
                 error = True
     return attrs, error
-
-
-@blueprint.route('/shibboleth', methods=['GET', 'POST'])
-@register_menu(
-    blueprint, 'settings.shibuser',
-    _('%(icon)s Shibboleth', icon='<i class="fa fa-user fa-fw"></i>'),
-    visible_when=_has_admin_access,
-    order=14
-)
-@register_breadcrumb(
-    blueprint, 'breadcrumbs.settings.shibuser',
-    _('Shibboleth')
-)
-@login_required
-def set_shibboleth_user():
-    """Loading session setting page.
-
-    :return: Lifetime in minutes.
-    """
-    if not _has_admin_access():
-        return abort(403)
-    try:
-        shib_flg = '0'
-        if current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
-            shib_flg = '1'
-
-        if request.method == 'POST':
-            # Process forms
-            form = request.form.get('submit', None)
-            if form == 'shib_form':
-                shib_flg = request.form.get('shibbolethRadios', '0')
-                if shib_flg == '1':
-                    _app.config['SHIB_ACCOUNTS_LOGIN_ENABLED'] = True
-                else:
-                    _app.config['SHIB_ACCOUNTS_LOGIN_ENABLED'] = False
-                flash(_('Shibboleth flag was updated.'), category='success')
-
-        return render_template(config.WEKO_ACCOUNTS_SET_SHIB_TEMPLATE,
-                               shib_flg=shib_flg)
-    except:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return abort(400)
