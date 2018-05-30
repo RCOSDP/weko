@@ -257,6 +257,8 @@ def to_links_js(pid):
         'self': self_url,
         'ret': url_for('weko_items_ui.index')
     }
+    from weko_deposit.links import base_factory
+    links.update(base_factory(pid))
     return links
 
 

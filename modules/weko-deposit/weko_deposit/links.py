@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Link Factory weko-deposit."""
-from flask import current_app, request
+# from flask import current_app, request
 from invenio_deposit.links import deposit_links_factory
 
 
@@ -34,7 +34,6 @@ def links_factory(pid, **kwargs):
 def base_factory(pid, **kwargs):
     """Deposit links factory."""
     links = dict()
-    links['index'] = request.host_url + \
-        "api/deposits/redirect/" + pid.pid_value
-    links['r'] = request.host_url + "items/index/" + pid.pid_value
+    links['index'] = "/api/deposits/redirect/" + pid.pid_value
+    links['r'] = "/items/index/" + pid.pid_value
     return links

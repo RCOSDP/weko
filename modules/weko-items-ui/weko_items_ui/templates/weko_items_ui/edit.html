@@ -118,6 +118,8 @@
               <div ng-show="false" type="text" id="btn_id" ></div>
               <div ng-show="false" type="text" id="author_info" ></div>
               <div ng-show="false" type="text" id="array_flg" ></div>
+              <div ng-show="false" type="text" id="array_index" ></div>
+              <div ng-show="false" type="text" id="weko_id" ></div>
               <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
               <!--add by ryuu. end 20180410-->
               <invenio-records-form
@@ -125,15 +127,15 @@
                 form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                 template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
               </invenio-records-form>
-            </div>
-            <div class="row" ng-hide="false">
-              <div class="col-sm-9" ng-show="true">
-                <ul class="list-inline text-right">
-                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['index', 'PUT'], 'r')">{{_('Next')}}</button></li>
-                  {%- if pid %}
-                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">{{_('Delete')}}</button></li>
-                  {%- endif %}
-                </ul>
+              <div class="row" ng-hide="false">
+                <div class="col-sm-9" ng-show="true">
+                  <ul class="list-inline text-right">
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson();recordsVM.actionHandler(['index', 'PUT'], 'r')">{{_('Next')}}</button></li>
+                    {%- if pid %}
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">{{_('Delete')}}</button></li>
+                    {%- endif %}
+                  </ul>
+                </div>
               </div>
             </div>
           </invenio-records>
