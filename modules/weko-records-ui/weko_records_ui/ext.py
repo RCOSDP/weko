@@ -58,3 +58,7 @@ class WekoRecordsUI(object):
         for k in dir(config):
             if k.startswith('WEKO_RECORDS_UI_'):
                 app.config.setdefault(k, getattr(config, k))
+        app.config.setdefault('ITEM_SEARCH_FLG',
+                              getattr(config, 'ITEM_SEARCH_FLG'))
+        app.config.setdefault('EMAIL_DISPLAY_FLG',
+                              getattr(config, 'EMAIL_DISPLAY_FLG'))

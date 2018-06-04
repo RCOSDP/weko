@@ -87,6 +87,9 @@ setup(
         'invenio_base.apps': [
             'weko_records_ui = weko_records_ui:WekoRecordsUI',
         ],
+        'invenio_admin.views': [
+            'weko_records_ui_setting = weko_records_ui.admin:item_adminview',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_records_ui',
         ],

@@ -28,6 +28,15 @@ WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Contributor',
                              'General')
 
+ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
+# author setting page template
+
+ITEM_SEARCH_FLG = 'name'
+# setting author name search type: name or id
+
+EMAIL_DISPLAY_FLG = True
+# setting the email of author if display
+
 RECORDS_UI_ENDPOINTS = dict(
     recid=dict(
         pid_type='recid',

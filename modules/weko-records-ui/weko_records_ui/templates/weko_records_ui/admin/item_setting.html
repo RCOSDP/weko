@@ -1,0 +1,84 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+{%- extends admin_base_template %}
+
+{%- block body %}
+{%- set cur_lifetime = current_lifetime %}
+{%- set lifetime_map = map_lifetime %}
+<form class="form-inline" method="POST" name="set_search_author_form" action={{url_for('itemsetting.index')}}>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_('search author')}}</label>
+    </div>
+    <div class="col-sm-8">
+      {%- if search_author_flg == 'name' %}
+        <label class="radio-inline">
+          <input type="radio" name="searchRadios" id="searchRadiosName" value="name" checked>
+          {{_("search by author name")}}
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="searchRadios" id="searchRadiosID" value="id">
+          {{_("search by author id")}}
+        </label>
+      {%- else %}
+        <label class="radio-inline">
+          <input type="radio" name="searchRadios" id="searchRadiosName" value="name">
+          {{_("search by author name")}}
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="searchRadios" id="searchRadiosID" value="id" checked>
+          {{_("search by author id")}}
+        </label>
+      {%- endif %}
+    </div>
+  </div>
+  <div class="row m-top-5">
+    <div class="col-sm-2 text-right">
+      <label>{{_('display email')}}</label>
+    </div>
+    <div class="col-sm-8">
+      {%- if email_display_flg == '1' %}
+        <label class="radio-inline">
+          <input type="radio" name="displayRadios" id="displayRadios1" value="1" checked>
+          {{_("Display Email")}}
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="displayRadios" id="displayRadios0" value="0">
+          {{_("Hide Email")}}
+        </label>
+      {%- else %}
+        <label class="radio-inline">
+          <input type="radio" name="displayRadios" id="displayRadios1" value="1">
+          {{_("Display Email")}}
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="displayRadios" id="displayRadios0" value="0" checked>
+          {{_("Hide Email")}}
+        </label>
+      {%- endif %}
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" name="submit" value="set_search_author_form" class="btn btn-primary">
+      <i class="fa fa-check"></i> {{ _('Update') }}</button>
+  </div>
+</form>
+{%- endblock body %}
