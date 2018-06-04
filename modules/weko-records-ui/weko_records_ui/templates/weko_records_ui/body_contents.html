@@ -158,16 +158,17 @@
               </table>
               {%- endif %}
               <table class="table table-bordered table-striped">
-              {% if record.item_type_info %}
-                <tr>
-                  <th>{{_('item type')}}</th>
-                  <td>{{ record.item_type_info }}</td>
-                </tr>
-              {% endif %}
+                {% if record.item_type_info %}
+                  <tr>
+                    <th>{{_('item type')}}</th>
+                    <td>{{ record.item_type_info }}</td>
+                  </tr>
+                {% endif %}
                 {%- for lst in record.items_show_list %}
                   <tr>
                     <th>{{ lst['attribute_name'] }}</th>
                     <td>
+                      <pre class="hide">{{lst|tojson}}</pre>
                       {% if lst['attribute_value'] is string %}
                         {{ lst['attribute_value'] }}
                       {% else %}
@@ -175,15 +176,33 @@
                           {{ key }}
                         {% endfor %}
                       {% endif %}
-                      {%- for l in lst['attribute_value_mlt'] %}
-                        {%- for k, v in l.items() %}
-                          {% if k is none or '' in k %}
-                            {{ v }}<br>
-                          {% else %}
-                            {{ k }} : {{ v }}<br>
-                          {% endif %}
+                      {% if lst['attribute_type'] == 'creator' %}
+                        {%- for l in lst['attribute_value_mlt'] %}
+                          {%- set nid = l.get('nameIdentifierURI') -%}
+                          {%- for k, v in l.items() %}
+                              {%- if k == 'creatorName'  -%}
+                                {% set q = 'search_creator='+v %}
+                                <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ v }}</a><br>
+                              {%- elif k == 'nameIdentifier' and nid -%}
+                                <a href="{{nid}}">{{ v }}</a><br>
+                              {%- else -%}
+                                 {{ v }}<br>
+                              {% endif %}
+                          {% endfor %}
                         {% endfor %}
-                      {% endfor %}
+                      {% else %}
+                        {%- for l in lst['attribute_value_mlt'] %}
+                          {%- for k, v in l.items() %}
+                            {%- if k == 'メールアドレス' -%}
+                              {%- if config['EMAIL_DISPLAY_FLG'] -%}
+                                {{ v }}<br>
+                              {%- endif -%}
+                            {%- else -%}
+                              {{ v }}<br>
+                            {%- endif -%}
+                          {% endfor %}
+                        {% endfor %}
+                      {% endif %}
                     </td>
                   </tr>
                 {% endfor %}

@@ -96,6 +96,13 @@ setup(
         'invenio_base.apps': [
             'weko_admin = weko_admin:WekoAdmin',
         ],
+        'invenio_admin.views': [
+            'weko_admin_style = weko_admin.admin:style_adminview',
+        ],
+        'invenio_access.actions': [
+            'page_style_access = weko_admin.permissions:action_admin_access',
+            'page_style_update = weko_admin.permissions:action_admin_update',
+        ],
         'invenio_db.alembic': [
             'weko_admin = weko_admin:alembic',
         ],

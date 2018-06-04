@@ -20,6 +20,8 @@
 
 """Utilities for convert response json."""
 
+from . import config
+
 
 def get_response_json(result_list, n_lst):
     """
@@ -59,3 +61,8 @@ def get_response_json(result_list, n_lst):
         result['item_type'] = item_type
 
     return result
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in config.LOGO_ALLOWED_EXTENSIONS

@@ -1,0 +1,335 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/weko_admin/jquery.wysiwyg.css') }}" rel="stylesheet">
+<style>
+  .fileupload-buttonbar .btn,
+  .fileupload-buttonbar .toggle {
+    margin-bottom: 5px;
+  }
+
+  .fileinput-button {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+  }
+  .fileinput-button input {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    opacity: 0;
+    -ms-filter: 'alpha(opacity=0)';
+    font-size: 200px !important;
+    direction: ltr;
+    cursor: pointer;
+  }
+
+  /* Fixes for IE < 8 */
+  @media screen\9 {
+    .fileinput-button input {
+      filter: alpha(opacity=0);
+      font-size: 100%;
+      height: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{%- block body %}
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="panel-group">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <div class="panel-title">
+              <h3>Color Settings</h3>
+            </div>
+          </div>
+          <div class="panel-body" id="color_setting">
+            <div class="row">
+              <div class="col-sm-10">
+                <form id="logofileupload" class="form-inline" action={{url_for('stylesetting.upload_logo')}} method="post" enctype="multipart/form-data">
+                  <div class="row fileupload-buttonbar">
+                    <div class="col-sm-10">
+                      <span class="btn btn-success fileinput-button">
+                        <i class="glyphicon glyphicon-plus"></i>
+                        <span>{{_('Add Logo file...')}}</span>
+                        <input type="file" id="logo_file" name="logo_file">
+                      </span>
+                      <button type="submit" class="btn btn-primary start">
+                        <i class="glyphicon glyphicon-upload"></i>
+                        <span>{{_('Start upload')}}</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+                <table id="logo_info" role="presentation" class="table table-striped hide">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>{{_('File Name')}}</th>
+                      <th>{{_('File Size')}}</th>
+                      <th>{{_('File Type')}}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="files">
+                    <tr>
+                      <td><img id="preview" width="200px" src=""></td>
+                      <td><p id="fpname"></p></td>
+                      <td><p id="fpsize"></p></td>
+                      <td><p id="fptype"></p></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-sm-10">
+                <form action={{url_for('stylesetting.index')}} method="POST">
+                  <div class="panel panel-info">
+                    <div class="panel-heading">
+                      <div class="pull-right">
+                        <button type="submit" id="btn_commit_bg" class="btn btn-primary">
+                          <i class="fa fa-gear"></i>{{_('commit')}}
+                        </button>
+                      </div>
+                      <div class="panel-title">
+                        <h4>{{_('コーポレートカラー')}}</h4>
+                      </div>
+                    </div>
+                    <div class="panel-body">
+                      <div class="row">
+                        <div class="form-group col-sm-2">
+                          <label for="body-bg">{{_('Background1')}}</label>
+                          <input type="color" class="form-control" id="body-bg" name="body-bg" value={{ body_bg }}>
+                        </div>
+                        <div class="form-group col-sm-2">
+                          <label for="panel-bg">{{_('Background2')}}</label>
+                          <input type="color" class="form-control" id="panel-bg" name="panel-bg" value={{ panel_bg }}>
+                        </div>
+                        <div class="form-group col-sm-2">
+                          <label for="panel-default-border">{{_('Frame Border')}}</label>
+                          <input type="color" class="form-control" id="panel-default-border" name="panel-default-border" value={{ panel_default_border }}>
+                        </div>
+                        <div class="form-group col-sm-2">
+                          <label for="navbar-default-bg">{{_('Header')}}</label>
+                          <input type="color" class="form-control" id="navbar-default-bg" name="navbar-default-bg" value={{ navbar_default_bg }}>
+                        </div>
+                        <div class="form-group col-sm-2">
+                          <label for="footer-default-bg">{{_('Footer')}}</label>
+                          <input type="color" class="form-control" id="footer-default-bg" name="footer-default-bg" value={{ footer_default_bg }}>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-10">
+                <div class="panel panel-info">
+                  <div class="panel-heading">
+                    <div class="pull-right">
+                      <!--<button type="button" id="btn_review_header" class="btn btn-primary">
+                        <i class="fa fa-eye"></i>{{_('preview')}}
+                      </button>-->
+                      <button type="button" id="btn_commit_header" class="btn btn-primary">
+                        <i class="fa fa-gear"></i>{{_('commit')}}
+                      </button>
+                    </div>
+                    <div class="panel-title">
+                      <h4>{{_('Header Setting')}}</h4>
+                    </div>
+                  </div>
+                  <div class="panel-body">
+                    <textarea class="nav-justified" name="wysiwyg_header" id="wysiwyg_header" rows="5" cols="103">{{header_innerHtml}}</textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-10">
+                <div class="panel panel-info">
+                  <div class="panel-heading">
+                    <div class="pull-right">
+                      <!--<button type="button" id="btn_review_footer" class="btn btn-primary">
+                        <i class="fa fa-eye"></i>{{_('preview')}}
+                      </button>-->
+                      <button type="button" id="btn_commit_footer" class="btn btn-primary">
+                        <i class="fa fa-gear"></i>{{_('commit')}}
+                      </button>
+                    </div>
+                    <div class="panel-title">
+                      <h4>{{_('Footer Setting')}}</h4>
+                    </div>
+                  </div>
+                  <div class="panel-body">
+                    <textarea class="nav-justified" name="wysiwyg_footer" id="wysiwyg_footer" rows="5" cols="103">{{footer_innerHtml}}</textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{%- endblock body %}
+
+{% block tail %}
+<script src="{{ url_for('static', filename='js/weko_admin/jquery-migrate-1.4.1.js') }}"></script>
+<script src="{{ url_for('static', filename='js/weko_admin/jquery.wysiwyg.js') }}"></script>
+<script>
+  $(document).ready(function() {
+    <!--$('#color_setting select').each(function(){-->
+      <!--$(this).on('change', function(){-->
+        <!--var input = '#' + $(this).attr('id') + '_hex';-->
+        <!--var value = $(this).val();-->
+        <!--$(input).val(value);-->
+        <!--$(input).css('background-color', value);-->
+      <!--});-->
+    <!--});-->
+    <!--$('#color_setting select').each(function(){-->
+      <!--var input = '#' + $(this).attr('id') + '_hex';-->
+      <!--var value = $(this).val();-->
+      <!--$(input).val(value);-->
+      <!--$(input).css('background-color', value);-->
+    <!--});-->
+
+    document.querySelector('#logo_file').onchange = function() {
+      $('#fpname').text(this.files[0].name);
+      $('#fpsize').text(humanSize(this.files[0].size, 0));
+      $('#fptype').text(this.files[0].type);
+      $('#logo_info').removeClass('hide');
+    };
+    unit = ['bytes','KB','MB','GB'];
+    function humanSize(defSize, unit_idx) {
+      let tmp_size = round(defSize, 2);
+      let human_size = ''+tmp_size+unit[unit_idx];
+      if(defSize > 1024 && unit_idx < 2) {
+        human_size = humanSize(defSize/1024, ++unit_idx);
+      }
+      return human_size;
+    }
+    function round(number, precision) {
+      return Math.round(+number + 'e' + precision) / Math.pow(10, precision);
+    }
+
+    function htmlEntities( text, proc ) {
+      var entities = [
+        ['amp', '&'],
+        ['apos', '\''],
+        ['lt', '<'],
+        ['gt', '>'],
+      ];
+
+      for ( var i=0, max=entities.length; i<max; i++ ) {
+        if ( 'encode' === proc ) {
+          text = text.replace(new RegExp( entities[i][1], 'g' ), "&"+entities[i][0]+';' ).replace( '"', '&quot;' );
+        } else {
+          text = text.replace( '&quot;', '"' ).replace(new RegExp( '&'+entities[i][0]+';', 'g' ), entities[i][1] );
+        }
+      }
+      return text;
+    }
+
+    $('#btn_review_header').on('click', function(){
+      content = $('#wysiwyg_header').val();
+      $('header').html(htmlEntities(content, 'decode'));
+    });
+
+    $('#btn_review_footer').on('click', function(){
+      content = $('#wysiwyg_footer').val();
+      $('#footer').html(htmlEntities(content, 'decode'));
+    });
+
+    $('#btn_commit_footer').on('click', function(){
+      content = $('#wysiwyg_footer').val();
+      $.ajax({
+        type: 'POST',
+        url: '{{url_for('weko_admin.test_render')}}',
+        contentType: 'application/json; charset=UTF-8',
+        data: JSON.stringify({'content': content, 'temp': 'footer'}),
+        success: function(data){
+          $('#footer').html(htmlEntities(content, 'decode'));
+        }
+      });
+    });
+
+    var wysiwyg_option = {
+      controls: {
+        strikeThrough : { visible : true },
+        underline     : { visible : true },
+
+        separator00 : { visible : true },
+
+        justifyLeft   : { visible : true },
+        justifyCenter : { visible : true },
+        justifyRight  : { visible : true },
+        justifyFull   : { visible : true },
+
+        separator01 : { visible : true },
+
+        indent  : { visible : true },
+        outdent : { visible : true },
+
+        separator02 : { visible : true },
+
+        subscript   : { visible : true },
+        superscript : { visible : true },
+
+        separator03 : { visible : true },
+
+        undo : { visible : true },
+        redo : { visible : true },
+
+        separator04 : { visible : true },
+
+        insertOrderedList    : { visible : true },
+        insertUnorderedList  : { visible : true },
+        insertHorizontalRule : { visible : true },
+
+        h4mozilla : { visible : true && $.browser.mozilla, className : 'h4', command : 'heading', arguments : ['h4'], tags : ['h4'], tooltip : "Header 4" },
+        h5mozilla : { visible : true && $.browser.mozilla, className : 'h5', command : 'heading', arguments : ['h5'], tags : ['h5'], tooltip : "Header 5" },
+        h6mozilla : { visible : true && $.browser.mozilla, className : 'h6', command : 'heading', arguments : ['h6'], tags : ['h6'], tooltip : "Header 6" },
+
+        h4 : { visible : true && !( $.browser.mozilla ), className : 'h4', command : 'formatBlock', arguments : ['<H4>'], tags : ['h4'], tooltip : "Header 4" },
+        h5 : { visible : true && !( $.browser.mozilla ), className : 'h5', command : 'formatBlock', arguments : ['<H5>'], tags : ['h5'], tooltip : "Header 5" },
+        h6 : { visible : true && !( $.browser.mozilla ), className : 'h6', command : 'formatBlock', arguments : ['<H6>'], tags : ['h6'], tooltip : "Header 6" },
+
+        separator07 : { visible : true },
+
+        cut   : { visible : true },
+        copy  : { visible : true },
+        paste : { visible : true }
+      }
+    }
+
+    $('#wysiwyg_header').wysiwyg(wysiwyg_option);
+    $('#wysiwyg_footer').wysiwyg(wysiwyg_option);
+  });
+</script>
+{% endblock %}

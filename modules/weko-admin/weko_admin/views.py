@@ -21,12 +21,12 @@
 """Views for weko-admin."""
 
 import json
+import os
 import sys
 from datetime import timedelta
 
-from flask import (
-    Blueprint, abort, current_app, flash, jsonify, render_template, request, make_response,
-    session)
+from flask import Blueprint, abort, current_app, flash, \
+    jsonify, make_response, render_template, request, session
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -179,53 +179,25 @@ def site_license():
         abort(500)
 
 
-@blueprint.route('/admin/block-style', methods=['GET', 'POST'])
-@blueprint.route('/admin/block-style/', methods=['GET', 'POST'])
-def block_style():
-    """Block style setting page."""
-    body_bg = '#fff'
-    footer_default_bg = '#8a8a8a'
-    navbar_default_bg = '#f8f8f8'
-    panel_default_border = '#ddd'
-    scss_file = '/home/invenio/.virtualenvs/invenio/var/instance/static/css/weko_theme/_variables.scss'
+@blueprint.route('/test_render', methods=['POST'])
+def test_render():
     try:
-        if request.method == 'POST':
-            form_lines = []
-            body_bg = request.form.get('body-bg', '#fff')
-            footer_default_bg = request.form.get(
-                'footer-default-bg', '#8a8a8a')
-            navbar_default_bg = request.form.get(
-                'navbar-default-bg', '#f8f8f8')
-            panel_default_border = request.form.get(
-                'panel-default-border', '#ddd')
-            form_lines.append(
-                '$body-bg: ' + body_bg + ';')
-            form_lines.append(
-                '$footer-default-bg: ' + footer_default_bg + ';')
-            form_lines.append(
-                '$navbar-default-bg: ' + navbar_default_bg + ';')
-            form_lines.append(
-                '$panel-default-border: ' + panel_default_border + ';')
-            with open(scss_file, 'w', encoding='utf-8') as fp:
-                fp.writelines('\n'.join(form_lines))
-        if request.method == 'GET':
-            with open(scss_file, 'r', encoding='utf-8') as fp:
-                for line in fp.readlines():
-                    line = line.strip()
-                    if '$body-bg:' in line:
-                        body_bg = line[line.find('#'):-1]
-                    if '$footer-default-bg:' in line:
-                        footer_default_bg = line[line.find('#'):-1]
-                    if '$navbar-default-bg:' in line:
-                        navbar_default_bg = line[line.find('#'):-1]
-                    if '$panel-default-border:' in line:
-                        panel_default_border = line[line.find('#'):-1]
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return render_template(
-        current_app.config['WEKO_ADMIN_BlOCK_STYLE_TEMPLATE'],
-        body_bg=body_bg,
-        footer_default_bg=footer_default_bg,
-        navbar_default_bg=navbar_default_bg,
-        panel_default_border=panel_default_border
-    )
+        from html import unescape
+        from weko_theme.views import blueprint as theme_bp
+        f_path = os.path.join(theme_bp.root_path, theme_bp.template_folder)
+        data = request.get_json()
+        temp = data.get('temp')
+        if 'footer' == temp:
+            f_path = os.path.join(f_path,
+                                  current_app.config['THEME_FOOTER_TEMPLATE'])
+        elif 'header' == temp:
+            f_path = os.path.join(f_path,
+                                  current_app.config['THEME_HEADER_TEMPLATE'])
+        else:
+            abort(400)
+        inner_html = unescape(data.get('content'))
+        with open(f_path, 'w+', encoding='utf-8') as fp:
+            fp.writelines(inner_html)
+    except Exception:
+        abort(500)
+    return jsonify({'code': 0, 'msg': 'success'})

@@ -26,5 +26,4 @@
     <li role="presentation" {% if tab_value=='review_accept' %}class="active"{% endif %}><a href="/">{{ _('Review/Accept') }}</a></li>
     <li role="presentation" {% if tab_value=='import' %}class="active"{% endif %}><a href="/">{{ _('Import') }}</a></li>
     <li role="presentation" {% if tab_value=='management' %}class="active"{% endif %}><a href="{{url_for('weko_admin.site_license')}}">{{ _('Management') }}</a></li>
-    <li role="presentation" {% if tab_value=='block_style' %}class="active"{% endif %}><a href="{{url_for('weko_admin.block_style')}}">{{ _('Block style') }}</a></li>
 {% endmacro %}

@@ -37,3 +37,5 @@ WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/site_license.html'
 
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/block_style.html'
 """Block-style templates."""
+
+LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
