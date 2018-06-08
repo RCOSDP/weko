@@ -43,6 +43,7 @@ web:
     - INVENIO_ROLE_SYSTEM=System Administrator
     - INVENIO_ROLE_REPOSITORY=Repository Administrator
     - INVENIO_ROLE_CONTRIBUTOR=Contributor
+    - FLASK_DEBUG=1
   volumes_from:
     - static
   links:
@@ -51,7 +52,7 @@ web:
     - elasticsearch
     - rabbitmq
   ports:
-    - "5000:5000"
+    - "5001:5000"
 
 postgresql:
   restart: "always"
@@ -61,34 +62,34 @@ postgresql:
     - POSTGRES_DB=invenio
     - POSTGRES_PASSWORD=dbpass123
   ports:
-    - "25432:5432"
+    - "25401:5432"
 
 redis:
   restart: "always"
   image: redis
   ports:
-    - "26379:6379"
+    - "26301:6379"
 
 elasticsearch:
   restart: "always"
   build: .
   dockerfile: ./elasticsearch/Dockerfile
   ports:
-    - "29200:9200"
-    - "29300:9300"
+    - "29201:9200"
+    - "29301:9300"
 
 rabbitmq:
   restart: "always"
   image: rabbitmq
   ports:
-    - "24369:4369"
-    - "45672:25672"
+    - "24301:4369"
+    - "45601:25672"
 
 nginx:
   restart: "always"
   build: ./nginx
   ports:
-    - "80:80"
+    - "8001:80"
   volumes_from:
     - static
   links:
@@ -122,5 +123,5 @@ clamav:
   restart: "always"
   image: mkodockx/docker-clamav
   ports:
-    - "3310:3310"
+    - "3301:3310"
 
