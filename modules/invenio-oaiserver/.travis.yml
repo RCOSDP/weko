@@ -1,0 +1,97 @@
+# -*- coding: utf-8 -*-
+#
+# This file is part of Invenio.
+# Copyright (C) 2015-2018 CERN.
+#
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+
+addons:
+  postgresql: 9.4
+
+notifications:
+  email: false
+
+sudo: false
+
+services:
+  - mysql
+  - postgresql
+  - rabbitmq
+
+language: python
+
+cache:
+  - pip
+
+env:
+  global:
+    - ES2_DOWNLOAD_URL="https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/tar/elasticsearch/2.4.2/elasticsearch-2.4.2.tar.gz"
+    - ES5_DOWNLOAD_URL="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.4.tar.gz"
+    - ES6_DOWNLOAD_URL="https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.2.2.tar.gz"
+    - ES_HOST=127.0.0.1
+  matrix:
+    # ES2 + SQLite
+    - REQUIREMENTS=lowest EXTRAS=all,sqlite,elasticsearch2 SQLALCHEMY_DATABASE_URI="sqlite:///test.db" ES_URL=$ES2_DOWNLOAD_URL
+    # ES5 + MySQL
+    - REQUIREMENTS=lowest EXTRAS=all,mysql,elasticsearch5 SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio" ES_URL=$ES5_DOWNLOAD_URL
+    # ES5 + PostgreSQL
+    - REQUIREMENTS=release EXTRAS=all,postgresql,elasticsearch5 SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio" ES_URL=$ES5_DOWNLOAD_URL DEPLOY=true
+    # ES6 + MySQL
+    - REQUIREMENTS=release EXTRAS=all,mysql,elasticsearch6 SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio" ES_URL=$ES6_DOWNLOAD_URL
+    # ES6 + PostgreSQL
+    - REQUIREMENTS=devel EXTRAS=all,postgresql,elasticsearch6 SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio" ES_URL=$ES6_DOWNLOAD_URL
+
+python:
+  - "2.7"
+  - "3.5"
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - env: REQUIREMENTS=devel EXTRAS=all,sqlite,elasticsearch2 SQLALCHEMY_DATABASE_URI="sqlite:///test.db" ES_URL=$ES2_DOWNLOAD_URL
+    - env: REQUIREMENTS=devel EXTRAS=all,mysql,elasticsearch5 SQLALCHEMY_DATABASE_URI="mysql+pymysql://travis@localhost:3306/invenio" ES_URL=$ES5_DOWNLOAD_URL
+    - env: REQUIREMENTS=devel EXTRAS=all,postgresql,elasticsearch5 SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://postgres@localhost:5432/invenio" ES_URL=$ES5_DOWNLOAD_URL
+
+
+before_install:
+  - "nvm install 6; nvm use 6"
+  - "mkdir /tmp/elasticsearch"
+  - "wget -O - ${ES_URL} | tar xz --directory=/tmp/elasticsearch --strip-components=1"
+  - "/tmp/elasticsearch/bin/elasticsearch > /tmp/local-es.log &"
+  - "travis_retry pip install --upgrade pip setuptools py"
+  - "travis_retry pip install twine wheel coveralls requirements-builder"
+  - "requirements-builder -e $EXTRAS --level=min setup.py > .travis-lowest-requirements.txt"
+  - "requirements-builder -e $EXTRAS --level=pypi setup.py > .travis-release-requirements.txt"
+  - "requirements-builder -e $EXTRAS --level=dev --req requirements-devel.txt setup.py > .travis-devel-requirements.txt"
+  - "mysql -e 'CREATE DATABASE IF NOT EXISTS invenio;' -uroot"
+  - "psql -c 'CREATE DATABASE invenio;' -U postgres"
+
+install:
+  - "travis_retry pip install -r .travis-${REQUIREMENTS}-requirements.txt"
+  - "travis_retry pip install -e .[${EXTRAS}]"
+
+before_script:
+  # Allow ES to start
+  - sleep 10
+  - curl http://127.0.0.1:9200 && echo "Elasticsearch is up!" || cat /tmp/local-es.log
+
+script:
+  - /tmp/elasticsearch/bin/elasticsearch --version
+  - wget -q --waitretry=1 --retry-connrefused -T 10 -O - http://127.0.0.1:9200
+  - "./run-tests.sh"
+
+after_success:
+  - coveralls
+
+deploy:
+  provider: pypi
+  user: inveniosoftware
+  password:
+    secure: "aowAp1qLIDaS8ahzhEJ+Sn8zqaO2VWQHy59gp667V74zKOKC4KkgverwTQjuJ1h88+CirUbWd3G45FUFZMzxJFx4JhZFG8296jerXCZrwlpoTqjvZZUvZTFtPEu7rq837jYuhGQMaiZs86+CjusBd+Q+SZO0738+TeGuXQouAHCgz3F3CuGtF2TLrFACLccNkUer6lH9GTtSSOdETOx1OX9CoiFcqJmd45Ud1aWqh5dxFl+FMev5q7O3+K3P2lp1r1A9RHzqvDgbrhaC8DrCx8cVCq5dovJQBW5pJyebtzFtVKA1Bxqgu+3aonZY6XxReNRbkWhZIByp5+m46MgSgCcqftvMhbjBvCEo8bElRbQB7V9xgqOqMujwic/6o6lFgz9FH6CpRNg/3/KuheJUjjs2JN34Q6L/Qd0JeBlmDE22g4j1Q1vPHmi30tRKCgi5JSepI9BFKB1kXhTi5dTWJcm+tzHyp3Yle6KfkemLtwjzhTySrWWmuck6RbGiPchjy2xFpuuEL9KYbztP+LrPIcJYB1g8wdME8tYPUaqJqdOqKlYtcpCyHgZO0aYqI+HbUb9EPebSDZjQNBT+uAiC2A0ZhIS8OkPaLmT8L37A1AvGTAI4sT1cptL5CK/xX1TXUjwzIIzpxjWNceYJg0XTnU/3UGoGlfhD15pNLLLzgUM="
+  distributions: "compile_catalog sdist bdist_wheel"
+  on:
+    tags: true
+    python: "2.7"
+    repo: inveniosoftware/invenio-oaiserver
+    condition: $DEPLOY = true
