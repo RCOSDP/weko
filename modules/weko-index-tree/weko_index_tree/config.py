@@ -28,3 +28,24 @@ WEKO_INDEX_TREE_INDEX_TEMPLATE = 'weko_index_tree/index.html'
 
 WEKO_INDEX_TREE_EDIT_TEMPLATE = 'weko_index_tree/tree_edit.html'
 """Index template for the index tree page."""
+
+_IID = 'iid(tid,record_class="weko_index_tree.api:Indexes")'
+
+WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
+    tid=dict(
+        record_class='weko_index_tree.api:Indexes',
+        index_route='/tree/index/<int:index_id>',
+        tree_route='/tree',
+        default_media_type='application/json',
+        create_permission_factory_imp=
+        'weko_index_tree.permissions:index_tree_permission',
+        read_permission_factory_imp=
+        'weko_index_tree.permissions:index_tree_permission',
+        update_permission_factory_imp=
+        'weko_index_tree.permissions:index_tree_permission',
+        delete_permission_factory_imp=
+        'weko_index_tree.permissions:index_tree_permission',
+    )
+)
+
+WEKO_INDEX_TREE_UPDATED = True

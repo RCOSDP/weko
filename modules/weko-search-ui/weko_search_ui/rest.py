@@ -225,13 +225,17 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     if p.path == agp[k].get("key"):
                         agp[k]["name"] = p.name
                         date_range = agp[k].pop("date_range")
+                        no_available = agp[k].pop("no_available")
                         pub = dict()
-                        for d in date_range['buckets']:
-                            pub["pub_cnt" if d.get("to") else "un_pub_cnt"] = d.get(
-                                "doc_count")
-                        agp[k]["date_range"] = pub
-                        nlst.append(agp.pop(k))
-                        m = 1
+                        bkt = date_range['available']['buckets']
+                        if bkt:
+                            for d in bkt[0]['date_value']['buckets']:
+                                pub["pub_cnt" if d.get("to") else "un_pub_cnt"] = d.get(
+                                    "doc_count")
+                            pub["un_pub_cnt"] += no_available['doc_count']
+                            agp[k]["date_range"] = pub
+                            nlst.append(agp.pop(k))
+                            m = 1
                         break
                 if m == 0:
                     nd = {'doc_count': 0, 'key': p.path, 'name': p.name,

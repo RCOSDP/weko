@@ -20,7 +20,7 @@
 
 """Module of weko-index-tree."""
 
-from .ext import WekoIndexTree
+from .ext import WekoIndexTree, WekoIndexTreeREST
 from .version import __version__
 
-__all__ = ('__version__', 'WekoIndexTree')
+__all__ = ('__version__', 'WekoIndexTree', 'WekoIndexTreeREST')

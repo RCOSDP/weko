@@ -22,7 +22,7 @@
 
 import redis
 from datetime import datetime
-from flask import abort, current_app, json
+from flask import abort, current_app, json, g
 from invenio_db import db
 from invenio_deposit.api import Deposit, preserve, index
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -36,7 +36,8 @@ from simplekv.memory.redisstore import RedisStore
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
 from weko_records.utils import (
-    find_items, get_all_items, save_item_metadata, set_timestamp)
+    get_options_and_order_list, get_all_items, json_loader,
+    set_timestamp)
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 
@@ -228,6 +229,10 @@ class WekoDeposit(Deposit):
 
     deposit_minter = staticmethod(weko_deposit_minter)
 
+    data = None
+    jrc = None
+    is_edit = False
+
     @property
     def item_metadata(self):
         """Return the Item metadata."""
@@ -418,7 +423,7 @@ class WekoDeposit(Deposit):
             index_lst.append(lst.path)
 
         # convert item meta data
-        dc, jrc, is_edit = save_item_metadata(data, self.pid)
+        dc, jrc, is_edit = json_loader(data, self.pid)
         self.data = data
         self.jrc = jrc
         self.is_edit = is_edit
@@ -512,23 +517,32 @@ class WekoRecord(Record):
     @property
     def items_show_list(self):
         """Return the item show list."""
-        ojson = ItemTypes.get_record(self.get('item_type_id'))
-        items = []
-        solst = find_items(ojson.model.form)
+        try:
 
-        for lst in solst:
-            key = lst[0].split('.')[-1]
+            items = []
+            solst, meta_options = get_options_and_order_list(self.get('item_type_id'))
 
-            val = self.get(key)
-            if not val:
-                continue
+            for lst in solst:
+                key = lst[0]
 
-            mlt = val.get('attribute_value_mlt')
-            if mlt:
-                nval = dict()
-                nval['attribute_name'] = val.get('attribute_name')
-                nval['attribute_value_mlt'] = get_all_items(mlt, solst)
-                items.append(nval)
-            else:
-                items.append(val)
-        return items
+                val = self.get(key)
+                option = meta_options.get(key, {}).get('option')
+                if not val or not option:
+                    continue
+
+                hidden = option.get("hidden")
+                if hidden:
+                    continue
+
+                mlt = val.get('attribute_value_mlt')
+                if mlt:
+                    nval = dict()
+                    nval['attribute_name'] = val.get('attribute_name')
+                    nval['attribute_type'] = val.get('attribute_type')
+                    nval['attribute_value_mlt'] = get_all_items(mlt, solst)
+                    items.append(nval)
+                else:
+                    items.append(val)
+            return items
+        except:
+            abort(500)

@@ -193,13 +193,7 @@
                       {% else %}
                         {%- for l in lst['attribute_value_mlt'] %}
                           {%- for k, v in l.items() %}
-                            {%- if k == 'メールアドレス' -%}
-                              {%- if config['EMAIL_DISPLAY_FLG'] -%}
-                                {{ v }}<br>
-                              {%- endif -%}
-                            {%- else -%}
                               {{ v }}<br>
-                            {%- endif -%}
                           {% endfor %}
                         {% endfor %}
                       {% endif %}

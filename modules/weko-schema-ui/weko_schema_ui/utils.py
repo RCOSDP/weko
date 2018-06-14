@@ -29,6 +29,10 @@ from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 
 from .schema import SchemaTree
+import itertools
+from functools import reduce
+
+MISSING = object()
 
 
 def dumps_oai_etree(pid, records, **kwargs):
@@ -115,3 +119,31 @@ def export_tree(record, **kwargs):
     root.clear()
 
     return e_tree
+
+
+def json_merge_all(json_lst):
+    merged = reduce(json_merge, json_lst, MISSING)
+    if merged == MISSING:
+        raise ValueError("json_lst was empty")
+    return merged
+
+
+def json_merge(a, b):
+    if isinstance(a, dict) and isinstance(b, dict):
+        return dict(
+            (k, json_merge(a_val, b_val))
+            for k, a_val, b_val in dict_zip(a, b, fillvalue=MISSING)
+        )
+    elif isinstance(a, list) and isinstance(b, list):
+        return list(itertools.chain(a, b))
+
+    if b is MISSING:
+        assert a is not MISSING
+        return a
+    return b
+
+
+def dict_zip(*dicts, **kwargs):
+    fillvalue = kwargs.get("fillvalue", None)
+    keys = reduce(set.union, [set(d.keys()) for d in dicts], set())
+    return [tuple([k] + [d.get(k, fillvalue) for d in dicts]) for k in keys]

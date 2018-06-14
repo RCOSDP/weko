@@ -20,6 +20,29 @@
 
 """Module of weko-index-tree utils."""
 
+from functools import wraps
+
+from flask import current_app
+from invenio_cache import current_cache
+
+
+def is_index_tree_updated():
+    """Return True if index tree has been updated."""
+    return current_app.config['WEKO_INDEX_TREE_UPDATED']
+
+
+def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
+    """Cache index tree json."""
+    def caching(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            cache_fun = current_cache.cached(
+                timeout=timeout, key_prefix=key_prefix,
+                forced_update=is_index_tree_updated)
+            return cache_fun(f)(*args, **kwargs)
+        return wrapper
+    return caching
+
 
 def get_all_children(tree_json):
     """
@@ -124,3 +147,52 @@ def reset_tree(path, tree):
             id_tp.append(index_id)
 
         set_checked(id_tp, tree)
+
+
+@cached_index_tree_json()
+def get_tree_json(obj):
+    """
+    Get Tree Json
+    :param obj:
+    :return:
+    """
+
+    def get_settings():
+        return dict(emitLoadNextLevel=False,
+                    settings=dict(isCollapsedOnInit=False,checked=False))
+
+    def set_node(plst):
+        if isinstance(plst, list):
+            for lst in plst:
+                lst['children'] = []
+                if isinstance(lst, dict):
+                    key = lst.get('id')
+                    while ntree and str(ntree[0].pid) == key:
+                        index_obj = ntree.pop(0)
+                        if isinstance(index_obj, tuple):
+                            id = str(index_obj.cid)
+                            value = index_obj.name
+                            dc = get_settings()
+                            dc.update(dict(id=id, value=value))
+                            lst['children'].append(dc)
+                if not lst['children'] and lst.get('settings'):
+                    lst['settings']['isCollapsedOnInit'] = True
+            for lst in plst:
+                set_node(lst['children'])
+
+    def remove_keys(lst):
+        lst = lst._asdict()
+        lst.update(dict(value=lst.pop('name'),
+                        id=str(lst.pop('cid'))))
+        lst.pop('pid')
+        lst.pop('lev')
+        lst.pop('path')
+        return lst
+
+    parent = [remove_keys(x) for x in filter(lambda node: node.pid == 0, obj)]
+    ntree = obj[len(parent):]
+    set_node(parent)
+
+    current_app.config['WEKO_INDEX_TREE_UPDATED'] = False
+    return parent
+
