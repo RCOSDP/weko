@@ -84,7 +84,8 @@
     <td>
       <ul class="list-group" id="{{'ul_'+key}}">
         {%- for jpcoar_prop_key, jpcoar_prop_list in jpcoar_prop_lists.items() -%}
-          {%- if key in hide_mapping_prop and jpcoar_prop_key in hide_mapping_prop.get(key) and hide_mapping_prop.get(key).get(jpcoar_prop_key) is mapping -%}
+          {%- if key in hide_mapping_prop and jpcoar_prop_key in hide_mapping_prop.get(key)
+                 and hide_mapping_prop.get(key).get(jpcoar_prop_key) is mapping -%}
             {%- for mapping_key in hide_mapping_prop.get(key).get(jpcoar_prop_key).keys() -%}
             {%- if jpcoar_prop_key == mapping_name -%}
             <li class="{{'list-group-item list_'+jpcoar_prop_key}}">

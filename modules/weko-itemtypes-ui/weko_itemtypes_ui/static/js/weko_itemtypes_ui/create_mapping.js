@@ -153,7 +153,9 @@
         page_global.sub_mapping_list[jpcoar_key] = entries;
       } else if(typeof entries == "object") {
         Object.entries(entries).forEach(([key, value]) => {
-          make_list_mapping(value, [jpcoar_key, key].join('.'));
+          if(!key.startsWith('@')) {
+            make_list_mapping(value, [jpcoar_key, key].join('.'));
+          }
         });
       }
     }
@@ -224,7 +226,13 @@
                 cur_obj[sub_jpcoar_arr[idx]] = {};
               }
             } else {
-              cur_obj[sub_jpcoar_arr[idx]] = sub_sub_itemtype;
+              if(typeof cur_obj[sub_jpcoar_arr[idx]] == 'object') {
+                if(sub_sub_itemtype.length > 0) {
+                  cur_obj[sub_jpcoar_arr[idx]]['@value'] = sub_sub_itemtype;
+                }
+              } else {
+                cur_obj[sub_jpcoar_arr[idx]] = sub_sub_itemtype;
+              }
             }
             cur_obj = cur_obj[sub_jpcoar_arr[idx]];
           }
