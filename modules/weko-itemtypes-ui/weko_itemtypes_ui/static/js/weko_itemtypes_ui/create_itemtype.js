@@ -209,7 +209,12 @@
                                                             "lom_mapping": "",
                                                             "jpcoar_mapping": {
                                                                 "file": {
-                                                                    "URI": {"@value":"filename"}
+                                                                    "URI": {
+                                                                        "@attributes" :{
+                                                                           "objectType":"fulltext"
+                                                                           },
+                                                                        "@value":"filename"
+                                                                     }
                                                                 }
                                                             },
                                                             "lido_mapping": "",
@@ -292,7 +297,7 @@
                                                 "jpcoar_mapping": {
                                                     "date": {
                                                         "@attributes": {
-                                                            "dateType": "Accepted"
+                                                            "dateType": "Available"
                                                         }
                                                     }
                                                 },

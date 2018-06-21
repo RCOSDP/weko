@@ -85,6 +85,9 @@ setup(
         'invenio_base.apps': [
             'weko_index_tree = weko_index_tree:WekoIndexTree',
         ],
+        'invenio_base.api_apps': [
+            'weko_index_tree_rest = weko_index_tree:WekoIndexTreeREST',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_index_tree',
         ],

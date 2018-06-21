@@ -22,6 +22,7 @@
 
 import json
 from datetime import datetime
+from functools import partial
 
 from elasticsearch_dsl.query import Q
 from flask import current_app, request
@@ -33,6 +34,37 @@ from werkzeug.datastructures import MultiDict
 from .permissions import search_permission
 
 
+def get_item_type_aggs(search_index):
+    """
+     get item types aggregations
+    :return: aggs dict
+    """
+    return current_app.config['RECORDS_REST_FACETS']. \
+        get(search_index).get("aggs", {})
+
+
+def get_permission_filter():
+    # check permission
+    is_perm = search_permission.can()
+
+    mut = []
+    match = Q('match', publish_status='0')
+    ava = [Q('range', **{'date.value': {'lte': 'now/d'}}),
+           Q('term', **{'date.dateType': 'Available'})]
+    rng = Q('nested', path='date', query=Q('bool', must=ava))
+    if not is_perm:
+        mut.append(match)
+        mut.append(rng)
+    else:
+        user_id, result = check_admin_user()
+        if result:
+            shuld = [Q('match', weko_creator_id=user_id)]
+            mut2 = [match, rng]
+            shuld.append(Q('bool', must=mut2))
+            mut.append(Q('bool', should=shuld))
+    return mut
+
+
 def default_search_factory(self, search, query_parser=None):
     """Parse query using Weko-Query-Parser. MetaData Search.
 
@@ -42,107 +74,231 @@ def default_search_factory(self, search, query_parser=None):
     :returns: Tuple with search instance and URL arguments.
     """
 
-    # check permission
-    is_perm = search_permission.can()
+    def _get_search_qs_query(qs=None):
+        """
+        qs of search bar keywords for detail simple search.
+        :param qs: Query string.
+        :return: Query parser.
+        """
+        q = Q('query_string', query=qs, default_operator='and',
+              fields=['search_*', 'search_*.ja']) if qs else None
+        return q
 
-    def _get_permission_filter():
+    def _get_detail_keywords_query():
+        """
+        Get keywords query
+        :return: Query parser.
+        """
+
+        def _get_keywords_query(k, v):
+            qry = None
+            kv = request.values.get(k)
+            if not kv:
+                return
+
+            if isinstance(v, str):
+                name_dict = dict(operator="and")
+                name_dict.update(dict(query=kv))
+                qry = Q('match', **{v: name_dict})
+            elif isinstance(v, list):
+                qry = Q('multi_match', query=kv, type='most_fields',
+                        minimum_should_match='75%',
+                        operator='and', fields=v)
+            elif isinstance(v, dict):
+                for key, vlst in v.items():
+                    if isinstance(vlst, list):
+                        shud = []
+                        kvl = [x for x in kv.split(',')
+                              if x.isdecimal() and int(x) < len(vlst)]
+                        for j in map(partial(lambda x, y: x[int(y)], vlst), kvl):
+                            name_dict = dict(operator="and")
+                            name_dict.update(dict(query=j))
+                            shud.append(Q('match', **{key: name_dict}))
+
+                        kvl = [x for x in kv.split(',')
+                               if not x.isdecimal() and x in vlst]
+                        for j in kvl:
+                            name_dict = dict(operator="and")
+                            name_dict.update(dict(query=j))
+                            shud.append(Q('match', **{key: name_dict}))
+                        if shud:
+                            return Q('bool', should=shud)
+            elif isinstance(v, tuple) and len(v) >= 2:
+                shud = []
+                for i in map(lambda x: v[1](x), kv.split(',')):
+                    shud.append(Q('term', **{v[0]: i}))
+                if shud:
+                    qry = Q('bool', should=shud)
+
+            return qry
+
+        def _get_nested_query(k, v):
+            # text value
+            kv = request.values.get(k)
+            if not kv:
+                return
+
+            shuld = []
+            if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
+                # attr keyword in request url
+                for attr_key, attr_val_str in map(lambda x: (x, request.values.get(x)), list(v[1].keys())):
+                    attr_obj = v[1].get(attr_key)
+                    if isinstance(attr_obj, dict) and attr_val_str:
+                        if isinstance(v[0], str) and not len(v[0]):
+                            # For ID search
+                            for key in attr_val_str.split(','):
+                                attr = attr_obj.get(key)
+                                if isinstance(attr, tuple):
+                                    attr = [attr]
+
+                                if isinstance(attr, list):
+                                    for alst in attr:
+                                        if isinstance(alst, tuple):
+                                            val_attr_lst = alst[1].split('=')
+                                            name = alst[0] + ".value"
+                                            name_dict = dict(operator="and")
+                                            name_dict.update(dict(query=kv))
+                                            mut = [Q('match', **{name: name_dict})]
+
+                                            qt = None
+                                            if '=*' not in alst[1]:
+                                                name = alst[0] + "." + val_attr_lst[0]
+                                                qt = [Q('term', **{name: val_attr_lst[1]})]
+
+                                            mut.extend(qt or [])
+                                            qry = Q('bool', must=mut)
+                                            shuld.append(Q('nested', path=alst[0], query=qry))
+                        else:
+                            attr_key_hit = [x for x in attr_obj.keys() if v[0] + "." in x]
+                            if attr_key_hit:
+                                vlst = attr_obj.get(attr_key_hit[0])
+                                if isinstance(vlst, list):
+                                    attr_val = [x for x in attr_val_str.split(',')
+                                                if x.isdecimal() and int(x) < len(vlst)]
+                                    if attr_val:
+                                        shud = []
+                                        name = v[0] + ".value"
+                                        name_dict = dict(operator="and")
+                                        name_dict.update(dict(query=kv))
+                                        qm = Q('match', **{name: name_dict})
+
+                                        for j in map(partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                            name = attr_key_hit[0]
+                                            qm = Q('term', **{name: j})
+                                            shud.append(qm)
+
+                                        shuld.append(Q('nested', path=v[0],
+                                                       query=Q('bool', should=shud, must=[qm])))
+
+            return Q('bool', should=shuld) if shuld else None
+
+        def _get_date_query(k, v):
+            # text value
+            qry = None
+            if isinstance(v, list) and len(v) >= 2:
+                date_from = request.values.get(k + "_" + v[0][0])
+                date_to = request.values.get(k + "_" + v[0][1])
+                if not date_from or not date_to:
+                    return
+
+                date_from = datetime.strptime(date_from, '%Y%m%d').strftime('%Y-%m-%d')
+                date_to = datetime.strptime(date_to, '%Y%m%d').strftime('%Y-%m-%d')
+
+                qv = {}
+                qv.update(dict(gte=date_from))
+                qv.update(dict(lte=date_to))
+                if isinstance(v[1], str):
+                    qry = Q('range', **{v[1]: qv})
+                elif isinstance(v[1], tuple) and len(v[1]) >= 2:
+                    path = v[1][0]
+                    dt = v[1][1]
+                    if isinstance(dt, dict):
+                        for attr_key, attr_val_str in map(lambda x: (x, request.values.get(x)), list(dt.keys())):
+                            attr_obj = dt.get(attr_key)
+                            if isinstance(attr_obj, dict) and attr_val_str:
+                                attr_key_hit = [x for x in attr_obj.keys() if path + "." in x]
+                                if attr_key_hit:
+                                    vlst = attr_obj.get(attr_key_hit[0])
+                                    if isinstance(vlst, list):
+                                        attr_val = [x for x in attr_val_str.split(',')]
+                                        shud = []
+                                        for j in map(partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                            qt = Q('term', **{attr_key_hit[0]: j})
+                                            shud.append(qt)
+
+                                        qry = Q('range', **{path + ".value": qv})
+                                        qry = Q('nested', path=path, query=Q('bool', should=shud, must=[qry]))
+            return qry
+
+        kwd = current_app.config['WEKO_SEARCH_KEYWORDS_DICT']
+        ks = kwd.get('string')
+        kd = kwd.get('date')
+        kn = kwd.get('nested')
+
         mut = []
-        match = Q('match', publish_status='0')
-        rng = Q('range', date={'lte': 'now/d'})
-        if not is_perm:
-            mut.append(match)
-            mut.append(rng)
-        else:
-            user_id, result = check_admin_user()
-            if result:
-                shuld = []
-                shuld.append(Q('match', weko_creator_id=user_id))
-                mut2 = []
-                mut2.append(match)
-                mut2.append(rng)
-                shuld.append(Q('bool', must=mut2))
-                mut.append(Q('bool', should=shuld))
+        try:
+            for k, v in ks.items():
+                qy = _get_keywords_query(k, v)
+                if qy:
+                    mut.append(qy)
+
+            for k, v in kn.items():
+                qy = _get_nested_query(k, v)
+                if qy:
+                    mut.append(qy)
+
+            for k, v in kd.items():
+                qy = _get_date_query(k, v)
+                if qy:
+                    mut.append(qy)
+        except Exception as e:
+            current_app.logger.exception(
+                'Detail search query parser failed. err:{0}'.format(e))
         return mut
 
-    def _get_dsearch_query(qs=None):
-        """for detail search"""
-        kw = ['search_title', 'search_creator', 'subject', 'search_sh',
-              'description', 'search_publisher', 'search_contributor',
-              'itemtype', 'NIItype', 'format', 'search_id', 'jtitle',
-              'language', 'search_spatial', 'search_temporal', 'rights',
-              'textversion', 'grantid', 'degreename', 'grantor']
-        kd = ['date_s', 'date_e', 'dateofissued_s', 'dateofissued_e',
-              'dateofgranted_s', 'dateofgranted_e']
-
-        mut = []
-        qv = dict()
-        qd = dict()
-        qd1 = dict()
-        for k in kw:
-            kv = request.values.get(k)
-            if kv:
-                mut.append(Q('query_string', query=kv,
-                             default_operator='and', default_field=k))
-
-        i = 0
-        while i < 6:
-            s = request.values.get(kd[i])
-            e = request.values.get(kd[i + 1])
-            if s and e:
-                s = datetime.strptime(s, '%Y%m%d').strftime('%Y-%m-%d')
-                e = datetime.strptime(e, '%Y%m%d').strftime('%Y-%m-%d')
-
-                qv.update(dict(gte=s))
-                qv.update(dict(lte=e))
-                qd1.update({kd[i].split('_')[0]: qv})
-
-            i += 2
-
-        if qd1:
-            qd["range"] = qd1
-            mut.append(qd)
-
+    def _get_simple_search_query(qs=None):
+        """
+          query parser for simple search
+        :param qs: Query string.
+        :return: Query parser.
+        """
         # add  Permission filter by publish date and status
-        mt = _get_permission_filter()
-        if mt:
-            mut.extend(mt)
+        mt = get_permission_filter()
+        q = _get_search_qs_query(qs)
+        if q:
+            mt.append(q)
+        mt.extend(_get_detail_keywords_query())
 
-        if qs:
-            mut.append(Q('query_string', query=qs, default_operator='and', fields=[
-                       'search_*', 'search_*.ja']))
-
-        del qv, qd, qd1
-
-        return Q('bool', must=mut) if mut else Q(), mut
+        return Q('bool', must=mt) if mt else Q()
 
     def _default_parser(qstr=None):
-        """Default parser that uses the Q() from elasticsearch_dsl. Full text Search.
-
+        """Default parser that uses the Q() from elasticsearch_dsl.
+           Full text Search.
+           Detail Search.
         :param qstr: Query string.
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
-        mt = _get_permission_filter()
-        # multi keyword search filter
-        kmt = _get_dsearch_query()[1]
+        mt = get_permission_filter()
+
+        # multi keywords search filter
+        kmt = _get_detail_keywords_query()
+        # detail search
         if kmt:
             mt.extend(kmt)
-
-        if qstr:
-            q_s = Q('multi_match', query=qstr, operator='and',
-                    fields=['content.file.content^1.5',
-                            'content.file.content.ja^1.2',
-                            '_all'],
-                    type='most_fields', minimum_should_match='75%')
-            mt.append(q_s)
-            qur = Q('bool', must=mt)
+            q = _get_search_qs_query(qs)
+            if q:
+                mt.append(q)
         else:
-            if mt:
-                mt.append(Q())
-                qur = Q('bool', must=mt)
-            else:
-                qur = Q()
-        return qur
+            # Full Text Search
+            if qstr:
+                q_s = Q('multi_match', query=qstr, operator='and',
+                        fields=['content.file.content^1.5',
+                                'content.file.content.ja^1.2',
+                                '_all'],
+                        type='most_fields', minimum_should_match='75%')
+                mt.append(q_s)
+        return Q('bool', must=mt) if mt else Q()
 
     from invenio_records_rest.facets import default_facets_factory
     from invenio_records_rest.sorter import default_sorter_factory
@@ -154,14 +310,10 @@ def default_search_factory(self, search, query_parser=None):
 
     # full text search
     if search_type and '0' in search_type:
-        if qs:
-            query_q = query_parser(qs)
-        else:
-            # detail search
-            query_q = _get_dsearch_query()[0]
+        query_q = query_parser(qs)
     else:
         # simple search
-        query_q = _get_dsearch_query(qs)[0]
+        query_q = _get_simple_search_query(qs)
 
     src = {'_source': {'exclude': ['content']}}
     # extr = search._extra.copy()
@@ -198,7 +350,7 @@ def item_path_search_factory(self, search):
     def _get_index_earch_query():
         query_q = {
             "_source": {
-                "exclude": ['content', '_item_metadata']
+                "exclude": ['content']
             },
             "query": {
                 "match": {
@@ -213,17 +365,45 @@ def item_path_search_factory(self, search):
                     },
                     "aggs": {
                         "date_range": {
-                            "range": {
-                                "field": "date",
-                                "format": "YYYY-MM-DD",
-                                "ranges": [
-                                    {
-                                        "from": "now/d"
+                            "nested": {
+                                "path": "date"
+                            },
+                            "aggs": {
+                                "available": {
+                                    "terms": {
+                                        "field": "date.dateType",
+                                        "include": "Available"
                                     },
-                                    {
-                                        "to": "now/d"
+                                    "aggs": {
+                                        "date_value": {
+                                            "range": {
+                                                "field": "date.value",
+                                                "format": "YYYY-MM-DD",
+                                                "ranges": [
+                                                    {
+                                                        "from": "now/d"
+                                                    },
+                                                    {
+                                                        "to": "now/d"
+                                                    }
+                                                ]
+                                            }
+                                        }
                                     }
-                                ]
+                                }
+                            }
+                        },
+                        "no_available": {
+                            "filter": {
+                                "bool": {
+                                    "must_not": [
+                                        {
+                                            "match": {
+                                                "search_attr": "Available"
+                                            }
+                                        }
+                                    ]
+                                }
                             }
                         }
                     }
@@ -235,30 +415,20 @@ def item_path_search_factory(self, search):
                 }
             }
         }
+        # add item type aggs
+        query_q['aggs']['path']['aggs']. \
+            update(get_item_type_aggs(search._index[0]))
 
-        # check permission
-        is_perm = search_permission.can()
-        match = {'match': {'publish_status': '0'}}
-        rng = {'range': {'date': {'lte': 'now/d'}}}
-        if not is_perm:
-            mut = []
-            mut.append(match)
-            mut.append(rng)
-            mut.append({'term': query_q['post_filter'].pop('term')})
-            query_q['post_filter']['bool'] = {'must': mut}
-        else:
-            user_id, result = check_admin_user()
-            # if is administrator
-            if result:
-                mut = []
-                mut.append({'term': query_q['post_filter'].pop('term')})
-                shud = []
-                shud.append({'match': {'weko_creator_id': user_id}})
-                mut2 = []
-                mut2.append(match)
-                mut2.append(rng)
-                shud.append({'bool': {'must': mut2}})
-                query_q['post_filter']['bool'] = {'must': mut, 'should': shud}
+        mut = get_permission_filter()
+        if mut:
+            mut = list(map(lambda x: x.to_dict(), mut))
+            post_filter = query_q['post_filter']
+            if mut[0].get('bool'):
+                post_filter['bool'] = {'must': [{'term': post_filter.pop('term')}],
+                                       'should': mut[0]['bool']['should']}
+            else:
+                mut.append({'term': post_filter.pop('term')})
+                post_filter['bool'] = {'must': mut}
 
         # create search query
         q = request.values.get('q')
@@ -303,7 +473,7 @@ def check_admin_user():
     Check administrator role user.
     :return: result
     """
-    result = False
+    result = True
     user_id = current_user.get_id() \
         if current_user and current_user.is_authenticated else None
     if user_id:

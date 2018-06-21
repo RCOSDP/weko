@@ -70,15 +70,12 @@ INDEXER_FILE_DOC_TYPE = 'content'
 
 SEARCH_UI_SEARCH_INDEX = 'weko'
 
+# set item type aggs
 RECORDS_REST_FACETS = dict(
     weko=dict(
         aggs=dict(
-            authors=dict(terms=dict(
-                field='NIItype')),
-        ),
-        post_filters=dict(
-            authors=terms_filter(
-                'NIItype'),
+            itemtypes=dict(terms=dict(
+                field='item_type_id')),
         )
     )
 )
@@ -159,3 +156,98 @@ WEKO_SEARCH_REST_ENDPOINTS = dict(
         max_result_window=10000,
     ),
 )
+
+WEKO_SEARCH_KEYWORDS_DICT = {
+    "nested": {
+        "subject": ("subject", {"sbjscheme": {
+            "subject.subjectScheme": [
+                "BSH",
+                "DDC",
+                "LCC",
+                "LCSH",
+                "MeSH",
+                "NDC",
+                "NDLC",
+                "NDLSH",
+                "UDC",
+                "Other",
+                "SciVal"
+            ]
+        }}),
+        "id": ("", {
+            "id_attr": {
+                "identifier": ("relation.relatedIdentifier", "identifierType=*"),
+                "URI": ("identifier", "identifierType=*"),
+                "fullTextURL": ("file.URI", "objectType=*"),
+                "selfDOI": ("identifierRegistration", "identifierType=*"),
+                "ISBN": ("relation.relatedIdentifier", "identifierType=ISBN"),
+                "ISSN": ("sourceIdentifier", "identifierType=ISSN"),
+                "NCID": [
+                    ("relation.relatedIdentifier", "identifierType=NCID"),
+                    ("sourceIdentifier", "identifierType=NCID")
+                ],
+                "pmid": ("relation.relatedIdentifier", "identifierType=PMID"),
+                "doi": ("relation.relatedIdentifier", "identifierType=DOI"),
+                "NAID": ("relation.relatedIdentifier", "identifierType=NAID"),
+                "ichushi": ("relation.relatedIdentifier", "identifierType=ICHUSHI")
+            }})
+    },
+    "string": {
+        "title": ["search_title", "search_title.ja"],
+        "creator": ["search_creator", "search_creator.ja"],
+        "des": ["search_des", "search_des.ja"],
+        "publisher": ["search_publisher", "search_publisher.ja"],
+        "cname": ["search_contributor", "search_contributor.ja"],
+        "itemtype": ("item_type_id", int),
+        "type": {
+            "type": [
+                "conference paper",
+                "departmental bulletin paper",
+                "journal article",
+                "article",
+                "book",
+                "conference object",
+                "dataset",
+                "research report",
+                "technical report",
+                "thesis",
+                "learning material",
+                "software",
+                "other"
+            ]
+        },
+        "format": "file.mimeType",
+        "lang": {
+            "language": ["jpn", "eng",
+                         "fra", "ita",
+                         "deu", "spa",
+                         "zho", "rus",
+                         "lat", "msa",
+                         "epo", "ara",
+                         "ell", "kor",
+                         "-"]},
+        "srctitle": ["sourceTitle", "sourceTitle.ja"],
+        "spatial": "geoLocation.geoLocationPlace",
+        "temporal": "temporal",
+        "rights": "rights",
+        "version": "versionType",
+        "dissno": "dissertationNumber",
+        "degreename": ["degreeName", "degreeName.ja"],
+        "dgname": ["dgName", "dgName.ja"],
+        "wid": "weko_id",
+        "iid": ("path.tree", int)
+    },
+    "date": {
+        "filedate": [('from', 'to'), ("file.date", {"fd_attr": {
+            "file.date.dateType": ["Accepted",
+                                   "Available",
+                                   "Collected",
+                                   "Copyrighted",
+                                   "Created",
+                                   "Issued",
+                                   "Submitted",
+                                   "Updated",
+                                   "Valid"]}})],
+        "dategranted": [('from', 'to'), "dateGranted"]
+    }
+}

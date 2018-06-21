@@ -52,12 +52,12 @@ for reqs in extras_require.values():
 setup_requires = [
     'Babel>=1.3',
     'pytest-runner>=2.6.2',
-    'xmlschema>=0.9.13',
+    'xmlschema>=0.9.29',
 ]
 
 install_requires = [
     'Flask-BabelEx>=0.9.2',
-    'xmlschema==0.9.13',
+    'xmlschema==0.9.29',
 ]
 
 packages = find_packages()

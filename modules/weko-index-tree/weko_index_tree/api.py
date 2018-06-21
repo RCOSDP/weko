@@ -32,6 +32,7 @@ from sqlalchemy.sql.expression import func, literal_column
 from sqlalchemy.orm.attributes import flag_modified
 
 from .models import Index, IndexTree
+from .utils import get_tree_json
 
 
 class IndexTrees(object):
@@ -92,6 +93,29 @@ class IndexTrees(object):
 
 class Indexes(object):
     """Define API for index tree creation and update."""
+
+    @classmethod
+    def get_index_tree(cls):
+        """Get index tree json"""
+        with db.session.begin_nested():
+            recursive_t = cls.recu_query()
+            obj = db.session.query(recursive_t).\
+                order_by(recursive_t.c.lev, recursive_t.c.cid).all()
+
+        return get_tree_json(obj)
+
+    @classmethod
+    def get_index(cls, index_id):
+        with db.session.begin_nested():
+            obj = db.session.query(Index.id, Index.index_name,
+                                   Index.index_name_english,
+                                   Index.comment). \
+                filter_by(id=index_id).one_or_none()
+        return obj
+
+    @classmethod
+    def update(cls, index_id, **data):
+        return cls.upt_detail_by_id(index_id, **data)
 
     @classmethod
     def create(cls, indexes=None):

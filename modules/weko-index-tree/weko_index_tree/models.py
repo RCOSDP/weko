@@ -22,10 +22,12 @@
 
 from datetime import datetime
 
+from flask import current_app
 from invenio_db import db
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.inspection import inspect
 from sqlalchemy_utils.types import JSONType
+from sqlalchemy.event import listen
 
 
 class Timestamp(object):
@@ -304,3 +306,14 @@ class Index(db.Model, Timestamp, Serializer):
         del obj['created']
         del obj['thumbnail']
         return obj
+
+
+def index_removed_or_inserted(mapper, connection, target):
+    current_app.config['WEKO_INDEX_TREE_UPDATED'] = True
+
+
+listen(Index, 'after_insert', index_removed_or_inserted)
+listen(Index, 'after_delete', index_removed_or_inserted)
+listen(Index, 'after_update', index_removed_or_inserted)
+
+__all__ = ('Index', 'IndexTree', )

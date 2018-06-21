@@ -160,4 +160,6 @@ whichcraft==0.4.1
 WTForms==2.1
 WTForms-Alchemy==0.16.5
 WTForms-Components==0.10.3
-xmlschema==0.9.13
+elementpath==1.0.6
+defusedxml==0.5.0
+xmlschema==0.9.29

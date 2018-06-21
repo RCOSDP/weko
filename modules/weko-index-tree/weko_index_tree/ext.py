@@ -22,6 +22,7 @@
 
 from . import config
 from .views import blueprint
+from .rest import create_blueprint
 
 
 class WekoIndexTree(object):
@@ -55,6 +56,43 @@ class WekoIndexTree(object):
                 'WEKO_INDEX_TREE_BASE_TEMPLATE',
                 app.config['BASE_EDIT_TEMPLATE'],
             )
+        for k in dir(config):
+            if k.startswith('WEKO_INDEX_TREE_'):
+                app.config.setdefault(k, getattr(config, k))
+
+
+class WekoIndexTreeREST(object):
+    """
+      weko-index-tree Rest Obj
+    """
+
+    def __init__(self, app=None):
+        """Extension initialization.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        if app:
+            self.init_app(app)
+
+    def init_app(self, app):
+        """Flask application initialization.
+
+        Initialize the REST endpoints.  Connect all signals if
+        `DEPOSIT_REGISTER_SIGNALS` is True.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        self.init_config(app)
+        blueprint = create_blueprint(app,
+                                     app.config['WEKO_INDEX_TREE_REST_ENDPOINTS'])
+        app.register_blueprint(blueprint)
+        app.extensions['weko-index-tree-rest'] = self
+
+    def init_config(self, app):
+        """Initialize configuration.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
         for k in dir(config):
             if k.startswith('WEKO_INDEX_TREE_'):
                 app.config.setdefault(k, getattr(config, k))

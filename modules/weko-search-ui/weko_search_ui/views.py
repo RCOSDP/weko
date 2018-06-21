@@ -20,7 +20,8 @@
 
 """Blueprint for weko-search-ui."""
 
-from flask import Blueprint, current_app, render_template, request
+from flask import Blueprint, current_app, render_template, request, g
+from weko_records.utils import get__keywords_data_load
 
 blueprint = Blueprint(
     'weko_search_ui',
@@ -35,5 +36,6 @@ def search():
     """ Index Search page ui."""
     search_type = request.args.get('search_type', '0')
     cur_index_id = search_type if search_type not in ('0', '1', ) else None
+    g.item_type_all = get__keywords_data_load()
     return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
                            index_id=cur_index_id)
