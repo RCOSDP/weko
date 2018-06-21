@@ -33,15 +33,15 @@ logger = get_task_logger(__name__)
 
 
 @shared_task(ignore_result=True)
-def delete_items_by_id(index_id):
+def delete_items_by_id(p_path):
     """
     Delete item Index on ES and update item json column to None
-    :param index_id:
+    :param p_path:
     """
     current_app.logger.debug('index delete task is running.')
     try:
         result = db.session.query(RecordMetadata). \
-            filter(RecordMetadata.json.op('->>')('path').contains(str(index_id))).yield_per(1000)
+            filter(RecordMetadata.json.op('->>')('path').contains(p_path)).yield_per(1000)
         with db.session.begin_nested():
             for r in result:
                 try:
@@ -58,22 +58,26 @@ def delete_items_by_id(index_id):
 
 
 @shared_task(ignore_result=True)
-def update_items_by_id(index_id, pat):
+def update_items_by_id(p_path, target):
     current_app.logger.debug('index update task is running.')
     try:
         result = db.session.query(RecordMetadata). \
-            filter(RecordMetadata.json.op('->>')('path').contains(str(index_id))).yield_per(1000)
+            filter(RecordMetadata.json.op('->>')('path').contains(p_path)).yield_per(1000)
         with db.session.begin_nested():
             for r in result:
                 obj = WekoDeposit(r.json, r)
                 path = obj.get('path')
                 if isinstance(path, list):
-                    new_path = [pat]
+                    new_path_lst = []
                     for p in path:
-                        if index_id not in p:
-                            new_path.append(p)
+                        if p_path in p:
+                            p = p.replace(p_path, target)
+                            p = p[1:] if p.startswith('/') else p
+                            new_path_lst.append(p)
+                        else:
+                            new_path_lst.append(p)
                     del path
-                    obj['path'] = new_path
+                    obj['path'] = new_path_lst
                 obj.update_item_by_task()
                 try:
                     obj.indexer.update_path(obj)
@@ -85,3 +89,4 @@ def update_items_by_id(index_id, pat):
         current_app.logger. \
             exception('Failed to update items for index update. err:{0}'.
                       format(e))
+        update_items_by_id.retry(countdown=5, exc=e, max_retries=1)

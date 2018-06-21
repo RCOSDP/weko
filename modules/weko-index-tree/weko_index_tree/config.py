@@ -29,6 +29,10 @@ WEKO_INDEX_TREE_INDEX_TEMPLATE = 'weko_index_tree/index.html'
 WEKO_INDEX_TREE_EDIT_TEMPLATE = 'weko_index_tree/tree_edit.html'
 """Index template for the index tree page."""
 
+WEKO_INDEX_TREE_API = "/api/tree/index/"
+
+WEKO_INDEX_TREE_LIST_API = "/api/tree"
+
 _IID = 'iid(tid,record_class="weko_index_tree.api:Indexes")'
 
 WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
@@ -36,6 +40,8 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
         record_class='weko_index_tree.api:Indexes',
         index_route='/tree/index/<int:index_id>',
         tree_route='/tree',
+        item_tree_route='/tree/<int:pid_value>',
+        index_move_route='/tree/move/<int:index_id>',
         default_media_type='application/json',
         create_permission_factory_imp=
         'weko_index_tree.permissions:index_tree_permission',
@@ -49,3 +55,4 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
 )
 
 WEKO_INDEX_TREE_UPDATED = True
+"""For index tree cache."""

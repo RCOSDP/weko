@@ -799,7 +799,7 @@
             "match_mapping_type": "string",
             "match_pattern": "regex",
             "match": ".*?",
-            "unmatch": "^((subitem|item)_\\d+)|weko_id$",
+            "unmatch": "^((subitem|item)_\\d+)|weko_id|attribute_value$$",
             "mapping": {
               "type": "string",
               "index": "no"
@@ -822,7 +822,7 @@
           "string": {
             "match_mapping_type": "string",
             "match_pattern": "regex",
-            "match": "^(subitem|item)_\\d+$",
+            "match": "^((subitem|item)_\\d+)|attribute_value$",
             "mapping": {
               "type": "string",
               "index": "no",

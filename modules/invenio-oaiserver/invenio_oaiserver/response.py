@@ -11,9 +11,9 @@
 from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, url_for
-from invenio_db import db
-from invenio_records.api import Record
-from invenio_records.models import RecordMetadata
+# from invenio_db import db
+# from invenio_records.api import Record
+# from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 
@@ -24,7 +24,8 @@ from .query import get_records
 from .resumption_token import serialize
 from .utils import datetime_to_datestamp, serializer
 
-from .api import OaiIdentify;
+from .api import OaiIdentify
+from weko_deposit.api import WekoRecord
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -76,9 +77,9 @@ def envelope(**kwargs):
     return e_tree, e_oaipmh
 
 
-def error(errors):
+def error(errors, **kwargs):
     """Create error element."""
-    e_tree, e_oaipmh = envelope()
+    e_tree, e_oaipmh = envelope(**kwargs)
     for code, message in errors:
         e_error = SubElement(e_oaipmh, etree.QName(NS_OAIPMH, 'error'))
         e_error.set('code', code)
@@ -267,9 +268,19 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
+
+    def get_error_code_msg():
+        code = "noRecordsMatch"
+        msg = "The combination of the values of the from, until, " \
+              "set and metadataPrefix arguments results in an empty list."
+        return [(code, msg)]
+
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
-    record = Record.get_record(pid.object_uuid)
+    # record = Record.get_record(pid.object_uuid)
+    harvest_public_state, record = WekoRecord.get_record_with_hps(pid.object_uuid)
+    if not harvest_public_state:
+        return error(get_error_code_msg(), **kwargs)
 
     e_tree, e_getrecord = verb(**kwargs)
     e_record = SubElement(e_getrecord, etree.QName(NS_OAIPMH, 'record'))
