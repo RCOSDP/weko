@@ -186,7 +186,7 @@ msgstr "抽象"
 
 #: weko_theme/templates/weko_theme/body_search_detail.html:47
 msgid "Publisher"
-msgstr "出版社"
+msgstr "出版者"
 
 #: weko_theme/templates/weko_theme/body_search_detail.html:51
 msgid "Contributors or Author id"
