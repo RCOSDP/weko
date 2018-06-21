@@ -1,4 +1,5 @@
 -e /code/modules/invenio-files-rest
+-e /code/modules/invenio-oaiserver
 -e /code/modules/weko-theme
 -e /code/modules/weko-itemtypes-ui
 -e /code/modules/weko-items-ui
