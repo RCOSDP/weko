@@ -1,5 +1,8 @@
 //** Background color for `<body>`.
-$body-bg:               #fff !default;
+$body-bg:               #ffffff !default;
+
+//** Background color for `<panel-body>`.
+$panel-bg:               #ffffff !default;
 
 //** Background color for `<header>`.
 $navbar-default-bg:     #f8f8f8 !default;
@@ -7,4 +10,4 @@ $navbar-default-bg:     #f8f8f8 !default;
 //** Background color for `<footer>`.
 $footer-default-bg:     #8a8a8a !default;
 
-$panel-default-border:    #ddd !default;
+$panel-default-border:    #dddddd !default;

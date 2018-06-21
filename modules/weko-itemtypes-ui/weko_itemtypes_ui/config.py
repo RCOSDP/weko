@@ -28,7 +28,7 @@ WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE = 'weko_itemtypes_ui/create_itemtype.html'
 
 WEKO_ITEMTYPES_UI_CREATE_PROPERTY = 'weko_itemtypes_ui/create_property.html'
 
-WEKO_ITEMTYPES_UI_MAPPING_TEMPLATE = 'weko_itemtypes_ui/mapping.html'
+WEKO_ITEMTYPES_UI_MAPPING_TEMPLATE = 'weko_itemtypes_ui/create_mapping.html'
 """Mapping template for the item type page."""
 
 WEKO_ITEMTYPES_UI_ERROR_TEMPLATE = 'weko_itemtypes_ui/error.html'

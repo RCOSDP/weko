@@ -22,13 +22,13 @@
 
 import sys
 
-from flask import (
-    Blueprint, Flask, abort, current_app, json, jsonify, make_response,
-    redirect, render_template, request, url_for)
+from flask import Blueprint, Flask, abort, current_app, json, jsonify, \
+    make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from weko_records.api import ItemTypeProps, ItemTypes, Mapping
+from weko_schema_ui.api import WekoSchema
 
 from .permissions import item_type_permission
 
@@ -188,13 +188,29 @@ def mapping_index(ItemTypeID=0):
         item_type = ItemTypes.get_by_id(ItemTypeID)
         if item_type is None:
             return redirect(url_for('.mapping_index', ItemTypeID=lists[0].id))
+        itemtype_list = []
+        itemtype_prop = item_type.schema.get('properties')
+        for key, prop in itemtype_prop.items():
+            itemtype_list.append((key, prop.get('title')))
+        # jpcoar_list = []
+        mapping_name = request.args.get('mapping_type', 'jpcoar_mapping')
+        jpcoar_xsd = WekoSchema.get_all()
+        jpcoar_lists = {}
+        for item in jpcoar_xsd:
+            jpcoar_lists[item.schema_name] = json.loads(item.xsd)
+        # jpcoar_prop = json.loads(jpcoar_xsd.model.xsd)
+        # for key in jpcoar_prop.keys():
+        #     jpcoar_list.append((key, key))
         item_type_mapping = Mapping.get_record(ItemTypeID)
-        mapping = json.dumps(item_type_mapping, indent=4, ensure_ascii=False)
-        current_app.logger.debug(mapping)
+        # mapping = json.dumps(item_type_mapping, indent=4, ensure_ascii=False)
         return render_template(
             current_app.config['WEKO_ITEMTYPES_UI_MAPPING_TEMPLATE'],
             lists=lists,
-            mapping=mapping,
+            hide_mapping_prop=item_type_mapping,
+            mapping_name=mapping_name,
+            hide_itemtype_prop=itemtype_prop,
+            jpcoar_prop_lists=jpcoar_lists,
+            itemtype_list=itemtype_list,
             id=ItemTypeID
         )
     except:
@@ -215,7 +231,7 @@ def mapping_register():
     current_app.logger.debug(data)
     try:
         Mapping.create(item_type_id=data.get('item_type_id'),
-                       mapping=json.loads(data.get('mapping')))
+                       mapping=data.get('mapping'))
         db.session.commit()
     except BaseException:
         db.session.rollback()

@@ -88,6 +88,19 @@ table .license {
     width: 120px;
 }
 
+div .pre-scrollable {
+  overflow-x: hidden;
+}
+
+td .list-group {
+  margin-bottom: 0;
+}
+
+.list-group .list-group-item .radio {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .fileupload-buttonbar .btn,
 .fileupload-buttonbar .toggle {
   margin-bottom: 5px;

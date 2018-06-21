@@ -57,6 +57,7 @@ SPHINX-END
 from flask import Flask
 from flask_babelex import Babel
 from invenio_db import InvenioDB, db
+from invenio_i18n import InvenioI18N
 from weko_records import WekoRecords
 
 from weko_itemtypes_ui import WekoItemtypesUI
@@ -74,9 +75,11 @@ app.config.update(
     SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     WTF_CSRF_ENABLED=False,
+    SQLALCHEMY_DATABASE_URI='postgresql+psycopg2://invenio:dbpass123@localhost:5438/invenio',
 )
 Babel(app)
 InvenioDB(app)
+InvenioI18N(app)
 WekoRecords(app)
 WekoItemtypesUI(app)
 
@@ -85,3 +88,7 @@ WekoItemtypesUI(app)
 def index():
     """Example index page route."""
     return 'Welcome to weko-itemtypes-ui'
+
+
+if __file__ == '__main__':
+    app.run(host='127.0.0.1', port=5000, debug=1)

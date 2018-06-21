@@ -68,3 +68,5 @@ target/
 scripts/demo/contents/
 scripts/demo/elasticsearch/
 scripts/demo/postgresql/
+
+docker-compose.dev.yml
