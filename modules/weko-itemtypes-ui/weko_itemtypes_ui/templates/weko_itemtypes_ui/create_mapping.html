@@ -49,7 +49,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="jpcoar_lists">{{_('jpcoar list')}}</label>
+            <label for="jpcoar_lists">{{_('Schema list')}}</label>
             <select class="form-control" id="jpcoar_lists">
               {%- for mapping_list_name in jpcoar_prop_lists.keys() -%}
               <option  value="{{mapping_list_name}}" {% if mapping_name == mapping_list_name %}selected{% endif %}>{{mapping_list_name}}</option>
