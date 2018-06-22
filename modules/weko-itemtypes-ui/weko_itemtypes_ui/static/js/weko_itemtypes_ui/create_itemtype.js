@@ -23,7 +23,7 @@
       "display_lang_type": "",
       "oai_dc_mapping": "",
       "jpcoar_mapping": "",
-      "junii2_mapping": {"junii2:source":""},
+      "junii2_mapping": {"source":""},
       "lido_mapping": "",
       "lom_mapping": "",
       "spase_mapping": ""
@@ -246,12 +246,12 @@
                                                           },
                                                           "lom_mapping": "",
                                                           "jpcoar_mapping": {
-                                                              "dc:title": ""
+                                                              "title": ""
                                                           },
                                                           "lido_mapping": "",
                                                           "spase_mapping": "",
                                                           "junii2_mapping": {
-                                                              "junii2:title": ""
+                                                              "title": ""
                                                           },
                                                           "display_lang_type": ""
                                                       };
@@ -261,7 +261,7 @@
                                                           },
                                                           "lom_mapping": "",
                                                           "jpcoar_mapping": {
-                                                              "dcterms:alternative": {
+                                                              "alternative": {
                                                                   "@attributes": {
                                                                       "xml:lang": "ja"
                                                                   }
@@ -270,7 +270,7 @@
                                                           "lido_mapping": "",
                                                           "spase_mapping": "",
                                                           "junii2_mapping": {
-                                                              "junii2:alternative": ""
+                                                              "alternative": ""
                                                           },
                                                           "display_lang_type": ""
                                                       };
@@ -280,12 +280,12 @@
                                                 },
                                                 "lom_mapping": "",
                                                 "jpcoar_mapping": {
-                                                    "dc:language": ""
+                                                    "language": ""
                                                 },
                                                 "lido_mapping": "",
                                                 "spase_mapping": "",
                                                 "junii2_mapping": {
-                                                    "junii2:language": ""
+                                                    "language": ""
                                                 },
                                                 "display_lang_type": ""
                                             };
@@ -295,7 +295,7 @@
                                                 },
                                                 "lom_mapping": "",
                                                 "jpcoar_mapping": {
-                                                    "datacite:date": {
+                                                    "date": {
                                                         "@attributes": {
                                                             "dateType": "Available"
                                                         }
@@ -304,7 +304,7 @@
                                                 "lido_mapping": "",
                                                 "spase_mapping": "",
                                                 "junii2_mapping": {
-                                                    "junii2:date": ""
+                                                    "date": ""
                                                 },
                                                 "display_lang_type": ""
                                             };
@@ -314,7 +314,7 @@
                                                 },
                                                 "lom_mapping": "",
                                                 "jpcoar_mapping": {
-                                                    "jpcoar:subject": {
+                                                    "subject": {
                                                         "@attributes": {
                                                             "jpcoar:subjectScheme": "LCC",
                                                             "jpcoar:subjectURI": "http://localhost"
@@ -324,7 +324,7 @@
                                                 "lido_mapping": "",
                                                 "spase_mapping": "",
                                                 "junii2_mapping": {
-                                                    "junii2:subject": ""
+                                                    "subject": ""
                                                 },
                                                 "display_lang_type": ""
                                             };
@@ -334,17 +334,17 @@
                                                 },
                                                 "lom_mapping": "",
                                                 "jpcoar_mapping": {
-                                                    "jpcoar:rightsHolder": {
+                                                    "rightsHolder": {
                                                         "@attributes": {
                                                             "xml:lang": "haha"
                                                         },
-                                                        "jpcoar:rightsHolderName": {}
+                                                        "rightsHolderName": {}
                                                     }
                                                 },
                                                 "lido_mapping": "",
                                                 "spase_mapping": "",
                                                 "junii2_mapping": {
-                                                    "junii2:subject": ""
+                                                    "subject": ""
                                                 },
                                                 "display_lang_type": ""
                                             };

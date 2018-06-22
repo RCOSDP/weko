@@ -178,22 +178,34 @@
                       {% endif %}
                       {% if lst['attribute_type'] == 'creator' %}
                         {%- for l in lst['attribute_value_mlt'] %}
-                          {%- set nid = l.get('nameIdentifierURI') -%}
-                          {%- for k, v in l.items() %}
-                              {%- if k == 'creatorName'  -%}
-                                {% set q = 'search_creator='+v %}
-                                <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ v }}</a><br>
-                              {%- elif k == 'nameIdentifier' and nid -%}
-                                <a href="{{nid}}">{{ v }}</a><br>
-                              {%- else -%}
-                                 {{ v }}<br>
-                              {% endif %}
-                          {% endfor %}
+                          {%- for creatorName in l['creatorNames'] -%}
+                            {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
+                              {%- set q = 'creator='+creatorName['creatorName'] -%}
+                            {%- else -%}
+                              {%- set q = 'id='+l['weko_id'] -%}
+                            {%- endif -%}
+                            <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label class="p-left-10"></label>
+                          {%- endfor -%}
+                          <br>
+                          {%- for nameIdentifier in l['nameIdentifiers'] -%}
+                            {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
+                              {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
+                            {%- else -%}
+                              {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
+                            {%- endif -%}
+                            <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a>
+                          {%- endfor -%}
+                          <br>
+                          {%- if config['EMAIL_DISPLAY_FLG'] -%}
+                            {%- for creatorMail in l['creatorMails'] -%}
+                              <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a>
+                            {%- endfor -%}
+                          {%- endif -%}
                         {% endfor %}
                       {% else %}
                         {%- for l in lst['attribute_value_mlt'] %}
                           {%- for k, v in l.items() %}
-                              {{ v }}<br>
+                            {{ v }}<br>
                           {% endfor %}
                         {% endfor %}
                       {% endif %}

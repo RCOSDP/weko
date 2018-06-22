@@ -73,7 +73,7 @@
 <div class="pre-scrollable">
   <pre class="hide" id="hide_itemtype_prop">{{hide_itemtype_prop|tojson}}</pre>
   {%- for key, value in jpcoar_prop_lists.items() -%}
-  <pre class="hide" id="{{'hide_'+key}}">{{value|tojson}}</pre>
+  <div class="hide" id="{{'hide_'+key}}">{{value|tojson}}</div>
   {%- endfor -%}
   <table class="table"><tbody>
   {%- for (key, name) in itemtype_list -%}
@@ -100,7 +100,7 @@
                 </div>
                 <select class="form-control" name="parent_list">
                   {%- for jp_key in jpcoar_prop_list.keys() -%}
-                  <option value="{{jp_key}}" {%- if jp_key == mapping_key -%}selected{%- endif -%}>{{jp_key}}</option>
+                  <option value="{{ jp_key }}" {%- if jp_key == mapping_key -%}selected{%- endif -%}>{{jp_key}}</option>
                   {%- endfor -%}
                 </select>
                 <div class="btn-group pull-right" data-key="{{key}}">
@@ -153,50 +153,87 @@
 </div>
 <div id="sub_children_lists">
   <div class="row sub_children_list hide">
+    <div class="col-sm-6 sub_children_itemtype_list">
+      <div class="row sub_child_itemtype_list">
+        <div class="col-sm-8">
+          <div class="form">
+            <div class="form-group">
+              <select class="form-control" name="sub_itemtype_list">
+                <option value=""></option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4 del-col-space">
+          <div class="form-inline sub_itemtype_link hide">
+            <div class="form-group has-error">
+              <input type="text" class="form-control max-width-64" maxlength="1" value="">
+            </div>
+            <input type="button" class="btn btn-danger pull-right" data-action="del_sub_child" value="{{_('Delete')}}">
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="col-sm-6">
-      <div class="form">
-        <div class="form-group">
-          <select class="form-control" name="sub_itemtype_list">
-            <option value=""></option>
-          </select>
+      <div class="row">
+        <div class="col-sm-8">
+          <div class="form">
+            <div class="form-group">
+              <select class="form-control" name="sub_jpcoar_list">
+                <option value=""></option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <fieldset class="pull-right">
+            <input type="button" class="btn btn-danger" data-action="del_child" value="{{_('Delete')}}">
+          </fieldset>
+          <input type="button" class="btn btn-info pull-right" data-action="add_child" value="{{_('連結')}}">
         </div>
       </div>
     </div>
-    <div class="col-sm-5">
-      <div class="form">
-        <div class="form-group">
-          <select class="form-control" name="sub_jpcoar_list">
-            <option value=""></option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-1"><fieldset>
-      <input type="button" class="btn btn-danger" data-action="del_child" value="{{_('Delete')}}">
-    </fieldset></div>
   </div>
   <div class="row sub_child_list">
+    <div class="col-sm-6 sub_children_itemtype_list">
+      <div class="row sub_child_itemtype_list">
+        <div class="col-sm-8">
+          <div class="form">
+            <div class="form-group">
+              <select class="form-control" name="sub_itemtype_list">
+                <option value=""></option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <div class="form-inline sub_itemtype_link hide">
+            <div class="form-group del-col-space">
+              <input type="text" class="form-control max-width-64" maxlength="1" value="">
+            </div>
+            <input type="button" class="btn btn-danger pull-right" data-action="del_sub_child" value="{{_('Delete')}}">
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="col-sm-6">
-      <div class="form">
-        <div class="form-group">
-          <select class="form-control" name="sub_itemtype_list">
-            <option value=""></option>
-          </select>
+      <div class="row">
+        <div class="col-sm-8">
+          <div class="form">
+            <div class="form-group">
+              <select class="form-control" name="sub_jpcoar_list">
+                <option value=""></option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4">
+          <fieldset class="pull-right">
+            <input type="button" class="btn btn-danger" data-action="del_child" value="{{_('Delete')}}">
+          </fieldset>
+          <input type="button" class="btn btn-info pull-right" data-action="add_child" value="{{_('連結')}}">
         </div>
       </div>
-    </div>
-    <div class="col-sm-5">
-      <div class="form">
-        <div class="form-group">
-          <select class="form-control" name="sub_jpcoar_list">
-            <option value=""></option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-1"><fieldset disabled>
-      <input type="button" class="btn btn-danger" data-action="del_child" value="{{_('Delete')}}">
-    </fieldset>
     </div>
   </div>
 </div>

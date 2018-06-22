@@ -209,13 +209,46 @@ def mapping_index(ItemTypeID=0):
             hide_mapping_prop=item_type_mapping,
             mapping_name=mapping_name,
             hide_itemtype_prop=itemtype_prop,
-            jpcoar_prop_lists=jpcoar_lists,
+            jpcoar_prop_lists=remove_xsd_prefix(jpcoar_lists),
             itemtype_list=itemtype_list,
             id=ItemTypeID
         )
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
+
+
+@blueprint.route('/mapping/schema', methods=['GET'])
+@blueprint.route('/mapping/schema/', methods=['GET'])
+@blueprint.route('/mapping/schema/<string:SchemaName>', methods=['GET'])
+@login_required
+@item_type_permission.require(http_exception=403)
+def schema_list(SchemaName=None):
+    jpcoar_lists = {}
+    if SchemaName is None:
+        jpcoar_xsd = WekoSchema.get_all()
+        for item in jpcoar_xsd:
+            jpcoar_lists[item.schema_name] = json.loads(item.xsd)
+    else:
+        jpcoar_xsd = WekoSchema.get_record_by_name(SchemaName)
+        if jpcoar_xsd is not None:
+            jpcoar_lists[SchemaName] = json.loads(jpcoar_xsd.model.xsd)
+    return jsonify(remove_xsd_prefix(jpcoar_lists))
+
+
+def remove_xsd_prefix(jpcoar_lists):
+    jpcoar_copy = {}
+
+    def remove_prefix(jpcoar_src, jpcoar_dst):
+        for key, value in jpcoar_src.items():
+            if 'type' == key:
+                continue
+            jpcoar_dst[key.split(':').pop()] = {}
+            if isinstance(value, object):
+                remove_prefix(value, jpcoar_dst[key.split(':').pop()])
+
+    remove_prefix(jpcoar_lists, jpcoar_copy)
+    return jpcoar_copy
 
 
 @blueprint.route('/mapping', methods=['POST'])
