@@ -22,14 +22,14 @@
 
 import os
 import sys
+import hashlib
 
-from flask import abort, current_app, flash, redirect, request, url_for
+from flask import abort, current_app, flash, redirect, request, url_for, jsonify
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 
 from .permissions import admin_permission_factory
 from .utils import allowed_file
-
 
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -56,19 +56,36 @@ class StyleSettingView(BaseView):
                         navbar_default_bg = line[line.find('#'):-1]
                     if '$panel-default-border:' in line:
                         panel_default_border = line[line.find('#'):-1]
-            footer_array = []
-            header_array = []
+
             from weko_theme.views import blueprint as theme_bp
-            f_path = os.path.join(theme_bp.root_path, theme_bp.template_folder,
-                                  current_app.config['THEME_FOOTER_TEMPLATE'])
-            with open(f_path, 'r', encoding='utf-8') as fp:
-                for line in fp.readlines():
-                    footer_array.append(line)
-            f_path = os.path.join(theme_bp.root_path, theme_bp.template_folder,
-                                  current_app.config['THEME_HEADER_TEMPLATE'])
-            with open(f_path, 'r', encoding='utf-8') as fp:
-                for line in fp.readlines():
-                    header_array.append(line)
+
+            # Header
+            f_path_header_wysiwyg = os.path.join(theme_bp.root_path,
+                                                 theme_bp.template_folder,
+                                                 current_app.config['THEME_HEADER_WYSIWYG_TEMPLATE'])
+            header_array_wysiwyg = self.get_contents(f_path_header_wysiwyg)
+
+            f_path_header_editor = os.path.join(theme_bp.root_path,
+                                                theme_bp.template_folder,
+                                                current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
+
+            if self.cmp_files(f_path_header_wysiwyg, f_path_header_editor):
+                header_array_wysiwyg = ['<p><br></p>']
+
+            # Footer
+            f_path_footer_wysiwyg = os.path.join(theme_bp.root_path,
+                                                 theme_bp.template_folder,
+                                                 current_app.config['THEME_FOOTER_WYSIWYG_TEMPLATE'])
+            footer_array_wysiwyg = self.get_contents(f_path_footer_wysiwyg)
+
+            f_path_footer_editor = os.path.join(theme_bp.root_path,
+                                                theme_bp.template_folder,
+                                                current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
+
+            if self.cmp_files(f_path_footer_wysiwyg, f_path_footer_editor):
+                footer_array_wysiwyg = ['<p><br></p>']
+
+            # Color
             if request.method == 'POST':
                 if not admin_permission_factory('update-style-action').can():
                     current_app.logger.debug('deny access')
@@ -104,37 +121,76 @@ class StyleSettingView(BaseView):
             footer_default_bg=footer_default_bg,
             navbar_default_bg=navbar_default_bg,
             panel_default_border=panel_default_border,
-            header_innerHtml=''.join(header_array),
-            footer_innerHtml=''.join(footer_array)
+            header_innerHtml=''.join(header_array_wysiwyg),
+            footer_innerHtml=''.join(footer_array_wysiwyg)
         )
 
-    @expose('/upload_logo', methods=['POST'])
-    def upload_logo(self):
-        if not admin_permission_factory('update-style-action').can():
-            return abort(403)
-        if 'logo_file' not in request.files:
-            current_app.logger.debug('No file part')
-            flash(_('No file part'))
-            return abort(400)
-        fp = request.files['logo_file']
-        if '' == fp.filename:
-            current_app.logger.debug('No selected file')
-            flash(_('No selected file'))
-            return abort(400)
-        if fp and allowed_file(fp.filename):
-            filename = os.path.join(
-                current_app.static_folder, current_app.config['THEME_LOGO'])
-            fp.save(filename)
-        return redirect(url_for('stylesetting.index'))
+    """Upload header/footer settings from wysiwyg editor."""
+    @expose('/upload_editor', methods=['POST'])
+    def upload_editor(self):
+        try:
+            from html import unescape
+            from weko_theme.views import blueprint as theme_bp
+            write_path = folder_path = os.path.join(theme_bp.root_path, theme_bp.template_folder)
+            data = request.get_json()
+            temp = data.get('temp')
+            wysiwyg_html = unescape(data.get('content'))
 
-    def is_visible(self):
-        return True if admin_permission_factory(
-            'update-style-action').can() else admin_permission_factory(
-            action='read-style-action').can()
+            if 'footer' == temp:
+                if 'True' == str(data.get('isEmpty')):
+                    read_path = os.path.join(folder_path,
+                                             current_app.config[
+                                                 'THEME_FOOTER_EDITOR_TEMPLATE'])
+                    wysiwyg_html = self.get_contents(read_path)
 
-    def is_accessible(self):
-        return self.is_visible()
+                write_path = os.path.join(folder_path,
+                                          current_app.config[
+                                          'THEME_FOOTER_WYSIWYG_TEMPLATE'])
+            elif 'header' == temp:
+                if 'True' == str(data.get('isEmpty')):
+                    read_path = os.path.join(folder_path,
+                                             current_app.config[
+                                                 'THEME_HEADER_EDITOR_TEMPLATE'])
+                    wysiwyg_html = self.get_contents(read_path)
 
+                write_path = os.path.join(folder_path,
+                                          current_app.config[
+                                          'THEME_HEADER_WYSIWYG_TEMPLATE'])
+            else:
+                abort(400)
+
+            with open(write_path, 'w+', encoding='utf-8') as fp:
+                fp.writelines(wysiwyg_html)
+        except Exception:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            abort(500)
+        return jsonify({'code': 0, 'msg': 'success'})
+
+    """Get the contents of the file."""
+    def get_contents(self, f_path):
+        array = []
+        try:
+            with open(f_path, 'r', encoding='utf-8') as fp:
+                for line in fp.readlines():
+                    array.append(line)
+        except Exception:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            abort(500)
+        return array
+
+    """Compare the contents of the file."""
+    def cmp_files(self, f_path1, f_path2):
+        checksum1 = ''
+        checksum2 = ''
+        try:
+            with open(f_path1, 'rb') as fp1:
+                checksum1 = hashlib.md5(fp1.read()).hexdigest()
+            with open(f_path2, 'rb') as fp2:
+                checksum2 = hashlib.md5(fp2.read()).hexdigest()
+        except Exception:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            abort(500)
+        return checksum1 == checksum2
 
 style_adminview = {
     'view_class': StyleSettingView,

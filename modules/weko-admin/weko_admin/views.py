@@ -177,27 +177,3 @@ def site_license():
             result=json.dumps(result))
     except:
         abort(500)
-
-
-@blueprint.route('/test_render', methods=['POST'])
-def test_render():
-    try:
-        from html import unescape
-        from weko_theme.views import blueprint as theme_bp
-        f_path = os.path.join(theme_bp.root_path, theme_bp.template_folder)
-        data = request.get_json()
-        temp = data.get('temp')
-        if 'footer' == temp:
-            f_path = os.path.join(f_path,
-                                  current_app.config['THEME_FOOTER_TEMPLATE'])
-        elif 'header' == temp:
-            f_path = os.path.join(f_path,
-                                  current_app.config['THEME_HEADER_TEMPLATE'])
-        else:
-            abort(400)
-        inner_html = unescape(data.get('content'))
-        with open(f_path, 'w+', encoding='utf-8') as fp:
-            fp.writelines(inner_html)
-    except Exception:
-        abort(500)
-    return jsonify({'code': 0, 'msg': 'success'})
