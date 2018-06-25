@@ -22,10 +22,9 @@
 
 {% block css %}
 {{ super() }}
-<link href="{{ url_for('static', filename='css/weko_admin/jquery.wysiwyg.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
+<link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
+<link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
 <style>
   .fileupload-buttonbar .btn,
   .fileupload-buttonbar .toggle {
@@ -58,7 +57,7 @@
     }
   }
 
-  .wysiwyg-editor {
+  #editor-container-header, #editor-container-footer {
     height: 150px;
   }
 
@@ -177,7 +176,7 @@
                       </span>
                     </div>
                     <div id="editor-container-header" class="wysiwyg-editor"></div>
-                    <input type="text" id="header-editor-content" name="header-editor-content" value="{{ header_innerHtml }}" hidden>
+                    <div id="header-editor-content" class="header-editor-content" hidden>{{ header_innerHtml|safe }}</div>
                   </div>
                 </div>
               </div>
@@ -242,7 +241,7 @@
                       </span>
                     </div>
                     <div id="editor-container-footer" class="wysiwyg-editor"></div>
-                    <input type="text" id="footer-editor-content" name="footer-editor-content" value="{{ footer_innerHtml }}" hidden>
+                    <div id="footer-editor-content" class="footer-editor-content" hidden>{{ footer_innerHtml|safe }}</div>
                   </div>
                 </div>
               </div>
@@ -255,12 +254,9 @@
 {%- endblock body %}
 
 {% block tail %}
-<script src="{{ url_for('static', filename='js/weko_admin/jquery-migrate-1.4.1.js') }}"></script>
-<script src="{{ url_for('static', filename='js/weko_admin/jquery.wysiwyg.js') }}"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js"></script>
 <script src="{{ url_for('static', filename='js/weko_admin/quill.min.js') }}"></script>
-
 
 <script>
   $(document).ready(function() {
@@ -284,30 +280,30 @@
       theme: 'snow'
     });
 
-    $('#editor-container-footer').find('.ql-editor').html($('#footer-editor-content').val());
-    $('#editor-container-header').find('.ql-editor').html($('#header-editor-content').val());
-
-    $('#btn_commit_footer').on('click', function(){
-      isEmpty = quill_footer.getText() === '\n' && quill_footer.getLength() === 1;
-      content = $('#editor-container-footer').find('.ql-editor').html();
-      $.ajax({
-        type: 'POST',
-        url: '{{url_for('stylesetting.upload_editor')}}',
-        contentType: 'application/json; charset=UTF-8',
-        data: JSON.stringify({'content': content, 'temp': 'footer', 'isEmpty': isEmpty}),
-        success: function(data){
-        }
-      });
-    });
+    $('#editor-container-header').find('.ql-editor').html($('#header-editor-content').find('.ql-editor').html());
+    $('#editor-container-footer').find('.ql-editor').html($('#footer-editor-content').find('.ql-editor').html());
 
     $('#btn_commit_header').on('click', function(){
       isEmpty = quill_header.getText() === '\n' && quill_header.getLength() === 1;
-      content = $('#editor-container-header').find('.ql-editor').html();
+      content = $('#editor-container-header').find('.ql-editor').prop('outerHTML');
       $.ajax({
         type: 'POST',
         url: '{{url_for('stylesetting.upload_editor')}}',
         contentType: 'application/json; charset=UTF-8',
         data: JSON.stringify({'content': content, 'temp': 'header', 'isEmpty': isEmpty}),
+        success: function(data){
+        }
+      });
+    });
+
+    $('#btn_commit_footer').on('click', function(){
+      isEmpty = quill_footer.getText() === '\n' && quill_footer.getLength() === 1;
+      content = $('#editor-container-footer').find('.ql-editor').prop('outerHTML');
+      $.ajax({
+        type: 'POST',
+        url: '{{url_for('stylesetting.upload_editor')}}',
+        contentType: 'application/json; charset=UTF-8',
+        data: JSON.stringify({'content': content, 'temp': 'footer', 'isEmpty': isEmpty}),
         success: function(data){
         }
       });

@@ -31,10 +31,15 @@ from flask_babelex import gettext as _
 from .permissions import admin_permission_factory
 from .utils import allowed_file
 
+
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         """Block style setting page."""
+        wysiwyg_editor_default = [
+            '<div class="ql-editor ql-blank" data-gramm="false" '
+            'contenteditable="true"><p><br></p></div>']
+
         body_bg = '#fff'
         panel_bg = '#fff'
         footer_default_bg = '#8a8a8a'
@@ -70,7 +75,7 @@ class StyleSettingView(BaseView):
                                                 current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
 
             if self.cmp_files(f_path_header_wysiwyg, f_path_header_editor):
-                header_array_wysiwyg = ['<p><br></p>']
+                header_array_wysiwyg = wysiwyg_editor_default
 
             # Footer
             f_path_footer_wysiwyg = os.path.join(theme_bp.root_path,
@@ -83,7 +88,7 @@ class StyleSettingView(BaseView):
                                                 current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
 
             if self.cmp_files(f_path_footer_wysiwyg, f_path_footer_editor):
-                footer_array_wysiwyg = ['<p><br></p>']
+                footer_array_wysiwyg = wysiwyg_editor_default
 
             # Color
             if request.method == 'POST':
@@ -110,6 +115,9 @@ class StyleSettingView(BaseView):
                         '$navbar-default-bg: ' + navbar_default_bg + ';')
                     form_lines.append(
                         '$panel-default-border: ' + panel_default_border + ';')
+                    form_lines.append(
+                        '$input-bg-transparent: rgba(255, 255, 255, 0);')
+
                     with open(scss_file, 'w', encoding='utf-8') as fp:
                         fp.writelines('\n'.join(form_lines))
         except BaseException:
@@ -125,13 +133,15 @@ class StyleSettingView(BaseView):
             footer_innerHtml=''.join(footer_array_wysiwyg)
         )
 
-    """Upload header/footer settings from wysiwyg editor."""
     @expose('/upload_editor', methods=['POST'])
     def upload_editor(self):
+        """Upload header/footer settings from wysiwyg editor."""
+
         try:
             from html import unescape
             from weko_theme.views import blueprint as theme_bp
-            write_path = folder_path = os.path.join(theme_bp.root_path, theme_bp.template_folder)
+            write_path = folder_path = os.path.join(
+                theme_bp.root_path, theme_bp.template_folder)
             data = request.get_json()
             temp = data.get('temp')
             wysiwyg_html = unescape(data.get('content'))
@@ -145,7 +155,7 @@ class StyleSettingView(BaseView):
 
                 write_path = os.path.join(folder_path,
                                           current_app.config[
-                                          'THEME_FOOTER_WYSIWYG_TEMPLATE'])
+                                              'THEME_FOOTER_WYSIWYG_TEMPLATE'])
             elif 'header' == temp:
                 if 'True' == str(data.get('isEmpty')):
                     read_path = os.path.join(folder_path,
@@ -155,7 +165,7 @@ class StyleSettingView(BaseView):
 
                 write_path = os.path.join(folder_path,
                                           current_app.config[
-                                          'THEME_HEADER_WYSIWYG_TEMPLATE'])
+                                              'THEME_HEADER_WYSIWYG_TEMPLATE'])
             else:
                 abort(400)
 
@@ -166,8 +176,9 @@ class StyleSettingView(BaseView):
             abort(500)
         return jsonify({'code': 0, 'msg': 'success'})
 
-    """Get the contents of the file."""
     def get_contents(self, f_path):
+        """Get the contents of the file."""
+
         array = []
         try:
             with open(f_path, 'r', encoding='utf-8') as fp:
@@ -178,8 +189,9 @@ class StyleSettingView(BaseView):
             abort(500)
         return array
 
-    """Compare the contents of the file."""
     def cmp_files(self, f_path1, f_path2):
+        """Compare the contents of the file."""
+
         checksum1 = ''
         checksum2 = ''
         try:
@@ -191,6 +203,7 @@ class StyleSettingView(BaseView):
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
             abort(500)
         return checksum1 == checksum2
+
 
 style_adminview = {
     'view_class': StyleSettingView,
