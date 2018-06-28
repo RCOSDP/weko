@@ -71,10 +71,10 @@ invenio-marc21==1.0.0a5
 invenio-oaiserver==1.0.0a14
 invenio-oauth2server==1.0.0b2
 invenio-oauthclient==1.0.0b3
-invenio-pidstore==1.0.0b2
+invenio-pidstore==1.0.0
 invenio-previewer==1.0.0a11
 invenio-query-parser==0.6.0
-invenio-records==1.0.0b4
+invenio-records==1.0.0
 invenio-records-files==1.0.0a10
 invenio-records-rest==1.0.0b3
 invenio-records-ui==1.0.0b1
@@ -162,4 +162,4 @@ WTForms-Alchemy==0.16.5
 WTForms-Components==0.10.3
 elementpath==1.0.6
 defusedxml==0.5.0
-xmlschema==0.9.29
+xmlschema==0.9.30
