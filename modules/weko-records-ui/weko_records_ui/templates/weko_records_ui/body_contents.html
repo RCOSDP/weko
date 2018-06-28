@@ -200,6 +200,7 @@
                             {%- for creatorMail in l['creatorMails'] -%}
                               <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a>
                             {%- endfor -%}
+                            <br>
                           {%- endif -%}
                         {% endfor %}
                       {% else %}
