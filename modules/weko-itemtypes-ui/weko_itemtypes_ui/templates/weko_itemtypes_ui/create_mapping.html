@@ -86,6 +86,7 @@
         {%- for jpcoar_prop_key, jpcoar_prop_list in jpcoar_prop_lists.items() -%}
           {%- if key in hide_mapping_prop and jpcoar_prop_key in hide_mapping_prop.get(key)
                  and hide_mapping_prop.get(key).get(jpcoar_prop_key) is mapping -%}
+            {%- set keys_count = hide_mapping_prop.get(key).get(jpcoar_prop_key).keys()|length -%}
             {%- for mapping_key in hide_mapping_prop.get(key).get(jpcoar_prop_key).keys() -%}
             {%- if jpcoar_prop_key == mapping_name -%}
             <li class="{{'list-group-item list_'+jpcoar_prop_key}}">
@@ -99,13 +100,14 @@
                   </label>
                 </div>
                 <select class="form-control" name="parent_list">
+                  {%- if keys_count == 1 -%}<option value=""></option>{%- endif -%}
                   {%- for jp_key in jpcoar_prop_list.keys() -%}
                   <option value="{{ jp_key }}" {%- if jp_key == mapping_key -%}selected{%- endif -%}>{{jp_key}}</option>
                   {%- endfor -%}
                 </select>
                 <div class="btn-group pull-right" data-key="{{key}}">
                   <input type="button" class="btn btn-info" data-action="add" value="{{_('Add')}}">
-                  <input type="button" class="btn btn-danger" data-action="del" value="{{_('Delete')}}">
+                  <input type="button" class="btn btn-danger" data-action="del" value="{{_('Delete')}}" {%- if keys_count == 1 -%}disabled{%- endif -%}>
                 </div>
               </div>
             </li>
@@ -119,17 +121,18 @@
               <div class="form-inline">
                 <div class="radio">
                   <label>
-                    <input type="radio" name="radio_list" value="{{key}}">
+                    <input type="radio" name="radio_parent_list" value="{{key}}">
                   </label>
                 </div>
                 <select class="form-control" name="parent_list">
+                  <option value=""></option>
                   {%- for jp_key in jpcoar_prop_list.keys() -%}
                   <option value="{{jp_key}}">{{jp_key}}</option>
                   {%- endfor -%}
                 </select>
                 <div class="btn-group pull-right" data-key="{{key}}">
                   <input type="button" class="btn btn-info" data-action="add" value="{{_('Add')}}">
-                  <input type="button" class="btn btn-danger" data-action="del" value="{{_('Delete')}}">
+                  <input type="button" class="btn btn-danger" data-action="del" value="{{_('Delete')}}" disabled>
                 </div>
               </div>
             </li>
@@ -140,6 +143,33 @@
   </tr>
   {%- endfor -%}
   </tbody></table>
+</div>
+<div class="row hide">
+  <div class="col-sm-6 col-sm-offset-6">
+    <label id="sub-jpcoar-props-label">{{_('JPCOAR')}}</label><label>(属性)</label>
+  </div>
+</div>
+<div class="row hide">
+  <div class="col-sm-6 col-sm-offset-6">
+    <div class="form-horizontal" id="jpcoar-props-lists">
+      <div class="form-group jpcoar-prop-text-temp hide">
+        <label class="col-sm-4 control-label"></label>
+        <div class="col-sm-8">
+          <input type="text" class="form-control" value="">
+          <p class="help-block"></p>
+        </div>
+      </div>
+      <div class="form-group jpcoar-prop-select-temp hide">
+        <label class="col-sm-4 control-label"></label>
+        <div class="col-sm-8">
+          <select class="form-control">
+            <option value=""></option>
+          </select>
+          <p class="help-block"></p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <hr>
 <div class="row">
@@ -152,7 +182,7 @@
   </div>
 </div>
 <div id="sub_children_lists">
-  <div class="row sub_children_list hide">
+  <div class="row sub_children_list hide"><hr>
     <div class="col-sm-6 sub_children_itemtype_list">
       <div class="row sub_child_itemtype_list">
         <div class="col-sm-8">
@@ -194,7 +224,7 @@
       </div>
     </div>
   </div>
-  <div class="row sub_child_list">
+  <div class="row sub_child_list"><hr>
     <div class="col-sm-6 sub_children_itemtype_list">
       <div class="row sub_child_itemtype_list">
         <div class="col-sm-8">
@@ -239,14 +269,14 @@
 </div>
 <div class="row">
   <div class="col-sm-12">
-    <button id="sub_mapping-create" class="btn btn-primary pull-right">{{_('Create')}}</button>
+    <button id="sub_mapping-create" class="btn btn-primary pull-right" disabled>{{_('Create')}}</button>
   </div>
 </div>
 <div class="row">
-  <div class="col-sm-12">
+  <div class="col-sm-2">
     <pre class="hide" id="hide_mapping_prop">{{hide_mapping_prop|tojson}}</pre>
-    <pre class="pre-scrollable"><code id="preview_mapping">{{ hide_mapping_prop|tojson(indent=4) }}</code></pre>
-    <button id="mapping-submit" class="btn btn-primary pull-right">{{_('Submit')}}</button>
+    <pre class="pre-scrollable hide"><code id="preview_mapping">{{ hide_mapping_prop|tojson(indent=4) }}</code></pre>
+    <button id="mapping-submit" class="btn btn-success">{{_('Submit')}}</button>
   </div>
 </div>
 {%- endblock page_body_main%}

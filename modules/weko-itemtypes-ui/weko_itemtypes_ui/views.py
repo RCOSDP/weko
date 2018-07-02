@@ -242,6 +242,7 @@ def remove_xsd_prefix(jpcoar_lists):
     def remove_prefix(jpcoar_src, jpcoar_dst):
         for key, value in jpcoar_src.items():
             if 'type' == key:
+                jpcoar_dst[key] = value
                 continue
             jpcoar_dst[key.split(':').pop()] = {}
             if isinstance(value, object):
@@ -261,7 +262,6 @@ def mapping_register():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-    current_app.logger.debug(data)
     try:
         Mapping.create(item_type_id=data.get('item_type_id'),
                        mapping=data.get('mapping'))

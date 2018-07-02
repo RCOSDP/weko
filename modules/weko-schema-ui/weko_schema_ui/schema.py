@@ -150,7 +150,8 @@ class SchemaConverter:
         try:
             schema_file = open(schema_file, encoding='utf-8')
             schema_data = xmlschema.XMLSchema(schema_file)
-        except Exception:
+        except Exception as ex:
+            current_app.error(ex)
             abort(
                 400,
                 "Error creating Schema: Can not open xsd file. Please check it!")
