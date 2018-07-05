@@ -34,6 +34,12 @@ template allows to change design and layout of WEKO3.
 THEME_HEADER_TEMPLATE = 'weko_theme/header.html'
 """Header template which is normally included in :data:`BASE_TEMPLATE`."""
 
+THEME_HEADER_EDITOR_TEMPLATE = 'weko_theme/header_editor.html'
+"""Header editor template."""
+
+THEME_HEADER_WYSIWYG_TEMPLATE = 'weko_theme/header_wysiwyg.html'
+"""Header wysiwyg template."""
+
 THEME_HEADER_LOGIN_TEMPLATE = 'weko_theme/header_login.html'
 """Header login template, included in :data:`THEME_HEADER_TEMPLATE`."""
 
@@ -48,6 +54,12 @@ THEME_LOGO_ADMIN = 'images/weko-logo.png'
 
 THEME_FOOTER_TEMPLATE = 'weko_theme/footer.html'
 """Footer template which is normally included in :data:`BASE_TEMPLATE`."""
+
+THEME_FOOTER_EDITOR_TEMPLATE = 'weko_theme/footer_editor.html'
+"""Footer editor template."""
+
+THEME_FOOTER_WYSIWYG_TEMPLATE = 'weko_theme/footer_wysiwyg.html'
+"""Footer wysiwyg template."""
 
 THEME_SITENAME = 'Weko3'
 """The name of the site to be used on the header and as a title."""

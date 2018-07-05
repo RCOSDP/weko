@@ -23,6 +23,9 @@
 {% block css %}
 {{ super() }}
 <link href="{{ url_for('static', filename='css/weko_admin/jquery.wysiwyg.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
 <style>
   .fileupload-buttonbar .btn,
   .fileupload-buttonbar .toggle {
@@ -54,6 +57,15 @@
       height: 100%;
     }
   }
+
+  .wysiwyg-editor {
+    height: 150px;
+  }
+
+  .panel-info {
+    margin-top: 20px;
+  }
+
 </style>
 {% endblock %}
 
@@ -63,44 +75,6 @@
       <div class="panel-group">
         <div class="panel panel-default">
           <div class="panel-body" id="color_setting">
-            <div class="row">
-              <div class="col-sm-10">
-                <form id="logofileupload" class="form-inline" action={{url_for('stylesetting.upload_logo')}} method="post" enctype="multipart/form-data">
-                  <div class="row fileupload-buttonbar">
-                    <div class="col-sm-10">
-                      <span class="btn btn-success fileinput-button">
-                        <i class="glyphicon glyphicon-plus"></i>
-                        <span>{{_('Add Logo file...')}}</span>
-                        <input type="file" id="logo_file" name="logo_file">
-                      </span>
-                      <button type="submit" class="btn btn-primary start">
-                        <i class="glyphicon glyphicon-upload"></i>
-                        <span>{{_('Start upload')}}</span>
-                      </button>
-                    </div>
-                  </div>
-                </form>
-                <table id="logo_info" role="presentation" class="table table-striped hide">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>{{_('File Name')}}</th>
-                      <th>{{_('File Size')}}</th>
-                      <th>{{_('File Type')}}</th>
-                    </tr>
-                  </thead>
-                  <tbody class="files">
-                    <tr>
-                      <td><img id="preview" width="200px" src=""></td>
-                      <td><p id="fpname"></p></td>
-                      <td><p id="fpsize"></p></td>
-                      <td><p id="fptype"></p></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <hr>
             <div class="row">
               <div class="col-sm-10">
                 <form action={{url_for('stylesetting.index')}} method="POST">
@@ -148,11 +122,8 @@
                 <div class="panel panel-info">
                   <div class="panel-heading">
                     <div class="pull-right">
-                      <!--<button type="button" id="btn_review_header" class="btn btn-primary">
-                        <i class="fa fa-eye"></i>{{_('preview')}}
-                      </button>-->
                       <button type="button" id="btn_commit_header" class="btn btn-primary">
-                        <i class="fa fa-gear"></i>{{_('commit')}}
+                        <i class="fa fa-gear"></i>{{_(' commit')}}
                       </button>
                     </div>
                     <div class="panel-title">
@@ -160,7 +131,53 @@
                     </div>
                   </div>
                   <div class="panel-body">
-                    <textarea class="nav-justified" name="wysiwyg_header" id="wysiwyg_header" rows="5" cols="103">{{header_innerHtml}}</textarea>
+                    <div id="toolbar-container-header">
+                      <span class="ql-formats">
+                        <select class="ql-font"></select>
+                        <select class="ql-size"></select>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-bold"></button>
+                        <button class="ql-italic"></button>
+                        <button class="ql-underline"></button>
+                        <button class="ql-strike"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <select class="ql-color"></select>
+                        <select class="ql-background"></select>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-script" value="sub"></button>
+                        <button class="ql-script" value="super"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-header" value="1"></button>
+                        <button class="ql-header" value="2"></button>
+                        <button class="ql-blockquote"></button>
+                        <button class="ql-code-block"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-list" value="ordered"></button>
+                        <button class="ql-list" value="bullet"></button>
+                        <button class="ql-indent" value="-1"></button>
+                        <button class="ql-indent" value="+1"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-direction" value="rtl"></button>
+                        <select class="ql-align"></select>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-link"></button>
+                        <button class="ql-image"></button>
+                        <button class="ql-video"></button>
+                        <button class="ql-formula"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-clean"></button>
+                      </span>
+                    </div>
+                    <div id="editor-container-header" class="wysiwyg-editor"></div>
+                    <input type="text" id="header-editor-content" name="header-editor-content" value="{{ header_innerHtml }}" hidden>
                   </div>
                 </div>
               </div>
@@ -170,9 +187,6 @@
                 <div class="panel panel-info">
                   <div class="panel-heading">
                     <div class="pull-right">
-                      <!--<button type="button" id="btn_review_footer" class="btn btn-primary">
-                        <i class="fa fa-eye"></i>{{_('preview')}}
-                      </button>-->
                       <button type="button" id="btn_commit_footer" class="btn btn-primary">
                         <i class="fa fa-gear"></i>{{_('commit')}}
                       </button>
@@ -182,7 +196,53 @@
                     </div>
                   </div>
                   <div class="panel-body">
-                    <textarea class="nav-justified" name="wysiwyg_footer" id="wysiwyg_footer" rows="5" cols="103">{{footer_innerHtml}}</textarea>
+                    <div id="toolbar-container-footer">
+                      <span class="ql-formats">
+                        <select class="ql-font"></select>
+                        <select class="ql-size"></select>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-bold"></button>
+                        <button class="ql-italic"></button>
+                        <button class="ql-underline"></button>
+                        <button class="ql-strike"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <select class="ql-color"></select>
+                        <select class="ql-background"></select>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-script" value="sub"></button>
+                        <button class="ql-script" value="super"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-header" value="1"></button>
+                        <button class="ql-header" value="2"></button>
+                        <button class="ql-blockquote"></button>
+                        <button class="ql-code-block"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-list" value="ordered"></button>
+                        <button class="ql-list" value="bullet"></button>
+                        <button class="ql-indent" value="-1"></button>
+                        <button class="ql-indent" value="+1"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-direction" value="rtl"></button>
+                        <select class="ql-align"></select>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-link"></button>
+                        <button class="ql-image"></button>
+                        <button class="ql-video"></button>
+                        <button class="ql-formula"></button>
+                      </span>
+                      <span class="ql-formats">
+                        <button class="ql-clean"></button>
+                      </span>
+                    </div>
+                    <div id="editor-container-footer" class="wysiwyg-editor"></div>
+                    <input type="text" id="footer-editor-content" name="footer-editor-content" value="{{ footer_innerHtml }}" hidden>
                   </div>
                 </div>
               </div>
@@ -197,134 +257,61 @@
 {% block tail %}
 <script src="{{ url_for('static', filename='js/weko_admin/jquery-migrate-1.4.1.js') }}"></script>
 <script src="{{ url_for('static', filename='js/weko_admin/jquery.wysiwyg.js') }}"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js"></script>
+<script src="{{ url_for('static', filename='js/weko_admin/quill.min.js') }}"></script>
+
+
 <script>
   $(document).ready(function() {
-    <!--$('#color_setting select').each(function(){-->
-      <!--$(this).on('change', function(){-->
-        <!--var input = '#' + $(this).attr('id') + '_hex';-->
-        <!--var value = $(this).val();-->
-        <!--$(input).val(value);-->
-        <!--$(input).css('background-color', value);-->
-      <!--});-->
-    <!--});-->
-    <!--$('#color_setting select').each(function(){-->
-      <!--var input = '#' + $(this).attr('id') + '_hex';-->
-      <!--var value = $(this).val();-->
-      <!--$(input).val(value);-->
-      <!--$(input).css('background-color', value);-->
-    <!--});-->
-
-    document.querySelector('#logo_file').onchange = function() {
-      $('#fpname').text(this.files[0].name);
-      $('#fpsize').text(humanSize(this.files[0].size, 0));
-      $('#fptype').text(this.files[0].type);
-      $('#logo_info').removeClass('hide');
-    };
-    unit = ['bytes','KB','MB','GB'];
-    function humanSize(defSize, unit_idx) {
-      let tmp_size = round(defSize, 2);
-      let human_size = ''+tmp_size+unit[unit_idx];
-      if(defSize > 1024 && unit_idx < 2) {
-        human_size = humanSize(defSize/1024, ++unit_idx);
-      }
-      return human_size;
-    }
-    function round(number, precision) {
-      return Math.round(+number + 'e' + precision) / Math.pow(10, precision);
-    }
-
-    function htmlEntities( text, proc ) {
-      var entities = [
-        ['amp', '&'],
-        ['apos', '\''],
-        ['lt', '<'],
-        ['gt', '>'],
-      ];
-
-      for ( var i=0, max=entities.length; i<max; i++ ) {
-        if ( 'encode' === proc ) {
-          text = text.replace(new RegExp( entities[i][1], 'g' ), "&"+entities[i][0]+';' ).replace( '"', '&quot;' );
-        } else {
-          text = text.replace( '&quot;', '"' ).replace(new RegExp( '&'+entities[i][0]+';', 'g' ), entities[i][1] );
-        }
-      }
-      return text;
-    }
-
-    $('#btn_review_header').on('click', function(){
-      content = $('#wysiwyg_header').val();
-      $('header').html(htmlEntities(content, 'decode'));
+    var quill_header = new Quill('#editor-container-header', {
+      modules: {
+        formula: true,
+        syntax: true,
+        toolbar: '#toolbar-container-header'
+      },
+      placeholder: '',
+      theme: 'snow'
     });
 
-    $('#btn_review_footer').on('click', function(){
-      content = $('#wysiwyg_footer').val();
-      $('#footer').html(htmlEntities(content, 'decode'));
+    var quill_footer = new Quill('#editor-container-footer', {
+      modules: {
+        formula: true,
+        syntax: true,
+        toolbar: '#toolbar-container-footer'
+      },
+      placeholder: '',
+      theme: 'snow'
     });
+
+    $('#editor-container-footer').find('.ql-editor').html($('#footer-editor-content').val());
+    $('#editor-container-header').find('.ql-editor').html($('#header-editor-content').val());
 
     $('#btn_commit_footer').on('click', function(){
-      content = $('#wysiwyg_footer').val();
+      isEmpty = quill_footer.getText() === '\n' && quill_footer.getLength() === 1;
+      content = $('#editor-container-footer').find('.ql-editor').html();
       $.ajax({
         type: 'POST',
-        url: '{{url_for('weko_admin.test_render')}}',
+        url: '{{url_for('stylesetting.upload_editor')}}',
         contentType: 'application/json; charset=UTF-8',
-        data: JSON.stringify({'content': content, 'temp': 'footer'}),
+        data: JSON.stringify({'content': content, 'temp': 'footer', 'isEmpty': isEmpty}),
         success: function(data){
-          $('#footer').html(htmlEntities(content, 'decode'));
         }
       });
     });
 
-    var wysiwyg_option = {
-      controls: {
-        strikeThrough : { visible : true },
-        underline     : { visible : true },
-
-        separator00 : { visible : true },
-
-        justifyLeft   : { visible : true },
-        justifyCenter : { visible : true },
-        justifyRight  : { visible : true },
-        justifyFull   : { visible : true },
-
-        separator01 : { visible : true },
-
-        indent  : { visible : true },
-        outdent : { visible : true },
-
-        separator02 : { visible : true },
-
-        subscript   : { visible : true },
-        superscript : { visible : true },
-
-        separator03 : { visible : true },
-
-        undo : { visible : true },
-        redo : { visible : true },
-
-        separator04 : { visible : true },
-
-        insertOrderedList    : { visible : true },
-        insertUnorderedList  : { visible : true },
-        insertHorizontalRule : { visible : true },
-
-        h4mozilla : { visible : true && $.browser.mozilla, className : 'h4', command : 'heading', arguments : ['h4'], tags : ['h4'], tooltip : "Header 4" },
-        h5mozilla : { visible : true && $.browser.mozilla, className : 'h5', command : 'heading', arguments : ['h5'], tags : ['h5'], tooltip : "Header 5" },
-        h6mozilla : { visible : true && $.browser.mozilla, className : 'h6', command : 'heading', arguments : ['h6'], tags : ['h6'], tooltip : "Header 6" },
-
-        h4 : { visible : true && !( $.browser.mozilla ), className : 'h4', command : 'formatBlock', arguments : ['<H4>'], tags : ['h4'], tooltip : "Header 4" },
-        h5 : { visible : true && !( $.browser.mozilla ), className : 'h5', command : 'formatBlock', arguments : ['<H5>'], tags : ['h5'], tooltip : "Header 5" },
-        h6 : { visible : true && !( $.browser.mozilla ), className : 'h6', command : 'formatBlock', arguments : ['<H6>'], tags : ['h6'], tooltip : "Header 6" },
-
-        separator07 : { visible : true },
-
-        cut   : { visible : true },
-        copy  : { visible : true },
-        paste : { visible : true }
-      }
-    }
-
-    $('#wysiwyg_header').wysiwyg(wysiwyg_option);
-    $('#wysiwyg_footer').wysiwyg(wysiwyg_option);
-  });
+    $('#btn_commit_header').on('click', function(){
+      isEmpty = quill_header.getText() === '\n' && quill_header.getLength() === 1;
+      content = $('#editor-container-header').find('.ql-editor').html();
+      $.ajax({
+        type: 'POST',
+        url: '{{url_for('stylesetting.upload_editor')}}',
+        contentType: 'application/json; charset=UTF-8',
+        data: JSON.stringify({'content': content, 'temp': 'header', 'isEmpty': isEmpty}),
+        success: function(data){
+        }
+      });
+    });
+  })
 </script>
 {% endblock %}
