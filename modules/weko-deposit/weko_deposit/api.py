@@ -178,16 +178,16 @@ class WekoIndexer(RecordIndexer):
                                           body=search_query)
         return search_result.get('count')
 
-    def get_pid_by_es_scroll(self, index_id):
+    def get_pid_by_es_scroll(self, path):
         """
 
-        :param index_id:
+        :param path:
         :return: _scroll_id
         """
         search_query = {
             "query": {
                 "match": {
-                    "path.tree": index_id
+                    "path.tree": path
                 }
             },
             "_source": "_id",
@@ -440,29 +440,30 @@ class WekoDeposit(Deposit):
         return dc
 
     @classmethod
-    def delete_by_index_tree_id(cls, index_id):
+    def delete_by_index_tree_id(cls, path):
         # first update target pid when index tree id was deleted
-        if cls.update_pid_by_index_tree_id(cls, index_id):
+        if cls.update_pid_by_index_tree_id(cls, path):
             from .tasks import delete_items_by_id
-            delete_items_by_id.delay(index_id)
+            delete_items_by_id.delay(path)
 
     @classmethod
-    def update_by_index_tree_id(cls, index_id, pat):
+    def update_by_index_tree_id(cls, path, target):
         # update item path only
         from .tasks import update_items_by_id
-        update_items_by_id.delay(index_id, pat)
+        update_items_by_id.delay(path)
+        # update_items_by_id(path, target)
 
-    def update_pid_by_index_tree_id(self, index_id):
+    def update_pid_by_index_tree_id(self, path):
         """
          Update pid by index tree id
-        :param index_id:
+        :param path:
         :return: True: process success False: process failed
         """
         p = PersistentIdentifier
         try:
             dt = datetime.utcnow()
             with db.session.begin_nested():
-                for result in self.indexer.get_pid_by_es_scroll(index_id):
+                for result in self.indexer.get_pid_by_es_scroll(path):
                     db.session.query(p). \
                         filter(p.object_uuid.in_(result), p.object_type == 'rec'). \
                         update({p.status: 'D', p.updated: dt},
@@ -549,3 +550,18 @@ class WekoRecord(Record):
             return items
         except:
             abort(500)
+
+    @classmethod
+    def get_record_by_pid(cls, pid):
+        """"""
+        pid = PersistentIdentifier.get('depid', pid)
+        return cls.get_record(id_=pid.object_uuid)
+
+    @classmethod
+    def get_record_with_hps(cls, uuid):
+        record = cls.get_record(id_=uuid)
+        path = record.get('path')
+        harvest_public_state = True
+        if path:
+            harvest_public_state = Indexes.get_harvest_public_state(path)
+        return harvest_public_state, record

@@ -525,6 +525,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
 
 
 __all__ = (
+    'Timestamp',
     'ItemType',
     'ItemTypeName',
     'ItemTypeMapping',

@@ -24,6 +24,17 @@
 
 """Index errors."""
 from invenio_rest.errors import RESTException
+# from flask_babelex import gettext as _
+
+
+SUCCESS_MSG = 'Index deleted successfully.'
+FAILED_MSG = ''
+
+
+class IndexBaseRESTError(RESTException):
+    """Invalid request body."""
+
+    code = 400
 
 
 class InvalidDataRESTError(RESTException):
@@ -31,13 +42,6 @@ class InvalidDataRESTError(RESTException):
 
     code = 400
     description = 'Could not load data.'
-
-
-class IndexMoveRESTError(RESTException):
-    """Invalid request body."""
-
-    code = 409
-    description = 'Can not move items to root index.'
 
 
 class IndexDeletedRESTError(RESTException):
@@ -57,3 +61,13 @@ class IndexNotFoundRESTError(RESTException):
 class IndexUpdatedRESTError(RESTException):
     code = 400
     description = 'Could not update data.'
+
+
+class IndexAddedRESTError(RESTException):
+    code = 400
+    description = 'Could not add data.'
+
+
+class IndexMovedRESTError(RESTException):
+    code = 400
+    description = 'Could not move data.'

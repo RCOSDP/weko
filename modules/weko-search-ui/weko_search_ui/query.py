@@ -295,7 +295,7 @@ def default_search_factory(self, search, query_parser=None):
                 q_s = Q('multi_match', query=qstr, operator='and',
                         fields=['content.file.content^1.5',
                                 'content.file.content.ja^1.2',
-                                '_all', 'search_*'],
+                                '_all', 'search_string'],
                         type='most_fields', minimum_should_match='75%')
                 mt.append(q_s)
         return Q('bool', must=mt) if mt else Q()

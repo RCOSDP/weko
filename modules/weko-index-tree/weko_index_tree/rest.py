@@ -23,17 +23,15 @@
 import json
 
 from functools import wraps
-from flask import (
-    Blueprint, abort, current_app, json, jsonify, request,
-    make_response, url_for)
+from flask import (Blueprint, abort, jsonify, request, make_response)
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
-from weko_deposit.api import WekoDeposit
 
 from .api import Indexes
 from .errors import InvalidDataRESTError, \
-    IndexMoveRESTError, IndexDeletedRESTError, \
-    IndexNotFoundRESTError, IndexUpdatedRESTError
+    IndexBaseRESTError, IndexDeletedRESTError, \
+    IndexNotFoundRESTError, IndexUpdatedRESTError, \
+    IndexAddedRESTError, IndexMovedRESTError
 
 
 def need_record_permission(factory_name):
@@ -128,11 +126,23 @@ def create_blueprint(app, endpoints):
             methods=['GET'],
         )
 
+        blueprint.add_url_rule(
+            options.pop('item_tree_route'),
+            view_func=ita,
+            methods=['GET'],
+        )
+
+        blueprint.add_url_rule(
+            options.pop('index_move_route'),
+            view_func=ita,
+            methods=['PUT'],
+        )
+
     return blueprint
 
 
 class IndexActionResource(ContentNegotiatedMethodView):
-    """redirect to next page(index select) """
+    """Index create update delete view """
     view_name = '{0}_index_action'
 
     def __init__(self, ctx, record_serializers=None,
@@ -161,7 +171,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
     def get(self, index_id):
         """Get a tree index record"""
         try:
-            index = self.record_class.get_index(index_id)
+            index = self.record_class.get_index_with_role(index_id)
             return make_response(jsonify(index), 200)
         except:
             raise InvalidDataRESTError()
@@ -173,6 +183,12 @@ class IndexActionResource(ContentNegotiatedMethodView):
         data = self.loaders[request.mimetype]()
         if not data:
             raise InvalidDataRESTError()
+        if not self.record_class.create(index_id, data):
+            raise IndexAddedRESTError()
+
+        status = 201
+        msg = 'Index created successfully.'
+        return make_response(jsonify({'status': status, 'message': msg}), status)
 
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
@@ -183,6 +199,10 @@ class IndexActionResource(ContentNegotiatedMethodView):
         if not self.record_class.update(index_id, **data):
             raise IndexUpdatedRESTError()
 
+        status = 200
+        msg = 'Index updated successfully.'
+        return make_response(jsonify({'status': status, 'message': msg}), status)
+
     @need_record_permission('delete_permission_factory')
     def delete(self, index_id, **kwargs):
         """Delete a index """
@@ -190,32 +210,26 @@ class IndexActionResource(ContentNegotiatedMethodView):
         if not index_id or index_id <= 0:
             raise IndexNotFoundRESTError()
 
-        data = self.loaders[request.mimetype]()
-
+        action = request.values.get("action", "all")
         res = self.record_class.get_self_path(index_id)
-        result = self.record_class.delete_tree_by_id(index_id)
-        if result:
-            status = 200
-            msg = 'Index deleted Successfully.'
-
-            # delete index with move items
-            if data and data.get("move"):
-                pat = res.path.replace(index_id, "")
-                if pat:
-                    WekoDeposit.update_by_index_tree_id(index_id, pat[:-1])
-                else:
-                    raise IndexMoveRESTError()
-            else:
-                # delete indexes only
-                WekoDeposit.delete_by_index_tree_id(index_id)
-        else:
+        if not res:
             raise IndexDeletedRESTError()
 
+        if action in ('move', 'all'):
+            result = self.record_class.\
+                delete_by_action(action, index_id, res.path)
+            if not result:
+                raise IndexBaseRESTError(description="Could not delete data.")
+        else:
+            raise InvalidDataRESTError()
+
+        status = 200
+        msg = 'Index deleted successfully.'
         return make_response(jsonify({'status': status, 'message': msg}), status)
 
 
 class IndexTreeActionResource(ContentNegotiatedMethodView):
-    """redirect to next page(index select) """
+    """Tree get move action view """
     view_name = '{0}_tree_action'
 
     def __init__(self, ctx, record_serializers=None,
@@ -239,10 +253,30 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             setattr(self, key, value)
 
     @need_record_permission('read_permission_factory')
-    def get(self):
+    def get(self, **kwargs):
         """Get tree json"""
         try:
-            tree = self.record_class.get_index_tree()
+            action = request.values.get("action")
+            pid = kwargs.get('pid_value')
+            if pid:
+                tree = self.record_class.get_contribute_tree(pid)
+            elif action and "browsing" in action:
+                tree = self.record_class.get_browsing_tree()
+            else:
+                tree = self.record_class.get_index_tree()
             return make_response(jsonify(tree), 200)
         except:
             raise InvalidDataRESTError()
+
+    @need_record_permission('update_permission_factory')
+    def put(self, index_id, **kwargs):
+        """Move a index"""
+        data = self.loaders[request.mimetype]()
+        if not data:
+            raise InvalidDataRESTError()
+        if not self.record_class.move(index_id, **data):
+            raise IndexMovedRESTError()
+
+        status = 201
+        msg = 'Index moved successfully.'
+        return make_response(jsonify({'status': status, 'message': msg}), status)

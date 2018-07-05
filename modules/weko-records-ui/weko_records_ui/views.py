@@ -23,12 +23,10 @@
 import six
 from flask import (
     Blueprint, abort, current_app, make_response, redirect,
-    request, url_for, render_template, g)
+    request, url_for)
 from invenio_records_ui.utils import obj_or_import_string
 
-from invenio_records_ui.signals import record_viewed
 from .permissions import check_created_id
-from weko_records.utils import get__keywords_data_load
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -37,29 +35,6 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-
-def view(pid, record, template=None, **kwargs):
-    r"""Display default view.
-
-    Sends record_viewed signal and renders template.
-
-    :param pid: PID object.
-    :param record: Record object.
-    :param template: Template to render.
-    :param \*\*kwargs: Additional view arguments based on URL rule.
-    :returns: The rendered template.
-    """
-    record_viewed.send(
-        current_app._get_current_object(),
-        pid=pid,
-        record=record,
-    )
-    g.item_type_all = get__keywords_data_load()
-    return render_template(
-        template,
-        pid=pid,
-        record=record,
-    )
 
 def publish(pid, record, template=None, **kwargs):
     r"""Record publish  status change view.

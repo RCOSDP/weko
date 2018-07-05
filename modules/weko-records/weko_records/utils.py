@@ -398,7 +398,7 @@ def sort_meta_data_by_options(record_hit):
     return
 
 
-def get__keywords_data_load():
+def get_keywords_data_load(str):
     """
      Get a json of item type info
     :return: dict of item type info

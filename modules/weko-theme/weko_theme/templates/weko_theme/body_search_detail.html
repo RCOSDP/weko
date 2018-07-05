@@ -288,11 +288,15 @@
       <div class="col-sm-1">
         <label>{{_('Item Type')}}</label>
       </div>
-      {% for x in g.item_type_all %}
-      <div class="col-sm-3">
-         <input type="checkbox" id="type_{{x[1]}}" name="itemtype" placeholder="" value="{{x[1]}}">{{x[0]}}
+      <div class="col-sm-11 panel panel-default">
+        <div class="row">
+          {% for x in g.item_type_all %}
+          <div class="col-sm-3">
+            <input type="checkbox" id="type_{{x[1]}}" name="itemtype" placeholder="" value="{{x[1]}}">{{x[0]}}
+          </div>
+          {% endfor %}
+        </div>
       </div>
-      {% endfor %}
     </div>
     <!--言語-->
     <div class="row">

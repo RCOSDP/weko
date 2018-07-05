@@ -20,181 +20,114 @@
 
 """API for weko-index-tree."""
 
-import re, json
 from datetime import datetime
+from copy import deepcopy
 
 from flask import current_app
 from flask_login import current_user
 from invenio_db import db
-from invenio_indexer.api import RecordIndexer
+from invenio_accounts.models import Role
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql.expression import func, literal_column
 from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.sql.expression import func, literal_column
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from .models import Index, IndexTree
-from .utils import get_tree_json
-
-
-class IndexTrees(object):
-    """Define API for index tree creation and update."""
-
-    @classmethod
-    def update(cls, tree=None):
-        """
-        Update the index tree structure. Create if not exists.
-
-        :param tree: the index tree structure in JSON format.
-        :returns: The :class:`IndexTree` instance or None.
-        """
-        assert tree
-        index_tree = cls.get()
-        try:
-            with db.session.begin_nested():
-                if index_tree is None:
-                    # create
-                    index_tree = IndexTree(tree=tree)
-                    db.session.add(index_tree)
-                else:
-                    # update
-                    index_tree.tree = tree
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            return None
-        return index_tree
-
-    @classmethod
-    def get(cls):
-        """Get the index tree structure.
-
-        :returns: The :class:`IndexTree` instance or None.
-        """
-        with db.session.no_autoflush:
-            return IndexTree.query.one_or_none()
-
-    @classmethod
-    def delete(cls, index_id):
-
-        def delete_index(lst):
-            if isinstance(lst, list):
-                for i in range(len(lst)):
-                    if isinstance(lst[i], dict):
-                        if str(index_id) == lst[i].get('id'):
-                            lst.pop(i)
-                            return
-                        else:
-                            delete_index(lst[i].get('children'))
-
-        result = cls.get()
-        delete_index(result.tree)
-        flag_modified(result, 'tree')
-        db.session.merge(result)
+from .models import Index
+from .utils import get_tree_json, cached_index_tree_json, reset_tree
 
 
 class Indexes(object):
     """Define API for index tree creation and update."""
 
     @classmethod
-    def get_index_tree(cls):
-        """Get index tree json"""
-        with db.session.begin_nested():
-            recursive_t = cls.recu_query()
-            obj = db.session.query(recursive_t).\
-                order_by(recursive_t.c.lev, recursive_t.c.cid).all()
-
-        return get_tree_json(obj)
-
-    @classmethod
-    def get_index(cls, index_id):
-        with db.session.begin_nested():
-            obj = db.session.query(Index.id, Index.index_name,
-                                   Index.index_name_english,
-                                   Index.comment). \
-                filter_by(id=index_id).one_or_none()
-        return obj
-
-    @classmethod
-    def update(cls, index_id, **data):
-        return cls.upt_detail_by_id(index_id, **data)
-
-    @classmethod
-    def create(cls, indexes=None):
+    def create(cls, pid=None, indexes=None):
         """
         Create the indexes. Delete all indexes before creation.
 
+        :param pid: parent index id.
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
         """
-        if indexes is None:
-            indexes = []
-        cls.delete_all()
-        index_list = []
-        try:
+
+        def _add_index(data):
             with db.session.begin_nested():
-                for i in indexes:
-                    index = Index.query.filter_by(id=i['id']).first()
-                    if index is not None:
-                        index.parent = i['parent']
-                        index.children = i['children']
-                        index.is_delete = False
-                        db.session.merge(index)
-                    else:
-                        index_list.append(
-                            Index(id=i['id'],
-                                  parent=i['parent'],
-                                  children=i['children'],
-                                  owner_user_id=current_user.get_id(),
-                                  ins_user_id=current_user.get_id(),
-                                  ins_date=datetime.utcnow()))
-                if len(index_list) > 0:
-                    db.session.add_all(index_list)
+                index = Index(**data)
+                db.session.add(index)
             db.session.commit()
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
-            return None
-        return index_list
 
-    @classmethod
-    def delete_all(cls):
-        """Delete all indexes."""
-        Index.query.update({'is_delete': True})
+        if not isinstance(indexes, dict):
+            return
 
-    @classmethod
-    def get_all_descendants(cls, parent_id):
-        """
-        Get all descendants of indexes.
+        data = dict()
+        is_ok = True
+        try:
+            cid = indexes.get('id')
 
-        :param parent_id: Identifier of the parent index.
-        :returns: Type of dictionary.
-            Format: {'child1':['child1', 'grandson1', ...],
-                    'child2':['child2', 'grandson2', ...],
-                    ...}
-        """
-        result = {}
-        with db.session.no_autoflush:
-            indexes = Index.query.filter_by(parent=parent_id)
-        for i in indexes:
-            if i.children is '':
-                result[i.id] = [i.id]
+            if not cid:
+                return
+
+            data["id"] = cid
+            data["parent"] = pid
+            data["index_name"] = indexes.get('value')
+            data["owner_user_id"] = current_user.get_id()
+            role = cls.get_account_role()
+            data["browsing_role"] = \
+                ",".join(list(map(lambda x: str(x['id']), role)))
+            data["contribute_role"] = data["browsing_role"]
+
+            if int(pid) == 0:
+                pid_info = cls.get_root_index_count()
+                data["position"] = 0 if not pid_info else \
+                    (0 if pid_info.position_max is None
+                        else pid_info.position_max + 1)
             else:
-                result[i.id] = [i.id] + i.children.split(',')
-        current_app.logger.debug(result)
-        return result
+                pid_info = cls.get_index(pid, with_count=True)
+
+                if pid_info:
+                    data["position"] = 0 if pid_info.position_max is None \
+                        else pid_info.position_max + 1
+                    iobj = pid_info.Index
+                    data["harvest_public_state"] = iobj.harvest_public_state
+
+                    if iobj.recursive_public_state:
+                        data["public_state"] = iobj.public_state
+                        data["public_date"] = iobj.public_date
+                        data["recursive_public_state"] = iobj.recursive_public_state
+                    if iobj.recursive_browsing_role:
+                        data["browsing_role"] = iobj.browsing_role
+                        data["recursive_browsing_role"] = iobj.recursive_browsing_role
+                    if iobj.recursive_contribute_role:
+                        data["contribute_role"] = iobj.contribute_role
+                        data["recursive_contribute_role"] = iobj.recursive_contribute_role
+                else:
+                    return
+
+            _add_index(data)
+        except IntegrityError as ie:
+            if 'uix_position' in ''.join(ie.args):
+                try:
+                    pid_info = cls.get_index(pid, with_count=True)
+                    data["position"] = 0 if not pid_info else \
+                        (pid_info.position_max + 1
+                            if pid_info.position_max is not None else 0)
+                    _add_index(data)
+                except SQLAlchemyError as ex:
+                    is_ok = False
+                    current_app.logger.debug(ex)
+            else:
+                is_ok = False
+                current_app.logger.debug(ie)
+        except Exception as ex:
+            is_ok = False
+            current_app.logger.debug(ex)
+        finally:
+            del data
+            if not is_ok:
+                db.session.rollback()
+        return is_ok
 
     @classmethod
-    def get_detail_by_id(cls, index_id):
-        """
-        Get detail info of index by index_id.
-
-        :param index_id: Identifier of the index.
-        :return: Type of Index.
-        """
-        index = Index.query.filter_by(id=index_id, is_delete=False).first()
-        return index
-
-    @classmethod
-    def upt_detail_by_id(cls, index_id, **detail):
+    def update(cls, index_id, **data):
         """
         Update the index detail info.
 
@@ -204,37 +137,33 @@ class Indexes(object):
         """
         try:
             with db.session.begin_nested():
-                index = Index.query.filter_by(id=index_id).first()
-                if index is None:
-                    return None
-                for k in detail.keys():
-                    setattr(index, k, detail.get(k))
-                index.mod_user_id = current_user.get_id()
-                index.mod_date = datetime.utcnow()
+                index = cls.get_index(index_id)
+                if not index:
+                    return
+
+                for k, v in data.items():
+                    if isinstance(getattr(index, k), int):
+                        if isinstance(v, str) and len(v) == 0:
+                            continue
+                    if isinstance(v, dict):
+                        v = ",".join(map(lambda x: str(x["id"]), v["allow"]))
+                    if "public_date" in k:
+                        if len(v) > 0:
+                            v = datetime.strptime(v, '%Y%m%d')
+                        else:
+                            v = None
+                    setattr(index, k, v)
+                index.owner_user_id = current_user.get_id()
                 db.session.merge(index)
             db.session.commit()
+            return index
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
-            return None
-        return index
+        return
 
     @classmethod
-    def get_thumbnail_by_id(cls, index_id):
-        """
-        Get the thumbnail of index by index id.
-
-        :param index_id: Identifier of the index.
-        :return: the binary data of thumbnail.
-        """
-        try:
-            index = Index.query.filter_by(id=index_id).first()
-        except Exception as ex:
-            return None
-        return index.thumbnail
-
-    @classmethod
-    def delete_tree_by_id(cls, index_id):
+    def delete(cls, index_id, del_self=False):
         """
         Delete the index by index id.
 
@@ -242,31 +171,320 @@ class Indexes(object):
         :return: bool True: Delete success None: Delete failed
         """
         try:
-            with db.session.no_autoflush:
-                recursive_t = cls.recu_query(pid=index_id)
-                obj = db.session.query(recursive_t).\
-                union_all(db.session.query(Index.parent, Index.id,
-                                           literal_column("''", db.Text).label("path"),
-                                           literal_column("''", db.Text).label("name"),
-                                           literal_column("0", db.Integer).label("lev")).
-                          filter(Index.id == index_id,
-                                 Index.is_delete == False)).all()
-
-            if obj:
-                p_lst = [o.cid for o in obj]
+            if del_self:
                 with db.session.begin_nested():
-                    IndexTrees.delete(index_id)
-                    dct = db.session.query(Index).filter(Index.id.in_(p_lst)).\
-                        delete(synchronize_session='fetch')
-                        # update({Index.is_delete: True, Index.del_date: datetime.utcnow()},
-                        #        synchronize_session=False)
-                db.session.commit()
-                return dct
+                    slf = cls.get_index(index_id)
+                    if not slf:
+                        return
+
+                    dct = db.session.query(Index).filter(Index.parent == index_id).\
+                        update({Index.parent: slf.parent,
+                                Index.owner_user_id: current_user.get_id(),
+                                Index.updated: datetime.utcnow()},
+                               synchronize_session='fetch')
+                    db.session.delete(slf)
+                    db.session.commit()
+                    return dct
+            else:
+                with db.session.no_autoflush:
+                    recursive_t = cls.recs_query(pid=index_id)
+                    obj = db.session.query(recursive_t).\
+                    union_all(db.session.query(Index.parent, Index.id,
+                                               literal_column("''", db.Text).label("path"),
+                                               literal_column("''", db.Text).label("name"),
+                                               literal_column("0", db.Integer).label("lev")).
+                              filter(Index.id == index_id)).all()
+
+                if obj:
+                    p_lst = [o.cid for o in obj]
+                    with db.session.begin_nested():
+                        dct = db.session.query(Index).filter(Index.id.in_(p_lst)).\
+                            delete(synchronize_session='fetch')
+                    db.session.commit()
+                    return dct
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
             return None
         return 0
+
+    @classmethod
+    def delete_by_action(cls, action, index_id, path):
+        from weko_deposit.api import WekoDeposit
+        if "move" == action:
+            result = cls.delete(index_id, True)
+            if result is not None:
+                # move indexes all
+                target = path.split('/')
+                if len(target) >= 2:
+                    target.pop(-2)
+                    target = "/".join(target)
+                else:
+                    target = ""
+                WekoDeposit.update_by_index_tree_id(path, target)
+        else:
+            result = cls.delete(index_id)
+            if result is not None:
+                # delete indexes all
+                WekoDeposit.delete_by_index_tree_id(path)
+        return result
+
+    @classmethod
+    def move(cls, index_id, **data):
+
+        def _update_index(parent=None):
+            with db.session.begin_nested():
+                index = Index.query.filter_by(id=index_id).one()
+                index.position = position_max
+                index.owner_user_id = user_id
+                flag_modified(index, 'position')
+                flag_modified(index, 'owner_user_id')
+                if parent:
+                    index.parent = parent
+                    flag_modified(index, 'parent')
+                db.session.merge(index)
+            db.session.commit()
+
+        is_ok = True
+        user_id = current_user.get_id()
+        position_max = 0
+
+        if isinstance(data, dict):
+            pre_parent = data.get('pre_parent')
+            parent = data.get('parent')
+            if not pre_parent or not parent:
+                return False
+
+            try:
+                # move index on the same hierarchy
+                if str(pre_parent) == str(parent):
+                    parent_info = cls.get_index(pre_parent, with_count=True)
+                    position = int(data.get('position'))
+                    pmax = parent_info.position_max \
+                        if parent_info.position_max is not None else 0
+
+                    if position >= pmax:
+                        position_max = pmax + 1
+                        try:
+                            _update_index()
+                        except IntegrityError as ie:
+                            if 'uix_position' in ''.join(ie.args):
+                                try:
+                                    position_max += 1
+                                    _update_index()
+                                except SQLAlchemyError as ex:
+                                    is_ok = False
+                                    current_app.logger.debug(ex)
+                            else:
+                                is_ok = False
+                                current_app.logger.debug(ie)
+                        except Exception as ex:
+                            is_ok = False
+                            current_app.logger.debug(ex)
+                        finally:
+                            if not is_ok:
+                                db.session.rollback()
+                    else:
+                        position_max = position
+                        try:
+                            with db.session.begin_nested():
+                                nlst = Index.query.filter_by(parent=parent).\
+                                    order_by(Index.position).with_for_update().all()
+                                n = t = -1
+
+                                for i in range(len(nlst)):
+                                    db.session.delete(nlst[i])
+                                    if nlst[i].id == index_id:
+                                        n = i
+                                    if position == nlst[i].position:
+                                        t = i
+                                # if the index has been deleted.
+                                if n < 0:
+                                    raise Exception()
+
+                                pre_index = nlst.pop(n)
+                                if n < t:
+                                    t -= 1
+                                if t < 0:
+                                    t = position - 1
+
+                                nlst.insert(t + 1, pre_index)
+                                db.session.flush()
+                                for i in range(len(nlst)):
+                                    nid = Index()
+                                    for k in dict(nid).keys():
+                                        setattr(nid, k, getattr(nlst[i], k))
+                                    nid.position = i
+                                    nid.owner_user_id = user_id
+                                    db.session.add(nid)
+                            db.session.commit()
+                        except Exception as ex:
+                            is_ok = False
+                            current_app.logger.debug(ex)
+                        finally:
+                            if not is_ok:
+                                db.session.rollback()
+                else:
+                    slf_path = cls.get_self_path(index_id)
+                    parent_info = cls.get_index(parent, with_count=True)
+                    position_max = parent_info.position_max + 1 \
+                        if parent_info.position_max is not None else 0
+                    try:
+                        _update_index(parent)
+                    except IntegrityError as ie:
+                        if 'uix_position' in ''.join(ie.args):
+                            try:
+                                parent_info = cls.get_index(parent, with_count=True)
+                                position_max = parent_info.position_max + 1 \
+                                    if parent_info.position_max is not None else 0
+                                _update_index()
+                            except SQLAlchemyError as ex:
+                                is_ok = False
+                                current_app.logger.debug(ex)
+                        else:
+                            is_ok = False
+                            current_app.logger.debug(ie)
+                    except Exception as ex:
+                        is_ok = False
+                        current_app.logger.debug(ex)
+                    finally:
+                        if not is_ok:
+                            db.session.rollback()
+
+                    # move items
+                    target = cls.get_self_path(index_id)
+                    from weko_deposit.api import WekoDeposit
+                    WekoDeposit.update_by_index_tree_id(slf_path.path, target.path)
+            except Exception:
+                is_ok = False
+        return is_ok
+
+    @classmethod
+    @cached_index_tree_json(timeout=None)
+    def get_index_tree(cls):
+        """Get index tree json"""
+        return get_tree_json(cls.get_recursive_tree())
+
+    @classmethod
+    def get_browsing_tree(cls):
+        tree = cls.get_index_tree()
+        reset_tree(tree)
+        return tree
+
+    @classmethod
+    def get_contribute_tree(cls, pid):
+        """"""
+        from weko_deposit.api import WekoRecord
+        record = WekoRecord.get_record_by_pid(pid)
+        tree = cls.get_index_tree()
+        if record.get('_oai'):
+            reset_tree(tree, record.get('path'))
+        else:
+            reset_tree(tree, [])
+
+        return tree
+
+    @classmethod
+    def get_recursive_tree(cls):
+        with db.session.begin_nested():
+            recursive_t = cls.recs_tree_query()
+
+            qlst = [recursive_t.c.pid, recursive_t.c.cid,
+                    recursive_t.c.position, recursive_t.c.name,
+                    recursive_t.c.public_state, recursive_t.c.public_date,
+                    recursive_t.c.browsing_role, recursive_t.c.contribute_role
+                    ]
+            obj = db.session.query(*qlst). \
+                order_by(recursive_t.c.lev,
+                         recursive_t.c.pid,
+                         recursive_t.c.cid).all()
+        return obj
+
+    @classmethod
+    def get_index_with_role(cls, index_id):
+
+        def _get_allow_deny(allow, role):
+            alw = []
+            deny = []
+            if isinstance(role, list):
+                while role:
+                    tmp = role.pop(0)
+                    if str(tmp["id"]) in allow:
+                        alw.append(tmp)
+                    else:
+                        deny.append(tmp)
+            return alw, deny
+
+        index = dict(cls.get_index(index_id))
+        role = cls.get_account_role()
+
+        allow = index["browsing_role"].split(',') \
+            if len(index["browsing_role"]) else None
+        if allow:
+            allow, deny = _get_allow_deny(allow, deepcopy(role))
+        else:
+            allow = role
+            deny = []
+        index["browsing_role"] = dict(allow=allow, deny=deny)
+
+        allow = index["contribute_role"].split(',') \
+            if len(index["contribute_role"]) else None
+        if allow:
+            allow, deny = _get_allow_deny(allow, role)
+        else:
+            allow = role
+            deny = []
+        index["contribute_role"] = dict(allow=allow, deny=deny)
+        if index["public_date"]:
+            index["public_date"] = index["public_date"].strftime('%Y%m%d')
+
+        return index
+
+    @classmethod
+    def get_index(cls, index_id, with_count=False):
+        with db.session.begin_nested():
+            if with_count:
+                stmt = db.session.query(Index.parent, func.max(Index.position).
+                                        label('position_max'))\
+                    .filter(Index.parent == index_id)\
+                    .group_by(Index.parent).subquery()
+                obj = db.session.query(Index, stmt.c.position_max). \
+                    outerjoin(stmt, Index.id == stmt.c.parent).\
+                    filter(Index.id == index_id).one_or_none()
+            else:
+                obj = db.session.query(Index).\
+                    filter_by(id=index_id).one_or_none()
+        return obj
+
+    @classmethod
+    def get_root_index_count(cls):
+        with db.session.begin_nested():
+            obj = db.session.query(Index.parent,
+                                   func.max(Index.position).
+                                   label('position_max')).\
+                filter_by(parent=0).group_by(Index.parent).one_or_none()
+        return obj
+
+    @classmethod
+    def get_account_role(cls):
+
+        def _get_dict(x):
+            dt = dict()
+            for k, v in x.__dict__.items():
+                if not k.startswith('__') and not k.startswith('_') \
+                        and "description" not in k:
+                    if not v:
+                        v = ""
+                    if isinstance(v, int) or isinstance(v, str):
+                        dt[k] = v
+            return dt
+
+        try:
+            with db.session.no_autoflush:
+                role = Role.query.all()
+            return list(map(_get_dict, role)) + [{"id": 99, "name": "Guest"}]
+        except SQLAlchemyError:
+            return
 
     @classmethod
     def get_path_list(cls, node_lst):
@@ -276,7 +494,7 @@ class Indexes(object):
         :param node_lst: Identifier list of the index.
         :return: the list of index.
         """
-        recursive_t = cls.recu_query()
+        recursive_t = cls.recs_query()
         q = db.session.query(recursive_t).filter(
             recursive_t.c.cid.in_(node_lst)).all()
         return q
@@ -289,7 +507,7 @@ class Indexes(object):
         :param node_path: Identifier list of the index.
         :return: the list of index.
         """
-        recursive_t = cls.recu_query()
+        recursive_t = cls.recs_query()
         q = db.session.query(recursive_t).filter(
             recursive_t.c.path.in_(node_path)). \
             order_by(recursive_t.c.path).all()
@@ -305,7 +523,7 @@ class Indexes(object):
         """
         index = node_path.rfind('/')
         pid = node_path[index + 1:]
-        recursive_t = cls.recu_query()
+        recursive_t = cls.recs_query()
         q = db.session.query(recursive_t).filter(
             db.or_(recursive_t.c.pid == pid,
                    recursive_t.c.cid == pid)). \
@@ -320,12 +538,12 @@ class Indexes(object):
         :param node_id: Identifier of the index.
         :return: the type of Index.
         """
-        recursive_t = cls.recu_query()
+        recursive_t = cls.recs_query()
         return db.session.query(recursive_t).filter(
             recursive_t.c.cid == str(node_id)).one_or_none()
 
     @classmethod
-    def recu_query(cls, pid=0):
+    def recs_query(cls, pid=0):
         """
         Init select condition of index.
 
@@ -337,8 +555,7 @@ class Indexes(object):
             func.cast(Index.id, db.Text).label("path"),
             Index.index_name.label("name"),
             literal_column("1", db.Integer).label("lev")).filter(
-            Index.parent == pid,
-            Index.is_delete == False). \
+            Index.parent == pid). \
             cte(name="recursive_t", recursive=True)
 
         rec_alias = aliased(recursive_t, name="rec")
@@ -350,120 +567,66 @@ class Indexes(object):
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
                 rec_alias.c.name + '/' + test_alias.index_name,
                 rec_alias.c.lev + 1).filter(
-                test_alias.parent == rec_alias.c.cid,
-                test_alias.is_delete == False)
+                test_alias.parent == rec_alias.c.cid)
         )
 
         return recursive_t
 
     @classmethod
-    def has_children(cls, parent_id):
+    def recs_tree_query(cls, pid=0):
         """
-        Check if has children branch.
+        Init select condition of index.
 
-        :param parent_id: Identifier of the index.
-        :return: the count of the children branch
+        :return: the query of db.session.
         """
-        children_count = Index.query.filter_by(parent=parent_id).count()
-        return children_count
+        recursive_t = db.session.query(
+            Index.parent.label("pid"),
+            Index.id.label("cid"),
+            func.cast(Index.id, db.Text).label("path"),
+            Index.index_name.label("name"),
+            Index.position,
+            Index.public_state,
+            Index.public_date,
+            Index.browsing_role,
+            Index.contribute_role,
+            literal_column("1", db.Integer).label("lev")).filter(
+            Index.parent == pid). \
+            cte(name="recursive_t", recursive=True)
+
+        rec_alias = aliased(recursive_t, name="rec")
+        test_alias = aliased(Index, name="t")
+        recursive_t = recursive_t.union_all(
+            db.session.query(
+                test_alias.parent,
+                test_alias.id,
+                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                test_alias.index_name,
+                test_alias.position,
+                test_alias.public_state,
+                test_alias.public_date,
+                test_alias.browsing_role,
+                test_alias.contribute_role,
+                rec_alias.c.lev + 1).filter(
+                test_alias.parent == rec_alias.c.cid)
+        )
+
+        return recursive_t
 
     @classmethod
-    def get_all_descendants_id(cls, parent_id):
-        """
-        Get all of descendants id for parent.
-
-        :param parent_id: Identifier of the index.
-        :return: the id list of all descendant
-        """
-        descendant = Index.query.filter_by(id=parent_id).one_or_none()
-        if descendant is None:
-            return None
-        return descendant.split(',')
-
-
-class ItemRecord(RecordIndexer):
-    """Item Record."""
-
-    @staticmethod
-    def get_es_index():
-        """
-        Get the index and doc type of Elasticsearch.
-
-        :return: index,doc_type.
-        """
-        index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-        doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
-        return index, doc_type
-
-    def get_count_by_index_id(self, tree_path):
-        """
-        Get the count of item which belong to the index.
-
-        :param tree_path: Identifier of the index.
-        :return: The count of item.
-        """
-        search_query = {
-            "query": {
-                "term": {
-                    "path.tree": tree_path
-                }
-            }
-        }
-        index, doc_type = ItemRecord.get_es_index()
-        search_result = self.client.count(index=index,
-                                          doc_type=doc_type,
-                                          body=search_query)
-        return search_result.get('count')
-
-    def del_items_by_index_id(self, index_id, with_children=False):
-        """
-        Delete item record for ES and DB by index_id.
-
-        :param index_id: The index id for delete.
-        :param with_children: True: delete the children of the index.
-                               False: move the children to parent leaf.
-        :return: The count of delete and update.
-                  Format: count_del, count_upt.
-        """
-        count_del, count_upt = 0, 0
-        search_query = {
-            "query": {
-                "wildcard": {
-                    "path.tree": '*' + index_id + '*'
-                }
-            },
-            "_source": "path"
-        }
-        index, doc_type = ItemRecord.get_es_index()
-        search_result = self.client.search(index=index,
-                                           doc_type=doc_type,
-                                           body=search_query)
-        search_records = search_result.get('hits')
-        search_count = search_records.get('total')
-        if search_count <= 0:
-            return count_del, count_upt
-        regx_match = '/' + index_id
-        search_records = search_records.get('hits')
-        for record in search_records:
-            record_id = record.get('_id')
-            record_path = record.get('_source').get('path')
-            upt_tree = []
-            for path in record_path:
-                if not with_children:
-                    # move descendants to forebear
-                    upt_tree.append(re.sub(regx_match, '', path))
-                else:
-                    # delete all descendants
-                    if re.search(regx_match, path) is None:
-                        upt_tree.append(path)
-            if len(upt_tree) == 0:
-                self.delete_by_id(record_id)
-                count_del += 1
-            else:
-                self.client.update(index=index,
-                                   doc_type=doc_type,
-                                   id=record_id,
-                                   body={"doc": {"path": upt_tree}})
-            count_upt += 1
-        return count_del, count_upt
-
+    def get_harvest_public_state(cls, path):
+        try:
+            last_path = path.pop(-1).split('/')
+            qry = db.session.\
+                query(func.every(Index.harvest_public_state).
+                      label('parent_state')).filter(Index.id.in_(last_path))
+            for i in range(len(path)):
+                path[i] = path[i].split('/')
+                path[i] = db.session.\
+                    query(func.every(Index.harvest_public_state)).\
+                    filter(Index.id.in_(path[i]))
+            smt = qry.union_all(*path).subquery()
+            result = db.session.query(func.bool_or(smt.c.parent_state).label('parent_state')).one()
+            return result.parent_state
+        except Exception as se:
+            current_app.logger.debug(se)
+            return False
