@@ -1,18 +1,19 @@
-# Translations template for invenio-oaiserver.
+# Japanese translations for invenio-oaiserver.
 # Copyright (C) 2018 CERN
 # This file is distributed under the same license as the invenio-oaiserver
 # project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: invenio-oaiserver 1.0.0\n"
 "Report-Msgid-Bugs-To: info@inveniosoftware.org\n"
 "POT-Creation-Date: 2018-07-06 15:32+0900\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2018-07-06 15:33+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -20,35 +21,35 @@ msgstr ""
 
 #: invenio_oaiserver/admin.py:51 invenio_oaiserver/admin.py:89
 msgid "OAI-PMH"
-msgstr ""
+msgstr "OAI-PMH"
 
 #: invenio_oaiserver/admin.py:52
 msgid "Sets"
-msgstr ""
+msgstr "設定"
 
 #: invenio_oaiserver/admin.py:66
 msgid "outPutSet"
-msgstr ""
+msgstr "出力"
 
 #: invenio_oaiserver/admin.py:67 invenio_oaiserver/models.py:153
 msgid "Emails"
-msgstr ""
+msgstr "Email"
 
 #: invenio_oaiserver/admin.py:68
 msgid "RepositoryName"
-msgstr ""
+msgstr "RepositoryName"
 
 #: invenio_oaiserver/admin.py:69
 msgid "EarliestDatastamp"
-msgstr ""
+msgstr "EarliestDatastamp"
 
 #: invenio_oaiserver/admin.py:90
 msgid "Identify"
-msgstr ""
+msgstr "Identify"
 
 #: invenio_oaiserver/models.py:37
 msgid "Identifier"
-msgstr ""
+msgstr "Identifier"
 
 #: invenio_oaiserver/models.py:38
 msgid "Identifier of the set."

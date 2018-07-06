@@ -56,18 +56,19 @@ set_adminview = dict(
 class IdentifyModelView(ModelView):
     """OAIPMH model view."""
 
-    outputing =_('outPutSetting')
-    emails = _('emails')
-    repositoryName = _('repositoryName')
-    earliestDatastamp = _('earliestDatastamp')
-
     can_create = True
     can_edit = True
     can_delete = False
     can_view_details = False
-    column_list = (outputing, emails, repositoryName, earliestDatastamp)
-    column_details_list = (outputing, emails, repositoryName, earliestDatastamp)
-    form_columns = (outputing, emails, repositoryName, earliestDatastamp)
+    column_list = ('outPutSetting', 'emails', 'repositoryName', 'earliestDatastamp')
+    column_details_list = ('outPutSetting', 'emails', 'repositoryName', 'earliestDatastamp')
+    column_labels = dict(
+        outPutSetting=_('outPutSet'),
+        emails= _('Emails'),
+        repositoryName= _('RepositoryName'),
+        earliestDatastamp= _('EarliestDatastamp'),
+    )
+    form_columns = ('outPutSetting', 'emails', 'repositoryName', 'earliestDatastamp')
     page_size = 25
 
 
