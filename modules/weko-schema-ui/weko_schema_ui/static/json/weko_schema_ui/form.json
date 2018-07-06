@@ -2,6 +2,7 @@
   "file_name",
   "name",
   "root_name",
+  "zip_name",
   "xsd_file",
   {
     "key": "comment",

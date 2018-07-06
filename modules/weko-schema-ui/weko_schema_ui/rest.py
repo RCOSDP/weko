@@ -24,6 +24,7 @@ import json
 import os.path
 import shutil
 import uuid
+import zipfile
 
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_db import db
@@ -194,20 +195,35 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
         pid = request.view_args.get('pid_value')
         # the second post
         if pid:
-            furl = self.xsd_location_folder + 'tmp/' + pid + '/'
-            dst = self.xsd_location_folder + pid + '/'
+            # furl = self.xsd_location_folder + 'tmp/' + pid + '/'
+            furl = os.path.join(self.xsd_location_folder, 'tmp', pid)
+            # dst = self.xsd_location_folder + pid + '/'
+            dst = os.path.join(self.xsd_location_folder, pid)
             data.pop('$schema')
-            sn = data.get('name')
+            sn = data.get('name') if 'name' in data else None
+            root_name = data.get('root_name') if 'root_name' in data else None
+            if root_name is None or len(root_name) == 0:
+                abort(400, 'Root Name is empty.')
+            if sn is None or len(sn) == 0:
+                sn = root_name
+            if not sn.endswith('_mapping'):
+                sn = sn + '_mapping'
 
             if not os.path.exists(furl):
                 return jsonify({'status': 'Please upload file first.'})
 
-            fn = data.get('file_name')
-            fn = furl + (fn if '.' in fn else fn + '.xsd')
+            fn = data.get('file_name') if 'file_name' in data else None
+            zip_file = data.get('zip_name') if 'zip_name' in data else None
+            fn = os.path.join(furl, (fn if '.' in fn else fn + '.xsd'))
 
-            xsd = SchemaConverter(fn, data.get('root_name'))
+            # if zip file unzip first
+            if not zip_file is None and zip_file.endswith('.zip'):
+                with zipfile.ZipFile(os.path.join(furl, zip_file)) as fp:
+                    fp.extractall(furl)
+
+            xsd = SchemaConverter(fn, root_name)
             try:
-                self.record_class.create(pid, sn + '_mapping', data,
+                self.record_class.create(pid, sn, data,
                                          xsd.to_dict(), data.get('xsd_file'),
                                          xsd.namespaces)
                 db.session.commit()
