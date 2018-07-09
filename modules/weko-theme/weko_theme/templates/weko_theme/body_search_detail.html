@@ -290,7 +290,7 @@
       </div>
       <div class="col-sm-11 panel panel-default">
         <div class="row">
-          {% for x in g.item_type_all %}
+          {% for x in ''|item_type_all %}
           <div class="col-sm-3">
             <input type="checkbox" id="type_{{x[1]}}" name="itemtype" placeholder="" value="{{x[1]}}">{{x[0]}}
           </div>
