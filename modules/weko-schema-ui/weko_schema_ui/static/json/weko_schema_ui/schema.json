@@ -17,6 +17,11 @@
       "type": "string",
       "description": "Schema's root element name."
     },
+    "zip_name": {
+      "title": "Zip Name",
+      "type": "string",
+      "description": "Full Name of Zip File (Required when uploaded file is ZipFile)."
+    },
     "xsd_file": {
       "title": "Schema Location",
       "type": "string",
