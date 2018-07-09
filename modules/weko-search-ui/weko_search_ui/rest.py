@@ -242,6 +242,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                           'date_range': {'pub_cnt': 0, 'un_pub_cnt': 0}}
                     nlst.append(nd)
             agp.clear()
+            # process index tree image info
+            if len(nlst):
+                index_id = nlst[0].get('key')
+                index_id = index_id if '/' not in index_id \
+                    else index_id.split('/').pop()
+                index_info = Indexes.get_index(index_id=index_id)
+                if index_info.display_format == '2' \
+                    and len(index_info.image_name) > 0:
+                    nlst[0]['img'] = index_info.image_name
             agp.append(nlst)
 
         return self.make_response(

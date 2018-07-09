@@ -67,6 +67,12 @@ class Index(db.Model, Timestamp):
                                      nullable=False, default=True)
     """Harvest public State of the index."""
 
+    display_format = db.Column(db.Text,nullable=True, default='1')
+    """The Format of Search Resault."""
+
+    image_name = db.Column(db.Text, nullable=False,default='')
+    """The Name of upload image."""
+
     public_state = db.Column(db.Boolean(name='public_state'), nullable=False,
                              default=False)
     """Public State of the index."""

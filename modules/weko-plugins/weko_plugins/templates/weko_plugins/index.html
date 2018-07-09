@@ -1,0 +1,49 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_PLUGINS_BASE_TEMPLATE %}
+
+{%- block page_body %}
+<div class="container">
+  <p class="lead">TODO: Example template, please remove if you do not need it.</p>
+  <p>{{_('Welcome to %(module_name)s', module_name=module_name)}}</p>
+
+  {{ emit_event("tmpl_before_content") }}
+
+  {% for plugin in plugins %}
+    <div class="row">
+      <div class="col-sm-10">
+        <b>{{ plugin.name }}</b> by {{ plugin.author }} <br />
+        <i>{{ plugin.description }}</i> <br />
+        {{ plugin.license }}<br />
+        {{ plugin.path }}<br />
+        <a class="btn btn-danger" href="{{ url_for('weko_plugins.disable', plugin=plugin.identifier) }}" {% if not plugin.enabled %} disabled {% endif %}>Disable</a> <br />
+        <a class="btn btn-primary" href="{{ url_for('weko_plugins.enable', plugin=plugin.identifier) }}" {% if plugin.enabled %} disabled {% endif %}>Enable</a><br>
+        (<small>The Blueprint is still accessible via /hello because a blueprint cannot be unregistered _and_ needs to be registered before the app is serving requests.</small>)
+      </div>
+    </div>
+  {% endfor %}
+  <div class="starter-template">
+    <h1>Bootstrap starter template</h1>
+    <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
+  </div>
+</div>
+{%- endblock %}
+

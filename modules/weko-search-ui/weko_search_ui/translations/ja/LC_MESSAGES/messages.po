@@ -20,6 +20,10 @@ msgstr ""
 "Generated-By: Babel 2.5.1\n"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:41
+msgid "Index List"
+msgstr "インデクスリスト"
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:41
 msgid "Item Lists"
 msgstr "アイテムリスト"
 

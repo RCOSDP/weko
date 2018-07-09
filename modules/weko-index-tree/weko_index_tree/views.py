@@ -21,7 +21,11 @@
 """Blueprint for weko-index-tree."""
 
 
-from flask import (Blueprint, current_app, render_template)
+import os
+
+from flask import Blueprint, abort, current_app, \
+    flash, jsonify, render_template, request, url_for
+from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .permissions import index_tree_permission
@@ -42,8 +46,27 @@ def index():
     """Render the index tree edit page."""
     return render_template(
         current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'],
-        get_tree_json=current_app.config["WEKO_INDEX_TREE_LIST_API"],
-        upt_tree_json="",
-        mod_tree_detail=current_app.config["WEKO_INDEX_TREE_API"]
+        get_tree_json=current_app.config['WEKO_INDEX_TREE_LIST_API'],
+        upt_tree_json='',
+        mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API']
     )
 
+
+@blueprint.route('/upload', methods=['GET', 'POST'])
+def upload_image():
+
+    if 'uploadFile' not in request.files:
+        current_app.logger.debug('No file part')
+        flash(_('No file part'))
+        return abort(400)
+    fp = request.files['uploadFile']
+    if '' == fp.filename:
+        current_app.logger.debug('No selected file')
+        flash(_('No selected file'))
+        return abort(400)
+
+    filename = os.path.join(
+        current_app.static_folder, 'indextree', fp.filename)
+    file_uri = url_for('static', filename='indextree/'+fp.filename)
+    fp.save(filename)
+    return jsonify({'code': 0, 'msg': 'file upload success', 'data': {'path': file_uri}})
