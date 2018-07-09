@@ -1,0 +1,11 @@
+{
+    "identifier": "hello_world",
+    "name": "Hello World",
+    "author": "weko",
+    "license": "BSD",
+    "license_url": "https://opensource.org/licenses/bsd-license.php",
+    "description": "A Hello World Plugin.",
+    "description_ja": "テストプラグイン",
+    "website": "https://github.com/wekosoftware/weko-plugins",
+    "version": "1.0.0"
+}

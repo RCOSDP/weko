@@ -1,0 +1,11 @@
+{
+    "identifier": "new_plugin",
+    "name": "Hello New Plugin",
+    "author": "hitachi",
+    "license": "BSD",
+    "license_url": "https://opensource.org/licenses/bsd-license.php",
+    "description": "A new new Plugin.",
+    "description_ja": "テストプラグイン",
+    "website": "https://github.com/wekosoftware/weko-plugins",
+    "version": "1.0.0"
+}

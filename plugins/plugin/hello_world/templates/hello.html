@@ -1,0 +1,20 @@
+{%- extends config.WEKO_PLUGINS_BASE_TEMPLATE %}
+
+{% block page_body %}
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <b>[Plugin] Hello {{plugin_name}}!</b>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-6">
+      <form action="#" method="GET" id="form_id">
+        <input type="text" form="form_id" name="name" />
+        <input type="submit" form="form_id" value="ok" />
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

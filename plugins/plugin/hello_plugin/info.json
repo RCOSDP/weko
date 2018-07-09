@@ -1,0 +1,11 @@
+{
+    "identifier": "hello_plugin",
+    "name": "Hello Plugin",
+    "author": "nii",
+    "license": "BSD",
+    "license_url": "https://opensource.org/licenses/bsd-license.php",
+    "description": "A new test Plugin.",
+    "description_ja": "テストプラグイン",
+    "website": "https://github.com/wekosoftware/weko-plugins",
+    "version": "1.0.0"
+}
