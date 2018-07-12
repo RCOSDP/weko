@@ -60,3 +60,8 @@ ng\:form {
 #footer {
   background-color: $footer-default-bg;
 }
+
+.bg-transparent {
+  background-color: $input-bg-transparent;
+  border-color: $input-bg-transparent;
+}

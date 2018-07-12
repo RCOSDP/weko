@@ -18,7 +18,13 @@
 # MA 02111-1307, USA.
 #}
 
-<header>
+{% block css %}
+  <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+  <link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
+  <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
+{% endblock %}
+
+<header id="header">
   {%- block navbar %}
   <nav class="navbar navbar-default navbar-static-top">
     <div class="container">
@@ -45,3 +51,12 @@
 {%- include "invenio_theme/breadcrumbs.html" %}
   {%- endblock breadcrumbs %}
 </header>
+
+{% block tail %}
+<script src="//code.jquery.com/jquery-3.2.1.min.js"></script>
+<script>
+  $(document).ready(function() {
+    $('#header').find('.ql-editor').attr('contenteditable', 'false')
+  })
+</script>
+{% endblock %}
