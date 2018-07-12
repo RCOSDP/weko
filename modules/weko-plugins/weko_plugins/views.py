@@ -20,12 +20,8 @@
 
 """Blueprint for weko-plugins."""
 
-
-from flask import Blueprint, current_app, redirect, render_template, url_for
+from flask import Blueprint, render_template
 from flask_babelex import gettext as _
-from flask_plugins import emit_event, get_enabled_plugins, get_plugin
-
-from .proxies import current_plugins
 
 blueprint = Blueprint(
     'weko_plugins',
@@ -39,23 +35,8 @@ blueprint = Blueprint(
 @blueprint.route('/')
 def index():
     """Render a basic view."""
-    emit_event('after_navigation')
 
     return render_template(
         'weko_plugins/index.html',
-        module_name=_('weko-plugins')+' '+current_app.instance_path,
-        plugins=get_enabled_plugins())
-
-
-@blueprint.route('/disable/<plugin>')
-def disable(plugin):
-    plugin = get_plugin(plugin)
-    current_plugins.plugin_manager.disable_plugins([plugin])
-    return redirect(url_for('.index'))
-
-
-@blueprint.route('/enable/<plugin>')
-def enable(plugin):
-    plugin = get_plugin(plugin)
-    current_plugins.plugin_manager.enable_plugins([plugin])
-    return redirect(url_for('.index'))
+        module_name=_('weko-plugins')
+    )

@@ -1,4 +1,5 @@
-{#
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,18 +17,11 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
 
-{%- extends config.WEKO_PLUGINS_BASE_TEMPLATE %}
+"""Version information for weko-plugins.
 
-{%- block page_body %}
-<div class="container">
-  <div class="row">
-    <div class="col-sm-10">
-      <p class="lead">TODO: Example template, please remove if you do not need it.</p>
-      <p>{{_('Welcome to %(module_name)s', module_name=module_name)}}</p>
-    </div>
-  </div>
-</div>
-{%- endblock %}
+This file is imported by ``weko_plugins.__init__``,
+and parsed by ``setup.py``.
+"""
 
+__version__ = '0.1.0.dev20170000'

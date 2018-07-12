@@ -86,6 +86,9 @@ setup(
         'invenio_base.apps': [
             'weko_plugins = weko_plugins:wekoplugins',
         ],
+        'invenio_admin.views': [
+            'weko_plugins_admin = weko_plugins.admin:plugin_adminview',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_plugins',
         ],

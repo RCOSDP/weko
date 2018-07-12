@@ -20,7 +20,7 @@
 
 """Module of weko-plugins."""
 
-from .ext import wekoplugins, AppPlugin
+from .ext import wekoplugins
 from .version import __version__
 
-__all__ = ('__version__', 'wekoplugins', 'AppPlugin')
+__all__ = ('__version__', 'wekoplugins')

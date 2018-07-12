@@ -20,16 +20,12 @@
 
 """Flask extension for weko-plugins."""
 
-from flask import current_app
-from flask_plugins import PluginManager, Plugin
+import os
+import sys
+
+from flask_plugins import PluginManager
 from . import config
 from .views import blueprint
-
-
-class AppPlugin(Plugin):
-    def register_blueprint(self, blueprint, **kwargs):
-        """Registers a blueprint."""
-        current_app.register_blueprint(blueprint, **kwargs)
 
 
 class wekoplugins(object):
@@ -49,7 +45,14 @@ class wekoplugins(object):
         :param app: The Flask application.
         """
         self.init_config(app)
-        self.plugin_manager = PluginManager(app, base_app_folder='plugin')
+        self.plugin_manager = PluginManager()
+        sys.path.append(app.root_path)
+        root_path = app.root_path
+        app.root_path = os.path.join(root_path, 'plugins')
+        self.plugin_manager.init_app(app,
+                                     base_app_folder='plugins',
+                                     plugin_folder='plugin')
+        app.root_path = root_path
         app.register_blueprint(blueprint)
         app.extensions['weko-plugins'] = self
 
