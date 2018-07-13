@@ -46,9 +46,9 @@ class wekoplugins(object):
         """
         self.init_config(app)
         self.plugin_manager = PluginManager()
-        sys.path.append(app.root_path)
+        sys.path.append('/code')
         root_path = app.root_path
-        app.root_path = os.path.join(root_path, 'plugins')
+        app.root_path = os.path.join('/code', 'plugins')
         self.plugin_manager.init_app(app,
                                      base_app_folder='plugins',
                                      plugin_folder='plugin')
