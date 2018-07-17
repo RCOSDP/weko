@@ -24,7 +24,7 @@
 import os
 
 from flask import Blueprint, abort, current_app, \
-    flash, jsonify, render_template, request, url_for
+    flash, jsonify, render_template, request, url_for,session
 from flask_babelex import gettext as _
 from flask_login import login_required
 
@@ -44,6 +44,7 @@ blueprint = Blueprint(
 @index_tree_permission.require(http_exception=403)
 def index():
     """Render the index tree edit page."""
+
     return render_template(
         current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'],
         get_tree_json=current_app.config['WEKO_INDEX_TREE_LIST_API'],

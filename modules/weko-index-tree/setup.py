@@ -86,6 +86,7 @@ setup(
             'weko_index_tree = weko_index_tree:WekoIndexTree',
         ],
         'invenio_base.api_apps': [
+            'invenio_i18n_rest = invenio_i18n:InvenioI18N',
             'weko_index_tree_rest = weko_index_tree:WekoIndexTreeREST',
         ],
         'invenio_i18n.translations': [

@@ -23,7 +23,7 @@
 from datetime import datetime
 from copy import deepcopy
 
-from flask import current_app
+from flask import current_app,session
 from flask_login import current_user
 from invenio_db import db
 from invenio_accounts.models import Role
@@ -34,7 +34,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from .models import Index
 from .utils import get_tree_json, cached_index_tree_json, reset_tree
-
+from invenio_i18n.ext import current_i18n
 
 class Indexes(object):
     """Define API for index tree creation and update."""
@@ -363,13 +363,14 @@ class Indexes(object):
         return is_ok
 
     @classmethod
-    @cached_index_tree_json(timeout=None)
-    def get_index_tree(cls):
+    @cached_index_tree_json(timeout=None,)
+    def get_index_tree(cls,):
+
         """Get index tree json"""
         return get_tree_json(cls.get_recursive_tree())
 
     @classmethod
-    def get_browsing_tree(cls):
+    def get_browsing_tree(cls,):
         tree = cls.get_index_tree()
         reset_tree(tree)
         return tree
@@ -576,42 +577,76 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def recs_tree_query(cls, pid=0):
+    def recs_tree_query(cls, pid=0,):
         """
         Init select condition of index.
 
         :return: the query of db.session.
         """
-        recursive_t = db.session.query(
-            Index.parent.label("pid"),
-            Index.id.label("cid"),
-            func.cast(Index.id, db.Text).label("path"),
-            Index.index_name.label("name"),
-            Index.position,
-            Index.public_state,
-            Index.public_date,
-            Index.browsing_role,
-            Index.contribute_role,
-            literal_column("1", db.Integer).label("lev")).filter(
-            Index.parent == pid). \
-            cte(name="recursive_t", recursive=True)
+        lang = current_i18n.language
 
-        rec_alias = aliased(recursive_t, name="rec")
-        test_alias = aliased(Index, name="t")
-        recursive_t = recursive_t.union_all(
-            db.session.query(
-                test_alias.parent,
-                test_alias.id,
-                rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                test_alias.index_name,
-                test_alias.position,
-                test_alias.public_state,
-                test_alias.public_date,
-                test_alias.browsing_role,
-                test_alias.contribute_role,
-                rec_alias.c.lev + 1).filter(
-                test_alias.parent == rec_alias.c.cid)
-        )
+        if lang == 'ja':
+            recursive_t = db.session.query(
+                Index.parent.label("pid"),
+                Index.id.label("cid"),
+                func.cast(Index.id, db.Text).label("path"),
+                func.coalesce(Index.index_name, Index.index_name_english).label("name"),
+                Index.position,
+                Index.public_state,
+                Index.public_date,
+                Index.browsing_role,
+                Index.contribute_role,
+                literal_column("1", db.Integer).label("lev")).filter(
+                Index.parent == pid). \
+                cte(name="recursive_t", recursive=True)
+
+            rec_alias = aliased(recursive_t, name="rec")
+            test_alias = aliased(Index, name="t")
+            recursive_t = recursive_t.union_all(
+                db.session.query(
+                    test_alias.parent,
+                    test_alias.id,
+                    rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                    func.coalesce(test_alias.index_name, test_alias.index_name_english),
+                    test_alias.position,
+                    test_alias.public_state,
+                    test_alias.public_date,
+                    test_alias.browsing_role,
+                    test_alias.contribute_role,
+                    rec_alias.c.lev + 1).filter(
+                    test_alias.parent == rec_alias.c.cid)
+            )
+        else:
+            recursive_t = db.session.query(
+                Index.parent.label("pid"),
+                Index.id.label("cid"),
+                func.cast(Index.id, db.Text).label("path"),
+                Index.index_name_english.label("name"),
+                Index.position,
+                Index.public_state,
+                Index.public_date,
+                Index.browsing_role,
+                Index.contribute_role,
+                literal_column("1", db.Integer).label("lev")).filter(
+                Index.parent == pid). \
+                cte(name="recursive_t", recursive=True)
+
+            rec_alias = aliased(recursive_t, name="rec")
+            test_alias = aliased(Index, name="t")
+            recursive_t = recursive_t.union_all(
+                db.session.query(
+                    test_alias.parent,
+                    test_alias.id,
+                    rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                    test_alias.index_name_english,
+                    test_alias.position,
+                    test_alias.public_state,
+                    test_alias.public_date,
+                    test_alias.browsing_role,
+                    test_alias.contribute_role,
+                    rec_alias.c.lev + 1).filter(
+                    test_alias.parent == rec_alias.c.cid)
+            )
 
         return recursive_t
 

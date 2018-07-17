@@ -23,9 +23,10 @@
 from functools import wraps
 from datetime import date, datetime
 
-from flask import current_app
+from flask import current_app,session
 from flask_login import current_user
 from invenio_cache import current_cache
+from invenio_i18n.ext import current_i18n
 
 
 def is_index_tree_updated():
@@ -38,8 +39,9 @@ def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
     def caching(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
+            current_app.logger.debug(current_i18n.language)
             cache_fun = current_cache.cached(
-                timeout=timeout, key_prefix=key_prefix,
+                timeout=timeout, key_prefix=key_prefix+current_i18n.language,
                 forced_update=is_index_tree_updated)
             return cache_fun(f)(*args, **kwargs)
         return wrapper
@@ -83,6 +85,7 @@ def get_tree_json(obj):
                     settings=dict(isCollapsedOnInit=False, checked=False))
 
     def set_node(plst):
+
         if isinstance(plst, list):
             attr = ['public_state', 'public_date',
                     'browsing_role', 'contribute_role']
@@ -123,7 +126,7 @@ def get_tree_json(obj):
 
     parent = sorted(parent, key=lambda x: x["position"])
 
-    current_app.config['WEKO_INDEX_TREE_UPDATED'] = False
+    current_app.config['WEKO_INDEX_TREE_UPDATED'] = True
     return parent
 
 

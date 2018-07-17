@@ -54,7 +54,7 @@ class Index(db.Model, Timestamp):
     position = db.Column(db.Integer, nullable=False, default=0)
     """Children position of parent."""
 
-    index_name = db.Column(db.Text, nullable=False, default='')
+    index_name = db.Column(db.Text, nullable=True, default='')
     """Name of the index."""
 
     index_name_english = db.Column(db.Text, nullable=False, default='')

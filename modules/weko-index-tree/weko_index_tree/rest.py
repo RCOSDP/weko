@@ -23,7 +23,8 @@
 import json
 
 from functools import wraps
-from flask import (Blueprint, abort, jsonify, request, make_response)
+from flask import (Blueprint, abort, jsonify, request, make_response, session, current_app)
+from invenio_i18n.ext import current_i18n
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 
@@ -32,7 +33,6 @@ from .errors import InvalidDataRESTError, \
     IndexBaseRESTError, IndexDeletedRESTError, \
     IndexNotFoundRESTError, IndexUpdatedRESTError, \
     IndexAddedRESTError, IndexMovedRESTError
-
 
 def need_record_permission(factory_name):
     """Decorator checking that the user has the required permissions on record.
@@ -258,6 +258,7 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
         try:
             action = request.values.get("action")
             pid = kwargs.get('pid_value')
+
             if pid:
                 tree = self.record_class.get_contribute_tree(pid)
             elif action and "browsing" in action:
@@ -265,7 +266,8 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             else:
                 tree = self.record_class.get_index_tree()
             return make_response(jsonify(tree), 200)
-        except:
+        except Exception as ex:
+            current_app.logger.error('IndexTree Action Exception: ', ex)
             raise InvalidDataRESTError()
 
     @need_record_permission('update_permission_factory')
