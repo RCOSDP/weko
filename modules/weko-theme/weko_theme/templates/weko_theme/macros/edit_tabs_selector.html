@@ -26,4 +26,9 @@
     <li role="presentation" {% if tab_value=='review_accept' %}class="active"{% endif %}><a href="/">{{ _('Review/Accept') }}</a></li>
     <li role="presentation" {% if tab_value=='import' %}class="active"{% endif %}><a href="/">{{ _('Import') }}</a></li>
     <li role="presentation" {% if tab_value=='management' %}class="active"{% endif %}><a href="{{url_for('weko_admin.site_license')}}">{{ _('Management') }}</a></li>
+    {%- for plugin in current_plugins.get_enabled_plugins() %}
+      {%- if plugin %}
+      <li role="presentation" {% if tab_value==plugin[1] %}class="active"{% endif %}><a href="{{url_for('weko_plugins.setting', plugin=plugin[1])}}">{{ _(plugin[0]) }}</a></li>
+      {%- endif %}
+    {%- endfor %}
 {% endmacro %}

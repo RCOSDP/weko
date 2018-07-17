@@ -1,0 +1,68 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{% macro setting_info(plugin) %}
+<div class="media hide">
+  <div class="media-body">
+    <h4 class="media-heading">{{_('Name')}}</h4>
+    <p>{{ plugin.name }}</p>
+  </div>
+</div>
+<div class="media hide">
+  <div class="media-body">
+    <h4 class="media-heading">{{_('Author')}}</h4>
+    <p>{{ plugin.author }}</p>
+  </div>
+</div>
+<div class="media hide">
+  <div class="media-body">
+    <h4 class="media-heading">{{_('Description')}}</h4>
+    <textarea class="form-control" rows="3" id="description" name="description">{{ plugin.description }}</textarea>
+  </div>
+</div>
+<div class="media hide">
+  <div class="media-body">
+    <h4 class="media-heading">{{_('ID')}}</h4>
+    <p>{{ plugin.identifier }}</p>
+  </div>
+</div>
+<div class="media hide">
+  <div class="media-body">
+    <h4 class="media-heading">{{_('Version')}}</h4>
+    <p>{{ plugin.version }}</p>
+  </div>
+</div>
+<div class="media hide">
+  <div class="media-body">
+    <h4 class="media-heading">{{_('License')}}</h4>
+    {% if plugin.license_url %}
+    <p><a href="{{plugin.license_url}}"><u>{{ plugin.license }}</u></a></p>
+    {% else %}
+    <p>{{ plugin.license }}</p>
+    {% endif %}
+  </div>
+</div>
+<div class="media">
+  <div class="media-body">
+    <h4 class="media-heading hide">{{_('WebSite')}}</h4>
+    <input type="text" class="form-control" id="website" name="website" value="">
+  </div>
+</div>
+{% endmacro %}

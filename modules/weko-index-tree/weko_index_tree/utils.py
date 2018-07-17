@@ -39,7 +39,6 @@ def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
     def caching(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            current_app.logger.debug(current_i18n.language)
             cache_fun = current_cache.cached(
                 timeout=timeout, key_prefix=key_prefix+current_i18n.language,
                 forced_update=is_index_tree_updated)

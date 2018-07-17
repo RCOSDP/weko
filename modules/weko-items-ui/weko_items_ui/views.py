@@ -29,6 +29,7 @@ from flask import (
     render_template, request, session, url_for)
 from flask_babelex import gettext as _
 from flask_login import login_required
+from invenio_i18n.ext import current_i18n
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from weko_groups.api import Group
@@ -135,9 +136,10 @@ def get_schema_form(item_type_id=0):
     :return: The json object.
     """
     try:
-        cur_lang = 'default'
-        if current_app.config['I18N_SESSION_KEY'] in session:
-            cur_lang = session[current_app.config['I18N_SESSION_KEY']]
+        # cur_lang = 'default'
+        # if current_app.config['I18N_SESSION_KEY'] in session:
+        #     cur_lang = session[current_app.config['I18N_SESSION_KEY']]
+        cur_lang = current_i18n.language
         result = None
         if item_type_id > 0:
             result = ItemTypes.get_by_id(item_type_id)
@@ -156,7 +158,7 @@ def get_schema_form(item_type_id=0):
                     if cur_lang in elem['title_i18n']:
                         if len(elem['title_i18n'][cur_lang]) > 0:
                             elem['title'] = elem['title_i18n'][cur_lang]
-                if 'type' in elem and 'fieldset' == elem['type']:
+                if 'items' in elem:
                     for sub_elem in elem['items']:
                         if 'title_i18n' in sub_elem:
                             if cur_lang in sub_elem['title_i18n']:

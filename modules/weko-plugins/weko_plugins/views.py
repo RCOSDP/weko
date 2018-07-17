@@ -22,6 +22,7 @@
 
 from flask import Blueprint, render_template
 from flask_babelex import gettext as _
+from flask_plugins import get_plugin
 
 blueprint = Blueprint(
     'weko_plugins',
@@ -39,4 +40,18 @@ def index():
     return render_template(
         'weko_plugins/index.html',
         module_name=_('weko-plugins')
+    )
+
+
+@blueprint.route('/setting/<plugin>', methods=['GET'])
+def setting(plugin):
+    """
+    Set plugin base info
+    :param plugin:
+    :return:
+    """
+    plugin = get_plugin(plugin)
+    return render_template(
+        'weko_plugins/plugin_setting.html',
+        plugin=plugin
     )

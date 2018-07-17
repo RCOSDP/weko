@@ -79,7 +79,8 @@
                       <span class="break-word">{{ file.licensefree }}</span>
                     {%- else %}
                       {% set lst = file.licensetype | get_license_icon %}
-                      <img src="{{lst[0]}}"/><br>
+                      <a target="_blank" href="https://creativecommons.org/licenses/" alt="Creative Commons Licenses">
+                        <img src="{{lst[0]}}"/></a><br>
                       {{ lst[1] }}
                       {%- endif %}
                     {%- endif -%}

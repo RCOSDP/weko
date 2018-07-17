@@ -223,7 +223,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
 
             xsd = SchemaConverter(fn, root_name)
             try:
-                self.record_class.create(pid, sn, data,
+                self.record_class.create(pid, sn.lower(), data,
                                          xsd.to_dict(), data.get('xsd_file'),
                                          xsd.namespaces)
                 db.session.commit()

@@ -23,10 +23,13 @@
 import os
 import sys
 
-from flask_plugins import PluginManager
+from flask import current_app
+from flask_plugins import PluginManager, get_enabled_plugins
+from werkzeug.local import LocalProxy
 from . import config
 from .views import blueprint
 
+current_plugins = LocalProxy(lambda: current_app.extensions['weko-plugins'])
 
 class wekoplugins(object):
     """weko-plugins extension."""
@@ -54,6 +57,8 @@ class wekoplugins(object):
                                      plugin_folder='plugin')
         app.root_path = root_path
         app.register_blueprint(blueprint)
+        # Register Jinja2 template filters for plugins formatting
+        app.add_template_global(current_plugins, name='current_plugins')
         app.extensions['weko-plugins'] = self
 
     def init_config(self, app):
@@ -62,11 +67,19 @@ class wekoplugins(object):
         :param app: The Flask application.
         """
         # Use theme's base template if theme is installed
-        if 'BASE_TEMPLATE' in app.config:
+        if 'BASE_EDIT_TEMPLATE' in app.config:
             app.config.setdefault(
                 'WEKO_PLUGINS_BASE_TEMPLATE',
-                app.config['BASE_TEMPLATE'],
+                app.config['BASE_EDIT_TEMPLATE'],
             )
         for k in dir(config):
             if k.startswith('WEKO_PLUGINS_'):
                 app.config.setdefault(k, getattr(config, k))
+
+    def get_enabled_plugins(self):
+        """
+        return all enabled plugins list
+        :return: Pluging List Info
+        """
+        plugins = get_enabled_plugins()
+        return tuple(map(lambda plugin: (plugin.name, plugin.identifier) if plugin.enabled else None, plugins))

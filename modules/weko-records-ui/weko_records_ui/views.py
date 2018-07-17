@@ -164,12 +164,12 @@ def get_license_icon(type):
     :return:
     """
     lic_dict = {
-        "license_1": "Creative Commons : 表示",
-        "license_2": "Creative Commons : 表示 - 継承",
-        "license_3": "Creative Commons : 表示 - 改変禁止",
-        "license_4": "Creative Commons : 表示 - 非営利",
-        "license_5": "Creative Commons : 表示 - 非営利 - 継承",
-        "license_6": "Creative Commons : 表示 - 非営利 - 改変禁止",
+        "license_0": "Creative Commons : 表示",
+        "license_1": "Creative Commons : 表示 - 継承",
+        "license_2": "Creative Commons : 表示 - 改変禁止",
+        "license_3": "Creative Commons : 表示 - 非営利",
+        "license_4": "Creative Commons : 表示 - 非営利 - 継承",
+        "license_5": "Creative Commons : 表示 - 非営利 - 改変禁止",
     }
 
     if "license_free" in type:
