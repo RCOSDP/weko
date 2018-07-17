@@ -23,6 +23,7 @@
 from pkg_resources import resource_filename
 
 from .wekoxml import WekoXMLSerializer
+from .WekoBibTexSerializer import WekoBibTexSerializer
 
 xslt_dublincore_oai = resource_filename(
     'weko_records', 'xslts/toDc_oai_v2.xsl')
@@ -47,3 +48,5 @@ oaipmh_jpcoar_v1 = Jpcoar_v1.serialize_oaipmh
 oaipmh_dublincore_v2 = dublincore_v2.serialize_oaipmh
 
 WekoCommonSchema = WekoXMLSerializer()
+
+BibTexSerializer = WekoBibTexSerializer()

@@ -93,7 +93,7 @@ def export(pid, record, template=None, **kwargs):
     elif fmt is None:
         abort(404)
     else:
-        if "json" not in schema_type:
+        if "json" not in schema_type and "bibtex" not in schema_type:
             record.update({"@export_schema_type": schema_type})
         serializer = obj_or_import_string(fmt['serializer'])
         data = serializer.serialize(pid, record)
@@ -104,11 +104,14 @@ def export(pid, record, template=None, **kwargs):
         #     template, pid=pid, record=record, data=data,
         #     format_title=fmt['title'],
         # )
+
         response = make_response(data)
-        if "json" not in schema_type:
-            response.headers['Content-Type'] = 'text/xml'
-        else:
+
+        if "json" in schema_type or "bibtex" in schema_type:
             response.headers['Content-Type'] = 'text/plain'
+        else:
+            response.headers['Content-Type'] = 'text/xml'
+
         return response
 
 

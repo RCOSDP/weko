@@ -104,6 +104,11 @@ RECORDS_UI_EXPORT_FORMATS = {
             serializer='invenio_records_rest.serializers.json_v1',
             order=4,
         ),
+        'bibtex': dict(
+            title='BIBTEX',
+            serializer='weko_schema_ui.serializers.BibTexSerializer',
+            order=5,
+        ),
     }
 }
 
