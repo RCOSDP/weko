@@ -164,3 +164,4 @@ elementpath==1.0.6
 defusedxml==0.5.0
 xmlschema==0.9.30
 Flask-Plugins==1.6.1
+bibtexparser==1.0.1
