@@ -21,8 +21,8 @@
  WEKO
 ======
 
-.. image:: https://img.shields.io/travis/wekosoftware/weko.svg
-        :target: https://travis-ci.org/wekosoftware/weko
+.. image:: https://travis-ci.org/RCOSDP/weko.svg?branch=master
+        :target: https://travis-ci.org/RCOSDP/weko
 
 .. image:: https://img.shields.io/coveralls/wekosoftware/weko.svg
         :target: https://coveralls.io/r/wekosoftware/weko
