@@ -183,26 +183,39 @@ def get_license_icon(type):
 
     if 'license_free' in type:
         src = ''
+        lic = ''
+        href = '#'
     elif 'license_0' in type:
         src = '88x31(1).png'
+        lic = lic_dict.get('license_0')
+        href = href_dict.get('license_0')
     elif 'license_1' in type:
         src = '88x31(2).png'
+        lic = lic_dict.get('license_1')
+        href = href_dict.get('license_1')
     elif 'license_2' in type:
         src = '88x31(3).png'
+        lic = lic_dict.get('license_2')
+        href = href_dict.get('license_2')
     elif 'license_3' in type:
         src = '88x31(4).png'
+        lic = lic_dict.get('license_3')
+        href = href_dict.get('license_3')
     elif 'license_4' in type:
         src = '88x31(5).png'
+        lic = lic_dict.get('license_4')
+        href = href_dict.get('license_4')
     elif 'license_5' in type:
         src = '88x31(6).png'
+        lic = lic_dict.get('license_5')
+        href = href_dict.get('license_5')
     else:
         src = ''
+        lic = ''
+        href = '#'
 
-    lst = []
     src = '/static/images/default/' + src if len(src) > 0 else ''
-    lst.append(src)
-    lst.append(lic_dict.get(type, ''))
-    lst.append(href_dict.get(type, ''))
+    lst = (src, lic, href)
 
     return lst
 

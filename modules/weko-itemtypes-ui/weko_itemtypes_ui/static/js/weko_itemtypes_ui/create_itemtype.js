@@ -208,28 +208,29 @@
             }
           ]
         });
-        page_global.table_row_map.mapping['filemeta'] = {
-                                                            "oai_dc_mapping": {
-                                                                "subject": {"@value":"filename"}
-                                                            },
-                                                            "lom_mapping": "",
-                                                            "jpcoar_mapping": {
-                                                                "file": {
-                                                                    "URI": {
-                                                                        "@attributes" :{
-                                                                           "objectType":"fulltext"
-                                                                           },
-                                                                        "@value":"filename"
-                                                                     }
-                                                                }
-                                                            },
-                                                            "lido_mapping": "",
-                                                            "spase_mapping": "",
-                                                            "junii2_mapping": {
-                                                                "fullTextURL": {"@value":"filename"}
-                                                            },
-                                                            "display_lang_type": ""
-                                                        };
+        page_global.table_row_map.mapping['filemeta'] = mapping_value;
+//        page_global.table_row_map.mapping['filemeta'] = {
+//                                                            "oai_dc_mapping": {
+//                                                                "subject": {"@value":"filename"}
+//                                                            },
+//                                                            "lom_mapping": "",
+//                                                            "jpcoar_mapping": {
+//                                                                "file": {
+//                                                                    "URI": {
+//                                                                        "@attributes" :{
+//                                                                           "objectType":"fulltext"
+//                                                                           },
+//                                                                        "@value":"filename"
+//                                                                     }
+//                                                                }
+//                                                            },
+//                                                            "lido_mapping": "",
+//                                                            "spase_mapping": "",
+//                                                            "junii2_mapping": {
+//                                                                "fullTextURL": {"@value":"filename"}
+//                                                            },
+//                                                            "display_lang_type": ""
+//                                                        };
       }
       // タイトルなどを追加する
       page_global.table_row_map.schema.properties["title_ja"] = {type:"string",title:"タイトル",format:"text"}
