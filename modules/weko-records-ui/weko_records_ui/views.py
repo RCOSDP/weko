@@ -21,9 +21,8 @@
 """Blueprint for weko-records-ui."""
 
 import six
-from flask import (
-    Blueprint, abort, current_app, make_response, redirect,
-    request, url_for)
+from flask import Blueprint, abort, current_app, \
+    make_response, redirect, request, url_for
 from invenio_records_ui.utils import obj_or_import_string
 
 from .permissions import check_created_id
@@ -54,7 +53,7 @@ def publish(pid, record, template=None, **kwargs):
     status = request.values.get('status')
     publish_status = record.get('publish_status')
     if not publish_status:
-        record.update({'publish_status':(status or '0')})
+        record.update({'publish_status': (status or '0')})
     else:
         record['publish_status'] = (status or '0')
 
@@ -64,7 +63,7 @@ def publish(pid, record, template=None, **kwargs):
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
-    return redirect(url_for(".recid", pid_value=pid.pid_value))
+    return redirect(url_for('.recid', pid_value=pid.pid_value))
 
     # resp = make_response(render_template(template,  pid=pid, record=record,))
     # resp.headers.extend(dict(location=url_for(".recid", pid_value=pid.pid_value)))
@@ -93,8 +92,8 @@ def export(pid, record, template=None, **kwargs):
     elif fmt is None:
         abort(404)
     else:
-        if "json" not in schema_type and "bibtex" not in schema_type:
-            record.update({"@export_schema_type": schema_type})
+        if 'json' not in schema_type and 'bibtex' not in schema_type:
+            record.update({'@export_schema_type': schema_type})
         serializer = obj_or_import_string(fmt['serializer'])
         data = serializer.serialize(pid, record)
         if isinstance(data, six.binary_type):
@@ -107,7 +106,7 @@ def export(pid, record, template=None, **kwargs):
 
         response = make_response(data)
 
-        if "json" in schema_type or "bibtex" in schema_type:
+        if 'json' in schema_type or 'bibtex' in schema_type:
             response.headers['Content-Type'] = 'text/plain'
         else:
             response.headers['Content-Type'] = 'text/xml'
@@ -115,92 +114,103 @@ def export(pid, record, template=None, **kwargs):
         return response
 
 
-@blueprint.app_template_filter("get_image_src")
+@blueprint.app_template_filter('get_image_src')
 def get_image_src(mimetype):
-    """ Get image src by file type
+    """Get image src by file type.
+
     :param mimetype:
     :return src: dict
     """
-    if "text/" in mimetype:
-        src = "icon_16_txt.jpg"
-    elif "officedocument.wordprocessingml" in mimetype:
-        src = "icon_16_doc.jpg"
-    elif "officedocument.spreadsheetml" in mimetype:
-        src = "icon_16_xls.jpg"
-    elif "officedocument.presentationml" in mimetype:
-        src = "icon_16_ppt.jpg"
-    elif "msword" in mimetype:
-        src = "icon_16_doc.jpg"
-    elif "excel" in mimetype:
-        src = "icon_16_xls.jpg"
-    elif "powerpoint" in mimetype:
-        src = "icon_16_ppt.jpg"
-    elif "zip" in mimetype or "rar" in mimetype:
-        src = "icon_16_zip.jpg"
-    elif "audio/" in mimetype:
-        src = "icon_16_music.jpg"
-    elif "xml" in mimetype:
-        src = "icon_16_xml.jpg"
-    elif "image/" in mimetype:
-        src = "icon_16_picture.jpg"
-    elif "pdf" in mimetype:
-        src = "icon_16_pdf.jpg"
-    elif "video/" in mimetype:
-        if "flv" in mimetype:
-            src = "icon_16_flash.jpg"
+    if 'text/' in mimetype:
+        src = 'icon_16_txt.jpg'
+    elif 'officedocument.wordprocessingml' in mimetype:
+        src = 'icon_16_doc.jpg'
+    elif 'officedocument.spreadsheetml' in mimetype:
+        src = 'icon_16_xls.jpg'
+    elif 'officedocument.presentationml' in mimetype:
+        src = 'icon_16_ppt.jpg'
+    elif 'msword' in mimetype:
+        src = 'icon_16_doc.jpg'
+    elif 'excel' in mimetype:
+        src = 'icon_16_xls.jpg'
+    elif 'powerpoint' in mimetype:
+        src = 'icon_16_ppt.jpg'
+    elif 'zip' in mimetype or 'rar' in mimetype:
+        src = 'icon_16_zip.jpg'
+    elif 'audio/' in mimetype:
+        src = 'icon_16_music.jpg'
+    elif 'xml' in mimetype:
+        src = 'icon_16_xml.jpg'
+    elif 'image/' in mimetype:
+        src = 'icon_16_picture.jpg'
+    elif 'pdf' in mimetype:
+        src = 'icon_16_pdf.jpg'
+    elif 'video/' in mimetype:
+        if 'flv' in mimetype:
+            src = 'icon_16_flash.jpg'
         else:
-            src = "icon_16_movie.jpg"
+            src = 'icon_16_movie.jpg'
     else:
-        src = "icon_16_others.jpg"
+        src = 'icon_16_others.jpg'
 
-    return "/static/images/icon/" + src
+    return '/static/images/icon/' + src
 
 
-@blueprint.app_template_filter("get_license_icon")
+@blueprint.app_template_filter('get_license_icon')
 def get_license_icon(type):
-    """
-     Get License type icon
+    """Get License type icon.
+
     :param type:
     :return:
     """
     lic_dict = {
-        "license_0": "Creative Commons : 表示",
-        "license_1": "Creative Commons : 表示 - 継承",
-        "license_2": "Creative Commons : 表示 - 改変禁止",
-        "license_3": "Creative Commons : 表示 - 非営利",
-        "license_4": "Creative Commons : 表示 - 非営利 - 継承",
-        "license_5": "Creative Commons : 表示 - 非営利 - 改変禁止",
+        'license_0': 'Creative Commons : 表示',
+        'license_1': 'Creative Commons : 表示 - 継承',
+        'license_2': 'Creative Commons : 表示 - 改変禁止',
+        'license_3': 'Creative Commons : 表示 - 非営利',
+        'license_4': 'Creative Commons : 表示 - 非営利 - 継承',
+        'license_5': 'Creative Commons : 表示 - 非営利 - 改変禁止',
     }
 
-    if "license_free" in type:
-        src = ""
-    elif "license_0" in type:
-        src = "88x31(1).png"
-    elif "license_1" in type:
-        src = "88x31(2).png"
-    elif "license_2" in type:
-        src = "88x31(3).png"
-    elif "license_3" in type:
-        src = "88x31(4).png"
-    elif "license_4" in type:
-        src = "88x31(5).png"
-    elif "license_5" in type:
-        src = "88x31(6).png"
+    href_dict = {
+        'license_0': 'https://creativecommons.org/licenses/by/4.0/deed.ja',
+        'license_1': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
+        'license_2': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
+        'license_3': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
+        'license_4': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
+        'license_5': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
+    }
+
+    if 'license_free' in type:
+        src = ''
+    elif 'license_0' in type:
+        src = '88x31(1).png'
+    elif 'license_1' in type:
+        src = '88x31(2).png'
+    elif 'license_2' in type:
+        src = '88x31(3).png'
+    elif 'license_3' in type:
+        src = '88x31(4).png'
+    elif 'license_4' in type:
+        src = '88x31(5).png'
+    elif 'license_5' in type:
+        src = '88x31(6).png'
     else:
-        src = ""
+        src = ''
 
     lst = []
-    src = "/static/images/default/" + src if len(src) > 0 else ""
+    src = '/static/images/default/' + src if len(src) > 0 else ''
     lst.append(src)
-    lst.append(lic_dict.get(type, ""))
+    lst.append(lic_dict.get(type, ''))
+    lst.append(href_dict.get(type, ''))
 
     return lst
 
 
-@blueprint.app_template_filter("check_permission")
+@blueprint.app_template_filter('check_permission')
 def check_permission(record):
-    """
-    Check Permission on Page
+    """Check Permission on Page.
+
     :param record:
     :return: result
     """
