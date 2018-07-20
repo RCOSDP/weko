@@ -39,6 +39,13 @@ blueprint = Blueprint(
     template_folder='templates',
     static_folder='static',
 )
+blueprint_api = Blueprint(
+    'weko_itemtypes_rest',
+    __name__,
+    url_prefix='/itemtypes',
+    template_folder='templates',
+    static_folder='static',
+)
 
 
 @blueprint.route('/', methods=['GET'])
@@ -75,7 +82,9 @@ def render(item_type_id=0):
                 'schema': {}
             }
         }
-    return jsonify(result.render)
+    else:
+        result = result.render
+    return jsonify(result)
 
 
 @blueprint.route('/register', methods=['POST'])
@@ -169,6 +178,12 @@ def custom_property_new(property_id=0):
     return jsonify(msg=_('Success'))
 
 
+@blueprint_api.route('/<int:ItemTypeID>/mapping', methods=['GET'])
+def itemtype_mapping(ItemTypeID=0):
+    item_type_mapping = Mapping.get_record(ItemTypeID)
+    return jsonify(item_type_mapping)
+
+
 @blueprint.route('/mapping', methods=['GET'])
 @blueprint.route('/mapping/<int:ItemTypeID>', methods=['GET'])
 @login_required
@@ -180,7 +195,7 @@ def mapping_index(ItemTypeID=0):
     :return: The rendered template.
     """
     try:
-        lists = ItemTypes.get_all()
+        lists = ItemTypes.get_latest()    # ItemTypes.get_all()
         if lists is None or len(lists) == 0:
             return render_template(
                 current_app.config['WEKO_ITEMTYPES_UI_ERROR_TEMPLATE']

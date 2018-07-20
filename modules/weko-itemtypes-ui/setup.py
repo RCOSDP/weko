@@ -89,6 +89,9 @@ setup(
         'invenio_base.apps': [
             'weko_itemtypes_ui = weko_itemtypes_ui:WekoItemtypesUI',
         ],
+        'invenio_base.api_blueprints': [
+            'weko_itemtypes_ui = weko_itemtypes_ui.views:blueprint_api',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_itemtypes_ui',
         ],

@@ -2,6 +2,8 @@
     "jquery",
     "bootstrap"
   ],function() {
+    src_render = {};
+    src_mapping = {};
     page_global = {
       upload_file: false,
       table_row: [],        // 追加した行番号を保存する元々順番()
@@ -13,7 +15,7 @@
       schemaeditor: {       // objectの場合
         schema:{}           //   生成したschemaの情報を保存する
       }
-    }
+    };
     properties_obj = {}     // 作成したメタデータ項目タイプ
     select_option = '';
     page_json_editor = {}   //   一時的editorオブジェクトの保存
@@ -208,7 +210,11 @@
             }
           ]
         });
-        page_global.table_row_map.mapping['filemeta'] = mapping_value;
+        if(src_mapping.hasOwnProperty('filemeta')) {
+          page_global.table_row_map.mapping['filemeta'] = src_mapping['filemeta'];
+        } else {
+          page_global.table_row_map.mapping['filemeta'] = mapping_value;
+        }
 //        page_global.table_row_map.mapping['filemeta'] = {
 //                                                            "oai_dc_mapping": {
 //                                                                "subject": {"@value":"filename"}
@@ -242,7 +248,7 @@
       page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
       page_global.table_row_map.schema.properties["keywords"] = {type:"string",title:"キーワード",format:"text"}
       page_global.table_row_map.schema.properties["keywords_en"] = {type:"string",title:"キーワード(英)",format:"text"}
-      page_global.table_row_map.form.push({type:"fieldset",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},items:[{type:"text",key:"keywords",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},required:true},{type:"text",key:"keywords_en",title:"キーワード(英)",title_i18n:{ja:"タイトル(英)",en:"keywords"},required:true}]});
+      page_global.table_row_map.form.push({type:"fieldset",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},items:[{type:"text",key:"keywords",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},required:true},{type:"text",key:"keywords_en",title:"キーワード(英)",title_i18n:{ja:"キーワード(英)",en:"keywords"},required:true}]});
       page_global.table_row_map.schema.required.push("title_ja");
       page_global.table_row_map.schema.required.push("title_en");
       page_global.table_row_map.schema.required.push("lang");
@@ -262,7 +268,11 @@
 //                                                          },
 //                                                          "display_lang_type": ""
 //                                                      };
-      page_global.table_row_map.mapping['title_ja'] = mapping_value;
+      if(src_mapping.hasOwnProperty('title_ja')) {
+        page_global.table_row_map.mapping['title_ja'] = src_mapping['title_ja'];
+      } else {
+        page_global.table_row_map.mapping['title_ja'] = mapping_value;
+      }
 //      page_global.table_row_map.mapping['title_en'] = {
 //                                                          "oai_dc_mapping": {
 //                                                              "alternative": ""
@@ -282,7 +292,11 @@
 //                                                          },
 //                                                          "display_lang_type": ""
 //                                                      };
-      page_global.table_row_map.mapping['title_en'] = mapping_value;
+      if(src_mapping.hasOwnProperty('title_en')) {
+        page_global.table_row_map.mapping['title_en'] = src_mapping['title_en'];
+      } else {
+        page_global.table_row_map.mapping['title_en'] = mapping_value;
+      }
 //      page_global.table_row_map.mapping['lang'] = {
 //                                                "oai_dc_mapping": {
 //                                                    "language": ""
@@ -298,7 +312,11 @@
 //                                                },
 //                                                "display_lang_type": ""
 //                                            };
-      page_global.table_row_map.mapping['lang'] = mapping_value;
+      if(src_mapping.hasOwnProperty('lang')) {
+        page_global.table_row_map.mapping['lang'] = src_mapping['lang'];
+      } else {
+        page_global.table_row_map.mapping['lang'] = mapping_value;
+      }
 //      page_global.table_row_map.mapping['pubdate'] = {
 //                                                "oai_dc_mapping": {
 //                                                    "date": ""
@@ -318,7 +336,11 @@
 //                                                },
 //                                                "display_lang_type": ""
 //                                            };
-      page_global.table_row_map.mapping['pubdate'] = mapping_value;
+      if(src_mapping.hasOwnProperty('pubdate')) {
+        page_global.table_row_map.mapping['pubdate'] = src_mapping['pubdate'];
+      } else {
+        page_global.table_row_map.mapping['pubdate'] = mapping_value;
+      }
 //      page_global.table_row_map.mapping['keywords'] = {
 //                                                "oai_dc_mapping": {
 //                                                    "subject": ""
@@ -339,7 +361,11 @@
 //                                                },
 //                                                "display_lang_type": ""
 //                                            };
-      page_global.table_row_map.mapping['keywords'] = mapping_value;
+      if(src_mapping.hasOwnProperty('keywords')) {
+        page_global.table_row_map.mapping['keywords'] = src_mapping['keywords'];
+      } else {
+        page_global.table_row_map.mapping['keywords'] = mapping_value;
+      }
 //      page_global.table_row_map.mapping['keywords_en'] = {
 //                                                "oai_dc_mapping": {
 //                                                    "subject": {}
@@ -360,7 +386,11 @@
 //                                                },
 //                                                "display_lang_type": ""
 //                                            };
-      page_global.table_row_map.mapping['keywords_en'] = mapping_value;
+      if(src_mapping.hasOwnProperty('keywords_en')) {
+        page_global.table_row_map.mapping['keywords_en'] = src_mapping['keywords_en'];
+      } else {
+        page_global.table_row_map.mapping['keywords_en'] = mapping_value;
+      }
 
       // テーブルの行をトラバースし、マップに追加する
       err_input_id = []
@@ -382,7 +412,21 @@
         tmp.option.hidden = $('#chk_'+row_id+'_4').is(':checked')?true:false;
         tmp.option.showlist = tmp.option.hidden?false:($('#chk_'+row_id+'_2').is(':checked')?true:false);
         tmp.option.crtf = tmp.option.hidden?false:($('#chk_'+row_id+'_3').is(':checked')?true:false);
-        page_global.table_row_map.mapping[row_id] = mapping_value;
+
+        if(src_render['meta_list'].hasOwnProperty(row_id)) {
+          if(tmp.input_type == src_render['meta_list'][row_id]['input_type']) {
+            if(src_mapping.hasOwnProperty('keywords_en')) {
+              page_global.table_row_map.mapping[row_id] = src_mapping[row_id];
+            } else {
+              page_global.table_row_map.mapping[row_id] = mapping_value;
+            }
+          } else {
+            page_global.table_row_map.mapping[row_id] = mapping_value;
+          }
+        } else {
+          page_global.table_row_map.mapping[row_id] = mapping_value;
+        }
+
         if(tmp.option.required) {
           page_global.table_row_map.schema.required.push(row_id);
         }
@@ -996,6 +1040,7 @@
 
     if($('#item-type-lists').val().length > 0) {
       $.get('/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
+        Object.assign(src_render ,data);
         page_global.upload_file = data.upload_file;
         $('#chk_upload_file').attr('checked', data.upload_file);
         $.each(data.table_row, function(idx, row_id){
@@ -1035,6 +1080,9 @@
             render_empty('schema_'+row_id);
           }
         });
+      });
+      $.get('/api/itemtypes/' + $('#item-type-lists').val() + '/mapping', function(data, status){
+        Object.assign(src_mapping, data);
       });
     }
 });

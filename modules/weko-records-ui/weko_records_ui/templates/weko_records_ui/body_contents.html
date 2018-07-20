@@ -178,8 +178,8 @@
                         {% endfor %}
                       {% endif %}
                       {% if lst['attribute_type'] == 'creator' %}
-                        {%- for l in lst['attribute_value_mlt'] %}
-                          {%- for creatorName in l['creatorNames'] -%}
+                        {%- for l in lst['attribute_value_mlt'] if not l %}
+                          {%- for creatorName in l['creatorNames'] if not creatorName -%}
                             {%- if 'name' == config['ITEM_SEARCH_FLG'] -%}
                               {%- set q = 'creator='+creatorName['creatorName'] -%}
                             {%- else -%}
@@ -188,7 +188,7 @@
                             <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label class="p-left-10"></label>
                           {%- endfor -%}
                           <br>
-                          {%- for nameIdentifier in l['nameIdentifiers'] -%}
+                          {%- for nameIdentifier in l['nameIdentifiers'] if not nameIdentifier -%}
                             {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
                               {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
                             {%- else -%}
@@ -198,7 +198,7 @@
                           {%- endfor -%}
                           <br>
                           {%- if config['EMAIL_DISPLAY_FLG'] -%}
-                            {%- for creatorMail in l['creatorMails'] -%}
+                            {%- for creatorMail in l['creatorMails'] if not creatorMail -%}
                               <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a>
                             {%- endfor -%}
                             <br>

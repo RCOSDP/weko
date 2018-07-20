@@ -70,10 +70,20 @@ def json_loader(data, pid):
             item["attribute_name"] = ojson["properties"][k]["title"] \
                 if ojson["properties"][k].get("title") is not None else k
             # set a identifier to add a link on detail page when is a creator field
-            creator = mp.get(k, {}).get('jpcoar_mapping', {})
-            creator = creator.get('creator') if isinstance(
-                creator, dict) else None
-            if creator:
+            # creator = mp.get(k, {}).get('jpcoar_mapping', {})
+            # creator = creator.get('creator') if isinstance(
+            #     creator, dict) else None
+            iscreator = False
+            creator = ojson["properties"][k]
+            if 'object' == creator["type"]:
+                creator = creator["properties"]
+                if 'iscreator' in creator:
+                    iscreator = True
+            elif 'array' == creator["type"]:
+                creator = creator['items']["properties"]
+                if 'iscreator' in creator:
+                    iscreator = True
+            if iscreator:
                 item["attribute_type"] = 'creator'
 
             if isinstance(v, list):
