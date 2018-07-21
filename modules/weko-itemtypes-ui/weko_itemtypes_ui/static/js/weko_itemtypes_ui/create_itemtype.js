@@ -178,7 +178,8 @@
               title: '剽窃チェック',
               title_i18n:{ja:"剽窃チェック",en:"Check Plagiarism"},
               type: "template",
-              template: "<div class='text-center'><a class='btn btn-primary' href='http://ec2-13-230-57-67.ap-northeast-1.compute.amazonaws.com/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>"
+              //template: "<div class='text-center'><a class='btn btn-primary' href='http://ec2-13-230-57-67.ap-northeast-1.compute.amazonaws.com/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>"
+             template: "<div class='text-center'><a class='btn btn-primary' href='/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>" 
             },
             {
               key: "filemeta[].accessrole",
