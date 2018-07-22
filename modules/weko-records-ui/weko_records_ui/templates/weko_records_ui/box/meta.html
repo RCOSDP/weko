@@ -1,0 +1,59 @@
+<div class="well">
+            {%- block record_extra_info %}
+            <div class="extra-info">
+              <dl>
+                {%- if pid %}
+                {%- block record_control_number %}
+                <h4>Identifier</h4>
+                <span>
+		<svg xmlns="http://www.w3.org/2000/svg" width="186" height="20">
+        		<linearGradient id="b" x2="0" y2="100%">
+            			<stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+            			<stop offset="1" stop-opacity=".1"/>
+        		</linearGradient>
+        		<mask id="a" width="186" height="20">
+            			<rect width="186" height="20" rx="3" fill="#fff"/>
+        		</mask>
+        		<g mask="url(#a)">
+            			<path fill="#555" d="M0 0h31v20H0z" />
+            			<path fill="#007ec6" d="M31 0h155v20H31z" />
+            			<path fill="url(#b)" d="M0 0h186v20H0z" />
+        		</g>
+        		<g fill="#fff" text-anchor="middle" font-family="DejaVu Sans, Verdana,Geneva,sans-serif" font-size="11">
+            			<text x="16" y="15" fill="#010101" fill-opacity=".3">
+                DOI
+            			</text>
+            			<text x="16" y="14">
+                DOI
+            			</text>
+            <text x="108" y="15" fill="#010101" fill-opacity=".3">
+                xx.xxxx/weko.{{ (record.get('control_number', pid.value)).rjust(8, '0')}}
+            </text>
+            			<text x="108" y="14">
+                xx.xxxx/weko.{{ (record.get('control_number', pid.value)).rjust(8,'0')}}
+            			</text>
+        		</g>
+    		</svg>
+                </span>
+                {%- endblock %}
+                {% endif %}
+                {%- if 'publication_distribution_imprint' in record %}
+                {%- block record_publication_date %}
+                <dt>{{ _('Publication date') }}</dt>
+                <dd>{{ record['publication_distribution_imprint'][0]['date_of_publication_distribution'][0] }}</dd>
+                {%- endblock %}
+                {% endif %}
+                {%- if '$schema' in record %}
+                {%- block record_schema %}
+                <dt>{{ _('Schema') }}</dt>
+                <dd>
+                  <a target="_blank" href="{{ record['$schema'] }}">
+                    {{ record['$schema'] }}
+                  </a>
+                </dd>
+                {%- endblock %}
+                {% endif %}
+              </dl>
+            </div><!-- /.extra-info -->
+            {%- endblock record_extra_info %}
+</div>
