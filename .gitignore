@@ -70,3 +70,5 @@ scripts/demo/elasticsearch/
 scripts/demo/postgresql/
 
 docker-compose.dev.yml
+*.bak
+

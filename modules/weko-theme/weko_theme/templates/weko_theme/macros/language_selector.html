@@ -20,7 +20,7 @@
 
 {% macro language_selector_dropdown() %}
   <form id="language-code-form" class="form form-inline lang-select"
-        action="{{ url_for('invenio_i18n.set_lang')}}"
+        style="color: #ffffff;" action="{{ url_for('invenio_i18n.set_lang')}}"
         method="POST">
     <div class="form-group">
       <span for="lang-code">{{ _('Language:') }}</span>

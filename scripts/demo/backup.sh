@@ -53,6 +53,6 @@ docker cp $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/backups
 # elasticsearch-restore-end
 
 # contents-backup-begin
-chown -R 1000:1000 ./scripts/demo/contents
+# chown -R 1000:1000 ./scripts/demo/contents
 docker-compose exec web cp -r /var/tmp /code/scripts/demo/contents/
 # contents-restore-end
