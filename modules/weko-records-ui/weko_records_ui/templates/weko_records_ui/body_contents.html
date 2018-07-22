@@ -54,14 +54,14 @@
       </div>
       <div class="panel-body">
         <div class="row">
-          <div class="col-sm-9 col-md-9">
+          <div class="col-sm-9 col-md-9 col-left">
             {%- block record_author %}
               {%- set files = record.files -%}
               {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
               {%- if files -%}
               <table class="table table-bordered table-striped">
                 <thead>
-                <tr class="">
+                <tr >
                   <th>{{_('Name')}} / {{_('File')}}</th>
                   <th class="license">{{_('License')}}</th>
                 </tr>
@@ -71,9 +71,9 @@
                 {%- set img = file.mimetype | get_image_src -%}
                 {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                 filename=file.key) %}
-                <tr class="">
-                  <td class="">{{file.filename}}</td>
-                  <td class="" rowspan="2">
+                <tr >
+                  <td >{{file.filename}}</td>
+                  <td rowspan="2">
                     {%- if not 'simple' in file.displaytype -%}
                     {%- if 'license_free' == file.licensetype -%}
                       <span class="break-word">{{ file.licensefree }}</span>
@@ -86,7 +86,7 @@
                     {%- endif -%}
                   </td>
                 </tr>
-                <tr class="">
+                <tr >
                   <td>
                       <span class="filename">
                         <img src="{{img}}"/>
@@ -99,7 +99,7 @@
                   </td>
                 </tr>
                 {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
-                <tr class="">
+                <tr >
                   <td colspan="2">
                     <div class="panel panel-default" id="preview_de">
                       <div class="panel-heading">
@@ -121,7 +121,7 @@
                 </tr>
                 {%- endif -%}
                 {%- if 'preview' in file.displaytype -%}
-                <tr class="">
+                <tr >
                   <td colspan="2">
                     <div class="panel panel-default" id="preview">
                       <div class="panel-heading">
@@ -283,14 +283,49 @@
               {% endif %}
             </div>
           </div>
-          <div class="col-sm-3 col-md-3">
+          <div class="col-sm-3 col-md-3 col-right">
             {%- block record_extra_info %}
             <div class="extra-info">
               <dl>
                 {%- if pid %}
                 {%- block record_control_number %}
+                <!-- 
                 <dt>{{ _('Control number') }}</dt>
                 <dd>{{ record.get('control_number', pid.value) }}</dd>
+                -->
+                <!-- demo -->
+                <strong>Identifier</strong>
+                <span>
+		<svg xmlns="http://www.w3.org/2000/svg" width="186" height="20">
+        		<linearGradient id="b" x2="0" y2="100%">
+            			<stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+            			<stop offset="1" stop-opacity=".1"/>
+        		</linearGradient>
+        		<mask id="a" width="186" height="20">
+            			<rect width="186" height="20" rx="3" fill="#fff"/>
+        		</mask>
+        		<g mask="url(#a)">
+            			<path fill="#555" d="M0 0h31v20H0z" />
+            			<path fill="#007ec6" d="M31 0h155v20H31z" />
+            			<path fill="url(#b)" d="M0 0h186v20H0z" />
+        		</g>
+        		<g fill="#fff" text-anchor="middle" font-family="DejaVu Sans, Verdana,Geneva,sans-serif" font-size="11">
+            			<text x="16" y="15" fill="#010101" fill-opacity=".3">
+                DOI
+            			</text>
+            			<text x="16" y="14">
+                DOI
+            			</text>
+            <text x="108" y="15" fill="#010101" fill-opacity=".3">
+                xx.xxxx/weko.{{ (record.get('control_number', pid.value)).rjust(8, '0')}}
+            </text>
+            			<text x="108" y="14">
+                xx.xxxx/weko.{{ (record.get('control_number', pid.value)).rjust(8,'0')}}
+            			</text>
+        		</g>
+    		</svg>
+                </span>
+                <!-- demo -->
                 {%- endblock %}
                 {% endif %}
                 {%- if 'publication_distribution_imprint' in record %}
