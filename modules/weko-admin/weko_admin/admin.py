@@ -42,7 +42,7 @@ class StyleSettingView(BaseView):
 
         body_bg = '#fff'
         panel_bg = '#fff'
-        footer_default_bg = '#8a8a8a'
+        footer_default_bg = '#0d5f89'
         navbar_default_bg = '#f8f8f8'
         panel_default_border = '#ddd'
         scss_file = os.path.join(current_app.static_folder,
@@ -100,7 +100,7 @@ class StyleSettingView(BaseView):
                     body_bg = request.form.get('body-bg', '#fff')
                     panel_bg = request.form.get('panel-bg', '#fff')
                     footer_default_bg = request.form.get(
-                        'footer-default-bg', '#8a8a8a')
+                        'footer-default-bg', '#0d5f89')
                     navbar_default_bg = request.form.get(
                         'navbar-default-bg', '#f8f8f8')
                     panel_default_border = request.form.get(
