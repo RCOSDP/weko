@@ -98,6 +98,16 @@
                       </span>
                   </td>
                 </tr>
+                <!-- demo -->
+                {%- if record | check_permission -%}
+                {%- if 'pdf' in file.mimetype -%}
+                   <tr><td>
+<a class="btn btn-default" id="btn_edit" href="/ezas/pdf-detect-weko.html" target="_blank">
+                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>剽窃チェック</a>
+                </td></tr>
+                {%- endif -%}
+                {%- endif -%}
+                <!-- demo -->
                 {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
                 <tr >
                   <td colspan="2">
