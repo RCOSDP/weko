@@ -102,7 +102,7 @@
                 {%- if record | check_permission -%}
                 {%- if 'pdf' in file.mimetype -%}
                    <tr><td colspan="2">
-<a class="btn btn-default" id="btn_edit" href="/ezas/pdf-detect-weko.html" target="_blank">
+<a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
                 <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>剽窃チェック</a>
                 </td></tr>
                 {%- endif -%}
@@ -195,23 +195,28 @@
                             {%- else -%}
                               {%- set q = 'id='+l['weko_id'] -%}
                             {%- endif -%}
-                            <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label class="p-left-10"></label>
+                            <a href="{{url_for('invenio_search_ui.search')+'?q=&'+q}}">{{ creatorName['creatorName'] }}</a><label class="p-left-10"></label><br/>
                           {%- endfor -%}
                           <br>
                           {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
-                            {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
-                              {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
-                            {%- else -%}
-                              {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
+                            {%- if nameIdentifier['nameIdentifierScheme'] != "" -%}
+                              {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
+                                {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
+                              {%- else -%}
+                                    <!--
+                                {%- set nid = 'http://'+nameIdentifier['nameIdentifierScheme']+'.io/'+ nameIdentifier['nameIdentifier'] -%}
+                                -->
+                                <!-- demo -->
+                                {%- set nid = nameIdentifier['subitem_1522319059692'] -%}
+
+                              {%- endif -%}
+                              <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br/>
                             {%- endif -%}
-                            <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a>
                           {%- endfor -%}
-                          <br>
                           {%- if config['EMAIL_DISPLAY_FLG'] -%}
                             {%- for creatorMail in l['creatorMails'] if creatorMail -%}
-                              <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a>
+                              <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br/>
                             {%- endfor -%}
-                            <br>
                           {%- endif -%}
                         {% endfor %}
                       {% else %}
