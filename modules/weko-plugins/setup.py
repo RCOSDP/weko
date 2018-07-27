@@ -83,14 +83,24 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'flask.commands': [
+            'workflow = weko_plugins.cli:workflow',
+        ],
         'invenio_base.apps': [
-            'weko_plugins = weko_plugins:wekoplugins',
+            'weko_plugins = weko_plugins:WekoPlugins',
         ],
         'invenio_admin.views': [
             'weko_plugins_admin = weko_plugins.admin:plugin_adminview',
+            'weko_flow_admin = weko_plugins.admin:flow_adminview',
         ],
         'invenio_i18n.translations': [
             'messages = weko_plugins',
+        ],
+        'invenio_db.models': [
+            'weko_plugins = weko_plugins.models',
+        ],
+        'invenio_db.alembic': [
+            'weko_plugins = weko_plugins:alembic',
         ],
     },
     extras_require=extras_require,

@@ -25,6 +25,7 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_plugins import get_enabled_plugins, get_plugin
 
+from .api import WorkFlow
 from .proxies import current_plugins
 
 
@@ -114,6 +115,46 @@ class PluginSettingView(BaseView):
         return redirect(url_for('pluginsetting.index'))
 
 
+class FlowSettingView(BaseView):
+    @expose('/', methods=['GET'])
+    def index(self):
+        """
+        Get flow list info
+        :return:
+        """
+        workflow = WorkFlow()
+        flows = workflow.get_flow_list()
+        return self.render(
+            'weko_plugins/admin/flow_list.html',
+            flows=flows
+        )
+
+    @expose('/<string:flow_id>', methods=['GET'])
+    def flow_detail(self, flow_id):
+        """
+        Get flow detail info
+        :param flow_id:
+        :return:
+        """
+        workflow = WorkFlow()
+        flows = workflow.get_flow_detail(flow_id)
+        if flows and len(flows):
+            flow = flows[0]
+            actions = list()
+            for action in flows:
+                actions.append(dict(
+                    action_name=action.action_id,
+                    action_status=action.flow_status,
+                    modified=action.modified
+                ))
+        return self.render(
+            'weko_plugins/admin/flow_detail.html',
+            flow=flow,
+            flows=flows,
+            actions=actions
+        )
+
+
 plugin_adminview = {
     'view_class': PluginSettingView,
     'kwargs': {
@@ -123,6 +164,17 @@ plugin_adminview = {
     }
 }
 
+
+flow_adminview = {
+    'view_class': FlowSettingView,
+    'kwargs': {
+        'category': _('Plugins'),
+        'name': _('WorkFlow'),
+        'endpoint': 'flowsetting'
+    }
+}
+
 __all__ = (
     'plugin_adminview',
+    'flow_adminview',
 )
