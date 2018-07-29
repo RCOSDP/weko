@@ -129,3 +129,8 @@ CI=true npm install
 ${INVENIO_WEB_INSTANCE} collect -v
 ${INVENIO_WEB_INSTANCE} assets build
 # sphinxdoc-collect-and-build-assets-end
+
+# gunicorn - begin
+pip install gunicorn
+pip install meinheld
+# gunicorn -end

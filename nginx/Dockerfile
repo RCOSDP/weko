@@ -20,4 +20,6 @@
 
 FROM nginx
 RUN rm /etc/nginx/conf.d/default.conf
+RUN rm /etc/nginx/nginx.conf
 ADD weko.conf /etc/nginx/conf.d/
+ADD nginx.conf /etc/nginx/nginx.conf
