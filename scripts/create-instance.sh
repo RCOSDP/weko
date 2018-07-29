@@ -130,7 +130,9 @@ ${INVENIO_WEB_INSTANCE} collect -v
 ${INVENIO_WEB_INSTANCE} assets build
 # sphinxdoc-collect-and-build-assets-end
 
-# gunicorn - begin
+# gunicorn uwsgi - begin
 pip install gunicorn
 pip install meinheld
-# gunicorn -end
+pip install uwsgi
+pip install uwsgitop
+# gunicorn uwsgi -end
