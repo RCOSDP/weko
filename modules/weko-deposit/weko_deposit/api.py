@@ -560,7 +560,8 @@ class WekoRecord(Record):
     @classmethod
     def get_record_with_hps(cls, uuid):
         record = cls.get_record(id_=uuid)
-        path = record.get('path')
+        path = []
+        path.extend(record.get('path'))
         harvest_public_state = True
         if path:
             harvest_public_state = Indexes.get_harvest_public_state(path)

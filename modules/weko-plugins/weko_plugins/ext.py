@@ -31,7 +31,7 @@ from .views import blueprint
 
 current_plugins = LocalProxy(lambda: current_app.extensions['weko-plugins'])
 
-class wekoplugins(object):
+class WekoPlugins(object):
     """weko-plugins extension."""
 
     def __init__(self, app=None):

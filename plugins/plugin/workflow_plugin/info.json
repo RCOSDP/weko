@@ -1,0 +1,11 @@
+{
+    "identifier": "workflow_plugin",
+    "name": "WorkFlow Plugin",
+    "author": "nii",
+    "license": "BSD",
+    "license_url": "https://opensource.org/licenses/bsd-license.php",
+    "description": "WorkFlow Plugin.",
+    "description_ja": "ワークフロープラグイン",
+    "website": "https://github.com/wekosoftware/weko-plugins",
+    "version": "1.0.0"
+}
