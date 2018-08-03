@@ -49,9 +49,11 @@ def get_permission_filter():
 
     mut = []
     match = Q('match', publish_status='0')
-    ava = [Q('range', **{'date.value': {'lte': 'now/d'}}),
-           Q('term', **{'date.dateType': 'Available'})]
-    rng = Q('nested', path='date', query=Q('bool', must=ava))
+    # ava = [Q('range', **{'date.value': {'lte': 'now/d'}}),
+    #        Q('term', **{'date.dateType': 'Available'})]
+    # rng = Q('nested', path='date', query=Q('bool', must=ava))
+    ava = Q('range', **{'publish_date': {'lte': 'now/d'}})
+    rng = ava
     if not is_perm:
         mut.append(match)
         mut.append(rng)
@@ -348,6 +350,7 @@ def item_path_search_factory(self, search):
     """
 
     def _get_index_earch_query():
+
         query_q = {
             "_source": {
                 "exclude": ['content']
@@ -365,31 +368,22 @@ def item_path_search_factory(self, search):
                     },
                     "aggs": {
                         "date_range": {
-                            "nested": {
-                                "path": "date"
+                            "filter": {
+                                "match": {"publish_status": "0"}
                             },
                             "aggs": {
                                 "available": {
-                                    "terms": {
-                                        "field": "date.dateType",
-                                        "include": "Available"
-                                    },
-                                    "aggs": {
-                                        "date_value": {
-                                            "range": {
-                                                "field": "date.value",
-                                                "format": "YYYY-MM-DD",
-                                                "ranges": [
-                                                    {
-                                                        "from": "now/d"
-                                                    },
-                                                    {
-                                                        "to": "now/d"
-                                                    }
-                                                ]
+                                    "range": {
+                                        "field": "publish_date",
+                                        "ranges": [
+                                            {
+                                                "from": "now+1d/d"
+                                            },
+                                            {
+                                                "to": "now+1d/d"
                                             }
-                                        }
-                                    }
+                                        ]
+                                    },
                                 }
                             }
                         },
@@ -399,7 +393,7 @@ def item_path_search_factory(self, search):
                                     "must_not": [
                                         {
                                             "match": {
-                                                "search_attr": "Available"
+                                                "publish_status": "0"
                                             }
                                         }
                                     ]
@@ -415,6 +409,7 @@ def item_path_search_factory(self, search):
                 }
             }
         }
+
         # add item type aggs
         query_q['aggs']['path']['aggs']. \
             update(get_item_type_aggs(search._index[0]))

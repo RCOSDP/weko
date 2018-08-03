@@ -229,7 +229,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         pub = dict()
                         bkt = date_range['available']['buckets']
                         if bkt:
-                            for d in bkt[0]['date_value']['buckets']:
+                            for d in bkt:
                                 pub["pub_cnt" if d.get("to") else "un_pub_cnt"] = d.get(
                                     "doc_count")
                             pub["un_pub_cnt"] += no_available['doc_count']

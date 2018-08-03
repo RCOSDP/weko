@@ -29,6 +29,7 @@ from flask_login import login_required
 from invenio_db import db
 from weko_records.api import ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
+from invenio_i18n.ext import current_i18n
 
 from .permissions import item_type_permission
 
@@ -206,7 +207,40 @@ def mapping_index(ItemTypeID=0):
         itemtype_list = []
         itemtype_prop = item_type.schema.get('properties')
         for key, prop in itemtype_prop.items():
-            itemtype_list.append((key, prop.get('title')))
+            cur_lang = current_i18n.language
+            schema_form = item_type.form
+            elemStr = ''
+            if 'default' != cur_lang:
+                for elem in schema_form:
+                    if 'items' in elem:
+                        for sub_elem in elem['items']:
+                            if sub_elem['key'] == key:
+                                if 'title_i18n' in sub_elem:
+                                    if cur_lang in sub_elem['title_i18n']:
+                                        if len(sub_elem['title_i18n'][cur_lang]) > 0:
+                                            elemStr = sub_elem['title_i18n'][
+                                                cur_lang]
+                                else:
+                                    elemStr = sub_elem['title']
+                                break
+                    else:
+                        if elem['key'] == key:
+                            if 'title_i18n' in elem:
+                                if cur_lang in elem['title_i18n']:
+                                    if len(elem['title_i18n'][cur_lang]) > 0:
+                                        elemStr = elem['title_i18n'][
+                                            cur_lang]
+                            else:
+                                elemStr = elem['title']
+
+                    if elemStr != '':
+                        break
+
+            if elemStr == '':
+                elemStr = prop.get('title')
+
+            itemtype_list.append((key, elemStr))
+            # itemtype_list.append((key, prop.get('title')))
         # jpcoar_list = []
         mapping_name = request.args.get('mapping_type', 'jpcoar_mapping')
         jpcoar_xsd = WekoSchema.get_all()

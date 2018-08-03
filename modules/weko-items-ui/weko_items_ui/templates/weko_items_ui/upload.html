@@ -26,7 +26,7 @@
 
 {%- block javascript %}
   {{ super() }}
-  {% assets "weko_items_ui_demo_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -39,16 +39,45 @@
     <div class="col-sm-12 col-md-12">
       <div class="form-horizontal">
         <div class="form-group">
-          <label for="item-demo-data" class="col-sm-2 control-label">{{_('Item Test Data')}}</label>
+          <label for="files" class="col-sm-2 control-label">{{_('Select Files')}}</label>
+          <div class="col-sm-10 col-md-10 col-lg-10">
+              <input type="file" class="form-control-file" id="files" multiple>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="item-demo-data" class="col-sm-2 control-label">{{_('Import Data')}}</label>
           <div class="col-sm-10">
             <textarea class="form-control" rows="20" id="item-demo-data"></textarea>
           </div>
         </div>
         <div class="form-group">
           <div class="col-sm-offset-2 col-sm-12 col-md-12 col-lg-10">
-            <button id="demo-submit" class="btn btn-default">{{_('sending')}}</button>
+            <button id="demo-submit" class="btn btn-info">{{_('Import')}}</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-12 col-md-12">
+      <hr>
+    </div>
+  </div>
+  <div class="row hidden" id="result">
+    <div class="col-sm-12 col-md-12">
+      <label class="col-sm-2 control-label" id="result-label">{{_('Error List')}}</label>
+      <div class="table-responsive col-sm-10 pre-scrollable">
+        <table class="table table-bordered">
+            <thead>
+              <tr class="active">
+                <th>{{_('Category')}}</th>
+                <th>{{_('Line')}}</th>
+                <th>{{_('Item ID')}}</th>
+                <th>{{_('Error')}}</th>
+              </tr>
+            </thead>
+            <tbody id="result-list"></tbody>
+          </table>
       </div>
     </div>
   </div>

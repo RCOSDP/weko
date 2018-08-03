@@ -22,11 +22,11 @@ msgstr ""
 msgid "invalide request"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/demo.html:42
+#: weko_items_ui/templates/weko_items_ui/upload.html:42
 msgid "Item Test Data"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/demo.html:49
+#: weko_items_ui/templates/weko_items_ui/upload.html:49
 msgid "sending"
 msgstr ""
 

@@ -138,7 +138,7 @@
           items: [
             {
               key: "filemeta[].filename",
-              type: "text",
+              type: "select",
               title: "表示名",
               title_i18n:{ja:"表示名",en:"FileName"}
             },
@@ -179,7 +179,7 @@
               title_i18n:{ja:"剽窃チェック",en:"Check Plagiarism"},
               type: "template",
               //template: "<div class='text-center'><a class='btn btn-primary' href='http://ec2-13-230-57-67.ap-northeast-1.compute.amazonaws.com/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>"
-             template: "<div class='text-center'><a class='btn btn-primary' href='/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>" 
+             template: "<div class='text-center'><a class='btn btn-primary' href='/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>"
             },
             {
               key: "filemeta[].accessrole",
@@ -414,7 +414,8 @@
         tmp.option.showlist = tmp.option.hidden?false:($('#chk_'+row_id+'_2').is(':checked')?true:false);
         tmp.option.crtf = tmp.option.hidden?false:($('#chk_'+row_id+'_3').is(':checked')?true:false);
 
-        if(src_render['meta_list'].hasOwnProperty(row_id)) {
+        if(src_render.hasOwnProperty('meta_list')
+            && src_render['meta_list'].hasOwnProperty(row_id)) {
           if(tmp.input_type == src_render['meta_list'][row_id]['input_type']) {
             if(src_mapping.hasOwnProperty('keywords_en')) {
               page_global.table_row_map.mapping[row_id] = src_mapping[row_id];
@@ -946,7 +947,8 @@
 
     $('#chk_upload_file').on('change', function(){
       if($('#chk_upload_file').is(':checked')) {
-        page_global.upload_file = true;
+        // page_global.upload_file = true;
+        page_global.upload_file = false;
       } else {
         page_global.upload_file = false;
       }
@@ -1042,7 +1044,7 @@
     if($('#item-type-lists').val().length > 0) {
       $.get('/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
         Object.assign(src_render ,data);
-        page_global.upload_file = data.upload_file;
+        page_global.upload_file = false;    // data.upload_file;
         $('#chk_upload_file').attr('checked', data.upload_file);
         $.each(data.table_row, function(idx, row_id){
           new_meta_row(row_id);
