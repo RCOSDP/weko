@@ -341,7 +341,8 @@ class WekoDeposit(Deposit):
 
     def get_content_files(self):
         """Get content file metadata."""
-        fmd = self.data.get('filemeta')
+        # fmd = self.data.get('filemeta')
+        fmd = self.get_file_data()
         if fmd:
             for file in self.files:
                 if isinstance(fmd, list):
@@ -359,6 +360,16 @@ class WekoDeposit(Deposit):
                                 abort(500, '{}'.format(e.errors))
                             break
             self.jrc.update({'content': fmd})
+
+    def get_file_data(self):
+        file_data = []
+        for key in self.data:
+            if isinstance(self.data.get(key), list):
+                for item in self.data.get(key):
+                    if 'filename' in item:
+                        file_data.extend(self.data.get(key))
+                        break
+        return file_data
 
     def save_or_update_item_metadata(self):
         """Save or update item metadata.

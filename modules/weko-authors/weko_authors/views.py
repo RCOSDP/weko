@@ -27,6 +27,8 @@ from flask_login import login_required
 from invenio_indexer.api import RecordIndexer
 
 from .permissions import author_permission
+from invenio_db import db
+from .models import Authors
 
 blueprint = Blueprint(
     'weko_authors',
@@ -63,6 +65,16 @@ def add():
         current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
 
 
+# add by ryuu at 20180808 start
+@blueprint.route("/edit", methods=['GET'])
+@login_required
+@author_permission.require(http_exception=403)
+def edit():
+    """Render an adding author view."""
+    return render_template(
+        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
+# add by ryuu at 20180808 end
+
 @blueprint_api.route("/add", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -77,7 +89,69 @@ def create():
     indexer.client.index(index="authors",
                          doc_type="author",
                          body=data,)
+
+    author_data = dict()
+
+    author_data["id"]= json.loads(json.dumps(data))["pk_id"]
+    author_data["json"]= json.dumps(data)
+
+    with db.session.begin_nested():
+        author = Authors(**author_data)
+        db.session.add(author)
+    db.session.commit()
     return jsonify(msg=_('Success'))
+
+# add by ryuu. at 20180820 start
+@blueprint_api.route("/edit", methods=['POST'])
+@login_required
+@author_permission.require(http_exception=403)
+def update_author():
+    """Add an author."""
+    if request.headers['Content-Type'] != 'application/json':
+        current_app.logger.debug(request.headers['Content-Type'])
+        return jsonify(msg=_('Header Error'))
+
+    data = request.get_json()
+    indexer = RecordIndexer()
+    body = {'doc': data}
+    indexer.client.update(
+        index="authors",
+        doc_type="author",
+        id=json.loads(json.dumps(data))["id"],
+        body=body
+    )
+
+    with db.session.begin_nested():
+        author_data = Authors.query.filter_by(id=json.loads(json.dumps(data))["pk_id"]).one()
+        author_data.json = json.dumps(data)
+        db.session.merge(author_data)
+    db.session.commit()
+
+    return jsonify(msg=_('Success'))
+
+@blueprint_api.route("/delete", methods=['post'])
+@login_required
+@author_permission.require(http_exception=403)
+def delete_author():
+    """Add an author."""
+    if request.headers['Content-Type'] != 'application/json':
+        current_app.logger.debug(request.headers['Content-Type'])
+        return jsonify(msg=_('Header Error'))
+
+    data = request.get_json()
+    indexer = RecordIndexer()
+    indexer.client.delete(id=json.loads(json.dumps(data))["Id"],
+                          index="authors",
+                          doc_type="author",)
+
+    with db.session.begin_nested():
+        author_data = Authors.query.filter_by(id=json.loads(json.dumps(data))["pk_id"]).one()
+        db.session.delete(author_data)
+    db.session.commit()
+
+    return jsonify(msg=_('Success'))
+
+# add by ryuu. at 20180820 end
 
 
 @blueprint_api.route("/search", methods=['POST'])
@@ -115,6 +189,29 @@ def get():
         "from": offset,
         "size": size,
         "sort": sort
+    }
+    current_app.logger.debug(body)
+    indexer = RecordIndexer()
+    result = indexer.client.search(index="authors", body=body)
+    return json.dumps(result)
+
+@blueprint_api.route("/search_edit", methods=['POST'])
+@login_required
+@author_permission.require(http_exception=403)
+def getById():
+    """Get all authors."""
+    data = request.get_json()
+    current_app.logger.debug(data)
+
+    search_key = data.get('Id') or ''
+
+    if search_key:
+        match = []
+        match.append({"match": {"_id": search_key}})
+        query = {"bool": {"must": match}}
+
+    body = {
+        "query": query
     }
     current_app.logger.debug(body)
     indexer = RecordIndexer()

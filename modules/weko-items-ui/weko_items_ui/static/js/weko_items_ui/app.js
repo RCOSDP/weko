@@ -14,6 +14,69 @@ require([
     angular.module('wekoRecords.controllers', []);
     function WekoRecordsCtrl($scope, $rootScope, $modal, InvenioRecordsAPI){
 //      $scope.items = [ 'item1', 'item2', 'item3' ];
+      $scope.filemeta_key = '';
+      $scope.filemeta_form_idx = -1;
+
+      $scope.searchFilemetaKey = function() {
+          if($scope.filemeta_key.length > 0) {
+            return $scope.filemeta_key;
+          }
+          Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+            ([key, value]) => {
+              if(value.type == 'array') {
+                if(value.items.properties.hasOwnProperty('filename')) {
+                  $scope.filemeta_key = key;
+                }
+              }
+            }
+          );
+      }
+      $scope.findFilemetaFormIdx = function() {
+          if($scope.filemeta_form_idx >= 0) {
+            return $scope.filemeta_form_idx;
+          }
+          $rootScope.recordsVM.invenioRecordsForm.forEach(
+            (element, index) => {
+              if(element.hasOwnProperty('key')
+                  && element.key == $scope.filemeta_key) {
+                $scope.filemeta_form_idx = index;
+              }
+            }
+          );
+      }
+
+      $rootScope.$on('invenio.uploader.upload.completed', function(ev){
+        $scope.searchFilemetaKey();
+        $scope.findFilemetaFormIdx();
+        filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[$scope.filemeta_key];
+        filemeta_schema.items.properties['filename']['enum'] = [];
+        filemeta_form = $rootScope.recordsVM.invenioRecordsForm[$scope.filemeta_form_idx];
+        filemeta_filename_form = filemeta_form.items[0];
+        filemeta_filename_form['titleMap'] = [];
+        $rootScope.filesVM.files.forEach(file => {
+          if(file.completed) {
+            filemeta_schema.items.properties['filename']['enum'].push(file.key);
+            filemeta_filename_form['titleMap'].push({name: file.key, value: file.key});
+          }
+        });
+        $rootScope.$broadcast('schemaFormRedraw');
+      });
+      $scope.$on('invenio.uploader.file.deleted', function(ev, f){
+        $scope.searchFilemetaKey();
+        $scope.findFilemetaFormIdx();
+        filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[$scope.filemeta_key];
+        filemeta_schema.items.properties['filename']['enum'] = [];
+        filemeta_form = $rootScope.recordsVM.invenioRecordsForm[$scope.filemeta_form_idx];
+        filemeta_filename_form = filemeta_form.items[0];
+        filemeta_filename_form['titleMap'] = [];
+        $rootScope.filesVM.files.forEach(file => {
+          if(file.completed) {
+            filemeta_schema.items.properties['filename']['enum'].push(file.key);
+            filemeta_filename_form['titleMap'].push({name: file.key, value: file.key});
+          }
+        });
+        $rootScope.$broadcast('schemaFormRedraw');
+      });
 
       $scope.searchAuthor = function(model_id,arrayFlg,form) {
         // add by ryuu. start 20180410

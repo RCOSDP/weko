@@ -97,6 +97,9 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_authors',
         ],
+        'invenio_db.models': [
+            'weko_authors = weko_authors.models',
+        ],
         'invenio_search.mappings': [
             'authors = weko_authors.mappings',
         ],

@@ -87,7 +87,7 @@ class Index(db.Model, Timestamp):
     """Recursive Public State of the index."""
 
     browsing_role = db.Column(db.Text, nullable=True)
-    """Browsing Role of the index."""
+    """Browsing Role of the  ."""
 
     recursive_browsing_role = db.Column(
         db.Boolean(name='recs_browsing_role'), nullable=True, default=False)

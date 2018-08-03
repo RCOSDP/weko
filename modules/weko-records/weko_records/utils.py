@@ -63,8 +63,9 @@ def json_loader(data, pid):
         mp = mjson.dumps()
         data.get("$schema")
         for k, v in data.items():
-            if k == "$schema" or mp.get(k) is None:
-                continue
+            if k != "pubdate":
+                if k == "$schema" or mp.get(k) is None:
+                    continue
 
             item.clear()
             item["attribute_name"] = ojson["properties"][k]["title"] \
@@ -99,7 +100,10 @@ def json_loader(data, pid):
                 item["attribute_value"] = v
 
             dc[k] = item.copy()
-            item.update(mp.get(k))
+            if k != "pubdate":
+                item.update(mp.get(k))
+            else:
+                pubdate = v
             jpcoar[k] = item.copy()
 
     if dc:
@@ -127,6 +131,7 @@ def json_loader(data, pid):
         jrc.update(dict(_oai={"id": oai_value}))
         jrc.update(dict(_item_metadata=dc))
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
+        jrc.update(dict(publish_date=pubdate))
 
         # save items's creator to check permission
         user_id = current_user.get_id()
