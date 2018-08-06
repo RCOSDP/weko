@@ -1,0 +1,77 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{%- block body %}
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>{{_('No.')}}</th>
+          <th>{{_('Action Name')}}</th>
+          <th>{{_('Action Summary')}}</th>
+          <th>{{_('Action Version')}}</th>
+          <th>{{_('Action Update')}}</th>
+          <th>{{_('Flow Action Version')}}</th>
+          <th>{{_('Flow Action Update')}}</th>
+        </tr>
+      </thead>
+      <tbody>
+      {%- for action in actions %}
+        <tr>
+          <th scope="row" rowspan="2">{{loop.index}}</th>
+          <td><a href="{{url_for('flowsetting.action_detail', action_id=action.id)}}">{{action.action_name}}</a></td>
+          <td>{{action.action_desc}}</td>
+          <td>{{action.action_version}}</td>
+          <td>{{action.action_lastdate.date()}}</td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td colspan="6">
+            <div>
+              <button class="btn btn-primary" id="btn_apply_{{action.id}}">{{_('Apply')}}</button>
+              <button class="btn btn-default" id="btn_unusable_{{action.id}}">{{_('Unusable')}}</button>
+              <button class="btn btn-default" id="btn_update_{{action.id}}">{{_('Update')}}</button>
+            </div>
+          </td>
+        </tr>
+      {%- endfor %}
+      </tbody>
+    </table>
+    <button type="button" class="btn btn-primary pull-right" id="btn_back">
+        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
+    </div>
+  </div>
+</div>
+{%- endblock %}
+
+{% block tail %}
+<script>
+  $(document).ready(function() {
+    $('#btn_back').on('click', function(){
+      window.history.back();
+    });
+  });
+</script>
+{% endblock %}

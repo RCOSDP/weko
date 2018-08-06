@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Module of weko-plugins."""
+"""Module of weko-workflow."""
 
 import os
 
@@ -56,7 +56,6 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.2',
-    'Flask-Plugins>=1.6.1',
 ]
 
 packages = find_packages()
@@ -64,33 +63,46 @@ packages = find_packages()
 
 # Get the version string. Cannot be done with import!
 g = {}
-with open(os.path.join('weko_plugins', 'version.py'), 'rt') as fp:
+with open(os.path.join('weko_workflow', 'version.py'), 'rt') as fp:
     exec(fp.read(), g)
     version = g['__version__']
 
 setup(
-    name='weko-plugins',
+    name='weko-workflow',
     version=version,
     description=__doc__,
     long_description=readme + '\n\n' + history,
-    keywords='weko plugins',
+    keywords='weko workflow',
     license='GPLv2',
     author='National Institute of Informatics',
     author_email='wekosoftware@nii.ac.jp',
-    url='https://github.com/wekosoftware/weko-plugins',
+    url='https://github.com/wekosoftware/weko-workflow',
     packages=packages,
     zip_safe=False,
     include_package_data=True,
     platforms='any',
     entry_points={
+        'flask.commands': [
+            'workflow = weko_workflow.cli:workflow',
+        ],
         'invenio_base.apps': [
-            'weko_plugins = weko_plugins:WekoPlugins',
+            'weko_workflow = weko_workflow:WekoWorkflow',
         ],
         'invenio_admin.views': [
-            'weko_plugins_admin = weko_plugins.admin:plugin_adminview',
+            'weko_workflow = weko_workflow.admin:workflow_adminview',
+            'weko_flow = weko_workflow.admin:flow_adminview',
+        ],
+        'invenio_assets.bundles': [
+            'workflow_js = weko_workflow.bundles:js_workflow',
         ],
         'invenio_i18n.translations': [
-            'messages = weko_plugins',
+            'messages = weko_workflow',
+        ],
+        'invenio_db.models': [
+            'weko_workflow = weko_workflow.models',
+        ],
+        'invenio_db.alembic': [
+            'weko_workflow = weko_workflow:alembic',
         ],
     },
     extras_require=extras_require,

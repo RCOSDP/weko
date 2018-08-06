@@ -28,9 +28,9 @@
       <thead>
         <tr>
           <th>{{_('No.')}}</th>
-          <th>{{_('Flow Name')}}</th>
-          <th>{{_('Flow Status')}}</th>
-          <th>{{_('Flow Update')}}</th>
+          <th>{{_('Flow')}}</th>
+          <th>{{_('Status')}}</th>
+          <th>{{_('Updated')}}</th>
         </tr>
       </thead>
       <tbody>
@@ -44,8 +44,8 @@
       {%- endfor %}
       </tbody>
     </table>
-    <button type="button" class="btn btn-primary pull-right" id="btn_submit">
-      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Create Flow')}}</button>
+    <a class="btn btn-primary pull-right" id="btn_submit" href="{{url_for('flowsetting.flow_detail', flow_id=0)}}">
+      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Create Flow')}}</a>
     </div>
   </div>
 </div>

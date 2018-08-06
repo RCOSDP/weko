@@ -20,15 +20,19 @@
 
 """WEKO3 module docstring."""
 
+import uuid
+
 from datetime import datetime
 from flask_babelex import gettext as _
 from invenio_accounts.models import User
 from invenio_db import db
+from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils.types import UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from weko_groups.widgets import RadioGroupWidget
-from weko_records.models import ItemMetadata
+from weko_records.models import ItemMetadata, ItemType
+from weko_user_profiles import UserProfile
 
 
 class FlowStatusPolicy(object):
@@ -115,6 +119,43 @@ class StatusPolicy(object):
         return policy in [cls.NEW, cls.UPT, cls.DEL]
 
 
+class AvailableStautsPolicy(object):
+    """availabled status policies."""
+
+    USABLE = 'A'
+    """usable."""
+
+    UNUSABLE = 'N'
+    """unusable."""
+
+    descriptions = dict([
+        (USABLE,
+         _('Usable.')),
+        (UNUSABLE,
+         _('Unusable.')),
+    ])
+    """Policies descriptions."""
+
+    @classmethod
+    def describe(cls, policy):
+        """
+        Policy description.
+
+        :param policy:
+        """
+        if cls.validate(policy):
+            return cls.descriptions[policy]
+
+    @classmethod
+    def validate(cls, policy):
+        """
+        Validate subscription policy value.
+
+        :param policy:
+        """
+        return policy in [cls.USABLE, cls.UNUSABLE]
+
+
 class TimestampMixin(object):
     """Timestamp model mix-in with fractional seconds support.
 
@@ -192,6 +233,10 @@ class Action(db.Model, TimestampMixin):
     action_version = db.Column(db.String(64), nullable=True)
     """the version of action."""
 
+    action_makedate = db.Column(
+        db.DateTime, nullable=False, default=datetime.now)
+    """the create date of action."""
+
     action_lastdate = db.Column(
         db.DateTime, nullable=False, default=datetime.now)
     """the last update date of action."""
@@ -206,16 +251,23 @@ class Flow(db.Model, TimestampMixin):
                    primary_key=True, autoincrement=True)
     """Flow identifier."""
 
-    flow_id = db.Column(UUIDType, nullable=False, unique=False, index=True)
+    flow_id = db.Column(
+        UUIDType, nullable=False, unique=True, index=True,
+        default=uuid.uuid4()
+    )
     """the id of flow."""
 
     flow_name = db.Column(
-        db.String(255), nullable=True, unique=False, index=False)
+        db.String(255), nullable=True, unique=True, index=True)
     """the name of flow."""
 
     flow_user = db.Column(
-        db.Integer, db.ForeignKey(User.id), nullable=True, unique=False)
+        db.Integer,
+        db.ForeignKey(UserProfile.user_id), nullable=True, unique=False)
     """the user who update the flow."""
+
+    user_profile = db.relationship(UserProfile)
+    """User relationship"""
 
     FLOWSTATUSPOLICY = [
         (FlowStatusPolicy.AVAILABLE, _('Available')),
@@ -234,62 +286,121 @@ class Flow(db.Model, TimestampMixin):
         ))
     """the status of flow."""
 
+    flow_actions = db.relationship('FlowAction', backref=db.backref('flow'))
+    """flow action relationship."""
+
+
+class FlowAction(db.Model, TimestampMixin):
+    """Action list belong to Flow"""
+
+    __tablename__ = 'flow_action'
+
+    id = db.Column(db.Integer, nullable=False,
+                   primary_key=True, autoincrement=True)
+    """FlowAction identifier."""
+
+    flow_id = db.Column(
+        UUIDType, db.ForeignKey(Flow.flow_id),
+        nullable=False, unique=False, index=True)
+    """the id of flow."""
+
     action_id = db.Column(db.Integer, db.ForeignKey(Action.id),
                           nullable=False, unique=False)
     """the id of action."""
+
+    action_version = db.Column(db.String(64), nullable=True)
+    """the version of used action."""
 
     action_order = db.Column(db.Integer, nullable=False, unique=False)
     """the order of action."""
 
     action_condition = db.Column(db.String(255), nullable=True, unique=False)
-    """the condition of action."""
+    """the condition of transition."""
+
+    TATUSPOLICY = [
+        (AvailableStautsPolicy.USABLE, _('Usable')),
+        (AvailableStautsPolicy.UNUSABLE, _('Unusable')),
+    ]
+    """Subscription policy choices."""
+
+    action_status = db.Column(
+        ChoiceType(TATUSPOLICY, impl=db.String(1)),
+        nullable=False,
+        default=AvailableStautsPolicy.USABLE)
+    """the status of flow action."""
+
+    action_date = db.Column(
+        db.DateTime, nullable=False, default=datetime.now)
+    """the use date of action."""
+
+    action = db.relationship(
+        Action, backref=db.backref('flow_action'))
+    """flow action relationship."""
 
 
-class Flows(db.Model, TimestampMixin):
-    """define Flows"""
+class WorkFlow(db.Model, TimestampMixin):
+    """define WorkFlow"""
 
-    __tablename__ = 'flows'
+    __tablename__ = 'work_flow'
 
     id = db.Column(db.Integer, nullable=False,
                    primary_key=True, autoincrement=True)
     """Flows identifier."""
 
-    flows_id = db.Column(db.Integer, nullable=False, unique=True)
+    flows_id = db.Column(
+        UUIDType,
+        nullable=False,
+        unique=True,
+        index=True,
+        default=uuid.uuid4()
+    )
     """the id of flows."""
 
     flows_name = db.Column(
         db.String(255), nullable=True, unique=False, index=False)
     """the name of flows."""
 
-    itemtype_id = db.Column(db.Integer, nullable=False, unique=False)
+    itemtype_id = db.Column(
+        db.Integer, db.ForeignKey(ItemType.id), nullable=False, unique=False)
     """the id of itemtype."""
+
+    itemtype = db.relationship(
+        ItemType,
+        backref=db.backref('workflow', lazy='dynamic',
+                           order_by=desc('item_type.tag'))
+    )
 
     flow_id = db.Column(db.Integer, db.ForeignKey(Flow.id),
                         nullable=False, unique=False)
     """the id of flow."""
 
-    flow_order = db.Column(db.Integer, nullable=False, unique=False)
-    """the order of flow."""
+    flow = db.relationship(
+        Flow,
+        backref=db.backref('workflow', lazy='dynamic')
+    )
 
-    flow_condition = db.Column(db.Integer, nullable=False, unique=False)
-    """the pre condition of flow."""
-
-    FLOWSTATUSPOLICY = [
-        (FlowStatusPolicy.AVAILABLE, _('Available')),
-        (FlowStatusPolicy.INUSE, _('In use')),
-        (FlowStatusPolicy.MAKING, _('Making')),
-    ]
-    """Subscription policy choices."""
-
-    flows_status = db.Column(
-        ChoiceType(FLOWSTATUSPOLICY, impl=db.String(1)),
-        nullable=False,
-        default=FlowStatusPolicy.MAKING,
-        info=dict(
-            label=_('Subscription Policy'),
-            widget=RadioGroupWidget(FlowStatusPolicy.descriptions),
-        ))
-    """the status of flows."""
+    # flow_order = db.Column(db.Integer, nullable=False, unique=False)
+    # """the order of flow."""
+    #
+    # flow_condition = db.Column(db.Integer, nullable=False, unique=False)
+    # """the pre condition of flow."""
+    #
+    # FLOWSTATUSPOLICY = [
+    #     (FlowStatusPolicy.AVAILABLE, _('Available')),
+    #     (FlowStatusPolicy.INUSE, _('In use')),
+    #     (FlowStatusPolicy.MAKING, _('Making')),
+    # ]
+    # """Subscription policy choices."""
+    #
+    # flows_status = db.Column(
+    #     ChoiceType(FLOWSTATUSPOLICY, impl=db.String(1)),
+    #     nullable=False,
+    #     default=FlowStatusPolicy.MAKING,
+    #     info=dict(
+    #         label=_('Subscription Policy'),
+    #         widget=RadioGroupWidget(FlowStatusPolicy.descriptions),
+    #     ))
+    # """the status of flows."""
 
 
 class Activity(db.Model, TimestampMixin):
@@ -310,32 +421,33 @@ class Activity(db.Model, TimestampMixin):
     """activity name of Activity."""
 
     item_id = db.Column(
-        UUIDType, db.ForeignKey(ItemMetadata.id), nullable=False, unique=False, index=True)
+        UUIDType, db.ForeignKey(ItemMetadata.id),
+        nullable=False, unique=False, index=True)
     """item id."""
 
-    flows_id = db.Column(
-        db.Integer, db.ForeignKey(Flows.id), nullable=False, unique=False)
-    """flows id."""
+    workflow_id = db.Column(
+        db.Integer, db.ForeignKey(WorkFlow.id), nullable=False, unique=False)
+    """workflow id."""
 
-    flows_status = db.Column(
+    workflow_status = db.Column(
         db.Integer, nullable=True, unique=False)
-    """flows status."""
+    """workflow status."""
 
     flow_id = db.Column(
         db.Integer, db.ForeignKey(Flow.id), nullable=True, unique=False)
     """flow id."""
 
-    flow_status = db.Column(
-        db.Integer, nullable=True, unique=False)
-    """flow status."""
+    # flow_status = db.Column(
+    #     db.Integer, nullable=True, unique=False)
+    # """flow status."""
 
     action_id = db.Column(
         db.Integer, db.ForeignKey(Action.id), nullable=True, unique=False)
     """action id."""
 
-    action_version = db.Column(
-        db.String(24), nullable=True, unique=False)
-    """action version."""
+    # action_version = db.Column(
+    #     db.String(24), nullable=True, unique=False)
+    # """action version."""
 
     action_status = db.Column(
         db.Integer, nullable=True, unique=False)

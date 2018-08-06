@@ -121,6 +121,7 @@ static:
     - /code/modules/weko-deposit/weko_deposit.egg-info
     - /code/modules/weko-authors/weko_authors.egg-info
     - /code/modules/weko-plugins/weko_plugins.egg-info
+    - /code/modules/weko-plugins/weko_workflow.egg-info
     - .:/code
   user: invenio
 

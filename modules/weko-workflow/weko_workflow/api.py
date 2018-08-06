@@ -20,29 +20,51 @@
 
 """WEKO3 module docstring."""
 
+from flask_login import current_user
 from invenio_db import db
 from sqlalchemy import asc
 
-from .models import Flow
+from .models import Action as _Action
+from .models import Flow as _Flow
+from .models import FlowAction as _FlowAction
+from .models import WorkFlow as _WorkFlow
+from .models import FlowStatusPolicy
 
 
-class WorkFlow(object):
+class Flow(object):
     """Operated on the Flow"""
+
     def create_flow(self, flow):
         """
         Create new flow
         :param flow:
         :return:
         """
-        pass
+        _flow = _Flow(
+            flow_name=flow.get('flow_name'),
+            flow_user=current_user.get_id()
+        )
+        with db.session.begin_nested():
+            db.session.add(_flow)
+        db.session.commit()
+        return _flow
 
-    def upt_flow(self, flow):
+    def upt_flow(self, flow_id, flow):
         """
         Update flow info
+        :param flow_id:
         :param flow:
         :return:
         """
-        pass
+        with db.session.begin_nested():
+            _flow = _Flow.query.filter_by(
+                flow_id=flow_id).one_or_none()
+            if _flow is not None:
+                _flow.flow_name = flow.get('flow_name')
+                _flow.flow_user = current_user.get_id()
+                db.session.merge(_flow)
+        db.session.commit()
+        return _flow
 
     def get_flow_list(self):
         """
@@ -50,8 +72,7 @@ class WorkFlow(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = Flow.query.distinct(Flow.flow_id).order_by(
-                asc(Flow.flow_id))
+            query = _Flow.query.order_by(asc(_Flow.flow_id))
             return query.all()
 
     def get_flow_detail(self, flow_id):
@@ -61,10 +82,9 @@ class WorkFlow(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = Flow.query.filter_by(
-                flow_id=flow_id).order_by(
-                asc(Flow.action_order))
-            return query.all()
+            query = _Flow.query.filter_by(
+                flow_id=flow_id)
+            return query.one_or_none()
 
     def del_flow(self, flow_id):
         """
@@ -72,7 +92,113 @@ class WorkFlow(object):
         :param flow_id:
         :return:
         """
-        pass
+        with db.session.begin_nested():
+            _FlowAction.query.filter_by(
+                flow_id=flow_id).delete(synchronize_session=False)
+            _Flow.query.filter_by(
+                flow_id=flow_id).delete(synchronize_session=False)
+        db.session.commit()
+        return True
+
+    def upt_flow_action(self, flow_id, actions):
+        """Update FlowAction Info"""
+        with db.session.begin_nested():
+            for order, action in enumerate(actions):
+                flowaction_filter = _FlowAction.query.filter_by(flow_id=flow_id)\
+                    .filter_by(action_id=action.get('id'))
+                if action.get('action', None) == 'DEL':
+                    flowaction_filter.delete()
+                    continue
+                flowaction = flowaction_filter.one_or_none()
+                if flowaction is None:
+                    """new"""
+                    flowaction = _FlowAction(
+                        flow_id=flow_id,
+                        action_id=action.get('id'),
+                        action_order=order + 1
+                    )
+                    _flow = _Flow.query.filter_by(flow_id=flow_id).one_or_none()
+                    _flow.flow_status = FlowStatusPolicy.AVAILABLE
+                    db.session.add(flowaction)
+                else:
+                    """Update"""
+                    flowaction.action_order = order + 1
+                    db.session.merge(flowaction)
+        db.session.commit()
+
+
+class WorkFlow(object):
+    """Operated on the WorkFlow"""
+    def create_workflow(self, workflow):
+        """
+        Create new workflow
+        :param workflow:
+        :return:
+        """
+        assert workflow
+        try:
+            with db.session.begin_nested():
+                db.session.execute(_WorkFlow.__table__.insert(), workflow)
+            db.session.commit()
+            return workflow
+        except BaseException as ex:
+            db.session.rollback()
+            return None
+
+    def upt_workflow(self, workflow):
+        """
+        Update workflow info
+        :param workflow:
+        :return:
+        """
+        assert workflow
+        try:
+            with db.session.begin_nested():
+                _workflow = _WorkFlow.query.filter_by(
+                    flows_id=workflow.get('flows_id')
+                ).one_or_none()
+                if _workflow is not None:
+                    _workflow.flows_name = workflow.get('flows_name')
+                    _workflow.itemtype_id = workflow.get('itemtype_id')
+                    _workflow.flow_id = workflow.get('flow_id')
+                    db.session.add(_workflow)
+            db.session.commit()
+            return workflow
+        except BaseException as ex:
+            db.session.rollback()
+            return None
+
+    def get_workflow_list(self):
+        """
+        get workflow list info
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.order_by(asc(_WorkFlow.flows_id))
+            return query.all()
+
+    def get_workflow_detail(self, workflow_id):
+        """
+        get workflow detail info
+        :param workflow_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                flows_id=workflow_id)
+            return query.one_or_none()
+
+    def del_workflow(self, workflow_id):
+        """
+        Delete flow info
+        :param workflow_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                flows_id=workflow_id)
+            query.delete(synchronize_session=False)
+        db.session.commit()
 
 class Action(object):
     """Operated on the Action"""
@@ -98,7 +224,9 @@ class Action(object):
         :param is_deleted:
         :return:
         """
-        pass
+        with db.session.no_autoflush:
+            query = _Action.query.order_by(asc(_Action.id))
+            return query.all()
 
     def get_action_detail(self, action_id):
         """
