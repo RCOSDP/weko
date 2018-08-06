@@ -122,6 +122,7 @@ jinja2 "$scriptpathname/instance.cfg" > "var/instance/${INVENIO_WEB_INSTANCE}.cf
 # sphinxdoc-run-npm-begin
 ${INVENIO_WEB_INSTANCE} npm
 cdvirtualenv "var/instance/static"
+CI=true npm install angular-schema-form@0.8.13
 CI=true npm install
 # sphinxdoc-run-npm-end
 

@@ -1,0 +1,58 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{%- block body %}
+<div class="container">
+  <div class="row">
+    <div class="col-sm-12">
+      <a class="btn btn-primary pull-right media-heading" id="btn_submit" href="{{url_for('workflowsetting.workflow_detail', workflow_id=0)}}">
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Create WrokFlow')}}</a>
+      <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>{{_('No.')}}</th>
+          <th>{{_('WorkFlow')}}</th>
+          <th>{{_('ItemType')}}</th>
+          <th>{{_('Flow')}}</th>
+          <th class="hide">{{_('Next Flow')}}</th>
+          <th>{{_('Status')}}</th>
+          <th>{{_('Updated')}}</th>
+        </tr>
+      </thead>
+      <tbody>
+      {%- for workflow in workflows %}
+        <tr>
+          <th scope="row">{{loop.index}}</th>
+          <td><a href="{{url_for('workflowsetting.workflow_detail', workflow_id=workflow.flows_id)}}">{{workflow.flows_name}}</a></td>
+          <td>{{_(workflow.itemtype.item_type_name.name)}}</td>
+          <td>{{_(workflow.flow.flow_name)}}</td>
+          <td class="hide"> </td>
+          <td>{{_(workflow.flow.flow_status.value)}}</td>
+          <td>{{workflow.modified.date()}}</td>
+        </tr>
+      {%- endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{%- endblock %}

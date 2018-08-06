@@ -214,7 +214,7 @@ def mapping_index(ItemTypeID=0):
                 for elem in schema_form:
                     if 'items' in elem:
                         for sub_elem in elem['items']:
-                            if sub_elem['key'] == key:
+                            if 'key' in sub_elem and sub_elem['key'] == key:
                                 if 'title_i18n' in sub_elem:
                                     if cur_lang in sub_elem['title_i18n']:
                                         if len(sub_elem['title_i18n'][cur_lang]) > 0:

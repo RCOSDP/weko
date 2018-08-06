@@ -1,4 +1,5 @@
-{#
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,11 +17,37 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
 
-{% macro tabs_selector(tab_value='top') %}
-    <li role="presentation" {% if tab_value=='top' %}class="active"{% endif %}><a href="/">{{ _('Top') }}</a></li>
-    <li role="presentation" {% if tab_value=='item' %}class="active"{% endif %}><a href="{{url_for('weko_items_ui.index')}}">{{ _('Item Registration') }}</a></li>
-    <li role="presentation" {% if tab_value=='author' %}class="active"{% endif %}><a href="{{url_for('weko_authors.index')}}">{{ _('Author Management') }}</a></li>
-    <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index')}}">{{ _('WorkFlow') }}</a></li>
-{% endmacro %}
+root = true
+
+[*]
+indent_style = space
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+
+# Python files
+[*.py]
+indent_size = 4
+# isort plugin configuration
+known_first_party = weko_workflow
+multi_line_output = 2
+default_section = THIRDPARTY
+skip = .eggs
+
+# RST files (used by sphinx)
+[*.rst]
+indent_size = 4
+
+# CSS, HTML, JS, JSON, YML
+[*.{css,html,js,json,yml}]
+indent_size = 2
+
+# Matches the exact files either package.json or .travis.yml
+[{package.json,.travis.yml}]
+indent_size = 2
+
+# Dockerfile
+[Dockerfile]
+indent_size = 4

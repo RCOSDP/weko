@@ -1,4 +1,6 @@
-{#
+#!/usr/bin/env sh
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,11 +18,9 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
 
-{% macro tabs_selector(tab_value='top') %}
-    <li role="presentation" {% if tab_value=='top' %}class="active"{% endif %}><a href="/">{{ _('Top') }}</a></li>
-    <li role="presentation" {% if tab_value=='item' %}class="active"{% endif %}><a href="{{url_for('weko_items_ui.index')}}">{{ _('Item Registration') }}</a></li>
-    <li role="presentation" {% if tab_value=='author' %}class="active"{% endif %}><a href="{{url_for('weko_authors.index')}}">{{ _('Author Management') }}</a></li>
-    <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index')}}">{{ _('WorkFlow') }}</a></li>
-{% endmacro %}
+pydocstyle weko_workflow tests docs && \
+isort -rc -c -df && \
+check-manifest --ignore ".travis-*" && \
+sphinx-build -qnNW docs docs/_build/html && \
+python setup.py test

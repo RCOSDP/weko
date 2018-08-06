@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-flow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-08-02 15:35+0900\n"
+"POT-Creation-Date: 2018-08-06 13:51+0900\n"
 "PO-Revision-Date: 2018-08-01 12:12+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,72 +18,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.3\n"
 
-#: weko_plugins/admin.py:161 weko_plugins/admin.py:171
+#: weko_plugins/admin.py:120
 msgid "Plugins"
 msgstr ""
 
-#: weko_plugins/admin.py:162
+#: weko_plugins/admin.py:121
 msgid "Plugin List"
-msgstr ""
-
-#: weko_plugins/admin.py:172
-msgid "WorkFlow"
-msgstr ""
-
-#: weko_plugins/models.py:48
-msgid "Available."
-msgstr ""
-
-#: weko_plugins/models.py:50
-msgid "In use."
-msgstr ""
-
-#: weko_plugins/models.py:52
-msgid "Making."
-msgstr ""
-
-#: weko_plugins/models.py:90
-msgid "Created."
-msgstr ""
-
-#: weko_plugins/models.py:92
-msgid "Updated."
-msgstr ""
-
-#: weko_plugins/models.py:94
-msgid "Deleted."
-msgstr ""
-
-#: weko_plugins/models.py:125
-msgid "Record has be created."
-msgstr ""
-
-#: weko_plugins/models.py:126
-msgid "Record has be updated."
-msgstr ""
-
-#: weko_plugins/models.py:127
-msgid "Record has be deleted."
-msgstr ""
-
-#: weko_plugins/models.py:135
-msgid "Status Policy"
-msgstr ""
-
-#: weko_plugins/models.py:221 weko_plugins/models.py:278
-msgid "Available"
-msgstr ""
-
-#: weko_plugins/models.py:222 weko_plugins/models.py:279
-msgid "In use"
-msgstr ""
-
-#: weko_plugins/models.py:223 weko_plugins/models.py:280
-msgid "Making"
-msgstr ""
-
-#: weko_plugins/models.py:232 weko_plugins/models.py:289
-msgid "Subscription Policy"
 msgstr ""
 
 #: weko_plugins/views.py:42
@@ -103,107 +43,6 @@ msgstr ""
 #: weko_plugins/templates/weko_plugins/admin/plugin_setting.html:33
 #: weko_plugins/templates/weko_plugins/plugin_setting.html:37
 msgid "Reset"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:29
-#: weko_plugins/templates/weko_plugins/admin/flow_list.html:31
-msgid "Flow Name"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:39
-#: weko_plugins/templates/weko_plugins/admin/flow_list.html:33
-msgid "Flow Update"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:45
-msgid "Flow Author"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:51
-#: weko_plugins/templates/weko_plugins/admin/flow_list.html:32
-msgid "Flow Status"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:58
-msgid "Edit"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:59
-#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:82
-#: weko_plugins/templates/weko_plugins/admin/plugin_list.html:40
-msgid "Delete"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:67
-msgid "Activity List"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:71
-#: weko_plugins/templates/weko_plugins/admin/flow_list.html:30
-msgid "No."
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:72
-msgid "Activity Query"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:73
-msgid "Activity Status"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:74
-msgid "Activity Update"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:75
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:109
-msgid "Change Order"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:95
-msgid "New Query"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:100
-msgid "Action List"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:101
-msgid "New Transition"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:105
-msgid "Order"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:106
-msgid "Action Name"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:107
-msgid "Action Status"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:108
-msgid "Action Update"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:129
-msgid "More Action"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:134
-msgid "New Flow"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_detail.html:136
-#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:86
-#: weko_plugins/templates/weko_plugins/admin/plugin_setting.html:37
-msgid "Back"
-msgstr ""
-
-#: weko_plugins/templates/weko_plugins/admin/flow_list.html:47
-msgid "Create Flow"
 msgstr ""
 
 #: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:31
@@ -254,6 +93,16 @@ msgstr ""
 #: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:80
 #: weko_plugins/templates/weko_plugins/admin/plugin_list.html:38
 msgid "Enable"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:82
+#: weko_plugins/templates/weko_plugins/admin/plugin_list.html:40
+msgid "Delete"
+msgstr ""
+
+#: weko_plugins/templates/weko_plugins/admin/plugin_detail.html:86
+#: weko_plugins/templates/weko_plugins/admin/plugin_setting.html:37
+msgid "Back"
 msgstr ""
 
 #: weko_plugins/templates/weko_plugins/admin/plugin_list.html:33

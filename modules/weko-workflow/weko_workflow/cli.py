@@ -24,10 +24,13 @@ import click
 import datetime
 import uuid
 from flask.cli import with_appcontext
+from sqlalchemy import asc
 from invenio_db import db
 
+from weko_records.api import ItemTypes
+
 from .models import ActionStatus, Action, Activity, ActivityHistory,\
-    Flow, Flows, FlowStatusPolicy
+    Flow, FlowAction, FlowStatusPolicy, WorkFlow
 
 
 @click.group()
@@ -86,39 +89,45 @@ def init_workflow(tables):
         """Init Action Table"""
         db_action = list()
         db_action.append(dict(
-            action_name='重複チェック',
+            action_name='重複チェック「ダミー」',
             action_desc='アイテムの重複登録があるかを確認するため',
             action_version='1.0.0',
+            action_makedate=datetime.date(2018, 5, 15),
             action_lastdate=datetime.date(2018, 5, 15)
         ))
         db_action.append(dict(
-            action_name='アイテム登録',
+            action_name='アイテム登録「ダミー」',
             action_desc='アイテムを登録するためのブラグイン',
             action_version='1.0.1',
+            action_makedate=datetime.date(2018, 5, 22),
             action_lastdate=datetime.date(2018, 5, 22)
         ))
         db_action.append(dict(
-            action_name='コンテンツアップロード',
+            action_name='コンテンツアップロード「ダミー」',
             action_desc='アイテムに関連してアップロードするコンテンツファイル',
             action_version='1.2.1',
+            action_makedate=datetime.date(2018, 4, 22),
             action_lastdate=datetime.date(2018, 4, 22)
         ))
         db_action.append(dict(
-            action_name='承認依頼',
+            action_name='承認依頼「ダミー」',
             action_desc='アイテムに対しての承認者を設けて、承認を得る',
             action_version='1.1.1',
+            action_makedate=datetime.date(2018, 6, 11),
             action_lastdate=datetime.date(2018, 6, 11)
         ))
         db_action.append(dict(
-            action_name='承認',
+            action_name='承認「ダミー」',
             action_desc='承認依頼されているアイテムに対しての承認される',
             action_version='2.0.0',
+            action_makedate=datetime.date(2018, 2, 11),
             action_lastdate=datetime.date(2018, 2, 11)
         ))
         db_action.append(dict(
-            action_name='ビアレビュー',
+            action_name='ビアレビュー「ダミー」',
             action_desc='アイテムについてのビアレビューをサポートする',
             action_version='1.1.2',
+            action_makedate=datetime.date(2018, 6, 8),
             action_lastdate=datetime.date(2018, 6, 8)
         ))
         return db_action
@@ -126,36 +135,85 @@ def init_workflow(tables):
     def init_flow():
         """Init Flow Table"""
         db_flow = list()
+        db_flow_action = list()
+        action_list = Action.query.order_by(asc(Action.id)).all()
         _uuid = uuid.uuid4()
         db_flow.append(dict(
             flow_id=_uuid,
-            flow_name='登録フロー',
-            flow_status=FlowStatusPolicy.INUSE,
-            action_id=2,
-            action_order=1
+            flow_name='登録フロー「ダミー」',
+            flow_status=FlowStatusPolicy.AVAILABLE,
+            flow_user=1
         ))
+        for i, _idx in enumerate([0, 1, 3, 4]):
+            """action.id: [1, 2, 4, 5]"""
+            db_flow_action.append(dict(
+                flow_id=_uuid,
+                action_id=action_list[_idx].id,
+                action_version=action_list[_idx].action_version,
+                action_order=(i+1),
+                action_condition='',
+                action_date=datetime.date(2018, 7, 28)
+            ))
+        _uuid = uuid.uuid4()
         db_flow.append(dict(
             flow_id=_uuid,
-            flow_name='登録フロー',
-            flow_status=FlowStatusPolicy.INUSE,
-            action_id=5,
-            action_order=2
-        ))
-        db_flow.append(dict(
-            flow_id=uuid.uuid4(),
-            flow_name='登録承認フロー',
+            flow_name='登録承認フロー「ダミー」',
             flow_status=FlowStatusPolicy.AVAILABLE,
-            action_id=2,
-            action_order=1
+            flow_user=1
         ))
+        for i, _idx in enumerate([1, 3, 4]):
+            """action.id: [2, 4, 5]"""
+            db_flow_action.append(dict(
+                flow_id=_uuid,
+                action_id=action_list[_idx].id,
+                action_version=action_list[_idx].action_version,
+                action_order=(i+1),
+                action_condition='',
+                action_date=datetime.date(2018, 8, 5)
+            ))
+        _uuid = uuid.uuid4()
         db_flow.append(dict(
-            flow_id=uuid.uuid4(),
-            flow_name='メタデータ付加フロー',
-            flow_status=FlowStatusPolicy.MAKING,
-            action_id=2,
-            action_order=1
+            flow_id=_uuid,
+            flow_name='メタデータ付加フロー「ダミー」',
+            flow_status=FlowStatusPolicy.AVAILABLE,
+            flow_user=1
         ))
-        return db_flow
+        for i, _idx in enumerate([1, 2, 3, 4, 5]):
+            """action.id: [2, 3, 4, 5, 6]"""
+            db_flow_action.append(dict(
+                flow_id=_uuid,
+                action_id=action_list[_idx].id,
+                action_version=action_list[_idx].action_version,
+                action_order=(i+1),
+                action_condition='',
+                action_date=datetime.date(2018, 8, 7)
+            ))
+        return db_flow, db_flow_action
+
+    def init_workflow():
+        """Init WorkFlow Table"""
+        db_workflow = list()
+        flow_list = Flow.query.order_by(asc(Flow.id)).all()
+        itemtypesname_list = ItemTypes.get_latest()
+        db_workflow.append(dict(
+            flows_id=uuid.uuid4(),
+            flows_name='論文登録フロー「ダミー」',
+            itemtype_id=itemtypesname_list[0].item_type[0].id,
+            flow_id=flow_list[0].id
+        ))
+        db_workflow.append(dict(
+            flows_id=uuid.uuid4(),
+            flows_name='レポート登録フロー「ダミー」',
+            itemtype_id=itemtypesname_list[1].item_type[0].id,
+            flow_id=flow_list[1].id
+        ))
+        db_workflow.append(dict(
+            flows_id=uuid.uuid4(),
+            flows_name='メタデータ付加フロー「ダミー」',
+            itemtype_id=itemtypesname_list[2].item_type[0].id,
+            flow_id=flow_list[2].id
+        ))
+        return db_workflow
 
     if len(tables):
         try:
@@ -171,9 +229,15 @@ def init_workflow(tables):
                         db.session.execute(Action.__table__.insert(),
                                            db_action)
                     if 'Flow' == table:
-                        db_flow = init_flow()
+                        db_flow, db_flow_action = init_flow()
                         db.session.execute(Flow.__table__.insert(),
                                            db_flow)
+                        db.session.execute(FlowAction.__table__.insert(),
+                                           db_flow_action)
+                    if 'WorkFlow' == table:
+                        db_workflow = init_workflow()
+                        db.session.execute(WorkFlow.__table__.insert(),
+                                           db_workflow)
         except BaseException as ex:
             db.session.rollback()
             click.secho(str(ex), fg='blue')
