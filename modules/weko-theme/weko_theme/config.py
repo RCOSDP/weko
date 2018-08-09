@@ -61,7 +61,7 @@ THEME_FOOTER_EDITOR_TEMPLATE = 'weko_theme/footer_editor.html'
 THEME_FOOTER_WYSIWYG_TEMPLATE = 'weko_theme/footer_wysiwyg.html'
 """Footer wysiwyg template."""
 
-THEME_SITENAME = 'Weko3'
+THEME_SITENAME = 'WEKO3'
 """The name of the site to be used on the header and as a title."""
 
 THEME_SEARCHBAR = True
