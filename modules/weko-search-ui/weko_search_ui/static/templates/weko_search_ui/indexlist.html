@@ -17,8 +17,10 @@
       <ul class="list-group">
         <a class="list-group-item" ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0] track by $index"
            ng-if="!$first" ng-href="/search?search_type=2&q={{ index_path.key.split('/').pop() }}">
-          <span class="badge">{{_('Private')}}{{index_path.date_range.un_pub_cnt}} {{_('Cases')}}</span>
-          <span class="badge">{{_('Public')}}{{index_path.date_range.pub_cnt}} {{_('Cases')}}</span>
+          <!--<span class="badge">{{_('Private')}}{{index_path.date_range.un_pub_cnt}} {{_('items ')}}</span>-->
+          <!--<span class="badge">{{_('Public')}}{{index_path.date_range.pub_cnt}} {{_('items ')}}</span>-->
+          <span ng-if="index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0" class="badge">{{index_path.date_range.pub_cnt}} items (Private {{index_path.date_range.un_pub_cnt}} items )</span>
+          <span ng-if="index_path.date_range.pub_cnt==0&&index_path.date_range.un_pub_cnt==0" class="badge">{{index_path.date_range.pub_cnt}} items </span>
           <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
           {{ index_path.name.split('/').pop() }}
         </a>
