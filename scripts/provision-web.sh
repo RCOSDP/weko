@@ -104,8 +104,7 @@ provision_web_common_centos7 () {
          git \
          rlwrap \
          screen \
-         vim \
-         gnupg
+         vim
     # sphinxdoc-install-useful-system-tools-centos7-end
 
     # sphinxdoc-add-nodejs-external-repository-centos7-begin
