@@ -6,6 +6,10 @@ require([
   $("#item-type-lists").change(function (ev) {
     window.location.href = '/items/' + $(this).val();
   });
+  $("#btnModalClose").click(function () {
+    $('#myModal').modal('toggle');
+    $("div.modal-backdrop").remove();
+  });
 });
 
 (function (angular) {
