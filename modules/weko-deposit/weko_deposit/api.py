@@ -40,6 +40,7 @@ from weko_records.utils import (
     set_timestamp)
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
+from .signals import item_created
 
 PRESERVE_FIELDS = (
     '_deposit',
@@ -274,6 +275,10 @@ class WekoDeposit(Deposit):
 
         dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
+        current_app.logger.debug(
+            'create item: {0}'.format(self.pid.object_uuid))
+        item_created.send(
+            current_app._get_current_object(), item_id=self.pid)
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):

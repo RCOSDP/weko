@@ -88,6 +88,9 @@ setup(
         'invenio_base.apps': [
             'weko_workflow = weko_workflow:WekoWorkflow',
         ],
+        'invenio_base.api_apps': [
+            'weko_workflow_rest = weko_workflow:WekoWorkflow',
+        ],
         'invenio_admin.views': [
             'weko_workflow = weko_workflow.admin:workflow_adminview',
             'weko_flow = weko_workflow.admin:flow_adminview',

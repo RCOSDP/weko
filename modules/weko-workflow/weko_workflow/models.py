@@ -35,6 +35,60 @@ from weko_records.models import ItemMetadata, ItemType
 from weko_user_profiles import UserProfile
 
 
+class ActionStatusPolicy(object):
+    """Action status policies."""
+
+    ACTION_BEGIN = 'B'
+    """Begin the action."""
+
+    ACTION_FINALLY = 'F'
+    """Finally the action."""
+
+    ACTION_FORCE_END = 'E'
+    """Force end the action."""
+
+    ACTION_CANCEL = 'C'
+    """Cancel the action"""
+
+    ACTION_MAKING = 'M'
+    """Making the action"""
+
+    descriptions = dict([
+        (ACTION_BEGIN,
+         _('Begin')),
+        (ACTION_FINALLY,
+         _('Finally')),
+        (ACTION_FORCE_END,
+         _('Force End')),
+        (ACTION_CANCEL,
+         _('Cancel')),
+        (ACTION_MAKING,
+         _('Making')),
+    ])
+    """Policies descriptions."""
+
+    @classmethod
+    def describe(cls, policy):
+        """
+        Policy description.
+
+        :param policy:
+        """
+        if cls.validate(policy):
+            return cls.descriptions[policy]
+
+    @classmethod
+    def validate(cls, policy):
+        """
+        Validate subscription policy value.
+
+        :param policy:
+        """
+        return policy in [cls.ACTION_BEGIN, cls.ACTION_FINALLY,
+                          cls.ACTION_FORCE_END, cls.ACTION_CANCEL,
+                          cls.ACTION_MAKING]
+
+
 class FlowStatusPolicy(object):
     """Workflow status policies."""
 
@@ -49,11 +103,11 @@ class FlowStatusPolicy(object):
 
     descriptions = dict([
         (AVAILABLE,
-         _('Available.')),
+         _('Available')),
         (INUSE,
-         _('In use.')),
+         _('In use')),
         (MAKING,
-         _('Making.')),
+         _('Making')),
     ])
     """Policies descriptions."""
 
@@ -91,11 +145,11 @@ class StatusPolicy(object):
 
     descriptions = dict([
         (NEW,
-         _('Created.')),
+         _('Created')),
         (UPT,
-         _('Updated.')),
+         _('Updated')),
         (DEL,
-         _('Deleted.')),
+         _('Deleted')),
     ])
     """Policies descriptions."""
 
@@ -130,9 +184,9 @@ class AvailableStautsPolicy(object):
 
     descriptions = dict([
         (USABLE,
-         _('Usable.')),
+         _('Usable')),
         (UNUSABLE,
-         _('Unusable.')),
+         _('Unusable')),
     ])
     """Policies descriptions."""
 
@@ -196,8 +250,19 @@ class ActionStatus(db.Model, TimestampMixin):
                    primary_key=True, autoincrement=True)
     """ActionStatus identifier."""
 
+    ACTIONSTATUSPOLICY = [
+        (ActionStatusPolicy.ACTION_BEGIN, _('Begin')),
+        (ActionStatusPolicy.ACTION_FINALLY, _('Finally')),
+        (ActionStatusPolicy.ACTION_FORCE_END, _('Force end')),
+        (ActionStatusPolicy.ACTION_CANCEL, _('Cancel')),
+        (ActionStatusPolicy.ACTION_MAKING, _('Making')),
+    ]
+    """Subscription policy choices."""
+
     action_status_id = db.Column(
-        db.String(1), nullable=False, unique=True, index=True)
+        ChoiceType(ACTIONSTATUSPOLICY, impl=db.String(1)),
+        default=ActionStatusPolicy.ACTION_BEGIN,
+        nullable=False, unique=True, index=True)
     """the id of action status."""
 
     action_status_name = db.Column(
@@ -421,8 +486,8 @@ class Activity(db.Model, TimestampMixin):
     """activity name of Activity."""
 
     item_id = db.Column(
-        UUIDType, db.ForeignKey(ItemMetadata.id),
-        nullable=False, unique=False, index=True)
+        UUIDType,
+        nullable=True, unique=False, index=True)
     """item id."""
 
     workflow_id = db.Column(
@@ -437,20 +502,27 @@ class Activity(db.Model, TimestampMixin):
         db.Integer, db.ForeignKey(Flow.id), nullable=True, unique=False)
     """flow id."""
 
-    # flow_status = db.Column(
-    #     db.Integer, nullable=True, unique=False)
-    # """flow status."""
+    flow = db.relationship(
+        Flow,
+        backref=db.backref('activity', lazy='dynamic')
+    )
 
     action_id = db.Column(
         db.Integer, db.ForeignKey(Action.id), nullable=True, unique=False)
     """action id."""
+
+    action = db.relationship(
+        Action,
+        backref=db.backref('activity', lazy='dynamic')
+    )
 
     # action_version = db.Column(
     #     db.String(24), nullable=True, unique=False)
     # """action version."""
 
     action_status = db.Column(
-        db.Integer, nullable=True, unique=False)
+        db.String(1), db.ForeignKey(ActionStatus.action_status_id),
+        nullable=True, unique=False)
     """action status."""
 
     activity_login_user = db.Column(
@@ -468,7 +540,7 @@ class Activity(db.Model, TimestampMixin):
     activity_start = db.Column(db.DateTime, nullable=False)
     """activity start date."""
 
-    activity_end = db.Column(db.DateTime, nullable=False)
+    activity_end = db.Column(db.DateTime, nullable=True)
     """activity end date."""
 
 
@@ -492,7 +564,9 @@ class ActivityHistory(db.Model, TimestampMixin):
         db.String(24), nullable=True, unique=False)
     """the used version of action."""
 
-    action_status = db.Column(db.String(255), nullable=True)
+    action_status = db.Column(
+        db.String(1), db.ForeignKey(ActionStatus.action_status_id),
+        nullable=True)
     """the status description of action."""
 
     action_user = db.Column(db.Integer, db.ForeignKey(User.id), nullable=True)

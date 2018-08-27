@@ -20,15 +20,24 @@
 
 """WEKO3 module docstring."""
 
+import uuid
+
+from datetime import datetime
+from flask import current_app
 from flask_login import current_user
+from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy import asc
+from sqlalchemy.orm.exc import NoResultFound
+from weko_records.api import ItemsMetadata
 
 from .models import Action as _Action
+from .models import Activity as _Activity
+from .models import ActivityHistory
 from .models import Flow as _Flow
 from .models import FlowAction as _FlowAction
 from .models import WorkFlow as _WorkFlow
-from .models import FlowStatusPolicy
+from .models import ActionStatusPolicy, FlowStatusPolicy, StatusPolicy
 
 
 class Flow(object):
@@ -188,6 +197,17 @@ class WorkFlow(object):
                 flows_id=workflow_id)
             return query.one_or_none()
 
+    def get_workflow_by_id(self, id):
+        """
+        get workflow detail info
+        :param workflow_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            query = _WorkFlow.query.filter_by(
+                id=id)
+            return query.one_or_none()
+
     def del_workflow(self, workflow_id):
         """
         Delete flow info
@@ -286,56 +306,46 @@ class ActionStatus(object):
         """
         pass
 
-class WorkFLows(object):
-    """Operated on the Flows"""
-    def create_flows(self, flows):
-        """
-        Create new flows
-        :param flows:
-        :return:
-        """
-        pass
-
-    def upt_flows(self, flows):
-        """
-        Update flows info
-        :param flows:
-        :return:
-        """
-        pass
-
-    def get_flows_list(self):
-        """
-        get flows list info
-        :return:
-        """
-        pass
-
-    def get_flows_detail(self, flows_id):
-        """
-        get flows detail info
-        :param flows_id:
-        :return:
-        """
-        pass
-
-    def del_flows(self, flows_id):
-        """
-        Delete flows info
-        :param flows_id:
-        :return:
-        """
-        pass
-
 class WorkActivity(object):
     """Operated on the Activity"""
-    def create_activity(self, activity):
+
+    def init_activity(self, activity):
         """
         Create new activity
         :param activity:
         :return:
         """
-        pass
+        db_activity = _Activity(
+            activity_id='A' + str(datetime.utcnow().timestamp()).split('.')[0],
+            workflow_id=activity.get('workflow_id'),
+            flow_id=activity.get('flow_id'),
+            action_id=0,
+            action_status=ActionStatusPolicy.ACTION_FINALLY,
+            activity_login_user=current_user.get_id(),
+            activity_update_user=current_user.get_id(),
+            activity_status=0,
+            activity_start=datetime.utcnow()
+        )
+        db_history = ActivityHistory(
+            activity_id=db_activity.activity_id,
+            action_id=db_activity.action_id,
+            action_version='1.0.0',
+            action_status=ActionStatusPolicy.ACTION_FINALLY,
+            action_user=current_user.get_id(),
+            action_date=db_activity.activity_start,
+            action_comment='Begin Action'
+        )
+        try:
+            with db.session.begin_nested():
+                db.session.add(db_activity)
+                db.session.add(db_history)
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+            return None
+        else:
+            db.session.commit()
+            return db_activity
 
     def upt_activity(self, activity):
         """
@@ -345,12 +355,89 @@ class WorkActivity(object):
         """
         pass
 
+    def upt_activity_item(self, activity, item_id):
+        """
+        Update activity info for item id
+        :param activity:
+        :param item_id:
+        :return:
+        """
+        current_app.logger.debug('received item: {0}'.format(item_id))
+        try:
+            with db.session.begin_nested():
+                db_activity = _Activity.query.filter_by(
+                    activity_id=activity.get('activity_id')).one()
+                db_activity.item_id = item_id
+                db_activity.action_status = ActionStatusPolicy.ACTION_FINALLY
+                db_history = ActivityHistory.query.filter_by(
+                    activity_id=db_activity.activity_id,
+                    action_id=db_activity.action_id).first()
+                db_new_history = ActivityHistory(
+                    activity_id=db_activity.activity_id,
+                    action_id=db_activity.action_id,
+                    action_version=db_history.action_version,
+                    action_status=ActionStatusPolicy.ACTION_FINALLY,
+                    action_user=current_user.get_id(),
+                    action_date=datetime.utcnow(),
+                    action_comment=db_history.action_comment
+                )
+                db.session.merge(db_activity)
+                db.session.add(db_new_history)
+
+            db.session.commit()
+            return True
+        except NoResultFound as ex:
+            current_app.logger.exception(str(ex))
+            return None
+
+
     def get_activity_list(self):
         """
         get activity list info
         :return:
         """
-        pass
+        with db.session.no_autoflush:
+            query = _Activity.query.order_by(asc(_Activity.id))
+            activities = query.all()
+            for activi in activities:
+                if activi.item_id is None:
+                    activi.ItemName = ''
+                else:
+                    item = ItemsMetadata.get_record(id_=activi.item_id)
+                    activi.ItemName = item.get('title_ja')
+                activi.StatusDesc = StatusPolicy.describe(activi.status)
+                activi.User = User.query.filter_by(
+                    id=activi.activity_update_user).first()
+            return activities
+
+    def get_activity_steps(self, activity_id):
+        steps = []
+        his = WorkActivityHistory()
+        histories = his.get_activity_history_list(activity_id)
+        history_dict = {}
+        for history in histories:
+            history_dict[history.action_id] = {
+                'Updater': history.user.email,
+                'Result': history.StatusDesc
+            }
+        with db.session.no_autoflush:
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            if activity is not None:
+                flow_actions = _FlowAction.query.filter_by(
+                    flow_id=activity.flow.flow_id).order_by(asc(
+                    _FlowAction.action_order)).all()
+                for flow_action in flow_actions:
+                    steps.append({
+                        'ActivityId': activity_id,
+                        'ActionId': flow_action.action_id,
+                        'ActionName': flow_action.action.action_name,
+                        'ActionVersion': flow_action.action_version,
+                        'Author': history_dict[flow_action.action_id].get('Updater') if flow_action.action_id in history_dict else '',
+                        'Status': history_dict[flow_action.action_id].get('Result') if flow_action.action_id in history_dict else ' '
+                    })
+
+        return steps
 
     def get_activity_detail(self, activity_id):
         """
@@ -358,7 +445,10 @@ class WorkActivity(object):
         :param activity_id:
         :return:
         """
-        pass
+        with db.session.no_autoflush:
+            query = _Activity.query.filter_by(activity_id=activity_id)
+            activity = query.one_or_none()
+            return activity
 
     def del_activity(self, activity_id):
         """
@@ -376,14 +466,55 @@ class WorkActivityHistory(object):
         :param activity:
         :return:
         """
-        pass
+        db_history = ActivityHistory(
+            activity_id=activity.get('activity_id'),
+            action_id=activity.get('action_id'),
+            action_version=activity.get('action_version'),
+            action_status=ActionStatusPolicy.ACTION_MAKING,
+            action_user=current_user.get_id(),
+            action_date=datetime.utcnow(),
+            action_comment=activity.get('commond')
+        )
+        new_history = False
+        activity = WorkActivity()
+        activity = activity.get_activity_detail(db_history.activity_id)
+        if activity.action_id != db_history.action_id or \
+                activity.action_status != db_history.action_status:
+            new_history = True
+            activity.action_id = db_history.action_id
+            activity.action_status = db_history.action_status
+            activity.activity_update_user = db_history.action_user
+            activity.modified = datetime.utcnow()
+        try:
+            with db.session.begin_nested():
+                if new_history:
+                    db.session.merge(activity)
+                    db.session.add(db_history)
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+            return None
+        else:
+            db.session.commit()
+            return db_history
 
-    def get_activity_history_list(self):
+    def get_activity_history_list(self, activity_id):
         """
         get activity history list info
+        :param activity_id:
         :return:
         """
-        pass
+        with db.session.no_autoflush:
+            query = ActivityHistory.query.filter_by(
+                activity_id=activity_id).order_by(asc(ActivityHistory.id))
+            histories = query.all()
+            for history in histories:
+                history.ActionName = \
+                    _Action.query.filter_by(
+                        id=history.action_id).first().action_name,
+                history.StatusDesc = \
+                    ActionStatusPolicy.describe(history.action_status)
+            return histories
 
     def get_activity_history_detail(self, activity_id):
         """
