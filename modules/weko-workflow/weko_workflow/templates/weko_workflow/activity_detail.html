@@ -1,0 +1,206 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
+
+{%- block css %}
+{{ super() }}
+{%- endblock css %}
+
+{%- block javascript %}
+{{ super() }}
+{% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('flow') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+<div class="row">
+  <div class="col-sm-12">
+    <div class="panel-group">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-sm-3">
+              <div class="form-horizontal">
+                <div class="form-group">
+                  <label class="col-sm-4 control-label">{{_('Flow')}}</label>
+                  <div class="col-sm-8">
+                    <p class="form-control-static">{{activity.flow_define.flow_name}}</p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-4 control-label">{{_('Activity')}}</label>
+                  <div class="col-sm-8">
+                    <p class="form-control-static">{{activity.activity_id}}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-2">
+              <div class="form-horizontal">
+                <div class="form-group">
+                  <label class="col-sm-4 control-label">{{_('Created')}}</label>
+                  <div class="col-sm-8">
+                    <p class="form-control-static">{{activity.activity_start.date()}}</p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-4 control-label">{{_('Creater')}}</label>
+                  <div class="col-sm-8">
+                    <p class="form-control-static">{{activity.activity_login_user}}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-2">
+              <div class="form-horizontal">
+                <div class="form-group">
+                  <label class="col-sm-4 control-label">{{_('Updated')}}</label>
+                  <div class="col-sm-8">
+                    <p class="form-control-static">{{activity.updated.date()}}</p>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-sm-4 control-label">{{_('Updater')}}</label>
+                  <div class="col-sm-8">
+                    <p class="form-control-static">{{activity.activity_update_user}}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-sm-3">
+              <div class="form-horizontal">
+                <div class="form-group">
+                  <label class="col-sm-4 control-label">{{_('Item')}}</label>
+                  <div class="col-sm-8">
+                    <p class="form-control-static">{{item.get('title_ja') if item}}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel panel-default">
+        <span class="indent">{{_('Step')}}</span>
+        <div class="panel-body">
+          <div class="row">
+            {%- for step in steps %}
+            <div class="col-sm-1">
+              <ul class="list-group">
+                <li class="list-group-item break-word">
+                  <a href="javascript:void(0)" class="action-name"
+                     data-action-version="{{step.ActionVersion}}"
+                     data-next-uri="{{url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId)}}">{{step.ActionName}}</a></li>
+                <li class="list-group-item break-word">
+                  <a href="#">{{step.Author}}</a></li>
+                <li class="list-group-item">{{_(step.Status)}}</li>
+              </ul>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="panel panel-default">
+        <span class="indent">{{_('History')}}</span>
+        <div class="panel-body">
+          <table class="table table-bordered table-striped">
+          <thead>
+          <tr>
+            <th>{{_('Action')}}</th>
+            <th>{{_('Updated')}}</th>
+            <th>{{_('Updater')}}</th>
+            <th>{{_('Result')}}</th>
+            <th>{{_('Comment')}}</th>
+          </tr>
+          </thead>
+          <tbody>
+          {%- if histories %}
+          {%- for history in histories %}
+          <tr>
+            <td>{{history.ActionName}}</td>
+            <td>{{history.action_date.date()}}</td>
+            <td>{{history.user.email}}</td>
+            <td>{{_(history.StatusDesc)}}</td>
+            <td>{{history.action_comment}}</td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          {% endif %}
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+    <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
+  </div>
+</div>
+{%- endblock page_body_main%}
+{%- block page_body%}
+{{ super() }}
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="myModalLabel">info</h4>
+      </div>
+      <div class="modal-body">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            test
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="sr-only" for="input-comment">Comment</label>
+          <div class="input-group">
+            <div class="input-group-addon">{{_('Comment:')}}</div>
+            <input type="text" class="form-control" id="input-comment" placeholder="Comment">
+          </div>
+        </div>
+        <div class="hide" id="hide-post-uri"></div>
+        <div class="hide" id="hide-action-version"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" id="btn-draft">Draft</button>
+        <button type="button" class="btn btn-default" id="btn-finish">Finish</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+{%- endblock page_body%}

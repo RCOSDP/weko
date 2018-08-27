@@ -18,17 +18,25 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Configuration for weko-workflow."""
+"""WEKO3 module docstring."""
 
-WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
-"""Default base template for the demo page."""
 
-WEKO_WORKFLOW_POP_PAGE = 'weko_workflow/admin/pop_page.html'
-"""Default pop page template for the flow detail page."""
+from flask import current_app, session
 
-WEKO_WORKFLOW_ACTION_ENDPOINTS = {
-    'item_login': {
-        'endpoint': 'weko_items_ui.index',
-        'params': {}
-    }
-}
+from .api import WorkActivity
+
+
+def upt_activity_item(app, item_id):
+    """
+    Connect to the item_created signal.
+    :param app:
+    :param item_id:
+    :return:
+    """
+    if 'activity_info' in session:
+        activity = session['activity_info']
+        workactivity = WorkActivity()
+        rtn = workactivity.upt_activity_item(
+            activity, item_id.object_uuid)
+        if rtn:
+            del session['activity_info']
