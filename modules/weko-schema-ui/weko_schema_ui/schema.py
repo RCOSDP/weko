@@ -388,8 +388,8 @@ class SchemaTree:
 
         def get_atr_value_lst(node, atr_vm):
             for k1, v1 in node.items():
-                if 'item' not in v1:
-                    continue
+                # if 'item' not in v1:
+                #     continue
                 klst = get_items_value_lst(atr_vm, v1)
                 if klst:
                     node[k1] = klst
@@ -459,10 +459,15 @@ class SchemaTree:
             return vlst
 
         vlst = []
+        current_app.logger.debug(
+            '_record: {0}'.format(json.dumps(self._record)))
         for k, v in self._record.items():
             if isinstance(v, dict):
                 # Dict
-                mpdic = v.get(self._schema_name)
+                mpdic = v.get(
+                    self._schema_name) if self._schema_name in v else ''
+                if isinstance(mpdic, str) and len(mpdic) == 0:
+                    continue
                 # List or string
                 atr_v = v.get('attribute_value')
                 # List of dict
@@ -478,6 +483,8 @@ class SchemaTree:
                     if isinstance(atr_vm, list) and isinstance(mpdic, dict):
                         for lst in atr_vm:
                             vlst.extend(get_mapping_value(mpdic, lst, k))
+        current_app.logger.debug(
+            '__get_value_list: {0}'.format(json.dumps(vlst)))
         return vlst
 
     def create_xml(self):
@@ -538,16 +545,24 @@ class SchemaTree:
                 val = node.get(self._v)
                 # the last children level
                 if val:
-                    atr = get_atr_list(node.get(self._atr))
-                    if atr:
-                        atr = get_atr_list(atr[index])
-                    for i in range(len(val[index])):
-                        chld = etree.Element(kname, None, ns)
-                        chld.text = val[index][i]
-                        if len(atr) > i:
-                            for k2, v2 in atr[i].items():
-                                chld.set(get_prefix(k2), v2)
-                        tree.append(chld)
+                    if node.get(self._atr):
+                        atr = get_atr_list(node.get(self._atr))
+                        for altt in atr:
+                            if altt:
+                                # atr = get_atr_list(atr[index])
+                                atrt = get_atr_list(altt)
+                            for i in range(len(val[index])):
+                                chld = etree.Element(kname, None, ns)
+                                chld.text = val[index][i]
+                                if len(atrt) > i:
+                                    for k2, v2 in atrt[i].items():
+                                        chld.set(get_prefix(k2), v2)
+                                tree.append(chld)
+                    else:
+                        for i in range(len(val[index])):
+                            chld = etree.Element(kname, None, ns)
+                            chld.text = val[index][i]
+                            tree.append(chld)
                 else:
                     # parents level
                     # if have any child
@@ -597,6 +612,8 @@ class SchemaTree:
         root = E(rootname)
 
         # Create sub element
+        current_app.logger.debug(
+            'node_tree: {0}'.format(json.dumps(node_tree)))
         for lst in node_tree:
             for k, v in lst.items():
                 k = get_prefix(k)
