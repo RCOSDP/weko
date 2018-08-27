@@ -39,7 +39,7 @@
           <th scope="row">{{loop.index}}</th>
           <td><a href="{{url_for('flowsetting.flow_detail', flow_id=flow.flow_id)}}">{{flow.flow_name}}</a></td>
           <td>{{_(flow.flow_status.value)}}</td>
-          <td>{{flow.modified.date()}}</td>
+          <td>{{flow.updated.date()}}</td>
         </tr>
       {%- endfor %}
       </tbody>

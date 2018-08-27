@@ -18,17 +18,14 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Configuration for weko-workflow."""
+"""WEKO3 module docstring."""
 
-WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
-"""Default base template for the demo page."""
 
-WEKO_WORKFLOW_POP_PAGE = 'weko_workflow/admin/pop_page.html'
-"""Default pop page template for the flow detail page."""
+from flask.signals import Namespace
 
-WEKO_WORKFLOW_ACTION_ENDPOINTS = {
-    'item_login': {
-        'endpoint': 'weko_items_ui.index',
-        'params': {}
-    }
-}
+
+_signals = Namespace()
+
+
+#: Sent when a new item created.
+item_created = _signals.signal('item_created')

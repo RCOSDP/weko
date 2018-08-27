@@ -20,7 +20,10 @@
 
 """Flask extension for weko-workflow."""
 
+from weko_deposit.signals import item_created
+
 from . import config
+from .sessions import upt_activity_item
 from .views import blueprint
 
 
@@ -41,6 +44,7 @@ class WekoWorkflow(object):
         :param app: The Flask application.
         """
         self.init_config(app)
+        item_created.connect(upt_activity_item, app)
         app.register_blueprint(blueprint)
         app.extensions['weko-workflow'] = self
 
@@ -53,7 +57,7 @@ class WekoWorkflow(object):
         if 'BASE_EDIT_TEMPLATE' in app.config:
             app.config.setdefault(
                 'WEKO_WORKFLOW_BASE_TEMPLATE',
-                app.config['BASE_EDIT_TEMPLATE'],
+                app.config['BASE_PAGE_TEMPLATE'],
             )
         for k in dir(config):
             if k.startswith('WEKO_WORKFLOW_'):

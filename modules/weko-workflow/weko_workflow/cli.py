@@ -29,8 +29,8 @@ from invenio_db import db
 
 from weko_records.api import ItemTypes
 
-from .models import ActionStatus, Action, Activity, ActivityHistory,\
-    Flow, FlowAction, FlowStatusPolicy, WorkFlow
+from .models import ActionStatus, Action, FlowDefine, \
+    FlowAction, FlowStatusPolicy, WorkFlow
 
 
 @click.group()
@@ -85,6 +85,27 @@ def init_workflow(tables):
         ))
         return db_action_status
 
+    def init_action_begin():
+        """Init Action Table"""
+        db_action = list()
+        db_action.append(dict(
+            action_name='開始「ダミー」',
+            action_desc='アクションが開始したことを示す',
+            action_version='1.0.0',
+            action_endpoint='begin_action',
+            action_makedate=datetime.date(2018, 5, 15),
+            action_lastdate=datetime.date(2018, 5, 15)
+        ))
+        db_action.append(dict(
+            action_name='終了「ダミー」',
+            action_desc='アクションが終了したことを示す',
+            action_version='1.0.0',
+            action_endpoint='end_action',
+            action_makedate=datetime.date(2018, 5, 15),
+            action_lastdate=datetime.date(2018, 5, 15)
+        ))
+        return db_action
+
     def init_action():
         """Init Action Table"""
         db_action = list()
@@ -92,6 +113,7 @@ def init_workflow(tables):
             action_name='重複チェック「ダミー」',
             action_desc='アイテムの重複登録があるかを確認するため',
             action_version='1.0.0',
+            action_endpoint='double_check',
             action_makedate=datetime.date(2018, 5, 15),
             action_lastdate=datetime.date(2018, 5, 15)
         ))
@@ -99,6 +121,7 @@ def init_workflow(tables):
             action_name='アイテム登録「ダミー」',
             action_desc='アイテムを登録するためのブラグイン',
             action_version='1.0.1',
+            action_endpoint='item_login',
             action_makedate=datetime.date(2018, 5, 22),
             action_lastdate=datetime.date(2018, 5, 22)
         ))
@@ -106,6 +129,7 @@ def init_workflow(tables):
             action_name='コンテンツアップロード「ダミー」',
             action_desc='アイテムに関連してアップロードするコンテンツファイル',
             action_version='1.2.1',
+            action_endpoint='file_upload',
             action_makedate=datetime.date(2018, 4, 22),
             action_lastdate=datetime.date(2018, 4, 22)
         ))
@@ -113,6 +137,7 @@ def init_workflow(tables):
             action_name='承認依頼「ダミー」',
             action_desc='アイテムに対しての承認者を設けて、承認を得る',
             action_version='1.1.1',
+            action_endpoint='approval_request',
             action_makedate=datetime.date(2018, 6, 11),
             action_lastdate=datetime.date(2018, 6, 11)
         ))
@@ -120,6 +145,7 @@ def init_workflow(tables):
             action_name='承認「ダミー」',
             action_desc='承認依頼されているアイテムに対しての承認される',
             action_version='2.0.0',
+            action_endpoint='approval',
             action_makedate=datetime.date(2018, 2, 11),
             action_lastdate=datetime.date(2018, 2, 11)
         ))
@@ -127,6 +153,7 @@ def init_workflow(tables):
             action_name='ビアレビュー「ダミー」',
             action_desc='アイテムについてのビアレビューをサポートする',
             action_version='1.1.2',
+            action_endpoint='review_action',
             action_makedate=datetime.date(2018, 6, 8),
             action_lastdate=datetime.date(2018, 6, 8)
         ))
@@ -193,7 +220,7 @@ def init_workflow(tables):
     def init_workflow():
         """Init WorkFlow Table"""
         db_workflow = list()
-        flow_list = Flow.query.order_by(asc(Flow.id)).all()
+        flow_list = FlowDefine.query.order_by(asc(FlowDefine.id)).all()
         itemtypesname_list = ItemTypes.get_latest()
         db_workflow.append(dict(
             flows_id=uuid.uuid4(),
@@ -225,12 +252,15 @@ def init_workflow(tables):
                         db.session.execute(ActionStatus.__table__.insert(),
                                            db_action_status)
                     if 'Action' == table:
+                        db_action = init_action_begin()
+                        db.session.execute(Action.__table__.insert(),
+                                           db_action)
                         db_action = init_action()
                         db.session.execute(Action.__table__.insert(),
                                            db_action)
                     if 'Flow' == table:
                         db_flow, db_flow_action = init_flow()
-                        db.session.execute(Flow.__table__.insert(),
+                        db.session.execute(FlowDefine.__table__.insert(),
                                            db_flow)
                         db.session.execute(FlowAction.__table__.insert(),
                                            db_flow_action)

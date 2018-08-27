@@ -24,15 +24,68 @@ import uuid
 
 from datetime import datetime
 from flask_babelex import gettext as _
-from invenio_accounts.models import User
+from invenio_accounts.models import Role, User
 from invenio_db import db
 from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils.types import UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
 
 from weko_groups.widgets import RadioGroupWidget
-from weko_records.models import ItemMetadata, ItemType
-from weko_user_profiles import UserProfile
+from weko_records.models import ItemType
+
+
+class ActionStatusPolicy(object):
+    """Action status policies."""
+
+    ACTION_BEGIN = 'B'
+    """Begin the action."""
+
+    ACTION_FINALLY = 'F'
+    """Finally the action."""
+
+    ACTION_FORCE_END = 'E'
+    """Force end the action."""
+
+    ACTION_CANCEL = 'C'
+    """Cancel the action"""
+
+    ACTION_MAKING = 'M'
+    """Making the action"""
+
+    descriptions = dict([
+        (ACTION_BEGIN,
+         _('Begin')),
+        (ACTION_FINALLY,
+         _('Finally')),
+        (ACTION_FORCE_END,
+         _('Force End')),
+        (ACTION_CANCEL,
+         _('Cancel')),
+        (ACTION_MAKING,
+         _('Making')),
+    ])
+    """Policies descriptions."""
+
+    @classmethod
+    def describe(cls, policy):
+        """
+        Policy description.
+
+        :param policy:
+        """
+        if cls.validate(policy):
+            return cls.descriptions[policy]
+
+    @classmethod
+    def validate(cls, policy):
+        """
+        Validate subscription policy value.
+
+        :param policy:
+        """
+        return policy in [cls.ACTION_BEGIN, cls.ACTION_FINALLY,
+                          cls.ACTION_FORCE_END, cls.ACTION_CANCEL,
+                          cls.ACTION_MAKING]
 
 
 class FlowStatusPolicy(object):
@@ -49,11 +102,11 @@ class FlowStatusPolicy(object):
 
     descriptions = dict([
         (AVAILABLE,
-         _('Available.')),
+         _('Available')),
         (INUSE,
-         _('In use.')),
+         _('In use')),
         (MAKING,
-         _('Making.')),
+         _('Making')),
     ])
     """Policies descriptions."""
 
@@ -91,11 +144,11 @@ class StatusPolicy(object):
 
     descriptions = dict([
         (NEW,
-         _('Created.')),
+         _('Created')),
         (UPT,
-         _('Updated.')),
+         _('Updated')),
         (DEL,
-         _('Deleted.')),
+         _('Deleted')),
     ])
     """Policies descriptions."""
 
@@ -130,9 +183,9 @@ class AvailableStautsPolicy(object):
 
     descriptions = dict([
         (USABLE,
-         _('Usable.')),
+         _('Usable')),
         (UNUSABLE,
-         _('Unusable.')),
+         _('Unusable')),
     ])
     """Policies descriptions."""
 
@@ -182,9 +235,9 @@ class TimestampMixin(object):
     created = db.Column(db.DateTime, nullable=False, default=datetime.now)
     """Creation timestamp."""
 
-    modified = db.Column(db.DateTime, nullable=False, default=datetime.now,
-                         onupdate=datetime.now)
-    """Modification timestamp."""
+    updated = db.Column(db.DateTime, nullable=False, default=datetime.now,
+                        onupdate=datetime.now)
+    """Updated timestamp."""
 
 
 class ActionStatus(db.Model, TimestampMixin):
@@ -192,12 +245,23 @@ class ActionStatus(db.Model, TimestampMixin):
 
     __tablename__ = 'action_status'
 
-    id = db.Column(db.Integer, nullable=False,
+    id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
     """ActionStatus identifier."""
 
+    ACTIONSTATUSPOLICY = [
+        (ActionStatusPolicy.ACTION_BEGIN, _('Begin')),
+        (ActionStatusPolicy.ACTION_FINALLY, _('Finally')),
+        (ActionStatusPolicy.ACTION_FORCE_END, _('Force end')),
+        (ActionStatusPolicy.ACTION_CANCEL, _('Cancel')),
+        (ActionStatusPolicy.ACTION_MAKING, _('Making')),
+    ]
+    """Subscription policy choices."""
+
     action_status_id = db.Column(
-        db.String(1), nullable=False, unique=True, index=True)
+        ChoiceType(ACTIONSTATUSPOLICY, impl=db.String(1)),
+        default=ActionStatusPolicy.ACTION_BEGIN,
+        nullable=False, unique=True, index=True)
     """the id of action status."""
 
     action_status_name = db.Column(
@@ -219,7 +283,7 @@ class Action(db.Model, TimestampMixin):
 
     __tablename__ = 'action'
 
-    id = db.Column(db.Integer, nullable=False,
+    id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
     """Action identifier."""
 
@@ -229,6 +293,9 @@ class Action(db.Model, TimestampMixin):
 
     action_desc = db.Column(db.Text, nullable=True)
     """the description of action."""
+
+    action_endpoint = db.Column(db.String(24), nullable=True, index=False)
+    """the endpoint of action"""
 
     action_version = db.Column(db.String(64), nullable=True)
     """the version of action."""
@@ -242,12 +309,12 @@ class Action(db.Model, TimestampMixin):
     """the last update date of action."""
 
 
-class Flow(db.Model, TimestampMixin):
+class FlowDefine(db.Model, TimestampMixin):
     """define Flow"""
 
-    __tablename__ = 'flow'
+    __tablename__ = 'flow_define'
 
-    id = db.Column(db.Integer, nullable=False,
+    id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
     """Flow identifier."""
 
@@ -262,11 +329,11 @@ class Flow(db.Model, TimestampMixin):
     """the name of flow."""
 
     flow_user = db.Column(
-        db.Integer,
-        db.ForeignKey(UserProfile.user_id), nullable=True, unique=False)
+        db.Integer(),
+        db.ForeignKey(User.id), nullable=True, unique=False)
     """the user who update the flow."""
 
-    user_profile = db.relationship(UserProfile)
+    user_profile = db.relationship(User)
     """User relationship"""
 
     FLOWSTATUSPOLICY = [
@@ -295,23 +362,23 @@ class FlowAction(db.Model, TimestampMixin):
 
     __tablename__ = 'flow_action'
 
-    id = db.Column(db.Integer, nullable=False,
+    id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
     """FlowAction identifier."""
 
     flow_id = db.Column(
-        UUIDType, db.ForeignKey(Flow.flow_id),
+        UUIDType, db.ForeignKey(FlowDefine.flow_id),
         nullable=False, unique=False, index=True)
     """the id of flow."""
 
-    action_id = db.Column(db.Integer, db.ForeignKey(Action.id),
+    action_id = db.Column(db.Integer(), db.ForeignKey(Action.id),
                           nullable=False, unique=False)
     """the id of action."""
 
     action_version = db.Column(db.String(64), nullable=True)
     """the version of used action."""
 
-    action_order = db.Column(db.Integer, nullable=False, unique=False)
+    action_order = db.Column(db.Integer(), nullable=False, unique=False)
     """the order of action."""
 
     action_condition = db.Column(db.String(255), nullable=True, unique=False)
@@ -337,13 +404,52 @@ class FlowAction(db.Model, TimestampMixin):
         Action, backref=db.backref('flow_action'))
     """flow action relationship."""
 
+    action_roles = db.relationship(
+        'FlowActionRole',
+        backref=db.backref('flow_action'))
+    """flow action relationship."""
+
+
+class FlowActionRole(db.Model, TimestampMixin):
+    """FlowActionRole list belong to FlowAction
+
+    It relates an allowed action with a role or a user
+    """
+
+    __tablename__ = 'flow_action_role'
+
+    id = db.Column(db.Integer(), nullable=False,
+                   primary_key=True, autoincrement=True)
+    """FlowAction identifier."""
+
+    flow_action_id = db.Column(
+        db.Integer(), db.ForeignKey(FlowAction.id),
+        nullable=False, unique=False, index=True)
+    """the id of flow_action."""
+
+    action_role = db.Column(db.Integer(), db.ForeignKey(Role.id),
+                            nullable=True, unique=False)
+
+    action_role_exclude = db.Column(
+        db.Boolean(name='role_exclude'),
+        nullable=False, default=False, server_default='0')
+    """If set to True, deny the action, otherwise allow it."""
+
+    action_user = db.Column(db.Integer(), db.ForeignKey(User.id),
+                            nullable=True, unique=False)
+
+    action_user_exclude = db.Column(
+        db.Boolean(name='user_exclude'),
+        nullable=False, default=False, server_default='0')
+    """If set to True, deny the action, otherwise allow it."""
+
 
 class WorkFlow(db.Model, TimestampMixin):
     """define WorkFlow"""
 
     __tablename__ = 'work_flow'
 
-    id = db.Column(db.Integer, nullable=False,
+    id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
     """Flows identifier."""
 
@@ -361,7 +467,7 @@ class WorkFlow(db.Model, TimestampMixin):
     """the name of flows."""
 
     itemtype_id = db.Column(
-        db.Integer, db.ForeignKey(ItemType.id), nullable=False, unique=False)
+        db.Integer(), db.ForeignKey(ItemType.id), nullable=False, unique=False)
     """the id of itemtype."""
 
     itemtype = db.relationship(
@@ -370,19 +476,19 @@ class WorkFlow(db.Model, TimestampMixin):
                            order_by=desc('item_type.tag'))
     )
 
-    flow_id = db.Column(db.Integer, db.ForeignKey(Flow.id),
+    flow_id = db.Column(db.Integer(), db.ForeignKey(FlowDefine.id),
                         nullable=False, unique=False)
     """the id of flow."""
 
-    flow = db.relationship(
-        Flow,
+    flow_define = db.relationship(
+        FlowDefine,
         backref=db.backref('workflow', lazy='dynamic')
     )
 
-    # flow_order = db.Column(db.Integer, nullable=False, unique=False)
+    # flow_order = db.Column(db.Integer(), nullable=False, unique=False)
     # """the order of flow."""
     #
-    # flow_condition = db.Column(db.Integer, nullable=False, unique=False)
+    # flow_condition = db.Column(db.Integer(), nullable=False, unique=False)
     # """the pre condition of flow."""
     #
     # FLOWSTATUSPOLICY = [
@@ -408,7 +514,7 @@ class Activity(db.Model, TimestampMixin):
 
     __tablename__ = 'activity'
 
-    id = db.Column(db.Integer, nullable=False,
+    id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
     """Activity identifier."""
 
@@ -421,63 +527,74 @@ class Activity(db.Model, TimestampMixin):
     """activity name of Activity."""
 
     item_id = db.Column(
-        UUIDType, db.ForeignKey(ItemMetadata.id),
-        nullable=False, unique=False, index=True)
+        UUIDType,
+        nullable=True, unique=False, index=True)
     """item id."""
 
     workflow_id = db.Column(
-        db.Integer, db.ForeignKey(WorkFlow.id), nullable=False, unique=False)
+        db.Integer(), db.ForeignKey(WorkFlow.id),
+        nullable=False, unique=False)
     """workflow id."""
 
     workflow_status = db.Column(
-        db.Integer, nullable=True, unique=False)
+        db.Integer(), nullable=True, unique=False)
     """workflow status."""
 
     flow_id = db.Column(
-        db.Integer, db.ForeignKey(Flow.id), nullable=True, unique=False)
+        db.Integer(), db.ForeignKey(FlowDefine.id),
+        nullable=True, unique=False)
     """flow id."""
 
-    # flow_status = db.Column(
-    #     db.Integer, nullable=True, unique=False)
-    # """flow status."""
+    flow_define = db.relationship(
+        FlowDefine,
+        backref=db.backref('activity', lazy='dynamic')
+    )
 
     action_id = db.Column(
-        db.Integer, db.ForeignKey(Action.id), nullable=True, unique=False)
+        db.Integer(), db.ForeignKey(Action.id), nullable=True, unique=False)
     """action id."""
+
+    action = db.relationship(
+        Action,
+        backref=db.backref('activity', lazy='dynamic')
+    )
 
     # action_version = db.Column(
     #     db.String(24), nullable=True, unique=False)
     # """action version."""
 
     action_status = db.Column(
-        db.Integer, nullable=True, unique=False)
+        db.String(1), db.ForeignKey(ActionStatus.action_status_id),
+        nullable=True, unique=False)
     """action status."""
 
     activity_login_user = db.Column(
-        db.Integer, db.ForeignKey(User.id), nullable=True, unique=False)
+        db.Integer(), db.ForeignKey(User.id),
+        nullable=True, unique=False)
     """the user of create activity."""
 
     activity_update_user = db.Column(
-        db.Integer, db.ForeignKey(User.id), nullable=True, unique=False)
+        db.Integer(), db.ForeignKey(User.id),
+        nullable=True, unique=False)
     """the user of update activity."""
 
     activity_status = db.Column(
-        db.Integer, nullable=True)
+        db.Integer(), nullable=True)
     """activity status."""
 
     activity_start = db.Column(db.DateTime, nullable=False)
     """activity start date."""
 
-    activity_end = db.Column(db.DateTime, nullable=False)
+    activity_end = db.Column(db.DateTime, nullable=True)
     """activity end date."""
 
 
 class ActivityHistory(db.Model, TimestampMixin):
     """define ActivityHistory"""
 
-    __tablename__ = 'activity_history'
+    __tablename__ = 'action_history'
 
-    id = db.Column(db.Integer, nullable=False,
+    id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
     """ActivityHistory identifier."""
 
@@ -485,17 +602,19 @@ class ActivityHistory(db.Model, TimestampMixin):
         db.String(24), nullable=False, unique=False, index=True)
     """activity id of Activity."""
 
-    action_id = db.Column(db.Integer, nullable=False, unique=False)
+    action_id = db.Column(db.Integer(), nullable=False, unique=False)
     """action id."""
 
     action_version = db.Column(
         db.String(24), nullable=True, unique=False)
     """the used version of action."""
 
-    action_status = db.Column(db.String(255), nullable=True)
+    action_status = db.Column(
+        db.String(1), db.ForeignKey(ActionStatus.action_status_id),
+        nullable=True)
     """the status description of action."""
 
-    action_user = db.Column(db.Integer, db.ForeignKey(User.id), nullable=True)
+    action_user = db.Column(db.Integer(), db.ForeignKey(User.id), nullable=True)
     """the user of operate action."""
 
     action_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
