@@ -27,13 +27,9 @@ sudo: required
 language: python
 
 cache:
-  - pip
   directories:
-    - $CACHE_DIR
-
-env:
-  global:
-    - CACHE_DIR=$HOME/.cache/docker
+    - $HOME/.cache/docker
+    - $HOME/.cache/pip
 
 python:
   - "3.5"
