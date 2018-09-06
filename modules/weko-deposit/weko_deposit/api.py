@@ -275,8 +275,6 @@ class WekoDeposit(Deposit):
 
         dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
-        current_app.logger.debug(
-            'create item: {0}'.format(self.pid.object_uuid))
         item_created.send(
             current_app._get_current_object(), item_id=self.pid)
 
