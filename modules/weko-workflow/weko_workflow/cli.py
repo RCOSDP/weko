@@ -110,22 +110,6 @@ def init_workflow(tables):
         """Init Action Table"""
         db_action = list()
         db_action.append(dict(
-            id=0,
-            action_name='開始「ダミー」',
-            action_desc='アクションが開始したことを示す',
-            action_version='1.0.0',
-            action_makedate=datetime.date(2018, 5, 15),
-            action_lastdate=datetime.date(2018, 5, 15)
-        ))
-        db_action.append(dict(
-            id=1,
-            action_name='終了「ダミー」',
-            action_desc='アクションが終了したことを示す',
-            action_version='1.0.0',
-            action_makedate=datetime.date(2018, 5, 15),
-            action_lastdate=datetime.date(2018, 5, 15)
-        ))
-        db_action.append(dict(
             action_name='重複チェック「ダミー」',
             action_desc='アイテムの重複登録があるかを確認するため',
             action_version='1.0.0',
