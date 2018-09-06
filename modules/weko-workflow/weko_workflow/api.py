@@ -423,11 +423,11 @@ class WorkActivity(object):
         try:
             history = WorkActivityHistory()
             with db.session.begin_nested():
-                activity = _Activity.query.filter_by(
+                db_activity = _Activity.query.filter_by(
                     activity_id=activity.get('activity_id')).one_or_none()
-                if activity:
-                    activity.activity_end = datetime.utcnow()
-                    db.session.merge(activity)
+                if db_activity:
+                    db_activity.activity_end = datetime.utcnow()
+                    db.session.merge(db_activity)
                     history.create_activity_history(activity)
             db.session.commit()
         except:
