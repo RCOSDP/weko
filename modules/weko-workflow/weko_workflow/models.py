@@ -88,60 +88,6 @@ class ActionStatusPolicy(object):
                           cls.ACTION_MAKING]
 
 
-class ActionStatusPolicy(object):
-    """Action status policies."""
-
-    ACTION_BEGIN = 'B'
-    """Begin the action."""
-
-    ACTION_FINALLY = 'F'
-    """Finally the action."""
-
-    ACTION_FORCE_END = 'E'
-    """Force end the action."""
-
-    ACTION_CANCEL = 'C'
-    """Cancel the action"""
-
-    ACTION_MAKING = 'M'
-    """Making the action"""
-
-    descriptions = dict([
-        (ACTION_BEGIN,
-         _('Begin')),
-        (ACTION_FINALLY,
-         _('Finally')),
-        (ACTION_FORCE_END,
-         _('Force End')),
-        (ACTION_CANCEL,
-         _('Cancel')),
-        (ACTION_MAKING,
-         _('Making')),
-    ])
-    """Policies descriptions."""
-
-    @classmethod
-    def describe(cls, policy):
-        """
-        Policy description.
-
-        :param policy:
-        """
-        if cls.validate(policy):
-            return cls.descriptions[policy]
-
-    @classmethod
-    def validate(cls, policy):
-        """
-        Validate subscription policy value.
-
-        :param policy:
-        """
-        return policy in [cls.ACTION_BEGIN, cls.ACTION_FINALLY,
-                          cls.ACTION_FORCE_END, cls.ACTION_CANCEL,
-                          cls.ACTION_MAKING]
-
-
 class FlowStatusPolicy(object):
     """Workflow status policies."""
 
