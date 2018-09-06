@@ -25,3 +25,10 @@ WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 
 WEKO_WORKFLOW_POP_PAGE = 'weko_workflow/admin/pop_page.html'
 """Default pop page template for the flow detail page."""
+
+WEKO_WORKFLOW_ACTION_ENDPOINTS = {
+    'item_login': {
+        'endpoint': 'weko_items_ui.index',
+        'params': {}
+    }
+}

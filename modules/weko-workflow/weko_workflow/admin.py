@@ -23,6 +23,7 @@
 from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from invenio_accounts.models import Role, User
 
 from weko_records.api import ItemTypes
 
@@ -50,6 +51,8 @@ class FlowSettingView(BaseView):
         :param flow_id:
         :return:
         """
+        users = User.query.filter_by(active=True).all()
+        roles = Role.query.all()
         action = Action()
         actions = action.get_action_list()
         if '0' == flow_id:
@@ -59,6 +62,8 @@ class FlowSettingView(BaseView):
                 flow_id=flow_id,
                 flow=flow,
                 flows=None,
+                users=users,
+                roles=roles,
                 actions=None,
                 action_list=actions
             )
@@ -71,6 +76,8 @@ class FlowSettingView(BaseView):
             flow_id=flow_id,
             flow=flow,
             flows=None,
+            users=users,
+            roles=roles,
             actions=flow.flow_actions,
             action_list=actions
         )

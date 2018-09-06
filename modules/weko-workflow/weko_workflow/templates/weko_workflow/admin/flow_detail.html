@@ -38,7 +38,7 @@
         <div class="form-group">
           <label class="col-sm-3 control-label">{{_('Flow Update')}}</label>
           <div class="col-sm-9">
-            <p class="form-control-static">{{flow.modified.date() if flow}}</p>
+            <p class="form-control-static">{{flow.updated.date() if flow}}</p>
           </div>
         </div>
         <div class="form-group">
@@ -46,7 +46,7 @@
           <div class="col-sm-9">
             {%- set username = current_userprofile.username|default(current_user.email) if current_userprofile else None %}
             {%- if flow %}
-            <p class="form-control-static">{{flow.user_profile.username if flow}}</p>
+            <p class="form-control-static">{{flow.user_profile.email if flow}}</p>
             {% else %}
             <p class="form-control-static">{{ username or current_user.email }}</p>
             {% endif %}
@@ -94,7 +94,7 @@
             <th scope="row">{{loop.index}}</th>
             <td>{{flow.flow_name}}</td>
             <td>{{_(flow.flow_status.value)}}</td>
-            <td>{{flow.modified.date()}}</td>
+            <td>{{flow.updated.date()}}</td>
             <td>
               <div class="btn-group" role="group" aria-label="入替">
                 <button type="button" class="btn btn-default sortable_up" {%- if loop.first %}disabled{%- endif %}>↑</button>
@@ -121,6 +121,8 @@
             <th>{{_('Order')}}</th>
             <th class="hide">{{_('Action ID')}}</th>
             <th>{{_('Action Name')}}</th>
+            <th>{{_('Action Role')}}</th>
+            <th>{{_('Action User')}}</th>
             <th>{{_('Action Status')}}</th>
             <th>{{_('Action Update')}}</th>
             <th class="hide">{{_('Action Version')}}</th>
@@ -134,6 +136,38 @@
               <th scope="row"><span class="action_order">{{loop.index}}</span></th>
               <td class="hide action_ids">{{action.action_id}}</td>
               <td><span id="td_action_name_{{action.action_id}}">{{action.action.action_name}}</span></td>
+              <td>
+                <div class="form-inline">
+                  <div class="hide">{{action.action_role.action_role}}</div>
+                  <div class="hide">{{action.action_role.action_role_exclude}}</div>
+                  <select class="form-control td_action_role" id="td_action_role_{{action.action_id}}" data-action-id="{{action.action_id}}">
+                    <option value="0"></option>
+                    {%- for role in roles if role %}
+                    <option value="{{role.id}}" {% if role.id == action.action_role.action_role%}selected{% endif %}>{{role.name}}</option>
+                    {%- endfor %}
+                  </select>
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" {% if action.action_role.action_role_exclude %}checked{% endif %}> {{_('Deny')}}
+                    </label>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="form-inline">
+                  <select class="form-control td_action_user" id="td_action_user_{{action.action_id}}" data-action-id="{{action.action_id}}">
+                    <option value="0"></option>
+                    {%- for user in users if user %}
+                    <option value="{{user.id}}" {% if user.id == action.action_role.action_user%}selected{% endif %}>{{user.email}}</option>
+                    {%- endfor %}
+                  </select>
+                  <div class="checkbox">
+                    <label>
+                      <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_{{action.action_id}}" data-action-id="{{action.action_id}}" {% if action.action_role.action_user_exclude %}checked{% endif %}> {{_('Deny')}}
+                    </label>
+                  </div>
+                </div>
+              </td>
               <td>{{_(action.action_status.value)}}</td>
               <td class="hide"><span id="td_action_ver_{{action.action_id}}">{{action.action_version|default(action.action.action_version)}}</span></td>
               <td><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
@@ -188,13 +222,17 @@
       apply_action_list = JSON.parse(localStorage.getItem('apply_action_list'));
       apply_action = apply_action_list.find(function(element) {
         return element.id == actionId;
-      })
+      });
       if(apply_action == undefined) {
         apply_action = {
           id: actionId,
           name: actionName,
           date: curDateStr,
           version: actionVer,
+          user: 0,
+          user_deny: false,
+          role: 0,
+          role_deny: false,
           action: 'ADD'
         };
         apply_action_list.push(apply_action);
@@ -216,7 +254,7 @@
       apply_action_list = JSON.parse(localStorage.getItem('apply_action_list'));
       apply_action = apply_action_list.find(function(element) {
         return element.id == actionId;
-      })
+      });
       Object.assign(apply_action, {action: 'DEL'});
       localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
       $(this).removeClass('btn-primary');
@@ -236,6 +274,42 @@
       cur_row = $(this).parents('tr');
       cur_row.before(cur_row.next());
       initSortedBtn();
+    });
+    $('#tb_action_list').on('change', '.td_action_role', function(){
+      let actionId = $(this).data('action-id');
+      apply_action_list = JSON.parse(localStorage.getItem('apply_action_list'));
+      apply_action = apply_action_list.find(function(element) {
+        return element.id == actionId;
+      });
+      Object.assign(apply_action, {role: $(this).val()});
+      localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
+    });
+    $('#tb_action_list').on('change', '.td_action_role_deny', function(){
+      let actionId = $(this).data('action-id');
+      apply_action_list = JSON.parse(localStorage.getItem('apply_action_list'));
+      apply_action = apply_action_list.find(function(element) {
+        return element.id == actionId;
+      });
+      Object.assign(apply_action, {role_deny: $(this).is(':checked')});
+      localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
+    });
+    $('#tb_action_list').on('change', '.td_action_user', function(){
+      let actionId = $(this).data('action-id');
+      apply_action_list = JSON.parse(localStorage.getItem('apply_action_list'));
+      apply_action = apply_action_list.find(function(element) {
+        return element.id == actionId;
+      });
+      Object.assign(apply_action, {user: $(this).val()});
+      localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
+    });
+    $('#tb_action_list').on('change', '.td_action_user_deny', function(){
+      let actionId = $(this).data('action-id');
+      apply_action_list = JSON.parse(localStorage.getItem('apply_action_list'));
+      apply_action = apply_action_list.find(function(element) {
+        return element.id == actionId;
+      });
+      Object.assign(apply_action, {user_deny: $(this).is(':checked')});
+      localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     });
     $('#btn_submit').on('click', function(){
       $.ajax({
@@ -329,6 +403,10 @@
         name: $('#td_action_name_'+actionId).text(),
         date: $('#td_action_date_'+actionId).text(),
         version: $('#td_action_ver_'+actionId).text(),
+        user: $('#td_action_user_'+actionId).val(),
+        user_deny: $('#td_action_user_deny_'+actionId).is(':checked'),
+        role: $('#td_action_role_'+actionId).val(),
+        role_deny: $('#td_action_role_deny_'+actionId).is(':checked'),
         action: 'ADD'
       });
     });
@@ -343,7 +421,31 @@
               +'<td class="hide action_ids">'+apply_action.id+'</td>'
               +'<td><span id="td_action_name_'+apply_action.id+'">'
                 +apply_action.name+'</span></td>'
-              +'<td>Uasble</td>'
+              +'<td><div class="form-inline">'
+              +'  <select class="form-control td_action_role" id="td_action_role_'+apply_action.id+'" data-action-id="'+apply_action.id+'">'
+              +'    <option value="0" selected></option>'
+              +'    {%- for role in roles if role %}'
+              +'    <option value="{{role.id}}">{{role.name}}</option>'
+              +'    {%- endfor %}'
+              +'  </select><div class="checkbox">'
+              +'    <label>'
+              +'      <input type="checkbox" class="td_action_role_deny" id="td_action_role_deny_'+apply_action.id+'" data-action-id="'+apply_action.id+'"> {{_("Deny")}}'
+              +'    </label>'
+              +'  </div>'
+              +'</div></td>'
+              +'<td><div class="form-inline">'
+              +'  <select class="form-control td_action_user" id="td_action_user_'+apply_action.id+'" data-action-id="'+apply_action.id+'">'
+              +'    <option value="0" selected></option>'
+              +'    {%- for user in users if user -%}'
+              +'    <option value="{{user.id}}">{{user.email}}</option>'
+              +'    {%- endfor -%}'
+              +'  </select><div class="checkbox">'
+              +'    <label>'
+              +'      <input type="checkbox" class="td_action_user_deny" id="td_action_user_deny_'+apply_action.id+'" data-action-id="'+apply_action.id+'"> {{_("Deny")}}'
+              +'    </label>'
+              +'  </div>'
+              +'</div></td>'
+              +'<td>{{_("Usable")}}</td>'
               +'<td><span id="td_action_date_'+apply_action.id+'">'
                 +apply_action.date+'</span></td>'
               +'<td>'
@@ -378,6 +480,10 @@
           name: $('#td_action_name_'+actionId).text(),
           date: $('#td_action_date_'+actionId).text(),
           version: $('#td_action_ver_'+actionId).text(),
+          user: $('#td_action_user_'+actionId).val(),
+          user_deny: $('#td_action_user_deny_'+actionId).is(':checked'),
+          role: $('#td_action_role_'+actionId).val(),
+          role_deny: $('#td_action_role_deny_'+actionId).is(':checked'),
           action: 'ADD'
         });
       });

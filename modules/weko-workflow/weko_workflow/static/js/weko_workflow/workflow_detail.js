@@ -47,9 +47,14 @@ require([
       data: JSON.stringify(post_data),
       success: function(data, status) {
         if(0 == data.code) {
-          document.location.href=data.data.redirect;
+          if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+            document.location.href=data.data.redirect;
+          } else {
+            document.location.reload(true);
+          }
         } else {
           alert(data.msg);
+          $('#myModal').modal('hide');
         }
       },
       error: function(jqXHE, status) {

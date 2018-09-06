@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workflow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-08-22 16:13+0900\n"
+"POT-Creation-Date: 2018-09-05 11:05+0900\n"
 "PO-Revision-Date: 2018-08-06 13:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -19,96 +19,143 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.3\n"
 
-#: weko_workflow/admin.py:180 weko_workflow/admin.py:189
+#: weko_workflow/admin.py:222 weko_workflow/admin.py:231
 #: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:29
 #: weko_workflow/templates/weko_workflow/admin/workflow_list.html:33
 msgid "WorkFlow"
 msgstr ""
 
-#: weko_workflow/admin.py:181
+#: weko_workflow/admin.py:223
 msgid "WorkFlow List"
 msgstr ""
 
-#: weko_workflow/admin.py:190
+#: weko_workflow/admin.py:232
 msgid "Flow List"
 msgstr ""
 
-#: weko_workflow/models.py:52
-msgid "Available."
+#: weko_workflow/models.py:57 weko_workflow/models.py:253
+msgid "Begin"
 msgstr ""
 
-#: weko_workflow/models.py:54
-msgid "In use."
+#: weko_workflow/models.py:59 weko_workflow/models.py:254
+msgid "Finally"
 msgstr ""
 
-#: weko_workflow/models.py:56
-msgid "Making."
+#: weko_workflow/models.py:61
+msgid "Force End"
 msgstr ""
 
-#: weko_workflow/models.py:94
-msgid "Created."
+#: weko_workflow/models.py:63 weko_workflow/models.py:256
+msgid "Cancel"
 msgstr ""
 
-#: weko_workflow/models.py:96
-msgid "Updated."
-msgstr ""
-
-#: weko_workflow/models.py:98
-msgid "Deleted."
-msgstr ""
-
-#: weko_workflow/models.py:133
-msgid "Usable."
-msgstr ""
-
-#: weko_workflow/models.py:135
-msgid "Unusable."
-msgstr ""
-
-#: weko_workflow/models.py:166
-msgid "Record has be created."
-msgstr ""
-
-#: weko_workflow/models.py:167
-msgid "Record has be updated."
-msgstr ""
-
-#: weko_workflow/models.py:168
-msgid "Record has be deleted."
-msgstr ""
-
-#: weko_workflow/models.py:176
-msgid "Status Policy"
-msgstr ""
-
-#: weko_workflow/models.py:273
-msgid "Available"
-msgstr ""
-
-#: weko_workflow/models.py:274
-msgid "In use"
-msgstr ""
-
-#: weko_workflow/models.py:275
+#: weko_workflow/models.py:65 weko_workflow/models.py:109
+#: weko_workflow/models.py:257 weko_workflow/models.py:342
 msgid "Making"
 msgstr ""
 
-#: weko_workflow/models.py:284
-msgid "Subscription Policy"
+#: weko_workflow/models.py:105 weko_workflow/models.py:340
+msgid "Available"
 msgstr ""
 
-#: weko_workflow/models.py:321
+#: weko_workflow/models.py:107 weko_workflow/models.py:341
+msgid "In use"
+msgstr ""
+
+#: weko_workflow/models.py:147
+msgid "Created"
+msgstr ""
+
+#: weko_workflow/models.py:149
+#: weko_workflow/templates/weko_workflow/activity_list.html:43
+#: weko_workflow/templates/weko_workflow/admin/flow_list.html:33
+#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:38
+msgid "Updated"
+msgstr ""
+
+#: weko_workflow/models.py:151
+msgid "Deleted"
+msgstr ""
+
+#: weko_workflow/models.py:186 weko_workflow/models.py:388
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:448
 msgid "Usable"
 msgstr ""
 
-#: weko_workflow/models.py:322
+#: weko_workflow/models.py:188 weko_workflow/models.py:389
 #: weko_workflow/templates/weko_workflow/admin/action_list.html:54
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:40
 msgid "Unusable"
 msgstr ""
 
-#: weko_workflow/views.py:41
-msgid "weko-workflow"
+#: weko_workflow/models.py:219
+msgid "Record has be created."
+msgstr ""
+
+#: weko_workflow/models.py:220
+msgid "Record has be updated."
+msgstr ""
+
+#: weko_workflow/models.py:221
+msgid "Record has be deleted."
+msgstr ""
+
+#: weko_workflow/models.py:229
+msgid "Status Policy"
+msgstr ""
+
+#: weko_workflow/models.py:255
+msgid "Force end"
+msgstr ""
+
+#: weko_workflow/models.py:351
+msgid "Subscription Policy"
+msgstr ""
+
+#: weko_workflow/views.py:135
+msgid "Authorization required"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:42
+#: weko_workflow/templates/weko_workflow/admin/action_list.html:30
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:83
+#: weko_workflow/templates/weko_workflow/admin/flow_list.html:30
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:15
+#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:32
+msgid "No."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:44
+msgid "Activity"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:45
+msgid "Item"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:46
+#: weko_workflow/templates/weko_workflow/admin/flow_list.html:31
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:41
+#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:35
+msgid "Flow"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:47
+msgid "Action"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:48
+#: weko_workflow/templates/weko_workflow/admin/flow_list.html:32
+#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:37
+msgid "Status"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:49
+msgid "User"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/activity_list.html:67
+msgid "New Activity"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/index.html:29
@@ -116,16 +163,8 @@ msgstr ""
 msgid "Welcome to %(module_name)s"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:30
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:73
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:30
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:15
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:32
-msgid "No."
-msgstr ""
-
 #: weko_workflow/templates/weko_workflow/admin/action_list.html:31
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:113
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:123
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:16
 msgid "Action Name"
 msgstr ""
@@ -136,12 +175,13 @@ msgid "Action Summary"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/action_list.html:33
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:128
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:18
 msgid "Action Version"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/action_list.html:34
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:115
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:127
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:19
 msgid "Action Update"
 msgstr ""
@@ -167,8 +207,8 @@ msgid "Update"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/action_list.html:63
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:150
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:82
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:194
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:84
 msgid "Back"
 msgstr ""
 
@@ -184,87 +224,91 @@ msgstr ""
 msgid "Flow Author"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:51
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:56
 msgid "Flow Status"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:59
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:65
+msgid "Create"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:68
 msgid "Edit"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:61
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:78
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:71
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:80
 msgid "Delete"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:69
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:79
 msgid "Activity List"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:74
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:84
 msgid "Activity Query"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:75
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:85
 msgid "Activity Status"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:76
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:86
 msgid "Activity Update"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:77
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:116
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:87
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:129
 msgid "Change Order"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:100
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:110
 msgid "New Query"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:105
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:115
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:7
 msgid "Action List"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:107
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:117
 msgid "New Transition"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:111
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:121
 msgid "Order"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:112
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:122
 msgid "Action ID"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:114
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:124
+msgid "Action Role"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:125
+msgid "Action User"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:126
 msgid "Action Status"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:142
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:151
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:166
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:432
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:444
+msgid "Deny"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:186
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:188
 msgid "More Action"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:152
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:196
 msgid "New Flow"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:31
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:41
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:35
-msgid "Flow"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:32
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:37
-msgid "Status"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:33
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:38
-msgid "Updated"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_list.html:48
@@ -280,12 +324,12 @@ msgstr ""
 msgid "ItemType"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:65
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:67
 #: weko_workflow/templates/weko_workflow/admin/workflow_list.html:36
 msgid "Next Flow"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:75
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:77
 msgid "New WorkFlow"
 msgstr ""
 
@@ -303,5 +347,32 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "ItemType Title"
+#~ msgstr ""
+
+#~ msgid "Available."
+#~ msgstr ""
+
+#~ msgid "In use."
+#~ msgstr ""
+
+#~ msgid "Making."
+#~ msgstr ""
+
+#~ msgid "Created."
+#~ msgstr ""
+
+#~ msgid "Updated."
+#~ msgstr ""
+
+#~ msgid "Deleted."
+#~ msgstr ""
+
+#~ msgid "Usable."
+#~ msgstr ""
+
+#~ msgid "Unusable."
+#~ msgstr ""
+
+#~ msgid "weko-workflow"
 #~ msgstr ""
 

@@ -34,8 +34,9 @@ from weko_records.api import ItemsMetadata
 from .models import Action as _Action
 from .models import Activity as _Activity
 from .models import ActivityHistory
-from .models import Flow as _Flow
+from .models import FlowDefine as _Flow
 from .models import FlowAction as _FlowAction
+from .models import FlowActionRole as _FlowActionRole
 from .models import WorkFlow as _WorkFlow
 from .models import ActionStatusPolicy, FlowStatusPolicy, StatusPolicy
 
@@ -93,7 +94,12 @@ class Flow(object):
         with db.session.no_autoflush:
             query = _Flow.query.filter_by(
                 flow_id=flow_id)
-            return query.one_or_none()
+            flow_detail = query.one_or_none()
+            for action in flow_detail.flow_actions:
+                action_roles = _FlowActionRole.query.filter_by(
+                    flow_action_id=action.id).first()
+                action.action_role = action_roles if action_roles else None
+            return flow_detail
 
     def del_flow(self, flow_id):
         """
@@ -133,6 +139,21 @@ class Flow(object):
                     """Update"""
                     flowaction.action_order = order + 1
                     db.session.merge(flowaction)
+                _FlowActionRole.query.filter_by(
+                    flow_action_id=flowaction.id).delete()
+                flowactionrole = _FlowActionRole(
+                    flow_action_id=flowaction.id,
+                    action_role=action.get(
+                        'role') if '0' != action.get('role') else None,
+                    action_role_exclude=action.get(
+                        'role_deny') if '0' != action.get('role') else False,
+                    action_user=action.get(
+                        'user') if '0' != action.get('user') else None,
+                    action_user_exclude=action.get(
+                        'user_deny') if '0' != action.get('user') else False
+                )
+                if flowactionrole.action_role or flowactionrole.action_user:
+                    db.session.add(flowactionrole)
         db.session.commit()
 
 
@@ -254,7 +275,9 @@ class Action(object):
         :param action_id:
         :return:
         """
-        pass
+        with db.session.no_autoflush:
+            query = _Action.query.filter_by(id=action_id)
+            return query.one_or_none()
 
     def del_action(self, action_id):
         """
@@ -315,27 +338,34 @@ class WorkActivity(object):
         :param activity:
         :return:
         """
-        db_activity = _Activity(
-            activity_id='A' + str(datetime.utcnow().timestamp()).split('.')[0],
-            workflow_id=activity.get('workflow_id'),
-            flow_id=activity.get('flow_id'),
-            action_id=0,
-            action_status=ActionStatusPolicy.ACTION_FINALLY,
-            activity_login_user=current_user.get_id(),
-            activity_update_user=current_user.get_id(),
-            activity_status=0,
-            activity_start=datetime.utcnow()
-        )
-        db_history = ActivityHistory(
-            activity_id=db_activity.activity_id,
-            action_id=db_activity.action_id,
-            action_version='1.0.0',
-            action_status=ActionStatusPolicy.ACTION_FINALLY,
-            action_user=current_user.get_id(),
-            action_date=db_activity.activity_start,
-            action_comment='Begin Action'
-        )
         try:
+            action_id = 0
+            with db.session.no_autoflush:
+                action = _Action.query.filter_by(
+                    action_endpoint='begin_action').one_or_none()
+                if action is not None:
+                    action_id = action.id
+            db_activity = _Activity(
+                activity_id='A' + str(
+                    datetime.utcnow().timestamp()).split('.')[0],
+                workflow_id=activity.get('workflow_id'),
+                flow_id=activity.get('flow_id'),
+                action_id=action_id,
+                action_status=ActionStatusPolicy.ACTION_FINALLY,
+                activity_login_user=current_user.get_id(),
+                activity_update_user=current_user.get_id(),
+                activity_status=0,
+                activity_start=datetime.utcnow()
+            )
+            db_history = ActivityHistory(
+                activity_id=db_activity.activity_id,
+                action_id=db_activity.action_id,
+                action_version='1.0.0',
+                action_status=ActionStatusPolicy.ACTION_FINALLY,
+                action_user=current_user.get_id(),
+                action_date=db_activity.activity_start,
+                action_comment='Begin Action'
+            )
             with db.session.begin_nested():
                 db.session.add(db_activity)
                 db.session.add(db_history)
@@ -362,7 +392,6 @@ class WorkActivity(object):
         :param item_id:
         :return:
         """
-        current_app.logger.debug('received item: {0}'.format(item_id))
         try:
             with db.session.begin_nested():
                 db_activity = _Activity.query.filter_by(
@@ -390,6 +419,19 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             return None
 
+    def end_activity(self, activity):
+        try:
+            history = WorkActivityHistory()
+            with db.session.begin_nested():
+                activity = _Activity.query.filter_by(
+                    activity_id=activity.get('activity_id')).one_or_none()
+                if activity:
+                    activity.activity_end = datetime.utcnow()
+                    db.session.merge(activity)
+                    history.create_activity_history(activity)
+            db.session.commit()
+        except:
+            db.session.rollback()
 
     def get_activity_list(self):
         """
@@ -425,7 +467,7 @@ class WorkActivity(object):
                 activity_id=activity_id).one_or_none()
             if activity is not None:
                 flow_actions = _FlowAction.query.filter_by(
-                    flow_id=activity.flow.flow_id).order_by(asc(
+                    flow_id=activity.flow_define.flow_id).order_by(asc(
                     _FlowAction.action_order)).all()
                 for flow_action in flow_actions:
                     steps.append({
@@ -450,6 +492,32 @@ class WorkActivity(object):
             activity = query.one_or_none()
             return activity
 
+    def get_activity_action_role(self, activity_id, action_id):
+        roles = {
+            'allow': [],
+            'deny': []
+        }
+        users = {
+            'allow': [],
+            'deny': []
+        }
+        with db.session.no_autoflush:
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id).first()
+            flow_action = _FlowAction.query.filter_by(
+                flow_id=activity.flow_define.flow_id,
+                action_id=int(action_id)).one_or_none()
+            for action_role in flow_action.action_roles:
+                if action_role.action_role_exclude:
+                    roles['deny'].append(action_role.action_role)
+                elif action_role.action_role:
+                    roles['allow'].append(action_role.action_role)
+                if action_role.action_user_exclude:
+                    users['deny'].append(action_role.action_user)
+                elif action_role.action_user:
+                    users['allow'].append(action_role.action_user)
+            return roles, users
+
     def del_activity(self, activity_id):
         """
         Delete activity info
@@ -470,7 +538,7 @@ class WorkActivityHistory(object):
             activity_id=activity.get('activity_id'),
             action_id=activity.get('action_id'),
             action_version=activity.get('action_version'),
-            action_status=ActionStatusPolicy.ACTION_MAKING,
+            action_status=activity.get('action_status'),
             action_user=current_user.get_id(),
             action_date=datetime.utcnow(),
             action_comment=activity.get('commond')
@@ -484,7 +552,7 @@ class WorkActivityHistory(object):
             activity.action_id = db_history.action_id
             activity.action_status = db_history.action_status
             activity.activity_update_user = db_history.action_user
-            activity.modified = datetime.utcnow()
+            activity.updated = datetime.utcnow()
         try:
             with db.session.begin_nested():
                 if new_history:

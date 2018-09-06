@@ -36,6 +36,7 @@ def upt_activity_item(app, item_id):
     if 'activity_info' in session:
         activity = session['activity_info']
         workactivity = WorkActivity()
-        rtn = workactivity.upt_activity_item(activity, item_id.object_uuid)
+        rtn = workactivity.upt_activity_item(
+            activity, item_id.object_uuid)
         if rtn:
             del session['activity_info']
