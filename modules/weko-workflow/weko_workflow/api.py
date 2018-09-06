@@ -428,7 +428,16 @@ class WorkActivity(object):
                 if db_activity:
                     db_activity.activity_end = datetime.utcnow()
                     db.session.merge(db_activity)
-                    history.create_activity_history(activity)
+                    db_history = ActivityHistory(
+                        activity_id=activity.get('activity_id'),
+                        action_id=activity.get('action_id'),
+                        action_version=activity.get('action_version'),
+                        action_status=activity.get('action_status'),
+                        action_user=current_user.get_id(),
+                        action_date=datetime.utcnow(),
+                        action_comment=activity.get('commond')
+                    )
+                    db.session.add(db_history)
             db.session.commit()
         except:
             db.session.rollback()
