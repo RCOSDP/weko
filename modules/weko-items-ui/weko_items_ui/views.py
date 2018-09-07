@@ -87,6 +87,60 @@ def index(item_type_id=0):
     return abort(400)
 
 
+@blueprint.route('/iframe', methods=['GET'])
+@blueprint.route('/iframe/<int:item_type_id>', methods=['GET'])
+@login_required
+@item_permission.require(http_exception=403)
+def iframe_index(item_type_id=0):
+    """Renders an item register view.
+
+    :param item_type_id: Item type ID. (Default: 0)
+    :return: The rendered template.
+    """
+    try:
+        item_type = ItemTypes.get_by_id(item_type_id)
+        if item_type is None:
+            return render_template('weko_items_ui/iframe/error.html',
+                                   error_type='no_itemtype')
+        json_schema = '/items/jsonschema/{}'.format(item_type_id)
+        schema_form = '/items/schemaform/{}'.format(item_type_id)
+        need_file = False
+        if 'filename' in json.dumps(item_type.schema):
+            need_file = True
+        return render_template(
+            'weko_items_ui/iframe/item_edit.html',
+            need_file=need_file,
+            record={},
+            jsonschema=json_schema,
+            schemaform=schema_form,
+            id=item_type_id,
+            files=[]
+        )
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)
+
+
+@blueprint.route('/iframe/success', methods=['GET'])
+def iframe_success():
+    """Renders an item register view.
+
+    :return: The rendered template.
+    """
+    return render_template('weko_items_ui/iframe/error.html',
+                           error_type='item_login_success')
+
+
+@blueprint.route('/iframe/error', methods=['GET'])
+def iframe_error():
+    """Renders an item register view.
+
+    :return: The rendered template.
+    """
+    return render_template('weko_items_ui/iframe/error.html',
+                           error_type='item_login_error')
+
+
 # @blueprint.route("/edit/<int:pid>", methods=['GET'])
 # @login_required
 # @item_permission.require(http_exception=403)
@@ -187,6 +241,47 @@ def items_index(pid_value=0):
             flash(_('invalide request'), 'error')
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'])
+
+        data = request.get_json()
+        sessionstore = RedisStore(redis.StrictRedis.from_url(
+            'redis://{host}:{port}/1'.format(
+                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+        if request.method == 'PUT':
+            """update index of item info."""
+            item_str = sessionstore.get('item_index_{}'.format(pid_value))
+            sessionstore.delete('item_index_{}'.format(pid_value))
+            current_app.logger.debug(item_str)
+            item = json.loads(item_str)
+            item['index'] = data
+            current_app.logger.debug(item)
+        elif request.method == 'POST':
+            """update item data info."""
+            current_app.logger.debug(data)
+            sessionstore.put('item_index_{}'.format(pid_value), json.dumps(data),
+                             ttl_secs=300)
+        return jsonify(data)
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)
+
+
+@blueprint.route('/iframe/index/<int:pid_value>',
+                 methods=['GET', 'PUT', 'POST'])
+@login_required
+@item_permission.require(http_exception=403)
+def iframe_items_index(pid_value=0):
+    try:
+        if pid_value == 0:
+            return redirect(url_for('.iframe_index'))
+        if request.method == 'GET':
+            return render_template(
+                'weko_items_ui/iframe/item_index.html',
+                pid_value=pid_value)
+        if request.headers['Content-Type'] != 'application/json':
+            flash(_('invalide request'), 'error')
+            return render_template(
+                'weko_items_ui/iframe/item_index.html')
 
         data = request.get_json()
         sessionstore = RedisStore(redis.StrictRedis.from_url(

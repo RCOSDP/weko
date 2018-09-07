@@ -34,29 +34,14 @@
   {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('item') }}
-{%- endblock page_body_tabs%}
+{%- block page_header %}
+{%- endblock page_header %}
 
-{%- block page_body_main %}
-  {%- if pid %}
-  {%- else %}
-  <div class="row">
-    <div class="col-sm-12 col-md-12 col-lg-10">
-      <div class="form-inline h6">
-        <div class="form-group">
-          <label for="item-type-lists">{{_('Itemtype List')}}</label>
-          <select class="form-control" id="item-type-lists">
-            {% for list in lists %}
-            <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-  {%- endif %}
+{%- block page_footer %}
+{%- endblock page_footer %}
+
+{%- block page_body %}
+<div class="container-fluid">
   <div class="row">
     <div class="col-md-12">
       <div id="weko-records">
@@ -130,7 +115,7 @@
               <div class="row" ng-hide="false">
                 <div class="col-sm-9" ng-show="true">
                   <ul class="list-inline text-right">
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson();recordsVM.actionHandler(['index', 'PUT'], 'r')">{{_('Next')}}</button></li>
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson();recordsVM.actionHandler(['index', 'PUT'], 'iframe_tree')">{{_('Next')}}</button></li>
                     {%- if pid %}
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">{{_('Delete')}}</button></li>
                     {%- endif %}
@@ -145,9 +130,7 @@
       </div>
     </div>
   </div>
-{%- endblock page_body_main %}
-{%- block page_body %}
-{{ super() }}
+</div>
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog modelWidth" role="document">
     <div class="modal-content">
@@ -161,4 +144,3 @@
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 {%- endblock page_body %}
-

@@ -55,6 +55,7 @@ setup_requires = [
 ]
 
 install_requires = [
+    'Flask>=0.11.1',
     'Flask-BabelEx>=0.9.2',
 ]
 
@@ -97,6 +98,10 @@ setup(
         ],
         'invenio_assets.bundles': [
             'workflow_js = weko_workflow.bundles:js_workflow',
+            'workflow_activity_list_js = '
+            'weko_workflow.bundles:js_activity_list',
+            'workflow_iframe_js = weko_workflow.bundles:js_iframe',
+            'workflow_css = weko_workflow.bundles:css_workflow',
         ],
         'invenio_i18n.translations': [
             'messages = weko_workflow',

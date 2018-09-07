@@ -96,7 +96,7 @@ class FlowSettingView(BaseView):
                                    flow_id=flow.flow_id)
                            })
         workflow.upt_flow(flow_id, post_data)
-        return jsonify(code=0, msg='success')
+        return jsonify(code=0, msg=_('Update flow successfully.'))
 
     @expose('/<string:flow_id>', methods=['DELETE'])
     def del_flow(self, flow_id='0'):
@@ -134,7 +134,8 @@ class FlowSettingView(BaseView):
         actions = request.get_json()
         workflow = Flow()
         workflow.upt_flow_action(flow_id, actions)
-        return jsonify(code=0, msg='success')
+        return jsonify(code=0, msg=_('Update flow action successfully'))
+
 
 class WorkFlowSettingView(BaseView):
     @expose('/', methods=['GET'])
@@ -215,6 +216,7 @@ class WorkFlowSettingView(BaseView):
             workflow.del_workflow(workflow_id)
         return jsonify(code=0, msg='',
                        data={'redirect': url_for('workflowsetting.index')})
+
 
 workflow_adminview = {
     'view_class': WorkFlowSettingView,

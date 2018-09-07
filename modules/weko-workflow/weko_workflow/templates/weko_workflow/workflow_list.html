@@ -32,7 +32,7 @@
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
   {{ tabs_selector('flow') }}
-{%- endblock page_body_tabs%}
+{%- endblock page_body_tabs %}
 
 {%- block page_body_main %}
 <div class="row">
@@ -65,4 +65,4 @@
   <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
   </div>
 </div>
-{%- endblock page_body_main%}
+{%- endblock page_body_main %}

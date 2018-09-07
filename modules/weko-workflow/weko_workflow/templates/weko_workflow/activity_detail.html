@@ -22,6 +22,7 @@
 
 {%- block css %}
 {{ super() }}
+{% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -32,7 +33,7 @@
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
   {{ tabs_selector('flow') }}
-{%- endblock page_body_tabs%}
+{%- endblock page_body_tabs %}
 
 {%- block page_body_main %}
 <div class="row">
@@ -55,6 +56,12 @@
                     <p class="form-control-static">{{activity.activity_id}}</p>
                   </div>
                 </div>
+                <div class="form-group">
+                  <label class="col-sm-4 control-label">{{_('Status')}}</label>
+                  <div class="col-sm-8">
+                    <p class="form-control-static">{{activity.activity_status_str}}</p>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="col-sm-2">
@@ -68,7 +75,7 @@
                 <div class="form-group">
                   <label class="col-sm-4 control-label">{{_('Creater')}}</label>
                   <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.activity_login_user}}</p>
+                    <p class="form-control-static">{{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
                   </div>
                 </div>
               </div>
@@ -84,7 +91,7 @@
                 <div class="form-group">
                   <label class="col-sm-4 control-label">{{_('Updater')}}</label>
                   <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.activity_update_user}}</p>
+                    <p class="form-control-static">{{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
                   </div>
                 </div>
               </div>
@@ -113,21 +120,69 @@
         <div class="panel-body">
           <div class="row">
             {%- for step in steps %}
-            <div class="col-sm-1">
-              <ul class="list-group">
-                <li class="list-group-item break-word">
-                  <a href="javascript:void(0)" class="action-name"
-                     data-action-version="{{step.ActionVersion}}"
-                     data-next-uri="{{url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId)}}">{{step.ActionName}}</a></li>
-                <li class="list-group-item break-word">
-                  <a href="#">{{step.Author}}</a></li>
-                <li class="list-group-item">{{_(step.Status)}}</li>
-              </ul>
+            <div class="col-sm-2">
+              <div class="row">
+                <div class="col-sm-9">
+                  <ul class="list-group">
+                    <li class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
+                      <span class="action-name {% if cur_step == step.ActionEndpoint %} cur_step style_a {% endif %}"
+                         data-action-version="{{step.ActionVersion}}"
+                         data-next-uri="{{url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId)}}">{{step.ActionName}}</span></li>
+                    <li class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
+                      <span class="action-name {% if cur_step == step.ActionEndpoint %} style_a {% endif %}">{{step.Author}}</span></li>
+                    <li class="list-group-item {% if cur_step == step.ActionEndpoint %} style_li style_a {% endif %}">{{_(step.Status)}}</li>
+                  </ul>
+                </div>
+                {%- if 'end_action' != step.ActionEndpoint %}
+                <div class="col-sm-3 pull-right">
+                  <span class="glyphicon glyphicon-arrow-right rightFoward_font" aria-hidden="true"></span>
+                </div>
+                {%- endif %}
+              </div>
             </div>
             {% endfor %}
           </div>
         </div>
       </div>
+      {%- if 7 != activity.activity_status %}
+      <div class="panel panel-default">
+        <div class="panel-body" id="step_page">
+          <div class="hide" id="hide-actionId">{{action_id}}</div>
+          {%- if step_item_login_url %}
+          <iframe id="step_item_login" frameborder="0" width="100%" height="700px" src="{{step_item_login_url}}"></iframe>
+          {%- else %}
+          {%- if 'approval' == cur_step %}
+          {% include 'weko_workflow/record_detail.html' %}
+          {% endif %}
+          <div class="form-group">
+            <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
+            <div class="input-group">
+              <div class="input-group-addon">{{_('Comment')}}</div>
+              <textarea class="form-control" rows="5" id="input-comment" placeholder="">{{temporary_comment if temporary_comment else ''}}</textarea>
+            </div>
+          </div>
+          {%- if 'approval_request' == cur_step %}
+          <button type="button" class="btn btn-default" id="btn-approval-req">{{_('Approval Request')}}</button>
+          <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
+          {%- endif %}
+          {%- if 'approval' == cur_step %}
+          <button type="button" class="btn btn-default" id="btn-approval">{{_('Approval')}}</button>
+          <button type="button" class="btn btn-default" id="btn-reject">{{_('Reject')}}</button>
+          <button type="button" class="btn btn-default" id="btn-return">{{_('Return')}}</button>
+          <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
+          {%- endif %}
+          {%- if 'double_check' == cur_step %}
+          <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
+          <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
+          {%- endif %}
+          {%- if 'end_action' == cur_step %}
+          <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
+          <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
+          {%- endif %}
+          {%- endif %}
+        </div>
+      </div>
+      {%- endif %}
       <div class="panel panel-default">
         <span class="indent">{{_('History')}}</span>
         <div class="panel-body">
@@ -145,11 +200,11 @@
           {%- if histories %}
           {%- for history in histories %}
           <tr>
-            <td>{{history.ActionName}}</td>
+            <td>{{history.ActionName[0]}}</td>
             <td>{{history.action_date.date()}}</td>
             <td>{{history.user.email}}</td>
             <td>{{_(history.StatusDesc)}}</td>
-            <td>{{history.action_comment}}</td>
+            <td>{{history.CommentDesc}}</td>
           </tr>
           {% endfor %}
           {% else %}
@@ -169,38 +224,4 @@
     <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
   </div>
 </div>
-{%- endblock page_body_main%}
-{%- block page_body%}
-{{ super() }}
-<!-- Modal -->
-<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4 class="modal-title" id="myModalLabel">info</h4>
-      </div>
-      <div class="modal-body">
-        <div class="panel panel-default">
-          <div class="panel-body">
-            test
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="sr-only" for="input-comment">Comment</label>
-          <div class="input-group">
-            <div class="input-group-addon">{{_('Comment:')}}</div>
-            <input type="text" class="form-control" id="input-comment" placeholder="Comment">
-          </div>
-        </div>
-        <div class="hide" id="hide-post-uri"></div>
-        <div class="hide" id="hide-action-version"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" id="btn-draft">Draft</button>
-        <button type="button" class="btn btn-default" id="btn-finish">Finish</button>
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-{%- endblock page_body%}
+{%- endblock page_body_main %}

@@ -97,6 +97,14 @@ DEPOSIT_RECORDS_UI_ENDPOINTS = {
         'view_imp': 'weko_items_ui.views.default_view_method',
         'permission_factory_imp': 'weko_items_ui.permissions:edit_permission_factory',
     },
+    'iframe_depid': {
+        'pid_type': 'depid',
+        'route': '/item/iframe/edit/<pid_value>',
+        'template': 'weko_items_ui/iframe/item_edit.html',
+        'record_class': 'weko_deposit.api:WekoDeposit',
+        'view_imp': 'weko_items_ui.views.default_view_method',
+        'permission_factory_imp': 'weko_items_ui.permissions:edit_permission_factory',
+    }
 }
 
 RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY = None

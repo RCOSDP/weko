@@ -38,31 +38,46 @@ class ActionStatusPolicy(object):
     """Action status policies."""
 
     ACTION_BEGIN = 'B'
-    """Begin the action."""
+    """The action status of begin."""
 
-    ACTION_FINALLY = 'F'
-    """Finally the action."""
+    ACTION_DONE = 'F'
+    """The action status of done."""
 
-    ACTION_FORCE_END = 'E'
-    """Force end the action."""
+    ACTION_DOING = 'M'
+    """The action status of doing."""
 
-    ACTION_CANCEL = 'C'
-    """Cancel the action"""
+    ACTION_THROWN_OUT = 'T'
+    """The action status of thrown out."""
 
-    ACTION_MAKING = 'M'
-    """Making the action"""
+    ACTION_NOT_DONE = 'P'
+    """The action status of not done."""
+
+    ACTION_RETRY = 'R'
+    """The action status of retry."""
+
+    ACTION_SKIPPED = 'S'
+    """The action status of skipped."""
+
+    ACTION_ERROR = 'E'
+    """The action status of error."""
 
     descriptions = dict([
         (ACTION_BEGIN,
-         _('Begin')),
-        (ACTION_FINALLY,
-         _('Finally')),
-        (ACTION_FORCE_END,
-         _('Force End')),
-        (ACTION_CANCEL,
-         _('Cancel')),
-        (ACTION_MAKING,
-         _('Making')),
+         _('action_begin')),
+        (ACTION_DONE,
+         _('action_done')),
+        (ACTION_DOING,
+         _('action_doing')),
+        (ACTION_THROWN_OUT,
+         _('action_thrown_out')),
+        (ACTION_NOT_DONE,
+         _('action_not_done')),
+        (ACTION_RETRY,
+         _('action_retry')),
+        (ACTION_SKIPPED,
+         _('action_skipped')),
+        (ACTION_ERROR,
+         _('action_error')),
     ])
     """Policies descriptions."""
 
@@ -83,9 +98,69 @@ class ActionStatusPolicy(object):
 
         :param policy:
         """
-        return policy in [cls.ACTION_BEGIN, cls.ACTION_FINALLY,
-                          cls.ACTION_FORCE_END, cls.ACTION_CANCEL,
-                          cls.ACTION_MAKING]
+        return policy in [cls.ACTION_BEGIN, cls.ACTION_DONE,
+                          cls.ACTION_DOING, cls.ACTION_THROWN_OUT,
+                          cls.ACTION_NOT_DONE, cls.ACTION_RETRY,
+                          cls.ACTION_SKIPPED, cls.ACTION_ERROR]
+
+
+class ActivityStatusPolicy(object):
+    """Activity status policies."""
+
+    ACTIVITY_BEGIN = 'B'
+    """The activity status of active."""
+
+    ACTIVITY_FINALLY = 'F'
+    """The activity status of completed."""
+
+    ACTIVITY_FORCE_END = 'P'
+    """The activity status of stop."""
+
+    ACTIVITY_CANCEL = 'C'
+    """The activity status of cancel."""
+
+    ACTIVITY_MAKING = 'M'
+    """The activity status of doing."""
+
+    ACTIVITY_ERROR = 'E'
+    """The activity status of error."""
+
+    descriptions = dict([
+        (ACTIVITY_BEGIN,
+         _('activity_active')),
+        (ACTIVITY_FINALLY,
+         _('activity_completed')),
+        (ACTIVITY_FORCE_END,
+         _('activity_stopped')),
+        (ACTIVITY_CANCEL,
+         _('activity_canceled')),
+        (ACTIVITY_MAKING,
+         _('activity_doing')),
+        (ACTIVITY_ERROR,
+         _('activity_error')),
+    ])
+    """Policies descriptions."""
+
+    @classmethod
+    def describe(cls, policy):
+        """
+        Policy description.
+
+        :param policy:
+        """
+        if cls.validate(policy):
+            return cls.descriptions[policy]
+
+    @classmethod
+    def validate(cls, policy):
+        """
+        Validate subscription policy value.
+
+        :param policy:
+        """
+        return policy in [cls.ACTIVITY_BEGIN, cls.ACTIVITY_FINALLY,
+                          cls.ACTIVITY_FORCE_END, cls.ACTIVITY_CANCEL,
+                          cls.ACTIVITY_MAKING, cls.ACTIVITY_ERROR]
 
 
 class FlowStatusPolicy(object):
@@ -209,6 +284,44 @@ class AvailableStautsPolicy(object):
         return policy in [cls.USABLE, cls.UNUSABLE]
 
 
+class ActionCommentPolicy(object):
+    """action comment policies."""
+
+    BEGIN_ACTION_COMMENT = 'Begin Action'
+    """usable."""
+
+    FINALLY_ACTION_COMMENT = 'End Action'
+    """unusable."""
+
+    descriptions = dict([
+        (BEGIN_ACTION_COMMENT,
+         _('Begin Action')),
+        (FINALLY_ACTION_COMMENT,
+         _('End Action')),
+    ])
+    """Policies descriptions."""
+
+    @classmethod
+    def describe(cls, policy):
+        """
+        Policy description.
+
+        :param policy:
+        """
+        if cls.validate(policy):
+            return cls.descriptions[policy]
+        return policy
+
+    @classmethod
+    def validate(cls, policy):
+        """
+        Validate subscription policy value.
+
+        :param policy:
+        """
+        return policy in [cls.BEGIN_ACTION_COMMENT, cls.FINALLY_ACTION_COMMENT]
+
+
 class TimestampMixin(object):
     """Timestamp model mix-in with fractional seconds support.
 
@@ -243,18 +356,29 @@ class TimestampMixin(object):
 class ActionStatus(db.Model, TimestampMixin):
     """define ActionStatus"""
 
-    __tablename__ = 'action_status'
+    __tablename__ = 'workflow_action_status'
 
     id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
     """ActionStatus identifier."""
 
     ACTIONSTATUSPOLICY = [
-        (ActionStatusPolicy.ACTION_BEGIN, _('Begin')),
-        (ActionStatusPolicy.ACTION_FINALLY, _('Finally')),
-        (ActionStatusPolicy.ACTION_FORCE_END, _('Force end')),
-        (ActionStatusPolicy.ACTION_CANCEL, _('Cancel')),
-        (ActionStatusPolicy.ACTION_MAKING, _('Making')),
+        (ActionStatusPolicy.ACTION_BEGIN,
+         ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_BEGIN)),
+        (ActionStatusPolicy.ACTION_DONE,
+         ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_DONE)),
+        (ActionStatusPolicy.ACTION_DOING,
+         ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_DOING)),
+        (ActionStatusPolicy.ACTION_THROWN_OUT,
+         ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_THROWN_OUT)),
+        (ActionStatusPolicy.ACTION_NOT_DONE,
+         ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_NOT_DONE)),
+        (ActionStatusPolicy.ACTION_RETRY,
+         ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_RETRY)),
+        (ActionStatusPolicy.ACTION_SKIPPED,
+         ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_SKIPPED)),
+        (ActionStatusPolicy.ACTION_ERROR,
+         ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_ERROR)),
     ]
     """Subscription policy choices."""
 
@@ -281,7 +405,7 @@ class ActionStatus(db.Model, TimestampMixin):
 class Action(db.Model, TimestampMixin):
     """define Action"""
 
-    __tablename__ = 'action'
+    __tablename__ = 'workflow_action'
 
     id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
@@ -312,7 +436,7 @@ class Action(db.Model, TimestampMixin):
 class FlowDefine(db.Model, TimestampMixin):
     """define Flow"""
 
-    __tablename__ = 'flow_define'
+    __tablename__ = 'workflow_flow_define'
 
     id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
@@ -337,9 +461,12 @@ class FlowDefine(db.Model, TimestampMixin):
     """User relationship"""
 
     FLOWSTATUSPOLICY = [
-        (FlowStatusPolicy.AVAILABLE, _('Available')),
-        (FlowStatusPolicy.INUSE, _('In use')),
-        (FlowStatusPolicy.MAKING, _('Making')),
+        (FlowStatusPolicy.AVAILABLE,
+         FlowStatusPolicy.describe(FlowStatusPolicy.AVAILABLE)),
+        (FlowStatusPolicy.INUSE,
+         FlowStatusPolicy.describe(FlowStatusPolicy.INUSE)),
+        (FlowStatusPolicy.MAKING,
+         FlowStatusPolicy.describe(FlowStatusPolicy.MAKING)),
     ]
     """Subscription policy choices."""
 
@@ -360,7 +487,7 @@ class FlowDefine(db.Model, TimestampMixin):
 class FlowAction(db.Model, TimestampMixin):
     """Action list belong to Flow"""
 
-    __tablename__ = 'flow_action'
+    __tablename__ = 'workflow_flow_action'
 
     id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
@@ -385,8 +512,10 @@ class FlowAction(db.Model, TimestampMixin):
     """the condition of transition."""
 
     TATUSPOLICY = [
-        (AvailableStautsPolicy.USABLE, _('Usable')),
-        (AvailableStautsPolicy.UNUSABLE, _('Unusable')),
+        (AvailableStautsPolicy.USABLE,
+         AvailableStautsPolicy.describe(AvailableStautsPolicy.USABLE)),
+        (AvailableStautsPolicy.UNUSABLE,
+         AvailableStautsPolicy.describe(AvailableStautsPolicy.UNUSABLE)),
     ]
     """Subscription policy choices."""
 
@@ -416,7 +545,7 @@ class FlowActionRole(db.Model, TimestampMixin):
     It relates an allowed action with a role or a user
     """
 
-    __tablename__ = 'flow_action_role'
+    __tablename__ = 'workflow_flow_action_role'
 
     id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
@@ -447,7 +576,7 @@ class FlowActionRole(db.Model, TimestampMixin):
 class WorkFlow(db.Model, TimestampMixin):
     """define WorkFlow"""
 
-    __tablename__ = 'work_flow'
+    __tablename__ = 'workflow_workflow'
 
     id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
@@ -485,34 +614,11 @@ class WorkFlow(db.Model, TimestampMixin):
         backref=db.backref('workflow', lazy='dynamic')
     )
 
-    # flow_order = db.Column(db.Integer(), nullable=False, unique=False)
-    # """the order of flow."""
-    #
-    # flow_condition = db.Column(db.Integer(), nullable=False, unique=False)
-    # """the pre condition of flow."""
-    #
-    # FLOWSTATUSPOLICY = [
-    #     (FlowStatusPolicy.AVAILABLE, _('Available')),
-    #     (FlowStatusPolicy.INUSE, _('In use')),
-    #     (FlowStatusPolicy.MAKING, _('Making')),
-    # ]
-    # """Subscription policy choices."""
-    #
-    # flows_status = db.Column(
-    #     ChoiceType(FLOWSTATUSPOLICY, impl=db.String(1)),
-    #     nullable=False,
-    #     default=FlowStatusPolicy.MAKING,
-    #     info=dict(
-    #         label=_('Subscription Policy'),
-    #         widget=RadioGroupWidget(FlowStatusPolicy.descriptions),
-    #     ))
-    # """the status of flows."""
-
 
 class Activity(db.Model, TimestampMixin):
     """define Activety"""
 
-    __tablename__ = 'activity'
+    __tablename__ = 'workflow_activity'
 
     id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)
@@ -578,8 +684,26 @@ class Activity(db.Model, TimestampMixin):
         nullable=True, unique=False)
     """the user of update activity."""
 
+    ACTIVITYSTATUSPOLICY = [
+        (ActivityStatusPolicy.ACTIVITY_BEGIN,
+         ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_BEGIN)),
+        (ActivityStatusPolicy.ACTIVITY_FINALLY,
+         ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_FINALLY)),
+        (ActivityStatusPolicy.ACTIVITY_FORCE_END,
+         ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_FORCE_END)),
+        (ActivityStatusPolicy.ACTIVITY_CANCEL,
+         ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_CANCEL)),
+        (ActivityStatusPolicy.ACTIVITY_MAKING,
+         ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_MAKING)),
+        (ActivityStatusPolicy.ACTIVITY_ERROR,
+         ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_ERROR)),
+    ]
+    """Subscription policy choices."""
+
     activity_status = db.Column(
-        db.Integer(), nullable=True)
+        ChoiceType(ACTIVITYSTATUSPOLICY, impl=db.String(1)),
+        default=ActivityStatusPolicy.ACTIVITY_BEGIN,
+        nullable=True, unique=False, index=False)
     """activity status."""
 
     activity_start = db.Column(db.DateTime, nullable=False)
@@ -589,10 +713,36 @@ class Activity(db.Model, TimestampMixin):
     """activity end date."""
 
 
+class ActivityAction(db.Model, TimestampMixin):
+    """define Activety"""
+
+    __tablename__ = 'workflow_activity_action'
+
+    id = db.Column(db.Integer(), nullable=False,
+                   primary_key=True, autoincrement=True)
+    """Activity_Action identifier."""
+
+    activity_id = db.Column(
+        db.String(24), nullable=False, unique=False, index=True)
+    """activity id of Activity Action."""
+
+    action_id = db.Column(
+        db.Integer(), db.ForeignKey(Action.id), nullable=True, unique=False)
+    """action id."""
+
+    action_status = db.Column(
+        db.String(1), db.ForeignKey(ActionStatus.action_status_id),
+        nullable=False, unique=False)
+    """action status."""
+
+    action_comment = db.Column(db.Text, nullable=True)
+    """action comment."""
+
+
 class ActivityHistory(db.Model, TimestampMixin):
     """define ActivityHistory"""
 
-    __tablename__ = 'action_history'
+    __tablename__ = 'workflow_action_history'
 
     id = db.Column(db.Integer(), nullable=False,
                    primary_key=True, autoincrement=True)

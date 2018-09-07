@@ -272,7 +272,6 @@ class WekoDeposit(Deposit):
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def update(self, *args, **kwargs):
         """Update only drafts."""
-
         dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
         item_created.send(

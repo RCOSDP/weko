@@ -28,3 +28,20 @@ js_workflow = Bundle(
     filters='requirejs',
     output="gen/workflow_workflow.js"
 )
+
+js_activity_list = Bundle(
+    'js/weko_workflow/activity_list.js',
+    filters='requirejs',
+    output="gen/workflow_activity_list.js"
+)
+
+js_iframe = Bundle(
+    'js/weko_workflow/iframe_pop.js',
+    filters='requirejs',
+    output="gen/workflow_iframe_pop.js"
+)
+
+css_workflow = Bundle(
+    'css/weko_workflow/style.css',
+    output="gen/workflow_workflow.css"
+)
