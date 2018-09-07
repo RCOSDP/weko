@@ -123,8 +123,8 @@
             <th>{{_('Action Name')}}</th>
             <th>{{_('Action Role')}}</th>
             <th>{{_('Action User')}}</th>
-            <th>{{_('Action Status')}}</th>
-            <th>{{_('Action Update')}}</th>
+            <th class="hide">{{_('Action Status')}}</th>
+            <th class="hide">{{_('Action Update')}}</th>
             <th class="hide">{{_('Action Version')}}</th>
             <th>{{_('Change Order')}}</th>
           </tr>
@@ -168,9 +168,9 @@
                   </div>
                 </div>
               </td>
-              <td>{{_(action.action_status.value)}}</td>
+              <td class="hide">{{_(action.action_status.value)}}</td>
+              <td class="hide"><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
               <td class="hide"><span id="td_action_ver_{{action.action_id}}">{{action.action_version|default(action.action.action_version)}}</span></td>
-              <td><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
               <td>
                 <div class="btn-group" role="group" aria-label="入替">
                   <button type="button" class="btn btn-default sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>↑</button>
@@ -320,7 +320,7 @@
         data: localStorage.getItem('apply_action_list'),
         success: function(data, status) {
           uptOrderInfo(false);
-          alert('update success');
+          alert(data.msg);
         },
         error: function(jqXHR, status) {
           alert('update failed');
@@ -364,7 +364,7 @@
         contentType: 'application/json',
         data: JSON.stringify({'flow_name': flow_name}),
         success: function(data, status) {
-          alert('update success');
+          alert(data.msg);
         },
         error: function(jqXHR, status) {
           alert('update failed');
@@ -445,9 +445,11 @@
               +'    </label>'
               +'  </div>'
               +'</div></td>'
-              +'<td>{{_("Usable")}}</td>'
-              +'<td><span id="td_action_date_'+apply_action.id+'">'
+              +'<td class="hide">{{_("Usable")}}</td>'
+              +'<td class="hide"><span id="td_action_date_'+apply_action.id+'">'
                 +apply_action.date+'</span></td>'
+              +'<td class="hide"><span id="td_action_ver_'+apply_action.id+'">'
+                +apply_action.version+'</span></td>'
               +'<td>'
                 +'<div class="btn-group" role="group" aria-label="入替">'
                   +'<button type="button" class="btn btn-default sortable sortable_up">↑</button>'

@@ -27,18 +27,20 @@ from flask import current_app
 from flask_login import current_user
 from invenio_accounts.models import User
 from invenio_db import db
-from sqlalchemy import asc
+from sqlalchemy import asc,desc
 from sqlalchemy.orm.exc import NoResultFound
-from weko_records.api import ItemsMetadata
+from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
 from .models import Activity as _Activity
+from .models import ActivityAction
 from .models import ActivityHistory
 from .models import FlowDefine as _Flow
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
 from .models import WorkFlow as _WorkFlow
-from .models import ActionStatusPolicy, FlowStatusPolicy, StatusPolicy
+from .models import ActionStatusPolicy, ActionCommentPolicy, \
+    ActivityStatusPolicy, FlowStatusPolicy
 
 
 class Flow(object):
@@ -50,14 +52,39 @@ class Flow(object):
         :param flow:
         :return:
         """
-        _flow = _Flow(
-            flow_name=flow.get('flow_name'),
-            flow_user=current_user.get_id()
-        )
-        with db.session.begin_nested():
-            db.session.add(_flow)
-        db.session.commit()
-        return _flow
+        try:
+            with db.session.no_autoflush:
+                action_start = _Action.query.filter_by(
+                    action_endpoint='begin_action').one_or_none()
+                action_end = _Action.query.filter_by(
+                    action_endpoint='end_action').one_or_none()
+            _flow = _Flow(
+                flow_id=uuid.uuid4(),
+                flow_name=flow.get('flow_name'),
+                flow_user=current_user.get_id()
+            )
+            _flowaction_start = _FlowAction(
+                flow_id=_flow.flow_id,
+                action_id=action_start.id,
+                action_version=action_start.action_version,
+                action_order=1
+            )
+            _flowaction_end = _FlowAction(
+                flow_id=_flow.flow_id,
+                action_id=action_end.id,
+                action_version=action_end.action_version,
+                action_order=2
+            )
+            with db.session.begin_nested():
+                db.session.add(_flow)
+                db.session.add(_flowaction_start)
+                db.session.add(_flowaction_end)
+            db.session.commit()
+            return _flow
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+            return None
 
     def upt_flow(self, flow_id, flow):
         """
@@ -66,15 +93,20 @@ class Flow(object):
         :param flow:
         :return:
         """
-        with db.session.begin_nested():
-            _flow = _Flow.query.filter_by(
-                flow_id=flow_id).one_or_none()
-            if _flow is not None:
-                _flow.flow_name = flow.get('flow_name')
-                _flow.flow_user = current_user.get_id()
-                db.session.merge(_flow)
-        db.session.commit()
-        return _flow
+        try:
+            with db.session.begin_nested():
+                _flow = _Flow.query.filter_by(
+                    flow_id=flow_id).one_or_none()
+                if _flow:
+                    _flow.flow_name = flow.get('flow_name')
+                    _flow.flow_user = current_user.get_id()
+                    db.session.merge(_flow)
+            db.session.commit()
+            return _flow
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+            return None
 
     def get_flow_list(self):
         """
@@ -119,9 +151,12 @@ class Flow(object):
         """Update FlowAction Info"""
         with db.session.begin_nested():
             for order, action in enumerate(actions):
-                flowaction_filter = _FlowAction.query.filter_by(flow_id=flow_id)\
-                    .filter_by(action_id=action.get('id'))
+                flowaction_filter = _FlowAction.query.filter_by(
+                    flow_id=flow_id, action_id=action.get('id'))
                 if action.get('action', None) == 'DEL':
+                    flowaction_id = flowaction_filter.one_or_none().id
+                    _FlowActionRole.query.filter_by(
+                        flow_action_id=flowaction_id).delete()
                     flowaction_filter.delete()
                     continue
                 flowaction = flowaction_filter.one_or_none()
@@ -130,7 +165,8 @@ class Flow(object):
                     flowaction = _FlowAction(
                         flow_id=flow_id,
                         action_id=action.get('id'),
-                        action_order=order + 1
+                        action_order=order + 1,
+                        action_version=action.get('version')
                     )
                     _flow = _Flow.query.filter_by(flow_id=flow_id).one_or_none()
                     _flow.flow_status = FlowStatusPolicy.AVAILABLE
@@ -156,6 +192,44 @@ class Flow(object):
                     db.session.add(flowactionrole)
         db.session.commit()
 
+    def get_next_flow_action(self, flow_id, cur_action_id):
+        """
+        return next action info
+        :param flow_id:
+        :param cur_action_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            cur_action = _FlowAction.query.filter_by(
+                flow_id=flow_id).filter_by(
+                action_id=cur_action_id).one_or_none()
+            if cur_action:
+                next_action_order = cur_action.action_order + 1
+                next_action = _FlowAction.query.filter_by(
+                    flow_id=flow_id).filter_by(
+                    action_order=next_action_order).all()
+                return next_action
+        return None
+
+    def get_previous_flow_action(self, flow_id, cur_action_id):
+        """
+        return next action info
+        :param flow_id:
+        :param cur_action_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            cur_action = _FlowAction.query.filter_by(
+                flow_id=flow_id,
+                action_id=cur_action_id).one_or_none()
+            if cur_action and cur_action.action_order > 1:
+                previous_action_order = cur_action.action_order - 1
+                previous_action = _FlowAction.query.filter_by(
+                    flow_id=flow_id).filter_by(
+                    action_order=previous_action_order).all()
+                return previous_action
+            return None
+
 
 class WorkFlow(object):
     """Operated on the WorkFlow"""
@@ -171,8 +245,9 @@ class WorkFlow(object):
                 db.session.execute(_WorkFlow.__table__.insert(), workflow)
             db.session.commit()
             return workflow
-        except BaseException as ex:
+        except Exception as ex:
             db.session.rollback()
+            current_app.logger.exception(str(ex))
             return None
 
     def upt_workflow(self, workflow):
@@ -187,15 +262,16 @@ class WorkFlow(object):
                 _workflow = _WorkFlow.query.filter_by(
                     flows_id=workflow.get('flows_id')
                 ).one_or_none()
-                if _workflow is not None:
+                if _workflow:
                     _workflow.flows_name = workflow.get('flows_name')
                     _workflow.itemtype_id = workflow.get('itemtype_id')
                     _workflow.flow_id = workflow.get('flow_id')
-                    db.session.add(_workflow)
+                    db.session.merge(_workflow)
             db.session.commit()
-            return workflow
-        except BaseException as ex:
+            return _workflow
+        except Exception as ex:
             db.session.rollback()
+            current_app.logger.exception(str(ex))
             return None
 
     def get_workflow_list(self):
@@ -218,7 +294,7 @@ class WorkFlow(object):
                 flows_id=workflow_id)
             return query.one_or_none()
 
-    def get_workflow_by_id(self, id):
+    def get_workflow_by_id(self, workflow_id):
         """
         get workflow detail info
         :param workflow_id:
@@ -226,7 +302,7 @@ class WorkFlow(object):
         """
         with db.session.no_autoflush:
             query = _WorkFlow.query.filter_by(
-                id=id)
+                id=workflow_id)
             return query.one_or_none()
 
     def del_workflow(self, workflow_id):
@@ -240,6 +316,7 @@ class WorkFlow(object):
                 flows_id=workflow_id)
             query.delete(synchronize_session=False)
         db.session.commit()
+
 
 class Action(object):
     """Operated on the Action"""
@@ -287,6 +364,7 @@ class Action(object):
         """
         pass
 
+
 class ActionStatus(object):
     """Operated on the ActionStatus"""
     def create_action_status(self, action_status):
@@ -329,6 +407,7 @@ class ActionStatus(object):
         """
         pass
 
+
 class WorkActivity(object):
     """Operated on the Activity"""
 
@@ -340,50 +419,131 @@ class WorkActivity(object):
         """
         try:
             action_id = 0
+            next_action_id = 0
             with db.session.no_autoflush:
                 action = _Action.query.filter_by(
                     action_endpoint='begin_action').one_or_none()
                 if action is not None:
                     action_id = action.id
+                flow_define = _Flow.query.filter_by(
+                    id=activity.get('flow_id')).one_or_none()
+                if flow_define:
+                    flow_actions = _FlowAction.query.filter_by(
+                        flow_id=flow_define.flow_id).order_by(
+                        asc(_FlowAction.action_order)).all()
+                    if flow_actions and len(flow_actions) >= 2:
+                        next_action_id = flow_actions[1].action_id
             db_activity = _Activity(
                 activity_id='A' + str(
                     datetime.utcnow().timestamp()).split('.')[0],
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
-                action_id=action_id,
-                action_status=ActionStatusPolicy.ACTION_FINALLY,
+                action_id=next_action_id,
+                action_status=ActionStatusPolicy.ACTION_BEGIN,
                 activity_login_user=current_user.get_id(),
                 activity_update_user=current_user.get_id(),
-                activity_status=0,
+                activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
                 activity_start=datetime.utcnow()
             )
             db_history = ActivityHistory(
                 activity_id=db_activity.activity_id,
-                action_id=db_activity.action_id,
-                action_version='1.0.0',
-                action_status=ActionStatusPolicy.ACTION_FINALLY,
+                action_id=action_id,
+                action_version=action.action_version,
+                action_status=ActionStatusPolicy.ACTION_DONE,
                 action_user=current_user.get_id(),
                 action_date=db_activity.activity_start,
-                action_comment='Begin Action'
+                action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT
             )
+
             with db.session.begin_nested():
                 db.session.add(db_activity)
                 db.session.add(db_history)
+
+                for flow_action in flow_actions:
+                    db_activity_action = ActivityAction(
+                        activity_id= db_activity.activity_id,
+                        action_id=flow_action.action_id,
+                        action_status=ActionStatusPolicy.ACTION_DONE,
+                    )
+                    db.session.add(db_activity_action)
+
         except Exception as ex:
-            current_app.logger.exception(str(ex))
             db.session.rollback()
+            current_app.logger.exception(str(ex))
             return None
         else:
             db.session.commit()
             return db_activity
 
-    def upt_activity(self, activity):
+    def upt_activity_action(self, activity_id, action_id):
         """
         Update activity info
-        :param activity:
+        :param activity_id:
+        :param action_id:
         :return:
         """
-        pass
+        with db.session.begin_nested():
+            activity = _Activity.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            activity.action_id = action_id
+            activity.action_status = ActionStatusPolicy.ACTION_DOING
+            db.session.merge(activity)
+        db.session.commit()
+
+    # add by ryuu sta
+    def upt_activity_action_status(self, activity_id, action_id, action_status):
+        """
+        Update activity info
+        :param activity_id:
+        :param action_id:
+        :param action_status:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity_action = ActivityAction.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id,).one_or_none()
+            activity_action.action_status = action_status
+            db.session.merge(activity_action)
+        db.session.commit()
+
+    def upt_activity_action_comment(self, activity_id, action_id, comment):
+        """
+        Update activity info
+        :param activity_id:
+        :param action_id:
+        :param comment:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity_action = ActivityAction.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id,).one_or_none()
+            if activity_action:
+                activity_action.action_comment = comment
+                db.session.merge(activity_action)
+        db.session.commit()
+
+    def get_activity_action_comment(self, activity_id, action_id):
+        """
+        get activity info
+        :param activity_id:
+        :param action_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            activity_action = ActivityAction.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id,).one_or_none()
+            return activity_action
+
+    def get_activity_action_status(self, activity_id, action_id):
+        with db.session.no_autoflush:
+            activity_ac = ActivityAction.query.filter_by(
+                activity_id=activity_id, action_id=action_id).one()
+            action_stus = activity_ac.action_status
+            return action_stus
+    # add by ryuu end
 
     def upt_activity_item(self, activity, item_id):
         """
@@ -397,35 +557,38 @@ class WorkActivity(object):
                 db_activity = _Activity.query.filter_by(
                     activity_id=activity.get('activity_id')).one()
                 db_activity.item_id = item_id
-                db_activity.action_status = ActionStatusPolicy.ACTION_FINALLY
-                db_history = ActivityHistory.query.filter_by(
-                    activity_id=db_activity.activity_id,
-                    action_id=db_activity.action_id).first()
+                db_activity.action_status = activity.get('action_status')
                 db_new_history = ActivityHistory(
                     activity_id=db_activity.activity_id,
                     action_id=db_activity.action_id,
-                    action_version=db_history.action_version,
-                    action_status=ActionStatusPolicy.ACTION_FINALLY,
+                    action_version=activity.get('action_version'),
+                    action_status=activity.get('action_status'),
                     action_user=current_user.get_id(),
                     action_date=datetime.utcnow(),
-                    action_comment=db_history.action_comment
+                    action_comment=activity.get('commond')
                 )
                 db.session.merge(db_activity)
                 db.session.add(db_new_history)
-
             db.session.commit()
             return True
         except NoResultFound as ex:
             current_app.logger.exception(str(ex))
             return None
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return None
 
     def end_activity(self, activity):
         try:
-            history = WorkActivityHistory()
             with db.session.begin_nested():
                 db_activity = _Activity.query.filter_by(
                     activity_id=activity.get('activity_id')).one_or_none()
                 if db_activity:
+                    db_activity.activity_status = \
+                        ActivityStatusPolicy.ACTIVITY_FINALLY
+                    db_activity.action_id = activity.get('action_id')
+                    db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()
                     db.session.merge(db_activity)
                     db_history = ActivityHistory(
@@ -435,12 +598,14 @@ class WorkActivity(object):
                         action_status=activity.get('action_status'),
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
-                        action_comment=activity.get('commond')
+                        action_comment=
+                        ActionCommentPolicy.FINALLY_ACTION_COMMENT
                     )
                     db.session.add(db_history)
             db.session.commit()
-        except:
+        except Exception as ex:
             db.session.rollback()
+            current_app.logger.exception(str(ex))
 
     def get_activity_list(self):
         """
@@ -448,17 +613,76 @@ class WorkActivity(object):
         :return:
         """
         with db.session.no_autoflush:
-            query = _Activity.query.order_by(asc(_Activity.id))
-            activities = query.all()
+            self_user_id = int(current_user.get_id())
+            self_group_ids = [role.id for role in current_user.roles]
+
+            db_flow_action_users = _FlowActionRole.query.filter_by(
+                action_user=self_user_id, action_user_exclude=False).all()
+            db_flow_action_ids = [db_flow_action_user.flow_action_id for
+                                  db_flow_action_user in db_flow_action_users]
+            db_flow_action_roles = _FlowActionRole.query.filter_by(
+                action_user_exclude=False).filter(
+                _FlowActionRole.action_role.in_(self_group_ids)).all()
+            db_flow_action_ids.extend(
+                [db_flow_action_role.flow_action_id for
+                 db_flow_action_role in db_flow_action_roles])
+            db_flow_actions = _FlowAction.query.filter(
+                _FlowAction.id.in_(db_flow_action_ids)).all()
+            db_flow_define_flow_ids = [db_flow_action.flow_id for
+                                       db_flow_action in db_flow_actions]
+            db_flow_defines = _Flow.query.filter(
+                _Flow.flow_id.in_(db_flow_define_flow_ids)).all()
+            db_flow_define_ids = [db_flow_define.id for
+                                  db_flow_define in db_flow_defines]
+            db_activitys = _Activity.query.filter_by(
+                activity_login_user=self_user_id).all()
+            db_flow_define_ids.extend(
+                [db_activity.flow_id for db_activity in db_activitys])
+            db_flow_define_ids = list(set(db_flow_define_ids))
+            activities = _Activity.query.filter(
+                _Activity.flow_id.in_(db_flow_define_ids)).order_by(
+                asc(_Activity.id)).all()
             for activi in activities:
                 if activi.item_id is None:
                     activi.ItemName = ''
                 else:
-                    item = ItemsMetadata.get_record(id_=activi.item_id)
-                    activi.ItemName = item.get('title_ja')
-                activi.StatusDesc = StatusPolicy.describe(activi.status)
+                    item = ItemMetadata.query.filter_by(
+                        id=activi.item_id).one_or_none()
+                    if item:
+                        activi.ItemName = item.json.get('title_ja')
+                    else:
+                        activi.ItemName = ''
+                activi.StatusDesc = ActionStatusPolicy.describe(
+                    ActionStatusPolicy.ACTION_DONE) \
+                    if 7 == activi.activity_status \
+                    else ActionStatusPolicy.describe(
+                    ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
+                if 7 == activi.activity_status:
+                    activi.type = 'All'
+                    continue
+                activi.type = 'ToDo'
+                if self_user_id == activi.activity_login_user:
+                    db_flow_action = _FlowAction.query.filter_by(
+                        flow_id=activi.flow_define.flow_id,
+                        action_id=activi.action_id).one_or_none()
+                    current_app.logger.debug(
+                        'activi {0}:{1} db_flow_action is {2}'.format(
+                            activi.activity_id,
+                            activi.activity_login_user,
+                            'True' if db_flow_action else 'None'))
+                    if db_flow_action:
+                        for role in db_flow_action.action_roles:
+                            activi.type = 'Wait'
+                            if role.action_user == self_user_id and \
+                                    role.action_user_exclude is False:
+                                activi.type = 'ToDo'
+                                break
+                            if role.action_role in self_group_ids and \
+                                    role.action_role_exclude is False:
+                                activi.type = 'ToDo'
+                                break
             return activities
 
     def get_activity_steps(self, activity_id):
@@ -469,7 +693,10 @@ class WorkActivity(object):
         for history in histories:
             history_dict[history.action_id] = {
                 'Updater': history.user.email,
-                'Result': history.StatusDesc
+                'Result': ActionStatusPolicy.describe(
+                    self.get_activity_action_status(activity_id=activity_id,
+                                                    action_id=history.action_id)
+                )
             }
         with db.session.no_autoflush:
             activity = _Activity.query.filter_by(
@@ -484,8 +711,11 @@ class WorkActivity(object):
                         'ActionId': flow_action.action_id,
                         'ActionName': flow_action.action.action_name,
                         'ActionVersion': flow_action.action_version,
-                        'Author': history_dict[flow_action.action_id].get('Updater') if flow_action.action_id in history_dict else '',
-                        'Status': history_dict[flow_action.action_id].get('Result') if flow_action.action_id in history_dict else ' '
+                        'ActionEndpoint': flow_action.action.action_endpoint,
+                        'Author': history_dict[flow_action.action_id].get(
+                            'Updater') if flow_action.action_id in history_dict else '',
+                        'Status': history_dict[flow_action.action_id].get(
+                            'Result') if flow_action.action_id in history_dict else ' '
                     })
 
         return steps
@@ -499,6 +729,15 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             query = _Activity.query.filter_by(activity_id=activity_id)
             activity = query.one_or_none()
+            if activity:
+                activity_login_user = User.query.filter_by(
+                    id=activity.activity_login_user).one_or_none()
+                if activity_login_user:
+                    activity.login_user = activity_login_user.email
+                activity_update_user = User.query.filter_by(
+                    id=activity.activity_update_user).one_or_none()
+                if activity_update_user:
+                    activity.update_user = activity_update_user.email
             return activity
 
     def get_activity_action_role(self, activity_id, action_id):
@@ -534,6 +773,7 @@ class WorkActivity(object):
         :return:
         """
         pass
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity"""
@@ -586,11 +826,12 @@ class WorkActivityHistory(object):
                 activity_id=activity_id).order_by(asc(ActivityHistory.id))
             histories = query.all()
             for history in histories:
-                history.ActionName = \
-                    _Action.query.filter_by(
-                        id=history.action_id).first().action_name,
-                history.StatusDesc = \
-                    ActionStatusPolicy.describe(history.action_status)
+                history.ActionName = _Action.query.filter_by(
+                    id=history.action_id).first().action_name,
+                history.StatusDesc = ActionStatusPolicy.describe(
+                    history.action_status)
+                history.CommentDesc = ActionCommentPolicy.describe(
+                    history.action_comment)
             return histories
 
     def get_activity_history_detail(self, activity_id):
@@ -600,3 +841,26 @@ class WorkActivityHistory(object):
         :return:
         """
         pass
+
+    def upd_activity_history_detail(self, activity_id, action_id):
+        """
+        get activity history detail info
+        :param activity_id:
+        :param action_id:
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                activity = ActivityHistory.query.filter_by(
+                    activity_id=activity_id,
+                    action_id=action_id).order_by(
+                    desc(ActivityHistory.id)).one_or_none()
+                if activity:
+                    activity.action_status = ActionStatusPolicy.ACTION_DOING
+                    db.session.merge(activity)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            current_app.logger.exception(str(ex))
+            db.session.rollback()
+            return None

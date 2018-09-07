@@ -1,0 +1,48 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_header %}
+{%- endblock page_header %}
+
+{%- block page_footer %}
+{%- endblock page_footer %}
+
+{%- block page_body %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="hide" id="post_url">{{ config.DEPOSIT_RECORDS_API.format(pid_value=pid_value) }}</div>
+    <div class="hide" id="post_success_url">{{url_for('weko_workflow.iframe_success')}}</div>
+    <div class="hide" id="post_error_url">{{url_for('weko_items_ui.iframe_error')}}</div>
+    <app-root-tree></app-root-tree>
+  </div>
+</div>
+{%- endblock page_body %}

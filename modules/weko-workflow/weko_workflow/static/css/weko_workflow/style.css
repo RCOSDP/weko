@@ -1,0 +1,15 @@
+.rightFoward_font{
+    font-size: 50px;
+    color: silver;
+    top:40px !important;
+}
+.align_right{
+  text-align: right;
+}
+
+.style_li{
+  background-color:#ff8800;
+}
+.style_a{
+  color: white;
+}
