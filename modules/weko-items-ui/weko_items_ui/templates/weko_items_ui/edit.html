@@ -46,7 +46,7 @@
     <div class="col-sm-12 col-md-12 col-lg-10">
       <div class="form-inline h6">
         <div class="form-group">
-          <label for="item-type-lists">{{_('itemtype list')}}</label>
+          <label for="item-type-lists">{{_('Itemtype List')}}</label>
           <select class="form-control" id="item-type-lists">
             {% for list in lists %}
             <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
