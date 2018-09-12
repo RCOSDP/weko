@@ -26,33 +26,33 @@
 <form class="form-inline" method="POST" name="set_search_author_form" action={{url_for('itemsetting.index')}}>
   <div class="row">
     <div class="col-sm-2 text-right">
-      <label>{{_('search author')}}</label>
+      <label>{{_('Search Author')}}</label>
     </div>
     <div class="col-sm-8">
       {%- if search_author_flg == 'name' %}
         <label class="radio-inline">
           <input type="radio" name="searchRadios" id="searchRadiosName" value="name" checked>
-          {{_("search by author name")}}
+          {{_("Search by Author Name")}}
         </label>
         <label class="radio-inline">
           <input type="radio" name="searchRadios" id="searchRadiosID" value="id">
-          {{_("search by author id")}}
+          {{_("Search by Author ID")}}
         </label>
       {%- else %}
         <label class="radio-inline">
           <input type="radio" name="searchRadios" id="searchRadiosName" value="name">
-          {{_("search by author name")}}
+          {{_("Search by Author Name")}}
         </label>
         <label class="radio-inline">
           <input type="radio" name="searchRadios" id="searchRadiosID" value="id" checked>
-          {{_("search by author id")}}
+          {{_("Search by Author ID")}}
         </label>
       {%- endif %}
     </div>
   </div>
   <div class="row">
     <div class="col-sm-2 text-right">
-      <label>{{_('display email')}}</label>
+      <label>{{_('Display Email')}}</label>
     </div>
     <div class="col-sm-8">
       {%- if email_display_flg == '1' %}
