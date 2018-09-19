@@ -54,6 +54,11 @@ SEARCH_UI_JSTEMPLATE_SORT_ORDER = 'templates/weko_search_ui/togglebutton.html'
 
 INDEX_IMG = 'indextree/36466818-image.jpg'
 
+# Opensearch description
+WEKO_OPENSEARCH_SYSTEM_SHORTNAME = 'WEKO'
+WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = 'WEKO - NII Scholarly and Academic Information Navigator'
+WEKO_OPENSEARCH_IMAGE_URL = 'images/favicon.ico'
+
 
 RECORDS_REST_ENDPOINTS = copy.deepcopy(RECORDS_REST_ENDPOINTS)
 RECORDS_REST_ENDPOINTS['recid']['search_factory_imp'] = \
@@ -65,6 +70,16 @@ RECORDS_REST_ENDPOINTS['recid']['search_serializers'] = {
 
 RECORDS_REST_ENDPOINTS['recid']['search_index'] = 'weko'
 RECORDS_REST_ENDPOINTS['recid']['search_type'] = 'item'
+
+# Opensearch endpoint
+RECORDS_REST_ENDPOINTS['opensearch'] = copy.deepcopy(RECORDS_REST_ENDPOINTS['recid'])
+RECORDS_REST_ENDPOINTS['opensearch']['search_factory_imp'] = \
+    'weko_search_ui.query.opensearch_factory'
+RECORDS_REST_ENDPOINTS['opensearch']['list_route'] = '/opensearch/search'
+RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
+    'application/json': ('weko_records.serializers'
+                         ':opensearch_v1_search'),
+}
 
 INDEXER_DEFAULT_INDEX = 'weko'
 INDEXER_DEFAULT_DOCTYPE = 'item'
@@ -219,8 +234,8 @@ WEKO_SEARCH_KEYWORDS_DICT = {
                 "other"
             ]
         },
-        "format": "file.mimeType",
-        "lang": {
+        "mimetype": "file.mimeType",
+        "language": {
             "language": ["jpn", "eng",
                          "fra", "ita",
                          "deu", "spa",
