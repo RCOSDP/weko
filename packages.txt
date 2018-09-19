@@ -134,3 +134,4 @@ xmlschema==0.9.30
 Flask-Plugins==1.6.1
 bibtexparser==1.0.1
 github3.py==1.1.0
+feedgen==0.7.0

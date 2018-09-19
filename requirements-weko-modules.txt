@@ -1,5 +1,6 @@
 -e /code/modules/invenio-files-rest
 -e /code/modules/invenio-oaiserver
+-e git+https://github.com/RCOSDP/invenio-records-rest.git@feature/weko#egg=invenio-records-rest
 -e /code/modules/weko-theme
 -e /code/modules/weko-itemtypes-ui
 -e /code/modules/weko-items-ui
