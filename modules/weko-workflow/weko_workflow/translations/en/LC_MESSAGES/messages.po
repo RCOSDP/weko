@@ -49,7 +49,7 @@ msgstr "Begin"
 
 #: weko_workflow/models.py:68
 msgid "action_done"
-msgstr "Doing"
+msgstr "Done"
 
 #: weko_workflow/models.py:70
 msgid "action_doing"
