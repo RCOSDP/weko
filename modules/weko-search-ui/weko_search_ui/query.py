@@ -67,7 +67,7 @@ def get_permission_filter():
     return mut
 
 
-def default_search_factory(self, search, query_parser=None):
+def default_search_factory(self, search, query_parser=None, search_type=None):
     """Parse query using Weko-Query-Parser. MetaData Search.
 
     :param self: REST view.
@@ -307,7 +307,9 @@ def default_search_factory(self, search, query_parser=None):
 
     query_parser = query_parser or _default_parser
 
-    search_type = request.values.get('search_type')
+    if search_type is None:
+        search_type = request.values.get('search_type')
+
     qs = request.values.get('q')
 
     # full text search
@@ -341,7 +343,7 @@ def default_search_factory(self, search, query_parser=None):
     return search, urlkwargs
 
 
-def item_path_search_factory(self, search):
+def item_path_search_factory(self, search, index_id=None):
     """Parse query using Weko-Query-Parser.
 
     :param self: REST view.
@@ -426,7 +428,7 @@ def item_path_search_factory(self, search):
                 post_filter['bool'] = {'must': mut}
 
         # create search query
-        q = request.values.get('q')
+        q = request.values.get('q') if index_id is None else index_id
         if q:
             try:
                 fp = Indexes.get_self_path(q)
@@ -447,9 +449,9 @@ def item_path_search_factory(self, search):
         search.update_from_dict(query_q)
         search._extra.update(extr)
     except SyntaxError:
+        q = request.values.get('q', '') if index_id is None else index_id
         current_app.logger.debug(
-            "Failed parsing query: {0}".format(
-                request.values.get('q', '')),
+            "Failed parsing query: {0}".format(q),
             exc_info=True)
         raise InvalidQueryRESTError()
 
@@ -479,6 +481,24 @@ def check_admin_user():
                 result = True
     return user_id, result
 
-
 weko_search_factory = item_path_search_factory
 es_search_factory = default_search_factory
+
+def opensearch_factory(self, search, query_parser=None):
+    """
+    Factory for opensearch.
+    :param self:
+    :param search:
+    :param query_parser:
+    :return:
+    """
+    index_id = request.values.get('index_id')
+    if index_id:
+        return item_path_search_factory(self,
+                                        search,
+                                        index_id=index_id)
+    else:
+        return default_search_factory(self,
+                                      search,
+                                      query_parser,
+                                      search_type='0')

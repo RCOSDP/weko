@@ -57,6 +57,7 @@ setup_requires = [
 install_requires = [
     'Flask-BabelEx>=0.9.2',
     'jsonpatch>=1.20',
+    'feedgen>=0.7.0',
     'lxml>=4.0.0',
     'dojson>=1.3.0',
     'invenio-access>=1.0.0b1',
