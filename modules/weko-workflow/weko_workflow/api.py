@@ -654,12 +654,12 @@ class WorkActivity(object):
                         activi.ItemName = ''
                 activi.StatusDesc = ActionStatusPolicy.describe(
                     ActionStatusPolicy.ACTION_DONE) \
-                    if 7 == activi.activity_status \
+                    if ActivityStatusPolicy.ACTIVITY_FINALLY == activi.activity_status \
                     else ActionStatusPolicy.describe(
                     ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
-                if 7 == activi.activity_status:
+                if ActivityStatusPolicy.ACTIVITY_FINALLY == activi.activity_status:
                     activi.type = 'All'
                     continue
                 activi.type = 'ToDo'
