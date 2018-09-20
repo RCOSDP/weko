@@ -45,6 +45,9 @@ class Authors(db.Model,Timestamp):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """id of the authors."""
 
+    gather_flg = db.Column(db.BigInteger, primary_key=False, unique=True,default=0)
+    """gather_flg of the authors."""
+
     json = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),

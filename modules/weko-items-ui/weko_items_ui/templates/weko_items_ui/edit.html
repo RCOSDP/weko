@@ -148,7 +148,7 @@
 {%- endblock page_body_main %}
 {%- block page_body %}
 {{ super() }}
-<div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+<div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog modelWidth" role="document">
     <div class="modal-content">
       <div class="modal-body">
