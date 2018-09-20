@@ -51,58 +51,58 @@ def init_workflow_tables(tables):
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_BEGIN,
             action_status_name='action_begin',
-            action_status_desc='アクション開始したことを示す',
+            action_status_desc='Indicates that the action has started.',
             action_scopes='sys',
             action_displays=''
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_DONE,
             action_status_name='action_done',
-            action_status_desc='アクション終了したことを示す',
+            action_status_desc='Indicates that the action has been completed.',
             action_scopes='sys,user',
-            action_displays='作業済み,終了,完了'
+            action_displays='Complete'
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_NOT_DONE,
             action_status_name='action_not_done',
-            action_status_desc='フローを中断し、後続のアクションの実行を行わないことを示す',
+            action_status_desc='Indicates that the flow is suspended and no subsequent action is performed.',
             action_scopes='user',
-            action_displays='中断,取り消し'
+            action_displays='Suspend'
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_RETRY,
             action_status_name='action_retry',
-            action_status_desc='フローの作業をやり直すことを示し、開始アクションから行う状態を示す',
+            action_status_desc='Indicates that redo the workflow.(from start action)',
             action_scopes='user',
-            action_displays='差し戻し,取り消し,やり消し,再処理'
+            action_displays='Redo'
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_DOING,
             action_status_name='action_doing',
-            action_status_desc='アクションが完了しておらず、該当アクションの継続作業が必要な状態を示す',
+            action_status_desc='Indicates that the action is not completed.(There are following actions)',
             action_scopes='user',
-            action_displays='作業中,査読中,審査中'
+            action_displays='Doing'
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_THROWN_OUT,
             action_status_name='action_thrown_out',
-            action_status_desc='依頼内容に不備があるので却下する',
+            action_status_desc='Indicates that the action has been rejected.',
             action_scopes='user',
-            action_displays='作業中,査読中,審査中'
+            action_displays='Reject'
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_SKIPPED,
             action_status_name='action_skipped',
-            action_status_desc='スキップ',
+            action_status_desc='Indicates that the action has been skipped.',
             action_scopes='user',
-            action_displays='スキップ'
+            action_displays='Skip'
         ))
         db_action_status.append(dict(
             action_status_id=ActionStatusPolicy.ACTION_ERROR,
             action_status_name='action_error',
-            action_status_desc='エラー',
+            action_status_desc='Indicates that the action has been errored.',
             action_scopes='user',
-            action_displays='エラー'
+            action_displays='Error'
         ))
         return db_action_status
 
@@ -110,64 +110,64 @@ def init_workflow_tables(tables):
         """Init Action Table"""
         db_action = list()
         db_action.append(dict(
-            action_name='開始',
-            action_desc='アクションが開始したことを示す',
+            action_name='Start',
+            action_desc='Indicates that the action has started.',
             action_version='1.0.0',
             action_endpoint='begin_action',
             action_makedate=datetime.date(2018, 5, 15),
             action_lastdate=datetime.date(2018, 5, 15)
         ))
         db_action.append(dict(
-            action_name='終了',
-            action_desc='アクションが終了したことを示す',
+            action_name='End',
+            action_desc='Indicates that the action has been completed.',
             action_version='1.0.0',
             action_endpoint='end_action',
             action_makedate=datetime.date(2018, 5, 15),
             action_lastdate=datetime.date(2018, 5, 15)
         ))
         db_action.append(dict(
-            action_name='重複チェック',
-            action_desc='アイテムの重複登録があるかを確認するため',
+            action_name='Duplicate Check',
+            action_desc='Confirm duplicate registration of items.',
             action_version='1.0.0',
             action_endpoint='double_check',
             action_makedate=datetime.date(2018, 5, 15),
             action_lastdate=datetime.date(2018, 5, 15)
         ))
         db_action.append(dict(
-            action_name='アイテム登録',
-            action_desc='アイテムを登録するためのブラグイン',
+            action_name='Item Registration',
+            action_desc='Plug-in for registering items.',
             action_version='1.0.1',
             action_endpoint='item_login',
             action_makedate=datetime.date(2018, 5, 22),
             action_lastdate=datetime.date(2018, 5, 22)
         ))
         db_action.append(dict(
-            action_name='コンテンツアップロード',
-            action_desc='アイテムに関連してアップロードするコンテンツファイル',
+            action_name='Content Upload',
+            action_desc='Action for uploading item content.',
             action_version='1.2.1',
             action_endpoint='file_upload',
             action_makedate=datetime.date(2018, 4, 22),
             action_lastdate=datetime.date(2018, 4, 22)
         ))
         db_action.append(dict(
-            action_name='承認依頼',
-            action_desc='アイテムに対しての承認者を設けて、承認を得る',
+            action_name='Approval Request',
+            action_desc='Establish an approver for items and get approval.',
             action_version='1.1.1',
             action_endpoint='approval_request',
             action_makedate=datetime.date(2018, 6, 11),
             action_lastdate=datetime.date(2018, 6, 11)
         ))
         db_action.append(dict(
-            action_name='承認',
-            action_desc='承認依頼されているアイテムに対しての承認される',
+            action_name='Approval',
+            action_desc='Approval action for approval requested items.',
             action_version='2.0.0',
             action_endpoint='approval',
             action_makedate=datetime.date(2018, 2, 11),
             action_lastdate=datetime.date(2018, 2, 11)
         ))
         db_action.append(dict(
-            action_name='ビアレビュー',
-            action_desc='アイテムについてのビアレビューをサポートする',
+            action_name='Via Review',
+            action_desc='Supports via review for items.',
             action_version='1.1.2',
             action_endpoint='review_action',
             action_makedate=datetime.date(2018, 6, 8),
@@ -183,7 +183,7 @@ def init_workflow_tables(tables):
         _uuid = uuid.uuid4()
         db_flow.append(dict(
             flow_id=_uuid,
-            flow_name='登録フロー',
+            flow_name='Registration Flow',
             flow_status=FlowStatusPolicy.AVAILABLE,
             flow_user=1
         ))
@@ -200,7 +200,7 @@ def init_workflow_tables(tables):
         _uuid = uuid.uuid4()
         db_flow.append(dict(
             flow_id=_uuid,
-            flow_name='登録承認フロー',
+            flow_name='Registration Approval Flow',
             flow_status=FlowStatusPolicy.AVAILABLE,
             flow_user=1
         ))
@@ -217,7 +217,7 @@ def init_workflow_tables(tables):
         _uuid = uuid.uuid4()
         db_flow.append(dict(
             flow_id=_uuid,
-            flow_name='メタデータ付加フロー',
+            flow_name='Metadata Addition Flow',
             flow_status=FlowStatusPolicy.AVAILABLE,
             flow_user=1
         ))
@@ -240,19 +240,19 @@ def init_workflow_tables(tables):
         itemtypesname_list = ItemTypes.get_latest()
         db_workflow.append(dict(
             flows_id=uuid.uuid4(),
-            flows_name='論文登録フロー',
+            flows_name='Article Registration Flow',
             itemtype_id=itemtypesname_list[0].item_type[0].id,
             flow_id=flow_list[0].id
         ))
         db_workflow.append(dict(
             flows_id=uuid.uuid4(),
-            flows_name='レポート登録フロー',
+            flows_name='Report Registration Flow',
             itemtype_id=itemtypesname_list[1].item_type[0].id,
             flow_id=flow_list[1].id
         ))
         db_workflow.append(dict(
             flows_id=uuid.uuid4(),
-            flows_name='メタデータ付加フロー',
+            flows_name='Metadata Addition Flow',
             itemtype_id=itemtypesname_list[2].item_type[0].id,
             flow_id=flow_list[2].id
         ))

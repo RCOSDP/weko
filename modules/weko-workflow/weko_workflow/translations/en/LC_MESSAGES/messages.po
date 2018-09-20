@@ -242,7 +242,7 @@ msgstr "Approval"
 #: weko_workflow/templates/weko_workflow/activity_detail.html:179
 #: weko_workflow/templates/weko_workflow/item_login_success.html:54
 msgid "Run"
-msgstr ""
+msgstr "Done"
 
 #: weko_workflow/templates/weko_workflow/activity_detail.html:166
 msgid "Approval"
@@ -476,7 +476,7 @@ msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:196
 msgid "New Flow"
-msgstr ""
+msgstr "Update"
 
 #: weko_workflow/templates/weko_workflow/admin/flow_list.html:48
 msgid "Create Flow"
@@ -488,7 +488,7 @@ msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:77
 msgid "New WorkFlow"
-msgstr ""
+msgstr "Update"
 
 #: weko_workflow/templates/weko_workflow/admin/workflow_list.html:28
 msgid "Create WrokFlow"
