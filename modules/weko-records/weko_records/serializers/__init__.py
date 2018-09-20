@@ -27,12 +27,18 @@ from invenio_records_rest.serializers.response import record_responsify, search_
 from invenio_records_rest.serializers.schemas.json import RecordSchemaJSONV1
 from invenio_records_rest.serializers.json import JSONSerializer
 from .searchserializer import SearchSerializer
+from .opensearchserializer import OpenSearchSerializer
+from .opensearchresponse import oepnsearch_responsify
 
 deposit_json_v1 = JSONSerializer(DepositSchemaV1, replace_refs=True)
 #: JSON record serializer for individual records.
 deposit_json_v1_response = record_responsify(
     deposit_json_v1, 'application/json')
 
-# for search result list
+# For search result list
 json_v1 = SearchSerializer(RecordSchemaJSONV1)
 json_v1_search = search_responsify(json_v1, 'application/json')
+
+# For opensearch serialize
+opensearch_v1 = OpenSearchSerializer(RecordSchemaJSONV1)
+opensearch_v1_search = oepnsearch_responsify(opensearch_v1)
