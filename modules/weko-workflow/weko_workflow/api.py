@@ -864,3 +864,34 @@ class WorkActivityHistory(object):
             current_app.logger.exception(str(ex))
             db.session.rollback()
             return None
+
+class UpdateItem(object):
+    """the class about item"""
+
+    def publish(pid, record):
+        r"""Record publish  status change view.
+
+        Change record publish status with given status and renders record export
+        template.
+
+        :param pid: PID object.
+        :param record: Record object.
+        :param template: Template to render.
+        :param \*\*kwargs: Additional view arguments based on URL rule.
+        :return: The rendered template.
+        """
+
+        from invenio_db import db
+        from weko_deposit.api import WekoIndexer
+        publish_status = record.get('publish_status')
+        if not publish_status:
+            record.update({'publish_status': '0'})
+        else:
+            record['publish_status'] = '0'
+
+        record.commit()
+        db.session.commit()
+
+        indexer = WekoIndexer()
+        indexer.update_publish_status(record)
+

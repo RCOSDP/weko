@@ -104,21 +104,68 @@ def iframe_index(item_type_id=0):
                                    error_type='no_itemtype')
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
+        sessionstore = RedisStore(redis.StrictRedis.from_url(
+            'redis://{host}:{port}/1'.format(
+                host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+        record = {}
+        files = []
+        endpoints = {}
+        activity_session = session['activity_info']
+        activity_id = activity_session.get('activity_id', None)
+        if activity_id and sessionstore.redis.exists(
+                'activity_item_'+activity_id):
+            item_str = sessionstore.get('activity_item_'+activity_id)
+            item_json = json.loads(item_str)
+            if 'metainfo' in item_json:
+                record = item_json.get('metainfo')
+            if 'files' in item_json:
+                files = item_json.get('files')
+            if 'endpoints' in item_json:
+                endpoints = item_json.get('endpoints')
         need_file = False
         if 'filename' in json.dumps(item_type.schema):
             need_file = True
         return render_template(
             'weko_items_ui/iframe/item_edit.html',
             need_file=need_file,
-            record={},
+            record=record,
             jsonschema=json_schema,
             schemaform=schema_form,
             id=item_type_id,
-            files=[]
+            item_save_uri=url_for('.iframe_save_model'),
+            files=files,
+            endpoints=endpoints
         )
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
+
+
+@blueprint.route('/iframe/model/save', methods=['POST'])
+@login_required
+@item_permission.require(http_exception=403)
+def iframe_save_model():
+    """Renders an item register view.
+
+    :param item_type_id: Item type ID. (Default: 0)
+    :return: The rendered template.
+    """
+    try:
+        data = request.get_json()
+        activity_session = session['activity_info']
+        activity_id = activity_session.get('activity_id', None)
+        if activity_id:
+            sessionstore = RedisStore(redis.StrictRedis.from_url(
+                'redis://{host}:{port}/1'.format(
+                    host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                    port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+            sessionstore.put('activity_item_'+activity_id, json.dumps(data),
+                             ttl_secs=60*60*24*7)
+    except Exception as ex:
+        current_app.logger.exception(str(ex))
+        return jsonify(code=1, msg='Model save error')
+    return jsonify(code=0, msg='Model save success')
 
 
 @blueprint.route('/iframe/success', methods=['GET'])
@@ -331,7 +378,8 @@ def default_view_method(pid, record, template=None):
     json_schema = '/items/jsonschema/{}'.format(item_type_id)
     schema_form = '/items/schemaform/{}'.format(item_type_id)
     need_file = False
-    if 'filemeta' in json.dumps(item_type.schema):
+    # if 'filemeta' in json.dumps(item_type.schema):
+    if 'filename' in json.dumps(item_type.schema):
         need_file = True
     return render_template(
         template,

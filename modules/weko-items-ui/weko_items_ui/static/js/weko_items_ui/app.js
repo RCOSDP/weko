@@ -48,8 +48,7 @@ require([
             }
           );
       }
-
-      $rootScope.$on('invenio.uploader.upload.completed', function(ev){
+      $scope.initFilenameList = function() {
         $scope.searchFilemetaKey();
         $scope.findFilemetaFormIdx();
         filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[$scope.filemeta_key];
@@ -64,22 +63,25 @@ require([
           }
         });
         $rootScope.$broadcast('schemaFormRedraw');
+      }
+
+      $rootScope.$on('invenio.records.loading.stop', function(ev){
+        $scope.initFilenameList();
+        hide_endpoints = $('#hide_endpoints').text()
+        if(hide_endpoints.length > 2) {
+          endpoints = JSON.parse($('#hide_endpoints').text());
+          if(endpoints.hasOwnProperty('bucket')) {
+            $rootScope.$broadcast(
+              'invenio.records.endpoints.updated', endpoints
+            );
+          }
+        }
+      });
+      $rootScope.$on('invenio.uploader.upload.completed', function(ev){
+        $scope.initFilenameList();
       });
       $scope.$on('invenio.uploader.file.deleted', function(ev, f){
-        $scope.searchFilemetaKey();
-        $scope.findFilemetaFormIdx();
-        filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[$scope.filemeta_key];
-        filemeta_schema.items.properties['filename']['enum'] = [];
-        filemeta_form = $rootScope.recordsVM.invenioRecordsForm[$scope.filemeta_form_idx];
-        filemeta_filename_form = filemeta_form.items[0];
-        filemeta_filename_form['titleMap'] = [];
-        $rootScope.filesVM.files.forEach(file => {
-          if(file.completed) {
-            filemeta_schema.items.properties['filename']['enum'].push(file.key);
-            filemeta_filename_form['titleMap'].push({name: file.key, value: file.key});
-          }
-        });
-        $rootScope.$broadcast('schemaFormRedraw');
+        $scope.initFilenameList();
       });
 
       $scope.searchAuthor = function(model_id,arrayFlg,form) {
@@ -235,6 +237,35 @@ require([
           str = str.split(',"authorLink":[]').join('');
         }
         $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+      }
+      $scope.saveDataJson = function(item_save_uri){
+        var metainfo = {'metainfo': $rootScope.recordsVM.invenioRecordsModel};
+        if(!angular.isUndefined($rootScope.filesVM)) {
+          metainfo = angular.merge(
+            {},
+            metainfo,
+            {
+              'files': $rootScope.filesVM.files,
+              'endpoints': $rootScope.filesVM.invenioFilesEndpoints
+            }
+          );
+        }
+        var request = {
+          url: item_save_uri,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(metainfo)
+        };
+        InvenioRecordsAPI.request(request).then(
+          function success(response){
+            alert(response.data.msg);
+          },
+          function error(response){
+            alert(response);
+          }
+        );
       }
     }
     // Inject depedencies

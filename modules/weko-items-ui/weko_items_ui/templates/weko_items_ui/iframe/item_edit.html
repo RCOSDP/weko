@@ -44,6 +44,11 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-md-12">
+      {% if endpoints %}
+      <div class="hide" id="hide_endpoints">{{ endpoints|tojson }}</div>
+      {% else %}
+      <div class="hide" id="hide_endpoints"></div>
+      {% endif %}
       <div id="weko-records">
         {%- if need_file %}
         <invenio-files-uploader
@@ -54,6 +59,7 @@
             files='{{files|tojson}}'
           {% else %}
             initialization="{{ config.DEPOSIT_SEARCH_API }}"
+            files='{{files|tojson}}'
           {% endif %}
           extra-params='{"headers":{"Content-Type": "application/json"}}'
         >
@@ -115,6 +121,7 @@
               <div class="row" ng-hide="false">
                 <div class="col-sm-9" ng-show="true">
                   <ul class="list-inline text-right">
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="saveDataJson('{{item_save_uri}}');">{{_('Save')}}</button></li>
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson();recordsVM.actionHandler(['index', 'PUT'], 'iframe_tree')">{{_('Next')}}</button></li>
                     {%- if pid %}
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">{{_('Delete')}}</button></li>

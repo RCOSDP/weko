@@ -107,14 +107,14 @@
       </tbody>
     </table>
     <button type="button" class="btn btn-primary pull-right" id="btn_new_query" {%- if flow_id == '0' %} disabled {% endif %}>
-      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('New Query')}}</button>
+      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Save Query')}}</button>
     </div>
   </div>
   <div class="row">
     <div class="col-sm-12">
       <label>{{_('Action List')}}</label>
       <button type="button" class="btn btn-primary pull-right media-heading" id="btn_new_transition" {%- if flow_id == '0' %} disabled {% endif %}>
-        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('New Transition')}}</button>
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Save Transition')}}</button>
       <table class="table table-striped table-bordered table-hover">
         <thead>
           <tr>
@@ -193,7 +193,7 @@
       <button type="button" class="btn btn-primary" id="btn_back">
         <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
       <button type="button" class="btn btn-primary" id="btn_submit" data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
-        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('New Flow')}}</button>
+        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Save Flow')}}</button>
     </div>
   </div>
 </div>
