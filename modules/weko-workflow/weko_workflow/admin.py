@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import uuid
 from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
@@ -193,6 +194,9 @@ class WorkFlowSettingView(BaseView):
         workflow = WorkFlow()
         if '0' == workflow_id:
             """Create new workflow"""
+            form_workflow.update(
+                flows_id=uuid.uuid4()
+            )
             workflow.create_workflow(form_workflow)
         else:
             """Update the workflow info"""

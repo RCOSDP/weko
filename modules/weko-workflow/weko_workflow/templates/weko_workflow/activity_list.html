@@ -67,7 +67,7 @@
         <td>{{activity.updated.date()}}</td>
         <td><a href="{{url_for('weko_workflow.display_activity', activity_id=activity.activity_id, status=activity.type)}}">{{activity.activity_id}}</a></td>
         <td>{{activity.ItemName}}</td>
-        <td>{{activity.flow_define.flow_name}}</td>
+        <td>{{activity.workflow.flows_name}}</td>
         <td>{{activity.action.action_name}}</td>
         <td>{{_(activity.StatusDesc)}}</td>
         <td>{{activity.User.email}}</td>

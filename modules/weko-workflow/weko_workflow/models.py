@@ -642,6 +642,11 @@ class Activity(db.Model, TimestampMixin):
         nullable=False, unique=False)
     """workflow id."""
 
+    workflow = db.relationship(
+        WorkFlow,
+        backref=db.backref('activity', lazy='dynamic')
+    )
+
     workflow_status = db.Column(
         db.Integer(), nullable=True, unique=False)
     """workflow status."""

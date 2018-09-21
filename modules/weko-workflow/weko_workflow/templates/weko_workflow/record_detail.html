@@ -1,3 +1,4 @@
+{%- if record !=[] -%}
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
     <h3 class="panel-title">{{_('Item')}}</h3>
@@ -11,7 +12,7 @@
       </div>
       <div class="panel-body">
         <div class="row">
-          <div class="col-sm-9 col-md-9 col-left">
+          <div class="col-sm-12 col-md-12 col-left">
             {%- block record_author %}
               {%- set files = record.files -%}
               {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
@@ -190,4 +191,5 @@
     </div>
   </div>
 </div>
+{% endif %}
 <br>

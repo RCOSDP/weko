@@ -180,4 +180,7 @@ require([
           }
       });
   });
+  $('#lnk_item_detail').on('click', function () {
+    $('#myModal').modal('show');
+  })
 })

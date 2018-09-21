@@ -9,36 +9,34 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workflow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-09-19 19:34+0900\n"
+"POT-Creation-Date: 2018-09-28 15:36+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.3\n"
+"Generated-By: Babel 2.6.0\n"
 
-#: weko_workflow/admin.py:99
+#: weko_workflow/admin.py:100
 msgid "Update flow successfully."
 msgstr ""
 
-#: weko_workflow/admin.py:137
+#: weko_workflow/admin.py:138
 msgid "Update flow action successfully"
 msgstr ""
 
-#: weko_workflow/admin.py:224 weko_workflow/admin.py:233
+#: weko_workflow/admin.py:228 weko_workflow/admin.py:237
 #: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:29
 #: weko_workflow/templates/weko_workflow/admin/workflow_list.html:33
-#: weko_workflow/templates/weko_workflow/workflow_list.html:44
-#: weko_workflow/templates/weko_workflow/activity_list.html:57
 msgid "WorkFlow"
 msgstr ""
 
-#: weko_workflow/admin.py:225
+#: weko_workflow/admin.py:229
 msgid "WorkFlow List"
 msgstr ""
 
-#: weko_workflow/admin.py:234
+#: weko_workflow/admin.py:238
 msgid "Flow List"
 msgstr ""
 
@@ -111,14 +109,10 @@ msgid "Making"
 msgstr ""
 
 #: weko_workflow/models.py:222
-#: weko_workflow/templates/weko_workflow/activity_detail.html:70
 msgid "Created"
 msgstr ""
 
 #: weko_workflow/models.py:224
-#: weko_workflow/templates/weko_workflow/activity_detail.html:86
-#: weko_workflow/templates/weko_workflow/activity_detail.html:192
-#: weko_workflow/templates/weko_workflow/activity_list.html:54
 #: weko_workflow/templates/weko_workflow/admin/flow_list.html:33
 #: weko_workflow/templates/weko_workflow/admin/workflow_list.html:38
 msgid "Updated"
@@ -167,150 +161,23 @@ msgstr ""
 msgid "Subscription Policy"
 msgstr ""
 
-#: weko_workflow/views.py:120
+#: weko_workflow/views.py:128
 msgid "End"
 msgstr ""
 
-#: weko_workflow/views.py:172 weko_workflow/views.py:174
-#: weko_workflow/views.py:177 weko_workflow/views.py:179
+#: weko_workflow/views.py:196 weko_workflow/views.py:198
+#: weko_workflow/views.py:201 weko_workflow/views.py:203
 msgid "Authorization required"
 msgstr ""
 
-#: weko_workflow/views.py:205 weko_workflow/views.py:210
-#: weko_workflow/views.py:213 weko_workflow/views.py:242
-#: weko_workflow/views.py:295
+#: weko_workflow/views.py:247 weko_workflow/views.py:252
+#: weko_workflow/views.py:255 weko_workflow/views.py:299
+#: weko_workflow/views.py:352
 msgid "success"
 msgstr ""
 
-#: weko_workflow/views.py:216 weko_workflow/views.py:266
+#: weko_workflow/views.py:273 weko_workflow/views.py:323
 msgid "error"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:48
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:31
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:41
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:35
-#: weko_workflow/templates/weko_workflow/workflow_list.html:47
-msgid "Flow"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:54
-#: weko_workflow/templates/weko_workflow/activity_list.html:55
-msgid "Activity"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:60
-#: weko_workflow/templates/weko_workflow/activity_list.html:59
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:32
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:37
-msgid "Status"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:76
-msgid "Creater"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:92
-#: weko_workflow/templates/weko_workflow/activity_detail.html:193
-msgid "Updater"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:108
-#: weko_workflow/templates/weko_workflow/activity_list.html:56
-msgid "Item"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:119
-msgid "Step"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:155
-#: weko_workflow/templates/weko_workflow/activity_detail.html:157
-#: weko_workflow/templates/weko_workflow/activity_detail.html:195
-#: weko_workflow/templates/weko_workflow/item_login_success.html:45
-#: weko_workflow/templates/weko_workflow/item_login_success.html:47
-msgid "Comment"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:162
-msgid "Approval Request"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:163
-#: weko_workflow/templates/weko_workflow/activity_detail.html:174
-#: weko_workflow/templates/weko_workflow/activity_detail.html:179
-#: weko_workflow/templates/weko_workflow/item_login_success.html:54
-msgid "Run"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:166
-msgid "Approval"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:167
-msgid "Reject"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:168
-msgid "Return"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:169
-#: weko_workflow/templates/weko_workflow/activity_detail.html:173
-#: weko_workflow/templates/weko_workflow/activity_detail.html:178
-#: weko_workflow/templates/weko_workflow/item_login_success.html:53
-msgid "Save"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:186
-msgid "History"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:191
-#: weko_workflow/templates/weko_workflow/activity_list.html:58
-msgid "Action"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:194
-msgid "Result"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_detail.html:223
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:63
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:194
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:84
-#: weko_workflow/templates/weko_workflow/workflow_list.html:65
-msgid "Back"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:41
-msgid "ToDo"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:43
-msgid "Wait"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:45
-msgid "All"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:53
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:30
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:83
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:30
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:15
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:32
-#: weko_workflow/templates/weko_workflow/workflow_list.html:43
-msgid "No."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:60
-msgid "User"
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/activity_list.html:78
-msgid "New Activity"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/index.html:29
@@ -318,21 +185,49 @@ msgstr ""
 msgid "Welcome to %(module_name)s"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/workflow_list.html:45
-#: weko_workflow/templates/weko_workflow/workflow_list.html:56
-msgid "Begin"
+#: weko_workflow/templates/weko_workflow/permission_required.html:25
+msgid "Permission required"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:53
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:34
-#: weko_workflow/templates/weko_workflow/workflow_list.html:46
-msgid "ItemType"
+#: weko_workflow/templates/weko_workflow/permission_required.html:26
+msgid "You do not have sufficient permissions to view this page."
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:67
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:36
-#: weko_workflow/templates/weko_workflow/workflow_list.html:48
-msgid "Next Flow"
+#: weko_workflow/templates/weko_workflow/record_detail.html:4
+msgid "Item"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:10
+msgid "No title"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:23
+msgid "Name"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:23
+msgid "File"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:24
+msgid "License"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:63
+#: weko_workflow/templates/weko_workflow/record_detail.html:85
+msgid "Preview"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:120
+msgid "item type"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/admin/action_list.html:30
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:83
+#: weko_workflow/templates/weko_workflow/admin/flow_list.html:30
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:15
+#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:32
+msgid "No."
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/action_list.html:31
@@ -376,6 +271,12 @@ msgstr ""
 #: weko_workflow/templates/weko_workflow/admin/action_list.html:55
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:41
 msgid "Update"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/admin/action_list.html:63
+#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:194
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:84
+msgid "Back"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:29
@@ -429,7 +330,7 @@ msgid "Change Order"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:110
-msgid "New Query"
+msgid "Save Query"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:115
@@ -438,7 +339,7 @@ msgid "Action List"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:117
-msgid "New Transition"
+msgid "Save Transition"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:121
@@ -474,7 +375,18 @@ msgid "More Action"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_detail.html:196
-msgid "New Flow"
+msgid "Save Flow"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/admin/flow_list.html:31
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:41
+#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:35
+msgid "Flow"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/admin/flow_list.html:32
+#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:37
+msgid "Status"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/flow_list.html:48
@@ -485,8 +397,18 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:53
+#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:34
+msgid "ItemType"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:67
+#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:36
+msgid "Next Flow"
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:77
-msgid "New WorkFlow"
+msgid "Save WorkFlow"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/workflow_list.html:28

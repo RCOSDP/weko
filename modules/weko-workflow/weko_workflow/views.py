@@ -30,10 +30,11 @@ from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
+from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.utils import import_string
 from weko_records.api import ItemsMetadata
 
-from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow
+from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 
 blueprint = Blueprint(
@@ -109,7 +110,11 @@ def display_activity(activity_id=0):
     activity_detail = activity.get_activity_detail(activity_id)
     item = None
     if activity_detail is not None and activity_detail.item_id is not None:
-        item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+        try:
+            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+        except NoResultFound as ex:
+            current_app.logger.exception(str(ex))
+            item = None
     steps = activity.get_activity_steps(activity_id)
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
@@ -130,6 +135,8 @@ def display_activity(activity_id=0):
         temporary_comment = temporary_comment.action_comment
     cur_step = action_endpoint
     step_item_login_url = None
+    approval_record = []
+    pid = None
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -148,16 +155,16 @@ def display_activity(activity_id=0):
             step_item_login_url = url_for(
                 'invenio_deposit_ui.iframe_depid',
                 pid_value=pid_identifier.pid_value)
-    if 'approval' == action_endpoint:
-        if item:
-            pid_identifier = PersistentIdentifier.get_by_object(
-                pid_type='depid', object_type='rec', object_uuid=item.id)
-            record_class = import_string('weko_deposit.api:WekoRecord')
-            resolver = Resolver(pid_type='recid', object_type='rec',
-                                getter=record_class.get_record)
-            pid, approval_record = resolver.resolve(pid_identifier.pid_value)
-    else:
-        approval_record = []
+    # if 'approval' == action_endpoint:
+    if item:
+        pid_identifier = PersistentIdentifier.get_by_object(
+            pid_type='depid', object_type='rec', object_uuid=item.id)
+        record_class = import_string('weko_deposit.api:WekoRecord')
+        resolver = Resolver(pid_type='recid', object_type='rec',
+                            getter=record_class.get_record)
+        pid, approval_record = resolver.resolve(pid_identifier.pid_value)
+
+    res_check = check_authority_action(activity_id,action_id)
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -169,7 +176,9 @@ def display_activity(activity_id=0):
         temporary_comment=temporary_comment,
         record=approval_record,
         step_item_login_url=step_item_login_url,
-        histories=histories
+        histories=histories,
+        res_check=res_check,
+        pid=pid
     )
 
 
@@ -194,6 +203,24 @@ def check_authority(func):
                 return jsonify(code=403, msg=_('Authorization required'))
         return func(*args, **kwargs)
     return decorated_function
+
+
+def check_authority_action(activity_id='0', action_id=0):
+    work = WorkActivity()
+    roles, users = work.get_activity_action_role(activity_id, action_id)
+    cur_user = current_user.get_id()
+    cur_role = db.session.query(Role).join(userrole).filter_by(
+        user_id=cur_user).all()
+    if users['deny'] and int(cur_user) in users['deny']:
+        return 1
+    if users['allow'] and int(cur_user) not in users['allow']:
+        return 1
+    for role in cur_role:
+        if roles['deny'] and role.id in roles['deny']:
+            return 1
+        if roles['allow'] and role.id not in roles['allow']:
+            return 1
+    return 0
 
 
 @blueprint.route(
@@ -226,6 +253,21 @@ def next_action(activity_id='0', action_id=0):
     if 'end_action' == action_endpoint:
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
+
+    if 'approval' == action_endpoint:
+        activity_obj = WorkActivity()
+        activity_detail = activity_obj.get_activity_detail(activity_id)
+        item = None
+        if activity_detail is not None and activity_detail.item_id is not None:
+            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+            pid_identifier = PersistentIdentifier.get_by_object(
+                pid_type='depid', object_type='rec', object_uuid=item.id)
+            record_class = import_string('weko_deposit.api:WekoRecord')
+            resolver = Resolver(pid_type='recid', object_type='rec',
+                                getter=record_class.get_record)
+            pid, approval_record = resolver.resolve(pid_identifier.pid_value)
+            UpdateItem.publish(pid, approval_record)
+
     rtn = history.create_activity_history(activity)
     if rtn is None:
         return jsonify(code=-1, msg=_('error'))

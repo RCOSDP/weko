@@ -20,8 +20,11 @@
 
 """WEKO3 module docstring."""
 
+import os
+import redis
 
 from flask import current_app, session
+from simplekv.memory.redisstore import RedisStore
 
 from .api import WorkActivity
 
@@ -40,3 +43,11 @@ def upt_activity_item(app, item_id):
             activity, item_id.object_uuid)
         if rtn:
             del session['activity_info']
+            sessionstore = RedisStore(redis.StrictRedis.from_url(
+                'redis://{host}:{port}/1'.format(
+                    host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+                    port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+            activity_id = activity.get('activity_id', None)
+            if activity_id and sessionstore.redis.exists(
+                    'activity_item_' + activity_id):
+                sessionstore.delete('activity_item_' + activity_id)
