@@ -242,14 +242,14 @@
       // タイトルなどを追加する
       page_global.table_row_map.schema.properties["title_ja"] = {type:"string",title:"タイトル",format:"text"}
       page_global.table_row_map.schema.properties["title_en"] = {type:"string",title:"タイトル(英)",format:"text"}
-      page_global.table_row_map.form.push({type:"fieldset",title:"タイトル",title_i18n:{ja:"タイトル",en:"Title"},items:[{type:"text",key:"title_ja",title:"タイトル",title_i18n:{ja:"タイトル",en:"Title"},required:true},{type:"text",key:"title_en",title:"タイトル(英)",title_i18n:{ja:"タイトル(英)",en:"Title"},required:true}]});
+      page_global.table_row_map.form.push({type:"fieldset",title:"タイトル",title_i18n:{ja:"タイトル",en:"Title"},items:[{type:"text",key:"title_ja",title:"タイトル",title_i18n:{ja:"タイトル",en:"Title"},required:true},{type:"text",key:"title_en",title:"タイトル(英)",title_i18n:{ja:"タイトル(英)",en:"Title(English)"},required:true}]});
       page_global.table_row_map.schema.properties["lang"] = {type:"string",title:"言語",format:"select",enum:["en","ja"]}
       page_global.table_row_map.form.push({key:"lang",type:"select",title:"言語",title_i18n:{ja:"言語",en:"Language"},required: true,titleMap:{"en":"英語","ja":"日本語"}});
       page_global.table_row_map.schema.properties["pubdate"] = {type:"string",title:"公開日",format:"datetime"}
       page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
       page_global.table_row_map.schema.properties["keywords"] = {type:"string",title:"キーワード",format:"text"}
       page_global.table_row_map.schema.properties["keywords_en"] = {type:"string",title:"キーワード(英)",format:"text"}
-      page_global.table_row_map.form.push({type:"fieldset",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},items:[{type:"text",key:"keywords",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},required:true},{type:"text",key:"keywords_en",title:"キーワード(英)",title_i18n:{ja:"キーワード(英)",en:"keywords"},required:true}]});
+      page_global.table_row_map.form.push({type:"fieldset",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},items:[{type:"text",key:"keywords",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},required:true},{type:"text",key:"keywords_en",title:"キーワード(英)",title_i18n:{ja:"キーワード(英)",en:"keywords(English)"},required:true}]});
       page_global.table_row_map.schema.required.push("title_ja");
       page_global.table_row_map.schema.required.push("title_en");
       page_global.table_row_map.schema.required.push("lang");
@@ -693,7 +693,7 @@
         //add by ryuu. start
         tmp_title_en.title_i18n ={}
         tmp_title_en.title_i18n.ja = "タイトル(英)";
-        tmp_title_en.title_i18n.en = "Title";
+        tmp_title_en.title_i18n.en = "Title(English)";
         //add by ryuu. end
         tmp_title_en.input_type = "text";
         tmp_title_en.input_value = "";
@@ -769,7 +769,7 @@
         //add by ryuu. start
         tmp_keywords_en.title_i18n ={}
         tmp_keywords_en.title_i18n.ja = "キーワード(英)";
-        tmp_keywords_en.title_i18n.en = "keywords";
+        tmp_keywords_en.title_i18n.en = "keywords(English)";
         //add by ryuu. end
         tmp_keywords_en.input_type = "text";
         tmp_keywords_en.input_value = "";
