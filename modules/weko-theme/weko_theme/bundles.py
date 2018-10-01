@@ -39,7 +39,7 @@ from invenio_assets import NpmBundle
 
 css_bootstrap = NpmBundle(
     'css/weko_theme/styles.scss',
-    depends=('scss/invenio_theme/*.scss', 'css/weko_theme/_variables.scss',),
+    depends=('scss/invenio_theme/*.scss', 'css/weko_theme/_variables.scss', 'scss/invenio_communities/variables.scss', 'scss/invenio_communities/communities/*.scss',),
     filters='node-scss,cleancssurl',
     output='gen/weko_styles.%(version)s.css',
     npm={

@@ -130,7 +130,11 @@ class Index(db.Model, Timestamp):
                         or isinstance(value, datetime) \
                         or isinstance(value, int):
                     yield (name, value)
+    # format setting for community admin page
 
+    def __str__(self):
+        """Representation."""
+        return 'Index <id={0.id}, index_name={0.index_name_english}>'.format(self)
 
 # class IndexItems(db.Model):
 #     """"""

@@ -38,11 +38,21 @@ blueprint_api = Blueprint(
     static_folder='static',
 )
 
+
 @blueprint.route("/search/index")
 def search():
     """ Index Search page ui."""
     search_type = request.args.get('search_type', '0')
+    # getArgs= request.args
+    # comm_id = None
+    # if 'community' in getArgs:
+    #     comm_id = request.args.get('community')
+    # ctx = {'id': comm_id}
+    # current_app.logger.debug(ctx)
     cur_index_id = search_type if search_type not in ('0', '1', ) else None
+    # return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
+    #                        index_id=cur_index_id, community=ctx)
+
     return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
                            index_id=cur_index_id)
 

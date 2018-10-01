@@ -25,13 +25,14 @@ from datetime import datetime
 from functools import partial
 
 from elasticsearch_dsl.query import Q
-from flask import current_app, request
+from flask import current_app, request, flash
 from flask_security import current_user
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
 from werkzeug.datastructures import MultiDict
 
 from .permissions import search_permission
+from invenio_communities.models import Community
 
 
 def get_item_type_aggs(search_index):
@@ -43,7 +44,7 @@ def get_item_type_aggs(search_index):
         get(search_index).get("aggs", {})
 
 
-def get_permission_filter():
+def get_permission_filter(comm_id=None):
     # check permission
     is_perm = search_permission.can()
 
@@ -54,17 +55,43 @@ def get_permission_filter():
     # rng = Q('nested', path='date', query=Q('bool', must=ava))
     ava = Q('range', **{'publish_date': {'lte': 'now/d'}})
     rng = ava
+    mst = []
+    if comm_id is not None:
+        path_list = Indexes.get_all_path_list(comm_id)
+        match_list=[]
+        for p_l in path_list:
+            match_q = Q('match', path=p_l)
+            match_list.append(match_q)
+        mst.append(Q('bool', should=match_list))
     if not is_perm:
         mut.append(match)
         mut.append(rng)
+        mut.append(get_index_filter()[0])
     else:
         user_id, result = check_admin_user()
         if result:
             shuld = [Q('match', weko_creator_id=user_id)]
             mut2 = [match, rng]
             shuld.append(Q('bool', must=mut2))
-            mut.append(Q('bool', should=shuld))
+            if comm_id is not None:
+                mut.append(Q('bool', should=shuld, must=mst))
+            else:
+                mut.append(Q('bool', should=shuld, must=get_index_filter()))
+
     return mut
+
+
+def get_index_filter():
+
+    paths = Indexes.get_browsing_tree_paths()
+    mst = []
+    q_list = []
+    for path in paths:
+        match_q = Q('match', path=path)
+        q_list.append(match_q)
+    mst.append(Q('bool', should=q_list))
+
+    return mst
 
 
 def default_search_factory(self, search, query_parser=None, search_type=None):
@@ -270,8 +297,26 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         if q:
             mt.append(q)
         mt.extend(_get_detail_keywords_query())
-
         return Q('bool', must=mt) if mt else Q()
+
+    def _get_simple_search_community_query(community_id,qs=None):
+        """
+          query parser for simple search
+        :param qs: Query string.
+        :return: Query parser.
+        """
+        # add  Permission filter by publish date and status
+        comm = Community.get(community_id)
+        root_node_id = comm.root_node_id
+
+        mt = get_permission_filter(root_node_id)
+        q = _get_search_qs_query(qs)
+
+        if q:
+            mt.append(q)
+        mt.extend(_get_detail_keywords_query())
+        return Q('bool', must=mt) if mt else Q()
+
 
     def _default_parser(qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
@@ -311,13 +356,18 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         search_type = request.values.get('search_type')
 
     qs = request.values.get('q')
-
+    # add by ryuu at 1004 start
+    comm_ide = request.values.get('provisional_communities')
+    # add by ryuu at 1004 end
     # full text search
     if search_type and '0' in search_type:
         query_q = query_parser(qs)
     else:
         # simple search
-        query_q = _get_simple_search_query(qs)
+        if not comm_ide is None:
+            query_q = _get_simple_search_community_query(comm_ide,qs)
+        else:
+            query_q = _get_simple_search_query(qs)
 
     src = {'_source': {'exclude': ['content']}}
     # extr = search._extra.copy()
@@ -421,8 +471,10 @@ def item_path_search_factory(self, search, index_id=None):
             mut = list(map(lambda x: x.to_dict(), mut))
             post_filter = query_q['post_filter']
             if mut[0].get('bool'):
-                post_filter['bool'] = {'must': [{'term': post_filter.pop('term')}],
+                post_filter['bool'] = {'must': [{'term': post_filter.pop('term')}, mut[0]['bool']['must'][0]],
                                        'should': mut[0]['bool']['should']}
+                # post_filter['bool'] = {'must': [{'term': post_filter.pop('term')}],
+                #                        'should': mut[0]['bool']['should']}
             else:
                 mut.append({'term': post_filter.pop('term')})
                 post_filter['bool'] = {'must': mut}

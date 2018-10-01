@@ -33,7 +33,7 @@ from sqlalchemy.sql.expression import func, literal_column
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from weko_groups.api import Group
 from .models import Index
-from .utils import get_tree_json, cached_index_tree_json, reset_tree
+from .utils import get_tree_json, cached_index_tree_json, reset_tree, get_index_id_list
 from invenio_i18n.ext import current_i18n
 
 class Indexes(object):
@@ -382,16 +382,25 @@ class Indexes(object):
 
     @classmethod
     @cached_index_tree_json(timeout=None,)
-    def get_index_tree(cls,):
-
+    def get_index_tree(cls,pid=0):
         """Get index tree json"""
-        return get_tree_json(cls.get_recursive_tree())
+        return get_tree_json(cls.get_recursive_tree(pid), pid)
 
     @classmethod
-    def get_browsing_tree(cls,):
-        tree = cls.get_index_tree()
+    def get_browsing_tree(cls,pid=0):
+        tree = cls.get_index_tree(pid)
         reset_tree(tree)
         return tree
+
+    @classmethod
+    def get_browsing_tree_paths(cls,pid=0):
+        id_list = get_index_id_list(cls.get_browsing_tree(pid), [])
+        paths = []
+        if id_list:
+            for id in id_list:
+                paths.append(Indexes.get_self_path(id).path)
+
+        return paths
 
     @classmethod
     def get_contribute_tree(cls, pid):
@@ -407,10 +416,12 @@ class Indexes(object):
         return tree
 
     @classmethod
-    def get_recursive_tree(cls):
+    def get_recursive_tree(cls, pid=0):
+        """"""
         with db.session.begin_nested():
-            recursive_t = cls.recs_tree_query()
-
+            recursive_t = cls.recs_tree_query(pid)
+            if pid != 0:
+                recursive_t = cls.recs_root_tree_query(pid)
             qlst = [recursive_t.c.pid, recursive_t.c.cid,
                     recursive_t.c.position, recursive_t.c.name,
                     recursive_t.c.public_state, recursive_t.c.public_date,
@@ -451,9 +462,9 @@ class Indexes(object):
 
             return allow, deny
 
+
         index = dict(cls.get_index(index_id))
         role = cls.get_account_role()
-
         allow = index["browsing_role"].split(',') \
             if len(index["browsing_role"]) else None
         if allow:
@@ -505,6 +516,7 @@ class Indexes(object):
             else:
                 obj = db.session.query(Index).\
                     filter_by(id=index_id).one_or_none()
+
         return obj
 
     @classmethod
@@ -582,6 +594,45 @@ class Indexes(object):
         return q
 
     @classmethod
+    def get_all_path_list(cls, node_path):
+        """
+        Get child of index list info.
+
+        :param node_path: Identifier of the index.
+        :return: the list of index.
+        """
+
+        # def get_path_list(node_path):
+        #     """
+        #     Get index list info.
+        #
+        #     :param node_path: Identifier of the index.
+        #     :return: the list of index.
+        #     """
+        #     node_path = str(node_path)
+        #     index = node_path.rfind('/')
+        #     pid = node_path[index + 1:]
+        #     recursive_t = cls.recs_query()
+        #     q = db.session.query(recursive_t).filter(
+        #         db.or_(recursive_t.c.pid == pid,
+        #                recursive_t.c.cid == pid)). \
+        #         order_by(recursive_t.c.path).all()
+        #     if q and len(q) >1:
+        #         path_list.append(q[0].path)
+        #         q = q[1:]
+        #         for inx in q:
+        #             get_path_list(inx.path)
+        #     else:
+        #         path_list.append(q[0].path)
+        #     return path_list
+        #
+        # path_list=[]
+        # path = get_path_list(node_path)
+        path = Indexes.get_browsing_tree_paths(node_path)
+
+        return path
+
+    @classmethod
     def get_self_path(cls, node_id):
         """
         Get index view path info.
@@ -631,7 +682,6 @@ class Indexes(object):
         :return: the query of db.session.
         """
         lang = current_i18n.language
-
         if lang == 'ja':
             recursive_t = db.session.query(
                 Index.parent.label("pid"),
@@ -682,6 +732,87 @@ class Indexes(object):
                 Index.contribute_group,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
+                cte(name="recursive_t", recursive=True)
+
+            rec_alias = aliased(recursive_t, name="rec")
+            test_alias = aliased(Index, name="t")
+            recursive_t = recursive_t.union_all(
+                db.session.query(
+                    test_alias.parent,
+                    test_alias.id,
+                    rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                    test_alias.index_name_english,
+                    test_alias.position,
+                    test_alias.public_state,
+                    test_alias.public_date,
+                    test_alias.browsing_role,
+                    test_alias.contribute_role,
+                    test_alias.browsing_group,
+                    test_alias.contribute_group,
+                    rec_alias.c.lev + 1).filter(
+                    test_alias.parent == rec_alias.c.cid)
+            )
+
+        return recursive_t
+
+    @classmethod
+    def recs_root_tree_query(cls, pid=0, ):
+        """
+        Init select condition of index.
+
+        :return: the query of db.session.
+        """
+        lang = current_i18n.language
+        if lang == 'ja':
+            recursive_t = db.session.query(
+                Index.parent.label("pid"),
+                Index.id.label("cid"),
+                func.cast(Index.id, db.Text).label("path"),
+                func.coalesce(Index.index_name, Index.index_name_english).label("name"),
+                Index.position,
+                Index.public_state,
+                Index.public_date,
+                Index.browsing_role,
+                Index.contribute_role,
+                Index.browsing_group,
+                Index.contribute_group,
+                literal_column("1", db.Integer).label("lev")).filter(
+                Index.id == pid). \
+                cte(name="recursive_t", recursive=True)
+
+            rec_alias = aliased(recursive_t, name="rec")
+            test_alias = aliased(Index, name="t")
+            recursive_t = recursive_t.union_all(
+                db.session.query(
+                    test_alias.parent,
+                    test_alias.id,
+                    rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
+                    func.coalesce(test_alias.index_name, test_alias.index_name_english),
+                    test_alias.position,
+                    test_alias.public_state,
+                    test_alias.public_date,
+                    test_alias.browsing_role,
+                    test_alias.contribute_role,
+                    test_alias.browsing_group,
+                    test_alias.contribute_group,
+                    rec_alias.c.lev + 1).filter(
+                    test_alias.parent == rec_alias.c.cid)
+            )
+        else:
+            recursive_t = db.session.query(
+                Index.parent.label("pid"),
+                Index.id.label("cid"),
+                func.cast(Index.id, db.Text).label("path"),
+                Index.index_name_english.label("name"),
+                Index.position,
+                Index.public_state,
+                Index.public_date,
+                Index.browsing_role,
+                Index.contribute_role,
+                Index.browsing_group,
+                Index.contribute_group,
+                literal_column("1", db.Integer).label("lev")).filter(
+                Index.id == pid). \
                 cte(name="recursive_t", recursive=True)
 
             rec_alias = aliased(recursive_t, name="rec")

@@ -214,6 +214,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         if q:
             try:
                 paths = Indexes.get_self_list(q)
+                current_app.logger.debug(paths)
             except BaseException:
                 paths = []
             agp = rd["aggregations"]["path"]["buckets"]
