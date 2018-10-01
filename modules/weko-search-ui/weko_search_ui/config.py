@@ -36,6 +36,7 @@ WEKO_SEARCH_UI_THEME_FRONTPAGE_TEMPLATE = \
 """Reset invenio_theme.config['THEME_FRONTPAGE_TEMPLATE'] info"""
 
 WEKO_SEARCH_UI_SEARCH_TEMPLATE = 'weko_search_ui/search.html'
+
 """Reset search_ui_search config"""
 
 WEKO_SEARCH_UI_JSTEMPLATE_RESULTS = 'templates/weko_search_ui/itemlist.html'

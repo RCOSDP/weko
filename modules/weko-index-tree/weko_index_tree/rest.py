@@ -25,6 +25,7 @@ from functools import wraps
 from flask import Blueprint, abort, current_app, jsonify, make_response, request
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
+from invenio_communities.models import Community
 
 from .api import Indexes
 from .errors import IndexAddedRESTError, IndexBaseRESTError, \
@@ -256,12 +257,19 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
         """Get tree json."""
         try:
             action = request.values.get('action')
+            comm_id = request.values.get('community')
+
             pid = kwargs.get('pid_value')
 
             if pid:
                 tree = self.record_class.get_contribute_tree(pid)
-            elif action and 'browsing' in action:
+            elif action and 'browsing' in action and comm_id is None:
                 tree = self.record_class.get_browsing_tree()
+            elif action and 'browsing' in action and not comm_id is None:
+                comm = Community.get(comm_id)
+
+                if not comm is None:
+                    tree = self.record_class.get_browsing_tree(int(comm.root_node_id))
             else:
                 tree = self.record_class.get_index_tree()
             return make_response(jsonify(tree), 200)

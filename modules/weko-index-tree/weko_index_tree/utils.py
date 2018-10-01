@@ -30,6 +30,7 @@ from invenio_i18n.ext import current_i18n
 from weko_groups.models import Group
 
 
+
 def is_index_tree_updated():
     """Return True if index tree has been updated."""
     return current_app.config['WEKO_INDEX_TREE_UPDATED']
@@ -74,7 +75,7 @@ def reset_tree(tree, path=None):
         reduce_index_by_role(tree, roles, groups)
 
 
-def get_tree_json(obj):
+def get_tree_json(obj, pid=0):
     """
     Get Tree Json
     :param obj:
@@ -122,13 +123,19 @@ def get_tree_json(obj):
         lst.pop('pid')
         return lst
 
-    parent = [remove_keys(x) for x in filter(lambda node: node.pid == 0, obj)]
+    # update by ryuu for invenio community start
+    # parent = [remove_keys(x) for x in filter(lambda node: node.pid == 0, obj)]
+    if pid != 0:
+        parent = [remove_keys(x) for x in filter(lambda node: node.cid == pid, obj)]
+    else:
+        parent = [remove_keys(x) for x in filter(lambda node: node.pid == pid, obj)]
+    # update by ryuu for invenio community end
     ntree = obj[len(parent):]
     set_node(parent)
 
     parent = sorted(parent, key=lambda x: x["position"])
-
     current_app.config['WEKO_INDEX_TREE_UPDATED'] = True
+
     return parent
 
 
@@ -177,7 +184,6 @@ def check_groups(user_group, groups):
 
     return is_can
 
-
 def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
     if isinstance(tree, list):
         i = 0
@@ -212,19 +218,34 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         tree.pop(i)
                 # contribute role and group check
                 else:
-                    lst['disabled'] = False \
-                        if roles[0] or (check_roles(roles, contribute_role) and
-                                        check_groups(groups, contribute_group)) \
-                        else True
+                    if roles[0] or (check_roles(roles, contribute_role) and
+                                    check_groups(groups, contribute_group)):
+                        lst['disabled'] = False
 
-                    plst = plst or []
-                    tree_id = lst.get('id', '')
-                    if tree_id in plst:
-                        settings = lst.get('settings')
-                        if isinstance(settings, dict) and settings.get(
-                                'checked') is not None:
-                            settings['checked'] = True
-                            plst.remove(tree_id)
+                        plst = plst or []
+                        tree_id = lst.get('id', '')
+                        if tree_id in plst:
+                            settings = lst.get('settings')
+                            if isinstance(settings, dict) and settings.get(
+                                    'checked') is not None:
+                                settings['checked'] = True
+                                plst.remove(tree_id)
 
-                    reduce_index_by_role(children, roles, groups, False, plst)
-                    i += 1
+                        reduce_index_by_role(children, roles, groups, False, plst)
+                        i += 1
+
+                    else:
+                        children.clear()
+                        tree.pop(i)
+
+
+def get_index_id_list(indexes, id_list = []):
+    if isinstance(indexes, list):
+        for index in indexes:
+            if isinstance(index, dict):
+                id_list.append(index.get('id', ''))
+
+                children = index.get('children')
+                get_index_id_list(children, id_list)
+
+    return id_list

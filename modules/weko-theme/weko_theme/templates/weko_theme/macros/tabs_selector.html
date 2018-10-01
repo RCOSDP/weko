@@ -23,4 +23,6 @@
     <!--<li role="presentation" {% if tab_value=='item' %}class="active"{% endif %}><a href="{{url_for('weko_items_ui.index')}}">{{ _('Item Registration') }}</a></li>-->
     <li role="presentation" {% if tab_value=='author' %}class="active"{% endif %}><a href="{{url_for('weko_authors.index')}}">{{ _('Author Management') }}</a></li>
     <li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('weko_workflow.index')}}">{{ _('WorkFlow') }}</a></li>
+    <!--<li role="presentation" {% if tab_value=='flow' %}class="active"{% endif %}><a href="{{url_for('invenio_communities.index')}}">{{ _('Community') }}</a></li>-->
+    <li role="presentation" {% if tab_value=='community' %}class="active"{% endif %}><a href="{{url_for('invenio_communities.community_list')}}">{{ _('Community') }}</a></li>
 {% endmacro %}

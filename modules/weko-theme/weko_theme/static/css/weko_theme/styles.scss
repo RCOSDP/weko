@@ -34,6 +34,8 @@ $fa-font-path: "/static/node_modules/font-awesome/fonts";
 @import "../../scss/invenio_theme/footer";
 @import "../../scss/invenio_theme/input-icon";
 
+@import "../../scss/invenio_communities/variables";
+
 // CSS code to allow `ng-csp="no-inline-css"`
 [ng\:cloak],
 [ng-cloak],
@@ -65,4 +67,3 @@ ng\:form {
   background-color: $input-bg-transparent;
   border-color: $input-bg-transparent;
 }
-
