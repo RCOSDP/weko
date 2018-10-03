@@ -100,6 +100,20 @@ class Index(db.Model, Timestamp):
         db.Boolean(name='recs_contribute_role'), nullable=True, default=False)
     """Recursive Browsing Role of the index."""
 
+    browsing_group = db.Column(db.Text, nullable=True)
+    """Browsing Group of the  ."""
+
+    recursive_browsing_group = db.Column(
+        db.Boolean(name='recs_browsing_group'), nullable=True, default=False)
+    """Recursive Browsing Group of the index."""
+
+    contribute_group = db.Column(db.Text, nullable=True)
+    """Contribute Group of the index."""
+
+    recursive_contribute_group = db.Column(
+        db.Boolean(name='recs_contribute_group'), nullable=True, default=False)
+    """Recursive Browsing Group of the index."""
+
     owner_user_id = db.Column(db.Integer, nullable=True, default=0)
     """Owner user id of the index."""
 

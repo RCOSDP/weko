@@ -34,7 +34,7 @@ from weko_index_tree.api import Index
 
 class AtomSerializer(JSONSerializer):
     """
-    Modify search result to atom format.
+    Serialize search result to atom format.
     """
 
     def serialize_search(self, pid_fetcher, search_result, links=None,
@@ -61,12 +61,14 @@ class AtomSerializer(JSONSerializer):
         index_meta = {}
         _keywords = request.args.get('q', '')
         _indexId = request.args.get('index_id')
+
         if _indexId:
             index = Index.query.filter_by(id=_indexId).one_or_none()
             _indexName = index.index_name
-            index_meta[_indexId] = _indexName
+            index_meta[_indexId] = _indexName if _indexName else \
+                'Nonexistent Index'
 
-            fg.title('WEKO OpenSearch: ' + str(_indexName))
+            fg.title('WEKO OpenSearch: ' + str(index_meta[_indexId]))
         else:
             fg.title('WEKO OpenSearch: ' + str(_keywords))
 
@@ -116,25 +118,32 @@ class AtomSerializer(JSONSerializer):
             if 'title_ja' in item_metadata:
                 _jaTitle = item_metadata['title_ja']['attribute_value']
 
-            _lang = item_metadata['lang']['attribute_value']
-            if(_lang == 'en'):
+            if 'lang' in item_metadata:
+                _lang = item_metadata['lang']['attribute_value']
+            if _lang:
+                if(_lang == 'en'):
+                    if _enTitle:
+                        fe.title(_enTitle)
+                    elif _jaTitle:
+                        fe.title(_jaTitle)
+                else:
+                    if _jaTitle:
+                        fe.title(_jaTitle)
+                    elif _enTitle:
+                        fe.title(_enTitle)
+            else:
                 if _enTitle:
                     fe.title(_enTitle)
-                elif _jaTitle:
-                    fe.title(_jaTitle)
-            else:
                 if _jaTitle:
                     fe.title(_jaTitle)
-                elif _enTitle:
-                    fe.title(_enTitle)
 
             # Set link
-            _pid = hit['_source']['control_number']
+            _pid = item_metadata['control_number']
             item_url = request.host_url + 'records/' + _pid
             fe.link(href=item_url, rel='alternate', type='text/xml')
 
             # Set oai
-            _oai = hit['_source']['_oai']['id']
+            _oai = item_metadata['_oai']['id']
             item_url = request.host_url + 'oai2d?verb=GetRecord&metadataPrefix=jpcoar&identifier=' + _oai
             fe.link(href=item_url, rel='alternate', type='text/xml')
 
@@ -275,18 +284,20 @@ class AtomSerializer(JSONSerializer):
                                                    publisher_name_langs)
 
             # Set subject
-            if not _indexId:
-                indexes = item_metadata['path'][0].split('/')
-                _indexId = indexes[len(indexes) - 1]
-
-            if _indexId in index_meta:
-                _indexName = index_meta[_indexId]
+            if _indexId:
+                fe.dc.dc_subject(index_meta[_indexId])
             else:
-                index = Index.query.filter_by(id=_indexId).one_or_none()
-                _indexName = index.index_name
-                index_meta[_indexId] = _indexName
+                indexes = item_metadata['path'][0].split('/')
+                indexId = indexes[len(indexes) - 1]
 
-            fe.dc.dc_subject(_indexName)
+                if indexId in index_meta:
+                    indexName = index_meta[indexId]
+                else:
+                    index = Index.query.filter_by(id=indexId).one_or_none()
+                    indexName = index.index_name
+                    index_meta[indexId] = indexName
+
+                fe.dc.dc_subject(indexName)
 
             # Set publicationName
             _sourceTitle_value = 'sourceTitle.@value'

@@ -57,8 +57,7 @@ INDEX_IMG = 'indextree/36466818-image.jpg'
 # Opensearch description
 WEKO_OPENSEARCH_SYSTEM_SHORTNAME = 'WEKO'
 WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = 'WEKO - NII Scholarly and Academic Information Navigator'
-WEKO_OPENSEARCH_IMAGE_URL = 'images/favicon.ico'
-
+WEKO_OPENSEARCH_IMAGE_URL = 'static/favicon.ico'
 
 RECORDS_REST_ENDPOINTS = copy.deepcopy(RECORDS_REST_ENDPOINTS)
 RECORDS_REST_ENDPOINTS['recid']['search_factory_imp'] = \
