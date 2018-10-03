@@ -40,7 +40,7 @@ class OpenSearchSerializer(JSONSerializer):
         :param links: Dictionary of links to add to response.
         """
         format = request.values.get('format')
-        if format == 'atom':
+        if not format or format == 'atom':
             mimetype = 'application/atom+xml'
             atom_v1 = AtomSerializer(RecordSchemaJSONV1)
             return atom_v1.serialize_search(pid_fetcher, search_result,

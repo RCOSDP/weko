@@ -23,7 +23,7 @@
 from datetime import datetime
 from copy import deepcopy
 
-from flask import current_app,session
+from flask import current_app
 from flask_login import current_user
 from invenio_db import db
 from invenio_accounts.models import Role
@@ -31,7 +31,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import func, literal_column
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-
+from weko_groups.api import Group
 from .models import Index
 from .utils import get_tree_json, cached_index_tree_json, reset_tree
 from invenio_i18n.ext import current_i18n
@@ -75,6 +75,17 @@ class Indexes(object):
                 ",".join(list(map(lambda x: str(x['id']), role)))
             data["contribute_role"] = data["browsing_role"]
 
+            group_list = ''
+            groups = Group.query.all()
+            for group in groups:
+                if not group_list:
+                    group_list = str(group.id)
+                else:
+                    group_list = group_list + ',' + str(group.id)
+
+            data["browsing_group"] = group_list
+            data["contribute_group"] = group_list
+
             if int(pid) == 0:
                 pid_info = cls.get_root_index_count()
                 data["position"] = 0 if not pid_info else \
@@ -102,6 +113,13 @@ class Indexes(object):
                     if iobj.recursive_contribute_role:
                         data["contribute_role"] = iobj.contribute_role
                         data["recursive_contribute_role"] = iobj.recursive_contribute_role
+                    if iobj.recursive_browsing_group:
+                        data["browsing_group"] = iobj.browsing_group
+                        data["recursive_browsing_group"] = iobj.recursive_browsing_group
+                    if iobj.recursive_contribute_group:
+                        data["contribute_group"] = iobj.contribute_group
+                        data["recursive_contribute_group"] = iobj.recursive_contribute_group
+
                 else:
                     return
 
@@ -396,7 +414,8 @@ class Indexes(object):
             qlst = [recursive_t.c.pid, recursive_t.c.cid,
                     recursive_t.c.position, recursive_t.c.name,
                     recursive_t.c.public_state, recursive_t.c.public_date,
-                    recursive_t.c.browsing_role, recursive_t.c.contribute_role
+                    recursive_t.c.browsing_role, recursive_t.c.contribute_role,
+                    recursive_t.c.browsing_group, recursive_t.c.contribute_group
                     ]
             obj = db.session.query(*qlst). \
                 order_by(recursive_t.c.lev,
@@ -419,6 +438,19 @@ class Indexes(object):
                         deny.append(tmp)
             return alw, deny
 
+        def _get_group_allow_deny(allow_group_id=[], groups=[]):
+            allow = []
+            deny = []
+            if not groups:
+                return allow, deny
+            for group in groups:
+                if str(group.id) in allow_group_id:
+                    allow.append({'id':str(group.id), 'name':group.name})
+                else:
+                    deny.append({'id': str(group.id), 'name': group.name})
+
+            return allow, deny
+
         index = dict(cls.get_index(index_id))
         role = cls.get_account_role()
 
@@ -439,8 +471,23 @@ class Indexes(object):
             allow = role
             deny = []
         index["contribute_role"] = dict(allow=allow, deny=deny)
+
         if index["public_date"]:
             index["public_date"] = index["public_date"].strftime('%Y%m%d')
+
+        group_list = Group.query.all()
+
+        allow_group_id = index["browsing_group"].split(',') \
+            if len(index["browsing_group"]) else []
+        allow_group, deny_group = _get_group_allow_deny(allow_group_id,
+                                                        deepcopy(group_list))
+        index["browsing_group"] = dict(allow=allow_group, deny=deny_group)
+
+        allow_group_id = index["contribute_group"].split(',') \
+            if len(index["contribute_group"]) else []
+        allow_group, deny_group = _get_group_allow_deny(allow_group_id,
+                                                        deepcopy(group_list))
+        index["contribute_group"] = dict(allow=allow_group, deny=deny_group)
 
         return index
 
@@ -596,6 +643,8 @@ class Indexes(object):
                 Index.public_date,
                 Index.browsing_role,
                 Index.contribute_role,
+                Index.browsing_group,
+                Index.contribute_group,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -613,6 +662,8 @@ class Indexes(object):
                     test_alias.public_date,
                     test_alias.browsing_role,
                     test_alias.contribute_role,
+                    test_alias.browsing_group,
+                    test_alias.contribute_group,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -627,6 +678,8 @@ class Indexes(object):
                 Index.public_date,
                 Index.browsing_role,
                 Index.contribute_role,
+                Index.browsing_group,
+                Index.contribute_group,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -644,6 +697,8 @@ class Indexes(object):
                     test_alias.public_date,
                     test_alias.browsing_role,
                     test_alias.contribute_role,
+                    test_alias.browsing_group,
+                    test_alias.contribute_group,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )

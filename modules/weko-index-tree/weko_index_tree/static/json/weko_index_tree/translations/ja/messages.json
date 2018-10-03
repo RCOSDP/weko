@@ -35,6 +35,90 @@
         null,
         "もっと表示"
     ],
+    "Publish": [
+        null,
+        "公開"
+    ],
+    "Open_To_Public": [
+        null,
+        "公開する"
+    ],
+    "Date": [
+        null,
+        "公開日"
+    ],
+    "Set_Publish_Date_Recursively": [
+        null,
+        "子インデックスのペース権限にも再帰的に反映させる"
+    ],
+    "Harvest_Publish": [
+        null,
+        "ハーベスト公開"
+    ],
+    "Harvest_Message": [
+        null,
+        "所属しているアイテムのメタデータを外部に公開しない場合はチェックをOFFにしてください"
+    ],
+    "Browsing_Privilege": [
+        null,
+        "閲覧権限"
+    ],
+    "Role": [
+        null,
+        "ロール"
+    ],
+    "Set_Role_Recursively": [
+        null,
+        "子インデックスのペース権限にも再帰的に反映させる"
+    ],
+    "Authorized": [
+        null,
+        "権限あり"
+    ],
+    "Unauthorized": [
+        null,
+        "権限なし"
+    ],
+    "Group": [
+        null,
+        "グループ"
+    ],
+    "Set_Group_Recursively": [
+        null,
+        "子インデックスのグループ権限にも再帰的に反映させる"
+    ],
+    "Deposit_Privilege": [
+        null,
+        "投稿権限"
+    ],
+    "Display_Format": [
+        null,
+        "表示形式"
+    ],
+    "Search_Results": [
+        null,
+        "検索結果"
+    ],
+    "List": [
+        null,
+        "一覧形式"
+    ],
+    "Contents_Table": [
+        null,
+        "目次形式"
+    ],
+    "File_Size": [
+        null,
+        "ファイルサイズ "
+    ],
+    "Image_Size": [
+        null,
+        "画像サイズ"
+    ],
+    "File_Type": [
+        null,
+        "ファイルタイプ"
+    ],
     "Send": [
         null,
         "送信"

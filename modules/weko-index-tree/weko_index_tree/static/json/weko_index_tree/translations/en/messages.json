@@ -31,9 +31,93 @@
         null,
         "Display Range"
     ],
-    "More_Display": [
+      "More_Display": [
         null,
         "More Display"
+    ],
+    "Publish": [
+        null,
+        "Publish"
+    ],
+    "Open_To_Public": [
+        null,
+        "Open to public"
+    ],
+    "Date": [
+        null,
+        "Date"
+    ],
+    "Set_Publish_Date_Recursively": [
+        null,
+        "Set the publication date of child indexes recursively"
+    ],
+    "Harvest_Publish": [
+        null,
+        "Harvest Publish"
+    ],
+    "Harvest_Message": [
+        null,
+        "Please turn off the check if you do not want to open the metadata of the belonging items to public"
+    ],
+    "Browsing_Privilege": [
+        null,
+        "Browsing Privilege"
+    ],
+    "Role": [
+        null,
+        "Role"
+    ],
+    "Set_Role_Recursively": [
+        null,
+        "Set the base authorities of child indexes recursively"
+    ],
+    "Authorized": [
+        null,
+        "Authorized"
+    ],
+    "Unauthorized": [
+        null,
+        "Unauthorized"
+    ],
+    "Group": [
+        null,
+        "Group"
+    ],
+    "Set_Group_Recursively": [
+        null,
+        "Set the group authorities of child indexes recursively"
+    ],
+    "Deposit_Privilege": [
+        null,
+        "Deposit Privilege"
+    ],
+    "Display_Format": [
+        null,
+        "Display Format"
+    ],
+    "Search_Results": [
+        null,
+        "Search Results"
+    ],
+    "List": [
+        null,
+        "List"
+    ],
+    "Contents_Table": [
+        null,
+        "Table Of Contents"
+    ],
+    "File_Size": [
+        null,
+        "File Size"
+    ],
+    "Image_Size": [
+        null,
+        "Image Size"
+    ],
+    "File_Type": [
+        null,
+        "File Type"
     ],
     "Send": [
         null,

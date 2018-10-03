@@ -75,19 +75,18 @@ def opensearch_description():
     img.set('height', '16')
     img.set('width', '16')
     img.set('type', 'image/x-icon')
-    img.text = request.host_url + current_app.config['WEKO_OPENSEARCH_IMAGE_URL']
-
-    url = ET.SubElement(root, '{'+ ns_opensearch + '}Url')
-    url.set('type', 'text/html')
-    url.set('template', request.host_url+'api/opensearch/search?q={searchTerms}')
-
-    url = ET.SubElement(root, '{'+ ns_opensearch + '}Url')
-    url.set('type', 'application/rdf+xml')
-    url.set('template', request.host_url+'api/opensearch/search?q={searchTerms}&amp;format=rss')
+    img.text = request.host_url + \
+               current_app.config['WEKO_OPENSEARCH_IMAGE_URL']
 
     url = ET.SubElement(root, '{'+ ns_opensearch + '}Url')
     url.set('type', 'application/atom+xml')
-    url.set('template', request.host_url+'api/opensearch/search?q={searchTerms}&amp;format=atom')
+    url.set('template', request.host_url +
+            'api/opensearch/search?q={searchTerms}')
+
+    url = ET.SubElement(root, '{'+ ns_opensearch + '}Url')
+    url.set('type', 'application/atom+xml')
+    url.set('template', request.host_url +
+            'api/opensearch/search?q={searchTerms}&amp;format=atom')
 
     response.data = ET.tostring(root)
 
