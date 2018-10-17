@@ -190,6 +190,9 @@ require([
           query += $(this).serialize() + '&';
         });
         query += $('#q').serialize().replace(/\+/g,'%20') + '&';
+        if($('#community').val()){
+          query += $('#community').serialize().replace(/\+/g,'%20') + '&';
+        }
         var btn = sessionStorage.getItem('btn', '');
         if (btn == 'detail-search'){
           $('#search_detail_metadata :input:not(:checkbox)').each(function(){

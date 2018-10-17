@@ -47,7 +47,6 @@ def get_item_type_aggs(search_index):
 def get_permission_filter(comm_id=None):
     # check permission
     is_perm = search_permission.can()
-
     mut = []
     match = Q('match', publish_status='0')
     # ava = [Q('range', **{'date.value': {'lte': 'now/d'}}),
@@ -317,7 +316,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         mt.extend(_get_detail_keywords_query())
         return Q('bool', must=mt) if mt else Q()
 
-
     def _default_parser(qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
            Full text Search.
@@ -347,25 +345,70 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 mt.append(q_s)
         return Q('bool', must=mt) if mt else Q()
 
+    def _default_parser_community(community_id, qstr=None):
+        """Default parser that uses the Q() from elasticsearch_dsl.
+           Full text Search.
+           Detail Search.
+        :param qstr: Query string.
+        :returns: Query parser.
+        """
+        # add  Permission filter by publish date and status
+
+        comm = Community.get(community_id)
+        root_node_id = comm.root_node_id
+        mt = get_permission_filter(root_node_id)
+
+        # multi keywords search filter
+        kmt = _get_detail_keywords_query()
+        # detail search
+        if kmt:
+            mt.extend(kmt)
+            q = _get_search_qs_query(qs)
+            if q:
+                mt.append(q)
+        else:
+            # Full Text Search
+            if qstr:
+                q_s = Q('multi_match', query=qstr, operator='and',
+                        fields=['content.file.content^1.5',
+                                'content.file.content.ja^1.2',
+                                '_all', 'search_string'],
+                        type='most_fields', minimum_should_match='75%')
+                mt.append(q_s)
+        return Q('bool', must=mt) if mt else Q()
+
+
     from invenio_records_rest.facets import default_facets_factory
     from invenio_records_rest.sorter import default_sorter_factory
 
-    query_parser = query_parser or _default_parser
+    # add by ryuu at 1004 start curate
+    comm_ide = request.values.get('provisional_communities')
+    # simple search
+    comm_id_simple = request.values.get('community')
+    # add by ryuu at 1004 end
+    if comm_id_simple is not None:
+        query_parser = query_parser or _default_parser_community
+    else:
+        query_parser = query_parser or _default_parser
 
     if search_type is None:
         search_type = request.values.get('search_type')
 
     qs = request.values.get('q')
-    # add by ryuu at 1004 start
-    comm_ide = request.values.get('provisional_communities')
-    # add by ryuu at 1004 end
+
     # full text search
     if search_type and '0' in search_type:
-        query_q = query_parser(qs)
+        if comm_id_simple is not None:
+            query_q = query_parser(comm_id_simple, qs)
+        else:
+            query_q = query_parser(qs)
+
     else:
         # simple search
-        if not comm_ide is None:
-            query_q = _get_simple_search_community_query(comm_ide,qs)
+        if comm_ide is not None:
+            query_q = _get_simple_search_community_query(comm_ide, qs)
+        elif comm_id_simple is not None:
+            query_q = _get_simple_search_community_query(comm_id_simple, qs)
         else:
             query_q = _get_simple_search_query(qs)
 
