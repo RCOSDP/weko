@@ -30,7 +30,7 @@ msgstr ""
 #: angular i18n add start
 #: app-author-add/src/app/app.component.html:11
 msgid "Author_Add_New_Author"
-msgstr "Add New Author"
+msgstr "Author"
 
 #: app-author-add/src/app/app.component.html:21
 msgid "Author_Name"
