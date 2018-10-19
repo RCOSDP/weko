@@ -262,7 +262,11 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             pid = kwargs.get('pid_value')
 
             if pid:
-                tree = self.record_class.get_contribute_tree(pid)
+                if comm_id:
+                    comm = Community.get(comm_id)
+                    tree = self.record_class.get_contribute_tree(pid, int(comm.root_node_id))
+                else:
+                    tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
                 tree = self.record_class.get_browsing_tree()
             elif action and 'browsing' in action and not comm_id is None:

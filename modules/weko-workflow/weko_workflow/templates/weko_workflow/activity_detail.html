@@ -19,6 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
+{%- from "invenio_communities/macros.html" import community_header, community_footer %}
 
 {%- block css %}
 {{ super() }}
@@ -32,11 +33,28 @@
 
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('flow') }}
+  {{ tabs_selector('flow', community_id) }}
 {%- endblock page_body_tabs %}
+
+{%- block page_header %}
+{%-if not community %}
+{{ super() }}
+{%- endif%}
+{%- endblock page_header %}
+
+{%- block page_footer %}
+{%-if not community%}
+{{ super() }}
+{%- endif%}
+{%- endblock page_footer %}
 
 {%- block page_body_main %}
 <div class="row">
+  {%-if community%}
+  <div id="community_id" class="hide">{{community.id}}</div>
+  {%-else %}
+  <div id="community_id" class="hide"></div>
+  {%-endif %}
   <div class="col-sm-12">
     <div id="workFlow" class="panel-group">
       <div class="panel panel-default">
@@ -230,11 +248,20 @@
         </div>
       </div>
     </div>
+    {%-if community%}
+    <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index',community=community.id)}}">{{_('Back')}}</a>
+    {%-else%}
     <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
+    {%-endif%}
   </div>
 </div>
 {%- endblock page_body_main %}
 {%- block page_body %}
+{%-if community %}
+<div class="communities">
+<div id="community-id" name="community-id" hidden>{{ community.id }}</div>
+{{ community_header(community, subtitle='') }}
+{%- endif%}
 {{ super() }}
 <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog modelWidth" role="document">
@@ -248,4 +275,10 @@
     </div>
   </div>
 </div>
+{%-if community %}
+{{ community_footer(community, link=False, subtitle='') }}
+</div>
+<div class="communities">
+</div>
+{%- endif%}
 {%- endblock page_body %}

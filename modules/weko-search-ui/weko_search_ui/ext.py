@@ -70,6 +70,9 @@ class WekoSearchUI(object):
             SEARCH_UI_JSTEMPLATE_RESULTS=getattr(
                 config,
                 'WEKO_SEARCH_UI_JSTEMPLATE_RESULTS'),
+            SEARCH_UI_JSTEMPLATE_RESULTS_BASIC=getattr(
+                config,
+                'WEKO_SEARCH_UI_JSTEMPLATE_RESULTS_BASIC'),
             SEARCH_UI_JSTEMPLATE_COUNT=getattr(
                 config,
                 'WEKO_SEARCH_UI_JSTEMPLATE_COUNT'),

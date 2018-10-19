@@ -717,6 +717,9 @@ class Activity(db.Model, TimestampMixin):
     activity_end = db.Column(db.DateTime, nullable=True)
     """activity end date."""
 
+    activity_community_id = db.Column(db.Text, nullable=True)
+    """activity community id"""
+
 
 class ActivityAction(db.Model, TimestampMixin):
     """define Activety"""

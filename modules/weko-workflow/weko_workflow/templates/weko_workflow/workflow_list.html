@@ -19,6 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
+{%- from "invenio_communities/macros.html" import community_header, community_footer %}
 
 {%- block css %}
 {{ super() }}
@@ -31,8 +32,36 @@
 
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('flow') }}
+  {{ tabs_selector('flow', community_id) }}
 {%- endblock page_body_tabs %}
+
+{%- block page_header %}
+{%-if not community %}
+{{ super() }}
+{%- endif%}
+{%- endblock page_header %}
+
+{%- block page_footer %}
+{%-if not community%}
+{{ super() }}
+{%- endif%}
+{%- endblock page_footer %}
+
+{% block page_body %}
+{%-if not community %}
+{{super()}}
+{%- else%}
+<div class="communities">
+<div id="community-id" name="community-id" hidden>{{ community.id }}</div>
+{{ community_header(community, subtitle='') }}
+{{super()}}
+{{ community_footer(community, link=False, subtitle='') }}
+</div>
+<div class="communities">
+</div>
+{%- endif%}
+{% endblock page_body %}
+
 
 {%- block page_body_main %}
 <div class="row">
@@ -53,7 +82,11 @@
       <tr>
         <th scope="row">{{loop.index}}</th>
         <td>{{workflow.flows_name}}</td>
-        <td><a href="#" class="btn btn-primary btn-begin" id="btn-begin-{{workflow.id}}" data-workflow-id="{{workflow.id}}">{{_('Begin')}}</a></td>
+        {%-if community%}
+        <td><a href="#" class="btn btn-primary btn-begin" id="btn-begin-{{workflow.id}}" data-workflow-id="{{workflow.id}}" data-community="{{community.id}}">{{_('Begin')}}</a></td>
+        {%- else%}
+        <td><a href="#" class="btn btn-primary btn-begin" id="btn-begin-{{workflow.id}}" data-workflow-id="{{workflow.id}}" data-community="">{{_('Begin')}}</a></td>
+        {%- endif%}
         <td><span id="item_type_{{workflow.id}}" data-itemtype-id="{{workflow.itemtype_id}}">{{_(workflow.itemtype.item_type_name.name)}}</span></td>
         <td><span id="flow_{{workflow.id}}" data-flow-id="{{workflow.flow_id}}">{{_(workflow.flow_define.flow_name)}}</span></td>
         <td class="hide"> </td>

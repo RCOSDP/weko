@@ -21,7 +21,7 @@
 """Blueprint for weko-theme."""
 
 
-from flask import Blueprint, current_app, render_template
+from flask import Blueprint, current_app, render_template, request
 
 blueprint = Blueprint(
     'weko_theme',
@@ -34,8 +34,17 @@ blueprint = Blueprint(
 @blueprint.route('/')
 def index():
     """Simplistic front page view."""
+    getArgs = request.args
+    ctx = {'community': None}
+    community_id=""
+    if 'community' in getArgs:
+        from weko_workflow.api import GetCommunity
+        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        ctx = {'community': comm}
+        community_id = comm.id
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
+        community_id =community_id, **ctx
     )
 
 

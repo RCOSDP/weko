@@ -5,11 +5,15 @@ require([
   $('.btn-begin').on('click', function () {
       let post_uri = $('#post_uri').text();
       let workflow_id = $(this).data('workflow-id');
+      let community = $(this).data('community');
       let post_data = {
           workflow_id: workflow_id,
           flow_id: $('#flow_' + workflow_id).data('flow-id'),
           itemtype_id: $('#item_type_' + workflow_id).data('itemtype-id')
       };
+      if(community != ""){
+        post_uri = post_uri+"?community="+ community;
+      }
       $.ajax({
           url: post_uri,
           method: 'POST',

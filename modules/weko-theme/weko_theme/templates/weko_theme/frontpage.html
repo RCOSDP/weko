@@ -20,6 +20,8 @@
 
 {%- extends config.BASE_PAGE_TEMPLATE %}
 
+{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+
 {%- block css %}
   {{ super() }}
   {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
@@ -37,8 +39,35 @@
 
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('top') }}
+  {{ tabs_selector('top',community_id) }}
 {%- endblock page_body_tabs%}
+
+{%- block page_header %}
+{%-if not community_id %}
+{{ super() }}
+{%- endif%}
+{%- endblock page_header %}
+
+{%- block page_footer %}
+{%-if not community_id%}
+{{ super() }}
+{%- endif%}
+{%- endblock page_footer %}
+
+{% block page_body %}
+{%-if not community_id %}
+{{super()}}
+{%- else%}
+<div class="communities">
+<div id="community-id" name="community-id" hidden>{{ community_id }}</div>
+{{ community_header(community, subtitle='') }}
+{{super()}}
+{{ community_footer(community, link=False, subtitle='') }}
+</div>
+<div class="communities">
+</div>
+{%- endif%}
+{% endblock page_body %}
 
 {%- block page_body_main %}
   <div class="hide" id="cur_index_id">{{index_id}}</div>
@@ -56,3 +85,4 @@
     <!--</div>-->
   </div>
 {%- endblock page_body_main %}
+

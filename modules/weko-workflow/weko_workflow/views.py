@@ -34,7 +34,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.utils import import_string
 from weko_records.api import ItemsMetadata
 
-from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem
+from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem, GetCommunity
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 
 blueprint = Blueprint(
@@ -51,12 +51,21 @@ blueprint = Blueprint(
 def index():
     """Render a basic view."""
     activity = WorkActivity()
-    activities = activity.get_activity_list()
+    getargs = request.args
+    ctx = {'community': None}
+    community_id = ""
+    if 'community' in getargs:
+        current_app.logger.debug(request.args.get('community'))
+        activities = activity.get_activity_list(request.args.get('community'))
+        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        ctx = {'community': comm}
+        community_id =comm.id
+    else:
+        activities = activity.get_activity_list()
     return render_template(
         'weko_workflow/activity_list.html',
-        activities=activities
+        activities=activities, community_id=community_id, **ctx
     )
-
 
 @blueprint.route('/iframe/success', methods=['GET'])
 def iframe_success():
@@ -72,9 +81,16 @@ def iframe_success():
 def new_activity():
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
+    getargs = request.args
+    ctx = {'community': None}
+    community_id=""
+    if 'community' in getargs:
+        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        ctx = {'community': comm}
+        community_id = comm.id
     return render_template(
         'weko_workflow/workflow_list.html',
-        workflows=workflows
+        workflows=workflows, community_id =community_id, **ctx
     )
 
 
@@ -83,9 +99,19 @@ def new_activity():
 def init_activity():
     post_activity = request.get_json()
     activity = WorkActivity()
-    rtn = activity.init_activity(post_activity)
+    getargs = request.args
+    if 'community' in getargs:
+        rtn = activity.init_activity(post_activity, request.args.get('community'))
+    else:
+        rtn = activity.init_activity(post_activity)
     if rtn is None:
         return jsonify(code=-1, msg='error')
+    if 'community' in getargs:
+        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        return jsonify(code=0, msg='success',
+                       data={'redirect': url_for(
+                           'weko_workflow.display_activity',
+                           activity_id=rtn.activity_id, community=comm.id)})
     return jsonify(code=0, msg='success',
                    data={'redirect': url_for(
                        'weko_workflow.display_activity',
@@ -166,6 +192,14 @@ def display_activity(activity_id=0):
 
     res_check = check_authority_action(activity_id,action_id)
 
+    getargs = request.args
+    ctx = {'community': None}
+    community_id = ""
+    if 'community' in getargs:
+        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        community_id=request.args.get('community')
+        ctx = {'community': comm}
+        community_id = comm.id
     return render_template(
         'weko_workflow/activity_detail.html',
         activity=activity_detail,
@@ -178,7 +212,9 @@ def display_activity(activity_id=0):
         step_item_login_url=step_item_login_url,
         histories=histories,
         res_check=res_check,
-        pid=pid
+        pid=pid,
+        community_id=community_id,
+        **ctx
     )
 
 
