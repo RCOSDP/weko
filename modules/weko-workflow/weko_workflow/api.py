@@ -42,7 +42,6 @@ from .models import WorkFlow as _WorkFlow
 from .models import ActionStatusPolicy, ActionCommentPolicy, \
     ActivityStatusPolicy, FlowStatusPolicy
 
-
 class Flow(object):
     """Operated on the Flow"""
 
@@ -411,7 +410,7 @@ class ActionStatus(object):
 class WorkActivity(object):
     """Operated on the Activity"""
 
-    def init_activity(self, activity):
+    def init_activity(self, activity, community_id=None):
         """
         Create new activity
         :param activity:
@@ -443,7 +442,8 @@ class WorkActivity(object):
                 activity_login_user=current_user.get_id(),
                 activity_update_user=current_user.get_id(),
                 activity_status=ActivityStatusPolicy.ACTIVITY_MAKING,
-                activity_start=datetime.utcnow()
+                activity_start=datetime.utcnow(),
+                activity_community_id=community_id
             )
             db_history = ActivityHistory(
                 activity_id=db_activity.activity_id,
@@ -607,7 +607,7 @@ class WorkActivity(object):
             db.session.rollback()
             current_app.logger.exception(str(ex))
 
-    def get_activity_list(self):
+    def get_activity_list(self, community_id=None):
         """
         get activity list info
         :return:
@@ -639,9 +639,16 @@ class WorkActivity(object):
             db_flow_define_ids.extend(
                 [db_activity.flow_id for db_activity in db_activitys])
             db_flow_define_ids = list(set(db_flow_define_ids))
-            activities = _Activity.query.filter(
-                _Activity.flow_id.in_(db_flow_define_ids)).order_by(
-                asc(_Activity.id)).all()
+            if community_id is not None:
+                activities = _Activity.query.filter(
+                    _Activity.flow_id.in_(db_flow_define_ids),
+                    _Activity.activity_community_id == community_id
+                ).order_by(
+                    asc(_Activity.id)).all()
+            else:
+                activities = _Activity.query.filter(
+                    _Activity.flow_id.in_(db_flow_define_ids)).order_by(
+                    asc(_Activity.id)).all()
             for activi in activities:
                 if activi.item_id is None:
                     activi.ItemName = ''
@@ -895,3 +902,12 @@ class UpdateItem(object):
         indexer = WekoIndexer()
         indexer.update_publish_status(record)
 
+
+class GetCommunity(object):
+    """Get Community Info"""
+    @classmethod
+    def get_community_by_id(self, community_id):
+        """"""
+        from invenio_communities.models import Community
+        c = Community.get(community_id)
+        return c

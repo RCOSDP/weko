@@ -44,22 +44,18 @@ blueprint_api = Blueprint(
 def search():
     """ Index Search page ui."""
     search_type = request.args.get('search_type', '0')
+    current_app.logger.debug("AAAA")
     getArgs= request.args
-    comm_id = ""
+    community_id = ""
+    ctx = {'community': None}
     cur_index_id = search_type if search_type not in ('0', '1', ) else None
     if 'community' in getArgs:
-        comm_id = request.args.get('community')
-        # from invenio_communities.models import Community
-        # community = Community.get(comm_id)
-        # ctx = {'community': community}
-        # return render_template(current_app.config['COMMUNITIES_CURATE_TEMPLATE'],
-        #                        index_id=cur_index_id, community_id=comm_id,**ctx)
-
+        from weko_workflow.api import GetCommunity
+        comm = GetCommunity.get_community_by_id(request.args.get('community'))
+        ctx = {'community': comm}
+        community_id = comm.id
     return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
-                           index_id=cur_index_id, community_id=comm_id)
-
-    # return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
-    #                        index_id=cur_index_id)
+                           index_id=cur_index_id, community_id=community_id, **ctx)
 
 
 @blueprint_api.route('/opensearch/description.xml', methods=['GET'])

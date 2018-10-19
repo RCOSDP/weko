@@ -403,11 +403,11 @@ class Indexes(object):
         return paths
 
     @classmethod
-    def get_contribute_tree(cls, pid):
+    def get_contribute_tree(cls, pid,root_node_id=0):
         """"""
         from weko_deposit.api import WekoRecord
         record = WekoRecord.get_record_by_pid(pid)
-        tree = cls.get_index_tree()
+        tree = cls.get_index_tree(root_node_id)
         if record.get('_oai'):
             reset_tree(tree, record.get('path'))
         else:

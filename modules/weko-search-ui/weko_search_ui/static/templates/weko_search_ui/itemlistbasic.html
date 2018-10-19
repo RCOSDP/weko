@@ -1,0 +1,37 @@
+<div class="row record-elem" ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
+  <div class="col-xs-12">
+    <div class="pull-right view-record hidden-xs">
+      <a target="_self" ng-href="/records/{{ record.id }}" class="btn btn-default">View</a>
+    </div>
+    <span class="label label-info" bs-tooltip data-container="div" data-title="Publication date">{{ record.updated|date:'longDate' }}</span>
+    <h4><a target="_self" ng-href="/records/{{ record.id }}">{{ record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0] }}</a></h4>
+    <p>
+      <span ng-repeat="comment in record.metadata._comment"> {{ comment }} <br> </span>
+    </p>
+	<div class="pull-right">
+      <ul class="list-inline">
+        <li ng-show="record.metadata.publisher.length > 0">
+          <a ng-click="showAuthors=!showAuthors">
+            {{ showAuthors ? 'Hide authors' : 'Show authors' }}
+          </a>
+        </li>
+        <li>
+          <a ng-click="showSource=!showSource">
+            {{ showSource ? 'Hide source' : 'Show source' }}
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div ng-hide="!showAuthors">
+      <ul>
+        <div ng-repeat='author in record.metadata.creator'>
+          <li>{{ author }}</li>
+        </div>
+      </ul>
+    </div>
+    <div ng-hide="!showSource">
+      <pre class="pre-scrollable">{{ record | json }}</pre>
+    </div>
+    <hr />
+  </div>
+</div>
