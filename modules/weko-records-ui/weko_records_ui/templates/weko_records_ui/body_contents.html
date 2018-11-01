@@ -80,7 +80,7 @@
                     {%- else %}
                       {% set lst = file.licensetype | get_license_icon %}
                       <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
-                        <img src="{{lst[0]}}"/></a><br>
+                        <img src="{{lst[0]}}" alt="license.icon" /></a><br>
                       {{ lst[1] }}
                     {%- endif %}
                     {%- endif -%}
@@ -89,7 +89,7 @@
                 <tr >
                   <td>
                       <span class="filename">
-                        <img src="{{img}}"/>
+                        <img src="{{img}}" alt={{ file.filename }} />
                         <a class="forcewrap"
                            href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
                         <span>[ 0 downloads ]</span><br>
