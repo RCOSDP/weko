@@ -10,6 +10,6 @@
 </div>
 <div ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && vm.invenioSearchResults.aggregations.path.buckets[0].length < 2">
   <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')">
-    <img ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}" class="img-thumbnail" id="thumbnail_img">
+    <img ng-if="$last" ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}" class="img-thumbnail" id="thumbnail_img" alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}>
   </div>
 </div>
