@@ -22,7 +22,7 @@
 
 from flask import Blueprint, current_app, render_template, request
 from xml.etree import ElementTree as ET
-
+from weko_index_tree.models import IndexStyle
 
 blueprint = Blueprint(
     'weko_search_ui',
@@ -54,8 +54,14 @@ def search():
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
+
+    # Get index style
+    style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+    width = style.width if style else '3'
+
     return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
-                           index_id=cur_index_id, community_id=community_id, **ctx)
+                           index_id=cur_index_id, community_id=community_id,
+                           width=width, **ctx)
 
 
 @blueprint_api.route('/opensearch/description.xml', methods=['GET'])

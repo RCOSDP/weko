@@ -63,6 +63,13 @@ class Index(db.Model, Timestamp):
     comment = db.Column(db.Text, nullable=True, default='')
     """Comment of the index."""
 
+    more_check = db.Column(db.Boolean(name='more_check'), nullable=False,
+                             default=False)
+    """More Status of the index."""
+
+    display_no = db.Column(db.Integer, nullable=False, default=0)
+    """Display number of the index."""
+
     harvest_public_state = db.Column(db.Boolean(name='harvest_public_state'),
                                      nullable=False, default=True)
     """Harvest public State of the index."""
@@ -162,4 +169,60 @@ listen(Index, 'after_insert', index_removed_or_inserted)
 listen(Index, 'after_delete', index_removed_or_inserted)
 listen(Index, 'after_update', index_removed_or_inserted)
 
-__all__ = ('Index', )
+class IndexStyle(db.Model, Timestamp):
+
+    __tablename__ = 'index_style'
+
+    id = db.Column(db.String(100), primary_key=True)
+    """identifier for index style setting."""
+
+    width = db.Column(db.Text, nullable=False, default='')
+    """Index area width."""
+
+    @classmethod
+    def create(cls, community_id, **data):
+        try:
+            with db.session.begin_nested():
+                obj = cls(id=community_id, **data)
+                db.session.add(obj)
+            db.session.commit()
+            return obj
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return
+
+    @classmethod
+    def get(cls, community_id):
+        """Get a style."""
+        return cls.query.filter_by(id=community_id).one_or_none()
+
+    @classmethod
+    def update(cls, community_id, **data):
+        """
+        Update the index detail info.
+
+        :param index_id: Identifier of the index.
+        :param detail: new index info for update.
+        :return: Updated index info
+        """
+        try:
+            with db.session.begin_nested():
+                style = cls.get(community_id)
+                if not style:
+                    return
+
+                for k, v in data.items():
+                    if "width" in k:
+                        setattr(style, k, v)
+                db.session.merge(style)
+            db.session.commit()
+            return style
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return
+
+
+__all__ = ('Index',
+           'IndexStyle',)

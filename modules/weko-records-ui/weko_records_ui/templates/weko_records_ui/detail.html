@@ -45,10 +45,10 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-sm-3 col-md-3 col-lg-3">
+    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
       {% include "weko_theme/body_index.html" %}
     </div>
-    <div class="col-sm-9 col-md-9 col-lg-9 m-top-20">
+    <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}} m-top-20">
       {% include "weko_records_ui/body_contents.html" %}
     </div>
   </div>
