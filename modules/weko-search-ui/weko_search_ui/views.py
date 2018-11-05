@@ -44,7 +44,6 @@ blueprint_api = Blueprint(
 def search():
     """ Index Search page ui."""
     search_type = request.args.get('search_type', '0')
-    current_app.logger.debug("AAAA")
     getArgs= request.args
     community_id = ""
     ctx = {'community': None}

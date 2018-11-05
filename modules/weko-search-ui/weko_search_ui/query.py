@@ -433,6 +433,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         urlkwargs.add(key, value)
 
     urlkwargs.add('q', query_q)
+
     return search, urlkwargs
 
 

@@ -6,13 +6,13 @@
           <input type="checkbox" id="item_id_1" value="option1" aria-label="...">
         </label>
       </div>
-      <a target="_self" ng-href="/records/{{ record.id }}">
+      <a target="_self" ng-href="/records/{{ record.id }}{{commInfo}}">
         <span class="glyphicon glyphicon-file" aria-hidden="true"></span> {{ record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0] }}</a>
     </div>
   </div>
   <div class="panel-body">
     <pre class="hide">{{record.metadata._comment}}</pre>
-    <span ng-repeat="comment in record.metadata._comment"> {{ comment }} <br> </span>
+    <span ng-repeat="comment in record.metadata._comment track by $index"> {{ comment }} <br> </span>
     <div class="pull-right">
       <ul class="list-inline">
         <li ng-show="record.metadata.publisher.length > 0">

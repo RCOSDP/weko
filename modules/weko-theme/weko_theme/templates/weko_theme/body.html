@@ -32,7 +32,11 @@
             {%- endblock body_title_right %}
             </div>
             {%- block body_title_left %}
+              {%-if not community_id %}
               <h5><strong><p class="text-uppercase">{{ _(config.THEME_SITENAME) }}</p></strong></h5>
+              {%- else%}
+              <h5><strong><p class="">{{community.title}}</p></strong></h5>
+              {%- endif%}
             {%- endblock body_title_left %}
           {%- endblock body_title %}
         </div>

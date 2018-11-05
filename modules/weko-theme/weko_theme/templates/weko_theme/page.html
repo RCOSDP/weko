@@ -20,10 +20,13 @@
 {%- extends config.THEME_BODY_TEMPLATE %}
 
 {%- block body_title_right %}
+{%-if not community_id %}
 <button type="button" id="btn_edit_start" class="btn btn-primary">
   <i class="fa fa-gear"></i>
   {{_('Edit')}}
 </button>
+{%- else%}
+{%- endif%}
 {%- endblock body_title_right %}
 
 {%- block body_center %}

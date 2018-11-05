@@ -2,7 +2,7 @@
      ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && vm.invenioSearchResults.aggregations.path.buckets[0].length > 0">
   <ol class="breadcrumb">
     <li ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
-      <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}">
+      <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}{{commInfoIndex}}">
         {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</a>
       <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</span>
     </li>

@@ -29,6 +29,7 @@
    search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
    search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
   >
+  <div id="search_res" ng-controller="searchResCtrl">
   {%- block search_index_results %}
   <invenio-search-results
    template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_INDEX) }}">
@@ -145,9 +146,11 @@
                     </invenio-search-loading>
                     {%- endblock search_loading %}
                     {%- block search_results %}
+
                     <invenio-search-results
                      template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RESULTS) }}">
                     </invenio-search-results>
+
                     {%- endblock search_results %}
                   </div>
                 {%- endblock search_item_result %}
@@ -164,6 +167,7 @@
         {%- endblock search_pagination_top %}
       </div>
     </div>
+  </div>
   </div>
   </invenio-search>
 </div>
