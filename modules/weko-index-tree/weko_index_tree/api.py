@@ -69,6 +69,7 @@ class Indexes(object):
             data["id"] = cid
             data["parent"] = pid
             data["index_name"] = indexes.get('value')
+            data["index_name_english"] = indexes.get('value')
             data["owner_user_id"] = current_user.get_id()
             role = cls.get_account_role()
             data["browsing_role"] = \
@@ -213,6 +214,7 @@ class Indexes(object):
                     union_all(db.session.query(Index.parent, Index.id,
                                                literal_column("''", db.Text).label("path"),
                                                literal_column("''", db.Text).label("name"),
+                                               literal_column("''", db.Text).label("name_en"),
                                                literal_column("0", db.Integer).label("lev")).
                               filter(Index.id == index_id)).all()
 
@@ -656,6 +658,9 @@ class Indexes(object):
             Index.id.label("cid"),
             func.cast(Index.id, db.Text).label("path"),
             Index.index_name.label("name"),
+            # add by ryuu at 1108 start
+            Index.index_name_english.label("name_en"),
+            # add by ryuu at 1108 end
             literal_column("1", db.Integer).label("lev")).filter(
             Index.parent == pid). \
             cte(name="recursive_t", recursive=True)
@@ -668,6 +673,9 @@ class Indexes(object):
                 test_alias.id,
                 rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
                 rec_alias.c.name + '/' + test_alias.index_name,
+                # add by ryuu at 1108 start
+                rec_alias.c.name_en + '/' + test_alias.index_name_english,
+                # add by ryuu at 1108 end
                 rec_alias.c.lev + 1).filter(
                 test_alias.parent == rec_alias.c.cid)
         )

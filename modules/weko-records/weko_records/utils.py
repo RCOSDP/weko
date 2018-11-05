@@ -289,7 +289,6 @@ def get_all_items(nlst, klst):
     #         k = lst[0].split('.')[-1]
     #         if key == k:
     #             return lst[1]
-
     def get_items(nlst):
         if isinstance(nlst, dict):
             for k, v in nlst.items():

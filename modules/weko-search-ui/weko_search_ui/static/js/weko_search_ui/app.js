@@ -43,4 +43,40 @@
         return str;
       }
     });
-})
+});
+
+(function (angular) {
+  // Bootstrap it!
+  angular.element(document).ready(function() {
+    angular.module('searchResult.controllers', []);
+    function searchResCtrl($scope, $rootScope){
+     var commInfo=$("#community").val();
+     if(commInfo != ""){
+        $rootScope.commInfo="?community="+commInfo;
+        $rootScope.commInfoIndex="&community="+commInfo;
+     }else{
+        $rootScope.commInfo="";
+        $rootScope.commInfoIndex="";;
+     }
+    }
+    // Inject depedencies
+    searchResCtrl.$inject = [
+      '$scope',
+      '$rootScope',
+    ];
+    angular.module('searchResult.controllers')
+      .controller('searchResCtrl', searchResCtrl);
+
+    angular.module('searchResult', [
+      'invenioSearch',
+      'searchResult.controllers',
+    ]);
+
+    angular.bootstrap(
+      document.getElementById('invenio-search'), [
+        'searchResult',
+      ]
+    );
+  });
+})(angular);
+

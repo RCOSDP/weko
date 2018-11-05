@@ -7,7 +7,7 @@
     <div class="panel_bread">
       <ol class="breadcrumb">
         <li ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
-          <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}">
+          <a target="_self" ng-if="!$last" ng-href="/search?search_type=2&q={{ index_path }}{{commInfoIndex}}">
             {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</a>
           <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</span>
         </li>
@@ -16,9 +16,7 @@
     <div id="index_tree_list">
       <ul class="list-group">
         <a class="list-group-item" ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0] track by $index"
-           ng-if="!$first" ng-href="/search?search_type=2&q={{ index_path.key.split('/').pop() }}">
-          <!--<span class="badge">{{_('Private')}}{{index_path.date_range.un_pub_cnt}} {{_('items ')}}</span>-->
-          <!--<span class="badge">{{_('Public')}}{{index_path.date_range.pub_cnt}} {{_('items ')}}</span>-->
+           ng-if="!$first" ng-href="/search?search_type=2&q={{ index_path.key.split('/').pop() }}{{commInfoIndex}}">
           <span ng-if="index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0" class="badge">{{index_path.date_range.pub_cnt}} items (Private {{index_path.date_range.un_pub_cnt}} items )</span>
           <span ng-if="index_path.date_range.pub_cnt==0&&index_path.date_range.un_pub_cnt==0" class="badge">{{index_path.date_range.pub_cnt}} items </span>
           <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
