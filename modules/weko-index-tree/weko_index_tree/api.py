@@ -75,6 +75,8 @@ class Indexes(object):
                 ",".join(list(map(lambda x: str(x['id']), role)))
             data["contribute_role"] = data["browsing_role"]
 
+            data["display_no"] = current_app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER']
+
             group_list = ''
             groups = Group.query.all()
             for group in groups:

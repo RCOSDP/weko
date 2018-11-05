@@ -27,13 +27,17 @@
         null,
         "Comment"
     ],
-    "Display_Range": [
+    "More_Function": [
         null,
-        "Display Range"
+        "More Function"
     ],
-      "More_Display": [
+    "More_Check": [
         null,
-        "More Display"
+        "Limit the number of child indexes to show."
+    ],
+    "More_No": [
+        null,
+        "Set display index number."
     ],
     "Publish": [
         null,
