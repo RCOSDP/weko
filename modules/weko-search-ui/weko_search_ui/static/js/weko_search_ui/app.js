@@ -58,6 +58,11 @@
         $rootScope.commInfo="";
         $rootScope.commInfoIndex="";;
      }
+
+//     $rootScope.$on('invenio.search.finished', function(ev){
+//      alert("$locationChangeStart!!!!!");
+//     });
+
     }
     // Inject depedencies
     searchResCtrl.$inject = [

@@ -28,6 +28,7 @@ from invenio_rest import ContentNegotiatedMethodView
 from invenio_communities.models import Community
 
 from .api import Indexes
+from .models import Index
 from .errors import IndexAddedRESTError, IndexBaseRESTError, \
     IndexDeletedRESTError, IndexMovedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
@@ -172,8 +173,13 @@ class IndexActionResource(ContentNegotiatedMethodView):
         """Get a tree index record."""
         try:
             index = self.record_class.get_index_with_role(index_id)
+            have_children = Index.have_children(index_id)
+            index['have_children'] = have_children
+            if not have_children:
+                index['more_check'] = False
+
             return make_response(jsonify(index), 200)
-        except:
+        except Exception:
             raise InvalidDataRESTError()
 
     # @pass_record
@@ -259,6 +265,11 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             action = request.values.get('action')
             comm_id = request.values.get('community')
 
+            more_id_list = request.values.get('more_ids')
+            more_ids = []
+            if more_id_list is not None:
+                more_ids = more_id_list.split('/')
+
             pid = kwargs.get('pid_value')
 
             if pid:
@@ -268,12 +279,23 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                 else:
                     tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
-                tree = self.record_class.get_browsing_tree()
+                if more_id_list is None:
+                    tree = self.record_class.get_browsing_tree()
+                else:
+                    tree = self.record_class.get_more_browsing_tree(
+                        more_ids=more_ids)
+
             elif action and 'browsing' in action and not comm_id is None:
                 comm = Community.get(comm_id)
 
                 if not comm is None:
-                    tree = self.record_class.get_browsing_tree(int(comm.root_node_id))
+                    if more_id_list is None:
+                        tree = self.record_class.get_browsing_tree(
+                            int(comm.root_node_id))
+                    else:
+                        tree = self.record_class.get_more_browsing_tree(
+                            pid=int(comm.root_node_id), more_ids=more_ids)
+
             else:
                 tree = self.record_class.get_index_tree()
             return make_response(jsonify(tree), 200)
