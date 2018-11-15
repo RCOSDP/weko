@@ -23,7 +23,7 @@
 from datetime import datetime
 from copy import deepcopy
 
-from flask import current_app
+from flask import current_app, flash
 from flask_login import current_user
 from invenio_db import db
 from invenio_accounts.models import Role
@@ -76,6 +76,7 @@ class Indexes(object):
                 ",".join(list(map(lambda x: str(x['id']), role)))
             data["contribute_role"] = data["browsing_role"]
 
+            data["more_check"] = False
             data["display_no"] = current_app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER']
 
             group_list = ''
@@ -176,6 +177,8 @@ class Indexes(object):
                             v = datetime.strptime(v, '%Y%m%d')
                         else:
                             v = None
+                    if "have_children" in k:
+                        continue
                     setattr(index, k, v)
                 index.owner_user_id = current_user.get_id()
                 db.session.merge(index)
@@ -393,7 +396,13 @@ class Indexes(object):
     @classmethod
     def get_browsing_tree(cls,pid=0):
         tree = cls.get_index_tree(pid)
-        reset_tree(tree)
+        reset_tree(tree=tree)
+        return tree
+
+    @classmethod
+    def get_more_browsing_tree(cls, pid=0, more_ids=[]):
+        tree = cls.get_index_tree(pid)
+        reset_tree(tree=tree, more_ids=more_ids)
         return tree
 
     @classmethod
@@ -413,9 +422,9 @@ class Indexes(object):
         record = WekoRecord.get_record_by_pid(pid)
         tree = cls.get_index_tree(root_node_id)
         if record.get('_oai'):
-            reset_tree(tree, record.get('path'))
+            reset_tree(tree=tree, path=record.get('path'))
         else:
-            reset_tree(tree, [])
+            reset_tree(tree=tree, path=[])
 
         return tree
 
@@ -430,7 +439,8 @@ class Indexes(object):
                     recursive_t.c.position, recursive_t.c.name,
                     recursive_t.c.public_state, recursive_t.c.public_date,
                     recursive_t.c.browsing_role, recursive_t.c.contribute_role,
-                    recursive_t.c.browsing_group, recursive_t.c.contribute_group
+                    recursive_t.c.browsing_group, recursive_t.c.contribute_group,
+                    recursive_t.c.more_check, recursive_t.c.display_no
                     ]
             obj = db.session.query(*qlst). \
                 order_by(recursive_t.c.lev,
@@ -466,8 +476,8 @@ class Indexes(object):
 
             return allow, deny
 
-
         index = dict(cls.get_index(index_id))
+
         role = cls.get_account_role()
         allow = index["browsing_role"].split(',') \
             if len(index["browsing_role"]) else None
@@ -705,6 +715,8 @@ class Indexes(object):
                 Index.contribute_role,
                 Index.browsing_group,
                 Index.contribute_group,
+                Index.more_check,
+                Index.display_no,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -724,6 +736,8 @@ class Indexes(object):
                     test_alias.contribute_role,
                     test_alias.browsing_group,
                     test_alias.contribute_group,
+                    test_alias.more_check,
+                    test_alias.display_no,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -740,6 +754,8 @@ class Indexes(object):
                 Index.contribute_role,
                 Index.browsing_group,
                 Index.contribute_group,
+                Index.more_check,
+                Index.display_no,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -759,6 +775,8 @@ class Indexes(object):
                     test_alias.contribute_role,
                     test_alias.browsing_group,
                     test_alias.contribute_group,
+                    test_alias.more_check,
+                    test_alias.display_no,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -786,6 +804,8 @@ class Indexes(object):
                 Index.contribute_role,
                 Index.browsing_group,
                 Index.contribute_group,
+                Index.more_check,
+                Index.display_no,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.id == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -805,6 +825,8 @@ class Indexes(object):
                     test_alias.contribute_role,
                     test_alias.browsing_group,
                     test_alias.contribute_group,
+                    test_alias.more_check,
+                    test_alias.display_no,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -821,6 +843,8 @@ class Indexes(object):
                 Index.contribute_role,
                 Index.browsing_group,
                 Index.contribute_group,
+                Index.more_check,
+                Index.display_no,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.id == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -840,6 +864,8 @@ class Indexes(object):
                     test_alias.contribute_role,
                     test_alias.browsing_group,
                     test_alias.contribute_group,
+                    test_alias.more_check,
+                    test_alias.display_no,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -864,3 +890,8 @@ class Indexes(object):
         except Exception as se:
             current_app.logger.debug(se)
             return False
+
+    @classmethod
+    def have_children(cls, index_id):
+        return Index.get_children(index_id)
+

@@ -22,7 +22,7 @@
 
 import redis
 from datetime import datetime
-from flask import abort, current_app, json, g
+from flask import abort, current_app, json, g, flash
 from invenio_db import db
 from invenio_deposit.api import Deposit, preserve, index
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -93,7 +93,6 @@ class WekoIndexer(RecordIndexer):
         #                       doc_type=self.es_doc_type):
         #     self.client.delete(id=str(item_id), index=self.es_index,
         #                        doc_type=self.es_doc_type)
-
         self.client.index(id=str(item_id),
                           index=self.es_index,
                           doc_type=self.es_doc_type,
@@ -332,18 +331,22 @@ class WekoDeposit(Deposit):
                 # upload item metadata to Elasticsearch
                 set_timestamp(self.jrc, self.created, self.updated)
 
-                # upload file content to Elasticsearch
+                # Get file contents
                 self.get_content_files()
+
+                # upload file content to Elasticsearch
                 self.indexer.upload_metadata(self.jrc, self.pid.object_uuid,
                                              self.revision_id)
+
                 # remove large base64 files for release memory
                 if self.jrc.get('content'):
                     for content in self.jrc['content']:
-                        del content['file']
+                        if content.get('file'):
+                            del content['file']
 
     def get_content_files(self):
         """Get content file metadata."""
-        # fmd = self.data.get('filemeta')
+        contents = []
         fmd = self.get_file_data()
         if fmd:
             for file in self.files:
@@ -357,11 +360,21 @@ class WekoDeposit(Deposit):
 
                             # upload file metadata to Elasticsearch
                             try:
-                                file.obj.file.upload_file(lst)
+                                file_size_max = current_app.config[
+                                    'WEKO_MAX_FILE_SIZE_FOR_ES']
+                                mimetypes = current_app.config[
+                                    'WEKO_MIMETYPE_WHITELIST_FOR_ES']
+                                if file.obj.file.size <= file_size_max and \
+                                    file.obj.mimetype in mimetypes:
+
+                                    content = lst.copy()
+                                    content.update({"file": file.obj.file.read_file(lst)})
+                                    contents.append(content)
+
                             except Exception as e:
-                                abort(500, '{}'.format(e.errors))
+                                abort(500, '{}'.format(str(e)))
                             break
-            self.jrc.update({'content': fmd})
+            self.jrc.update({'content': contents})
 
     def get_file_data(self):
         file_data = []

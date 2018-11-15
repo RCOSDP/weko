@@ -20,7 +20,7 @@
 
 """Blueprint for weko-search-ui."""
 
-from flask import Blueprint, current_app, render_template, request
+from flask import Blueprint, current_app, render_template, request, flash
 from xml.etree import ElementTree as ET
 from weko_index_tree.models import IndexStyle
 
