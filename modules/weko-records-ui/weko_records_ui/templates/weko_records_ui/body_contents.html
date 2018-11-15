@@ -33,7 +33,11 @@
           {%- set name = nav.name.split('/') -%}
           {%- set p = nav.path.split('/') -%}
           {%- for n in name -%}
+            {%- if community_id%}
+            <li><a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]+"&community="+community_id}}>{{n}}</a></li>
+            {%-else%}
             <li><a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}>{{n}}</a></li>
+            {%- endif -%}
           {%- endfor -%}
         </ol>
         {%- endfor -%}
