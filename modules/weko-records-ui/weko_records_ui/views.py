@@ -25,7 +25,8 @@ from flask import Blueprint, abort, current_app, render_template, \
     make_response, redirect, request, url_for
 
 from invenio_records_ui.utils import obj_or_import_string
-
+from invenio_records_ui.signals import record_viewed
+from weko_index_tree.models import IndexStyle
 from .permissions import check_created_id
 
 blueprint = Blueprint(
@@ -231,9 +232,24 @@ def check_permission(record):
     """
     return check_created_id(record)
 
-def detail_view(pid, record, template, **kwargs):
-    """"""
-    current_app.logger.debug("AAAA")
+
+def default_view_method(pid, record, template=None, **kwargs):
+    """Display default view.
+
+    Sends record_viewed signal and renders template.
+
+    :param pid: PID object.
+    :param record: Record object.
+    :param template: Template to render.
+    :param \*\*kwargs: Additional view arguments based on URL rule.
+    :returns: The rendered template.
+    """
+    record_viewed.send(
+        current_app._get_current_object(),
+        pid=pid,
+        record=record,
+    )
+
     getargs = request.args
     community_id = ""
     ctx = {'community': None}
@@ -243,11 +259,16 @@ def detail_view(pid, record, template, **kwargs):
         ctx = {'community': comm}
         community_id = comm.id
 
+    # Get index style
+    style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+    width = style.width if style else '3'
+
     return render_template(
         template,
         pid=pid,
         record=record,
         community_id=community_id,
         **ctx,
-        **kwargs
+        **kwargs,
+        width=width
     )
