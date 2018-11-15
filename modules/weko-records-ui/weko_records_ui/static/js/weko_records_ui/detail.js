@@ -28,4 +28,5 @@ require([
       $('#public_status ').text('Public');
     };
   });
+
 });

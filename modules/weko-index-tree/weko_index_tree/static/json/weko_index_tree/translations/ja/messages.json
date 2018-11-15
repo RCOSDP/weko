@@ -27,13 +27,17 @@
         null,
         "コメント"
     ],
-    "Display_Range": [
+    "More_Function": [
         null,
         "表示範囲"
     ],
-    "More_Display": [
+    "More_Check": [
         null,
-        "もっと表示"
+        "More表示機能"
+    ],
+    "More_No": [
+        null,
+        "初期表示する子インデクスの数を指定してください"
     ],
     "Publish": [
         null,
