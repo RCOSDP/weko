@@ -443,6 +443,13 @@ class WekoDeposit(Deposit):
 
         # Save Index Path on ES
         jrc.update(dict(path=index_lst))
+        # add at 20181121 start
+        sub_sort={}
+        for pth in index_lst:
+            # es setting
+            sub_sort[pth[-13:]] = ""
+        jrc.update(dict(custom_sort=sub_sort))
+        dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
 
         pubs = '1' if 'private' in actions else '0'

@@ -23,7 +23,7 @@
 from datetime import datetime
 from copy import deepcopy
 
-from flask import current_app
+from flask import current_app, json, jsonify
 from flask_login import current_user
 from invenio_db import db
 from invenio_accounts.models import Role
@@ -35,6 +35,7 @@ from weko_groups.api import Group
 from .models import Index
 from .utils import get_tree_json, cached_index_tree_json, reset_tree, get_index_id_list
 from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
 
 class Indexes(object):
     """Define API for index tree creation and update."""
@@ -864,3 +865,83 @@ class Indexes(object):
         except Exception as se:
             current_app.logger.debug(se)
             return False
+
+
+    @classmethod
+    def set_item_sort_custom(cls, index_id, sort_json={}):
+        """Set custom sort"""
+
+        # change type of custom sort data
+        sort_dict_db = dict(sort_json)
+
+        for k,v in sort_dict_db.items():
+            if v != "":
+                sort_dict_db[k] = int(v)
+            else:
+                sort_dict_db[k] = 0
+
+        try:
+            with db.session.begin_nested():
+                index = cls.get_index(index_id)
+                if not index:
+                    return
+                index.item_custom_sort = sort_dict_db
+                db.session.merge(index)
+            db.session.commit()
+            return index
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return
+
+    @classmethod
+    def update_item_sort_custom_es(cls, index_path, sort_json=[]):
+        """
+        Set custom sort
+        :param index_path selected index path
+        :param sort_json custom setted item sort
+
+        """
+        try:
+            upd_item_sort_q = {
+                "query": {
+                    "match": {
+                        "path.tree": "@index"
+                    }
+                }
+            }
+            query_q = json.dumps(upd_item_sort_q).replace("@index", index_path)
+            query_q = json.loads(query_q)
+            indexer = RecordIndexer()
+            res = indexer.client.search(index="weko", body=query_q)
+
+            for d in sort_json:
+                for h in res.get("hits").get("hits"):
+                    if int(h.get('_source').get('control_number')) == int(d.get("id")):
+                        body = {
+                            'doc': {
+                                'custom_sort': d.get('custom_sort'),
+                            }
+                        }
+                        indexer.client.update(
+                            index="weko",
+                            doc_type="item",
+                            id=h.get("_id"),
+                            body=body
+                        )
+                        break
+
+        except Exception as ex:
+            current_app.logger.debug(ex)
+        return
+
+    @classmethod
+    def get_item_sort(cls, index_id):
+        """
+        :param index_id: search index id
+        :return: sort list
+
+        """
+        item_custom_sort=db.session.query(Index.item_custom_sort).filter(Index.id == index_id).one()
+
+        return item_custom_sort[0]

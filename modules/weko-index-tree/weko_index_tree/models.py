@@ -27,6 +27,8 @@ from invenio_db import db
 from sqlalchemy.dialects import mysql
 from sqlalchemy.event import listen
 from weko_records.models import Timestamp
+from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy_utils.types import JSONType, UUIDType
 # from sqlalchemy_utils.types import UUIDType
 # from invenio_records.models import RecordMetadata
 
@@ -123,6 +125,24 @@ class Index(db.Model, Timestamp):
 
     owner_user_id = db.Column(db.Integer, nullable=True, default=0)
     """Owner user id of the index."""
+
+    # item_custom_sort = db.Column(db.Text, nullable=True, default='')
+
+    item_custom_sort = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """The sort of item by custom setting"""
 
     # index_items = db.relationship('IndexItems', back_populates='index', cascade='delete')
 

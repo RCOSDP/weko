@@ -20,9 +20,12 @@
 
 """Blueprint for weko-search-ui."""
 
-from flask import Blueprint, current_app, render_template, request
+from flask import Blueprint, current_app, render_template, request, \
+    redirect, url_for, make_response, jsonify
 from xml.etree import ElementTree as ET
 from weko_index_tree.models import IndexStyle
+from weko_index_tree.api import Indexes
+from invenio_indexer.api import RecordIndexer
 
 blueprint = Blueprint(
     'weko_search_ui',
@@ -57,10 +60,15 @@ def search():
     # Get index style
     style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
     width = style.width if style else '3'
+    if 'management' in getArgs:
+        return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
+                               index_id=cur_index_id, community_id=community_id,
+                               width=width, **ctx)
+    else:
+        return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
+                               index_id=cur_index_id, community_id=community_id,
+                               width=width, **ctx)
 
-    return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
-                           index_id=cur_index_id, community_id=community_id,
-                           width=width, **ctx)
 
 
 @blueprint_api.route('/opensearch/description.xml', methods=['GET'])
@@ -110,3 +118,32 @@ def opensearch_description():
     # update headers
     response.headers['Content-Type'] = 'application/xml'
     return response
+
+
+@blueprint.route("/item_management/save", methods=['POST'])
+def save_sort():
+    """ Save custom sort"""
+    try:
+        data = request.get_json()
+        index_id = data.get("q_id")
+        sort_data = data.get("sort")
+
+        # save data to DB
+        item_sort={}
+        for sort in sort_data:
+            item_sort[sort.get('id')]=sort.get('custom_sort').get(index_id)
+
+        Indexes.set_item_sort_custom(index_id, item_sort)
+
+        # update es
+        fp = Indexes.get_self_path(index_id)
+        Indexes.update_item_sort_custom_es(fp.path, sort_data)
+
+        jfy = {}
+        jfy['status'] = 200
+        jfy['message'] = 'Data is successfully updated.'
+        return make_response(jsonify(jfy), jfy['status'])
+    except Exception as ex:
+        jfy['status'] = 405
+        jfy['message'] = 'Error'
+        return make_response(jsonify(jfy), jfy['status'])

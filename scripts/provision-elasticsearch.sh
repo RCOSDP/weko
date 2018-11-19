@@ -136,6 +136,15 @@ install_plugins () {
     # sphinxdoc-install-elasticsearch-plugins-end
 }
 
+settings_script () {
+    # sphinxdoc-settings-elasticsearch-script-begin
+    echo 'script.inline: true' | \
+        tee -a /usr/share/elasticsearch/config/elasticsearch.yml
+    echo 'script.indexed: true' | \
+        tee -a /usr/share/elasticsearch/config/elasticsearch.yml
+    # sphinxdoc-settings-elasticsearch-script-end
+}
+
 cleanup_elasticsearch_ubuntu14 () {
     # sphinxdoc-install-elasticsearch-cleanup-ubuntu14-begin
     sudo apt-get -y autoremove && sudo apt-get -y clean
@@ -172,6 +181,7 @@ main () {
             check_environment_variables
             provision_elasticsearch_ubuntu14
             install_plugins
+            settings_script
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1
@@ -181,6 +191,7 @@ main () {
             check_environment_variables
             provision_elasticsearch_centos7
             install_plugins
+            settings_script
         else
             echo "[ERROR] Sorry, unsupported release ${os_release}."
             exit 1
@@ -188,6 +199,7 @@ main () {
     elif [ "$os_distribution" = "Docker" ]; then
         provision_elasticsearch_docker
         install_plugins
+        settings_script
     else
         echo "[ERROR] Sorry, unsupported distribution ${os_distribution}."
         exit 1

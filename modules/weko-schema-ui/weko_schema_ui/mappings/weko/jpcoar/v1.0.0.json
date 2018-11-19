@@ -115,6 +115,18 @@
           "type": "string",
           "index": "not_analyzed"
         },
+		"custom_sort": {
+          "type": "object",
+		  "properties": {
+			"index_id": {
+              "type": "string"
+            },
+			"sort": {
+              "type": "string"
+            }
+		  }
+        },
+
         "title": {
           "type": "string",
           "index": "not_analyzed",
