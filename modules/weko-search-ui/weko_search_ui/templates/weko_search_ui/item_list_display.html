@@ -1,0 +1,127 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+<div id="invenio-search">
+  <div id="item_management"class="hide">item_management</div>
+  <div role="navigation">
+    <ul class="nav nav-tabs">
+      <li id="tab_display" role="presentation" class="active activity_li">
+        <a class="active activity_li" data-show-tab="display">{{_('Custom Sort')}}</a></li>
+    </ul>
+  </div>
+  <br>
+  <invenio-search
+   {%- if index_id %}
+     search-endpoint="{{ config.WEKO_SEARCH_UI_SEARCH_INDEX_API }}"
+   {%- else %}
+     search-endpoint="{{ config.SEARCH_UI_SEARCH_API }}"
+   {%- endif %}
+   search-extra-params='{% if search_extra_params %}{{search_extra_params|tojson}}{% endif %}'
+   search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
+   search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
+  >
+  <div id="search_res" ng-controller="searchResCtrl">
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <span class="panel-title">
+        {{_('Target Index')}}
+      </span>
+    </div>
+    <div class="panel-body">
+      <div id="index_item_list">
+        {%- if not page_id %}
+        {%- if index_id %}
+          <invenio-search-results
+           template="{{ url_for('static', filename=config.WEKO_ITEM_MANAGEMENT_JSTEMPLATE_BREAD) }}">
+          </invenio-search-results>
+        {%- endif %}
+        <br>
+        <div class="panel-group m-top-5">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              <div class="row">
+                {%- block search_item_result %}
+                  <div class="col-xs-12 col-md-12">
+                    {%- block search_error %}
+                    <invenio-search-error
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
+                     message="{{ _('Search failed.') }}">
+                    </invenio-search-error>
+                    {%- endblock search_error %}
+                    {%- block search_loading %}
+                    <invenio-search-loading
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
+                     message="{{ _('Loading...') }}">
+                    </invenio-search-loading>
+                    {%- endblock search_loading %}
+                    {%- block search_results %}
+                    <invenio-search-results
+                     template="{{ url_for('static', filename=config.WEKO_ITEM_MANAGEMENT_JSTEMPLATE_RESULTS_EDIT) }}">
+                    </invenio-search-results>
+                    {%- endblock search_results %}
+                  </div>
+                {%- endblock search_item_result %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {%- endif %}
+      </div>
+      <div class="text-center">
+        {%- block search_pagination_top %}
+        <invenio-search-pagination
+         template="{{ url_for('static', filename=config.SEARCH_UI_ITEM_MANAGEMENT_JSTEMPLATE_PAGINATION) }}">
+        </invenio-search-pagination>
+        {%- endblock search_pagination_top %}
+      </div>
+      <div class="row">
+        <div class="col-sm-9 col-md-9">
+          <a ng-hide="!display_flg" class="btn btn-primary btn-sm" ng-click="itemManagementEdit()">
+            {{ _("Edit") }}</a>
+        </div>
+        <div class="col-sm-3 col-md-3">
+          <a ng-hide="display_flg" class="btn btn-primary btn-sm" ng-click="itemManagementSave()">
+            {{ _('Save') }}</a>
+          <a ng-hide="display_flg" class="btn btn-primary btn-sm" ng-click="itemManagementCancel()">
+            {{ _('Cancel') }}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div >
+  </invenio-search>
+    <!--<div class="modal fade" tabindex="-1" role="dialog" id="comfirmModal">-->
+      <!--<div class="modal-dialog modelWidth" role="document">-->
+        <!--<div class="modal-content">-->
+          <!--<div class="modal-header">-->
+            <!--<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>-->
+            <!--<h4 class="modal-title" id="myModalLabel"><span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span></h4>-->
+          <!--</div>-->
+          <!--<div class="modal-body">-->
+            <!--<strong>{{_('Is the input contents discarded ?')}}</strong>-->
+          <!--</div>-->
+          <!--<div class="modal-footer">-->
+            <!--<button type="button" class="btn btn-primary" id="btnModalContinue" data-dismiss="modal" ng-click="btnMcontineFunc()">{{_('Continue')}}</button>-->
+            <!--<button type="button" class="btn btn-default" id="btnModalCancel" data-dismiss="modal" ng-click="btnMCancelFunc()">{{_('Cancel')}}</button>-->
+          <!--</div>-->
+        <!--</div>&lt;!&ndash; /.modal-content &ndash;&gt;-->
+      <!--</div>&lt;!&ndash; /.modal-dialog &ndash;&gt;-->
+    <!--</div>&lt;!&ndash; /.modal &ndash;&gt;-->
+</div>

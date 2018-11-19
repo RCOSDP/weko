@@ -41,15 +41,21 @@ WEKO_SEARCH_UI_SEARCH_TEMPLATE = 'weko_search_ui/search.html'
 
 WEKO_SEARCH_UI_JSTEMPLATE_RESULTS = 'templates/weko_search_ui/itemlist.html'
 
+WEKO_ITEM_MANAGEMENT_JSTEMPLATE_RESULTS_EDIT = 'templates/weko_search_ui/itemListItemManagementEdit.html'
+
 WEKO_SEARCH_UI_JSTEMPLATE_RESULTS_BASIC = 'templates/weko_search_ui/itemlistbasic.html'
 
 WEKO_SEARCH_UI_JSTEMPLATE_INDEX = 'templates/weko_search_ui/indexlist.html'
 
 WEKO_SEARCH_UI_JSTEMPLATE_BREAD = 'templates/weko_search_ui/breadcrumb.html'
 
+WEKO_ITEM_MANAGEMENT_JSTEMPLATE_BREAD = 'templates/weko_search_ui/breadcrumbItemManagement.html'
+
 WEKO_SEARCH_UI_JSTEMPLATE_COUNT = 'templates/weko_search_ui/count.html'
 
 SEARCH_UI_JSTEMPLATE_PAGINATION = 'templates/weko_search_ui/pagination.html'
+
+SEARCH_UI_ITEM_MANAGEMENT_JSTEMPLATE_PAGINATION = 'templates/weko_search_ui/paginationItemManagement.html'
 
 SEARCH_UI_JSTEMPLATE_SELECT_BOX = 'templates/weko_search_ui/selectbox.html'
 
@@ -148,7 +154,15 @@ RECORDS_REST_SORT_OPTIONS = dict(
             fields=['date'],
             default_order='asc',
             order=8,
+        ),
+        # add 20181121 start
+        custom_sort=dict(
+                    title='Custom',
+                    fields=['custom_sort.sort'],
+                    default_order='asc',
+                    order=9,
         )
+        # add 20181121 end
     )
 )
 

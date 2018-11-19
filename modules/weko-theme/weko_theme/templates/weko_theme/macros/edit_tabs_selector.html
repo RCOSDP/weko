@@ -21,7 +21,7 @@
 {% macro tabs_selector(tab_value='item_type') %}
     <li role="presentation" {% if tab_value=='schema_management' %}class="active"{% endif %}><a href="{{url_for('weko_schema_ui.list')}}">{{ _('Schema Management') }}</a></li>
     <li role="presentation" {% if tab_value=='item_type' %}class="active"{% endif %}><a href="{{url_for('weko_itemtypes_ui.index')}}">{{ _('Item Type') }}</a></li>
-    <li role="presentation" {% if tab_value=='item_management' %}class="active"{% endif %}><a href="/">{{ _('Item Management') }}</a></li>
+    <li role="presentation" {% if tab_value=='item_management' %}class="active"{% endif %}><a href="{{url_for('weko_theme.item_management')}}">{{ _('Item Management') }}</a></li>
     <li role="presentation" {% if tab_value=='edit_tree' %}class="active"{% endif %}><a href="{{url_for('weko_index_tree.index')}}">{{ _('Edit Tree') }}</a></li>
     <li role="presentation" {% if tab_value=='review_accept' %}class="active"{% endif %}><a href="/">{{ _('Review/Accept') }}</a></li>
     <li role="presentation" {% if tab_value=='import' %}class="active"{% endif %}><a href="/">{{ _('Import') }}</a></li>

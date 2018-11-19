@@ -304,7 +304,6 @@ def items_index(pid_value=0):
             current_app.logger.debug(item)
         elif request.method == 'POST':
             """update item data info."""
-            current_app.logger.debug(data)
             sessionstore.put('item_index_{}'.format(pid_value), json.dumps(data),
                              ttl_secs=300)
         return jsonify(data)
@@ -345,7 +344,6 @@ def iframe_items_index(pid_value=0):
             current_app.logger.debug(item)
         elif request.method == 'POST':
             """update item data info."""
-            current_app.logger.debug(data)
             sessionstore.put('item_index_{}'.format(pid_value), json.dumps(data),
                              ttl_secs=300)
         return jsonify(data)

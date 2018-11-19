@@ -1,0 +1,89 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
+
+{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('item_management') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+  <div class="hide" id="cur_index_id">{{index_id}}</div>
+  <div class="row">
+    <div class="col-sm-3 col-md-3 col-lg-3">
+      {% include "weko_theme/body_index.html" %}
+    </div>
+    <div class="col-sm-9 col-md-9 col-lg-9 m-top-20">
+      <div class="row">
+        <div>
+          <div id="item_management"class="hide">item_management</div>
+          <div role="navigation">
+            <ul class="nav nav-tabs">
+              <li id="tab_display" role="presentation" class="active activity_li">
+                <a class="active activity_li" data-show-tab="display">{{_('Custom Sort')}}</a></li>
+            </ul>
+          </div>
+          <br>
+          <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+              <span class="panel-title">
+                {{_('Target Index')}}
+              </span>
+            </div>
+            <div class="panel-body">
+              <br>
+              <br>
+              <br>
+              <br>
+              <br>
+              <br>
+              <br>
+              <br>
+              <br>
+              <br>
+              <br>
+              <br>
+              <br>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{%- endblock page_body_main %}
+

@@ -45,38 +45,75 @@
     });
 });
 
-(function (angular) {
-  // Bootstrap it!
-  angular.element(document).ready(function() {
-    angular.module('searchResult.controllers', []);
-    function searchResCtrl($scope, $rootScope){
-     var commInfo=$("#community").val();
+//add controller to invenioSearch
+// add by ryuu. at 20181129 start
+
+function searchResCtrl($scope, $rootScope, $http, $location) {
+    var commInfo=$("#community").val();
      if(commInfo != ""){
         $rootScope.commInfo="?community="+commInfo;
         $rootScope.commInfoIndex="&community="+commInfo;
      }else{
         $rootScope.commInfo="";
-        $rootScope.commInfoIndex="";;
+        $rootScope.commInfoIndex="";
      }
-    }
-    // Inject depedencies
-    searchResCtrl.$inject = [
-      '$scope',
-      '$rootScope',
-    ];
-    angular.module('searchResult.controllers')
-      .controller('searchResCtrl', searchResCtrl);
+//   button setting
+     $rootScope.disable_flg = true;
+     $rootScope.display_flg = true;
+     $rootScope.index_id_q = $location.search().q;
 
-    angular.module('searchResult', [
-      'invenioSearch',
-      'searchResult.controllers',
-    ]);
 
-    angular.bootstrap(
-      document.getElementById('invenio-search'), [
-        'searchResult',
-      ]
-    );
-  });
-})(angular);
+     $scope.itemManagementTabDisplay= function(){
+        $rootScope.disable_flg = true;
+        $rootScope.display_flg = true;
+     }
+
+     $scope.itemManagementEdit= function(){
+        $rootScope.disable_flg = false;
+        $rootScope.display_flg = false;
+     }
+
+     $scope.itemManagementSave= function(){
+        var data = $scope.vm.invenioSearchResults.hits.hits
+        var custom_sort_list =[]
+        for(var x of data){
+           var sub = {"id":"", "custom_sort":""}
+           sub.id= x.id;
+           sub.custom_sort=x.metadata.custom_sort;
+           custom_sort_list.push(sub);
+        }
+        var post_data ={"q_id":$rootScope.index_id_q, "sort":custom_sort_list, "es_data":data}
+
+　　   // request api
+        $http({
+            method: 'POST',
+            url: '/item_management/save',
+            data: post_data,
+          headers: {'Content-Type': 'application/json'},
+        }).then(function successCallback(response) {
+          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q + "&management=item&sort=custom_sort";
+        }, function errorCallback(response) {
+          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q+ "&management=item&sort=custom_sort";
+        });
+     }
+
+     $scope.itemManagementCancel= function(){
+        $rootScope.disable_flg = true;
+        $rootScope.display_flg = true;
+        $("#tab_display").addClass("active")
+     }
+     $rootScope.confirmFunc=function(){
+        if(!$rootScope.disable_flg){
+          return confirm("Is the input contents discarded ?") ;
+        }else{
+          return true;
+        }
+     }
+  }
+
+angular.module('invenioSearch.controllers')
+  .controller('searchResCtrl', searchResCtrl);
+
+// add by ryuu. at 20181129 end
+
 

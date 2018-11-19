@@ -23,6 +23,7 @@
 
 from flask import Blueprint, current_app, render_template, request, flash
 from weko_index_tree.models import IndexStyle
+from flask_login import login_required
 
 blueprint = Blueprint(
     'weko_theme',
@@ -59,4 +60,14 @@ def edit():
     """Simplistic front page view."""
     return render_template(
         current_app.config['BASE_EDIT_TEMPLATE'],
+    )
+
+@blueprint.route("/item_management")
+@login_required
+def item_management():
+    """Render view."""
+    page_id="itemManagement"
+    return render_template(
+        current_app.config['WEKO_ITEM_MANAGEMENT_INIT_TEMPLATE'],
+        page_id=page_id
     )
