@@ -49,7 +49,7 @@ def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
     return caching
 
 
-def reset_tree(tree, path=None):
+def reset_tree(tree, path=None, more_ids=[]):
     """
     Reset the state of checked.
 
@@ -73,6 +73,7 @@ def reset_tree(tree, path=None):
     else:
         # for browsing role check
         reduce_index_by_role(tree, roles, groups)
+        reduce_index_by_more(tree=tree, more_ids=more_ids)
 
 
 def get_tree_json(obj, pid=0):
@@ -81,7 +82,6 @@ def get_tree_json(obj, pid=0):
     :param obj:
     :return:
     """
-
     def get_settings():
         return dict(emitLoadNextLevel=False,
                     settings=dict(isCollapsedOnInit=False, checked=False))
@@ -91,7 +91,8 @@ def get_tree_json(obj, pid=0):
         if isinstance(plst, list):
             attr = ['public_state', 'public_date',
                     'browsing_role', 'contribute_role',
-                    'browsing_group', 'contribute_group']
+                    'browsing_group', 'contribute_group',
+                    'more_check', 'display_no']
             for lst in plst:
                 lst['children'] = []
                 if isinstance(lst, dict):
@@ -238,14 +239,43 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         children.clear()
                         tree.pop(i)
 
-
 def get_index_id_list(indexes, id_list = []):
     if isinstance(indexes, list):
         for index in indexes:
             if isinstance(index, dict):
+                if index.get('id', '') == 'more':
+                    continue
+
                 id_list.append(index.get('id', ''))
 
                 children = index.get('children')
                 get_index_id_list(children, id_list)
 
     return id_list
+
+def reduce_index_by_more(tree, more_ids=[]):
+
+    for node in tree:
+        if isinstance(node, dict):
+            id = node.get('id')
+            children = node.get('children')
+            more_check = node.get('more_check')
+            display_no = node.get('display_no')
+
+            if more_check and \
+                len(children) > display_no and \
+                (len(more_ids) == 0 or id not in more_ids):
+
+                # Delete child node
+                i = display_no
+                while i < len(children):
+                    children.pop(i)
+                reduce_index_by_more(tree=children, more_ids=more_ids)
+
+                # Add more node
+                more_node = {"id": "more",
+                             "value": '<a href="#" class="more">more...</a>'}
+                children.insert(len(children), more_node)
+
+            else:
+                reduce_index_by_more(tree=children, more_ids=more_ids)

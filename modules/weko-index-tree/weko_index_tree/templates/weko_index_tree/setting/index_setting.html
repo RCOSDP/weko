@@ -30,7 +30,7 @@
 {%- set lifetime_map = map_lifetime %}
 <form class="form-horizontal" method="POST" name="index_form" action={{url_for('indextree.index')}}>
   <div class="form-group">
-    <label for="width" class="control-label col-sm-1">Width</label>
+    <label for="width" class="control-label col-sm-1">{{_('Width')}}</label>
     <div class="controls col-sm-2">
       <select class="form-control" id="width" name="width">
         {%- for width in widths if width %}

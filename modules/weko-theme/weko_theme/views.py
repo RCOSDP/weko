@@ -51,8 +51,7 @@ def index():
 
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
-        community_id =community_id, width=width, **ctx
-    )
+        community_id =community_id, width=width, **ctx)
 
 
 @blueprint.route('/edit')
