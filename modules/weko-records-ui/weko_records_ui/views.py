@@ -268,7 +268,7 @@ def default_view_method(pid, record, template=None, **kwargs):
         pid=pid,
         record=record,
         community_id=community_id,
+        width=width,
         **ctx,
-        **kwargs,
-        width=width
+        **kwargs
     )

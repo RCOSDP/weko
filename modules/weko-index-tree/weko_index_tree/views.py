@@ -29,6 +29,7 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .permissions import index_tree_permission
+from .api import Indexes
 
 blueprint = Blueprint(
     'weko_index_tree',

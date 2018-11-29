@@ -25,11 +25,23 @@
 
 import copy
 
-WEKO_BUCKET_QUOTA_SIZE = 50 * 1000 * 1000 * 1000  # 50 GB
+WEKO_BUCKET_QUOTA_SIZE = 50 * 1024 * 1024 * 1024  # 50 GB
 """Maximum quota per bucket."""
 
 WEKO_MAX_FILE_SIZE = WEKO_BUCKET_QUOTA_SIZE
+WEKO_MAX_FILE_SIZE_FOR_ES = 1 * 1024 * 1024  # 1MB
 """Maximum file size accepted."""
+
+WEKO_MIMETYPE_WHITELIST_FOR_ES = [
+    'text/plain',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/pdf',
+]
 
 FILES_REST_STORAGE_FACTORY = 'weko_deposit.storage.pyfs_storage_factory'
 """Import path of factory used to create a storage instance."""

@@ -22,7 +22,7 @@
 
 from datetime import datetime
 
-from flask import current_app
+from flask import current_app, flash
 from invenio_db import db
 from sqlalchemy.dialects import mysql
 from sqlalchemy.event import listen
@@ -162,6 +162,11 @@ class Index(db.Model, Timestamp):
     def __str__(self):
         """Representation."""
         return 'Index <id={0.id}, index_name={0.index_name_english}>'.format(self)
+
+    @classmethod
+    def have_children(cls, id):
+        children = cls.query.filter_by(parent=id).all()
+        return False if (children is None or len(children) == 0) else True
 
 # class IndexItems(db.Model):
 #     """"""
