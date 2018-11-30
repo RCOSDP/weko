@@ -178,8 +178,7 @@
               title: '剽窃チェック',
               title_i18n:{ja:"剽窃チェック",en:"Check Plagiarism"},
               type: "template",
-              //template: "<div class='text-center'><a class='btn btn-primary' href='http://ec2-13-230-57-67.ap-northeast-1.compute.amazonaws.com/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>"
-             template: "<div class='text-center'><a class='btn btn-primary' href='/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>"
+              template: "<div class='text-center'><a class='btn btn-primary' href='/ezas/pdf-detect-weko.html' target='_blank' role='button'>{{ form.title }}</a></div>"
             },
             {
               key: "filemeta[].accessrole",
@@ -216,29 +215,8 @@
         } else {
           page_global.table_row_map.mapping['filemeta'] = mapping_value;
         }
-//        page_global.table_row_map.mapping['filemeta'] = {
-//                                                            "oai_dc_mapping": {
-//                                                                "subject": {"@value":"filename"}
-//                                                            },
-//                                                            "lom_mapping": "",
-//                                                            "jpcoar_mapping": {
-//                                                                "file": {
-//                                                                    "URI": {
-//                                                                        "@attributes" :{
-//                                                                           "objectType":"fulltext"
-//                                                                           },
-//                                                                        "@value":"filename"
-//                                                                     }
-//                                                                }
-//                                                            },
-//                                                            "lido_mapping": "",
-//                                                            "spase_mapping": "",
-//                                                            "junii2_mapping": {
-//                                                                "fullTextURL": {"@value":"filename"}
-//                                                            },
-//                                                            "display_lang_type": ""
-//                                                        };
       }
+
       // タイトルなどを追加する
       page_global.table_row_map.schema.properties["title_ja"] = {type:"string",title:"タイトル",format:"text"}
       page_global.table_row_map.schema.properties["title_en"] = {type:"string",title:"タイトル(英)",format:"text"}
@@ -254,139 +232,32 @@
       page_global.table_row_map.schema.required.push("title_en");
       page_global.table_row_map.schema.required.push("lang");
       page_global.table_row_map.schema.required.push("pubdate");
-//      page_global.table_row_map.mapping['title_ja'] = {
-//                                                          "oai_dc_mapping": {
-//                                                              "title": ""
-//                                                          },
-//                                                          "lom_mapping": "",
-//                                                          "jpcoar_mapping": {
-//                                                              "title": ""
-//                                                          },
-//                                                          "lido_mapping": "",
-//                                                          "spase_mapping": "",
-//                                                          "junii2_mapping": {
-//                                                              "title": ""
-//                                                          },
-//                                                          "display_lang_type": ""
-//                                                      };
+
       if(src_mapping.hasOwnProperty('title_ja')) {
         page_global.table_row_map.mapping['title_ja'] = src_mapping['title_ja'];
       } else {
         page_global.table_row_map.mapping['title_ja'] = mapping_value;
       }
-//      page_global.table_row_map.mapping['title_en'] = {
-//                                                          "oai_dc_mapping": {
-//                                                              "alternative": ""
-//                                                          },
-//                                                          "lom_mapping": "",
-//                                                          "jpcoar_mapping": {
-//                                                              "alternative": {
-//                                                                  "@attributes": {
-//                                                                      "xml:lang": "ja"
-//                                                                  }
-//                                                              }
-//                                                          },
-//                                                          "lido_mapping": "",
-//                                                          "spase_mapping": "",
-//                                                          "junii2_mapping": {
-//                                                              "alternative": ""
-//                                                          },
-//                                                          "display_lang_type": ""
-//                                                      };
       if(src_mapping.hasOwnProperty('title_en')) {
         page_global.table_row_map.mapping['title_en'] = src_mapping['title_en'];
       } else {
         page_global.table_row_map.mapping['title_en'] = mapping_value;
       }
-//      page_global.table_row_map.mapping['lang'] = {
-//                                                "oai_dc_mapping": {
-//                                                    "language": ""
-//                                                },
-//                                                "lom_mapping": "",
-//                                                "jpcoar_mapping": {
-//                                                    "language": ""
-//                                                },
-//                                                "lido_mapping": "",
-//                                                "spase_mapping": "",
-//                                                "junii2_mapping": {
-//                                                    "language": ""
-//                                                },
-//                                                "display_lang_type": ""
-//                                            };
       if(src_mapping.hasOwnProperty('lang')) {
         page_global.table_row_map.mapping['lang'] = src_mapping['lang'];
       } else {
         page_global.table_row_map.mapping['lang'] = mapping_value;
       }
-//      page_global.table_row_map.mapping['pubdate'] = {
-//                                                "oai_dc_mapping": {
-//                                                    "date": ""
-//                                                },
-//                                                "lom_mapping": "",
-//                                                "jpcoar_mapping": {
-//                                                    "date": {
-//                                                        "@attributes": {
-//                                                            "dateType": "Available"
-//                                                        }
-//                                                    }
-//                                                },
-//                                                "lido_mapping": "",
-//                                                "spase_mapping": "",
-//                                                "junii2_mapping": {
-//                                                    "date": ""
-//                                                },
-//                                                "display_lang_type": ""
-//                                            };
       if(src_mapping.hasOwnProperty('pubdate')) {
         page_global.table_row_map.mapping['pubdate'] = src_mapping['pubdate'];
       } else {
         page_global.table_row_map.mapping['pubdate'] = mapping_value;
       }
-//      page_global.table_row_map.mapping['keywords'] = {
-//                                                "oai_dc_mapping": {
-//                                                    "subject": ""
-//                                                },
-//                                                "lom_mapping": "",
-//                                                "jpcoar_mapping": {
-//                                                    "subject": {
-//                                                        "@attributes": {
-//                                                            "jpcoar:subjectScheme": "LCC",
-//                                                            "jpcoar:subjectURI": "http://localhost"
-//                                                        }
-//                                                    }
-//                                                },
-//                                                "lido_mapping": "",
-//                                                "spase_mapping": "",
-//                                                "junii2_mapping": {
-//                                                    "subject": ""
-//                                                },
-//                                                "display_lang_type": ""
-//                                            };
       if(src_mapping.hasOwnProperty('keywords')) {
         page_global.table_row_map.mapping['keywords'] = src_mapping['keywords'];
       } else {
         page_global.table_row_map.mapping['keywords'] = mapping_value;
       }
-//      page_global.table_row_map.mapping['keywords_en'] = {
-//                                                "oai_dc_mapping": {
-//                                                    "subject": {}
-//                                                },
-//                                                "lom_mapping": "",
-//                                                "jpcoar_mapping": {
-//                                                    "rightsHolder": {
-//                                                        "@attributes": {
-//                                                            "xml:lang": "haha"
-//                                                        },
-//                                                        "rightsHolderName": {}
-//                                                    }
-//                                                },
-//                                                "lido_mapping": "",
-//                                                "spase_mapping": "",
-//                                                "junii2_mapping": {
-//                                                    "subject": ""
-//                                                },
-//                                                "display_lang_type": ""
-//                                            };
       if(src_mapping.hasOwnProperty('keywords_en')) {
         page_global.table_row_map.mapping['keywords_en'] = src_mapping['keywords_en'];
       } else {
@@ -679,8 +550,6 @@
         //add by ryuu. end
         tmp_title_ja.input_type = "text";
         tmp_title_ja.input_value = "";
-//        tmp_title_ja.input_minItems = $('#minItems_'+row_id).val();
-//        tmp_title_ja.input_maxItems = $('#maxItems_'+row_id).val();
         tmp_title_ja.option = {}
         tmp_title_ja.option.required = $('#chk_title_0').is(':checked')?true:false;
         tmp_title_ja.option.multiple = $('#chk_title_1').is(':checked')?true:false;
@@ -697,8 +566,6 @@
         //add by ryuu. end
         tmp_title_en.input_type = "text";
         tmp_title_en.input_value = "";
-//        tmp_title_en.input_minItems = $('#minItems_'+row_id).val();
-//        tmp_title_en.input_maxItems = $('#maxItems_'+row_id).val();
         tmp_title_en.option = {}
         tmp_title_en.option.required = $('#chk_title_en_0').is(':checked')?true:false;
         tmp_title_en.option.multiple = $('#chk_title_en_1').is(':checked')?true:false;
@@ -716,8 +583,6 @@
         //add by ryuu. end
         tmp_lang.input_type = "text";
         tmp_lang.input_value = "";
-//        tmp_lang.input_minItems = $('#minItems_'+row_id).val();
-//        tmp_lang.input_maxItems = $('#maxItems_'+row_id).val();
         tmp_lang.option = {}
         tmp_lang.option.required = $('#chk_lang_0').is(':checked')?true:false;
         tmp_lang.option.multiple = $('#chk_lang_1').is(':checked')?true:false;
@@ -735,8 +600,6 @@
         //add by ryuu. end
         tmp_pubdate.input_type = "datetime";
         tmp_pubdate.input_value = "";
-//        tmp_title_ja.input_minItems = $('#minItems_'+row_id).val();
-//        tmp_title_ja.input_maxItems = $('#maxItems_'+row_id).val();
         tmp_pubdate.option = {}
         tmp_pubdate.option.required = $('#chk_pubdate_0').is(':checked')?true:false;
         tmp_pubdate.option.multiple = $('#chk_pubdate_1').is(':checked')?true:false;
@@ -754,8 +617,6 @@
         //add by ryuu. end
         tmp_keywords_ja.input_type = "text";
         tmp_keywords_ja.input_value = "";
-//        tmp_keywords_ja.input_minItems = $('#minItems_'+row_id).val();
-//        tmp_keywords_ja.input_maxItems = $('#maxItems_'+row_id).val();
         tmp_keywords_ja.option = {}
         tmp_keywords_ja.option.required = $('#chk_keyword_0').is(':checked')?true:false;
         tmp_keywords_ja.option.multiple = $('#chk_keyword_1').is(':checked')?true:false;
@@ -773,8 +634,6 @@
         //add by ryuu. end
         tmp_keywords_en.input_type = "text";
         tmp_keywords_en.input_value = "";
-//        tmp_keywords_en.input_minItems = $('#minItems_'+row_id).val();
-//        tmp_keywords_en.input_maxItems = $('#maxItems_'+row_id).val();
         tmp_keywords_en.option = {}
         tmp_keywords_en.option.required = $('#chk_keyword_en_0').is(':checked')?true:false;
         tmp_keywords_en.option.multiple = $('#chk_keyword_en_1').is(':checked')?true:false;
@@ -1019,12 +878,7 @@
       });
     }
 
-    select_option = '<option value="text" selected>テキスト</option>'
-                  + '<option value="textarea">テキストエリア</option>'
-                  + '<option value="checkboxes">チェックボックス</option>'
-                  + '<option value="radios">選択式(ラジオ)</option>'
-                  + '<option value="select">選択式(プルダウン)</option>'
-                  + '<option value="datetime">日付</option>';
+    select_option = '';
     // 作成したメタデータ項目タイプの取得
     $.ajax({
       method: 'GET',
@@ -1032,9 +886,36 @@
       async: false,
       success: function(data, status){
         properties_obj = data;
-        Object.keys(data).forEach(function(key) {
-          select_option = select_option + '<option value="cus_'+key+'">'+data[key].name+'</option>'
+
+        defProps = data.defaults;
+        isSelected = true;
+        Object.keys(defProps).forEach(function(key) {
+          if (isSelected) {
+            select_option = select_option + '<option value="' + defProps[key].value + '" selected>' + defProps[key].name + '</option>';
+            isSelected = false;
+          } else {
+            select_option = select_option + '<option value="' + defProps[key].value + '">' + defProps[key].name + '</option>';
+          }
         });
+
+        odered = {}
+        others = ''
+        for (var key in data) {
+          if (key == 'defaults') continue;
+
+          option = '<option value="cus_' + key + '">' + data[key].name + '</option>'
+          if (data[key].sort != null) {
+            odered[data[key].sort] = option;
+          } else {
+            others = others + option;
+          }
+        }
+
+        Object.keys(odered).forEach(function(key) {
+          select_option = select_option + odered[key];
+        });
+        select_option = select_option + others;
+
       },
       error: function(status, error){
         console.log(error);

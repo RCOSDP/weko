@@ -87,6 +87,17 @@ class DcWekoBaseExtension(DcBaseExtension):
 
         return self._dcelem_publisher
 
+    def extend_jpcoar(self, jpcoar_feed):
+        '''Extend a JPCOAR feed with the set DC fields.
+
+        :param jpcoar_feed: The feed root element
+        :returns: The feed root element.
+        '''
+        header = jpcoar_feed[0]
+        self._extend_xml(header)
+
+        return jpcoar_feed
+
 class DcWekoEntryExtension(DcWekoBaseExtension):
     """Dublin Core Elements extension for podcasts.
     """
@@ -101,6 +112,14 @@ class DcWekoEntryExtension(DcWekoBaseExtension):
     def extend_rss(self, item):
         '''Add dc elements to a RSS item. Alters the item itself.
         :param item: A RSS item element.
+        :returns: The item element.
+        '''
+        self._extend_xml(item)
+        return item
+
+    def extend_jpcoar(self, item):
+        '''Add dc elements to a JPCOAR item. Alters the item itself.
+        :param item: A JPCOAR item element.
         :returns: The item element.
         '''
         self._extend_xml(item)

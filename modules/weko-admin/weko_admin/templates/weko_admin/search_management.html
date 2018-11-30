@@ -1,0 +1,218 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_SCHEMA_UI_BASE_TEMPLATE %}
+
+{%- block css %}
+{{ super() }}
+{% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+{% assets "weko_admin_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+{% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+{{ tabs_selector('search_management') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+<div id="search_management" class="container-fluid table-responsive">
+  <div ng-init="initData('{{setting_data}}')" ng-controller="searchManagementCtrl">
+    <div class="row">
+      <div class="col-sm-12 col-md-12 col-md-12">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h5><strong><p>{{_('Search Results Setting')}}</p></strong></h5>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              <div class="col-sm-12 col-md-12 col-md-12">
+                <table class="table table-bordered">
+                <tr>
+                  <td >
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                      <form class="form-inline">
+                        <div class="form-group">
+                          <label for="def_dis_num">{{_('Default Display Number :')}}</label>
+                          <select id="def_dis_num" ng-model="dataJson.dlt_dis_num_selected" class="form-control">
+                            <option ng-repeat="opt_num in dataJson.dlt_dis_num_options track by $index" value="[[opt_num.id]]">{{_('[[opt_num.contents]]')}}</option>
+                          </select>
+                        </div>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                 <tr>
+                  <td>
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                      <form class="form-inline">
+                        <div class="form-group">
+                          <label for="def_dis_sort_index">{{_('Default Display Sort (Index Search) :')}}</label>
+                          <select id="def_dis_sort_index" ng-model="dataJson.dlt_index_sort_selected" class="form-control">
+                            <option ng-repeat="opt_index_sort in dataJson.dlt_index_sort_options track by $index" value="[[opt_index_sort.id]]">{{_('[[opt_index_sort.contents]]')}}</option>
+                          </select>
+                        </div>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                 <tr>
+                  <td>
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                      <form class="form-inline">
+                        <div class="form-group">
+                          <label for="def_dis_sort_keywords">{{_('Default Display Sort (Keywords Search) :')}}</label>
+                          <select id="def_dis_sort_keywords" ng-model="dataJson.dlt_keyword_sort_selected" class="form-control">
+                            <option ng-repeat="opt_keyword_sort in dataJson.dlt_keyword_sort_options track by $index" value="[[opt_keyword_sort.id]]">{{_('[[opt_keyword_sort.contents]]')}}</option>
+                          </select>
+                        </div>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                 <tr>
+                  <td>
+                    <div class="row">
+                      <div class="col-sm-12 col-md-12 col-md-12">
+                        <span>{{_('Please set the sort of search results .')}}</span>
+                      </div>
+                    </div>
+                    <p>
+                    <div class="row">
+                      <div class="col-sm-5 col-md-5 col-md-5">
+                        <div class="col-sm-12 col-md-12 col-md-12">
+                          {{_('Deny')}}
+                          <br>
+                          <select multiple name="select_deny" id="select_deny" class="form-control" ng-model="selected_deny">
+                            <option ng-repeat="opt_sort_deny in dataJson.sort_options.deny track by $index" value="[[$index]]">{{_('[[opt_sort_deny.contents]]')}}</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-sm-2 col-md-2 col-md-2 text-center">
+                        &nbsp;<br>
+                        <button type="button" class="btn btn-default" ng-click="setAllow(selected_deny)">
+                          <span class="glyphicon glyphicon-arrow-right"></span>
+                        </button>
+                        <br>
+                        <br>
+                        <button type="button" class="btn btn-default" ng-click="setDeny(selected_allow)" >
+                          <span class="glyphicon glyphicon-arrow-left"></span>
+                        </button>
+                      </div>
+                      <div class="col-sm-5 col-md-5 col-md-5">
+                        <div class="col-sm-12 col-md-12 col-md-12">
+                          {{_('Allow')}}
+                          <br>
+                          <select multiple name="select_allow" id="select_allow" class="form-control" ng-model="selected_allow">
+                            <option ng-repeat="opt_sort_allow in dataJson.sort_options.allow track by $index" value="[[$index]]">{{_('[[opt_sort_allow.contents]]')}}</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-12 col-md-12 col-md-12">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h5><strong><p>{{_('Detail Search Conditions Setting')}}</p></strong></h5>
+          </div>
+          <div class="panel-body">
+            <div class="row">
+              <div class="col-sm-12 col-md-12 col-md-12 text-center">
+                <table class="table table-bordered">
+                <tr>
+                  <td rowspan="[[rowspanNum]]">
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                      {{_('Search Item')}}
+                    </div>
+                  </td>
+                  <td >
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                     {{_('Useable Item')}}
+                    </div>
+                  </td>
+                  <td >
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                      {{_('Condition Name')}}
+                    </div>
+                  </td>
+                  <td >
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                      {{_('JPCOAR Mapping')}}
+                    </div>
+                  </td>
+                  <td >
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                      {{_('Initial Condition')}}
+                    </div>
+                  </td>
+                </tr>
+                <tr ng-repeat = "option_condition in dataJson.detail_condition track by $index">
+                  <td >
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                        <label>
+                          <input type="checkbox" id="chk_useable_[[$index]]" value="option_condition.id" ng-model="option_condition.useable_status" >
+                        </label>
+                    </div>
+                  </td>
+                  <td >
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                      {{_('[[option_condition.contents]]')}}
+                    </div>
+                  </td>
+                  <td >
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                      <p ng-repeat = "option_condition_mapping in option_condition.mapping track by $index">[[option_condition_mapping]]</p>
+                    </div>
+                  </td>
+                  <td >
+                    <div class="col-sm-12 col-md-12 col-md-12">
+                        <label>
+                          <input type="checkbox" id="chk_init_[[$index]]" value="option_condition.id" ng-model="option_condition.default_display" >
+                        </label>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <button type="button" class="btn btn-default" ng-click="saveData()">
+        <span class="glyphicon glyphicon-save"></span>{{_('Save')}}
+      </button>
+    </div>
+  </div>
+</div>
+{%- endblock page_body_main %}

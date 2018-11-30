@@ -50,7 +50,8 @@ from webargs.flaskparser import use_kwargs
 from weko_index_tree.api import Indexes
 from werkzeug.utils import secure_filename
 from invenio_i18n.ext import current_i18n
-
+from . import config
+from weko_admin.models import SearchManagement as sm
 
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
@@ -256,3 +257,4 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             links=links,
             item_links_factory=self.links_factory,
         )
+

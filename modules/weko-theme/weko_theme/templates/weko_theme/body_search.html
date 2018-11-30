@@ -18,42 +18,43 @@
 # MA 02111-1307, USA.
 #}
 
-<form id="search-form" action="/search">
-  <div class="row">
-    <div class="col-sm-12 col-md-6 col-lg-6">
-      <div id="search_simple" class="input-group" id="simple-search-btn">
-        <input type="text" id="q" name="q" class="form-control" placeholder="{{_('Type and press enter to search')}}">
-        <input type="hidden" id="community" name="community" class="form-control" value="{{community_id}}">
-        <div class="input-group-btn">
-          <button id="top-search-btn" type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+  <div id="search_detail" ng-controller="searchDetailCtrl">
+    <form id="search-form" action="/search">
+    <div class="row">
+      <div class="col-sm-12 col-md-6 col-lg-6">
+        <div id="search_simple" class="input-group" id="simple-search-btn">
+          <input type="text" id="q" name="q" class="form-control" placeholder="{{_('Type and press enter to search')}}" ng-model="search_q">
+          <input type="hidden" id="community" name="community" class="form-control" value="{{community_id}}">
+          <div class="input-group-btn">
+            <button id="top-search-btn" type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <div class="row">
-    <div class="col-sm-12 col-md-6 col-lg-6">
-      <div id="search_type" class="form-inline">
-        <button id="detail_search_main" type="button" class="btn btn-info">
-          <i class="fa fa-search-plus"></i>
-          {{_('Detail search')}}
-        </button>
-        <label class="radio-inline">
-          <input type="radio" name="search_type" id="search_type_fulltext" value="0"> {{_('Full text')}}
-        </label>
-        <label class="radio-inline">
-          <input type="radio" name="search_type" id="search_type_keyword" value="1"> {{_('Keyword')}}
-        </label>
-      </div>
-    </div>
-  </div>
-<!--</form>-->
-<div id="search_detail">
-  <!--<form id="search_detail_form" action="/search">-->
     <div class="row">
-      <div id="search_detail_metadata" class="collapse col-sm-12 col-md-11 col-lg-11">
-          {% include "weko_theme/body_search_detail.html" %}
+      <div class="col-sm-12 col-md-6 col-lg-6">
+        <div id="search_type" class="form-inline">
+          <button id="detail_search_main" type="button" class="btn btn-info">
+            <i class="fa fa-search-plus"></i>
+            {{_('Detail search')}}
+          </button>
+          <label class="radio-inline">
+            <input type="radio" name="search_type" id="search_type_fulltext" value="0" ng-value="0" ng-model="search_type"> {{_('Full text')}}
+          </label>
+          <label class="radio-inline">
+            <input type="radio" name="search_type" id="search_type_keyword" value="1" ng-value="1" ng-model="search_type"> {{_('Keyword')}}
+          </label>
+        </div>
       </div>
     </div>
-  <!--</form>-->
-</div>
-</form>
+    </form>
+    <!--Detail search-->
+    <div>
+        <div class="row">
+          <div id="search_detail_metadata" class="collapse col-sm-12 col-md-12 col-lg-12">
+              {% include "weko_theme/body_search_detail_new.html" %}
+          </div>
+        </div>
+    </div>
+  </div>
+

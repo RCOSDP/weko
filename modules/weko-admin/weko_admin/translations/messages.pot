@@ -91,3 +91,71 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
+msgid "Title_Asc"
+msgstr ""
+
+msgid "Title_Desc"
+msgstr ""
+
+msgid "Creator_Asc"
+msgstr ""
+
+msgid "Creator_Desc"
+msgstr ""
+
+msgid "itemType_Desc"
+msgstr ""
+
+msgid "itemType_Asc"
+msgstr ""
+
+msgid "ID_Asc"
+msgstr ""
+
+msgid "ID_Desc"
+msgstr ""
+
+msgid "Update_Asc"
+msgstr ""
+
+msgid "Update_Desc"
+msgstr ""
+
+msgid "Create_Asc"
+msgstr ""
+
+msgid "Create_Desc"
+msgstr ""
+
+msgid "Date_of_Issued_Asc"
+msgstr ""
+
+msgid "Date_of_Issued_Desc"
+msgstr ""
+
+msgid "Custom_Asc"
+msgstr ""
+
+msgid "Custom_Desc"
+msgstr ""
+
+msgid "Search Results Setting"
+msgstr ""
+
+msgid "Default Display Number"
+msgstr ""
+
+msgid "Default Display Sort (Index Search)"
+msgstr ""
+
+msgid "Default Display Sort (Keywords Search)"
+msgstr ""
+
+msgid "Please set the sort of search results ."
+msgstr ""
+
+msgid "Deny"
+msgstr ""
+
+msgid "Allow "
+msgstr ""

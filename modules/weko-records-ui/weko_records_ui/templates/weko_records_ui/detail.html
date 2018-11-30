@@ -27,6 +27,7 @@
   {{ super() }}
   {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 <!-- start demo block-->
@@ -77,10 +78,10 @@
     </div>
   </div>
   <div class="row">
-    <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
+    <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
       {% include "weko_theme/body_index.html" %}
     </div>
-    <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}} m-top-20">
+    <div id="detail-item" class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}} m-top-20">
       {% include "weko_records_ui/body_contents.html" %}
     </div>
   </div>

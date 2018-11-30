@@ -37,6 +37,10 @@ from lxml import etree
 from feedgen.compat import string_types
 from feedgen.util import ensure_format, formatRFC2822
 
+from weko_schema_ui.utils import dumps_etree
+
+
+
 class WekoFeedEntry(FeedEntry):
 
     def __init__(self):
@@ -71,6 +75,11 @@ class WekoFeedEntry(FeedEntry):
         self.__rss_pubDate = None
         self.__rss_source = None
         self.__rss_title = None
+        self.__rss_itemUrl = None
+        self.__rss_seeAlso = None
+
+        # JPCOAR
+        self.__jpcoar_itemData = None
 
         # Extension list:
         self.__extensions = {}
@@ -213,6 +222,10 @@ class WekoFeedEntry(FeedEntry):
     def rss_entry(self, extensions=True):
         '''Create a RSS item and return it.'''
         entry = etree.Element('item')
+        if self.__rss_itemUrl:
+            entry.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
+                self.__rss_itemUrl
+
         if not (self.__rss_title or
                 self.__rss_description or
                 self.__rss_content):
@@ -223,6 +236,11 @@ class WekoFeedEntry(FeedEntry):
         if self.__rss_link:
             link = etree.SubElement(entry, 'link')
             link.text = self.__rss_link
+        if self.__rss_seeAlso:
+            seeAlso = etree.SubElement(entry, '{http://www.w3.org/2000/01/rdf-schema#}seeAlso')
+            seeAlso.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource'] = \
+                self.__rss_seeAlso
+
         if self.__rss_description and self.__rss_content:
             description = etree.SubElement(entry, 'description')
             description.text = self.__rss_description
@@ -275,6 +293,23 @@ class WekoFeedEntry(FeedEntry):
 
         return entry
 
+    def jpcoar_entry(self, extensions=True):
+        '''Create a JPCOAR item and return it.'''
+        des = etree.Element('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description')
+        des.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
+            self.__jpcoar_itemUrl
+
+        if self.__jpcoar_itemData:
+            jpcoar_tree = dumps_etree(self.__jpcoar_itemData, 'jpcoar')
+            des.append(jpcoar_tree)
+
+        if extensions:
+            for ext in self.__extensions.values() or []:
+                if ext.get('jpcoar'):
+                    ext['inst'].extend_rss(des)
+
+        return des
+
     def title(self, title=None):
         '''Get or set the title value of the entry. It should contain a human
         readable title for the entry. Title is mandatory for both ATOM and RSS
@@ -286,6 +321,37 @@ class WekoFeedEntry(FeedEntry):
             self.__atom_title = title
             self.__rss_title = title
         return self.__atom_title
+
+    def itemUrl(self, itemUrl=None):
+        '''Get or set the item url value of the entry. This is an RSS only
+        field.
+        :param itemUrl: The item url of the entry.
+        :returns: The item's url.
+        '''
+        if itemUrl is not None:
+            self.__rss_itemUrl = itemUrl
+            self.__jpcoar_itemUrl = itemUrl
+        return self.__rss_itemUrl
+
+    def itemData(self, itemData=None):
+        '''Get or set the item metadata of the entry. This is an JPCOAR only
+        field.
+        :param itemData: The item data of the entry.
+        :returns: The item's data.
+        '''
+        if itemData is not None:
+            self.__jpcoar_itemData = itemData
+        return self.__jpcoar_itemData
+
+    def seeAlso(self, seeAlso=None):
+        '''Get or set the oai url value of the entry. This is an RSS only
+        field.
+        :param seeAlso: The oai url of the entry.
+        :returns: The oai's url.
+        '''
+        if seeAlso is not None:
+            self.__rss_seeAlso = seeAlso
+        return self.__rss_seeAlso
 
     def id(self, id=None):
         '''Get or set the entry id which identifies the entry using a
@@ -681,12 +747,13 @@ class WekoFeedEntry(FeedEntry):
         self.register_extension(name, ext, atom, rss)
 
     def register_extension(self, namespace, extension_class_entry=None,
-                           atom=True, rss=True):
+                           atom=True, rss=True, jpcoar=True):
         '''Register a specific extension by classes to a namespace.
         :param namespace: namespace for the extension
         :param extension_class_entry: Class of the entry extension to load.
         :param atom: If the extension should be used for ATOM feeds.
         :param rss: If the extension should be used for RSS feeds.
+        :param jpcoar: If the extension should be used for JPCOAR feeds.
         '''
         # Check loaded extensions
         # `load_extension` ignores the "Extension" suffix.
@@ -705,5 +772,6 @@ class WekoFeedEntry(FeedEntry):
                 'inst': extinst,
                 'extension_class_entry': extension_class_entry,
                 'atom': atom,
-                'rss': rss
+                'rss': rss,
+                'jpcoar': jpcoar
                 }

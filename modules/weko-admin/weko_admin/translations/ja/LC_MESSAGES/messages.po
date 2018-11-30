@@ -92,3 +92,92 @@ msgstr "キャンセル"
 msgid "Update"
 msgstr "アップデート"
 
+msgid "Title_Asc"
+msgstr "タイトル（昇順）"
+
+msgid "Title_Desc"
+msgstr "タイトル（降順）"
+
+msgid "Creator_Asc"
+msgstr "登録者（昇順）"
+
+msgid "Creator_Desc"
+msgstr "登録者（降順）"
+
+msgid "itemType_Desc"
+msgstr "アイテムタイプ（昇順）"
+
+msgid "itemType_Asc"
+msgstr "アイテムタイプ（降順）"
+
+msgid "ID_Asc"
+msgstr "ID（昇順）"
+
+msgid "ID_Desc"
+msgstr "ID（降順）"
+
+msgid "Update_Asc"
+msgstr "更新日時（昇順）"
+
+msgid "Update_Desc"
+msgstr "更新日時（降順）"
+
+msgid "Create_Asc"
+msgstr "作成日時（昇順）"
+
+msgid "Create_Desc"
+msgstr "作成日時（降順）"
+
+msgid "Date_of_Issued_Asc"
+msgstr "出版年（昇順）"
+
+msgid "Date_of_Issued_Desc"
+msgstr "出版年（降順）"
+
+msgid "Custom_Asc"
+msgstr "カスタム（昇順）"
+
+msgid "Custom_Desc"
+msgstr "カスタム（降順）"
+
+msgid "Search Results Setting"
+msgstr "検索結果表示設定"
+
+msgid "Default Display Number :"
+msgstr "デフォルト表示件数："
+
+msgid "Default Display Sort (Index Search) :"
+msgstr "デフォルトソート条件（インデクス検索）："
+
+msgid "Default Display Sort (Keywords Search) :"
+msgstr "デフォルトソート条件（キーワード検索）："
+
+msgid "Please set the sort of search results ."
+msgstr "一覧に表示するソート条件を設定してください"
+
+msgid "Deny"
+msgstr "表示しない"
+
+msgid "Allow"
+msgstr "表示する"
+
+msgid "Detail Search Conditions Setting"
+msgstr "詳細検索条件設定"
+
+msgid "Search Item"
+msgstr "項目"
+
+msgid "Useable Item"
+msgstr "使用項目"
+
+msgid "Condition Name"
+msgstr "検索条件"
+
+msgid "Initial Condition"
+msgstr "初期選択"
+
+msgid "JPCOAR Mapping"
+msgstr "JPCOAR マッピング"
+
+msgid "Save"
+msgstr "保存"

@@ -55,7 +55,6 @@ def index():
     ctx = {'community': None}
     community_id = ""
     if 'community' in getargs:
-        current_app.logger.debug(request.args.get('community'))
         activities = activity.get_activity_list(request.args.get('community'))
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}

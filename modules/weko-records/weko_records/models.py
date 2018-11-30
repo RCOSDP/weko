@@ -433,9 +433,10 @@ class ItemTypeProperty(db.Model, Timestamp):
 
     delflg = db.Column(db.Boolean(name='delFlg'),
                        default=False, nullable=False)
-    """record delete flag
-    """
+    """record delete flag"""
 
+    sort = db.Column(db.Integer, nullable=True, unique=True)
+    """Sort number of itemtype property."""
 
 class SiteLicenseInfo(db.Model, Timestamp):
     """Represent a SiteLicenseInfo data.

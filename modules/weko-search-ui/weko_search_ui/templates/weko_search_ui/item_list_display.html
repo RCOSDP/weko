@@ -33,7 +33,7 @@
    {%- else %}
      search-endpoint="{{ config.SEARCH_UI_SEARCH_API }}"
    {%- endif %}
-   search-extra-params='{% if search_extra_params %}{{search_extra_params|tojson}}{% endif %}'
+   search-extra-params='{"size":100}'
    search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
    search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
   >

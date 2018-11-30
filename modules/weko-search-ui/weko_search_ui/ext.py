@@ -24,7 +24,6 @@ from . import config
 from .views import blueprint
 from .rest import create_blueprint
 
-
 class WekoSearchUI(object):
     """weko-search-ui extension."""
 
@@ -35,6 +34,7 @@ class WekoSearchUI(object):
         """
         if app:
             self.init_app(app)
+
 
     def init_app(self, app):
         """Flask application initialization.
@@ -77,6 +77,7 @@ class WekoSearchUI(object):
                 config,
                 'WEKO_SEARCH_UI_JSTEMPLATE_COUNT'),
         )
+
         for k in dir(config):
             if k.startswith('WEKO_SEARCH_UI_'):
                 app.config.setdefault(k, getattr(config, k))

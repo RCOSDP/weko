@@ -24,6 +24,8 @@
 from flask import Blueprint, current_app, render_template, request, flash
 from weko_index_tree.models import IndexStyle
 from flask_login import login_required
+from weko_search_ui.api import get_search_detail_keyword
+
 
 blueprint = Blueprint(
     'weko_theme',
@@ -48,10 +50,14 @@ def index():
     # Get index style
     style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
     width = style.width if style else '3'
+    height = style.height if style else None
+
+    detail_condition = get_search_detail_keyword('')
 
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
-        community_id =community_id, width=width, **ctx)
+        community_id =community_id, detail_condition=detail_condition, width=width, height=height, **ctx)
+
 
 
 @blueprint.route('/edit')
@@ -60,6 +66,7 @@ def edit():
     return render_template(
         current_app.config['BASE_EDIT_TEMPLATE'],
     )
+
 
 @blueprint.route("/item_management")
 @login_required

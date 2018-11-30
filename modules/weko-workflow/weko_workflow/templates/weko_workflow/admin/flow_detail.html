@@ -21,9 +21,9 @@
 {%- extends admin_base_template %}
 
 {%- block body %}
-<div class="container">
-  <div class="row">
-    <div class="col-sm-5">
+<div class="row">
+  <div class="col-sm-offset-2">
+    <div class="col-sm-4">
       <div class="form-horizontal">
         <div class="form-group" id="div_flow_name">
           <label for="txt_flow_name" class="col-sm-4 control-label">{{_('Flow Name')}}</label>
@@ -33,7 +33,7 @@
         </div>
       </div>
     </div>
-    <div class="col-sm-7">
+    <div class="col-sm-4">
       <div class="form-horizontal">
         <div class="form-group">
           <label class="col-sm-3 control-label">{{_('Flow Update')}}</label>
@@ -74,47 +74,18 @@
       </div>
     </div>
   </div>
-  <div class="row form-group">
-    <div class="col-sm-12">
-      <label>{{_('Activity List')}}</label>
-      <table class="table table-striped table-bordered">
-      <thead>
-        <tr>
-          <th>{{_('No.')}}</th>
-          <th>{{_('Activity Query')}}</th>
-          <th>{{_('Activity Status')}}</th>
-          <th>{{_('Activity Update')}}</th>
-          <th>{{_('Change Order')}}</th>
-        </tr>
-      </thead>
-      <tbody>
-      {%- if flows %}
-        {%- for flow in flows %}
-          <tr>
-            <th scope="row">{{loop.index}}</th>
-            <td>{{flow.flow_name}}</td>
-            <td>{{_(flow.flow_status.value)}}</td>
-            <td>{{flow.updated.date()}}</td>
-            <td>
-              <div class="btn-group" role="group" aria-label="入替">
-                <button type="button" class="btn btn-default sortable_up" {%- if loop.first %}disabled{%- endif %}>↑</button>
-                <button type="button" class="btn btn-default sortable_down" {%- if loop.last %}disabled{%- endif %}>↓</button>
-              </div>
-            </td>
-          </tr>
-        {%- endfor %}
-      {%- endif %}
-      </tbody>
-    </table>
-    <button type="button" class="btn btn-primary pull-right" id="btn_new_query" {%- if flow_id == '0' %} disabled {% endif %}>
-      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Save Query')}}</button>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-sm-12">
-      <label>{{_('Action List')}}</label>
-      <button type="button" class="btn btn-primary pull-right media-heading" id="btn_new_transition" {%- if flow_id == '0' %} disabled {% endif %}>
-        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Save Transition')}}</button>
+</div>
+<div class="row">
+  <div class="col-sm-offset-2 col-sm-8"><hr></div>
+</div>
+<div class="row">
+  <div class="col-sm-offset-2 col-sm-8">
+    <label>{{_('Action List')}}</label><br>
+    <a href="{{url_for('flowsetting.action')}}" class="btn btn-primary hide" id="btn_more_action">
+      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('More Action')}}</a>
+    <button class="btn btn-primary media-heading" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
+      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('More Action')}}</button>
+    <div class="table-responsive">
       <table class="table table-striped table-bordered table-hover">
         <thead>
           <tr>
@@ -182,19 +153,15 @@
         {%- endif %}
         </tbody>
       </table>
-      <a href="{{url_for('flowsetting.action')}}" class="btn btn-primary pull-right hide" id="btn_more_action">
-        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('More Action')}}</a>
-      <button class="btn btn-primary pull-right" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
-        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('More Action')}}</button>
     </div>
   </div>
-  <div class="row">
-    <div class="col-sm-10">
-      <button type="button" class="btn btn-primary" id="btn_back">
-        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
-      <button type="button" class="btn btn-primary" id="btn_submit" data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
-        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Save Flow')}}</button>
-    </div>
+</div>
+<div class="row">
+  <div class="col-sm-offset-2 col-sm-8">
+    <button type="button" class="btn btn-primary" id="btn_submit" data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
+      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Save Flow')}}</button>
+    <button type="button" class="btn btn-primary" id="btn_back">
+      <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
   </div>
 </div>
 {%- endblock %}

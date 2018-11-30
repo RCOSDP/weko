@@ -23,7 +23,7 @@
 from functools import wraps
 from datetime import date, datetime
 
-from flask import current_app
+from flask import current_app, flash
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_i18n.ext import current_i18n

@@ -1,0 +1,96 @@
+{# # This file is part of WEKO3. # Copyright (C) 2017 National Institute of Informatics. # # WEKO3 is free software; you can redistribute it # and/or modify it under the terms of the GNU General Public License as # published by the Free Software Foundation;
+either version 2 of the # License, or (at your option) any later version. # # WEKO3 is distributed in the hope that it will be # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU # General Public License for more details. # # You should have received a copy of the GNU General Public License # along with WEKO3; if not, write to the # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, # MA 02111-1307,
+USA. #}
+<div ng-init="initData('{{detail_condition}}')" class="panel panel-default">
+    <div class="panel-body">
+        <div ng-repeat=" sub_data in condition_data track by $index" class="row">
+            <div ng-if="!$first" class="col-sm-1 text-center">AND</div>
+            <div ng-if="$first" class="col-sm-1"></div>
+            <!--<div class="col-sm-1"></div>-->
+            <div class="col-sm-10">
+              <form class="form-horizontal">
+                <div class="form-group">
+                  <label for="sele_[[$index]]" class="col-sm-2 control-label">
+                    <select ng-model="sub_data.selected_key" class="form-control" ng-change="change_search_key($index,sub_data.selected_key)">
+                      <option ng-repeat="key_option in sub_data.key_options track by $index" value="[[key_option.id]]" ng-disabled="key_option.disabled_flg">{{_('[[key_option.contents]]')}} </option>
+                    </select>
+                  </label>
+                  <div class="col-sm-10">
+                    <!--input_type is text sta-->
+                    <input ng-if="sub_data.key_value.inputType=='text'" type="text" class="form-control" id="sele_[[$index]]" ng-model="sub_data.key_value.inputVal" placeholder="">
+                    <!--input_type is text end-->
+                    <!--input_type is sele sta-->
+                    <select ng-if="sub_data.key_value.inputType=='selectbox'" id="sele_[[$index]]" ng-model="sub_data.key_value.inputVal" class="form-control">
+                      <option ng-repeat="sub_sel_option in sub_data.key_value.options track by $index" value="[[sub_sel_option.id]]">{{_('[[sub_sel_option.contents]]')}}</option>
+                    </select>
+                    <!--input_type is sele end-->
+                    <!--input_type is checkbox sta-->
+                    <div ng-if="sub_data.key_value.inputType=='checkbox_list'" id="sele_[[$index]]" class="checkbox">
+                      <label ng-repeat="sub_check in sub_data.key_value.check_val track by $index">
+                        <input type="checkbox" id="[[sub_data.key_value.id]]" value="[[sub_check.id]]" ng-model="sub_check.checkStus">{{_('[[sub_check.contents]]')}}　
+                      </label>
+                    </div>
+                    <!--input_type is checkbox end-->
+                    <!--input_type is radio sta-->
+                    <div ng-if="sub_data.key_value.inputType=='radio_list'" class="radio">
+                      <label ng-repeat="sub_radio in sub_data.key_value.radio_val track by $index" class="radio-inline">
+                        <input type="radio" name="rights"  value="[[sub_radio.id]]" ng-model="sub_data.key_value.inputVal">{{_('[[sub_radio.contents]]')}}
+                      </label>
+                    </div>
+                    <!--input_type is radio end-->
+                    <!--input_type is daterange sta-->
+                    <div ng-if="sub_data.key_value.inputType=='dateRange'" class="col-sm-3">
+                      <div class="row input-daterange input-group">
+                        <input type="text" class="input-sm form-control" name="[[sub_data.key_value.id]]_from" data-provide="datepicker"
+                               id="[[sub_data.key_value.id]]_from" placeholder="yyyymmdd" data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_from"/>
+                        <span class="input-group-addon">To</span>
+                        <input type="text" class="input-sm form-control" name="[[sub_data.key_value.id]]_to" data-provide="datepicker"
+                               id="[[sub_data.key_value.id]]_to" placeholder="yyyymmdd" data-date-format="yyyymmdd" ng-model="sub_data.key_value.inputVal_to"/>
+                      </div>
+                    </div>
+                    <!--input_type is daterange end-->
+                  </div>
+                </div>
+                <!--input_type is schema or attribute sta-->
+                <div ng-if="sub_data.key_value.mappingFlg" class="form-group">
+                  <div class="col-sm-offset-2 col-sm-10">
+                    <div class="panel panel-default">
+                      <div class="panel-body">
+                        <div class="checkbox">
+                          <label ng-repeat="sub_attr in sub_data.key_value.sche_or_attr track by $index">
+                            <input type="checkbox" id="[[sub_attr.id]]" name="[[sub_data.key_value.id]]" placeholder="" value="[[sub_attr.id]]" ng-model="sub_attr.checkStus">{{_('[[sub_attr.contents]]')}}　
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!--input_type is schema or attribute end-->
+              </form>
+            </div>
+            <div class="col-sm-1 text-center">
+              <button ng-if="!$first" type="button" class="btn btn-danger" ng-click="delete_search_key($index)">
+                <span class="glyphicon glyphicon-remove"></span>
+              </button>
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-sm-10">
+            </div>
+            <div class="col-sm-2">
+                <button id="add-condition-btn" type="button" class="btn btn-primary btn-block" ng-click="add_search_key()" ng-disabled="condition_data.length==detail_search_key.length">{{_('Add Search Condition')}}</button>
+            </div>
+        </div>
+      <br>
+        <div class="row">
+            <div class="col-sm-3">
+                <button id="detail-search-btn" type="submit" class="btn btn-primary btn-block" ng-click="detail_search()">{{_('DetailSearch')}}</button>
+            </div>
+            <div class="col-sm-3">
+                <button id="clear-search-btn" type="button" class="btn btn-secondary btn-block" ng-click="detail_search_clear()">{{_('Clear')}}</button>
+            </div>
+        </div>
+    </div>
+</div>

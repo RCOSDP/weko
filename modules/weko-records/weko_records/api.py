@@ -22,7 +22,7 @@
 
 from copy import deepcopy
 
-from flask import current_app
+from flask import current_app, flash
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_records.api import Record
@@ -33,7 +33,7 @@ from invenio_records.signals import (
     before_record_revert, before_record_update)
 from jsonpatch import apply_patch
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import desc
+from sqlalchemy.sql.expression import desc, asc
 from werkzeug.local import LocalProxy
 
 from .models import (
@@ -821,6 +821,7 @@ class ItemTypeProps(RecordBase):
                 query = query.filter_by(delflg=False)  # noqa
             else:
                 query = ItemTypeProperty.query.filter_by(delflg=False)
+
             return query.all()
 
     @property

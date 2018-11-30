@@ -66,3 +66,93 @@ msgstr "12 hours"
 #: weko_admin/views.py:108
 msgid "1440 mins"
 msgstr "1 day"
+
+msgid "Title_Asc"
+msgstr "Title (Asc)"
+
+msgid "Title_Desc"
+msgstr "Title (Desc)"
+
+msgid "Creator_Asc"
+msgstr "Creator (Asc)"
+
+msgid "Creator_Desc"
+msgstr "Creator (Desc)"
+
+msgid "ItemType_Desc"
+msgstr "Item Type (Desc)"
+
+msgid "ItemType_Asc"
+msgstr "Item Type (Asc)"
+
+msgid "ID_Asc"
+msgstr "ID (Asc)"
+
+msgid "ID_Desc"
+msgstr "ID (Desc)"
+
+msgid "Update_Asc"
+msgstr "Update (Asc)"
+
+msgid "Update_Desc"
+msgstr "Update (Desc)"
+
+msgid "Create_Asc"
+msgstr "Create (Asc)"
+
+msgid "Create_Desc"
+msgstr "Create (Desc)"
+
+msgid "Date_of_Issued_Asc"
+msgstr "Date Of Issued (Asc)"
+
+msgid "Date_of_Issued_Desc"
+msgstr "Date Of Issued (Desc)"
+
+msgid "Custom_Asc"
+msgstr "Custom (Asc)"
+
+msgid "Custom_Desc"
+msgstr "Custom (Desc)"
+
+msgid "Search Results Setting"
+msgstr "Search Results Setting"
+
+msgid "Default Display Number :"
+msgstr "Default Display Number："
+
+msgid "Default Display Sort (Index Search) :"
+msgstr "Default Display Sort (By Index)："
+
+msgid "Default Display Sort (Keywords Search)"
+msgstr "Default Display Sort (By Keywords)"
+
+msgid "Please set the sort of search results ."
+msgstr "Please set the sort of search results ."
+
+msgid "Deny"
+msgstr "Deny"
+
+msgid "Allow"
+msgstr "Allow"
+
+msgid "Detail Search Conditions Setting"
+msgstr "Detail Search Conditions Setting"
+
+msgid "Search Item"
+msgstr "Item"
+
+msgid "Useable Item"
+msgstr "Useable Item"
+
+msgid "Condition Name"
+msgstr "Condition Name"
+
+msgid "Initial Condition"
+msgstr "Initial Condition"
+
+msgid "JPCOAR Mapping"
+msgstr "JPCOAR Mapping"
+
+msgid "Save"
+msgstr "Save"

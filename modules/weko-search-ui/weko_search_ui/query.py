@@ -33,6 +33,7 @@ from werkzeug.datastructures import MultiDict
 
 from .permissions import search_permission
 from invenio_communities.models import Community
+from .api import SearchSetting
 
 
 def get_item_type_aggs(search_index):
@@ -429,11 +430,24 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     search_index = search._index[0]
     search, urlkwargs = default_facets_factory(search, search_index)
     search, sortkwargs = default_sorter_factory(search, search_index)
+
     for key, value in sortkwargs.items():
         urlkwargs.add(key, value)
 
-    urlkwargs.add('q', query_q)
+    # defalult sort
+    if not sortkwargs:
+        sort_key, sort = SearchSetting.get_default_sort(current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
+        sort_obj=dict()
+        key_fileds = SearchSetting.get_sort_key(sort_key)
+        if sort=='desc':
+            sort_obj[key_fileds] = dict(order='desc')
+            sort_key = '-'+sort_key
+        else:
+            sort_obj[key_fileds] = dict(order='asc')
+        search._sort.append(sort_obj)
+        urlkwargs.add('sort',sort_key)
 
+    urlkwargs.add('q', query_q)
     return search, urlkwargs
 
 
@@ -552,49 +566,52 @@ def item_path_search_factory(self, search, index_id=None):
 
     from invenio_records_rest.sorter import default_sorter_factory
     search_index = search._index[0]
-
     search, sortkwargs = default_sorter_factory(search, search_index)
 
     for key, value in sortkwargs.items():
         # set custom sort option
-        if value == 'custom_sort':
+        if 'custom_sort' in value:
             ind_id = request.values.get('q', '')
-            factor_obj = Indexes.get_item_sort(ind_id)
-            script_str = {
-                "_script": {
-                    "script": "factor.get(doc[\"control_number\"].value)&&factor.get(doc[\"control_number\"].value) !=0 ? factor.get(doc[\"control_number\"].value):Integer.MAX_VALUE",
-                    "type": "number",
-                    "params": {
-                        "factor": factor_obj
-                    },
-                    "order": "asc"
-                }
-            }
-            default_sort = {'_score': {'order': 'desc'}}
-            search._sort=[]
+            search._sort = []
+            if value == 'custom_sort' :
+                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, 'asc')
+            else:
+                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, 'desc')
+
             search._sort.append(script_str)
             search._sort.append(default_sort)
-        if value =="-custom_sort":
-            ind_id = request.values.get('q', '')
-            factor_obj = Indexes.get_item_sort(ind_id)
-            script_str = {
-                "_script": {
-                    "script": "factor.get(doc[\"control_number\"].value)&&factor.get(doc[\"control_number\"].value) !=0 ? factor.get(doc[\"control_number\"].value):0",
-                    "type": "number",
-                    "params": {
-                        "factor": factor_obj
-                    },
-                    "order": "desc"
-                }
-            }
-            default_sort = {'_score': {'order': 'asc'}}
+
+        # set selectbox
+        urlkwargs.add(key, value)
+        # defalult sort
+    # default sort
+    if not sortkwargs:
+        sort_key, sort = SearchSetting.get_default_sort(current_app.config['WEKO_SEARCH_TYPE_INDEX'])
+        sort_obj = dict()
+        key_fileds = SearchSetting.get_sort_key(sort_key)
+        if 'custom_sort' not in sort_key:
+            if sort == 'desc':
+                sort_obj[key_fileds] = dict(order='desc')
+                sort_key = '-' + sort_key
+            else:
+                sort_obj[key_fileds] = dict(order='asc')
+            search._sort.append(sort_obj)
+        else:
+            if sort == 'desc':
+                ind_id = request.values.get('q', '')
+                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, 'desc')
+                sort_key = '-' + sort_key
+            else:
+                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, 'asc')
+
             search._sort = []
             search._sort.append(script_str)
             search._sort.append(default_sort)
-        # set selectbox
-        urlkwargs.add(key, value)
+
+        urlkwargs.add('sort', sort_key)
 
     urlkwargs.add('q', query_q)
+
     return search, urlkwargs
 
 
