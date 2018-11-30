@@ -33,3 +33,13 @@ WEKO_ITEMTYPES_UI_MAPPING_TEMPLATE = 'weko_itemtypes_ui/create_mapping.html'
 
 WEKO_ITEMTYPES_UI_ERROR_TEMPLATE = 'weko_itemtypes_ui/error.html'
 """Error template for the item type page."""
+
+WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
+    '1': {'name': 'テキスト', 'value': 'text'},
+    '2': {'name': 'テキストエリア', 'value': 'textarea'},
+    '3': {'name': 'チェックボックス', 'value': 'checkboxes'},
+    '4': {'name': '選択式(ラジオ)', 'value': 'radios'},
+    '5': {'name': '選択式(プルダウン)', 'value': 'select'},
+    '6': {'name': '日付', 'value': 'datetime'}
+}
+"""Default properties of the item type."""

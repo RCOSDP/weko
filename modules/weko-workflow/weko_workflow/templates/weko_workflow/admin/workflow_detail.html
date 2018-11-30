@@ -21,13 +21,13 @@
 {%- extends admin_base_template %}
 
 {%- block body %}
-<div class="container">
-  <div class="row">
-    <div class="col-sm-12">
-      <div class="form-horizontal">
-        <div class="form-group">
-          <label for="txt_workflow_name" class="col-sm-4 control-label">{{_('WorkFlow')}}</label>
-          <div class="col-sm-8">
+<div class="row">
+  <div class="col-sm-offset-2 col-sm-8">
+    <div class="form-horizontal">
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <label for="txt_workflow_name" class="col-sm-2 control-label">{{_('WorkFlow')}}</label>
+          <div class="col-sm-6">
             <input type="text" class="form-control" id="txt_workflow_name" name="workflow_name" value="{{workflow.flows_name if workflow}}">
             <input type="hidden" id="_id" value="{{workflow.id if workflow}}">
             {%- if workflow %}
@@ -37,9 +37,11 @@
             {%- endif%}
           </div>
         </div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="txt_flow_name">{{_('Flow')}}</label>
-          <div class="col-sm-8">
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <label class="col-sm-2 control-label" for="txt_flow_name">{{_('Flow')}}</label>
+          <div class="col-sm-6">
             {%- if flow_list %}
             <select class="form-control" id="txt_flow_name">
               {%- for flow in flow_list if flow %}
@@ -49,9 +51,11 @@
             {%- endif %}
           </div>
         </div>
-        <div class="form-group">
-          <label class="col-sm-4 control-label" for="txt_itemtype">{{_('ItemType')}}</label>
-          <div class="col-sm-8">
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <label class="col-sm-2 control-label" for="txt_itemtype">{{_('ItemType')}}</label>
+          <div class="col-sm-6">
             <select class="form-control" id="txt_itemtype">
             {%- if itemtype_list %}
               {%- for itemtype in itemtype_list if itemtype %}
@@ -63,16 +67,20 @@
             </select>
           </div>
         </div>
-        <div class="form-group hide">
-          <label class="col-sm-4 control-label">{{_('Next Flow')}}</label>
-          <div class="col-sm-8">
+      </div>
+      <div class="form-group hide">
+        <div class="col-sm-offset-2">
+          <label class="col-sm-2 control-label">{{_('Next Flow')}}</label>
+          <div class="col-sm-6">
             <select class="form-control">
               <option value="0"></option>
             </select>
           </div>
         </div>
-        <div class="form-group">
-          <div class="col-sm-offset-4 col-sm-8">
+      </div>
+      <div class="form-group">
+        <div class="col-sm-offset-2">
+          <div class="col-sm-offset-2 col-sm-6">
             <button type="button" class="btn btn-primary" id="btn_create">
               <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Save WorkFlow')}}</button>
             {%- if workflow %}

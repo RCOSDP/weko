@@ -28,6 +28,7 @@ from invenio_records_ui.utils import obj_or_import_string
 from invenio_records_ui.signals import record_viewed
 from weko_index_tree.models import IndexStyle
 from .permissions import check_created_id
+from weko_search_ui.api import get_search_detail_keyword
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -262,6 +263,9 @@ def default_view_method(pid, record, template=None, **kwargs):
     # Get index style
     style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
     width = style.width if style else '3'
+    height = style.height if style else None
+
+    detail_condition=get_search_detail_keyword('')
 
     return render_template(
         template,
@@ -269,6 +273,8 @@ def default_view_method(pid, record, template=None, **kwargs):
         record=record,
         community_id=community_id,
         width=width,
+        detail_condition=detail_condition,
+        height=height,
         **ctx,
         **kwargs
     )

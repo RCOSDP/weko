@@ -33,9 +33,9 @@ from .dc import DcWekoBaseExtension, DcWekoEntryExtension
 from .utils import get_mapping, get_metadata_from_map
 from weko_index_tree.api import Index
 
-class AtomSerializer(JSONSerializer):
+class RssSerializer(JSONSerializer):
     """
-    Serialize search result to atom format.
+    Serialize search result to rss format.
     """
 
     def serialize_search(self, pid_fetcher, search_result, links=None,
@@ -79,11 +79,8 @@ class AtomSerializer(JSONSerializer):
         # Set link
         fg.link(href=request.url)
 
-        # Set id
-        fg.id(request.url)
-
-        # Set updated
-        fg.updated(datetime.now(pytz.utc))
+        # Set date
+        fg.dc.dc_date(str(datetime.now(pytz.utc)))
 
         # Set totalResults
         _totalResults = search_result['hits']['total']
@@ -103,6 +100,10 @@ class AtomSerializer(JSONSerializer):
         _itemPerPage = len(search_result['hits']['hits'])
         fg.opensearch.itemsPerPage(str(_itemPerPage))
 
+        # Set Request URL
+        if int(_totalResults) != 0:
+            fg.requestUrl(request.url)
+
         # Set language
         request_lang = request.args.get('lang')
         if request_lang:
@@ -111,8 +112,9 @@ class AtomSerializer(JSONSerializer):
             fg.language('en')
 
         if not _keywords and not _indexId:
-            return fg.atom_str(pretty=True)
+            return fg.rss_str(pretty=True)
 
+        rss_items = []
         jpcoar_map = {}
         for hit in search_result['hits']['hits']:
 
@@ -161,11 +163,14 @@ class AtomSerializer(JSONSerializer):
 
             # Set oai
             _oai = hit['_source']['_oai']['id']
-            item_url = request.host_url + 'oai2d?verb=GetRecord&metadataPrefix=jpcoar&identifier=' + _oai
-            fe.link(href=item_url, rel='alternate', type='text/xml')
+            oai_url = request.host_url + 'oai2d?verb=GetRecord&metadataPrefix=jpcoar&identifier=' + _oai
+            fe.seeAlso(oai_url)
 
-            # Set id
-            fe.id(item_url)
+            # Set item url
+            fe.itemUrl(item_url)
+
+            # Add to channel item list
+            rss_items.append(item_url)
 
             # Set weko id
             fe.dc.dc_identifier(_pid)
@@ -228,7 +233,6 @@ class AtomSerializer(JSONSerializer):
                             fe.dc.dc_identifier(uri_list, False)
 
             # Set author info
-            request_lang = request.args.get('lang')
             # _creatorName_attr_lang = 'creator.creatorName.@attributes.xml:lang'
             _creatorName_value = 'creator.creatorName.@value'
             if _creatorName_value in item_map:
@@ -239,8 +243,7 @@ class AtomSerializer(JSONSerializer):
                     creator_metadata = get_metadata_from_map(
                         item_metadata[item_id], item_id)
 
-                    creator_names = creator_metadata[
-                        item_map[_creatorName_value]]
+                    creator_names = creator_metadata[item_map[_creatorName_value]]
 
                     _creatorName_attr_lang = item_id + '.' + 'creatorNameLang'
                     creator_name_langs = creator_metadata[
@@ -339,6 +342,7 @@ class AtomSerializer(JSONSerializer):
                             fe.prism.publicationName(source_titles)
 
             # Set sourceIdentifier
+            _sourceIdentifier_attr_type = 'sourceIdentifier.@attributes.identifierType'
             _sourceIdentifier_value = 'sourceIdentifier.@value'
             if _sourceIdentifier_value in item_map:
                 item_id = item_map[_sourceIdentifier_value].split('.')[0]
@@ -349,13 +353,19 @@ class AtomSerializer(JSONSerializer):
                         item_metadata[item_id], item_id)
 
                     source_identifiers = sourceIdentifier_metadata[
+                        item_map[_sourceIdentifier_attr_type]]
+
+                    source_identifier_types = sourceIdentifier_metadata[
                         item_map[_sourceIdentifier_value]]
 
                     if source_identifiers:
                         if isinstance(source_identifiers, list):
-                            for source_identifier in source_identifiers:
-                                fe.prism.issn(source_identifier)
-                        else:
+                            for i in range(len(source_identifiers)):
+                                source_identifier_type = source_identifier_types[i]
+                                if source_identifier_type and source_identifier_type == 'ISSN':
+                                    fe.prism.issn(source_identifiers[i])
+
+                        elif source_identifier_type and source_identifier_type == 'ISSN':
                             fe.prism.issn(source_identifiers)
 
             # Set volume
@@ -435,6 +445,7 @@ class AtomSerializer(JSONSerializer):
                             fe.prism.endingPage(pageEnds)
 
             # Set publicationDate
+            _date_attr_type = 'date.@attributes.dateType'
             _date = 'date.@value'
             if _date in item_map:
                 item_id = item_map[_date].split('.')[0]
@@ -445,12 +456,16 @@ class AtomSerializer(JSONSerializer):
                         item_metadata[item_id], item_id)
 
                     dates = date_metadata[item_map[_date]]
+                    date_types = date_metadata[item_map[_date_attr_type]]
 
                     if dates:
                         if isinstance(dates, list):
-                            for date in dates:
-                                fe.prism.publicationDate(date)
-                        else:
+                            for i in range(len(dates)):
+                                date_type = date_types[i]
+                                if date_type and date_type == 'Issued':
+                                    fe.prism.publicationDate(dates[i])
+
+                        elif date_type and date_type == 'Issued':
                             fe.prism.publicationDate(dates)
 
             # Set content
@@ -485,10 +500,9 @@ class AtomSerializer(JSONSerializer):
                             else:
                                 fe.content(descriptions, description_langs)
 
-            # Set updated
-            _updated = hit['_source']['_updated']
-            if _updated:
-                fe.updated(_updated)
+            publish_date = item_metadata['pubdate']['attribute_value']
+            if publish_date:
+                fe.dc.dc_date(str(datetime.now(pytz.utc)))
 
             # Set creationDate
             _creationDate = hit['_source']['_created']
@@ -500,4 +514,10 @@ class AtomSerializer(JSONSerializer):
             if _modificationDate:
                 fe.prism.modificationDate(_modificationDate)
 
-        return fg.atom_str(pretty=True)
+            # Set file preview url
+            fe.prism.url(item_url)
+
+        # Set channel items
+        fg.items(rss_items)
+
+        return fg.rss_str(pretty=True)

@@ -35,8 +35,9 @@ from invenio_admin.proxies import current_admin
 from weko_records.api import ItemTypes, SiteLicense
 from werkzeug.local import LocalProxy
 
-from .models import SessionLifetime
-from .utils import get_response_json
+
+from .models import SessionLifetime, SearchManagement
+from .utils import get_response_json, get_search_setting
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -177,3 +178,39 @@ def site_license():
             result=json.dumps(result))
     except:
         abort(500)
+
+
+@blueprint.route('/admin/search-management', methods=['GET', 'POST'])
+def set_search():
+    """Site license setting page."""
+    current_app.logger.info('search setting page')
+    result = json.dumps(get_search_setting())
+
+    if 'POST' in request.method:
+        jfy = {}
+        try:
+            # update search setting
+            dbData = request.get_json()
+            res = SearchManagement.get()
+
+            if res:
+                id = res.id
+                SearchManagement.update(id, dbData)
+            else:
+                SearchManagement.create(dbData)
+            jfy['status'] = 201
+            jfy['message'] = 'Search setting was successfully updated.'
+        except:
+            jfy['status'] = 500
+            jfy['message'] = 'Failed to update search setting.'
+        return make_response(jsonify(jfy), jfy['status'])
+
+    try:
+        return render_template(
+            current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
+            setting_data=result
+        )
+    except:
+        abort(500)
+
+

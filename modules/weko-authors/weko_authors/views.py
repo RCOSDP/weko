@@ -247,7 +247,7 @@ def getById():
     body = {
         "query": query
     }
-    current_app.logger.debug(body)
+
     indexer = RecordIndexer()
     result = indexer.client.search(index="authors", body=body)
     return json.dumps(result)

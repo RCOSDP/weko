@@ -21,6 +21,8 @@
 """Utilities for convert response json."""
 
 from . import config
+from .models import SearchManagement
+from flask import json, current_app
 
 
 def get_response_json(result_list, n_lst):
@@ -66,3 +68,26 @@ def get_response_json(result_list, n_lst):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in config.LOGO_ALLOWED_EXTENSIONS
+
+
+def get_search_setting():
+    """
+    Get search setting from DB
+    :return: Setting data by Json
+    """
+
+    res = SearchManagement.get()
+
+    if res:
+        db_obj= res.search_setting_all
+        # current_app.logger.debug(db_str)
+        # if 'False' in db_str:
+        #     db_str.replace('False','false')
+        # if 'True' in db_str:
+        #     db_str.replace('True', 'true')
+        # db_str = json.dumps(db_str)
+        # db_obj= json.loads(db_str)
+
+        return db_obj
+    else:
+        return config.WEKO_ADMIN_MANAGEMENT_OPTIONS

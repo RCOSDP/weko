@@ -90,6 +90,17 @@ class PrismBaseExtension(BaseExtension):
 
         return rss_feed
 
+    def extend_jpcoar(self, jpcoar_feed):
+        """Extend a JPCOAR feed with the set Prism fields.
+
+        :param jpcoar_feed: The feed root element
+        :returns: The feed root element.
+        """
+        header = jpcoar_feed[0]
+        self._extend_xml(header)
+
+        return jpcoar_feed
+
     def aggregationType(self, aggregationType=None, replace=False):
         """Get or set the prism:aggregationType which is an entity responsible for
         making totalResults to the resource.

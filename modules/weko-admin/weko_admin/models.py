@@ -22,8 +22,12 @@
 
 from datetime import datetime
 
+from flask import current_app, json
 from invenio_db import db
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy_utils.types import JSONType
+from sqlalchemy.sql import func
 
 
 class SessionLifetime(db.Model):
@@ -96,3 +100,126 @@ class SessionLifetime(db.Model):
     def is_anonymous(self):
         """Return whether this UserProfile is anonymous."""
         return False
+
+
+class SearchManagement(db.Model):
+    """Search setting model"""
+
+    __tablename__ = 'search_management'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    default_dis_num = db.Column( db.Integer, nullable=False, default=20)
+    """ Default display number of search results"""
+
+    default_dis_sort_index = db.Column( db.Text, nullable=True, default="")
+    """ Default display sort of index search"""
+
+    default_dis_sort_keyword = db.Column(db.Text, nullable=True, default="")
+    """ Default display sort of keyword search"""
+
+    sort_setting = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """ The list of sort setting"""
+
+    search_conditions = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """ The list of search condition """
+
+    search_setting_all = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """ The list of search condition """
+
+    create_date = db.Column(db.DateTime, default=datetime.now)
+    """Create Time"""
+
+    @classmethod
+    def create(cls, data):
+        """Create data"""
+        current_app.logger.debug(data)
+        try:
+            dataObj = SearchManagement()
+            with db.session.begin_nested():
+                dataObj.default_dis_num = data.get('dlt_dis_num_selected')
+                dataObj.default_dis_sort_index = data.get('dlt_index_sort_selected')
+                dataObj.default_dis_sort_keyword = data.get('dlt_keyword_sort_selected')
+                dataObj.sort_setting = data.get('sort_options')
+                dataObj.search_conditions = data.get('detail_condition')
+                dataObj.search_setting_all= data
+                db.session.add(dataObj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    @classmethod
+    def get(cls):
+        """Get setting"""
+        id = db.session.query(func.max(SearchManagement.id)).first()[0]
+        current_app.logger.debug(id)
+        if id is None:
+            return  None
+        return cls.query.filter_by(id=id).one_or_none()
+
+    @classmethod
+    def update(cls, id, data):
+        """Update setting"""
+        try:
+            with db.session.begin_nested():
+                setting_data = cls.query.filter_by(id=id).one()
+                setting_data.default_dis_num = data.get('dlt_dis_num_selected')
+                setting_data.default_dis_sort_index = data.get('dlt_index_sort_selected')
+                setting_data.default_dis_sort_keyword = data.get('dlt_keyword_sort_selected')
+                setting_data.sort_setting = data.get('sort_options')
+                setting_data.search_conditions = data.get('detail_condition')
+                setting_data.search_setting_all = data
+                db.session.merge(setting_data)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+
+
+
+__all__ = (['SearchManagement'])

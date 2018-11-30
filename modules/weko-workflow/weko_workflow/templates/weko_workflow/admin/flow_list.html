@@ -21,31 +21,31 @@
 {%- extends admin_base_template %}
 
 {%- block body %}
-<div class="container">
-  <div class="row">
-    <div class="col-sm-12">
-      <table class="table table-striped table-bordered">
-      <thead>
-        <tr>
-          <th>{{_('No.')}}</th>
-          <th>{{_('Flow')}}</th>
-          <th>{{_('Status')}}</th>
-          <th>{{_('Updated')}}</th>
-        </tr>
-      </thead>
-      <tbody>
-      {%- for flow in flows %}
-        <tr>
-          <th scope="row">{{loop.index}}</th>
-          <td><a href="{{url_for('flowsetting.flow_detail', flow_id=flow.flow_id)}}">{{flow.flow_name}}</a></td>
-          <td>{{_(flow.flow_status.value)}}</td>
-          <td>{{flow.updated.date()}}</td>
-        </tr>
-      {%- endfor %}
-      </tbody>
-    </table>
-    <a class="btn btn-primary pull-right" id="btn_submit" href="{{url_for('flowsetting.flow_detail', flow_id=0)}}">
+<div class="row">
+  <div class="col-sm-offset-2 col-sm-8">
+    <a class="btn btn-primary media-heading" id="btn_submit" href="{{url_for('flowsetting.flow_detail', flow_id=0)}}">
       <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('Create Flow')}}</a>
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>{{_('No.')}}</th>
+            <th>{{_('Flow')}}</th>
+            <th>{{_('Status')}}</th>
+            <th>{{_('Updated')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+        {%- for flow in flows %}
+          <tr>
+            <th scope="row">{{loop.index}}</th>
+            <td><a href="{{url_for('flowsetting.flow_detail', flow_id=flow.flow_id)}}">{{flow.flow_name}}</a></td>
+            <td>{{_(flow.flow_status.value)}}</td>
+            <td>{{flow.updated.date()}}</td>
+          </tr>
+        {%- endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

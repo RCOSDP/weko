@@ -137,7 +137,6 @@ def json_loader(data, pid):
         user_id = current_user.get_id()
         if user_id:
             jrc.update(dict(weko_creator_id=user_id))
-        current_app.logger.debug(jrc)
 
     del ojson, mjson, item
     return dc, jrc, is_edit

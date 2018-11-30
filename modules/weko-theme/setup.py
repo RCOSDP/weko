@@ -88,6 +88,7 @@ setup(
             'weko_theme_js_treeview = weko_theme.bundles:js_treeview',
             'weko_theme_js = weko_theme.bundles:js',
             'weko_theme_js_top_page = weko_theme.bundles:js_top_page',
+            'weko_theme_js_detail_search = weko_theme.bundles:js_detail_search',
         ],
         'invenio_base.apps': [
             'weko_theme = weko_theme:WekoTheme',

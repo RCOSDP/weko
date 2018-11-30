@@ -25,7 +25,7 @@
    {%- else %}
      search-endpoint="{{ config.SEARCH_UI_SEARCH_API }}"
    {%- endif %}
-   search-extra-params='{% if search_extra_params %}{{search_extra_params|tojson}}{% endif %}'
+   search-extra-params='{{disply_setting|tojson}}'
    search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
    search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
   >
@@ -94,7 +94,7 @@
               </select>
             </div>
             {%- block search_sort %}
-              {%- set sort_options = config.get('RECORDS_REST_SORT_OPTIONS', {}).get(config.SEARCH_UI_SEARCH_INDEX) %}
+              {%- set sort_options = sort_option.get(config.SEARCH_UI_SEARCH_INDEX) %}
               {%- if sort_options %}
               <div class="form-group">
                 {%- block search_sort_select scoped %}
@@ -146,11 +146,9 @@
                     </invenio-search-loading>
                     {%- endblock search_loading %}
                     {%- block search_results %}
-
                     <invenio-search-results
                      template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RESULTS) }}">
                     </invenio-search-results>
-
                     {%- endblock search_results %}
                   </div>
                 {%- endblock search_item_result %}

@@ -23,7 +23,7 @@
 import sys
 
 from flask import Blueprint, Flask, abort, current_app, json, jsonify, \
-    make_response, redirect, render_template, request, url_for
+    make_response, redirect, render_template, request, url_for, flash
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
@@ -127,7 +127,6 @@ def custom_property(property_id=0):
         lists=lists
     )
 
-
 @blueprint.route('/property/list', methods=['GET'])
 @login_required
 @item_type_permission.require(http_exception=403)
@@ -137,11 +136,12 @@ def get_property_list(property_id=0):
     lists = {}
     for k in props:
         tmp = {'name': k.name, 'schema': k.schema, 'form': k.form,
-               'forms': k.forms}
+               'forms': k.forms, 'sort': k.sort}
         lists[k.id] = tmp
 
-    return jsonify(lists)
+    lists['defaults'] = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
 
+    return jsonify(lists)
 
 @blueprint.route('/property/<int:property_id>', methods=['GET'])
 @login_required
