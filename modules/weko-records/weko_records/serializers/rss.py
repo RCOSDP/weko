@@ -359,14 +359,13 @@ class RssSerializer(JSONSerializer):
                         item_map[_sourceIdentifier_value]]
 
                     if source_identifiers:
-                        source_identifier_type = None
                         if isinstance(source_identifiers, list):
                             for i in range(len(source_identifiers)):
                                 source_identifier_type = source_identifier_types[i]
                                 if source_identifier_type and source_identifier_type == 'ISSN':
                                     fe.prism.issn(source_identifiers[i])
 
-                        elif source_identifier_type and source_identifier_type == 'ISSN':
+                        elif source_identifier_types and source_identifier_types == 'ISSN':
                             fe.prism.issn(source_identifiers)
 
             # Set volume
@@ -460,14 +459,13 @@ class RssSerializer(JSONSerializer):
                     date_types = date_metadata[item_map[_date_attr_type]]
 
                     if dates:
-                        date_type = None
                         if isinstance(dates, list):
                             for i in range(len(dates)):
                                 date_type = date_types[i]
                                 if date_type and date_type == 'Issued':
                                     fe.prism.publicationDate(dates[i])
 
-                        elif date_type and date_type == 'Issued':
+                        elif date_types and date_types == 'Issued':
                             fe.prism.publicationDate(dates)
 
             # Set content
