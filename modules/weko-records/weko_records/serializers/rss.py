@@ -359,6 +359,7 @@ class RssSerializer(JSONSerializer):
                         item_map[_sourceIdentifier_value]]
 
                     if source_identifiers:
+                        source_identifier_type = None
                         if isinstance(source_identifiers, list):
                             for i in range(len(source_identifiers)):
                                 source_identifier_type = source_identifier_types[i]
@@ -459,6 +460,7 @@ class RssSerializer(JSONSerializer):
                     date_types = date_metadata[item_map[_date_attr_type]]
 
                     if dates:
+                        date_type = None
                         if isinstance(dates, list):
                             for i in range(len(dates)):
                                 date_type = date_types[i]
