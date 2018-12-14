@@ -58,6 +58,7 @@ install_requires = [
     'Flask-BabelEx>=0.9.2',
     'Flask-Assets>=0.12',
     'ipaddress>=1.0.19',
+    'angular-gettext-babel>=0.3',
     'elasticsearch_dsl<3.0.0,>=2.0.0',
     'invenio-assets>=1.0.0b7',
     'invenio-db>=1.0.0b9',
@@ -89,6 +90,9 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
+        'babel.extractors': [
+            'angular_gettext = angular_gettext_babel.extract:extract_angular',
+        ],
         'invenio_base.apps': [
             'weko_search_ui = weko_search_ui:WekoSearchUI',
         ],
@@ -98,17 +102,18 @@ setup(
         'invenio_base.api_blueprints': [
             'weko_search_ui = weko_search_ui.views:blueprint_api',
         ],
-        'invenio_i18n.translations': [
-            'messages = weko_search_ui',
-        ],
         'invenio_config.module': [
             'weko_search_ui = weko_search_ui.config',
         ],
         'invenio_assets.bundles': [
             'weko_search_ui_css = weko_search_ui.bundles:css',
+            'weko_search_ui_search_i18n = weko_search_ui.bundles:i18n',
             'weko_search_ui_js = weko_search_ui.bundles:js',
             'weko_search_ui_dependencies_js = weko_search_ui.bundles:'
             'js_dependecies',
+        ],
+        'invenio_i18n.translations': [
+            'messages = weko_search_ui',
         ],
         'invenio_access.actions': [
             'search_access = weko_search_ui.permissions:action_search_access',

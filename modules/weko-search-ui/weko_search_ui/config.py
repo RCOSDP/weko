@@ -114,9 +114,9 @@ RECORDS_REST_SORT_OPTIONS = dict(
             order=1,
         ),
         controlnumber=dict(
-            title='Control number',
+            title='ID',
             fields=['control_number'],
-            default_order='desc',
+            default_order='asc',
             order=2,
         ),
         wtl=dict(

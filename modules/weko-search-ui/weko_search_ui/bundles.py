@@ -20,8 +20,11 @@
 
 """Bundles for weko-search-ui."""
 
+import os
+
 from flask_assets import Bundle
-from invenio_assets import NpmBundle
+from invenio_assets import AngularGettextFilter, GlobBundle, NpmBundle
+from pkg_resources import resource_filename
 
 css = Bundle(
     'node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.css',
@@ -47,3 +50,20 @@ js = Bundle(
     filters='requirejs',
     output="gen/weko_search_ui.%(version)s.js",
 )
+
+def catalog(domain):
+    """Return glob matching path to tranlated messages for a given domain."""
+    return os.path.join(
+        resource_filename('weko_search_ui', 'translations'),
+        '*',  # language code
+        'LC_MESSAGES',
+        '{0}.po'.format(domain),
+    )
+
+
+i18n = GlobBundle(
+    catalog('messages-js'),
+    filters=AngularGettextFilter(catalog_name='invenioSearch'),
+    output='gen/translations/weko-search-ui.%(version)s.js',
+)
+

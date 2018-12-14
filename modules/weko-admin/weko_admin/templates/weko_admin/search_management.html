@@ -38,6 +38,7 @@
 {%- block page_body_main %}
 <div id="search_management" class="container-fluid table-responsive">
   <div ng-init="initData('{{setting_data}}')" ng-controller="searchManagementCtrl">
+    <span>{{_('[[test_data]]')}}</span>
     <div class="row">
       <div class="col-sm-12 col-md-12 col-md-12">
         <div class="panel panel-default">
@@ -69,7 +70,7 @@
                         <div class="form-group">
                           <label for="def_dis_sort_index">{{_('Default Display Sort (Index Search) :')}}</label>
                           <select id="def_dis_sort_index" ng-model="dataJson.dlt_index_sort_selected" class="form-control">
-                            <option ng-repeat="opt_index_sort in dataJson.dlt_index_sort_options track by $index" value="[[opt_index_sort.id]]">{{_('[[opt_index_sort.contents]]')}}</option>
+                            <option ng-repeat="opt_index_sort in dataJson.dlt_index_sort_options track by $index" value="[[opt_index_sort.id]]" ng-disabled="opt_index_sort.disableFlg">{{_('[[opt_index_sort.contents]]')}}</option>
                           </select>
                         </div>
                       </form>
@@ -83,7 +84,7 @@
                         <div class="form-group">
                           <label for="def_dis_sort_keywords">{{_('Default Display Sort (Keywords Search) :')}}</label>
                           <select id="def_dis_sort_keywords" ng-model="dataJson.dlt_keyword_sort_selected" class="form-control">
-                            <option ng-repeat="opt_keyword_sort in dataJson.dlt_keyword_sort_options track by $index" value="[[opt_keyword_sort.id]]">{{_('[[opt_keyword_sort.contents]]')}}</option>
+                            <option ng-repeat="opt_keyword_sort in dataJson.dlt_keyword_sort_options track by $index" value="[[opt_keyword_sort.id]]" ng-disabled="opt_keyword_sort.disableFlg">{{_('[[opt_keyword_sort.contents]]')}}</option>
                           </select>
                         </div>
                       </form>
