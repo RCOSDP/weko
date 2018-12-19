@@ -225,7 +225,8 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             try:
                 self.record_class.create(pid, sn.lower(), data,
                                          xsd.to_dict(), data.get('xsd_file'),
-                                         xsd.namespaces)
+                                         xsd.namespaces,
+                                         target_namespace=xsd.target_namespace)
                 db.session.commit()
             except BaseException:
                 abort(400, 'Schema of the same name already exists.')
