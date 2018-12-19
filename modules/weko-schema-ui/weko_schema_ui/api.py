@@ -31,7 +31,8 @@ class WekoSchema(RecordBase):
     """Define API for Weko Schema creation and manipulation."""
 
     @classmethod
-    def create(cls, uuid, sname, fdata, xsd, schema, ns=None, isvalid=True):
+    def create(cls, uuid, sname, fdata, xsd, schema, ns=None, isvalid=True,
+            target_namespace=''):
         """
         create a schema record stored in db
         :param uuid:
@@ -41,6 +42,7 @@ class WekoSchema(RecordBase):
         :param schema:
         :param ns:
         :param isvalid:
+        :param target_namespace:
         :return:
         """
         with db.session.begin_nested():
@@ -49,7 +51,8 @@ class WekoSchema(RecordBase):
                                            form_data=fdata, xsd=xsd,
                                            namespaces=ns,
                                            schema_location=schema,
-                                           isvalid=isvalid)
+                                           isvalid=isvalid,
+                                           target_namespace=target_namespace)
             db.session.add(record.model)
 
         return record

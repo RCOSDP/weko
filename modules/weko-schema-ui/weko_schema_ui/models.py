@@ -129,6 +129,8 @@ class OAIServerSchema(db.Model, Timestamp):
     version_id = db.Column(db.Integer, nullable=False)
     """Used by SQLAlchemy for optimistic concurrency control."""
 
+    target_namespace = db.Column(db.String(255), default='')
+
     __mapper_args__ = {
         'version_id_col': version_id
     }

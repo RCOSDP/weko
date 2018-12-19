@@ -48,7 +48,8 @@ class SchemaConverter:
             abort(400, "Error creating Schema: Invalid root name used")
 
         self.rootname = rootname
-        self.schema, self.namespaces = self.create_schema(schemafile)
+        self.schema, self.namespaces, self.target_namespace = \
+            self.create_schema(schemafile)
 
     def to_dict(self):
         return json.dumps(self.schema)
@@ -64,20 +65,6 @@ class SchemaConverter:
                         return element_name.replace("{" + nsp + "}", k + ":")
 
             return element_name
-
-        def get_namespace(namespaces):
-            pix = tg = ''
-            for k, nsp in namespaces.items():
-                if k == '':
-                    tg = nsp
-                    break
-
-            for k, nsp in namespaces.items():
-                if tg == nsp and k != '':
-                    pix = k
-                    break
-
-            return pix, tg
 
         def get_element_type(type):
             typd = OrderedDict()
@@ -157,19 +144,21 @@ class SchemaConverter:
                 "Error creating Schema: Can not open xsd file. Please check it!")
 
         # namespace
-        nsp, tagns = get_namespace(schema_data.namespaces)
+        nsp, tagns = schema_data.target_prefix, schema_data.target_namespace
 
         # create the xsd json schema
         schema = OrderedDict()
 
         try:
             # get elements by root name
-            path = self.rootname + "/*" if ':' in self.rootname \
-                else '{%s}%s/*' % (tagns, nsp if nsp else self.rootname)
-            elements = schema_data.findall(path)
-            elements = schema_data.findall(
-                '*/*') if len(elements) < 1 else elements
-        except Exception:
+            if nsp:
+                path = self.rootname if ':' in self.rootname \
+                    else '%s:%s' % (nsp, self.rootname)
+            else:
+                path = '*'
+            elements = schema_data.findall(path + '/*')
+        except Exception as ex:
+            current_app.logger.error(str(ex))
             abort(400, "Error creating Schema: Can not find element")
         else:
             if len(elements) > 0:
@@ -189,7 +178,7 @@ class SchemaConverter:
             else:
                 abort(400, "Error creating Schema: No xsd element")
 
-        return schema, schema_data.namespaces
+        return schema, schema_data.namespaces, nsp
 
 
 class SchemaTree:
@@ -208,6 +197,13 @@ class SchemaTree:
                 self.get_mapping_data()
         self._v = "@value"
         self._atr = "@attributes"
+        self._location = ''
+        self._target_namespace = ''
+        schemas = WekoSchema.get_all()
+        for schema in schemas:
+            if self._schema_name == schema.schema_name:
+                self._location = schema.schema_location
+                self._target_namespace = schema.target_namespace
 
     def get_mapping_data(self):
         """
@@ -598,18 +594,19 @@ class SchemaTree:
 
         node_tree = self.find_nodes(self.__get_value_list())
         ns = self._ns
-        if not ns.get("xml"):
-            ns.update({"xml": "http://www.w3.org/XML/1998/namespace"})
+        xsi = 'http://www.w3.org/2001/XMLSchema-instance'
+        ns.update({'xml': "http://www.w3.org/XML/1998/namespace"})
+        ns.update({'xsi': xsi})
         rootname = self._root_name
         if ":" in rootname:
             rootname = rootname.split(":")[-1]
-            E = ElementMaker(namespace=ns.pop(""), nsmap=ns)
-        else:
-            namespace = ns.pop("")
-            ns.update({None: namespace})
-            E = ElementMaker(namespace=namespace, nsmap=ns)
+        ns.update({None: ns.pop('')})
+        if not self._target_namespace:
+            self._target_namespace = None
+        E = ElementMaker(namespace=ns[self._target_namespace], nsmap=ns)
         # Create root element
         root = E(rootname)
+        root.attrib['{{{pre}}}schemaLocation'.format(pre=xsi)] = self._location
 
         # Create sub element
         current_app.logger.debug(
@@ -777,6 +774,8 @@ def cache_schema(schema_name, delete=False):
             if rec:
                 dstore = dict()
                 dstore['root_name'] = rec.get('root_name')
+                dstore['target_namespace'] = rec.get('target_namespace')
+                dstore['schema_location'] = rec.get('schema_location')
                 dstore['namespaces'] = rec.model.namespaces.copy()
                 dstore['schema'] = json.loads(
                     rec.model.xsd, object_pairs_hook=OrderedDict)
