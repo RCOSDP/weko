@@ -94,7 +94,7 @@ RECORDS_UI_EXPORT_FORMATS = {
             serializer='weko_schema_ui.serializers.WekoCommonSchema',
             order=2,
         ),
-        'dc': dict(
+        'oai_dc': dict(
             title='DublinCore',
             serializer='weko_schema_ui.serializers.WekoCommonSchema',
             order=3,
