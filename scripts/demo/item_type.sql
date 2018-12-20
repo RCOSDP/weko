@@ -217,7 +217,8 @@ CREATE TABLE oaiserver_schema (
     isvalid boolean NOT NULL,
     is_mapping boolean NOT NULL,
     isfixed boolean NOT NULL,
-    version_id integer NOT NULL
+    version_id integer NOT NULL,
+    target_namespace character varying(255)
 );
 
 
