@@ -73,6 +73,9 @@
                   </ul>
                 </div>
               </div>
+              <invenio-files-error
+                template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
+              </invenio-files-error>
               <invenio-files-upload-zone
                 template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
               </invenio-files-upload-zone>
