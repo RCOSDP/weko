@@ -90,7 +90,7 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
         {'id': 'custom_sort_asc', 'contents': 'Custom(asc)', 'disableFlg': False},
         {'id': 'custom_sort_desc', 'contents': 'Custom(desc)', 'disableFlg': False},
     ],
-    'dlt_keyword_sort_selected': 'pyear_desc',
+    'dlt_keyword_sort_selected': 'createdate_desc',
     'sort_options':{
         'deny':[],
         'allow':[

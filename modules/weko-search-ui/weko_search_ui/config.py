@@ -107,12 +107,6 @@ RECORDS_REST_FACETS = dict(
 )
 RECORDS_REST_SORT_OPTIONS = dict(
     weko=dict(
-        bestmatch=dict(
-            title='Best match',
-            fields=['-_score'],
-            default_order='asc',
-            order=1,
-        ),
         controlnumber=dict(
             title='ID',
             fields=['control_number'],
