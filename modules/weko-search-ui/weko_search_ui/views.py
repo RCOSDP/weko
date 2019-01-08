@@ -70,9 +70,29 @@ def search():
     detail_condition = get_search_detail_keyword('')
 
     height = style.height if style else None
-
+    
     if 'management' in getArgs:
         return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
+                               index_id=cur_index_id, community_id=community_id,
+                               width=width, height=height, **ctx)
+    elif 'item_link' in getArgs:
+        activity_id=request.args.get('item_link')
+        from weko_workflow.api import WorkActivity
+        workFlowActivity = WorkActivity()
+        activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx \
+            = workFlowActivity.get_activity_index_search(activity_id=activity_id)
+        return render_template('weko_workflow/activity_detail.html',
+                               activity=activity_detail,
+                               item=item,
+                               steps=steps,
+                               action_id=action_id,
+                               cur_step=cur_step,
+                               temporary_comment=temporary_comment,
+                               record=approval_record,
+                               step_item_login_url=step_item_login_url,
+                               histories=histories,
+                               res_check=res_check,
+                               pid=pid,
                                index_id=cur_index_id, community_id=community_id,
                                width=width, height=height, **ctx)
     else:

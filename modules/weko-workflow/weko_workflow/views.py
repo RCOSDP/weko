@@ -140,6 +140,7 @@ def display_activity(activity_id=0):
         except NoResultFound as ex:
             current_app.logger.exception(str(ex))
             item = None
+
     steps = activity.get_activity_steps(activity_id)
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
@@ -302,6 +303,20 @@ def next_action(activity_id='0', action_id=0):
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
             UpdateItem.publish(pid, approval_record)
+
+    if 'item_link'==action_endpoint:
+        relation_data= post_json.get('link_data'),
+        activity_obj = WorkActivity()
+        activity_detail = activity_obj.get_activity_detail(activity_id)
+        item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+        pid_identifier = PersistentIdentifier.get_by_object(
+            pid_type='depid', object_type='rec', object_uuid=item.id)
+        record_class = import_string('weko_deposit.api:WekoRecord')
+        resolver = Resolver(pid_type='recid', object_type='rec',
+                            getter=record_class.get_record)
+        pid, item_record = resolver.resolve(pid_identifier.pid_value)
+        updateItem = UpdateItem()
+        updateItem.set_item_relation(relation_data, item_record)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
