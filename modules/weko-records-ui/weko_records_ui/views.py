@@ -29,6 +29,7 @@ from invenio_records_ui.signals import record_viewed
 from weko_index_tree.models import IndexStyle
 from .permissions import check_created_id
 from weko_search_ui.api import get_search_detail_keyword
+from weko_deposit.api import WekoIndexer
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -63,6 +64,7 @@ def publish(pid, record, template=None, **kwargs):
     record.commit()
     db.session.commit()
 
+    current_app.logger.debug(record)
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
@@ -266,6 +268,13 @@ def default_view_method(pid, record, template=None, **kwargs):
     height = style.height if style else None
 
     detail_condition=get_search_detail_keyword('')
+
+    weko_indexer = WekoIndexer()
+    res = weko_indexer.get_item_link_info(pid= record.get("control_number"))
+    if res is not None:
+        record["relation"]=res
+    else:
+        record["relation"] = {}
 
     return render_template(
         template,

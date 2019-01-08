@@ -28,7 +28,16 @@
 
 {%- block javascript %}
 {{ super() }}
+{% include config.THEME_JAVASCRIPT_TEMPLATE %}
+{% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- if 'item_link' == cur_step %}
+{% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "workflow_item_link_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- else %}
 {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endif %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -177,9 +186,13 @@
             {%- if step_item_login_url %}
               <iframe id="step_item_login" name="step_item_login" frameborder="0" width="100%" height="700px" src="{{step_item_login_url}}"></iframe>
             {%- else %}
+              {%- if 'item_link' == cur_step %}
+                {% include "weko_workflow/item_link.html" %}
+              {%- endif %}
               {%- if 'approval' == cur_step %}
                 {% include 'weko_workflow/record_detail.html' %}
               {% endif %}
+              {%- if 'item_link' != cur_step %}
               <div class="form-group">
                 <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
                 <div class="input-group">
@@ -187,6 +200,7 @@
                   <textarea class="form-control" rows="5" id="input-comment" placeholder="">{{temporary_comment if temporary_comment else ''}}</textarea>
                 </div>
               </div>
+              {% endif %}
               {%- if 'approval_request' == cur_step %}
                 <button type="button" class="btn btn-default" id="btn-approval-req">{{_('Approval Request')}}</button>
                 <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>

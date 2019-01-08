@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_RECORDS_UI_BASE_TEMPLATE %}
+{% extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
 
 {%- from "invenio_communities/macros.html" import community_header, community_footer %}
 
@@ -28,7 +28,6 @@
   {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 <!-- start demo block-->
 <script type="text/javascript">var addthis_config = {"data_track_addressbar": true};</script>

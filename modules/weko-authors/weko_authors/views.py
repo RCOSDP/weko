@@ -222,7 +222,6 @@ def get():
        }
     }
 
-    current_app.logger.debug(body)
     indexer = RecordIndexer()
     result = indexer.client.search(index="authors", body=body)
     result_itemCnt = indexer.client.search(index="weko", body=query_item)
@@ -259,7 +258,6 @@ def getById():
 def mapping():
     """Transfer the author to JPCOAR format."""
     data = request.get_json()
-    current_app.logger.debug(data)
 
     # get author data
     author_id = data.get('id') or ''
@@ -311,9 +309,6 @@ def gatherById():
     gatherFrom = data["idFrom"]
     gatherFromPkId = data["idFromPkId"]
     gatherTo = data["idTo"]
-    current_app.logger.debug(gatherFrom)
-    current_app.logger.debug(gatherFromPkId)
-    current_app.logger.debug(gatherTo)
 
     #update DB of Author
     try:
