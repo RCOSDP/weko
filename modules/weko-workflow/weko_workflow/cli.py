@@ -178,7 +178,7 @@ def init_workflow_tables(tables):
             action_name='Item Link',
             action_desc='Plug-in for link items.',
             action_version='1.0.1',
-            action_endpoint='item_login',
+            action_endpoint='item_link',
             action_makedate=datetime.date(2018, 5, 22),
             action_lastdate=datetime.date(2018, 5, 22)
         ))
