@@ -77,7 +77,6 @@ def search():
     activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx\
         = WorkActivity.get_activity_index_search(activity_id='A1547011369')
 
-    current_app.logger.debug(item)
 
     return render_template('weko_workflow/activity_detail.html',
                                        activity=activity_detail,
