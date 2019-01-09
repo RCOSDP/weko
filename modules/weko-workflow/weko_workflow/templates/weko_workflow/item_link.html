@@ -1,6 +1,13 @@
 <div class="row">
   <div class="col-sm-3 col-md-3 col-lg-3">
-    {% include "weko_theme/body_index.html" %}
+    <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">{{_('Index Tree')}}</h3>
+    </div>
+    <div class="panel-body index-body" style="overflow: auto;">
+      <app-tree-items></app-tree-items>
+    </div>
+  </div>
   </div>
   <div class="col-sm-9 col-md-9 col-lg-9">
     <invenio-search
