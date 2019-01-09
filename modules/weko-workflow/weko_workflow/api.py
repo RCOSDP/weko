@@ -781,7 +781,7 @@ class WorkActivity(object):
         """
         pass
 
-    def get_activity_index_search(self, activity_id):
+    def get_activity_index_search(activity_id):
         """Get page info after item search"""
         from weko_records.api import ItemsMetadata
         from flask_babelex import gettext as _
