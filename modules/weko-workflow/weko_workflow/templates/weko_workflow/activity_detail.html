@@ -205,6 +205,11 @@
                 <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
                 <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
               {%- endif %}
+              {%- if 'item_link' == cur_step %}
+                {% include 'weko_workflow/record_detail.html' %}
+                <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
+                <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
+              {%- endif %}
             {%- endif %}
           </div>
         {%- endif %}
