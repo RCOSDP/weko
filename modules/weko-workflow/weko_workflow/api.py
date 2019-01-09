@@ -41,12 +41,6 @@ from .models import FlowActionRole as _FlowActionRole
 from .models import WorkFlow as _WorkFlow
 from .models import ActionStatusPolicy, ActionCommentPolicy, \
     ActivityStatusPolicy, FlowStatusPolicy
-from weko_records.api import ItemsMetadata
-from flask_babelex import gettext as _
-from invenio_pidstore.models import PersistentIdentifier
-from werkzeug.utils import import_string
-from invenio_pidstore.resolver import Resolver
-from .views import check_authority_action
 
 class Flow(object):
     """Operated on the Flow"""
@@ -789,7 +783,12 @@ class WorkActivity(object):
 
     def get_activity_index_search(self, activity_id):
         """Get page info after item search"""
-
+        from weko_records.api import ItemsMetadata
+        from flask_babelex import gettext as _
+        from invenio_pidstore.models import PersistentIdentifier
+        from werkzeug.utils import import_string
+        from invenio_pidstore.resolver import Resolver
+        from .views import check_authority_action
         activity = WorkActivity()
         activity_detail = activity.get_activity_detail(activity_id)
         item = None
