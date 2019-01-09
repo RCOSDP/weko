@@ -71,7 +71,7 @@ def search():
 
     height = style.height if style else None
 
-    current_app.logger.debug("AAAA")
+    current_app.logger.debug("CCCCCCC")
 
     if 'management' in getArgs:
         return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
