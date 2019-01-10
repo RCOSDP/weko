@@ -9,7 +9,7 @@
     </thead>
     <tbody ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
       <tr>
-        <td>{{$index}}</td>
+        <td>{{$index+1}}</td>
         <td>{{ record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0] }}</td>
         <td>{{ record.metadata.hasOwnProperty('itemtype')?record.metadata.itemtype:record.metadata['dc:itemtype'] }}</td>
         <td>

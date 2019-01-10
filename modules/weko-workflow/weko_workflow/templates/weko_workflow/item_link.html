@@ -44,6 +44,20 @@
           </span>
         </div>
         <div class="panel-body">
+
+          <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <h3 class="panel-title">{{_('Designate Index')}}</h3>
+            </div>
+            <div class="panel-body index-body">
+                {%- if index_id %}
+                  <invenio-search-results
+                   template="{{ url_for('static', filename=config.WEKO_ITEM_MANAGEMENT_JSTEMPLATE_BREAD) }}">
+                  </invenio-search-results>
+                {%- endif %}
+            </div>
+          </div>
+
           <div id="index_item_list">
             {%- if not page_id %}
             <br>
