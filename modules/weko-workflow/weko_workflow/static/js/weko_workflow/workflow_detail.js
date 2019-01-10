@@ -197,7 +197,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 angular.module('invenioSearch')
   .controller('searchResItemLinkCtrl', searchResItemLinkCtrl);
 
-angular.module('itemLinkModule', ['invenioSearch']).config(['$interpolateProvider', function($interpolateProvider) {
+angular.module('invenioSearch').config(['$interpolateProvider', function($interpolateProvider) {
       $interpolateProvider.startSymbol('[[');
       $interpolateProvider.endSymbol(']]');
 　　}]);
