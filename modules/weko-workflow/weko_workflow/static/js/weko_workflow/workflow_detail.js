@@ -188,3 +188,10 @@ require([
     $('#myModal').modal('show');
   })
 })
+
+function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
+
+  }
+
+angular.module('invenioSearch')
+  .controller('searchResItemLinkCtrl', searchResItemLinkCtrl);
