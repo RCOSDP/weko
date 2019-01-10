@@ -198,7 +198,7 @@ angular.module('invenioSearch')
   .controller('searchResItemLinkCtrl', searchResItemLinkCtrl);
 
 angular.module('invenioSearch').config(['$interpolateProvider', function($interpolateProvider) {
-      $interpolateProvider.startSymbol('[[');
-      $interpolateProvider.endSymbol(']]');
+      $interpolateProvider.startSymbol('{[');
+      $interpolateProvider.endSymbol(']}');
 　　}]);
 
