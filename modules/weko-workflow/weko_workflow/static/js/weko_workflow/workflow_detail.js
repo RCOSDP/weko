@@ -196,7 +196,9 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
 
 //   add button
    $rootScope.add_link=function(data, index){
-    $scope.link_item_list.push(data)
+    var sub_data={seleOption:[],sele_id:'',item_data:""}
+    sub_data.item_data = data
+    $scope.link_item_list.push(sub_data)
    }
 //   delete button
    $scope.del_link=function(index){
