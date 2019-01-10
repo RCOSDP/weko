@@ -192,13 +192,16 @@ require([
 //Item Link
 function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
    $scope.testData='AAAAA'
+   $rootScope.add_link=function(index){
+    alert(index)
+   }
 }
 
 angular.module('invenioSearch')
   .controller('searchResItemLinkCtrl', searchResItemLinkCtrl);
 
 angular.module('invenioSearch').config(['$interpolateProvider', function($interpolateProvider) {
-      $interpolateProvider.startSymbol('{[');
-      $interpolateProvider.endSymbol(']}');
-　　}]);
+  $interpolateProvider.startSymbol('{[');
+  $interpolateProvider.endSymbol(']}');
+}]);
 
