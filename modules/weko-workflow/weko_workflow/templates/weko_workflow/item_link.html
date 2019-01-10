@@ -13,6 +13,7 @@
     <div id="invenio-search">
       <!--<div id="item_management"class="hide">item_management</div>-->
       <br>
+      {%- if index_id %}
       <invenio-search
        {%- if index_id %}
          search-endpoint="{{ config.WEKO_SEARCH_UI_SEARCH_INDEX_API }}"
@@ -131,6 +132,7 @@
       </div>
       </div >
       </invenio-search>
+      {%- endif %}
     </div>
   </div>
 </div>
