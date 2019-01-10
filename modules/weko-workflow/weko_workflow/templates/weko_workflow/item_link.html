@@ -47,7 +47,7 @@
         <div class="panel-body">
           <div class="panel panel-default">
             <div class="panel-body index-body">
-              <div class="row">
+              <div class="row" ng-repeat="sub_link_item in link_item_list track by $index">
                 <div class="col-sm-4 col-md-4 col-lg-4">
                   <select class="form-control" id="page_count">
                     <option value="20">20</option>
@@ -60,25 +60,10 @@
                   item-201901101522
                 </div>
                 <div class="col-sm-3 col-md-3 col-lg-3 text-center">
-                  <button type="button" class="btn btn-danger" ng-click="del_link()">{{_('Delete')}}</button>
+                  <button type="button" class="btn btn-danger" ng-click="del_link($index)">{{_('Delete')}}</button>
                 </div>
               </div>
-              <div class="row">
-                <div class="col-sm-4 col-md-4 col-lg-4">
-                  <select class="form-control" id="page_count">
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                    <option value="75">75</option>
-                    <option value="100">100</option>
-                  </select>
-                </div>
-                <div class="col-sm-5 col-md-5 col-lg-5">
-                  item-201901101523
-                </div>
-                <div class="col-sm-3 col-md-3 col-lg-3 text-center">
-                  <button type="button" class="btn btn-danger" ng-click="del_link()">{{_('Delete')}}</button>
-                </div>
-              </div>
+
               {[testData]}
             </div>
           </div>

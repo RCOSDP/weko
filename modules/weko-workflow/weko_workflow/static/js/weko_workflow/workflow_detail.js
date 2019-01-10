@@ -192,12 +192,15 @@ require([
 //Item Link
 function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
    $scope.testData='AAAAA'
+   $scope.link_item_list=[]
+
 //   add button
-   $rootScope.add_link=function(index){
+   $rootScope.add_link=function(data, index){
     alert(index)
+    console.log(data)
    }
 //   delete button
-   $scope.del_link=function(){
+   $scope.del_link=function(index){
     alert("BBBB")
    }
 }
