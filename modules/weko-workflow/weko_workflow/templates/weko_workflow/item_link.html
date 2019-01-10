@@ -34,7 +34,8 @@
               </invenio-search-results>
             {%- endif %}
         </div>
-    </div>
+      </div>
+      <br>
       <div id="search_res" ng-controller="searchResCtrl">
       <div class="panel panel-default">
         <div class="panel-heading clearfix">
@@ -66,7 +67,7 @@
                         {%- endblock search_loading %}
                         {%- block search_results %}
                         <invenio-search-results
-                         template="{{ url_for('static', filename=config.WEKO_ITEM_MANAGEMENT_JSTEMPLATE_RESULTS_EDIT) }}">
+                         template="{{ url_for('static', filename=config.WEKO_ITEM_WORKFLOW_JSTEMPLATE_RESULTS_EDIT) }}">
                         </invenio-search-results>
                         {%- endblock search_results %}
                       </div>
