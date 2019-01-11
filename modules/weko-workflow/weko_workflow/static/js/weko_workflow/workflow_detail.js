@@ -191,7 +191,6 @@ require([
 
 //Item Link
 function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
-   $scope.testData='AAAAA'
    $scope.link_item_list=[]
    $scope.sele_options=[
                         {id:'relateTo',content:'relateTo'},
@@ -225,6 +224,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
    $scope.del_link=function(index){
     $scope.link_item_list.splice(index,1);
    }
+
 }
 
 angular.module('invenioSearch')

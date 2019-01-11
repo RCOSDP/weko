@@ -188,6 +188,7 @@
               {%- if 'approval' == cur_step %}
                 {% include 'weko_workflow/record_detail.html' %}
               {% endif %}
+              {%- if 'item_link' != cur_step %}
               <div class="form-group">
                 <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
                 <div class="input-group">
@@ -195,6 +196,7 @@
                   <textarea class="form-control" rows="5" id="input-comment" placeholder="">{{temporary_comment if temporary_comment else ''}}</textarea>
                 </div>
               </div>
+              {% endif %}
               {%- if 'approval_request' == cur_step %}
                 <button type="button" class="btn btn-default" id="btn-approval-req">{{_('Approval Request')}}</button>
                 <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
@@ -210,10 +212,6 @@
                 <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
               {%- endif %}
               {%- if 'end_action' == cur_step %}
-                <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
-                <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
-              {%- endif %}
-              {%- if 'item_link' == cur_step %}
                 <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
                 <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
               {%- endif %}
