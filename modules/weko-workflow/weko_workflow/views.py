@@ -304,7 +304,7 @@ def next_action(activity_id='0', action_id=0):
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
             UpdateItem.publish(pid, approval_record)
 
-    if 'item_link'==action_endpoint:
+    # if 'item_link'==action_endpoint:
 
 
     rtn = history.create_activity_history(activity)
