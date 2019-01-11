@@ -140,7 +140,7 @@ def display_activity(activity_id=0):
         except NoResultFound as ex:
             current_app.logger.exception(str(ex))
             item = None
-    current_app.logger.debug(item)
+
     steps = activity.get_activity_steps(activity_id)
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
@@ -304,8 +304,10 @@ def next_action(activity_id='0', action_id=0):
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
             UpdateItem.publish(pid, approval_record)
 
-    # if 'item_link'==action_endpoint:
-
+    if 'item_link'==action_endpoint:
+        activity_detail = activity_obj.get_activity_detail(activity_id)
+        item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+        current_app.logger.debug(item)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
