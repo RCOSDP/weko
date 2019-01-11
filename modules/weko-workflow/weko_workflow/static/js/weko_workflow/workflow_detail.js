@@ -224,6 +224,15 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
    $scope.del_link=function(index){
     $scope.link_item_list.splice(index,1);
    }
+//   save button
+   $scope.btn_save=function(){
+    var post_uri = $('.cur_step').data('next-uri');
+    alert(post_uri)
+   }
+//   run button
+   $scope.btn_run=function(){
+
+   }
 
 }
 

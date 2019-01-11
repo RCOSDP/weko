@@ -116,11 +116,11 @@
         <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
         <div class="input-group">
           <div class="input-group-addon">{{_('Comment')}}</div>
-          <textarea class="form-control" rows="5" id="input-comment" placeholder="">{{temporary_comment if temporary_comment else ''}}</textarea>
+          <textarea class="form-control" rows="5" id="input-comment" placeholder="" ng-model="comment_data">{{temporary_comment if temporary_comment else ''}}</textarea>
         </div>
       </div>
-      <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
-      <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
+      <button type="button" class="btn btn-default" ng-click="btn_save()">{{_('Save')}}</button>
+      <button type="button" class="btn btn-default" ng-click="btn_run()">{{_('Run')}}</button>
       </div >
       </invenio-search>
     </div>
