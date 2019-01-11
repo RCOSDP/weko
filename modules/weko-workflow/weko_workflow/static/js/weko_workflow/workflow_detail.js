@@ -240,10 +240,15 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         data: post_data,
         headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
-      alert(response.data)
-      alert(response.code)
+      if(0 == data.code) {
+        if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+          document.location.href=data.data.redirect;
+        } else {
+          document.location.reload(true);
+        }
+       }
     }, function errorCallback(response) {
-
+      alert(response.data.msg)
     });
    }
 //   run button
@@ -262,9 +267,15 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
           data: post_data,
           headers: {'Content-Type': 'application/json'},
       }).then(function successCallback(response) {
-
+        if(0 == data.code) {
+          if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+            document.location.href=data.data.redirect;
+          } else {
+            document.location.reload(true);
+          }
+        }
       }, function errorCallback(response) {
-
+         alert(response.data.msg)
       });
     }
 }
