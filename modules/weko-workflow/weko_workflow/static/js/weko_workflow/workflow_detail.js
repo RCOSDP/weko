@@ -191,7 +191,7 @@ require([
 
 //Item Link
 function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
-   $scope.link_item_list=[]
+   $scope.link_item_list=[];
    $scope.sele_options=[
                         {id:'relateTo',content:'relateTo'},
                         {id:'isVersionOf',content:'isVersionOf'},
@@ -211,7 +211,8 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
                         {id:'isIdenticalTo',content:'isIdenticalTo'},
                         {id:'isDeriverdFrom',content:'isDeriverdFrom'},
                         {id:'isSoruceOf',content:'isSoruceOf'},
-                       ]
+                       ];
+   $scope.comment_data="";
 //   add button
    $rootScope.add_link=function(data, index){
     var sub_data={seleOption:[],sele_id:'',item_data:""};
@@ -226,14 +227,45 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
    }
 //   save button
    $scope.btn_save=function(){
-    var post_uri = $('.cur_step').data('next-uri');
-    alert(post_uri)
+    var post_url = $('.cur_step').data('next-uri');
+    var post_data = {
+      commond: $scope.comment_data,
+      action_version: $('.cur_step').data('action-version'),
+      temporary_save: 1
+    };
+
+    $http({
+        method: 'POST',
+        url: post_url,
+        data: post_data,
+        headers: {'Content-Type': 'application/json'},
+    }).then(function successCallback(response) {
+
+    }, function errorCallback(response) {
+
+    });
    }
 //   run button
    $scope.btn_run=function(){
+      var post_url = $('.cur_step').data('next-uri');
+      var post_data = {
+        commond: $scope.comment_data,
+        action_version: $('.cur_step').data('action-version'),
+        temporary_save: 0,
+        link_data:$scope.link_item_list
+      };
 
-   }
+      $http({
+          method: 'POST',
+          url: post_url,
+          data: post_data,
+          headers: {'Content-Type': 'application/json'},
+      }).then(function successCallback(response) {
 
+      }, function errorCallback(response) {
+
+      });
+    }
 }
 
 angular.module('invenioSearch')
