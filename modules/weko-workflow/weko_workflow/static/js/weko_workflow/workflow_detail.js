@@ -219,7 +219,7 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
     sub_data.seleOption = angular.copy($scope.sele_options);
     sub_data.sele_id = 'relateTo';
     sub_data.item_data = data;
-    sub_data.item_title = data.metadata.title[0]:data.metadata['dc:title'][0];
+    sub_data.item_title = data.metadata.title[0];
     $scope.link_item_list.push(sub_data);
    }
 //   delete button
