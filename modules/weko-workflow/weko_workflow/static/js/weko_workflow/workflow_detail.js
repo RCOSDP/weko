@@ -240,7 +240,8 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         data: post_data,
         headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
-
+      alert(response.data)
+      alert(response.code)
     }, function errorCallback(response) {
 
     });
