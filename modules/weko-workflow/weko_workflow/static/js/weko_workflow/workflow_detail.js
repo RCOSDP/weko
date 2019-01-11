@@ -240,9 +240,9 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
         data: post_data,
         headers: {'Content-Type': 'application/json'},
     }).then(function successCallback(response) {
-      if(0 == data.code) {
-        if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-          document.location.href=data.data.redirect;
+      if(0 == response.data.code) {
+        if(response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
+          document.location.href=response.data.data.redirect;
         } else {
           document.location.reload(true);
         }
@@ -267,9 +267,9 @@ function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
           data: post_data,
           headers: {'Content-Type': 'application/json'},
       }).then(function successCallback(response) {
-        if(0 == data.code) {
-          if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href=data.data.redirect;
+        if(0 == response.data.code) {
+          if(response.data.hasOwnProperty('data') && response.data.data.hasOwnProperty('redirect')) {
+            document.location.href=response.data.data.redirect;
           } else {
             document.location.reload(true);
           }
