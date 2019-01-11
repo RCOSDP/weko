@@ -305,6 +305,7 @@ def next_action(activity_id='0', action_id=0):
             UpdateItem.publish(pid, approval_record)
 
     if 'item_link'==action_endpoint:
+        activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
         item = ItemsMetadata.get_record(id_=activity_detail.item_id)
         current_app.logger.debug(item)
