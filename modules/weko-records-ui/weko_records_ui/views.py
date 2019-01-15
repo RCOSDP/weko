@@ -267,6 +267,8 @@ def default_view_method(pid, record, template=None, **kwargs):
 
     detail_condition=get_search_detail_keyword('')
 
+    current_app.logger.debug(record)
+
     return render_template(
         template,
         pid=pid,
