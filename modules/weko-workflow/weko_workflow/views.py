@@ -305,7 +305,7 @@ def next_action(activity_id='0', action_id=0):
             UpdateItem.publish(pid, approval_record)
 
     if 'item_link'==action_endpoint:
-        relation_data=[]
+        relation_data= post_json.get('link_data'),
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
         item = ItemsMetadata.get_record(id_=activity_detail.item_id)
@@ -315,7 +315,8 @@ def next_action(activity_id='0', action_id=0):
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
         pid, item_record = resolver.resolve(pid_identifier.pid_value)
-        current_app.logger.debug(item_record)
+        # current_app.logger.debug(item_record)
+        current_app.logger.debug(relation_data)
         # UpdateItem.set_item_relation(relation_data, item_record)
 
     rtn = history.create_activity_history(activity)
