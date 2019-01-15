@@ -981,6 +981,18 @@ class UpdateItem(object):
         indexer = WekoIndexer()
         indexer.update_publish_status(record)
 
+    def set_item_relation(self, relationData, record):
+        """
+        set relation info of item
+        :param relationData: item relation data
+        :param record: item info
+        """
+
+        from weko_deposit.api import WekoIndexer
+
+        indexer = WekoIndexer()
+        indexer.update_relation_info(record, relationData)
+
 
 class GetCommunity(object):
     """Get Community Info"""

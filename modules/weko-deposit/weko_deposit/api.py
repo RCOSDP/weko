@@ -128,6 +128,18 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
+    def update_relation_info(self, record, relation_info):
+        self.get_es_index()
+        pst = 'relation'
+        body = {'doc': {pst: relation_info}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(record.id),
+            version=record.revision_id,
+            body=body
+        )
+
     def update_path(self, record):
         self.get_es_index()
         path = 'path'
