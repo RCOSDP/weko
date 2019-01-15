@@ -309,6 +309,8 @@ def next_action(activity_id='0', action_id=0):
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
         item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+        pid_identifier = PersistentIdentifier.get_by_object(
+            pid_type='depid', object_type='rec', object_uuid=item.id)
         record_class = import_string('weko_deposit.api:WekoRecord')
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
