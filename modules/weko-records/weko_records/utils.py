@@ -137,8 +137,10 @@ def json_loader(data, pid):
         user_id = current_user.get_id()
         if user_id:
             jrc.update(dict(weko_creator_id=user_id))
-        relation_ar=[]
-        relation_ar.append(dict(value="", item_links="", item_title=""))
+
+        relation_ar = []
+        # relation_ar.append(dict(value="", item_links="", item_title=""))
+        relation_ar.append({"key":1})
         jrc.update(dict(relation=dict(relationType=relation_ar)))
         current_app.logger.debug(jrc)
         current_app.logger.debug(dc)
