@@ -481,6 +481,8 @@ class WekoDeposit(Deposit):
         jrc.update(dict(custom_sort=sub_sort))
         dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
+        current_app.logger.debug(jrc)
+        current_app.logger.debug(dc)
 
         pubs = '1' if 'private' in actions else '0'
         ps = dict(publish_status=pubs)
