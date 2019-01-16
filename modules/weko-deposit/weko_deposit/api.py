@@ -147,6 +147,7 @@ class WekoIndexer(RecordIndexer):
 
     def get_item_link_info(self, pid):
         try:
+            item_link_info=None
             get_item_link_q = {
                 "query": {
                     "match": {
@@ -158,11 +159,11 @@ class WekoIndexer(RecordIndexer):
             query_q = json.loads(query_q)
             indexer = RecordIndexer()
             res = indexer.client.search(index="weko", body=query_q)
-            current_app.logger.debug(res)
+            item_link_info = res.get("hits").get("hits")[0].get("relation")
 
         except Exception as ex:
             current_app.logger.debug(ex)
-        return
+        return item_link_info
 
     def update_path(self, record):
         self.get_es_index()
