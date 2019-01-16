@@ -315,8 +315,6 @@ def next_action(activity_id='0', action_id=0):
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
         pid, item_record = resolver.resolve(pid_identifier.pid_value)
-        current_app.logger.debug(item_record)
-        current_app.logger.debug(relation_data)
         updateItem = UpdateItem()
         updateItem.set_item_relation(relation_data, item_record)
 
