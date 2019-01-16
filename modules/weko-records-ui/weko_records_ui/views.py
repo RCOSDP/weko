@@ -270,7 +270,7 @@ def default_view_method(pid, record, template=None, **kwargs):
 
     current_app.logger.debug(record)
     weko_indexer = WekoIndexer()
-    weko_indexer.get_item_link_info('133')
+    weko_indexer.get_item_link_info(pid='133')
 
     return render_template(
         template,
