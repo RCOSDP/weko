@@ -130,8 +130,13 @@ class WekoIndexer(RecordIndexer):
 
     def update_relation_info(self, record, relation_info):
         self.get_es_index()
-        pst = 'relation'
-        body = {'doc': {pst: relation_info}}
+        relation = 'relation'
+        relation_type = 'relation_type'
+        relation_type_val=[]
+        for d in relation_info:
+            sub_data=dict(item_links=d.get('item_data').get('links').get('self'), item_title=d.get('item_title'), value=d.get('sele_id'))
+            relation_type_val.append(sub_data)
+        body = {'doc': {relation: {relation_type:relation_type_val}}}
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,

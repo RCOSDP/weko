@@ -317,7 +317,7 @@ def next_action(activity_id='0', action_id=0):
         pid, item_record = resolver.resolve(pid_identifier.pid_value)
         current_app.logger.debug(item_record)
         current_app.logger.debug(relation_data)
-        # UpdateItem.set_item_relation(relation_data, item_record)
+        UpdateItem.set_item_relation(relation_data, item_record)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
