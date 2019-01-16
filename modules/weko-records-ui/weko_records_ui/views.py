@@ -268,11 +268,11 @@ def default_view_method(pid, record, template=None, **kwargs):
 
     detail_condition=get_search_detail_keyword('')
 
-    current_app.logger.debug(record)
     weko_indexer = WekoIndexer()
     res = weko_indexer.get_item_link_info(pid= record.get("control_number"))
     if res is not None:
         record["relation"]=res
+    current_app.logger.debug(record)
 
     return render_template(
         template,
