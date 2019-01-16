@@ -270,6 +270,8 @@ def default_view_method(pid, record, template=None, **kwargs):
 
     weko_indexer = WekoIndexer()
     res = weko_indexer.get_item_link_info(pid= record.get("control_number"))
+    current_app.logger.debug(record.get("control_number"))
+    current_app.logger.debug(res)
     if res is not None:
         record["relation"]=res
     current_app.logger.debug(record)
