@@ -134,16 +134,17 @@ class WekoIndexer(RecordIndexer):
         relation_type = 'relation_type'
         relation_type_val=[]
         for d in relation_info:
-            sub_data=dict(item_links=d.item_data.links.self, item_title=d.item_title, value=d.sele_id)
-            relation_type_val.append(sub_data)
-        body = {'doc': {relation: {relation_type:relation_type_val}}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(record.id),
-            version=record.revision_id,
-            body=body
-        )
+            current_app.logger.debug(d)
+        #     sub_data=dict(item_links=d.item_data.links.self, item_title=d.item_title, value=d.sele_id)
+        #     relation_type_val.append(sub_data)
+        # body = {'doc': {relation: {relation_type:relation_type_val}}}
+        # return self.client.update(
+        #     index=self.es_index,
+        #     doc_type=self.es_doc_type,
+        #     id=str(record.id),
+        #     version=record.revision_id,
+        #     body=body
+        # )
 
     def update_path(self, record):
         self.get_es_index()
