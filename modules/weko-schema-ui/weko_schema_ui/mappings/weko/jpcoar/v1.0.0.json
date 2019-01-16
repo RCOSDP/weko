@@ -116,14 +116,14 @@
           "index": "not_analyzed"
         },
         "custom_sort": {
-              "type": "object",
+          "type": "object",
           "properties": {
           "index_id": {
-                  "type": "string"
-                },
+            "type": "string"
+          },
           "sort": {
-                  "type": "string"
-                }
+            "type": "string"
+           }
           }
         },
         "title": {

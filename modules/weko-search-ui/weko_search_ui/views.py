@@ -71,37 +71,34 @@ def search():
 
     height = style.height if style else None
 
-    current_app.logger.debug("CCCCCCC")
-
-    from weko_workflow.api import WorkActivity
-    activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx\
-        = WorkActivity.get_activity_index_search(activity_id='A1547535183')
-
-
-    return render_template('weko_workflow/activity_detail.html',
-                                       activity=activity_detail,
-                                       item=item,
-                                       steps=steps,
-                                       action_id=action_id,
-                                       cur_step=cur_step,
-                                       temporary_comment=temporary_comment,
-                                       record=approval_record,
-                                       step_item_login_url=step_item_login_url,
-                                       histories=histories,
-                                       res_check=res_check,
-                                       pid=pid,
-                                      index_id=cur_index_id, community_id=community_id,
-                                      width=width, height=height, **ctx)
-
-
-    # if 'management' in getArgs:
-    #     return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
-    #                            index_id=cur_index_id, community_id=community_id,
-    #                            width=width, height=height, **ctx)
-    # else:
-    #     return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
-    #                            index_id=cur_index_id, community_id=community_id,
-    #                            sort_option=sort_options, disply_setting=disply_setting, detail_condition=detail_condition, width=width, height=height, **ctx)
+    if 'management' in getArgs:
+        return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
+                               index_id=cur_index_id, community_id=community_id,
+                               width=width, height=height, **ctx)
+    elif 'item_link' in getArgs:
+        activity_id=request.args.get('item_link')
+        from weko_workflow.api import WorkActivity
+        workFlowActivity = WorkActivity()
+        activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx \
+            = workFlowActivity.get_activity_index_search(activity_id=activity_id)
+        return render_template('weko_workflow/activity_detail.html',
+                               activity=activity_detail,
+                               item=item,
+                               steps=steps,
+                               action_id=action_id,
+                               cur_step=cur_step,
+                               temporary_comment=temporary_comment,
+                               record=approval_record,
+                               step_item_login_url=step_item_login_url,
+                               histories=histories,
+                               res_check=res_check,
+                               pid=pid,
+                               index_id=cur_index_id, community_id=community_id,
+                               width=width, height=height, **ctx)
+    else:
+        return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
+                               index_id=cur_index_id, community_id=community_id,
+                               sort_option=sort_options, disply_setting=disply_setting, detail_condition=detail_condition, width=width, height=height, **ctx)
 
 
 
