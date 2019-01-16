@@ -159,8 +159,9 @@ class WekoIndexer(RecordIndexer):
             query_q = json.loads(query_q)
             indexer = RecordIndexer()
             res = indexer.client.search(index="weko", body=query_q)
+            current_app.logger.debug(res)
             item_link_info = res.get("hits").get("hits")[0].get("relation")
-
+            current_app.logger.debug(item_link_info)
         except Exception as ex:
             current_app.logger.debug(ex)
         return item_link_info
