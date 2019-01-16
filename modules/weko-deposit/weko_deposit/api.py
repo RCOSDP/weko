@@ -145,6 +145,25 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
+    def get_item_link_info(self, pid):
+        try:
+            get_item_link_q = {
+                "query": {
+                    "match": {
+                        "control_number": "@control_number"
+                    }
+                }
+            }
+            query_q = json.dumps(get_item_link_q).replace("@control_number", pid)
+            query_q = json.loads(query_q)
+            indexer = RecordIndexer()
+            res = indexer.client.search(index="weko", body=query_q)
+            current_app.logger.debug(res)
+
+        except Exception as ex:
+            current_app.logger.debug(ex)
+        return
+
     def update_path(self, record):
         self.get_es_index()
         path = 'path'
