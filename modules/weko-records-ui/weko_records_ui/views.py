@@ -29,7 +29,7 @@ from invenio_records_ui.signals import record_viewed
 from weko_index_tree.models import IndexStyle
 from .permissions import check_created_id
 from weko_search_ui.api import get_search_detail_keyword
-from weko_deposit import WekoIndexer
+from weko_deposit.api import WekoIndexer
 
 blueprint = Blueprint(
     'weko_records_ui',
