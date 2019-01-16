@@ -126,10 +126,10 @@ def json_loader(data, pid):
         if not is_edit:
             oaid = current_pidstore.minters['oaiid'](item_id, dc)
             oai_value = oaid.pid_value
-        relation_ar = []
-        relation_ar.append(dict(value="", item_links="", item_title=""))
-        jrc.update(dict(relation=dict(relationType=relation_ar)))
-        dc.update(dict(relation=dict(relationType=relation_ar)))
+        # relation_ar = []
+        # relation_ar.append(dict(value="", item_links="", item_title=""))
+        # jrc.update(dict(relation=dict(relationType=relation_ar)))
+        # dc.update(dict(relation=dict(relationType=relation_ar)))
         jrc.update(dict(control_number=pid))
         jrc.update(dict(_oai={"id": oai_value}))
         jrc.update(dict(_item_metadata=dc))
@@ -140,12 +140,6 @@ def json_loader(data, pid):
         user_id = current_user.get_id()
         if user_id:
             jrc.update(dict(weko_creator_id=user_id))
-
-        relation_ar = []
-        relation_ar.append(dict(value="", item_links="", item_title=""))
-        jrc.update(dict(relation=dict(relationType=relation_ar)))
-        current_app.logger.debug(jrc)
-        current_app.logger.debug(dc)
 
     del ojson, mjson, item
     return dc, jrc, is_edit
