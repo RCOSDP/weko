@@ -275,7 +275,7 @@ def default_view_method(pid, record, template=None, **kwargs):
     if res is not None:
         record["relation"]=res
     else:
-        record["relation"] = []
+        record["relation"] = {}
     current_app.logger.debug(record)
 
     return render_template(

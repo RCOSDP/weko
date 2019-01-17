@@ -129,8 +129,6 @@ class WekoIndexer(RecordIndexer):
         )
 
     def update_relation_info(self, record, relation_info):
-        current_app.logger.debug(relation_info)
-        current_app.logger.debug(len(relation_info))
         self.get_es_index()
         relation = 'relation'
         relation_type = 'relation_type'
@@ -140,12 +138,14 @@ class WekoIndexer(RecordIndexer):
             links= '/records/'+pid
             sub_data=dict(item_links=links, item_title=d.get('item_title'), value=d.get('sele_id'))
             relation_type_val.append(sub_data)
-        body = {'doc': {relation: {relation_type:relation_type_val}}}
+        if relation_info[0]:
+            body = {'doc': {relation: {relation_type:relation_type_val}}}
+        else:
+            body = {'doc': {relation: {}}}
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(record.id),
-            # version=record.revision_id,
             body=body
         )
 
