@@ -139,6 +139,7 @@ class WekoIndexer(RecordIndexer):
             sub_data=dict(item_links=links, item_title=d.get('item_title'), value=d.get('sele_id'))
             relation_type_val.append(sub_data)
         if relation_info[0]:
+            current_app.logger.debug(record)
             body = {'doc': {relation: {relation_type:relation_type_val}}}
             return self.client.update(
                 index=self.es_index,
