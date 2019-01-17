@@ -129,6 +129,7 @@ class WekoIndexer(RecordIndexer):
         )
 
     def update_relation_info(self, record, relation_info):
+        current_app.logger.debug(len(relation_info))
         self.get_es_index()
         relation = 'relation'
         relation_type = 'relation_type'
