@@ -21,12 +21,10 @@
 """Views for weko-admin."""
 
 import json
-import os
 import sys
 from datetime import timedelta
-
 from flask import Blueprint, abort, current_app, flash, \
-    jsonify, make_response, render_template, request, session
+    jsonify, make_response, render_template, request, session, redirect, url_for
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -34,12 +32,12 @@ from flask_menu import register_menu
 from invenio_admin.proxies import current_admin
 from weko_records.api import ItemTypes, SiteLicense
 from werkzeug.local import LocalProxy
-
-
+from sqlalchemy.orm import session
 from .models import SessionLifetime, SearchManagement
 from .utils import get_response_json, get_search_setting
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
+
 
 blueprint = Blueprint(
     'weko_admin',
@@ -212,5 +210,3 @@ def set_search():
         )
     except:
         abort(500)
-
-

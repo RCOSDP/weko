@@ -139,3 +139,8 @@ github3.py==1.1.0
 feedgen==0.7.0
 boto3==1.7.84
 s3fs==0.1.6
+fpdf==1.7.2
+Pillow==5.4.1
+Sickle==0.6.4
+Sphinx==1.8.4
+pytest==4.2.0
