@@ -134,6 +134,8 @@ class WekoIndexer(RecordIndexer):
         relation_type = 'relation_type'
         relation_type_val=[]
         for d in relation_info[0]:
+            pid = d.get('item_data').get('links').get('self').split('/')[len(d.get('item_data').get('links').get('self').split('/'))-1]
+            current_app.logger.debug(pid)
             sub_data=dict(item_links=d.get('item_data').get('links').get('self'), item_title=d.get('item_title'), value=d.get('sele_id'))
             relation_type_val.append(sub_data)
         body = {'doc': {relation: {relation_type:relation_type_val}}}

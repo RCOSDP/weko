@@ -238,7 +238,7 @@
                     <th>{{_('Link')}}</th>
                     <td>
                       {%- for sub_record in record.relation.relation_type%}
-                        <a target="_self" ng-href="{{sub_record.item_links}}">{{ sub_record.item_title}}</a><br>
+                        <a target="_self" href="{{sub_record.item_links}}">{{ sub_record.item_title}}</a><br>
                       {% endfor %}
                     </td>
                   </tr>
