@@ -63,7 +63,7 @@ def publish(pid, record, template=None, **kwargs):
 
     record.commit()
     db.session.commit()
-
+    current_app.logger.debug(record)
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
