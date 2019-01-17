@@ -120,6 +120,7 @@ class WekoIndexer(RecordIndexer):
         self.get_es_index()
         pst = 'publish_status'
         body = {'doc': {pst: record.get(pst)}}
+        current_app.logger.debug(record)
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
