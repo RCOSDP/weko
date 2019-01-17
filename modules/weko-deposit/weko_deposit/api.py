@@ -144,6 +144,7 @@ class WekoIndexer(RecordIndexer):
                 index=self.es_index,
                 doc_type=self.es_doc_type,
                 id=str(record.id),
+                version=record.revision_id,
                 body=body
             )
 
