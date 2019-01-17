@@ -233,6 +233,16 @@
                     </td>
                   </tr>
                 {% endfor %}
+                {% if record.relation %}
+                  <tr>
+                    <th>{{_('Link')}}</th>
+                    <td>
+                      {%- for sub_record in record.relation. %}
+                        <a target="_self" ng-href="{{sub_record.item_links}}">{{ sub_record.item_title}}</a><br>
+                      {% endfor %}
+                    </td>
+                  </tr>
+                {% endif %}
                 {% if record.pubdate %}
                   <tr>
                     <th>{{_('Publish Status')}}</th>
