@@ -140,14 +140,12 @@ class WekoIndexer(RecordIndexer):
             relation_type_val.append(sub_data)
         if relation_info[0]:
             body = {'doc': {relation: {relation_type:relation_type_val}}}
-        else:
-            body = {'doc': {relation: {}}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(record.id),
-            body=body
-        )
+            return self.client.update(
+                index=self.es_index,
+                doc_type=self.es_doc_type,
+                id=str(record.id),
+                body=body
+            )
 
     def get_item_link_info(self, pid):
         try:
