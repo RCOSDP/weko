@@ -425,6 +425,23 @@
               "copy_to": [
                 "search_other"
               ]
+            },
+			"relationType": {
+              "type": "nested",
+              "properties": {
+                "value": {
+                  "type": "string",
+				  "index": "not_analyzed"
+                },
+                "item_links": {
+                  "type": "string",
+                  "index": "not_analyzed"
+                },
+                "item_title": {
+                  "type": "string",
+                  "index": "not_analyzed"
+                }
+              }
             }
           }
         },
