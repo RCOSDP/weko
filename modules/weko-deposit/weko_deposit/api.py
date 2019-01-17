@@ -164,7 +164,6 @@ class WekoIndexer(RecordIndexer):
             indexer = RecordIndexer()
             res = indexer.client.search(index="weko", body=query_q)
             item_link_info = res.get("hits").get("hits")[0].get('_source').get("relation")
-            current_app.logger.debug(item_link_info)
         except Exception as ex:
             current_app.logger.debug(ex)
         return item_link_info
@@ -505,8 +504,6 @@ class WekoDeposit(Deposit):
         jrc.update(dict(custom_sort=sub_sort))
         dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
-        current_app.logger.debug(jrc)
-        current_app.logger.debug(dc)
 
         pubs = '1' if 'private' in actions else '0'
         ps = dict(publish_status=pubs)

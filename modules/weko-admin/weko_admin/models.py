@@ -172,7 +172,6 @@ class SearchManagement(db.Model):
     @classmethod
     def create(cls, data):
         """Create data"""
-        current_app.logger.debug(data)
         try:
             dataObj = SearchManagement()
             with db.session.begin_nested():
