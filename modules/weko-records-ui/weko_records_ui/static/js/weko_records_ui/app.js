@@ -72,8 +72,8 @@
         ConfirmContr.$inject = [
           '$scope',
           '$rootScope',
-          '$http',
           '$modal',
+          '$http',
           '$location'
         ];
         angular.module('item_detail')
