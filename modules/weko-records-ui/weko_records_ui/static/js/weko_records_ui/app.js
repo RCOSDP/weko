@@ -41,7 +41,7 @@
 (function (angular) {
     // Bootstrap it!
     angular.element(document).ready(function () {
-        angular.module('item_detail', []);
+        angular.module('item_detail', ['ui.bootstrap']);
 
         function ConfirmContr($scope, $rootScope, $modal, $http, $location) {
            $scope.openConfirm = function(message, url, rdt) {
