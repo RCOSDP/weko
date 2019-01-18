@@ -288,29 +288,29 @@
               {% endif %}
             {%- endblock %}
 
-            <!--<div class="text-center" ng-app="myApp" ng-controller="ItemController">-->
-              <!--<a class="btn btn-default" id="btn_back" href="#" >-->
-                <!--<span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</a>-->
-              <!--{% if record | check_permission %}-->
-              <!--<a class="btn btn-default" id="btn_edit" href="{{ '/item/edit/'+pid.pid_value }}">-->
-                <!--<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Edit')}}</a>-->
-              <!--<a class="btn btn-danger btn-sm" id="btn_delete" href="#"-->
-                 <!--ng-click="openConfirm('',-->
-                 <!--'{{'/api/deposits/items/'+pid.pid_value}}',-->
-                 <!--'{{url_for('weko_items_ui.index')}}')">-->
-                <!--<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>{{_('Delete')}}</a>-->
-              <!--<script type="text/ng-template" id="confirm-modal.html">-->
-                <!--<div class="modal-header"><h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>Confirm</h3></div>-->
-                <!--<div class="modal-body">-->
-                  <!--<p>{{ _('Are you sure you want to delete this item?') }}</p>-->
-                <!--</div>-->
-                <!--<div class="modal-footer">-->
-                  <!--<button class="btn btn-primary" ng-click="ok()">{{_('Ok')}}</button>-->
-                  <!--<button class="btn btn-warning" ng-click="cancel()">Cancel</button>-->
-                <!--</div>-->
-              <!--</script>-->
-              <!--{% endif %}-->
-            <!--</div>-->
+            <div class="text-center" ng-app="myApp" ng-controller="ItemController">
+              <a class="btn btn-default" id="btn_back" href="#" >
+                <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</a>
+              {% if record | check_permission %}
+              <a class="btn btn-default" id="btn_edit" href="{{ '/item/edit/'+pid.pid_value }}">
+                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Edit')}}</a>
+              <a class="btn btn-danger btn-sm" id="btn_delete" href="#"
+                 ng-click="openConfirm('',
+                 '{{'/api/deposits/items/'+pid.pid_value}}',
+                 '{{url_for('weko_items_ui.index')}}')">
+                <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>{{_('Delete')}}</a>
+              <script type="text/ng-template" id="confirm-modal.html">
+                <div class="modal-header"><h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>Confirm</h3></div>
+                <div class="modal-body">
+                  <p>{{ _('Are you sure you want to delete this item?') }}</p>
+                </div>
+                <div class="modal-footer">
+                  <button class="btn btn-primary" ng-click="ok()">{{_('Ok')}}</button>
+                  <button class="btn btn-warning" ng-click="cancel()">Cancel</button>
+                </div>
+              </script>
+              {% endif %}
+            </div>
           </div>
           <div class="col-sm-3 col-md-3 col-right">
 <!-- start demo block -->
