@@ -2,7 +2,7 @@
     // Bootstrap it!
     angular.element(document).ready(function () {
         angular.module('searchDetail.controllers', []);
-
+        angular.module('searchDetailModule', [])
         function searchDetailCtrl($scope, $rootScope, $http, $location) {
             $scope.condition_data = [];
             $scope.detail_search_key = [];
