@@ -1,6 +1,6 @@
 (function (angular) {
     // Bootstrap it!
-//    angular.element(document).ready(function () {
+    angular.element(document).ready(function () {
         angular.module('searchDetail.controllers', []);
 
         function searchDetailCtrl($scope, $rootScope, $http, $location) {
@@ -224,5 +224,5 @@
 
         angular.bootstrap(
             document.getElementById('search_detail'), ['searchDetailModule']);
-//    });
+    });
 })(angular);
