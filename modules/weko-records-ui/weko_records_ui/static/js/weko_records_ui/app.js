@@ -1,4 +1,4 @@
-angular.module('myApp', ['ui.bootstrap'])
+angular.module('myApp', [])
  .controller("ItemController",
   function($scope, $modal, $http, $window) {
    $scope.openConfirm = function(message, url, rdt) {
