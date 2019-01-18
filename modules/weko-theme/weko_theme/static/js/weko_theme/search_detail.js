@@ -222,7 +222,7 @@
                 $interpolateProvider.endSymbol(']]');　　
             }]);
 
-        angular.bootstrap(
-            document.getElementById('search_detail'), ['searchDetailModule']);
+//        angular.bootstrap(
+//            document.getElementById('search_detail'), ['searchDetailModule']);
     });
 })(angular);
