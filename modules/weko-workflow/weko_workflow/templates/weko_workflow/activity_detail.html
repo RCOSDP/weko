@@ -36,9 +36,6 @@
 {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endif%}
 {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%-if 'item_link' == cur_step %}
-{% assets "workflow_itemLink_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endif%}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
