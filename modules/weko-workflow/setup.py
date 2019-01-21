@@ -98,6 +98,7 @@ setup(
         ],
         'invenio_assets.bundles': [
             'workflow_js = weko_workflow.bundles:js_workflow',
+            'workflow_itemLink_js = weko_workflow.bundles:js_workflow_item_link',
             'workflow_activity_list_js = '
             'weko_workflow.bundles:js_activity_list',
             'workflow_iframe_js = weko_workflow.bundles:js_iframe',
