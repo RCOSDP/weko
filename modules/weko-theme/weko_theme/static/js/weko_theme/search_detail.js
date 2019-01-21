@@ -1,3 +1,10 @@
+require([
+  'jquery',
+  'bootstrap'
+],function () {
+
+});
+
 (function (angular) {
     // Bootstrap it!
     angular.element(document).ready(function () {
