@@ -189,7 +189,6 @@ require([
   })
 })
 
-(function (angular) {
 //Item Link
 function searchResItemLinkCtrl($scope, $rootScope, $http, $location) {
    $scope.link_item_list=[];
@@ -289,7 +288,6 @@ angular.module('invenioSearch').config(['$interpolateProvider', function($interp
   $interpolateProvider.startSymbol('{[');
   $interpolateProvider.endSymbol(']}');
 }]);
-})(angular);
 
 
 
