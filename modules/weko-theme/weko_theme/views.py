@@ -25,6 +25,9 @@ from flask import Blueprint, current_app, render_template, request, flash
 from weko_index_tree.models import IndexStyle
 from flask_login import login_required
 from weko_search_ui.api import get_search_detail_keyword
+from blinker import Namespace
+_signals = Namespace()
+top_viewed = _signals.signal('top-viewed')
 
 
 blueprint = Blueprint(
@@ -54,6 +57,7 @@ def index():
 
     detail_condition = get_search_detail_keyword('')
 
+    top_viewed.send(current_app._get_current_object())
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         community_id =community_id, detail_condition=detail_condition, width=width, height=height, **ctx)

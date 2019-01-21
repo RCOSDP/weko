@@ -62,6 +62,14 @@ RECORDS_UI_ENDPOINTS = dict(
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
     ),
+    recid_file_preview=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/file_preview/<path:filename>',
+        view_imp='weko_records_ui.fd.file_preview_ui',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+    ),
     recid_preview=dict(
         pid_type='recid',
         route='/record/<pid_value>/preview/<path:filename>',
