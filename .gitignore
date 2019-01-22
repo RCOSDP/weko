@@ -72,3 +72,5 @@ scripts/demo/postgresql/
 docker-compose.dev.yml
 *.bak
 
+#docker-compose.yml customised
+docker-compose.yml
