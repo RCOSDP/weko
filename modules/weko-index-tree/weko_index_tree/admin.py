@@ -26,6 +26,7 @@ from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from .models import IndexStyle
+from invenio_db import db
 
 class IndexSettingView(BaseView):
 
@@ -63,6 +64,29 @@ class IndexSettingView(BaseView):
         return abort(400)
 
 
+class IndexLinkSettingView(BaseView):
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        try:
+            style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+            if not style:
+                IndexStyle.create(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                    width=3, height=None)
+                style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+            if request.method == 'POST':
+                if request.form.get('indexlink') == 'enable':
+                    style.index_link_enabled = True
+                else:
+                    style.index_link_enabled = False
+                db.session.commit()
+            return self.render(current_app.config['WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE'],
+                    enable=style.index_link_enabled)
+        except:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            return abort(400)
+
+
 index_adminview = {
     'view_class': IndexSettingView,
     'kwargs': {
@@ -72,7 +96,18 @@ index_adminview = {
     }
 }
 
+index_link_adminview = {
+    'view_class': IndexLinkSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Index Link'),
+        'endpoint': 'indexlink'
+    }
+}
+
 __all__ = (
     'index_adminview',
     'IndexSettingView',
+    'index_link_adminview',
+    'IndexLinkSettingView',
 )

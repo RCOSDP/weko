@@ -19,16 +19,24 @@
 #}
 
 <div class="panel-group-tmp">
-　<div class="panel panel-default hide">
+  {% if index_link_enabled  %}
+  <div class="panel panel-default">
+  {% else %}
+  <div class="panel panel-default hide">
+  {% endif %}
     <div class="panel-heading clearfix">
         <h3 class="panel-title">{{_('Index Link')}}</h3>
     </div>
     <div class="panel-body">
-        <div id="logFeed">
-            <div class="spinner-loading-wrapper">
-                <div class="logo-spin logo-lg"></div>
-                 <p class="m-t-sm fg-load-message"> {{_('Add Links')}}  </p>
-            </div>
+        <div class="spinner-loading-wrapper">
+            <select name=index_link style="width:100%" onchange="selectIndexLink(this);">
+                <option></option>
+                {% if index_link_list %}
+                    {% for id, name in index_link_list %}
+                    <option value={{id}}>{{name}}</option>
+                    {% endfor %}
+                {% endif %}
+            </select>
         </div>
     </div>
   </div>
@@ -48,4 +56,15 @@
     if(adminHeight == null || adminHeight == '') return;
     $('.index-body').css('height',adminHeight);
   })
+</script>
+<script>
+    $(function(){
+      // bind change event to select
+      $("select[name='index_link']").on('change', function () {
+          if ($(this).val()) {
+            var url = '/search?search_type=2&q=' + $(this).val();
+            window.location = url;
+          }
+      });
+    });
 </script>
