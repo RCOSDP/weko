@@ -250,7 +250,6 @@ def default_view_method(pid, record, template=None, **kwargs):
         pid=pid,
         record=record,
     )
-
     getargs = request.args
     community_id = ""
     ctx = {'community': None}
@@ -266,7 +265,6 @@ def default_view_method(pid, record, template=None, **kwargs):
     height = style.height if style else None
 
     detail_condition=get_search_detail_keyword('')
-
     return render_template(
         template,
         pid=pid,

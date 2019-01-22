@@ -91,6 +91,7 @@ setup(
         ],
         'invenio_admin.views': [
             'weko_index_tree_indextree = weko_index_tree.admin:index_adminview',
+            'weko_index_tree_indexlink = weko_index_tree.admin:index_link_adminview',
         ],
         'invenio_i18n.translations': [
             'messages = weko_index_tree',
