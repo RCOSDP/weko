@@ -49,8 +49,12 @@ def index():
 
     # Get index style
     style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    width = style.width if style else '3'
-    height = style.height if style else None
+    if not style:
+        IndexStyle.create(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                width=3, height=None)
+        style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+    width = style.width
+    height = style.height
     index_link_enabled = style.index_link_enabled
 
     index_link_list = []
