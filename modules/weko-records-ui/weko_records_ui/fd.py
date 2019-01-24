@@ -119,16 +119,40 @@ def prepare_response(pid_value, fd=True):
     return rv
 
 
-def file_preview_ui(pid, _record_file_factory=None, **kwargs):
-    """
+# def file_preview_ui(pid, _record_file_factory=None, **kwargs):
+#     """
+#
+#     :param pid:
+#     :param _record_file_factory:
+#     :param kwargs:
+#     :return:
+#     """
+#
+#     return prepare_response(pid.pid_value, False)
+#
 
-    :param pid:
+def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
+    """File preview view for a given record.
+
+    Plug this method into your ``RECORDS_UI_ENDPOINTS`` configuration:
+
+    .. code-block:: python
+
+        RECORDS_UI_ENDPOINTS = dict(
+            recid=dict(
+                # ...
+                route='/records/<pid_value/file_preview/<filename>',
+                view_imp='invenio_records_files.utils:file_preview_ui',
+                record_class='invenio_records_files.api:Record',
+            )
+        )
+
     :param _record_file_factory:
-    :param kwargs:
-    :return:
+    :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
+        instance.
+    :param record: The record metadata.
     """
-
-    return prepare_response(pid.pid_value, False)
+    return file_ui(pid, record, _record_file_factory, is_preview=True, **kwargs)
 
 
 def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
@@ -147,6 +171,17 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
             )
         )
 
+    :param _record_file_factory:
+    :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
+        instance.
+    :param record: The record metadata.
+    """
+    return file_ui(pid, record, _record_file_factory, is_preview=False, **kwargs)
+
+
+def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
+    """
+    :param is_preview: Determine the type of event. True: file-preview, False: file-download
     :param _record_file_factory:
     :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
         instance.
@@ -172,7 +207,7 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
 
     # Send file.
     return ObjectResource.send_object(
-        obj.bucket, obj,
+        obj.bucket, obj, is_preview=is_preview,
         expected_chksum=fileobj.get('checksum'),
         logger_data={
             'bucket_id': obj.bucket_id,

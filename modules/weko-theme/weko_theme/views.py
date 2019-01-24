@@ -26,6 +26,9 @@ from weko_index_tree.models import Index, IndexStyle
 from flask_login import login_required
 from weko_search_ui.api import get_search_detail_keyword
 from invenio_i18n.ext import current_i18n
+from blinker import Namespace
+_signals = Namespace()
+top_viewed = _signals.signal('top-viewed')
 
 blueprint = Blueprint(
     'weko_theme',
@@ -64,8 +67,12 @@ def index():
             else:
                 index_link_list.append((index.id, index.index_link_name_english))
 
+<<<<<<< HEAD
     detail_condition = get_search_detail_keyword('')
     current_app.logger.debug(index_link_list)
+=======
+    top_viewed.send(current_app._get_current_object())
+>>>>>>> feature/sp1-StoreLogInfo-dev17
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         community_id=community_id, detail_condition=detail_condition,

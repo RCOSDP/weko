@@ -135,6 +135,8 @@
                 </tr>
                 {%- endif -%}
                 {%- if 'preview' in file.displaytype -%}
+                {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview', pid_value=pid.pid_value,
+                filename=file.key) %}
                 <tr >
                   <td colspan="2">
                     <div class="panel panel-default" id="preview">
@@ -149,14 +151,14 @@
                         <div class="embed-responsive embed-responsive-16by9">
                           {%- if 'audio' in file.mimetype -%}
                             <audio controls preload="auto">
-                              <source src="{{file_url}}" type="{{file.mimetype}}">
+                              <source src="{{file_preview_url}}" type="{{file.mimetype}}">
                             </audio>
                           {%- elif 'video' in file.mimetype -%}
                             <video controls>
-                              <source src="{{file_url}}" type="{{file.mimetype}}">
+                              <source src="{{file_preview_url}}" type="{{file.mimetype}}">
                             </video>
                           {%- elif 'text' in file.mimetype -%}
-                            <object data="{{file_url}}" type="{{file.mimetype}}"/>
+                            <object data="{{file_preview_url}}" type="{{file.mimetype}}"/>
                           {%- else -%}
                             <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
                                   src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
