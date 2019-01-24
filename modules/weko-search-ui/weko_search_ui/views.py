@@ -29,6 +29,9 @@ from invenio_indexer.api import RecordIndexer
 from .api import SearchSetting
 from weko_search_ui.api import get_search_detail_keyword
 from invenio_i18n.ext import current_i18n
+from blinker import Namespace
+_signals = Namespace()
+searched = _signals.signal('searched')
 
 blueprint = Blueprint(
     'weko_search_ui',
@@ -108,6 +111,8 @@ def search():
                                index_id=cur_index_id, community_id=community_id,
                                width=width, height=height, **ctx)
     else:
+        if search_type in ('0', '1', '2'):
+            searched.send(current_app._get_current_object(), search_args=getArgs)
         return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
                                index_id=cur_index_id, community_id=community_id,
                                sort_option=sort_options, disply_setting=disply_setting,
