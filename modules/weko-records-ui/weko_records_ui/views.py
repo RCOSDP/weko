@@ -252,7 +252,6 @@ def default_view_method(pid, record, template=None, **kwargs):
         pid=pid,
         record=record,
     )
-
     getargs = request.args
     community_id = ""
     ctx = {'community': None}

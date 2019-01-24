@@ -32,6 +32,9 @@ WEKO_INDEX_TREE_EDIT_TEMPLATE = 'weko_index_tree/tree_edit.html'
 WEKO_INDEX_TREE_ADMIN_TEMPLATE = 'weko_index_tree/setting/index_setting.html'
 """Index area setting page."""
 
+WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE = 'weko_index_tree/setting/index_link_setting.html'
+"""Index link setting page."""
+
 WEKO_INDEX_TREE_STYLE_OPTIONS = {
     'id': 'weko',
     'widths': ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']

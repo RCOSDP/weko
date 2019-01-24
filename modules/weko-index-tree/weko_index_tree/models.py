@@ -62,6 +62,16 @@ class Index(db.Model, Timestamp):
     index_name_english = db.Column(db.Text, nullable=False, default='')
     """English Name of the index."""
 
+    index_link_name = db.Column(db.Text, nullable=True, default='')
+    """Name of the index link."""
+
+    index_link_name_english = db.Column(db.Text, nullable=False, default='')
+    """English Name of the index link."""
+
+    index_link_enabled = db.Column(db.Boolean(name='index_link_enabled'), nullable=False,
+                             default=False)
+    """Index link enable flag."""
+
     comment = db.Column(db.Text, nullable=True, default='')
     """Comment of the index."""
 
@@ -206,6 +216,9 @@ class IndexStyle(db.Model, Timestamp):
 
     height = db.Column(db.Text, nullable=False, default='')
     """Index area height."""
+
+    index_link_enabled = db.Column(db.Boolean(name='index_link_enabled'),
+        nullable=False, default=False)
 
     @classmethod
     def create(cls, community_id, **data):
