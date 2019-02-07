@@ -104,6 +104,7 @@ pyzmq==17.0.0
 redis==2.10.6
 requests==2.18.4
 requests-oauthlib==0.8.0
+Sickle==0.6.4
 simplegeneric==0.8.1
 simplejson==3.12.0
 simplekv==0.10.0
