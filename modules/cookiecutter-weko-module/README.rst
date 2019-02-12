@@ -20,10 +20,7 @@ features:
   submodule.
 - **Boilderplate files:** `README` including important badges, `AUTHORS` and
   `CHANGES` file.
-- **License:** `GPL 2 <https://www.gnu.org/licenses/gpl-2.0.html>`_ file and
-  headers. Headers optionally include a special paragraph for
-  Intergovernmental Organizations like National Institute of Informatics. Provides these headers as
-  reusable files for Python and reStructuredText.
+- **License:** `MIT <https://opensource.org/licenses/MIT>`_ file and headers.
 - **Installation:** Installation script written as `setup.py` and a
   requirements calculator for different levels (`min`, `pypi`, `dev`).
 - **Tests:** Test setup using `pytest <http://pytest.org/latest/>`_ and
