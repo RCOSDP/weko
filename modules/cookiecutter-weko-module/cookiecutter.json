@@ -8,7 +8,7 @@
     "author_email": "wekosoftware@nii.ac.jp",
     "year": "{% now 'local', '%Y' %}",
     "copyright_holder": "{{ cookiecutter.author_name }}",
-    "copyright_by_intergovernmental": true,
+    "copyright_by_intergovernmental": false,
     "superproject": "WEKO3",
     "transifex_project": "{{ cookiecutter.project_shortname }}",
     "extension_class": "{{ cookiecutter.project_name | replace('WEKO', 'Weko') | replace('-', '') | replace(' ', '') }}",
