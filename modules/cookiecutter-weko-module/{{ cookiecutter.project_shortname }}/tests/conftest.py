@@ -1,5 +1,11 @@
 {% include 'misc/header.py' %}
-"""Pytest configuration."""
+"""Pytest configuration.
+
+See https://pytest-invenio.readthedocs.io/ for documentation on which test
+fixtures are available.
+"""
+
+from __future__ import absolute_import, print_function
 
 import shutil
 import tempfile
@@ -8,29 +14,27 @@ import pytest
 from flask import Flask
 from flask_babelex import Babel
 
-
-@pytest.yield_fixture()
-def instance_path():
-    """Temporary instance path."""
-    path = tempfile.mkdtemp()
-    yield path
-    shutil.rmtree(path)
+from {{ cookiecutter.package_name }} import {{ cookiecutter.extension_class }}
+from {{ cookiecutter.package_name }}.views import blueprint
 
 
-@pytest.fixture()
-def base_app(instance_path):
-    """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
-    app_.config.update(
-        SECRET_KEY='SECRET_KEY',
-        TESTING=True,
-    )
-    Babel(app_)
-    return app_
+@pytest.fixture(scope='module')
+def celery_config():
+    """Override pytest-invenio fixture.
+
+    TODO: Remove this fixture if you add Celery support.
+    """
+    return {}
 
 
-@pytest.yield_fixture()
-def app(base_app):
-    """Flask application fixture."""
-    with base_app.app_context():
-        yield base_app
+@pytest.fixture(scope='module')
+def create_app(instance_path):
+    """Application factory fixture."""
+    def factory(**config):
+        app = Flask('testapp', instance_path=instance_path)
+        app.config.update(**config)
+        Babel(app)
+        {{ cookiecutter.extension_class }}(app)
+        app.register_blueprint(blueprint)
+        return app
+    return factory

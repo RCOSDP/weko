@@ -45,6 +45,12 @@ git add -A
 
 pip install -e .\[all\] --quiet
 
+mkdir generated_fun/translations
+python setup.py extract_messages
+python setup.py init_catalog -l en
+python setup.py compile_catalog
+git add -A
+
 check-manifest -u || true
 
 ./run-tests.sh
