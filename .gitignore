@@ -69,6 +69,10 @@ scripts/demo/contents/
 scripts/demo/elasticsearch/
 scripts/demo/postgresql/
 
-docker-compose.yml
 docker-compose.dev.yml
 *.bak
+
+#PDF cover page-related files
+header-icons/*
+combined-pdfs/*
+!.gitkeep
