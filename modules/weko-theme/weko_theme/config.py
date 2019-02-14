@@ -31,6 +31,9 @@ embedding header metadata and define basic template blocks. All other user
 facing templates usually extends from this template and thus changing this
 template allows to change design and layout of WEKO3.
 """
+BASE_GRID_TEMPLATE = 'weko_theme/grid.html'
+"""Base template for grid-layout."""
+
 THEME_HEADER_TEMPLATE = 'weko_theme/header.html'
 """Header template which is normally included in :data:`BASE_TEMPLATE`."""
 

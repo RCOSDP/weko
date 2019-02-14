@@ -89,6 +89,13 @@ def edit():
         current_app.config['BASE_EDIT_TEMPLATE'],
     )
 
+@blueprint.route('/grid')
+def grid():
+    """Simplistic front page view."""
+    return render_template(
+        current_app.config['BASE_GRID_TEMPLATE'],
+    )
+
 
 @blueprint.route("/item_management")
 @login_required
