@@ -20,6 +20,8 @@
 
 """Configuration for weko-records-ui."""
 
+from .views import blueprint
+
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
 WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
 
@@ -163,8 +165,9 @@ FOOTER_HEIGHT = 4  # height of the footer cell
 # meta_h = 9  # height of the metadata cell
 METADATA_HEIGHT = 9
 
+# Path to the JPAexg font file
+JPAEXG_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexg00201/ipaexg.ttf"
 
-JPAEXG_TTF_FILEPATH = '/code/modules/weko-records-ui/weko_records_ui/fonts/ipaexg00201/ipaexg.ttf'
-
-JPAEXM_TTF_FILEPATH = '/code/modules/weko-records-ui/weko_records_ui/fonts/ipaexm00201/ipaexm.ttf'
+# Path to the JPAexm font file
+JPAEXM_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexm00201/ipaexm.ttf"
 
