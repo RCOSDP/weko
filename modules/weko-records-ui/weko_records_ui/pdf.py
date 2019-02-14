@@ -31,6 +31,7 @@ from .models import PDFCoverPageSettings
 from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 from weko_records.api import Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
+from .views import blueprint
 
 """ Function counting numbers of full-width character and half-width character differently """
 def get_east_asian_width_count(text):
@@ -245,49 +246,49 @@ def make_combined_pdf(pid, obj_file_uri):
     pdf.set_x(108)
 
     license =  item_metadata_json[_file_item_id][0].get('licensetype')
-    if license == 'license_free':  #自由入力
+    if license == 'license_free':  #Free writing
         txt = item_metadata_json[_file_item_id][0].get('licensefree')
         if txt == None:
             txt = ''
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
     elif license == 'license_0': #Attribution
         txt = 'This work is licensed under a Creative Commons Attribution 4.0 International License.'
-        src = "modules/weko-records-ui/weko_records_ui/static/images/creative_commons/by.png"
+        src = blueprint.root_path + "/static/images/creative_commons/by.png"
         lnk = "http://creativecommons.org/licenses/by/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 1, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_1': #Attribution-ShareAlike
         txt = 'This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.'
-        src= "modules/weko-records-ui/weko_records_ui/static/images/creative_commons/by-sa.png"
+        src= blueprint.root_path + "/static/images/creative_commons/by-sa.png"
         lnk = "http://creativecommons.org/licenses/by-sa/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 1, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_2': #Attribution-NoDerivatives
         txt = 'This work is licensed under a Creative Commons Attribution-NoDerivatives 4.0 International License.'
-        src = "modules/weko-records-ui/weko_records_ui/static/images/creative_commons/by-nd.png"
+        src = blueprint.root_path + "/static/images/creative_commons/by-nd.png"
         lnk = "http://creativecommons.org/licenses/by-nd/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_3': #Attribution-NonCommercial
         txt = 'This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.'
-        src = "modules/weko-records-ui/weko_records_ui/static/images/creative_commons/by-nc.png"
+        src = blueprint.root_path +  "/static/images/creative_commons/by-nc.png"
         lnk = "http://creativecommons.org/licenses/by-nc/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_4': #Attribution-NonCommercial-ShareAlike
         txt = 'This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.'
-        src = "modules/weko-records-ui/weko_records_ui/static/images/creative_commons/by-nc-sa.png"
+        src = blueprint.root_path + "/static/images/creative_commons/by-nc-sa.png"
         lnk = "http://creativecommons.org/licenses/by-nc-sa/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_5': #Attribution-NonCommercial-NoDerivatives
         txt = 'This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.'
-        src = "modules/weko-records-ui/weko_records_ui/static/images/creative_commons/by-nc-nd.png"
+        src = blueprint.root_path + "/static/images/creative_commons/by-nc-nd.png"
         lnk = "http://creativecommons.org/licenses/by-nc-nd/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
@@ -295,7 +296,7 @@ def make_combined_pdf(pid, obj_file_uri):
     else:
         pdf.multi_cell(footer_w, footer_h, '', 0, 'L', False)
 
-    """ Convert PDF cover page data as Bytecode """
+    """ Convert PDF cover page data as bytecode """
     output = pdf.output(dest = 'S').encode('latin-1')
     b_output = io.BytesIO(output)
 
