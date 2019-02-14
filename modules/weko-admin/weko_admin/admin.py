@@ -29,10 +29,6 @@ from flask_babelex import gettext as _
 from .permissions import admin_permission_factory
 from .utils import allowed_file
 
-from .models import PDFCoverPageSettings
-from sqlalchemy import exc
-#from .models import PDFCoverPageSettings
-
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
