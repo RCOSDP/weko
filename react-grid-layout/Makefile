@@ -1,6 +1,7 @@
 .DELETE_ON_ERROR:
 
 export BIN := $(shell npm bin)
+DOCKERID = $(shell docker-compose ps -q web)
 PATH := $(BIN):$(PATH)
 DIST = ./dist
 BUILD = ./build
@@ -35,6 +36,9 @@ build-js:
 build-example:
 	@$(BIN)/webpack --config webpack-examples.config.js
 	node ./examples/generate.js
+
+install-example:
+	docker cp $(DIST) $(DOCKERID):/home/invenio/.virtualenvs/invenio/var/instance/static/gen/
 
 view-example: build-example
 	@$(BIN)/opener examples/0-showcase.html
