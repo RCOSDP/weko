@@ -171,6 +171,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('read_permission_factory')
     def get(self, index_id):
         """Get a tree index record."""
+        print(index_id)
         try:
             index = self.record_class.get_index_with_role(index_id)
             have_children = Index.have_children(index_id)
