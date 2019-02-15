@@ -1,0 +1,22 @@
+<table class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th style="width:10%">No.</th>
+        <th style="width:35%">Title</th>
+        <th style="width:35%">Item Type</th>
+        <th style="width:20%">Add</th>
+      </tr>
+    </thead>
+    <tbody ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
+      <tr>
+        <td>{{$index+1}}</td>
+        <td>{{ record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0] }}</td>
+        <td>{{ record.metadata.hasOwnProperty('itemtype')?record.metadata.itemtype:record.metadata['dc:itemtype'] }}</td>
+        <td  class="text-center">
+          <button type="button" id="btn_edit_start" class="btn btn-primary" ng-click="add_link(record,$index)">
+            Add
+          </button>
+        </td>
+      </tr>
+    </tbody>
+</table>

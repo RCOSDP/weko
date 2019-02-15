@@ -23,14 +23,11 @@
 import os
 import sys
 import hashlib
-
-from flask import abort, current_app, flash, redirect, request, url_for, jsonify
+from flask import abort, current_app, flash, request, jsonify
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-
 from .permissions import admin_permission_factory
 from .utils import allowed_file
-
 
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -123,7 +120,7 @@ class StyleSettingView(BaseView):
         except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return self.render(
-            'weko_admin/admin/block_style.html',
+            current_app.config["WEKO_ADMIN_BlOCK_STYLE_TEMPLATE"],
             body_bg=body_bg,
             panel_bg=panel_bg,
             footer_default_bg=footer_default_bg,
@@ -204,7 +201,6 @@ class StyleSettingView(BaseView):
             abort(500)
         return checksum1 == checksum2
 
-
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -216,5 +212,4 @@ style_adminview = {
 
 __all__ = (
     'style_adminview',
-    'StyleSettingView',
 )

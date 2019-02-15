@@ -22,13 +22,16 @@
 
 import six
 from flask import Blueprint, abort, current_app, render_template, \
-    make_response, redirect, request, url_for
+    make_response, redirect, request, url_for, flash
 
 from invenio_records_ui.utils import obj_or_import_string
 from invenio_records_ui.signals import record_viewed
 from weko_index_tree.models import IndexStyle
 from .permissions import check_created_id
 from weko_search_ui.api import get_search_detail_keyword
+from weko_deposit.api import WekoIndexer
+from .models import PDFCoverPageSettings
+import werkzeug
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -63,6 +66,7 @@ def publish(pid, record, template=None, **kwargs):
     record.commit()
     db.session.commit()
 
+    current_app.logger.debug(record)
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
@@ -250,7 +254,6 @@ def default_view_method(pid, record, template=None, **kwargs):
         pid=pid,
         record=record,
     )
-
     getargs = request.args
     community_id = ""
     ctx = {'community': None}
@@ -267,6 +270,13 @@ def default_view_method(pid, record, template=None, **kwargs):
 
     detail_condition=get_search_detail_keyword('')
 
+    weko_indexer = WekoIndexer()
+    res = weko_indexer.get_item_link_info(pid= record.get("control_number"))
+    if res is not None:
+        record["relation"]=res
+    else:
+        record["relation"] = {}
+
     return render_template(
         template,
         pid=pid,
@@ -278,3 +288,42 @@ def default_view_method(pid, record, template=None, **kwargs):
         **ctx,
         **kwargs
     )
+
+@blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
+def set_pdfcoverpage_header():
+    #limit upload file size : 1MB
+    current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+
+    @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
+    def handle_over_max_file_size(error):
+        print("werkzeug.exceptions.RequestEntityTooLarge")
+        return 'result : file size is overed.'
+
+    # Save PDF Cover Page Header settings
+    if request.method == 'POST':
+        record = PDFCoverPageSettings.find(1)
+        avail = request.form.get('availability')
+        header_display_type = request.form.get('header-display')
+        header_output_string = request.form.get('header-output-string')
+        header_output_image_file = request.files.get('header-output-image')
+        header_output_image_filename = header_output_image_file.filename
+        header_output_image = record.header_output_image
+        if not header_output_image_filename == '':
+            upload_dir = "/code/header-icons/"
+            header_output_image = upload_dir + header_output_image_filename
+            header_output_image_file.save(header_output_image)
+        header_display_position = request.form.get('header-display-position')
+
+        # update PDF cover page settings
+        PDFCoverPageSettings.update(1,
+                                    avail,
+                                    header_display_type,
+                                    header_output_string,
+                                    header_output_image,
+                                    header_display_position
+                                    )
+
+        flash('PDF cover page settings have been updated.', category='success')
+        return redirect('/admin/pdfcoverpage')
+
+    return redirect('/admin/pdfcoverpage')

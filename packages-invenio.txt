@@ -4,7 +4,7 @@ invenio-admin==1.0.0b4
 invenio-app==1.0.0b1
 invenio-assets==1.0.0b7
 invenio-base==1.0.0a16
-invenio-cache==1.0.0b1
+invenio-cache==1.0.0
 invenio-celery==1.0.0b3
 invenio-config==1.0.0b3
 invenio-db==1.0.0b9
@@ -22,6 +22,7 @@ invenio-oauthclient==1.0.0b3
 invenio-pidstore==1.0.0
 invenio-previewer==1.0.0a11
 invenio-query-parser==0.6.0
+invenio-queues==1.0.0a1
 invenio-records==1.0.0
 invenio-records-files==1.0.0a10
 invenio-records-rest==1.0.0b3
@@ -29,4 +30,5 @@ invenio-records-ui==1.0.0b1
 invenio-rest==1.0.0b2
 invenio-search==1.0.0b4
 invenio-search-ui==1.0.0a9
+invenio-stats==1.0.0a10
 invenio-theme==1.0.0b4

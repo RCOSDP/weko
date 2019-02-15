@@ -226,3 +226,27 @@
             document.getElementById('search_detail'), ['searchDetailModule']);
     });
 })(angular);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

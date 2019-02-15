@@ -26,8 +26,10 @@ from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
-
 from . import config
+from invenio_db import db
+from .models import PDFCoverPageSettings
+
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -64,6 +66,35 @@ class ItemSettingView(BaseView):
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 
+class PdfCoverPageSettingView(BaseView):
+    @expose('/', methods=['GET'])
+    def index(self):
+        db.create_all()
+        record = PDFCoverPageSettings.find(1)
+        try:
+            return self.render(
+                current_app.config["WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE"],
+                avail = record.avail,
+                header_display_type = record.header_display_type,
+                header_output_string = record.header_output_string,
+                header_output_image = record.header_output_image,
+                header_display_position = record.header_display_position
+            )
+        except AttributeError:
+            makeshift = PDFCoverPageSettings(avail='disable', header_display_type=None, header_output_string=None, header_output_image = None, header_display_position = None)
+            db.session.add(makeshift)
+            db.session.commit()
+            record = PDFCoverPageSettings.find(1)
+            return self.render(
+                current_app.config["WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE"],
+                avail = record.avail,
+                header_display_type = record.header_display_type,
+                header_output_string = record.header_output_string,
+                header_output_image = record.header_output_image,
+                header_display_position = record.header_display_position
+            )
+
+
 
 item_adminview = {
     'view_class': ItemSettingView,
@@ -74,7 +105,18 @@ item_adminview = {
     }
 }
 
+pdfcoverpage_adminview = {
+    'view_class': PdfCoverPageSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('PDF Cover Page'),
+        'endpoint': 'pdfcoverpage'
+    }
+}
+
 __all__ = (
+    'pdfcoverpage_adminview',
+    'PdfCoverPageSettingView',
     'item_adminview',
     'ItemSettingView',
 )

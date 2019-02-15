@@ -70,6 +70,7 @@ class Indexes(object):
             data["parent"] = pid
             data["index_name"] = indexes.get('value')
             data["index_name_english"] = indexes.get('value')
+            data["index_link_name_english"] = data["index_name_english"]
             data["owner_user_id"] = current_user.get_id()
             role = cls.get_account_role()
             data["browsing_role"] = \

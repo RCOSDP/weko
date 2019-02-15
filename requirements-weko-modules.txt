@@ -1,6 +1,9 @@
 -e git+https://github.com/RCOSDP/invenio-files-rest.git@feature/weko#egg=invenio-files-rest
 -e git+https://github.com/RCOSDP/invenio-s3.git@feature/weko#egg=invenio-s3
 -e /code/modules/invenio-oaiserver
+-e git+https://github.com/RCOSDP/invenio-oaiharvester.git@feature/weko#egg=invenio-oaiharvester
+-e git+https://github.com/RCOSDP/invenio-previewer.git@feature/weko#egg=invenio-previewer
+-e git+https://github.com/RCOSDP/invenio-stats.git@feature/weko#egg=invenio-stats
 -e git+https://github.com/RCOSDP/invenio-records-rest.git@feature/weko#egg=invenio-records-rest
 -e git+https://github.com/RCOSDP/invenio-communities.git@feature/weko#egg=invenio-communities
 -e git+https://github.com/RCOSDP/invenio-mail.git@feature/weko#egg=invenio-mail
