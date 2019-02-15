@@ -1,9 +1,6 @@
 *~
 *.py[cod]
 
-# Idea software family
-.idea/
-
 # Packages
 *.egg
 *.egg-info

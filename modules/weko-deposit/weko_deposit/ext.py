@@ -56,6 +56,7 @@ class WekoDeposit(object):
                 'WEKO_DEPOSIT_BASE_TEMPLATE',
                 app.config['BASE_TEMPLATE'],
             )
+
         for k in dir(config):
             if k.startswith('WEKO_DEPOSIT_'):
                 app.config.setdefault(k, getattr(config, k))

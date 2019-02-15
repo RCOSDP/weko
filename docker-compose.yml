@@ -130,4 +130,3 @@ clamav:
   image: mkodockx/docker-clamav
   ports:
     - "3301:3310"
-

@@ -20,6 +20,8 @@
 
 """Configuration for weko-records-ui."""
 
+from .views import blueprint
+
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
 WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
 
@@ -30,6 +32,9 @@ WEKO_PERMISSION_ROLE_USER = ('System Administrator',
 
 ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
 # author setting page template
+
+WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE = 'weko_records_ui/admin/pdfcoverpage.html'
+# pdfcoverpage templates
 
 ITEM_SEARCH_FLG = 'name'
 # setting author name search type: name or id
@@ -58,6 +63,14 @@ RECORDS_UI_ENDPOINTS = dict(
         pid_type='recid',
         route='/record/<pid_value>/files/<path:filename>',
         view_imp='weko_records_ui.fd.file_download_ui',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+    ),
+    recid_file_preview=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/file_preview/<path:filename>',
+        view_imp='weko_records_ui.fd.file_preview_ui',
         record_class='weko_deposit.api:WekoRecord',
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
@@ -141,3 +154,20 @@ OAISERVER_METADATA_FORMATS = {
         'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
     }
 }
+
+URL_OA_POLICY_HEIGHT = 7  # height of the URL & OA-policy
+# title_h = 8  # height of the title
+TITLE_HEIGHT = 8  # height of the title
+# header_h = 20  # height of the header cell
+HEADER_HEIGHT = 20  # height of the header cell
+# footer_h = 4  # height of the footer cell
+FOOTER_HEIGHT = 4  # height of the footer cell
+# meta_h = 9  # height of the metadata cell
+METADATA_HEIGHT = 9
+
+# Path to the JPAexg font file
+JPAEXG_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexg00201/ipaexg.ttf"
+
+# Path to the JPAexm font file
+JPAEXM_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexm00201/ipaexm.ttf"
+

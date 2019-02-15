@@ -23,7 +23,7 @@
 import uuid
 
 from datetime import datetime
-from flask import current_app
+from flask import current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import User
 from invenio_db import db
@@ -781,6 +781,85 @@ class WorkActivity(object):
         """
         pass
 
+    def get_activity_index_search(self, activity_id):
+        """Get page info after item search"""
+        from weko_records.api import ItemsMetadata
+        from flask_babelex import gettext as _
+        from invenio_pidstore.models import PersistentIdentifier
+        from werkzeug.utils import import_string
+        from invenio_pidstore.resolver import Resolver
+        from .views import check_authority_action
+        activity = WorkActivity()
+        activity_detail = activity.get_activity_detail(activity_id)
+        item = None
+        if activity_detail is not None and activity_detail.item_id is not None:
+            try:
+                item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+            except NoResultFound as ex:
+                current_app.logger.exception(str(ex))
+                item = None
+        steps = activity.get_activity_steps(activity_id)
+        history = WorkActivityHistory()
+        histories = history.get_activity_history_list(activity_id)
+        workflow = WorkFlow()
+        workflow_detail = workflow.get_workflow_by_id(
+            activity_detail.workflow_id)
+        if ActivityStatusPolicy.ACTIVITY_FINALLY != activity_detail.activity_status:
+            activity_detail.activity_status_str = \
+                request.args.get('status', 'ToDo')
+        else:
+            activity_detail.activity_status_str = _('End')
+        cur_action = activity_detail.action
+        action_endpoint = cur_action.action_endpoint
+        action_id = cur_action.id
+        temporary_comment = activity.get_activity_action_comment(
+            activity_id=activity_id, action_id=action_id)
+        if temporary_comment:
+            temporary_comment = temporary_comment.action_comment
+        cur_step = action_endpoint
+        step_item_login_url = None
+        approval_record = []
+        pid = None
+        if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
+            activity_session = dict(
+                activity_id=activity_id,
+                action_id=activity_detail.action_id,
+                action_version=cur_action.action_version,
+                action_status=ActionStatusPolicy.ACTION_DOING,
+                commond=''
+            )
+            session['activity_info'] = activity_session
+            step_item_login_url = url_for(
+                'weko_items_ui.iframe_index',
+                item_type_id=workflow_detail.itemtype_id)
+            if item:
+                pid_identifier = PersistentIdentifier.get_by_object(
+                    pid_type='depid', object_type='rec', object_uuid=item.id)
+                step_item_login_url = url_for(
+                    'invenio_deposit_ui.iframe_depid',
+                    pid_value=pid_identifier.pid_value)
+        # if 'approval' == action_endpoint:
+        if item:
+            pid_identifier = PersistentIdentifier.get_by_object(
+                pid_type='depid', object_type='rec', object_uuid=item.id)
+            record_class = import_string('weko_deposit.api:WekoRecord')
+            resolver = Resolver(pid_type='recid', object_type='rec',
+                                getter=record_class.get_record)
+            pid, approval_record = resolver.resolve(pid_identifier.pid_value)
+
+        res_check = check_authority_action(activity_id, action_id)
+
+        getargs = request.args
+        ctx = {'community': None}
+        community_id = ""
+        if 'community' in getargs:
+            comm = GetCommunity.get_community_by_id(request.args.get('community'))
+            community_id = request.args.get('community')
+            ctx = {'community': comm}
+            community_id = comm.id
+
+        return activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity"""
@@ -901,6 +980,18 @@ class UpdateItem(object):
 
         indexer = WekoIndexer()
         indexer.update_publish_status(record)
+
+    def set_item_relation(self, relationData, record):
+        """
+        set relation info of item
+        :param relationData: item relation data
+        :param record: item info
+        """
+
+        from weko_deposit.api import WekoIndexer
+
+        indexer = WekoIndexer()
+        indexer.update_relation_info(record, relationData)
 
 
 class GetCommunity(object):

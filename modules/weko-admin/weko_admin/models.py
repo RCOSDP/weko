@@ -25,9 +25,9 @@ from datetime import datetime
 from flask import current_app, json
 from invenio_db import db
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy_utils.types import JSONType
 from sqlalchemy.sql import func
+from sqlalchemy.dialects import mysql, postgresql
 
 
 class SessionLifetime(db.Model):
@@ -172,7 +172,6 @@ class SearchManagement(db.Model):
     @classmethod
     def create(cls, data):
         """Create data"""
-        current_app.logger.debug(data)
         try:
             dataObj = SearchManagement()
             with db.session.begin_nested():
@@ -194,7 +193,6 @@ class SearchManagement(db.Model):
     def get(cls):
         """Get setting"""
         id = db.session.query(func.max(SearchManagement.id)).first()[0]
-        current_app.logger.debug(id)
         if id is None:
             return  None
         return cls.query.filter_by(id=id).one_or_none()
@@ -219,7 +217,7 @@ class SearchManagement(db.Model):
             raise
         return cls
 
-
-
-
-__all__ = (['SearchManagement'])
+__all__ = ([
+    'SearchManagement',
+]
+)

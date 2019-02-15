@@ -178,6 +178,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
 
+        current_app.logger.debug(page)
+        current_app.logger.debug(size)
+
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
         urlkwargs = dict()

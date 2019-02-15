@@ -23,11 +23,15 @@
 from flask import Blueprint, current_app, render_template, request, \
     redirect, url_for, make_response, jsonify
 from xml.etree import ElementTree as ET
-from weko_index_tree.models import IndexStyle
+from weko_index_tree.models import Index, IndexStyle
 from weko_index_tree.api import Indexes
 from invenio_indexer.api import RecordIndexer
 from .api import SearchSetting
 from weko_search_ui.api import get_search_detail_keyword
+from invenio_i18n.ext import current_i18n
+from blinker import Namespace
+_signals = Namespace()
+searched = _signals.signal('searched')
 
 blueprint = Blueprint(
     'weko_search_ui',
@@ -71,14 +75,50 @@ def search():
 
     height = style.height if style else None
 
+    index_link_list = []
+    for index in Index.query.all():
+        if index.index_link_enabled == True and index.public_state == True:
+            if hasattr(current_i18n, 'language'):
+                if current_i18n.language == 'ja' and index.index_link_name:
+                    index_link_list.append((index.id, index.index_link_name))
+                else:
+                    index_link_list.append((index.id, index.index_link_name_english))
+            else:
+                index_link_list.append((index.id, index.index_link_name_english))
+
     if 'management' in getArgs:
         return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
                                index_id=cur_index_id, community_id=community_id,
                                width=width, height=height, **ctx)
+    elif 'item_link' in getArgs:
+        activity_id=request.args.get('item_link')
+        from weko_workflow.api import WorkActivity
+        workFlowActivity = WorkActivity()
+        activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx \
+            = workFlowActivity.get_activity_index_search(activity_id=activity_id)
+        return render_template('weko_workflow/activity_detail.html',
+                               activity=activity_detail,
+                               item=item,
+                               steps=steps,
+                               action_id=action_id,
+                               cur_step=cur_step,
+                               temporary_comment=temporary_comment,
+                               record=approval_record,
+                               step_item_login_url=step_item_login_url,
+                               histories=histories,
+                               res_check=res_check,
+                               pid=pid,
+                               index_id=cur_index_id, community_id=community_id,
+                               width=width, height=height, **ctx)
     else:
+        if search_type in ('0', '1', '2'):
+            searched.send(current_app._get_current_object(), search_args=getArgs)
         return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
                                index_id=cur_index_id, community_id=community_id,
-                               sort_option=sort_options, disply_setting=disply_setting, detail_condition=detail_condition, width=width, height=height, **ctx)
+                               sort_option=sort_options, disply_setting=disply_setting,
+                               detail_condition=detail_condition, width=width, height=height,
+                               index_link_enabled=style.index_link_enabled,
+                               index_link_list=index_link_list, **ctx)
 
 
 

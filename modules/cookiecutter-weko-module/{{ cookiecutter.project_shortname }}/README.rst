@@ -20,8 +20,6 @@
 
 {{ cookiecutter.description }}
 
-*This is an experimental developer preview release.*
-
 TODO: Please provide feature overview of module
 
 Further documentation is available on

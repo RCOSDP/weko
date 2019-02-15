@@ -173,6 +173,16 @@ def init_workflow_tables(tables):
             action_makedate=datetime.date(2018, 6, 8),
             action_lastdate=datetime.date(2018, 6, 8)
         ))
+        #
+        db_action.append(dict(
+            action_name='Item Link',
+            action_desc='Plug-in for link items.',
+            action_version='1.0.1',
+            action_endpoint='item_link',
+            action_makedate=datetime.date(2018, 5, 22),
+            action_lastdate=datetime.date(2018, 5, 22)
+        ))
+        #
         return db_action
 
     def init_flow():

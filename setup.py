@@ -130,6 +130,8 @@ install_requires = [
     'invenio-celery>=1.0.0b2,<1.1.0',
     'invenio-config>=1.0.0b2,<1.1.0',
     'invenio-i18n>=1.0.0b3,<1.1.0',
+    'fpdf>=1.7.2',
+    'Pillow>=5.4.1'
 ]
 
 packages = find_packages()

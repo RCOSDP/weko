@@ -22,10 +22,13 @@
 
 
 from flask import Blueprint, current_app, render_template, request, flash
-from weko_index_tree.models import IndexStyle
+from weko_index_tree.models import Index, IndexStyle
 from flask_login import login_required
 from weko_search_ui.api import get_search_detail_keyword
-
+from invenio_i18n.ext import current_i18n
+from blinker import Namespace
+_signals = Namespace()
+top_viewed = _signals.signal('top-viewed')
 
 blueprint = Blueprint(
     'weko_theme',
@@ -49,14 +52,33 @@ def index():
 
     # Get index style
     style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    width = style.width if style else '3'
-    height = style.height if style else None
+    if not style:
+        IndexStyle.create(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
+                width=3, height=None)
+        style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+    width = style.width
+    height = style.height
+    index_link_enabled = style.index_link_enabled
+
+    index_link_list = []
+    for index in Index.query.all():
+        if index.index_link_enabled == True and index.public_state == True:
+            if hasattr(current_i18n, 'language'):
+                if current_i18n.language == 'ja' and index.index_link_name:
+                    index_link_list.append((index.id, index.index_link_name))
+                else:
+                    index_link_list.append((index.id, index.index_link_name_english))
+            else:
+                index_link_list.append((index.id, index.index_link_name_english))
 
     detail_condition = get_search_detail_keyword('')
-
+    current_app.logger.debug(index_link_list)
+    top_viewed.send(current_app._get_current_object())
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
-        community_id =community_id, detail_condition=detail_condition, width=width, height=height, **ctx)
+        community_id=community_id, detail_condition=detail_condition,
+        width=width, height=height, index_link_list=index_link_list,
+        index_link_enabled=index_link_enabled, **ctx)
 
 
 
