@@ -172,7 +172,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
     def get(self, index_id):
         """Get a tree index record."""
         #print(index_id)
-        return make_response(jsonify({'index' : index_id}}), 200)
+        return make_response(jsonify({'index' : index_id}), 200)
 
         """
         try:
