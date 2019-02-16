@@ -138,6 +138,7 @@ def create_blueprint(app, endpoints):
             view_func=ita,
             methods=['PUT'],
         )
+    print("[Log] route url of index tree")
     print(blueprint.__dict__)
     return blueprint
 
