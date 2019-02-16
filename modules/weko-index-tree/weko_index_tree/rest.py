@@ -73,6 +73,12 @@ def create_blueprint(app, endpoints):
 
     for endpoint, options in (endpoints or {}).items():
 
+        print('[Log]: endpoint')
+        print(endpoint)
+
+        print('[Log]: options')
+        print(options)
+        
         if 'record_serializers' in options:
             record_serializers = options.get('record_serializers')
             record_serializers = {mime: obj_or_import_string(func)
