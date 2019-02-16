@@ -121,8 +121,8 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get('default_media_type'),
         )
 
-        print('[Log]: ctx')
-        print(ctx)
+        # print('[Log]: ctx')
+        # print(ctx)
 
         print('[Log]: iar')
         print(iar)
