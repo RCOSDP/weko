@@ -16,3 +16,25 @@ WEKO_INDEXTREE_JOURNAL_DEFAULT_VALUE = 'foobar'
 
 WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE = 'weko_indextree_journal/base.html'
 """Default base template for the demo page."""
+
+WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
+    tid=dict(
+        record_class='weko_indextree_journal.api:Journals',
+        index_route='/tree/journal/index/<int:index_id>',
+        tree_route='/tree/journal',
+        item_tree_route='/tree/journal/<int:pid_value>',
+        index_move_route='/tree/journal/move/<int:index_id>',
+        default_media_type='application/json',
+        create_permission_factory_imp=
+        'weko_indextree_journal.permissions:index_tree_journal_permission',
+        read_permission_factory_imp=
+        'weko_indextree_journal.permissions:index_tree_journal_permission',
+        update_permission_factory_imp=
+        'weko_indextree_journal.permissions:index_tree_journal_permission',
+        delete_permission_factory_imp=
+        'weko_indextree_journal.permissions:index_tree_journal_permission',
+    )
+)
+
+WEKO_INDEXTREE_JOURNAL_UPDATED = True
+"""For index tree cache."""
