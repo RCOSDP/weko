@@ -138,7 +138,7 @@ def create_blueprint(app, endpoints):
             view_func=ita,
             methods=['PUT'],
         )
-
+    print(blueprint.__dict__)
     return blueprint
 
 
