@@ -188,9 +188,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
     def get(self, index_id):
         """Get a tree index record."""
         #print(index_id)
-        return make_response(jsonify({'index' : index_id}), 200)
+        #return make_response(jsonify({'index' : index_id}), 200)
 
-        """
         try:
             index = self.record_class.get_index_with_role(index_id)
             have_children = Index.have_children(index_id)
@@ -201,7 +200,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
             return make_response(jsonify(index), 200)
         except Exception:
             raise InvalidDataRESTError()
-        """
+        
     # @pass_record
     @need_record_permission('create_permission_factory')
     def post(self, index_id, **kwargs):
