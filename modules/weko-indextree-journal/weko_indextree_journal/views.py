@@ -31,3 +31,9 @@ def index():
     return render_template(
         "weko_indextree_journal/index.html",
         module_name=_('WEKO-Indextree-Journal'))
+
+
+@blueprint.route("/create")
+def create():
+    """Render a basic view."""
+    return jsonify({'Text' : 'Hello World'})
