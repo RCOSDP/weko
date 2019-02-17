@@ -200,7 +200,7 @@ class IndexActionResource(ContentNegotiatedMethodView):
             return make_response(jsonify(index), 200)
         except Exception:
             raise InvalidDataRESTError()
-        
+
     # @pass_record
     @need_record_permission('create_permission_factory')
     def post(self, index_id, **kwargs):
