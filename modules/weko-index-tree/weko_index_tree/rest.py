@@ -125,7 +125,7 @@ def create_blueprint(app, endpoints):
         # print(ctx)
 
         print('[Log]: iar')
-        print(iar)
+        vars(iar)
 
         print('[Log]: ita')
         print(ita)
