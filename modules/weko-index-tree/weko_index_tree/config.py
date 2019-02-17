@@ -47,7 +47,7 @@ WEKO_INDEX_TREE_API = "/api/tree/index/"
 
 WEKO_INDEX_TREE_LIST_API = "/api/tree"
 
-_IID = 'iid(tid,record_class="weko_index_tree.api:Indexes")'
+_IID = 'iid(tid,record_class="weko_index_tree.apy:Indexes")'
 
 WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
     tid=dict(
