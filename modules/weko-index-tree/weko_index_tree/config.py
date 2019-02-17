@@ -51,7 +51,7 @@ _IID = 'iid(tid,record_class="weko_index_tree.api:Indexes")'
 
 WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
     tid=dict(
-        record_class='weko_index_tree.api:Indexes',
+        record_class='weko_index_tree.apy:Indexes',
         index_route='/tree/index/<int:index_id>',
         tree_route='/tree',
         item_tree_route='/tree/<int:pid_value>',
