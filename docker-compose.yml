@@ -122,6 +122,7 @@ static:
     - /code/modules/weko-authors/weko_authors.egg-info
     - /code/modules/weko-plugins/weko_plugins.egg-info
     - /code/modules/weko-workflow/weko_workflow.egg-info
+    - /code/modules/weko-items-autofill/weko_items_autofill.egg-info
     - .:/code
   user: invenio
 
