@@ -42,6 +42,8 @@ class WekoIndexTree(object):
         :param app: The Flask application.
         """
         self.init_config(app)
+        print('index tree blueprint')
+        print(blueprint.__dict__)
         app.register_blueprint(blueprint)
         app.extensions['weko-index-tree'] = self
 

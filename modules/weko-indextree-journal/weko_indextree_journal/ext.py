@@ -32,6 +32,10 @@ class WekoIndextreeJournal(object):
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
+
+        print('index tree journal blueprint')
+        print(blueprint.__dict__)
+
         app.register_blueprint(blueprint)
         app.extensions['weko-indextree-journal'] = self
 
