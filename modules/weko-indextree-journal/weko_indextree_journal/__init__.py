@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
-from .ext import WekoIndextreeJournal
+from .ext import WekoIndextreeJournal, WekoIndextreeJournalREST
 from .version import __version__
 
-__all__ = ('__version__', 'WekoIndextreeJournal')
+__all__ = ('__version__', 'WekoIndextreeJournal', 'WekoIndextreeJournalREST')
