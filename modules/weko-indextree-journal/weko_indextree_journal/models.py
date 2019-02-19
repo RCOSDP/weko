@@ -22,6 +22,8 @@
 
 from datetime import datetime
 
+from invenio_accounts.models import User
+from weko_index_tree.models import Index
 from flask import current_app, flash
 from invenio_db import db
 from sqlalchemy.dialects import mysql
