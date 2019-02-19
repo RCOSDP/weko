@@ -27,6 +27,79 @@
 {%- endblock css %}
 
 {%- block javascript %}
+  <script src="https://unpkg.com/react@15/dist/react.min.js"></script>
+  <script src="https://unpkg.com/react-dom@15/dist/react-dom.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+  <script type="text/babel">
+    class ModalHeader extends React.Component {
+      render(){
+        return (
+          <div className="text-right">
+            <h3>Weko items auto fill</h3>
+          </div>
+        )
+      }
+    }
+    class SearchMetaForm extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state ={
+          idType: 'ISBN',
+          itemId: ''
+        };
+
+        this.handleChange = this.handleChange.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+      }
+
+      handleChange(event) {
+        const target = event.target;
+        const value = target.value;
+        const name = target.name;
+        this.setState({[name]: value});
+      }
+
+      handleSubmit(event) {
+        this.clickItemMetadata();
+        event.preventDefault();
+      }
+
+      clickItemMetadata() {
+            setTimeout(function() {
+              angular.element('#btn_setItemMetadata').triggerHandler('click');
+            },0);
+      };
+
+      render() {
+        return (
+          <div>
+            <ModalHeader />
+            <form onSubmit={this.handleSubmit}>
+                <div className="form-inline">
+                    <label className="input-group-text" for="autofill_id_type">
+                        Select ID:
+                    </label>
+                    <select name="idType" id="autofill_id_type" value={this.state.idType.value} 
+                        onChange={this.handleChange} className="form-control">
+                        <option selected value='ISBN'>ISBN</option>
+                    </select>
+                    &nbsp;&nbsp;
+                    <input name="itemId" type="text" id="autofill_item_id" 
+                        value={this.state.itemId.value} onChange={this.handleChange} className="form-control ng-untouched ng-pristine ng-valid" />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="submit" value="Get" className="btn btn-info" />
+                </div>
+            </form>
+        </div>
+        );
+      }
+    }
+    ReactDOM.render(
+      <SearchMetaForm />,
+      document.getElementById('meta-sach-body')
+    )
+  </script>
+
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -116,6 +189,9 @@
               <div ng-show="false" type="text" id="weko_id" ></div>
               <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
               <!--add by ryuu. end 20180410-->
+
+              <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
+
               <invenio-records-form
                 form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
                 form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
@@ -153,4 +229,18 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+<!--TODO-->
+<div class="modal fade" tabindex="-1" role="dialog" id="meta-sach">
+  <div class="modal-dialog modelWidth" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div id="meta-sach-body"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" id="meta-sach-close" data-dismiss="modal">{{_('Close')}}</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 {%- endblock page_body %}

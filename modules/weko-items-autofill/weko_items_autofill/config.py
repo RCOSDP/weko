@@ -15,3 +15,40 @@ WEKO_ITEMS_AUTOFILL_DEFAULT_VALUE = 'foobar'
 
 WEKO_ITEMS_AUTOFILL_BASE_TEMPLATE = 'weko_items_autofill/base.html'
 """Default base template for the demo page."""
+
+WEKO_ITEMS_AUTOFILL_SERVICE_DOMAINS = {
+    'JP': 'webservices.amazon.co.jp',
+    'UK': 'webservices.amazon.co.uk',
+    'US': 'webservices.amazon.com',
+}
+"""Amazon domains service"""
+
+WEKO_ITEMS_AUTOFILL_DEFAULT_REGION = 'JP'
+"""Default region"""
+
+WEKO_ITEMS_AUTOFILL_DEFAULT_SERVICE = 'AWSECommerceService'
+"""Default Amazon API service"""
+
+WEKO_ITEMS_AUTOFILL_DEFAULT_OPERATION = 'ItemLookup'
+"""Default Amazon operation"""
+
+WEKO_ITEMS_AUTOFILL_SERVICE_URI = "/onca/xml"
+"""Amazon service URI"""
+
+WEKO_ITEMS_AUTOFILL_DEFAULT_TIMEOUT = 5.0
+"""Default time out"""
+
+WEKO_ITEMS_AUTOFILL_PROXY = 'http://donkey.cybersoft.vn:8080'
+"""Proxy server"""
+
+WEKO_ITEMS_AUTOFILL_API_PROTOCOL = 'http://'
+"""Api protocol"""
+
+WEKO_ITEMS_AUTOFILL_AWS_ACCESS_KEY_ID = ''
+"""AWSAccessKeyId"""
+
+WEKO_ITEMS_AUTOFILL_AWS_SECRET_ACCESS_KEY = ''
+"""AWSSecretAccessKey"""
+
+WEKO_ITEMS_AUTOFILL_ASSOCIATE_TAG = ''
+"""AssociateTag"""

@@ -10,6 +10,13 @@ require([
     $('#myModal').modal('toggle');
     $("div.modal-backdrop").remove();
   });
+
+//TODO
+  $("#meta-sach-close").click(function () {
+    $('#meta-sach').modal('toggle');
+    $("div.modal-backdrop").remove();
+  });
+
 });
 
 (function (angular) {
@@ -83,6 +90,47 @@ require([
       $scope.$on('invenio.uploader.file.deleted', function(ev, f){
         $scope.initFilenameList();
       });
+
+      // TODO
+      $scope.getItemMetadata = function(model_id,arrayFlg,form) {
+        $('#meta-sach').modal('show');
+
+      }
+
+      $scope.setItemMetadata = function() {
+        param = 'ISBN' + '/' + '076243631X'
+        $.ajax({
+          method: 'GET',
+          url: '/items/' + param,
+          async: false,
+          success: function(data, status){
+            if(confirm('Are you sure input to the form?')){
+//              $rootScope.recordsVM.invenioRecordsModel['title_ja'] = 'アマゾン'
+              $rootScope.recordsVM.invenioRecordsModel['title_en'] = 'Amazon'
+              $rootScope.recordsVM.invenioRecordsModel['lang'] = 'en'
+              $rootScope.recordsVM.invenioRecordsModel['pubdate'] = '2018-01-01'
+
+//              $rootScope.recordsVM.invenioRecordsModel['item_1549607866425'][0]['subitem_1522300295150'] = 'ja';
+//              $rootScope.recordsVM.invenioRecordsModel['item_1549607866425'][0]['subitem_1522300316516'] = 'University of Tokyo';
+
+            }
+            $('#meta-sach').modal('toggle');
+
+          },
+          error: function(status, error){
+            console.log(error);
+          }
+        });
+
+
+      }
+
+      $scope.searchSource = function(model_id,arrayFlg,form) {
+
+        alert(form.key[1]);
+
+      }
+
 
       $scope.searchAuthor = function(model_id,arrayFlg,form) {
         // add by ryuu. start 20180410
