@@ -166,22 +166,8 @@ class Journals(object):
         return result
 
     @classmethod
-    def get_index_with_role(cls, index_id):
-        return index
-
-    @classmethod
-    def get_index(cls, index_id, with_count=False):
-        with db.session.begin_nested():
-            if with_count:
-                stmt = db.session.query(Index.parent, func.max(Index.position).
-                                        label('position_max'))\
-                    .filter(Index.parent == index_id)\
-                    .group_by(Index.parent).subquery()
-                obj = db.session.query(Index, stmt.c.position_max). \
-                    outerjoin(stmt, Index.id == stmt.c.parent).\
-                    filter(Index.id == index_id).one_or_none()
-            else:
-                obj = db.session.query(Index).\
-                    filter_by(id=index_id).one_or_none()
+    def get_journal(cls, journal_id, with_count=False):
+        obj = db.session.query(Journal).\
+                    filter_by(id=journal_id).one_or_none()
 
         return obj

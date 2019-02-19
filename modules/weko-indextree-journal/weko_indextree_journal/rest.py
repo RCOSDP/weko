@@ -29,9 +29,9 @@ from invenio_communities.models import Community
 
 from .api import Journals
 from .models import Journal
-from .errors import JournalAddedRESTError, JournalBaseRESTError, \
-    JournalDeletedRESTError, JournalMovedRESTError, JournalNotFoundRESTError, \
-    JournalUpdatedRESTError, JournalInvalidDataRESTError
+#from .errors import JournalAddedRESTError, JournalBaseRESTError, \
+#    JournalDeletedRESTError, JournalMovedRESTError, JournalNotFoundRESTError, \
+#    JournalUpdatedRESTError, JournalInvalidDataRESTError
 
 
 def need_record_permission(factory_name):
@@ -174,12 +174,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
         """Get a journal record."""
 
         try:
-            journal = [] #self.record_class.get_journal_with_role(journal_id)
-            #have_children = Journal.have_children(index_id)
-            #index['have_children'] = have_children
-            #if not have_children:
-            #    journal['more_check'] = False
-
+            journal = self.record_class.get_journal(journal_id)
             return make_response(jsonify(journal), 200)
         except Exception:
             raise JournalInvalidDataRESTError()
