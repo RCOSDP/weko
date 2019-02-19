@@ -48,12 +48,14 @@ class Journal(db.Model, Timestamp):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    index_id = db.Column(db.BigInteger,
-        db.ForeignKey(Index.id, ondelete='CASCADE'), nullable=False)
-    """ID of Index to whom this shib user belongs."""
+    # index_id = db.Column(db.BigInteger,
+    #    db.ForeignKey(Index.id, ondelete='CASCADE'), nullable=False)
+    # """ID of Index to whom this shib user belongs."""
 
-    index = relationship(Index, backref='journal')
- 
+    index = db.relationship(Index, backref=db.backref(
+        'journal'), cascade='all, delete-orphan'))
+    """ID of Index to whom this journal belongs."""
+
     publication_title = db.Column(db.Text, nullable=False, default='')
     """Title of the journal."""
 
