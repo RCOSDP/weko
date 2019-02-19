@@ -17,6 +17,8 @@ WEKO_INDEXTREE_JOURNAL_DEFAULT_VALUE = 'foobar'
 WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE = 'weko_indextree_journal/base.html'
 """Default base template for the demo page."""
 
+_IID = 'iid(tid,record_class="weko_indextree_journal.api:Journals")'
+
 WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
     tid=dict(
         record_class='weko_indextree_journal.api:Journals',
