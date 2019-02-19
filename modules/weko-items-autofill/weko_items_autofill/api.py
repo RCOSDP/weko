@@ -105,7 +105,7 @@ class AmazonApi:
         # Generate the string to be signed
         signature_data = 'GET\n' + service_domain \
                          + current_app.config[
-                             'WEKO_ITEMS_AUTOFILL_SERVICE_DOMAINS'] \
+                             'WEKO_ITEMS_AUTOFILL_SERVICE_URI'] + '?' \
                          + query_strings
         print("signature_data=%s" % signature_data)
 

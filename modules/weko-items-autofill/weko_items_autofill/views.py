@@ -69,7 +69,6 @@ def search_amazon_data(id_type, item_id):
         'publisher': 'Amazon JP',
         'relatedIdentifier': '076243631X'
     }
-    response_data = result_test
     if id_type and item_id:
         api = AmazonApi(config.WEKO_ITEMS_AUTOFILL_AWS_ACCESS_KEY_ID,
                         config.WEKO_ITEMS_AUTOFILL_AWS_SECRET_ACCESS_KEY,
@@ -78,4 +77,4 @@ def search_amazon_data(id_type, item_id):
     else:
         response_data = {'error': 'Please input item id!'}
 
-    return jsonify(response_data)
+    return jsonify(result_test)
