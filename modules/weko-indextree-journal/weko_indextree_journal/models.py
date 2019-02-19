@@ -52,8 +52,10 @@ class Journal(db.Model, Timestamp):
         db.ForeignKey(Index.id, ondelete='CASCADE'), nullable=False)
     # """ID of Index to whom this shib user belongs."""
 
-    index = db.relationship(Index, backref=db.backref(
-        'journal'), cascade='all, delete-orphan')
+    index = db.relationship(Index,
+        backref=db.backref('journal', cascade='all'),
+        cascade='all, delete-orphan',
+        single_parent=True)
     """ID of Index to whom this journal belongs."""
 
     publication_title = db.Column(db.Text, nullable=False, default='')
