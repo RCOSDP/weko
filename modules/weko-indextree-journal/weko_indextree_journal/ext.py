@@ -13,6 +13,8 @@ from __future__ import absolute_import, print_function
 from flask_babelex import gettext as _
 
 from . import config
+from .views import blueprint
+from .rest import create_blueprint
 
 
 class WekoIndextreeJournal(object):
