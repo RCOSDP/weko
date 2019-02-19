@@ -31,7 +31,7 @@ from .api import Journals
 from .models import Journal
 from .errors import JournalAddedRESTError, JournalBaseRESTError, \
     JournalDeletedRESTError, JournalMovedRESTError, JournalNotFoundRESTError, \
-    JournalUpdatedRESTError, InvalidDataRESTError
+    JournalUpdatedRESTError, JournalInvalidDataRESTError
 
 
 def need_record_permission(factory_name):
@@ -182,7 +182,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
 
             return make_response(jsonify(journal), 200)
         except Exception:
-            raise InvalidDataRESTError()
+            raise JournalInvalidDataRESTError()
 
     # @pass_record
     @need_record_permission('create_permission_factory')
@@ -191,7 +191,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
         data = self.loaders[request.mimetype]()
 
         if not data:
-            raise InvalidDataRESTError()
+            raise JournalInvalidDataRESTError()
         if not self.record_class.create(journal_id, data):
             raise JournalAddedRESTError()
 
@@ -205,7 +205,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
         """Update a new journal."""
         data = self.loaders[request.mimetype]()
         if not data:
-            raise InvalidDataRESTError()
+            raise JournalInvalidDataRESTError()
         if not self.record_class.update(journal_id, **data):
             raise JournalUpdatedRESTError()
 
@@ -231,7 +231,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
             if not result:
                 raise JournalBaseRESTError(description='Could not delete data.')
         else:
-            raise InvalidDataRESTError()
+            raise JournalInvalidDataRESTError()
 
         status = 200
         msg = 'Journal deleted successfully.'

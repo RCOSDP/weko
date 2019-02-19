@@ -34,7 +34,7 @@ class JournalBaseRESTError(RESTException):
 
     code = 400
 
-class InvalidDataRESTError(RESTException):
+class JournalInvalidDataRESTError(RESTException):
     """Invalid request body."""
 
     code = 400
