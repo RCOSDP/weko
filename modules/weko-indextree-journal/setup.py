@@ -73,7 +73,6 @@ setup(
             'weko_indextree_journal = weko_indextree_journal:WekoIndextreeJournal',
         ],
         'invenio_base.api_apps': [
-            'invenio_i18n_rest = invenio_i18n:InvenioI18N',
             'weko_indextree_journal_rest = weko_indextree_journal:WekoIndextreeJournalREST',
         ],
         'invenio_base.blueprints': [
