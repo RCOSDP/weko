@@ -24,3 +24,4 @@
 -e /code/modules/weko-authors
 -e /code/modules/weko-plugins
 -e /code/modules/weko-workflow
+-e /code/modules/weko-bulkupdate
