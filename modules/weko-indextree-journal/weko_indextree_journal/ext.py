@@ -87,5 +87,5 @@ class WekoIndextreeJournalREST(object):
         :param app: An instance of :class:`flask.Flask`.
         """
         for k in dir(config):
-            if k.startswith('WEKO_INDEX_TREE_'):
+            if k.startswith('WEKO_INDEXTREE_JOURNAL_'):
                 app.config.setdefault(k, getattr(config, k))
