@@ -77,6 +77,7 @@ class WekoIndexTreeREST(object):
             self.init_app(app)
 
     def init_app(self, app):
+        print('init_app WekoIndexTreeREST')
         """Flask application initialization.
 
         Initialize the REST endpoints.  Connect all signals if
