@@ -69,6 +69,9 @@ class WekoIndextreeJournalREST(object):
         :param app: An instance of :class:`flask.Flask`.
         """
         self.init_config(app)
+
+        print('Journal rest dict')
+        print(app.config.__dict__)
         blueprint = create_blueprint(app,
                                      app.config['WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
