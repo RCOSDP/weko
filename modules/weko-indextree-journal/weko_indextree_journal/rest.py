@@ -180,7 +180,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
         try:
             
             journal = self.record_class.get_journal(journal_id)
-            if not journal:
+            if journal is None:
                 journal = []
             return make_response(jsonify(journal), 200)
             # return make_response(jsonify({'Text' : 'Hello World'}), 200)
