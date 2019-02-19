@@ -29,10 +29,9 @@ from invenio_communities.models import Community
 
 from .api import Journals
 from .models import Journal
-#from .errors import JournalAddedRESTError, JournalBaseRESTError, \
-#    JournalDeletedRESTError, JournalMovedRESTError, JournalNotFoundRESTError, \
-#    JournalUpdatedRESTError, JournalInvalidDataRESTError
-
+from .errors import JournalAddedRESTError, JournalBaseRESTError, \
+    JournalDeletedRESTError, JournalMovedRESTError, JournalNotFoundRESTError, \
+    JournalUpdatedRESTError, JournalInvalidDataRESTError
 
 def need_record_permission(factory_name):
     """Decorator checking that the user has the required permissions on record.
