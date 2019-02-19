@@ -79,6 +79,13 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_indextree_journal',
         ],
+        'invenio_db.models': [
+            'weko_indextree_journal = weko_indextree_journal.models',
+        ],
+        'invenio_access.actions': [
+            'indextree_journal_access = '
+            'weko_indextree_journal.permissions:action_indextree_journal_access',
+        ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
