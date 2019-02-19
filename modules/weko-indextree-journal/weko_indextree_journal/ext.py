@@ -47,7 +47,7 @@ class WekoIndextreeJournal(object):
             if k.startswith('WEKO_INDEXTREE_JOURNAL_'):
                 app.config.setdefault(k, getattr(config, k))
 
-class WekoIndexTreeJournalREST(object):
+class WekoIndextreeJournalREST(object):
     """
       weko-indextree-journal Rest Obj
     """
