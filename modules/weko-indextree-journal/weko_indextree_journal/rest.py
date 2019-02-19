@@ -116,11 +116,12 @@ def create_blueprint(app, endpoints):
         """
 
         blueprint.add_url_rule(
-            options.pop('index_journal_route'),
+            options.pop('indextree_journal_route'),
             view_func=iar,
             methods=['GET', 'PUT', 'POST', 'DELETE'],
         )
 
+        """
         blueprint.add_url_rule(
             options.pop('tree_journal_route'),
             view_func=ita,
@@ -138,6 +139,7 @@ def create_blueprint(app, endpoints):
             view_func=ita,
             methods=['PUT'],
         )
+        """
 
     return blueprint
 

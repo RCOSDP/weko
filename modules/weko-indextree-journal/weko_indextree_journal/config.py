@@ -20,10 +20,10 @@ WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE = 'weko_indextree_journal/base.html'
 WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
     tid=dict(
         record_class='weko_indextree_journal.api:Journals',
-        index_journal_route='/tree/journal/index/<int:index_id>',
-        tree_journal_route='/tree/journal',
-        item_tree_journal_route='/tree/journal/<int:pid_value>',
-        journal_move_route='/tree/journal/move/<int:index_id>',
+        indextree_journal_route='/indextree/journal/<int:index_id>',
+        # tree_journal_route='/tree/journal',
+        # item_tree_journal_route='/tree/journal/<int:pid_value>',
+        # journal_move_route='/tree/journal/move/<int:index_id>',
         default_media_type='application/json',
         create_permission_factory_imp=
         'weko_indextree_journal.permissions:indextree_journal_permission',
