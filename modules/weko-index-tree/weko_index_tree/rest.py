@@ -72,13 +72,6 @@ def create_blueprint(app, endpoints):
     )
 
     for endpoint, options in (endpoints or {}).items():
-
-        print('[Log]: endpoint')
-        print(endpoint)
-
-        print('[Log]: options')
-        print(options)
-
         if 'record_serializers' in options:
             record_serializers = options.get('record_serializers')
             record_serializers = {mime: obj_or_import_string(func)
@@ -121,15 +114,6 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get('default_media_type'),
         )
 
-        # print('[Log]: ctx')
-        # print(ctx)
-
-        print('[Log]: iar')
-        print(iar.__dict__)
-
-        print('[Log]: ita')
-        print(ita)
-
         blueprint.add_url_rule(
             options.pop('index_route'),
             view_func=iar,
@@ -153,8 +137,6 @@ def create_blueprint(app, endpoints):
             view_func=ita,
             methods=['PUT'],
         )
-    print("[Log] route url of index tree")
-    print(blueprint.__dict__)
     return blueprint
 
 
