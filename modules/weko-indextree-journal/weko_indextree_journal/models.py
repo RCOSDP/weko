@@ -49,8 +49,10 @@ class Journal(db.Model, Timestamp):
     """Identifier of the index."""
 
     index_id = db.Column(db.BigInteger,
-        db.ForeignKey(Index.id, ondelete='RESTRICT'))
+        db.ForeignKey(Index.id, ondelete='CASCADE'), nullable=False)
     """ID of Index to whom this shib user belongs."""
+
+    index = relationship(Index, backref='journal')
  
     publication_title = db.Column(db.Text, nullable=False, default='')
     """Title of the journal."""

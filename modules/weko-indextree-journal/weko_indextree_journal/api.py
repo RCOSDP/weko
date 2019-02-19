@@ -35,6 +35,7 @@ from .models import Journal
 #from .utils import get_tree_json, cached_index_tree_json, reset_tree, get_index_id_list
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from weko_index_tree.api import Indexes
 
 class Journals(object):
     """Define API for journal creation and update."""
@@ -69,13 +70,14 @@ class Journals(object):
             data["id"] = cid
 
             # check index id.
-            index_info = cls.get_index(index_id, with_count=True)
+            index_info = Indexes.get_index(index_id=index_id, with_count=True)
             if index_info:
                 data["index_id"] = index_id
             else:
                 return
 
-            _add_index(data)
+            data["owner_user_id"] = current_user.get_id()
+            _add_journal(data)
         except IntegrityError as ie:
             is_ok = False
             current_app.logger.debug(ie)
@@ -166,7 +168,7 @@ class Journals(object):
         return result
 
     @classmethod
-    def get_journal(cls, journal_id, with_count=False):
+    def get_journal(cls, journal_id):
         obj = db.session.query(Journal).\
                     filter_by(id=journal_id).one_or_none()
 

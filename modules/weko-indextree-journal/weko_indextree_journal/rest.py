@@ -111,41 +111,38 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get('default_media_type'),
         )
 
-        """
-        ita = IndexTreeActionResource.as_view(
-            IndexTreeActionResource.view_name.format(endpoint),
-            ctx=ctx,
-            record_serializers=record_serializers,
-            default_media_type=options.get('default_media_type'),
-        )
-        """
+        # ita = IndexTreeActionResource.as_view(
+        #     IndexTreeActionResource.view_name.format(endpoint),
+        #     ctx=ctx,
+        #     record_serializers=record_serializers,
+        #     default_media_type=options.get('default_media_type'),
+        # )
+
         print('indextree_journal_route config')
-        # print(options.pop('indextree_journal_route'))
+        
         blueprint.add_url_rule(
             options.pop('indextree_journal_route'),
             view_func=iar,
             methods=['GET', 'PUT', 'POST', 'DELETE'],
         )
 
-        """
-        blueprint.add_url_rule(
-            options.pop('tree_journal_route'),
-            view_func=ita,
-            methods=['GET'],
-        )
+        # blueprint.add_url_rule(
+        #     options.pop('tree_journal_route'),
+        #     view_func=ita,
+        #     methods=['GET'],
+        # )
 
-        blueprint.add_url_rule(
-            options.pop('item_tree_journal_route'),
-            view_func=ita,
-            methods=['GET'],
-        )
+        # blueprint.add_url_rule(
+        #     options.pop('item_tree_journal_route'),
+        #     view_func=ita,
+        #     methods=['GET'],
+        # )
 
-        blueprint.add_url_rule(
-            options.pop('journal_move_route'),
-            view_func=ita,
-            methods=['PUT'],
-        )
-        """
+        # blueprint.add_url_rule(
+        #     options.pop('journal_move_route'),
+        #     view_func=ita,
+        #     methods=['PUT'],
+        # )
 
     return blueprint
 
