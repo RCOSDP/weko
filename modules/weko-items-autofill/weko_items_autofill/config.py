@@ -38,7 +38,7 @@ WEKO_ITEMS_AUTOFILL_SERVICE_URI = "/onca/xml"
 WEKO_ITEMS_AUTOFILL_DEFAULT_TIMEOUT = 5.0
 """Default time out"""
 
-WEKO_ITEMS_AUTOFILL_PROXY = 'http://donkey.cybersoft.vn:8080'
+WEKO_ITEMS_AUTOFILL_PROXY = ''
 """Proxy server"""
 
 WEKO_ITEMS_AUTOFILL_API_PROTOCOL = 'http://'
