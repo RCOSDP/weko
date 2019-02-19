@@ -101,7 +101,7 @@ require([
         param = 'ISBN' + '/' + '076243631X'
         $.ajax({
           method: 'GET',
-          url: '/api/items/' + param,
+          url: '/api/items/autofill/search/' + param,
           async: false,
           success: function(data, status){
             if(confirm('Are you sure input to the form?')){

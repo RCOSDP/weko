@@ -45,10 +45,10 @@ def index():
         module_name=_('WEKO-Items-Autofill'))
 
 
-@blueprint_api.route("/search/<str:id_type>/<str:item_id>",
+@blueprint_api.route("/search/<id_type>/<item_id>",
                      methods=['GET'])
-@login_required
-@auto_fill_permission.require(http_exception=403)
+# @login_required
+# @auto_fill_permission.require(http_exception=403)
 def search_amazon_data(id_type, item_id):
     """Get data from Amazon Advertising API.
     :type id_type: str id type
