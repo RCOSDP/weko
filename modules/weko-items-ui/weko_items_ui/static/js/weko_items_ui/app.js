@@ -98,10 +98,13 @@ require([
       }
 
       $scope.setItemMetadata = function() {
+        var arrayFlg = $('#array_flg').text();
+        var modelId = $('#btn_id').text();
+        var array_index = $('#array_index').text();
         param = 'ISBN' + '/' + '076243631X'
         $.ajax({
           method: 'GET',
-          url: '/api/items/autofill/search/' + param,
+          url: '/items/autofill/search/' + param,
           async: false,
           success: function(data, status){
             if(confirm('Are you sure input to the form?')){
@@ -109,13 +112,12 @@ require([
               $rootScope.recordsVM.invenioRecordsModel['title_en'] = data.title;
               $rootScope.recordsVM.invenioRecordsModel['lang'] = data.language;
               $rootScope.recordsVM.invenioRecordsModel['pubdate'] = data.date;
-              console.log(data);
 
 //              $rootScope.recordsVM.invenioRecordsModel['item_1549607866425'][0]['subitem_1522300295150'] = 'ja';
 //              $rootScope.recordsVM.invenioRecordsModel['item_1549607866425'][0]['subitem_1522300316516'] = 'University of Tokyo';
 
             }
-            $('#meta-sach').modal('toggle');
+            $('#meta-search').modal('toggle');
 
           },
           error: function(status, error){

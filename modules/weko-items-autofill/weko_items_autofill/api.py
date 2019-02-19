@@ -30,6 +30,8 @@ from flask import current_app
 
 from hashlib import sha256
 
+from .utils import cached_api_json
+
 
 class AmazonApi:
     _id_type = ''
@@ -143,6 +145,7 @@ class AmazonApi:
         except Exception as e:
             print('Fail to get data from API:', e)
 
+    # @cached_api_json
     def search(self, id_type=None, item_id=None, **query):
         if id_type is not None:
             self._id_type = id_type
