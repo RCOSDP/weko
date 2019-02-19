@@ -7,9 +7,6 @@
 # details.
 
 """Module of weko-indextree-journal."""
-
-from __future__ import absolute_import, print_function
-
 from .ext import WekoIndextreeJournal, WekoIndextreeJournalREST
 from .version import __version__
 
