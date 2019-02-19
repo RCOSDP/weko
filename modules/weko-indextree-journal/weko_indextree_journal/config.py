@@ -22,7 +22,7 @@ _IID = 'iid(tid,record_class="weko_indextree_journal.api:Journals")'
 WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
     tid=dict(
         record_class='weko_indextree_journal.api:Journals',
-        indextree_journal_route='/indextree/journal/<int:index_id>',
+        indextree_journal_route='/indextree/journal/<int:journal_id>',
         journal_route='/indextree/journal',
         # item_tree_journal_route='/tree/journal/<int:pid_value>',
         # journal_move_route='/tree/journal/move/<int:index_id>',
