@@ -114,7 +114,8 @@ def create_blueprint(app, endpoints):
             default_media_type=options.get('default_media_type'),
         )
         """
-
+        print('indextree_journal_route config')
+        print(options.pop('indextree_journal_route'))
         blueprint.add_url_rule(
             options.pop('indextree_journal_route'),
             view_func=iar,
@@ -175,8 +176,11 @@ class JournalActionResource(ContentNegotiatedMethodView):
         """Get a journal record."""
 
         try:
-            journal = self.record_class.get_journal(journal_id)
-            return make_response(jsonify(journal), 200)
+            
+            #journal = self.record_class.get_journal(journal_id)
+            #return make_response(jsonify(journal), 200)
+            return make_response(jsonify({'Text' : 'Hello World'}), 200)
+
         except Exception:
             raise JournalInvalidDataRESTError()
 
