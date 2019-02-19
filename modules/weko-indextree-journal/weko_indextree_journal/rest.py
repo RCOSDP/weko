@@ -58,9 +58,9 @@ def need_record_permission(factory_name):
 
 
 def create_blueprint(app, endpoints):
-    """Create Weko-Index-Tree-Journal-REST blueprint.
+    """Create Weko-IndexTree-Journal-REST blueprint.
 
-    See: :data:`weko_index_tree.config.WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS`.
+    See: :data:`weko_indextree_journal.config.WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS`.
 
     :param endpoints: List of endpoints configuration.
     :returns: The configured blueprint.
