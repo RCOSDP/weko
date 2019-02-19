@@ -53,7 +53,7 @@ class Journal(db.Model, Timestamp):
     # """ID of Index to whom this shib user belongs."""
 
     index = db.relationship(Index, backref=db.backref(
-        'journal'), cascade='all, delete-orphan'))
+        'journal'), cascade='all, delete-orphan')
     """ID of Index to whom this journal belongs."""
 
     publication_title = db.Column(db.Text, nullable=False, default='')
