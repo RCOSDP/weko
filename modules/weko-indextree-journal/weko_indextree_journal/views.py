@@ -13,8 +13,11 @@
 
 from __future__ import absolute_import, print_function
 
+from flask_login import login_required
 from flask import Blueprint, jsonify, render_template
 from flask_babelex import gettext as _
+
+from .permissions import indextree_journal_permission
 
 blueprint = Blueprint(
     'weko_indextree_journal',
@@ -26,6 +29,8 @@ blueprint = Blueprint(
 
 
 @blueprint.route("/")
+@login_required
+@indextree_journal_permission.require(http_exception=403)
 def index():
     """Render a basic view."""
     return render_template(
