@@ -80,7 +80,7 @@ def create_blueprint(app, endpoints):
             record_serializers = {}
 
         record_class = obj_or_import_string(
-            options.get('record_class'), default=Journal)
+            options.get('record_class'), default=Journals)
 
         ctx = dict(
             read_permission_factory=obj_or_import_string(
