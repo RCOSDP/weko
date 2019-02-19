@@ -30,6 +30,19 @@ WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Contributor',
                              'General')
 
+WEKO_RECORDS_UI_BULK_UPDATE_FIELDS = {
+    'fields': [{'id': '1', 'name': 'Access Type'},
+               {'id': '2', 'name': 'Licence'}],
+
+    'licences': [{'id': 'license_free', 'name': '自由入力'},
+                 {'id': 'license_0', 'name': 'Creative Commons : 表示'},
+                 {'id': 'license_1', 'name': 'Creative Commons : 表示 - 継承'},
+                 {'id': 'license_2', 'name': 'Creative Commons : 表示 - 改変禁止'},
+                 {'id': 'license_3', 'name': 'Creative Commons : 表示 - 非営利'},
+                 {'id': 'license_4', 'name': 'Creative Commons : 表示 - 非営利 - 継承'},
+                 {'id': 'license_5', 'name': 'Creative Commons : 表示 - 非営利 - 改変禁止'}]
+}
+
 ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
 # author setting page template
 

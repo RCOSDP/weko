@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Blueprint for weko-search-ui."""
-
+from flask_login import login_required
 from flask import Blueprint, current_app, render_template, request, \
     redirect, url_for, make_response, jsonify
 from xml.etree import ElementTree as ET
@@ -86,10 +86,15 @@ def search():
             else:
                 index_link_list.append((index.id, index.index_link_name_english))
 
-    if 'management' in getArgs:
+    if 'item_management' in getArgs:
+        management_type = request.args.get('item_management', 'sort')
         return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
                                index_id=cur_index_id, community_id=community_id,
-                               width=width, height=height, **ctx)
+                               width=width, height=height,management_type=management_type,
+                               fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
+                               licences = current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
+                               detail_condition=detail_condition, **ctx)
+
     elif 'item_link' in getArgs:
         activity_id=request.args.get('item_link')
         from weko_workflow.api import WorkActivity
@@ -198,3 +203,10 @@ def save_sort():
         jfy['status'] = 405
         jfy['message'] = 'Error'
         return make_response(jsonify(jfy), jfy['status'])
+
+@blueprint.route("/item_management/custom_sort", methods=['GET'])
+@login_required
+def custom_sort():
+    """Render view."""
+    return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
+                           management_type='sort')

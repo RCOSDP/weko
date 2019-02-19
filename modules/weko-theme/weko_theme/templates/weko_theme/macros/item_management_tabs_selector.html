@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-#
+{#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -17,29 +16,9 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
+#}
 
-"""WEKO3 module docstring."""
-
-from flask_assets import Bundle
-from invenio_assets import NpmBundle
-
-js_dependencies = NpmBundle(
-    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
-    'node_modules/angular/angular.js',
-    npm={
-        'angular-ui-bootstrap': '~0.13.2',
-    },
-)
-
-js = NpmBundle(
-    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
-    'node_modules/angular/angular.js',
-    'js/weko_records_ui/detail.js',
-    'js/weko_records_ui/app.js',
-    'js/weko_records_ui/bulk_update.js',
-    filters='jsmin',
-    output="gen/weko_records_ui.%(version)s.js",
-    npm={
-        'angular-ui-bootstrap': '~0.13.2',
-    },
-)
+{% macro tabs_selector(tab_value='custom_sort') %}
+    <li id="tab_display" role="presentation" {% if tab_value=='custom_sort' %}class="active activity_li"{% endif %}><a href="{{url_for('weko_search_ui.custom_sort')}}">{{ _('Custom Sort') }}</a></li>
+    <li role="presentation" {% if tab_value=='bulk_update' %}class="active activity_li"{% endif %}><a href="{{url_for('weko_records_ui.bulk_update')}}">{{ _('Bulk Update') }}</a></li>
+{% endmacro %}

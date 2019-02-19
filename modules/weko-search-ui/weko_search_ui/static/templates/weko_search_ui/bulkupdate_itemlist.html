@@ -1,0 +1,13 @@
+<div class="panel panel-default" ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
+  <div class="panel-heading">
+    <div class="form-inline">
+      <div class="checkbox">
+        <label>
+          <input type="checkbox" id="item_id_{{ record.id }}" value="{{ record.id }}" aria-label="...">
+        </label>
+      </div>
+      <a target="_self" ng-href="/records/{{ record.id }}{{commInfo}}">
+        <span class="glyphicon glyphicon-file" aria-hidden="true"></span> {{ record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0] }}</a>
+    </div>
+  </div>
+</div>
