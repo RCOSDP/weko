@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
+{%- extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
 
 {%- from "invenio_communities/macros.html" import community_header, community_footer %}
 
@@ -36,6 +36,7 @@
   {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -46,12 +47,16 @@
 {%- block page_body_main %}
   <div class="hide" id="cur_index_id">{{index_id}}</div>
   <div class="row">
-    <div class="col-sm-3 col-md-3 col-lg-3">
+    <div class="col-sm-3 col-md-3 col-lg-3 m-top-20">
       {% include "weko_theme/body_index.html" %}
     </div>
     <div class="col-sm-9 col-md-9 col-lg-9 m-top-20">
       <div class="row">
-      {% include "weko_search_ui/item_list_display.html" %}
+        {%- if management_type == "sort" %}
+          {% include "weko_search_ui/item_list_display.html" %}
+        {%- else %}
+          {% include "weko_records_ui/bulk_update_display.html" %}
+        {%- endif %}
       </div>
     </div>
   </div>

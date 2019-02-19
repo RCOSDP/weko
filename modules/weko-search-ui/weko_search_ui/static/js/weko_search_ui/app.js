@@ -91,9 +91,9 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
             data: post_data,
           headers: {'Content-Type': 'application/json'},
         }).then(function successCallback(response) {
-          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q + "&management=item&sort=custom_sort";
+          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q + "&item_management=sort&sort=custom_sort";
         }, function errorCallback(response) {
-          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q+ "&management=item&sort=custom_sort";
+          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q+ "&item_management=sort&sort=custom_sort";
         });
      }
 
