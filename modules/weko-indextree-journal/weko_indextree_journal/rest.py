@@ -120,7 +120,7 @@ def create_blueprint(app, endpoints):
         )
         """
         print('indextree_journal_route config')
-        print(options.pop('indextree_journal_route'))
+        # print(options.pop('indextree_journal_route'))
         blueprint.add_url_rule(
             options.pop('indextree_journal_route'),
             view_func=iar,
