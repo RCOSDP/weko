@@ -179,9 +179,9 @@ class JournalActionResource(ContentNegotiatedMethodView):
 
         try:
             
-            #journal = self.record_class.get_journal(journal_id)
-            #return make_response(jsonify(journal), 200)
-            return make_response(jsonify({'Text' : 'Hello World'}), 200)
+            journal = self.record_class.get_journal(journal_id)
+            return make_response(jsonify(journal), 200)
+            # return make_response(jsonify({'Text' : 'Hello World'}), 200)
 
         except Exception:
             raise JournalInvalidDataRESTError()
