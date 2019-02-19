@@ -26,10 +26,9 @@ import urllib3
 import hmac
 import time
 import xml.etree.ElementTree as ET
+from flask import current_app
 
 from hashlib import sha256
-
-from . import config
 
 
 class AmazonApi:
@@ -49,17 +48,20 @@ class AmazonApi:
         self.associate_tag = associate_tag
 
         if service is None:
-            self.service = config.WEKO_ITEMS_AUTOFILL_DEFAULT_SERVICE
+            self.service = current_app.config[
+                'WEKO_ITEMS_AUTOFILL_DEFAULT_SERVICE']
         else:
             self.service = service
 
         if operation is None:
-            self.operation = config.WEKO_ITEMS_AUTOFILL_DEFAULT_OPERATION
+            self.operation = current_app.config[
+                'WEKO_ITEMS_AUTOFILL_DEFAULT_OPERATION']
         else:
             self.operation = operation
 
         if region is None:
-            self.region = config.WEKO_ITEMS_AUTOFILL_DEFAULT_REGION
+            self.region = current_app.config[
+                'WEKO_ITEMS_AUTOFILL_DEFAULT_REGION']
         else:
             self.region = region
 
@@ -94,14 +96,16 @@ class AmazonApi:
         return query
 
     def _api_url(self, query):
-        if query:
-            query_strings = urllib.parse.urlencode(query)
+        query_strings = urllib.parse.urlencode(query)
 
-        service_domain = config.WEKO_ITEMS_AUTOFILL_SERVICE_DOMAINS[self.region]
+        service_domain = \
+            current_app.config['WEKO_ITEMS_AUTOFILL_SERVICE_DOMAINS'][
+                self.region]
 
         # Generate the string to be signed
         signature_data = 'GET\n' + service_domain \
-                         + config.WEKO_ITEMS_AUTOFILL_SERVICE_DOMAINS \
+                         + current_app.config[
+                             'WEKO_ITEMS_AUTOFILL_SERVICE_DOMAINS'] \
                          + query_strings
         print("signature_data=%s" % signature_data)
 
@@ -116,21 +120,26 @@ class AmazonApi:
         # Base64 encode and urlencode
         signature = urllib.parse.quote(b64encode(signature_digest))
 
-        url = (config.WEKO_ITEMS_AUTOFILL_API_PROTOCOL + service_domain
-               + config.WEKO_ITEMS_AUTOFILL_SERVICE_URI + '?' + query_strings
+        url = (current_app.config['WEKO_ITEMS_AUTOFILL_API_PROTOCOL']
+               + service_domain
+               + current_app.config[
+                   'WEKO_ITEMS_AUTOFILL_SERVICE_URI'] + '?' + query_strings
                + '&Signature=%s' % signature)
+
         return url
 
     def _call_api(self, api_url):
-        if config.WEKO_ITEMS_AUTOFILL_PROXY:
-            api_request = urllib3.ProxyManager(config.WEKO_ITEMS_AUTOFILL_PROXY)
+        if current_app.config['WEKO_ITEMS_AUTOFILL_PROXY']:
+            api_request = urllib3.ProxyManager(
+                current_app.config['WEKO_ITEMS_AUTOFILL_PROXY'])
         else:
             api_request = urllib3.PoolManager()
 
         try:
             print("Amazon URL: %s" % api_url)
             return api_request.request('GET', api_url, timeout=urllib3.Timeout(
-                connect=config.WEKO_ITEMS_AUTOFILL_DEFAULT_TIMEOUT))
+                connect=current_app.config[
+                    'WEKO_ITEMS_AUTOFILL_DEFAULT_TIMEOUT']))
         except Exception as e:
             print('Fail to get data from API:', e)
 
