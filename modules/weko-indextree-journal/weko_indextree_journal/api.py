@@ -18,23 +18,13 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""API for weko-index-tree."""
+"""API for weko-indextree-journal."""
 
-from datetime import datetime
-from copy import deepcopy
-from flask import current_app, json
+from flask import current_app
 from flask_login import current_user
 from invenio_db import db
-from invenio_accounts.models import Role
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import func, literal_column
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from weko_groups.api import Group
+from sqlalchemy.exc import IntegrityError
 from .models import Journal
-#from .utils import get_tree_json, cached_index_tree_json, reset_tree, get_index_id_list
-from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
 from weko_index_tree.api import Indexes
 
 class Journals(object):
@@ -79,8 +69,9 @@ class Journals(object):
 
             data["owner_user_id"] = current_user.get_id()
 
+            print("[Log] Create journal data:")
             print(data)
-            
+
             _add_journal(data)
         except IntegrityError as ie:
             is_ok = False
@@ -130,7 +121,7 @@ class Journals(object):
     @classmethod
     def delete(cls, journal_id):
         """
-        Delete the journal by journal id.
+        Delete the journal by journal_id.
 
         :param journal_id: Identifier of the journal.
         :return: bool True: Delete success None: Delete failed
@@ -151,28 +142,13 @@ class Journals(object):
         return 0
 
     @classmethod
-    def delete_by_action(cls, action, journal_id, path):
-        from weko_deposit.api import WekoDeposit
-        if "move" == action:
-            result = cls.delete(journal_id, True)
-            if result is not None:
-                # move indexes all
-                target = path.split('/')
-                if len(target) >= 2:
-                    target.pop(-2)
-                    target = "/".join(target)
-                else:
-                    target = ""
-                WekoDeposit.update_by_index_tree_id(path, target)
-        else:
-            result = cls.delete(journal_id)
-            if result is not None:
-                # delete indexes all
-                WekoDeposit.delete_by_index_tree_id(path)
-        return result
-
-    @classmethod
     def get_journal(cls, journal_id):
+        """
+        Get journal information by journal_id.
+
+        :param journal_id: Identifier of the journal.
+        :return: A journal object.
+        """
         obj = db.session.query(Journal).\
                     filter_by(id=journal_id).one_or_none()
 
