@@ -27,15 +27,15 @@
 {%- endblock css %}
 
 {%- block javascript %}
-  <script src="https://unpkg.com/react@15/dist/react.min.js"></script>
-  <script src="https://unpkg.com/react-dom@15/dist/react-dom.min.js"></script>
+  <script src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
   <script type="text/babel">
     class ModalHeader extends React.Component {
       render(){
         return (
           <div className="text-right">
-            <h3>Weko items auto fill</h3>
+            <h3>{{_('Weko Items Autofill')}}</h3>
           </div>
         )
       }
@@ -77,17 +77,19 @@
             <form onSubmit={this.handleSubmit}>
                 <div className="form-inline">
                     <label className="input-group-text" for="autofill_id_type">
-                        Select ID:
+                        {{_('Automatic metadata input')}}
                     </label>
-                    <select name="idType" id="autofill_id_type" value={this.state.idType.value} 
+                    &nbsp;&nbsp;
+                    <select name="idType" id="autofill_id_type" value={this.state.idType.value}
                         onChange={this.handleChange} className="form-control">
-                        <option selected value='ISBN'>ISBN</option>
+                        <option selected value='Default'>{{_('Select the ID')}}</option>
+                        <option value='ISBN'>ISBN</option>
                     </select>
                     &nbsp;&nbsp;
                     <input name="itemId" type="text" id="autofill_item_id" 
                         value={this.state.itemId.value} onChange={this.handleChange} className="form-control ng-untouched ng-pristine ng-valid" />
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <input type="submit" value="Get" className="btn btn-info" />
+                    <input type="submit" value="{{_('Get')}}" className="btn btn-info" />
                 </div>
             </form>
         </div>

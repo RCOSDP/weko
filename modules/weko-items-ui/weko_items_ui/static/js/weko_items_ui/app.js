@@ -101,26 +101,38 @@ require([
         var arrayFlg = $('#array_flg').text();
         var modelId = $('#btn_id').text();
         var array_index = $('#array_index').text();
-        param = 'ISBN' + '/' + '076243631X'
+        var autoFillID = $('#autofill_id_type').val();
+        var value = $('#autofill_item_id').val();
+        if (autoFillID === 'Default'){
+          alert('Please select the ID');
+        } else if (!value.length){
+          alert('Please input valid value')
+        }else {
+          param = autoFillID + '/' + value
+        }
         $.ajax({
           method: 'GET',
           url: '/items/autofill/search/' + param,
           async: false,
           success: function(data, status){
-            if(confirm('Are you sure input to the form?')){
-//              $rootScope.recordsVM.invenioRecordsModel['title_ja'] = 'アマゾン'
-              $rootScope.recordsVM.invenioRecordsModel['title_en'] = data.title;
-              $rootScope.recordsVM.invenioRecordsModel['lang'] = data.language;
-              $rootScope.recordsVM.invenioRecordsModel['pubdate'] = data.date;
+            $rootScope.recordsVM.invenioRecordsModel['title_ja'] = data.sourceTitle;
+            $rootScope.recordsVM.invenioRecordsModel['title_en'] = data.title;
+            $rootScope.recordsVM.invenioRecordsModel['lang'] = data.language;
+            $rootScope.recordsVM.invenioRecordsModel['pubdate'] = data.date;
+            // Author
+            $rootScope.recordsVM.invenioRecordsModel['item_1550573963552'] = data.creator;
+            // Number of page
+            $rootScope.recordsVM.invenioRecordsModel['item_1550574045459'] = data.pageEnd;
+            // Publisher
+            $rootScope.recordsVM.invenioRecordsModel['item_1550574105389'] = data.publisher;
+            // ISBN
+            $rootScope.recordsVM.invenioRecordsModel['item_1550574115033'] = data.relatedIdentifier;
 
-//              $rootScope.recordsVM.invenioRecordsModel['item_1549607866425'][0]['subitem_1522300295150'] = 'ja';
-//              $rootScope.recordsVM.invenioRecordsModel['item_1549607866425'][0]['subitem_1522300316516'] = 'University of Tokyo';
-
-            }
             $('#meta-search').modal('toggle');
 
           },
           error: function(status, error){
+            alert(error);
             console.log(error);
           }
         });

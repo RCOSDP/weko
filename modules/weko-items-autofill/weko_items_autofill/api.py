@@ -39,11 +39,20 @@ class AmazonApi:
     _query = {}
 
     def __init__(self, access_key_id=None, secret_access_key=None,
-                 associate_tag=None, region=None, service=None, operation=None,
-                 id_type=None, item_id=None, timeout=None):
+                 associate_tag=None, id_type=None, item_id=None, region=None,
+                 service=None, operation=None,
+                 timeout=None):
         """
-
-        :rtype: object
+        Amazon API
+        :param access_key_id: Amazon access key
+        :param secret_access_key: Amazon secret access key
+        :param associate_tag: Amazon associate tag
+        :param id_type: Amazon item type
+        :param item_id: Amazon item id
+        :param region: Region
+        :param service: Amazon service name
+        :param operation: Operation type
+        :param timeout: Request timeout
         """
         self.access_key_id = access_key_id
         self.secret_access_key = secret_access_key
@@ -82,6 +91,10 @@ class AmazonApi:
             raise TypeError("AssociateTag is not defined.")
 
     def _build_query(self):
+        """
+        Build query
+        :return:
+        """
         query = {
             'Service': 'AWSECommerceService',
             'Operation': self.operation,
@@ -98,6 +111,11 @@ class AmazonApi:
         return query
 
     def _api_url(self, query):
+        """
+        Create API URL request
+        :param query:
+        :return:
+        """
         query_strings = urllib.parse.urlencode(query)
 
         service_domain = \
@@ -131,6 +149,11 @@ class AmazonApi:
         return url
 
     def _call_api(self, api_url):
+        """
+        Call Amazon API
+        :param api_url:
+        :return:
+        """
         if current_app.config['WEKO_ITEMS_AUTOFILL_PROXY']:
             api_request = urllib3.ProxyManager(
                 current_app.config['WEKO_ITEMS_AUTOFILL_PROXY'])
@@ -145,8 +168,33 @@ class AmazonApi:
         except Exception as e:
             print('Fail to get data from API:', e)
 
-    # @cached_api_json
+    @classmethod
+    @cached_api_json(timeout=None, )
+    def call_api(cls, id_type, item_id):
+        """
+        
+        :param id_type: search type
+        :param item_id: search value
+        :return: Amazon response
+        """
+        aws_access_key_id = current_app.config[
+            'WEKO_ITEMS_AUTOFILL_AWS_ACCESS_KEY_ID']
+        aws_secret_access_key = current_app.config[
+            'WEKO_ITEMS_AUTOFILL_AWS_SECRET_ACCESS_KEY']
+        associate_tag = current_app.config['WEKO_ITEMS_AUTOFILL_ASSOCIATE_TAG']
+        cls(aws_access_key_id, aws_secret_access_key, associate_tag, id_type,
+            item_id)
+
+        return cls.search()
+
     def search(self, id_type=None, item_id=None, **query):
+        """
+        Get data from Amazon API
+        :param id_type:
+        :param item_id:
+        :param query:
+        :return:
+        """
         if id_type is not None:
             self._id_type = id_type
         if item_id is not None:
@@ -160,9 +208,15 @@ class AmazonApi:
 
         api_response = self._call_api(api_url)
         response = self._parse(api_response)
+
         return response
 
     def _parse(self, api_response):
+        """
+        Parse response from API to Json
+        :param api_response:
+        :return: Json data
+        """
         if api_response.data:
             response_data = api_response.data
             if type(api_response.data) is bytes:
@@ -183,4 +237,5 @@ class AmazonApi:
                 # for item in root.findall('{}Item'.format(namespaces)):
                 #     print(item)
                 response_data = {}
+
             return response_data

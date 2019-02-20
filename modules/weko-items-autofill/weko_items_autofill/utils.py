@@ -31,6 +31,12 @@ def is_update_cache():
 
 
 def cached_api_json(timeout=50, key_prefix='amazon_json'):
+    """Cache Api data
+    :param timeout: Cache timeout
+    :param key_prefix: prefix key
+    :return:
+    """
+
     def caching(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
