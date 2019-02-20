@@ -187,7 +187,8 @@ class JournalActionResource(ContentNegotiatedMethodView):
             return make_response(jsonify(journal), 200)
             # return make_response(jsonify({'Text' : 'Hello World'}), 200)
 
-        except Exception:
+        except Exception as ex:
+            current_app.logger.info(ex)
             raise JournalInvalidDataRESTError()
 
     # @pass_record
