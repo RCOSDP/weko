@@ -49,8 +49,6 @@ class Journals(object):
         :returns: The :class:`Journal` instance lists or None.
         """
         def _add_journal(data):
-            print('_add_journal, [data]:')
-            print(data)
             with db.session.begin_nested():
                 journal = Journal(**data)
                 db.session.add(journal)
