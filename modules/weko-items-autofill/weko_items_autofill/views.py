@@ -12,7 +12,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, render_template
 from flask_babelex import gettext as _
 from flask import current_app
 
@@ -28,13 +28,13 @@ blueprint = Blueprint(
     static_folder='static',
     url_prefix='/items/autofill',
 )
-# blueprint_api = Blueprint(
-#     'weko_items_autofill_api',
-#     __name__,
-#     template_folder='templates',
-#     static_folder='static',
-#     url_prefix='/items/autofill',
-# )
+blueprint_api = Blueprint(
+    'weko_items_autofill_api',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+    url_prefix='/items/autofill',
+)
 
 
 @blueprint.route("/")
@@ -45,7 +45,7 @@ def index():
         module_name=_('WEKO-Items-Autofill'))
 
 
-@blueprint.route("/search/<str:id_type>/<str:item_id>", methods=['GET'])
+@blueprint.route("/search/<id_type>/<item_id>", methods=['GET'])
 @login_required
 @auto_fill_permission.require(http_exception=403)
 def search_amazon_data(id_type='', item_id=''):
@@ -54,9 +54,7 @@ def search_amazon_data(id_type='', item_id=''):
     :type item_id: str item id
     :return
     """
-    # data = request.get_json()
-    # id_type = data.get('idType')
-    # item_id = data.get('itemId')
+
     result_test = {
         'title': 'Title',
         'sourceTitle': 'Source Title',
@@ -68,7 +66,7 @@ def search_amazon_data(id_type='', item_id=''):
         'publisher': 'Amazon JP',
         'relatedIdentifier': '076243631X'
     }
-    result_test
+
     if id_type and item_id:
         api = AmazonApi(
             current_app.config['WEKO_ITEMS_AUTOFILL_AWS_ACCESS_KEY_ID'],
