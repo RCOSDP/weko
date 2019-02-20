@@ -8,8 +8,41 @@
 
 {%- extends config.WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE %}
 
-{%- block page_body %}
-TODO: Example template, please remove if you do not need it.
-{{_('Welcome to %(module_name)s', module_name=module_name)}}
-{%- endblock %}
+{%- block css %}
+  {{ super() }}
+  <!--{% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}-->
+  {% assets "weko_indextree_journal_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
 
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_indextree_journal_view" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_indextree_journal_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script>
+    $(document).ready(function() {
+      loadHtml();
+    })
+
+    function loadHtml(index_id) {
+      index_id = index_id || null;
+      $.get('/indextree/journal/right-content/' + index_id, function(data, status){
+        if(data.length <= 0) return;
+        $( "#journalHtml" ).html(data);
+      });
+    }
+  </script>
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('edit_tree') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+<div class="row">
+  <div class="hide" id="get_tree_json">{{ get_tree_json }}</div>
+  <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
+  <div class="hide" id="mod_tree_detail">{{ mod_tree_detail }}</div>
+  <app-root-tree-hensyu journalDisplayFlg="1"></app-root-tree-hensyu>
+</div>
+{%- endblock page_body_main %}
