@@ -178,7 +178,9 @@ class JournalActionResource(ContentNegotiatedMethodView):
         """Get a journal record."""
 
         try:
-            
+            print("[Log]: get journal_id")
+            print(journal_id)
+
             journal = self.record_class.get_journal(journal_id)
             if journal is None:
                 journal = []
