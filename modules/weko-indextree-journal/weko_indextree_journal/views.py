@@ -38,9 +38,9 @@ def index():
     """Render a basic view."""
     return render_template(
         current_app.config['WEKO_INDEXTREE_JOURNAL_INDEX_TEMPLATE'],
-        get_tree_json=current_app.config['WEKO_INDEX_TREE_LIST_API'],
+        get_tree_json=current_app.config['WEKO_INDEXTREE_JOURNAL_LIST_API'],
         upt_tree_json='',
-        mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API'],
+        mod_tree_detail=current_app.config['WEKO_INDEXTREE_JOURNAL_API'],
         )
 
 
