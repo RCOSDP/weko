@@ -41,15 +41,13 @@ class Journals(object):
     """Define API for journal creation and update."""
 
     @classmethod
-    def create(cls, index_id=None, journals=None):
+    def create(cls, journals=None):
         """
         Create the journals. Delete all journals before creation.
-
-        :param index_id: the index id.
-        :param journals: the journal information.
+        
+        :param journals: the journal information (dictinary).
         :returns: The :class:`Journal` instance lists or None.
         """
-
         def _add_journal(data):
             with db.session.begin_nested():
                 journal = Journal(**data)
@@ -63,14 +61,17 @@ class Journals(object):
         is_ok = True
         try:
             cid = journals.get('id')
-
             if not cid:
                 return
-
             data["id"] = cid
 
             # check index id.
+            index_id = journals.get('index_id')
+            if not index_id:
+                return
+
             index_info = Indexes.get_index(index_id=index_id, with_count=True)
+
             if index_info:
                 data["index_id"] = index_id
             else:
