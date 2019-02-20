@@ -190,13 +190,13 @@ class JournalActionResource(ContentNegotiatedMethodView):
 
     # @pass_record
     @need_record_permission('create_permission_factory')
-    def post(self, journal_id, **kwargs):
+    def post(self, **kwargs):
         """Create a journal."""
         data = self.loaders[request.mimetype]()
 
         if not data:
             raise JournalInvalidDataRESTError()
-        if not self.record_class.create(journal_id, data):
+        if not self.record_class.create(data):
             raise JournalAddedRESTError()
 
         status = 201
