@@ -44,11 +44,13 @@ class Journals(object):
     def create(cls, journals=None):
         """
         Create the journals. Delete all journals before creation.
-        
+
         :param journals: the journal information (dictinary).
         :returns: The :class:`Journal` instance lists or None.
         """
         def _add_journal(data):
+            print('_add_journal, [data]:')
+            print(data)
             with db.session.begin_nested():
                 journal = Journal(**data)
                 db.session.add(journal)
