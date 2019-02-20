@@ -93,10 +93,8 @@ class Journals(object):
             data["jstage_code"] = journals.get('jstage_code')
             data["ichushi_code"] = journals.get('ichushi_code')
 
+            # get current user logged id.
             data["owner_user_id"] = current_user.get_id()
-
-            print("[Log] Create journal data:")
-            print(data)
 
             _add_journal(data)
         except IntegrityError as ie:
