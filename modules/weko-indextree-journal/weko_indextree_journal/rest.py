@@ -182,6 +182,9 @@ class JournalActionResource(ContentNegotiatedMethodView):
             print(journal_id)
 
             journal = self.record_class.get_journal(journal_id)
+            print("[Log]: get journal object")
+            print(journal.__dict__)
+
             if journal is None:
                 journal = []
             return make_response(jsonify(journal), 200)
