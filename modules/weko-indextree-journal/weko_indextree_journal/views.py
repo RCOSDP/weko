@@ -12,10 +12,15 @@
 # the templates and static folders as well as the test case.
 
 from __future__ import absolute_import, print_function
+import sys
 
+from flask import (
+    Blueprint, render_template, current_app, json, abort, jsonify)
 from flask_login import login_required
-from flask import Blueprint, jsonify, render_template
+from invenio_i18n.ext import current_i18n
 from flask_babelex import gettext as _
+from weko_records.api import ItemTypes
+from weko_groups.api import Group
 
 from .permissions import indextree_journal_permission
 
