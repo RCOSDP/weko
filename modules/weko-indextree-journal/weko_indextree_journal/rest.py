@@ -194,6 +194,8 @@ class JournalActionResource(ContentNegotiatedMethodView):
         """Create a journal."""
         data = self.loaders[request.mimetype]()
 
+        print("[Log] post_journal")
+        print(data)
         if not data:
             raise JournalInvalidDataRESTError()
         if not self.record_class.create(data):
