@@ -18,18 +18,18 @@
 # MA 02111-1307, USA.
 #}
 
-{%- block page_body %}{%- endblock page_body %}
-
-{%- block css %}
-  {{ super() }}
-  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{%- endblock css %}
-
-{%- block javascript %}
-  {{ super() }}
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- endblock javascript %}
+#{%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
+#
+#{%- block css %}
+#  {{ super() }}
+#  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+#{%- endblock css %}
+#
+#{%- block javascript %}
+#  {{ super() }}
+#  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+#  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+#{%- endblock javascript %}
 
 <div class="hide" id="cur_index_id">{{index_id}}</div>
 <div class="row">
