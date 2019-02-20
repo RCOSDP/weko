@@ -178,4 +178,4 @@ class Journals(object):
         obj = db.session.query(Journal).\
                     filter_by(id=journal_id).one_or_none()
 
-        return obj
+        return dict(obj)
