@@ -31,8 +31,9 @@
   {{ super() }}
   {% assets "weko_indextree_journal_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   <script>
+    
     $(document).ready(function() {
-      loadHtml();
+      // loadHtml();
     })
 
     function loadHtml(index_id) {
