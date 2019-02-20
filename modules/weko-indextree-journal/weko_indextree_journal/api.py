@@ -78,6 +78,9 @@ class Journals(object):
                 return
 
             data["owner_user_id"] = current_user.get_id()
+
+            print(data)
+            
             _add_journal(data)
         except IntegrityError as ie:
             is_ok = False
