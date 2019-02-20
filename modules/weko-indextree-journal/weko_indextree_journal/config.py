@@ -22,6 +22,10 @@ WEKO_INDEXTREE_JOURNAL_INDEX_TEMPLATE = 'weko_indextree_journal/index.html'
 WEKO_INDEXTREE_JOURNAL_CONTENT_TEMPLATE = 'weko_indextree_journal/journal.html'
 """Index template for the indextree journal page."""
 
+WEKO_INDEXTREE_JOURNAL_API = "/api/indextree/journal"
+
+WEKO_INDEXTREE_JOURNAL_LIST_API = "/api/journal"
+
 _IID = 'iid(tid,record_class="weko_indextree_journal.api:Journals")'
 
 WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
