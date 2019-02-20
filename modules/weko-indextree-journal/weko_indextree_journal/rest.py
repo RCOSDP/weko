@@ -178,18 +178,11 @@ class JournalActionResource(ContentNegotiatedMethodView):
         """Get a journal record."""
 
         try:
-            print("[Log]: get journal_id")
-            print(journal_id)
-
             journal = self.record_class.get_journal(journal_id)
-            print("[Log]: get journal object")
-            print(journal.__dict__)
 
             if journal is None:
                 journal = []
             return make_response(jsonify(journal), 200)
-            # return make_response(jsonify({'Text' : 'Hello World'}), 200)
-
         except Exception as ex:
             current_app.logger.info(ex)
             raise JournalInvalidDataRESTError()
