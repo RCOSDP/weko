@@ -71,11 +71,6 @@ def create_blueprint(app, endpoints):
     )
 
     for endpoint, options in (endpoints or {}).items():
-        print('[Log]: journal endpoint')
-        print(endpoint)
-
-        print('[Log]: journal options')
-        print(options)
         if 'record_serializers' in options:
             record_serializers = options.get('record_serializers')
             record_serializers = {mime: obj_or_import_string(func)
@@ -117,8 +112,6 @@ def create_blueprint(app, endpoints):
         #     record_serializers=record_serializers,
         #     default_media_type=options.get('default_media_type'),
         # )
-
-        print('indextree_journal_route config')
         
         blueprint.add_url_rule(
             options.pop('indextree_journal_route'),
@@ -192,9 +185,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
     def post(self, **kwargs):
         """Create a journal."""
         data = self.loaders[request.mimetype]()
-
-        print("[Log] post_journal")
-        print(data)
+        
         if not data:
             raise JournalInvalidDataRESTError()
         if not self.record_class.create(data):
