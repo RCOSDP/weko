@@ -67,6 +67,32 @@ class Journals(object):
             else:
                 return
 
+            data["publication_title"] = journals.get('publication_title')
+            data["print_identifier"] = journals.get('print_identifier')
+            data["online_identifier"] = journals.get('online_identifier')
+            data["date_first_issue_online"] = journals.get('date_first_issue_online')
+            data["num_first_vol_online"] = journals.get('num_first_vol_online')
+            data["num_first_issue_online"] = journals.get('num_first_issue_online')
+            data["date_last_issue_online"] = journals.get('date_last_issue_online')
+            data["num_last_vol_online"] = journals.get('num_last_vol_online')
+            data["num_last_issue_online"] = journals.get('num_last_issue_online')
+            data["embargo_info"] = journals.get('embargo_info')
+            data["coverage_depth"] = journals.get('coverage_depth')
+            data["notes"] = journals.get('notes')
+            data["publisher_name"] = journals.get('publisher_name')
+            data["publication_type"] = journals.get('publication_type')
+            data["parent_publication_title_id"] = journals.get('parent_publication_title_id')
+            data["preceding_publication_title_id"] = journals.get('preceding_publication_title_id')
+            data["access_type"] = journals.get('access_type')
+            data["language"] = journals.get('language')
+            data["title_alternative"] = journals.get('title_alternative')
+            data["title_transcription"] = journals.get('title_transcription')
+            data["ncid"] = journals.get('ncid')
+            data["ndl_callno"] = journals.get('ndl_callno')
+            data["ndl_bibid"] = journals.get('ndl_bibid')
+            data["jstage_code"] = journals.get('jstage_code')
+            data["ichushi_code"] = journals.get('ichushi_code')
+
             data["owner_user_id"] = current_user.get_id()
 
             print("[Log] Create journal data:")
