@@ -28,8 +28,16 @@
     {{ super() }}
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    <script src="/static/gen/packed.2cf2c03d.js"></script>
+    <script src="/static/gen/i18n.7e738a68.js"></script>
+    <script src="/static/gen/weko_theme.2e100057.js"></script>
+    <script src="/static/gen/deposit.783a6822.js"></script>
+    <script src="/static/gen/items_ui.c15364c2.js"></script>
+    <script src="/static/gen/items_ui_authorSearch.f509cf6d.js"></script>
   {%- endblock javascript %}
   
+
+
   <div class="hide" id="cur_index_id">{{index_id}}</div>
   <div class="row">
     <div class="col-sm-3 col-md-3 col-lg-3 m-top-20">
