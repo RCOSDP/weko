@@ -75,6 +75,9 @@ setup(
         'invenio_base.api_apps': [
             'weko_indextree_journal_rest = weko_indextree_journal:WekoIndextreeJournalREST',
         ],
+        'invenio_base.blueprints': [
+            'weko_indextree_journal = weko_indextree_journal.views:blueprint',
+        ],
         'invenio_i18n.translations': [
             'messages = weko_indextree_journal',
         ],
@@ -84,6 +87,11 @@ setup(
         'invenio_access.actions': [
             'indextree_journal_access = '
             'weko_indextree_journal.permissions:action_indextree_journal_access',
+        ],
+        'invenio_assets.bundles': [
+            'weko_indextree_journal_css = weko_indextree_journal.bundles:style',
+            'weko_indextree_journal_view = weko_indextree_journal.bundles:js_treeview',
+            'weko_indextree_journal_js = weko_indextree_journal.bundles:js',
         ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
