@@ -14,8 +14,6 @@ from __future__ import absolute_import, print_function
 
 from flask import Blueprint, jsonify, render_template
 from flask_babelex import gettext as _
-from flask import current_app
-
 from flask_login import login_required
 
 from .permissions import auto_fill_permission
@@ -48,17 +46,18 @@ def index():
 @blueprint.route("/search/<id_type>/<item_id>", methods=['GET'])
 @login_required
 @auto_fill_permission.require(http_exception=403)
-def search_amazon_data(id_type='', item_id=''):
+def get_amazon_data(id_type='', item_id=''):
     """Get data from Amazon Advertising API.
-    :type id_type: str id type
-    :type item_id: str item id
-    :return
+    :param id_type: id type
+    :param item_id: item id
+    :return:
+    json: Data response from API
     """
 
     result_test = {
         'title': 'Title',
         'sourceTitle': 'Source Title',
-        'language': 'English',
+        'language': 'en',
         'creator': 'Amazon Creator',
         'pageStart': '1',
         'pageEnd': '10',
@@ -67,13 +66,9 @@ def search_amazon_data(id_type='', item_id=''):
         'relatedIdentifier': '076243631X'
     }
 
-    if id_type and item_id:
-        api = AmazonApi(
-            current_app.config['WEKO_ITEMS_AUTOFILL_AWS_ACCESS_KEY_ID'],
-            current_app.config['WEKO_ITEMS_AUTOFILL_AWS_SECRET_ACCESS_KEY'],
-            current_app.config['WEKO_ITEMS_AUTOFILL_ASSOCIATE_TAG'])
-        response_data = api.search(id_type, item_id)
-    else:
-        response_data = {'error': 'Please input item id!'}
+    try:
+        response_data = AmazonApi.call_api(id_type, item_id)
+    except Exception as e:
+        print('Error: %s' % e)
 
     return jsonify(result_test)
