@@ -60,16 +60,78 @@ def get_journal_content(index_id=None):
     json_schema = '/indextree/journal/jsonschema/{}'.format(item_type_id)
     schema_form = '/indextree/journal/schemaform/{}'.format(item_type_id)
 
-    return render_template(
-        current_app.config['WEKO_INDEXTREE_JOURNAL_CONTENT_TEMPLATE'],
-        record=None,
-        jsonschema=json_schema,
-        schemaform=schema_form,
-        lists=lists,
-        links=None,
-        id=item_type_id,
-        files=None,
-        pid=None
+    # return render_template(
+    #     current_app.config['WEKO_INDEXTREE_JOURNAL_CONTENT_TEMPLATE'],
+    #     record=None,
+    #     jsonschema=json_schema,
+    #     schemaform=schema_form,
+    #     lists=lists,
+    #     links=None,
+    #     id=item_type_id,
+    #     files=None,
+    #     pid=None
+    # )
+    return render_template_string(
+    """
+        <div class="hide" id="cur_index_id">{{index_id}}</div>
+        <div class="row">
+        <div class="col-sm-3 col-md-3 col-lg-3 m-top-20">
+            <app-root-tree-hensyu></app-root-tree-hensyu>
+        </div>
+        <div class="col-sm-8 col-md-8 col-lg-8 m-top-20">
+            <div class="row">
+            <div id="item_management"class="hide">indextree</div>
+            <div role="navigation">
+                <ul class="nav nav-tabs">
+                <li role="presentation">
+                    <a data-show-tab="display">{{_('Index Edit')}}</a></li>
+                <li role="presentation" class="active activity_li">
+                    <a class="active activity_li" data-show-tab="display">{{_('Journal')}}</a></li>
+                </ul>
+            </div>
+            <br>
+            <div class="panel panel-default">
+                <div class="panel-heading clearfix">
+                <span class="panel-title">
+                    {{_('Journal')}}
+                </span>
+                </div>
+                <div class="panel-body">
+                <div id="weko-records">
+                    <invenio-records
+                    {%- if pid %}
+                        initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+                        links='{{links|tojson}}'
+                    {%- else %}
+                        initialization="{{ config.DEPOSIT_SEARCH_API }}"
+                    {%- endif %}
+                    response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
+                    extra-params='{"headers":{"Content-Type": "application/json"}}'
+                    form="{{ schemaform }}"
+                    record='{{ record | tojson }}'
+                    schema="{{ jsonschema }}">
+                    <invenio-records-loading
+                        template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
+                    </invenio-records-loading>
+                    <invenio-records-alert
+                        template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
+                    </invenio-records-alert>
+                    <invenio-records-form
+                        form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+                        form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
+                        template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
+                    </invenio-records-form>
+                    </invenio-records>
+                </div>
+                </div>
+                <div class="panel-footer">
+                <button id="index-detail-submit" class="btn btn-info" (click)="">{{_('Save')}}</button>
+                </div>
+            </div>
+            </div>
+        </div>
+        </div>
+    """
     )
 
 
