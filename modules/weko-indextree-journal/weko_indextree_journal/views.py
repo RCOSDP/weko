@@ -15,7 +15,7 @@ from __future__ import absolute_import, print_function
 import sys
 
 from flask import (
-    Blueprint, render_template, current_app, json, abort, jsonify)
+    Blueprint, render_template, render_template_string, current_app, json, abort, jsonify)
 from flask_login import login_required
 from invenio_i18n.ext import current_i18n
 from flask_babelex import gettext as _
