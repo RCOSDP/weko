@@ -45,8 +45,8 @@ def index():
     )
 
 
-@blueprint.route("/right-content/<string:index_id>", methods=['GET'])
-def get_journal_content(index_id=None):
+@blueprint.route("/right-content", methods=['GET'])
+def get_journal_content():
     """Render a content of journal."""
     item_type_id = 19 # item tpye's journal = 21
     lists = ItemTypes.get_latest()
