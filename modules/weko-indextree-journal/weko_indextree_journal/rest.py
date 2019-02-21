@@ -167,14 +167,19 @@ class JournalActionResource(ContentNegotiatedMethodView):
             setattr(self, key, value)
 
     @need_record_permission('read_permission_factory')
-    def get(self, journal_id):
+    def get(self, journal_id, **kwargs):
         """Get a journal record."""
 
         try:
-            journal = self.record_class.get_journal(journal_id)
-
+            if journal_id != 0:
+                journal = self.record_class.get_journal(journal_id)
+            else:
+                index_id = kwargs.get('index_id')
+                journal = self.record_class.get_journal_by_index_id(index_id)
+                            
             if journal is None:
                 journal = []
+
             return make_response(jsonify(journal), 200)
         except Exception as ex:
             current_app.logger.info(ex)
