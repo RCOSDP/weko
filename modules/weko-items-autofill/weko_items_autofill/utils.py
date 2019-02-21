@@ -77,5 +77,8 @@ def get_items_autofill(item_type_id):
                     for key in items.keys():
                         if k == key:
                             items[key] = value
+                        elif isinstance(jpcoar_metadata[k], dict):
+                            if (key in jpcoar_metadata[k].keys()):
+                                items[key] = value
 
     return items
