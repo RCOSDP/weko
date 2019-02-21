@@ -54,3 +54,15 @@ WEKO_ITEMS_AUTOFILL_ASSOCIATE_TAG = ''
 """AssociateTag"""
 
 WEKO_ITEMS_AUTOFIL_AMAZON_API_UPDATED = True
+
+WEKO_ITEMS_AUTOFIL_ITEMS_AUTOFILL = {
+    'title': '',
+    'sourceTitle': '',
+    'language': '',
+    'creator': '',
+    'pageStart': '',
+    'pageEnd': '',
+    'date': '',
+    'publisher': '',
+    'relatedIdentifier': '',
+}
