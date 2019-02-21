@@ -174,15 +174,18 @@ class JournalActionResource(ContentNegotiatedMethodView):
             if journal_id != 0:
                 journal = self.record_class.get_journal(journal_id)
             else:
+                print('[Log]: kwargs')
+                print(kwargs)
+
                 index_id = kwargs.get('index_id')
                 journal = self.record_class.get_journal_by_index_id(index_id)
-                            
+
             if journal is None:
                 journal = []
 
             return make_response(jsonify(journal), 200)
         except Exception as ex:
-            current_app.logger.info(ex)
+            current_app.logger.error(ex)
             raise JournalInvalidDataRESTError()
 
     # @pass_record
