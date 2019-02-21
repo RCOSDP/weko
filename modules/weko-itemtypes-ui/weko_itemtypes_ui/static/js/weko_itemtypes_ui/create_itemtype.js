@@ -878,11 +878,12 @@
       });
     }
 
+    getPropUrl = '/itemtypes/property/list?lang=' + $('#lang-code').val();
     select_option = '';
     // 作成したメタデータ項目タイプの取得
     $.ajax({
       method: 'GET',
-      url: '/itemtypes/property/list',
+      url: getPropUrl,
       async: false,
       success: function(data, status){
         properties_obj = data;

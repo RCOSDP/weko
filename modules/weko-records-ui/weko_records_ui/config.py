@@ -30,6 +30,9 @@ WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Contributor',
                              'General')
 
+WEKO_PERMISSION_SUPER_ROLE_USER = ('System Administrator',
+                                   'Repository Administrator')
+
 ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
 # author setting page template
 
