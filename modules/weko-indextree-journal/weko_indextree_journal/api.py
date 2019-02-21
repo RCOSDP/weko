@@ -125,7 +125,6 @@ class Journals(object):
                 if not journal:
                     return
 
-                print(dict(journal))
                 for k, v in data.items():
                     setattr(journal, k, v)
                 journal.owner_user_id = current_user.get_id()
