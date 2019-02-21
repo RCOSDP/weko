@@ -36,8 +36,12 @@ WEKO_PERMISSION_SUPER_ROLE_USER = ('System Administrator',
 ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
 # author setting page template
 
+
 WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE = 'weko_records_ui/admin/pdfcoverpage.html'
 # pdfcoverpage templates
+
+INSTITUTION_NAME_SETTING_TEMPLATE = 'weko_records_ui/admin/institution_name_setting.html'
+# institution name setting page template
 
 ITEM_SEARCH_FLG = 'name'
 # setting author name search type: name or id

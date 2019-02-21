@@ -1,0 +1,56 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
+
+{% set panel_title = _("Life Time") %}
+{% set panel_icon = "fa fa-user" %}
+
+{%- block body %}
+{%- set cur_lifetime = current_lifetime %}
+{%- set lifetime_map = map_lifetime %}
+
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <div class="panel-title">
+      <h4>Institution Name<h4>
+    </div>
+  </div>
+  <div class="panel-body">
+<form method="POST" name="institution_name_form" action={{url_for('others.index')}}>
+  <div class="row">
+    <div class="col-sm-2 text-right">
+      <label>{{_("Institution Name")}}</label>
+    </div>
+    <div class="col-xs-2">
+      <input type="text" class="form-control" name="institution_name" id="institution_name" value={{institution_name}}>
+    </div>
+  </div>
+      <button type="submit" name="submit" value="institution_name_form" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Update') }}</button>
+    </div>
+  </div>
+</form>
+  </div>
+</div>
+{%- endblock body %}
+
