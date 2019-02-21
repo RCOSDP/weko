@@ -121,18 +121,6 @@ def prepare_response(pid_value, fd=True):
     return rv
 
 
-# def file_preview_ui(pid, _record_file_factory=None, **kwargs):
-#     """
-#
-#     :param pid:
-#     :param _record_file_factory:
-#     :param kwargs:
-#     :return:
-#     """
-#
-#     return prepare_response(pid.pid_value, False)
-#
-
 def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
     """File preview view for a given record.
 

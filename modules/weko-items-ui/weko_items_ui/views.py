@@ -34,6 +34,7 @@ from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from weko_groups.api import Group
 from weko_records.api import ItemTypes
+from weko_deposit.api import WekoRecord
 
 from .permissions import item_permission
 
@@ -280,10 +281,17 @@ def items_index(pid_value=0):
     try:
         if pid_value == 0:
             return redirect(url_for('.index'))
+
+        record = WekoRecord.get_record_by_pid(pid_value)
+        action = 'private' if record.get('publish_status', '1') == '1' \
+            else 'publish'
+
         if request.method == 'GET':
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
-                pid_value=pid_value)
+                pid_value=pid_value,
+                action=action)
+
         if request.headers['Content-Type'] != 'application/json':
             flash(_('invalide request'), 'error')
             return render_template(
@@ -320,10 +328,17 @@ def iframe_items_index(pid_value=0):
     try:
         if pid_value == 0:
             return redirect(url_for('.iframe_index'))
+
+        record = WekoRecord.get_record_by_pid(pid_value)
+        action = 'private' if record.get('publish_status', '1') == '1' \
+            else 'publish'
+
         if request.method == 'GET':
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
-                pid_value=pid_value)
+                pid_value=pid_value,
+                action=action)
+
         if request.headers['Content-Type'] != 'application/json':
             flash(_('invalide request'), 'error')
             return render_template(
