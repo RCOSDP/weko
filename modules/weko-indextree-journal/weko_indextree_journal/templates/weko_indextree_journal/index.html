@@ -38,7 +38,7 @@
 
     function loadHtml(index_id) {
       index_id = index_id || null;
-      $.get('/indextree/journal/right-content/', function(data, status){
+      $.get('/indextree/journal/right-content', function(data, status){
         console.log(data);
         if(data.length <= 0) return;
         $( "#journalHtml" ).html(data);
