@@ -125,13 +125,6 @@ class Journals(object):
                     return
 
                 for k, v in data.items():
-                    if isinstance(getattr(journal, k), int):
-                        if isinstance(v, str) and len(v) == 0:
-                            continue
-
-                    if isinstance(v, dict):
-                        v = ",".join(map(lambda x: str(x["id"]), v["allow"]))
-                    
                     setattr(journal, k, v)
                 journal.owner_user_id = current_user.get_id()
                 db.session.merge(journal)
