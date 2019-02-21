@@ -44,6 +44,20 @@ def index():
         mod_journal_detail=current_app.config['WEKO_INDEXTREE_JOURNAL_API'],
     )
 
+@blueprint.route("/index/<int:index_id>")
+def get_journal_by_index_id(index_id = 0):
+    try:
+        result = None
+        if index_id > 0:
+            journal = Journals.get_journal_by_index_id(index_id)
+
+        if journal is None:
+            journal = '{}'
+        return jsonify(journal)
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)
+    
 
 @blueprint.route("/right-content", methods=['GET'])
 def get_journal_content():
