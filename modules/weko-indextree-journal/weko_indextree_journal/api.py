@@ -177,3 +177,16 @@ class Journals(object):
                     filter_by(id=journal_id).one_or_none()
 
         return dict(obj)
+
+    @classmethod
+    def get_journal_by_index_id(cls, index_id):
+        """
+        Get journal information by index_id.
+
+        :param index_id: Identifier of the journal.
+        :return: A journal object.
+        """
+        obj = db.session.query(Journal).\
+                    filter_by(index_id=index_id).one_or_none()
+
+        return dict(obj)
