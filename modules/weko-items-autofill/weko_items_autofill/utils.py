@@ -24,6 +24,7 @@ from flask import current_app
 from invenio_cache import current_cache
 from invenio_i18n.ext import current_i18n
 
+from weko_records.api import ItemTypeProps, ItemTypes, Mapping
 
 def is_update_cache():
     """Return True if Amazon Api has been updated."""
@@ -48,3 +49,23 @@ def cached_api_json(timeout=50, key_prefix='amazon_json'):
         return wrapper
 
     return caching
+
+
+def get_items_autofill(item_type_id):
+    """
+    :param item_type_id:
+    :return: items autofill
+    """
+    items = current_app.config['WEKO_ITEMS_AUTOFIL_ITEMS_AUTOFILL']
+    item_type_json = ItemTypes.get_record(item_type_id)
+    item_mapping_json = Mapping.get_record(item_type_id)
+    if item_type_json and item_mapping_json:
+        for value in item_type_json["properties"]:
+            jpcoar_metadata = item_mapping_json[value]["jpcoar_mapping"]
+            if isinstance(jpcoar_metadata, dict):
+                for k in jpcoar_metadata.keys():
+                    for key in items.keys():
+                        if k == key:
+                            items[key] = value
+
+    return items

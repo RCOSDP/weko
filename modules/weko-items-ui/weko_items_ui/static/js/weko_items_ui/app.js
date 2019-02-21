@@ -91,16 +91,11 @@ require([
       });
 
       $scope.getItemMetadata = function(model_id,arrayFlg,form) {
-        $("#btn_id").text(model_id);
-        $("#array_flg").text(arrayFlg);
-        $("#array_index").text(form.key[1]);
         $('#meta-search').modal('show');
       }
 
       $scope.setItemMetadata = function() {
-        var arrayFlg = $('#array_flg').text();
-        var modelId = $('#btn_id').text();
-        var array_index = $('#array_index').text();
+        var param;
         var autoFillID = $('#autofill_id_type').val();
         var value = $('#autofill_item_id').val();
         if (autoFillID === 'Default'){
@@ -108,25 +103,29 @@ require([
         } else if (!value.length){
           alert('Please input valid value')
         }else {
-          param = autoFillID + '/' + value
+          let itemTypeId = $("#autofill_item_type_id").val();
+          param = autoFillID + '/' + value +  '/' + itemTypeId;
         }
         $.ajax({
           method: 'GET',
           url: '/items/autofill/search/' + param,
           async: false,
           success: function(data, status){
-            $rootScope.recordsVM.invenioRecordsModel['title_ja'] = data.sourceTitle;
-            $rootScope.recordsVM.invenioRecordsModel['title_en'] = data.title;
-            $rootScope.recordsVM.invenioRecordsModel['lang'] = data.language;
-            $rootScope.recordsVM.invenioRecordsModel['pubdate'] = data.date;
+            // Title
+            $rootScope.recordsVM.invenioRecordsModel[data.items.sourceTitle] = data.data.sourceTitle;
+            $rootScope.recordsVM.invenioRecordsModel[data.items.title] = data.data.title;
+            // Languages
+            $rootScope.recordsVM.invenioRecordsModel[data.items.language] = data.data.language;
+            // PublicationDate
+            $rootScope.recordsVM.invenioRecordsModel[data.items.date] = data.data.date;
             // Author
-            $rootScope.recordsVM.invenioRecordsModel['item_1550573963552'] = data.creator;
+            $rootScope.recordsVM.invenioRecordsModel[data.items.creator] = data.data.creator;
             // Number of page
-            $rootScope.recordsVM.invenioRecordsModel['item_1550574045459'] = data.pageEnd;
+            $rootScope.recordsVM.invenioRecordsModel[data.items.pageEnd] = data.data.pageEnd;
             // Publisher
-            $rootScope.recordsVM.invenioRecordsModel['item_1550574105389'] = data.publisher;
+            $rootScope.recordsVM.invenioRecordsModel[data.items.publisher] = data.data.publisher;
             // ISBN
-            $rootScope.recordsVM.invenioRecordsModel['item_1550574115033'] = data.relatedIdentifier;
+            $rootScope.recordsVM.invenioRecordsModel[data.items.relatedIdentifier] = data.data.relatedIdentifier;
 
             $('#meta-search').modal('toggle');
 
