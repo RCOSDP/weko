@@ -176,9 +176,9 @@ class Journals(object):
         obj = db.session.query(Journal).\
                     filter_by(id=journal_id).one_or_none()
 
-        if obj is None
+        if obj is None:
             return []
-            
+
         return dict(obj)
 
     @classmethod
@@ -192,7 +192,7 @@ class Journals(object):
         obj = db.session.query(Journal).\
                     filter_by(index_id=index_id).one_or_none()
 
-        if obj is None
+        if obj is None:
             return []
 
         return dict(obj)
