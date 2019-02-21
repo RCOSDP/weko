@@ -56,6 +56,17 @@
     $('#item-type-lists').on('change', function(){
       window.location.href = '/itemtypes/' + $('#item-type-lists').val();
     });
+
+    $('input[type=radio][name=item_type]').on ('change', function(){
+        if (this.value === 'normal') {
+            $('option.normal_type').show()
+            $('option.harvesting_type').hide()
+        } else {
+            $('option.normal_type').hide()
+            $('option.harvesting_type').show()
+        }
+    });
+
     $('#btn_create_itemtype_schema').on('click', function(){
       if($('#itemtype_name').val() == "") {
         $('#itemtype_name_warning').removeClass('hide');
@@ -969,5 +980,11 @@
       $.get('/api/itemtypes/' + $('#item-type-lists').val() + '/mapping', function(data, status){
         Object.assign(src_mapping, data);
       });
+    }
+    $('input[type=radio][name=item_type][value=normal]').click()
+    if ($("#item-type-lists option:selected").hasClass('normal_type')) {
+        $('input[type=radio][name=item_type][value=normal]').click()
+    } else if ($("#item-type-lists option:selected").hasClass('harvesting_type')) {
+        $('input[type=radio][name=item_type][value=harvesting]').click()
     }
 });

@@ -91,6 +91,10 @@ class ItemType(db.Model, Timestamp):
     )
     """Name information from ItemTypeName class."""
 
+    harvesting_type = db.Column(db.Boolean(name='harvesting_type'),
+        nullable=False,
+        default=False)
+
     schema = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
@@ -105,9 +109,9 @@ class ItemType(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema in JSON format. When you create a new ``item type`` the 
-    ``schema`` field value should never be ``NULL``. Default value is an 
-    empty dict. ``NULL`` value means that the record metadata has been 
+    """Store schema in JSON format. When you create a new ``item type`` the
+    ``schema`` field value should never be ``NULL``. Default value is an
+    empty dict. ``NULL`` value means that the record metadata has been
     deleted. """
 
     form = db.Column(
@@ -144,9 +148,9 @@ class ItemType(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store page render information in JSON format. When you create a new 
-    ``item type`` the ``render`` field value should never be ``NULL``. 
-    Default value is an empty dict. ``NULL`` value means that the record 
+    """Store page render information in JSON format. When you create a new
+    ``item type`` the ``render`` field value should never be ``NULL``.
+    Default value is an empty dict. ``NULL`` value means that the record
     metadata has been deleted. """
 
     tag = db.Column(db.Integer, nullable=False)
@@ -388,9 +392,9 @@ class ItemTypeProperty(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema in JSON format. When you create a new 
-    ``ItemTypeProperty`` the ``schema`` field value should never be ``NULL``. 
-    Default value is an empty dict. ``NULL`` value means that the record 
+    """Store schema in JSON format. When you create a new
+    ``ItemTypeProperty`` the ``schema`` field value should never be ``NULL``.
+    Default value is an empty dict. ``NULL`` value means that the record
     metadata has been deleted. """
 
     form = db.Column(
@@ -407,9 +411,9 @@ class ItemTypeProperty(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema form (single) in JSON format. When you create a new 
-    ``ItemTypeProperty`` the ``form`` field value should never be ``NULL``. 
-    Default value is an empty dict. ``NULL`` value means that the record 
+    """Store schema form (single) in JSON format. When you create a new
+    ``ItemTypeProperty`` the ``form`` field value should never be ``NULL``.
+    Default value is an empty dict. ``NULL`` value means that the record
     metadata has been deleted. """
 
     forms = db.Column(
@@ -426,9 +430,9 @@ class ItemTypeProperty(db.Model, Timestamp):
         default=lambda: dict(),
         nullable=True
     )
-    """Store schema form (array) in JSON format. When you create a new 
-    ``ItemTypeProperty`` the ``forms`` field value should never be ``NULL``. 
-    Default value is an empty dict. ``NULL`` value means that the record 
+    """Store schema form (array) in JSON format. When you create a new
+    ``ItemTypeProperty`` the ``forms`` field value should never be ``NULL``.
+    Default value is an empty dict. ``NULL`` value means that the record
     metadata has been deleted. """
 
     delflg = db.Column(db.Boolean(name='delFlg'),
