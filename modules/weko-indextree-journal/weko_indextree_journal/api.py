@@ -120,7 +120,8 @@ class Journals(object):
         """
         try:
             with db.session.begin_nested():
-                journal = cls.get_journal(journal_id)
+                journal = db.session.query(Journal).\
+                    filter_by(id=journal_id).one_or_none()
                 if not journal:
                     return
 
