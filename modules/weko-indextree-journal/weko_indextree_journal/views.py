@@ -21,6 +21,7 @@ from invenio_i18n.ext import current_i18n
 from flask_babelex import gettext as _
 from weko_records.api import ItemTypes
 from weko_groups.api import Group
+from .api import Journals
 
 from .permissions import indextree_journal_permission
 
