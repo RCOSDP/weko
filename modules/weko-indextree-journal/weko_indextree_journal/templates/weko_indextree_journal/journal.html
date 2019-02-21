@@ -17,21 +17,32 @@
   # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
   # MA 02111-1307, USA.
   #}
-  {%- extends config.WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE %}
+  
+  {%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
   
   {%- block css %}
+    {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_index_tree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {{ super() }}
-    {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {%- endblock css %}
   
   {%- block javascript %}
+    {% assets "weko_index_tree_view" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
-    {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    <script src="/static/gen/packed.2cf2c03d.js"></script>
-    <script src="/static/gen/i18n.7e738a68.js"></script>
-    <script src="/static/gen/weko_theme.2e100057.js"></script>
-    <script src="/static/gen/deposit.783a6822.js"></script>
-    <script src="/static/gen/items_ui.c15364c2.js"></script>
-    <script src="/static/gen/items_ui_authorSearch.f509cf6d.js"></script>
+    {% assets "weko_index_tree_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- endblock javascript %}
+  
+  {%- block page_body_tabs %}
+    {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+    {{ tabs_selector('edit_tree') }}
+  {%- endblock page_body_tabs%}
+  
+  {%- block page_body_main %}
+  <div class="row">
+    <div class="hide" id="get_tree_json">{{ get_tree_json }}</div>
+    <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
+    <div class="hide" id="mod_tree_detail">{{ mod_tree_detail }}</div>
+    <app-root-tree-hensyu></app-root-tree-hensyu>
+  </div>
+  {%- endblock page_body_main %}
+  
