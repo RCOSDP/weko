@@ -177,6 +177,9 @@ class JournalActionResource(ContentNegotiatedMethodView):
                 print('[Log]: index_id')
                 print(index_id)
 
+                print('[Log]: request')
+                print(request.__dict__)
+
                 journal = self.record_class.get_journal_by_index_id(index_id)
 
             if journal is None:
