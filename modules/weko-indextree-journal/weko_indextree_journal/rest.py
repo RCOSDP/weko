@@ -167,20 +167,12 @@ class JournalActionResource(ContentNegotiatedMethodView):
             setattr(self, key, value)
 
     @need_record_permission('read_permission_factory')
-    def get(self, journal_id, index_id=None, **kwargs):
+    def get(self, journal_id, **kwargs):
         """Get a journal record."""
 
         try:
             if journal_id != 0:
                 journal = self.record_class.get_journal(journal_id)
-            else:
-                print('[Log]: index_id')
-                print(index_id)
-
-                print('[Log]: request')
-                print(request.__dict__)
-
-                journal = self.record_class.get_journal_by_index_id(index_id)
 
             if journal is None:
                 journal = []
