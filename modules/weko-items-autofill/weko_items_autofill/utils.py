@@ -56,7 +56,17 @@ def get_items_autofill(item_type_id):
     :param item_type_id:
     :return: items autofill
     """
-    items = current_app.config['WEKO_ITEMS_AUTOFIL_ITEMS_AUTOFILL']
+    items = {
+        'title': '',
+        'sourceTitle': '',
+        'language': '',
+        'creator': '',
+        'pageStart': '',
+        'pageEnd': '',
+        'date': '',
+        'publisher': '',
+        'relatedIdentifier': '',
+    }
     item_type_json = ItemTypes.get_record(item_type_id)
     item_mapping_json = Mapping.get_record(item_type_id)
     if item_type_json and item_mapping_json:
