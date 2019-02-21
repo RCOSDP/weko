@@ -16,8 +16,17 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}  
-<div class="hide" id="cur_index_id">{{index_id}}</div>
+#}
+
+{%- block css %}
+  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
 <div class="row">
   <div class="col-sm-3 col-md-3 col-lg-3 m-top-20">
     <app-root-tree-hensyu></app-root-tree-hensyu>
@@ -75,4 +84,3 @@
     </div>
   </div>
 </div>
-  

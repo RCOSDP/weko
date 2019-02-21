@@ -42,7 +42,7 @@ class WekoIndextreeJournal(object):
     def init_config(self, app):
         """Initialize configuration."""
         # Use theme's base template if theme is installed
-        if 'BASE_TEMPLATE' in app.config:
+        if 'BASE_EDIT_TEMPLATE' in app.config:
             app.config.setdefault(
                 'WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE',
                 app.config['BASE_TEMPLATE'],
