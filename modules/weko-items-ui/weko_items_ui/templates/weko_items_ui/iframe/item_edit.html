@@ -189,7 +189,7 @@
               <div ng-show="false" type="text" id="array_flg" ></div>
               <div ng-show="false" type="text" id="array_index" ></div>
               <div ng-show="false" type="text" id="weko_id" ></div>
-              <div ng-show="false" type="text" id="item_type_id" >{{id}}</div>
+              <div ng-show="false" type="text" id="autofill_item_type_id" >{{id}}</div>
               <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
               <!--add by ryuu. end 20180410-->
 
@@ -238,6 +238,7 @@
     <div class="modal-content">
       <div class="modal-body">
         <div id="meta-search-body"></div>
+        <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">{{_('Close')}}</button>
