@@ -7,9 +7,6 @@
 
 """Module of weko-items-autofill."""
 
-# TODO: This is an example file. Remove it if your package does not use any
-# extra configuration variables.
-
 WEKO_ITEMS_AUTOFILL_DEFAULT_VALUE = 'foobar'
 """Default value for the application."""
 
@@ -55,14 +52,15 @@ WEKO_ITEMS_AUTOFILL_ASSOCIATE_TAG = ''
 
 WEKO_ITEMS_AUTOFIL_AMAZON_API_UPDATED = True
 
-WEKO_ITEMS_AUTOFIL_ITEMS_AUTOFILL = {
-    'title': '',
-    'sourceTitle': '',
-    'language': '',
-    'creator': '',
-    'pageStart': '',
-    'pageEnd': '',
-    'date': '',
-    'publisher': '',
-    'relatedIdentifier': '',
-}
+WEKO_ITEMS_AUTOFIL_ITEMS_AUTOFILL = [
+    'title',
+    'sourceTitle',
+    'language'
+    'creator',
+    'pageStart',
+    'pageEnd',
+    'date',
+    'publisher',
+    'relatedIdentifier'
+]
+""" Item autofill list """

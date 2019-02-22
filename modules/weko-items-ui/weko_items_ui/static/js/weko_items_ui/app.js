@@ -100,12 +100,15 @@ require([
         var value = $('#autofill_item_id').val();
         if (autoFillID === 'Default'){
           alert('Please select the ID');
+          return;
         } else if (!value.length){
-          alert('Please input valid value')
+          alert('Please input valid value');
+          return;
         }else {
           let itemTypeId = $("#autofill_item_type_id").val();
           param = autoFillID + '/' + value +  '/' + itemTypeId;
         }
+
         $.ajax({
           method: 'GET',
           url: '/items/autofill/search/' + param,
@@ -135,8 +138,6 @@ require([
             console.log(error);
           }
         });
-
-
       }
 
       $scope.searchSource = function(model_id,arrayFlg,form) {
