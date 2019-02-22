@@ -26,12 +26,13 @@ from invenio_i18n.ext import current_i18n
 
 from weko_records.api import ItemTypeProps, ItemTypes, Mapping
 
+
 def is_update_cache():
     """Return True if Amazon Api has been updated."""
-    return current_app.config['WEKO_ITEMS_AUTOFIL_AMAZON_API_UPDATED']
+    return current_app.config["WEKO_ITEMS_AUTOFIL_AMAZON_API_UPDATED"]
 
 
-def cached_api_json(timeout=50, key_prefix='amazon_json'):
+def cached_api_json(timeout=50, key_prefix="amazon_json"):
     """Cache Api data
     :param timeout: Cache timeout
     :param key_prefix: prefix key
@@ -42,8 +43,10 @@ def cached_api_json(timeout=50, key_prefix='amazon_json'):
         @wraps(f)
         def wrapper(*args, **kwargs):
             cache_fun = current_cache.cached(
-                timeout=timeout, key_prefix=key_prefix + current_i18n.language,
-                forced_update=is_update_cache)
+                timeout=timeout,
+                key_prefix=key_prefix + current_i18n.language,
+                forced_update=is_update_cache,
+            )
             return cache_fun(f)(*args, **kwargs)
 
         return wrapper
@@ -56,29 +59,45 @@ def get_items_autofill(item_type_id):
     :param item_type_id:
     :return: items autofill
     """
-    items = {
-        'title': '',
-        'sourceTitle': '',
-        'language': '',
-        'creator': '',
-        'pageStart': '',
-        'pageEnd': '',
-        'date': '',
-        'publisher': '',
-        'relatedIdentifier': '',
-    }
-    item_type_json = ItemTypes.get_record(item_type_id)
+    jpcoar_item_autofill = [
+        'title',
+        'sourceTitle',
+        'language',
+        'creator',
+        'pageStart',
+        'pageEnd',
+        'date',
+        'publisher',
+        'relatedIdentifier'
+    ]
+    items = dict()
     item_mapping_json = Mapping.get_record(item_type_id)
-    if item_type_json and item_mapping_json:
-        for value in item_type_json["properties"]:
-            jpcoar_metadata = item_mapping_json[value]["jpcoar_mapping"]
-            if isinstance(jpcoar_metadata, dict):
-                for k in jpcoar_metadata.keys():
-                    for key in items.keys():
-                        if k == key:
-                            items[key] = value
-                        elif isinstance(jpcoar_metadata[k], dict):
-                            if (key in jpcoar_metadata[k].keys()):
-                                items[key] = value
-
+    jpcoar_metadata = _get_jpcoar_metadata(item_mapping_json)
+    for jpcoar_item_name in jpcoar_item_autofill:
+        items[jpcoar_item_name] = get_autofill_item_id(jpcoar_item_name,
+                                                       jpcoar_metadata)
     return items
+
+
+def get_autofill_item_id(jpcoar_item_name, jpcoar_data):
+    item_id = ""
+    for k in jpcoar_data.keys():
+        jpcoar_data_type = jpcoar_data[k]
+        if isinstance(jpcoar_data_type, dict):
+            if jpcoar_item_name in jpcoar_data_type.keys():
+                return k
+            elif jpcoar_data_type.get('relation'):
+                if jpcoar_item_name in jpcoar_data_type.get('relation').keys():
+                    return k
+
+    return item_id
+
+
+def _get_jpcoar_metadata(jpcoar_mapping_json):
+    jpcoar_metadata = dict()
+    for k in jpcoar_mapping_json.keys():
+        jpcoar_mapping = jpcoar_mapping_json.get(k)["jpcoar_mapping"]
+        if jpcoar_mapping:
+            jpcoar_metadata[k] = jpcoar_mapping
+
+    return jpcoar_metadata
