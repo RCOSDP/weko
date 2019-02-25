@@ -117,9 +117,9 @@
           ];
           return (
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
-              <div key="a" class="grid-left">Left_a</div>
-              <div key="b" class="grid-left">Left_b</div>
-              <div key="c" class="grid-left">Left_c</div>
+              <div key="a" class="grid-left"><h3>Left_a</h3></div>
+              <div key="b" class="grid-left"><h3>Left_b</h3></div>
+              <div key="c" class="grid-left"><h3>Left_c</h3></div>
             </ReactGridLayout>
           )
         }
@@ -139,9 +139,9 @@
           ];
           return (
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
-              <div key="d" class="grid-right">Right_d</div>
-              <div key="e" class="grid-right">Right_e</div>
-              <div key="f" class="grid-right">Right_f</div>
+              <div key="d" class="grid-right"><h3>Right_d</h3></div>
+              <div key="e" class="grid-right"><h3>Right_e</h3></div>
+              <div key="f" class="grid-right"><h3>Right_f</h3></div>
             </ReactGridLayout>
           )
         }
@@ -155,11 +155,11 @@
       class WekoGridInfo extends React.Component {
         render(){
           var layout = [
-            {i: 'g', x: 4, y: 0, w: 12, h: 3}
+            {i: 'g', x: 4, y: 0, w: 8, h: 3}
           ];
           return (
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
-              <div key="g" class="grid-info">Info</div>
+              <div key="g" class="grid-info"><h3>Info</h3></div>
             </ReactGridLayout>
           )
         }
