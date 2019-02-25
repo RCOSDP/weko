@@ -17,7 +17,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
-{%- block page_body %}{%- endblock page_body %}
+{%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
 {%- block css %}
   {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_indextree_journal_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
