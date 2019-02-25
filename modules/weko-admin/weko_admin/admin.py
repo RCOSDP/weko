@@ -242,13 +242,12 @@ class ChunkSelectView(BaseView):
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 
-    @expose('/list', methods=['GET'])
-    def get_chunk_list(self):
-        chunks = ChunkSelect.get('weko')
-        designed = chunks.designed if chunks else []
-        others = chunks.others if chunks else []
+    @expose('/format', methods=['GET'])
+    def get_chunk_format(self):
+        chunk = ChunkSelect.get('weko')
+        format = chunk.format if chunk else '0'
 
-        data = {'others': others, 'designed': designed}
+        data = {'format': format}
 
         return jsonify(data)
 
