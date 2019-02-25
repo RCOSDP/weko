@@ -18,6 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+
 """Database models for weko-admin."""
 
 from datetime import datetime
@@ -85,3 +86,24 @@ class PDFCoverPageSettings(db.Model):
         return record
 
 __all__ = (['PDFCoverPageSettings'])
+
+"""Record UI models."""
+
+from invenio_db import db
+
+class InstitutionName(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    institution_name = db.Column(db.String(255), default='')
+
+    @classmethod
+    def get_institution_name(cls):
+        if len(cls.query.all()) < 1:
+            db.session.add(cls())
+            db.session.commit()
+        return cls.query.get(1).institution_name
+
+    @classmethod
+    def set_institution_name(cls, new_name):
+        cfg = cls.query.get(1)
+        cfg.institution_name = new_name
+        db.session.commit()

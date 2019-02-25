@@ -49,7 +49,7 @@
           <label for="item-type-lists">{{_('Itemtype List')}}</label>
           <select class="form-control" id="item-type-lists">
             {% for list in lists %}
-            <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+            <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.harvesting_type %} class="harvesting" {% endif %} {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
             {% endfor %}
           </select>
         </div>
