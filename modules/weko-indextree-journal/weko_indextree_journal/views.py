@@ -158,3 +158,11 @@ def get_schema_form(item_type_id=0):
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
+
+@blueprint.route('/checkview', methods=['GET'])
+@login_required
+def check_view(item_type_id=0):
+    """Render a check view."""
+    return render_template(
+        'weko_indextree_journal/checkview.html'
+    )
