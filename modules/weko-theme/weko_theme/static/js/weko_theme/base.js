@@ -11,11 +11,34 @@ require([
       });
 
       // Chunk Design
-      $('#grid-info').attr('hidden', 'hidden')
-//      alert($('#grid-info').innerHTML);
-//      alert($('#grid-body-left').innerHTML);
-//      alert($('#grid-body-right').innerHTML);
+      $.ajax({
+        url: '/admin/chunk-select/format',
+        method: 'GET',
+        async: false,
+        success: function(data, status) {
 
+          format = data.format;
+
+          if (!format) {
+            alert('Load chunk format failed.');
+            return;
+          }
+
+          if (format === '1') {
+            $('#grid-info').attr('hidden', 'hidden');
+
+          }else if (format === '2') {
+            $('#grid-body-left').attr('hidden', 'hidden');
+
+          }else if (format === '3') {
+            $('#grid-body-right').attr('hidden', 'hidden');
+
+          }
+        },
+        error: function(jqXHR, status) {
+          alert('Load chunk format failed.');
+        }
+      });
 
 
     });
