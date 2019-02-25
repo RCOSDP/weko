@@ -42,11 +42,6 @@ require([
         }
       });
 
-      $('#link').on('click', function(){
-        alert('Link!!!!');
-        return false;
-      });
-
 
 
     });

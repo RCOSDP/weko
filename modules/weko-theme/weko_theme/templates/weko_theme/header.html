@@ -56,7 +56,13 @@
 <script src="//code.jquery.com/jquery-3.2.1.min.js"></script>
 <script>
   $(document).ready(function() {
-    $('#header').find('.ql-editor').attr('contenteditable', 'false')
+    $('#header').find('.ql-editor').attr('contenteditable', 'false');
+
+    $('#link').on('click', function(){
+      alert('Link!!!!');
+      return false;
+    });
+
   })
 </script>
 {% endblock %}
