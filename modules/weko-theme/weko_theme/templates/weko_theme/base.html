@@ -78,11 +78,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.min.css" />
     <style type="text/css">
         #grid-body-left {
-            background: lightyellow;
+            background: #D8D8D8;
+            height: 300px;
         }
         #grid-body-right {
-            background: navajowhite;
+            background: #D8D8D8;
+            height: 300px;
         }
+        .grid-left {
+            background: #58FA58;
+        }
+        .grid-right {
+            background: #5882FA;
+        }
+
     </style>
 
     <script src="https://unpkg.com/react@15/dist/react.min.js"></script>
@@ -94,15 +103,15 @@
       class WekoGridLeft extends React.Component {
         render(){
           var layout = [
-            {i: 'a', x: 0, y: 0, w: 1, h: 2},
-            {i: 'b', x: 1, y: 0, w: 3, h: 2},
-            {i: 'c', x: 4, y: 0, w: 1, h: 2}
+            {i: 'a', x: 0, y: 0, w: 3, h: 2},
+            {i: 'b', x: 0, y: 3, w: 3, h: 2},
+            {i: 'c', x: 0, y: 6, w: 3, h: 2}
           ];
           return (
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
-              <div key="a">a</div>
-              <div key="b">b</div>
-              <div key="c">c</div>
+              <div key="a" class="grid-left">a</div>
+              <div key="b" class="grid-left">b</div>
+              <div key="c" class="grid-left">c</div>
             </ReactGridLayout>
           )
         }
@@ -115,15 +124,15 @@
       class WekoGridRight extends React.Component {
         render(){
           var layout = [
-            {i: 'd', x: 0, y: 0, w: 2, h: 2},
-            {i: 'e', x: 2, y: 0, w: 2, h: 1},
-            {i: 'f', x: 0, y: 4, w: 3, h: 2}
+            {i: 'd', x: 0, y: 0, w: 3, h: 2},
+            {i: 'e', x: 0, y: 3, w: 3, h: 2},
+            {i: 'f', x: 0, y: 6, w: 3, h: 2}
           ];
           return (
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
-              <div key="d">d</div>
-              <div key="e">e</div>
-              <div key="f">f</div>
+              <div key="d" class="grid-right">d</div>
+              <div key="e" class="grid-right">e</div>
+              <div key="f" class="grid-right">f</div>
             </ReactGridLayout>
           )
         }
