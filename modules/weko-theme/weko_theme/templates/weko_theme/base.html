@@ -74,18 +74,28 @@
     <![endif]-->
     {%- endblock browserupgrade %}
     {%- block body_inner %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.min.css" />
+    <style type="text/css">
+        #grid-body-left {
+            background: lightyellow;
+        }
+        #grid-body-right {
+            background: navajowhite;
+        }
+    </style>
+
     <script src="https://unpkg.com/react@15/dist/react.min.js"></script>
     <script src="https://unpkg.com/react-dom@15/dist/react-dom.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/react-grid-layout.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
     <script type="text/babel">
-      class MyFirstGrid extends React.Component {
+      class WekoGridLeft extends React.Component {
         render(){
           var layout = [
-            {i: 'a', x: 0, y: 0, w: 1, h: 2, static: true},
-            {i: 'b', x: 1, y: 0, w: 3, h: 2, minW: 2, maxW: 4},
+            {i: 'a', x: 0, y: 0, w: 1, h: 2},
+            {i: 'b', x: 1, y: 0, w: 3, h: 2},
             {i: 'c', x: 4, y: 0, w: 1, h: 2}
           ];
           return (
@@ -97,55 +107,50 @@
           )
         }
       }
-      class SearchMetaForm extends React.Component {
-        constructor(props) {
-          super(props);
-          this.state = {value: ''};
-          this.body = {value: document.getElementById("grid-header").innerHTML};
+      ReactDOM.render(
+        <WekoGridLeft />,
+        document.getElementById('grid-body-left')
+      )
 
-          this.handleChange = this.handleChange.bind(this);
-          this.handleSubmit = this.handleSubmit.bind(this);
-        }
-
-        handleChange(event) {
-          this.setState({value: event.target.value});
-        }
-
-        handleSubmit(event) {
-          alert(this.body.value);
-          event.preventDefault();
-        }
-
-        render() {
+      class WekoGridRight extends React.Component {
+        render(){
+          var layout = [
+            {i: 'd', x: 0, y: 0, w: 2, h: 2},
+            {i: 'e', x: 2, y: 0, w: 2, h: 1},
+            {i: 'f', x: 0, y: 4, w: 3, h: 2}
+          ];
           return (
-            <div>
-              <ModalHeader />
-              <form onSubmit={this.handleSubmit}>
-                <label>
-                  Select ID:
-                  <input type="text" value={this.state.value} onChange={this.handleChange} />
-                </label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                <input type="submit" value="Get" />
-              </form>
-              document.getElementById("grid-header")
-            </div>
-          );
+            <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
+              <div key="d">d</div>
+              <div key="e">e</div>
+              <div key="f">f</div>
+            </ReactGridLayout>
+          )
         }
       }
       ReactDOM.render(
-        <MyFirstGrid />,
-        document.getElementById('grid')
+        <WekoGridRight />,
+        document.getElementById('grid-body-right')
       )
 
     </script>
-    <div id="grid">
-
-    </div>
     {%- block page_header %}
       {% include config.THEME_HEADER_TEMPLATE %}
     {%- endblock page_header %}
-    {%- block page_body %}
-    {%- endblock page_body %}
+
+    <div class="row" class="col-md-12">
+      <div id="grid-body-left" class="col-md-3">
+
+      </div>
+      <div id="grid-body" class="col-md-6">
+      {%- block page_body %}
+      {%- endblock page_body %}
+      </div>
+      <div id="grid-body-right" class="col-md-3">
+
+      </div>
+
+    </div>
     {%- block page_footer %}
       {% include config.THEME_FOOTER_TEMPLATE %}
     {%- endblock page_footer %}
