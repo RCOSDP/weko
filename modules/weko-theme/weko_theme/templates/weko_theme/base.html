@@ -77,11 +77,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.min.css" />
     <style type="text/css">
+        #grid-info {
+            background: #D8D8D8;
+        }
+        #grid-info .react-grid-item {
+            background: #f0e68c;
+        }
         #grid-body-left {
             background: #D8D8D8;
-            .react-grid-item {
-              background: #58FA58;
-            }
         }
         #grid-body-right {
             background: #D8D8D8;
@@ -90,7 +93,7 @@
             background: #b0c4de;
         }
         #grid-body-right .react-grid-item {
-            background: #f0e68c;
+            background: #00ff00;
         }
 
     </style>
@@ -101,6 +104,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
     <script type="text/babel">
+      // Left
       class WekoGridLeft extends React.Component {
         render(){
           var layout = [
@@ -110,9 +114,9 @@
           ];
           return (
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
-              <div key="a" class="grid-left">a</div>
-              <div key="b" class="grid-left">b</div>
-              <div key="c" class="grid-left">c</div>
+              <div key="a" class="grid-left">Left_a</div>
+              <div key="b" class="grid-left">Left_b</div>
+              <div key="c" class="grid-left">Left_c</div>
             </ReactGridLayout>
           )
         }
@@ -122,6 +126,7 @@
         document.getElementById('grid-body-left')
       )
 
+      // Right
       class WekoGridRight extends React.Component {
         render(){
           var layout = [
@@ -131,9 +136,9 @@
           ];
           return (
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
-              <div key="d" class="grid-right">d</div>
-              <div key="e" class="grid-right">e</div>
-              <div key="f" class="grid-right">f</div>
+              <div key="d" class="grid-right">Right_d</div>
+              <div key="e" class="grid-right">Right_e</div>
+              <div key="f" class="grid-right">Right_f</div>
             </ReactGridLayout>
           )
         }
@@ -143,21 +148,41 @@
         document.getElementById('grid-body-right')
       )
 
+      // Info
+      class WekoGridInfo extends React.Component {
+        render(){
+          var layout = [
+            {i: 'g', x: 0, y: 0, w: 6, h: 2}
+          ];
+          return (
+            <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
+              <div key="g" class="grid-info">Info</div>
+            </ReactGridLayout>
+          )
+        }
+      }
+      ReactDOM.render(
+        <WekoGridInfo />,
+        document.getElementById('grid-info')
+      )
+
     </script>
     {%- block page_header %}
       {% include config.THEME_HEADER_TEMPLATE %}
     {%- endblock page_header %}
 
     <div class="row" class="col-md-12">
+      <div id="grid-info" class="col-md-offset-2 col-md-8">
+      </div>
+    </div>
+    <div class="row" class="col-md-12">
       <div id="grid-body-left" class="col-md-3">
-
       </div>
       <div id="grid-body" class="col-md-6">
       {%- block page_body %}
       {%- endblock page_body %}
       </div>
       <div id="grid-body-right" class="col-md-3">
-
       </div>
 
     </div>
