@@ -11,7 +11,7 @@ require([
       });
 
       // Chunk Design
-      alert($('#grid-info').html());
+      $('#grid-info').attr('hidden', 'hidden')
 //      alert($('#grid-info').innerHTML);
 //      alert($('#grid-body-left').innerHTML);
 //      alert($('#grid-body-right').innerHTML);
