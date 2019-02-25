@@ -29,9 +29,11 @@ require([
 
           }else if (format === '2') {
             $('#grid-body-left').attr('hidden', 'hidden');
+            $('#grid-body').attr('class', 'col-md-9');
 
           }else if (format === '3') {
             $('#grid-body-right').attr('hidden', 'hidden');
+            $('#grid-body').attr('class', 'col-md-9');
 
           }
         },
