@@ -97,6 +97,7 @@ setup(
         ],
         'invenio_admin.views': [
             'weko_admin_style = weko_admin.admin:style_adminview',
+            'weko_admin_chunk_select = weko_admin.admin:chunk_selectview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',

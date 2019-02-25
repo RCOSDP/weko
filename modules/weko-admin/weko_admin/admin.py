@@ -27,7 +27,7 @@ from flask import abort, current_app, flash, request, jsonify
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from .permissions import admin_permission_factory
-from .utils import allowed_file
+from .models import ChunkSelect
 
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -210,6 +210,61 @@ style_adminview = {
     }
 }
 
+# TODO
+class ChunkSelectView(BaseView):
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        try:
+            # Get record
+            chunk = ChunkSelect.get('weko')
+            format = chunk.format if chunk else '0'
+
+            # Post
+            if request.method == 'POST':
+                # Get form
+                form = request.form.get('submit', None)
+                if form == 'chunk_form':
+                    format = request.form.get('format', '0')
+
+                    if chunk:
+                        ChunkSelect.update('weko', format=format)
+                    else:
+                        ChunkSelect.create('weko', format=format)
+
+                    flash(_('The information was updated.'), category='success')
+
+            return self.render(current_app.config['WEKO_ADMIN_CHUNK_SELECT_TEMPLATE'],
+                               formats=current_app.config['WEKO_ADMIN_CHUNK_FORMAT_LIST'],
+                               format_selected=format)
+
+        except:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        return abort(400)
+
+    @expose('/list', methods=['GET'])
+    def get_chunk_list(self):
+        chunks = ChunkSelect.get('weko')
+        designed = chunks.designed if chunks else []
+        others = chunks.others if chunks else []
+
+        data = {'others': others, 'designed': designed}
+
+        return jsonify(data)
+
+
+chunk_selectview = {
+    'view_class': ChunkSelectView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Chunk Select'),
+        'endpoint': 'chunk-select'
+    }
+}
+
 __all__ = (
     'style_adminview',
+    'StyleSettingView',
+    'chunk_selectview',
+    'ChunkSelectView',
 )

@@ -38,6 +38,17 @@ WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/site_license.html'
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
 """Block-style templates."""
 
+
+WEKO_ADMIN_CHUNK_SELECT_TEMPLATE = 'weko_admin/admin/chunk_select.html'
+"""Chunk design setting page."""
+
+WEKO_ADMIN_CHUNK_FORMAT_LIST = [
+    {'id': '0', 'name': 'ALL'},
+    {'id': '1', 'name': 'No Info'},
+    {'id': '2', 'name': 'No Left'},
+    {'id': '3', 'name': 'No Right'},
+]
+
 WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = 'weko_admin/search_management.html'
 """Site-license templates."""
 

@@ -217,6 +217,60 @@ class SearchManagement(db.Model):
             raise
         return cls
 
+# TODO
+class ChunkSelect(db.Model):
+
+    __tablename__ = 'chunk_select'
+
+    id = db.Column(db.String(100), primary_key=True)
+    """identifier for chunk style setting."""
+
+    format = db.Column(db.Text, nullable=False, default='')
+    """Chunk format."""
+
+    @classmethod
+    def create(cls, community_id, **data):
+        try:
+            with db.session.begin_nested():
+                obj = cls(id=community_id, **data)
+                db.session.add(obj)
+            db.session.commit()
+            return obj
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return
+
+    @classmethod
+    def get(cls, community_id):
+        """Get a style."""
+        return cls.query.filter_by(id=community_id).one_or_none()
+
+    @classmethod
+    def update(cls, community_id, **data):
+        """
+        Update chunk design info.
+        :param community_id:
+        :param data:
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                chunk = cls.get(community_id)
+                if not chunk:
+                    return
+
+                for k, v in data.items():
+                    if "format" in k:
+                        setattr(chunk, k, v)
+                db.session.merge(chunk)
+            db.session.commit()
+            return chunk
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return
+
 __all__ = ([
     'SearchManagement',
 ]
