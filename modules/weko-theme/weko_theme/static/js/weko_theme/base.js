@@ -10,7 +10,10 @@ require([
         window.location.href = '/';
       });
 
-      alert('Base!!');
+      // Chunk Design
+      alert($('#grid-info').innerHTML);
+      alert($('#grid-body-left').innerHTML);
+      alert($('#grid-body-right').innerHTML);
 
 
 
