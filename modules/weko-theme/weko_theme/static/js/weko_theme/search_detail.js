@@ -140,6 +140,10 @@
                 });
                 sessionStorage.setItem('detail_search_conditions', angular.toJson($scope.condition_data));
                 var url = '/search?page=1' + query_str
+                if(angular.element('#item_management_bulk_update').length != 0) {
+                  url = url + '&item_management=update';
+                }
+
                 window.location.href = url
             }
             //
