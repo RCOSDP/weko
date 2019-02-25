@@ -74,14 +74,84 @@
     <![endif]-->
     {%- endblock browserupgrade %}
     {%- block body_inner %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.min.css" />
+    <script src="https://unpkg.com/react@15/dist/react.min.js"></script>
+    <script src="https://unpkg.com/react-dom@15/dist/react-dom.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/react-grid-layout.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
+    <script type="text/babel">
+      class MyFirstGrid extends React.Component {
+        render(){
+          var layout = [
+            {i: 'a', x: 0, y: 0, w: 1, h: 2, static: true},
+            {i: 'b', x: 1, y: 0, w: 3, h: 2, minW: 2, maxW: 4},
+            {i: 'c', x: 4, y: 0, w: 1, h: 2}
+          ];
+          return (
+            <GridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
+              <div key="a">a</div>
+              <div key="b">b</div>
+              <div key="c">c</div>
+            </GridLayout>
+          )
+        }
+      }
+      class SearchMetaForm extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {value: ''};
+          this.body = {value: document.getElementById("grid-header").innerHTML};
+
+          this.handleChange = this.handleChange.bind(this);
+          this.handleSubmit = this.handleSubmit.bind(this);
+        }
+
+        handleChange(event) {
+          this.setState({value: event.target.value});
+        }
+
+        handleSubmit(event) {
+          alert(this.body.value);
+          event.preventDefault();
+        }
+
+        render() {
+          return (
+            <div>
+              <ModalHeader />
+              <form onSubmit={this.handleSubmit}>
+                <label>
+                  Select ID:
+                  <input type="text" value={this.state.value} onChange={this.handleChange} />
+                </label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <input type="submit" value="Get" />
+              </form>
+              document.getElementById("grid-header")
+            </div>
+          );
+        }
+      }
+      ReactDOM.render(
+        <MyFirstGrid />,
+        document.getElementById('grid')
+      )
+
+    </script>
+    <div id="grid">
+
+    </div>
     {%- block page_header %}
-{% include config.THEME_HEADER_TEMPLATE %}
+      {% include config.THEME_HEADER_TEMPLATE %}
     {%- endblock page_header %}
     {%- block page_body %}
     {%- endblock page_body %}
     {%- block page_footer %}
-{% include config.THEME_FOOTER_TEMPLATE %}
+      {% include config.THEME_FOOTER_TEMPLATE %}
     {%- endblock page_footer %}
+
+
+
     {%- endblock body_inner %}
     {%- block javascript %}
 {% include config.THEME_JAVASCRIPT_TEMPLATE %}
