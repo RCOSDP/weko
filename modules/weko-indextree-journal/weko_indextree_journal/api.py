@@ -190,9 +190,3 @@ class Journals(object):
             return []
 
         return dict(obj)
-
-    @classmethod
-    def export_journals(cls)
-        # get data from sql
-        # save to file.
-        # complete.
