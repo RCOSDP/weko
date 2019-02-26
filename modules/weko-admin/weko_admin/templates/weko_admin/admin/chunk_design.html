@@ -101,7 +101,6 @@
       <div class="col-md-12">
         <div id="grid-design"></div>
         <div id="grid-layout" ></div>
-
       </div>
     </div>
   </div>
@@ -116,7 +115,24 @@
     });
 
     $('#btn_save').on('click', function(){
-      alert('btn_save!!');
+
+      alert($('#grid-layout').text());
+
+      <!--var data = {designed: ''};-->
+
+      <!--$.ajax({-->
+        <!--url: '/admin/chunk-design/',-->
+        <!--method: 'POST',-->
+        <!--async: true,-->
+        <!--contentType: 'application/json',-->
+        <!--data: JSON.stringify(data),-->
+        <!--success: function(data, status) {-->
+          <!--alert('Chunk information was updated.');-->
+        <!--},-->
+        <!--error: function(jqXHR, status) {-->
+          <!--alert('Save failed.');-->
+        <!--}-->
+      <!--});-->
     });
 
   })
