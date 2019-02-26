@@ -5,6 +5,15 @@ require([
   $('#myModal').modal({
     show: false
   })
+});
+/*
+require([
+  "jquery",
+  "bootstrap"
+  ], function() {
+  $('#myModal').modal({
+    show: false
+  })
 
   page_global = {
     cur_index_id: 0,
@@ -392,3 +401,5 @@ require([
 
   //refreshIndexTree();
 });
+
+*/
