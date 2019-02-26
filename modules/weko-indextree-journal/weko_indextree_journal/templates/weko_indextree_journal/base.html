@@ -17,4 +17,14 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
-{%- block page_body %}{%- endblock page_body %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <meta charset="utf-8" />
+    {%- block css %}{%- endblock css %}
+    {%- block javascript %}{%- endblock javascript %}
+    </head>
+    <body>
+    {%- block page_body %}{%- endblock page_body %}
+    </body>
+</html>

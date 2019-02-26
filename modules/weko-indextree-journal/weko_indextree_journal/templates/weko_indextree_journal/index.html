@@ -18,7 +18,7 @@
   # MA 02111-1307, USA.
   #}
   
-  {%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
+  {%- extends config.WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE %}
   
   {%- block css %}
     {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
@@ -32,7 +32,7 @@
     {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {{ super() }}
     {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_indextree_journal_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
     {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- endblock javascript %}
   
