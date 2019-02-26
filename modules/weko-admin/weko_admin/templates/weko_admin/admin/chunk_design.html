@@ -28,7 +28,8 @@
 {%- block body %}
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.min.css" />
 <style type="text/css">
     #grid-design {
         background: #D8D8D8;
@@ -46,6 +47,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
 <script type="text/babel">
   class WekoGridLeft extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {value: ''};
+
+      this.handleChange = this.handleChange.bind(this);
+    }
+
+    handleChange(event) {
+      this.setState({value: event.target.value});
+      alert('Change!!!!');
+    }
+
     render(){
       var layout = [
         {i: 'a', x: 0, y: 0, w: 3, h: 2},
@@ -55,7 +68,7 @@
         {i: 'e', x: 0, y: 12, w: 3, h: 2}
       ];
       return (
-        <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
+        <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200} onChange={this.handleChange}>
           <div key="a" class="grid-left"><h3>Left_a</h3></div>
           <div key="b" class="grid-left"><h3>Left_b</h3></div>
           <div key="c" class="grid-left"><h3>Left_c</h3></div>
