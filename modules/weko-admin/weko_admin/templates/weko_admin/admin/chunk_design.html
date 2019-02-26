@@ -50,6 +50,7 @@
     constructor(props) {
       super(props);
       this.state = {layout: []};
+      this.onLayoutChange = this.onLayoutChange.bind(this);
 
       this.handleChange = this.handleChange.bind(this);
     }
