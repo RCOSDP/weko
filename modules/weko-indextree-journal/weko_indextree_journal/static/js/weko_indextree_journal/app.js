@@ -1,3 +1,4 @@
+/*
 require([
   "jquery",
   "bootstrap"
@@ -6,7 +7,7 @@ require([
     show: false
   })
 });
-/*
+
 require([
   "jquery",
   "bootstrap"
