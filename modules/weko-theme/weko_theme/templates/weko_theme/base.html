@@ -111,7 +111,7 @@
       class WekoGridLeft extends React.Component {
         constructor(props) {
           super(props);
-          this.state = {layout: [],};
+          this.state = {layout};
         }
         componentWillMount() {
           fetch('/admin/chunk-design/design')
@@ -120,7 +120,7 @@
 
         }
         componentDidMount() {
-          alert({this.state.layout});
+          alert(this.state.layout);
         }
 
         render(){
