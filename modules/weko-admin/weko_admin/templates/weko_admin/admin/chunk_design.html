@@ -1,0 +1,87 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+{%- extends "weko_admin/chunk_admin.html" %}
+
+{% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
+
+{% set panel_title = _("Life Time") %}
+{% set panel_icon = "fa fa-user" %}
+
+{%- block body %}
+{%- set cur_lifetime = current_lifetime %}
+{%- set lifetime_map = map_lifetime %}
+
+<style type="text/css">
+    .list {
+        <!--background: #FFFFBB;-->
+        height: 500px;
+        text-align: center;
+        padding: 10px;
+        border: 1px solid gray;
+    }
+    .design {
+        <!--background: #CCFFFF;-->
+        height: 500px;
+        padding: 10px;
+        margin-left: 30px;
+        border: 1px solid gray;
+    }
+    .grid-stack-item-content {
+        color: #2c3e50;
+        text-align: center;
+        background-color: #BBBBBB;
+    }
+    #grid-design .grid-stack-item-content {
+        background-color: #98FB98;
+    }
+</style>
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <button type="button" class="btn btn-primary" id="btn_back">
+          <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
+        <button type="button" class="btn btn-primary" id="btn_save">
+          <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Save')}}</button>
+      </div>
+    </div>
+    <br>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="list col-md-2">
+          <div class="grid-stack grid-stack-2" id="grid-list"></div>
+        </div>
+        <div class="design col-md-9">
+          <div class="grid-stack grid-stack-9" id="grid-design"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+{%- endblock body %}
+{% block tail %}
+<script>
+  $(document).ready(function() {
+
+
+  })
+</script>
+{% endblock %}

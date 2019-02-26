@@ -49,6 +49,12 @@ WEKO_ADMIN_CHUNK_FORMAT_LIST = [
     {'id': '3', 'name': 'No Right'},
 ]
 
+WEKO_ADMIN_CHUNK_DESIGN_TEMPLATE = 'weko_admin/admin/chunk_design.html'
+"""Chunk design setting page."""
+
+
+
+
 WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = 'weko_admin/search_management.html'
 """Site-license templates."""
 

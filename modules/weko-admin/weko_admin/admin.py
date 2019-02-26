@@ -27,7 +27,7 @@ from flask import abort, current_app, flash, request, jsonify
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from .permissions import admin_permission_factory
-from .models import ChunkSelect
+from .models import ChunkSelect, ChunkDesign
 
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -261,9 +261,59 @@ chunk_selectview = {
     }
 }
 
+class ChunkDesignView(BaseView):
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        try:
+            # Get record
+            chunk = ChunkDesign.get('weko')
+            format = chunk.format if chunk else '0'
+
+            # Post
+            if request.method == 'POST':
+                # Get form
+                form = request.form.get('submit', None)
+                if form == 'chunk_form':
+                    format = request.form.get('format', '0')
+
+                    if chunk:
+                        ChunkDesign.update('weko', format=format)
+                    else:
+                        ChunkDesign.create('weko', format=format)
+
+                    flash(_('The information was updated.'), category='success')
+
+            return self.render(current_app.config['WEKO_ADMIN_CHUNK_DESIGN_TEMPLATE'])
+
+        except:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        return abort(400)
+
+    @expose('/design', methods=['GET'])
+    def get_chunk_design(self):
+        chunk = ChunkSelect.get('weko')
+        format = chunk.format if chunk else '0'
+
+        data = {'format': format}
+
+        return jsonify(data)
+
+
+chunk_designview = {
+    'view_class': ChunkDesignView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Chunk Design'),
+        'endpoint': 'chunk-design'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'StyleSettingView',
     'chunk_selectview',
     'ChunkSelectView',
+    'chunk_designview',
+    'ChunkDesignView',
 )
