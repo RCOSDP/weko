@@ -43,6 +43,14 @@ def index():
         upt_tree_json='',
         mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API'],
         mod_journal_detail=current_app.config['WEKO_INDEXTREE_JOURNAL_API'],
+        record=None,
+        jsonschema=json_schema,
+        schemaform=schema_form,
+        lists=lists,
+        links=None,
+        id=item_type_id,
+        files=None,
+        pid=None
     )
 
 @blueprint.route("/index/<int:index_id>")
