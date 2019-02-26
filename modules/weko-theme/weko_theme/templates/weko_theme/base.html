@@ -123,7 +123,8 @@
         render(){
           var layout = document.getElementById('grid-layout').innerText
           return (
-            { this.state && this.state.layout && 
+            <div>
+            { this.state && this.state.layout &&
             <ReactGridLayout className="layout" layout={this.state.layout} cols={12} rowHeight={30} width={1200}>
               <div key="a" class="grid-left"><h3>Left_a</h3></div>
               <div key="b" class="grid-left"><h3>Left_b</h3></div>
@@ -132,6 +133,7 @@
               <div key="e" class="grid-left"><h3>Left_e</h3></div>
             </ReactGridLayout>
             }
+            </div>
           )
         }
       }
