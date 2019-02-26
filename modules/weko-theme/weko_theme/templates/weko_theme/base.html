@@ -112,6 +112,7 @@
         constructor(props) {
           super(props);
           this.state = {layout: [],};
+          this.layout = this.layout.bind(this);
         }
         componentWillMount() {
           fetch('/admin/chunk-design/design')
