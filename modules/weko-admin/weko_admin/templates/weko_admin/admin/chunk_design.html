@@ -56,7 +56,7 @@
 
     onLayoutChange(layout) {
       this.setState({layout: layout});
-      alert(document.getElementById('grid-layout').innerText);
+      document.getElementById('grid-layout').innerText = JSON.stringify(layout);
 
     }
     render(){
@@ -68,16 +68,13 @@
         {i: 'e', x: 0, y: 12, w: 3, h: 2}
       ];
       return (
-        <div>
-          <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200} onLayoutChange={this.onLayoutChange}>
-            <div key="a" class="grid-left"><h3>Left_a</h3></div>
-            <div key="b" class="grid-left"><h3>Left_b</h3></div>
-            <div key="c" class="grid-left"><h3>Left_c</h3></div>
-            <div key="d" class="grid-left"><h3>Left_d</h3></div>
-            <div key="e" class="grid-left"><h3>Left_e</h3></div>
-          </ReactGridLayout>
-          <div id="grid-layout" ref="layout" hidden>grid-layout</div>
-        </div>
+        <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200} onLayoutChange={this.onLayoutChange}>
+          <div key="a" class="grid-left"><h3>Left_a</h3></div>
+          <div key="b" class="grid-left"><h3>Left_b</h3></div>
+          <div key="c" class="grid-left"><h3>Left_c</h3></div>
+          <div key="d" class="grid-left"><h3>Left_d</h3></div>
+          <div key="e" class="grid-left"><h3>Left_e</h3></div>
+        </ReactGridLayout>
       )
     }
   }
@@ -103,6 +100,7 @@
     <div class="row">
       <div class="col-md-12">
         <div id="grid-design"></div>
+        <div id="grid-layout" ></div>
 
       </div>
     </div>
