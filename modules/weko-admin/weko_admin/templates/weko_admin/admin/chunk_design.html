@@ -46,19 +46,29 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script>
 <script type="text/babel">
+  class ButtonArea extends React.Component {
+    render(){
+      return (
+        <button type="button" class="btn btn-primary" id="btn_back">
+          <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
+        <button type="button" class="btn btn-primary" id="btn_save">
+          <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Save')}}</button>
+      )
+    }
+  }
+  ReactDOM.render(
+    <ButtonArea />,
+    document.getElementById('grid-button')
+  )
+
+
   class WekoGridLeft extends React.Component {
     constructor(props) {
       super(props);
       this.state = {layout: []};
       this.onLayoutChange = this.onLayoutChange.bind(this);
-
-      this.handleChange = this.handleChange.bind(this);
     }
 
-    handleChange(event) {
-      this.setState({value: event.target.value});
-      alert('Change!!!!');
-    }
     onLayoutChange(layout) {
       this.setState({layout: layout});
       alert(JSON.stringify(this.state.layout));
@@ -94,10 +104,7 @@
   <div class="container-fluid">
     <div class="row">
       <div class="col-md-12">
-        <button type="button" class="btn btn-primary" id="btn_back">
-          <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
-        <button type="button" class="btn btn-primary" id="btn_save">
-          <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Save')}}</button>
+        <div id="grid-button"></div>
       </div>
     </div>
     <br>
