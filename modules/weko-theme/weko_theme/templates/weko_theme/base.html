@@ -114,10 +114,9 @@
           this.state = {layout: [],};
         }
         componentDidMount() {
-          await fetch('/admin/chunk-design/design')
+          fetch('/admin/chunk-design/design')
               .then(response => response.json())
               .then(data => this.setState({ layout: data.layout }));
-
         }
 
         render(){
