@@ -292,10 +292,10 @@ class ChunkDesignView(BaseView):
 
     @expose('/design', methods=['GET'])
     def get_chunk_design(self):
-        chunk = ChunkSelect.get('weko')
-        format = chunk.format if chunk else '0'
+        chunk = ChunkDesign.get('weko')
+        designed = chunk.designed if chunk else []
 
-        data = {'format': format}
+        data = {'layout': designed}
 
         return jsonify(data)
 
