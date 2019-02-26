@@ -49,10 +49,12 @@
   class ButtonArea extends React.Component {
     render(){
       return (
-        <button type="button" class="btn btn-primary" id="btn_back">
-          <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
-        <button type="button" class="btn btn-primary" id="btn_save">
-          <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Save')}}</button>
+        <div>
+          <button type="button" class="btn btn-primary" id="btn_back">
+            <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
+          <button type="button" class="btn btn-primary" id="btn_save">
+            <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Save')}}</button>
+        </div>
       )
     }
   }
