@@ -639,3 +639,13 @@ class WekoRecord(Record):
         if path:
             harvest_public_state = Indexes.get_harvest_public_state(path)
         return harvest_public_state, record
+
+    @classmethod
+    def get_record_cvs(cls, uuid):
+        record = cls.get_record(id_=uuid)
+        path = []
+        path.extend(record.get('path'))
+        coverpage_state = False
+        if path:
+            coverpage_state = Indexes.get_coverpage_state(path)
+        return coverpage_state
