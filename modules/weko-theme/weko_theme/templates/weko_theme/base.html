@@ -113,10 +113,6 @@
           super(props);
         }
         componentDidMount() {
-          const self = this;
-          fetch('/admin/chunk-design/design')
-              .then(response => response.json())
-              .then(data => self.setState({ layout: data.layout }));
         }
 
         render(){
