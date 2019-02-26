@@ -120,9 +120,8 @@
         componentDidMount() {
           fetch('/admin/chunk-design/design')
             .then(response => response.json())
-            .then(data => this.setState({ layout: data.layout }));
+            .then(data => document.getElementById('grid-layout').innerText = data.layout);
 
-          alert(this.state.layout);
         }
         getLayout(){
           var layout = [
@@ -216,6 +215,7 @@
       <div id="grid-body-right" class="col-md-3">
       </div>
 
+      <div id="grid-layout" ></div>
     </div>
     {%- block page_footer %}
       {% include config.THEME_FOOTER_TEMPLATE %}
