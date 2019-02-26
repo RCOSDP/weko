@@ -111,22 +111,21 @@
       class WekoGridLeft extends React.Component {
         constructor(props) {
           super(props);
-          this.state = {layout: 'Test!!!',};
+          this.state = {layout: [],};
         }
         componentWillMount() {
-          fetch('/admin/chunk-design/design')
-            .then(response => response.json())
-            .then(data => this.setState({ layout: data.layout }));
 
         }
         componentDidMount() {
-          alert(this.state.layout);
+          fetch('/admin/chunk-design/design')
+            .then(response => response.json())
+            .then(data => this.setState({ layout: data.layout }));
         }
 
         render(){
           var layout = this.state.layout;
           return (
-            <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
+            <ReactGridLayout className="layout" layout={this.state.layout} cols={12} rowHeight={30} width={1200}>
               <div key="a" class="grid-left"><h3>Left_a</h3></div>
               <div key="b" class="grid-left"><h3>Left_b</h3></div>
               <div key="c" class="grid-left"><h3>Left_c</h3></div>
