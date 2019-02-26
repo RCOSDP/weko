@@ -117,12 +117,14 @@
           fetch('/admin/chunk-design/design')
               .then(response => response.json())
               .then(data => document.getElementById('grid-layout').innerText = data.layout);
+
+          this.setState({ layout: [{i: 'a', x: 0, y: 0, w: 3, h: 2}] });
         }
 
         render(){
           var layout = document.getElementById('grid-layout').innerText
           return (
-            <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={1200}>
+            <ReactGridLayout className="layout" layout={this.state.layout} cols={12} rowHeight={30} width={1200}>
               <div key="a" class="grid-left"><h3>Left_a</h3></div>
               <div key="b" class="grid-left"><h3>Left_b</h3></div>
               <div key="c" class="grid-left"><h3>Left_c</h3></div>
