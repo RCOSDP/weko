@@ -297,7 +297,7 @@ class ChunkDesignView(BaseView):
 
         data = {'layout': designed}
 
-        return jsonify(data)
+        return designed
 
 
 chunk_designview = {
