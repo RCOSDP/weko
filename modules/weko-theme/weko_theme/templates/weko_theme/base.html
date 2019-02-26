@@ -113,9 +113,6 @@
           super(props);
           this.state = {layout: [],};
         }
-        componentWillMount() {
-
-        }
         componentDidMount() {
           const response = await fetch('/admin/chunk-design/design');
           const data = await response.json();
@@ -124,7 +121,7 @@
         }
 
         render(){
-          
+
           return (
             <ReactGridLayout className="layout" layout={this.state.layout} cols={12} rowHeight={30} width={1200}>
               <div key="a" class="grid-left"><h3>Left_a</h3></div>
