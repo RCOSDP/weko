@@ -119,7 +119,7 @@
             method: 'GET',
             async: false,
             success: function(data, status) {
-              alert(data.layout);
+              this.setState({ layout: data.layout });
 
             },
             error: function(jqXHR, status) {
