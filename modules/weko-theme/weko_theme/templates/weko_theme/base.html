@@ -116,9 +116,8 @@
         componentWillMount() {
           fetch('/admin/chunk-design/design')
             .then(response => response.json())
-            .then(data => this.setState({ layout: data.layout }));
+            .then(data => alert(JSON.stringify(data)));
 
-          alert(JSON.stringify(this.state.layout));
         }
 
         render(){
