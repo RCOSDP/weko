@@ -113,7 +113,7 @@
           super(props);
           this.state = {layout: [],};
         }
-        componentWillReceiveProps(nextProps) {
+        getInitialState() {
           fetch('/admin/chunk-design/design')
               .then(response => response.json())
               .then(data => document.getElementById('grid-layout').innerText = data.layout);
