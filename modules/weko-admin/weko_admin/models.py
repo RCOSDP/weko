@@ -278,8 +278,21 @@ class ChunkDesign(db.Model):
     id = db.Column(db.String(100), primary_key=True)
     """identifier for chunk style setting."""
 
-    format = db.Column(db.Text, nullable=False, default='')
-    """Chunk format."""
+    designed = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Designed chunk info."""
 
     @classmethod
     def create(cls, community_id, **data):
@@ -314,7 +327,7 @@ class ChunkDesign(db.Model):
                     return
 
                 for k, v in data.items():
-                    if "format" in k:
+                    if "designed" in k:
                         setattr(chunk, k, v)
                 db.session.merge(chunk)
             db.session.commit()

@@ -266,29 +266,29 @@ class ChunkDesignView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         try:
-            # Get record
-            chunk = ChunkDesign.get('weko')
-            format = chunk.format if chunk else '0'
-
             # Post
             if request.method == 'POST':
-                # Get form
-                form = request.form.get('submit', None)
-                if form == 'chunk_form':
-                    format = request.form.get('format', '0')
+                # Get record
+                chunks = ChunkDesign.get('weko')
+                designed = chunks.designed if chunks else []
 
-                    if chunk:
-                        ChunkDesign.update('weko', format=format)
+                # Get json
+                widgets = request.get_json()
+
+                if widgets is not None:
+                    designed = widgets.get('designed', [])
+
+                    if chunks:
+                        ChunkDesign.update('weko', designed=designed)
                     else:
-                        ChunkDesign.create('weko', format=format)
-
-                    flash(_('The information was updated.'), category='success')
+                        ChunkDesign.create('weko', designed=designed)
 
             return self.render(current_app.config['WEKO_ADMIN_CHUNK_DESIGN_TEMPLATE'])
 
         except:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
+
 
     @expose('/design', methods=['GET'])
     def get_chunk_design(self):
