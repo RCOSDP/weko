@@ -179,3 +179,6 @@ JPAEXG_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexg00201/ipaexg.ttf"
 # Path to the JPAexm font file
 JPAEXM_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexm00201/ipaexm.ttf"
 
+PDF_COVERPAGE_LANG_FILEPATH = blueprint.root_path + "/translations/"
+
+PDF_COVERPAGE_LANG_FILENAME = "/pdf_coverpage.json"

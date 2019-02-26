@@ -32,7 +32,8 @@ from sqlalchemy.sql.expression import func, literal_column
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from weko_groups.api import Group
 from .models import Index
-from .utils import get_tree_json, cached_index_tree_json, reset_tree, get_index_id_list
+from .utils import get_tree_json, cached_index_tree_json, reset_tree, \
+    get_index_id_list, get_admin_coverpage_setting
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 
@@ -80,6 +81,10 @@ class Indexes(object):
             data["more_check"] = False
             data["display_no"] = current_app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER']
 
+            data["admin_coverpage"] = get_admin_coverpage_setting()
+            data["coverpage_state"] = False
+            data["recursive_coverpage_check"] = False
+
             group_list = ''
             groups = Group.query.all()
             for group in groups:
@@ -124,6 +129,9 @@ class Indexes(object):
                     if iobj.recursive_contribute_group:
                         data["contribute_group"] = iobj.contribute_group
                         data["recursive_contribute_group"] = iobj.recursive_contribute_group
+
+
+                    current_app.logger.debug(iobj.coverpage_state)
 
                 else:
                     return
@@ -178,9 +186,16 @@ class Indexes(object):
                             v = datetime.strptime(v, '%Y%m%d')
                         else:
                             v = None
+                    if "admin_coverpage" in k:
+                        v = get_admin_coverpage_setting()
                     if "have_children" in k:
                         continue
                     setattr(index, k, v)
+
+                if getattr(index, "recursive_coverpage_check"):
+                    cls.set_coverpage_state_resc(index_id, getattr(index, "coverpage_state"))
+                    setattr(index, "recursive_coverpage_check", False)
+
                 index.owner_user_id = current_user.get_id()
                 db.session.merge(index)
             db.session.commit()
@@ -441,7 +456,8 @@ class Indexes(object):
                     recursive_t.c.public_state, recursive_t.c.public_date,
                     recursive_t.c.browsing_role, recursive_t.c.contribute_role,
                     recursive_t.c.browsing_group, recursive_t.c.contribute_group,
-                    recursive_t.c.more_check, recursive_t.c.display_no
+                    recursive_t.c.more_check, recursive_t.c.display_no, 
+                    recursive_t.c.coverpage_state, recursive_t.c.recursive_coverpage_check, recursive_t.c.admin_coverpage
                     ]
             obj = db.session.query(*qlst). \
                 order_by(recursive_t.c.lev,
@@ -723,6 +739,9 @@ class Indexes(object):
                 Index.contribute_group,
                 Index.more_check,
                 Index.display_no,
+                Index.coverpage_state,
+                Index.recursive_coverpage_check,
+                Index.admin_coverpage,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -744,6 +763,9 @@ class Indexes(object):
                     test_alias.contribute_group,
                     test_alias.more_check,
                     test_alias.display_no,
+                    test_alias.coverpage_state,
+                    test_alias.recursive_coverpage_check,
+                    test_alias.admin_coverpage,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -762,6 +784,14 @@ class Indexes(object):
                 Index.contribute_group,
                 Index.more_check,
                 Index.display_no,
+
+                Index.coverpage_state,
+                Index.recursive_coverpage_check,
+                Index.admin_coverpage,
+                Index.display_cv,
+                Index.coverpage_state,
+                Index.recursive_coverpage_check,
+                Index.admin_coverpage,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -783,6 +813,9 @@ class Indexes(object):
                     test_alias.contribute_group,
                     test_alias.more_check,
                     test_alias.display_no,
+                    test_alias.coverpage_state,
+                    test_alias.recursive_coverpage_check,
+                    test_alias.admin_coverpage,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -812,6 +845,9 @@ class Indexes(object):
                 Index.contribute_group,
                 Index.more_check,
                 Index.display_no,
+                Index.coverpage_state,
+                Index.recursive_coverpage_check,
+                Index.admin_coverpage,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.id == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -833,6 +869,9 @@ class Indexes(object):
                     test_alias.contribute_group,
                     test_alias.more_check,
                     test_alias.display_no,
+                    test_alias.coverpage_state,
+                    test_alias.recursive_coverpage_check,
+                    test_alias.admin_coverpage,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -851,6 +890,9 @@ class Indexes(object):
                 Index.contribute_group,
                 Index.more_check,
                 Index.display_no,
+                Index.coverpage_state,
+                Index.recursive_coverpage_check,
+                Index.admin_coverpage,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.id == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -872,6 +914,9 @@ class Indexes(object):
                     test_alias.contribute_group,
                     test_alias.more_check,
                     test_alias.display_no,
+                    test_alias.coverpage_state,
+                    test_alias.recursive_coverpage_check,
+                    test_alias.admin_coverpage,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -979,3 +1024,26 @@ class Indexes(object):
     @classmethod
     def have_children(cls, index_id):
         return Index.get_children(index_id)
+
+    @classmethod
+    def get_coverpage_state(cls, path):
+        try:
+            last_path = path.pop(-1).split('/')
+            return Index.query.filter_by(id=last_path.pop()).one().coverpage_state
+
+        except Exception as se:
+            current_app.logger.debug(se)
+            return False
+
+    @classmethod
+    def set_coverpage_state_resc(cls, index_id, state):
+        """
+        :param index_id: search index id
+        :param state: coverpage state of search index id
+
+        """
+        Index.query.filter_by(parent=index_id).\
+            update({Index.coverpage_state: state},
+            synchronize_session='fetch')
+        for index in Index.query.filter_by(parent=index_id).all():
+            cls.set_coverpage_state_resc(index.id, state)
