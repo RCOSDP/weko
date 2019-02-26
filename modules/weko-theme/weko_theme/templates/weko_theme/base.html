@@ -114,9 +114,21 @@
           this.state = {layout: [],};
         }
         componentDidMount() {
-          fetch('/admin/chunk-design/design')
-              .then(response => response.json())
-              .then(data => this.setState({ layout: data.layout }));
+          $.ajax({
+            url: '/admin/chunk-design/design',
+            method: 'GET',
+            async: false,
+            success: function(data, status) {
+              layout = data.layout;
+              alert(layout);
+
+            },
+            error: function(jqXHR, status) {
+              alert('Load chunk Layout failed.');
+            }
+          });
+
+
         }
 
         render(){
