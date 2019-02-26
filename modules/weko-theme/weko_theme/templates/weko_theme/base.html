@@ -113,23 +113,10 @@
           super(props);
           this.state = {layout: [],};
         }
-        componentDidMount() {
-          var leftLayout = [];
-          $.ajax({
-            url: '/admin/chunk-design/design',
-            method: 'GET',
-            async: false,
-            success: function(data, status) {
-              leftLayout = data.layout;
-
-            },
-            error: function(jqXHR, status) {
-              alert('Load chunk Layout failed.');
-            }
-          });
-          this.setState({ layout: leftLayout });
-
-
+        componentWillMount() {
+          fetch('/admin/chunk-design/design')
+              .then(response => response.json())
+              .then(data => this.setState({ layout: data.layout }));
         }
 
         render(){
