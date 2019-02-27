@@ -183,7 +183,7 @@
           fetch('/admin/chunk-design/html')
               .then(response => response.text())
               .then(data => this.setState({ html: data.html }));
-              
+
 
         }
         render(){
@@ -191,13 +191,9 @@
             {i: 'a', x: 1, y: 0, w: 11, h: 2}
           ];
           return (
-            <div>
-            { this.state.html &&
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000}>
               <div key="a" class="grid-info"><h3>Info</h3>></div>
             </ReactGridLayout>
-            }
-            </div>
 
           )
         }
