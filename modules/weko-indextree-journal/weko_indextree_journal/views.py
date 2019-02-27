@@ -100,14 +100,11 @@ def export_journals():
         print("[Log]: results")
         print(results)
 
-        jsonList = json.dumps({"results" : results})
-
+        # jsonList = json.dumps({"results" : results})
         # Save journals information to file
-        
-
         status = 200
         msg = 'Journal exported successfully.'
-        return jsonify(jsonList)
+        return jsonify(results)
     except Exception as ex:
         current_app.logger.debug(ex)
     return abort(400)
