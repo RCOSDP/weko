@@ -86,7 +86,7 @@ def export_journals():
     try:
         # Get all journal records in journal table.
         journals = Journals.get_all_journals()
-        json_string = json.dumps([ob.__dict__ for ob in journals])
+        json_string = json.dumps(journals, default=obj_dict)
 
         #journals = []
         # Save journals information to file
@@ -99,6 +99,9 @@ def export_journals():
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
+def obj_dict(obj):
+    return obj.__dict__
+    
 @blueprint.route("/right-content", methods=['GET'])
 def get_journal_content():
     """Render a content of journal."""
