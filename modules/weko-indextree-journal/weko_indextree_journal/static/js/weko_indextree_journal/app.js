@@ -1,3 +1,11 @@
+require([
+  "jquery",
+  "bootstrap"
+  ], function() {
+  $('#myModal').modal({
+    show: false
+  })
+
 (function (angular) {
   // Bootstrap it!
   angular.element(document).ready(function() {
