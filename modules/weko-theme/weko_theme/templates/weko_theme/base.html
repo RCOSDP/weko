@@ -196,7 +196,7 @@
           return (
             <div>
               { this.state.html &&
-              <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000} autoSize="true">
+              <ReactGridLayout className="layout" layout={layout} cols={12} width={2000} autoSize="true">
                 <div key="a" class="grid-info">
                   <div dangerouslySetInnerHTML={this.createMarkup(this.state.html)}></div>
                 </div>
