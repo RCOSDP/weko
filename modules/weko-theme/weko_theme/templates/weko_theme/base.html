@@ -172,38 +172,6 @@
         document.getElementById('grid-body-right')
       )
 
-      // InfoComponent
-      class InfoComp extends React.Component {
-        constructor(props) {
-          super(props);
-          this.state = {};
-          this.createMarkup = this.createMarkup.bind(this);
-        }
-
-        componentDidMount() {
-          var html = '';
-          fetch('/admin/chunk-design/html')
-              .then(response => response.json())
-              .then(data => this.setState({ html: data.html }));
-
-        }
-        createMarkup(info) {
-          return {__html: info};
-        }
-
-        render(){
-          return (
-            <div>
-              { this.state.html &&
-              <div dangerouslySetInnerHTML={this.createMarkup(this.state.html)}>
-              </div>
-              }
-            </div>
-
-          )
-        }
-      }
-
       // Info
       class WekoGridInfo extends React.Component {
         constructor(props) {
