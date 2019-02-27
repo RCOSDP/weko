@@ -299,6 +299,15 @@ class ChunkDesignView(BaseView):
 
         return jsonify(data)
 
+    @expose('/html', methods=['GET'])
+    def get_chunk_html(self):
+        chunk = ChunkDesign.get('weko')
+        html = chunk.html if chunk else ''
+
+        data = {'html': html}
+
+        return jsonify(data)
+
     @expose('/upload_editor', methods=['POST'])
     def upload_editor(self):
         """Upload wysiwyg editor."""

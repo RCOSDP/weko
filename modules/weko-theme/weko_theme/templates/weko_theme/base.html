@@ -74,6 +74,10 @@
     <![endif]-->
     {%- endblock browserupgrade %}
     {%- block body_inner %}
+    <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.min.css" />
     <style type="text/css">
@@ -170,14 +174,29 @@
 
       // Info
       class WekoGridInfo extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {};
+        }
+        componentDidMount() {
+          const self = this;
+          fetch('/admin/chunk-design/html')
+              .then(response => response.text())
+              .then(data => this.setState({ html: data.html }));
+        }
         render(){
           var layout = [
             {i: 'a', x: 1, y: 0, w: 11, h: 2}
           ];
           return (
+            <div>
+            { this.state.html &&
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000}>
-              <div key="a" class="grid-info"><h3>Info</h3></div>
+              <div key="a" class="grid-info">{this.state.html}</div>
             </ReactGridLayout>
+            }
+            </div>
+
           )
         }
       }
