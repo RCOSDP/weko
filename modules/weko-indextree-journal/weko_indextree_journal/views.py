@@ -35,8 +35,8 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route("/")
-def index():
+@blueprint.route("/<int:index_id>")
+def index(index_id = 0):
     """Render a basic view."""
     item_type_id = 19 # item tpye's journal = 21
     lists = ItemTypes.get_latest()
@@ -50,13 +50,22 @@ def index():
     json_schema = '/indextree/journal/jsonschema/{}'.format(item_type_id)
     schema_form = '/indextree/journal/schemaform/{}'.format(item_type_id)
     
+    # Get journal info.
+    if index_id > 0:
+        journal = Journals.get_journal_by_index_id(index_id)
+
+    if journal is None:
+        journal = '{}'
+
+    json_record = jsonify(journal)
+
     return render_template(
         current_app.config['WEKO_INDEXTREE_JOURNAL_INDEX_TEMPLATE'],
         get_tree_json=current_app.config['WEKO_INDEX_TREE_LIST_API'],
         upt_tree_json='',
         mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API'],
         mod_journal_detail=current_app.config['WEKO_INDEXTREE_JOURNAL_API'],
-        record=None,
+        record=json_record,
         jsonschema=json_schema,
         schemaform=schema_form,
         lists=lists,
