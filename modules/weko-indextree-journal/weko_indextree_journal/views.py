@@ -79,7 +79,7 @@ def get_journal_by_index_id(index_id = 0):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
-@blueprint.route("/export")
+@blueprint.route("/export", methods=['GET'])
 def export_journals():
     try:
         # Get all journal records in journal table.
@@ -87,7 +87,7 @@ def export_journals():
 
         # Save journals information to file
         print(journals)
-        
+
         status = 200
         msg = 'Journal exported successfully.'
         return make_response(jsonify({'status': status, 'message': msg,
