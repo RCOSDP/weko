@@ -182,7 +182,8 @@
           const self = this;
           fetch('/admin/chunk-design/html')
               .then(response => response.text())
-              .then(data => this.setState({ html: data.html }));
+              .then(data => document.getElementById('grid-info-html').innerText = data.html);
+
         }
         render(){
           var layout = [
@@ -192,7 +193,7 @@
             <div>
             { this.state.html &&
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000}>
-              <div key="a" class="grid-info">{this.state.html}</div>
+              <div key="a" class="grid-info"><h3>Info</h3>></div>
             </ReactGridLayout>
             }
             </div>
@@ -212,6 +213,7 @@
 
     <div class="row" class="col-md-12">
       <div id="grid-info" class="col-md-12">
+      <div id="grid-info-html" class="col-md-12">
       </div>
     </div>
     <div class="row" class="col-md-12">
