@@ -318,7 +318,7 @@ def make_combined_pdf(pid, obj_file_uri):
 
     except (KeyError, IndexError):
         combined_filename = 'CV_' + title + '.pdf'
-    combined_filepath = "/code/combined-pdfs/{}.pdf".format(combined_filename)
+    combined_filepath = "/code/invenio/{}.pdf".format(combined_filename)
     combined_file = open(combined_filepath, "wb")
     combined_pages.write(combined_file)
     combined_file.close()

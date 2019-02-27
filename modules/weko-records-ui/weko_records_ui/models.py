@@ -66,6 +66,7 @@ class PDFCoverPageSettings(db.Model):
     @classmethod
     def find(cls, id):
         """ find record by id"""
+        print('-------------------------------QUERYYYY----------------------------', db.session.query(cls).filter_by(id=id))
         record = db.session.query(cls).filter_by(id=id).first()
         return record
 
