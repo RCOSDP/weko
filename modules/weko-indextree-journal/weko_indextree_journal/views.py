@@ -93,9 +93,9 @@ def export_journals():
 
         status = 200
         msg = 'Journal exported successfully.'
-        return jsonify({'status': status, 'message': msg, 'data': journals})
-    except:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        return jsonify({'status': status, 'message': msg, 'data': journals.__dict__})
+    except Exception as ex:
+        current_app.logger.debug(ex)
     return abort(400)
 
 def obj_dict(obj):
