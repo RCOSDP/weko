@@ -279,9 +279,9 @@ class ChunkDesignView(BaseView):
                     designed = widgets.get('designed', [])
 
                     if chunks:
-                        ChunkDesign.update('weko', designed=designed)
+                        ChunkDesign.update('weko', designed=designed, html='')
                     else:
-                        ChunkDesign.create('weko', designed=designed)
+                        ChunkDesign.create('weko', designed=designed, html='')
 
             return self.render(current_app.config['WEKO_ADMIN_CHUNK_DESIGN_TEMPLATE'])
 
@@ -298,6 +298,32 @@ class ChunkDesignView(BaseView):
         data = {'layout': designed}
 
         return jsonify(data)
+
+    @expose('/upload_editor', methods=['POST'])
+    def upload_editor(self):
+        """Upload wysiwyg editor."""
+
+        try:
+            from html import unescape
+            data = request.get_json()
+            temp = data.get('temp')
+            wysiwyg_html = unescape(data.get('content'))
+
+            chunks = ChunkDesign.get('weko')
+            designed = chunks.designed if chunks else []
+            html = chunks.html if chunks else []
+
+            if wysiwyg_html:
+                html = wysiwyg_html
+
+            if 'info' == temp:
+                if chunks:
+                    ChunkDesign.update('weko', designed=designed, html=html)
+
+        except Exception:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            abort(500)
+        return jsonify({'code': 0, 'msg': 'success'})
 
 
 chunk_designview = {

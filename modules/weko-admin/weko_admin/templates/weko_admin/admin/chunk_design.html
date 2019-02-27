@@ -245,11 +245,16 @@
       content = $('#editor-container-header').find('.ql-editor').prop('outerHTML');
       $.ajax({
         type: 'POST',
-        url: '{{url_for('stylesetting.upload_editor')}}',
+        url: '{{url_for('chunk-design.upload_editor')}}',
         contentType: 'application/json; charset=UTF-8',
-        data: JSON.stringify({'content': content, 'temp': 'header', 'isEmpty': isEmpty}),
+        data: JSON.stringify({'content': content, 'temp': 'info', 'isEmpty': isEmpty}),
         success: function(data){
+          alert('Wysiwyg info updated.');
         }
+        error: function(jqXHR, status) {
+          alert('Save failed.');
+        }
+
       });
     });
 

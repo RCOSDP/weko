@@ -294,6 +294,9 @@ class ChunkDesign(db.Model):
     )
     """Designed chunk info."""
 
+    html = db.Column(db.Text, nullable=False, default='')
+    """Chunk Contents."""
+
     @classmethod
     def create(cls, community_id, **data):
         try:
@@ -327,7 +330,7 @@ class ChunkDesign(db.Model):
                     return
 
                 for k, v in data.items():
-                    if "designed" in k:
+                    if "designed" in k or "html" in k:
                         setattr(chunk, k, v)
                 db.session.merge(chunk)
             db.session.commit()
