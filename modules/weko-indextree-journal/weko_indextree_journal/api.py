@@ -190,3 +190,17 @@ class Journals(object):
             return []
 
         return dict(obj)
+
+    @classmethod
+    def get_all_journals(cls):
+        """
+        Get all journals in journal table.
+
+        :return: List of journal object.
+        """
+        journals = db.session.query(Journal).all()
+
+        if obj is None:
+            return []
+
+        return dict(obj)
