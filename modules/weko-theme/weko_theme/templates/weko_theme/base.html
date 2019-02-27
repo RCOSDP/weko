@@ -179,10 +179,11 @@
           this.state = {};
         }
         componentDidMount() {
-          const self = this;
+          var html = '';
           fetch('/admin/chunk-design/html')
               .then(response => response.text())
-              .then(data => document.getElementById('grid-info-html').innerText = data.html);
+              .then(data => this.setState({ html: data.html }));
+              
 
         }
         render(){
