@@ -193,10 +193,13 @@
           var layout = [
             {i: 'a', x: 1, y: 0, w: 11, h: 1}
           ];
+          const styles = {
+            height: "100vh"
+          }
           return (
             <div>
               { this.state.html &&
-              <ReactGridLayout className="layout" layout={layout} cols={12} width={2000} autoSize="true">
+              <ReactGridLayout className="layout" layout={layout} cols={12} width={2000} autoSize="true" style={styles}>
                 <div key="a" class="grid-info">
                   <div dangerouslySetInnerHTML={this.createMarkup(this.state.html)}></div>
                 </div>
