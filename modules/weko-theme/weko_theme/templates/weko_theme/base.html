@@ -172,6 +172,16 @@
         document.getElementById('grid-body-right')
       )
 
+      class ModalHeader extends React.Component {
+        render(){
+          return (
+            <div class="text-right">
+              <h3>Written by React</h3>
+            </div>
+          )
+        }
+      }
+
       // Info
       class WekoGridInfo extends React.Component {
         constructor(props) {
@@ -195,6 +205,7 @@
           ];
           return (
             <div>
+            <ModalHeader />
             { this.state.html &&
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000}>
               <div key="a" class="grid-info">{this.state.html}</div>
