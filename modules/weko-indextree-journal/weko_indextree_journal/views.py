@@ -90,7 +90,7 @@ def export_journals():
 
         #journals = []
         # Save journals information to file
-        print(json_string)
+        print(journals)
 
         status = 200
         msg = 'Journal exported successfully.'

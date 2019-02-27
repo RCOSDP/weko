@@ -203,4 +203,4 @@ class Journals(object):
         if journals is None:
             return []
 
-        return list(journals)
+        return journals
