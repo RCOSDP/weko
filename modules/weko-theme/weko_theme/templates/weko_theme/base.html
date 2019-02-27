@@ -195,7 +195,7 @@
           return (
             <div>
               { this.state.html &&
-              <div dangerouslySetInnerHTML={this.createMarkup({this.state.html})}>
+              <div dangerouslySetInnerHTML={this.createMarkup(this.state.html)}>
               </div>
               }
             </div>
