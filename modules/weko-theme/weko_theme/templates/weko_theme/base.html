@@ -181,8 +181,8 @@
         componentDidMount() {
           var html = '';
           fetch('/admin/chunk-design/html')
-              .then(response => response.text())
-              .then(data => alert(data.html));
+              .then(response => response.json())
+              .then(data => this.setState({ html: data.html }));
 
 
         }
@@ -191,9 +191,13 @@
             {i: 'a', x: 1, y: 0, w: 11, h: 2}
           ];
           return (
+            <div>
+            { this.state.html &&
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000}>
               <div key="a" class="grid-info">{this.state.html}</div>
             </ReactGridLayout>
+            }
+            </div>
 
           )
         }
