@@ -28,6 +28,10 @@
 {%- block body %}
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
+<link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+<link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
+<link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-grid-layout/0.16.6/css/styles.min.css" />
 <style type="text/css">
@@ -41,6 +45,10 @@
     .wysiwyg {
         background: #D8D8D8;
     }
+    #editor-container-header, #editor-container-footer {
+      height: 150px;
+    }
+
 </style>
 
 <script src="https://unpkg.com/react@15/dist/react.min.js"></script>
@@ -107,6 +115,71 @@
       </div>
       <div class="col-md-offset-1 col-md-8 wysiwyg">
 
+        <div class="row">
+          <div class="col-sm-10">
+            <div class="panel panel-info">
+              <div class="panel-heading">
+                <div class="pull-right">
+                  <button type="button" id="btn_commit_header" class="btn btn-primary">
+                    <i class="fa fa-gear"></i>{{_('Save')}}
+                  </button>
+                </div>
+                <div class="panel-title">
+                  <h4>{{_('Header Setting')}}</h4>
+                </div>
+              </div>
+              <div class="panel-body">
+                <div id="toolbar-container-header">
+                  <span class="ql-formats">
+                    <select class="ql-font"></select>
+                    <select class="ql-size"></select>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-bold"></button>
+                    <button class="ql-italic"></button>
+                    <button class="ql-underline"></button>
+                    <button class="ql-strike"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <select class="ql-color"></select>
+                    <select class="ql-background"></select>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-script" value="sub"></button>
+                    <button class="ql-script" value="super"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-header" value="1"></button>
+                    <button class="ql-header" value="2"></button>
+                    <button class="ql-blockquote"></button>
+                    <button class="ql-code-block"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-list" value="ordered"></button>
+                    <button class="ql-list" value="bullet"></button>
+                    <button class="ql-indent" value="-1"></button>
+                    <button class="ql-indent" value="+1"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-direction" value="rtl"></button>
+                    <select class="ql-align"></select>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-link"></button>
+                    <button class="ql-image"></button>
+                    <button class="ql-video"></button>
+                    <button class="ql-formula"></button>
+                  </span>
+                  <span class="ql-formats">
+                    <button class="ql-clean"></button>
+                  </span>
+                </div>
+                <div id="editor-container-header" class="wysiwyg-editor"></div>
+                <div id="header-editor-content" class="header-editor-content" hidden>{{ header_innerHtml|safe }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -114,6 +187,9 @@
 </body>
 {%- endblock body %}
 {% block tail %}
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js"></script>
+<script src="{{ url_for('static', filename='js/weko_admin/quill.min.js') }}"></script>
 <script>
   $(document).ready(function() {
 
@@ -136,6 +212,32 @@
         },
         error: function(jqXHR, status) {
           alert('Save failed.');
+        }
+      });
+    });
+
+    // ----- wysiwyg -----
+    var quill_header = new Quill('#editor-container-header', {
+      modules: {
+        formula: true,
+        syntax: true,
+        toolbar: '#toolbar-container-header'
+      },
+      placeholder: '',
+      theme: 'snow'
+    });
+
+    $('#editor-container-header').find('.ql-editor').html($('#header-editor-content').find('.ql-editor').html());
+
+    $('#btn_commit_header').on('click', function(){
+      isEmpty = quill_header.getText() === '\n' && quill_header.getLength() === 1;
+      content = $('#editor-container-header').find('.ql-editor').prop('outerHTML');
+      $.ajax({
+        type: 'POST',
+        url: '{{url_for('stylesetting.upload_editor')}}',
+        contentType: 'application/json; charset=UTF-8',
+        data: JSON.stringify({'content': content, 'temp': 'header', 'isEmpty': isEmpty}),
+        success: function(data){
         }
       });
     });
