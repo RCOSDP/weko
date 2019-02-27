@@ -194,7 +194,7 @@
           fetch('/admin/chunk-design/html')
               .then(response => response.json())
               .then(data => this.setState({ html: data.html }));
-          alert('React!!!');
+
         }
         createMarkup() {
           return {__html: '<h3>Info</h3>'};
@@ -205,10 +205,9 @@
           ];
           return (
             <div>
-            <ModalHeader />
             { this.state.html &&
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000}>
-              <div key="a" class="grid-info">{this.state.html}</div>
+              <div key="a" class="grid-info"><ModalHeader /></div>
             </ReactGridLayout>
             }
             </div>
