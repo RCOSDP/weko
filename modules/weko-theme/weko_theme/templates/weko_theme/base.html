@@ -184,7 +184,6 @@
               .then(response => response.text())
               .then(data => this.setState({ html: data.html }));
 
-
         }
         render(){
           var layout = [
@@ -192,7 +191,7 @@
           ];
           return (
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000}>
-              <div key="a" class="grid-info"><h3>Info</h3>></div>
+              <div key="a" class="grid-info">{this.state.layout}</div>
             </ReactGridLayout>
 
           )
