@@ -181,7 +181,7 @@
         componentDidMount() {
           var html = '';
           fetch('/admin/chunk-design/html')
-              .then(response => response.text())
+              .then(response => response.json())
               .then(data => html=data.html);
 
           alert(html);
