@@ -3,6 +3,9 @@ require([
   "bootstrap"
   ], function() {
     $(document).ready(function() {
+
+      alert('Jquery!!!');
+
       $('#btn_edit_start').on('click', function(){
         window.location.href = '/schema/list/';
       });

@@ -193,10 +193,11 @@
             {i: 'a', x: 1, y: 0, w: 11, h: 2}
           ];
           return (
+            alert('React!!!');
             <div>
             { this.state.html &&
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000}>
-              <div key="a" class="grid-info"><div dangerouslySetInnerHTML={this.createMarkup()}>{this.state.html}</div></div>
+              <div key="a" class="grid-info">{this.state.html}</div>
             </ReactGridLayout>
             }
             </div>
