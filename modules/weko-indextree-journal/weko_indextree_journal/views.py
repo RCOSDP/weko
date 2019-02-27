@@ -86,14 +86,14 @@ def export_journals():
     try:
         # Get all journal records in journal table.
         journals = Journals.get_all_journals()
-
+        jsonList = json.dumps(journals)
         #journals = []
         # Save journals information to file
-        print(journals)
+        print(jsonList)
 
         status = 200
         msg = 'Journal exported successfully.'
-        return jsonify(journals)
+        return jsonify(jsonList)
     except Exception as ex:
         current_app.logger.debug(ex)
     return abort(400)
