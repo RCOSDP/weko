@@ -95,9 +95,11 @@ def export_journals():
     try:
         # Get all journal records in journal table.
         journals = Journals.get_all_journals()
-        jsonList = json.dumps(journals)
-        #journals = []
+        results = [obj.__dict__ for obj in journals]
+        jsonList = json.dumps({"results" : results})
+
         # Save journals information to file
+        print("[Log]: jsonList")
         print(jsonList)
 
         status = 200
