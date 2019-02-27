@@ -186,17 +186,17 @@
               .then(data => this.setState({ html: data.html }));
         }
         createMarkup() {
-          return {__html: 'First &middot; Second'};
+          return {__html: '<h3>Info</h3>'};
         }
         render(){
           var layout = [
             {i: 'a', x: 1, y: 0, w: 11, h: 2}
           ];
           return (
-            <div dangerouslySetInnerHTML={this.createMarkup()}>
+            <div>
             { this.state.html &&
             <ReactGridLayout className="layout" layout={layout} cols={12} rowHeight={30} width={2000}>
-              <div key="a" class="grid-info">{this.state.html}</div>
+              <div key="a" class="grid-info" dangerouslySetInnerHTML={this.createMarkup()}></div>
             </ReactGridLayout>
             }
             </div>
