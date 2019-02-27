@@ -2,11 +2,8 @@ require([
   "jquery",
   "bootstrap"
   ], function() {
-  $('#myModal').modal({
-    show: false
-  })
 
-(function (angular) {
+  (function (angular) {
   // Bootstrap it!
   angular.element(document).ready(function() {
     angular.module('wekoRecords.controllers', []);
@@ -301,3 +298,5 @@ require([
     );
   });
 })(angular);
+
+});
