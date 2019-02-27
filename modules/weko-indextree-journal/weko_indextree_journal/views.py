@@ -91,8 +91,7 @@ def export_journals():
 
         status = 200
         msg = 'Journal exported successfully.'
-        return make_response(jsonify({'status': status, 'message': msg,
-            'data': journals}), status)
+        return jsonify({'status': status, 'message': msg, 'data': journals})
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
