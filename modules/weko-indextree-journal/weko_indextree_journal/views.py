@@ -35,9 +35,7 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route('/', methods=['GET'])
-@blueprint.route("/<int:index_id>", methods=['GET'])
-@login_required
+@blueprint.route("/<int:index_id>")
 def index(index_id = 0):
     """Render a basic view."""
     item_type_id = 19 # item tpye's journal = 21
@@ -53,7 +51,6 @@ def index(index_id = 0):
     schema_form = '/indextree/journal/schemaform/{}'.format(item_type_id)
     
     # Get journal info.
-    journal = None
     if index_id > 0:
         journal = Journals.get_journal_by_index_id(index_id)
 
