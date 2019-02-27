@@ -200,7 +200,7 @@ class Journals(object):
         """
         journals = db.session.query(Journal).all()
 
-        if obj is None:
+        if journals is None:
             return []
 
-        return dict(obj)
+        return dict(journals)
