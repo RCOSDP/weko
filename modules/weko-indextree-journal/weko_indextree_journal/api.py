@@ -203,4 +203,7 @@ class Journals(object):
         if journals is None:
             return []
 
-        return list(journals)
+        obj = {}
+        for k in journals:
+            obj[str(k.id)] = k.__dict__
+        return obj

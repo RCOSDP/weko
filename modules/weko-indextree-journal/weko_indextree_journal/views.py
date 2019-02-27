@@ -86,7 +86,6 @@ def export_journals():
     try:
         # Get all journal records in journal table.
         journals = Journals.get_all_journals()
-        json_string = json.dumps(journals, default=obj_dict)
 
         #journals = []
         # Save journals information to file
@@ -94,7 +93,7 @@ def export_journals():
 
         status = 200
         msg = 'Journal exported successfully.'
-        return jsonify({'status': status, 'message': msg, 'data': json_string})
+        return jsonify({'status': status, 'message': msg, 'data': journals})
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
