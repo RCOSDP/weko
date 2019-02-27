@@ -104,8 +104,7 @@ def export_journals():
         # Save journals information to file
         status = 200
         msg = 'Journal exported successfully.'
-        return results
-        # jsonify(results)
+        return jsonify({"results" : results})
     except Exception as ex:
         current_app.logger.debug(ex)
     return abort(400)
