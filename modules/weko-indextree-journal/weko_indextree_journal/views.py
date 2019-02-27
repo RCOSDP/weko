@@ -13,6 +13,7 @@
 
 from __future__ import absolute_import, print_function
 import sys
+import json
 
 from flask import (
     Blueprint, render_template, current_app, json, abort, jsonify)
@@ -91,7 +92,7 @@ def export_journals():
 
         status = 200
         msg = 'Journal exported successfully.'
-        return jsonify({'status': status, 'message': msg, 'data': journals})
+        return jsonify({'status': status, 'message': msg, 'data': json.dumps(journals)})
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
