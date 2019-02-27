@@ -2,6 +2,7 @@ require([
   "jquery",
   "bootstrap"
   ], function() {
+});
 
   (function (angular) {
   // Bootstrap it!
@@ -298,5 +299,3 @@ require([
     );
   });
 })(angular);
-
-});
