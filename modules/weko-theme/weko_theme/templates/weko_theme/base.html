@@ -182,9 +182,8 @@
           var html = '';
           fetch('/admin/chunk-design/html')
               .then(response => response.json())
-              .then(data => html=data.html);
+              .then(data => alert(data.html));
 
-          alert(html);
 
         }
         render(){
