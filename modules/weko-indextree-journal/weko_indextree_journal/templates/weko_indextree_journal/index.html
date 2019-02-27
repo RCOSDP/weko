@@ -40,14 +40,23 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
-<div class="row">
+<div class="row" style="
+    height: 500px;
+">
   <div class="hide" id="get_tree_json">{{ get_tree_json }}</div>
   <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
   <div class="hide" id="mod_tree_detail">{{ mod_tree_detail }}</div>
   <app-root-tree-hensyu journalDisplayFlg="1"></app-root-tree-hensyu>
 </div>
-<div class="row">
-  <div class="col-sm-8 col-md-8 col-lg-8">
+<div class="" style="
+    position: absolute;
+    left: 490px;
+    top: 10px;
+    width: 65%;
+    float: left;
+    height: 100%;
+">
+  <div class="">
     <div role="navigation">
       <ul class="nav nav-tabs">
         {%- block edit_tree_tabs %}
