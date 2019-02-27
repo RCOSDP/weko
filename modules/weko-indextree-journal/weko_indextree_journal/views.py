@@ -80,11 +80,12 @@ def get_journal_by_index_id(index_id = 0):
     return abort(400)
 
 @blueprint.route("/export", methods=['GET'])
+@login_required
 def export_journals():
     try:
         # Get all journal records in journal table.
-        journals = Journals.get_all_journals()
-
+        #journals = Journals.get_all_journals()
+        journals = []
         # Save journals information to file
         print(journals)
 
