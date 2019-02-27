@@ -183,7 +183,7 @@
           var html = '';
           fetch('/admin/chunk-design/html')
               .then(response => response.json())
-              .then(data => this.setState({ html: this.createMarkup() }));
+              .then(data => this.setState({ html: data.html }));
         }
         createMarkup() {
           return {__html: '<h3>Info</h3>'};
