@@ -14,6 +14,7 @@
 from __future__ import absolute_import, print_function
 import sys
 import json
+import numpy
 
 from flask import (
     Blueprint, render_template, current_app, json, abort, jsonify)
@@ -96,18 +97,17 @@ def export_journals():
         # Get all journal records in journal table.
         journals = Journals.get_all_journals()
         results = [obj.__dict__ for obj in journals]
-
+        data = numpy.asarray(results)
+        numpy.savetxt("journal.tsv", data, delimiter='\t')
         print("[Log]: results")
         print(results)
 
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
-        status = 200
-        msg = 'Journal exported successfully.'
-        return jsonify({"results" : results})
+        return jsonify({"result" : True})
     except Exception as ex:
         current_app.logger.debug(ex)
-    return abort(400)
+    return jsonify({"result" : False})
 
 def obj_dict(obj):
     return obj.__dict__
