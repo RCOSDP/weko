@@ -84,8 +84,8 @@ def get_journal_by_index_id(index_id = 0):
 def export_journals():
     try:
         # Get all journal records in journal table.
-        #journals = Journals.get_all_journals()
-        journals = []
+        journals = Journals.get_all_journals()
+        #journals = []
         # Save journals information to file
         print(journals)
 
