@@ -1,68 +1,70 @@
 {#
-  # This file is part of WEKO3.
-  # Copyright (C) 2017 National Institute of Informatics.
-  #
-  # WEKO3 is free software; you can redistribute it
-  # and/or modify it under the terms of the GNU General Public License as
-  # published by the Free Software Foundation; either version 2 of the
-  # License, or (at your option) any later version.
-  #
-  # WEKO3 is distributed in the hope that it will be
-  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  # General Public License for more details.
-  #
-  # You should have received a copy of the GNU General Public License
-  # along with WEKO3; if not, write to the
-  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  # MA 02111-1307, USA.
-  #}
-  
-  {%- extends config.WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE %}
-  
-  {%- block css %}
-    {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {{ super() }}
-  {%- endblock css %}
-  
-  {%- block javascript %}
-    {% assets "weko_index_tree_view" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_index_tree_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {{ super() }}
-    {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_indextree_journal_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {%- endblock javascript %}
-  
-  {%- block page_body_tabs %}
-    {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-    {{ tabs_selector('edit_tree') }}
-  {%- endblock page_body_tabs%}
-  
-  {%- block page_body_main %}
-  <div class="row">
-    <div class="hide" id="get_tree_json">{{ get_tree_json }}</div>
-    <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
-    <div class="hide" id="mod_tree_detail">{{ mod_tree_detail }}</div>
-    <app-root-tree-hensyu></app-root-tree-hensyu>
-  </div>
-  <div class="row">
-    <div class="col-md-12">
-      <div id="weko-records">
-        {%- if need_file %}
-        <invenio-files-uploader
-          method="PUT"
-          endpoint="{{ config.DEPOSIT_FILES_API }}"
-          {% if pid %}
-            initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
-            files='{{files|tojson}}'
-          {% else %}
-            initialization="{{ config.DEPOSIT_SEARCH_API }}"
-          {% endif %}
-          extra-params='{"headers":{"Content-Type": "application/json"}}'
-        >
-        {%- endif %}
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE %}
+
+{%- block css %}
+  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+{%- endblock css %}
+
+{%- block javascript %}
+  {% assets "weko_index_tree_view" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_index_tree_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_indextree_journal_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('edit_tree') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+<div class="row">
+  <div class="hide" id="get_tree_json">{{ get_tree_json }}</div>
+  <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
+  <div class="hide" id="mod_tree_detail">{{ mod_tree_detail }}</div>
+  <app-root-tree-hensyu journalDisplayFlg="1"></app-root-tree-hensyu>
+</div>
+<div class="row">
+  <div class="col-sm-8 col-md-8 col-lg-8">
+    <div role="navigation">
+      <ul class="nav nav-tabs">
+        {%- block edit_tree_tabs %}
+          {% from "weko_theme/macros/edit_tree_tabs_selector.html" import tabs_selector %}
+          {{ tabs_selector('journal_edit') }}
+        {%- endblock edit_tree_tabs%}
+      </ul>
+    </div>
+    <br>
+    <div class="panel panel-default">
+      <div class="panel-heading clearfix">
+        <span class="panel-title">
+          {{_('Journal')}}
+        </span>
+      </div>
+      <div class="panel-body">
+        <div id="weko-records">
           <invenio-records
             {%- if pid %}
               initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
@@ -95,7 +97,11 @@
               </invenio-records-form>
             </div>
           </invenio-records>
+        </div>
       </div>
-    </div>
+      <div class="panel-footer">
+        <button id="index-detail-submit" class="btn btn-info" (click)="">{{_('Save')}}</button>
+      </div>
   </div>
-  {%- endblock page_body_main %}
+</div>
+{%- endblock page_body_main %}
