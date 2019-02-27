@@ -141,7 +141,3 @@ pip install meinheld
 pip install uwsgi
 pip install uwsgitop
 # gunicorn uwsgi -end
-
-# csv lib - begin
-pip install numpy
-# csv lib - begin
