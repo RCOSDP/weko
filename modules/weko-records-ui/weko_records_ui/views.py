@@ -23,9 +23,11 @@
 import six
 from flask import Blueprint, abort, current_app, render_template, \
     make_response, redirect, request, url_for, flash
-
+from lxml import etree
 from invenio_records_ui.utils import obj_or_import_string
 from invenio_records_ui.signals import record_viewed
+from invenio_oaiserver.response import getrecord
+from weko_records_ui.models import InstitutionName
 from weko_index_tree.models import IndexStyle
 from .permissions import check_created_id
 from weko_search_ui.api import get_search_detail_keyword
@@ -241,6 +243,44 @@ def check_permission(record):
     return check_created_id(record)
 
 
+def _get_google_scholar_meta(record):
+    target_map = {
+        'dc:title':'citation_title',
+        'jpcoar:creatorName':'citation_author',
+        'dc:publisher':'citation_publisher',
+        'jpcoar:subject':'citation_keywords',
+        'jpcoar:sourceTitle':'citation_journal_title',
+        'jpcoar:volume':'citation_volume',
+        'jpcoar:issue':'citation_issue',
+        'jpcoar:pageStart':'citation_firstpage',
+        'jpcoar:pageEnd':'citation_lastpage',}
+    recstr = etree.tostring(getrecord(identifier=record['_oai']['id'], metadataPrefix='jpcoar', verb='getrecord'))
+    et = etree.fromstring(recstr)
+    mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
+    res = []
+    for target in target_map:
+        found = mtdata.find(target, namespaces=mtdata.nsmap)
+        if found is not None:
+            res.append({'name':target_map[target], 'data':found.text})
+    for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
+        if date.attrib['dateType'] == 'Available':
+            res.append({'name':'citation_online_date', 'data':date.text})
+        elif date.attrib['dateType'] == 'Issued':
+            res.append({'name':'citation_publication_date', 'data':date.text})
+    for relatedIdentifier in mtdata.findall('jpcoar:relatedIdentifier', namespaces=mtdata.nsmap):
+        if 'identifierType' in relatedIdentifier.attrib and relatedIdentifier.attrib['identifierType'] == 'DOI':
+            res.append({'name':'citation_doi', 'data':relatedIdentifier.text})
+    for sourceIdentifier in mtdata.findall('jpcoar:sourceIdentifier', namespaces=mtdata.nsmap):
+        if 'identifierType' in sourceIdentifier.attrib and sourceIdentifier.attrib['identifierType'] == 'ISSN':
+            res.append({'name':'citation_issn', 'data':sourceIdentifier.text})
+    pdf_url = mtdata.find('jpcoar:file/jpcoar:URI', namespaces=mtdata.nsmap)
+    if pdf_url is not None:
+        res.append({'name':'citation_pdf_url', 'data':pdf_url.text})
+    res.append({'name':'citation_dissertation_institution', 'data': InstitutionName.get_institution_name()})
+    res.append({'name':'citation_abstract_html_url', 'data': request.url})
+    return res
+
+
 def default_view_method(pid, record, template=None, **kwargs):
     """Display default view.
 
@@ -280,6 +320,8 @@ def default_view_method(pid, record, template=None, **kwargs):
     else:
         record["relation"] = {}
 
+    google_scholar_meta = _get_google_scholar_meta(record)
+
     return render_template(
         template,
         pid=pid,
@@ -288,6 +330,7 @@ def default_view_method(pid, record, template=None, **kwargs):
         width=width,
         detail_condition=detail_condition,
         height=height,
+        google_scholar_meta=google_scholar_meta,
         **ctx,
         **kwargs
     )
