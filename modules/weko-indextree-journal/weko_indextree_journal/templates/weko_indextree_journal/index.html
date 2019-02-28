@@ -36,7 +36,7 @@
 
 {%- block page_body_tabs %}
   {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('edit_tree', index_id) }}
+  {{ tabs_selector('edit_tree') }}
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
@@ -50,7 +50,7 @@
       <ul class="nav nav-tabs">
         {%- block edit_tree_tabs %}
           {% from "weko_theme/macros/edit_tree_tabs_selector.html" import tabs_selector %}
-          {{ tabs_selector('journal_edit') }}
+          {{ tabs_selector('journal_edit', index_id) }}
         {%- endblock edit_tree_tabs%}
       </ul>
     </div>
