@@ -2,7 +2,68 @@ require([
   "jquery",
   "bootstrap"
   ], function() {
-});
+
+  page_global = {
+    cur_index_id: 0,
+    send_method: 'POST'
+   }
+  $('#index-journal-submit').on('click', function(){
+    if($('#right_index_id').val() != '') {
+      page_global.cur_index_id = $('#right_index_id').val();
+    }
+    var data = {
+      id: page_global.cur_index_id,
+      index_id: page_global.cur_index_id,
+      publication_title: $('#publication_title').val() || '',
+      print_identifier: $('#print_identifier').val() || '',
+      online_identifier: $('#online_identifier').val() || '',
+      date_first_issue_online: $('#date_first_issue_online').val() || '',
+      num_first_vol_online: $('#num_first_vol_online').val() || '',
+      num_first_issue_online: $('#num_first_issue_online').val() || '',
+      date_last_issue_online: $('#date_last_issue_online').val() || '',
+      num_last_vol_online: $('#num_last_vol_online').val() || '',
+      num_last_issue_online: $('#num_last_issue_online').val() || '',
+      embargo_info: $('#embargo_info').val() || '',
+      coverage_depth: $('#coverage_depth').val() || '',
+      notes: $('#coverage_notes').val() || '', // coverage_notes
+      publisher_name: $('#publisher_name').val() || '',
+      publication_type: $('#publication_type').val() || '',
+      parent_publication_title_id: $('#parent_publication_title_id').val() || '',
+      preceding_publication_title_id: $('#preceding_publication_title_id').val() || '',
+      access_type: $('#access_type').val() || '',
+      language: $('#language').val() || '',
+      title_alternative: $('#title_alternative').val() || '',
+      title_transcription: $('#title_transcription').val() || '',
+      ncid: $('#ncid').val() || '',
+      ndl_callno: $('#ndl_callno').val() || '',
+      ndl_bibid: $('#ndl_bibid').val() || '',
+      jstage_code: $('#jstage_code').val() || '',
+      ichushi_code: $('#ichushi_code').val() || ''
+    }
+
+    if(page_global.cur_index_id > 0) {
+      page_global.send_method = "PUT"
+    }
+
+    send('/api/indextree/journal/'+page_global.cur_index_id, page_global.send_method, data);
+
+    function send(url, method, data){
+      $.ajax({
+        method: method,
+        url: url,
+        async: true,
+        contentType: 'application/json',
+        dataType: 'json',
+        data: JSON.stringify(data),
+        success: function(data,textStatus){
+          alert(data.message);
+        },
+        error: function(textStatus,errorThrown){
+          alert(errmsg.message);
+        }
+      });
+    }
+  });
 
   (function (angular) {
   // Bootstrap it!
@@ -92,7 +153,7 @@ require([
          var authorInfoObj = JSON.parse(authorInfo);
          var updateIndex = 0;
          if(arrayFlg == 'true'){
-　　　　　　　var familyName ="";
+         var familyName ="";
               var givenName = "";
               if(authorInfoObj[0].hasOwnProperty('affiliation')){
                  $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].affiliation = authorInfoObj[0].affiliation;
@@ -189,13 +250,13 @@ require([
             if(modelValue == true){
               $rootScope.recordsVM.invenioRecordsModel[model_id][array_index].weko_id= $rootScope.recordsVM.invenioRecordsModel[model_id][array_index].weko_id_hidden;
             }else{
-  　　　　　　delete $rootScope.recordsVM.invenioRecordsModel[model_id][array_index].weko_id;
+            delete $rootScope.recordsVM.invenioRecordsModel[model_id][array_index].weko_id;
             }
           }else{
             if(modelValue == true){
               $rootScope.recordsVM.invenioRecordsModel[model_id].weko_id= $rootScope.recordsVM.invenioRecordsModel[model_id].weko_id_hidden;
             }else{
-  　　　　　　delete $rootScope.recordsVM.invenioRecordsModel[model_id].weko_id;
+            delete $rootScope.recordsVM.invenioRecordsModel[model_id].weko_id;
             }
           }
 //        2018/05/28 end
