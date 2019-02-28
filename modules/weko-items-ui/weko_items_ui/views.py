@@ -214,6 +214,7 @@ def get_json_schema(item_type_id=0):
         result = None
         if item_type_id > 0:
             result = ItemTypes.get_record(item_type_id)
+            print(json.dumps(result))
             if 'filemeta' in json.dumps(result):
                 group_list = Group.get_group_list()
                 group_enum = list(group_list.keys())
