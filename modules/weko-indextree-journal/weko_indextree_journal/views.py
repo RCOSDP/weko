@@ -40,7 +40,7 @@ blueprint = Blueprint(
 @login_required
 def index(index_id = 0):
     """Render a basic view."""
-    item_type_id = 19 # item tpye's journal = 21
+    item_type_id = 20 # item tpye's journal = 21
     lists = ItemTypes.get_latest()
     if lists is None or len(lists) == 0:
         return render_template(
@@ -98,7 +98,7 @@ def export_journals():
         journals = Journals.get_all_journals()
         results = [obj.__dict__ for obj in journals]
         data = numpy.asarray(results)
-        numpy.savetxt("/work/weko_dev23/journal.tsv", data, delimiter=",")
+        numpy.savetxt("journal.tsv", data, delimiter=",")
         print("[Log]: results")
         print(results)
 
