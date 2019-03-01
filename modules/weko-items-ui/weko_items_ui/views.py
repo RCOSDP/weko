@@ -215,17 +215,23 @@ def get_json_schema(item_type_id=0):
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
-            result = ItemTypes.get_by_id(item_type_id)
-
-            if result is None:
-                return '{}'
-            
-            json_schema = result.schema
-            properties = json_schema.get('properties')
-
-            for key, value in properties.items():
-                if 'validationMessage_i18n' in value:
-                    value['validationMessage'] = value['validationMessage_i18n'][cur_lang]
+            if item_type_id == 20:
+                result = ItemTypes.get_by_id(item_type_id)
+                if result is None:
+                    return '{}'
+                json_schema = result.schema
+                properties = json_schema.get('properties')
+                for key, value in properties.items():
+                    if 'validationMessage_i18n' in value:
+                        value['validationMessage'] = value['validationMessage_i18n'][cur_lang]
+            else:
+                result = ItemTypes.get_record(item_type_id)
+                if 'filemeta' in json.dumps(result):
+                    group_list = Group.get_group_list()
+                    group_enum = list(group_list.keys())
+                    filemeta_group = result.get('properties').get('filemeta').get(
+                        'items').get('properties').get('groups')
+                    filemeta_group['enum'] = group_enum
 
         if result is None:
             return '{}'
