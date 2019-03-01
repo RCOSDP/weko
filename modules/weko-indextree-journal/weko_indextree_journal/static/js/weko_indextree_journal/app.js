@@ -9,6 +9,10 @@ require([
     send_method: 'POST'
    }
   $('#index-journal-submit').on('click', function(){
+    var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid-tv4-0");
+    if(invalidFlg) {
+      return
+    }
     if($('#right_index_id').val() != '') {
       page_global.cur_index_id = $('#right_index_id').val();
     }
@@ -18,6 +22,7 @@ require([
     var data = {
       id: page_global.cur_index_id,
       index_id: page_global.cur_index_id,
+      is_output: $("input[name='is_output']:checked").val() || true,
       publication_title: $('#publication_title').val() || '',
       print_identifier: $('#print_identifier').val() || '',
       online_identifier: $('#online_identifier').val() || '',
@@ -32,8 +37,8 @@ require([
       coverage_notes: $('#coverage_notes').val() || '',
       publisher_name: $('#publisher_name').val() || '',
       publication_type: $('select[name=publication_type]').val() || '',
-      parent_publication_title_id: $('#parent_publication_title_id').val() || '',
-      preceding_publication_title_id: $('#preceding_publication_title_id').val() || '',
+      parent_publication_title_id: $('#parent_publication_title_id').val() || 0,
+      preceding_publication_title_id: $('#preceding_publication_title_id').val() || 0,
       access_type: $('select[name=access_type]').val() || '',
       language: $('select[name=language]').val() || '',
       title_alternative: $('#title_alternative').val() || '',

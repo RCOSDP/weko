@@ -24,6 +24,11 @@
   {% assets "weko_indextree_journal_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
+  <style>
+    body {
+    overflow-x:hidden;
+    }
+  </style>
 {%- endblock css %}
 
 {%- block javascript %}
