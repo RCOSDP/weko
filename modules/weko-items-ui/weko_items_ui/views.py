@@ -213,13 +213,13 @@ def get_json_schema(item_type_id=0):
     try:
         result = None
         if item_type_id > 0:
-            result = ItemTypes.get_record(item_type_id)
+            result = ItemTypes.get_by_id(item_type_id)
 
             if result is None:
                 return '{}'
             
-            properties = result.get('properties')
-            print(properties)
+            json_schema = result.schema
+            print(json.dumps(json_schema))
 
             #if 'filemeta' in json.dumps(result):
             #    group_list = Group.get_group_list()
