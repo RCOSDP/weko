@@ -212,6 +212,8 @@ def get_json_schema(item_type_id=0):
     """
     try:
         result = None
+        cur_lang = current_i18n.language
+
         if item_type_id > 0:
             result = ItemTypes.get_by_id(item_type_id)
 
@@ -219,19 +221,12 @@ def get_json_schema(item_type_id=0):
                 return '{}'
             
             json_schema = result.schema
-            print(json_schema.get('properties'))
+            properties = json_schema.get('properties')
 
-            for elem in json_schema:
-                print(elem)
-                if 'validationMessage_i18n' in elem:
-                    elem['validationMessage'] = elem['validationMessage_i18n'][cur_lang]
+            for key, value in properties.items():
+                if 'validationMessage_i18n' in value:
+                    value['validationMessage'] = value['validationMessage_i18n'][cur_lang]
 
-            #if 'filemeta' in json.dumps(result):
-            #    group_list = Group.get_group_list()
-            #    group_enum = list(group_list.keys())
-            #    filemeta_group = result.get('properties').get('filemeta').get(
-            #        'items').get('properties').get('groups')
-            #    filemeta_group['enum'] = group_enum
         if result is None:
             return '{}'
         return jsonify(json_schema)
