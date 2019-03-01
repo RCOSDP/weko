@@ -4,12 +4,16 @@ require([
 ], function() {
 
   page_global = {
+    cur_journal_id: 0,
     cur_index_id: 0,
     send_method: 'POST'
    }
   $('#index-journal-submit').on('click', function(){
     if($('#right_index_id').val() != '') {
       page_global.cur_index_id = $('#right_index_id').val();
+    }
+    if($('#journal_id').val() != '') {
+      page_global.cur_journal_id = $('#journal_id').val();
     }
     var data = {
       id: page_global.cur_index_id,
@@ -41,7 +45,7 @@ require([
       ichushi_code: $('#ichushi_code').val() || ''
     }
 
-    if(page_global.cur_index_id != '0') {
+    if(page_global.cur_journal_id != '0') {
       page_global.send_method = "PUT";
     }
 
@@ -58,8 +62,8 @@ require([
         success: function(data,textStatus){
           alert(data.message);
         },
-        error: function(textStatus,errorThrown){
-          alert(errmsg.message);
+        error: function(data,textStatus){
+          alert(data.message);
         }
       });
     }
