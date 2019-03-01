@@ -30,10 +30,11 @@ from sqlalchemy_utils.types import JSONType
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import mysql, postgresql
 
+""" PDF cover page model"""
 class PDFCoverPageSettings(db.Model):
     __tablename__ = 'pdfcoverpage_set'
 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     avail = db.Column(db.Text, nullable=True, default='disable')
     """ PDF Cover Page Availability """
@@ -86,10 +87,8 @@ class PDFCoverPageSettings(db.Model):
         db.session.commit()
         return record
 
-"""Record UI models."""
 
-from invenio_db import db
-
+""" Record UI models """
 class InstitutionName(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     institution_name = db.Column(db.String(255), default='')
