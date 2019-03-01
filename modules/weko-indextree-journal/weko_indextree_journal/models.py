@@ -138,7 +138,7 @@ class Journal(db.Model, Timestamp):
         　Abstract、Fulltext、Selected Articles
     """
 
-    notes = db.Column(db.Text, nullable=True, default='')
+    coverage_notes = db.Column(db.Text, nullable=True, default='')
     """Coverage notes of the journal."""
     """ varchar(255) """
 
