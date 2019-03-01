@@ -220,7 +220,7 @@ def get_json_schema(item_type_id=0):
             
             json_schema = result.schema
             properties = json_schema.get('properties')
-            #print()
+            print(json.dumps(properties)
 
             for elem in properties:
                 if 'validationMessage_i18n' in elem:
