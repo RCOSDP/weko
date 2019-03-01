@@ -219,9 +219,10 @@ def get_json_schema(item_type_id=0):
                 return '{}'
             
             json_schema = result.schema
-            #print(json_schema.get('properties'))
+            properties = json_schema.get('properties')
+            #print()
 
-            for elem in json_schema:
+            for elem in properties:
                 if 'validationMessage_i18n' in elem:
                     print("[Log]: Exist validation message i18n")
                     print(elem)
