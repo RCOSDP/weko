@@ -215,24 +215,37 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
             file_downloaded.send(current_app._get_current_object(), obj=obj)
             return obj.send_file(restricted=restricted, as_attachment=as_attachment)
 
-    pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
-
-    if pdfcoverpage_set_rec.avail == 'disable': # Write this if statement later
-
+    try:
+        pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
+        if pdfcoverpage_set_rec.avail == 'disable':
+            return ObjectResourceWeko.send_object(
+            obj.bucket, obj,
+            expected_chksum=fileobj.get('checksum'),
+            logger_data={
+                'bucket_id': obj.bucket_id,
+                'pid_type': pid.pid_type,
+                'pid_value': pid.pid_value,
+            },
+            as_attachment=False,
+            cache_timeout=-1
+            )
+    except AttributeError:
         return ObjectResourceWeko.send_object(
-        obj.bucket, obj,
-        expected_chksum=fileobj.get('checksum'),
-        logger_data={
-            'bucket_id': obj.bucket_id,
-            'pid_type': pid.pid_type,
-            'pid_value': pid.pid_value,
-        },
-        as_attachment=False,
-        cache_timeout=-1
+            obj.bucket, obj,
+            expected_chksum=fileobj.get('checksum'),
+            logger_data={
+                'bucket_id': obj.bucket_id,
+                'pid_type': pid.pid_type,
+                'pid_value': pid.pid_value,
+            },
+            as_attachment=False,
+            cache_timeout=-1
         )
+
 
     """ Send file with its pdf cover page """
     object_version_record = ObjectVersion.query.filter_by(bucket_id= obj.bucket_id).first()
     file_instance_record = FileInstance.query.filter_by(id=object_version_record.file_id).first()
     obj_file_uri = file_instance_record.uri
     return make_combined_pdf(pid, obj_file_uri)
+
