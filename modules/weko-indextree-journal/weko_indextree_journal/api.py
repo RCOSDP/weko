@@ -187,7 +187,7 @@ class Journals(object):
                     filter_by(index_id=index_id).one_or_none()
 
         if obj is None:
-            return []
+            return {}
 
         return dict(obj)
 
