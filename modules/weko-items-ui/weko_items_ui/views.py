@@ -218,7 +218,7 @@ def get_json_schema(item_type_id=0):
             if result is None:
                 return '{}'
             
-            print(result.__dict__)
+            print(json.dumps(result))
             json_schema = result.schema
             print(json_schema)
 
