@@ -222,16 +222,16 @@ def get_json_schema(item_type_id=0):
             properties = json_schema.get('properties')
 
             counter = 0
-            for elem in properties:
+            for key, value in properties:
                 print("[Log]: counter: ")
                 print(counter)
                 counter = counter + 1
-                print(json.dumps(elem))
+                print(json.dumps(key))
 
-                if 'validationMessage_i18n' in elem:
+                if 'validationMessage_i18n' in value:
                     print("[Log]: Exist validation message i18n")
-                    print(elem)
-                    elem['validationMessage'] = elem['validationMessage_i18n'][cur_lang]
+                    print(value)
+                    value['validationMessage'] = value['validationMessage_i18n'][cur_lang]
 
             #if 'filemeta' in json.dumps(result):
             #    group_list = Group.get_group_list()
