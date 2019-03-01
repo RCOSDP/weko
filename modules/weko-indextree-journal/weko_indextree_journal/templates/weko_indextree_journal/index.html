@@ -60,6 +60,7 @@
     {% else %}
     <fieldset disabled>
     {% endif %}
+      <input type="hidden" id="journal_id" value="{{journal_id}}">
       <input type="hidden" id="right_index_id" value="{{index_id}}">
       <div class="panel panel-default">
         <div class="panel-heading clearfix">
@@ -68,7 +69,7 @@
           </span>
         </div>
         <div class="panel-body">
-          <div id="weko-records">
+          <div id="weko-records" style="width: 1500px;">
             <invenio-records
               {%- if pid %}
                 initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
