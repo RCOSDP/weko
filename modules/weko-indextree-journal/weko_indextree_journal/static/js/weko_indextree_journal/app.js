@@ -12,7 +12,7 @@ require([
     if($('#right_index_id').val() != '') {
       page_global.cur_index_id = $('#right_index_id').val();
     }
-    if($('#journal_id').val() != '') {
+    if($('#journal_id').val() != '' && $('#journal_id').val() != 'None') {
       page_global.cur_journal_id = $('#journal_id').val();
     }
     var data = {
@@ -29,7 +29,7 @@ require([
       num_last_issue_online: $('#num_last_issue_online').val() || '',
       embargo_info: $('#embargo_info').val() || '',
       coverage_depth: $('select[name=coverage_depth]').val() || '',
-      notes: $('#coverage_notes').val() || '', // coverage_notes
+      coverage_notes: $('#coverage_notes').val() || '',
       publisher_name: $('#publisher_name').val() || '',
       publication_type: $('select[name=publication_type]').val() || '',
       parent_publication_title_id: $('#parent_publication_title_id').val() || '',
@@ -62,8 +62,8 @@ require([
         success: function(data,textStatus){
           alert(data.message);
         },
-        error: function(data,textStatus){
-          alert(data.message);
+        error: function(textStatus,errorThrown){
+          alert(textStatus.responseText);
         }
       });
     }
