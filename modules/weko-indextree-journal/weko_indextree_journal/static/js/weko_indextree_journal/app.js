@@ -17,21 +17,21 @@ require([
       publication_title: $('#publication_title').val() || '',
       print_identifier: $('#print_identifier').val() || '',
       online_identifier: $('#online_identifier').val() || '',
-      date_first_issue_online: $('#date_first_issue_online').val() || '',
+      date_first_issue_online: $('input[name=date_first_issue_online]').val() || '',
       num_first_vol_online: $('#num_first_vol_online').val() || '',
       num_first_issue_online: $('#num_first_issue_online').val() || '',
-      date_last_issue_online: $('#date_last_issue_online').val() || '',
+      date_last_issue_online: $('input[name=date_last_issue_online]').val() || '',
       num_last_vol_online: $('#num_last_vol_online').val() || '',
       num_last_issue_online: $('#num_last_issue_online').val() || '',
       embargo_info: $('#embargo_info').val() || '',
-      coverage_depth: $('#coverage_depth').val() || '',
+      coverage_depth: $('select[name=coverage_depth]').val() || '',
       notes: $('#coverage_notes').val() || '', // coverage_notes
       publisher_name: $('#publisher_name').val() || '',
-      publication_type: $('#publication_type').val() || '',
+      publication_type: $('select[name=publication_type]').val() || '',
       parent_publication_title_id: $('#parent_publication_title_id').val() || '',
       preceding_publication_title_id: $('#preceding_publication_title_id').val() || '',
-      access_type: $('#access_type').val() || '',
-      language: $('#language').val() || '',
+      access_type: $('select[name=access_type]').val() || '',
+      language: $('select[name=language]').val() || '',
       title_alternative: $('#title_alternative').val() || '',
       title_transcription: $('#title_transcription').val() || '',
       ncid: $('#ncid').val() || '',
@@ -41,7 +41,7 @@ require([
       ichushi_code: $('#ichushi_code').val() || ''
     }
 
-    if(page_global.cur_index_id > 0) {
+    if(page_global.cur_index_id != '0') {
       page_global.send_method = "PUT";
     }
 
