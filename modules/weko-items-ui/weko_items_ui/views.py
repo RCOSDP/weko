@@ -222,11 +222,11 @@ def get_json_schema(item_type_id=0):
             properties = json_schema.get('properties')
 
             counter = 0
-            for key, value in properties:
+            for value in properties.itervalues():
                 print("[Log]: counter: ")
                 print(counter)
                 counter = counter + 1
-                print(json.dumps(key))
+                print(json.dumps(value))
 
                 if 'validationMessage_i18n' in value:
                     print("[Log]: Exist validation message i18n")
