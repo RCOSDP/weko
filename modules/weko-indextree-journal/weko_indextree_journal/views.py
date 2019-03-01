@@ -54,8 +54,10 @@ def index(index_id = 0):
     
     # Get journal info.
     journal = []
+    journal_id = None
     if index_id > 0:
         journal = Journals.get_journal_by_index_id(index_id)
+        journal_id = journal.get("id")
 
     json_record = journal
 
@@ -73,7 +75,8 @@ def index(index_id = 0):
         id=item_type_id,
         files=None,
         pid=None,
-        index_id = index_id
+        index_id = index_id,
+        journal_id = journal_id
     )
 
 @blueprint.route("/index/<int:index_id>")
@@ -151,17 +154,24 @@ def get_json_schema(item_type_id=0):
     """
     try:
         result = None
+        cur_lang = current_i18n.language
+
         if item_type_id > 0:
-            result = ItemTypes.get_record(item_type_id)
-            if 'filemeta' in json.dumps(result):
-                group_list = Group.get_group_list()
-                group_enum = list(group_list.keys())
-                filemeta_group = result.get('properties').get('filemeta').get(
-                    'items').get('properties').get('groups')
-                filemeta_group['enum'] = group_enum
+            result = ItemTypes.get_by_id(item_type_id)
+
+            if result is None:
+                return '{}'
+            
+            json_schema = result.schema
+            properties = json_schema.get('properties')
+
+            for key, value in properties.items():
+                if 'validationMessage_i18n' in value:
+                    value['validationMessage'] = value['validationMessage_i18n'][cur_lang]
+
         if result is None:
             return '{}'
-        return jsonify(result)
+        return jsonify(json_schema)
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
