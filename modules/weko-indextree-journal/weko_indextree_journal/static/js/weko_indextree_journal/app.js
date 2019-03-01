@@ -42,7 +42,7 @@ require([
     }
 
     if(page_global.cur_index_id > 0) {
-      page_global.send_method = "PUT"
+      page_global.send_method = "PUT";
     }
 
     send('/api/indextree/journal/'+page_global.cur_index_id, page_global.send_method, data);
