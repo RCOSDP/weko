@@ -219,5 +219,4 @@ class SearchManagement(db.Model):
 
 __all__ = ([
     'SearchManagement',
-]
-)
+])
