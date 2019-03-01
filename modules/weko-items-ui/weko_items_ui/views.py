@@ -214,13 +214,19 @@ def get_json_schema(item_type_id=0):
         result = None
         if item_type_id > 0:
             result = ItemTypes.get_record(item_type_id)
-            print(json.dumps(result))
-            if 'filemeta' in json.dumps(result):
-                group_list = Group.get_group_list()
-                group_enum = list(group_list.keys())
-                filemeta_group = result.get('properties').get('filemeta').get(
-                    'items').get('properties').get('groups')
-                filemeta_group['enum'] = group_enum
+
+            if result is None:
+                return '{}'
+            
+            json_schema = result.schema
+            print(json_schema)
+            
+            #if 'filemeta' in json.dumps(result):
+            #    group_list = Group.get_group_list()
+            #    group_enum = list(group_list.keys())
+            #    filemeta_group = result.get('properties').get('filemeta').get(
+            #        'items').get('properties').get('groups')
+            #    filemeta_group['enum'] = group_enum
         if result is None:
             return '{}'
         return jsonify(result)
