@@ -213,14 +213,18 @@ def get_json_schema(item_type_id=0):
     try:
         result = None
         if item_type_id > 0:
-            result = ItemTypes.get_record(item_type_id)
+            result = ItemTypes.get_by_id(item_type_id)
 
             if result is None:
                 return '{}'
             
-            properties = result.get('properties')
-            print(properties)
+            json_schema = result.schema
+            print(json_schema.get('properties'))
 
+            for elem in json_schema:
+                if 'validationMessage_i18n' in elem:
+                    elem['validationMessage'] = elem['validationMessage_i18n'][cur_lang]
+                    
             #if 'filemeta' in json.dumps(result):
             #    group_list = Group.get_group_list()
             #    group_enum = list(group_list.keys())
@@ -229,7 +233,7 @@ def get_json_schema(item_type_id=0):
             #    filemeta_group['enum'] = group_enum
         if result is None:
             return '{}'
-        return jsonify(result)
+        return jsonify(json_schema)
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
