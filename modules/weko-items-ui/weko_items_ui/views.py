@@ -233,6 +233,8 @@ def get_json_schema(item_type_id=0):
                         'items').get('properties').get('groups')
                     filemeta_group['enum'] = group_enum
 
+                json_schema = result
+
         if result is None:
             return '{}'
         return jsonify(json_schema)
