@@ -219,7 +219,7 @@ def get_json_schema(item_type_id=0):
                 return '{}'
             
             json_schema = result.schema
-            print(json.dumps(json_schema))
+            print(json_schema)
 
             #if 'filemeta' in json.dumps(result):
             #    group_list = Group.get_group_list()
@@ -229,7 +229,7 @@ def get_json_schema(item_type_id=0):
             #    filemeta_group['enum'] = group_enum
         if result is None:
             return '{}'
-        return jsonify(result)
+        return jsonify(json_schema)
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
