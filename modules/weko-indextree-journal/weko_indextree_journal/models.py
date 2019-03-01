@@ -58,7 +58,7 @@ class Journal(db.Model, Timestamp):
         single_parent=True)
     """ID of Index to whom this journal belongs."""
 
-    publication_title = db.Column(db.Text, nullable=False, default='')
+    publication_title = db.Column(db.Text, nullable=True, default='')
     """Title of the journal."""
 
     print_identifier = db.Column(db.Text, nullable=True, default='')
@@ -130,7 +130,7 @@ class Journal(db.Model, Timestamp):
     """Embargo information of the journal."""
     """ varchar(255) """
 
-    coverage_depth = db.Column(db.Text, nullable=False, default='')
+    coverage_depth = db.Column(db.Text, nullable=True, default='')
     """Coverage depth of the journal."""
     """ 
         varchar(255)
@@ -146,7 +146,7 @@ class Journal(db.Model, Timestamp):
     """The Publisher name of the journal."""
     """ varchar(255) """
 
-    publication_type = db.Column(db.Text, nullable=False, default='')
+    publication_type = db.Column(db.Text, nullable=True, default='')
     """Publication type of the journal."""
     """ varchar(255)
         Select the following item: "Serial"
@@ -168,7 +168,7 @@ class Journal(db.Model, Timestamp):
             It's the index ID of index containing journal information
     """
 
-    access_type = db.Column(db.Text, nullable=False, default='')
+    access_type = db.Column(db.Text, nullable=True, default='')
     """Access type of the journal."""
     """
         varchar(1)
@@ -179,7 +179,7 @@ class Journal(db.Model, Timestamp):
         　・P：Paid（有料）
     """
 
-    language = db.Column(db.Text, nullable=False, default='')
+    language = db.Column(db.Text, nullable=True, default='')
     """Language of the journal."""
     """
         varchar(7)
@@ -226,6 +226,11 @@ class Journal(db.Model, Timestamp):
     """ varchar(6)
         Allow the following input:「^J[0-9]{5}$」
     """
+
+    is_output = db.Column(db.Boolean(name='is_output'),
+        nullable=True,
+        default=lambda: False
+    )
 
     owner_user_id = db.Column(db.Integer, nullable=True, default=0)
     """Owner user id of the journal."""

@@ -92,6 +92,7 @@ class Journals(object):
             data["ndl_bibid"] = journals.get('ndl_bibid')
             data["jstage_code"] = journals.get('jstage_code')
             data["ichushi_code"] = journals.get('ichushi_code')
+            data["is_output"] = journals.get('is_output')
 
             # get current user logged id.
             data["owner_user_id"] = current_user.get_id()
