@@ -218,9 +218,8 @@ def get_json_schema(item_type_id=0):
             if result is None:
                 return '{}'
             
-            print(json.dumps(result))
-            json_schema = result.schema
-            print(json_schema)
+            properties = result.properties
+            print(properties)
 
             #if 'filemeta' in json.dumps(result):
             #    group_list = Group.get_group_list()
