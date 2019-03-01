@@ -222,7 +222,7 @@ def get_json_schema(item_type_id=0):
             properties = json_schema.get('properties')
 
             counter = 0
-            for value in properties.itervalues():
+            for value in properties:
                 print("[Log]: counter: ")
                 print(counter)
                 counter = counter + 1
