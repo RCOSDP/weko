@@ -78,7 +78,7 @@ class Journals(object):
             data["num_last_issue_online"] = journals.get('num_last_issue_online')
             data["embargo_info"] = journals.get('embargo_info')
             data["coverage_depth"] = journals.get('coverage_depth')
-            data["coverage_notes"] = journals.get('notes')
+            data["coverage_notes"] = journals.get('coverage_notes')
             data["publisher_name"] = journals.get('publisher_name')
             data["publication_type"] = journals.get('publication_type')
             data["parent_publication_title_id"] = journals.get('parent_publication_title_id')
