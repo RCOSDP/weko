@@ -57,7 +57,7 @@ def index(index_id = 0):
     journal_id = None
     if index_id > 0:
         journal = Journals.get_journal_by_index_id(index_id)
-        if journal is not None
+        if journal is not None:
             journal_id = journal.get("id")
 
     json_record = journal
