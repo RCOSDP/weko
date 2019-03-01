@@ -219,7 +219,7 @@ def get_json_schema(item_type_id=0):
                 return '{}'
             
             json_schema = result.schema
-            print(json_schema.get('properties'))
+            #print(json_schema.get('properties'))
 
             for elem in json_schema:
                 print(elem)
