@@ -212,6 +212,8 @@ def get_json_schema(item_type_id=0):
     """
     try:
         result = None
+        cur_lang = current_i18n.language
+        
         if item_type_id > 0:
             result = ItemTypes.get_by_id(item_type_id)
 
