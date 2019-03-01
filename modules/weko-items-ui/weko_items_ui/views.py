@@ -218,7 +218,7 @@ def get_json_schema(item_type_id=0):
             if result is None:
                 return '{}'
             
-            properties = result.properties
+            properties = result.get('properties')
             print(properties)
 
             #if 'filemeta' in json.dumps(result):
