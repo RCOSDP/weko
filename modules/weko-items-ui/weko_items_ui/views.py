@@ -222,9 +222,10 @@ def get_json_schema(item_type_id=0):
             print(json_schema.get('properties'))
 
             for elem in json_schema:
+                print(elem)
                 if 'validationMessage_i18n' in elem:
                     elem['validationMessage'] = elem['validationMessage_i18n'][cur_lang]
-                    
+
             #if 'filemeta' in json.dumps(result):
             #    group_list = Group.get_group_list()
             #    group_enum = list(group_list.keys())
