@@ -19,10 +19,10 @@
 # MA 02111-1307, USA.
 
 """ Utilities for making the PDF cover page and newly combined PDFs. """
-import io, unicodedata, json
+import io, unicodedata, json, os
 from datetime import datetime
 from fpdf import FPDF
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfFileWriter, PdfFileReader, utils
 from flask import send_file, current_app
 from weko_records.api import ItemsMetadata, ItemMetadata, ItemType
 from invenio_pidstore.models import PersistentIdentifier
@@ -32,6 +32,7 @@ from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 from weko_records.api import Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
 from .views import blueprint
+from .views import ObjectResourceWeko
 
 """ Function counting numbers of full-width character and half-width character differently """
 def get_east_asian_width_count(text):
@@ -45,7 +46,7 @@ def get_east_asian_width_count(text):
 
 
 """ Function making PDF cover page """
-def make_combined_pdf(pid, obj_file_uri):
+def make_combined_pdf(pid, obj_file_uri, fileobj, obj):
     """
     meke the cover-page-combined PDF file
     :param pid: PID object
@@ -53,8 +54,7 @@ def make_combined_pdf(pid, obj_file_uri):
     :return: cover-page-combined PDF file object
     """
 
-    pid = pid.pid_value
-    pidObject = PersistentIdentifier.get('recid', pid)
+    pidObject = PersistentIdentifier.get('recid', pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pidObject.object_uuid)
     item_metadata = db.session.query(ItemMetadata).filter_by(json=item_metadata_json).first()
     item_type = db.session.query(ItemType).filter(ItemType.id==ItemMetadata.item_type_id).first()
@@ -304,6 +304,38 @@ def make_combined_pdf(pid, obj_file_uri):
     cover_page = PdfFileReader(b_output)
     f = open(obj_file_uri, "rb")
     existing_pages = PdfFileReader(f)
+
+    # In the case the PDF file is encrypted by the password, ''(i.e. not encrypted intentionally)
+    if existing_pages.isEncrypted:
+        try:
+            existing_pages.decrypt('')
+        except: # Errors such as NotImplementedError
+            return ObjectResourceWeko.send_object(
+                obj.bucket, obj,
+                expected_chksum=fileobj.get('checksum'),
+                logger_data={
+                    'bucket_id': obj.bucket_id,
+                    'pid_type': pid.pid_type,
+                    'pid_value': pid.pid_value,
+                },
+                as_attachment=False,
+                cache_timeout=-1
+            )
+
+    # In the case the PDF file is encrypted by the password except ''
+    if existing_pages.isEncrypted:
+        return ObjectResourceWeko.send_object(
+            obj.bucket, obj,
+            expected_chksum=fileobj.get('checksum'),
+            logger_data={
+                'bucket_id': obj.bucket_id,
+                'pid_type': pid.pid_type,
+                'pid_value': pid.pid_value,
+            },
+            as_attachment=False,
+            cache_timeout=-1
+        )
+
     combined_pages = PdfFileWriter()
     combined_pages.addPage(cover_page.getPage(0))
     for page_num in range(existing_pages.numPages):

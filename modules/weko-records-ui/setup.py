@@ -105,6 +105,12 @@ setup(
             'detail_page_access'
             ' = weko_records_ui.permissions:action_detail_page_access',
         ],
+        'invenio_db.alembic': [
+            'weko_records_ui = weko_records_ui:alembic',
+        ],
+        'invenio_db.models': [
+            'weko_records_ui = weko_records_ui.models',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
