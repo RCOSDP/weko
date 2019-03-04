@@ -2,77 +2,6 @@ require([
   "jquery",
   "bootstrap"
 ], function() {
-
-  page_global = {
-    cur_journal_id: 0,
-    cur_index_id: 0,
-    send_method: 'POST'
-   }
-  $('#index-journal-submit').on('click', function(){
-    var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid-tv4-0");
-    if(invalidFlg) {
-      return
-    }
-    if($('#right_index_id').val() != '') {
-      page_global.cur_index_id = $('#right_index_id').val();
-    }
-    if($('#journal_id').val() != '' && $('#journal_id').val() != 'None') {
-      page_global.cur_journal_id = $('#journal_id').val();
-    }
-    var data = {
-      id: page_global.cur_index_id,
-      index_id: page_global.cur_index_id,
-      is_output: $("input[name='is_output']:checked").val() || true,
-      publication_title: $('#publication_title').val() || '',
-      print_identifier: $('#print_identifier').val() || '',
-      online_identifier: $('#online_identifier').val() || '',
-      date_first_issue_online: $('input[name=date_first_issue_online]').val() || '',
-      num_first_vol_online: $('#num_first_vol_online').val() || '',
-      num_first_issue_online: $('#num_first_issue_online').val() || '',
-      date_last_issue_online: $('input[name=date_last_issue_online]').val() || '',
-      num_last_vol_online: $('#num_last_vol_online').val() || '',
-      num_last_issue_online: $('#num_last_issue_online').val() || '',
-      embargo_info: $('#embargo_info').val() || '',
-      coverage_depth: $('select[name=coverage_depth]').val() || '',
-      coverage_notes: $('#coverage_notes').val() || '',
-      publisher_name: $('#publisher_name').val() || '',
-      publication_type: $('select[name=publication_type]').val() || '',
-      parent_publication_title_id: $('#parent_publication_title_id').val() || 0,
-      preceding_publication_title_id: $('#preceding_publication_title_id').val() || 0,
-      access_type: $('select[name=access_type]').val() || '',
-      language: $('select[name=language]').val() || '',
-      title_alternative: $('#title_alternative').val() || '',
-      title_transcription: $('#title_transcription').val() || '',
-      ncid: $('#ncid').val() || '',
-      ndl_callno: $('#ndl_callno').val() || '',
-      ndl_bibid: $('#ndl_bibid').val() || '',
-      jstage_code: $('#jstage_code').val() || '',
-      ichushi_code: $('#ichushi_code').val() || ''
-    }
-
-    if(page_global.cur_journal_id != '0') {
-      page_global.send_method = "PUT";
-    }
-
-    send('/api/indextree/journal/'+page_global.cur_index_id, page_global.send_method, data);
-
-    function send(url, method, data){
-      $.ajax({
-        method: method,
-        url: url,
-        async: true,
-        contentType: 'application/json',
-        dataType: 'json',
-        data: JSON.stringify(data),
-        success: function(data,textStatus){
-          alert(data.message);
-        },
-        error: function(textStatus,errorThrown){
-          alert(textStatus.responseText);
-        }
-      });
-    }
-  });
 });
 
 (function (angular) {
@@ -81,6 +10,40 @@ require([
   angular.module('wekoRecords.controllers', []);
 
   function WekoRecordsCtrl($scope, $rootScope, $modal, InvenioRecordsAPI){
+    $scope.saveData = function(){
+      // Broadcast an event so all fields validate themselves
+      $scope.$broadcast('schemaFormValidate');
+      var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
+      if (invalidFlg) {
+        var page_info = {
+          cur_journal_id: 0,
+          cur_index_id: 0,
+          send_method: 'POST'
+        }
+        page_info.cur_journal_id = $rootScope.recordsVM.invenioRecordsModel.id;
+        page_info.cur_index_id = $rootScope.recordsVM.invenioRecordsModel.index_id;
+
+        if(page_info.cur_journal_id != '0') {
+          page_info.send_method = "PUT";
+        }
+        var request = {
+          url: '/api/indextree/journal/'+page_info.cur_index_id,
+          method: page_info.send_method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify($rootScope.recordsVM.invenioRecordsModel)
+        };
+        InvenioRecordsAPI.request(request).then(
+          function success(response){
+            alert(response.data.message);
+          },
+          function error(response){
+            alert(response.data.message);
+          }
+        );
+      }
+    }
   }
 
   // Inject depedencies
