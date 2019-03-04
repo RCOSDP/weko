@@ -65,8 +65,6 @@
     {% else %}
     <fieldset disabled>
     {% endif %}
-      <input type="hidden" id="journal_id" value="{{journal_id}}">
-      <input type="hidden" id="right_index_id" value="{{index_id}}">
       <div class="panel panel-default">
         <div class="panel-heading clearfix">
           <span class="panel-title">
@@ -100,17 +98,21 @@
                 <div ng-show="false" type="text" id="array_index" ></div>
                 <div ng-show="false" type="text" id="weko_id" ></div>
                 <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
+                <input type="hidden" id="journal_id" value="{{journal_id}}">
+                <input type="hidden" id="right_index_id" value="{{index_id}}">
                 <invenio-records-form
                   form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
                   form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                   template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
                 </invenio-records-form>
+                <div class="row">
+                  <div class="col-sm-9 text-center">
+                    <button id="index-journal-submit" class="btn btn-info" ng-click="saveData();" >{{_('Save')}}</button>
+                  </div>
+                </div>
               </div>
             </invenio-records>
           </div>
-        </div>
-        <div class="panel-footer">
-          <button id="index-journal-submit" class="btn btn-info" (click)="">{{_('Save')}}</button>
         </div>
       </div>
     </fieldset>
