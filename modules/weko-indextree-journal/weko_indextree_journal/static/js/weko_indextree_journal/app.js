@@ -21,14 +21,14 @@ require([
           send_method: 'POST'
         }
         if($('#right_index_id').val() != '') {
-          page_global.cur_index_id = $('#right_index_id').val();
+          page_info.cur_index_id = $('#right_index_id').val();
         }
         if($('#journal_id').val() != '' && $('#journal_id').val() != 'None') {
-          page_global.cur_journal_id = $('#journal_id').val();
+          page_info.cur_journal_id = $('#journal_id').val();
         }
         var data = {
-          id: page_global.cur_index_id,
-          index_id: page_global.cur_index_id,
+          id: page_info.cur_index_id,
+          index_id: page_info.cur_index_id,
           is_output: $("input[name='is_output']:checked").val() || true,
           publication_title: $('#publication_title').val() || '',
           print_identifier: $('#print_identifier').val() || '',
