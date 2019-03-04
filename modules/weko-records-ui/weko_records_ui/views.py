@@ -31,6 +31,9 @@ from .permissions import check_created_id
 from weko_search_ui.api import get_search_detail_keyword
 from weko_deposit.api import WekoIndexer
 from .models import PDFCoverPageSettings
+from invenio_files_rest.views import ObjectResource
+from invenio_files_rest.views import file_downloaded, check_permission
+from invenio_files_rest.views import ObjectResource
 import werkzeug
 
 blueprint = Blueprint(
@@ -327,3 +330,23 @@ def set_pdfcoverpage_header():
         return redirect('/admin/pdfcoverpage')
 
     return redirect('/admin/pdfcoverpage')
+
+
+class ObjectResourceWeko(ObjectResource):
+
+    # redefine `send_object` method to implement the no-cache function
+    @staticmethod
+    def send_object(bucket, obj, expected_chksum=None, logger_data=None, restricted=True, as_attachment=False,
+                    cache_timeout=-1):
+        if not obj.is_head:
+            check_permission(
+                current_permission_factory(obj, 'object-read-version'),
+                hidden=False
+            )
+
+        if expected_chksum and obj.file.checksum != expected_chksum:
+            current_app.logger.warning(
+                'File checksum mismatch detected.', extra=logger_data)
+
+        file_downloaded.send(current_app._get_current_object(), obj=obj)
+        return obj.send_file(restricted=restricted, as_attachment=as_attachment)
