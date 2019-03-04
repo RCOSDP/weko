@@ -30,30 +30,31 @@ from sqlalchemy_utils.types import JSONType
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import mysql, postgresql
 
+""" PDF cover page model"""
 class PDFCoverPageSettings(db.Model):
     __tablename__ = 'pdfcoverpage_set'
 
-    id = db.Column("ID", db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    avail = db.Column("Availability", db.Text, nullable=True, default='disable')
+    avail = db.Column(db.Text, nullable=True, default='disable')
     """ PDF Cover Page Availability """
 
-    header_display_type = db.Column("Header Display Type", db.Text, nullable=True, default='string')
+    header_display_type = db.Column(db.Text, nullable=True, default='string')
     """ Header Display('string' or 'image')"""
 
-    header_output_string = db.Column("Header Output String", db.Text, nullable=True, default='')
+    header_output_string = db.Column(db.Text, nullable=True, default='')
     """ Header Output String"""
 
-    header_output_image = db.Column("Header Output Image", db.Text, nullable=True, default='')
+    header_output_image = db.Column(db.Text, nullable=True, default='')
     """ Header Output Image"""
 
-    header_display_position = db.Column("Header Display Position", db.Text, nullable=True, default='center')
+    header_display_position = db.Column(db.Text, nullable=True, default='center')
     """ Header Display Position """
 
-    created_at = db.Column("Created at", db.DateTime, nullable=False, default=datetime.now)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     """ Created Date"""
 
-    updated_at = db.Column("Updated at", db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
     """ Updated Date """
 
     def __init__(self, avail, header_display_type, header_output_string, header_output_image, header_display_position):
@@ -65,7 +66,8 @@ class PDFCoverPageSettings(db.Model):
 
     @classmethod
     def find(cls, id):
-        """ find record by id"""
+        """ find record by ID """
+
         record = db.session.query(cls).filter_by(id=id).first()
         return record
 
@@ -74,7 +76,7 @@ class PDFCoverPageSettings(db.Model):
 
         settings = PDFCoverPageSettings(avail, header_display_type, header_output_string, header_output_image, header_display_position)
 
-        """ update record by id"""
+        """ update record by ID """
         record = db.session.query(cls).filter_by(id=id).first()
 
         record.avail = settings.avail
@@ -85,12 +87,8 @@ class PDFCoverPageSettings(db.Model):
         db.session.commit()
         return record
 
-__all__ = (['PDFCoverPageSettings'])
 
-"""Record UI models."""
-
-from invenio_db import db
-
+""" Record UI models """
 class InstitutionName(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     institution_name = db.Column(db.String(255), default='')
@@ -107,3 +105,6 @@ class InstitutionName(db.Model):
         cfg = cls.query.get(1)
         cfg.institution_name = new_name
         db.session.commit()
+
+
+__all__ = ('PDFCoverPageSettings')
