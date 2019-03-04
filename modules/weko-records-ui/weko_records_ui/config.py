@@ -30,7 +30,6 @@ WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Contributor',
                              'General')
 
-
 WEKO_PERMISSION_SUPER_ROLE_USER = ('System Administrator',
                                    'Repository Administrator')
 

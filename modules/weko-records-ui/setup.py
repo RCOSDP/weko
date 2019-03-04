@@ -104,6 +104,7 @@ setup(
         'invenio_access.actions': [
             'detail_page_access'
             ' = weko_records_ui.permissions:action_detail_page_access',
+            'download_original_pdf_access = weko_records_ui.permissions:action_download_original_pdf_access',
         ],
         'invenio_db.alembic': [
             'weko_records_ui = weko_records_ui:alembic',

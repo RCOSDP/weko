@@ -27,7 +27,7 @@ from flask import Blueprint, abort, current_app, render_template, \
 from invenio_records_ui.utils import obj_or_import_string
 from invenio_records_ui.signals import record_viewed
 from weko_index_tree.models import IndexStyle
-from .permissions import check_created_id
+from .permissions import check_created_id, check_original_pdf_download_permission
 from weko_search_ui.api import get_search_detail_keyword
 from weko_deposit.api import WekoIndexer
 from .models import PDFCoverPageSettings
@@ -280,10 +280,17 @@ def default_view_method(pid, record, template=None, **kwargs):
     else:
         record["relation"] = {}
 
+    pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
+    # Check if user has the permission to download original pdf file
+    # and the cover page setting is set and its value is enable (not disabled)
+    can_download_original = check_original_pdf_download_permission(record) \
+        and pdfcoverpage_set_rec is not None and pdfcoverpage_set_rec.avail != 'disable'
+
     return render_template(
         template,
         pid=pid,
         record=record,
+        can_download_original_pdf=can_download_original,
         community_id=community_id,
         width=width,
         detail_condition=detail_condition,
