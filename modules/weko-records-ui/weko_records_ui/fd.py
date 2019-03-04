@@ -28,7 +28,7 @@ from .pdf import make_combined_pdf
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 from invenio_files_rest.proxies import current_permission_factory
-from .permissions import file_permission_factory
+from .permissions import file_permission_factory, check_original_pdf_download_permission
 from .models import PDFCoverPageSettings
 from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
@@ -199,17 +199,26 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
 
     try:
         pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
-        if pdfcoverpage_set_rec.avail == 'disable':
+
+        is_original = request.args.get('original') or False
+        is_pdf = 'pdf' in fileobj.mimetype
+        can_download_original_pdf = check_original_pdf_download_permission(record)
+
+        # if not pdf or cover page disabled: Download directly
+        # if pdf and cover page enabled and has original in query param: check permission (user roles)
+        if is_pdf is False \
+            or pdfcoverpage_set_rec is None or pdfcoverpage_set_rec.avail == 'disable' \
+            or (is_original and can_download_original_pdf):
             return ObjectResourceWeko.send_object(
-            obj.bucket, obj,
-            expected_chksum=fileobj.get('checksum'),
-            logger_data={
-                'bucket_id': obj.bucket_id,
-                'pid_type': pid.pid_type,
-                'pid_value': pid.pid_value,
-            },
-            as_attachment=False,
-            cache_timeout=-1
+                obj.bucket, obj,
+                expected_chksum=fileobj.get('checksum'),
+                logger_data={
+                    'bucket_id': obj.bucket_id,
+                    'pid_type': pid.pid_type,
+                    'pid_value': pid.pid_value,
+                },
+                as_attachment=False,
+                cache_timeout=-1
             )
     except AttributeError:
         return ObjectResourceWeko.send_object(
@@ -223,7 +232,6 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
             as_attachment=False,
             cache_timeout=-1
         )
-
 
     """ Send file with its pdf cover page """
     object_version_record = ObjectVersion.query.filter_by(bucket_id= obj.bucket_id).first()
