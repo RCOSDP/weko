@@ -55,7 +55,17 @@ setup_requires = [
 ]
 
 install_requires = [
-    'Flask-BabelEx>=0.9.2',
+    'Flask-CeleryExt>=0.3.1',
+    'Flask-Login>=0.3.2',
+    'Flask-WTF>=0.13.1',
+    'Flask>=0.11.1',
+    'fs>=0.5.4,<2.0',
+    'invenio-rest[cors]>=1.0.0',
+    'marshmallow>=2.15.1,<3.0.0',
+    'simplejson>=3.0.0',
+    'SQLAlchemy-Utils>=0.31.0',
+    'webargs>=1.1.1',
+    'WTForms>=2.0',
 ]
 
 packages = find_packages()
