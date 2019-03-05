@@ -93,6 +93,9 @@ setup(
             'weko_indextree_journal_view = weko_indextree_journal.bundles:js_treeview',
             'weko_indextree_journal_js = weko_indextree_journal.bundles:js',
         ],
+        'invenio_celery.tasks': [
+            'weko_indextree_journal = weko_indextree_journal.tasks',
+        ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
