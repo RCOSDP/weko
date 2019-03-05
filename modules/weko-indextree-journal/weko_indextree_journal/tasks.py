@@ -104,7 +104,9 @@ def export_journal_task(p_path):
 
         # Get journal data.
         journals = Journals.get_all_journals()
-        journals_list = list(journals)
+        journals_list = []
+        if journals is not None
+            journals_list = list(journals)
         data = numpy.asarray(journals_list)
 
         # create folder if not exist
