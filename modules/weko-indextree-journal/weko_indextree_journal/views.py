@@ -24,6 +24,7 @@ from flask_babelex import gettext as _
 from weko_records.api import ItemTypes
 from weko_groups.api import Group
 from .api import Journals
+from .tasks import export_journal_task
 
 from .permissions import indextree_journal_permission
 
@@ -226,6 +227,5 @@ def get_schema_form(item_type_id=0):
 @login_required
 def check_view(item_type_id=0):
     """Render a check view."""
-    return render_template(
-        'weko_indextree_journal/checkview.html'
-    )
+    result = export_journal_task(p_path = '')
+    return jsonify(result)
