@@ -58,12 +58,10 @@ def export_journal_task(p_path):
         repository_name = current_app.config['OAISERVER_REPOSITORY_NAME']
         current_date = datetime.datetime.today().strftime('%Y-%m-%d')
 
-        repository_filename = "{0}_AllTitles_{1}.txt"
-            .format(repository_name, current_date)
+        repository_filename = "{0}_AllTitles_{1}.txt".format(repository_name, current_date)
 
         repository_data_path = os.path.join(
-            current_app.static_folder, kbart_folder,
-                repository_filename)
+            current_app.static_folder, kbart_folder, repository_filename)
 
         # Build header.
         header = [
@@ -116,6 +114,7 @@ def export_journal_task(p_path):
             os.makedirs(directory)
 
         numpy.savetxt(repository_data_path, journals_list, delimiter="\t", header=header_string)
+        numpy.savetxt(filelist_path, [repository_filename])
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
     except Exception as ex:
