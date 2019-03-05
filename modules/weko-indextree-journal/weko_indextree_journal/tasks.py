@@ -29,8 +29,9 @@ from elasticsearch.exceptions import TransportError
 
 logger = get_task_logger(__name__)
 
+print("[Log]: Register journal tasks.")
 @shared_task(ignore_result=True)
-def export_journal(p_path):
+def export_journal_task(p_path):
     """
     Delete item Index on ES and update item json column to None
     :param p_path:
