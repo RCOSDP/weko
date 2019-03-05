@@ -133,13 +133,18 @@ def export_journal_task(p_path):
 
         numpy.savetxt(repository_data_path, journals_list, delimiter="\t", header=header_string)
 
+        print("[Log]: Before remove filelist_path")
         # save file list
         if os.path.exists(filelist_path):
             os.remove(filelist_path)
 
+        print("[Log]: Before create array filelist_data")
         filelist_data = []
         filelist_data.append(repository_filename)
+
+        print("[Log]: Before save filelist_path, filelist_data")
         numpy.savetxt(filelist_path, filelist_data)
+        print("[Log]: After save filelist_path, filelist_data")
 
         print("[Log]: end export tasks ")
         # jsonList = json.dumps({"results" : results})
