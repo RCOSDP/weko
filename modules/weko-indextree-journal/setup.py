@@ -26,6 +26,13 @@ tests_require = [
 ]
 
 extras_require = {
+    ':python_version=="2.7"': [
+        'ipaddr>=2.1.11',
+    ],
+    'celery': [
+        # Needed for building the documentation until v4.2 is released.
+        'celery>=3.1.0,<4.0',
+    ],
     'docs': [
         'Sphinx>=1.5.1',
     ],
@@ -43,6 +50,7 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.3',
+    'Flask-CeleryExt>=0.3.1',
 ]
 
 packages = find_packages()
