@@ -68,7 +68,7 @@ def export_journal_task(p_path):
 
         repository_filename = "{0}_AllTitles_{1}.txt".format(repository_name, current_date)
         print("[Log]: repository_filename: ")
-        print(repository_name)
+        print(repository_filename)
 
         repository_data_path = os.path.join(
             current_app.static_folder, kbart_folder, repository_filename)
