@@ -47,7 +47,6 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.3',
-    'Flask-CeleryExt>=0.3.1',
 ]
 
 packages = find_packages()
