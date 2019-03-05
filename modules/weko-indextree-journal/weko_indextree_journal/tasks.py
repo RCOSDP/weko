@@ -132,7 +132,14 @@ def export_journal_task(p_path):
             os.makedirs(directory)
 
         numpy.savetxt(repository_data_path, journals_list, delimiter="\t", header=header_string)
-        numpy.savetxt(filelist_path, [repository_filename])
+
+        # save file list
+        if os.path.exists(filelist_path):
+            os.remove(filelist_path)
+
+        filelist_data = []
+        filelist_data.append(repository_filename)
+        numpy.savetxt(filelist_path, filelist_data)
 
         print("[Log]: end export tasks ")
         # jsonList = json.dumps({"results" : results})
