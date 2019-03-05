@@ -71,10 +71,14 @@ require([
         };
         InvenioRecordsAPI.request(request).then(
           function success(response){
-            alert(response.data.message);
+            if (!$('form[name="depositionForm"]').hasClass("ng-invalid")) {
+              alert(response.data.message);
+            }
           },
           function error(response){
-            alert(response.data.message);
+            if (!$('form[name="depositionForm"]').hasClass("ng-invalid")) {
+              alert(response.data.message);
+            }
           }
         );
       }
