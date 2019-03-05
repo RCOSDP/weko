@@ -34,6 +34,8 @@ from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
 from invenio_files_rest.models import ObjectVersion, FileInstance
 from .views import ObjectResourceWeko
+from weko_user_profiles.models import UserProfile
+from flask_login import current_user
 
 def weko_view_method(pid, record, template=None, **kwargs):
     r"""Display Weko view.
@@ -195,6 +197,15 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
     # #Check permissions
     # ObjectResource.check_object_permission(obj)
 
+    ### Get user's language
+    user = UserProfile.get_by_userid(current_user.get_id())
+    lang = 'en'     # Defautl language for PDF coverpage
+
+    if user == None:
+        lang = 'en'
+    else:
+        lang = user.language
+
     """ Send file without its pdf cover page """
 
     try:
@@ -229,5 +240,5 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
     object_version_record = ObjectVersion.query.filter_by(bucket_id= obj.bucket_id).first()
     file_instance_record = FileInstance.query.filter_by(id=object_version_record.file_id).first()
     obj_file_uri = file_instance_record.uri
-    return make_combined_pdf(pid, obj_file_uri, fileobj, obj)
+    return make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang)
 
