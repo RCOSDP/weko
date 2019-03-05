@@ -60,7 +60,6 @@ install_requires = [
     'Flask-WTF>=0.13.1',
     'Flask>=0.11.1',
     'fs>=0.5.4,<2.0',
-    'invenio-rest[cors]>=1.0.0',
     'marshmallow>=2.15.1,<3.0.0',
     'simplejson>=3.0.0',
     'SQLAlchemy-Utils>=0.31.0',
