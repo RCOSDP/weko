@@ -55,15 +55,25 @@ def export_journal_task(p_path):
         filelist_path = os.path.join(
             current_app.static_folder, kbart_folder, "filelist.txt")
 
+        print("[Log]: filelist_path: ")
+        print(filelist_path)
         # UtokyoRepository_Global_AllTitles_2018-12-12.txt
         # {0}: {Repository name}, {1}: {Last update date}
         repository_name = current_app.config['OAISERVER_REPOSITORY_NAME']
+        print("[Log]: repository_name: ")
+        print(repository_name)
+
         current_date = datetime.datetime.today().strftime('%Y-%m-%d')
 
         repository_filename = "{0}_AllTitles_{1}.txt".format(repository_name, current_date)
+        print("[Log]: repository_filename: ")
+        print(repository_name)
 
         repository_data_path = os.path.join(
             current_app.static_folder, kbart_folder, repository_filename)
+
+        print("[Log]: repository_data_path: ")
+        print(repository_data_path)
 
         # Build header.
         header = [
@@ -114,11 +124,16 @@ def export_journal_task(p_path):
         # create folder if not exist
         directory = os.path.join(
             current_app.static_folder, kbart_folder)
+        
+        print("[Log]: directory: ")
+        print(directory)
         if not os.path.exists(directory):
             os.makedirs(directory)
 
         numpy.savetxt(repository_data_path, journals_list, delimiter="\t", header=header_string)
         numpy.savetxt(filelist_path, [repository_filename])
+
+        print("[Log]: end export tasks ")
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
     except Exception as ex:
