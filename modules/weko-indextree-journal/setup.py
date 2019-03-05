@@ -26,9 +26,6 @@ tests_require = [
 ]
 
 extras_require = {
-    ':python_version=="2.7"': [
-        'ipaddr>=2.1.11',
-    ],
     'celery': [
         # Needed for building the documentation until v4.2 is released.
         'celery>=3.1.0,<4.0',
