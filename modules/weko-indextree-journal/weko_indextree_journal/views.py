@@ -169,7 +169,10 @@ def get_json_schema(item_type_id=0):
 
             for key, value in properties.items():
                 if 'validationMessage_i18n' in value:
-                    value['validationMessage'] = value['validationMessage_i18n'][cur_lang]
+                    msg = {}
+                    for k, v in value['validationMessage_i18n'].items():
+                        msg[k] = v[cur_lang]
+                    value['validationMessage'] = msg
 
         if result is None:
             return '{}'

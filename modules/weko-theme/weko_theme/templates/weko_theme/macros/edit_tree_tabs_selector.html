@@ -19,6 +19,6 @@
 #}
 
 {% macro tabs_selector(tab_value='index_edit',index_id='') %}
-    <li id="tab_display" role="presentation" {% if tab_value=='index_edit' %}class="active activity_li"{% endif %}><a href="{{url_for('weko_index_tree.index')}}">{{ _('Index Edit') }}</a></li>
+    <li id="tab_display" role="presentation" {% if tab_value=='index_edit' %}class="active activity_li"{% endif %}><a href="{{url_for('weko_index_tree.index', index_id=index_id)}}">{{ _('Index Edit') }}</a></li>
     <li role="presentation" {% if tab_value=='journal_edit' %}class="active activity_li"{% endif %}><a href="{{url_for('weko_indextree_journal.index', index_id=index_id)}}">{{ _('Journal') }}</a></li>
 {% endmacro %}
