@@ -119,7 +119,49 @@ def export_journal_task(p_path):
         journals = Journals.get_all_journals()
         journals_list = []
         if journals is not None:
-            journals_list = list(journals)
+            for item in journals
+                print("[Log]: show attributes of journal in database")
+                print(dir(item))
+
+                # get data
+                journal_data = []
+                journal_data.append(item.publication_title)
+                journal_data.append(item.print_identifier)
+                journal_data.append(item.online_identifier)
+                journal_data.append(item.date_first_issue_online)
+                journal_data.append(item.num_first_vol_online)
+                journal_data.append(item.num_first_issue_online)
+                journal_data.append(item.date_last_issue_online)
+                journal_data.append(item.num_last_vol_online)
+                journal_data.append(item.num_last_issue_online)
+                journal_data.append(item.title_url)
+                journal_data.append(item.first_author)
+                journal_data.append(item.title_id)
+                journal_data.append(item.embargo_info)
+                journal_data.append(item.coverage_depth)
+                journal_data.append(item.notes)
+                journal_data.append(item.publisher_name)
+                journal_data.append(item.publication_type)
+                journal_data.append(item.date_monograph_published_print)
+                journal_data.append(item.date_monograph_published_online)
+                journal_data.append(item.monograph_volume)
+                journal_data.append(item.monograph_edition)
+                journal_data.append(item.first_editor)
+                journal_data.append(item.parent_publication_title_id)
+                journal_data.append(item.preceding_publication_title_id)
+                journal_data.append(item.access_type)
+                journal_data.append(item.language)
+                journal_data.append(item.title_alternative)
+                journal_data.append(item.title_transcription)
+                journal_data.append(item.ncid)
+                journal_data.append(item.ndl_callno)
+                journal_data.append(item.jstage_code)
+                journal_data.append(item.ichushi_code)
+                journal_data.append(item.deleted)
+
+                # add to list.
+                journals_list.append(journal_data)
+            
         data = numpy.asarray(journals_list)
 
         print("[Log]: data: ")
