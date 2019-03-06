@@ -122,6 +122,8 @@ def export_journal_task(p_path):
             journals_list = list(journals)
         data = numpy.asarray(journals_list)
 
+        print("[Log]: data: ")
+        print(data)
         # create folder if not exist
         directory = os.path.join(
             current_app.static_folder, kbart_folder)
