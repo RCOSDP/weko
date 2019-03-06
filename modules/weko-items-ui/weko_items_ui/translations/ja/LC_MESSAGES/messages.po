@@ -118,3 +118,15 @@ msgstr "保存"
 #: app-author-add/src/app/app.component.html:21
 msgid "Index_Tree"
 msgstr "インデックスツリー"
+
+# weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:38
+msgid "Items_Autofill_Header_Name"
+msgstr "Wekoアイテムオートフィル"
+
+# weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:108
+msgid "Items_Autofill_Automatic_Metadata_Input"
+msgstr "自動メタデータ入力"
+
+# weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:120
+msgid "Get"
+msgstr "取得する"

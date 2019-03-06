@@ -1,0 +1,28 @@
+# Japanese translations for weko-itemtypes-ui.
+# Copyright (C) 2018 National Institute of Informatics
+# This file is distributed under the same license as the weko-itemtypes-ui
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2018-04-11 19:54+0900\n"
+"PO-Revision-Date: 2018-01-18 18:48+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#: weko_items_autofill/views.py:56
+msgid "Header_Error"
+msgstr "ヘッダ誤り"
+
+#: weko_items_autofill/config.py:86
+msgid "Select_the_ID"
+msgstr "IDを選択"
