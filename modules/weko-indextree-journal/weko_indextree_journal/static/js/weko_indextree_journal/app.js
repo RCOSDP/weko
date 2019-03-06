@@ -12,19 +12,19 @@ require([
   function WekoRecordsCtrl($scope, $rootScope, $modal, InvenioRecordsAPI){
     $scope.saveData = function(){
       // Broadcast an event so all fields validate themselves
-      $scope.cur_journal_id = 0;
+      $scope.cur_index_id = 0;
       $scope.$broadcast('schemaFormValidate');
       var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
       if (!invalidFlg) {
         var page_info = {
-          cur_index_id: 0,
+          cur_journal_id: 0,
           send_method: 'POST'
         }
         if($('#right_index_id').val() != '') {
-          page_info.cur_index_id = $('#right_index_id').val();
+          $scope.cur_index_id = $('#right_index_id').val();
         }
         if($('#journal_id').val() != '' && $('#journal_id').val() != 'None') {
-          $scope.cur_journal_id = $('#journal_id').val();
+          page_info.cur_journal_id = $('#journal_id').val();
         }
         var data = {
           id: page_info.cur_index_id,
@@ -60,7 +60,7 @@ require([
         data.parent_publication_title_id = data.parent_publication_title_id || null;
         data.preceding_publication_title_id = data.preceding_publication_title_id || null;
 
-        if($scope.cur_journal_id != '0') {
+        if(page_info.cur_journal_id != '0') {
           page_info.send_method = "PUT";
         }
         var request = {
@@ -73,7 +73,7 @@ require([
         };
         InvenioRecordsAPI.request(request).then(
           function success(response){
-            $('#journal_id').val($scope.cur_journal_id);
+            $('#journal_id').val($scope.cur_index_id);
             if (!$('form[name="depositionForm"]').hasClass("ng-invalid")) {
               alert(response.data.message);
             }
