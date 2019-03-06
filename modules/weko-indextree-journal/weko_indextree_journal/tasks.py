@@ -175,7 +175,8 @@ def export_journal_task(p_path):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        numpy.savetxt(repository_data_path, data, delimiter=", ", header=header_string)
+        data_line_format = ""
+        numpy.savetxt(repository_data_path, data, fmt="%s", delimiter=", ", header=header_string)
 
         print("[Log]: Before remove filelist_path")
         # save file list
@@ -188,7 +189,7 @@ def export_journal_task(p_path):
         filelist_data_saved = numpy.asarray(filelist_data)
 
         print("[Log]: Before save filelist_path, filelist_data")
-        numpy.savetxt(filelist_path, filelist_data_saved, "")
+        numpy.savetxt(filelist_path, filelist_data_saved, fmt="%s", "")
         print("[Log]: After save filelist_path, filelist_data")
 
         print("[Log]: end export tasks ")
