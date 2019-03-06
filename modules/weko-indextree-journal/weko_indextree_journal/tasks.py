@@ -119,7 +119,7 @@ def export_journal_task(p_path):
         journals = Journals.get_all_journals()
         journals_list = []
         if journals is not None:
-            for item in journals
+            for item in journals:
                 print("[Log]: show attributes of journal in database")
                 print(dir(item))
 
