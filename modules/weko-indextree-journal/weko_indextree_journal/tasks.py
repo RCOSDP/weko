@@ -175,7 +175,7 @@ def export_journal_task(p_path):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        numpy.savetxt(repository_data_path, journals_list, delimiter="\t", header=header_string)
+        numpy.savetxt(repository_data_path, data, delimiter="\t", header=header_string)
 
         print("[Log]: Before remove filelist_path")
         # save file list
@@ -185,9 +185,10 @@ def export_journal_task(p_path):
         print("[Log]: Before create array filelist_data")
         filelist_data = []
         filelist_data.append(repository_filename)
+        filelist_data_saved = numpy.asarray(filelist_data)
 
         print("[Log]: Before save filelist_path, filelist_data")
-        numpy.savetxt(filelist_path, [filelist_data], "")
+        numpy.savetxt(filelist_path, filelist_data_saved, "")
         print("[Log]: After save filelist_path, filelist_data")
 
         print("[Log]: end export tasks ")
