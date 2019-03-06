@@ -226,7 +226,7 @@ def get_schema_form(item_type_id=0):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
-@blueprint.route('/checkview', methods=['GET'])
+@blueprint.route('/save/kbart', methods=['GET'])
 @login_required
 def check_view(item_type_id=0):
     """Render a check view."""
