@@ -13,6 +13,7 @@
 
 from __future__ import absolute_import, print_function
 import sys
+import os
 import json
 import numpy
 
@@ -143,41 +144,42 @@ def get_journal_content():
     )
 
 
-@blueprint.route('/jsonschema/<int:item_type_id>', methods=['GET'])
+@blueprint.route('/jsonschema', methods=['GET'])
 @login_required
 # @item_permission.require(http_exception=403)
-def get_json_schema(item_type_id=0):
+def get_json_schema():
     """Get json schema.
 
-    :param item_type_id: Item type ID. (Default: 0)
     :return: The json object.
     """
     try:
         result = None
         cur_lang = current_i18n.language
+        schema_file = os.path.join(current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON'])
 
-        if item_type_id > 0:
-            result = ItemTypes.get_by_id(item_type_id)
-
-            if result is None:
-                return '{}'
-            
-            json_schema = result.schema
-            properties = json_schema.get('properties')
-
-            for key, value in properties.items():
-                if 'validationMessage_i18n' in value:
-                    msg = {}
-                    for k, v in value['validationMessage_i18n'].items():
-                        msg[k] = v[cur_lang]
-                    value['validationMessage'] = msg
+        try:
+            with open(schema_file, 'r', encoding='utf-8') as fp:
+                exec(fp.read(), result)
+        except BaseException:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
 
         if result is None:
             return '{}'
-        return jsonify(json_schema)
+
+        json_schema = result # .schema
+        properties = json_schema.get('properties')
+
+        for key, value in properties.items():
+            if 'validationMessage_i18n' in value:
+                msg = {}
+                for k, v in value['validationMessage_i18n'].items():
+                    msg[k] = v[cur_lang]
+                value['validationMessage'] = msg
+
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return abort(400)
+        abort(500)
+    return jsonify(json_schema)
 
 
 @blueprint.route('/schemaform/<int:item_type_id>', methods=['GET'])
