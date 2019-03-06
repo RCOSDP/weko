@@ -181,3 +181,9 @@ msgstr "JPCOAR マッピング"
 
 msgid "Save"
 msgstr "保存"
+
+msgid "Target language"
+msgstr ""
+
+msgid "Registered language"
+msgstr ""
