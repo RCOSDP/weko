@@ -73,8 +73,14 @@ setup(
         'invenio_base.blueprints': [
             'weko_items_autofill = weko_items_autofill.views:blueprint',
         ],
+        'invenio_base.api_apps': [
+            'weko_items_autofill = weko_items_autofill:WekoItemsAutofill',
+        ],
         'invenio_base.api_blueprints': [
             'weko_items_autofill = weko_items_autofill.views:blueprint_api',
+        ],
+        'invenio_config.module': [
+            'weko_items_autofill = weko_items_autofill.config',
         ],
         'invenio_i18n.translations': [
             'messages = weko_items_autofill',

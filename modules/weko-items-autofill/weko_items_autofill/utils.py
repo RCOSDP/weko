@@ -20,16 +20,17 @@
 
 """Module of weko-items-autofill utils.."""
 from functools import wraps
-from flask import current_app
 from invenio_cache import current_cache
 from invenio_i18n.ext import current_i18n
 
-from weko_records.api import ItemTypeProps, ItemTypes, Mapping
+from weko_records.api import Mapping
+from .crossref_api import Works
+from . import config
 
 
 def is_update_cache():
     """Return True if Amazon Api has been updated."""
-    return current_app.config["WEKO_ITEMS_AUTOFIL_AMAZON_API_UPDATED"]
+    return config.WEKO_ITEMS_AUTOFILL_AMAZON_API_UPDATED
 
 
 def cached_api_json(timeout=50, key_prefix="amazon_json"):
@@ -59,21 +60,10 @@ def get_items_autofill(item_type_id):
     :param item_type_id:
     :return: items autofill
     """
-    jpcoar_item_autofill = [
-        'title',
-        'sourceTitle',
-        'language',
-        'creator',
-        'pageStart',
-        'pageEnd',
-        'date',
-        'publisher',
-        'relatedIdentifier'
-    ]
     items = dict()
     item_mapping_json = Mapping.get_record(item_type_id)
     jpcoar_metadata = _get_jpcoar_metadata(item_mapping_json)
-    for jpcoar_item_name in jpcoar_item_autofill:
+    for jpcoar_item_name in config.WEKO_ITEMS_AUTOFILL_ITEMS_AUTOFILL:
         items[jpcoar_item_name] = get_autofill_item_id(jpcoar_item_name,
                                                        jpcoar_metadata)
     return items
@@ -101,3 +91,23 @@ def _get_jpcoar_metadata(jpcoar_mapping_json):
             jpcoar_metadata[k] = jpcoar_mapping
 
     return jpcoar_metadata
+
+
+def parse_crossref_response(response):
+    response_data = dict()
+    if response is None or not isinstance(response, dict):
+        return response_data
+
+    if response.get('status') != Works.STATUS_OK:
+        return response_data
+
+    message = response.get('message')
+
+    if message:
+        response_key = config.WEKO_ITEMS_AUTOFILL_CROSSREF_RESPONSE_RESULT
+
+        for key in response_key:
+            if message.get(key):
+                response_data[key] = message.get(key)
+
+        return response_data

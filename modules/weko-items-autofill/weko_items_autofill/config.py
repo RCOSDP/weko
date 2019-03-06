@@ -7,55 +7,20 @@
 
 """Module of weko-items-autofill."""
 
+from flask_babelex import gettext as _
+
 WEKO_ITEMS_AUTOFILL_DEFAULT_VALUE = 'foobar'
 """Default value for the application."""
 
 WEKO_ITEMS_AUTOFILL_BASE_TEMPLATE = 'weko_items_autofill/base.html'
 """Default base template for the demo page."""
 
-WEKO_ITEMS_AUTOFILL_SERVICE_DOMAINS = {
-    'JP': 'webservices.amazon.co.jp',
-    'UK': 'webservices.amazon.co.uk',
-    'US': 'webservices.amazon.com',
-}
-"""Amazon domains service"""
+WEKO_ITEMS_AUTOFILL_AMAZON_API_UPDATED = True
 
-WEKO_ITEMS_AUTOFILL_DEFAULT_REGION = 'JP'
-"""Default region"""
-
-WEKO_ITEMS_AUTOFILL_DEFAULT_SERVICE = 'AWSECommerceService'
-"""Default Amazon API service"""
-
-WEKO_ITEMS_AUTOFILL_DEFAULT_OPERATION = 'ItemLookup'
-"""Default Amazon operation"""
-
-WEKO_ITEMS_AUTOFILL_SERVICE_URI = "/onca/xml"
-"""Amazon service URI"""
-
-WEKO_ITEMS_AUTOFILL_DEFAULT_TIMEOUT = 5.0
-"""Default time out"""
-
-WEKO_ITEMS_AUTOFILL_PROXY = ''
-"""Proxy server"""
-
-WEKO_ITEMS_AUTOFILL_API_PROTOCOL = 'http://'
-"""Api protocol"""
-
-WEKO_ITEMS_AUTOFILL_AWS_ACCESS_KEY_ID = ''
-"""AWSAccessKeyId"""
-
-WEKO_ITEMS_AUTOFILL_AWS_SECRET_ACCESS_KEY = ''
-"""AWSSecretAccessKey"""
-
-WEKO_ITEMS_AUTOFILL_ASSOCIATE_TAG = ''
-"""AssociateTag"""
-
-WEKO_ITEMS_AUTOFIL_AMAZON_API_UPDATED = True
-
-WEKO_ITEMS_AUTOFIL_ITEMS_AUTOFILL = [
+WEKO_ITEMS_AUTOFILL_ITEMS_AUTOFILL = [
     'title',
     'sourceTitle',
-    'language'
+    'language',
     'creator',
     'pageStart',
     'pageEnd',
@@ -64,3 +29,31 @@ WEKO_ITEMS_AUTOFIL_ITEMS_AUTOFILL = [
     'relatedIdentifier'
 ]
 """ Item autofill list """
+
+WEKO_ITEMS_AUTOFILL_CROSSREF_API_URL = 'https://api.crossref.org'
+"""Crossref API URL"""
+
+WEKO_ITEMS_AUTOFILL_CROSSREF_API_TOKEN = ''
+"""Crossref API token"""
+
+WEKO_ITEMS_AUTOFILL_CROSSREF_RESPONSE_RESULT = [
+    'title',
+    'language',
+    'author',
+    'page',
+    'published-online',
+    'publisher',
+    'ISBN'
+]
+
+WEKO_ITEMS_AUTOFILL_SELECT_OPTION = {
+    'options': [
+        {'value': 'Default', 'text': _('Select_the_ID')},
+        {'value': 'CrossRef', 'text': 'CrossRef'}
+    ]
+}
+
+# WEKO_ITEMS_AUTOFILL_CROSSREF_API_APP_NAME = ''
+# WEKO_ITEMS_AUTOFILL_CROSSREF_API_APP_VERSION = ''
+# WEKO_ITEMS_AUTOFILL_CROSSREF_API_APP_URL = ''
+# WEKO_ITEMS_AUTOFILL_CROSSREF_API_APP_EMAIL = ''

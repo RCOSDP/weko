@@ -27,15 +27,15 @@
 {%- endblock css %}
 
 {%- block javascript %}
-  <script src="https://unpkg.com/react@16/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
   <script type="text/babel">
     class ModalHeader extends React.Component {
       render(){
         return (
           <div className="text-right">
-            <h3>{{_('Weko Items Autofill')}}</h3>
+            <h3>{{_('Items_Autofill_Header_Name')}}</h3>
           </div>
         )
       }
@@ -45,12 +45,40 @@
         super(props);
         this.state ={
           idType: 'ISBN',
-          itemId: ''
+          itemId: '',
+          selectOptions : []
         };
 
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
       }
+
+      componentDidMount() {
+        fetch("/api/autofill/select_options")
+          .then(res => res.json())
+          .then(
+            (result) => {
+              console.log("result: ", this.state.selectOptions);
+              let options = result.options.map((option)=>{
+                return(
+                  <option key={option.value} value={option.value}>{option.text}</option>
+                )
+              });
+              this.setState({
+                selectOptions : options
+              });
+              console.log("option: ", this.state.selectOptions);
+            },
+            (error) => {
+              this.setState({
+                isLoaded: true,
+                error
+              });
+            }
+          )
+      }
+
+
 
       handleChange(event) {
         const target = event.target;
@@ -82,12 +110,12 @@
                     &nbsp;&nbsp;
                     <select name="idType" id="autofill_id_type" value={this.state.idType.value}
                         onChange={this.handleChange} className="form-control">
-                        <option selected value='Default'>{{_('Select the ID')}}</option>
-                        <option value='ISBN'>ISBN</option>
+                        {this.state.selectOptions}
                     </select>
                     &nbsp;&nbsp;
                     <input name="itemId" type="text" id="autofill_item_id" 
-                        value={this.state.itemId.value} onChange={this.handleChange} className="form-control ng-untouched ng-pristine ng-valid" />
+                        value={this.state.itemId.value} onChange={this.handleChange} 
+                        className="form-control ng-untouched ng-pristine ng-valid" />
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     <input type="submit" value="{{_('Get')}}" className="btn btn-info" />
                 </div>

@@ -81,3 +81,15 @@ msgstr "Save"
 #: app-author-add/src/app/app.component.html:21
 msgid "Index_Tree"
 msgstr "INDEX TREE"
+
+# weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:38
+msgid "Items_Autofill_Header_Name"
+msgstr "Weko Items Autofill"
+
+# weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:108
+msgid "Items_Autofill_Automatic_Metadata_Input"
+msgstr "Automatic metadata input"
+
+# weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:120
+msgid "Get"
+msgstr "Get"

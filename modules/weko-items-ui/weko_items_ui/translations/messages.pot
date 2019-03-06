@@ -112,3 +112,15 @@ msgstr ""
 #: app-author-add/src/app/app.component.html:21
 msgid "Index_Tree"
 msgstr ""
+
+# weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:38
+msgid "Items_Autofill_Header_Name"
+msgstr ""
+
+# weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:108
+msgid "Items_Autofill_Automatic_Metadata_Input"
+msgstr ""
+
+# weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:120
+msgid "Get"
+msgstr ""

@@ -95,49 +95,82 @@ require([
       }
 
       $scope.setItemMetadata = function() {
-        var param;
-        var autoFillID = $('#autofill_id_type').val();
-        var value = $('#autofill_item_id').val();
+        let autoFillID = $('#autofill_id_type').val();
+        let value = $('#autofill_item_id').val();
+        let itemTypeId = $("#autofill_item_type_id").val();
         if (autoFillID === 'Default'){
           alert('Please select the ID');
           return;
         } else if (!value.length){
           alert('Please input valid value');
           return;
-        }else {
-          let itemTypeId = $("#autofill_item_type_id").val();
-          param = autoFillID + '/' + value +  '/' + itemTypeId;
         }
 
-        $.ajax({
-          method: 'GET',
-          url: '/items/autofill/search/' + param,
-          async: false,
-          success: function(data, status){
-            // Title
-            $rootScope.recordsVM.invenioRecordsModel[data.items.sourceTitle] = data.data.sourceTitle;
-            $rootScope.recordsVM.invenioRecordsModel[data.items.title] = data.data.title;
-            // Languages
-            $rootScope.recordsVM.invenioRecordsModel[data.items.language] = data.data.language;
-            // PublicationDate
-            $rootScope.recordsVM.invenioRecordsModel[data.items.date] = data.data.date;
-            // Author
-            $rootScope.recordsVM.invenioRecordsModel[data.items.creator] = data.data.creator;
-            // Number of page
-            $rootScope.recordsVM.invenioRecordsModel[data.items.pageEnd] = data.data.pageEnd;
-            // Publisher
-            $rootScope.recordsVM.invenioRecordsModel[data.items.publisher] = data.data.publisher;
-            // ISBN
-            $rootScope.recordsVM.invenioRecordsModel[data.items.relatedIdentifier] = data.data.relatedIdentifier;
+        param = {
+          api_type: autoFillID,
+          search_data: value,
+          item_type_id: itemTypeId
+        }
 
-            $('#meta-search').modal('toggle');
+        // let request = {
+        //   url: item_save_uri,
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/json'
+        //   },
+        //   data: JSON.stringify(param)
+        // };
 
+        var request = $.ajax({
+          url: '/api/autofill/crossref_api',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          error: function(status, error){
-            alert(error);
-            console.log(error);
-          }
+          method: "POST",
+          data: JSON.stringify(param),
+          dataType: "json"
         });
+
+        request.done((data) => {
+          console.log(data);
+        });
+
+        request.fail((jqXHR, textStatus) => {
+          console.log(jqXHR);
+          alert("Request failed: " + textStatus);
+        });
+
+        // $.ajax({
+        //   method: 'GET',
+        //   url: '/api/autofill/search/' + param,
+        //   async: false,
+        //   success: function(data, status){
+        //     // Title
+        //     $rootScope.recordsVM.invenioRecordsModel[data.items.sourceTitle] = data.data.sourceTitle;
+        //     $rootScope.recordsVM.invenioRecordsModel[data.items.title] = data.data.title;
+        //     // Languages
+        //     $rootScope.recordsVM.invenioRecordsModel[data.items.language] = data.data.language;
+        //     // PublicationDate
+        //     $rootScope.recordsVM.invenioRecordsModel[data.items.date] = data.data.date;
+        //     // Author
+        //     $rootScope.recordsVM.invenioRecordsModel[data.items.creator] = data.data.creator;
+        //     // Number of page
+        //     $rootScope.recordsVM.invenioRecordsModel[data.items.pageEnd] = data.data.pageEnd;
+        //     // Publisher
+        //     $rootScope.recordsVM.invenioRecordsModel[data.items.publisher] = data.data.publisher;
+        //     // ISBN
+        //     $rootScope.recordsVM.invenioRecordsModel[data.items.relatedIdentifier] = data.data.relatedIdentifier;
+
+        //     $('#meta-search').modal('toggle');
+
+        //   },
+        //   error: function(status, error){
+        //     alert(error);
+        //     console.log(error);
+        //   }
+        // });
+
+
       }
 
       $scope.searchSource = function(model_id,arrayFlg,form) {
