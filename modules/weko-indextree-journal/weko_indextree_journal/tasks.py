@@ -139,7 +139,7 @@ def export_journal_task(p_path):
                 journal_data.append(item.title_id)
                 journal_data.append(item.embargo_info)
                 journal_data.append(item.coverage_depth)
-                journal_data.append(item.notes)
+                journal_data.append(item.coverage_notes)
                 journal_data.append(item.publisher_name)
                 journal_data.append(item.publication_type)
                 journal_data.append(item.date_monograph_published_print)
