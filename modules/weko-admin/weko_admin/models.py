@@ -109,10 +109,10 @@ class SearchManagement(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    default_dis_num = db.Column( db.Integer, nullable=False, default=20)
+    default_dis_num = db.Column(db.Integer, nullable=False, default=20)
     """ Default display number of search results"""
 
-    default_dis_sort_index = db.Column( db.Text, nullable=True, default="")
+    default_dis_sort_index = db.Column(db.Text, nullable=True, default="")
     """ Default display sort of index search"""
 
     default_dis_sort_keyword = db.Column(db.Text, nullable=True, default="")
@@ -180,7 +180,7 @@ class SearchManagement(db.Model):
                 dataObj.default_dis_sort_keyword = data.get('dlt_keyword_sort_selected')
                 dataObj.sort_setting = data.get('sort_options')
                 dataObj.search_conditions = data.get('detail_condition')
-                dataObj.search_setting_all= data
+                dataObj.search_setting_all = data
                 db.session.add(dataObj)
             db.session.commit()
         except BaseException as ex:
@@ -194,7 +194,7 @@ class SearchManagement(db.Model):
         """Get setting"""
         id = db.session.query(func.max(SearchManagement.id)).first()[0]
         if id is None:
-            return  None
+            return None
         return cls.query.filter_by(id=id).one_or_none()
 
     @classmethod
@@ -216,6 +216,74 @@ class SearchManagement(db.Model):
             current_app.logger.debug(ex)
             raise
         return cls
+
+
+class AdminLangSettings(db.Model):
+    """
+    System Language Display Setting
+    Stored target language and registered language
+    """
+
+    __tablename__ = 'admin_lang_settings'
+
+    lang_code = db.Column(db.String(3), primary_key=True, nullable=False, unique=True)
+
+    lang_name = db.Column(db.String(30), nullable=False)
+
+    is_registered = db.Column(db.Boolean(name='registered'), default=True, )
+
+    sequence = db.Column(db.Integer, unique=True)
+
+    is_active = db.Column(db.Boolean(name='active'), default=True)
+
+    @classmethod
+    def load_lang(cls):
+        """
+        Get language list
+        :return: A list of language
+        """
+
+        lang_list = cls.query.all()
+
+        obj = {}
+        for k in lang_list:
+            obj[str(k.lang_code)] = k.lang_name
+
+        return obj
+
+    @classmethod
+    def save_lang(self, lang_code=None, lang_name=None, is_registered=None, sequence=None, is_active=None):
+        """
+        Save list language into database
+        :return: Updated record
+        """
+        with db.session.begin_nested():
+            if lang_code is not None:
+                self.lang_code = lang_code
+            if lang_name is not None:
+                self.lang_name = lang_name
+            if is_registered is not None:
+                self.is_registered = is_registered
+            if sequence is not None:
+                self.sequence = sequence
+            if is_active is not None:
+                self.is_active = is_active
+
+            db.session.merge(self)
+
+        db.session.commit()
+
+        return self
+
+    @classmethod
+    def get_lang_code(cls):
+        """
+        Get language code
+        :return: the language code
+        """
+        return cls.lang_code
+
+
 
 __all__ = ([
     'SearchManagement',
