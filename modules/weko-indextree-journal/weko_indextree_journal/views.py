@@ -104,8 +104,6 @@ def export_journals():
         results = [obj.__dict__ for obj in journals]
         data = numpy.asarray(results)
         numpy.savetxt("journal.tsv", data, delimiter=",")
-        print("[Log]: results")
-        print(results)
 
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file

@@ -56,25 +56,16 @@ def export_journal_task(p_path):
         filelist_path = os.path.join(
             current_app.static_folder, kbart_folder, "filelist.txt")
 
-        print("[Log]: filelist_path: ")
-        print(filelist_path)
         # UtokyoRepository_Global_AllTitles_2018-12-12.txt
         # {0}: {Repository name}, {1}: {Last update date}
         repository_name = current_app.config['OAISERVER_REPOSITORY_NAME']
-        print("[Log]: repository_name: ")
-        print(repository_name)
 
         current_date = datetime.datetime.today().strftime('%Y-%m-%d')
 
         repository_filename = "{0}_AllTitles_{1}.txt".format(repository_name, current_date)
-        print("[Log]: repository_filename: ")
-        print(repository_filename)
 
         repository_data_path = os.path.join(
             current_app.static_folder, kbart_folder, repository_filename)
-
-        print("[Log]: repository_data_path: ")
-        print(repository_data_path)
 
         # Build header.
         header = [
@@ -120,9 +111,6 @@ def export_journal_task(p_path):
         journals_list = []
         if journals is not None:
             for item in journals:
-                print("[Log]: show attributes of journal in database")
-                print(dir(item))
-
                 # get data
                 journal_data = []
                 journal_data.append(item.publication_title)
@@ -164,14 +152,10 @@ def export_journal_task(p_path):
             
         data = numpy.asarray(journals_list)
 
-        print("[Log]: data: ")
-        print(data)
         # create folder if not exist
         directory = os.path.join(
             current_app.static_folder, kbart_folder)
         
-        print("[Log]: directory: ")
-        print(directory)
         if not os.path.exists(directory):
             os.makedirs(directory)
         
@@ -179,19 +163,15 @@ def export_journal_task(p_path):
         numpy.savetxt(repository_data_path, data, "%s", delimiter="\t", header=header_string)
 
         # save file list
-        print("[Log]: Before remove filelist_path")
         if os.path.exists(filelist_path):
             os.remove(filelist_path)
 
-        print("[Log]: Before create array filelist_data")
         filelist_data = []
         filelist_data.append(repository_filename)
         filelist_data_saved = numpy.asarray(filelist_data)
 
-        print("[Log]: Before save filelist_path, filelist_data")
         numpy.savetxt(filelist_path, filelist_data_saved, "%s", "")
 
-        print("[Log]: end export tasks ")
         return data
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
