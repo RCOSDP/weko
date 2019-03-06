@@ -143,7 +143,7 @@ def export_journal_task(p_path):
         filelist_data.append(repository_filename)
 
         print("[Log]: Before save filelist_path, filelist_data")
-        numpy.savetxt(filelist_path, filelist_data, "")
+        numpy.savetxt(filelist_path, [filelist_data], "")
         print("[Log]: After save filelist_path, filelist_data")
 
         print("[Log]: end export tasks ")
