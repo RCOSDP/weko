@@ -153,20 +153,15 @@ def get_json_schema():
     :return: The json object.
     """
     try:
-        result = None
+        json_schema = None
         cur_lang = current_i18n.language
-        schema_file = os.path.join(current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON'])
+        schema_file = os.path.join(os.path.dirname(__file__), current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON'])
 
-        try:
-            with open(schema_file, 'r', encoding='utf-8') as fp:
-                exec(fp.read(), result)
-        except BaseException:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        json_schema = json.load(open(schema_file))
 
-        if result is None:
+        if json_schema is None:
             return '{}'
 
-        json_schema = result # .schema
         properties = json_schema.get('properties')
 
         for key, value in properties.items():
