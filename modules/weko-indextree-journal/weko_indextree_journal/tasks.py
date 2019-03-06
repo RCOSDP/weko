@@ -175,7 +175,7 @@ def export_journal_task(p_path):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        numpy.savetxt(repository_data_path, data, delimiter="\t", header=header_string)
+        numpy.savetxt(repository_data_path, data, delimiter=", ", header=header_string)
 
         print("[Log]: Before remove filelist_path")
         # save file list
