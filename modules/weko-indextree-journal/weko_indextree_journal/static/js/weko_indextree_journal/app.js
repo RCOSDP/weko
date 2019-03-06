@@ -57,6 +57,8 @@ require([
           ichushi_code: $('#ichushi_code').val() || ''
         }
         $.extend( data, $rootScope.recordsVM.invenioRecordsModel );
+        o.parent_publication_title_id = o.parent_publication_title_id || null;
+        o.preceding_publication_title_id = o.preceding_publication_title_id || null;
 
         if(page_info.cur_journal_id != '0') {
           page_info.send_method = "PUT";
