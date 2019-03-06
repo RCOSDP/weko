@@ -192,7 +192,7 @@ def export_journal_task(p_path):
         numpy.savetxt(filelist_path, filelist_data_saved, "%s", "")
 
         print("[Log]: end export tasks ")
-        return jsonify(data)
+        return data
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
     except Exception as ex:
