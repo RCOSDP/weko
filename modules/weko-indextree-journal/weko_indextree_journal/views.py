@@ -42,17 +42,11 @@ blueprint = Blueprint(
 @login_required
 def index(index_id = 0):
     """Render a basic view."""
-    item_type_id = 20 # item tpye's journal = 21
     lists = ItemTypes.get_latest()
     if lists is None or len(lists) == 0:
         return render_template(
             current_app.config['WEKO_ITEMS_UI_ERROR_TEMPLATE']
         )
-    item_type = ItemTypes.get_by_id(item_type_id)
-    if item_type is None:
-        return
-    json_schema = '/indextree/journal/jsonschema/{}'.format(item_type_id)
-    schema_form = '/indextree/journal/schemaform/{}'.format(item_type_id)
     
     # Get journal info.
     journal = []
@@ -71,16 +65,15 @@ def index(index_id = 0):
         mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API'],
         mod_journal_detail=current_app.config['WEKO_INDEXTREE_JOURNAL_API'],
         record=json_record,
-        jsonschema=json_schema,
-        schemaform=schema_form,
+        jsonschema=current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'],
+        schemaform='/indextree/journal/schemaform/20', # current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'],
         lists=lists,
         links=None,
-        id=item_type_id,
-        files=None,
         pid=None,
         index_id = index_id,
         journal_id = journal_id
     )
+
 
 @blueprint.route("/index/<int:index_id>")
 def get_journal_by_index_id(index_id = 0):
@@ -95,6 +88,7 @@ def get_journal_by_index_id(index_id = 0):
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
+
 
 @blueprint.route("/export", methods=['GET'])
 @login_required
@@ -113,35 +107,9 @@ def export_journals():
         current_app.logger.debug(ex)
     return jsonify({"result" : False})
 
+
 def obj_dict(obj):
     return obj.__dict__
-    
-@blueprint.route("/right-content", methods=['GET'])
-def get_journal_content():
-    """Render a content of journal."""
-    item_type_id = 19 # item tpye's journal = 21
-    lists = ItemTypes.get_latest()
-    if lists is None or len(lists) == 0:
-        return render_template(
-            current_app.config['WEKO_ITEMS_UI_ERROR_TEMPLATE']
-        )
-    item_type = ItemTypes.get_by_id(item_type_id)
-    if item_type is None:
-        return
-    json_schema = '/indextree/journal/jsonschema/{}'.format(item_type_id)
-    schema_form = '/indextree/journal/schemaform/{}'.format(item_type_id)
-
-    return render_template(
-        current_app.config['WEKO_INDEXTREE_JOURNAL_CONTENT_TEMPLATE'],
-        record=None,
-        jsonschema=json_schema,
-        schemaform=schema_form,
-        lists=lists,
-        links=None,
-        id=item_type_id,
-        files=None,
-        pid=None
-    )
 
 
 @blueprint.route('/jsonschema', methods=['GET'])
@@ -155,7 +123,7 @@ def get_json_schema():
     try:
         json_schema = None
         cur_lang = current_i18n.language
-        schema_file = os.path.join(os.path.dirname(__file__), current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON'])
+        schema_file = os.path.join(os.path.dirname(__file__), current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'])
 
         json_schema = json.load(open(schema_file))
 
@@ -220,6 +188,7 @@ def get_schema_form(item_type_id=0):
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
+
 
 @blueprint.route('/save/kbart', methods=['GET'])
 @login_required
