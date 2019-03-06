@@ -202,6 +202,6 @@ class Journals(object):
         journals = db.session.query(Journal).all()
 
         if journals is None:
-            return []
+            return None
 
-        return list(journals)
+        return journals
