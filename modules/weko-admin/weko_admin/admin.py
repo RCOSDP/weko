@@ -201,6 +201,13 @@ class StyleSettingView(BaseView):
             abort(500)
         return checksum1 == checksum2
 
+class LanguageSettingView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_LANGUAGE"]
+        )
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -210,6 +217,16 @@ style_adminview = {
     }
 }
 
+language_adminview = {
+    'view_class': LanguageSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Language'),
+        'endpoint': 'language'
+    }
+}
+
 __all__ = (
     'style_adminview',
+    'language_adminview'
 )
