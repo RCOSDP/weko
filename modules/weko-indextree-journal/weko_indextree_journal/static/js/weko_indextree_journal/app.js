@@ -27,8 +27,8 @@ require([
           page_info.cur_journal_id = $('#journal_id').val();
         }
         var data = {
-          id: page_info.cur_index_id,
-          index_id: page_info.cur_index_id,
+          id: $scope.cur_index_id,
+          index_id: $scope.cur_index_id,
           is_output: $("input[name='is_output']:checked").val() || true,
           publication_title: $('#publication_title').val() || '',
           print_identifier: $('#print_identifier').val() || '',
@@ -64,7 +64,7 @@ require([
           page_info.send_method = "PUT";
         }
         var request = {
-          url: '/api/indextree/journal/'+page_info.cur_index_id,
+          url: '/api/indextree/journal/'+$scope.cur_index_id,
           method: page_info.send_method,
           headers: {
             'Content-Type': 'application/json'
