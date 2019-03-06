@@ -33,9 +33,6 @@ class WekoIndextreeJournal(object):
         """Flask application initialization."""
         self.init_config(app)
 
-        print('index tree journal blueprint')
-        print(blueprint.__dict__)
-
         app.register_blueprint(blueprint)
         app.extensions['weko-indextree-journal'] = self
 
@@ -65,7 +62,6 @@ class WekoIndextreeJournalREST(object):
             self.init_app(app)
 
     def init_app(self, app):
-        print('init_app WekoIndextreeJournalREST')
         """Flask application initialization.
 
         Initialize the REST endpoints.  Connect all signals if
@@ -75,8 +71,6 @@ class WekoIndextreeJournalREST(object):
         """
         self.init_config(app)
 
-        print('Journal rest dict')
-        print(app.config.__dict__)
         blueprint = create_blueprint(app,
                                      app.config['WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
