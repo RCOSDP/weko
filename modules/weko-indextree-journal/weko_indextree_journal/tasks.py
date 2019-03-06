@@ -174,12 +174,12 @@ def export_journal_task(p_path):
         print(directory)
         if not os.path.exists(directory):
             os.makedirs(directory)
-
-        data_line_format = ""
+        
+        # Save data to file.
         numpy.savetxt(repository_data_path, data, "%s", delimiter="\t", header=header_string)
 
-        print("[Log]: Before remove filelist_path")
         # save file list
+        print("[Log]: Before remove filelist_path")
         if os.path.exists(filelist_path):
             os.remove(filelist_path)
 
@@ -190,9 +190,9 @@ def export_journal_task(p_path):
 
         print("[Log]: Before save filelist_path, filelist_data")
         numpy.savetxt(filelist_path, filelist_data_saved, "%s", "")
-        print("[Log]: After save filelist_path, filelist_data")
 
         print("[Log]: end export tasks ")
+        return jsonify(data)
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
     except Exception as ex:
