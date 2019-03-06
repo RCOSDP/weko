@@ -123,10 +123,11 @@ def get_json_schema():
     try:
         json_schema = None
         cur_lang = current_i18n.language
-        schema_file = os.path.join(os.path.dirname(__file__), current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'])
+        schema_file = os.path.join(
+            os.path.dirname(__file__),
+            current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'])
 
         json_schema = json.load(open(schema_file))
-
         if json_schema is None:
             return '{}'
 
@@ -145,32 +146,25 @@ def get_json_schema():
     return jsonify(json_schema)
 
 
-@blueprint.route('/schemaform/<int:item_type_id>', methods=['GET'])
+@blueprint.route('/schemaform', methods=['GET'])
 @login_required
 # @item_permission.require(http_exception=403)
-def get_schema_form(item_type_id=0):
+def get_schema_form():
     """Get schema form.
 
-    :param item_type_id: Item type ID. (Default: 0)
     :return: The json object.
     """
     try:
-        # cur_lang = 'default'
-        # if current_app.config['I18N_SESSION_KEY'] in session:
-        #     cur_lang = session[current_app.config['I18N_SESSION_KEY']]
+        schema_form = None
         cur_lang = current_i18n.language
-        result = None
-        if item_type_id > 0:
-            result = ItemTypes.get_by_id(item_type_id)
-        if result is None:
+        form_file = os.path.join(
+            os.path.dirname(__file__),
+            current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'])
+
+        schema_form = json.load(open(form_file))
+        if schema_form is None:
             return '["*"]'
-        schema_form = result.form
-        filemeta_form = schema_form[0]
-        if 'filemeta' == filemeta_form.get('key'):
-            group_list = Group.get_group_list()
-            filemeta_form_group = filemeta_form.get('items')[-1]
-            filemeta_form_group['type'] = 'select'
-            filemeta_form_group['titleMap'] = group_list
+
         if 'default' != cur_lang:
             for elem in schema_form:
                 if 'title_i18n' in elem:
@@ -184,10 +178,10 @@ def get_schema_form(item_type_id=0):
                                 if len(sub_elem['title_i18n'][cur_lang]) > 0:
                                     sub_elem['title'] = sub_elem['title_i18n'][
                                         cur_lang]
-        return jsonify(schema_form)
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return abort(400)
+        abort(500)
+    return jsonify(schema_form)
 
 
 @blueprint.route('/save/kbart', methods=['GET'])
