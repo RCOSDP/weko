@@ -126,6 +126,18 @@ class Journal(db.Model, Timestamp):
     """Number of last issue available online of the journal."""
     """ varchar(255) """
 
+    title_url = db.Column(db.Text, nullable=True, default='')
+    """ varchar(2048)
+        WEKO index search result page display URL
+        [Top Page URL] /? Action = repository_opensearch & index_id = [title_id]
+    """
+    
+    first_author = db.Column(db.Text, nullable=True, default='')
+    """ first_author """
+
+    title_id = db.Column(db.BigInteger, nullable=True, default=0)
+    """ Output the index ID of WEKO. """
+    
     embargo_info = db.Column(db.Text, nullable=True, default='')
     """Embargo information of the journal."""
     """ varchar(255) """
@@ -151,6 +163,21 @@ class Journal(db.Model, Timestamp):
     """ varchar(255)
         Select the following item: "Serial"
     """
+
+    date_monograph_published_print = db.Column(db.Text, nullable=True, default='')
+    """" date_monograph_published_print """
+
+    date_monograph_published_online = db.Column(db.Text, nullable=True, default='')
+    """" date_monograph_published_online """
+
+    monograph_volume = db.Column(db.Text, nullable=True, default='')
+    """" monograph_volume """
+
+    monograph_edition = db.Column(db.Text, nullable=True, default='')
+    """" monograph_edition """
+
+    first_editor = db.Column(db.Text, nullable=True, default='')
+    """" first_editor """
 
     parent_publication_title_id = db.Column(db.BigInteger, nullable=True, default=0)
     """Parent publication identifier of the journal."""
@@ -226,6 +253,9 @@ class Journal(db.Model, Timestamp):
     """ varchar(6)
         Allow the following input:「^J[0-9]{5}$」
     """
+
+    deleted = db.Column(db.Text, nullable=True, default='')
+    """Always output with empty string (character string length = 0)"""
 
     is_output = db.Column(db.Boolean(name='is_output'),
         nullable=True,
