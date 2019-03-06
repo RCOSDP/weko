@@ -47,6 +47,14 @@ blueprint = Blueprint(
     url_prefix='/accounts/settings',
 )
 
+blueprint_api = Blueprint(
+    'weko_admin',
+    __name__,
+    url_prefix='/admin',
+    template_folder='templates',
+    static_folder='static',
+)
+
 
 def _has_admin_access():
     """Use to check if a user has any admin access."""
@@ -210,3 +218,74 @@ def set_search():
         )
     except:
         abort(500)
+
+
+@blueprint_api.route('/load_lang', methods=['GET'])
+def get_lang_list():
+    result = {
+        'result': [
+            {
+                'lang_code': "eng",
+                'lang_name': "English",
+                'is_registered': 'true',
+                'sequence': 1
+            },
+            {
+                'lang_code': "jpn",
+                'lang_name': "Japanese",
+                'is_registered': 'true',
+                'sequence': 2
+            },
+            {
+                'lang_code': "chi",
+                'lang_name': "Chinese",
+                'is_registered': 'false',
+                'sequence': 3
+            },
+            {
+                'lang_code': "ind",
+                'lang_name': "Indonesian",
+                'is_registered': 'false',
+                'sequence': 4
+            },
+            {
+                'lang_code': "vie",
+                'lang_name': "Vietnamese",
+                'is_registered': 'false',
+                'sequence': 5
+            },
+            {
+                'lang_code': "may",
+                'lang_name': "Malay",
+                'is_registered': 'false',
+                'sequence': 6
+            },
+            {
+                'lang_code': "tgl",
+                'lang_name': "Tagalog",
+                'is_registered': 'false',
+                'sequence': 7
+            },
+            {
+                'lang_code': "tha",
+                'lang_name': "Thai",
+                'is_registered': 'false',
+                'sequence': 8
+            },
+            {
+                'lang_code': "hin",
+                'lang_name': "Hindi",
+                'is_registered': 'false',
+                'sequence': 9
+            },
+            {
+                'lang_code': "ara",
+                'lang_name': "Arabic",
+                'is_registered': 'false',
+                'sequence': 10
+            }
+        ],
+        'msg': 'Success'
+    }
+
+    return jsonify(result)
