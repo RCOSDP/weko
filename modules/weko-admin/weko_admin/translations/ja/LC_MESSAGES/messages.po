@@ -183,7 +183,7 @@ msgid "Save"
 msgstr "保存"
 
 msgid "Target language"
-msgstr ""
+msgstr "対象言語"
 
 msgid "Registered language"
-msgstr ""
+msgstr "登録言語"
