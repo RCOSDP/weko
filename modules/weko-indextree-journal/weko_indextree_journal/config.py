@@ -10,9 +10,6 @@
 
 # TODO: This is an example file. Remove it if your package does not use any
 # extra configuration variables.
-WEKO_INDEXTREE_JOURNAL_DEFAULT_VALUE = 'foobar'
-"""Default value for the application."""
-
 WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE = 'weko_indextree_journal/base.html'
 """Default base template for the indextree journal page."""
 
@@ -26,6 +23,7 @@ WEKO_INDEXTREE_JOURNAL_API = "/api/indextree/journal"
 
 WEKO_INDEXTREE_JOURNAL_LIST_API = "/api/journal"
 
+WEKO_KBART_
 _IID = 'iid(tid,record_class="weko_indextree_journal.api:Journals")'
 
 WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
