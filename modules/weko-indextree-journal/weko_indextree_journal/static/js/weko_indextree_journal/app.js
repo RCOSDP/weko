@@ -44,8 +44,8 @@ require([
           coverage_notes: $('#coverage_notes').val() || '',
           publisher_name: $('#publisher_name').val() || '',
           publication_type: $('select[name=publication_type]').val() || '',
-          parent_publication_title_id: $('#parent_publication_title_id').val() || 0,
-          preceding_publication_title_id: $('#preceding_publication_title_id').val() || 0,
+          parent_publication_title_id: $('#parent_publication_title_id').val() || null,
+          preceding_publication_title_id: $('#preceding_publication_title_id').val() || null,
           access_type: $('select[name=access_type]').val() || '',
           language: $('select[name=language]').val() || '',
           title_alternative: $('#title_alternative').val() || '',
@@ -57,6 +57,8 @@ require([
           ichushi_code: $('#ichushi_code').val() || ''
         }
         $.extend( data, $rootScope.recordsVM.invenioRecordsModel );
+        o.parent_publication_title_id = o.parent_publication_title_id || null;
+        o.preceding_publication_title_id = o.preceding_publication_title_id || null;
 
         if(page_info.cur_journal_id != '0') {
           page_info.send_method = "PUT";
