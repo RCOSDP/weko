@@ -205,7 +205,7 @@ class LanguageSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         return self.render(
-            current_app.config["WEKO_ADMIN_LANGUAGE"]
+            current_app.config["WEKO_ADMIN_LANG_SETTINGS"]
         )
 
 style_adminview = {
