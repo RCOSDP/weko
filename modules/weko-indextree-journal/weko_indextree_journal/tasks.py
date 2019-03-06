@@ -38,7 +38,6 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-print("[Log]: Register journal tasks.")
 @shared_task(ignore_result=True)
 def export_journal_task(p_path):
     """
