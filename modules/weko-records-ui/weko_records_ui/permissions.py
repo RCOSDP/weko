@@ -33,6 +33,8 @@ from .ipaddr import check_site_license_permission
 action_detail_page_access = action_factory('detail-page-access')
 detail_page_permission = Permission(action_detail_page_access)
 
+action_download_original_pdf_access = action_factory('download-original-pdf-access')
+download_original_pdf_permission = Permission(action_download_original_pdf_access)
 
 def page_permission_factory(record, *args, **kwargs):
     def can(self):
@@ -119,6 +121,26 @@ def check_file_download_permission(record, fjson):
         except:
             abort(500)
         return is_can
+
+
+def check_original_pdf_download_permission(record):
+    is_ok = True
+    # item publish status check
+    is_pub = check_publish_status(record)
+    # role permission
+    is_can = download_original_pdf_permission.can()
+    # person himself check
+    is_himself = check_created_id(record)
+    # Only allow to download original pdf if one of the following condition is matched
+    # - is_himself
+    # - record is published and user (not is_himself) has the permission
+    if not is_himself:
+        if is_pub:
+            if not is_can:
+                is_ok = False
+        else:
+            is_ok = False
+    return is_ok
 
 
 def check_user_group_permission(group_id):

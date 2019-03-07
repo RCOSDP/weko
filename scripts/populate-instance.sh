@@ -130,6 +130,7 @@ ${INVENIO_WEB_INSTANCE} users create \
 ${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_SYSTEM}"
 ${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_REPOSITORY}"
 ${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_CONTRIBUTOR}"
+${INVENIO_WEB_INSTANCE} roles create "${INVENIO_ROLE_COMMUNITY}"
 # sphinxdoc-create-roles-end
 
 # sphinxdoc-set-user-role-begin
@@ -188,6 +189,12 @@ ${INVENIO_WEB_INSTANCE} access \
        allow "detail-page-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "download-original-pdf-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+       role "${INVENIO_ROLE_COMMUNITY}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "author-access" \
