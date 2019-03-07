@@ -228,13 +228,13 @@ def get_lang_list():
                 'lang_code': "eng",
                 'lang_name': "English",
                 'is_registered': 1,
-                'sequence': 1
+                'sequence': 0
             },
             {
                 'lang_code': "jpn",
                 'lang_name': "Japanese",
                 'is_registered': 1,
-                'sequence': 2
+                'sequence': 1
             },
             {
                 'lang_code': "chi",

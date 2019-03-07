@@ -13,6 +13,11 @@
     margin: 10px;
 }
 
+.query-columns .buttons input[type=button]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .query-columns select {
     width:150px;
 }
@@ -20,3 +25,4 @@
 #btn_commit_lg {
     margin-top: 10px;
 }
+
