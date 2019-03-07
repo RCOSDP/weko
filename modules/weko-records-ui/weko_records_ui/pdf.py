@@ -59,7 +59,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     pidObject = PersistentIdentifier.get('recid', pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pidObject.object_uuid)
-    item_metadata = db.session.query(ItemMetadata).filter_by(json=item_metadata_json).first()
+    #item_metadata = db.session.query(ItemMetadata).filter_by(json=item_metadata_json).first()
     item_type = db.session.query(ItemType).filter(ItemType.id==ItemMetadata.item_type_id).first()
     item_type_id = item_type.id
     type_mapping = Mapping.get_record(item_type_id)
@@ -123,7 +123,9 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         pdf.set_y(55)
 
     """ Title """
-    title = item_metadata_json['title_en']
+    title = item_metadata_json['title_' + lang_user]
+    if title == None:
+        title = item_metadata_json['title_en']
     pdf.set_font('IPAexm', '', 20)
     pdf.multi_cell(w1 + w2, title_h, title, 0, 'L', False)
     pdf.ln(h='15')
@@ -142,6 +144,27 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     if _creator in item_map:
         _creator_item_id = item_map[_creator].split('.')[0]
 
+    item_types = db.session.query(ItemType).filter(ItemType.id==ItemMetadata.item_type_id).all()
+
+    publisher_attr_lang = 'publisher.@attributes.xml:lang'
+    publisher_value = 'publisher.@value'
+    publisher_item_id = None
+    publisher_lang_id = None
+    publisher_text_id = None
+
+    for item in item_types:
+        item_id = item.id
+        type_mapping_ = Mapping.get_record(item_id)
+        temp_map = get_mapping(type_mapping_, "jpcoar_mapping")
+        if publisher_attr_lang in temp_map:
+            publisher_item_id = temp_map[publisher_attr_lang].split('.')[0]
+            publisher_lang_id = temp_map[publisher_attr_lang].split('.')[1]
+        if publisher_attr_lang in temp_map:
+            publisher_item_id = temp_map[publisher_attr_lang].split('.')[0]
+            publisher_lang_id = temp_map[publisher_attr_lang].split('.')[1]
+        if publisher_value in temp_map:
+            publisher_text_id = temp_map[publisher_value].split('.')[1]
+
     pdf.set_font('Arial', '', 14)
     pdf.set_font('IPAexg', '', 14)
 
@@ -155,7 +178,18 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         lang = None
     try:
-        publisher = item_metadata_json[_creator_item_id].get(_creator_item_id)
+        #publisher = item_metadata_json[_creator_item_id].get(_creator_item_id)
+        publisher = None
+        default_publisher = None
+        publishers = item_metadata_json[publisher_item_id]
+        for publisher_data in publishers:
+            if publisher_data[publisher_lang_id] == lang_user:
+                publisher = publisher_data[publisher_text_id]
+            if publisher_data[publisher_lang_id] == 'en':
+                default_publisher = publisher_data[publisher_text_id]
+
+        if publisher == None:
+            publisher = default_publisher
     except (KeyError, IndexError):
         publisher = None
     try:
@@ -176,8 +210,16 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         creator_mail = None
     try:
-        #creator_name = item_metadata_json['item_1538028816158']['creatorNames'][0].get('creatorName')
-        creator_name = item_metadata_json[_creator_item_id]['creatorNames'][0].get('creatorName')
+        creator_name = None
+        default_creator_name = None
+        for creator_metadata in item_metadata_json[_creator_item_id]['creatorNames']:
+            if creator_metadata.get('creatorNameLang') == lang_user:
+                creator_name = creator_metadata.get('creatorName')
+            if creator_metadata.get('creatorNameLang') == 'en':
+                default_creator_name = creator_metadata.get('creatorName')
+
+        if creator_name == None:
+            creator_name = default_creator_name
     except (KeyError, IndexError):
         creator_name = None
     try:
@@ -228,19 +270,19 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     top = pdf.y
     # Calculate x position of next cell
     offset = pdf.x + w1
-    pdf.multi_cell(w1, meta_h, lang_data["Title"]["METADATA"] + '\n'*(metadata_lfnum+1), 1, 'C', True)
+    pdf.multi_cell(w1, meta_h, lang_data["Title"]["METADATA"] + '\n'*(metadata_lfnum + 1), 1, 'C', True)
     # Reset y coordinate
     pdf.y = top
     # Move to computed offset
     pdf.x = offset
     pdf.multi_cell(w2, meta_h, metadata, 1, 'L', False)
     top = pdf.y
-    pdf.multi_cell(w1, url_oapolicy_h, lang_data["Title"]["URL"] + '\n'*(url_lfnum+1), 1, 'C', True)
+    pdf.multi_cell(w1, url_oapolicy_h, lang_data["Title"]["URL"] + '\n'*(url_lfnum + 1), 1, 'C', True)
     pdf.y = top
     pdf.x = offset
     pdf.multi_cell(w2, url_oapolicy_h, url, 1, 'L', False)
     top = pdf.y
-    pdf.multi_cell(w1, url_oapolicy_h, lang_data["Title"]["OAPOLICY"] + '\n'*(oa_policy_lfnum+1), 1, 'C', True)
+    pdf.multi_cell(w1, url_oapolicy_h, lang_data["Title"]["OAPOLICY"] + '\n'*(oa_policy_lfnum + 1), 1, 'C', True)
     pdf.y = top
     pdf.x = offset
     pdf.multi_cell(w2, url_oapolicy_h, oa_policy, 1, 'L', False)
