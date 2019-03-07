@@ -91,3 +91,39 @@ def get_search_setting():
         return db_obj
     else:
         return config.WEKO_ADMIN_MANAGEMENT_OPTIONS
+
+
+def get_admin_lang_setting():
+    """
+    convert language list to jason
+    :return:
+    """
+    json_list = []
+    try:
+        active_lang_list = AdminLangSettings.get_active_language()
+        for key in active_lang_list:
+            json_list.append({
+                'lang_code': '{0}'.format(active_lang_list[key]['lang_code']),
+                'lang_name': '{0}'.format(active_lang_list[key]['lang_name']),
+                'is_registered': active_lang_list[key]['is_registered'],
+                'sequence': active_lang_list[key]['sequence']
+            })
+    except Exception as e:
+        return str(e)
+    return json_list
+
+
+def update_admin_lang_setting(admin_lang_settings):
+    """
+    update language to admin_lang_settings table
+    :param lang_list:
+    """
+    try:
+        for admin_lang in admin_lang_settings:
+            AdminLangSettings.update_lang(admin_lang['lang_code'],
+                                          admin_lang['lang_name'],
+                                          admin_lang['is_registered'],
+                                          admin_lang['sequence'])
+    except Exception as e:
+        return str(e)
+    return 'success'
