@@ -21,8 +21,7 @@
 """Utilities for convert response json."""
 
 from . import config
-from .models import SearchManagement
-from flask import json, current_app
+from .models import SearchManagement, AdminLangSettings
 
 
 def get_response_json(result_list, n_lst):
@@ -116,7 +115,7 @@ def get_admin_lang_setting():
 def update_admin_lang_setting(admin_lang_settings):
     """
     update language to admin_lang_settings table
-    :param lang_list:
+    :param admin_lang_settings:
     """
     try:
         for admin_lang in admin_lang_settings:
