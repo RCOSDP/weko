@@ -34,7 +34,8 @@ from weko_records.api import ItemTypes, SiteLicense
 from werkzeug.local import LocalProxy
 from sqlalchemy.orm import session
 from .models import SessionLifetime, SearchManagement
-from .utils import get_response_json, get_search_setting
+from .utils import get_response_json, get_search_setting, \
+    get_admin_lang_setting, update_admin_lang_setting
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -224,7 +225,7 @@ def set_search():
 def get_lang_list():
     results = dict()
     try:
-        results['results'] = admin_lang_db_to_json()
+        results['results'] = get_admin_lang_setting()
         results['msg'] = 'success'
     except Exception as e:
         results['msg'] = str(e)
