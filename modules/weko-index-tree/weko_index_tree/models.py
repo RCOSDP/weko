@@ -105,6 +105,18 @@ class Index(db.Model, Timestamp):
         db.Boolean(name='recs_public_state'), nullable=True, default=False)
     """Recursive Public State of the index."""
 
+    admin_coverpage = db.Column(db.Boolean(name='admin_coverpage'), nullable=True,
+                             default=False)
+    """User Setting PDF Cover Page of the index."""
+
+    coverpage_state = db.Column(db.Boolean(name='coverpage_state'), nullable=True,
+                             default=False)
+    """PDF Cover Page State of the index."""
+
+    recursive_coverpage_check = db.Column(
+        db.Boolean(name='recursive_coverpage_check'), nullable=True, default=False)
+    """Recursive PDF Cover Page State of the index."""
+
     browsing_role = db.Column(db.Text, nullable=True)
     """Browsing Role of the  ."""
 

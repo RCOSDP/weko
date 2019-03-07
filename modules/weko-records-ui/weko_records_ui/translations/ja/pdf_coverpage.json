@@ -1,0 +1,24 @@
+{
+    "Metadata": {
+        "LANG"      : "言語",
+        "PUBLISHER" : "出版者",
+        "PUBLICDATE": "公開日",
+        "KEY"       : "キーワード",
+        "AUTHOR"    : "作成者",
+        "EMAIL"     : "メールアドレス",
+        "AFFILIATED": "所属"
+    },
+    "License": {
+            "LICENSE_0" : "This work is licensed under a Creative Commons Attribution 4.0 International License.",
+            "LICENSE_1" : "This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.",
+            "LICENSE_2" : "This work is licensed under a Creative Commons Attribution-NoDerivatives 4.0 International License.",
+            "LICENSE_3" : "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.",
+            "LICENSE_4" : "This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.",
+            "LICENSE_5" : "This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License."
+    },
+    "Title": {
+        "METADATA"  : "メタデータ",
+        "URL"       : "URL",
+        "OAPOLICY"  : "ポリシー"
+    }
+}
