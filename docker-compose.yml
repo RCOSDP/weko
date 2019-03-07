@@ -120,11 +120,7 @@ static:
     - /code/modules/weko-authors/weko_authors.egg-info
     - /code/modules/weko-plugins/weko_plugins.egg-info
     - /code/modules/weko-workflow/weko_workflow.egg-info
+    - /code/modules/weko-indextree-journal/weko_indextree_journal.egg-info
     - .:/code
   user: invenio
 
-clamav:
-  restart: "always"
-  image: mkodockx/docker-clamav
-  ports:
-    - "3301:3310"
