@@ -23,6 +23,7 @@
 import os
 import datetime
 import numpy
+import time
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -38,12 +39,13 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-@shared_task(ignore_result=True)
+#@shared_task(ignore_result=True)
+@shared_task
 def export_journal_task(p_path):
     """
     Output the file name of KBART2 extended format included
     last update date to the file "Own institution repository URL" ＋「/weko/kbart/filelist.txt」
-    Output journal info with KBART2 extended format by tsv format to 
+    Output journal info with KBART2 extended format by tsv format to
     "Own institution repository URL" ＋「/weko/kbart/{Repository name}_Global_AllTitles_{Last update date}.txt
     export journal information to file.
     :param p_path:
@@ -98,6 +100,7 @@ def export_journal_task(p_path):
             "title_transcription",
             "ncid",
             "ndl_callno",
+            "ndl_bibid",
             "jstage_code",
             "ichushi_code",
             "deleted"
@@ -142,24 +145,26 @@ def export_journal_task(p_path):
                 journal_data.append(item.title_transcription)
                 journal_data.append(item.ncid)
                 journal_data.append(item.ndl_callno)
+                journal_data.append(item.ndl_bibid)
                 journal_data.append(item.jstage_code)
                 journal_data.append(item.ichushi_code)
                 journal_data.append(item.deleted)
 
                 # add to list.
                 journals_list.append(journal_data)
-            
+
         data = numpy.asarray(journals_list)
 
         # create folder if not exist
         directory = os.path.join(
             current_app.static_folder, kbart_folder)
-        
+
         if not os.path.exists(directory):
             os.makedirs(directory)
-        
+
         # Save data to file.
-        numpy.savetxt(repository_data_path, data, "%s", delimiter="\t", header=header_string)
+        numpy.savetxt(repository_data_path, data, "%s", delimiter="\t",
+            header=header_string, footer='', comments='')
 
         # save file list
         if os.path.exists(filelist_path):
@@ -171,10 +176,11 @@ def export_journal_task(p_path):
 
         numpy.savetxt(filelist_path, filelist_data_saved, "%s", "")
 
-        return data
+        return journals_list
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
     except Exception as ex:
         current_app.logger.error(ex)
 
     return {}
+
