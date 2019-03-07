@@ -263,9 +263,9 @@ def _get_google_scholar_meta(record):
         if found is not None:
             res.append({'name':target_map[target], 'data':found.text})
     for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
-        if date.attrib['dateType'] == 'Available':
+        if date.attrib.get('dateType') == 'Available':
             res.append({'name':'citation_online_date', 'data':date.text})
-        elif date.attrib['dateType'] == 'Issued':
+        elif date.attrib.get('dateType') == 'Issued':
             res.append({'name':'citation_publication_date', 'data':date.text})
     for relatedIdentifier in mtdata.findall('jpcoar:relatedIdentifier', namespaces=mtdata.nsmap):
         if 'identifierType' in relatedIdentifier.attrib and relatedIdentifier.attrib['identifierType'] == 'DOI':
