@@ -43,6 +43,7 @@ $(document).ready(function () {
     },
     error: function (error) {
       console.log(error);
+      alert('Error when get languages');
     }
   });
 
@@ -132,9 +133,11 @@ $(document).ready(function () {
       contentType: 'application/json',
       data: JSON.stringify(results),
       success: function (data) {
+        alert('Update languages action successfully');
       },
       error: function (error) {
         console.log(error);
+        alert('Update languages action erroneously');
       }
     });
   });
