@@ -238,6 +238,19 @@ class AdminLangSettings(db.Model):
     is_active = db.Column(db.Boolean(name='active'), default=True)
 
     @classmethod
+    def parse_result(cls, in_result):
+        obj = {}
+
+        for k in in_result:
+            obj[str(k.lang_code)] = k.lang_name
+            obj[str(k.lang_name)] = k.lang_name
+            obj[str(k.is_registered)] = k.is_registered
+            obj[str(k.sequence)] = k.sequence
+            obj[str(k.is_active)] = k.is_active
+
+        return obj
+
+    @classmethod
     def load_lang(cls):
         """
         Get language list
@@ -246,7 +259,7 @@ class AdminLangSettings(db.Model):
 
         lang_list = cls.query.all()
 
-        return parse_result(result)
+        return cls.parse_result(lang_list)
 
     @classmethod
     def save_lang(self, lang_code=None, lang_name=None, is_registered=None,
@@ -296,7 +309,7 @@ class AdminLangSettings(db.Model):
         """
         result = cls.query.filter_by(is_registered=True)
 
-        return result
+        return cls.parse_result(result)
 
     @classmethod
     def get_active_language(cls):
@@ -306,19 +319,7 @@ class AdminLangSettings(db.Model):
         """
         result = cls.query.filter_by(is_active=True)
 
-        return parse_result(result)
-
-    def parse_result(in_result):
-        obj = {}
-
-        for k in in_result:
-            obj[str(k.lang_code)] = k.lang_name
-            obj[str(k.lang_name)] = k.lang_name
-            obj[str(k.is_registered)] = k.is_registered
-            obj[str(k.sequence)] = k.sequence
-            obj[str(k.is_active)] = k.is_active
-
-        return obj
+        return cls.parse_result(result)
 
 
 __all__ = ([
