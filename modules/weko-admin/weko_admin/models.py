@@ -311,7 +311,7 @@ class AdminLangSettings(db.Model):
     def parse_result(in_result):
         obj = {}
 
-        for k in lang_list:
+        for k in in_result:
             obj[str(k.lang_code)] = k.lang_name
             obj[str(k.lang_name)] = k.lang_name
             obj[str(k.is_registered)] = k.is_registered
