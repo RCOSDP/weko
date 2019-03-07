@@ -269,7 +269,7 @@ def get_lang_list():
             {
                 'lang_code': "tha",
                 'lang_name': "Thai",
-                'is_registered': 'false',
+                'is_registered': 0,
                 'sequence': 0
             },
             {
