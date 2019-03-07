@@ -226,13 +226,14 @@ class AdminLangSettings(db.Model):
 
     __tablename__ = 'admin_lang_settings'
 
-    lang_code = db.Column(db.String(3), primary_key=True, nullable=False, unique=True)
+    lang_code = db.Column(db.String(3), primary_key=True, nullable=False,
+                          unique=True)
 
     lang_name = db.Column(db.String(30), nullable=False)
 
-    is_registered = db.Column(db.Boolean(name='registered'), default=True, )
+    is_registered = db.Column(db.Boolean(name='registered'), default=True)
 
-    sequence = db.Column(db.Integer, unique=True)
+    sequence = db.Column(db.Integer, default=0)
 
     is_active = db.Column(db.Boolean(name='active'), default=True)
 
@@ -245,14 +246,11 @@ class AdminLangSettings(db.Model):
 
         lang_list = cls.query.all()
 
-        obj = {}
-        for k in lang_list:
-            obj[str(k.lang_code)] = k.lang_name
-
-        return obj
+        return parse_result(result)
 
     @classmethod
-    def save_lang(self, lang_code=None, lang_name=None, is_registered=None, sequence=None, is_active=None):
+    def save_lang(self, lang_code=None, lang_name=None, is_registered=None,
+                  sequence=None, is_active=None):
         """
         Save list language into database
         :return: Updated record
@@ -283,6 +281,44 @@ class AdminLangSettings(db.Model):
         """
         return cls.lang_code
 
+    @classmethod
+    def get_lang_name(cls):
+        """
+        Get language full name
+        :return: language full name
+        """
+
+    @classmethod
+    def get_registered_language(cls):
+        """
+        Get registered languages
+        :return: All language have registered
+        """
+        result = cls.query.filter_by(is_registered=True)
+
+        return result
+
+    @classmethod
+    def get_active_language(cls):
+        """
+        Get active languages
+        :return: All languages have activated
+        """
+        result = cls.query.filter_by(is_active=True)
+
+        return parse_result(result)
+
+    def parse_result(in_result):
+        obj = {}
+
+        for k in lang_list:
+            obj[str(k.lang_code)] = k.lang_name
+            obj[str(k.lang_name)] = k.lang_name
+            obj[str(k.is_registered)] = k.is_registered
+            obj[str(k.sequence)] = k.sequence
+            obj[str(k.is_active)] = k.is_active
+
+        return obj
 
 
 __all__ = ([
