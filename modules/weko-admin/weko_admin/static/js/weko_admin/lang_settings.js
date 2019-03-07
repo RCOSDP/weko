@@ -4,6 +4,21 @@ $(document).ready(function () {
   const urlLoad = '/api/admin/load_lang';
   const urlUpdate = '/api/admin/save_lang';
 
+  const moveRight = $('#moveRight');
+  const moveLeft = $('#moveLeft')
+  const moveTop = $('#moveTop')
+  const moveUp = $('#moveUp')
+  const moveDown = $('#moveDown')
+  const moveBottom = $('#moveBottom')
+  const saveBtn = $('#btn_commit_lg')
+  const leftSelect = $('#leftSelect');
+  const rightSelect = $('#rightSelect');
+
+  moveTop.prop("disabled", true);
+  moveUp.prop("disabled", true);
+  moveDown.prop("disabled", true);
+  moveBottom.prop("disabled", true);
+
   // $.ajax({
   //   url: url,
   //   type: 'POST',
@@ -40,24 +55,27 @@ $(document).ready(function () {
         }
         leftOption += `<option value="${element.lang_code}">${element.lang_name}</option>`;
       }
-      $('#leftSelect').append(leftOption);
-      $('#rightSelect').append(rightOption);
+      leftSelect.append(leftOption);
+      rightSelect.append(rightOption);
     },
     error: function (error) {
       console.log(error);
     }
   });
 
-  $('#moveRight').on('click', function () {
-    $('#leftSelect').find('option:selected').detach().prop("selected", false).appendTo($('#rightSelect'));
+  moveRight.on('click', function () {
+    leftSelect.find('option:selected').detach().prop("selected", false).appendTo(rightSelect);
+    updateButton();
   });
 
-  $('#moveLeft').on('click', function () {
-    $('#rightSelect').find('option:selected').detach().prop("selected", false).appendTo($('#leftSelect'));
+  moveLeft.on('click', function () {
+    rightSelect.find('option:selected').detach().prop("selected", false).appendTo(leftSelect);
+    updateButton();
+    updateRightButtons();
   });
 
-  $('#moveTop').on('click', function () {
-    $('#rightSelect').find('option:selected').detach().prependTo($('#rightSelect'));
+  moveTop.on('click', function () {
+    rightSelect.find('option:selected').detach().prependTo(rightSelect);
   });
 
   $('#moveUp').on('click', function () {
@@ -72,9 +90,40 @@ $(document).ready(function () {
     });
   });
 
-  $('#moveBottom').on('click', function () {
-    $('#rightSelect').find('option:selected').detach().appendTo($('#rightSelect'));
+  moveBottom.on('click', function () {
+    rightSelect.find('option:selected').detach().appendTo(rightSelect);
   });
+
+  rightSelect.on('change', function() {
+    if (moveTop.prop('disabled')) {
+      moveTop.prop('disabled', false);
+      moveUp.prop('disabled', false);
+      moveDown.prop('disabled', false);
+      moveBottom.prop('disabled', false);
+    }
+  });
+
+  function updateButton() {
+    let moveRightDisabled = true;
+    if (leftSelect.children().length) {
+      moveRightDisabled = false;
+    }
+    moveRight.prop("disabled", moveRightDisabled);
+
+    let moveLeftDisabled = true;
+    if (rightSelect.children().length) {
+      moveLeftDisabled = false;
+    }
+    moveLeft.prop("disabled", moveLeftDisabled);
+    saveBtn.prop("disabled", moveLeftDisabled);
+  }
+
+  function updateRightButtons() {
+    moveTop.prop('disabled', true);
+    moveUp.prop('disabled', true);
+    moveDown.prop('disabled', true);
+    moveBottom.prop('disabled', true);
+  }
 
   $('#btn_commit_lg').on('click', function () {
     const children = $('#leftSelect').children();
@@ -97,7 +146,7 @@ $(document).ready(function () {
     $.ajax({
       url: urlUpdate,
       type: 'POST',
-      contentType: 'application/json; charset=UTF-8',
+      contentType: 'application/json',
       data: JSON.stringify(results),
       success: function (data) {
       },
