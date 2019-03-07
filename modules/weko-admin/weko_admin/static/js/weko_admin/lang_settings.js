@@ -20,47 +20,28 @@ $(document).ready(function () {
   //   dataType:'json'
   // });
 
-  const results = [
-    {
-      lang_code: "eng",
-      lang_name: "English",
-      is_registered: true,
-      sequence: 0,
-    },
-    {
-      lang_code: "vie",
-      lang_name: "Vietnamese",
-      is_registered: false,
-      sequence: 0,
-    },
-    {
-      lang_code: "jpn",
-      lang_name: "Japanese",
-      is_registered: false,
-      sequence: 0,
-    }
-  ]
-
-  let leftOption = '';
-  let rightOption = '';
-
-  for (let index = 0; index < results.length; index++) {
-    const element = results[index];
-    if (element.is_registered) {
-      rightOption += `<option value="${element.lang_code}">${element.lang_name}</option>`;
-      continue;
-    }
-    leftOption += `<option value="${element.lang_code}">${element.lang_name}</option>`;
-  }
-  $('#leftSelect').append(leftOption);
-  $('#rightSelect').append(rightOption);
+  let results = []
 
 
   $.ajax({
     url: urlLoad,
     type: 'GET',
     success: function (data) {
+      results = data.result;
 
+      let leftOption = '';
+      let rightOption = '';
+
+      for (let index = 0; index < results.length; index++) {
+        const element = results[index];
+        if (element.is_registered) {
+          rightOption += `<option value="${element.lang_code}">${element.lang_name}</option>`;
+          continue;
+        }
+        leftOption += `<option value="${element.lang_code}">${element.lang_name}</option>`;
+      }
+      $('#leftSelect').append(leftOption);
+      $('#rightSelect').append(rightOption);
     }
   });
 
