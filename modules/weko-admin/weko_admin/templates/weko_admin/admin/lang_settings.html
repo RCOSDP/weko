@@ -39,34 +39,32 @@
         <div class="panel-body" id="color_setting">
           <div class="row">
             <div class="col-sm-10">
-              <div class="panel panel-info">
-                <span class="query-columns">
-                  <span>
-                    <label>{{_('Target language')}}</label>
-                    <select id="leftSelect" multiple="multiple" size="10">
-                    </select>
-                  </span>
-                  <span class="buttons">
-                    <input type="button" id="moveRight" value="→" class="move-right">
-                    <input type="button" id="moveLeft" value="←" class="move-left">
-                  </span>
-                  <span>
-                    <label>{{_('Registered language')}}</label>
-                    <select id="rightSelect" multiple="multiple" size="10">
-                    </select>
-                  </span>
-                  <span class="buttons">
-                    <input type="button" value="⇈" id="moveTop">
-                    <input type="button" value="↑" id="moveUp">
-                    <input type="button" value="↓" id="moveDown">
-                    <input type="button" value="⇊" id="moveBottom">
-                  </span>
+              <span class="query-columns">
+                <span>
+                  <label>{{_('Target language')}}</label>
+                  <select id="leftSelect" multiple="multiple" size="10">
+                  </select>
                 </span>
-                <br>
-                <button id="btn_commit_lg" class="btn btn-primary">
-                  {{_('Save')}}
-                </button>
-              </div>
+                <span class="buttons">
+                  <input type="button" id="moveRight" value="→" class="move-right">
+                  <input type="button" id="moveLeft" value="←" class="move-left">
+                </span>
+                <span>
+                  <label>{{_('Registered language')}}</label>
+                  <select id="rightSelect" multiple="multiple" size="10">
+                  </select>
+                </span>
+                <span class="buttons">
+                  <input type="button" value="⇈" id="moveTop">
+                  <input type="button" value="↑" id="moveUp">
+                  <input type="button" value="↓" id="moveDown">
+                  <input type="button" value="⇊" id="moveBottom">
+                </span>
+              </span>
+              <br>
+              <button id="btn_commit_lg" class="btn btn-primary">
+                {{_('Save')}}
+              </button>
             </div>
           </div>
         </div>

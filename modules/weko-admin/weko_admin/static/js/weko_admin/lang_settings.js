@@ -27,7 +27,7 @@ $(document).ready(function () {
     url: urlLoad,
     type: 'GET',
     success: function (data) {
-      results = data.result;
+      results = data.results;
 
       let leftOption = '';
       let rightOption = '';
@@ -42,6 +42,9 @@ $(document).ready(function () {
       }
       $('#leftSelect').append(leftOption);
       $('#rightSelect').append(rightOption);
+    },
+    error: function (error) {
+      console.log(error);
     }
   });
 
@@ -97,6 +100,9 @@ $(document).ready(function () {
       contentType: 'application/json; charset=UTF-8',
       data: JSON.stringify(results),
       success: function (data) {
+      },
+      error: function (error) {
+        console.log(error);
       }
     });
   });
