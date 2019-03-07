@@ -19,24 +19,7 @@ $(document).ready(function () {
   moveDown.prop("disabled", true);
   moveBottom.prop("disabled", true);
 
-  // $.ajax({
-  //   url: url,
-  //   type: 'POST',
-  //   contentType:'application/json',
-  //   data: JSON.stringify(data),
-  //   dataType:'json'
-  // });
-
-  // $.ajax({
-  //   url: url,
-  //   type: 'GET',
-  //   contentType:'application/json',
-  //   data: JSON.stringify(data),
-  //   dataType:'json'
-  // });
-
   let results = []
-
 
   $.ajax({
     url: urlLoad,
