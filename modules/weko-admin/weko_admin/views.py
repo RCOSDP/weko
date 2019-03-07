@@ -289,3 +289,13 @@ def get_lang_list():
     }
 
     return jsonify(result)
+
+
+@blueprint_api.route('/save_lang', methods=['POST'])
+def save_lang_list():
+    if request.headers['Content-Type'] != 'application/json':
+        current_app.logger.debug(request.headers['Content-Type'])
+        return jsonify(msg='Header Error')
+    data = request.get_json()
+
+    return jsonify(msg=data)
