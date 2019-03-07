@@ -100,6 +100,14 @@
                         <span>{{file.checksum.split(':')[0]}}</span>
                         <span class="break-word">{{file.checksum.split(':')[1]}}</span>
                       </span>
+
+                      {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
+                      {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                      filename=file.key, original=1) %}
+                      <div class="text-right">
+                        <a class="forcewrap" href="{{original_file_url}}">{{_('Original')}}</a>
+                      </div>
+                      {%- endif -%}
                   </td>
                 </tr>
                 <!-- demo -->

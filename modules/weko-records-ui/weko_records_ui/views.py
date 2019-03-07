@@ -29,7 +29,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_oaiserver.response import getrecord
 from weko_records_ui.models import InstitutionName
 from weko_index_tree.models import IndexStyle
-from .permissions import check_created_id
+from .permissions import check_created_id, check_original_pdf_download_permission
 from weko_search_ui.api import get_search_detail_keyword
 from weko_deposit.api import WekoIndexer
 from .models import PDFCoverPageSettings
@@ -322,10 +322,17 @@ def default_view_method(pid, record, template=None, **kwargs):
 
     google_scholar_meta = _get_google_scholar_meta(record)
 
+    pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
+    # Check if user has the permission to download original pdf file
+    # and the cover page setting is set and its value is enable (not disabled)
+    can_download_original = check_original_pdf_download_permission(record) \
+        and pdfcoverpage_set_rec is not None and pdfcoverpage_set_rec.avail != 'disable'
+
     return render_template(
         template,
         pid=pid,
         record=record,
+        can_download_original_pdf=can_download_original,
         community_id=community_id,
         width=width,
         detail_condition=detail_condition,
