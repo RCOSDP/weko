@@ -46,13 +46,16 @@ def get_east_asian_width_count(text):
 
 
 """ Function making PDF cover page """
-def make_combined_pdf(pid, obj_file_uri, fileobj, obj):
+def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     """
-    meke the cover-page-combined PDF file
+    make the cover-page-combined PDF file
     :param pid: PID object
     :param file_uri: URI of the file object
+    :param lang_user: LANGUAGE of access user
     :return: cover-page-combined PDF file object
     """
+    lang_filepath = current_app.config['PDF_COVERPAGE_LANG_FILEPATH']\
+        + lang_user + current_app.config['PDF_COVERPAGE_LANG_FILENAME']
 
     pidObject = PersistentIdentifier.get('recid', pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pidObject.object_uuid)
@@ -62,6 +65,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj):
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
 
+    with open(lang_filepath) as json_datafile:
+        lang_data = json.loads(json_datafile.read())
 
     """ Initialize Instance """
     pdf = FPDF('P', 'mm', 'A4')
@@ -198,14 +203,14 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj):
             metadata_dict[key] = ''
 
     metadata_list = [
-        "Language: {}".format(metadata_dict["lang"]),
-        "Publisher: {}".format(metadata_dict["publisher"]),
-        "Date of Publication: {}".format(metadata_dict["pubdate"]),
-        "Keywords(Ja): {}".format(metadata_dict["keywords_ja"]),
-        "Keywords(En): {}".format(metadata_dict["keywords_en"]),
-        "Author: {}".format(metadata_dict["creator_name"]),
-        "E-mail: {}".format(metadata_dict["creator_mail"]),
-        "Affiliation: {}".format(metadata_dict["affiliation"])
+        "{}: {}".format(lang_data["Metadata"]["LANG"], metadata_dict["lang"]),
+        "{}: {}".format(lang_data["Metadata"]["PUBLISHER"], metadata_dict["publisher"]),
+        "{}: {}".format(lang_data["Metadata"]["PUBLICDATE"], metadata_dict["pubdate"]),
+        "{} (Ja): {}".format(lang_data["Metadata"]["KEY"], metadata_dict["keywords_ja"]),
+        "{} (En): {}".format(lang_data["Metadata"]["KEY"], metadata_dict["keywords_en"]),
+        "{}: {}".format(lang_data["Metadata"]["AUTHOR"], metadata_dict["creator_name"]),
+        "{}: {}".format(lang_data["Metadata"]["EMAIL"], metadata_dict["creator_mail"]),
+        "{}: {}".format(lang_data["Metadata"]["AFFILIATED"], metadata_dict["affiliation"])
     ]
 
     metadata = '\n'.join(metadata_list)
@@ -223,19 +228,19 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj):
     top = pdf.y
     # Calculate x position of next cell
     offset = pdf.x + w1
-    pdf.multi_cell(w1, meta_h, 'Metadata' + '\n'*(metadata_lfnum+1), 1, 'C', True)
+    pdf.multi_cell(w1, meta_h, lang_data["Title"]["METADATA"] + '\n'*(metadata_lfnum+1), 1, 'C', True)
     # Reset y coordinate
     pdf.y = top
     # Move to computed offset
     pdf.x = offset
     pdf.multi_cell(w2, meta_h, metadata, 1, 'L', False)
     top = pdf.y
-    pdf.multi_cell(w1, url_oapolicy_h, 'URL' + '\n'*(url_lfnum+1), 1, 'C', True)
+    pdf.multi_cell(w1, url_oapolicy_h, lang_data["Title"]["URL"] + '\n'*(url_lfnum+1), 1, 'C', True)
     pdf.y = top
     pdf.x = offset
     pdf.multi_cell(w2, url_oapolicy_h, url, 1, 'L', False)
     top = pdf.y
-    pdf.multi_cell(w1, url_oapolicy_h, 'OA Policy' + '\n'*(oa_policy_lfnum+1), 1, 'C', True)
+    pdf.multi_cell(w1, url_oapolicy_h, lang_data["Title"]["OAPOLICY"] + '\n'*(oa_policy_lfnum+1), 1, 'C', True)
     pdf.y = top
     pdf.x = offset
     pdf.multi_cell(w2, url_oapolicy_h, oa_policy, 1, 'L', False)
@@ -252,42 +257,42 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj):
             txt = ''
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
     elif license == 'license_0': #Attribution
-        txt = 'This work is licensed under a Creative Commons Attribution 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_0"]
         src = blueprint.root_path + "/static/images/creative_commons/by.png"
         lnk = "http://creativecommons.org/licenses/by/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 1, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_1': #Attribution-ShareAlike
-        txt = 'This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_1"]
         src= blueprint.root_path + "/static/images/creative_commons/by-sa.png"
         lnk = "http://creativecommons.org/licenses/by-sa/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 1, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_2': #Attribution-NoDerivatives
-        txt = 'This work is licensed under a Creative Commons Attribution-NoDerivatives 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_2"]
         src = blueprint.root_path + "/static/images/creative_commons/by-nd.png"
         lnk = "http://creativecommons.org/licenses/by-nd/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_3': #Attribution-NonCommercial
-        txt = 'This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_3"]
         src = blueprint.root_path +  "/static/images/creative_commons/by-nc.png"
         lnk = "http://creativecommons.org/licenses/by-nc/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_4': #Attribution-NonCommercial-ShareAlike
-        txt = 'This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_4"]
         src = blueprint.root_path + "/static/images/creative_commons/by-nc-sa.png"
         lnk = "http://creativecommons.org/licenses/by-nc-sa/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_5': #Attribution-NonCommercial-NoDerivatives
-        txt = 'This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_5"]
         src = blueprint.root_path + "/static/images/creative_commons/by-nc-nd.png"
         lnk = "http://creativecommons.org/licenses/by-nc-nd/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
