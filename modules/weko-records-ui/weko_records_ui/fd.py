@@ -213,8 +213,6 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     coverpage_state = WekoRecord.get_record_cvs(pid.object_uuid)
 
-    if coverpage_state == False:
-
     try:
         pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
 
