@@ -242,12 +242,13 @@ class AdminLangSettings(db.Model):
         obj = {}
 
         for k in in_result:
-            obj[str(k.lang_code)] = k.lang_code
-            obj[str(k.lang_name)] = k.lang_name
-            obj[str(k.is_registered)] = k.is_registered
-            obj[str(k.sequence)] = k.sequence
-            obj[str(k.is_active)] = k.is_active
-
+            record = dict()
+            record['lang_code'] = k.lang_code
+            record['lang_name'] = k.lang_name
+            record['is_registered'] = k.is_registered
+            record['sequence'] = k.sequence
+            record['is_active'] = k.is_active
+            obj[k.lang_code] = record
         return obj
 
     @classmethod
