@@ -38,7 +38,6 @@ from .views import ObjectResourceWeko
 from weko_user_profiles.models import UserProfile
 from flask_login import current_user
 
-
 def weko_view_method(pid, record, template=None, **kwargs):
     r"""Display Weko view.
 
