@@ -34,7 +34,8 @@ from weko_records.api import ItemTypes, SiteLicense
 from werkzeug.local import LocalProxy
 from sqlalchemy.orm import session
 from .models import SessionLifetime, SearchManagement
-from .utils import get_response_json, get_search_setting
+from .utils import get_response_json, get_search_setting, \
+    get_admin_lang_setting, update_admin_lang_setting
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -222,73 +223,14 @@ def set_search():
 
 @blueprint_api.route('/load_lang', methods=['GET'])
 def get_lang_list():
-    result = {
-        'results': [
-            {
-                'lang_code': "eng",
-                'lang_name': "English",
-                'is_registered': 1,
-                'sequence': 0
-            },
-            {
-                'lang_code': "jpn",
-                'lang_name': "Japanese",
-                'is_registered': 1,
-                'sequence': 1
-            },
-            {
-                'lang_code': "chi",
-                'lang_name': "Chinese",
-                'is_registered': 0,
-                'sequence': 0
-            },
-            {
-                'lang_code': "ind",
-                'lang_name': "Indonesian",
-                'is_registered': 0,
-                'sequence': 0
-            },
-            {
-                'lang_code': "vie",
-                'lang_name': "Vietnamese",
-                'is_registered': 0,
-                'sequence': 0
-            },
-            {
-                'lang_code': "may",
-                'lang_name': "Malay",
-                'is_registered': 0,
-                'sequence': 0
-            },
-            {
-                'lang_code': "tgl",
-                'lang_name': "Tagalog",
-                'is_registered': 0,
-                'sequence': 0
-            },
-            {
-                'lang_code': "tha",
-                'lang_name': "Thai",
-                'is_registered': 0,
-                'sequence': 0
-            },
-            {
-                'lang_code': "hin",
-                'lang_name': "Hindi",
-                'is_registered': 0,
-                'sequence': 0
-            },
-            {
-                'lang_code': "ara",
-                'lang_name': "Arabic",
-                'is_registered': 0,
-                'sequence': 0
-            }
-        ],
-        'msg': 'Success'
-    }
+    results = dict()
+    try:
+        results['results'] = get_admin_lang_setting()
+        results['msg'] = 'success'
+    except Exception as e:
+        results['msg'] = str(e)
 
-    return jsonify(result)
+    return jsonify(results)
 
 
 @blueprint_api.route('/save_lang', methods=['POST'])
@@ -297,5 +239,6 @@ def save_lang_list():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
+    result = update_admin_lang_setting(data)
 
-    return jsonify(msg=data)
+    return jsonify(msg=result)
