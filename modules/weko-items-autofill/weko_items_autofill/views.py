@@ -15,7 +15,7 @@ from flask_login import login_required
 
 from .permissions import auto_fill_permission
 from .crossref_api import CrossRefOpenURL
-from .utils import get_items_autofill, parse_crossref_response, get_item_id
+from .utils import parse_crossref_response, get_item_id
 from . import config
 
 blueprint = Blueprint(
