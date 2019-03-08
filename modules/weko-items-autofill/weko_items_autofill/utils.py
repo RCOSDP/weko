@@ -24,7 +24,6 @@ from invenio_cache import current_cache
 from invenio_i18n.ext import current_i18n
 
 from weko_records.api import Mapping
-from .crossref_api import Works
 from . import config
 
 
@@ -95,22 +94,7 @@ def _get_jpcoar_metadata(jpcoar_mapping_json):
 
 def parse_crossref_response(response):
     response_data = dict()
-    if response is None or not isinstance(response, dict):
-        return response_data
-
-    if response.get('status') != Works.STATUS_OK:
-        return response_data
-
-    message = response.get('message')
-
-    if message:
-        response_key = config.WEKO_ITEMS_AUTOFILL_CROSSREF_RESPONSE_RESULT
-
-        for key in response_key:
-            if message.get(key):
-                response_data[key] = message.get(key)
-
-        return response_data
+    return response_data
 
 
 def get_item_id(item_type_id):
