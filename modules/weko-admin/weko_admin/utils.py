@@ -97,19 +97,11 @@ def get_admin_lang_setting():
     Convert language list to json
     :return:
     """
-    json_list = []
     try:
         active_lang_list = AdminLangSettings.get_active_language()
-        for key in active_lang_list:
-            json_list.append({
-                'lang_code': '{0}'.format(active_lang_list[key]['lang_code']),
-                'lang_name': '{0}'.format(active_lang_list[key]['lang_name']),
-                'is_registered': active_lang_list[key]['is_registered'],
-                'sequence': active_lang_list[key]['sequence']
-            })
     except Exception as e:
         return str(e)
-    return json_list
+    return active_lang_list
 
 
 def update_admin_lang_setting(admin_lang_settings):
