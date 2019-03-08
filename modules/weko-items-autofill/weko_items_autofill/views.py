@@ -14,8 +14,8 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .permissions import auto_fill_permission
-from .crossref_api import Works
-from .utils import get_items_autofill, parse_crossref_response
+from .crossref_api import CrossRefOpenURL
+from .utils import get_items_autofill, parse_crossref_response, get_item_id
 from . import config
 
 blueprint = Blueprint(
@@ -63,13 +63,14 @@ def get_items_autofill_data():
 
     try:
         if api_type == 'CrossRef':
-            api = Works()
-            api_response = api.doi(search_data)
+            pid = config.WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID
+            api = CrossRefOpenURL(pid, search_data)
+            print(api.url)
+            api_response = api.get_data()
             result['result'] = parse_crossref_response(api_response)
-            result['items'] = get_items_autofill(item_type_id)
-        elif api_type == 'Amazon':
-            pass
-
+            result['items'] = get_item_id(item_type_id)
+        else:
+            result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:
         result['error'] = str(e)
 
@@ -82,3 +83,13 @@ def get_items_autofill_data():
 def get_selection_option():
     result = config.WEKO_ITEMS_AUTOFILL_SELECT_OPTION
     return jsonify(result)
+
+
+@blueprint_api.route('/get_item_map/<int:item_type_id>', methods=['GET'])
+def get_item_map(item_type_id=0):
+    """
+    host to ~/api/autofill/get_item_map/{id}
+    function return the dictionary of sub item id
+    """
+    results = get_item_id(item_type_id)
+    return jsonify(results)

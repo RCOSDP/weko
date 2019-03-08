@@ -106,22 +106,13 @@ require([
           return;
         }
 
-        param = {
+        let param = {
           api_type: autoFillID,
           search_data: value,
           item_type_id: itemTypeId
         }
-
-        // let request = {
-        //   url: item_save_uri,
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json'
-        //   },
-        //   data: JSON.stringify(param)
-        // };
-
-        var request = $.ajax({
+        // Create requet
+        let request = $.ajax({
           url: '/api/autofill/crossref_api',
           headers: {
             'Content-Type': 'application/json'
@@ -130,11 +121,11 @@ require([
           data: JSON.stringify(param),
           dataType: "json"
         });
-
+        // Request sucess
         request.done((data) => {
           console.log(data);
         });
-
+        // Request fail
         request.fail((jqXHR, textStatus) => {
           console.log(jqXHR);
           alert("Request failed: " + textStatus);
