@@ -59,6 +59,17 @@
            template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_BREAD) }}">
           </invenio-search-results>
         {%- endif %}
+        {%- if journal_info%}
+          <div class="panel-group">
+            <div class="panel-body">
+              <span ng-repeat="journalHeader in journal_info.header_info"> {{ journalHeader }} <br></span>
+              <br>
+              <span>URL:　</span><a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a>
+              <br>
+              <span ng-repeat="journalBody in journal_info.body_info"> {{ journalBody }} <br></span>
+            </div>
+          </div>
+        {%- endif%}
         <div class="form-inline flow-root">
           <select class="form-control hide" id="goExportORPrint">
             <option value="check_Export">{{_('Export Checked Items')}}</option>
