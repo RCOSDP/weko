@@ -786,9 +786,9 @@ class Indexes(object):
                 Index.display_no,
 
                 Index.coverpage_state,
-                # Index.recursive_coverpage_check,
+                Index.recursive_coverpage_check,
                 Index.admin_coverpage,
-                Index.display_cv,
+                # Index.display_cv,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
                 Index.admin_coverpage,
