@@ -263,29 +263,33 @@ class AdminLangSettings(db.Model):
         return cls.parse_result(lang_list)
 
     @classmethod
-    def save_lang(self, lang_code=None, lang_name=None, is_registered=None,
+    def update_lang(cls, lang_code=None, lang_name=None, is_registered=None,
                   sequence=None, is_active=None):
         """
         Save list language into database
+        :param lang_code: input language code
+        :param lang_name: input language name
+        :param is_registered: input boolean is language registered
+        :param sequence: input order number of language
+        :param is_active: input boolean is active of language
         :return: Updated record
         """
         with db.session.begin_nested():
+            lang_setting_data = cls.query.filter_by(lang_code=lang_code).one()
             if lang_code is not None:
-                self.lang_code = lang_code
+                lang_setting_data.lang_code = lang_code
             if lang_name is not None:
-                self.lang_name = lang_name
+                lang_setting_data.lang_name = lang_name
             if is_registered is not None:
-                self.is_registered = is_registered
+                lang_setting_data.is_registered = is_registered
             if sequence is not None:
-                self.sequence = sequence
+                lang_setting_data.sequence = sequence
             if is_active is not None:
-                self.is_active = is_active
-
-            db.session.merge(self)
+                lang_setting_data.is_active = is_active
+            db.session.merge(lang_setting_data)
 
         db.session.commit()
-
-        return self
+        return cls
 
     @classmethod
     def get_lang_code(cls):
