@@ -94,7 +94,7 @@ def get_search_setting():
 
 def get_admin_lang_setting():
     """
-    convert language list to jason
+    Convert language list to json
     :return:
     """
     json_list = []
@@ -114,8 +114,8 @@ def get_admin_lang_setting():
 
 def update_admin_lang_setting(admin_lang_settings):
     """
-    update language to admin_lang_settings table
-    :param admin_lang_settings:
+    Update language to admin_lang_settings table
+    :param admin_lang_settings: input data to update language into database
     """
     try:
         for admin_lang in admin_lang_settings:

@@ -267,6 +267,11 @@ class AdminLangSettings(db.Model):
                   sequence=None, is_active=None):
         """
         Save list language into database
+        :param lang_code: input language code
+        :param lang_name: input language name
+        :param is_registered: input boolean is language registered
+        :param sequence: input order number of language
+        :param is_active: input boolean is active of language
         :return: Updated record
         """
         with db.session.begin_nested():
