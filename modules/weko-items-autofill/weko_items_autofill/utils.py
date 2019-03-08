@@ -30,7 +30,7 @@ from . import config
 
 def is_update_cache():
     """Return True if Amazon Api has been updated."""
-    return config.WEKO_ITEMS_AUTOFILL_AMAZON_API_UPDATED
+    return config.WEKO_ITEMS_AUTOFILL_API_UPDATED
 
 
 def cached_api_json(timeout=50, key_prefix="amazon_json"):
@@ -111,3 +111,24 @@ def parse_crossref_response(response):
                 response_data[key] = message.get(key)
 
         return response_data
+
+
+def get_item_id(item_type_id):
+    """
+    return dictionary contain item id
+    get from mapping between itemtype and jpcoar
+    :param item_type_id: The item type id
+    :return: dictionary
+    """
+    results = dict()
+    item_type_mapping = Mapping.get_record(item_type_id)
+    try:
+        for k, v in item_type_mapping.items():
+            jpcoar = v.get("jpcoar_mapping")
+            if isinstance(jpcoar, dict):
+                for u,s in jpcoar.items():
+                    results[u] = s
+    except Exception as e:
+        results['error'] = str(e)
+
+    return results

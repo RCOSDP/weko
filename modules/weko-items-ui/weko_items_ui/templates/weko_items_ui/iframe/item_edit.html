@@ -44,7 +44,7 @@
       constructor(props) {
         super(props);
         this.state ={
-          idType: 'ISBN',
+          idType: '',
           itemId: '',
           selectOptions : []
         };
@@ -78,8 +78,6 @@
           )
       }
 
-
-
       handleChange(event) {
         const target = event.target;
         const value = target.value;
@@ -105,7 +103,7 @@
             <form onSubmit={this.handleSubmit}>
                 <div className="form-inline">
                     <label className="input-group-text" for="autofill_id_type">
-                        {{_('Automatic metadata input')}}
+                        {{_('Items_Autofill_Automatic_Metadata_Input')}}
                     </label>
                     &nbsp;&nbsp;
                     <select name="idType" id="autofill_id_type" value={this.state.idType.value}
