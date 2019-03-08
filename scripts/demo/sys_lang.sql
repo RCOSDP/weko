@@ -27,12 +27,3 @@ VALUES ('jpn', 'Japanese', 'true', 009, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
 VALUES ('eng', 'English', 'true', 010, 'true');
-
-INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('ab1', 'ABC1', 'true', 011, 'false');
-
-INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('ab2', 'ABC2', 'false', 012, 'true');
-
-INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('ab3', 'ABC3', 'false', 013, 'false');
