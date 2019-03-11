@@ -222,16 +222,20 @@ def get_journal_info(index_id = 0):
 
         cur_lang = current_i18n.language
         journal = Journals.get_journal_by_index_id(index_id)
-        if len(journal) <= 0:
+        if len(journal) <= 0 or journal.get('is_output') is False:
             return None
 
         result = {}
         for value in schema_data:
             title = value.get('title_i18n')
             if title is not None:
-                val = title.get(cur_lang) + '{0}{1}'.format(':　', journal.get(value['key']))
+                data = journal.get(value['key'])
+                dataMap = value.get('titleMap')
+                if dataMap is not None:
+                    data = [x['name'] for x in dataMap if x['value'] == data]
+                val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
                 result.update({value['key']: val})
-        result.update({'openSearchUrl': request.url_root + "/?action=repository_opensearch&index_id="+index_id})
+        result.update({'openSearchUrl': request.url_root + "?action=repository_opensearch&index_id="+index_id})
 
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
