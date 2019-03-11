@@ -112,10 +112,8 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
 
       // set data of page on init
       $scope.fetch=function(result){
-        $scope.journal_header_info = result.header_info;
-        $scope.journal_body_info = result.body_info;
-        console.log($scope.journal_header_info);
-        console.log($scope.journal_body_info);
+        $scope.journal = angular.fromJson(result.slice(2,-2).replace(/\n/g,'\\n'));
+        console.log($scope.journal);
       };
   }
 
