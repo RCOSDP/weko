@@ -126,7 +126,8 @@ def search():
                                sort_option=sort_options, disply_setting=disply_setting,
                                detail_condition=detail_condition, width=width, height=height,
                                index_link_enabled=style.index_link_enabled,
-                               index_link_list=index_link_list, **ctx)
+                               index_link_list=index_link_list,
+                               journal_info=journal_info, **ctx)
 
 
 
