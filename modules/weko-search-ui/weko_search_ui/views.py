@@ -216,7 +216,7 @@ def get_journal_info(index_id = 0):
     try:
         schema_file = os.path.join(
             os.path.abspath(__file__ + "/../../../"),
-            '/weko-indextree-journal/weko_indextree_journal',
+            'weko-indextree-journal/weko_indextree_journal',
             current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'])
         schema_data = json.load(open(schema_file))
 
