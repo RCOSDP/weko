@@ -62,6 +62,7 @@
         {%- if journal_info%}
           <div class="panel-group" ng-init="fetch('[[{{journal_info}}]]')">
             <div class="panel-body">
+              <p>{{ journal.header_info }}</p>
               <p ng-repeat="journalHeader in journal.header_info"> {{ journalHeader }} </p>
               <br>
               <p>URL:　<a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>

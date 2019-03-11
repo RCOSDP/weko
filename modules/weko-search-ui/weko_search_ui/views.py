@@ -127,7 +127,7 @@ def search():
                                detail_condition=detail_condition, width=width, height=height,
                                index_link_enabled=style.index_link_enabled,
                                index_link_list=index_link_list,
-                               journal_info=journal_info, **ctx)
+                               journal_info=json.dumps(journal_info), **ctx)
 
 
 
