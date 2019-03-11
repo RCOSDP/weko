@@ -215,8 +215,8 @@ def get_journal_info(index_id = 0):
     """
     try:
         schema_file = os.path.join(
-            #os.path.dirname(__file__),
-            '/code/modules/weko-indextree-journal/weko_indextree_journal',
+            os.path.abspath(__file__ + "/../../../"),
+            '/weko-indextree-journal/weko_indextree_journal',
             current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'])
         schema_data = json.load(open(schema_file))
 
@@ -232,7 +232,8 @@ def get_journal_info(index_id = 0):
                 data = journal.get(value['key'])
                 dataMap = value.get('titleMap')
                 if dataMap is not None:
-                    data = [x['name'] for x in dataMap if x['value'] == data]
+                    res = [x['name'] for x in dataMap if x['value'] == data]
+                    data = res[0]
                 val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
                 result.update({value['key']: val})
         result.update({'openSearchUrl': request.url_root + "?action=repository_opensearch&index_id="+index_id})
