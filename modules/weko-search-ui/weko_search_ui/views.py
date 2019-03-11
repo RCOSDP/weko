@@ -127,7 +127,7 @@ def search():
                                detail_condition=detail_condition, width=width, height=height,
                                index_link_enabled=style.index_link_enabled,
                                index_link_list=index_link_list,
-                               journal_info=json.dumps(journal_info), **ctx)
+                               journal_info=journal_info, **ctx)
 
 
 
@@ -221,24 +221,17 @@ def get_journal_info(index_id = 0):
         schema_data = json.load(open(schema_file))
 
         cur_lang = current_i18n.language
-        header_info = ("publication_title", "publisher_name",
-                       "language", "online_identifier")
         journal = Journals.get_journal_by_index_id(index_id)
         if len(journal) <= 0:
             return None
 
         result = {}
-        result['header_info'] = {}
-        result['body_info'] = {}
         for value in schema_data:
             title = value.get('title_i18n')
             if title is not None:
                 val = title.get(cur_lang) + '{0}{1}'.format(':　', journal.get(value['key']))
-                if value['key'] in header_info:
-                    result['header_info'].update({value['key']: val})
-                else:
-                    result['body_info'].update({value['key']: val})
-        result['openSearchUrl'] = "/?action=repository_opensearch&index_id="+index_id
+                result.update({value['key']: val})
+        result.update({'openSearchUrl': "/?action=repository_opensearch&index_id="+index_id})
 
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
