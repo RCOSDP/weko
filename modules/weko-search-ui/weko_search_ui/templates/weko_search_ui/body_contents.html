@@ -29,7 +29,7 @@
    search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
    search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
   >
-  <div id="search_res" ng-controller="searchResCtrl">
+  <div id="search_res" ng-controller="searchResCtrl" ng-init="fetch('[[{{journal_info}}]]')">
   {%- block search_index_results %}
   <invenio-search-results
    template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_INDEX) }}">
@@ -62,11 +62,11 @@
         {%- if journal_info%}
           <div class="panel-group">
             <div class="panel-body">
-              <span ng-repeat="journalHeader in journal_info.header_info"> {{ journalHeader }} <br></span>
+              <p ng-repeat="journalHeader in journal_header_info"> {{ journalHeader }} </p>
               <br>
-              <span>URL:　</span><a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a>
+              <p>URL:　<a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
               <br>
-              <span ng-repeat="journalBody in journal_info.body_info"> {{ journalBody }} <br></span>
+              <p ng-repeat="journalBody in journal_body_info"> {{ journalBody }} </p>
             </div>
           </div>
         {%- endif%}

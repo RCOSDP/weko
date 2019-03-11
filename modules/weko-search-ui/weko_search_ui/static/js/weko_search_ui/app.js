@@ -109,6 +109,14 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
           return true;
         }
      }
+
+      // set data of page on init
+      $scope.fetch=function(result){
+        $scope.journal_header_info = result.header_info;
+        $scope.journal_body_info = result.body_info;
+        console.log($scope.journal_header_info);
+        console.log($scope.journal_body_info);
+      };
   }
 
 angular.module('invenioSearch')
