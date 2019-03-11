@@ -28,6 +28,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import JSONType
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy import asc
 
 
 class SessionLifetime(db.Model):
@@ -240,7 +241,6 @@ class AdminLangSettings(db.Model):
     @classmethod
     def parse_result(cls, in_result):
         obj = {}
-
         for k in in_result:
             record = dict()
             record['lang_code'] = k.lang_code
@@ -249,7 +249,17 @@ class AdminLangSettings(db.Model):
             record['sequence'] = k.sequence
             record['is_active'] = k.is_active
             obj[k.lang_code] = record
-        return obj
+
+        json_list = []
+        for key in obj:
+            json_list.append({
+                'lang_code': '{0}'.format(obj[key]['lang_code']),
+                'lang_name': '{0}'.format(obj[key]['lang_name']),
+                'is_registered': obj[key]['is_registered'],
+                'sequence': obj[key]['sequence']
+            })
+        sorted_list = sorted(json_list, key=lambda k: k['sequence'])
+        return sorted_list
 
     @classmethod
     def load_lang(cls):
@@ -322,8 +332,8 @@ class AdminLangSettings(db.Model):
         Get active languages
         :return: All languages have activated
         """
-        result = cls.query.filter_by(is_active=True)
-
+        result = cls.query.filter_by(is_active=True).order_by(
+            asc('admin_lang_settings_sequence'))
         return cls.parse_result(result)
 
 
