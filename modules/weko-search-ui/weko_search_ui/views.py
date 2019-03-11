@@ -243,4 +243,4 @@ def get_journal_info(index_id = 0):
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         abort(500)
-    return result
+    return jsonify(result)
