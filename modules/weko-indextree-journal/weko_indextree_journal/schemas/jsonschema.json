@@ -90,7 +90,7 @@
     "embargo_info": {
       "type": "string",
       "title": "Embargo information",
-      "pattern": "^[PR]([0-9]+)[DMY]$|^[PR]([0-9]+)[DMY]；[PR]([0-9]+)[DMY]$",
+      "pattern": "^[PR]([0-9]+)[DMY]$|^[PR]([0-9]+)[DMY];[PR]([0-9]+)[DMY]$",
       "validationMessage_i18n": {
         "202": {
           "en": "Embargo information format is wrong",
