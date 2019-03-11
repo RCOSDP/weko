@@ -109,12 +109,6 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
           return true;
         }
      }
-
-      // set data of page on init
-      $scope.fetch=function(result){
-        $scope.journal = angular.fromJson(result.slice(2,-2).replace(/\n/g,'\\n'));
-        console.log($scope.journal);
-      };
   }
 
 angular.module('invenioSearch')
