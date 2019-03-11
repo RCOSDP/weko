@@ -94,6 +94,10 @@ require([
         $('#meta-search').modal('show');
       }
 
+      $scope.setValueToField = function(id, value){
+        $('#'+id).val(value);
+      }
+
       $scope.setItemMetadata = function() {
         let autoFillID = $('#autofill_id_type').val();
         let value = $('#autofill_item_id').val();
@@ -117,19 +121,131 @@ require([
           headers: {
             'Content-Type': 'application/json'
           },
+          async: false,
           method: "POST",
           data: JSON.stringify(param),
-          dataType: "json"
+          dataType: "json",
+          success: (data, status)=>{
+            console.log(data.items);
+            let items = data.items;
+            let value = 'dummy data';
+            if (items.hasOwnProperty('creator')) {
+              if (items.creator.hasOwnProperty('affiliation')) {
+                if (items.creator.affiliation.hasOwnProperty('affiliationName')) {
+                  let id = items.creator.affiliation.affiliationName;
+                  this.setValueToField(id['@attributes']['xml:lang'], 'en');
+                  this.setValueToField(id['@value'], value);
+                  // $rootScope.recordsVM.invenioRecordsModel[id['@value']] = fieldData;
+                }
+                if (items.creator.affiliation.hasOwnProperty('nameIdentifier')) {
+                  let id = items.creator.affiliation.nameIdentifier;
+                  this.setValueToField(id['@attributes']['nameIdentifierScheme'], 'AID');
+                  this.setValueToField(id['@attributes']['nameIdentifierURI'], value);
+                  this.setValueToField(id['@value'], value);
+                }
+              }
+              if (items.creator.hasOwnProperty('creatorAlternative')) {
+                let id = items.creator.creatorAlternative;
+                this.setValueToField(id['@attributes']['xml:lang'], 'en');
+                this.setValueToField(id['@value'], value);
+              }
+              if (items.creator.hasOwnProperty('creatorName')) {
+                let id = items.creator.creatorName;
+                this.setValueToField(id['@attributes']['xml:lang'], 'en');
+                this.setValueToField(id['@value'], value);
+              }
+              if (items.creator.hasOwnProperty('familyName')) {
+                let id = items.creator.familyName;
+                this.setValueToField(id['@attributes']['xml:lang'], 'en');
+                this.setValueToField(id['@value'], value);
+              }
+              if (items.creator.hasOwnProperty('givenName')) {
+                let id = items.creator.givenName;
+                this.setValueToField(id['@attributes']['xml:lang'], 'en');
+                this.setValueToField(id['@value'], value);
+              }
+              if (items.creator.hasOwnProperty('nameIdentifier')) {
+                let id = items.creator.nameIdentifier;
+                  this.setValueToField(id['@attributes']['nameIdentifierScheme'], 'AID');
+                  this.setValueToField(id['@attributes']['nameIdentifierURI'], value);
+                  this.setValueToField(id['@value'], value);
+              }
+            }
+            if (items.hasOwnProperty('date')){
+              let id = items.date;
+              this.setValueToField(id['@attributes']['dateType'], value);
+              this.setValueToField(id['@value'], value);
+            }
+            if (items.hasOwnProperty('language')) {
+              this.setValueToField(items.language['@value'], value);
+            }
+            if (items.hasOwnProperty('numPages')) {
+              this.setValueToField(items.numPages['@value'], value);
+            }
+            if (items.hasOwnProperty('pageStart')) {
+              this.setValueToField(items.pageStart['@value'], value);
+            }
+            if (items.hasOwnProperty('pageEnd')) {
+              this.setValueToField(items.pageEnd['@value'], value);
+            }
+            if (items.hasOwnProperty('publisher')) {
+              let id = items.publisher;
+              this.setValueToField(id['@attributes']['xml:lang'], value);
+              this.setValueToField(id['@value'], value);
+            }
+            if (items.hasOwnProperty('relation')) {
+              let relation = items.relation;
+              this.setValueToField(relation['@attributes']['relationType'], value);
+              if (relation.hasOwnProperty('relatedIdentifier')) {
+                let id = relation.relatedIdentifier;
+                this.setValueToField(id['@attributes']['identifierType'], value);
+                this.setValueToField(id['@value'], value);
+              }
+              if (relation.hasOwnProperty('relatedTitle')) {
+                let id = relation.relatedTitle;
+                this.setValueToField(id['@attributes']['xml:lang'], value);
+                this.setValueToField(id['@value'], value);
+              }
+            }
+            if (items.hasOwnProperty('title')) {
+              let id = items.title;
+              this.setValueToField(id['@attributes']['xml:lang'], value);
+              this.setValueToField(id['@value'], value);
+            }
+            $('#meta-search').modal('toggle');
+          }
         });
-        // Request sucess
-        request.done((data) => {
-          console.log(data);
-        });
-        // Request fail
-        request.fail((jqXHR, textStatus) => {
-          console.log(jqXHR);
-          alert("Request failed: " + textStatus);
-        });
+        // // Request sucess
+        // request.done((data) => {
+        //   console.log(data.items);
+        //   let items = data.items;
+        //   let value = data.result;
+        //   console.log(0.1);
+        //   if (items.hasOwnProperty('creator')) {
+        //     console.log(1);
+        //     if (items.creator.hasOwnProperty('affiliation')) {
+        //       console.log(2);
+        //       if (items.creator.affiliation.hasOwnProperty('affiliationName')) {
+        //         console.log(3);
+        //         let id = items.creator.affiliation.affiliationName;
+        //         let fieldData = "affiliation"
+        //         console.log(id['@attributes']['xml:lang']+"---"+fieldData+' language');
+        //         console.log(id['@value']);
+        //         this.setValueToField(id['@attributes']['xml:lang'], 'en');
+        //         this.setValueToField(id['@value'], fieldData);
+        //         $rootScope.recordsVM.invenioRecordsModel[id['@value']] = fieldData;
+        //       }
+        //     }
+        //     $('#meta-search').modal('toggle');
+        //   }
+        // });
+        // // Request fail
+        // request.fail((jqXHR, textStatus) => {
+        //   console.log(jqXHR);
+        //   alert("Request failed: " + textStatus);
+        // });
+
+
 
         // $.ajax({
         //   method: 'GET',
