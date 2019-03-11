@@ -62,11 +62,11 @@
         {%- if journal_info%}
           <div class="panel-group">
             <div class="panel-body">
-              <p ng-repeat="journalHeader in journal_header_info"> {{ journalHeader }} </p>
+              <p ng-repeat="journalHeader in journal.header_info"> {{ journalHeader }} </p>
               <br>
               <p>URL:　<a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
               <br>
-              <p ng-repeat="journalBody in journal_body_info"> {{ journalBody }} </p>
+              <p ng-repeat="journalBody in journal.body_info"> {{ journalBody }} </p>
             </div>
           </div>
         {%- endif%}
