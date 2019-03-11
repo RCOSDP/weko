@@ -233,7 +233,7 @@ def get_journal_info(index_id = 0):
         for value in schema_data:
             title = value.get('title_i18n')
             if title is not None:
-                val = title.get(cur_lang) + ':　{}'.format(journal.get(value['key']))
+                val = title.get(cur_lang) + '{0}{1}'.format(':　', journal.get(value['key']))
                 if value['key'] in header_info:
                     result['header_info'].update({value['key']: val})
                 else:
@@ -243,4 +243,4 @@ def get_journal_info(index_id = 0):
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         abort(500)
-    return jsonify(result)
+    return result
