@@ -5,7 +5,6 @@
 }
 .query-columns label {
     display:block;
-    text-align: center;
 }
 .query-columns .buttons input[type=button] {
     width:35px;
@@ -20,6 +19,7 @@
 
 .query-columns select {
     width:150px;
+    height: calc(100vh - 350px);
 }
 
 #btn_commit_lg {
