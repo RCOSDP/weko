@@ -130,9 +130,6 @@ class Indexes(object):
                         data["contribute_group"] = iobj.contribute_group
                         data["recursive_contribute_group"] = iobj.recursive_contribute_group
 
-
-                    current_app.logger.debug(iobj.coverpage_state)
-
                 else:
                     return
 
@@ -1042,3 +1039,4 @@ class Indexes(object):
             synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
             cls.set_coverpage_state_resc(index.id, state)
+
