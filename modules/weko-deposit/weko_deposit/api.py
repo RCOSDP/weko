@@ -579,7 +579,9 @@ class WekoRecord(Record):
         WekoRecord.print_trackback()
 
         pid = self.record_fetcher(self.id, self)
-        return PersistentIdentifier.get(pid.pid_type, pid.pid_value)
+        var obj = PersistentIdentifier.get(pid.pid_type, pid.pid_value)
+        print(obj.__dict__)
+        return obj
 
     @property
     def navi(self):
