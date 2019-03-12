@@ -1,29 +1,32 @@
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('chi', 'Chinese', 'true', 000, 'false');
+VALUES ('zh', 'Chinese', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('ind', 'Indonesian', 'true', 000, 'false');
+VALUES ('id', 'Indonesian', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('vie', 'Vietnamese', 'true', 000, 'false');
+VALUES ('vi', 'Vietnamese', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('may', 'Malay', 'true', 000, 'false');
+VALUES ('ms', 'Malay', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('tgl', 'Tagalog', 'true', 000, 'false');
+VALUES ('tl', 'Tagalog', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('tha', 'Thai', 'true', 000, 'false');
+VALUES ('th', 'Thai', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('hin', 'Hindi', 'true', 000, 'false');
+VALUES ('hi', 'Hindi', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('ara', 'Arabic', 'true', 000, 'false');
+VALUES ('ar', 'Arabic', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('jpn', 'Japanese', 'true', 001, 'true');
+VALUES ('jp', 'Japanese', 'true', 001, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('eng', 'English', 'true', 002, 'true');
+VALUES ('en', 'English', 'true', 002, 'true');
+
+INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
+VALUES ('de', 'German', 'false', 000, 'true');
