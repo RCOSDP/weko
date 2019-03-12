@@ -118,7 +118,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
             //data: post_data,
           headers: {'Content-Type': 'application/json'},
         }).then(function successCallback(response) {
-          $rootScope.journal_info = response;
+          $rootScope.journal_info = JSON.stringify(response);
         }, function errorCallback(error) {
           console.log(error);
         });
