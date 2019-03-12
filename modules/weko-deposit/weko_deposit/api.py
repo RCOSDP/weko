@@ -576,7 +576,7 @@ class WekoRecord(Record):
     def pid(self):
         """Return an instance of record PID."""
         print("======== [Log]: method pid ========")
-        self.print_trackback()
+        # self.print_trackback()
 
         pid = self.record_fetcher(self.id, self)
         return PersistentIdentifier.get(pid.pid_type, pid.pid_value)
@@ -585,7 +585,7 @@ class WekoRecord(Record):
     def navi(self):
         """Return the path name."""
         print("======== [Log]: method navi ========")
-        self.print_trackback()
+        # self.print_trackback()
 
         return Indexes.get_path_name(self.get('path', []))
 
@@ -593,7 +593,7 @@ class WekoRecord(Record):
     def item_type_info(self):
         """Return the information of item type."""
         print("======== [Log]: method item_type_info ========")
-        self.print_trackback()
+        # self.print_trackback()
 
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
@@ -602,7 +602,7 @@ class WekoRecord(Record):
     def items_show_list(self):
         """Return the item show list."""
         print("======== [Log]: method items_show_list ========")
-        self.print_trackback()
+        # self.print_trackback()
 
         try:
 
@@ -641,7 +641,7 @@ class WekoRecord(Record):
     def get_record_by_pid(cls, pid):
         """"""
         print("======== [Log]: method get_record_by_pid ========")
-        cls.print_trackback()
+        # cls.print_trackback()
 
         pid = PersistentIdentifier.get('depid', pid)
         return cls.get_record(id_=pid.object_uuid)
@@ -649,7 +649,7 @@ class WekoRecord(Record):
     @classmethod
     def get_record_with_hps(cls, uuid):
         print("======== [Log]: method get_record_with_hps ========")
-        cls.print_trackback()
+        # cls.print_trackback()
 
         record = cls.get_record(id_=uuid)
         path = []
@@ -662,7 +662,7 @@ class WekoRecord(Record):
     @classmethod
     def get_record_cvs(cls, uuid):
         print("======== [Log]: method get_record_cvs ========")
-        cls.print_trackback()
+        # cls.print_trackback()
         
         record = cls.get_record(id_=uuid)
         path = []
@@ -672,7 +672,7 @@ class WekoRecord(Record):
             coverpage_state = Indexes.get_coverpage_state(path)
         return coverpage_state
 
-    def print_trackback():
+    def print_trackback(cls):
         try:
             for line in traceback.format_stack():
                 print(line.strip())
