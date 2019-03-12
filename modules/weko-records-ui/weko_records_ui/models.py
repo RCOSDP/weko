@@ -106,5 +106,49 @@ class InstitutionName(db.Model):
         cfg.institution_name = new_name
         db.session.commit()
 
+        """ Record UI models """
 
-__all__ = ('PDFCoverPageSettings')
+class Identifier(db.Model):
+    """
+        Represent an Identifier.
+
+        The Identifier object contains a ``created``, a ``updated``
+        properties that are automatically updated.
+    """
+
+    __tablename__ = 'pidstore_indentifier'
+
+    id = db.Column(db.BigInteger, primary_key=True, unique=True)
+    """Identifier of the index."""
+
+    repository = db.Column(db.Text, nullable=False, default='')
+    """repository of the Identifier."""
+
+    jalc_doi = db.Column(db.Text, nullable=True, default='')
+    """jalc_doi of the Identifier."""
+
+    jalc_crossref_doi = db.Column(db.Text, nullable=True, default='')
+    """jalc_crossref_doi of the Identifier."""
+
+    jalc_datacite_doi = db.Column(db.Text, nullable=True, default='')
+    """jalc_datacite_doi of the Identifier."""
+
+    cnri = db.Column(db.Text, nullable=True, default='')
+    """cnri of the Identifier."""
+
+    suffix = db.Column(db.Text, nullable=True, default='')
+    """suffix of the Identifier."""
+
+    created_userId = db.Column(db.Text, nullable=False, default='')
+    """created by user."""
+
+    created_date = db.Column(db.DateTime, nullable=False, default='')
+    """created date."""
+
+    updated_userId = db.Column(db.Text, nullable=False, default='')
+    """updated by user."""
+
+    updated_date = db.Column(db.DateTime, nullable=True, default='')
+    """updated date."""
+
+__all__ = ('PDFCoverPageSettings', 'Identifier')
