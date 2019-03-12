@@ -108,6 +108,10 @@ class InstitutionName(db.Model):
 
         """ Record UI models """
 
+
+__all__ = ('PDFCoverPageSettings',)
+
+
 class Identifier(db.Model):
     """
         Represent an Identifier.
@@ -151,4 +155,5 @@ class Identifier(db.Model):
     updated_date = db.Column(db.DateTime, nullable=True, default='')
     """updated date."""
 
-__all__ = ('PDFCoverPageSettings', 'Identifier')
+
+__all__ = ('Identifier',)

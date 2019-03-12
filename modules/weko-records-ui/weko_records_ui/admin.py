@@ -24,9 +24,11 @@ import sys
 
 from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
+from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
 from . import config
+from .models import Identifier
 from invenio_db import db
 from .models import PDFCoverPageSettings
 from .models import InstitutionName
@@ -107,7 +109,7 @@ class InstitutionNameSettingView(BaseView):
                            institution_name = institution_name)
 
 
-
+"""
 class IdentifierSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
@@ -117,7 +119,51 @@ class IdentifierSettingView(BaseView):
         institution_name = InstitutionName.get_institution_name()
         return self.render(config.INSTITUTION_NAME_SETTING_TEMPLATE,
                            institution_name = institution_name)
+"""
 
+
+class IdentifierSettingView(ModelView):
+    """Setting model view."""
+
+    can_create = True
+    can_edit = True
+    can_delete = False
+    can_view_details = False
+    column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+    column_details_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+    column_labels = dict(
+        repository=_('Repository'),
+        jalc_doi=_('JaLC DOI'),
+        jalc_crossref_doi=_('JaLC CrossRef DOI'),
+        jalc_datacite_doi=_('JaLC DataCite DOI'),
+        cnri=_('CNRI'),
+        suffix=_('Repository'),
+        #created_userId=_(''),
+        #created_date=_(''),
+        #updated_userId=_(''),
+        #updated_date=_('')
+    )
+    form_columns = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+    page_size = 25
+
+
+    def edit_form(self, obj):
+        """Customize edit form."""
+        form = super(IdentifierSettingView, self).edit_form(obj)
+        return form
+
+
+    def after_model_change(self,form,Identify,true):
+        """Set Create button Hidden"""
+        IdentifierSettingView.can_create = False
+
+
+identifier_adminview = dict(
+    modelview=IdentifierSettingView,
+    model=Identifier,
+    category=_('Setting'),
+    name=_('Identifier'),
+)
 
 
 institution_adminview = {
@@ -147,6 +193,7 @@ pdfcoverpage_adminview = {
     }
 }
 
+"""
 identifier_adminview = {
     'view_class': IdentifierSettingView,
     'kwargs': {
@@ -155,10 +202,11 @@ identifier_adminview = {
         'endpoint': 'identifier'
     }
 }
+"""
 
 __all__ = (
-    'identifier_adminview',
-    'IdentifierSettingView',
+    #'identifier_adminview',
+    #'IdentifierSettingView',
     'pdfcoverpage_adminview',
     'PdfCoverPageSettingView',
     'item_adminview',
