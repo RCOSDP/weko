@@ -114,6 +114,18 @@ msgstr "エクスポート"
 #~ msgstr "公開"
 
 #: Message strings for display File versions
+msgid "Detail"
+msgstr "詳細"
+
+msgid "Stats"
+msgstr "統計"
+
+msgid "Public"
+msgstr "公開"
+
+msgid "Private"
+msgstr "非公開"
+
 msgid "Version"
 msgstr "バージョン"
 
@@ -129,7 +141,7 @@ msgstr "ファイル容量"
 msgid "File Hash Value"
 msgstr "ファイルハッシュ値"
 
-msgid "Registered User Name"
+msgid "Contributor Name"
 msgstr "登録ユーザ名"
 
 msgid "Public/Private"

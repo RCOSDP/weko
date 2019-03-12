@@ -78,7 +78,7 @@
                 {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
                 filename=file.key) %}
                 <tr >
-                  <td >{{file.filename}} <a href="{{file_details_url}}">{{_('Details')}}</a></td>
+                  <td >{{file.filename}} <a href="{{file_details_url}}">{{_('Detail')}}</a></td>
                   <td rowspan="2">
                     {%- if not 'simple' in file.displaytype -%}
                     {%- if 'license_free' == file.licensetype -%}
