@@ -112,9 +112,9 @@ def update_admin_lang_setting(admin_lang_settings):
     try:
         for admin_lang in admin_lang_settings:
             AdminLangSettings.update_lang(admin_lang.get('lang_code'),
-                                          admin_lang['lang_name'],
-                                          admin_lang['is_registered'],
-                                          admin_lang['sequence'])
+                                          admin_lang.get('lang_name'),
+                                          admin_lang.get('is_registered'),
+                                          admin_lang.get('sequence'))
     except Exception as e:
         return str(e)
     return 'success'
