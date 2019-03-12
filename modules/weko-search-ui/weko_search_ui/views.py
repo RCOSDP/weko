@@ -209,11 +209,14 @@ def save_sort():
         return make_response(jsonify(jfy), jfy['status'])
 
 
+@blueprint.route("/journal_info/<int:index_id>", methods=['GET'])
 def get_journal_info(index_id = 0):
     """Get journal information.
     :return: The object.
     """
     try:
+        if index_id == 0:
+            return None
         schema_file = os.path.join(
             os.path.abspath(__file__ + "/../../../"),
             'weko-indextree-journal/weko_indextree_journal',
