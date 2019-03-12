@@ -296,7 +296,7 @@ def reduce_index_by_more(tree, more_ids=[]):
 def get_admin_coverpage_setting():
     avail = 'disable'
     try:
-        record = db.engine.execute(current_app.config['WEKO_PDF_COVERPAGE_TABLE'])
+        record = db.engine.execute("SELECT * FROM pdfcoverpage_set")
         avail = record.first()[1]
     except Exception as ex:
         current_app.logger.debug(ex)
