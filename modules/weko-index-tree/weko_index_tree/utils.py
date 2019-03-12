@@ -163,6 +163,7 @@ def get_user_roles():
         return _check_admin(), [x.id for x in current_user.roles]
     return False, None
 
+
 def get_user_groups():
     grps = []
     groups = Group.query_by_user(current_user, eager=False)
@@ -170,6 +171,7 @@ def get_user_groups():
         grps.append(group.id)
 
     return grps
+
 
 def check_roles(user_role, roles):
     is_can = True
@@ -182,6 +184,7 @@ def check_roles(user_role, roles):
             is_can = False
     return is_can
 
+
 def check_groups(user_group, groups):
     is_can = True
     if current_user.is_authenticated:
@@ -190,6 +193,7 @@ def check_groups(user_group, groups):
             is_can = False
 
     return is_can
+
 
 def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
     if isinstance(tree, list):
@@ -245,6 +249,7 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         children.clear()
                         tree.pop(i)
 
+
 def get_index_id_list(indexes, id_list = []):
     if isinstance(indexes, list):
         for index in indexes:
@@ -258,6 +263,7 @@ def get_index_id_list(indexes, id_list = []):
                 get_index_id_list(children, id_list)
 
     return id_list
+
 
 def reduce_index_by_more(tree, more_ids=[]):
 
@@ -286,11 +292,12 @@ def reduce_index_by_more(tree, more_ids=[]):
             else:
                 reduce_index_by_more(tree=children, more_ids=more_ids)
 
+
 def get_admin_coverpage_setting():
-    avail = False
+    avail = 'disable'
     try:
-        record = db.engine.execute('SELECT * FROM pdfcoverpage_set')
-        avail = record.first()['Availability']
+        record = db.engine.execute(current_app.config['WEKO_PDF_COVERPAGE_TABLE'])
+        avail = record.first()[1]
     except Exception as ex:
         current_app.logger.debug(ex)
     return avail == 'enable'
