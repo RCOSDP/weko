@@ -673,5 +673,8 @@ class WekoRecord(Record):
         return coverpage_state
 
     def print_trackback():
-        for line in traceback.format_stack():
-            print(line.strip())
+        try:
+            for line in traceback.format_stack():
+                print(line.strip())
+        except Exception:
+            print("warning")
