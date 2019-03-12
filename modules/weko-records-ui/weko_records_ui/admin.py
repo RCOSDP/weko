@@ -152,7 +152,7 @@ identifier_adminview = {
     'kwargs': {
         'category': _('Setting'),
         'name': _('Identifier'),
-        'endpoint': 'identifier'
+        'endpoint': 'identifiera'
     }
 }
 
