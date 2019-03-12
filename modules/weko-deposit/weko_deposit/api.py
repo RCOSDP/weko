@@ -575,8 +575,8 @@ class WekoRecord(Record):
     @property
     def pid(self):
         """Return an instance of record PID."""
-        print("[Log]: method pid")
-        cls.print_trackback()
+        print("======== [Log]: method pid ========")
+        print_trackback()
 
         pid = self.record_fetcher(self.id, self)
         return PersistentIdentifier.get(pid.pid_type, pid.pid_value)
@@ -584,16 +584,16 @@ class WekoRecord(Record):
     @property
     def navi(self):
         """Return the path name."""
-        print("[Log]: method navi")
-        cls.print_trackback()
+        print("======== [Log]: method navi ========")
+        print_trackback()
 
         return Indexes.get_path_name(self.get('path', []))
 
     @property
     def item_type_info(self):
         """Return the information of item type."""
-        print("[Log]: method item_type_info")
-        cls.print_trackback()
+        print("======== [Log]: method item_type_info ========")
+        print_trackback()
 
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
@@ -601,8 +601,8 @@ class WekoRecord(Record):
     @property
     def items_show_list(self):
         """Return the item show list."""
-        print("[Log]: method items_show_list")
-        cls.print_trackback()
+        print("======== [Log]: method items_show_list ========")
+        print_trackback()
 
         try:
 
@@ -640,16 +640,16 @@ class WekoRecord(Record):
     @classmethod
     def get_record_by_pid(cls, pid):
         """"""
-        print("[Log]: method get_record_by_pid")
-        cls.print_trackback()
+        print("======== [Log]: method get_record_by_pid ========")
+        print_trackback()
 
         pid = PersistentIdentifier.get('depid', pid)
         return cls.get_record(id_=pid.object_uuid)
 
     @classmethod
     def get_record_with_hps(cls, uuid):
-        print("[Log]: method get_record_with_hps")
-        cls.print_trackback()
+        print("======== [Log]: method get_record_with_hps ========")
+        print_trackback()
 
         record = cls.get_record(id_=uuid)
         path = []
@@ -661,8 +661,8 @@ class WekoRecord(Record):
 
     @classmethod
     def get_record_cvs(cls, uuid):
-        print("[Log]: method get_record_cvs")
-        cls.print_trackback()
+        print("======== [Log]: method get_record_cvs ========")
+        print_trackback()
         
         record = cls.get_record(id_=uuid)
         path = []
