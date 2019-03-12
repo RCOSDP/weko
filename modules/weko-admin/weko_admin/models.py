@@ -315,6 +315,7 @@ class AdminLangSettings(db.Model):
         Get language full name
         :return: language full name
         """
+        return cls.lang_name
 
     @classmethod
     def get_registered_language(cls):

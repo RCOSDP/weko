@@ -33,10 +33,10 @@ $(document).ready(function () {
       for (let index = 0; index < results.length; index++) {
         const element = results[index];
         if (element.is_registered) {
-          rightOption += `<option value="${element.lang_code}">${element.lang_name}</option>`;
+          rightOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
           continue;
         }
-        leftOption += `<option value="${element.lang_code}">${element.lang_name}</option>`;
+        leftOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
       }
       leftSelect.append(leftOption);
       rightSelect.append(rightOption);
