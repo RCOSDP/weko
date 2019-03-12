@@ -456,7 +456,7 @@ class Indexes(object):
                     recursive_t.c.public_state, recursive_t.c.public_date,
                     recursive_t.c.browsing_role, recursive_t.c.contribute_role,
                     recursive_t.c.browsing_group, recursive_t.c.contribute_group,
-                    recursive_t.c.more_check, recursive_t.c.display_no, 
+                    recursive_t.c.more_check, recursive_t.c.display_no,
                     recursive_t.c.coverpage_state, recursive_t.c.recursive_coverpage_check, recursive_t.c.admin_coverpage
                     ]
             obj = db.session.query(*qlst). \
@@ -784,11 +784,6 @@ class Indexes(object):
                 Index.contribute_group,
                 Index.more_check,
                 Index.display_no,
-
-                Index.coverpage_state,
-                Index.recursive_coverpage_check,
-                Index.admin_coverpage,
-                Index.display_cv,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
                 Index.admin_coverpage,
