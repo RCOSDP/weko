@@ -239,7 +239,8 @@ def get_journal_info(index_id = 0):
                     data = res[0]
                 val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
                 result.update({value['key']: val})
-        result.update({'openSearchUrl': request.url_root + "?action=repository_opensearch&index_id="+index_id})
+        # real url: ?action=repository_opensearch&index_id=
+        result.update({'openSearchUrl': request.url_root + "search?q={}".format(index_id)})
 
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
