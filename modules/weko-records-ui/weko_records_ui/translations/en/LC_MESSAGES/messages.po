@@ -107,3 +107,24 @@ msgstr ""
 msgid "Export"
 msgstr ""
 
+#: Message strings for display File versions
+msgid "Version"
+msgstr "Version"
+
+msgid "Date Modified"
+msgstr "Date Modified"
+
+msgid "Object File Name"
+msgstr "Object File Name"
+
+msgid "File Size"
+msgstr "File Size"
+
+msgid "File Hash Value"
+msgstr "File Hash Value"
+
+msgid "Registered User Name"
+msgstr "Registered User Name"
+
+msgid "Public/Private"
+msgstr "Public/Private"

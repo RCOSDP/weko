@@ -113,3 +113,24 @@ msgstr "エクスポート"
 #~ msgid "Publishing"
 #~ msgstr "公開"
 
+#: Message strings for display File versions
+msgid "Version"
+msgstr "バージョン"
+
+msgid "Date Modified"
+msgstr "更新日時"
+
+msgid "Object File Name"
+msgstr "オブジェクトファイル名"
+
+msgid "File Size"
+msgstr "ファイル容量"
+
+msgid "File Hash Value"
+msgstr "ファイルハッシュ値"
+
+msgid "Registered User Name"
+msgstr "登録ユーザ名"
+
+msgid "Public/Private"
+msgstr "公開/非公開"
