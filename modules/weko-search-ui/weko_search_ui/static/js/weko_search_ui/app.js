@@ -61,7 +61,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
      $rootScope.disable_flg = true;
      $rootScope.display_flg = true;
      $rootScope.index_id_q = $location.search().q;
-
+     $rootScope.journal_info = [];
 
      $scope.itemManagementTabDisplay= function(){
         $rootScope.disable_flg = true;
@@ -109,6 +109,22 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
           return true;
         }
      }
+
+     $scope.getJournalInfo= function(){
+        // request api
+        $http({
+            method: 'GET',
+            url: '/journal_info/'+$rootScope.index_id_q,
+            //data: post_data,
+          headers: {'Content-Type': 'application/json'},
+        }).then(function successCallback(response) {
+          $rootScope.journal_info = response;
+        }, function errorCallback(error) {
+          console.log(error);
+        });
+     }
+
+     $scope.getJournalInfo();
   }
 
 angular.module('invenioSearch')
