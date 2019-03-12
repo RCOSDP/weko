@@ -209,7 +209,6 @@ def save_sort():
         return make_response(jsonify(jfy), jfy['status'])
 
 
-@blueprint.route("/journal_info/<int:index_id>", methods=['GET'])
 def get_journal_info(index_id = 0):
     """Get journal information.
     :return: The object.
@@ -246,3 +245,9 @@ def get_journal_info(index_id = 0):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         abort(500)
     return result
+
+@blueprint.route("/journal_info/<int:index_id>", methods=['GET'])
+def journal_detail(index_id=0):
+    """Render a check view."""
+    result = get_journal_info(index_id)
+    return jsonify(result)
