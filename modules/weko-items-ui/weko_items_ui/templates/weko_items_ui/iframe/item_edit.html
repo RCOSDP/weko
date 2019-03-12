@@ -58,7 +58,6 @@
           .then(res => res.json())
           .then(
             (result) => {
-              console.log("result: ", this.state.selectOptions);
               let options = result.options.map((option)=>{
                 return(
                   <option key={option.value} value={option.value}>{option.text}</option>
@@ -67,7 +66,6 @@
               this.setState({
                 selectOptions : options
               });
-              console.log("option: ", this.state.selectOptions);
             },
             (error) => {
               this.setState({

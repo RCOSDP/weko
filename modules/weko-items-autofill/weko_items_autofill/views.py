@@ -15,7 +15,7 @@ from flask_login import login_required
 
 from .permissions import auto_fill_permission
 from .crossref_api import CrossRefOpenURL
-from .utils import parse_crossref_response, get_item_id
+from .utils import parse_crossref_json_response, get_item_id
 from . import config
 
 blueprint = Blueprint(
@@ -62,13 +62,13 @@ def get_items_autofill_data():
     item_type_id = data.get('item_type_id', '')
 
     try:
+        result['items'] = get_item_id(item_type_id)
         if api_type == 'CrossRef':
             pid = config.WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID
             api = CrossRefOpenURL(pid, search_data)
-            print(api.url)
             api_response = api.get_data()
-            result['result'] = parse_crossref_response(api_response)
-            result['items'] = get_item_id(item_type_id)
+            result['result'] = parse_crossref_json_response(api_response,
+                                                            result['items'])
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:
