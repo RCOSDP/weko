@@ -43,6 +43,13 @@
         return str;
       }
     });
+    jQuery(window).load(function () {
+      if($('#index_tree_list').length){
+        $("#journal_info").remove();
+      } else {
+        $("#journal_info").css({ display: "block" });
+      }
+    });
 });
 
 //add controller to invenioSearch
