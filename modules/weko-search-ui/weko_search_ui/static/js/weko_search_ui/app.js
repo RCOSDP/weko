@@ -50,7 +50,7 @@
         } else {
           $("#journal_info").css({ display: "block" });
         }
-      }, 500);
+      }, 1000);
 
     };
 });
