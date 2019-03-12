@@ -24,7 +24,9 @@ from invenio_cache import current_cache
 from invenio_i18n.ext import current_i18n
 
 from weko_records.api import Mapping
+
 from . import config
+import copy
 
 
 def is_update_cache():
@@ -54,47 +56,65 @@ def cached_api_json(timeout=50, key_prefix="amazon_json"):
     return caching
 
 
-def get_items_autofill(item_type_id):
-    """
-    :param item_type_id:
-    :return: items autofill
-    """
-    items = dict()
-    item_mapping_json = Mapping.get_record(item_type_id)
-    jpcoar_metadata = _get_jpcoar_metadata(item_mapping_json)
-    for jpcoar_item_name in config.WEKO_ITEMS_AUTOFILL_ITEMS_AUTOFILL:
-        items[jpcoar_item_name] = get_autofill_item_id(jpcoar_item_name,
-                                                       jpcoar_metadata)
-    return items
+def parse_crossref_json_response(response, response_data_template):
+    response_data_convert = copy.deepcopy(response_data_template)
+    error = response.get('error')
+    if error:
+        return error
+    created = response['response'].get("created")
+    issued = response['response'].get('issued')
+    author = response['response'].get('author')
+    page = response['response'].get('page')
+    page = page.split('-')
 
+    response_data_convert['creator']['affiliation']['affiliationName']['@value'] = created.get('affiliationName')
+    response_data_convert['creator']['affiliation']['affiliationName']['@attributes']['xml:lang'] = \
+        created.get('language')
+    response_data_convert['creator']['affiliation']['nameIdentifier']['@value'] = created.get('nameIdentifier')
+    response_data_convert['creator']['affiliation']['nameIdentifier']['@attributes']['nameIdentifierScheme'] = \
+        created.get('nameIdentifierScheme')
+    response_data_convert['creator']['affiliation']['nameIdentifier']['@attributes']['nameIdentifierURI'] = \
+        created.get('nameIdentifierURI')
+    response_data_convert['creator']['creatorAlternative']['@value'] = created.get('creatorAlternative')
+    response_data_convert['creator']['creatorAlternative']['@attributes']['xml:lang'] = \
+        created.get('language')
 
-def get_autofill_item_id(jpcoar_item_name, jpcoar_data):
-    item_id = ""
-    for k in jpcoar_data.keys():
-        jpcoar_data_type = jpcoar_data[k]
-        if isinstance(jpcoar_data_type, dict):
-            if jpcoar_item_name in jpcoar_data_type.keys():
-                return k
-            elif jpcoar_data_type.get('relation'):
-                if jpcoar_item_name in jpcoar_data_type.get('relation').keys():
-                    return k
+    response_data_convert['creator']['creatorName']['@value'] = author[0].get('family') + " " + author[0].get('given')
 
-    return item_id
+    response_data_convert['creator']['creatorName']['@attributes']['xml:lang'] = created.get('language')
+    response_data_convert['creator']['familyName']['@value'] = author[0].get('family')
+    response_data_convert['creator']['familyName']['@attributes']['xml:lang'] = created.get('language')
+    response_data_convert['creator']['givenName']['@value'] = author[0].get('given')
+    response_data_convert['creator']['givenName']['@attributes']['xml:lang'] = created.get('language')
+    response_data_convert['creator']['nameIdentifier']['@value'] = created.get('nameIdentifier')
+    response_data_convert['creator']['nameIdentifier']['@attributes']['nameIdentifierScheme'] = \
+        created.get('nameIdentifierScheme')
+    response_data_convert['creator']['nameIdentifier']['@attributes']['nameIdentifierURI'] = \
+        created.get('nameIdentifierURI')
 
+    response_data_convert['date']['@value'] = issued.get('date-parts')
 
-def _get_jpcoar_metadata(jpcoar_mapping_json):
-    jpcoar_metadata = dict()
-    for k in jpcoar_mapping_json.keys():
-        jpcoar_mapping = jpcoar_mapping_json.get(k)["jpcoar_mapping"]
-        if jpcoar_mapping:
-            jpcoar_metadata[k] = jpcoar_mapping
+    response_data_convert['date']['@attributes']['dateType'] = created.get('date')
 
-    return jpcoar_metadata
+    response_data_convert['language']['@value'] = created.get('language')
 
+    response_data_convert['numPages']['@value'] = str(int(page[1]) - int(page[0]))
 
-def parse_crossref_response(response):
-    response_data = dict()
-    return response_data
+    response_data_convert['pageEnd']['@value'] = page[1]
+
+    response_data_convert['pageStart']['@value'] = page[0]
+    response_data_convert['publisher']['@value'] = created.get('publisher')
+    response_data_convert['publisher']['@attributes']['xml:lang'] = created.get('language')
+
+    response_data_convert['relation']['@attributes']['relationType'] = created.get('relationType')
+    response_data_convert['relation']['relatedIdentifier']['@value'] = created.get('ISBN')
+    response_data_convert['relation']['relatedTitle']['@value'] = created.get('relatedTitle')
+    response_data_convert['relation']['relatedTitle']['@attributes']['xml:lang'] = created.get('language')
+
+    response_data_convert['title']['@value'] = created.get('title')
+    response_data_convert['title']['@attributes']['xml:lang'] = created.get('language')
+
+    return response_data_convert
 
 
 def get_item_id(item_type_id):

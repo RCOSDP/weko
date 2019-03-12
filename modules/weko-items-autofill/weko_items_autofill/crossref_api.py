@@ -40,7 +40,7 @@ class CrossRefOpenURL:
         Create endpoint
         :return: endpoint string.
         """
-        endpoint_url = self.ENDPOINT + 'pid=' + self._pid
+        endpoint_url = self.ENDPOINT + '?pid=' + self._pid
         endpoint_url = endpoint_url + '&id=doi:' + self._doi
         if self._response_format is not None:
             endpoint_url = endpoint_url + '&format=' + self._response_format
@@ -67,9 +67,14 @@ class CrossRefOpenURL:
         """
         This method retrieves the metadata from CrossRef.
         """
-        ap_response = dict()
+        response = {
+            'response': '',
+            'error': ''
+        }
         try:
-            ap_response['response'] = self._do_http_request()
+            result = self._do_http_request()
+            if result.status_code == 200:
+                response['response'] = result.json()
         except Exception as e:
-            ap_response['error'] = str(e)
-        return ap_response
+            response['error'] = str(e)
+        return response

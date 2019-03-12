@@ -116,7 +116,7 @@ require([
           item_type_id: itemTypeId
         }
         // Create requet
-        let request = $.ajax({
+        $.ajax({
           url: '/api/autofill/crossref_api',
           headers: {
             'Content-Type': 'application/json'
@@ -215,68 +215,6 @@ require([
             $('#meta-search').modal('toggle');
           }
         });
-        // // Request sucess
-        // request.done((data) => {
-        //   console.log(data.items);
-        //   let items = data.items;
-        //   let value = data.result;
-        //   console.log(0.1);
-        //   if (items.hasOwnProperty('creator')) {
-        //     console.log(1);
-        //     if (items.creator.hasOwnProperty('affiliation')) {
-        //       console.log(2);
-        //       if (items.creator.affiliation.hasOwnProperty('affiliationName')) {
-        //         console.log(3);
-        //         let id = items.creator.affiliation.affiliationName;
-        //         let fieldData = "affiliation"
-        //         console.log(id['@attributes']['xml:lang']+"---"+fieldData+' language');
-        //         console.log(id['@value']);
-        //         this.setValueToField(id['@attributes']['xml:lang'], 'en');
-        //         this.setValueToField(id['@value'], fieldData);
-        //         $rootScope.recordsVM.invenioRecordsModel[id['@value']] = fieldData;
-        //       }
-        //     }
-        //     $('#meta-search').modal('toggle');
-        //   }
-        // });
-        // // Request fail
-        // request.fail((jqXHR, textStatus) => {
-        //   console.log(jqXHR);
-        //   alert("Request failed: " + textStatus);
-        // });
-
-
-
-        // $.ajax({
-        //   method: 'GET',
-        //   url: '/api/autofill/search/' + param,
-        //   async: false,
-        //   success: function(data, status){
-        //     // Title
-        //     $rootScope.recordsVM.invenioRecordsModel[data.items.sourceTitle] = data.data.sourceTitle;
-        //     $rootScope.recordsVM.invenioRecordsModel[data.items.title] = data.data.title;
-        //     // Languages
-        //     $rootScope.recordsVM.invenioRecordsModel[data.items.language] = data.data.language;
-        //     // PublicationDate
-        //     $rootScope.recordsVM.invenioRecordsModel[data.items.date] = data.data.date;
-        //     // Author
-        //     $rootScope.recordsVM.invenioRecordsModel[data.items.creator] = data.data.creator;
-        //     // Number of page
-        //     $rootScope.recordsVM.invenioRecordsModel[data.items.pageEnd] = data.data.pageEnd;
-        //     // Publisher
-        //     $rootScope.recordsVM.invenioRecordsModel[data.items.publisher] = data.data.publisher;
-        //     // ISBN
-        //     $rootScope.recordsVM.invenioRecordsModel[data.items.relatedIdentifier] = data.data.relatedIdentifier;
-
-        //     $('#meta-search').modal('toggle');
-
-        //   },
-        //   error: function(status, error){
-        //     alert(error);
-        //     console.log(error);
-        //   }
-        // });
-
 
       }
 
