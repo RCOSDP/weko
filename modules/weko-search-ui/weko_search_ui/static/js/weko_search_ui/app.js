@@ -43,13 +43,16 @@
         return str;
       }
     });
-    jQuery(window).load(function () {
-      if($('#index_tree_list').length){
-        $("#journal_info").remove();
-      } else {
-        $("#journal_info").css({ display: "block" });
-      }
-    });
+    window.onload = function () {
+      setTimeout(function () {
+        if($('#index_tree_list').length){
+          $("#journal_info").remove();
+        } else {
+          $("#journal_info").css({ display: "block" });
+        }
+      }, 500);
+
+    };
 });
 
 //add controller to invenioSearch
