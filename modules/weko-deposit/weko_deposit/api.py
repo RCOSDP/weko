@@ -641,7 +641,7 @@ class WekoRecord(Record):
     def get_record_by_pid(cls, pid):
         """"""
         print("======== [Log]: method get_record_by_pid ========")
-        self.print_trackback()
+        cls.print_trackback()
 
         pid = PersistentIdentifier.get('depid', pid)
         return cls.get_record(id_=pid.object_uuid)
@@ -649,7 +649,7 @@ class WekoRecord(Record):
     @classmethod
     def get_record_with_hps(cls, uuid):
         print("======== [Log]: method get_record_with_hps ========")
-        self.print_trackback()
+        cls.print_trackback()
 
         record = cls.get_record(id_=uuid)
         path = []
@@ -662,7 +662,7 @@ class WekoRecord(Record):
     @classmethod
     def get_record_cvs(cls, uuid):
         print("======== [Log]: method get_record_cvs ========")
-        self.print_trackback()
+        cls.print_trackback()
         
         record = cls.get_record(id_=uuid)
         path = []
