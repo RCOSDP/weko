@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit API."""
-
+import sys
 import redis
 from datetime import datetime
 from flask import abort, current_app, json, g, flash
@@ -576,7 +576,7 @@ class WekoRecord(Record):
         """Return an instance of record PID."""
         caller = sys._getframe(1).f_code.co_name
         print("[Log]: method pid: {0}".format(caller))
-        
+
         pid = self.record_fetcher(self.id, self)
         return PersistentIdentifier.get(pid.pid_type, pid.pid_value)
 
