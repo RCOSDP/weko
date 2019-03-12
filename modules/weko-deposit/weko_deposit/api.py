@@ -578,7 +578,7 @@ class WekoRecord(Record):
         caller_2 = sys._getframe(2).f_code.co_name
         caller_3 = sys._getframe(3).f_code.co_name
 
-        print("[Log]: method pid: {0}, {1}, {3}".format(caller_1, caller_2, caller_3))
+        print("[Log]: method pid: {0}, {1}, {2}".format(caller_1, caller_2, caller_3))
 
         pid = self.record_fetcher(self.id, self)
         return PersistentIdentifier.get(pid.pid_type, pid.pid_value)
@@ -589,7 +589,7 @@ class WekoRecord(Record):
         caller_1 = sys._getframe(1).f_code.co_name
         caller_2 = sys._getframe(2).f_code.co_name
         caller_3 = sys._getframe(3).f_code.co_name
-        print("[Log]: method navi: {0}, {1}, {3}".format(caller_1, caller_2, caller_3))
+        print("[Log]: method navi: {0}, {1}, {2}".format(caller_1, caller_2, caller_3))
 
         return Indexes.get_path_name(self.get('path', []))
 
@@ -599,7 +599,7 @@ class WekoRecord(Record):
         caller_1 = sys._getframe(1).f_code.co_name
         caller_2 = sys._getframe(2).f_code.co_name
         caller_3 = sys._getframe(3).f_code.co_name
-        print("[Log]: method item_type_info: {0}, {1}, {3}".format(caller_1, caller_2, caller_3))
+        print("[Log]: method item_type_info: {0}, {1}, {2}".format(caller_1, caller_2, caller_3))
 
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
@@ -610,7 +610,7 @@ class WekoRecord(Record):
         caller_1 = sys._getframe(1).f_code.co_name
         caller_2 = sys._getframe(2).f_code.co_name
         caller_3 = sys._getframe(3).f_code.co_name
-        print("[Log]: method items_show_list: {0}, {1}, {3}".format(caller_1, caller_2, caller_3))
+        print("[Log]: method items_show_list: {0}, {1}, {2}".format(caller_1, caller_2, caller_3))
 
         try:
 
@@ -651,7 +651,7 @@ class WekoRecord(Record):
         caller_1 = sys._getframe(1).f_code.co_name
         caller_2 = sys._getframe(2).f_code.co_name
         caller_3 = sys._getframe(3).f_code.co_name
-        print("[Log]: method get_record_by_pid: {0}, {1}, {3}".format(caller_1, caller_2, caller_3))
+        print("[Log]: method get_record_by_pid: {0}, {1}, {2}".format(caller_1, caller_2, caller_3))
         
         pid = PersistentIdentifier.get('depid', pid)
         return cls.get_record(id_=pid.object_uuid)
@@ -661,7 +661,7 @@ class WekoRecord(Record):
         caller_1 = sys._getframe(1).f_code.co_name
         caller_2 = sys._getframe(2).f_code.co_name
         caller_3 = sys._getframe(3).f_code.co_name
-        print("[Log]: method get_record_with_hps: {0}, {1}, {3}".format(caller_1, caller_2, caller_3))
+        print("[Log]: method get_record_with_hps: {0}, {1}, {2}".format(caller_1, caller_2, caller_3))
         
         record = cls.get_record(id_=uuid)
         path = []
@@ -676,7 +676,7 @@ class WekoRecord(Record):
         caller_1 = sys._getframe(1).f_code.co_name
         caller_2 = sys._getframe(2).f_code.co_name
         caller_3 = sys._getframe(3).f_code.co_name
-        print("[Log]: method get_record_cvs: {0}, {1}, {3}".format(caller_1, caller_2, caller_3))
+        print("[Log]: method get_record_cvs: {0}, {1}, {2}".format(caller_1, caller_2, caller_3))
         
         record = cls.get_record(id_=uuid)
         path = []
