@@ -292,6 +292,9 @@ def default_view_method(pid, record, template=None, **kwargs):
     :param \*\*kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+
+    print("[Log]: record data")
+    print(record)
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
