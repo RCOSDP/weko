@@ -160,6 +160,7 @@ class IdentifierSettingView(ModelView):
         IdentifierSettingView.can_create = False
     """
 
+"""
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
     model=Identifier,
@@ -167,6 +168,7 @@ identifier_adminview = dict(
     name=_('Identifier'),
     endpoint='identifier'
 )
+"""
 
 
 institution_adminview = {
@@ -196,7 +198,7 @@ pdfcoverpage_adminview = {
     }
 }
 
-"""
+
 identifier_adminview = {
     'view_class': IdentifierSettingView,
     'kwargs': {
@@ -205,7 +207,7 @@ identifier_adminview = {
         'endpoint': 'identifier'
     }
 }
-"""
+
 
 __all__ = (
     #'identifier_adminview',
