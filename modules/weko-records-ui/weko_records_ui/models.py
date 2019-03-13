@@ -24,6 +24,7 @@
 from datetime import datetime
 
 from flask import current_app, json
+from flask_babelex import lazy_gettext as _
 from invenio_db import db
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import JSONType
@@ -109,6 +110,9 @@ class InstitutionName(db.Model):
         """ Record UI models """
 
 
+__all__ = ('PDFCoverPageSettings',)
+
+
 class Identifier(db.Model):
     """
         Represent an Identifier.
@@ -122,22 +126,70 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    repository = db.Column(db.Text, nullable=False, default='')
+    repository = db.Column(
+        db.Text,
+        nullable=False,
+        default='',
+        info=dict(
+            label=_('Repository'),
+            description=_('Repository Name of...'),
+        ),
+    )
     """repository of the Identifier."""
 
-    jalc_doi = db.Column(db.Text, nullable=True, default='')
+    jalc_doi = db.Column(
+        db.Text,
+        nullable=True,
+        default='',
+        info=dict(
+            label=_('JaLC DOI'),
+            description=_('JaLC DOI'),
+        ),
+    )
     """jalc_doi of the Identifier."""
 
-    jalc_crossref_doi = db.Column(db.Text, nullable=True, default='')
+    jalc_crossref_doi = db.Column(
+        db.Text,
+        nullable=True,
+        default='',
+        info=dict(
+            label=_('JaLC Crossref DOI'),
+            description=_('JaLC Crossref DOI'),
+        )
+    )
     """jalc_crossref_doi of the Identifier."""
 
-    jalc_datacite_doi = db.Column(db.Text, nullable=True, default='')
+    jalc_datacite_doi = db.Column(
+        db.Text,
+        nullable=True,
+        default='',
+        info=dict(
+            label=_('JaLC Datacite DOI'),
+            description=_('JaLC Datacite DOI'),
+        )
+    )
     """jalc_datacite_doi of the Identifier."""
 
-    cnri = db.Column(db.Text, nullable=True, default='')
+    cnri = db.Column(
+        db.Text,
+        nullable=True,
+        default='',
+        info=dict(
+            label=_('CNRI'),
+            description=_('CNRI'),
+        )
+    )
     """cnri of the Identifier."""
 
-    suffix = db.Column(db.Text, nullable=True, default='')
+    suffix = db.Column(
+        db.Text,
+        nullable=True,
+        default='',
+        info=dict(
+            label=_('SUFFIX'),
+            description=_('SUFFIX'),
+        )
+    )
     """suffix of the Identifier."""
 
     created_userId = db.Column(db.Text, nullable=False, default='')
@@ -153,4 +205,4 @@ class Identifier(db.Model):
     """updated date."""
 
 
-__all__ = ('PDFCoverPageSettings', 'Identifier')
+__all__ = ('Identifier',)
