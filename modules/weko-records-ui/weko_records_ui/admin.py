@@ -129,8 +129,9 @@ class IdentifierSettingView(ModelView):
     can_edit = True
     #can_delete = False
     #can_view_details = False
-    column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-    column_details_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+    #column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+    #column_details_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+    """
     column_labels = dict(
         repository=_('Repository'),
         jalc_doi=_('JaLC DOI'),
@@ -138,28 +139,29 @@ class IdentifierSettingView(ModelView):
         jalc_datacite_doi=_('JaLC DataCite DOI'),
         cnri=_('CNRI'),
         suffix=_('Repository'),
-        #created_userId=_(''),
-        #created_date=_(''),
-        #updated_userId=_(''),
-        #updated_date=_('')
+        created_userId=_('Created by'),
+        created_date=_('Create on date'),
+        updated_userId=_('Updated by'),
+        updated_date=_('Updated on date')
     )
+    """
     form_columns = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-    page_size = 25
+    #page_size = 25
 
-
+    """
     def edit_form(self, obj):
-        """Customize edit form."""
+        #Customize edit form.
         form = super(IdentifierSettingView, self).edit_form(obj)
         return form
 
 
     def after_model_change(self,form,Identify,true):
-        """Set Create button Hidden"""
+        #Set Create button Hidden
         IdentifierSettingView.can_create = False
-
+    """
 
 identifier_adminview = dict(
-    modelview=PdfCoverPageSettingView,
+    modelview=IdentifierSettingView,
     model=Identifier,
     category=_('Setting'),
     name=_('Identifier'),
