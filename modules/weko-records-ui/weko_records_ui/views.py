@@ -29,7 +29,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_oaiserver.response import getrecord
 from weko_records_ui.models import InstitutionName
 from weko_index_tree.models import IndexStyle
-from .permissions import check_created_id, check_original_pdf_download_permission
+from .permissions import check_created_id, check_original_pdf_download_permission, check_file_download_permission
 from weko_search_ui.api import get_search_detail_keyword
 from weko_deposit.api import WekoIndexer
 from .models import PDFCoverPageSettings
@@ -242,6 +242,15 @@ def check_permission(record):
     """
     return check_created_id(record)
 
+@blueprint.app_template_filter('check_file_permission')
+def check_file_permission(record, fjson):
+    """Check File Download Permission.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    return check_file_download_permission(record, fjson)
 
 def _get_google_scholar_meta(record):
     target_map = {
