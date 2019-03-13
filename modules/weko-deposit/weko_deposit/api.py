@@ -311,17 +311,18 @@ class WekoDeposit(Deposit):
         print("[Log]: WekoDeposit:create >> after data")
         print(data)
 
-        print("[Log]: WekoDeposit:create >> current_user")
-        print(current_user.__dict__)
+        
 
         if current_user and current_user.is_authenticated:
+            user = UserProfile.get_by_userid(current_user.get_id())
             creator_id = int(current_user.get_id())
-            creator_username = current_user._username
-            creator_displayname = current_user._displayname
+
+            print("[Log]: WekoDeposit:create >> user")
+            print(user.__dict__)
 
             data['_deposit']['owners'].append(creator_id)
-            data['_deposit']['owners'].append(creator_username)
-            data['_deposit']['owners'].append(creator_displayname)
+            data['_deposit']['owners'].append(user._username)
+            data['_deposit']['owners'].append(user._displayname)
 
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
