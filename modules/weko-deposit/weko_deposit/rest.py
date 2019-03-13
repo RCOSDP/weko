@@ -152,18 +152,9 @@ class ItemResource(ContentNegotiatedMethodView):
     @pass_record
     def post(self, pid, record, **kwargs):
         """"""
-        print("[Log]: post >> record: ")
-        print(record)
-
-        print("[Log]: post >> pid: ")
-        print(pid)
-
         from weko_deposit.links import base_factory
         response = self.make_response(pid, record, 201,
                                       links_factory=base_factory)
-
-        print("[Log]: post >> response: ")
-        print(response)
         return response
 
     def put(self, **kwargs):

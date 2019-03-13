@@ -281,21 +281,12 @@ class WekoDeposit(Deposit):
         """Return the Item metadata."""
         return ItemsMetadata.get_record(self.id).dumps()
 
-    def print_trackback():
-        try:
-            for line in traceback.format_stack():
-                print(line.strip())
-        except Exception:
-            print("warning")
-
     @classmethod
     def create(cls, data, id_=None):
         """Create a deposit.
 
         Adds bucket creation immediately on deposit creation.
         """
-        print("[Log]: WekoDeposit:create >> before data")
-        print(data)
         bucket = Bucket.create(
             quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
             max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
@@ -307,27 +298,16 @@ class WekoDeposit(Deposit):
 
         # save user_name & display name.
         data['_buckets'] = {'deposit': str(bucket.id)}
-        
-
-        print("[Log]: WekoDeposit:create >> after data")
-        print(data)
 
         if current_user and current_user.is_authenticated:
             user = UserProfile.get_by_userid(current_user.get_id())
             creator_id = int(current_user.get_id())
-
-            print("[Log]: WekoDeposit:create >> current_user")
-            print(user.__dict__)            
-
             data['_deposit']['owners_ext'] = {
                 'username' : user._username,
                 'displayname' : user._displayname,
             }
 
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
-
-        print("[Log]: WekoDeposit:create >> before deposit")
-        print(deposit)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         # recid = PersistentIdentifier.get(
@@ -339,11 +319,6 @@ class WekoDeposit(Deposit):
 
         # PIDVersioning(parent=conceptrecid).insert_draft_child(child=recid)
         # RecordDraft.link(recid, depid)
-
-        print("[Log]: WekoDeposit:create >> after deposit")
-        print(deposit)
-
-        WekoDeposit.print_trackback()
         return deposit
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
@@ -351,9 +326,6 @@ class WekoDeposit(Deposit):
         """Update only drafts."""
         dc = self.convert_item_metadata(args[0])
         
-        print("[Log]: WekoDeposit:update >> dc")
-        print(dc)
-
         super(WekoDeposit, self).update(dc)
         item_created.send(
             current_app._get_current_object(), item_id=self.pid)
@@ -506,9 +478,6 @@ class WekoDeposit(Deposit):
         self.delete_es_index_attempt(self.pid)
 
         try:
-            print("======== [Log]: method convert_item_metadata ========")
-            WekoRecord.print_trackback()
-
             actions = index_obj.get('actions', 'private')
             datastore = RedisStore(redis.StrictRedis.from_url(
                 current_app.config['CACHE_REDIS_URL']))
@@ -620,9 +589,6 @@ class WekoRecord(Record):
     @property
     def pid(self):
         """Return an instance of record PID."""
-        print("======== [Log]: method pid ========")
-        WekoRecord.print_trackback()
-
         pid = self.record_fetcher(self.id, self)
         obj = PersistentIdentifier.get(pid.pid_type, pid.pid_value)
         print(obj.__dict__)
@@ -631,25 +597,17 @@ class WekoRecord(Record):
     @property
     def navi(self):
         """Return the path name."""
-        print("======== [Log]: method navi ========")
-        WekoRecord.print_trackback()
-
         return Indexes.get_path_name(self.get('path', []))
 
     @property
     def item_type_info(self):
         """Return the information of item type."""
-        print("======== [Log]: method item_type_info ========")
-        WekoRecord.print_trackback()
-
         item_type = ItemTypes.get_by_id(self.get('item_type_id'))
         return '{}({})'.format(item_type.item_type_name.name, item_type.tag)
 
     @property
     def items_show_list(self):
         """Return the item show list."""
-        print("======== [Log]: method items_show_list ========")
-        WekoRecord.print_trackback()
 
         try:
 
@@ -687,16 +645,12 @@ class WekoRecord(Record):
     @classmethod
     def get_record_by_pid(cls, pid):
         """"""
-        print("======== [Log]: method get_record_by_pid ========")
-        WekoRecord.print_trackback()
 
         pid = PersistentIdentifier.get('depid', pid)
         return cls.get_record(id_=pid.object_uuid)
 
     @classmethod
     def get_record_with_hps(cls, uuid):
-        print("======== [Log]: method get_record_with_hps ========")
-        WekoRecord.print_trackback()
 
         record = cls.get_record(id_=uuid)
         path = []
@@ -708,8 +662,6 @@ class WekoRecord(Record):
 
     @classmethod
     def get_record_cvs(cls, uuid):
-        print("======== [Log]: method get_record_cvs ========")
-        WekoRecord.print_trackback()
         
         record = cls.get_record(id_=uuid)
         path = []
@@ -718,10 +670,3 @@ class WekoRecord(Record):
         if path:
             coverpage_state = Indexes.get_coverpage_state(path)
         return coverpage_state
-
-    def print_trackback():
-        try:
-            for line in traceback.format_stack():
-                print(line.strip())
-        except Exception:
-            print("warning")
