@@ -20,6 +20,7 @@
 
 """Link Factory weko-deposit."""
 # from flask import current_app, request
+import traceback
 from invenio_deposit.links import deposit_links_factory
 
 
