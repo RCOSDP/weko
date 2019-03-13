@@ -53,9 +53,7 @@ WEKO_ITEMS_AUTOFILL_CROSSREF_RESPONSE_RESULT = [
     'ISBN'
 ]
 
-WEKO_ITEMS_AUTOFILL_SELECT_OPTION = {
-    'options': [
-        {'value': 'Default', 'text': _('Select the ID')},
-        {'value': 'CrossRef', 'text': 'CrossRef'}
-    ]
-}
+WEKO_ITEMS_AUTOFILL_SELECT_OPTION = [
+    {'value': 'CrossRef', 'text': 'CrossRef'}
+]
+
