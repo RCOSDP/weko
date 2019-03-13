@@ -55,7 +55,7 @@ WEKO_ITEMS_AUTOFILL_CROSSREF_RESPONSE_RESULT = [
 
 WEKO_ITEMS_AUTOFILL_SELECT_OPTION = {
     'options': [
-        {'value': 'Default', 'text': _('Select_the_ID')},
+        {'value': 'Default', 'text': _('Select the ID')},
         {'value': 'CrossRef', 'text': 'CrossRef'}
     ]
 }

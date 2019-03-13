@@ -1,27 +1,42 @@
-# Translations template for weko-items-ui.
-# Copyright (C) 2018 National Institute of Informatics
-# This file is distributed under the same license as the weko-items-ui
+# Translations template for weko-items-autofill.
+# Copyright (C) 2019 National Institute of Informatics
+# This file is distributed under the same license as the weko-items-autofill
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: weko-items-ui 0.1.0.dev20170000\n"
+"Project-Id-Version: weko-items-autofill 1.0.0.dev20190000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:53+0900\n"
+"POT-Creation-Date: 2019-03-13 13:53+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.6.0\n"
+
+#: weko_items_autofill/config.py:58
+msgid "Select the ID"
+msgstr ""
+
+#. NOTE: This is a note to a translator.
+#: weko_items_autofill/ext.py:25
+msgid "A translation string"
+msgstr ""
+
+#: weko_items_autofill/views.py:42
+msgid "WEKO-Items-Autofill"
+msgstr ""
 
 #: weko_items_autofill/views.py:56
-msgid "Header_Error"
+msgid "Header Error"
 msgstr ""
 
-#: weko_items_autofill/config.py:86
-msgid "Select_the_ID"
+#: weko_items_autofill/templates/weko_items_autofill/index.html:12
+#, python-format
+msgid "Welcome to %(module_name)s"
 msgstr ""
+
