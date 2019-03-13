@@ -82,7 +82,7 @@ angular.module('myApp', ['ui.bootstrap'])
             }
 
             // TODO: Check the permission of file to be able download or not
-            let txt_link = index == 0 ? "<a href=\"${ele.links.self}\">${ele.key}</a>" : ${ele.key}
+            let txt_link = index == 0 ? `<a href="${ele.links.self}">${ele.key}</a>` : ele.key
 
             let size = formatBytes(ele.size, 2);
 
