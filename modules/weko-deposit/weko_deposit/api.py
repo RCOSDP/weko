@@ -279,6 +279,13 @@ class WekoDeposit(Deposit):
         """Return the Item metadata."""
         return ItemsMetadata.get_record(self.id).dumps()
 
+    def print_trackback():
+        try:
+            for line in traceback.format_stack():
+                print(line.strip())
+        except Exception:
+            print("warning")
+
     @classmethod
     def create(cls, data, id_=None):
         """Create a deposit.
@@ -315,7 +322,9 @@ class WekoDeposit(Deposit):
         # RecordDraft.link(recid, depid)
 
         print("[Log]: WekoDeposit:create >> after deposit")
-        print(deposit.__dict__)
+        print(deposit)
+
+        WekoDeposit.print_trackback()
         return deposit
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
