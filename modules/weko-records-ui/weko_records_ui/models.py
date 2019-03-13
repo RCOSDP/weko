@@ -204,5 +204,96 @@ class Identifier(db.Model):
     updated_date = db.Column(db.DateTime, nullable=True, default='')
     """updated date."""
 
+    def __init__(self, id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date):
+        self.id = id
+        self.repository = repository
+        self.jalc_doi = jalc_doi
+        self.jalc_crossref_doi = jalc_crossref_doi
+        self.jalc_datacite_doi = jalc_datacite_doi
+        self.cnri = cnri
+        self.suffix = suffix
+        self.created_userId = created_userId
+        self.created_date = created_date
+        self.updated_userId = updated_userId
+        self.updated_date = updated_date
+
+
+    @classmethod
+    def crete(data):
+        with db.session.begin_nested():
+            identifier = Identifier(**data)
+            db.session.add(identifier)
+        db.session.commit()
+
+
+    @classmethod
+    def find(cls, id):
+        """ find record by ID """
+
+        record = db.session.query(cls).filter_by(id=id).first()
+        return record
+
+    @classmethod
+    def update(cls, id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date):
+        settings = Identifier(id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date)
+
+        """ update record by ID """
+        record = db.session.query(cls).filter_by(id=id).first()
+
+        record.id = id
+        record.repository = repository
+        record.jalc_doi = jalc_doi
+        record.jalc_crossref_doi = jalc_crossref_doi
+        record.jalc_datacite_doi = jalc_datacite_doi
+        record.cnri = cnri
+        record.suffix = suffix
+        record.created_userId = created_userId
+        record.created_date = created_date
+        record.updated_userId = updated_userId
+        record.updated_date = updated_date
+        db.session.commit()
+        return record
+
+
+    @classmethod
+    def delete(cls, id):
+        """
+        Delete record by id.
+
+        :param id: id of Identifier
+        :return: bool True: Delete success None: Delete failed
+        """
+        try:
+            with db.session.begin_nested():
+                slf = cls.get_identifier(id)
+                if not slf:
+                    return
+
+                db.session.delete(slf)
+                db.session.commit()
+                return dct
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+            return None
+        return 0
+
+
+    @classmethod
+    def get_identifier(cls, id):
+        """
+        Get indentifier information by id.
+
+        :param id: Identifier ID.
+        :return: A identifier object.
+        """
+        obj = db.session.query(Identifier). \
+            filter_by(id=id).one_or_none()
+
+        if obj is None:
+            return []
+
+        return dict(obj)
+
 
 __all__ = ('Identifier',)

@@ -137,7 +137,7 @@ class IdentifierSettingView(ModelView):
         jalc_crossref_doi=_('JaLC CrossRef DOI'),
         jalc_datacite_doi=_('JaLC DataCite DOI'),
         cnri=_('CNRI'),
-        suffix=_('Repository'),
+        suffix=_('Suffix'),
         #created_userId=_(''),
         #created_date=_(''),
         #updated_userId=_(''),
