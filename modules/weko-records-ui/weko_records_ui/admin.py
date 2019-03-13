@@ -165,7 +165,7 @@ identifier_adminview = dict(
     model=Identifier,
     category=_('Setting'),
     name=_('Identifier'),
-    endpoint= 'identifier'
+    endpoint=_('identifier')
 )
 
 
@@ -208,8 +208,8 @@ identifier_adminview = {
 """
 
 __all__ = (
-    'identifier_adminview',
-    'IdentifierSettingView',
+    #'identifier_adminview',
+    #'IdentifierSettingView',
     'pdfcoverpage_adminview',
     'PdfCoverPageSettingView',
     'item_adminview',
