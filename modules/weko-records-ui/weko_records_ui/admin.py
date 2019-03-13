@@ -127,8 +127,8 @@ class IdentifierSettingView(ModelView):
 
     can_create = True
     can_edit = True
-    can_delete = False
-    can_view_details = False
+    #can_delete = False
+    #can_view_details = False
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
     column_details_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
     column_labels = dict(
@@ -159,7 +159,7 @@ class IdentifierSettingView(ModelView):
 
 
 identifier_adminview = dict(
-    modelview=IdentifierSettingView,
+    modelview=PdfCoverPageSettingView,
     model=Identifier,
     category=_('Setting'),
     name=_('Identifier'),
