@@ -81,7 +81,11 @@ def get_items_autofill_data():
 @login_required
 @auto_fill_permission.require(http_exception=403)
 def get_selection_option():
-    result = config.WEKO_ITEMS_AUTOFILL_SELECT_OPTION
+    options = [{'value': 'Default', 'text': _('Select the ID')}]
+    options.extend(config.WEKO_ITEMS_AUTOFILL_SELECT_OPTION)
+    result = {
+        'options': options
+    }
     return jsonify(result)
 
 

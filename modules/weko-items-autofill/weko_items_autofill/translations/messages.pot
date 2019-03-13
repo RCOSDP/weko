@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.6.0\n"
 
-#: weko_items_autofill/config.py:58
+#: weko_items_autofill/views.py:84
 msgid "Select the ID"
 msgstr ""
 
