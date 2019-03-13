@@ -506,6 +506,9 @@ class WekoDeposit(Deposit):
         self.delete_es_index_attempt(self.pid)
 
         try:
+            print("======== [Log]: method convert_item_metadata ========")
+            WekoRecord.print_trackback()
+
             actions = index_obj.get('actions', 'private')
             datastore = RedisStore(redis.StrictRedis.from_url(
                 current_app.config['CACHE_REDIS_URL']))
