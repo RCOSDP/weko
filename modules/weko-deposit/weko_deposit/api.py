@@ -350,6 +350,10 @@ class WekoDeposit(Deposit):
     def update(self, *args, **kwargs):
         """Update only drafts."""
         dc = self.convert_item_metadata(args[0])
+        
+        print("[Log]: WekoDeposit:update >> dc")
+        print(dc)
+
         super(WekoDeposit, self).update(dc)
         item_created.send(
             current_app._get_current_object(), item_id=self.pid)
