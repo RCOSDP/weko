@@ -37,6 +37,7 @@ from invenio_files_rest.models import Bucket, MultipartObject, Part
 from simplekv.memory.redisstore import RedisStore
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
+from weko_user_profiles.models import UserProfile
 from weko_records.utils import (
     get_options_and_order_list, get_all_items, json_loader,
     set_timestamp)
