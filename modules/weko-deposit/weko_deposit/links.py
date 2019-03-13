@@ -20,7 +20,6 @@
 
 """Link Factory weko-deposit."""
 # from flask import current_app, request
-import traceback
 from invenio_deposit.links import deposit_links_factory
 
 
@@ -50,6 +49,7 @@ def base_factory(pid, **kwargs):
 
 def print_trackback():
     try:
+        import traceback
         for line in traceback.format_stack():
             print(line.strip())
     except Exception:
