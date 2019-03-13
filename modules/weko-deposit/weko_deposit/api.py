@@ -312,7 +312,7 @@ class WekoDeposit(Deposit):
         print(data)
 
         print("[Log]: WekoDeposit:create >> current_user")
-        print(current_user)
+        print(current_user.__dict__)
 
         if current_user and current_user.is_authenticated:
             creator_id = int(current_user.get_id())
