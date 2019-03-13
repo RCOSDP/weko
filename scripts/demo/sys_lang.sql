@@ -29,7 +29,7 @@ INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, 
 VALUES ('ar', 'Arabic', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('jp', 'Japanese', 'true', 001, 'true');
+VALUES ('ja', 'Japanese', 'true', 001, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
 VALUES ('cn', 'Cantonese', 'false', 000, 'true');
