@@ -35,7 +35,7 @@
       render(){
         return (
           <div className="text-right">
-            <h3>{{_('Items_Autofill_Header_Name')}}</h3>
+            <h3>{{_('Metadata Auto Input')}}</h3>
           </div>
         )
       }
@@ -101,7 +101,7 @@
             <form onSubmit={this.handleSubmit}>
                 <div className="form-inline">
                     <label className="input-group-text" for="autofill_id_type">
-                        {{_('Items_Autofill_Automatic_Metadata_Input')}}
+                        {{_('Automatic metadata input')}}
                     </label>
                     &nbsp;&nbsp;
                     <select name="idType" id="autofill_id_type" value={this.state.idType.value}
@@ -255,7 +255,6 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-<!--TODO-->
 <div class="modal fade" tabindex="-1" role="dialog" id="meta-search">
   <div class="modal-dialog modelWidth" role="document">
     <div class="modal-content">

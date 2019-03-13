@@ -27,6 +27,105 @@
 {%- endblock css %}
 
 {%- block javascript %}
+  <script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+  <script type="text/babel">
+    class ModalHeader extends React.Component {
+      render(){
+        return (
+          <div className="text-right">
+            <h3>{{_('Metadata Auto Input')}}</h3>
+          </div>
+        )
+      }
+    }
+    class SearchMetaForm extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state ={
+          idType: '',
+          itemId: '',
+          selectOptions : []
+        };
+
+        this.handleChange = this.handleChange.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+      }
+
+      componentDidMount() {
+        fetch("/api/autofill/select_options")
+          .then(res => res.json())
+          .then(
+            (result) => {
+              let options = result.options.map((option)=>{
+                return(
+                  <option key={option.value} value={option.value}>{option.text}</option>
+                )
+              });
+              this.setState({
+                selectOptions : options
+              });
+            },
+            (error) => {
+              this.setState({
+                isLoaded: true,
+                error
+              });
+            }
+          )
+      }
+
+      handleChange(event) {
+        const target = event.target;
+        const value = target.value;
+        const name = target.name;
+        this.setState({[name]: value});
+      }
+
+      handleSubmit(event) {
+        this.clickItemMetadata();
+        event.preventDefault();
+      }
+
+      clickItemMetadata() {
+            setTimeout(function() {
+              angular.element('#btn_setItemMetadata').triggerHandler('click');
+            },0);
+      };
+
+      render() {
+        return (
+          <div>
+            <ModalHeader />
+            <form onSubmit={this.handleSubmit}>
+                <div className="form-inline">
+                    <label className="input-group-text" for="autofill_id_type">
+                        {{_('Automatic metadata input')}}
+                    </label>
+                    &nbsp;&nbsp;
+                    <select name="idType" id="autofill_id_type" value={this.state.idType.value}
+                        onChange={this.handleChange} className="form-control">
+                        {this.state.selectOptions}
+                    </select>
+                    &nbsp;&nbsp;
+                    <input name="itemId" type="text" id="autofill_item_id" 
+                        value={this.state.itemId.value} onChange={this.handleChange} 
+                        className="form-control ng-untouched ng-pristine ng-valid" />
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <input type="submit" value="{{_('Get')}}" className="btn btn-info" />
+                </div>
+            </form>
+        </div>
+        );
+      }
+    }
+    ReactDOM.render(
+      <SearchMetaForm />,
+      document.getElementById('meta-search-body')
+    )
+  </script>
+
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -125,6 +224,9 @@
               <div ng-show="false" type="text" id="weko_id" ></div>
               <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
               <!--add by ryuu. end 20180410-->
+
+              <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
+
               <invenio-records-form
                 form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
                 form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
@@ -163,5 +265,19 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="meta-search">
+  <div class="modal-dialog modelWidth" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div id="meta-search-body"></div>
+        <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">{{_('Close')}}</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 {%- endblock page_body %}
 
