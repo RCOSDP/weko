@@ -24,6 +24,7 @@ import sys
 import redis
 from datetime import datetime
 from flask import abort, current_app, json, g, flash
+from flask_login import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, preserve, index
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -303,8 +304,25 @@ class WekoDeposit(Deposit):
 
         data['_buckets'] = {'deposit': str(bucket.id)}
 
+        # save user_name & display name.
+        data['_buckets'] = {'deposit': str(bucket.id)}
+        
+
         print("[Log]: WekoDeposit:create >> after data")
         print(data)
+
+        print("[Log]: WekoDeposit:create >> current_user")
+        print(current_user)
+
+        if current_user and current_user.is_authenticated:
+            creator_id = int(current_user.get_id())
+            creator_username = current_user._username
+            creator_displayname = current_user._displayname
+
+            data['_deposit']['owners'].append(creator_id)
+            data['_deposit']['owners'].append(creator_username)
+            data['_deposit']['owners'].append(creator_displayname)
+
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
         print("[Log]: WekoDeposit:create >> before deposit")
