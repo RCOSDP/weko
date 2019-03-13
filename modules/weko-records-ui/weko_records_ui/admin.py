@@ -165,7 +165,7 @@ identifier_adminview = dict(
     model=Identifier,
     category=_('Setting'),
     name=_('Identifier'),
-    endpoint=_('identifier')
+    endpoint='identifier'
 )
 
 
