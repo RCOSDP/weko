@@ -120,7 +120,7 @@ msgstr "詳細"
 msgid "Stats"
 msgstr "統計"
 
-msgid "Public"
+msgid "Published"
 msgstr "公開"
 
 msgid "Private"
@@ -135,8 +135,11 @@ msgstr "更新日時"
 msgid "Object File Name"
 msgstr "オブジェクトファイル名"
 
-msgid "File Size"
-msgstr "ファイル容量"
+msgid "File "
+msgstr "ファイル"
+
+msgid "Size"
+msgstr "容量"
 
 msgid "File Hash Value"
 msgstr "ファイルハッシュ値"
@@ -144,5 +147,8 @@ msgstr "ファイルハッシュ値"
 msgid "Contributor Name"
 msgstr "登録ユーザ名"
 
-msgid "Public/Private"
-msgstr "公開/非公開"
+msgid "Published/"
+msgstr "公開/"
+
+msgid "Private"
+msgstr "非公開"

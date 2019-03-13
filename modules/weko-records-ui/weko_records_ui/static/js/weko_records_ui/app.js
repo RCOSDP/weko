@@ -48,22 +48,25 @@ angular.module('myApp', ['ui.bootstrap'])
         response.contents.sort(function(first, second) {
             return second.updated - first.updated;
         });
+        let txt_published = $('#txt_published').val()
+        let txt_private = $('#txt_private').val()
         for (let index = 0; index < contents.length; index++) {
             const ele = contents[index];
 
-            // const isPublic = ele.pubPri === 'Public' ? 1 : 0;
+            // const isPublished = ele.pubPri === 'Published' ? 1 : 0;
             const nameRadio = `radio${index}`;
-            let radio = `
+            let radio = index == 0 ? "" : `
             <div class="radio">
-                <label style="margin-left: 5px"><input type="radio" name="${nameRadio}" checked>Public</label> <label style="margin-left: 5px"><input type="radio" name="${nameRadio}">Private</label>
+                <label style="margin-left: 5px"><input type="radio" name="${nameRadio}">${txt_published}</label>
+                <label style="margin-left: 5px"><input type="radio" name="${nameRadio}" checked>${txt_private}</label>
             </div>
             `;
-            // if (!isPublic) {
+            // if (!isPublished) {
             //   radio = `
             //     <div class="radio">
             //       <div class="row">
             //         <div>
-            //             <label><input type="radio" name="${nameRadio}">Public</label>
+            //             <label><input type="radio" name="${nameRadio}">Published</label>
             //         </div>
             //         <div>
             //           <label><input type="radio" name="${nameRadio}" checked>Private</label>
@@ -78,51 +81,36 @@ angular.module('myApp', ['ui.bootstrap'])
                 version = 'Current';
             }
 
+            // TODO: Check the permission of file to be able download or not
+            let txt_link = index == 0 ? "<a href=\"${ele.links.self}\">${ele.key}</a>" : ${ele.key}
+
             let size = formatBytes(ele.size, 2);
+
+            // Checksum
+            var checksum = ele.checksum
+            var checksumIndex = ele.checksum.indexOf(":")
+            if (checksumIndex != -1) {
+              checksum = ele.checksum.substr(0, checksumIndex) + " <span class=\"wrap\">" + ele.checksum.substr(checksumIndex + 1) + "</span>"
+            }
 
             results += `
             <tr>
                 <td>
-                <div class="row">
-                    <div class="col-md-12 margin_top_10">
-                    <p>${version}</p>
-                    </div>
-                </div>
+                    ${version}
+                </td>
+                <td class="nowrap">
+                    ${formatDate(new Date(ele.updated))}
                 </td>
                 <td>
-                <div class="row">
-                    <div class="col-md-12 margin_top_10">
-                    <p>${formatDate(new Date(ele.updated))}</p>
-                    </div>
-                </div>
+                    ${txt_link}
                 </td>
                 <td>
-                <div class="row">
-                    <div class="col-md-12 margin_top_10">
-                    <a href="${ele.links.self}">${ele.key}</a>
-                    </div>
-                </div>
+                    ${size}
                 </td>
-                <td>
-                <div class="row">
-                    <div class="col-md-12 margin_top_10">
-                    <p>${size}</p>
-                    </div>
-                </div>
+                <td class="wrap">
+                    ${checksum}
                 </td>
-                <td>
-                <div class="row">
-                    <div class="col-md-12 margin_top_10">
-                    <p>${ele.checksum}</p>
-                    </div>
-                </div>
-                </td>
-                <td>
-                <div class="row">
-                    <div class="col-md-12 margin_top_10">
-                    <p></p>
-                    </div>
-                </div>
+                <td class="nowrap">
                 </td>
                 <td>${radio}</td>
             </tr>
