@@ -41,4 +41,15 @@ def base_factory(pid, **kwargs):
 
     print("[Log]: base_factory >> links")
     print(links)
+
+    print("[Log]: base_factory >> ======= print trackback =======")
+    print_trackback()
+    print("[Log]: base_factory >> ===============================")
     return links
+
+def print_trackback():
+    try:
+        for line in traceback.format_stack():
+            print(line.strip())
+    except Exception:
+        print("warning")
