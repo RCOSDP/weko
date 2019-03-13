@@ -36,7 +36,9 @@ from .models import PDFCoverPageSettings
 from invenio_files_rest.views import ObjectResource
 from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
+from .models import Identifier
 import werkzeug
+from datetime import datetime
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -380,6 +382,62 @@ def set_pdfcoverpage_header():
         return redirect('/admin/pdfcoverpage')
 
     return redirect('/admin/pdfcoverpage')
+
+
+@blueprint.route('/admin/identifier/register', methods=['POST'])
+def registerDOI():
+    #limit upload file size : 1MB
+    current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+
+    @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
+    def handle_over_max_file_size(error):
+        print("werkzeug.exceptions.RequestEntityTooLarge")
+        return 'result : file size is overed.'
+
+    # register DOI
+    #record = Identifier.find(1)
+    """
+    id = request.form.get('id')
+    repository = request.form.get('repository')
+    jalc_doi = request.form.get('jalc_doi')
+    jalc_crossref_doi = request.form.get('jalc_crossref_doi')
+    jalc_datacite_doi = request.form.get('jalc_datacite_doi')
+    cnri = request.form.get('cnri')
+    suffix = request.form.get('suffix')
+    created_userId = request.form.get('created_userId')
+    created_date = request.form.get('created_date')
+    updated_userId = request.form.get('updated_userId')
+    updated_date = request.form.get('updated_date')
+    """
+
+    id = 'ID001'
+    repository = 'repository I'
+    jalc_doi = 'jalc_doi I'
+    jalc_crossref_doi = 'jalc_crossref_doi test'
+    jalc_datacite_doi = 'jalc_datacite_doi test'
+    cnri = 'cnri test'
+    suffix = '1000000-20112120'
+    created_userId = 'B001-001'
+    created_date = datetime.now()
+    updated_userId = 'B001-001'
+    updated_date = datetime.now()
+
+    # Register DOI for identifier
+    Identifier.crete(id,
+                     repository,
+                     jalc_doi,
+                     jalc_crossref_doi,
+                     jalc_datacite_doi,
+                     cnri,
+                     suffix,
+                     created_userId,
+                     created_date,
+                     updated_userId,
+                     updated_date,
+                     )
+
+    flash('Register successed.', category='success')
+    return redirect('/admin/identifier')
 
 
 class ObjectResourceWeko(ObjectResource):
