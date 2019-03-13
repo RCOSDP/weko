@@ -440,6 +440,52 @@ def registerDOI():
     return redirect('/admin/identifier')
 
 
+@blueprint.route('/admin/identifier/delete/<int:identifier_id>', methods=['POST'])
+def deleteDOIById(identifier_id = 0):
+    #limit upload file size : 1MB
+    current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+
+    @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
+    def handle_over_max_file_size(error):
+        print("werkzeug.exceptions.RequestEntityTooLarge")
+        return 'result : file size is overed.'
+    # delete identifier
+    Identifier.delete(identifier_id)
+    flash('Delete successed.', category='success')
+    return redirect('/admin/identifier')
+
+
+@blueprint.route('/admin/identifier/update/<int:identifier_id>', methods=['POST'])
+def updateDOIById(identifier_id = 0):
+    #limit upload file size : 1MB
+    current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+
+    @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
+    def handle_over_max_file_size(error):
+        print("werkzeug.exceptions.RequestEntityTooLarge")
+        return 'result : file size is overed.'
+    # delete identifier
+    #Identifier.update(id=identifier_id)
+    identifier = Identifier.find(identifier_id)
+    if identifier is not None:
+        Identifier.update(id = identifier_id,
+                          repository = 'repository II',
+                          jalc_doi = 'jalc_doi II',
+                          jalc_crossref_doi = 'jalc_crossref_doi test I',
+                          jalc_datacite_doi = 'jalc_datacite_doi test I',
+                          cnri = 'cnri test I',
+                          suffix = '1000000-20112120TEST',
+                          created_userId = 'B001-001TEST',
+                          created_date = datetime.now(),
+                          updated_userId = 'B001-001TEST',
+                          updated_date = datetime.now())
+        flash('Update successed.', category='success')
+        return redirect('/admin/identifier')
+    else:
+        flash('Update failure.', category='error')
+        redirect('/admin/identifier')
+
+
 class ObjectResourceWeko(ObjectResource):
 
     # redefine `send_object` method to implement the no-cache function
