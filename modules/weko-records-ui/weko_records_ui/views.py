@@ -423,7 +423,7 @@ def registerDOI():
     updated_date = datetime.now()
 
     # Register DOI for identifier
-    Identifier.crete(id,
+    Identifier.create(id,
                      repository,
                      jalc_doi,
                      jalc_crossref_doi,

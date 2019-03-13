@@ -219,9 +219,9 @@ class Identifier(db.Model):
 
 
     @classmethod
-    def crete(data):
+    def create(id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date):
         with db.session.begin_nested():
-            identifier = Identifier(**data)
+            identifier = Identifier(id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date)
             db.session.add(identifier)
         db.session.commit()
 
