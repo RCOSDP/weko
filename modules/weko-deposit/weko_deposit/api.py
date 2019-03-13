@@ -22,15 +22,11 @@
 import traceback
 import sys
 import redis
-import uuid
-
 from datetime import datetime
 from flask import abort, current_app, json, g, flash
 from flask_login import current_user
 from invenio_db import db
-from invenio_deposit.api import Deposit, preserve, index, current_jsonschemas
-from invenio_deposit.minters import deposit_minter as default_deposit_minter
-
+from invenio_deposit.api import Deposit, preserve, index
 from invenio_files_rest.models import Bucket, ObjectVersion
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -41,7 +37,6 @@ from invenio_files_rest.models import Bucket, MultipartObject, Part
 from simplekv.memory.redisstore import RedisStore
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
-from weko_user_profiles.models import UserProfile
 from weko_records.utils import (
     get_options_and_order_list, get_all_items, json_loader,
     set_timestamp)
@@ -316,63 +311,19 @@ class WekoDeposit(Deposit):
         print("[Log]: WekoDeposit:create >> after data")
         print(data)
 
-        
-        """
         if current_user and current_user.is_authenticated:
             user = UserProfile.get_by_userid(current_user.get_id())
             creator_id = int(current_user.get_id())
 
-            print("[Log]: WekoDeposit:create >> user")
-            print(user.__dict__)
+            print("[Log]: WekoDeposit:create >> current_user")
+            print(user.__dict__)            
 
-            data['_deposit']['owners'].append(creator_id)
-            data['_deposit']['owners'].append(user._username)
-            data['_deposit']['owners'].append(user._displayname)
+            data['_deposit']['owners_ext'] = {
+                'username' : user._username,
+                'displayname' : user._displayname,
+            }
 
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
-        """
-        """Create a deposit.
-        Initialize the follow information inside the deposit:
-        .. code-block:: python
-            deposit['_deposit'] = {
-                'id': pid_value,
-                'status': 'draft',
-                'owners': [user_id],
-                'created_by': user_id,
-            }
-        The deposit index is updated.
-        :param data: Input dictionary to fill the deposit.
-        :param id_: Default uuid for the deposit.
-        :returns: The new created deposit.
-        """
-        data.setdefault('$schema', current_jsonschemas.path_to_url(
-            current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA']
-        ))
-
-        if '_deposit' not in data:
-            id_ = id_ or uuid.uuid4()
-            cls.deposit_minter(id_, data)
-
-        data['_deposit'].setdefault('owners', list())
-        if current_user and current_user.is_authenticated:
-            creator_id = int(current_user.get_id())
-
-            if creator_id not in data['_deposit']['owners']:
-                data['_deposit']['owners'].append(creator_id)
-
-            # get username & display name.
-            user = UserProfile.get_by_userid(current_user.get_id())
-
-            print("[Log]: WekoDeposit:create >> user")
-            print(user.__dict__)
-
-            data['_deposit']['owners'].append(user._username)
-            data['_deposit']['owners'].append(user._displayname)
-
-            # add created by.
-            data['_deposit']['created_by'] = creator_id
-
-        deposit = super(Deposit, cls).create(data, id_=id_)
 
         print("[Log]: WekoDeposit:create >> before deposit")
         print(deposit)
