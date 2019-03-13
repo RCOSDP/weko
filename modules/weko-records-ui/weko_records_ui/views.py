@@ -410,7 +410,7 @@ def registerDOI():
     updated_date = request.form.get('updated_date')
     """
 
-    id = 'ID001'
+    id = 100001
     repository = 'repository I'
     jalc_doi = 'jalc_doi I'
     jalc_crossref_doi = 'jalc_crossref_doi test'
