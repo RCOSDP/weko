@@ -23,6 +23,11 @@
 
 {%- from "invenio_communities/macros.html" import community_header, community_footer %}
 
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
 {%- block javascript %}
   {{ super() }}
   {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}

@@ -23,6 +23,11 @@
 from flask_assets import Bundle
 from invenio_assets import NpmBundle
 
+style = Bundle(
+    'css/weko_records_ui/style.css',
+    output="gen/weko_records_ui.%(version)s.css"
+)
+
 js_dependencies = NpmBundle(
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
     'node_modules/angular/angular.js',

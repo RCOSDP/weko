@@ -114,7 +114,7 @@ msgstr ""
 msgid "Stats"
 msgstr ""
 
-msgid "Public"
+msgid "Published"
 msgstr ""
 
 msgid "Private"
@@ -129,7 +129,10 @@ msgstr ""
 msgid "Object File Name"
 msgstr ""
 
-msgid "File Size"
+msgid "File "
+msgstr ""
+
+msgid "Size"
 msgstr ""
 
 msgid "File Hash Value"
@@ -138,5 +141,8 @@ msgstr ""
 msgid "Contributor Name"
 msgstr ""
 
-msgid "Public/Private"
+msgid "Published/"
+msgstr ""
+
+msgid "Private"
 msgstr ""
