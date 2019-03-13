@@ -1,4 +1,10 @@
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
+VALUES ('en', 'English', 'true', 002, 'true');
+
+INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
+VALUES ('de', 'German', 'false', 000, 'true');
+
+INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
 VALUES ('zh', 'Chinese', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
@@ -26,7 +32,4 @@ INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, 
 VALUES ('jp', 'Japanese', 'true', 001, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('en', 'English', 'true', 002, 'true');
-
-INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('de', 'German', 'false', 000, 'true');
+VALUES ('cn', 'Cantonese', 'false', 000, 'true');
