@@ -285,6 +285,8 @@ class WekoDeposit(Deposit):
 
         Adds bucket creation immediately on deposit creation.
         """
+        print("[Log]: WekoDeposit:create >> before data")
+        print(data)
         bucket = Bucket.create(
             quota_size=current_app.config['WEKO_BUCKET_QUOTA_SIZE'],
             max_file_size=current_app.config['WEKO_MAX_FILE_SIZE'],
@@ -293,8 +295,13 @@ class WekoDeposit(Deposit):
             data.pop('$schema')
 
         data['_buckets'] = {'deposit': str(bucket.id)}
+
+        print("[Log]: WekoDeposit:create >> after data")
+        print(data)
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
+        print("[Log]: WekoDeposit:create >> before deposit")
+        print(deposit)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         # recid = PersistentIdentifier.get(
@@ -307,6 +314,8 @@ class WekoDeposit(Deposit):
         # PIDVersioning(parent=conceptrecid).insert_draft_child(child=recid)
         # RecordDraft.link(recid, depid)
 
+        print("[Log]: WekoDeposit:create >> after deposit")
+        print(deposit.__dict__)
         return deposit
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
