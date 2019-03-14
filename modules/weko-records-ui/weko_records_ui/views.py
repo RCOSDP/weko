@@ -36,7 +36,7 @@ from .models import PDFCoverPageSettings
 from invenio_files_rest.views import ObjectResource
 from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
-from .api import Indentifier
+from .models import Indentifier
 import werkzeug
 from datetime import datetime
 from flask_login import current_user
