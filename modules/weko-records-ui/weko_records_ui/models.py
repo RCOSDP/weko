@@ -113,7 +113,7 @@ class InstitutionName(db.Model):
 __all__ = ('PDFCoverPageSettings',)
 
 
-class Identifier(db.Model):
+class Indentifier(db.Model):
     """
         Represent an Identifier.
 
@@ -121,7 +121,7 @@ class Identifier(db.Model):
         properties that are automatically updated.
     """
 
-    __tablename__ = 'indentifier'
+    __tablename__ = 'pidstore_indentifier '
 
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
@@ -129,66 +129,78 @@ class Identifier(db.Model):
     repository = db.Column(
         db.Text,
         nullable=False,
-        default='',
+        default=''
+        """
         info=dict(
             label=_('Repository'),
             description=_('Repository Name of...'),
-        ),
+        )
+        """
     )
     """repository of the Identifier."""
 
     jalc_doi = db.Column(
         db.Text,
         nullable=True,
-        default='',
+        default=''
+        """
         info=dict(
             label=_('JaLC DOI'),
             description=_('JaLC DOI'),
-        ),
+        )
+        """
     )
     """jalc_doi of the Identifier."""
 
     jalc_crossref_doi = db.Column(
         db.Text,
         nullable=True,
-        default='',
+        default=''
+        """
         info=dict(
             label=_('JaLC Crossref DOI'),
             description=_('JaLC Crossref DOI'),
         )
+        """
     )
     """jalc_crossref_doi of the Identifier."""
 
     jalc_datacite_doi = db.Column(
         db.Text,
         nullable=True,
-        default='',
+        default=''
+        """
         info=dict(
             label=_('JaLC Datacite DOI'),
             description=_('JaLC Datacite DOI'),
         )
+        """
     )
     """jalc_datacite_doi of the Identifier."""
 
     cnri = db.Column(
         db.Text,
         nullable=True,
-        default='',
+        default=''
+        """
         info=dict(
             label=_('CNRI'),
             description=_('CNRI'),
         )
+        """
     )
     """cnri of the Identifier."""
 
     suffix = db.Column(
         db.Text,
         nullable=True,
-        default='',
+        default=''
+        """
         info=dict(
             label=_('SUFFIX'),
             description=_('SUFFIX'),
         )
+        """
     )
     """suffix of the Identifier."""
 
@@ -217,7 +229,7 @@ class Identifier(db.Model):
         self.updated_userId = updated_userId
         self.updated_date = updated_date
 
-
+"""
     @classmethod
     def create(cls, id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date):
         with db.session.begin_nested():
@@ -228,7 +240,7 @@ class Identifier(db.Model):
 
     @classmethod
     def find(cls, id):
-        """ find record by ID """
+        #find record by ID
 
         record = db.session.query(cls).filter_by(id=id).first()
         return record
@@ -237,7 +249,9 @@ class Identifier(db.Model):
     def update(cls, id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date):
         settings = Identifier(id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date)
 
-        """ update record by ID """
+
+        #update record by ID
+
         record = db.session.query(cls).filter_by(id=id).first()
 
         record.id = id
@@ -257,12 +271,12 @@ class Identifier(db.Model):
 
     @classmethod
     def delete(cls, id):
-        """
-        Delete record by id.
 
-        :param id: id of Identifier
-        :return: bool True: Delete success None: Delete failed
-        """
+        #Delete record by id.
+
+        #:param id: id of Identifier
+        #:return: bool True: Delete success None: Delete failed
+
         try:
             with db.session.begin_nested():
                 slf = cls.get_identifier(id)
@@ -281,12 +295,10 @@ class Identifier(db.Model):
 
     @classmethod
     def get_identifier(cls, id):
-        """
-        Get indentifier information by id.
+        #Get indentifier information by id.
+        #:param id: Identifier ID.
+        #:return: A identifier object.
 
-        :param id: Identifier ID.
-        :return: A identifier object.
-        """
         obj = db.session.query(Identifier). \
             filter_by(id=id).one_or_none()
 
@@ -295,5 +307,5 @@ class Identifier(db.Model):
 
         return dict(obj)
 
-
-__all__ = ('Identifier',)
+"""
+__all__ = ('Indentifier',)
