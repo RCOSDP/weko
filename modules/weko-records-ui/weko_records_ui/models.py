@@ -127,7 +127,7 @@ class Indentifier(db.Model):
     """Identifier of the index."""
 
     repository = db.Column(
-        db.Text,
+        db.String(50),
         nullable=False,
         default=''
         """
@@ -140,7 +140,7 @@ class Indentifier(db.Model):
     """repository of the Identifier."""
 
     jalc_doi = db.Column(
-        db.Text,
+        db.String(100),
         nullable=True,
         default=''
         """
@@ -153,7 +153,7 @@ class Indentifier(db.Model):
     """jalc_doi of the Identifier."""
 
     jalc_crossref_doi = db.Column(
-        db.Text,
+        db.String(100),
         nullable=True,
         default=''
         """
@@ -166,7 +166,7 @@ class Indentifier(db.Model):
     """jalc_crossref_doi of the Identifier."""
 
     jalc_datacite_doi = db.Column(
-        db.Text,
+        db.String(100),
         nullable=True,
         default=''
         """
@@ -179,7 +179,7 @@ class Indentifier(db.Model):
     """jalc_datacite_doi of the Identifier."""
 
     cnri = db.Column(
-        db.Text,
+        db.String(100),
         nullable=True,
         default=''
         """
@@ -192,7 +192,7 @@ class Indentifier(db.Model):
     """cnri of the Identifier."""
 
     suffix = db.Column(
-        db.Text,
+        db.String(100),
         nullable=True,
         default=''
         """
@@ -204,13 +204,13 @@ class Indentifier(db.Model):
     )
     """suffix of the Identifier."""
 
-    created_userId = db.Column(db.Text, nullable=False, default='')
+    created_userId = db.Column(db.String(50), nullable=False, default='')
     """created by user."""
 
     created_date = db.Column(db.DateTime, nullable=False, default='')
     """created date."""
 
-    updated_userId = db.Column(db.Text, nullable=False, default='')
+    updated_userId = db.Column(db.String(50), nullable=False, default='')
     """updated by user."""
 
     updated_date = db.Column(db.DateTime, nullable=True, default='')
