@@ -22,7 +22,7 @@
 
 import six
 from flask import Blueprint, abort, current_app, render_template, \
-    make_response, redirect, request, url_for, flash
+    make_response, redirect, request, url_for, flash, current_app
 from lxml import etree
 from invenio_records_ui.utils import obj_or_import_string
 from invenio_records_ui.signals import record_viewed
@@ -36,10 +36,12 @@ from .models import PDFCoverPageSettings
 from invenio_files_rest.views import ObjectResource
 from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
-from .models import Identifier
+from .api import Indentifier
 import werkzeug
 from datetime import datetime
-
+from flask_login import current_user
+from invenio_db import db
+from sqlalchemy.exc import IntegrityError
 blueprint = Blueprint(
     'weko_records_ui',
     __name__,
@@ -61,7 +63,6 @@ def publish(pid, record, template=None, **kwargs):
     :return: The rendered template.
     """
 
-    from invenio_db import db
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
@@ -384,91 +385,85 @@ def set_pdfcoverpage_header():
     return redirect('/admin/pdfcoverpage')
 
 
-@blueprint.route('/admin/identifier/register', methods=['POST'])
-def registerDOI():
-    #limit upload file size : 1MB
-    current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+@blueprint.route('/admin/identifier/register/<indentifer>', methods=['POST'])
+def register_doi(indentifiers = None):
 
-    @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
-    def handle_over_max_file_size(error):
-        print("werkzeug.exceptions.RequestEntityTooLarge")
-        return 'result : file size is overed.'
+    def _add_indentifier(data):
+        with db.session.begin_nested():
+            indentifier = Indentifier(**data)
+            db.session.add(indentifier)
+        db.session.commit()
 
-    # register DOI
-    #record = Identifier.find(1)
-    """
-    id = request.form.get('id')
-    repository = request.form.get('repository')
-    jalc_doi = request.form.get('jalc_doi')
-    jalc_crossref_doi = request.form.get('jalc_crossref_doi')
-    jalc_datacite_doi = request.form.get('jalc_datacite_doi')
-    cnri = request.form.get('cnri')
-    suffix = request.form.get('suffix')
-    created_userId = request.form.get('created_userId')
-    created_date = request.form.get('created_date')
-    updated_userId = request.form.get('updated_userId')
-    updated_date = request.form.get('updated_date')
-    """
+    if not isinstance(indentifiers, dict):
+        return
 
-    id = 100001
-    repository = 'repository I'
-    jalc_doi = 'jalc_doi I'
-    jalc_crossref_doi = 'jalc_crossref_doi test'
-    jalc_datacite_doi = 'jalc_datacite_doi test'
-    cnri = 'cnri test'
-    suffix = '1000000-20112120'
-    created_userId = 'B001-001'
-    created_date = datetime.now()
-    updated_userId = 'B001-001'
-    updated_date = datetime.now()
+    data = dict()
+    is_ok = True
+    try:
+        """
+        cid = indentifiers.get('id')
+        if not cid:
+            return
+        data["id"] = cid
 
-    # Register DOI for identifier
-    Identifier.create(id,
-                     repository,
-                     jalc_doi,
-                     jalc_crossref_doi,
-                     jalc_datacite_doi,
-                     cnri,
-                     suffix,
-                     created_userId,
-                     created_date,
-                     updated_userId,
-                     updated_date,
-                     )
+        # check index id.
+        index_id = indentifiers.get('index_id')
+        if not index_id:
+            return
 
-    flash('Register successed.', category='success')
-    return redirect('/admin/identifier')
+        #index_info = Indexes.get_index(index_id=index_id, with_count=True)
 
+        if index_info:
+            data["index_id"] = index_id
+        else:
+            return
+        """
+        data["id"] = indentifiers.get('id')
+        data["repository"] = indentifiers.get('repository')
+        data["jalc_doi"] = indentifiers.get('jalc_doi')
+        data["jalc_crossref_doi"] = indentifiers.get('jalc_crossref_doi')
+        data["jalc_datacite_doi"] = indentifiers.get('jalc_datacite_doi')
+        data["cnri"] = indentifiers.get('cnri')
+        data["suffix"] = indentifiers.get('suffix')
+        data["created_userId"] = current_user.get_id()
+        data["created_date"] = indentifiers.get('created_date')
+        data["updated_userId"] = current_user.get_id()
+        data["updated_date"] = indentifiers.get('updated_date')
+        print('______________Dadaaaadaaata____________________: ', data)
+        _add_indentifier(data)
+    except IntegrityError as ie:
+        is_ok = False
+        current_app.logger.warning(ie)
+    except Exception as ex:
+        is_ok = False
+        current_app.logger.warning(ex)
+    finally:
+        del data
+        if not is_ok:
+            db.session.commit()
+
+    if is_ok:
+        flash('Register successed.', category='success')
+        return redirect('/admin/identifier')
+    else:
+        flash('Register failure, please create again!', category='error')
+        return redirect('/admin/identifier')
 
 @blueprint.route('/admin/identifier/delete/<int:identifier_id>', methods=['POST'])
 def deleteDOIById(identifier_id = 0):
-    #limit upload file size : 1MB
-    current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
-
-    @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
-    def handle_over_max_file_size(error):
-        print("werkzeug.exceptions.RequestEntityTooLarge")
-        return 'result : file size is overed.'
     # delete identifier
-    Identifier.delete(identifier_id)
+    Indentifier.delete(identifier_id)
     flash('Delete successed.', category='success')
     return redirect('/admin/identifier')
 
 
 @blueprint.route('/admin/identifier/update/<int:identifier_id>', methods=['POST'])
 def updateDOIById(identifier_id = 0):
-    #limit upload file size : 1MB
-    current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
-
-    @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
-    def handle_over_max_file_size(error):
-        print("werkzeug.exceptions.RequestEntityTooLarge")
-        return 'result : file size is overed.'
     # delete identifier
     #Identifier.update(id=identifier_id)
-    identifier = Identifier.find(identifier_id)
+    identifier = Indentifier.find(identifier_id)
     if identifier is not None:
-        Identifier.update(id = identifier_id,
+        Indentifier.update(id = identifier_id,
                           repository = 'repository II',
                           jalc_doi = 'jalc_doi II',
                           jalc_crossref_doi = 'jalc_crossref_doi test I',

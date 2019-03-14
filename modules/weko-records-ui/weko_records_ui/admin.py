@@ -137,11 +137,7 @@ class IdentifierSettingView(ModelView):
         jalc_crossref_doi=_('JaLC CrossRef DOI'),
         jalc_datacite_doi=_('JaLC DataCite DOI'),
         cnri=_('CNRI'),
-        suffix=_('Suffix'),
-        #created_userId=_(''),
-        #created_date=_(''),
-        #updated_userId=_(''),
-        #updated_date=_('')
+        suffix=_('Suffix')
     )
     form_columns = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
     page_size = 25
