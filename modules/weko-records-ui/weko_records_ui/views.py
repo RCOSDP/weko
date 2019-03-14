@@ -23,6 +23,7 @@
 import six
 from flask import Blueprint, abort, current_app, render_template, \
     make_response, redirect, request, url_for, flash
+from flask_login import current_user
 from lxml import etree
 from invenio_records_ui.utils import obj_or_import_string
 from invenio_records_ui.signals import record_viewed
@@ -333,6 +334,7 @@ def default_view_method(pid, record, template=None, **kwargs):
         pid=pid,
         record=record,
         can_download_original_pdf=can_download_original,
+        is_logged_in=current_user and current_user.is_authenticated,
         community_id=community_id,
         width=width,
         detail_condition=detail_condition,
