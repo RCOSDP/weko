@@ -90,7 +90,7 @@ require([
         $scope.initFilenameList();
       });
 
-      $scope.getItemMetadata = function(model_id,arrayFlg,form) {
+      $scope.getItemMetadata = function() {
         $('#meta-search').modal('show');
       }
 
