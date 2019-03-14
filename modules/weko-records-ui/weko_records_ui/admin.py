@@ -28,7 +28,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
 from . import config
-from .models import Identifier
+from .models import Indentifier
 from invenio_db import db
 from .models import PDFCoverPageSettings
 from .models import InstitutionName
@@ -110,7 +110,7 @@ class InstitutionNameSettingView(BaseView):
 
 
 """
-class IdentifierSettingView(BaseView):
+class IndentifierSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         if request.method == 'POST':
@@ -122,7 +122,7 @@ class IdentifierSettingView(BaseView):
 """
 
 
-class IdentifierSettingView(ModelView):
+class IndentifierSettingView(ModelView):
     """Setting model view."""
 
     can_create = True
@@ -145,20 +145,20 @@ class IdentifierSettingView(ModelView):
 
     def edit_form(self, obj):
         """Customize edit form."""
-        form = super(IdentifierSettingView, self).edit_form(obj)
+        form = super(IndentifierSettingView, self).edit_form(obj)
         return form
 
 
     def after_model_change(self,form,Identify,true):
         """Set Create button Hidden"""
-        IdentifierSettingView.can_create = False
+        IndentifierSettingView.can_create = False
 
 
-identifier_adminview = dict(
-    modelview=IdentifierSettingView,
-    model=Identifier,
+indentifier_adminview = dict(
+    modelview=IndentifierSettingView,
+    model=Indentifier,
     category=_('Setting'),
-    name=_('Identifier'),
+    name=_('Indentifier'),
 )
 
 
@@ -190,19 +190,19 @@ pdfcoverpage_adminview = {
 }
 
 """
-identifier_adminview = {
-    'view_class': IdentifierSettingView,
+indentifier_adminview = {
+    'view_class': IndentifierSettingView,
     'kwargs': {
         'category': _('Setting'),
-        'name': _('Identifier'),
-        'endpoint': 'identifier'
+        'name': _('Indentifier'),
+        'endpoint': 'indentifier'
     }
 }
 """
 
 __all__ = (
-    #'identifier_adminview',
-    #'IdentifierSettingView',
+    #'indentifier_adminview',
+    #'IndentifierSettingView',
     'pdfcoverpage_adminview',
     'PdfCoverPageSettingView',
     'item_adminview',
