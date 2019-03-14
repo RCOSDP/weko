@@ -1,0 +1,73 @@
+<style>
+  .dropdown button{
+    background: #fff;
+    color: black;
+  }
+
+  h4{
+    float:left;
+  }
+
+  .dropdown{
+    float: right;
+  }
+
+  .clear{
+    clear: both;
+  }
+
+  /*.views-wrapper{*/
+    /*margin: 0 auto;*/
+  /*}*/
+
+  .total-views{
+    /*margin: 0 auto;*/
+    padding: 10px 20px;
+  }
+
+  .total-views p{
+    display: inline-block;
+    text-align: center;
+  }
+
+  #views-num{
+    font-size: xx-large;
+    vertical-align: -0.7rem;
+    padding-right: 10px;
+  }
+</style>
+
+
+<div class="well stats">
+  <h4>{{_('Stats')}}</h4>
+
+<div class="dropdown">
+  <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+    Period
+    <span class="caret"></span>
+  </button>
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <li><a href="#">period 1</a></li>
+    <li><a href="#">period 2</a></li>
+    <li><a href="#">period 3</a></li>
+  </ul>
+</div><!-- /.dropdown -->
+  <div class="clear"></div>
+
+  <div class="views-wrapper">
+    <div class="total-views">
+
+      <p id="views-num">200</p>
+      <p>views</p>
+    </div>
+    <div class="domain-views">
+      <p>Views per Domain</p>
+      <ul>
+        <li>foo.co.jp<span class="">xxx</span></li>
+        <li>bar.com<span class="">xxx</span></li>
+      </ul>
+    </div>
+
+  </div>
+
+  </div>
