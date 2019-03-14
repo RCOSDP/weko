@@ -440,9 +440,9 @@ def register_doi():
         data["jalc_datacite_doi"] = 'jalc_datacite_doi test'
         data["cnri"] = 'cnri test'
         data["suffix"] = '1000000-20112120'
-        data["created_userId"] = current_user.get_id()
+        data["created_userId"] = 'B001-001'#current_user.get_id()
         data["created_date"] = datetime.now()
-        data["updated_userId"] = current_user.get_id()
+        data["updated_userId"] = 'B001-001'
         data["updated_date"] = datetime.now()
         print('______________Dadaaaadaaata____________________: ', data)
         _add_indentifier(data)
