@@ -121,7 +121,7 @@ class Indentifier(db.Model):
         properties that are automatically updated.
     """
 
-    __tablename__ = 'pidstore_indentifier '
+    __tablename__ = 'pidstore_indentifier'
 
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
