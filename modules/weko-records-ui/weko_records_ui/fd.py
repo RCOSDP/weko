@@ -235,7 +235,7 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
                     'pid_type': pid.pid_type,
                     'pid_value': pid.pid_value,
                 },
-                as_attachment=False,
+                as_attachment=not is_preview,
                 cache_timeout=-1
             )
     except AttributeError:
@@ -247,7 +247,7 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
                 'pid_type': pid.pid_type,
                 'pid_value': pid.pid_value,
             },
-            as_attachment=False,
+            as_attachment=not is_preview,
             cache_timeout=-1
         )
 
