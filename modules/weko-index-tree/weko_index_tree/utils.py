@@ -30,6 +30,7 @@ from invenio_i18n.ext import current_i18n
 from weko_groups.models import Group
 from invenio_db import db
 from .models import Index
+from sqlalchemy import Table, MetaData
 
 
 def is_index_tree_updated():
@@ -95,6 +96,8 @@ def get_tree_json(obj, pid=0):
                     'browsing_group', 'contribute_group',
                     'more_check', 'display_no',
                     'coverpage_state', 'admin_coverpage']
+            admin_coverpage_set = get_admin_coverpage_setting()
+
             for lst in plst:
                 lst['children'] = []
                 if isinstance(lst, dict):
@@ -110,8 +113,7 @@ def get_tree_json(obj, pid=0):
                             for x in attr:
                                 if hasattr(index_obj, x):
                                     if x == 'admin_coverpage':
-                                        dc.update({x:
-                                            get_admin_coverpage_setting()})
+                                        dc.update({x: admin_coverpage_set})
                                     else:
                                         dc.update({x: getattr(index_obj, x)})
                             lst['children'].append(dc)
@@ -294,10 +296,20 @@ def reduce_index_by_more(tree, more_ids=[]):
 
 
 def get_admin_coverpage_setting():
+    """
+
+    Get 'avail' value from pdfcoverpage_set table
+    """
     avail = 'disable'
     try:
-        record = db.engine.execute("SELECT * FROM pdfcoverpage_set")
+        metadata = MetaData(bind=db.engine, reflect=True)
+        table_name = 'pdfcoverpage_set'
+
+        pdfcoverpage_table = Table(table_name, metadata)
+        record = db.session.query(pdfcoverpage_table)
+
         avail = record.first()[1]
     except Exception as ex:
         current_app.logger.debug(ex)
     return avail == 'enable'
+
