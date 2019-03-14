@@ -300,11 +300,19 @@ class WekoDeposit(Deposit):
         data['_buckets'] = {'deposit': str(bucket.id)}
 
         if current_user and current_user.is_authenticated:
-            user = UserProfile.get_by_userid(current_user.get_id())
             creator_id = int(current_user.get_id())
+            user = UserProfile.get_by_userid(current_user.get_id())
+
+            username = ''
+            displayname = ''
+            if user is not None:
+                username = user._username
+                displayname = user._displayname     
+                
             data['_deposit']['owners_ext'] = {
-                'username' : user._username,
-                'displayname' : user._displayname,
+                'username' : username,
+                'displayname' : displayname,
+                'email' : current_user.email
             }
 
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
@@ -325,7 +333,7 @@ class WekoDeposit(Deposit):
     def update(self, *args, **kwargs):
         """Update only drafts."""
         dc = self.convert_item_metadata(args[0])
-        
+
         super(WekoDeposit, self).update(dc)
         item_created.send(
             current_app._get_current_object(), item_id=self.pid)
