@@ -385,7 +385,7 @@ def set_pdfcoverpage_header():
     return redirect('/admin/pdfcoverpage')
 
 
-@blueprint.route('/admin/identifier/register/<indentifer>', methods=['POST'])
+@blueprint.route('/admin/identifier/register/<indentifiers>', methods=['POST'])
 def register_doi(indentifiers = None):
 
     def _add_indentifier(data):
