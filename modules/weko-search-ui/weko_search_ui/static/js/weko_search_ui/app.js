@@ -43,15 +43,21 @@
         return str;
       }
     });
-    window.onload = function () {
-      setTimeout(function () {
-        if($('#index_tree_list').length){
-          $("#journal_info").remove();
-        } else {
-          $("#journal_info").css({ display: "block" });
+    function showJournalInfo() {
+      var check = setInterval(show, 1000);
+      function show() {
+        if($('#index_list_box').length) {
+          if($('#index_tree_list').length){
+            $("#journal_info").remove();
+          } else {
+            $("#journal_info").css({ display: "block" });
+          }
+          clearInterval(check);
         }
-      }, 1000);
-
+      }
+    }
+    window.onload = function () {
+      showJournalInfo();
     };
 });
 
