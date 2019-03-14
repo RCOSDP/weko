@@ -385,8 +385,9 @@ def set_pdfcoverpage_header():
     return redirect('/admin/pdfcoverpage')
 
 
-@blueprint.route('/admin/identifier/register/<indentifiers>', methods=['POST'])
-def register_doi(indentifiers = None):
+#@blueprint.route('/admin/identifier/register/<indentifiers>', methods=['POST'])
+@blueprint.route('/admin/identifier/register', methods=['POST'])
+def register_doi():
 
     def _add_indentifier(data):
         with db.session.begin_nested():
@@ -394,8 +395,8 @@ def register_doi(indentifiers = None):
             db.session.add(indentifier)
         db.session.commit()
 
-    if not isinstance(indentifiers, dict):
-        return
+    #if not isinstance(indentifiers, dict):
+     #   return
 
     data = dict()
     is_ok = True
@@ -418,6 +419,7 @@ def register_doi(indentifiers = None):
         else:
             return
         """
+        """
         data["id"] = indentifiers.get('id')
         data["repository"] = indentifiers.get('repository')
         data["jalc_doi"] = indentifiers.get('jalc_doi')
@@ -429,6 +431,19 @@ def register_doi(indentifiers = None):
         data["created_date"] = indentifiers.get('created_date')
         data["updated_userId"] = current_user.get_id()
         data["updated_date"] = indentifiers.get('updated_date')
+        print('______________Dadaaaadaaata____________________: ', data)
+        """
+        data["id"] = 100001
+        data["repository"] = 'repository I'
+        data["jalc_doi"] = 'jalc_doi I'
+        data["jalc_crossref_doi"] = 'jalc_crossref_doi test'
+        data["jalc_datacite_doi"] = 'jalc_datacite_doi test'
+        data["cnri"] = 'cnri test'
+        data["suffix"] = '1000000-20112120'
+        data["created_userId"] = current_user.get_id()
+        data["created_date"] = datetime.now()
+        data["updated_userId"] = current_user.get_id()
+        data["updated_date"] = datetime.now()
         print('______________Dadaaaadaaata____________________: ', data)
         _add_indentifier(data)
     except IntegrityError as ie:
