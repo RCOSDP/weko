@@ -23,13 +23,13 @@
 <div class="panel-group">
 <div class="panel panel-default" ng-app="myApp" ng-controller="ItemController">
   <div class="panel-heading clearfix">
-    <a class="forcewrap" href="{{record_url}}"><h3 class="panel-title">{{_('Item')}}</h3></a>
+    <h3 class="panel-title">{{_('Item')}}</h3>
   </div>
   <div class="panel-body">
     <div class="panel panel-default">
       <div class="panel-heading">
         <div class="form-inline">
-          <a href="#"><span class="glyphicon glyphicon-file" aria-hidden="true"></span> {{ record.get('item_title', _('No title')) }}</a>
+          <a class="forcewrap" href="{{record_url}}"><span class="glyphicon glyphicon-file" aria-hidden="true"></span> {{ record.get('item_title', _('No title')) }}</a>
         </div>
       </div>
       <div class="panel-body">
