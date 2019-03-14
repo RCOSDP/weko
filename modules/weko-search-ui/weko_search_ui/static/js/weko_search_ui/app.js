@@ -44,9 +44,9 @@
       }
     });
     function showJournalInfo() {
-      var check = setInterval(show, 1000);
+      var check = setInterval(show, 500);
       function show() {
-        if($('#index_list_box').length) {
+        if($('#index_list_length').val() !== undefined && $('#index_list_length').val() !== '' && $('#index_list_length').val() !== null) {
           if($('#index_tree_list').length){
             $("#journal_info").remove();
           } else {
@@ -56,9 +56,9 @@
         }
       }
     }
-    window.onload = function () {
+    $(document).ready(function(){
       showJournalInfo();
-    };
+    });
 });
 
 //add controller to invenioSearch
