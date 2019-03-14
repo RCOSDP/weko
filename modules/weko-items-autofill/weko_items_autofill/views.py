@@ -14,8 +14,7 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .permissions import auto_fill_permission
-from .crossref_api import CrossRefOpenURL
-from .utils import parse_crossref_json_response, get_item_id
+from .utils import parse_crossref_json_response, get_item_id, get_crossref_data
 from . import config
 
 blueprint = Blueprint(
@@ -65,8 +64,7 @@ def get_items_autofill_data():
         result['items'] = get_item_id(item_type_id)
         if api_type == 'CrossRef':
             pid = config.WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID
-            api = CrossRefOpenURL(pid, search_data)
-            api_response = api.get_data()
+            api_response = get_crossref_data(pid, search_data)
             result['result'] = parse_crossref_json_response(api_response,
                                                             result['items'])
         else:
