@@ -207,6 +207,16 @@
             </div>
             {%- endif %}
             <div ng-controller="WekoRecordsCtrl">
+              <div class="row" ng-hide="false">
+                <div class="col-sm-9" ng-show="true">
+                <p class="text-center">
+                  <button class="btn btn-primary" ng-click="getItemMetadata()">
+                    <span class="glyphicon glyphicon-search"></span>
+                    {{_('Automatic metadata input')}}
+                </button>
+                </p>
+                </div>
+              </div>
               <!--add by ryuu. start 20180410-->
               <div ng-show="false" type="text" id="btn_id" ></div>
               <div ng-show="false" type="text" id="author_info" ></div>
