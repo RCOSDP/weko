@@ -53,7 +53,7 @@ web:
     - elasticsearch
     - rabbitmq
   ports:
-    - "5023:5000"
+    - "5001:5000"
 
 postgresql:
   restart: "always"
@@ -63,35 +63,35 @@ postgresql:
     - POSTGRES_DB=invenio
     - POSTGRES_PASSWORD=dbpass123
   ports:
-    - "25423:5432"
+    - "25401:5432"
 
 redis:
   restart: "always"
   image: redis
   ports:
-    - "26323:6379"
+    - "26301:6379"
 
 elasticsearch:
   restart: "always"
   build: .
   dockerfile: ./elasticsearch/Dockerfile
   ports:
-    - "29223:9200"
-    - "29323:9300"
+    - "29201:9200"
+    - "29301:9300"
 
 rabbitmq:
   restart: "always"
   image: rabbitmq
   ports:
-    - "24323:4369"
-    - "45623:25672"
+    - "24301:4369"
+    - "45601:25672"
 
 nginx:
   restart: "always"
   build: ./nginx
   ports:
-    - "8023:80"
-    - "4423:443"
+    - "8001:80"
+    - "443:443"
   volumes_from:
     - static
   links:
