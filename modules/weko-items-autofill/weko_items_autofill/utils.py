@@ -26,15 +26,16 @@ from invenio_i18n.ext import current_i18n
 from weko_records.api import Mapping
 
 from . import config
+from .crossref_api import CrossRefOpenURL
 import copy
 
 
 def is_update_cache():
-    """Return True if Amazon Api has been updated."""
+    """Return True if Autofill Api has been updated."""
     return config.WEKO_ITEMS_AUTOFILL_API_UPDATED
 
 
-def cached_api_json(timeout=50, key_prefix="amazon_json"):
+def cached_api_json(timeout=50, key_prefix="cached_api_json"):
     """Cache Api data
     :param timeout: Cache timeout
     :param key_prefix: prefix key
@@ -44,12 +45,18 @@ def cached_api_json(timeout=50, key_prefix="amazon_json"):
     def caching(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
+            key = key_prefix + args[1]
             cache_fun = current_cache.cached(
                 timeout=timeout,
-                key_prefix=key_prefix + current_i18n.language,
+                key_prefix=key,
                 forced_update=is_update_cache,
             )
-            return cache_fun(f)(*args, **kwargs)
+            if current_cache.get(key) is None:
+                data = cache_fun(f)(*args, **kwargs)
+                current_cache.set(key, data)
+                return data
+            else:
+                return current_cache.get(key)
 
         return wrapper
 
@@ -57,6 +64,10 @@ def cached_api_json(timeout=50, key_prefix="amazon_json"):
 
 
 def parse_crossref_json_response(response, response_data_template):
+    """ Convert response data from crossref API to auto fill data
+        response: data from crossref API
+        response_data_template: template of autofill data
+    """
     response_data_convert = copy.deepcopy(response_data_template)
 
     created = response['response'].get("created")
@@ -143,3 +154,13 @@ def get_item_id(item_type_id):
         results['error'] = str(e)
 
     return results
+
+
+@cached_api_json(timeout=50,)
+def get_crossref_data(pid, doi):
+    """Return cache-able data
+    pid: pid
+    search_data: DOI
+    """
+    api = CrossRefOpenURL(pid, doi)
+    return api.get_data()
