@@ -29,7 +29,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
 from . import config
-from .models import Indentifier
+from .models import Identifier
 from invenio_db import db
 from .models import PDFCoverPageSettings
 from .models import InstitutionName
@@ -114,20 +114,7 @@ class InstitutionNameSettingView(BaseView):
                            institution_name = institution_name)
 
 
-"""
-class IndentifierSettingView(BaseView):
-    @expose('/', methods=['GET', 'POST'])
-    def index(self):
-        if request.method == 'POST':
-            rf = request.form.to_dict()
-            InstitutionName.set_institution_name(rf['institution_name'])
-        institution_name = InstitutionName.get_institution_name()
-        return self.render(config.INSTITUTION_NAME_SETTING_TEMPLATE,
-                           institution_name = institution_name)
-"""
-
-
-class IndentifierSettingView(ModelView):
+class IdentifierSettingView(ModelView):
     """Setting model view."""
 
     can_create = True
@@ -171,7 +158,7 @@ class IndentifierSettingView(ModelView):
         """
         try:
             model = self.model()
-            print('_________________CREATE indentifier model______________', model)
+            print('_________________CREATE identifier model______________', model)
             print('_________________parameter form______________', form)
             form.populate_obj(model)
             self.session.add(model)
@@ -190,19 +177,19 @@ class IndentifierSettingView(ModelView):
 
     def edit_form(self, obj):
         """Customize edit form."""
-        form = super(IndentifierSettingView, self).edit_form(obj)
+        form = super(IdentifierSettingView, self).edit_form(obj)
         return form
 
     def after_model_change(self,form,Identify,true):
         """Set Create button Hidden"""
-        IndentifierSettingView.can_create = False
+        IdentifierSettingView.can_create = False
 
 
-indentifier_adminview = dict(
-    modelview=IndentifierSettingView,
-    model=Indentifier,
+identifier_adminview = dict(
+    modelview=IdentifierSettingView,
+    model=Identifier,
     category=_('Setting'),
-    name=_('Indentifier'),
+    name=_('Identifier'),
 )
 
 
@@ -233,16 +220,6 @@ pdfcoverpage_adminview = {
     }
 }
 
-"""
-indentifier_adminview = {
-    'view_class': IndentifierSettingView,
-    'kwargs': {
-        'category': _('Setting'),
-        'name': _('Indentifier'),
-        'endpoint': 'indentifier'
-    }
-}
-"""
 
 __all__ = (
     'pdfcoverpage_adminview',
