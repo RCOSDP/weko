@@ -25,7 +25,6 @@ from datetime import datetime
 
 from flask import current_app, json
 from flask_babelex import lazy_gettext as _
-from flask_login import current_user
 from invenio_db import db
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import JSONType
@@ -166,16 +165,29 @@ class Indentifier(db.Model):
     )
     """suffix of the Identifier."""
 
-    created_userId = db.Column(db.String(50), nullable=False, default=current_user.get_id())
+    created_userId = db.Column(db.String(50), nullable=False)
     """created by user."""
 
     created_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     """created date."""
 
-    updated_userId = db.Column(db.String(50), nullable=False, default=current_user.get_id())
+    updated_userId = db.Column(db.String(50), nullable=False)
     """updated by user."""
 
-    updated_date = db.Column(db.DateTime, nullable=True, default='')
+    updated_date = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
     """updated date."""
+
+    def __init__(self, id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date):
+        self.id = id
+        self.repository = repository
+        self.jalc_crossref_doi = jalc_crossref_doi
+        self.jalc_datacite_doi = jalc_datacite_doi
+        self.cnri = cnri
+        self.suffix = suffix
+        self.created_userId = created_userId
+        self.created_date = datetime.utcnow
+        self.updated_userId = updated_userId
+        self.updated_date = updated_date
+
 
 __all__ = ('Indentifier', 'PDFCoverPageSettings')
