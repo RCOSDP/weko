@@ -6,26 +6,26 @@ require([
     var journalNames = [];
     var actionJournal = {};
 
-    var timer = null;
+    var getJournalsTimer = null;
     // For IME
     $('#search-key').on('keydown', function(e) {
       if (e.keyCode == 229){
-        clearTimeout(timer);
-        timer = setTimeout(function(){ getJournals(); }, 1000);
+        clearTimeout(getJournalsTimer);
+        getJournalsTimer = setTimeout(function(){ getJournals(); }, 1000);
       }
     });
 
     // For Delete, Backspace
     $('#search-key').on('keyup', function(e) {
       if (e.keyCode == 46 || e.keyCode == 8){
-        clearTimeout(timer);
-        timer = setTimeout(function(){ getJournals(); }, 1000);
+        clearTimeout(getJournalsTimer);
+        getJournalsTimer = setTimeout(function(){ getJournals(); }, 1000);
       }
     });
 
     $('#search-key').on('keypress', function() {
-      clearTimeout(timer);
-      timer = setTimeout(function(){ getJournals(); }, 1000);
+      clearTimeout(getJournalsTimer);
+      getJournalsTimer = setTimeout(function(){ getJournals(); }, 1000);
     });
 
     function getJournals() {
@@ -122,16 +122,14 @@ require([
               $('#journal-info').removeAttr('hidden');
 
               // Set action journal
-              actionJournal['keywords'] = $('#search-key').val();
+              actionJournal['keywords'] = journal.jtitle;
 
-              if(!$("#journal-info").attr("hidden")) {
-                if (journal.issn) {
-                  actionJournal['issn'] = journal.issn;
-                  actionJournal['href'] = 'http://www.sherpa.ac.uk/romeo/search.php?issn=' + journal.issn;
-                }
-                actionJournal['romeo_msg'] = romeo_msg;
-                actionJournal['paid_msg'] = paid_msg;
+              if (journal.issn) {
+                actionJournal['issn'] = journal.issn;
+                actionJournal['href'] = 'http://www.sherpa.ac.uk/romeo/search.php?issn=' + journal.issn;
               }
+              actionJournal['romeo_msg'] = romeo_msg;
+              actionJournal['paid_msg'] = paid_msg;
 
               $('#action-journal').text(JSON.stringify(actionJournal));
             }
