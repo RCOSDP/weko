@@ -37,6 +37,10 @@ require([
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 0
     };
+    if($('#action-journal')){
+      post_data.pop('commond');
+    }
+
     $.ajax({
       url: post_uri,
       method: 'POST',
