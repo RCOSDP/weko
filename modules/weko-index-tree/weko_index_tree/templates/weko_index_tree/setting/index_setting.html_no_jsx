@@ -68,8 +68,8 @@ class TreeWidthDiv extends React.Component {
                   //  </div>
                   //</div>);
           //      }
-        //return React.createElement('div', null, `Hello ${this.props.name}`);
-        return <div>Hello, {this.props.name} </div>;
+        return React.createElement('div', null, `Hello ${this.props.name}`);
+        //return <div>Hello, {this.props.name} </div>;
                 }
         }
 console.log('alpha beta');

@@ -28,9 +28,22 @@
 {%- block body %}
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
-<form class="form-horizontal" method="POST" name="index_form" action={{url_for('indextree.index')}}>
-    <div id="tree-width"/>
-    <div class="form-group">
+<form ondragover="allowDrop(event)" ondrop="handleDrop()" class="form-horizontal" method="POST" name="index_form" action={{url_for('indextree.index')}}>
+    <div class="form-group" draggable="true">
+    <label for="width" class="control-label col-sm-1">{{('Width what (Grid)')}}</label>
+    <div class="controls col-sm-2">
+      <select class="form-control" id="width" name="width">
+        {%- for width in widths if width %}
+          {%- if width == width_selected %}
+            <option value={{ width }} selected="selected">{{ width }}</option>
+          {%- else %}
+            <option value={{ width }}>{{ width }}</option>
+          {%- endif %}
+        {%- endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="form-group" draggable="true">
     <label for="height" class="control-label col-sm-1">{{_('Height (Pixel)')}}</label>
     <div class="controls col-sm-2">
       <input type="text" class="form-control" id="height" name="height" value={{ height }}>
@@ -46,38 +59,22 @@
 {% block tail %}
 <script type="text/javascript" src="https://unpkg.com/react@16.7.0/umd/react.production.min.js"></script>
 <script type="text/javascript" src="https://unpkg.com/react-dom@16.7.0/umd/react-dom.production.min.js"></script>
-<!-- script src="http://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script -->
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<!-- Also include jQueryUI -->
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
 <script>
-//import React from 'react';
-//import ReactDOM from 'react-dom';
-console.log('am here 3');
-class TreeWidthDiv extends React.Component {
-    render() {
-        //<div className="form-group">Hello React!</div>);
-                  //  <label for="width" className="control-label col-sm-1">{{_('Width (Grid)')}}</label>
-                  //  <div className="controls col-sm-2">
-                  //    <select className="form-control" id="width" name="width">
-                  //      {%- for width in widths if width %}
-                  //        {%- if width == width_selected %}
-                  //          <option value={{ width }} selected="selected">{{ width }}</option>
-                  //        {%- else %}
-                  //          <option value={{ width }}>{{ width }}</option>
-                  //        {%- endif %}
-                  //      {%- endfor %}
-                  //    </select>
-                  //  </div>
-                  //</div>);
-          //      }
-        //return React.createElement('div', null, `Hello ${this.props.name}`);
-        return <div>Hello, {this.props.name} </div>;
-                }
-        }
-console.log('alpha beta');
-    ReactDOM.render(
-            React.createElement(TreeWidthDiv, { name : 'John'}, null),
-            document.getElementById('tree-width')
-            );
-console.log('am here 4');
+const { Component } = React;
+const { render } = ReactDOM;
+console.log('am here again 5');
+
+allowDrop = (event) => {
+     event.preventDefault();
+ }
+
+ handleDrop = () => {
+     console.log('You dropped something');
+ }
+
 $(document).ready(function() {
     $('#index_form_submit').on('click', function(){
       let height = $('#height').val();
