@@ -137,6 +137,7 @@ class IndentifierSettingView(ModelView):
     create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE
 
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+    column_searchable_list = ['repository', 'jalc_doi']
 
     form_create_rules = [rules.Header('Prefix'),
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
@@ -145,9 +146,11 @@ class IndentifierSettingView(ModelView):
         'suffix'
     ]
 
+
     form_choices = {
         'repository': [
             ('0', 'Root Index')
+            # list communities
         ]
     }
 
