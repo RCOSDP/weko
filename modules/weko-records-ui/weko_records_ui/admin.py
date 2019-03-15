@@ -185,10 +185,6 @@ class IdentifierSettingView(ModelView):
         form = super(IdentifierSettingView, self).edit_form(obj)
         return form
 
-    def after_model_change(self,form,Identify,true):
-        """Set Create button Hidden"""
-        IdentifierSettingView.can_create = False
-
 
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
