@@ -49,7 +49,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                {%- for file in files|sort(attribute='key') -%}
+                {%- for file in files | sort(attribute='key') if not file.key == filename -%}
                 {%- set img = file.mimetype | get_image_src -%}
                 {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                 filename=file.key) %}
@@ -171,6 +171,7 @@
             <div class="row">
               <div class="col-sm-12 tab-content">
                 <div class="tab-pane active" id="versions">
+                  <input type="hidden" value="{{filename}}" id="txt_filename"/>
                   <input type="hidden" value="{{_('Published')}}" id="txt_published"/>
                   <input type="hidden" value="{{_('Private')}}" id="txt_private"/>
                   {%- set username = '' -%}
