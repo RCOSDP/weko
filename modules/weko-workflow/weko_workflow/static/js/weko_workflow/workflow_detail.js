@@ -79,6 +79,7 @@ require([
           }else {
             post_data['journal'] = {keywords: ''};
           }
+          post_data['issn'] = {issn: ''};
         }
       }
     }
