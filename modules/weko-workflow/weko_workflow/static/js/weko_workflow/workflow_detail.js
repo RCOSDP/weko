@@ -69,16 +69,13 @@ require([
     };
 
     // Get Journal
-    let journalNode = $('#action-journal');
-    if(journalNode){
-      if(journalNode.text()) {
-        post_data['journal'] = $.parseJSON(journalNode.text());
+    if($('#action-journal')){
+      if($('#action-journal').text()) {
+        post_data['journal'] = $.parseJSON($('#action-journal').text());
       }else {
-        alert($("#journal-info").attr("hidden"));
-        let keywordsNode = $('#search-key');
-        if (keywordsNode){
-          if (keywordsNode.val()){
-            post_data['journal'] = {keywords: keywordsNode.val()};
+        if ($("#journal-info").attr("hidden")){
+          if ($('#search-key').val()){
+            post_data['journal'] = {keywords: $('#search-key').val()};
           }else {
             post_data['journal'] = {keywords: ''};
           }
