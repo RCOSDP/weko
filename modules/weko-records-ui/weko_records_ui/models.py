@@ -168,13 +168,13 @@ class Indentifier(db.Model):
     created_userId = db.Column(db.String(50), nullable=False, default='')
     """created by user."""
 
-    created_date = db.Column(db.DateTime, nullable=False, default='')
+    created_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     """created date."""
 
     updated_userId = db.Column(db.String(50), nullable=False, default='')
     """updated by user."""
 
-    updated_date = db.Column(db.DateTime, nullable=True, default='')
+    updated_date = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
     """updated date."""
 
     def __init__(self, id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date):
