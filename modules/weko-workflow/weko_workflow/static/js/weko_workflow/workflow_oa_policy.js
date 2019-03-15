@@ -127,6 +127,8 @@ require([
               if (journal.issn) {
                 actionJournal['issn'] = journal.issn;
                 actionJournal['href'] = 'http://www.sherpa.ac.uk/romeo/search.php?issn=' + journal.issn;
+              }else {
+                actionJournal['issn'] = '';
               }
               actionJournal['romeo_msg'] = romeo_msg;
               actionJournal['paid_msg'] = paid_msg;
