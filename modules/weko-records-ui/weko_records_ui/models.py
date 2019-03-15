@@ -177,6 +177,7 @@ class Indentifier(db.Model):
     updated_date = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
     """updated date."""
 
+    """
     def __init__(self, id, repository, jalc_doi, jalc_crossref_doi, jalc_datacite_doi, cnri, suffix, created_userId, created_date, updated_userId, updated_date):
         self.id = id
         self.repository = repository
@@ -189,5 +190,6 @@ class Indentifier(db.Model):
         self.created_date = created_date
         self.updated_userId = updated_userId
         self.updated_date = updated_date
+    """
 
 __all__ = ('Indentifier', 'PDFCoverPageSettings')
