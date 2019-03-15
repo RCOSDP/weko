@@ -193,11 +193,24 @@
                 {% include 'weko_workflow/record_detail.html' %}
               {% endif %}
               {%- if 'identifier_grant' == cur_step %}
-              <div class="form-group">
-                <label class="sr-only" for="input-comment">{{_('Identifier Grant')}}</label>
+              <div class="form-group text-center">
+                <p>
+                  <label><input type="radio" name="identifier_grant" value="0" ng-value="0" ng-model="identifier_grant"> {{_('Not Grant')}}</label>
+                </p>
+                <p>
+                  <label><input type="radio" name="identifier_grant" value="1" ng-value="1" ng-model="identifier_grant"> {{_('JaLC DOI')}}</label>
+                </p>
+                <p>
+                  <label><input type="radio" name="identifier_grant" value="2" ng-value="2" ng-model="identifier_grant"> {{_('JaLC CrossRef DOI')}}</label>
+                </p>
+                <p>
+                  <label><input type="radio" name="identifier_grant" value="3" ng-value="3" ng-model="identifier_grant"> {{_('JaLC DataCite DOI')}}</label>
+                </p>
+                <p>
+                  <label><input type="radio" name="identifier_grant" value="4" ng-value="4" ng-model="identifier_grant"> {{_('CNRI')}}</label>
+                </p>
               </div>
-              {% endif %}
-              {%- if 'item_link' != cur_step %}
+              {%- elif 'item_link' != cur_step %}
               <div class="form-group">
                 <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
                 <div class="input-group">
