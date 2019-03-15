@@ -24,6 +24,7 @@ import sys
 
 from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
+from flask_admin.form import rules
 from flask_admin.contrib.sqla import ModelView
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
@@ -32,6 +33,9 @@ from .models import Indentifier
 from invenio_db import db
 from .models import PDFCoverPageSettings
 from .models import InstitutionName
+from weko_index_tree.api import Indexes
+from invenio_communities.models import Community
+
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -129,17 +133,30 @@ class IndentifierSettingView(ModelView):
     can_edit = True
     can_delete = False
     can_view_details = False
+    create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE
+
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-    column_details_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-    column_labels = dict(
-        repository=_('Repository'),
-        jalc_doi=_('JaLC DOI'),
-        jalc_crossref_doi=_('JaLC CrossRef DOI'),
-        jalc_datacite_doi=_('JaLC DataCite DOI'),
-        cnri=_('CNRI'),
-        suffix=_('Suffix')
-    )
-    form_columns = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+
+    form_create_rules = [rules.Header('Prefix'), 
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'cnri',
+        rules.Header('Suffix'), 
+        'suffix'
+    ]
+
+    form_choices = {
+        'repository': [
+            ('0', 'Root Index')
+        ]
+    }
+
+    column_labels = dict(repository='Repository', jalc_doi='JaLC DOI',
+        jalc_crossref_doi='JaLC CrossRef DOI', 
+        jalc_datacite_doi='jaLC DataCite DOI', cnri='CNRI',
+        suffix='Semi-automatic Suffix')
+
+    form_edit_rules = form_create_rules
+
     page_size = 25
 
 
@@ -147,7 +164,6 @@ class IndentifierSettingView(ModelView):
         """Customize edit form."""
         form = super(IndentifierSettingView, self).edit_form(obj)
         return form
-
 
     def after_model_change(self,form,Identify,true):
         """Set Create button Hidden"""
@@ -201,8 +217,6 @@ indentifier_adminview = {
 """
 
 __all__ = (
-    #'indentifier_adminview',
-    #'IndentifierSettingView',
     'pdfcoverpage_adminview',
     'PdfCoverPageSettingView',
     'item_adminview',
