@@ -25,6 +25,7 @@ from datetime import datetime
 
 from flask import current_app, json
 from flask_babelex import lazy_gettext as _
+from flask_login import current_user
 from invenio_db import db
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import JSONType
@@ -165,16 +166,16 @@ class Indentifier(db.Model):
     )
     """suffix of the Identifier."""
 
-    created_userId = db.Column(db.String(50), nullable=False, default='')
+    created_userId = db.Column(db.String(50), nullable=False, default=current_user.get_id())
     """created by user."""
 
     created_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     """created date."""
 
-    updated_userId = db.Column(db.String(50), nullable=False, default='')
+    updated_userId = db.Column(db.String(50), nullable=False, default=current_user.get_id())
     """updated by user."""
 
-    updated_date = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
+    updated_date = db.Column(db.DateTime, nullable=True, default='')
     """updated date."""
 
 __all__ = ('Indentifier', 'PDFCoverPageSettings')
