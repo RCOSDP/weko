@@ -193,7 +193,7 @@
                 {% include 'weko_workflow/record_detail.html' %}
               {% endif %}
               {%- if 'identifier_grant' == cur_step %}
-              <div class="form-group text-center">
+              <div class="form-group">
                 <p>
                   <label><input type="radio" name="identifier_grant" value="0" ng-value="0" ng-model="identifier_grant"> {{_('Not Grant')}}</label>
                 </p>
@@ -229,7 +229,7 @@
                 <button type="button" class="btn btn-default" id="btn-return">{{_('Return')}}</button>
                 <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
               {%- endif %}
-              {%- if 'double_check' == cur_step %}
+              {%- if cur_step in ['double_check', 'identifier_grant'] %}
                 <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
                 <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
               {%- endif %}
