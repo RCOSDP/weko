@@ -185,7 +185,8 @@ class IdentifierSettingView(ModelView):
 
 def get_all_community():
     """Get a community."""
-    return Community.query.all().order_by(db.asc(Community.title))
+    return Community.query.all()
+    return Community.query.all()
 
 
 identifier_adminview = dict(
