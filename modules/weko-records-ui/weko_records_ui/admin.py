@@ -39,6 +39,7 @@ from invenio_communities.models import Community
 from flask_admin.babel import gettext, ngettext, lazy_gettext
 
 
+
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
 
@@ -134,7 +135,6 @@ class IdentifierSettingView(ModelView):
         'suffix'
     ]
 
-
     form_choices = {
         'repository': [
             ('0', 'Root Index')
@@ -159,12 +159,9 @@ class IdentifierSettingView(ModelView):
         """
         try:
             model = self.model()
-            print('_________________CREATE identifier model______________', model)
-            print('_________________parameter form______________', form)
-
             model.created_userId = current_user.get_id()
             model.updated_userId = current_user.get_id()
-            print('_________________CREATE identifier identifier______________', model.created_userId, model.created_userId)
+            print('_________________Get all COMMUNITY______________', get_all_community())
             form.populate_obj(model)
             self.session.add(model)
             self._on_model_change(form, model, True)
@@ -184,6 +181,11 @@ class IdentifierSettingView(ModelView):
         """Customize edit form."""
         form = super(IdentifierSettingView, self).edit_form(obj)
         return form
+
+
+def get_all_community():
+    """Get a community."""
+    return Community.query.all().order_by(db.asc(Community.title))
 
 
 identifier_adminview = dict(
