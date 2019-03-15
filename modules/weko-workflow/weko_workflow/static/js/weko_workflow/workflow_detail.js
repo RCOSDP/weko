@@ -37,9 +37,6 @@ require([
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 0
     };
-    if($('#action-journal')){
-      post_data.commond = '';
-    }
 
     $.ajax({
       url: post_uri,
