@@ -284,16 +284,17 @@ def next_action(activity_id='0', action_id=0):
     )
     work_activity = WorkActivity()
     if 1 == post_json.get('temporary_save'):
-        work_activity.upt_activity_action_comment(
-            activity_id=activity_id,
-            action_id=action_id,
-            comment=post_json.get('commond')
-        )
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
                 action_id=action_id,
                 journal=post_json.get('journal')
+            )
+        else:
+            work_activity.upt_activity_action_comment(
+                activity_id=activity_id,
+                action_id=action_id,
+                comment=post_json.get('commond')
             )
         return jsonify(code=0, msg=_('success'))
     history = WorkActivityHistory()
