@@ -182,7 +182,15 @@ def init_workflow_tables(tables):
             action_makedate=datetime.date(2018, 5, 22),
             action_lastdate=datetime.date(2018, 5, 22)
         ))
-        #
+        # Identifier Grant
+        db_action.append(dict(
+            action_name='Identifier Grant',
+            action_desc='Action to select DOI issuing institution and CNRI.',
+            action_version='1.0.0',
+            action_endpoint='identifier_grant',
+            action_makedate=datetime.date(2019, 3, 15),
+            action_lastdate=datetime.date(2019, 3, 15)
+        ))
         return db_action
 
     def init_flow():
