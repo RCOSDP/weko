@@ -26,6 +26,7 @@ from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
 from flask_admin.form import rules
 from flask_admin.contrib.sqla import ModelView
+from flask_login import current_user
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
 from . import config
@@ -160,9 +161,13 @@ class IdentifierSettingView(ModelView):
             model = self.model()
             print('_________________CREATE identifier model______________', model)
             print('_________________parameter form______________', form)
-            form.populate_obj(model)
-            self.session.add(model)
-            self._on_model_change(form, model, True)
+            identifier = Identifier (model)
+            identifier.created_userId = current_user.get_id()
+            identifier.updated_userId = current_user.get_id()
+            print('_________________CREATE identifier identifier______________', identifier)
+            form.populate_obj(identifier)
+            self.session.add(identifier)
+            self._on_model_change(form, identifier, True)
             self.session.commit()
         except Exception as ex:
             if not self.handle_view_exception(ex):
@@ -171,7 +176,7 @@ class IdentifierSettingView(ModelView):
             self.session.rollback()
             return False
         else:
-            self.after_model_change(form, model, True)
+            self.after_model_change(form, identifier, True)
 
         return model
 
