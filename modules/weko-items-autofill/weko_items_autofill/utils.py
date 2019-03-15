@@ -21,7 +21,6 @@
 """Module of weko-items-autofill utils.."""
 from functools import wraps
 from invenio_cache import current_cache
-from invenio_i18n.ext import current_i18n
 
 from weko_records.api import Mapping
 
@@ -70,68 +69,95 @@ def parse_crossref_json_response(response, response_data_template):
     """
     response_data_convert = copy.deepcopy(response_data_template)
     if (response['response'] == ''):
-       return None
+        return None
     created = response['response'].get("created")
     issued = response['response'].get('issued')
     author = response['response'].get('author')
     page = response['response'].get('page')
-    page = page.split('-')
+    split_page = []
+    if page:
+        split_page = page.split('-')
 
-    response_data_convert['creator']['affiliation']['affiliationName']['@value'] = created.get('affiliationName')
-    response_data_convert['creator']['affiliation']['affiliationName']['@attributes']['xml:lang'] = \
+    response_data_convert['creator']['affiliation']['affiliationName'][
+        '@value'] = created.get('affiliationName')
+    response_data_convert['creator']['affiliation']['affiliationName'][
+        '@attributes']['xml:lang'] = \
         config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
-    response_data_convert['creator']['affiliation']['nameIdentifier']['@value'] = created.get('nameIdentifier')
-    response_data_convert['creator']['affiliation']['nameIdentifier']['@attributes']['nameIdentifierScheme'] = \
+    response_data_convert['creator']['affiliation']['nameIdentifier'][
+        '@value'] = created.get('nameIdentifier')
+    response_data_convert['creator']['affiliation']['nameIdentifier'][
+        '@attributes']['nameIdentifierScheme'] = \
         created.get('nameIdentifierScheme')
-    response_data_convert['creator']['affiliation']['nameIdentifier']['@attributes']['nameIdentifierURI'] = \
+    response_data_convert['creator']['affiliation']['nameIdentifier'][
+        '@attributes']['nameIdentifierURI'] = \
         created.get('nameIdentifierURI')
-    response_data_convert['creator']['creatorAlternative']['@value'] = created.get('creatorAlternative')
-    response_data_convert['creator']['creatorAlternative']['@attributes']['xml:lang'] = \
+    response_data_convert['creator']['creatorAlternative'][
+        '@value'] = created.get('creatorAlternative')
+    response_data_convert['creator']['creatorAlternative']['@attributes'][
+        'xml:lang'] = \
         config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
 
-    response_data_convert['creator']['creatorName']['@value'] = author[0].get('given') + " " + author[0].get('family')
+    response_data_convert['creator']['creatorName']['@value'] = author[0].get(
+        'given') + " " + author[0].get('family')
 
     response_data_convert['creator']['creatorName']['@attributes']['xml:lang'] = \
         config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
-    response_data_convert['creator']['familyName']['@value'] = author[0].get('family')
+    response_data_convert['creator']['familyName']['@value'] = author[0].get(
+        'family')
     response_data_convert['creator']['familyName']['@attributes']['xml:lang'] = \
         config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
-    response_data_convert['creator']['givenName']['@value'] = author[0].get('given')
+    response_data_convert['creator']['givenName']['@value'] = author[0].get(
+        'given')
     response_data_convert['creator']['givenName']['@attributes']['xml:lang'] = \
         config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
-    response_data_convert['creator']['nameIdentifier']['@value'] = created.get('nameIdentifier')
-    response_data_convert['creator']['nameIdentifier']['@attributes']['nameIdentifierScheme'] = \
+    response_data_convert['creator']['nameIdentifier']['@value'] = created.get(
+        'nameIdentifier')
+    response_data_convert['creator']['nameIdentifier']['@attributes'][
+        'nameIdentifierScheme'] = \
         created.get('nameIdentifierScheme')
-    response_data_convert['creator']['nameIdentifier']['@attributes']['nameIdentifierURI'] = \
+    response_data_convert['creator']['nameIdentifier']['@attributes'][
+        'nameIdentifierURI'] = \
         created.get('nameIdentifierURI')
 
     response_data_convert['date']['@value'] = issued.get('date-parts')
 
-    response_data_convert['date']['@attributes']['dateType'] = created.get('date')
+    response_data_convert['date']['@attributes']['dateType'] = created.get(
+        'date')
 
     response_data_convert['language']['@value'] = 'eng'
 
-    response_data_convert['numPages']['@value'] = str(int(page[1]) - int(page[0]))
+    if len(split_page) == 2:
+        response_data_convert['numPages']['@value'] = str(
+            int(split_page[1]) - int(split_page[0]))
+        response_data_convert['pageEnd']['@value'] = split_page[1]
+        response_data_convert['pageStart']['@value'] = split_page[0]
+    else:
+        response_data_convert['numPages']['@value'] = ''
+        response_data_convert['pageEnd']['@value'] = ''
+        response_data_convert['pageStart']['@value'] = ''
 
-    response_data_convert['pageEnd']['@value'] = page[1]
-
-    response_data_convert['pageStart']['@value'] = page[0]
     response_data_convert['publisher']['@value'] = created.get('publisher')
-    response_data_convert['publisher']['@attributes']['xml:lang'] = config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
+    response_data_convert['publisher']['@attributes'][
+        'xml:lang'] = config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
 
-    response_data_convert['relation']['@attributes']['relationType'] = created.get('relationType')
-    response_data_convert['relation']['relatedIdentifier']['@value'] = created.get('ISBN')
-    ISBNitem = created.get('ISBN')
-    if ISBNitem is not None:
-        response_data_convert['relation']['relatedTitle']['@value'] = ISBNitem[0]
+    response_data_convert['relation']['@attributes'][
+        'relationType'] = created.get('relationType')
+    response_data_convert['relation']['relatedIdentifier'][
+        '@value'] = created.get('ISBN')
+    isbn_item = created.get('ISBN')
+    if isbn_item is not None:
+        response_data_convert['relation']['relatedTitle']['@value'] = isbn_item[
+            0]
     else:
         response_data_convert['relation']['relatedTitle']['@value'] = None
 
-    response_data_convert['relation']['relatedTitle']['@attributes']['xml:lang'] = \
+    response_data_convert['relation']['relatedTitle']['@attributes'][
+        'xml:lang'] = \
         config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
 
     response_data_convert['title']['@value'] = created.get('title')
-    response_data_convert['title']['@attributes']['xml:lang'] = config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
+    response_data_convert['title']['@attributes'][
+        'xml:lang'] = config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE
 
     return response_data_convert
 
