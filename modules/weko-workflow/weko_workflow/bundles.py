@@ -47,6 +47,12 @@ js_iframe = Bundle(
     output="gen/workflow_iframe_pop.js"
 )
 
+js_identifier_grant = Bundle(
+    'js/weko_workflow/workflow_identifier_grant.js',
+    filters='requirejs',
+    output="gen/workflow_identifier_grant.%(version)s.js"
+)
+
 css_workflow = Bundle(
     'css/weko_workflow/style.css',
     output="gen/workflow_workflow.css"

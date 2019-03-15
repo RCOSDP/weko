@@ -103,6 +103,8 @@ setup(
             'weko_workflow.bundles:js_activity_list',
             'workflow_iframe_js = weko_workflow.bundles:js_iframe',
             'workflow_css = weko_workflow.bundles:css_workflow',
+            'workflow_identifier_grant_js = '
+            'weko_workflow.bundles:js_identifier_grant',
         ],
         'invenio_i18n.translations': [
             'messages = weko_workflow',
