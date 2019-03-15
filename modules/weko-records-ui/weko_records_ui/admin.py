@@ -161,13 +161,13 @@ class IdentifierSettingView(ModelView):
             model = self.model()
             print('_________________CREATE identifier model______________', model)
             print('_________________parameter form______________', form)
-            identifier = Identifier (model)
-            identifier.created_userId = current_user.get_id()
-            identifier.updated_userId = current_user.get_id()
-            print('_________________CREATE identifier identifier______________', identifier)
-            form.populate_obj(identifier)
-            self.session.add(identifier)
-            self._on_model_change(form, identifier, True)
+
+            model.created_userId = current_user.get_id()
+            model.updated_userId = current_user.get_id()
+            print('_________________CREATE identifier identifier______________', model.created_userId, model.created_userId)
+            form.populate_obj(model)
+            self.session.add(model)
+            self._on_model_change(form, model, True)
             self.session.commit()
         except Exception as ex:
             if not self.handle_view_exception(ex):
@@ -176,7 +176,7 @@ class IdentifierSettingView(ModelView):
             self.session.rollback()
             return False
         else:
-            self.after_model_change(form, identifier, True)
+            self.after_model_change(form, model, True)
 
         return model
 
