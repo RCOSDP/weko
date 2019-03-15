@@ -193,22 +193,20 @@
                 {% include 'weko_workflow/record_detail.html' %}
               {% endif %}
               {%- if 'identifier_grant' == cur_step %}
-              <div class="form-group">
-                <p>
-                  <label><input type="radio" name="identifier_grant" value="0" ng-value="0" ng-model="identifier_grant"> {{_('Not Grant')}}</label>
-                </p>
-                <p>
-                  <label><input type="radio" name="identifier_grant" value="1" ng-value="1" ng-model="identifier_grant"> {{_('JaLC DOI')}}</label>
-                </p>
-                <p>
-                  <label><input type="radio" name="identifier_grant" value="2" ng-value="2" ng-model="identifier_grant"> {{_('JaLC CrossRef DOI')}}</label>
-                </p>
-                <p>
-                  <label><input type="radio" name="identifier_grant" value="3" ng-value="3" ng-model="identifier_grant"> {{_('JaLC DataCite DOI')}}</label>
-                </p>
-                <p>
-                  <label><input type="radio" name="identifier_grant" value="4" ng-value="4" ng-model="identifier_grant"> {{_('CNRI')}}</label>
-                </p>
+              <div class="panel panel-default">
+                <div class="panel-body">
+                  <div class="form-group radio" style="display: inline-grid;">
+                    <label><input type="radio" name="identifier_grant" value="0" checked="checked" ng-value="0" ng-model="identifier_grant"> {{_('Not Grant')}}</label>
+                    <label><input type="radio" name="identifier_grant" value="1" ng-value="1" ng-model="identifier_grant"> {{_('JaLC DOI')}}</label>
+                    <label><input type="radio" name="identifier_grant" value="2" ng-value="2" ng-model="identifier_grant"> {{_('JaLC CrossRef DOI')}}</label>
+                    <label><input type="radio" name="identifier_grant" value="3" ng-value="3" ng-model="identifier_grant"> {{_('JaLC DataCite DOI')}}</label>
+                    <label><input type="radio" name="identifier_grant" value="4" ng-value="4" ng-model="identifier_grant"> {{_('CNRI')}}</label>
+                  </div>
+                </div>
+                <div class="panel-footer">
+                  <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
+                  <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
+                </div>
               </div>
               {%- elif 'item_link' != cur_step %}
               <div class="form-group">
@@ -229,7 +227,7 @@
                 <button type="button" class="btn btn-default" id="btn-return">{{_('Return')}}</button>
                 <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
               {%- endif %}
-              {%- if cur_step in ['double_check', 'identifier_grant'] %}
+              {%- if 'double_check' == cur_step %}
                 <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
                 <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
               {%- endif %}
