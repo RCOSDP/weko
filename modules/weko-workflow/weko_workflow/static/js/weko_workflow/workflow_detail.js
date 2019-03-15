@@ -37,7 +37,10 @@ require([
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 0
     };
-    if($('#hide-actionId').text() === '10'){ post_data.commond = '' }
+    if($('#hide-actionId').text() === '10'){
+      alert($('#action-journal'));
+      post_data.commond = ''
+    }
 
     $.ajax({
       url: post_uri,
