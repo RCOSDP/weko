@@ -35,6 +35,7 @@ from .models import PDFCoverPageSettings
 from .models import InstitutionName
 from weko_index_tree.api import Indexes
 from invenio_communities.models import Community
+from flask_admin.babel import gettext, ngettext, lazy_gettext
 
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
@@ -137,10 +138,10 @@ class IndentifierSettingView(ModelView):
 
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
 
-    form_create_rules = [rules.Header('Prefix'), 
+    form_create_rules = [rules.Header('Prefix'),
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
-        rules.Header('Suffix'), 
+        rules.Header('Suffix'),
         'suffix'
     ]
 
@@ -151,7 +152,7 @@ class IndentifierSettingView(ModelView):
     }
 
     column_labels = dict(repository='Repository', jalc_doi='JaLC DOI',
-        jalc_crossref_doi='JaLC CrossRef DOI', 
+        jalc_crossref_doi='JaLC CrossRef DOI',
         jalc_datacite_doi='jaLC DataCite DOI', cnri='CNRI',
         suffix='Semi-automatic Suffix')
 
@@ -159,6 +160,28 @@ class IndentifierSettingView(ModelView):
 
     page_size = 25
 
+    def create_model(self, form):
+        """
+            Create model from form.
+            :param form:
+                Form instance
+        """
+        try:
+            model = self.model()
+            form.populate_obj(model)
+            self.session.add(model)
+            self._on_model_change(form, model, True)
+            self.session.commit()
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                flash(gettext('Failed to create record. %(error)s', error=str(ex)), 'error')
+                current_app.logger.warning(ex)
+            self.session.rollback()
+            return False
+        else:
+            self.after_model_change(form, model, True)
+
+        return model
 
     def edit_form(self, obj):
         """Customize edit form."""
