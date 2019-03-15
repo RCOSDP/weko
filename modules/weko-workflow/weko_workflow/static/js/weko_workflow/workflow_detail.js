@@ -74,6 +74,7 @@ require([
       if(journalNode.text()) {
         post_data['journal'] = $.parseJSON(journalNode.text());
       }else {
+        alert($("#journal-info").attr("hidden"));
         let keywordsNode = $('#search-key');
         if (keywordsNode){
           if (keywordsNode.val()){
