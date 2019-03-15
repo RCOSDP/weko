@@ -67,6 +67,20 @@ require([
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 1
     };
+
+    // Get Journal
+    let journalNode = $('#action-journal');
+    if(journalNode){
+      if(journalNode.text()) {
+        post_data['journal'] = $.parseJSON(journalNode.text());
+      }else {
+        let keywordsNode = $('#search-key');
+        if (keywordsNode && keywordsNode.val()){
+          post_data['journal'] = {keywords: keywordsNode.val()};
+        }
+      }
+    }
+
     $.ajax({
       url: post_uri,
       method: 'POST',
