@@ -35,6 +35,8 @@
 {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets "workflow_item_link_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- elif 'identifier_grant' == cur_step %}
+{% assets "workflow_identifier_grant_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- else %}
 {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endif %}
@@ -194,9 +196,9 @@
               {% endif %}
               {%- if 'identifier_grant' == cur_step %}
               <div class="panel panel-default">
-                <div class="panel-body">
+                <div class="panel-body" style="line-height: 1.6;">
                   <div class="form-group radio" style="display: inline-grid;">
-                    <label><input type="radio" name="identifier_grant" value="0" checked="checked" ng-value="0" ng-model="identifier_grant"> {{_('Not Grant')}}</label>
+                    <label><input type="radio" name="identifier_grant" value="0" ng-value="0" ng-model="identifier_grant" checked> {{_('Not Grant')}}</label>
                     <label><input type="radio" name="identifier_grant" value="1" ng-value="1" ng-model="identifier_grant"> {{_('JaLC DOI')}}</label>
                     <label><input type="radio" name="identifier_grant" value="2" ng-value="2" ng-model="identifier_grant"> {{_('JaLC CrossRef DOI')}}</label>
                     <label><input type="radio" name="identifier_grant" value="3" ng-value="3" ng-model="identifier_grant"> {{_('JaLC DataCite DOI')}}</label>
