@@ -102,6 +102,7 @@ setup(
             'workflow_activity_list_js = '
             'weko_workflow.bundles:js_activity_list',
             'workflow_iframe_js = weko_workflow.bundles:js_iframe',
+            'workflow_oa_policy_js = weko_workflow.bundles:js_oa_policy',
             'workflow_css = weko_workflow.bundles:css_workflow',
         ],
         'invenio_i18n.translations': [
