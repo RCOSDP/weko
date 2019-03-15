@@ -75,8 +75,12 @@ require([
         post_data['journal'] = $.parseJSON(journalNode.text());
       }else {
         let keywordsNode = $('#search-key');
-        if (keywordsNode && keywordsNode.val()){
-          post_data['journal'] = {keywords: keywordsNode.val()};
+        if (keywordsNode){
+          if (keywordsNode.val()){
+            post_data['journal'] = {keywords: keywordsNode.val()};
+          }else {
+            post_data['journal'] = {keywords: ''};
+          }
         }
       }
     }
