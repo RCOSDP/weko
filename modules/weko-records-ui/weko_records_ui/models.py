@@ -110,7 +110,7 @@ class InstitutionName(db.Model):
         """ Record UI models """
 
 
-class Indentifier(db.Model):
+class Identifier(db.Model):
     """
         Represent an Identifier.
 
@@ -118,7 +118,7 @@ class Indentifier(db.Model):
         properties that are automatically updated.
     """
 
-    __tablename__ = 'pidstore_indentifier'
+    __tablename__ = 'pidstore_Identifier'
 
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
@@ -178,4 +178,4 @@ class Indentifier(db.Model):
     """updated date."""
 
 
-__all__ = ('Indentifier', 'PDFCoverPageSettings')
+__all__ = ('Identifier', 'PDFCoverPageSettings')
