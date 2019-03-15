@@ -171,6 +171,8 @@ class IndentifierSettingView(ModelView):
         """
         try:
             model = self.model()
+            print('_________________CREATE indentifier model______________', model)
+            print('_________________parameter form______________', form)
             form.populate_obj(model)
             self.session.add(model)
             self._on_model_change(form, model, True)
