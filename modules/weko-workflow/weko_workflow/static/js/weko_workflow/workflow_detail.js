@@ -38,7 +38,7 @@ require([
       temporary_save: 0
     };
     if($('#action-journal')){
-      post_data.pop('commond');
+      post_data.commond = '';
     }
 
     $.ajax({
