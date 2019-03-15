@@ -69,7 +69,8 @@ def parse_crossref_json_response(response, response_data_template):
         response_data_template: template of autofill data
     """
     response_data_convert = copy.deepcopy(response_data_template)
-
+    if (response['response'] == ''):
+       return None
     created = response['response'].get("created")
     issued = response['response'].get('issued')
     author = response['response'].get('author')

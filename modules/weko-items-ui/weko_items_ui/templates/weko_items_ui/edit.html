@@ -30,6 +30,7 @@
   <script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script type="text/babel">
     class ModalHeader extends React.Component {
       render(){
@@ -54,10 +55,9 @@
       }
 
       componentDidMount() {
-        fetch("/api/autofill/select_options")
-          .then(res => res.json())
-          .then(
-            (result) => {
+        axios.get('/api/autofill/select_options')
+          .then(res => res.data)
+          .then((result) => {
               let options = result.options.map((option)=>{
                 return(
                   <option key={option.value} value={option.value}>{option.text}</option>
@@ -66,14 +66,15 @@
               this.setState({
                 selectOptions : options
               });
-            },
-            (error) => {
-              this.setState({
+            }
+          )
+          .catch((error) => {
+            this.setState({
                 isLoaded: true,
                 error
               });
-            }
-          )
+            console.log(error);
+          });
       }
 
       handleChange(event) {
