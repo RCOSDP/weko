@@ -37,6 +37,20 @@ require([
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 0
     };
+    // Get Journal
+    if($('#action-journal')){
+      if($('#action-journal').text()) {
+        post_data['journal'] = $.parseJSON($('#action-journal').text());
+      }else {
+        if ($("#journal-info").attr("hidden")){
+          if ($('#search-key').val()){
+            post_data['journal'] = {keywords: $('#search-key').val()};
+          }else {
+            post_data['journal'] = {keywords: ''};
+          }
+        }
+      }
+    }
 
     $.ajax({
       url: post_uri,
