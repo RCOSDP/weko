@@ -17,10 +17,11 @@
     <div id="journal-title" class="col-md-5">
       {% if temporary_journal %}
         {%- if temporary_journal.keywords %}
-          {{ temporary_journal.keywords + ' (ISSN: ' + temporary_journal.issn + ')' }}
+          {{ temporary_journal.keywords }}
         {%- else %}
-          {{ 'Unknown' + ' (ISSN: ' + temporary_journal.issn + ')' }}
+          {{ 'Unknown' }}
         {%- endif %}
+        {{ ' (ISSN: ' }} {{ temporary_journal.issn if temporary_journal.issn else '' }} {{ ')' }}
         {%- if temporary_journal.href %}
           &nbsp;&nbsp;<a href="{{ temporary_journal.href }}" target="_blank">Detail</a>
         {%- endif %}
