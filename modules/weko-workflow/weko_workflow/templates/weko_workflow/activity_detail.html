@@ -192,6 +192,11 @@
               {%- if 'approval' == cur_step %}
                 {% include 'weko_workflow/record_detail.html' %}
               {% endif %}
+              {%- if 'identifier_grant' == cur_step %}
+              <div class="form-group">
+                <label class="sr-only" for="input-comment">{{_('Identifier Grant')}}</label>
+              </div>
+              {% endif %}
               {%- if 'item_link' != cur_step %}
               <div class="form-group">
                 <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
