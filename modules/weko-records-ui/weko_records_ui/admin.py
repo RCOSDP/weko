@@ -34,11 +34,11 @@ from .models import Identifier
 from invenio_db import db
 from .models import PDFCoverPageSettings
 from .models import InstitutionName
-from weko_index_tree.api import Indexes
+
 from invenio_communities.models import Community
-from flask_admin.babel import gettext, ngettext, lazy_gettext
-
-
+from datetime import datetime
+from wtforms import SelectField, StringField
+from wtforms import validators
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -104,7 +104,6 @@ class PdfCoverPageSettingView(BaseView):
             )
 
 
-
 class InstitutionNameSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
@@ -114,6 +113,34 @@ class InstitutionNameSettingView(BaseView):
         institution_name = InstitutionName.get_institution_name()
         return self.render(config.INSTITUTION_NAME_SETTING_TEMPLATE,
                            institution_name = institution_name)
+
+
+institution_adminview = {
+    'view_class': InstitutionNameSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Others'),
+        'endpoint': 'others'
+    }
+}
+
+item_adminview = {
+    'view_class': ItemSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Items'),
+        'endpoint': 'itemsetting'
+    }
+}
+
+pdfcoverpage_adminview = {
+    'view_class': PdfCoverPageSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('PDF Cover Page'),
+        'endpoint': 'pdfcoverpage'
+    }
+}
 
 
 class IdentifierSettingView(ModelView):
@@ -151,42 +178,21 @@ class IdentifierSettingView(ModelView):
 
     page_size = 25
 
-    def create_model(self, form):
-        """
-            Create model from form.
-            :param form:
-                Form instance
-        """
-        try:
-            model = self.model()
-            model.created_userId = current_user.get_id()
-            model.updated_userId = current_user.get_id()
-            print('_________________Get all COMMUNITY______________', get_all_community())
-            form.populate_obj(model)
-            self.session.add(model)
-            self._on_model_change(form, model, True)
-            self.session.commit()
-        except Exception as ex:
-            if not self.handle_view_exception(ex):
-                flash(gettext('Failed to create record. %(error)s', error=str(ex)), 'error')
-                current_app.logger.warning(ex)
-            self.session.rollback()
-            return False
-        else:
-            self.after_model_change(form, model, True)
-
-        return model
-
     def edit_form(self, obj):
-        """Customize edit form."""
+        """
+
+            Customize edit form
+        """
         form = super(IdentifierSettingView, self).edit_form(obj)
         return form
 
+    @classmethod
+    def get_all_community(self):
+        """
 
-def get_all_community():
-    """Get a community."""
-    return Community.query.all()
-    return Community.query.all()
+            Get communities
+        """
+        return Community.query.all()
 
 
 identifier_adminview = dict(
@@ -195,34 +201,6 @@ identifier_adminview = dict(
     category=_('Setting'),
     name=_('Identifier'),
 )
-
-
-institution_adminview = {
-    'view_class': InstitutionNameSettingView,
-    'kwargs': {
-        'category': _('Setting'),
-        'name': _('Others'),
-        'endpoint': 'others'
-    }
-}
-
-item_adminview = {
-    'view_class': ItemSettingView,
-    'kwargs': {
-        'category': _('Setting'),
-        'name': _('Items'),
-        'endpoint': 'itemsetting'
-    }
-}
-
-pdfcoverpage_adminview = {
-    'view_class': PdfCoverPageSettingView,
-    'kwargs': {
-        'category': _('Setting'),
-        'name': _('PDF Cover Page'),
-        'endpoint': 'pdfcoverpage'
-    }
-}
 
 
 __all__ = (
