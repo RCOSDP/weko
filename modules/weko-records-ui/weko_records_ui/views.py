@@ -42,6 +42,8 @@ from datetime import datetime
 from flask_login import current_user
 from invenio_db import db
 from sqlalchemy.exc import IntegrityError
+
+
 blueprint = Blueprint(
     'weko_records_ui',
     __name__,

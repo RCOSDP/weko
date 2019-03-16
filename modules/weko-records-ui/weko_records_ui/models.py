@@ -125,57 +125,64 @@ class Identifier(db.Model):
 
     repository = db.Column(
         db.String(50),
-        nullable=False,
-        default=''
+        nullable=False
     )
     """repository of the Identifier."""
 
     jalc_doi = db.Column(
         db.String(100),
-        nullable=True,
-        default=''
+        nullable=True
     )
     """jalc_doi of the Identifier."""
 
     jalc_crossref_doi = db.Column(
         db.String(100),
-        nullable=True,
-        default=''
+        nullable=True
     )
     """jalc_crossref_doi of the Identifier."""
 
     jalc_datacite_doi = db.Column(
         db.String(100),
-        nullable=True,
-        default=''
+        nullable=True
     )
     """jalc_datacite_doi of the Identifier."""
 
     cnri = db.Column(
         db.String(100),
-        nullable=True,
-        default=''
+        nullable=True
     )
     """cnri of the Identifier."""
 
     suffix = db.Column(
         db.String(100),
-        nullable=True,
-        default=''
+        nullable=True
     )
     """suffix of the Identifier."""
 
-    created_userId = db.Column(db.String(50), nullable=False)
+    created_userId = db.Column(
+        db.String(50), 
+        nullable=False, 
+    )
     """created by user."""
 
-    created_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_date = db.Column(
+        db.DateTime, 
+        nullable=False,
+        default=datetime.utcnow
+    )
     """created date."""
 
-    updated_userId = db.Column(db.String(50), nullable=False)
+    updated_userId = db.Column(
+        db.String(50), 
+        nullable=False, 
+    )
     """updated by user."""
 
-    updated_date = db.Column(db.DateTime, nullable=True, default=datetime.utcnow)
-    """updated date."""
+    updated_date = db.Column(
+        db.DateTime, 
+        nullable=True, 
+        default=datetime.utcnow
+    )
 
 
 __all__ = ('Identifier', 'PDFCoverPageSettings')
