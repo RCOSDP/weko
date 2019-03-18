@@ -20,18 +20,6 @@
 #}
 
 
-<style>
-  .dropdown {
-    vertical-align: baseline;
-  }
-
-  #toggle-stats {
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
-</style>
-
-
 {%- set record_url = url_for('invenio_records_ui.recid', pid_value=pid.pid_value) %}
 <div class="panel-group">
   <div class="panel panel-default" ng-app="myApp" ng-controller="ItemController">
