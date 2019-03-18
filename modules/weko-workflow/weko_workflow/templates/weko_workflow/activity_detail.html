@@ -201,11 +201,9 @@
                 </div>
                 <div class="panel-body" style="line-height: 1.6;">
                   <div class="form-group radio" style="display: inline-grid;">
-                    <label><input type="radio" name="identifier_grant" value="0" ng-value="0" ng-model="identifier_grant" checked> {{_('Not Grant')}}</label>
-                    <label><input type="radio" name="identifier_grant" value="1" ng-value="1" ng-model="identifier_grant"> {{_('JaLC DOI')}}</label>
-                    <label><input type="radio" name="identifier_grant" value="2" ng-value="2" ng-model="identifier_grant"> {{_('JaLC CrossRef DOI')}}</label>
-                    <label><input type="radio" name="identifier_grant" value="3" ng-value="3" ng-model="identifier_grant"> {{_('JaLC DataCite DOI')}}</label>
-                    <label><input type="radio" name="identifier_grant" value="4" ng-value="4" ng-model="identifier_grant"> {{_('CNRI')}}</label>
+                    {%- for key, val in id_grant_options %}
+                      <label><input type="radio" name="identifier_grant" value="{{ val }}" {%- if key == temporary_id_grant %}checked{%- endif %}> {{ key }}</label>
+                    {%- endfor %}
                   </div>
                   <span>{{temporary_id_grant if temporary_id_grant else ''}}</span>
                 </div>
