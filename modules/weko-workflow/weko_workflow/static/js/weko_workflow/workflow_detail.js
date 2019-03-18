@@ -31,16 +31,17 @@ require([
       });
   });
   $('#btn-finish').on('click', function(){
+    let comment = ''
+    if($('#input-comment') && $('#input-comment').val()){
+      comment = $('#input-comment').val();
+    }
+
     let post_uri = $('.cur_step').data('next-uri');
     let post_data = {
-      commond: $('#input-comment').val(),
+      commond: comment,
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 0
     };
-    if($('#action-journal')){
-      alert($('#action-journal'));
-      post_data.commond = ''
-    }
 
     $.ajax({
       url: post_uri,
@@ -66,9 +67,14 @@ require([
     });
   });
   $('#btn-draft').on('click', function(){
+    let comment = ''
+    if($('#input-comment') && $('#input-comment').val()){
+      comment = $('#input-comment').val();
+    }
+
     let post_uri = $('.cur_step').data('next-uri');
     let post_data = {
-      commond: $('#input-comment').val(),
+      commond: comment,
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 1
     };
