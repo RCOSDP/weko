@@ -125,7 +125,7 @@ class Identifier(db.Model):
     """Identifier of the index."""
 
     id_repo = db.Column(
-        db.Integer,
+        db.String(100),
         db.ForeignKey(Community.id),
         nullable=False
     )
