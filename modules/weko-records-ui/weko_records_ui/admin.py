@@ -39,6 +39,7 @@ from invenio_communities.models import Community
 from datetime import datetime
 from wtforms import SelectField, StringField
 from wtforms import validators
+from weko_user_profiles.models import UserProfile
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -197,12 +198,13 @@ class IdentifierSettingView(ModelView):
         """
 
         ### Update hidden data automation
-        model.created_userId = current_user.get_id()
-        model.updated_userId = current_user.get_id()
-
-        current_app.logger.debug(get_all_community())
-
+        if is_created:
+            model.created_userId = UserProfile.get_by_userid(current_user.get_id()).username
+            model.created_date = datetime.utcnow().replace(microsecond=0)
+        model.updated_userId = UserProfile.get_by_userid(current_user.get_id()).username
+        model.updated_date = datetime.utcnow().replace(microsecond=0)
         pass
+
 
     def edit_form(self, obj):
         """
