@@ -131,7 +131,7 @@ class Identifier(db.Model):
     )
     """... of the community."""
 
-    repository = db.relationship(Community, backref='communities', foreign_keys=[id_repo], nullable=False)
+    repository = db.relationship(Community, backref='communities', foreign_keys=[id_repo])
     """repository of the Identifier."""
 
     jalc_flag = db.Column(db.Boolean, nullable=True)
