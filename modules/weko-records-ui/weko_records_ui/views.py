@@ -38,6 +38,8 @@ from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
 import werkzeug
 
+from invenio_stats import current_stats
+
 blueprint = Blueprint(
     'weko_records_ui',
     __name__,
@@ -232,6 +234,19 @@ def get_license_icon(type):
 
     return lst
 
+@blueprint.app_template_filter('get_downloads_count')
+def get_downloads_count(record):
+    result = {}
+    try:
+        cfg = {'params': {'bucket_id': record['_buckets']['deposit'] }}
+        query_cfg = current_stats.queries['bucket-file-download-total']
+        query = query_cfg.query_class(**query_cfg.query_config)
+        reseponse = query.run(**cfg['params'])
+        for c in reseponse['buckets']:
+            result[c['key']] = int(c['value'])
+    except Exception as e:
+        current_app.logger.debug(str(e))
+    return result
 
 @blueprint.app_template_filter('check_permission')
 def check_permission(record):
