@@ -75,22 +75,23 @@ def try_assign_data(data, value, key_first, list_key=None):
             Dictionary with validated values
     """
     data_temp = list()
-    data_temp.append(data[key_first])
+    data_temp.append(data.get(key_first))
     idx = 0
     if list_key is None:
         data_temp[0] = value
     else:
         for key in list_key:
-            if key in data_temp[idx]:
-                if data_temp[idx].get(key):
-                    data_temp.append(data_temp[idx].get(key))
-                    idx += 1
+            if data_temp[idx]:
+                if key in data_temp[idx]:
+                    if data_temp[idx].get(key):
+                        data_temp.append(data_temp[idx].get(key))
+                        idx += 1
+                    else:
+                        temp = data_temp[idx]
+                        temp[key] = value
+                        return
                 else:
-                    temp = data_temp[idx]
-                    temp[key] = value
-                    return
-            else:
-                return    
+                    return    
 
 
 def reset_dict_final_value(data):
@@ -119,6 +120,7 @@ def parse_crossref_json_response(response, response_data_template):
     reset_dict_final_value(response_data_convert)
     if response['response'] == '':
         return None
+
     created = response['response'].get("created")
     issued = response['response'].get('issued')
     author = response['response'].get('author')
