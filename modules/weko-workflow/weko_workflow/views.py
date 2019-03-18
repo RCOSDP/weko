@@ -273,21 +273,14 @@ def next_action(activity_id='0', action_id=0):
         action_status=ActionStatusPolicy.ACTION_DONE,
         commond=post_json.get('commond')
     )
-    identifier_grant = post_json.get('identifier_grant')
     work_activity = WorkActivity()
     if 1 == post_json.get('temporary_save'):
-        temporary_activity = dict(
+        work_activity.upt_activity_action_comment(
             activity_id=activity_id,
             action_id=action_id,
             comment=post_json.get('commond')
         )
-        if identifier_grant is not None:
-            temporary_activity['identifier_grant'] = identifier_grant
-        work_activity.upt_activity_action_comment(temporary_activity)
         return jsonify(code=0, msg=_('success'))
-
-    if identifier_grant is not None:
-        activity['identifier_grant'] = identifier_grant
     history = WorkActivityHistory()
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
