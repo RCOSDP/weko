@@ -30,6 +30,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import JSONType
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import mysql, postgresql
+from invenio_communities.models import Community
 
 """ PDF cover page model"""
 class PDFCoverPageSettings(db.Model):
@@ -123,10 +124,7 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    repository = db.Column(
-        db.String(50),
-        nullable=False
-    )
+    repository = db.relationship(Community, backref='communities', foreign_keys=[id])
     """repository of the Identifier."""
 
     jalc_doi = db.Column(
@@ -160,28 +158,26 @@ class Identifier(db.Model):
     """suffix of the Identifier."""
 
     created_userId = db.Column(
-        db.String(50), 
-        nullable=False, 
+        db.String(50),
+        nullable=False
     )
     """created by user."""
 
     created_date = db.Column(
-        db.DateTime, 
-        nullable=False,
-        default=datetime.utcnow
+        db.DateTime,
+        nullable=False
     )
     """created date."""
 
     updated_userId = db.Column(
-        db.String(50), 
-        nullable=False, 
+        db.String(50),
+        nullable=False
     )
     """updated by user."""
 
     updated_date = db.Column(
-        db.DateTime, 
-        nullable=True, 
-        default=datetime.utcnow
+        db.DateTime,
+        nullable=True
     )
 
 
