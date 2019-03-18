@@ -174,17 +174,6 @@
                   <input type="hidden" value="{{filename}}" id="txt_filename"/>
                   <input type="hidden" value="{{_('Published')}}" id="txt_published"/>
                   <input type="hidden" value="{{_('Private')}}" id="txt_private"/>
-                  {%- set username = '' -%}
-                  {%- set displayname = '' -%}
-                  {%- set email = '' -%}
-                  {%- if record._deposit and record._deposit.owners_ext -%}
-                    {%- set username = record._deposit.owners_ext.username -%}
-                    {%- set displayname = record._deposit.owners_ext.displayname -%}
-                    {%- set email = record._deposit.owners_ext.email -%}
-                  {%- endif -%}
-                  <input type="hidden" value="{{username}}" id="txt_username"/>
-                  <input type="hidden" value="{{displayname}}" id="txt_displayname"/>
-                  <input type="hidden" value="{{email}}" id="txt_email"/>
                   <input type="hidden" value="{{is_logged_in}}" id="txt_is_logged_in"/>
                   <table class="table table-striped table-bordered file_version_table" ng-init="showChangeLog('{{deposit}}')">
                     <thead>

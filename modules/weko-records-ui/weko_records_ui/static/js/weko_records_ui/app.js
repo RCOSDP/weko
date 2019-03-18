@@ -51,9 +51,6 @@ angular.module('myApp', ['ui.bootstrap'])
         let txt_filename = $('#txt_filename').val()
         let txt_published = $('#txt_published').val()
         let txt_private = $('#txt_private').val()
-        let txt_username = $('#txt_username').val()
-        let txt_displayname = $('#txt_displayname').val()
-        let txt_email = $('#txt_email').val()
         let is_logged_in = $('#txt_is_logged_in').val()
         for (let index = 0; index < contents.length; index++) {
             const ele = contents[index];
@@ -103,9 +100,10 @@ angular.module('myApp', ['ui.bootstrap'])
               checksum = ele.checksum.substr(0, checksumIndex) + " <span class=\"wrap\">" + ele.checksum.substr(checksumIndex + 1) + "</span>"
             }
 
-            var username = txt_username == '' ? txt_email : txt_username
-            if (!is_logged_in) {
-              username = ""
+            var username = ''
+            if (is_logged_in && ele.uploaded_owners && ele.uploaded_owners.created_user) {
+              username =  ele.uploaded_owners.created_user.username == '' ?
+                  ele.uploaded_owners.created_user.email : ele.uploaded_owners.created_user.username
             }
 
             results += `
