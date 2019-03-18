@@ -25,12 +25,10 @@
     vertical-align: baseline;
   }
 
-  #toggle-stats{
+  #toggle-stats {
     margin-top: 10px;
     margin-bottom: 10px;
   }
-
-
 </style>
 
 
@@ -224,11 +222,9 @@
                       </tbody>
                     </table>
                   </div>
-
                   <div class="tab-pane" id="stats">
                     <div class="row">
                       <div class="col-sm-2">
-
                         <!-- period dropdown -->
                         <div class="dropdown">
                           <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton"
@@ -267,26 +263,31 @@
 
                       <div class="col-sm-2"></div>
                       <div class="col-sm-2 col-sm-offset-4">
-                        <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false" aria-controls="collapse-stats">
+                        <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false"
+                           aria-controls="collapse-stats">
                           {{_('See details')}}
                         </a>
                       </div>
                     </div>
                     <div class="collapse" id="collapse-stats">
-    <table class="table stats-table">
-        <!-- Skip table header if no versions --><tbody><tr>
-          <th></th>
-          <th>Views</th>
-        </tr><tr>
-          <td>***.hoge </td><td>xxx</td>
-        </tr>
-        <tr>
-          <td>***.huga </td><td>yyy</td>
-        </tr>
-      </tbody></table>
+                      <table class="table stats-table">
+                        <tbody>
+                        <tr>
+                          <th></th>
+                          <th>Views</th>
+                        </tr>
+                        <tr>
+                          <td>***.hoge</td>
+                          <td>xxx</td>
+                        </tr>
+                        <tr>
+                          <td>***.huga</td>
+                          <td>yyy</td>
+                        </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-
                 </div>
               </div>
               {%- endblock %}
