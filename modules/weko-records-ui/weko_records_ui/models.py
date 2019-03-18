@@ -124,7 +124,12 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    repository = db.relationship(Community, backref='communities', foreign_keys=[id])
+    #repository = db.Column(db.String(50), nullable=False)
+    repository = db.relationship(
+        Community, backref=db.backref(
+            'communities', uselist=False, cascade='all, delete-orphan')
+    )
+
     """repository of the Identifier."""
 
     jalc_doi = db.Column(
