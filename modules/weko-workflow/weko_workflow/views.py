@@ -157,8 +157,10 @@ def display_activity(activity_id=0):
     action_id = cur_action.id
     temporary_comment = activity.get_activity_action_comment(
         activity_id=activity_id, action_id=action_id)
+    temporary_id_grant = None
     if temporary_comment:
         temporary_comment = temporary_comment.action_comment
+        temporary_id_grant = temporary_comment.action_identifier_grant
     cur_step = action_endpoint
     step_item_login_url = None
     approval_record = []
@@ -208,6 +210,7 @@ def display_activity(activity_id=0):
         action_id=action_id,
         cur_step=cur_step,
         temporary_comment=temporary_comment,
+        temporary_id_grant=temporary_id_grant,
         record=approval_record,
         step_item_login_url=step_item_login_url,
         histories=histories,
@@ -273,18 +276,24 @@ def next_action(activity_id='0', action_id=0):
         action_status=ActionStatusPolicy.ACTION_DONE,
         commond=post_json.get('commond')
     )
-    identifier_grant = post_json.get('identifier_grant')
+    id_grant = post_json.get('identifier_grant')
     work_activity = WorkActivity()
     if 1 == post_json.get('temporary_save'):
-        work_activity.upt_activity_action_comment(
-            activity_id=activity_id,
-            action_id=action_id,
-            comment=identifier_grant
-        )
-        #if identifier_grant is not None:
-            #activity['identifier_grant'] = identifier_grant
+        if id_grant is not None:
+            work_activity.upt_activity_action_comment(
+                activity_id=activity_id,
+                action_id=action_id,
+                comment=post_json.get('commond')
+            )
+        else:
+            work_activity.upt_activity_action_id_grant(
+                activity_id=activity_id,
+                action_id=action_id,
+                identifier_grant=id_grant
+            )
         return jsonify(code=0, msg=_('success'))
-    activity['commond'] = identifier_grant
+    if id_grant is not None:
+        activity['id_grant'] = id_grant
     history = WorkActivityHistory()
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint

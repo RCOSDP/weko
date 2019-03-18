@@ -545,6 +545,25 @@ class WorkActivity(object):
             return action_stus
     # add by ryuu end
 
+
+    def upt_activity_action_id_grant(self, activity_id, action_id, identifier_grant):
+        """
+        Update activity info
+        :param activity_id:
+        :param action_id:
+        :param identifier_grant:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity_action = ActivityAction.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id,).one_or_none()
+            if activity_action:
+                activity_action.action_identifier_grant = identifier_grant
+                db.session.merge(activity_action)
+        db.session.commit()
+
+
     def upt_activity_item(self, activity, item_id):
         """
         Update activity info for item id
