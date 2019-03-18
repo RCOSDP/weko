@@ -167,8 +167,8 @@ class IdentifierSettingView(ModelView):
 
     form_choices = {
         'repository': [
-            ('0', 'Root Index'),
-            # list communities
+            SelectField('repository',
+                        choices=[(r.id, r.title) for r in Community.query.all()])
         ]
     }
 
