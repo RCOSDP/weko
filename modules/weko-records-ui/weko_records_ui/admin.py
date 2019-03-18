@@ -167,11 +167,11 @@ class IdentifierSettingView(ModelView):
 
     print('column_select_related_list:' ,column_select_related_list)
 
+    """
     form_choices = {
-        'repository': [
-            ('Root', 1),
-        ]
+        'repository': []
     }
+    """
 
     column_labels = dict(repository='Repository', jalc_doi='JaLC DOI',
         jalc_crossref_doi='JaLC CrossRef DOI',
