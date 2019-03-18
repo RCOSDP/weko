@@ -163,12 +163,13 @@ class IdentifierSettingView(ModelView):
         'suffix'
     ]
 
-    # current_app.logger.debug(get_all_community())
+    column_select_related_list = (Community.id, Community.title)
+
+    print('column_select_related_list:' ,column_select_related_list)
 
     form_choices = {
         'repository': [
-            SelectField('repository',
-                        choices=[(r.id, r.title) for r in Community.query.all()])
+            ('Root', 1),
         ]
     }
 
