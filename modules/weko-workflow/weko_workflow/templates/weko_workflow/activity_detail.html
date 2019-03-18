@@ -202,7 +202,7 @@
                 <div class="panel-body" style="line-height: 1.6;">
                   <div class="form-group radio" style="display: inline-grid;">
                     {%- for key, val in id_grant_options %}
-                      <label><input type="radio" name="identifier_grant" value="{{ val }}" {%- if key == temporary_id_grant %}checked{%- endif %}> {{ key }}</label>
+                      <label><input type="radio" name="identifier_grant" value="{{ key }}" {%- if key == temporary_id_grant %}checked{%- endif %}>{{ val }}</label>
                     {%- endfor %}
                   </div>
                   <span>{{temporary_id_grant if temporary_id_grant else ''}}</span>

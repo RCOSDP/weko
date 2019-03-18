@@ -36,6 +36,7 @@ from weko_records.api import ItemsMetadata
 
 from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem, GetCommunity
 from .models import ActionStatusPolicy, ActivityStatusPolicy
+from .config import IDENTIFIER_GRANT_LIST
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -210,8 +211,8 @@ def display_activity(activity_id=0):
         action_id=action_id,
         cur_step=cur_step,
         temporary_comment=temporary_comment,
-        temporary_id_grant=temporary_id_grant,
-        id_grant_options=current_app.config['IDENTIFIER_GRANT_LIST'],
+        temporary_id_grant=str(temporary_id_grant),
+        id_grant_options=IDENTIFIER_GRANT_LIST,
         record=approval_record,
         step_item_login_url=step_item_login_url,
         histories=histories,
