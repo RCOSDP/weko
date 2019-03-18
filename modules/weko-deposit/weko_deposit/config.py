@@ -43,6 +43,9 @@ WEKO_MIMETYPE_WHITELIST_FOR_ES = [
 FILES_REST_STORAGE_FACTORY = 'weko_deposit.storage.pyfs_storage_factory'
 """Import path of factory used to create a storage instance."""
 
+FILES_REST_UPLOAD_OWNER_FACTORIES = 'weko_deposit.serializer.file_uploaded_owner'
+"""file update version"""
+
 WEKO_DEPOSIT_ITEMS_CACHE_PREFIX = 'cache_itemsIndex_{pid_value}'
 """ cache items prifix info"""
 
