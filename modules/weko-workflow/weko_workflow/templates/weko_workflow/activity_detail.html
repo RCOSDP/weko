@@ -196,7 +196,10 @@
               {% endif %}
               {%- if 'identifier_grant' == cur_step %}
               <div class="panel panel-default">
-                <div class="panel-body" style="line-height: 1.6;">
+                <div class="panel-heading">
+                  <span>{{_('Identifier Grant')}}</span>
+                </div>
+                <div class="panel-body" ng-hide="collapsed" style="line-height: 1.6;">
                   <div class="form-group radio" style="display: inline-grid;">
                     <label><input type="radio" name="identifier_grant" value="0" ng-value="0" ng-model="identifier_grant" checked> {{_('Not Grant')}}</label>
                     <label><input type="radio" name="identifier_grant" value="1" ng-value="1" ng-model="identifier_grant"> {{_('JaLC DOI')}}</label>
@@ -205,10 +208,12 @@
                     <label><input type="radio" name="identifier_grant" value="4" ng-value="4" ng-model="identifier_grant"> {{_('CNRI')}}</label>
                   </div>
                 </div>
-                <div class="panel-footer">
-                  <button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button>
-                  <button type="button" class="btn btn-default" id="btn-finish">{{_('Run')}}</button>
-                </div>
+              </div>
+              <div class="m-top-20">
+                <ul class="list-inline text-right" style="margin-bottom: 0;">
+                  <li><button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button></li>
+                  <li style="padding-right: 0;"><button type="button" class="btn btn-default" id="btn-finish">{{_('Next')}}</button></li>
+                </ul>
               </div>
               {%- elif 'item_link' != cur_step %}
               <div class="form-group">
