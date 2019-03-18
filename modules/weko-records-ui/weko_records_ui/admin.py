@@ -75,6 +75,7 @@ class ItemSettingView(BaseView):
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 
+
 class PdfCoverPageSettingView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
@@ -162,9 +163,11 @@ class IdentifierSettingView(ModelView):
         'suffix'
     ]
 
+    # current_app.logger.debug(get_all_community())
+
     form_choices = {
         'repository': [
-            ('0', 'Root Index')
+            ('0', 'Root Index'),
             # list communities
         ]
     }
@@ -178,21 +181,44 @@ class IdentifierSettingView(ModelView):
 
     page_size = 25
 
-    def edit_form(self, obj):
+    def on_model_change(self, form, model, is_created):
+        """
+            Perform some actions before a model is created or updated.
+
+            Called from create_model and update_model in the same transaction
+            (if it has any meaning for a store backend).
+
+            By default does nothing.
+
+            :param form:
+                Form used to create/update model
+            :param model:
+                Model that will be created/updated
+            :param is_created:
+                Will be set to True if model was created and to False if edited
         """
 
+        ### Update hidden data automation
+        model.created_userId = current_user.get_id()
+        model.updated_userId = current_user.get_id()
+
+        current_app.logger.debug(get_all_community())
+
+        pass
+
+    def edit_form(self, obj):
+        """
             Customize edit form
         """
         form = super(IdentifierSettingView, self).edit_form(obj)
         return form
 
-    @classmethod
-    def get_all_community(self):
-        """
 
-            Get communities
-        """
-        return Community.query.all()
+def get_all_community():
+    """
+    Get communities
+    """
+    return Community.query.all()
 
 
 identifier_adminview = dict(
