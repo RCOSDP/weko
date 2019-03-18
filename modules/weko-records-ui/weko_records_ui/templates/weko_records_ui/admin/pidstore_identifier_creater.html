@@ -23,84 +23,57 @@
 {% from 'admin/lib.html' import extra with context %} {# backward compatible #}
 
 {%- block css %}
-{{ super() }}
-<style>
-  /* Fixes for IE < 8 */
-  @media screen\9 {
-    .fileinput-button input {
-      filter: alpha(opacity=0);
-      font-size: 100%;
-      height: 100%;
-    }
-  }
-
-  .panel-info {
-    margin-top: 20px;
-  }
-
-  .pull-left {
-    margin-top: 20px;
-    margin-bottom: 20px;
-  }
-
-  .form-group-label {
-    float: left;
-    width: 35%;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  .form-group-item {
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
-
-  .form-group-content {
-    float: left;
-    width: 65%;
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-
-  .form-group-content input {
-    margin-right: 0.5rem;
-    vertical-align: -0.2em;
-  }
-
-  .clear {
-    clear: left;
-  }
-
-  #image {
-    height: 150px;
-  }
-
-  #present-image {
-    height: 150px;
-  }
-</style>
+  {{ super() }}
+  <link href="{{ url_for('static', filename='css/weko_records_ui/quill.snow.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/weko_records_ui/pidstore_identifier.css') }}" rel="stylesheet">
 {%- endblock css %}
 
+{%- block javascript %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/weko_records_ui/pidstore_identifier.js') }}"></script>
+{%- endblock javascript %}
+
 {% block create_form %}
-<!-- {{ 'Hello' }} -->
-{% call lib.form_tag(None) %}
-<!-- <div class="admin-form from-horizontal row"> -->
-<div class="row">
-  <div class="col-sm-12">
-    <div class="panel-group">
-      <!-- <div class="panel panel-default"> -->
-      <div class="row">
-        <div class="col-sm-1 col-md-1"></div>
-        <div class="col-sm-10 col-md-10">
-          <div class="row">
-            {{ lib.render_form_fields(form, form_opts) }}
+  {% call lib.form_tag(None) %}
+  <!-- <div class="admin-form from-horizontal row"> -->
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="panel-group">
+        <div class="row">
+          <div class="col-sm-1 col-md-1"></div>
+          <div class="col-sm-10 col-md-10">
+            <div class="row">
+              {{ lib.render_form_fields(form, form_opts) }}
+            </div>
           </div>
         </div>
+
+        <div class="row">
+          <div class="col-sm-1 col-md-1"></div>
+          <div class="col-sm-10 col-md-10">
+            <span class="query-columns">
+              <span>
+                <label>{{_('Disable')}}</label>
+                <select id="leftSelect" multiple="multiple">
+                </select>
+              </span>
+              <span class="buttons">
+                <input type="button" id="moveRight" value="→" class="move-right">
+                <input type="button" id="moveLeft" value="←" class="move-left">
+              </span>
+              <span>
+                <label>{{_('Enable')}}</label>
+                <select id="rightSelect" multiple="multiple">
+                </select>
+              </span>
+            </span>
+          </div>
+        </div>
+
+        {{ lib.render_form_buttons(return_url, extra()) }}
+        <!-- </div> -->
       </div>
-      {{ lib.render_form_buttons(return_url, extra()) }}
-      <!-- </div> -->
     </div>
   </div>
-</div>
-{% endcall %}
+  {% endcall %}
 {% endblock %}

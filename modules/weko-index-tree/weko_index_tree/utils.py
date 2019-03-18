@@ -30,6 +30,7 @@ from invenio_i18n.ext import current_i18n
 from weko_groups.models import Group
 from invenio_db import db
 from .models import Index
+from sqlalchemy import MetaData
 
 
 def is_index_tree_updated():
@@ -288,6 +289,7 @@ def reduce_index_by_more(tree, more_ids=[]):
 
 def get_admin_coverpage_setting():
     avail = False
+    current_app.logger.debug(db.engine.table_names())
     try:
         record = db.engine.execute('SELECT * FROM pdfcoverpage_set')
         avail = record.first()['Availability']
