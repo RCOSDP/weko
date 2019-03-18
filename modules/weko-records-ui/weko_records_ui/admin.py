@@ -41,7 +41,6 @@ from wtforms import SelectField, StringField
 from wtforms import validators
 from weko_user_profiles.models import UserProfile
 
-
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
 
@@ -216,6 +215,7 @@ class IdentifierSettingView(ModelView):
         model.updated_userId = UserProfile.get_by_userid(current_user.get_id()).username
         model.updated_date = datetime.utcnow().replace(microsecond=0)
         pass
+
 
     def edit_form(self, obj):
         """
