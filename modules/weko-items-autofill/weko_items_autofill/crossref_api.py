@@ -25,7 +25,7 @@ class CrossRefOpenURL:
         if not doi:
             raise ValueError('DOI is required.')
         self._pid = pid
-        self._doi = doi
+        self._doi = doi.strip()
         if response_format:
             self._response_format = response_format
         if timeout:
