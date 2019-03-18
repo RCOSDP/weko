@@ -168,7 +168,6 @@ require([
           data: JSON.stringify(param),
           dataType: "json",
           success: (data, status)=>{
-            console.log(data);
             if (data.error) {
               alert("An error have occurred!\nDetail: "+data.error);
             }else {
@@ -276,7 +275,7 @@ require([
                   if (relation.hasOwnProperty('relatedTitle')) {
                     let id = relation.relatedTitle;
                     let subresultId = resultId.relatedTitle;
-                    if(resultId && resultId['@value']) {
+                    if(subresultId && subresultId['@value']) {
                       this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(subresultId,'@attributes','xml:lang')));
                       this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(subresultId,'@value')));
                     }
