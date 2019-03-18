@@ -8,11 +8,11 @@
     font-size: x-large;
   }
 
-  .fa-eye{
+  .fa-eye {
     vertical-align: -5px;
   }
 
-  #views-txt{
+  #views-txt {
     vertical-align: -5px;
   }
 
@@ -25,60 +25,49 @@
     <div class="col-sm-6 pull-left">
       <h4>{{_('Stats')}}</h4>
     </div>
-  <!-- period dropdown -->
-  <div class="dropdown col-sm-6 pull-right">
-    <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton" data-toggle="dropdown"
-            aria-haspopup="true" aria-expanded="false">
-      {{_('Period')}}
-      <span class="caret"></span>
-    </button>
-    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-      <li><a href="#">period 1</a></li>
-      <li><a href="#">period 2</a></li>
-      <li><a href="#">period 3</a></li>
-    </ul>
-  </div>
+    <!-- period dropdown -->
+    <div class="dropdown col-sm-6 pull-right">
+      <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton" data-toggle="dropdown"
+              aria-haspopup="true" aria-expanded="false">
+        {{_('Period')}}
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        <li><a href="#">period 1</a></li>
+        <li><a href="#">period 2</a></li>
+        <li><a href="#">period 3</a></li>
+      </ul>
+    </div>
   </div>
 
   <div class="row">
     <!--<div class="total-views">-->
-      <div class="col-sm-2"><i class="fa fa-eye" aria-hidden="true"></i></div>
+    <div class="col-sm-2"><i class="fa fa-eye" aria-hidden="true"></i></div>
     <div class="col-sm-5"><span id="views-num">1000</span></div>
-      <div class="col-sm-5"><span id="views-txt">views</span></div>
+    <div class="col-sm-5"><span id="views-txt">views</span></div>
     <!--</div>-->
   </div>
   <div class="row">
     <div class="col-sm-6 col-sm-offset-3">
-                        <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false" aria-controls="collapse-stats" id="views-details">{{_('See details')}}</a></div>
-    </div>
+      <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false" aria-controls="collapse-stats"
+         id="views-details">{{_('See details')}}</a></div>
+  </div>
   <div class="row collapse" id="collapse-stats">
     <table class="table stats-table">
-        <tbody><tr>
-          <th></th>
-          <th>Views</th>
-        </tr><tr>
-          <td>***.hoge </td><td>xxx</td>
-        </tr>
-        <tr>
-          <td>***.huga </td><td>yyy</td>
-        </tr>
-      </tbody></table>
+      <tbody>
+      <tr>
+        <th></th>
+        <th>Views</th>
+      </tr>
+      <tr>
+        <td>***.hoge</td>
+        <td>xxx</td>
+      </tr>
+      <tr>
+        <td>***.huga</td>
+        <td>yyy</td>
+      </tr>
+      </tbody>
+    </table>
   </div>
-
 </div>
-
-
-
-
-
-
-    <!--<div class="domain-views">-->
-      <!--<p>Views per Domain</p>-->
-      <!--<ul>-->
-        <!--<li>foo.co.jp<span class="">xxx</span></li>-->
-        <!--<li>bar.com<span class="">xxx</span></li>-->
-      <!--</ul>-->
-    <!--</div>-->
-  <!--</div>-->
-
-<!--</div>-->
