@@ -159,8 +159,8 @@ def display_activity(activity_id=0):
         activity_id=activity_id, action_id=action_id)
     temporary_id_grant = None
     if temporary_comment:
-        temporary_comment = temporary_comment.action_comment
         temporary_id_grant = temporary_comment.action_identifier_grant
+        temporary_comment = temporary_comment.action_comment
     cur_step = action_endpoint
     step_item_login_url = None
     approval_record = []
@@ -280,16 +280,16 @@ def next_action(activity_id='0', action_id=0):
     work_activity = WorkActivity()
     if 1 == post_json.get('temporary_save'):
         if id_grant is not None:
-            work_activity.upt_activity_action_comment(
-                activity_id=activity_id,
-                action_id=action_id,
-                comment=post_json.get('commond')
-            )
-        else:
             work_activity.upt_activity_action_id_grant(
                 activity_id=activity_id,
                 action_id=action_id,
                 identifier_grant=id_grant
+            )
+        else:
+            work_activity.upt_activity_action_comment(
+                activity_id=activity_id,
+                action_id=action_id,
+                comment=post_json.get('commond')
             )
         return jsonify(code=0, msg=_('success'))
     if id_grant is not None:
