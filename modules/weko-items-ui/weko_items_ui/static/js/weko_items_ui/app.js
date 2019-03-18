@@ -99,7 +99,11 @@ require([
           return;
         }
         if (!value) {
-          return;
+          // Reset current value
+          $scope.depositionForm[id].$viewValue = "";
+          $scope.depositionForm[id].$render();
+          $scope.depositionForm[id].$commitViewValue();
+		  return;
         }
         $scope.depositionForm[id].$viewValue = value;
         $scope.depositionForm[id].$render();
