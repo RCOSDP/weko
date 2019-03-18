@@ -167,7 +167,8 @@ class IdentifierSettingView(ModelView):
 
     form_choices = {
         'repository': [
-            ('0', 'Root Index'),
+            ('0', 'Root Index 0'),
+            ('1', 'Root Index 1'),
             # list communities
         ]
     }
@@ -191,6 +192,37 @@ class IdentifierSettingView(ModelView):
 
     page_size = 25
 
+    def create_model(self, form):
+        """
+            Create model from form.
+            :param form:
+                Form instance
+        """
+        try:
+            model = self.model()
+            model.created_userId = current_user.get_id()
+            model.updated_userId = current_user.get_id()
+            print('_________________Get all COMMUNITY______________', get_all_community())
+            form.populate_obj(model)
+            self.session.add(model)
+            self._on_model_change(form, model, True)
+            self.session.commit()
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                flash(gettext('Failed to create record. %(error)s', error=str(ex)), 'error')
+                current_app.logger.warning(ex)
+            self.session.rollback()
+            return False
+        else:
+            self.after_model_change(form, model, True)
+
+        return model
+
+    def edit_form(self, obj):
+        """Customize edit form."""
+        form = super(IdentifierSettingView, self).edit_form(obj)
+        return form
+
     def on_model_change(self, form, model, is_created):
         """
             Perform some actions before a model is created or updated.
@@ -208,7 +240,7 @@ class IdentifierSettingView(ModelView):
                 Will be set to True if model was created and to False if edited
         """
 
-        ### Update hidden data automation        
+        ### Update hidden data automation
         if is_created:
             model.created_userId = UserProfile.get_by_userid(current_user.get_id()).username
             model.created_date = datetime.utcnow().replace(microsecond=0)
@@ -229,7 +261,17 @@ def get_all_community():
     """
     Get communities
     """
-    return Community.query.all()
+
+    class CommunityIdentify:
+        def __init__(self, id, title):
+            self.id = id
+            self.title = title
+    data = []
+    for i in Community.query.all():
+        c = CommunityIdentify(i.id, i.title)
+        data.append(c)
+    print('---------------------Data---------------------', data)
+    return data
 
 
 identifier_adminview = dict(
