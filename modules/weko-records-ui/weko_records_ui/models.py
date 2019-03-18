@@ -124,19 +124,11 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    #repository = db.Column(db.String(50), nullable=False)
-    repository = db.relationship(
-        Community, backref=db.backref(
-            'communities', uselist=False, cascade='all, delete-orphan')
+    repository = db.Column(
+        db.String(50),
+        nullable=False
     )
-
     """repository of the Identifier."""
-
-    jalc_doi = db.Column(
-        db.String(100),
-        nullable=True
-    )
-    """jalc_doi of the Identifier."""
 
     jalc_flag = db.Column(db.Boolean, nullable=True)
     """jalc_flag of the Identifier."""
@@ -150,28 +142,58 @@ class Identifier(db.Model):
     cnri_flag = db.Column(db.Boolean, nullable=True)
     """cnri_flag of the Identifier."""
 
-    jalc_crossref_doi = db.Column(db.String(100), nullable=True)
+    jalc_doi = db.Column(
+        db.String(100),
+        nullable=True
+    )
+    """jalc_doi of the Identifier."""
+
+    jalc_crossref_doi = db.Column(
+        db.String(100),
+        nullable=True
+    )
     """jalc_crossref_doi of the Identifier."""
 
-    jalc_datacite_doi = db.Column(db.String(100), nullable=True)
+    jalc_datacite_doi = db.Column(
+        db.String(100),
+        nullable=True
+    )
     """jalc_datacite_doi of the Identifier."""
 
-    cnri = db.Column(db.String(100), nullable=True)
+    cnri = db.Column(
+        db.String(100),
+        nullable=True
+    )
     """cnri of the Identifier."""
 
-    suffix = db.Column(db.String(100),nullable=True)
+    suffix = db.Column(
+        db.String(100),
+        nullable=True
+    )
     """suffix of the Identifier."""
 
-    created_userId = db.Column(db.String(50),nullable=False)
+    created_userId = db.Column(
+        db.String(50), 
+        nullable=False, 
+    )
     """created by user."""
 
-    created_date = db.Column(db.DateTime,nullable=False)
+    created_date = db.Column(
+        db.DateTime, 
+        nullable=False,
+    )
     """created date."""
 
-    updated_userId = db.Column(db.String(50),nullable=False)
+    updated_userId = db.Column(
+        db.String(50), 
+        nullable=False, 
+    )
     """updated by user."""
 
-    updated_date = db.Column(db.DateTime,nullable=True)
+    updated_date = db.Column(
+        db.DateTime, 
+        nullable=True, 
+    )
 
 
 __all__ = ('Identifier', 'PDFCoverPageSettings')

@@ -39,6 +39,8 @@ from invenio_communities.models import Community
 from datetime import datetime
 from wtforms import SelectField, StringField
 from wtforms import validators
+from weko_user_profiles.models import UserProfile
+
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -156,27 +158,35 @@ class IdentifierSettingView(ModelView):
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
     column_searchable_list = ['repository', 'jalc_doi']
 
-    form_create_rules = [rules.Header('Prefix'),
+    form_create_rules = [rules.Header(_('Prefix')),
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
-        rules.Header('Suffix'),
-        'suffix'
+        rules.Header(_('Suffix')),
+        'suffix',
+        rules.Header(_('Enable/Disable')),
     ]
 
-    column_select_related_list = (Community.id, Community.title)
-
-    print('column_select_related_list:' ,column_select_related_list)
-
-    """
     form_choices = {
-        'repository': []
+        'repository': [
+            ('0', 'Root Index'),
+            # list communities
+        ]
     }
-    """
 
-    column_labels = dict(repository='Repository', jalc_doi='JaLC DOI',
-        jalc_crossref_doi='JaLC CrossRef DOI',
-        jalc_datacite_doi='jaLC DataCite DOI', cnri='CNRI',
-        suffix='Semi-automatic Suffix')
+    form_widget_args = {
+        'jalc_doi': {
+            'readonly': True
+        },
+        'jalc_crossref_doi': {
+            'readonly': True
+        },
+    }
+
+    column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
+        jalc_crossref_doi=_('JaLC CrossRef DOI'),
+        jalc_datacite_doi=_('jaLC DataCite DOI'), cnri=_('CNRI'),
+        suffix=_('Semi-automatic Suffix')
+    )
 
     form_edit_rules = form_create_rules
 
@@ -199,12 +209,12 @@ class IdentifierSettingView(ModelView):
                 Will be set to True if model was created and to False if edited
         """
 
-        ### Update hidden data automation
-        model.created_userId = current_user.get_id()
-        model.updated_userId = current_user.get_id()
-
-        current_app.logger.debug(get_all_community())
-
+        ### Update hidden data automation        
+        if is_created:
+            model.created_userId = UserProfile.get_by_userid(current_user.get_id()).username
+            model.created_date = datetime.utcnow().replace(microsecond=0)
+        model.updated_userId = UserProfile.get_by_userid(current_user.get_id()).username
+        model.updated_date = datetime.utcnow().replace(microsecond=0)
         pass
 
     def edit_form(self, obj):

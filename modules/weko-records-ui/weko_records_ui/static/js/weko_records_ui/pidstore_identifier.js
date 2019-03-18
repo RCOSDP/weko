@@ -1,42 +1,72 @@
+/*!
+ * -*- coding: utf-8 -*-
+ *
+ * This file is part of WEKO3.
+ * Copyright (C) 2017 National Institute of Informatics.
+ *
+ * WEKO3 is free software; you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * WEKO3 is distributed in the hope that it will be
+ * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with WEKO3; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ * MA 02111-1307, USA.
+ */
 
 $(document).ready(function () {
     const moveRight = $('#moveRight');
     const moveLeft = $('#moveLeft')
     const leftSelect = $('#leftSelect');
     const rightSelect = $('#rightSelect');
+
+    var jalcFlagLabel= $('#jalc_flag');
+    var jalcCrossrefFlagData = $('#jalc_crossref_flag');
+    var jalcDataciteFlagData = $('#jalc_datacite_flag');
+    var cnriFlagData = $('#cnri_flag');
+
+    // let results = []
+
+    let leftOption = '';
+    // let rightOption = '';
+
+    leftOption += `<option value="${jalcFlagLabel}">${jalcFlagLabel}</option>`;
+    leftOption += `<option value="${jalcCrossrefFlagData}">${jalcCrossrefFlagData}</option>`;
+    leftOption += `<option value="${jalcDataciteFlagData}">${jalc_datacite_flag}</option>`;
+    leftOption += `<option value="${cnriFlagData}">${cnriFlagData}</option>`;
+    leftSelect.append(leftOption);
+
+    // $.ajax({
+    //   url: urlLoad,
+    //   type: 'GET',
+    //   success: function (data) {
+    //     results = data.results;
   
-    moveTop.prop("disabled", true);
-    moveUp.prop("disabled", true);
-    moveDown.prop("disabled", true);
-    moveBottom.prop("disabled", true);
+    //     let leftOption = '';
+    //     let rightOption = '';
   
-    let results = []
-  
-    $.ajax({
-      url: urlLoad,
-      type: 'GET',
-      success: function (data) {
-        results = data.results;
-  
-        let leftOption = '';
-        let rightOption = '';
-  
-        for (let index = 0; index < results.length; index++) {
-          const element = results[index];
-          if (element.is_registered) {
-            rightOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
-            continue;
-          }
-          leftOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
-        }
-        leftSelect.append(leftOption);
-        rightSelect.append(rightOption);
-      },
-      error: function (error) {
-        console.log(error);
-        alert('Error when get languages');
-      }
-    });
+    //     for (let index = 0; index < results.length; index++) {
+    //       const element = results[index];
+    //       if (element.is_registered) {
+    //         rightOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
+    //         continue;
+    //       }
+    //       leftOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
+    //     }
+    //     leftSelect.append(leftOption);
+    //     rightSelect.append(rightOption);
+    //   },
+    //   error: function (error) {
+    //     console.log(error);
+    //     alert('Error when get languages');
+    //   }
+    // });
   
     moveRight.on('click', function () {
       leftSelect.find('option:selected').detach().prop("selected", false).appendTo(rightSelect);
@@ -49,87 +79,10 @@ $(document).ready(function () {
       updateRightButtons();
     });
   
-    moveTop.on('click', function () {
-      rightSelect.find('option:selected').detach().prependTo(rightSelect);
-    });
-  
-    $('#moveUp').on('click', function () {
-      $('#rightSelect').find('option:selected').each(function () {
-        $(this).prev(':not(:selected)').detach().insertAfter($(this));
-      });
-    });
-  
-    $('#moveDown').on('click', function () {
-      $($('#rightSelect').find('option:selected').get().reverse()).each(function () {
-        $(this).next(':not(:selected)').detach().insertBefore($(this));
-      });
-    });
-  
-    moveBottom.on('click', function () {
-      rightSelect.find('option:selected').detach().appendTo(rightSelect);
-    });
-  
-    rightSelect.on('change', function() {
-      if (moveTop.prop('disabled')) {
-        moveTop.prop('disabled', false);
-        moveUp.prop('disabled', false);
-        moveDown.prop('disabled', false);
-        moveBottom.prop('disabled', false);
-      }
-    });
-  
-    function updateButton() {
-      let moveRightDisabled = true;
-      if (leftSelect.children().length) {
-        moveRightDisabled = false;
-      }
-      moveRight.prop("disabled", moveRightDisabled);
-  
-      let moveLeftDisabled = true;
-      if (rightSelect.children().length) {
-        moveLeftDisabled = false;
-      }
-      moveLeft.prop("disabled", moveLeftDisabled);
-      saveBtn.prop("disabled", moveLeftDisabled);
-    }
-  
     function updateRightButtons() {
       moveTop.prop('disabled', true);
       moveUp.prop('disabled', true);
       moveDown.prop('disabled', true);
       moveBottom.prop('disabled', true);
     }
-  
-    $('#btn_commit_lg').on('click', function () {
-      const children = $('#leftSelect').children();
-      const selectedChildren = $('#rightSelect').children();
-      const map = {};
-      for (let ele of results) {
-        map[ele.lang_code] = ele;
-      }
-      for (let index = 0; index < children.length; index++) {
-        const element = map[children[index].value];
-        element.is_registered = false;
-        element.sequence = 0;
-      }
-      for (let index = 0; index < selectedChildren.length; index++) {
-        const element = map[selectedChildren[index].value];
-        element.is_registered = true;
-        element.sequence = index;
-      }
-  
-      $.ajax({
-        url: urlUpdate,
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(results),
-        success: function (data) {
-          alert('Update languages action successfully');
-        },
-        error: function (error) {
-          console.log(error);
-          alert('Update languages action erroneously');
-        }
-      });
-    });
   });  
