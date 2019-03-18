@@ -72,8 +72,8 @@
 }
 
 .query-columns select {
-    width:150px;
-    height: calc(100vh - 350px);
+    width: 200px;
+    height: 123px;
 }
 
 #btn_commit_lg {
