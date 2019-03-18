@@ -163,10 +163,6 @@ class IdentifierSettingView(ModelView):
         'suffix'
     ]
 
-    column_select_related_list = (Community.id, Community.title)
-
-    print('column_select_related_list:' ,column_select_related_list)
-
     form_choices = {
         'repository': [
             ('0', 'Root Index 0'),
