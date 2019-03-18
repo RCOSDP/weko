@@ -185,7 +185,7 @@ def init_workflow_tables(tables):
         # Identifier Grant
         db_action.append(dict(
             action_name='Identifier Grant',
-            action_desc='Action to select DOI issuing institution and CNRI.',
+            action_desc='Select DOI issuing organization and CNRI.',
             action_version='1.0.0',
             action_endpoint='identifier_grant',
             action_makedate=datetime.date(2019, 3, 15),
