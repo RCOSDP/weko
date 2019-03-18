@@ -124,21 +124,10 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-<<<<<<< HEAD
     repository = db.Column(
         db.String(50),
         nullable=False
     )
-=======
-    repository = db.Column(db.String(50), nullable=False)
-    """
-    repository = db.relationship(
-        Community, backref=db.backref(
-            'communities', uselist=False, cascade='all, delete-orphan')
-    )
-    """
-
->>>>>>> b389e5e9b7d176916162370912065438775a986d
     """repository of the Identifier."""
 
     jalc_flag = db.Column(db.Boolean, nullable=True)
@@ -184,26 +173,26 @@ class Identifier(db.Model):
     """suffix of the Identifier."""
 
     created_userId = db.Column(
-        db.String(50), 
-        nullable=False, 
+        db.String(50),
+        nullable=False,
     )
     """created by user."""
 
     created_date = db.Column(
-        db.DateTime, 
+        db.DateTime,
         nullable=False,
     )
     """created date."""
 
     updated_userId = db.Column(
-        db.String(50), 
-        nullable=False, 
+        db.String(50),
+        nullable=False,
     )
     """updated by user."""
 
     updated_date = db.Column(
-        db.DateTime, 
-        nullable=True, 
+        db.DateTime,
+        nullable=True,
     )
 
 
