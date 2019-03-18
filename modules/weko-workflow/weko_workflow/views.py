@@ -211,6 +211,7 @@ def display_activity(activity_id=0):
         cur_step=cur_step,
         temporary_comment=temporary_comment,
         temporary_id_grant=temporary_id_grant,
+        id_grant_options=current_app.config['IDENTIFIER_GRANT_LIST'],
         record=approval_record,
         step_item_login_url=step_item_login_url,
         histories=histories,
