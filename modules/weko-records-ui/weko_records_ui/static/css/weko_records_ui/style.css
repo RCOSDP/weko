@@ -1,0 +1,25 @@
+.nowrap {
+  white-space: nowrap;
+}
+
+.wrap {
+  word-break: break-all;
+}
+
+.dropdown button {
+  background: #fff;
+  color: black;
+}
+
+#views-num {
+  font-size: x-large;
+}
+
+.fa-eye {
+  vertical-align: -5px;
+}
+
+#views-txt {
+  vertical-align: -5px;
+}
+
