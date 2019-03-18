@@ -40,7 +40,7 @@ from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
 from .models import WorkFlow as _WorkFlow
 from .models import ActionStatusPolicy, ActionCommentPolicy, \
-    ActivityStatusPolicy, FlowStatusPolicy
+    ActivityStatusPolicy, FlowStatusPolicy, ActionJournal
 
 class Flow(object):
     """Operated on the Flow"""
@@ -536,6 +536,44 @@ class WorkActivity(object):
                 activity_id=activity_id,
                 action_id=action_id,).one_or_none()
             return activity_action
+
+    def create_or_update_action_journal(self, activity_id, action_id, journal):
+        """
+        Create or update action journal info.
+        :param activity_id:
+        :param action_id:
+        :param journal:
+        :return:
+        """
+        with db.session.begin_nested():
+            action_journal = ActionJournal.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id,).one_or_none()
+            if action_journal:
+                action_journal.action_journal = journal
+                db.session.merge(action_journal)
+            else:
+                new_action_journal = ActionJournal(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    action_journal=journal,
+                )
+                db.session.add(new_action_journal)
+
+        db.session.commit()
+
+    def get_action_journal(self, activity_id, action_id):
+        """
+        get action journal info.
+        :param activity_id:
+        :param action_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            action_journal = ActionJournal.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id,).one_or_none()
+            return action_journal
 
     def get_activity_action_status(self, activity_id, action_id):
         with db.session.no_autoflush:
