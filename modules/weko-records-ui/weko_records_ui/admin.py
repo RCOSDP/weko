@@ -192,31 +192,6 @@ class IdentifierSettingView(ModelView):
 
     page_size = 25
 
-    def create_model(self, form):
-        """
-            Create model from form.
-            :param form:
-                Form instance
-        """
-        try:
-            model = self.model()
-            model.created_userId = current_user.get_id()
-            model.updated_userId = current_user.get_id()
-            print('_________________Get all COMMUNITY______________', get_all_community())
-            form.populate_obj(model)
-            self.session.add(model)
-            self._on_model_change(form, model, True)
-            self.session.commit()
-        except Exception as ex:
-            if not self.handle_view_exception(ex):
-                flash(gettext('Failed to create record. %(error)s', error=str(ex)), 'error')
-                current_app.logger.warning(ex)
-            self.session.rollback()
-            return False
-        else:
-            self.after_model_change(form, model, True)
-
-        return model
 
     def edit_form(self, obj):
         """Customize edit form."""
@@ -261,16 +236,10 @@ def get_all_community():
     """
     Get communities
     """
-
-    class CommunityIdentify:
-        def __init__(self, id, title):
-            self.id = id
-            self.title = title
     data = []
     for i in Community.query.all():
-        c = CommunityIdentify(i.id, i.title)
+        c = {i.id, i.title}
         data.append(c)
-    print('---------------------Data---------------------', data)
     return data
 
 
