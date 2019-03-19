@@ -450,7 +450,7 @@ class Indexes(object):
                     recursive_t.c.public_state, recursive_t.c.public_date,
                     recursive_t.c.browsing_role, recursive_t.c.contribute_role,
                     recursive_t.c.browsing_group, recursive_t.c.contribute_group,
-                    recursive_t.c.more_check, recursive_t.c.display_no, 
+                    recursive_t.c.more_check, recursive_t.c.display_no,
                     recursive_t.c.coverpage_state, recursive_t.c.recursive_coverpage_check]
             obj = db.session.query(*qlst). \
                 order_by(recursive_t.c.lev,
@@ -777,6 +777,11 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
+                Index.admin_coverpage,
+                # Index.display_cv,
+                Index.coverpage_state,
+                Index.recursive_coverpage_check,
+                Index.admin_coverpage,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
