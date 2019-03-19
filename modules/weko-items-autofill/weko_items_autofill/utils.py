@@ -19,14 +19,15 @@
 # MA 02111-1307, USA.
 
 """Module of weko-items-autofill utils.."""
+import copy
+import datetime
 from functools import wraps
-from invenio_cache import current_cache
 
+from invenio_cache import current_cache
 from weko_records.api import Mapping
 
 from . import config
 from .crossref_api import CrossRefOpenURL
-import copy
 
 
 def is_update_cache():
@@ -62,6 +63,26 @@ def cached_api_json(timeout=50, key_prefix="cached_api_json"):
     return caching
 
 
+def convert_datetime_format(list_date):
+    """Convert datetime from response to the format of GUI
+    @param list_date: list include the value of day, month,
+    year of the publication date
+    @return:
+    if the response has full of 3 index(yyyy-mm-dd).
+    Convert it to datetime format and return true string format
+    else return none"""
+    if type(list_date) is list:
+        if len(list_date) == 3:
+            date = datetime.datetime.strptime(
+                str(list_date[0]) + '-' + str(list_date[1]) + '-' + str(
+                    list_date[2]), '%Y-%m-%d')
+            return date.strftime('%Y-%m-%d')
+        else:
+            return None
+    else:
+        return
+
+
 def try_assign_data(data, value, key_first, list_key=None):
     """Try to assign value into dictionary data
             Basic flow: If dictionary path is exist, value will be assigned to dictionary data
@@ -75,13 +96,15 @@ def try_assign_data(data, value, key_first, list_key=None):
             Dictionary with validated values
     """
     data_temp = list()
-    data_temp.append(data.get(key_first))
-    idx = 0
+    if data.get(key_first) is None:
+        return
+    else:
+        data_temp.append(data.get(key_first))
+        idx = 0
     if list_key is None:
         data_temp[0] = value
     else:
         for key in list_key:
-            if data_temp[idx]:
                 if key in data_temp[idx]:
                     if data_temp[idx].get(key):
                         data_temp.append(data_temp[idx].get(key))
@@ -125,101 +148,106 @@ def parse_crossref_json_response(response, response_data_template):
     issued = response['response'].get('issued')
     author = response['response'].get('author')
     page = response['response'].get('page')
-    split_page = []
-    if page:
+    if type(page) is str:
         split_page = page.split('-')
+        if len(split_page) == 2:
+            try_assign_data(response_data_convert,
+                            str(int(split_page[1]) - int(split_page[0]) + 1),
+                            'numPages', ['@value'])
+            try_assign_data(response_data_convert, split_page[1], 'pageEnd',
+                            ['@value'])
+            try_assign_data(response_data_convert, split_page[0], 'pageStart',
+                            ['@value'])
 
-    try_assign_data(response_data_convert, created.get('affiliationName'),
-                    'creator', ['affiliation', 'affiliationName', '@value'])
-    try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
-                    ['affiliation', 'affiliationName', '@attributes',
-                     'xml:lang'])
-    try_assign_data(response_data_convert, created.get('nameIdentifier'),
-                    'creator', ['affiliation', 'nameIdentifier', '@value'])
-    try_assign_data(response_data_convert, created.get('nameIdentifierScheme'),
-                    'creator', ['affiliation', 'nameIdentifier', '@attributes',
-                                'nameIdentifierScheme'])
-    try_assign_data(response_data_convert, created.get('nameIdentifierURI'),
-                    'creator', ['affiliation', 'nameIdentifier', '@attributes',
-                                'nameIdentifierURI'])
-    try_assign_data(response_data_convert, created.get('creatorAlternative'),
-                    'creator', ['creatorAlternative', '@value'])
-    try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
-                    ['creatorAlternative', '@attributes', 'xml:lang'])
-
-    try_assign_data(response_data_convert,
-                    author[0].get('given') + " " + author[0].get('family'),
-                    'creator', ['creatorName', '@value'])
-
-    try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
-                    ['creatorName', '@attributes', 'xml:lang'])
-
-    try_assign_data(response_data_convert, author[0].get('family'), 'creator',
-                    ['familyName', '@value'])
-    try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
-                    ['familyName', '@attributes', 'xml:lang'])
-
-    try_assign_data(response_data_convert, author[0].get('given'), 'creator',
-                    ['givenName', '@value'])
-    try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
-                    ['givenName', '@attributes', 'xml:lang'])
-
-    try_assign_data(response_data_convert, created.get('nameIdentifier'),
-                    'creator', ['nameIdentifier', '@value'])
-    try_assign_data(response_data_convert, created.get('nameIdentifierScheme'),
-                    'creator',
-                    ['nameIdentifier', '@attributes', 'nameIdentifierScheme'])
-
-    try_assign_data(response_data_convert, created.get('nameIdentifierURI'),
-                    'creator',
-                    ['nameIdentifier', '@attributes', 'nameIdentifierURI'])
-
-    try_assign_data(response_data_convert, issued.get('date-parts'), 'date',
-                    ['@value'])
-
-    try_assign_data(response_data_convert, created.get('date'), 'date',
-                    ['@attributes', 'dateType'])
-
-    try_assign_data(response_data_convert, 'eng', 'language', ['@value'])
-
-    if len(split_page) == 2:
+    if type(created) is dict:
+        try_assign_data(response_data_convert, created.get('affiliationName'),
+                        'creator', ['affiliation', 'affiliationName', '@value'])
         try_assign_data(response_data_convert,
-                        str(int(split_page[1]) - int(split_page[0])),
-                        'numPages', ['@value'])
-        try_assign_data(response_data_convert, split_page[1], 'pageEnd',
+                        config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                        ['affiliation', 'affiliationName', '@attributes',
+                         'xml:lang'])
+        try_assign_data(response_data_convert, created.get('nameIdentifier'),
+                        'creator', ['affiliation', 'nameIdentifier', '@value'])
+        try_assign_data(response_data_convert,
+                        created.get('nameIdentifierScheme'),
+                        'creator',
+                        ['affiliation', 'nameIdentifier', '@attributes',
+                         'nameIdentifierScheme'])
+        try_assign_data(response_data_convert, created.get('nameIdentifierURI'),
+                        'creator',
+                        ['affiliation', 'nameIdentifier', '@attributes',
+                         'nameIdentifierURI'])
+        try_assign_data(response_data_convert,
+                        created.get('creatorAlternative'),
+                        'creator', ['creatorAlternative', '@value'])
+        try_assign_data(response_data_convert, created.get('date'), 'date',
+                        ['@attributes', 'dateType'])
+        try_assign_data(response_data_convert, created.get('title'), 'title',
                         ['@value'])
-        try_assign_data(response_data_convert, split_page[0], 'pageStart',
+        try_assign_data(response_data_convert, created.get('nameIdentifier'),
+                        'creator', ['nameIdentifier', '@value'])
+        try_assign_data(response_data_convert,
+                        created.get('nameIdentifierScheme'),
+                        'creator',
+                        ['nameIdentifier', '@attributes',
+                         'nameIdentifierScheme'])
+        try_assign_data(response_data_convert, created.get('nameIdentifierURI'),
+                        'creator',
+                        ['nameIdentifier', '@attributes', 'nameIdentifierURI'])
+        try_assign_data(response_data_convert, created.get('publisher'),
+                        'publisher', ['@value'])
+        isbn_item = created.get('ISBN')
+        if type(isbn_item) is list:
+            try_assign_data(response_data_convert, isbn_item[0], 'relation',
+                            ['relatedTitle', '@value'])
+
+    if type(author) is list:
+        if type(author[0]) is dict:
+            try_assign_data(response_data_convert,
+                            author[0].get('given') or '' + " " + author[0].get(
+                                'family') or '',
+                            'creator', ['creatorName', '@value'])
+            try_assign_data(response_data_convert, author[0].get('family'),
+                            'creator',
+                            ['familyName', '@value'])
+            try_assign_data(response_data_convert, author[0].get('given'),
+                            'creator',
+                            ['givenName', '@value'])
+
+    if type(issued) is dict:
+        try_assign_data(response_data_convert,
+                        convert_datetime_format(issued.get('date-parts')),
+                        'date',
                         ['@value'])
 
-    try_assign_data(response_data_convert, created.get('publisher'),
-                    'publisher', ['@value'])
+    """Set default language to English(en or eng) because API does not return 
+    the current language"""
+    try_assign_data(response_data_convert, 'eng', 'language', ['@value'])
     try_assign_data(response_data_convert,
                     config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'publisher',
                     ['@attributes', 'xml:lang'])
-
     try_assign_data(response_data_convert, created.get('relationType'),
                     'relation', ['@attributes', 'relationType'])
     try_assign_data(response_data_convert, created.get('ISBN'), 'relation',
                     ['relatedIdentifier', '@value'])
-    isbn_item = created.get('ISBN')
-    if isbn_item is not None:
-        try_assign_data(response_data_convert, isbn_item[0], 'relation',
-                        ['relatedTitle', '@value'])
-
     try_assign_data(response_data_convert,
                     config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'relation',
                     ['relatedTitle', '@attributes', 'xml:lang'])
-
-    try_assign_data(response_data_convert, created.get('title'), 'title',
-                    ['@value'])
     try_assign_data(response_data_convert,
                     config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'title',
                     ['@attributes', 'xml:lang'])
+    try_assign_data(response_data_convert,
+                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                    ['creatorAlternative', '@attributes', 'xml:lang'])
+    try_assign_data(response_data_convert,
+                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                    ['creatorName', '@attributes', 'xml:lang'])
+    try_assign_data(response_data_convert,
+                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                    ['familyName', '@attributes', 'xml:lang'])
+    try_assign_data(response_data_convert,
+                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                    ['givenName', '@attributes', 'xml:lang'])
 
     return response_data_convert
 
