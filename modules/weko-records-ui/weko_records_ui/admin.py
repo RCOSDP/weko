@@ -151,7 +151,7 @@ class IdentifierSettingView(ModelView):
     can_create = True
     can_edit = True
     can_delete = False
-    can_view_details = False
+    can_view_details = True
     create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE
 
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')

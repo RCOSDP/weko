@@ -125,11 +125,10 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    repository = db.Column(
-        db.String(50),
-        nullable=False,
-        default=''
-    )
+    id_community = db.Column(db.String(100), db.ForeignKey(Community.id), nullable=False)
+    """Identifier of the index."""
+
+    repository = db.relationship(Community, backref='identifiers', foreign_keys=[id_community])
     """repository of the community."""
 
     jalc_flag = db.Column(db.Boolean, nullable=True)
