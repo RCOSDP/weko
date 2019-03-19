@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-03-18 10:58+0000\n"
+"POT-Creation-Date: 2019-03-19 11:12+0000\n"
 "PO-Revision-Date: 2018-01-22 15:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -188,22 +188,21 @@ msgstr "登録ユーザ名"
 msgid "Published/"
 msgstr "公開/"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:221
-#, fuzzy
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:220
 msgid "Period"
 msgstr "期間"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:234
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:265
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:233
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:264
 msgid "Downloads"
 msgstr "ダウンロード数"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:242
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:266
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:241
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:265
 msgid "Plays"
 msgstr "再生数"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:256
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
 msgid "See details"
 msgstr "詳細を見る"
 
