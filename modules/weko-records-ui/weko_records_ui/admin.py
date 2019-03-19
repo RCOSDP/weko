@@ -155,6 +155,8 @@ class IdentifierSettingView(ModelView):
 
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
 
+    column_searchable_list = ('jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri')
+
     form_create_rules = [rules.Header(_('Prefix')),
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
