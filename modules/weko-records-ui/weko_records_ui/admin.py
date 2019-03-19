@@ -154,24 +154,26 @@ class IdentifierSettingView(ModelView):
     can_view_details = False
     create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE
 
-    column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-    column_searchable_list = ['repository', 'jalc_doi']
+    column_list = ('owner', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+    column_searchable_list = ['owner', 'jalc_doi']
 
     form_create_rules = [rules.Header(_('Prefix')),
-        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'owner', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
         rules.Header(_('Suffix')),
         'suffix',
         rules.Header(_('Enable/Disable')),
     ]
 
+    """
     form_choices = {
-        'repository': [
+        'owner': [
             ('0', 'Root Index 0'),
             ('1', 'Root Index 1'),
             # list communities
         ]
     }
+    """
 
     form_widget_args = {
         'jalc_doi': {
@@ -182,7 +184,7 @@ class IdentifierSettingView(ModelView):
         },
     }
 
-    column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
+    column_labels = dict(owner=_('Owner'), jalc_doi=_('JaLC DOI'),
         jalc_crossref_doi=_('JaLC CrossRef DOI'),
         jalc_datacite_doi=_('jaLC DataCite DOI'), cnri=_('CNRI'),
         suffix=_('Semi-automatic Suffix')
