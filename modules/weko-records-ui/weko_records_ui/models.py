@@ -31,6 +31,7 @@ from sqlalchemy_utils.types import JSONType
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import mysql, postgresql
 from invenio_communities.models import Community
+from invenio_accounts.models import User
 
 """ PDF cover page model"""
 class PDFCoverPageSettings(db.Model):
@@ -121,18 +122,24 @@ class Identifier(db.Model):
 
     __tablename__ = 'pidstore_Identifier'
 
-    id_identifier = db.Column(db.BigInteger, primary_key=True, unique=True)
+    id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    id = db.Column(
-        db.String(100),
-        db.ForeignKey(Community.id),
+    id_user = db.Column(
+        db.Integer,
+        db.ForeignKey(User.id),
         nullable=False
     )
+    """Owner of the community."""
+
+    #id = db.Column(db.String(100),db.ForeignKey(Community.id),nullable=False)
     """... of the community."""
 
-    repository = db.relationship(Community, backref='communities', foreign_keys=[id])
-    """repository of the Identifier."""
+    #repository = db.relationship(Community, backref='communities', foreign_keys=[id])
+    # """repository of the Identifier."""
+    owner = db.relationship(User, backref='communities',
+                            foreign_keys=[id_user])
+    """Relation to the owner (User) of the community."""
 
     jalc_flag = db.Column(db.Boolean, nullable=True)
     """jalc_flag of the Identifier."""
