@@ -22,10 +22,10 @@
 {% import 'admin/lib.html' as lib with context %}
 {% from 'admin/lib.html' import extra with context %} {# backward compatible #}
 
-{% block head_tail %}
+{% block css %}
   {{ super() }}
   <link href="{{ url_for('static', filename='css/weko_records_ui/pidstore_identifier.css') }}" rel="stylesheet">
-{% endblock %}
+{% endblock css %}
 
 {% block create_form %}
   {% call lib.form_tag(None) %}
