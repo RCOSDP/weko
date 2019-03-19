@@ -121,17 +121,17 @@ class Identifier(db.Model):
 
     __tablename__ = 'pidstore_Identifier'
 
-    id = db.Column(db.BigInteger, primary_key=True, unique=True)
+    id_identifier = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    id_repo = db.Column(
+    id = db.Column(
         db.String(100),
         db.ForeignKey(Community.id),
         nullable=False
     )
     """... of the community."""
 
-    repository = db.relationship(Community, backref='communities', foreign_keys=[id_repo])
+    repository = db.relationship(Community, backref='communities', foreign_keys=[id])
     """repository of the Identifier."""
 
     jalc_flag = db.Column(db.Boolean, nullable=True)
