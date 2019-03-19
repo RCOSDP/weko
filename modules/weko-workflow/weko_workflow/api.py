@@ -895,7 +895,8 @@ class WorkActivityHistory(object):
             action_status=activity.get('action_status'),
             action_user=current_user.get_id(),
             action_date=datetime.utcnow(),
-            action_comment=activity.get('commond')
+            action_comment=activity.get('commond'),
+            action_identifier_grant=activity.get('identifier_grant', 0)
         )
         new_history = False
         activity = WorkActivity()
