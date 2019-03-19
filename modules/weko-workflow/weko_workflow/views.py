@@ -158,7 +158,7 @@ def display_activity(activity_id=0):
     action_id = cur_action.id
     temporary_comment = activity.get_activity_action_comment(
         activity_id=activity_id, action_id=action_id)
-    temporary_id_grant = None
+    temporary_id_grant = 0
     if temporary_comment:
         temporary_id_grant = temporary_comment.action_identifier_grant
         temporary_comment = temporary_comment.action_comment
