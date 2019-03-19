@@ -125,21 +125,12 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    id_user = db.Column(
-        db.Integer,
-        db.ForeignKey(User.id),
-        nullable=False
+    repository = db.Column(
+        db.String(50),
+        nullable=False,
+        default=''
     )
-    """Owner of the community."""
-
-    #id = db.Column(db.String(100),db.ForeignKey(Community.id),nullable=False)
-    """... of the community."""
-
-    #repository = db.relationship(Community, backref='communities', foreign_keys=[id])
-    # """repository of the Identifier."""
-    owner = db.relationship(User, backref='communities',
-                            foreign_keys=[id_user])
-    """Relation to the owner (User) of the community."""
+    """repository of the community."""
 
     jalc_flag = db.Column(db.Boolean, nullable=True)
     """jalc_flag of the Identifier."""
