@@ -95,8 +95,7 @@ def get_tree_json(obj, pid=0):
                     'browsing_role', 'contribute_role',
                     'browsing_group', 'contribute_group',
                     'more_check', 'display_no',
-                    'coverpage_state', 'admin_coverpage']
-            admin_coverpage_set = get_admin_coverpage_setting()
+                    'coverpage_state']
 
             for lst in plst:
                 lst['children'] = []
@@ -112,10 +111,7 @@ def get_tree_json(obj, pid=0):
                             dc.update(dict(id=cid, value=name))
                             for x in attr:
                                 if hasattr(index_obj, x):
-                                    if x == 'admin_coverpage':
-                                        dc.update({x: admin_coverpage_set})
-                                    else:
-                                        dc.update({x: getattr(index_obj, x)})
+                                    dc.update({x: getattr(index_obj, x)})
                             lst['children'].append(dc)
                 if not lst['children'] and lst.get('settings'):
                     lst['settings']['isCollapsedOnInit'] = True
@@ -302,7 +298,8 @@ def get_admin_coverpage_setting():
     """
     avail = 'disable'
     try:
-        metadata = MetaData(bind=db.engine, reflect=True)
+        metadata = MetaData()
+        metadata.reflect(bind=db.engine)
         table_name = 'pdfcoverpage_set'
 
         pdfcoverpage_table = Table(table_name, metadata)
