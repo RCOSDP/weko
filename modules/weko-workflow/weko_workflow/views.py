@@ -278,25 +278,23 @@ def next_action(activity_id='0', action_id=0):
         action_status=ActionStatusPolicy.ACTION_DONE,
         commond=post_json.get('commond')
     )
-    id_grant = post_json.get('identifier_grant')
     work_activity = WorkActivity()
-    if 1 == post_json.get('temporary_save'):
-        # when click button Save
-        if id_grant is not None:
-            work_activity.upt_activity_action_id_grant(
-                activity_id=activity_id,
-                action_id=action_id,
-                identifier_grant=id_grant
-            )
-        else:
-            work_activity.upt_activity_action_comment(
-                activity_id=activity_id,
-                action_id=action_id,
-                comment=post_json.get('commond')
-            )
-        return jsonify(code=0, msg=_('success'))
+    id_grant = post_json.get('identifier_grant')
+    # If is action identifier_grant, then save to work_activity
     if id_grant is not None:
+        work_activity.upt_activity_action_id_grant(
+            activity_id=activity_id,
+            action_id=action_id,
+            identifier_grant=id_grant
+        )
         activity['identifier_grant'] = id_grant
+    if 1 == post_json.get('temporary_save'):
+        work_activity.upt_activity_action_comment(
+            activity_id=activity_id,
+            action_id=action_id,
+            comment=post_json.get('commond')
+        )
+        return jsonify(code=0, msg=_('success'))
     history = WorkActivityHistory()
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
