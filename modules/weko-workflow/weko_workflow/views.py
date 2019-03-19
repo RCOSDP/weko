@@ -281,6 +281,7 @@ def next_action(activity_id='0', action_id=0):
     id_grant = post_json.get('identifier_grant')
     work_activity = WorkActivity()
     if 1 == post_json.get('temporary_save'):
+        # when click button Save
         if id_grant is not None:
             work_activity.upt_activity_action_id_grant(
                 activity_id=activity_id,
@@ -295,7 +296,7 @@ def next_action(activity_id='0', action_id=0):
             )
         return jsonify(code=0, msg=_('success'))
     if id_grant is not None:
-        activity['action_identifier_grant'] = id_grant
+        activity['identifier_grant'] = id_grant
     history = WorkActivityHistory()
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
