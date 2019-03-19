@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
+from invenio_i18n.ext import InvenioI18N, current_i18n
 
 from . import config
 from .models import SearchManagement, AdminLangSettings
@@ -118,3 +119,7 @@ def update_admin_lang_setting(admin_lang_settings):
     except Exception as e:
         return str(e)
     return 'success'
+
+
+def get_selected_language():
+    return current_i18n.language
