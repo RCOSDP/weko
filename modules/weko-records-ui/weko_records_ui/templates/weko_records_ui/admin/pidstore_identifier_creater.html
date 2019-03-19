@@ -20,13 +20,12 @@
 
 {% extends 'admin/model/create.html' %}
 {% import 'admin/lib.html' as lib with context %}
-{% import 'admin/static.html' as admin_static with context %}
 {% from 'admin/lib.html' import extra with context %} {# backward compatible #}
 
-{% block css %}
+{% block head_tail %}
   {{ super() }}
-  <link href="{{ admin_static.url(filename='css/weko_records_ui/pidstore_identifier.css', v='1.0.0') }}" rel="stylesheet">
-{% endblock css %}
+  <link href="{{ url_for('static', filename='css/weko_records_ui/pidstore_identifier.css') }}" rel="stylesheet">
+{% endblock %}
 
 {% block create_form %}
   {% call lib.form_tag(None) %}
@@ -71,5 +70,6 @@
 {% endblock %}
 
 {% block tail %}
+  {{ super() }}
   <script src="{{ admin_static.url(filename='js/weko_records_ui/pidstore_identifier.js', v='1.0.0') }}"></script>
 {% endblock %}
