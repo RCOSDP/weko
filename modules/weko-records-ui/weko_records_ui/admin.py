@@ -37,9 +37,8 @@ from .models import InstitutionName
 
 from invenio_communities.models import Community
 from datetime import datetime
-from wtforms import SelectField, StringField
-from wtforms import validators
 from weko_user_profiles.models import UserProfile
+
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -155,7 +154,6 @@ class IdentifierSettingView(ModelView):
     create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE
 
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-    column_searchable_list = ['repository', 'jalc_doi']
 
     form_create_rules = [rules.Header(_('Prefix')),
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
@@ -165,23 +163,6 @@ class IdentifierSettingView(ModelView):
         rules.Header(_('Enable/Disable')),
     ]
 
-    form_choices = {
-        'repository': [
-            ('0', 'Root Index 0'),
-            ('1', 'Root Index 1'),
-            # list communities
-        ]
-    }
-
-    form_widget_args = {
-        'jalc_doi': {
-            'readonly': True
-        },
-        'jalc_crossref_doi': {
-            'readonly': True
-        },
-    }
-
     column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
         jalc_crossref_doi=_('JaLC CrossRef DOI'),
         jalc_datacite_doi=_('jaLC DataCite DOI'), cnri=_('CNRI'),
@@ -189,14 +170,6 @@ class IdentifierSettingView(ModelView):
     )
 
     form_edit_rules = form_create_rules
-
-    page_size = 25
-
-
-    def edit_form(self, obj):
-        """Customize edit form."""
-        form = super(IdentifierSettingView, self).edit_form(obj)
-        return form
 
     def on_model_change(self, form, model, is_created):
         """
@@ -217,12 +190,11 @@ class IdentifierSettingView(ModelView):
 
         ### Update hidden data automation
         if is_created:
-            model.created_userId = UserProfile.get_by_userid(current_user.get_id()).username
+            model.created_userId = current_user.get_id()
             model.created_date = datetime.utcnow().replace(microsecond=0)
-        model.updated_userId = UserProfile.get_by_userid(current_user.get_id()).username
+        model.updated_userId = current_user.get_id()
         model.updated_date = datetime.utcnow().replace(microsecond=0)
         pass
-
 
     def edit_form(self, obj):
         """
