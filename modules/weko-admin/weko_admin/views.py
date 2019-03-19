@@ -33,9 +33,9 @@ from invenio_admin.proxies import current_admin
 from weko_records.api import ItemTypes, SiteLicense
 from werkzeug.local import LocalProxy
 from sqlalchemy.orm import session
-from .models import SessionLifetime, SearchManagement
+from .models import SessionLifetime, SearchManagement, AdminLangSettings
 from .utils import get_response_json, get_search_setting, \
-    get_admin_lang_setting, update_admin_lang_setting
+    get_admin_lang_setting, update_admin_lang_setting, get_selected_language
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -242,3 +242,17 @@ def save_lang_list():
     result = update_admin_lang_setting(data)
 
     return jsonify(msg=result)
+
+
+@blueprint_api.route('/get_selected_lang', methods=['GET'])
+def get_selected_lang():
+    result = {
+        'lang': '',
+        'selected':''
+    }
+    try:
+        result['lang'] = AdminLangSettings.get_registered_language()
+        result['selected'] = get_selected_language()
+    except Exception as e:
+        result['error'] = str(e)
+    return jsonify(result)
