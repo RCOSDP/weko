@@ -295,7 +295,7 @@ def next_action(activity_id='0', action_id=0):
             )
         return jsonify(code=0, msg=_('success'))
     if id_grant is not None:
-        activity['id_grant'] = id_grant
+        activity['action_identifier_grant'] = id_grant
     history = WorkActivityHistory()
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
