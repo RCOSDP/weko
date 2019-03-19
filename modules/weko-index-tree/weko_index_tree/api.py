@@ -81,7 +81,6 @@ class Indexes(object):
             data["more_check"] = False
             data["display_no"] = current_app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER']
 
-            data["admin_coverpage"] = get_admin_coverpage_setting()
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
 
@@ -183,8 +182,6 @@ class Indexes(object):
                             v = datetime.strptime(v, '%Y%m%d')
                         else:
                             v = None
-                    if "admin_coverpage" in k:
-                        v = get_admin_coverpage_setting()
                     if "have_children" in k:
                         continue
                     setattr(index, k, v)
@@ -454,8 +451,7 @@ class Indexes(object):
                     recursive_t.c.browsing_role, recursive_t.c.contribute_role,
                     recursive_t.c.browsing_group, recursive_t.c.contribute_group,
                     recursive_t.c.more_check, recursive_t.c.display_no, 
-                    recursive_t.c.coverpage_state, recursive_t.c.recursive_coverpage_check, recursive_t.c.admin_coverpage
-                    ]
+                    recursive_t.c.coverpage_state, recursive_t.c.recursive_coverpage_check]
             obj = db.session.query(*qlst). \
                 order_by(recursive_t.c.lev,
                          recursive_t.c.pid,
@@ -738,7 +734,6 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
-                Index.admin_coverpage,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -762,7 +757,6 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    test_alias.admin_coverpage,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -783,7 +777,6 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
-                Index.admin_coverpage,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -807,7 +800,6 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    test_alias.admin_coverpage,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -839,7 +831,6 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
-                Index.admin_coverpage,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.id == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -863,7 +854,6 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    test_alias.admin_coverpage,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
@@ -884,7 +874,6 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
-                Index.admin_coverpage,
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.id == pid). \
                 cte(name="recursive_t", recursive=True)
@@ -908,7 +897,6 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    test_alias.admin_coverpage,
                     rec_alias.c.lev + 1).filter(
                     test_alias.parent == rec_alias.c.cid)
             )
