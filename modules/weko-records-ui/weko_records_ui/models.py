@@ -124,7 +124,7 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    community_id = db.Column(db.String(100), db.ForeignKey(Community.id))
+    community_id = db.Column(db.String(100), db.ForeignKey(Community.id), nullable=False)
     """Identifier of the index."""
 
     repository = db.relationship(Community, foreign_keys=community_id)

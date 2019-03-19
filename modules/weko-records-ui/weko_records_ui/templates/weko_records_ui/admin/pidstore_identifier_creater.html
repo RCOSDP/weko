@@ -71,5 +71,5 @@
 
 {% block tail %}
   {{ super() }}
-  <script src="{{ admin_static.url(filename='js/weko_records_ui/pidstore_identifier.js', v='1.0.0') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_records_ui/pidstore_identifier.js') }}"></script>
 {% endblock %}
