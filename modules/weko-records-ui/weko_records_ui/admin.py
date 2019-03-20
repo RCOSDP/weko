@@ -195,7 +195,7 @@ class IdentifierSettingView(ModelView):
             model.created_date = datetime.utcnow().replace(microsecond=0)
         model.updated_userId = current_user.get_id()
         model.updated_date = datetime.utcnow().replace(microsecond=0)
-        model.repository = str(model.repository)
+        model.repository = model.repository.id
         pass
     
     def create_form(self):
