@@ -102,10 +102,9 @@
                             {%- set file_url = url_for_security('login', next=request.path) -%}
                         {%- endif -%}
                         <a class="forcewrap"
-                           href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
-                        <span>[ {{ downloads_count_list[file.key] if file.key in downloads_count_list else 0 }} downloads ]</span><br>
+                           href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a><br>
                         {%- if access_permission -%}
-                          <span>{{file.checksum.split(':')[0]}}</span>
+                          <span>{{file.checksum.split(':')[0]}}: </span>
                           <span class="break-word">{{file.checksum.split(':')[1]}}</span>
                         {%- else -%}
                           <div class="panel-body">
