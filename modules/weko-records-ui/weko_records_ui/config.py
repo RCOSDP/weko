@@ -76,6 +76,15 @@ RECORDS_UI_ENDPOINTS = dict(
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
     ),
+    recid_file_details=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/file_details/<path:filename>',
+        view_imp='weko_records_ui.views.default_view_method',
+        template='weko_records_ui/file_details.html',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+    ),
     recid_file_preview=dict(
         pid_type='recid',
         route='/record/<pid_value>/file_preview/<path:filename>',
