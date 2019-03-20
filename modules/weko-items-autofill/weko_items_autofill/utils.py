@@ -273,16 +273,18 @@ def get_item_id(item_type_id):
 
     return results
 
-	def get_item_path(item_type_id):
+
+def get_item_path(item_type_id):
     results = dict()
     item_type = ItemTypes.get_record(item_type_id)
     try:
         path_tree = item_type.get("properties")
         results = get_item_path_callback(path_tree)
-        #results = path_tree
+        # results = path_tree
     except Exception as e:
         results['error'] = str(e)
     return results
+
 
 def get_item_path_callback(data):
     results = dict()
