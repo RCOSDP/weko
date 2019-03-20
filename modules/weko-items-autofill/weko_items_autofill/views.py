@@ -62,7 +62,7 @@ def get_items_autofill_data():
 
     try:
         result['items'] = get_item_id(item_type_id)
-		result['path'] = get_item_path(item_type_id)
+        result['path'] = get_item_path(item_type_id)
         if api_type == 'CrossRef':
             pid = config.WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID
             api_response = get_crossref_data(pid, search_data)
