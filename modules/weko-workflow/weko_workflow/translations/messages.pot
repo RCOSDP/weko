@@ -412,6 +412,6 @@ msgid "Save WorkFlow"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/admin/workflow_list.html:28
-msgid "Create WrokFlow"
+msgid "Create WorkFlow"
 msgstr ""
 
