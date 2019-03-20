@@ -28,6 +28,7 @@ from weko_records.api import Mapping
 
 from . import config
 from .crossref_api import CrossRefOpenURL
+from weko_records.api import ItemTypes
 
 
 def is_update_cache():
@@ -272,6 +273,64 @@ def get_item_id(item_type_id):
 
     return results
 
+	def get_item_path(item_type_id):
+    results = dict()
+    item_type = ItemTypes.get_record(item_type_id)
+    try:
+        path_tree = item_type.get("properties")
+        results = get_item_path_callback(path_tree)
+        #results = path_tree
+    except Exception as e:
+        results['error'] = str(e)
+    return results
+
+def get_item_path_callback(data):
+    results = dict()
+    for k, v in data.items():
+        if is_item_id(k):
+            path = list()
+            find_properties(v, path)
+            if len(path) is not 0:
+                temp_dict = copy.deepcopy(v)
+                for key in path:
+                    temp_dict[key] = temp_dict.get(key)
+                item = dict()
+                for u, s in temp_dict["properties"].items():
+                    if is_item_id(u):
+                        if isinstance(s, dict):
+                            if "items" not in s.keys():
+                                item[u] = None
+                            else:
+                                item2 = dict()
+                                for key2 in s["items"]["properties"].keys():
+                                    item2[key2] = None
+                                item[u] = item2
+                        else:
+                            item[u] = None
+                results[k] = item
+            else:
+                results[k] = None
+
+    return results
+
+def find_properties(data, path):
+    if isinstance(data, dict):
+        for k, v in data.items():
+            if k == "properties":
+                path.append(k)
+                return
+        for k, v in data.items():
+            find_properties(v, path)     
+    else:
+        path = None
+
+def is_item_id(id):
+    try:
+        if (str(id).index("item") is not 0):
+            return True
+        return True
+    except:
+        return False
 
 @cached_api_json(timeout=50,)
 def get_crossref_data(pid, doi):

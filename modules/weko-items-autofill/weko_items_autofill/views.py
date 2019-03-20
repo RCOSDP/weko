@@ -14,7 +14,7 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .permissions import auto_fill_permission
-from .utils import parse_crossref_json_response, get_item_id, get_crossref_data
+from .utils import parse_crossref_json_response, get_item_id, get_crossref_data, get_item_path
 from . import config
 
 blueprint = Blueprint(
@@ -62,6 +62,7 @@ def get_items_autofill_data():
 
     try:
         result['items'] = get_item_id(item_type_id)
+		result['path'] = get_item_path(item_type_id)
         if api_type == 'CrossRef':
             pid = config.WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID
             api_response = get_crossref_data(pid, search_data)
@@ -94,4 +95,14 @@ def get_item_map(item_type_id=0):
     function return the dictionary of sub item id
     """
     results = get_item_id(item_type_id)
+    return jsonify(results)
+
+
+@blueprint_api.route('/get_item_type/<int:item_type_id>', methods=['GET'])
+def get_item_type(item_type_id=0):
+    """
+    host to ~/api/autofill/get_item_map/{id}
+    function return the dictionary of sub item id
+    """
+    results = get_item_path(item_type_id)
     return jsonify(results)
