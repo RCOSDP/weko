@@ -4,7 +4,6 @@ $(document).ready(function () {
     url: urlLoad,
     type: 'GET',
     success: function (data) {
-      console.log(data);
       let options = '';
       if (!data.lang) {
         return;
