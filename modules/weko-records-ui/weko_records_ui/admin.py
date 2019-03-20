@@ -150,11 +150,32 @@ class IdentifierSettingView(ModelView):
     can_create = True
     can_edit = True
     can_delete = False
-    can_view_details = False
+    can_view_details = True
     create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE
 
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-    column_searchable_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri')
+    column_searchable_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+    column_details_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
+
+
+    form_widget_args = {
+        'jalc_doi': {
+            'maxlength': 100
+        },
+        'jalc_crossref_doi': {
+            'maxlength': 100
+        },
+        'jalc_datacite_doi': {
+            'maxlength': 100
+        },
+        'cnri': {
+            'maxlength': 100
+        },
+        'suffix': {
+            'maxlength': 100
+        }
+    }
+
 
     form_create_rules = [rules.Header(_('Prefix')),
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
