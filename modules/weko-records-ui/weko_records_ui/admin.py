@@ -35,10 +35,11 @@ from invenio_db import db
 from .models import PDFCoverPageSettings
 from .models import InstitutionName
 
-from invenio_communities.models import Community
+import unicodedata
 from datetime import datetime
+from invenio_communities.models import Community
 from flask_admin.contrib.sqla.fields import QuerySelectField
-
+from wtforms.validators import ValidationError
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -157,6 +158,20 @@ class IdentifierSettingView(ModelView):
     column_searchable_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
     column_details_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix', 'created_userId', 'created_date', 'updated_userId', 'updated_date')
 
+    form_create_rules = [rules.Header(_('Prefix')),
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'cnri',
+        rules.Header(_('Suffix')),
+        'suffix',
+        # rules.Header(_('Enable/Disable')),
+    ]
+
+    column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
+        jalc_crossref_doi=_('JaLC CrossRef DOI'),
+        jalc_datacite_doi=_('JaLC DataCite DOI'), cnri=_('CNRI'),
+        suffix=_('Semi-automatic Suffix')
+    )
+
     form_widget_args = {
         'jalc_doi': {
             'maxlength': 100
@@ -175,20 +190,43 @@ class IdentifierSettingView(ModelView):
         }
     }
 
+    form_overrides = {
+        'repository': QuerySelectField,
+    }
 
-    form_create_rules = [rules.Header(_('Prefix')),
-        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
-        'cnri',
-        rules.Header(_('Suffix')),
-        'suffix',
-        # rules.Header(_('Enable/Disable')),
-    ]
+    def _validator_halfwidth_input(form, field):
+        """
+            Validator input character set
 
-    column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
-        jalc_crossref_doi=_('JaLC CrossRef DOI'),
-        jalc_datacite_doi=_('JaLC DataCite DOI'), cnri=_('CNRI'),
-        suffix=_('Semi-automatic Suffix')
-    )
+            :param form:
+                Form used to create/update model
+            :param field:
+                Template fields contain data need validator
+        """
+        for char in field.data:
+            if unicodedata.east_asian_width(char) in 'FWA':
+                raise ValidationError(_('Only allow halfwith character in input'))
+
+    form_args = {
+        'repository': {
+            'query_factory': db.session.query
+        },
+        'jalc_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'jalc_crossref_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'jalc_datacite_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'cnri': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'suffix': {
+            'validators': [_validator_halfwidth_input]
+        }
+    }
 
     form_edit_rules = form_create_rules
 
@@ -251,16 +289,6 @@ class IdentifierSettingView(ModelView):
         except:
             current_app.logger.error('[IdentifierSettingView] Unexpected error: ', sys.exc_info()[0])
         return query_data
-
-    form_overrides = {
-        'repository': QuerySelectField,
-    }
-
-    form_args = {
-        'repository': {
-            'query_factory': db.session.query
-        }
-    }
 
 
 identifier_adminview = dict(
