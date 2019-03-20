@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-03-19 11:18+0000\n"
+"POT-Creation-Date: 2019-03-20 02:42+0000\n"
 "PO-Revision-Date: 2018-04-12 18:06+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -197,6 +197,10 @@ msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:61
 msgid "Download"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/box/share.html:2
+msgid "Share"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:4
