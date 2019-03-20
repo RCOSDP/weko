@@ -29,43 +29,8 @@
 
 {% block create_form %}
   {% call lib.form_tag(None) %}
-  <div class="row">
-    <div class="col-sm-12">
-      <div class="panel-group">
-        <div class="row">
-          <div class="col-sm-1 col-md-1"></div>
-          <div class="col-sm-10 col-md-10">
-            <div class="row">
-              {{ lib.render_form_fields(form, form_opts) }}
-            </div>
-            <!-- 
-            <div class="row-line-space"></div>
-            <div class="row" align="center">
-                <span class="query-columns">
-                  <span>
-                    <label>{{_('Disable')}}</label>
-                    <select id="leftSelect" multiple="multiple">
-                    </select>
-                  </span>
-                  <span class="buttons">
-                    <input type="button" id="moveRight" value="→" class="move-right">
-                    <input type="button" id="moveLeft" value="←" class="move-left">
-                  </span>
-                  <span>
-                    <label>{{_('Enable')}}</label>
-                    <select id="rightSelect" multiple="multiple">
-                    </select>
-                  </span>
-                </span>
-            </div>
-             -->
-          </div>
-        </div>
-
-        {{ lib.render_form_buttons(return_url, extra()) }}
-      </div>
-    </div>
-  </div>
+      {{ lib.render_form_fields(form, form_opts) }}
+      {{ lib.render_form_buttons(return_url, extra()) }}
   {% endcall %}
 {% endblock %}
 
