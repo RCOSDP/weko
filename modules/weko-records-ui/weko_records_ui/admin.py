@@ -203,9 +203,13 @@ class IdentifierSettingView(ModelView):
             :param field:
                 Template fields contain data need validator
         """
-        for char in field.data:
-            if unicodedata.east_asian_width(char) in 'FWA':
-                raise ValidationError(_('Only allow halfwith character in input'))
+        try:
+            for char in field.data:
+                if unicodedata.east_asian_width(char) in 'FWA':
+                    raise ValidationError(_('Only allow halfwith 1-bytes character in input'))
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            raise ValidationError(_('Only allow halfwith 1-bytes character in input'))
 
     form_args = {
         'repository': {
@@ -252,7 +256,7 @@ class IdentifierSettingView(ModelView):
             model.created_date = datetime.utcnow().replace(microsecond=0)
         model.updated_userId = current_user.get_id()
         model.updated_date = datetime.utcnow().replace(microsecond=0)
-        model.repository = model.repository.id
+        model.repository = str(model.repository)
         pass
 
     def create_form(self):
