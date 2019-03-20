@@ -1,6 +1,6 @@
 require([
-  "jquery",
-  "bootstrap"
+  //"jqeury",
+  //"bootstrap"
 ], function() {
   $('#btn_back').on('click', function(){
     window.history.back();
