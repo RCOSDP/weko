@@ -216,21 +216,34 @@ class IdentifierSettingView(ModelView):
         model.updated_date = datetime.utcnow().replace(microsecond=0)
         model.repository = model.repository.id
         pass
-    
+
     def create_form(self):
+        """
+            Instantiate model delete form and return it.
+
+            Override to implement custom behavior.
+
+            The delete form originally used a GET request, so delete_form
+            accepts both GET and POST request for backwards compatibility.
+        """
         return self._use_append_repository(
             super(IdentifierSettingView, self).create_form()
         )
-    
+
     def edit_form(self, obj):
+        """
+            Instantiate model editing form and return it.
+
+            Override to implement custom behavior.
+        """
         return self._use_append_repository(
             super(IdentifierSettingView, self).edit_form(obj)
         )
 
     def _use_append_repository(self, form):
-        form.repository.query_factory = self._get_community_list 
+        form.repository.query_factory = self._get_community_list
         return form
-    
+
     def _get_community_list(self):
         try:
             query_data = Community.query.all()
