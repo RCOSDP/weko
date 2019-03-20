@@ -334,7 +334,9 @@ def next_action(activity_id='0', action_id=0):
             resolver = Resolver(pid_type='recid', object_type='rec',
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
-            UpdateItem.publish(pid, approval_record)
+            
+            # TODO: Make private as default.
+            # UpdateItem.publish(pid, approval_record)
 
     if 'item_link'==action_endpoint:
         relation_data= post_json.get('link_data'),
