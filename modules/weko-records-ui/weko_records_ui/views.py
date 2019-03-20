@@ -30,7 +30,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_oaiserver.response import getrecord
 from weko_records_ui.models import InstitutionName
 from weko_index_tree.models import IndexStyle
-from .permissions import check_created_id, check_original_pdf_download_permission
+from .permissions import check_created_id, check_original_pdf_download_permission, check_file_download_permission
 from weko_search_ui.api import get_search_detail_keyword
 from weko_deposit.api import WekoIndexer
 from .models import PDFCoverPageSettings
@@ -38,6 +38,8 @@ from invenio_files_rest.views import ObjectResource
 from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
 import werkzeug
+
+from invenio_stats import current_stats
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -233,6 +235,19 @@ def get_license_icon(type):
 
     return lst
 
+@blueprint.app_template_filter('get_downloads_count')
+def get_downloads_count(record):
+    result = {}
+    try:
+        cfg = {'params': {'bucket_id': record['_buckets']['deposit'] }}
+        query_cfg = current_stats.queries['bucket-file-download-total']
+        query = query_cfg.query_class(**query_cfg.query_config)
+        reseponse = query.run(**cfg['params'])
+        for c in reseponse['buckets']:
+            result[c['key']] = int(c['value'])
+    except Exception as e:
+        current_app.logger.debug(str(e))
+    return result
 
 @blueprint.app_template_filter('check_permission')
 def check_permission(record):
@@ -243,6 +258,15 @@ def check_permission(record):
     """
     return check_created_id(record)
 
+@blueprint.app_template_filter('check_file_permission')
+def check_file_permission(record, fjson):
+    """Check File Download Permission.
+
+    :param record
+    :param fjson
+    :return: result
+    """
+    return check_file_download_permission(record, fjson)
 
 def _get_google_scholar_meta(record):
     target_map = {

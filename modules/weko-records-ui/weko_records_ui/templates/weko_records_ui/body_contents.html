@@ -63,6 +63,7 @@
               {%- set files = record.files -%}
               {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
               {%- if files -%}
+              {%- set downloads_count_list = record | get_downloads_count -%}
               <table class="table table-bordered table-striped">
                 <thead>
                 <tr >
@@ -77,6 +78,7 @@
                 filename=file.key) %}
                 {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
                 filename=file.key) %}
+                {%- set access_permission = record | check_file_permission(file.info()) -%}
                 <tr >
                   <td >{{file.filename}} <a href="{{file_details_url}}">{{_('Detail')}}</a></td>
                   <td rowspan="2">
@@ -96,11 +98,20 @@
                   <td>
                       <span class="filename">
                         <img src="{{img}}" alt={{ file.filename }} />
+                        {%- if not access_permission and file.accessrole == 'open_login' -%}
+                            {%- set file_url = url_for_security('login', next=request.path) -%}
+                        {%- endif -%}
                         <a class="forcewrap"
                            href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
-                        <span>[ 0 downloads ]</span><br>
-                        <span>{{file.checksum.split(':')[0]}}</span>
-                        <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                        <span>[ {{ downloads_count_list[file.key] if file.key in downloads_count_list else 0 }} downloads ]</span><br>
+                        {%- if access_permission -%}
+                          <span>{{file.checksum.split(':')[0]}}</span>
+                          <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                        {%- else -%}
+                          <div class="panel-body">
+                            <span class="fa fa-key" style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted Access')}}</span>
+                          </div>
+                        {%- endif -%}
                       </span>
 
                       {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
@@ -129,17 +140,27 @@
                   <td colspan="2">
                     <div class="panel panel-default" id="preview_de">
                       <div class="panel-heading">
-                        <a class="panel-toggle" data-toggle="collapse" data-target="#preview_{{loop.index}}">
-                          {{_('Preview')}}
-                          <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
-                          <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
-                        </a>
+                        {%- if not access_permission and file.accessrole == 'open_login' -%}
+                            <a class="panel-toggle" href="{{url_for_security('login', next=request.path)}}">
+                                {{_('Preview')}}
+                            </a>
+                        {%- else -%}
+                            <a class="panel-toggle" data-toggle="collapse" data-target="#preview_{{loop.index}}">
+                              {{_('Preview')}}
+                              <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
+                              <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
+                            </a>
+                        {%- endif -%}
                       </div>
                       <div id="preview_{{loop.index}}" class="collapse">
                         <div class="embed-responsive embed-responsive-16by9">
+                          {%- if access_permission -%}
                             <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
                                   src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
                             </iframe>
+                          {%- else -%}
+                            {%- include config.WEKO_PERMISSION_REQUIRED_TEMPLATE -%}
+                          {%- endif -%}
                         </div>
                       </div>
                     </div>
@@ -153,28 +174,38 @@
                   <td colspan="2">
                     <div class="panel panel-default" id="preview">
                       <div class="panel-heading">
-                        <a class="panel-toggle" data-toggle="collapse" data-target="#preview_{{loop.index}}">
-                          {{_('Preview')}}
-                          <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
-                          <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
-                        </a>
+                          {%- if not access_permission and file.accessrole == 'open_login' -%}
+                            <a class="panel-toggle" href="{{url_for_security('login', next=request.path)}}">
+                              {{_('Preview')}}
+                            </a>
+                          {%- else -%}
+                            <a class="panel-toggle" data-toggle="collapse" data-target="#preview_{{loop.index}}">
+                              {{_('Preview')}}
+                              <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
+                              <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
+                            </a>
+                          {%- endif -%}
                       </div>
                       <div id="preview_{{loop.index}}" class="collapse">
                         <div class="embed-responsive embed-responsive-16by9">
-                          {%- if 'audio' in file.mimetype -%}
-                            <audio controls preload="auto">
-                              <source src="{{file_preview_url}}" type="{{file.mimetype}}">
-                            </audio>
-                          {%- elif 'video' in file.mimetype -%}
-                            <video controls>
-                              <source src="{{file_preview_url}}" type="{{file.mimetype}}">
-                            </video>
-                          {%- elif 'text' in file.mimetype -%}
-                            <object data="{{file_preview_url}}" type="{{file.mimetype}}"/>
-                          {%- else -%}
-                            <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
+                          {%- if access_permission -%}
+                              {%- if 'audio' in file.mimetype -%}
+                                <audio controls preload="auto">
+                                  <source src="{{file_preview_url}}" type="{{file.mimetype}}">
+                                </audio>
+                              {%- elif 'video' in file.mimetype -%}
+                                <video controls>
+                                  <source src="{{file_preview_url}}" type="{{file.mimetype}}">
+                                </video>
+                              {%- elif 'text' in file.mimetype -%}
+                                <object data="{{file_preview_url}}" type="{{file.mimetype}}"/>
+                              {%- else -%}
+                                <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
                                   src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
-                            </iframe>
+                                </iframe>
+                              {%- endif -%}
+                          {%- else -%}
+                              {%- include config.WEKO_PERMISSION_REQUIRED_TEMPLATE -%}
                           {%- endif -%}
                         </div>
                       </div>

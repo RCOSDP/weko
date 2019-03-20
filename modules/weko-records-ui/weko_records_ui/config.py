@@ -25,6 +25,8 @@ from .views import blueprint
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
 WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
 
+WEKO_PERMISSION_REQUIRED_TEMPLATE = 'weko_workflow/permission_required.html'
+
 WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Repository Administrator',
                              'Contributor',
