@@ -152,13 +152,18 @@ def parse_crossref_json_response(response, response_data_template):
     if type(page) is str:
         split_page = page.split('-')
         if len(split_page) == 2:
-            try_assign_data(response_data_convert,
-                            str(int(split_page[1]) - int(split_page[0]) + 1),
-                            'numPages', ['@value'])
-            try_assign_data(response_data_convert, split_page[1], 'pageEnd',
-                            ['@value'])
-            try_assign_data(response_data_convert, split_page[0], 'pageStart',
-                            ['@value'])
+            try:
+                try_assign_data(response_data_convert,
+                                str(int(split_page[1]) - int(
+                                    split_page[0]) + 1),
+                                'numPages', ['@value'])
+                try_assign_data(response_data_convert, split_page[1], 'pageEnd',
+                                ['@value'])
+                try_assign_data(response_data_convert, split_page[0],
+                                'pageStart',
+                                ['@value'])
+            except ValueError:
+                pass
 
     if type(created) is dict:
         try_assign_data(response_data_convert, created.get('affiliationName'),
@@ -181,8 +186,6 @@ def parse_crossref_json_response(response, response_data_template):
         try_assign_data(response_data_convert,
                         created.get('creatorAlternative'),
                         'creator', ['creatorAlternative', '@value'])
-        try_assign_data(response_data_convert, created.get('date'), 'date',
-                        ['@attributes', 'dateType'])
         try_assign_data(response_data_convert, created.get('title'), 'title',
                         ['@value'])
         try_assign_data(response_data_convert, created.get('nameIdentifier'),
@@ -197,21 +200,29 @@ def parse_crossref_json_response(response, response_data_template):
                         ['nameIdentifier', '@attributes', 'nameIdentifierURI'])
         try_assign_data(response_data_convert, created.get('publisher'),
                         'publisher', ['@value'])
+        try_assign_data(response_data_convert, created.get('relationType'),
+                        'relation', ['@attributes', 'relationType'])
+        try_assign_data(response_data_convert, None, 'relation',
+                        ['relatedTitle', '@value'])
         isbn_item = created.get('ISBN')
         if type(isbn_item) is list:
             try_assign_data(response_data_convert, isbn_item[0], 'relation',
-                            ['relatedTitle', '@value'])
+                            ['relatedIdentifier', '@value'])
+            try_assign_data(response_data_convert, 'ISBN', 'relation',
+                            ['relatedIdentifier', '@attributes',
+                             'identifierType'])
 
     if type(author) is list:
         if type(author[0]) is dict:
-            try_assign_data(response_data_convert,
-                            author[0].get('given') or '' + " " + author[0].get(
-                                'family') or '',
+            given_name = author[0].get('given') or ''
+            family_name = author[0].get('family') or ''
+            creator_name = given_name + " " + family_name
+            try_assign_data(response_data_convert, creator_name.strip(),
                             'creator', ['creatorName', '@value'])
-            try_assign_data(response_data_convert, author[0].get('family'),
+            try_assign_data(response_data_convert, family_name,
                             'creator',
                             ['familyName', '@value'])
-            try_assign_data(response_data_convert, author[0].get('given'),
+            try_assign_data(response_data_convert, given_name,
                             'creator',
                             ['givenName', '@value'])
 
@@ -220,6 +231,8 @@ def parse_crossref_json_response(response, response_data_template):
                         convert_datetime_format(issued.get('date-parts')),
                         'date',
                         ['@value'])
+        try_assign_data(response_data_convert, "Issued", 'date',
+                        ['@attributes', 'dateType'])
 
     """Set default language to English(en or eng) because API does not return 
     the current language"""
@@ -227,10 +240,6 @@ def parse_crossref_json_response(response, response_data_template):
     try_assign_data(response_data_convert,
                     config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'publisher',
                     ['@attributes', 'xml:lang'])
-    try_assign_data(response_data_convert, created.get('relationType'),
-                    'relation', ['@attributes', 'relationType'])
-    try_assign_data(response_data_convert, created.get('ISBN'), 'relation',
-                    ['relatedIdentifier', '@value'])
     try_assign_data(response_data_convert,
                     config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'relation',
                     ['relatedTitle', '@attributes', 'xml:lang'])
