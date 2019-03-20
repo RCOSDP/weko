@@ -339,5 +339,5 @@ class AdminLangSettings(db.Model):
 
 
 __all__ = ([
-    'SearchManagement',
+    'SearchManagement', 'AdminLangSettings'
 ])

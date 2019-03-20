@@ -19,10 +19,12 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
-from invenio_i18n.ext import InvenioI18N, current_i18n
+from flask import session
+from invenio_i18n.ext import current_i18n
+from invenio_i18n.views import set_lang
 
 from . import config
-from .models import SearchManagement, AdminLangSettings
+from .models import AdminLangSettings, SearchManagement
 
 
 def get_response_json(result_list, n_lst):
@@ -122,4 +124,57 @@ def update_admin_lang_setting(admin_lang_settings):
 
 
 def get_selected_language():
-    return current_i18n.language
+    result = {
+        'lang': '',
+        'selected': '',
+        'refresh': False
+    }
+    registered_languages = AdminLangSettings.get_registered_language()
+    if not registered_languages:
+        return result
+
+    result['lang'] = registered_languages
+    default_language = registered_languages[0].get('lang_code')
+    result['refresh'] = is_refresh(default_language)
+    result['selected'] = get_current_language(default_language)
+
+    return result
+
+
+def get_current_language(default_language):
+    """
+
+    :param default_language:
+    :return: selected language
+    """
+    if "selected_language" in session:
+        session['selected_language'] = current_i18n.language
+        return session['selected_language']
+    else:
+        session['selected_language'] = default_language
+        set_lang(default_language)
+        return session['selected_language']
+
+
+def set_default_language():
+    """
+    In case user opens the web for the first time,
+    set default language base on Admin language setting
+    """
+    if "selected_language" not in session:
+        registered_languages = AdminLangSettings.get_registered_language()
+        if registered_languages:
+            default_language = registered_languages[0].get('lang_code')
+            set_lang(default_language)
+
+
+def is_refresh(default_language):
+    """
+
+    :param default_language:
+    :return:
+    """
+    if "selected_language" not in session:
+        if default_language != current_i18n.language:
+            return True
+    return False
