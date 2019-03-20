@@ -195,7 +195,7 @@ class IdentifierSettingView(ModelView):
             model.created_date = datetime.utcnow().replace(microsecond=0)
         model.updated_userId = current_user.get_id()
         model.updated_date = datetime.utcnow().replace(microsecond=0)
-        model.repository = str(model.repository)
+        model.repository = model.repository.id
         pass
     
     def create_form(self):
@@ -215,8 +215,7 @@ class IdentifierSettingView(ModelView):
     def _get_community_list(self):
         try:
             query_data = Community.query.all()
-            query_data.append(Community(id=0, title='Root Index'))
-            query_data.sort(key=id)
+            query_data.insert(0, Community(id='Root Index'))
         except:
             current_app.logger.error('[IdentifierSettingView] Unexpected error: ', sys.exc_info()[0])
         return query_data
