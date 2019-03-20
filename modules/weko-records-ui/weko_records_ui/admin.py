@@ -145,17 +145,16 @@ pdfcoverpage_adminview = {
 
 
 class IdentifierSettingView(ModelView):
-    """Setting model view."""
+    """Pidstore Identifier admin view."""
 
     can_create = True
     can_edit = True
     can_delete = False
-    can_view_details = True
+    can_view_details = False
     create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE
 
     column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-
-    column_searchable_list = ('jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri')
+    column_searchable_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri')
 
     form_create_rules = [rules.Header(_('Prefix')),
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
@@ -167,10 +166,10 @@ class IdentifierSettingView(ModelView):
 
     column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
         jalc_crossref_doi=_('JaLC CrossRef DOI'),
-        jalc_datacite_doi=_('jaLC DataCite DOI'), cnri=_('CNRI'),
+        jalc_datacite_doi=_('JaLC DataCite DOI'), cnri=_('CNRI'),
         suffix=_('Semi-automatic Suffix')
     )
-    
+
     form_edit_rules = form_create_rules
 
     def on_model_change(self, form, model, is_created):
@@ -220,7 +219,6 @@ class IdentifierSettingView(ModelView):
             current_app.logger.error('[IdentifierSettingView] Unexpected error: ', sys.exc_info()[0])
         return query_data
 
-
     form_overrides = {
         'repository': QuerySelectField,
     }
@@ -230,6 +228,7 @@ class IdentifierSettingView(ModelView):
             'query_factory': db.session.query
         }
     }
+
 
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
