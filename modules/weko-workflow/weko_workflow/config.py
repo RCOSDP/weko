@@ -32,3 +32,11 @@ WEKO_WORKFLOW_ACTION_ENDPOINTS = {
         'params': {}
     }
 }
+
+IDENTIFIER_GRANT_LIST = [(0, 'Not Grant'),
+                         (1, 'JaLC DOI'),
+                         (2, 'JaLC CrossRef DOI'),
+                         (3, 'JaLC DataCite DOI'),
+                         (4, 'CNRI')
+                        ]
+"""Options list for Identifier Grant action."""

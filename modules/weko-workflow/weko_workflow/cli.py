@@ -187,6 +187,13 @@ def init_workflow_tables(tables):
             action_desc='Action for OA Policy confirmation.',
             action_version='1.0.0',
             action_endpoint='oa_policy',
+        ))
+        # Identifier Grant
+        db_action.append(dict(
+            action_name='Identifier Grant',
+            action_desc='Select DOI issuing organization and CNRI.',
+            action_version='1.0.0',
+            action_endpoint='identifier_grant',
             action_makedate=datetime.date(2019, 3, 15),
             action_lastdate=datetime.date(2019, 3, 15)
         ))
