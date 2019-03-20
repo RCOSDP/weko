@@ -21,5 +21,6 @@
  */
 
 $(document).ready(function () {
-    console.log("Hello!");
+    console.log("javascript behaviors for pidstore_identifier admin view!");
   });
+
