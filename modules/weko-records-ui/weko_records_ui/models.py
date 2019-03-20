@@ -124,22 +124,23 @@ class Identifier(db.Model):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    community_id = db.Column(db.String(100), db.ForeignKey(Community.id))
+    # community_id = db.Column(db.String(100), db.ForeignKey(Community.id), nullable=False)
     """Identifier of the index."""
 
-    repository = db.relationship(Community, foreign_keys=community_id)
+    # repository = db.relationship(Community, foreign_keys=community_id)
+    repository = db.Column(db.String(100), nullable=False)
     """repository of the community."""
 
-    jalc_flag = db.Column(db.Boolean, nullable=True)
+    jalc_flag = db.Column(db.Boolean)
     """jalc_flag of the Identifier."""
 
-    jalc_crossref_flag = db.Column(db.Boolean, nullable=True)
+    jalc_crossref_flag = db.Column(db.Boolean)
     """jalc_crossref_flag of the Identifier."""
 
-    jalc_datacite_flag = db.Column(db.Boolean, nullable=True)
+    jalc_datacite_flag = db.Column(db.Boolean)
     """jalc_datacite_flag of the Identifier."""
 
-    cnri_flag = db.Column(db.Boolean, nullable=True)
+    cnri_flag = db.Column(db.Boolean)
     """cnri_flag of the Identifier."""
 
     jalc_doi = db.Column(

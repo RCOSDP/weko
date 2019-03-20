@@ -37,7 +37,7 @@ from .models import InstitutionName
 
 from invenio_communities.models import Community
 from datetime import datetime
-from weko_user_profiles.models import UserProfile
+from flask_admin.contrib.sqla.fields import QuerySelectField
 
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
@@ -168,7 +168,7 @@ class IdentifierSettingView(ModelView):
         jalc_datacite_doi=_('jaLC DataCite DOI'), cnri=_('CNRI'),
         suffix=_('Semi-automatic Suffix')
     )
-
+    
     form_edit_rules = form_create_rules
 
     def on_model_change(self, form, model, is_created):
@@ -187,33 +187,48 @@ class IdentifierSettingView(ModelView):
             :param is_created:
                 Will be set to True if model was created and to False if edited
         """
-
         ### Update hidden data automation
         if is_created:
             model.created_userId = current_user.get_id()
             model.created_date = datetime.utcnow().replace(microsecond=0)
         model.updated_userId = current_user.get_id()
         model.updated_date = datetime.utcnow().replace(microsecond=0)
+        model.repository = str(model.repository)
         pass
-
+    
+    def create_form(self):
+        return self._use_append_repository(
+            super(IdentifierSettingView, self).create_form()
+        )
+    
     def edit_form(self, obj):
-        """
-            Customize edit form
-        """
-        form = super(IdentifierSettingView, self).edit_form(obj)
+        return self._use_append_repository(
+            super(IdentifierSettingView, self).edit_form(obj)
+        )
+
+    def _use_append_repository(self, form):
+        form.repository.query_factory = self._get_community_list 
         return form
+    
+    def _get_community_list(self):
+        try:
+            query_data = Community.query.all()
+            query_data.append(Community(id=0, title='Root Index'))
+            query_data.sort(key=id)
+        except:
+            current_app.logger.error('[IdentifierSettingView] Unexpected error: ', sys.exc_info()[0])
+        return query_data
 
 
-def get_all_community():
-    """
-    Get communities
-    """
-    data = []
-    for i in Community.query.all():
-        c = {i.id, i.title}
-        data.append(c)
-    return data
+    form_overrides = {
+        'repository': QuerySelectField,
+    }
 
+    form_args = {
+        'repository': {
+            'query_factory': db.session.query
+        }
+    }
 
 identifier_adminview = dict(
     modelview=IdentifierSettingView,
