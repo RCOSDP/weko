@@ -35,6 +35,8 @@
 {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets "workflow_item_link_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- elif 'identifier_grant' == cur_step %}
+{% assets "workflow_identifier_grant_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- else %}
   {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- if 'oa_policy' == cur_step %}
@@ -195,11 +197,31 @@
               {%- if 'approval' == cur_step %}
                 {% include 'weko_workflow/record_detail.html' %}
               {% endif %}
+
               {%- if 'oa_policy' == cur_step %}
                 {% include "weko_workflow/oapolicy_search.html" %}
               {%- endif %}
 
-              {%- if 'item_link' != cur_step and 'oa_policy' != cur_step %}
+              {%- if 'identifier_grant' == cur_step %}
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <span>{{_('Identifier Grant')}}</span>
+                </div>
+                <div class="panel-body" style="line-height: 1.6;">
+                  <div class="form-group radio" style="display: inline-grid;">
+                    {%- for key, val in id_grant_options %}
+                      <label><input type="radio" name="identifier_grant" value="{{ key }}" {%- if key == temporary_id_grant %}checked{%- endif %}>{{ val }}</label>
+                    {%- endfor %}
+                  </div>
+                </div>
+              </div>
+              <div class="m-top-20">
+                <ul class="list-inline text-right" style="margin-bottom: 0;">
+                  <li><button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button></li>
+                  <li style="padding-right: 0;"><button type="button" class="btn btn-default" id="btn-finish">{{_('Next')}}</button></li>
+                </ul>
+              </div>
+              {%- elif 'item_link' != cur_step and 'oa_policy' != cur_step %}
               <div class="form-group">
                 <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
                 <div class="input-group">

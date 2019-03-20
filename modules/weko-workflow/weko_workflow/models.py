@@ -747,6 +747,9 @@ class ActivityAction(db.Model, TimestampMixin):
     action_comment = db.Column(db.Text, nullable=True)
     """action comment."""
 
+    action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
+    """action identifier grant."""
+
 
 class ActivityHistory(db.Model, TimestampMixin):
     """define ActivityHistory"""
@@ -781,6 +784,9 @@ class ActivityHistory(db.Model, TimestampMixin):
 
     action_comment = db.Column(db.Text, nullable=True)
     """action comment."""
+
+    action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
+    """action identifier grant."""
 
     user = db.relationship(User, backref=db.backref(
         'activity_history'))
