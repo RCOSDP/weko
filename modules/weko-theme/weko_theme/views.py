@@ -28,7 +28,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from invenio_i18n.ext import current_i18n
 from blinker import Namespace
 
-from weko_search_ui.utils import set_default_language
+from weko_admin.utils import set_default_language
 
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
