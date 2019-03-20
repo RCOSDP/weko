@@ -162,7 +162,7 @@ class IdentifierSettingView(ModelView):
         'cnri',
         rules.Header(_('Suffix')),
         'suffix',
-        rules.Header(_('Enable/Disable')),
+        # rules.Header(_('Enable/Disable')),
     ]
 
     column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
