@@ -22,14 +22,13 @@
 {% import 'admin/lib.html' as lib with context %}
 {% from 'admin/lib.html' import extra with context %} {# backward compatible #}
 
-{% block head_tail %}
+{% block css %}
   {{ super() }}
   <link href="{{ url_for('static', filename='css/weko_records_ui/pidstore_identifier.css') }}" rel="stylesheet">
-{% endblock %}
+{% endblock css%}
 
 {% block create_form %}
   {% call lib.form_tag(None) %}
-  <!-- <div class="admin-form from-horizontal row"> -->
   <div class="row">
     <div class="col-sm-12">
       <div class="panel-group">
@@ -62,7 +61,6 @@
         </div>
 
         {{ lib.render_form_buttons(return_url, extra()) }}
-        <!-- </div> -->
       </div>
     </div>
   </div>
@@ -71,5 +69,5 @@
 
 {% block tail %}
   {{ super() }}
-  <script src="{{ admin_static.url(filename='js/weko_records_ui/pidstore_identifier.js', v='1.0.0') }}"></script>
+  <script src="{{ url_for('static', filename='js/weko_records_ui/pidstore_identifier.js') }}"></script>
 {% endblock %}
