@@ -279,60 +279,82 @@ def get_item_path(item_type_id):
     item_type = ItemTypes.get_record(item_type_id)
     try:
         path_tree = item_type.get("properties")
-        results = get_item_path_callback(path_tree)
-        # results = path_tree
+        #results = get_item_path_callback(path_tree)
+        item_id = get_item_id(item_type_id)
+        results = find_value_in_dict(path_tree, item_id['creator']['creatorName']['@value'])
     except Exception as e:
         results['error'] = str(e)
     return results
 
-
-def get_item_path_callback(data):
-    results = dict()
+def find_value_in_dict(data, value):
+    path = dict()
+    path_key = ""
     for k, v in data.items():
-        if is_item_id(k):
-            path = list()
-            find_properties(v, path)
-            if len(path) is not 0:
-                temp_dict = copy.deepcopy(v)
-                for key in path:
-                    temp_dict[key] = temp_dict.get(key)
-                item = dict()
-                for u, s in temp_dict["properties"].items():
-                    if is_item_id(u):
-                        if isinstance(s, dict):
-                            if "items" not in s.keys():
-                                item[u] = None
-                            else:
-                                item2 = dict()
-                                for key2 in s["items"]["properties"].keys():
-                                    item2[key2] = None
-                                item[u] = item2
+        temp_data = dict()
+        temp_data[k] = v
+        if is_value_in_dict(temp_data, value):
+            path_key = k
+    path = copy.deepcopy(data[path_key])
+    path = get_creator_dict(data[path_key], path_key)
+    return path
+
+def is_value_in_dict(data, value):
+    if isinstance(data, dict):
+        if value in data.keys():
+            return True
+        else:
+            for k, v in data.items():
+                if isinstance(v, dict):
+                    if (is_value_in_dict(v, value)):
+                        return True
+    else:
+        return False
+
+
+def get_creator_dict(root_data, path_key):
+    results = dict()
+    data = copy.deepcopy(root_data)
+    if "items" in data.keys():
+        data = data["items"]
+    if ("properties" in data):
+        sub_data_1 = copy.deepcopy(data["properties"])
+        try:
+            for k, v in data["properties"].items():
+                if isinstance(v, dict):
+                    sub_data_2 = dict()
+                    if ("items" in v.keys()):
+                        if ("properties" in v["items"].keys()):
+                            for u, s in v["items"]["properties"].items():
+                                sub_data_2[u] = None
                         else:
-                            item[u] = None
-                results[k] = item
-            else:
-                results[k] = None
+                            sub_data_2 = None
+                    else:
+                        sub_data_2 = None
+                    sub_data_1[k] = sub_data_2
+                else:
+                    sub_data_1[k] = None
+        except Exception as e:
+            results['error'] = str(e)
+        results[path_key] = sub_data_1
+    else:
+        return None
 
     return results
 
-def find_properties(data, path):
+def get_item_code(data):
     if isinstance(data, dict):
+        results = list()
         for k, v in data.items():
-            if k == "properties":
-                path.append(k)
-                return
-        for k, v in data.items():
-            find_properties(v, path)     
+            try:
+                if (str(k).index("item") != 0):
+                    results.append(k)
+            except:
+                return get_item_code(v)
+        if len(results) == 0:
+            return None
+        return results
     else:
-        path = None
-
-def is_item_id(id):
-    try:
-        if (str(id).index("item") is not 0):
-            return True
-        return True
-    except:
-        return False
+        return None
 
 @cached_api_json(timeout=50,)
 def get_crossref_data(pid, doi):
