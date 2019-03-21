@@ -158,11 +158,18 @@ class IdentifierSettingView(ModelView):
     column_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
-        'suffix')
+        'suffix',
+        #### Debug
+        'jalc_flag',
+        'jalc_crossref_flag',
+        'jalc_datacite_flag',
+        'cnri_flag',)
+
     column_searchable_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
         'suffix')
+
     column_details_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
