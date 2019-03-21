@@ -161,7 +161,7 @@ def iframe_save_model():
                 'redis://{host}:{port}/1'.format(
                     host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
                     port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-            sessionstore.put('activity_item_'+activity_id, json.dumps(data),
+            sessionstore.put('activity_item_'+activity_id, json.dumps(data).encode('utf-8'),
                              ttl_secs=60*60*24*7)
     except Exception as ex:
         current_app.logger.exception(str(ex))
