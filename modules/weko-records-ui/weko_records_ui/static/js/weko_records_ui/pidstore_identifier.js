@@ -82,8 +82,8 @@ $(document).ready(function () {
         return 'jalc_flag';
       case 'jalc_crossref_doi':
         return 'jalc_crossref_flag';
-      case 'jalc_datacite_flag':
-        return 'jalc_flag';
+      case 'jalc_datacite_doi':
+        return 'jalc_datacite_flag';
       case 'cnri':
         return 'cnri_flag';
       default:
