@@ -37,7 +37,12 @@ from .models import PDFCoverPageSettings
 from invenio_files_rest.views import ObjectResource
 from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
+from .models import Identifier
 import werkzeug
+from datetime import datetime
+from invenio_db import db
+from sqlalchemy.exc import IntegrityError
+
 
 from invenio_stats import current_stats
 
@@ -62,7 +67,6 @@ def publish(pid, record, template=None, **kwargs):
     :return: The rendered template.
     """
 
-    from invenio_db import db
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
