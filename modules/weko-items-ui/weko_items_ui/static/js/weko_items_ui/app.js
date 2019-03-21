@@ -190,6 +190,9 @@ require([
                       if(resultId && resultId['@value']) {
                         this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','xml:lang')));
                         this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                      } else {
+                        this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                        this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
                       }
                     }
                     if (items.creator.affiliation.hasOwnProperty('nameIdentifier')) {
@@ -206,6 +209,9 @@ require([
                     if(resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','xml:lang')));
                       this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                      this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
                     }
                   }
                   if (items.creator.hasOwnProperty('creatorName')) {
@@ -214,6 +220,9 @@ require([
                     if(resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','xml:lang')));
                       this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                      this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
                     }
                   }
                   if (items.creator.hasOwnProperty('familyName')) {
@@ -222,6 +231,9 @@ require([
                     if(resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','xml:lang')));
                       this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                      this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
                     }
                   }
                   if (items.creator.hasOwnProperty('givenName')) {
@@ -230,6 +242,9 @@ require([
                     if(resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','xml:lang')));
                       this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                      this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
                     }
                   }
                   if (items.creator.hasOwnProperty('nameIdentifier')) {
@@ -247,8 +262,8 @@ require([
                     this.setValueToField(this.dictValue(id,'@attributes','dateType'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','dateType')));
                     this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
                   } else {
-                    this.setValueToField(this.dictValue(id,'@attributes','dateType'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','dateType')));
-                    this.setValueToField(this.dictValue(id,'@value'), null);
+                    this.setValueToField(this.dictValue(id,'@attributes','dateType'), "");
+                    this.setValueToField(this.dictValue(id,'@value'), "");
                   }
                 }
                 if (items.hasOwnProperty('language')) {
@@ -269,6 +284,9 @@ require([
                   if(resultId && resultId['@value']) {
                     this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','xml:lang')));
                     this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                  } else {
+                    this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                    this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
                   }
                 }
                 if (items.hasOwnProperty('relation')) {
@@ -281,6 +299,9 @@ require([
                     if(subresultId && subresultId['@value']) {
                       this.setValueToField(this.dictValue(id,'@attributes','identifierType'), this.getAutoFillValue(this.dictValue(subresultId,'@attributes','identifierType')));
                       this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(subresultId,'@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(subresultId,'@value')));
+                      this.setValueToField(this.dictValue(id,'@attributes','identifierType'), "");
                     }
                   }
                   if (relation.hasOwnProperty('relatedTitle')) {
@@ -289,6 +310,9 @@ require([
                     if(subresultId && subresultId['@value']) {
                       this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(subresultId,'@attributes','xml:lang')));
                       this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(subresultId,'@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(subresultId,'@value')));
+                      this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
                     }
                   }
                 }
@@ -298,6 +322,9 @@ require([
                   if(resultId && resultId['@value']) {
                     this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','xml:lang')));
                     this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                  } else {
+                    this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                    this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
                   }
                 }
                 $('#meta-search').modal('toggle');
