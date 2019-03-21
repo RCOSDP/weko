@@ -152,69 +152,68 @@ class IdentifierSettingView(ModelView):
     can_edit = True
     can_delete = False
     can_view_details = True
-    create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE
+    create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR
+    edit_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
 
-    column_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-    column_searchable_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix')
-    column_details_list = ('repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri', 'suffix', 'created_userId', 'created_date', 'updated_userId', 'updated_date')
-
-    form_create_rules = [rules.Header(_('Prefix')),
+    column_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
-        rules.Header(_('Suffix')),
-        'suffix',
-        # rules.Header(_('Enable/Disable')),
-    ]
+        'suffix')
+    column_searchable_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'cnri',
+        'suffix')
+    column_details_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'cnri',
+        'suffix', 'created_userId', 'created_date', 'updated_userId',
+        'updated_date')
+
+    form_create_rules = [rules.Header(_('Prefix')),
+                         'repository', 
+                         'jalc_doi', 
+                         'jalc_crossref_doi',
+                         'jalc_datacite_doi',
+                         'cnri',
+                         rules.Header(_('Suffix')),
+                         'suffix',
+                         rules.Header(_('Enable/Disable')),
+                         'jalc_flag',
+                         'jalc_crossref_flag',
+                         'jalc_datacite_flag',
+                         'cnri_flag',
+                         ]
+
+    form_edit_rules = form_create_rules
 
     column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
-        jalc_crossref_doi=_('JaLC CrossRef DOI'),
-        jalc_datacite_doi=_('JaLC DataCite DOI'), cnri=_('CNRI'),
-        suffix=_('Semi-automatic Suffix')
-    )
-
-    form_widget_args = {
-        'jalc_doi': {
-            'maxlength': 100
-        },
-        'jalc_crossref_doi': {
-            'maxlength': 100
-        },
-        'jalc_datacite_doi': {
-            'maxlength': 100
-        },
-        'cnri': {
-            'maxlength': 100
-        },
-        'suffix': {
-            'maxlength': 100
-        }
-    }
-
-    form_overrides = {
-        'repository': QuerySelectField,
-    }
+                         jalc_crossref_doi=_('JaLC CrossRef DOI'),
+                         jalc_datacite_doi=_('JaLC DataCite DOI'),
+                         cnri=_('CNRI'),
+                         suffix=_('Semi-automatic Suffix')
+                         )
 
     def _validator_halfwidth_input(form, field):
         """
-            Validator input character set
+            Valid input character set
 
             :param form:
                 Form used to create/update model
             :param field:
                 Template fields contain data need validator
         """
-        try:
-            for char in field.data:
-                if unicodedata.east_asian_width(char) in 'FWA':
-                    raise ValidationError(_('Only allow halfwith 1-bytes character in input'))
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            raise ValidationError(_('Only allow halfwith 1-bytes character in input'))
+        if field.data == None:
+            return
+        else:
+            try:
+                for inchar in field.data:
+                    if unicodedata.east_asian_width(inchar) in 'FWA':
+                        raise ValidationError(
+                            _('Only allow halfwith 1-bytes character in input'))
+            except Exception as ex:
+                raise ValidationError('{}'.format(ex))
 
     form_args = {
-        'repository': {
-            'query_factory': db.session.query
-        },
         'jalc_doi': {
             'validators': [_validator_halfwidth_input]
         },
@@ -232,7 +231,31 @@ class IdentifierSettingView(ModelView):
         }
     }
 
-    form_edit_rules = form_create_rules
+    form_widget_args = {
+        'jalc_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'jalc_crossref_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'jalc_datacite_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'cnri': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'suffix': {
+            'maxlength': 100,
+        }
+    }
+
+    form_overrides = {
+        'repository': QuerySelectField,
+    }
 
     def on_model_change(self, form, model, is_created):
         """
@@ -283,15 +306,23 @@ class IdentifierSettingView(ModelView):
         )
 
     def _use_append_repository(self, form):
+        try:
+            current_app.logger.debug(form.repository.data)
+        except:
+            pass
         form.repository.query_factory = self._get_community_list
+        try:
+            current_app.logger.debug(form.repository.data)
+        except:
+            pass
         return form
 
     def _get_community_list(self):
         try:
             query_data = Community.query.all()
             query_data.insert(0, Community(id='Root Index'))
-        except:
-            current_app.logger.error('[IdentifierSettingView] Unexpected error: ', sys.exc_info()[0])
+        except Exception as ex:
+            current_app.logger.debug(ex)
         return query_data
 
 
