@@ -777,10 +777,6 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
-<<<<<<< HEAD
-=======
-                Index.admin_coverpage,
->>>>>>> feature/sp5-RegisterDOI-dev21
                 literal_column("1", db.Integer).label("lev")).filter(
                 Index.parent == pid). \
                 cte(name="recursive_t", recursive=True)
