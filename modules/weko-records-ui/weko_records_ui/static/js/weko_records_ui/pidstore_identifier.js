@@ -30,7 +30,7 @@ $(document).ready(function () {
   let targets = ['jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'cnri'];
 
   for (let index = 0; index < targets.length; index++) {
-    let isChecked = $('#' + targets[index] + '_flag').prop('checked');
+    let isChecked = $('#' + flag(targets[index])).prop('checked');
     if ($('#' + flag(targets[index])).prop('checked')) {
       rightSelect.append(`<option value="${targets[index]}">${labels[index]}</option>`);
     } else {
