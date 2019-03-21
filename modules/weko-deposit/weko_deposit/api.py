@@ -495,7 +495,7 @@ class WekoDeposit(Deposit):
 
             data_str = datastore.get(cache_key)
             datastore.delete(cache_key)
-            data = json.loads(data_str)
+            data = json.loads(data_str.decode('utf-8'))
         except:
             abort(500, 'Failed to register item')
 
