@@ -23,17 +23,16 @@ import copy
 import datetime
 from functools import wraps
 
+from flask import current_app
 from invenio_cache import current_cache
 from weko_records.api import Mapping
 
-from . import config
 from .crossref_api import CrossRefOpenURL
-from weko_records.api import ItemTypes
 
 
 def is_update_cache():
     """Return True if Autofill Api has been updated."""
-    return config.WEKO_ITEMS_AUTOFILL_API_UPDATED
+    return current_app.config['WEKO_ITEMS_AUTOFILL_API_UPDATED']
 
 
 def cached_api_json(timeout=50, key_prefix="cached_api_json"):
@@ -86,8 +85,10 @@ def convert_datetime_format(list_date):
 
 def try_assign_data(data, value, key_first, list_key=None):
     """Try to assign value into dictionary data
-            Basic flow: If dictionary path is exist, value will be assigned to dictionary data
-            Alternative flow: If dictionary path is not exist, no change could be saved
+            Basic flow: If dictionary path is exist,
+                value will be assigned to dictionary data
+            Alternative flow: If dictionary path is not exist,
+                no change could be saved
         Parameter:
             data: dictionary data
             value: value have to be assigned
@@ -115,7 +116,7 @@ def try_assign_data(data, value, key_first, list_key=None):
                         temp[key] = value
                         return
                 else:
-                    return    
+                    return
 
 
 def reset_dict_final_value(data):
@@ -169,7 +170,8 @@ def parse_crossref_json_response(response, response_data_template):
         try_assign_data(response_data_convert, created.get('affiliationName'),
                         'creator', ['affiliation', 'affiliationName', '@value'])
         try_assign_data(response_data_convert,
-                        config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                        current_app.config[
+                            'WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'], 'creator',
                         ['affiliation', 'affiliationName', '@attributes',
                          'xml:lang'])
         try_assign_data(response_data_convert, created.get('nameIdentifier'),
@@ -238,25 +240,32 @@ def parse_crossref_json_response(response, response_data_template):
     the current language"""
     try_assign_data(response_data_convert, 'eng', 'language', ['@value'])
     try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'publisher',
+                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                    'publisher',
                     ['@attributes', 'xml:lang'])
     try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'relation',
+                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                    'relation',
                     ['relatedTitle', '@attributes', 'xml:lang'])
     try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'title',
+                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                    'title',
                     ['@attributes', 'xml:lang'])
     try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                    'creator',
                     ['creatorAlternative', '@attributes', 'xml:lang'])
     try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                    'creator',
                     ['creatorName', '@attributes', 'xml:lang'])
     try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                    'creator',
                     ['familyName', '@attributes', 'xml:lang'])
     try_assign_data(response_data_convert,
-                    config.WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE, 'creator',
+                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                    'creator',
                     ['givenName', '@attributes', 'xml:lang'])
 
     return response_data_convert
@@ -282,88 +291,6 @@ def get_item_id(item_type_id):
 
     return results
 
-
-def get_item_path(item_type_id):
-    results = dict()
-    item_type = ItemTypes.get_record(item_type_id)
-    try:
-        path_tree = item_type.get("properties")
-        #results = get_item_path_callback(path_tree)
-        item_id = get_item_id(item_type_id)
-        results = find_value_in_dict(path_tree, item_id['creator']['creatorName']['@value'])
-    except Exception as e:
-        results['error'] = str(e)
-    return results
-
-def find_value_in_dict(data, value):
-    path = dict()
-    path_key = ""
-    for k, v in data.items():
-        temp_data = dict()
-        temp_data[k] = v
-        if is_value_in_dict(temp_data, value):
-            path_key = k
-    path = copy.deepcopy(data[path_key])
-    path = get_creator_dict(data[path_key], path_key)
-    return path
-
-def is_value_in_dict(data, value):
-    if isinstance(data, dict):
-        if value in data.keys():
-            return True
-        else:
-            for k, v in data.items():
-                if isinstance(v, dict):
-                    if (is_value_in_dict(v, value)):
-                        return True
-    else:
-        return False
-
-
-def get_creator_dict(root_data, path_key):
-    results = dict()
-    data = copy.deepcopy(root_data)
-    if "items" in data.keys():
-        data = data["items"]
-    if ("properties" in data):
-        sub_data_1 = copy.deepcopy(data["properties"])
-        try:
-            for k, v in data["properties"].items():
-                if isinstance(v, dict):
-                    sub_data_2 = dict()
-                    if ("items" in v.keys()):
-                        if ("properties" in v["items"].keys()):
-                            for u, s in v["items"]["properties"].items():
-                                sub_data_2[u] = None
-                        else:
-                            sub_data_2 = None
-                    else:
-                        sub_data_2 = None
-                    sub_data_1[k] = sub_data_2
-                else:
-                    sub_data_1[k] = None
-        except Exception as e:
-            results['error'] = str(e)
-        results[path_key] = sub_data_1
-    else:
-        return None
-
-    return results
-
-def get_item_code(data):
-    if isinstance(data, dict):
-        results = list()
-        for k, v in data.items():
-            try:
-                if (str(k).index("item") != 0):
-                    results.append(k)
-            except:
-                return get_item_code(v)
-        if len(results) == 0:
-            return None
-        return results
-    else:
-        return None
 
 @cached_api_json(timeout=50,)
 def get_crossref_data(pid, doi):

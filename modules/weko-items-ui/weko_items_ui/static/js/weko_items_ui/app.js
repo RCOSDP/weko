@@ -100,12 +100,12 @@ require([
         }
         if (!value) {
           // Reset current value
-          $scope.depositionForm[id].$viewValue = "";
+          $scope.depositionForm[id].$setViewValue("");
           $scope.depositionForm[id].$render();
           $scope.depositionForm[id].$commitViewValue();
 		      return;
         }
-        $scope.depositionForm[id].$viewValue = value;
+        $scope.depositionForm[id].$setViewValue(value);
         $scope.depositionForm[id].$render();
         $scope.depositionForm[id].$commitViewValue();
       }
@@ -167,7 +167,6 @@ require([
           headers: {
             'Content-Type': 'application/json'
           },
-          async: false,
           method: "POST",
           data: JSON.stringify(param),
           dataType: "json",
@@ -246,9 +245,10 @@ require([
                   let resultId = result.date;
                   if (this.getAutoFillValue(this.dictValue(resultId,'@value'))){
                     this.setValueToField(this.dictValue(id,'@attributes','dateType'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','dateType')));
-                    $scope.depositionForm[this.dictValue(id,'@value')].$setViewValue(new Date(this.getAutoFillValue(this.dictValue(resultId,'@value'))));
-                    $scope.depositionForm[this.dictValue(id,'@value')].$render();
-                    $scope.depositionForm[this.dictValue(id,'@value')].$commitViewValue();
+                    this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                  } else {
+                    this.setValueToField(this.dictValue(id,'@attributes','dateType'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','dateType')));
+                    this.setValueToField(this.dictValue(id,'@value'), null);
                   }
                 }
                 if (items.hasOwnProperty('language')) {
@@ -278,8 +278,10 @@ require([
                   if (relation.hasOwnProperty('relatedIdentifier')) {
                     let id = relation.relatedIdentifier;
                     let subresultId = resultId.relatedIdentifier;
-                    this.setValueToField(this.dictValue(id,'@attributes','identifierType'), this.getAutoFillValue(this.dictValue(subresultId,'@attributes','identifierType')));
-                    this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(subresultId,'@value')));
+                    if(subresultId && subresultId['@value']) {
+                      this.setValueToField(this.dictValue(id,'@attributes','identifierType'), this.getAutoFillValue(this.dictValue(subresultId,'@attributes','identifierType')));
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(subresultId,'@value')));
+                    }
                   }
                   if (relation.hasOwnProperty('relatedTitle')) {
                     let id = relation.relatedTitle;
