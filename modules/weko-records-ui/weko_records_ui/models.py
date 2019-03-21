@@ -24,11 +24,13 @@
 from datetime import datetime
 
 from flask import current_app, json
+from flask_babelex import lazy_gettext as _
 from invenio_db import db
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import JSONType
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import mysql, postgresql
+from invenio_communities.models import Community
 
 """ PDF cover page model"""
 class PDFCoverPageSettings(db.Model):
@@ -106,5 +108,93 @@ class InstitutionName(db.Model):
         cfg.institution_name = new_name
         db.session.commit()
 
+        """ Record UI models """
 
-__all__ = ('PDFCoverPageSettings')
+
+class Identifier(db.Model):
+    """
+        Represent an Identifier.
+
+        The Identifier object contains a ``created``, a ``updated``
+        properties that are automatically updated.
+    """
+
+    __tablename__ = 'pidstore_Identifier'
+
+    id = db.Column(db.BigInteger, primary_key=True, unique=True)
+    """Identifier of the index."""
+
+    # community_id = db.Column(db.String(100), db.ForeignKey(Community.id), nullable=False)
+    """Identifier of the index."""
+
+    # repository = db.relationship(Community, foreign_keys=community_id)
+    repository = db.Column(db.String(100), nullable=False)
+    """repository of the community."""
+
+    jalc_flag = db.Column(db.Boolean)
+    """jalc_flag of the Identifier."""
+
+    jalc_crossref_flag = db.Column(db.Boolean)
+    """jalc_crossref_flag of the Identifier."""
+
+    jalc_datacite_flag = db.Column(db.Boolean)
+    """jalc_datacite_flag of the Identifier."""
+
+    cnri_flag = db.Column(db.Boolean)
+    """cnri_flag of the Identifier."""
+
+    jalc_doi = db.Column(
+        db.String(100),
+        nullable=True
+    )
+    """jalc_doi of the Identifier."""
+
+    jalc_crossref_doi = db.Column(
+        db.String(100),
+        nullable=True
+    )
+    """jalc_crossref_doi of the Identifier."""
+
+    jalc_datacite_doi = db.Column(
+        db.String(100),
+        nullable=True
+    )
+    """jalc_datacite_doi of the Identifier."""
+
+    cnri = db.Column(
+        db.String(100),
+        nullable=True
+    )
+    """cnri of the Identifier."""
+
+    suffix = db.Column(
+        db.String(100),
+        nullable=True
+    )
+    """suffix of the Identifier."""
+
+    created_userId = db.Column(
+        db.String(50),
+        nullable=False,
+    )
+    """created by user."""
+
+    created_date = db.Column(
+        db.DateTime,
+        nullable=False,
+    )
+    """created date."""
+
+    updated_userId = db.Column(
+        db.String(50),
+        nullable=False,
+    )
+    """updated by user."""
+
+    updated_date = db.Column(
+        db.DateTime,
+        nullable=True,
+    )
+
+
+__all__ = ('Identifier', 'PDFCoverPageSettings')
