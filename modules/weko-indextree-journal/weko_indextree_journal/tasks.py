@@ -43,7 +43,8 @@ blueprint = Blueprint(
 # @shared_task(ignore_result=True)
 @shared_task
 def export_journal_task(p_path):
-    """Output the file name of KBART2 extended format included
+    u"""Output the file name of KBART2 extended format included.
+
     last update date to the file "Own institution repository URL" ＋「/weko/kbart/filelist.txt」
     Output journal info with KBART2 extended format by tsv format to
     "Own institution repository URL" ＋「/weko/kbart/{Repository name}_Global_AllTitles_{Last update date}.txt

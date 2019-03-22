@@ -31,6 +31,7 @@ from sqlalchemy_utils.types import JSONType, UUIDType
 from weko_index_tree.models import Index
 from weko_records.models import Timestamp
 
+
 # from sqlalchemy_utils.types import UUIDType
 # from invenio_records.models import RecordMetadata
 
@@ -274,21 +275,22 @@ class Journal(db.Model, Timestamp):
     """Owner user id of the journal."""
 
     def __iter__(self):
-        """Yield distributions for non-duplicate projects in the working set
+        """Yield distributions for non-duplicate projects in the working set.
 
         The yield order is the order in which the items' path entries were
         added to the working set.
         """
         for name in dir(Journal):
             if not name.startswith('__') and not name.startswith('_') \
-                    and name not in dir(Timestamp):
+                and name not in dir(Timestamp):
                 value = getattr(self, name)
                 if value is None:
                     value = ""
                 if isinstance(value, str) or isinstance(value, bool) \
-                        or isinstance(value, datetime) \
-                        or isinstance(value, int):
+                    or isinstance(value, datetime) \
+                    or isinstance(value, int):
                     yield (name, value)
+
     # format setting for community admin page
 
     def __str__(self):
