@@ -202,6 +202,35 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 # sphinxdoc-set-role-access-end
 
+#### sphinxdoc-create-language-data-begin
+${INVENIO_WEB_INSTANCE} language create \
+        "en" "English" "true" 001 "true"
+
+${INVENIO_WEB_INSTANCE} language create \
+        "zh" "中文" "false" 000 "true"
+
+${INVENIO_WEB_INSTANCE} language create \
+        "id" "Indonesia" "false" 000 "true"
+
+${INVENIO_WEB_INSTANCE} language create \
+        "vi" "Tiếng Việt" "false" 000 "true"
+
+${INVENIO_WEB_INSTANCE} language create \
+         "ms" "Bahasa Melayu" "false" 000 "true"
+
+${INVENIO_WEB_INSTANCE} language create \
+         "fil" "Filipino (Pilipinas)" "false" 000 "true"
+
+${INVENIO_WEB_INSTANCE} language create \
+         "th" "ไทย" "false" 000 "true"
+
+${INVENIO_WEB_INSTANCE} language create \
+         "hi" "हिन्दी" "false" 000 "true"
+
+${INVENIO_WEB_INSTANCE} language create \
+         "ja" "日本語" "true" 002 "true"
+#### sphinxdoc-create-language-data-end
+
 ##### sphinxdoc-create-test-data-begin
 ${INVENIO_WEB_INSTANCE} users create \
        "test01@hitachi.com" \
@@ -227,31 +256,3 @@ ${INVENIO_WEB_INSTANCE} users create \
        --active
 ##### sphinxdoc-create-test-data-end
 
-#### sphinxdoc-create-language-data-begin
-${INVENIO_WEB_INSTANCE} language create \
-        "en" "English" "true" 002 "true"
-
-${INVENIO_WEB_INSTANCE} language create \
-        "zh" "中文" "false" 000 "true"
-
-${INVENIO_WEB_INSTANCE} language create \
-        "id" "Indonesia" "false" 000 "true"
-
-${INVENIO_WEB_INSTANCE} language create \
-        "vi" "Tiếng Việt" "false" 000 "true"
-
-${INVENIO_WEB_INSTANCE} language create \
-         "ms" "Bahasa Melayu" "false" 000 "true"
-
-${INVENIO_WEB_INSTANCE} language create \
-         "fil" "Filipino (Pilipinas)" "false" 000 "true"
-
-${INVENIO_WEB_INSTANCE} language create \
-         "th" "ไทย" "false" 000 "true"
-
-${INVENIO_WEB_INSTANCE} language create \
-         "hi" "हिन्दी" "false" 000 "true"
-
-${INVENIO_WEB_INSTANCE} language create \
-         "ja" "日本語" "true" 001 "true"
-#### sphinxdoc-create-language-data-end
