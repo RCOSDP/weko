@@ -31,7 +31,6 @@ from sqlalchemy_utils.types import JSONType, UUIDType
 from weko_index_tree.models import Index
 from weko_records.models import Timestamp
 
-
 # from sqlalchemy_utils.types import UUIDType
 # from invenio_records.models import RecordMetadata
 
