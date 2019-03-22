@@ -24,8 +24,10 @@ from flask import current_app
 from flask_login import current_user
 from invenio_db import db
 from sqlalchemy.exc import IntegrityError
-from .models import Journal
 from weko_index_tree.api import Indexes
+
+from .models import Journal
+
 
 class Journals(object):
     """Define API for journal creation and update."""

@@ -20,14 +20,15 @@
 
 """Weko Journal celery tasks."""
 
-import os
 import datetime
-import numpy
+import os
 import time
 
+import numpy
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from flask import current_app, Blueprint
+from flask import Blueprint, current_app
+
 from .api import Journals
 
 logger = get_task_logger(__name__)
@@ -183,4 +184,3 @@ def export_journal_task(p_path):
         current_app.logger.error(ex)
 
     return {}
-
