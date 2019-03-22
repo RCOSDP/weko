@@ -163,3 +163,14 @@ tree-internal ul .more {
 tree-internal ul .value-container {
   font-size: 14px;
 }
+
+/* For Bootstrap collapse arrow */
+.hide-on-collapsed {
+  display:block
+}
+.panel-toggle.collapsed .hide-on-collapsed,.show-on-collapsed {
+  display:none
+}
+.panel-toggle.collapsed .show-on-collapsed {
+  display:block
+}
