@@ -91,6 +91,7 @@ setup(
     entry_points={
         'flask.commands': [
             'lifetime = weko_admin.cli:lifetime',
+            'language = weko_admin.cli:language',
         ],
         'invenio_base.apps': [
             'weko_admin = weko_admin:WekoAdmin',
