@@ -48,14 +48,18 @@ class Journal(db.Model, Timestamp):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    index_id = db.Column(db.BigInteger,
-        db.ForeignKey(Index.id, ondelete='CASCADE'), nullable=False)
+    index_id = db.Column(
+        db.BigInteger,
+        db.ForeignKey(
+            Index.id,
+            ondelete='CASCADE'),
+        nullable=False)
     # """ID of Index to whom this shib user belongs."""
 
     index = db.relationship(Index,
-        backref=db.backref('journal', cascade='all'),
-        cascade='all, delete-orphan',
-        single_parent=True)
+                            backref=db.backref('journal', cascade='all'),
+                            cascade='all, delete-orphan',
+                            single_parent=True)
     """ID of Index to whom this journal belongs."""
 
     publication_title = db.Column(db.Text, nullable=True, default='')
@@ -65,7 +69,7 @@ class Journal(db.Model, Timestamp):
     """Print-format identifier of the journal."""
     """
         varchar(20)
-        It complies with the format of ISBN or ISSN. 
+        It complies with the format of ISBN or ISSN.
         　ISSN：
         　　「^\d{4}-?\d{3}[0-9X]$」
         　ISBN：
@@ -79,7 +83,7 @@ class Journal(db.Model, Timestamp):
     """Online-format identifier of the journal."""
     """
         varchar(20)
-        It complies with the format of ISBN or ISSN. 
+        It complies with the format of ISBN or ISSN.
         　ISSN：
         　　「^\d{4}-?\d{3}[0-9X]$」
         　ISBN：
@@ -131,20 +135,20 @@ class Journal(db.Model, Timestamp):
         WEKO index search result page display URL
         [Top Page URL] /? Action = repository_opensearch & index_id = [title_id]
     """
-    
+
     first_author = db.Column(db.Text, nullable=True, default='')
     """ first_author """
 
     title_id = db.Column(db.BigInteger, nullable=True, default=0)
     """ Output the index ID of WEKO. """
-    
+
     embargo_info = db.Column(db.Text, nullable=True, default='')
     """Embargo information of the journal."""
     """ varchar(255) """
 
     coverage_depth = db.Column(db.Text, nullable=True, default='')
     """Coverage depth of the journal."""
-    """ 
+    """
         varchar(255)
         Select one of the following items:
         　Abstract、Fulltext、Selected Articles
@@ -164,10 +168,12 @@ class Journal(db.Model, Timestamp):
         Select the following item: "Serial"
     """
 
-    date_monograph_published_print = db.Column(db.Text, nullable=True, default='')
+    date_monograph_published_print = db.Column(
+        db.Text, nullable=True, default='')
     """" date_monograph_published_print """
 
-    date_monograph_published_online = db.Column(db.Text, nullable=True, default='')
+    date_monograph_published_online = db.Column(
+        db.Text, nullable=True, default='')
     """" date_monograph_published_online """
 
     monograph_volume = db.Column(db.Text, nullable=True, default='')
@@ -179,7 +185,8 @@ class Journal(db.Model, Timestamp):
     first_editor = db.Column(db.Text, nullable=True, default='')
     """" first_editor """
 
-    parent_publication_title_id = db.Column(db.BigInteger, nullable=True, default=0)
+    parent_publication_title_id = db.Column(
+        db.BigInteger, nullable=True, default=0)
     """Parent publication identifier of the journal."""
     """
         int(11)
@@ -187,7 +194,8 @@ class Journal(db.Model, Timestamp):
             It's the index ID of index containing journal information
     """
 
-    preceding_publication_title_id = db.Column(db.BigInteger, nullable=True, default=0)
+    preceding_publication_title_id = db.Column(
+        db.BigInteger, nullable=True, default=0)
     """Preceding publication identifier of the journal."""
     """
         int(11)
@@ -211,7 +219,7 @@ class Journal(db.Model, Timestamp):
     """
         varchar(7)
         Select from language code (ISO639-2).
-        In the pulldown, show: 
+        In the pulldown, show:
         jpn, eng, chi, kor, (the others language by alphabet order).
     """
 
@@ -241,7 +249,7 @@ class Journal(db.Model, Timestamp):
         Half-size alphanumeric symbol within 20 characters
         TODO: Need to repair.
     """
-    
+
     jstage_code = db.Column(db.Text, nullable=True, default='')
     """J-STAGE CDJOURNAL of the journal."""
     """ varchar(20)
@@ -258,9 +266,9 @@ class Journal(db.Model, Timestamp):
     """Always output with empty string (character string length = 0)"""
 
     is_output = db.Column(db.Boolean(name='is_output'),
-        nullable=True,
-        default=lambda: False
-    )
+                          nullable=True,
+                          default=lambda: False
+                          )
 
     owner_user_id = db.Column(db.Integer, nullable=True, default=0)
     """Owner user id of the journal."""
@@ -268,7 +276,7 @@ class Journal(db.Model, Timestamp):
     def __iter__(self):
         for name in dir(Journal):
             if not name.startswith('__') and not name.startswith('_') \
-                 and name not in dir(Timestamp):
+                    and name not in dir(Timestamp):
                 value = getattr(self, name)
                 if value is None:
                     value = ""
@@ -280,11 +288,13 @@ class Journal(db.Model, Timestamp):
 
     def __str__(self):
         """Representation."""
-        return 'Journal <id={0.id}, index_name={0.publication_title}>'.format(self)
+        return 'Journal <id={0.id}, index_name={0.publication_title}>'.format(
+            self)
 
 
 def journal_removed_or_inserted(mapper, connection, target):
     current_app.config['WEKO_INDEXTREE_JOURNAL_UPDATED'] = True
+
 
 listen(Journal, 'after_insert', journal_removed_or_inserted)
 listen(Journal, 'after_delete', journal_removed_or_inserted)

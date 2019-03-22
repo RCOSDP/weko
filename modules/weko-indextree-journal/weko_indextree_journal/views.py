@@ -37,17 +37,18 @@ blueprint = Blueprint(
     url_prefix='/indextree/journal',
 )
 
+
 @blueprint.route("/")
 @blueprint.route("/<int:index_id>")
 @login_required
-def index(index_id = 0):
+def index(index_id=0):
     """Render a basic view."""
     lists = ItemTypes.get_latest()
     if lists is None or len(lists) == 0:
         return render_template(
             current_app.config['WEKO_ITEMS_UI_ERROR_TEMPLATE']
         )
-    
+
     # Get journal info.
     journal = []
     journal_id = None
@@ -70,13 +71,12 @@ def index(index_id = 0):
         lists=lists,
         links=None,
         pid=None,
-        index_id = index_id,
-        journal_id = journal_id
-    )
+        index_id=index_id,
+        journal_id=journal_id)
 
 
 @blueprint.route("/index/<int:index_id>")
-def get_journal_by_index_id(index_id = 0):
+def get_journal_by_index_id(index_id=0):
     try:
         result = None
         if index_id > 0:
@@ -85,7 +85,7 @@ def get_journal_by_index_id(index_id = 0):
         if journal is None:
             journal = '{}'
         return jsonify(journal)
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
@@ -102,10 +102,10 @@ def export_journals():
 
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
-        return jsonify({"result" : True})
+        return jsonify({"result": True})
     except Exception as ex:
         current_app.logger.debug(ex)
-    return jsonify({"result" : False})
+    return jsonify({"result": False})
 
 
 def obj_dict(obj):
@@ -140,7 +140,7 @@ def get_json_schema():
                     msg[k] = v[cur_lang]
                 value['validationMessage'] = msg
 
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         abort(500)
     return jsonify(json_schema)
@@ -178,7 +178,7 @@ def get_schema_form():
                                 if len(sub_elem['title_i18n'][cur_lang]) > 0:
                                     sub_elem['title'] = sub_elem['title_i18n'][
                                         cur_lang]
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         abort(500)
     return jsonify(schema_form)
@@ -188,5 +188,5 @@ def get_schema_form():
 @login_required
 def check_view(item_type_id=0):
     """Render a check view."""
-    result = export_journal_task(p_path = '')
+    result = export_journal_task(p_path='')
     return jsonify(result)

@@ -114,7 +114,7 @@ def create_blueprint(app, endpoints):
         #     record_serializers=record_serializers,
         #     default_media_type=options.get('default_media_type'),
         # )
-        
+
         blueprint.add_url_rule(
             options.pop('indextree_journal_route'),
             view_func=iar,
@@ -189,7 +189,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
     def post(self, **kwargs):
         """Create a journal."""
         data = self.loaders[request.mimetype]()
-        
+
         if not data:
             raise JournalInvalidDataRESTError()
         if not self.record_class.create(data):
@@ -198,7 +198,8 @@ class JournalActionResource(ContentNegotiatedMethodView):
         status = 201
         msg = 'Journal created successfully.'
 
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)
 
     @need_record_permission('update_permission_factory')
     def put(self, journal_id, **kwargs):
@@ -211,7 +212,8 @@ class JournalActionResource(ContentNegotiatedMethodView):
 
         status = 200
         msg = 'Journal updated successfully.'
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)
 
     @need_record_permission('delete_permission_factory')
     def delete(self, journal_id, **kwargs):
@@ -229,10 +231,12 @@ class JournalActionResource(ContentNegotiatedMethodView):
             result = self.record_class.\
                 delete_by_action(action, journal_id, res.path)
             if not result:
-                raise JournalBaseRESTError(description='Could not delete data.')
+                raise JournalBaseRESTError(
+                    description='Could not delete data.')
         else:
             raise JournalInvalidDataRESTError()
 
         status = 200
         msg = 'Journal deleted successfully.'
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)

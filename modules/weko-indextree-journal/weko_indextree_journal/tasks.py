@@ -40,7 +40,7 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-#@shared_task(ignore_result=True)
+# @shared_task(ignore_result=True)
 @shared_task
 def export_journal_task(p_path):
     """
@@ -53,7 +53,8 @@ def export_journal_task(p_path):
     """
     try:
         # Get file name of journal info with KBART2 format.
-        # Own institution repository URL" ＋「/weko/kbart/{Repository name}_Global_AllTitles_{Last update date}.txt
+        # Own institution repository URL" ＋「/weko/kbart/{Repository
+        # name}_Global_AllTitles_{Last update date}.txt
         kbart_folder = 'weko/kbart'
         filelist_path = os.path.join(
             current_app.static_folder, kbart_folder, "filelist.txt")
@@ -64,7 +65,8 @@ def export_journal_task(p_path):
 
         current_date = datetime.datetime.today().strftime('%Y-%m-%d')
 
-        repository_filename = "{0}_AllTitles_{1}.txt".format(repository_name, current_date)
+        repository_filename = "{0}_AllTitles_{1}.txt".format(
+            repository_name, current_date)
 
         repository_data_path = os.path.join(
             current_app.static_folder, kbart_folder, repository_filename)
@@ -165,7 +167,7 @@ def export_journal_task(p_path):
 
         # Save data to file.
         numpy.savetxt(repository_data_path, data, "%s", delimiter="\t",
-            header=header_string, footer='', comments='')
+                      header=header_string, footer='', comments='')
 
         # save file list
         if os.path.exists(filelist_path):

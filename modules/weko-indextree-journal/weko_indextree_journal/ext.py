@@ -48,6 +48,7 @@ class WekoIndextreeJournal(object):
             if k.startswith('WEKO_INDEXTREE_JOURNAL_'):
                 app.config.setdefault(k, getattr(config, k))
 
+
 class WekoIndextreeJournalREST(object):
     """
       weko-indextree-journal Rest Obj
@@ -71,8 +72,8 @@ class WekoIndextreeJournalREST(object):
         """
         self.init_config(app)
 
-        blueprint = create_blueprint(app,
-                                     app.config['WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS'])
+        blueprint = create_blueprint(
+            app, app.config['WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
         app.extensions['weko-indextree-journal-rest'] = self
 
