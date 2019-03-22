@@ -202,7 +202,6 @@ class StyleSettingView(BaseView):
             abort(500)
         return checksum1 == checksum2
 
-<<<<<<< HEAD
 
 class ReportView(BaseView):
 
