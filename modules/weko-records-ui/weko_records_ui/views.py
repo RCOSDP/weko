@@ -38,6 +38,8 @@ from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
 import werkzeug
 
+from invenio_stats import import current_stats
+
 blueprint = Blueprint(
     'weko_records_ui',
     __name__,
