@@ -119,7 +119,7 @@ class Identifier(db.Model):
         properties that are automatically updated.
     """
 
-    __tablename__ = 'pidstore_Identifier'
+    __tablename__ = 'pidstore_identifier'
 
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
@@ -131,16 +131,16 @@ class Identifier(db.Model):
     repository = db.Column(db.String(100), nullable=False)
     """repository of the community."""
 
-    jalc_flag = db.Column(db.Boolean)
+    jalc_flag = db.Column(db.Boolean, default=True)
     """jalc_flag of the Identifier."""
 
-    jalc_crossref_flag = db.Column(db.Boolean)
+    jalc_crossref_flag = db.Column(db.Boolean, default=True)
     """jalc_crossref_flag of the Identifier."""
 
-    jalc_datacite_flag = db.Column(db.Boolean)
+    jalc_datacite_flag = db.Column(db.Boolean, default=True)
     """jalc_datacite_flag of the Identifier."""
 
-    cnri_flag = db.Column(db.Boolean)
+    cnri_flag = db.Column(db.Boolean, default=True)
     """cnri_flag of the Identifier."""
 
     jalc_doi = db.Column(
