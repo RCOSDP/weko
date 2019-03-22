@@ -40,6 +40,12 @@ $(document).ready(function () {
     $('#' + flag(targets[index])).parent().parent().hide()
   }
 
+  let selectVal = 0
+  $('#repo_selected').parent().parent().hide()
+  selectVal = $('#repo_selected').val();
+  $('#repository').val(selectVal);
+  $('#repository').select2().trigger('change');
+
   updateButtonState();
 
   moveRight.on('click', function () {

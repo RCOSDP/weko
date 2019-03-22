@@ -40,6 +40,8 @@ from datetime import datetime
 from invenio_communities.models import Community
 from flask_admin.contrib.sqla.fields import QuerySelectField
 from wtforms.validators import ValidationError
+from wtforms.fields import StringField
+from sqlalchemy.orm import load_only
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -176,6 +178,10 @@ class IdentifierSettingView(ModelView):
         'suffix', 'created_userId', 'created_date', 'updated_userId',
         'updated_date')
 
+    form_extra_fields = {
+        'repo_selected': StringField('Repository Selector'),
+    }
+
     form_create_rules = [rules.Header(_('Prefix')),
                          'repository',
                          'jalc_doi',
@@ -189,6 +195,7 @@ class IdentifierSettingView(ModelView):
                          'jalc_crossref_flag',
                          'jalc_datacite_flag',
                          'cnri_flag',
+                         'repo_selected',
                          ]
 
     form_edit_rules = form_create_rules
@@ -289,6 +296,17 @@ class IdentifierSettingView(ModelView):
         model.repository = str(model.repository)
         pass
 
+    def on_form_prefill(self, form, id):
+        query_data = Community.query.options(load_only('id')).all()
+        data = [index.id for index in query_data]
+        pos = -1
+        try:
+            pos = data.index(form.repository.data)
+        except ValueError:
+            pos = -1
+        form.repo_selected.data = pos + 1
+        pass
+
     def create_form(self, obj=None):
         """
             Instantiate model delete form and return it.
@@ -314,15 +332,8 @@ class IdentifierSettingView(ModelView):
         )
 
     def _use_append_repository(self, form):
-        try:
-            current_app.logger.debug(form.repository.data)
-        except:
-            pass
         form.repository.query_factory = self._get_community_list
-        try:
-            current_app.logger.debug(form.repository.data)
-        except:
-            pass
+        form.repo_selected.data = 0
         return form
 
     def _get_community_list(self):
@@ -331,13 +342,7 @@ class IdentifierSettingView(ModelView):
             query_data.insert(0, Community(id='Root Index'))
         except Exception as ex:
             current_app.logger.debug(ex)
-        return query_data
-
-    def _get_repo(self, obj):
-        try:
-            query_data = Identifier.query.filter_by(username=obj.repository).first()
-        except Exception as ex:
-            current_app.logger.debug(ex)
+        
         return query_data
 
 
