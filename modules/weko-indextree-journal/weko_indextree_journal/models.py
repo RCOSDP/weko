@@ -22,15 +22,15 @@
 
 from datetime import datetime
 
-from invenio_accounts.models import User
-from weko_index_tree.models import Index
 from flask import current_app, flash
+from invenio_accounts.models import User
 from invenio_db import db
-from sqlalchemy.dialects import mysql
-from sqlalchemy.event import listen
-from weko_records.models import Timestamp
 from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.event import listen
 from sqlalchemy_utils.types import JSONType, UUIDType
+from weko_index_tree.models import Index
+from weko_records.models import Timestamp
+
 # from sqlalchemy_utils.types import UUIDType
 # from invenio_records.models import RecordMetadata
 

@@ -12,22 +12,22 @@
 # the templates and static folders as well as the test case.
 
 from __future__ import absolute_import, print_function
-import sys
-import os
-import json
-import numpy
 
-from flask import (
-    Blueprint, render_template, current_app, json, abort, jsonify)
+import json
+import os
+import sys
+
+import numpy
+from flask import Blueprint, abort, current_app, json, jsonify, render_template
+from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_i18n.ext import current_i18n
-from flask_babelex import gettext as _
-from weko_records.api import ItemTypes
 from weko_groups.api import Group
-from .api import Journals
-from .tasks import export_journal_task
+from weko_records.api import ItemTypes
 
+from .api import Journals
 from .permissions import indextree_journal_permission
+from .tasks import export_journal_task
 
 blueprint = Blueprint(
     'weko_indextree_journal',
