@@ -310,13 +310,14 @@ def _get_google_scholar_meta(record):
     return res
 
 
-def default_view_method(pid, record, template=None, **kwargs):
+def default_view_method(pid, record, filename=None, template=None, **kwargs):
     """Display default view.
 
     Sends record_viewed signal and renders template.
 
     :param pid: PID object.
     :param record: Record object.
+    :param filename: File name.
     :param template: Template to render.
     :param \*\*kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
@@ -361,6 +362,7 @@ def default_view_method(pid, record, template=None, **kwargs):
         template,
         pid=pid,
         record=record,
+        filename=filename,
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
         community_id=community_id,
