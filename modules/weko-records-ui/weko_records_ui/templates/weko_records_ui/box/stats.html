@@ -1,3 +1,5 @@
+{%- set views_count = record | get_view_count -%}
+
 <div class="well stats">
   <div class="row">
     <div class="col-sm-6 pull-left">
@@ -14,15 +16,17 @@
         <li><a href="#">period 1</a></li>
         <li><a href="#">period 2</a></li>
         <li><a href="#">period 3</a></li>
+        <li><a href="#">period 4</a></li>
       </ul>
     </div>
   </div>
 
   <div class="row">
     <!--<div class="total-views">-->
-    <div class="col-sm-2"><i class="fa fa-eye" aria-hidden="true"></i></div>
-    <div class="col-sm-4"><span id="views-num">1000</span></div>
-    <div class="col-sm-6"><span id="views-txt">views</span></div>
+    <div class="col-sm-3"><i class="fa fa-eye" aria-hidden="true"></i></div>
+    <div class="col-sm-3"><span id="views-num">{{ views_count }}</span></div>
+    <div class="col-sm-3"><span id="views-txt">views</span></div>
+    <div class="col-sm-3"></div>
     <!--</div>-->
   </div>
   <div class="row">
@@ -42,7 +46,7 @@
         <td>xxx</td>
       </tr>
       <tr>
-        <td>***.huga</td>
+        <td>***.fuga</td>
         <td>yyy</td>
       </tr>
       </tbody>
