@@ -19,11 +19,10 @@
 # MA 02111-1307, USA.
 
 """Command line interface creation kit."""
-
 import click
 from flask.cli import with_appcontext
 
-from .models import SessionLifetime
+from .models import AdminLangSettings, SessionLifetime
 
 
 @click.group()
@@ -47,3 +46,29 @@ def init_lifetime(minutes):
 
     click.secho('SessionLifetime has been initialised. lifetime=%s minutes' %
                 minutes, fg='green')
+
+
+@click.group()
+def language():
+    """Language commands."""
+
+
+@language.command('create')
+@click.argument('lang_code')
+@click.argument('lang_name')
+@click.argument('is_registered')
+@click.argument('sequence')
+@click.argument('is_active')
+@with_appcontext
+def insert_lang_to_db(lang_code, lang_name, is_registered, sequence, is_active):
+    """
+    Ex: ja Japanese true 12 true
+    """
+    click.secho('admin_lang_setting:', lang_code, lang_name, is_registered,
+                sequence, is_active)
+    try:
+        AdminLangSettings.update_lang(lang_code, lang_name,
+                                      is_registered, sequence, is_active)
+    except Exception as e:
+        click.secho(str(e))
+    return 'success'
