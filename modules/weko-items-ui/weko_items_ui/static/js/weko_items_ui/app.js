@@ -91,6 +91,7 @@ require([
       });
 
       $scope.getItemMetadata = function() {
+        this.resetAutoFillErrorMessage();
         $('#meta-search').modal('show');
       }
 
@@ -116,6 +117,16 @@ require([
         }else {
           return "";
         }
+      }
+
+      $scope.setAutoFillErrorMessage = (message) => {
+        $("#autofill-error-message").text(message);
+        $("#auto-fill-error-div").addClass("alert alert-danger");
+      }
+
+      $scope.resetAutoFillErrorMessage = () => {
+        $("#autofill-error-message").text("");
+        $("#auto-fill-error-div").removeClass("alert alert-danger");
       }
 
       $scope.dictValue = (id, sub1 = null, sub2 = null, sub3 = null) => {
@@ -148,10 +159,10 @@ require([
         let value = $('#autofill_item_id').val();
         let itemTypeId = $("#autofill_item_type_id").val();
         if (autoFillID === 'Default'){
-          alert('Please select the ID');
+          this.setAutoFillErrorMessage($("#autofill_error_id").val());
           return;
         } else if (!value.length){
-          alert('Please input valid value');
+          this.setAutoFillErrorMessage($("#autofill_error_input_value").val());
           return;
         }
 
@@ -171,16 +182,17 @@ require([
           data: JSON.stringify(param),
           dataType: "json",
           success: (data, status)=>{
+            this.resetAutoFillErrorMessage()
             if (data.error) {
-              alert("An error have occurred!\nDetail: "+data.error);
+              this.setAutoFillErrorMessage("An error have occurred!\nDetail: "+data.error);
             }else {
               let items = data.items;
               if (!items) {
-                alert('Some error is occurs!');
+                this.setAutoFillErrorMessage('Some error is occurs!');
               }
               let result = data.result;
               if (!result) {
-                alert('DOI is not exist!!!');
+                this.setAutoFillErrorMessage($("#autofill_error_doi").val());
               } else {
                 if (items.hasOwnProperty('creator')) {
                   if (items.creator.hasOwnProperty('affiliation')) {
@@ -332,7 +344,7 @@ require([
             }
           },
           error: (data, status) => {
-            alert("Cannot connect to server!");
+            this.setAutoFillErrorMessage("Cannot connect to server!");
           }
         });
 

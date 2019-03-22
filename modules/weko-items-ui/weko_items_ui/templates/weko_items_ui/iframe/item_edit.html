@@ -276,6 +276,9 @@
       <div class="modal-body">
         <div id="meta-search-body"></div>
         <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
+        <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID')}}">
+        <input type="hidden" id="autofill_error_input_value" name="autofill_item_type_id" value="{{_('Please input value')}}">
+        <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id" value="{{_('Specified DOI does not exist')}}">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">{{_('Close')}}</button>

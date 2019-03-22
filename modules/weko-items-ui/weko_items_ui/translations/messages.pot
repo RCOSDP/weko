@@ -127,3 +127,18 @@ msgstr ""
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:116
 msgid "Get"
 msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:279
+msgid "Please select the ID"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:280
+msgid "Please input value"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:281
+msgid "Specified DOI does not exist"
+msgstr ""

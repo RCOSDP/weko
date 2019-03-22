@@ -96,3 +96,18 @@ msgstr "Automatic metadata input"
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:116
 msgid "Get"
 msgstr "Get"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:279
+msgid "Please select the ID"
+msgstr "Please select the ID."
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:280
+msgid "Please input value"
+msgstr "Please input value."
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:281
+msgid "Specified DOI does not exist"
+msgstr "Specified DOI does not exist."
