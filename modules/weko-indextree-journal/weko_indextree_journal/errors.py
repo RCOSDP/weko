@@ -35,11 +35,13 @@ class JournalBaseRESTError(RESTException):
 
     code = 400
 
+
 class JournalInvalidDataRESTError(RESTException):
     """Invalid request body."""
 
     code = 400
     description = 'Could not load data.'
+
 
 class JournalDeletedRESTError(RESTException):
     """Invalid request body."""
