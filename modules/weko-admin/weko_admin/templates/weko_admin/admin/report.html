@@ -1,0 +1,57 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+{%- extends admin_base_template %}
+
+{%- block body %}
+  <style>
+    .content-font {
+      font-size: 16px;
+    }
+  </style>
+  <div class="row">
+    <div class="col-md-3 text-center">
+      <h4>{{_('Number of items registered')}}</h4></div>
+  </div><br>
+
+  <div class="row content-font">
+    <div class="row">
+      <div class="col-md-3 text-right">
+        {{_('Total number of items registered:')}}
+        &nbsp;&nbsp;&nbsp;
+        {{ result.total if result.total else 0  }}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-3 text-right">
+        {{_('Number of open items registered:')}}
+        &nbsp;&nbsp;&nbsp;
+        {{ result.open if result.open else 0 }}
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-3 text-right">
+        {{_('Number of private items registered:')}}
+        &nbsp;&nbsp;&nbsp;
+        {{ result.private if result.private else 0 }}
+      </div>
+    </div>
+  </div>
+{%- endblock body %}
