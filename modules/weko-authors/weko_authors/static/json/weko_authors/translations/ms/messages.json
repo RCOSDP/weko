@@ -1,150 +1,98 @@
 {
-    "Add": [
+    "Author_Add_New_Author": [
         null,
-        "Add"
+        "Author"
     ],
-    "Delete": [
+    "Author_Name": [
         null,
-        "Delete"
+        "Name"
     ],
-    "Index_Edit": [
+    "Author_Display": [
         null,
-        "Index Edit"
+        "Display"
     ],
-    "Index": [
+    "Author_Hide": [
         null,
-        "Index"
+        "Hide"
     ],
-    "Janpanese": [
+    "Author_Add_Author_Item": [
         null,
-        "Janpanese"
+        "Add author item"
     ],
-    "English": [
+    "Author_ID": [
         null,
-        "English"
+        "Author ID"
     ],
-    "Comment": [
+    "Author_Placeholder_authorId": [
         null,
-        "Comment"
+        "Author ID"
     ],
-    "More_Function": [
+    "Author_Confirm": [
         null,
-        "More Function"
+        "Confirm"
     ],
-    "More_Check": [
+    "Author_Add_Author_ID": [
         null,
-        "Limit the number of child indexes to show."
+        "Add a new ID"
     ],
-    "More_No": [
+    "Author_EMail": [
         null,
-        "Set display index number."
+        "E-Mail"
     ],
-    "Publish": [
+    "Author_Add_EMail": [
         null,
-        "Publish"
+        "Add E-mail"
     ],
-    "Open_To_Public": [
+    "Author_Button_Clear": [
         null,
-        "Open to public"
+        "Clear"
     ],
-    "Date": [
+    "Author_Button_Save": [
         null,
-        "Date"
+        "Save"
     ],
-    "Set_Publish_Date_Recursively": [
+    "Author_familyNmAndNm": [
         null,
-        "Set the publication date of child indexes recursively"
+        "First and Last Name"
     ],
-    "Harvest_Publish": [
+    "Author_fullNm": [
         null,
-        "Harvest Publish"
+        "Full Name"
     ],
-    "Harvest_Message": [
+    "Author_Add_Organization": [
         null,
-        "Please turn off the check if you do not want to open the metadata of the belonging items to public"
+        "Add Organization"
     ],
-    "Browsing_Privilege": [
+    "Author_Add_Author": [
         null,
-        "Browsing Privilege"
+        "Add Author"
     ],
-    "Role": [
+    "Author_Search": [
         null,
-        "Role"
+        "Search"
     ],
-    "Set_Role_Recursively": [
+    "Author_Mail_Address": [
         null,
-        "Set the base authorities of child indexes recursively"
+        "Mail Address"
     ],
-    "Authorized": [
+    "Author_Edit": [
         null,
-        "Authorized"
+        "Edit"
     ],
-    "Unauthorized": [
+    "Author_Search_No_Result": [
         null,
-        "Unauthorized"
+        "Sorry，No results."
     ],
-    "Group": [
+    "Author_Page_Previous": [
         null,
-        "Group"
+        "Previous"
     ],
-    "Set_Group_Recursively": [
+    "Author_Page_Next": [
         null,
-        "Set the group authorities of child indexes recursively"
+        "Next"
     ],
-    "Deposit_Privilege": [
+    "Author_On_1_Page": [
         null,
-        "Deposit Privilege"
-    ],
-    "Display_Format": [
-        null,
-        "Display Format"
-    ],
-    "Search_Results": [
-        null,
-        "Search Results"
-    ],
-    "List": [
-        null,
-        "List"
-    ],
-    "Contents_Table": [
-        null,
-        "Table Of Contents"
-    ],
-    "File_Size": [
-        null,
-        "File Size"
-    ],
-    "Image_Size": [
-        null,
-        "Image Size"
-    ],
-    "File_Type": [
-        null,
-        "File Type"
-    ],
-    "Send": [
-        null,
-        "Send"
-    ],
-    "Choose_Processing":[
-      null,
-      "Please choose processing about index and items!"
-    ],
-     "Delete_all": [
-        null,
-        "Delete all"
-    ],
-     "Move_items_to_parent_Index": [
-        null,
-        "Move items to parent Index"
-    ],
-     "Cancle": [
-        null,
-        "Cancle"
-     ],
-     "Index_Link": [
-        null,
-        "Index Link"
-     ]
+        "On 1 Page:"
+    ]
 }
