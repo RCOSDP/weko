@@ -305,7 +305,7 @@ class IdentifierSettingView(ModelView):
         # except ValueError:
         #     pos = -1
         # form.repo_selected.data = pos + 1
-        form.repo_selected.data = form.address.data
+        form.repo_selected.data = form.repository.data
         pass
 
     def create_form(self, obj=None):
