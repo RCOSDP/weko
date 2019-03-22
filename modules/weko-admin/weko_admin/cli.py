@@ -64,11 +64,9 @@ def insert_lang_to_db(lang_code, lang_name, is_registered, sequence, is_active):
     """
     Ex: ja Japanese true 12 true
     """
-    click.secho('admin_lang_setting:', lang_code, lang_name, is_registered,
-                sequence, is_active)
     try:
-        AdminLangSettings.update_lang(lang_code, lang_name,
-                                      is_registered, sequence, is_active)
+        AdminLangSettings.create(lang_code, lang_name,
+                                 is_registered, sequence, is_active)
+        click.secho('insert language success')
     except Exception as e:
         click.secho(str(e))
-    return 'success'
