@@ -177,8 +177,8 @@ class IdentifierSettingView(ModelView):
         'updated_date')
 
     form_create_rules = [rules.Header(_('Prefix')),
-                         'repository', 
-                         'jalc_doi', 
+                         'repository',
+                         'jalc_doi',
                          'jalc_crossref_doi',
                          'jalc_datacite_doi',
                          'cnri',
@@ -308,7 +308,7 @@ class IdentifierSettingView(ModelView):
 
             Override to implement custom behavior.
         """
-        return self._use_append_repository(
+        return self._use_exist_repository(
             super(IdentifierSettingView, self).edit_form(obj)
         )
 
@@ -324,10 +324,29 @@ class IdentifierSettingView(ModelView):
             pass
         return form
 
+    def _use_exist_repository(self, form):
+        try:
+            current_app.logger.debug(form.repository.data)
+        except:
+            pass
+        form.repository.query_factory = self._get_identify_list
+        try:
+            current_app.logger.debug(form.repository.data)
+        except:
+            pass
+        return form
+
     def _get_community_list(self):
         try:
             query_data = Community.query.all()
             query_data.insert(0, Community(id='Root Index'))
+        except Exception as ex:
+            current_app.logger.debug(ex)
+        return query_data
+
+    def _get_identify_list(self):
+        try:
+            query_data = Identifier.query.all()
         except Exception as ex:
             current_app.logger.debug(ex)
         return query_data
