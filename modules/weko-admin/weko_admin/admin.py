@@ -26,6 +26,7 @@ import hashlib
 from flask import abort, current_app, flash, request, jsonify
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_login import current_user
 from .permissions import admin_permission_factory
 from .utils import allowed_file
 
@@ -201,6 +202,52 @@ class StyleSettingView(BaseView):
             abort(500)
         return checksum1 == checksum2
 
+
+class ReportView(BaseView):
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        try:
+            aggs_results = None
+            cur_user_id = current_user.get_id()
+            if cur_user_id:
+                aggs_query = {
+                    "query": {
+                        "match": {
+                            "weko_creator_id": cur_user_id
+                        }
+                    },
+                    "aggs": {
+                        "aggs_term": {
+                            "terms": {
+                                "field": "publish_status",
+                                "order": {"_count": "desc"}
+                            }
+                        }
+                    }
+                }
+
+                from invenio_stats.utils import get_aggregations
+                aggs_results = get_aggregations('weko', aggs_query)
+
+            total = 0
+            result = {}
+            if aggs_results:
+                for bucket in aggs_results['aggs_term']['buckets']:
+                    bkt = {'open': bucket['doc_count']} if bucket['key'] == '0' \
+                        else {'private': bucket['doc_count']}
+                    result.update(bkt)
+                    total = total + bucket['doc_count']
+
+            result.update({'total': total})
+
+            return self.render(current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
+                               result=result)
+        except Exception:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        return abort(400)
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -210,6 +257,16 @@ style_adminview = {
     }
 }
 
+report_adminview = {
+    'view_class': ReportView,
+    'kwargs': {
+        'category': _('Statistics'),
+        'name': _('Report'),
+        'endpoint': 'report'
+    }
+}
+
 __all__ = (
     'style_adminview',
+    'report_adminview',
 )
