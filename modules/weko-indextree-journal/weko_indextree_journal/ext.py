@@ -50,9 +50,7 @@ class WekoIndextreeJournal(object):
 
 
 class WekoIndextreeJournalREST(object):
-    """
-      weko-indextree-journal Rest Obj
-    """
+    """weko-indextree-journal Rest Obj"""
 
     def __init__(self, app=None):
         """Extension initialization.

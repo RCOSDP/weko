@@ -274,6 +274,11 @@ class Journal(db.Model, Timestamp):
     """Owner user id of the journal."""
 
     def __iter__(self):
+        """Yield distributions for non-duplicate projects in the working set
+
+        The yield order is the order in which the items' path entries were
+        added to the working set.
+        """
         for name in dir(Journal):
             if not name.startswith('__') and not name.startswith('_') \
                     and name not in dir(Timestamp):

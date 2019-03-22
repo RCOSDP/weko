@@ -77,6 +77,7 @@ def index(index_id=0):
 
 @blueprint.route("/index/<int:index_id>")
 def get_journal_by_index_id(index_id=0):
+    """get journal by index ID"""
     try:
         result = None
         if index_id > 0:
@@ -93,6 +94,7 @@ def get_journal_by_index_id(index_id=0):
 @blueprint.route("/export", methods=['GET'])
 @login_required
 def export_journals():
+    """Export journals information to file"""
     try:
         # Get all journal records in journal table.
         journals = Journals.get_all_journals()
@@ -109,6 +111,7 @@ def export_journals():
 
 
 def obj_dict(obj):
+    """return"""
     return obj.__dict__
 
 
