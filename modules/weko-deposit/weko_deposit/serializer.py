@@ -42,23 +42,24 @@ def file_uploaded_owner(created_user_id = 0, updated_user_id = 0):
     show_updated_user = False
 
     if current_user.is_authenticated:
-        created_user = User.query.get(created_user_id)
-        if created_user is not None:
-            created_userprofile = UserProfile.get_by_userid(created_user_id)
-            if created_userprofile is not None:
-                created_email = created_user.email
-                created_username = created_userprofile._username
-                created_displayname = created_userprofile._displayname
-                show_created_user = True
+        show_created_user = True
+        show_updated_user = True
 
-        updated_user = User.query.get(updated_user_id)
+        created_user = User.query.get_or_404(created_user_id)
+        if created_user is not None:
+                created_email = created_user.email
+        created_userprofile = UserProfile.get_by_userid(created_user_id)
+        if created_userprofile is not None:
+            created_username = created_userprofile._username
+            created_displayname = created_userprofile._displayname
+
+        updated_user = User.query.get_or_404(updated_user_id)
         if updated_user is not None:
-            updated_userprofile = UserProfile.get_by_userid(updated_user_id)
-            if updated_userprofile is not None:
                 updated_email = updated_user.email
-                updated_username = updated_userprofile._username
-                updated_displayname = updated_userprofile._displayname
-                show_updated_user = True
+        updated_userprofile = UserProfile.get_by_userid(updated_user_id)
+        if updated_userprofile is not None:
+            updated_username = updated_userprofile._username
+            updated_displayname = updated_userprofile._displayname
         
     return {
         'created_user': {
