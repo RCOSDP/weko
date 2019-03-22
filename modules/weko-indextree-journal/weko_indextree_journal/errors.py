@@ -58,15 +58,21 @@ class JournalNotFoundRESTError(RESTException):
 
 
 class JournalUpdatedRESTError(RESTException):
+    """Invalid request body."""
+
     code = 400
     description = 'Could not update data.'
 
 
 class JournalAddedRESTError(RESTException):
+    """Invalid request body."""
+
     code = 400
     description = 'Could not add data.'
 
 
 class JournalMovedRESTError(RESTException):
+    """Invalid request body."""
+
     code = 400
     description = 'Could not move data.'

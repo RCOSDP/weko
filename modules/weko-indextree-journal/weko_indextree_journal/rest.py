@@ -144,6 +144,7 @@ def create_blueprint(app, endpoints):
 
 class JournalActionResource(ContentNegotiatedMethodView):
     """Journal create update delete view."""
+
     view_name = '{0}_journal_action'
 
     def __init__(self, ctx, record_serializers=None,
@@ -171,7 +172,6 @@ class JournalActionResource(ContentNegotiatedMethodView):
     @need_record_permission('read_permission_factory')
     def get(self, journal_id, **kwargs):
         """Get a journal record."""
-
         try:
             if journal_id != 0:
                 journal = self.record_class.get_journal(journal_id)
@@ -218,7 +218,6 @@ class JournalActionResource(ContentNegotiatedMethodView):
     @need_record_permission('delete_permission_factory')
     def delete(self, journal_id, **kwargs):
         """Delete a journal."""
-
         if not journal_id or journal_id <= 0:
             raise JournalNotFoundRESTError()
 
