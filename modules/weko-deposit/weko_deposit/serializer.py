@@ -17,6 +17,7 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
+from flask_login import current_user
 from invenio_accounts.models import User
 from weko_user_profiles.models import UserProfile
 
@@ -32,39 +33,42 @@ def file_uploaded_owner(created_user_id = 0, updated_user_id = 0):
     created_username = ''
     created_displayname = ''
     created_email = ''
-
-    created_userprofile = UserProfile.get_by_userid(created_user_id)
-    if created_userprofile is not None:
-        created_username = created_userprofile._username
-        created_displayname = created_userprofile._displayname
-
-    created_user = User.query.get_or_404(created_user_id)
-    if created_user is not None:
-        created_email = created_user.email
+    show_created_user = False
 
     # updated user.
     updated_username = ''
     updated_displayname = ''
     updated_email = ''
+    show_updated_user = False
 
-    updated_userprofile = UserProfile.get_by_userid(updated_user_id)
-    if created_userprofile is not None:
-        updated_username = updated_userprofile._username
-        updated_displayname = updated_userprofile._displayname
+    if current_user.is_authenticated:
+        created_user = User.query.get(created_user_id)
+        if created_user is not None:
+            created_userprofile = UserProfile.get_by_userid(created_user_id)
+            if created_userprofile is not None:
+                created_email = created_user.email
+                created_username = created_userprofile._username
+                created_displayname = created_userprofile._displayname
+                show_created_user = True
 
-    updated_user = User.query.get_or_404(updated_user_id)
-    if updated_user is not None:
-        updated_email = updated_user.email
+        updated_user = User.query.get(updated_user_id)
+        if updated_user is not None:
+            updated_userprofile = UserProfile.get_by_userid(updated_user_id)
+            if updated_userprofile is not None:
+                updated_email = updated_user.email
+                updated_username = updated_userprofile._username
+                updated_displayname = updated_userprofile._displayname
+                show_updated_user = True
         
     return {
         'created_user': {
-            'user_id' : created_user_id,
+            'user_id' : created_user_id if show_created_user else 0,
             'username' : created_username,
             'displayname' : created_displayname,
             'email' : created_email,
         },
         'updated_user': {
-            'user_id' : updated_user_id,
+            'user_id' : updated_user_id if show_updated_user else 0,
             'username' : updated_username,
             'displayname' : updated_displayname,
             'email' : updated_email,

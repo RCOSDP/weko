@@ -101,7 +101,7 @@ angular.module('myApp', ['ui.bootstrap'])
             }
 
             var username = ''
-            if (is_logged_in && ele.uploaded_owners && ele.uploaded_owners.created_user) {
+            if (is_logged_in == 'True' && ele.uploaded_owners && ele.uploaded_owners.created_user) {
               username =  ele.uploaded_owners.created_user.username == '' ?
                   ele.uploaded_owners.created_user.email : ele.uploaded_owners.created_user.username
             }
