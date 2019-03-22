@@ -2,28 +2,25 @@ INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, 
 VALUES ('en', 'English', 'true', 002, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('zh', 'Chinese', 'false', 000, 'true');
+VALUES ('zh', '中文', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('id', 'Indonesian', 'false', 000, 'true');
+VALUES ('id', 'Indonesia', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('vi', 'Vietnamese', 'false', 000, 'true');
+VALUES ('vi', 'Tiếng Việt', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('ms', 'Malay', 'false', 000, 'true');
+VALUES ('ms', 'Bahasa Melayu', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('tl', 'Tagalog', 'false', 000, 'true');
+VALUES ('fil', 'Filipino (Pilipinas)', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('th', 'Thai', 'false', 000, 'true');
+VALUES ('th', 'ไทย', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('hi', 'Hindi', 'false', 000, 'true');
+VALUES ('hi', 'हिन्दी', 'false', 000, 'true');
 
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('ar', 'Arabic', 'false', 000, 'true');
-
-INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
-VALUES ('ja', 'Japanese', 'true', 001, 'true');
+VALUES ('ja', '日本語', 'true', 001, 'true');
