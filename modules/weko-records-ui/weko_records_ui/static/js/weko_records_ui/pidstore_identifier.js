@@ -40,11 +40,9 @@ $(document).ready(function () {
     $('#' + flag(targets[index])).parent().parent().hide()
   }
 
-  let selectVal = 0
   $('#repo_selected').parent().parent().hide()
-  selectVal = $('#repo_selected').val();
-  $('#repository').val(selectVal);
-  $('#repository').select2().trigger('change');
+  let selectVal = $('#repo_selected').val();
+  $('#repository').select2().val(selectVal).trigger('change');
 
   updateButtonState();
 

@@ -293,18 +293,19 @@ class IdentifierSettingView(ModelView):
             model.created_date = datetime.utcnow().replace(microsecond=0)
         model.updated_userId = current_user.get_id()
         model.updated_date = datetime.utcnow().replace(microsecond=0)
-        model.repository = str(model.repository)
+        model.repository = model.repository.id
         pass
 
     def on_form_prefill(self, form, id):
-        query_data = Community.query.options(load_only('id')).all()
-        data = [index.id for index in query_data]
-        pos = -1
-        try:
-            pos = data.index(form.repository.data)
-        except ValueError:
-            pos = -1
-        form.repo_selected.data = pos + 1
+        # query_data = Community.query.options(load_only('id')).all()
+        # data = [index.id for index in query_data]
+        # pos = -1
+        # try:
+        #     pos = data.index(form.repository.data)
+        # except ValueError:
+        #     pos = -1
+        # form.repo_selected.data = pos + 1
+        form.repo_selected.data = form.address.data
         pass
 
     def create_form(self, obj=None):
