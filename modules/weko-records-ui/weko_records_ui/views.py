@@ -38,6 +38,8 @@ from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
 import werkzeug
 
+from invenio_stats import current_stats
+
 blueprint = Blueprint(
     'weko_records_ui',
     __name__,
@@ -341,6 +343,19 @@ def default_view_method(pid, record, template=None, **kwargs):
         **ctx,
         **kwargs
     )
+
+@blueprint.app_template_filter('get_view_count')
+def get_view_count(record):
+    result = 0
+    try:
+        cfg = {'params': {'record_id': record.id }}
+        query_cfg = current_stats.queries['bucket-record-view-total']
+        query = query_cfg.query_class(**query_cfg.query_config)
+        reseponse = query.run(**cfg['params'])
+        result = int(reseponse['count'])
+    except Exception as e:
+        current_app.logger.debug(str(e))
+    return result
 
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
 def set_pdfcoverpage_header():

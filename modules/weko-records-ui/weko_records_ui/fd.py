@@ -210,11 +210,10 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
         lang = user.language
 
     """ Send file without its pdf cover page """
-    pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
-    coverpage_state = WekoRecord.get_record_cvs(pid.object_uuid)
 
     try:
         pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
+        coverpage_state = WekoRecord.get_record_cvs(pid.object_uuid)
 
         is_original = request.args.get('original') or False
         is_pdf = 'pdf' in fileobj.mimetype
