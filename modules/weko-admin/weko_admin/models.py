@@ -273,8 +273,29 @@ class AdminLangSettings(db.Model):
         return cls.parse_result(lang_list)
 
     @classmethod
+    def create(cls, lang_code, lang_name, is_registered, sequence, is_active):
+        """
+        Create language
+        """
+        try:
+            dataObj = AdminLangSettings()
+            with db.session.begin_nested():
+                dataObj.lang_code = lang_code
+                dataObj.lang_name = lang_name
+                dataObj.is_registered = is_registered
+                dataObj.sequence = sequence
+                dataObj.is_active = is_active
+                db.session.add(dataObj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    @classmethod
     def update_lang(cls, lang_code=None, lang_name=None, is_registered=None,
-                  sequence=None, is_active=None):
+                    sequence=None, is_active=None):
         """
         Save list language into database
         :param lang_code: input language code
