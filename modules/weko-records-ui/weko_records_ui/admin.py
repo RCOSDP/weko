@@ -308,7 +308,8 @@ class IdentifierSettingView(ModelView):
 
             Override to implement custom behavior.
         """
-        return self._use_exist_repository(
+        print('-------------------------OBJ_____________', obj.repository)
+        return self._use_append_repository(
             super(IdentifierSettingView, self).edit_form(obj)
         )
 
@@ -324,18 +325,6 @@ class IdentifierSettingView(ModelView):
             pass
         return form
 
-    def _use_exist_repository(self, form):
-        try:
-            current_app.logger.debug(form.repository.data)
-        except:
-            pass
-        form.repository.query_factory = self._get_identify_list
-        try:
-            current_app.logger.debug(form.repository.data)
-        except:
-            pass
-        return form
-
     def _get_community_list(self):
         try:
             query_data = Community.query.all()
@@ -344,9 +333,9 @@ class IdentifierSettingView(ModelView):
             current_app.logger.debug(ex)
         return query_data
 
-    def _get_identify_list(self):
+    def _get_repo(self, obj):
         try:
-            query_data = Identifier.query.all()
+            query_data = Identifier.query.filter_by(username=obj.repository).first()
         except Exception as ex:
             current_app.logger.debug(ex)
         return query_data
