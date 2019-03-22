@@ -32,8 +32,12 @@
       {{ lib.render_form_fields(form, form_opts) }}      
       {% block toggle_from %}
       {% endblock %}
-      <div class="row" align="center">
-        <span class="query-columns">
+      <div class="form-group">
+        <div class="row-line-space"></div>
+      </div>
+      <div class="form-group">
+        <div class="col-md-2"></div>
+        <span class="col-md-10 query-columns">
           <span>
             <label>{{'Disable'}}</label>
             <select id="leftSelect" multiple="multiple"></select>

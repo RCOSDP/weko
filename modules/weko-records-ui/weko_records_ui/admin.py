@@ -209,7 +209,7 @@ class IdentifierSettingView(ModelView):
             :param field:
                 Template fields contain data need validator
         """
-        if field.data == None:
+        if field.data is None:
             return
         else:
             try:
@@ -289,7 +289,7 @@ class IdentifierSettingView(ModelView):
         model.repository = str(model.repository)
         pass
 
-    def create_form(self):
+    def create_form(self, obj=None):
         """
             Instantiate model delete form and return it.
 
