@@ -1,150 +1,58 @@
 {
-    "Add": [
+    "Author_Add_Author": [
         null,
-        "Add"
+        "Add Author"
     ],
-    "Delete": [
+    "Author_Search": [
         null,
-        "Delete"
+        "Search"
     ],
-    "Index_Edit": [
+    "Author_Mail_Address": [
         null,
-        "Index Edit"
+        "Mail Address"
     ],
-    "Index": [
+    "Author_Edit": [
         null,
-        "Index"
+        "Edit"
     ],
-    "Janpanese": [
+    "Author_Search_No_Result": [
         null,
-        "Janpanese"
+        "Sorry，No results."
     ],
-    "English": [
+    "Author_Page_Previous": [
         null,
-        "English"
+        "Previous"
     ],
-    "Comment": [
+    "Author_Page_Next": [
         null,
-        "Comment"
+        "Next"
     ],
-    "More_Function": [
+    "Author_On_1_Page": [
         null,
-        "More Function"
+        "On 1 Page:"
     ],
-    "More_Check": [
+    "Author_Name": [
         null,
-        "Limit the number of child indexes to show."
+        "Name"
     ],
-    "More_No": [
+    "Author_Import": [
         null,
-        "Set display index number."
+        "Import"
     ],
-    "Publish": [
+    "Designate_Index": [
         null,
-        "Publish"
-    ],
-    "Open_To_Public": [
-        null,
-        "Open to public"
-    ],
-    "Date": [
-        null,
-        "Date"
-    ],
-    "Set_Publish_Date_Recursively": [
-        null,
-        "Set the publication date of child indexes recursively"
-    ],
-    "Harvest_Publish": [
-        null,
-        "Harvest Publish"
-    ],
-    "Harvest_Message": [
-        null,
-        "Please turn off the check if you do not want to open the metadata of the belonging items to public"
-    ],
-    "Browsing_Privilege": [
-        null,
-        "Browsing Privilege"
-    ],
-    "Role": [
-        null,
-        "Role"
-    ],
-    "Set_Role_Recursively": [
-        null,
-        "Set the base authorities of child indexes recursively"
-    ],
-    "Authorized": [
-        null,
-        "Authorized"
-    ],
-    "Unauthorized": [
-        null,
-        "Unauthorized"
-    ],
-    "Group": [
-        null,
-        "Group"
-    ],
-    "Set_Group_Recursively": [
-        null,
-        "Set the group authorities of child indexes recursively"
-    ],
-    "Deposit_Privilege": [
-        null,
-        "Deposit Privilege"
-    ],
-    "Display_Format": [
-        null,
-        "Display Format"
-    ],
-    "Search_Results": [
-        null,
-        "Search Results"
-    ],
-    "List": [
-        null,
-        "List"
-    ],
-    "Contents_Table": [
-        null,
-        "Table Of Contents"
-    ],
-    "File_Size": [
-        null,
-        "File Size"
-    ],
-    "Image_Size": [
-        null,
-        "Image Size"
-    ],
-    "File_Type": [
-        null,
-        "File Type"
+        "DESIGNATE INDEX"
     ],
     "Send": [
         null,
-        "Send"
+        "Next"
     ],
-    "Choose_Processing":[
-      null,
-      "Please choose processing about index and items!"
+    "Save": [
+        null,
+        "Save"
     ],
-     "Delete_all": [
+    "Index_Tree": [
         null,
-        "Delete all"
-    ],
-     "Move_items_to_parent_Index": [
-        null,
-        "Move items to parent Index"
-    ],
-     "Cancle": [
-        null,
-        "Cancle"
-     ],
-     "Index_Link": [
-        null,
-        "Index Link"
-     ]
+        "INDEX TREE"
+    ]
 }
