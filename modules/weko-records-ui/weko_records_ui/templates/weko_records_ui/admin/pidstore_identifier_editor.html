@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{% extends 'admin/model/create.html' %}
+{% extends 'admin/model/edit.html' %}
 {% import 'admin/lib.html' as lib with context %}
 {% from 'admin/lib.html' import extra with context %} {# backward compatible #}
 
@@ -27,9 +27,31 @@
   <link href="{{ url_for('static', filename='css/weko_records_ui/pidstore_identifier.css') }}" rel="stylesheet">
 {% endblock css%}
 
-{% block create_form %}
+{% block edit_form %}
   {% call lib.form_tag(None) %}
-      {{ lib.render_form_fields(form, form_opts) }}
+      {{ lib.render_form_fields(form, form_opts) }}      
+      {% block toggle_from %}
+      {% endblock %}
+      <div class="form-group">
+          <div class="row-line-space"></div>
+      </div>
+      <div class="form-group">
+        <div class="col-md-2"></div>
+        <span class="col-md-10 query-columns">
+          <span>
+            <label>{{'Disable'}}</label>
+            <select id="leftSelect" multiple="multiple"></select>
+          </span>
+          <span class="buttons">
+            <input type="button" id="moveRight" value="→" class="move-right">
+            <input type="button" id="moveLeft" value="←" class="move-left">
+          </span>
+          <span>
+            <label>{{'Enable'}}</label>
+            <select id="rightSelect" multiple="multiple"></select>
+          </span>
+        </span>
+      </div>
       {{ lib.render_form_buttons(return_url, extra()) }}
   {% endcall %}
 {% endblock %}
