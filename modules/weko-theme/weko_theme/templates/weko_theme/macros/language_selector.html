@@ -28,7 +28,7 @@
       <span for="lang-code">{{ _('Language:') }}</span>
       <select class="form-control" id="lang-code" name="lang_code">
       {% for l in current_i18n.get_locales() %}
-          <option value="{{ l.language }}"></option>
+           <option {% if current_i18n.language == l.language %}selected {% endif %}value="{{ l.language }}"></option>
       {% endfor %}
       </select>
     </div>
