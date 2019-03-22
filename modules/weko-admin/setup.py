@@ -91,13 +91,18 @@ setup(
     entry_points={
         'flask.commands': [
             'lifetime = weko_admin.cli:lifetime',
+            'language = weko_admin.cli:language',
         ],
         'invenio_base.apps': [
             'weko_admin = weko_admin:WekoAdmin',
         ],
+        'invenio_base.api_blueprints': [
+            'weko_admin = weko_admin.views:blueprint_api',
+        ],
         'invenio_admin.views': [
             'weko_admin_style = weko_admin.admin:style_adminview',
             'weko_admin_report = weko_admin.admin:report_adminview',
+            'weko_admin_language = weko_admin.admin:language_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
