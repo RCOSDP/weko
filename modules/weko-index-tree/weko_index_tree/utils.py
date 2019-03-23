@@ -20,17 +20,18 @@
 
 """Module of weko-index-tree utils."""
 
-from functools import wraps
 from datetime import date, datetime
+from functools import wraps
 
 from flask import current_app, flash
 from flask_login import current_user
 from invenio_cache import current_cache
-from invenio_i18n.ext import current_i18n
-from weko_groups.models import Group
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from sqlalchemy import MetaData, Table
+from weko_groups.models import Group
+
 from .models import Index
-from sqlalchemy import Table, MetaData
 
 
 def is_index_tree_updated():
@@ -309,4 +310,3 @@ def get_admin_coverpage_setting():
     except Exception as ex:
         current_app.logger.debug(ex)
     return avail == 'enable'
-

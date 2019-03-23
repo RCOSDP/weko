@@ -20,8 +20,8 @@
 
 """Blueprint for weko-schema-ui."""
 
-from flask import (
-    Blueprint, current_app, redirect, render_template, request, url_for)
+from flask import Blueprint, current_app, redirect, render_template, request, \
+    url_for
 from flask_login import login_required
 
 from .permissions import schema_permission

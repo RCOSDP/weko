@@ -20,22 +20,25 @@
 
 """API for weko-index-tree."""
 
-from datetime import datetime
 from copy import deepcopy
+from datetime import datetime
+
 from flask import current_app, json
 from flask_login import current_user
-from invenio_db import db
 from invenio_accounts.models import Role
+from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import func, literal_column
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from weko_groups.api import Group
+
 from .models import Index
-from .utils import get_tree_json, cached_index_tree_json, reset_tree, \
-    get_index_id_list, get_admin_coverpage_setting
-from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
+from .utils import cached_index_tree_json, get_admin_coverpage_setting, \
+    get_index_id_list, get_tree_json, reset_tree
+
 
 class Indexes(object):
     """Define API for index tree creation and update."""
@@ -1027,4 +1030,3 @@ class Indexes(object):
             synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
             cls.set_coverpage_state_resc(index.id, state)
-

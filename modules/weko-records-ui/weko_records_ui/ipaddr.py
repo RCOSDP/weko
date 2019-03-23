@@ -21,7 +21,8 @@
 """Utilities for site license check."""
 
 import ipaddress
-from flask import request, current_app
+
+from flask import current_app, request
 from weko_records.api import SiteLicense
 
 
@@ -80,5 +81,3 @@ def match_ip_addr(addr, ip_addr):
         return True
 
     return False
-
-

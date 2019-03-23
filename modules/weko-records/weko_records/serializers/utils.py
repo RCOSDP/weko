@@ -22,6 +22,7 @@
 
 import copy
 
+
 def get_mapping(item_type_mapping, mapping_type):
     """
     Format itemtype mapping data. [Key:Schema, Value:ItemId]

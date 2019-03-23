@@ -25,8 +25,10 @@ import sys
 from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from .models import IndexStyle
 from invenio_db import db
+
+from .models import IndexStyle
+
 
 class IndexSettingView(BaseView):
 

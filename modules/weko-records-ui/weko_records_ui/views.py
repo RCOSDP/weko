@@ -20,31 +20,31 @@
 
 """Blueprint for weko-records-ui."""
 
-import six
-from flask import Blueprint, abort, current_app, render_template, \
-    make_response, redirect, request, url_for, flash
-from flask_login import current_user
-from lxml import etree
-from invenio_records_ui.utils import obj_or_import_string
-from invenio_records_ui.signals import record_viewed
-from invenio_oaiserver.response import getrecord
-from weko_records_ui.models import InstitutionName
-from weko_index_tree.models import IndexStyle
-from .permissions import check_created_id, check_original_pdf_download_permission, check_file_download_permission
-from weko_search_ui.api import get_search_detail_keyword
-from weko_deposit.api import WekoIndexer
-from .models import PDFCoverPageSettings
-from invenio_files_rest.views import ObjectResource
-from invenio_files_rest.views import file_downloaded, check_permission
-from invenio_files_rest.views import ObjectResource
-from .models import Identifier
-import werkzeug
 from datetime import datetime
+
+import six
+import werkzeug
+from flask import Blueprint, abort, current_app, flash, make_response, \
+    redirect, render_template, request, url_for
+from flask_login import current_user
 from invenio_db import db
-from sqlalchemy.exc import IntegrityError
-
-
+from invenio_files_rest.views import ObjectResource, check_permission, \
+    file_downloaded
+from invenio_oaiserver.response import getrecord
+from invenio_records_ui.signals import record_viewed
+from invenio_records_ui.utils import obj_or_import_string
 from invenio_stats import current_stats
+from lxml import etree
+from sqlalchemy.exc import IntegrityError
+from weko_deposit.api import WekoIndexer
+from weko_index_tree.models import IndexStyle
+from weko_search_ui.api import get_search_detail_keyword
+
+from weko_records_ui.models import InstitutionName
+
+from .models import Identifier, PDFCoverPageSettings
+from .permissions import check_created_id, check_file_download_permission, \
+    check_original_pdf_download_permission
 
 blueprint = Blueprint(
     'weko_records_ui',

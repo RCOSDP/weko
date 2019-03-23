@@ -21,8 +21,8 @@
 """WEKO3 module docstring."""
 
 import os
-import redis
 
+import redis
 from flask import current_app, session
 from simplekv.memory.redisstore import RedisStore
 

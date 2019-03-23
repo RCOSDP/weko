@@ -20,10 +20,11 @@
 
 """Flask extension for weko-theme."""
 
-from . import config
-from .views import blueprint
 from weko_records.utils import get_keywords_data_load
 from weko_search_ui.api import get_search_detail_keyword
+
+from . import config
+from .views import blueprint
 
 
 class WekoTheme(object):

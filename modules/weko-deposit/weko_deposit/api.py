@@ -19,28 +19,28 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit API."""
-import traceback
 import sys
-import redis
+import traceback
 from datetime import datetime
-from flask import abort, current_app, json, g, flash
+
+import redis
+from flask import abort, current_app, flash, g, json
 from flask_login import current_user
 from invenio_db import db
-from invenio_deposit.api import Deposit, preserve, index
-from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_deposit.api import Deposit, index, preserve
+from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
+    Part
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_files.api import FileObject, Record
-from invenio_records_rest.errors import PIDResolveRESTError
 from invenio_records_files.models import RecordsBuckets
-from invenio_files_rest.models import Bucket, MultipartObject, Part
+from invenio_records_rest.errors import PIDResolveRESTError
 from simplekv.memory.redisstore import RedisStore
-from weko_user_profiles.models import UserProfile
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
-from weko_records.utils import (
-    get_options_and_order_list, get_all_items, json_loader,
-    set_timestamp)
+from weko_records.utils import get_all_items, get_options_and_order_list, \
+    json_loader, set_timestamp
+from weko_user_profiles.models import UserProfile
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 from .signals import item_created

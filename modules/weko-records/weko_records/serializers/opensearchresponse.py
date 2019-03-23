@@ -13,6 +13,7 @@ Responsible for creating a HTTP response given the output of a serializer.
 
 from flask import current_app, render_template
 
+
 def oepnsearch_responsify(serializer):
     """Create a Records-REST search result response serializer.
 

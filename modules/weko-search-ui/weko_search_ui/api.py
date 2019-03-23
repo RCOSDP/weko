@@ -23,9 +23,9 @@
 
 from flask import current_app, json
 from invenio_db import db
+from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
-from weko_admin import config as ad_config
 from weko_records.utils import get_keywords_data_load
 
 
@@ -144,4 +144,3 @@ def get_search_detail_keyword(str):
         key_options_str.replace('True', 'true')
 
         return key_options_str
-
