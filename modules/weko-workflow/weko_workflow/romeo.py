@@ -19,7 +19,8 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-import requests, xmltodict
+import requests
+import xmltodict
 from flask import jsonify
 
 romeo_api_base_url = 'http://www.sherpa.ac.uk/romeo/api29.php'

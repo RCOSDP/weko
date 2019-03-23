@@ -25,15 +25,15 @@ from datetime import datetime
 from functools import partial
 
 from elasticsearch_dsl.query import Q
-from flask import current_app, request, flash
+from flask import current_app, flash, request
 from flask_security import current_user
+from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
 from werkzeug.datastructures import MultiDict
 
-from .permissions import search_permission
-from invenio_communities.models import Community
 from .api import SearchSetting
+from .permissions import search_permission
 
 
 def get_item_type_aggs(search_index):

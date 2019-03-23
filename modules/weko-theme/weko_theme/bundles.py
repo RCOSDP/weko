@@ -82,5 +82,3 @@ js_detail_search = Bundle(
     filters='requirejs',
     output="gen/weko_detail_search.%(version)s.js",
 )
-
-

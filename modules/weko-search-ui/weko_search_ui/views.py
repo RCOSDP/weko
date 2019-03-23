@@ -20,20 +20,24 @@
 
 """Blueprint for weko-search-ui."""
 
+import json
 import os
 import sys
-import json
-from flask import Blueprint, current_app, render_template, request, \
-    redirect, url_for, make_response, jsonify, abort
 from xml.etree import ElementTree as ET
-from weko_index_tree.models import Index, IndexStyle
-from weko_index_tree.api import Indexes
-from invenio_indexer.api import RecordIndexer
-from .api import SearchSetting
-from weko_indextree_journal.api import Journals
-from weko_search_ui.api import get_search_detail_keyword
-from invenio_i18n.ext import current_i18n
+
 from blinker import Namespace
+from flask import Blueprint, abort, current_app, jsonify, make_response, \
+    redirect, render_template, request, url_for
+from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
+from weko_index_tree.api import Indexes
+from weko_index_tree.models import Index, IndexStyle
+from weko_indextree_journal.api import Journals
+
+from weko_search_ui.api import get_search_detail_keyword
+
+from .api import SearchSetting
+
 _signals = Namespace()
 searched = _signals.signal('searched')
 

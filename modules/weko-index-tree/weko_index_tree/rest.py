@@ -22,16 +22,17 @@
 
 from functools import wraps
 
-from flask import Blueprint, abort, current_app, jsonify, make_response, request
+from flask import Blueprint, abort, current_app, jsonify, make_response, \
+    request
+from invenio_communities.models import Community
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
-from invenio_communities.models import Community
 
 from .api import Indexes
-from .models import Index
 from .errors import IndexAddedRESTError, IndexBaseRESTError, \
     IndexDeletedRESTError, IndexMovedRESTError, IndexNotFoundRESTError, \
     IndexUpdatedRESTError, InvalidDataRESTError
+from .models import Index
 
 
 def need_record_permission(factory_name):

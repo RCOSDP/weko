@@ -21,11 +21,11 @@
 """WEKO3 module docstring."""
 
 import uuid
+
 from flask import abort, jsonify, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
-
 from weko_records.api import ItemTypes
 
 from .api import Action, Flow, WorkFlow

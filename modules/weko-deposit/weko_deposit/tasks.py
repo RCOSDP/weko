@@ -22,12 +22,13 @@
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from invenio_records.models import RecordMetadata
-from invenio_db import db
-from .api import WekoDeposit
-from sqlalchemy.exc import SQLAlchemyError
-from flask import current_app
 from elasticsearch.exceptions import TransportError
+from flask import current_app
+from invenio_db import db
+from invenio_records.models import RecordMetadata
+from sqlalchemy.exc import SQLAlchemyError
+
+from .api import WekoDeposit
 
 logger = get_task_logger(__name__)
 

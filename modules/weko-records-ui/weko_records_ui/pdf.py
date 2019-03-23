@@ -19,20 +19,23 @@
 # MA 02111-1307, USA.
 
 """ Utilities for making the PDF cover page and newly combined PDFs. """
-import io, unicodedata, json, os
+import io
+import json
+import os
+import unicodedata
 from datetime import datetime
+
+from flask import current_app, send_file
 from fpdf import FPDF
-from PyPDF2 import PdfFileWriter, PdfFileReader, utils
-from flask import send_file, current_app
-from weko_records.api import ItemsMetadata, ItemMetadata, ItemType
-from invenio_pidstore.models import PersistentIdentifier
 from invenio_db import db
-from .models import PDFCoverPageSettings
-from weko_records.serializers.utils import get_mapping, get_metadata_from_map
-from weko_records.api import Mapping
+from invenio_pidstore.models import PersistentIdentifier
+from PyPDF2 import PdfFileReader, PdfFileWriter, utils
+from weko_records.api import ItemMetadata, ItemsMetadata, ItemType, Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
-from .views import blueprint
-from .views import ObjectResourceWeko
+from weko_records.serializers.utils import get_mapping, get_metadata_from_map
+
+from .models import PDFCoverPageSettings
+from .views import ObjectResourceWeko, blueprint
 
 """ Function counting numbers of full-width character and half-width character differently """
 def get_east_asian_width_count(text):

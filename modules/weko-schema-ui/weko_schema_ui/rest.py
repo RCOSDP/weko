@@ -31,8 +31,8 @@ from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDInvalidAction
-from invenio_records_rest.errors import (
-    InvalidDataRESTError, UnsupportedMediaRESTError)
+from invenio_records_rest.errors import InvalidDataRESTError, \
+    UnsupportedMediaRESTError
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \

@@ -26,6 +26,7 @@ import sys
 from flask import current_app
 from flask_plugins import PluginManager, get_enabled_plugins
 from werkzeug.local import LocalProxy
+
 from . import config
 from .views import blueprint
 

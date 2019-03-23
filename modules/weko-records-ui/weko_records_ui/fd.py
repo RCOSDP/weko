@@ -22,22 +22,25 @@
 
 import mimetypes
 import unicodedata
+
 from flask import abort, current_app, render_template, request
+from flask_login import current_user
+from invenio_files_rest.models import FileInstance, ObjectVersion
+from invenio_files_rest.proxies import current_permission_factory
+from invenio_files_rest.views import ObjectResource, check_permission, \
+    file_downloaded
 from invenio_records_files.utils import record_file_factory
+from weko_deposit.api import WekoRecord
 from weko_records.api import FilesMetadata, ItemTypes
-from .pdf import make_combined_pdf
+from weko_user_profiles.models import UserProfile
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
-from invenio_files_rest.proxies import current_permission_factory
-from .permissions import file_permission_factory, check_original_pdf_download_permission
+
 from .models import PDFCoverPageSettings
-from invenio_files_rest.views import file_downloaded, check_permission
-from invenio_files_rest.views import ObjectResource
-from invenio_files_rest.models import ObjectVersion, FileInstance
-from weko_deposit.api import WekoRecord
+from .pdf import make_combined_pdf
+from .permissions import check_original_pdf_download_permission, \
+    file_permission_factory
 from .views import ObjectResourceWeko
-from weko_user_profiles.models import UserProfile
-from flask_login import current_user
 
 
 def weko_view_method(pid, record, template=None, **kwargs):

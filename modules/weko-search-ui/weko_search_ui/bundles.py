@@ -66,4 +66,3 @@ i18n = GlobBundle(
     filters=AngularGettextFilter(catalog_name='invenioSearch'),
     output='gen/translations/weko-search-ui.%(version)s.js',
 )
-

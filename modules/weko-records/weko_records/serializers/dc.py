@@ -25,9 +25,9 @@
     http://purl.org/dc/elements/1.1/
 """
 
+from feedgen.ext.dc import DcBaseExtension
 from lxml import etree
 
-from feedgen.ext.dc import DcBaseExtension
 
 class DcWekoBaseExtension(DcBaseExtension):
     """DC Elements extension.
