@@ -448,7 +448,7 @@ def get_journals():
     datastore = RedisStore(redis.StrictRedis.from_url(
         current_app.config['CACHE_REDIS_URL']))
     cache_key = current_app.config[
-        'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
+        'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key).encode('utf-8')
 
     if datastore.redis.exists(cache_key):
         flash('redis!!')
