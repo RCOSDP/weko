@@ -34,4 +34,4 @@ do
     fi
 done
 
-exit 0
+exit $exit_code
