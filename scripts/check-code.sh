@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env bash
 #
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
@@ -18,26 +18,18 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+# Check docs and sort source files in each module
 
-notifications:
-  email: false
+for mod_dir in "modules/"*
+do
+    inner_dir=${mod_dir#*/} # Get module name from path
+    pydocstyle "$mod_dir/$inner_dir" "$mod_dir/tests" "$mod_dir/docs"
+    isort "$mod_dir" -rc -c -df
 
-sudo: required
+    # Let isort run through entire code before stopping TravisCI
+    if [ $? -ne 0 ]; then
+        exit_code=1
+    fi
+done
 
-language: python
-
-cache:
-  directories:
-    - $HOME/.cache/docker
-    - $HOME/.cache/pip
-
-python:
-  - "3.5"
-
-before_install:
-  - docker-compose build
-  - docker-compose up -d
-
-script:
-  - bash scripts/check-scripts.sh | travis_terminate 1
-  - docker-compose ps
+exit $exit_code
