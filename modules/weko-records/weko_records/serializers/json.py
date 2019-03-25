@@ -44,7 +44,7 @@ class WekoJSONSerializer(JSONSerializer):
     """
     """
     def preprocess_record(self, pid, record, links_factory=None):
-        """Include files for single record retrievals."""
+        Include files for single record retrievals.
         result = super(WekoJSONSerializer, self).preprocess_record(
             pid, record, links_factory=links_factory
         )
