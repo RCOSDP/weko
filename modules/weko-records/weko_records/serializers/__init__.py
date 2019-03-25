@@ -22,7 +22,7 @@
 
 from pkg_resources import resource_filename
 
-from .json import WekoJSONSerializer as JSONSerializer
+# from .json import WekoJSONSerializer as JSONSerializer
 from .schemas.csl import RecordSchemaCSLJSON
 from invenio_records_rest.serializers.citeproc import CiteprocSerializer
 
