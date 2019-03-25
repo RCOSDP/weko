@@ -24,7 +24,7 @@ import redis, json
 from collections import OrderedDict
 from functools import wraps
 from flask import Blueprint, abort, current_app, jsonify, render_template, \
-    request, session, url_for
+    request, session, url_for, flash
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -451,11 +451,13 @@ def get_journals():
         'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
 
     if datastore.redis.exists(cache_key):
+        flash('redis!!')
         str = datastore.get(cache_key)
         multiple_result = json.loads(
             str.decode('utf-8'),
             object_pairs_hook=OrderedDict)
     else:
+        flash('api!!')
         multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
 
     return jsonify(multiple_result)
