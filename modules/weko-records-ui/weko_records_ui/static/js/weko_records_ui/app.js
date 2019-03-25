@@ -52,13 +52,19 @@ angular.module('myApp', ['ui.bootstrap'])
         let txt_published = $('#txt_published').val()
         let txt_private = $('#txt_private').val()
         let is_logged_in = $('#txt_is_logged_in').val()
+
+        // Remove the versions which does not match the current file
         for (let index = 0; index < contents.length; index++) {
             const ele = contents[index];
-
-            // Only filter file with the same name of this page
             if (ele.key != txt_filename) {
-              continue;
+              // Remove this item
+              contents.splice(index, 1);
+              index--;
             }
+        }
+
+        for (let index = 0; index < contents.length; index++) {
+            const ele = contents[index];
 
             // const isPublished = ele.pubPri === 'Published' ? 1 : 0;
             const nameRadio = `radio${index}`;
