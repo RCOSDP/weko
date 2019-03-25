@@ -88,7 +88,7 @@ class WekoJSONSerializer(JSONSerializer):
 
     """
     def transform_record(self, pid, record, links_factory=None):
-        """Transform record into an intermediate representation."""
+        #Transform record into an intermediate representation.
         return self.dump(
             self.preprocess_record(pid, record, links_factory=links_factory),
             context={'pid': pid}
