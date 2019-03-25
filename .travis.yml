@@ -39,6 +39,6 @@ before_install:
   - docker-compose up -d
 
 script:
-  - cd $TRAVIS_BUILD_DIR
-  - bash scripts/check-scripts.sh | travis_terminate 1
+  - pwd
+  - bash $TRAVIS_BUILD_DIR/scripts/check-scripts.sh | travis_terminate 1
   - docker-compose ps
