@@ -178,3 +178,35 @@ def is_refresh(default_language):
         if default_language != current_i18n.language:
             return True
     return False
+
+def get_api_certification_type():
+    """
+    :return: list of supported certification type
+    """
+    raise ValueError("Not implement yet!")
+
+
+def validate_certification(api_code, cert_data):
+    """
+    :param api_code: API code
+    :param cert_data: Certification data
+    :return: true if certification is valid, else return false
+    """
+    raise ValueError("Not implement yet!")
+
+
+def get_current_api_certification(api_code):
+    """
+    :param api_code: API code
+    :return: API certification data if exist
+    """
+    raise ValueError("Not implement yet!")
+
+
+def save_api_certification(api_code, cert_data):
+    """
+    :param api_code: API code
+    :param cert_data: certification data
+    :return: true if success, false if fail
+    """
+    raise ValueError("Not implement yet!")
