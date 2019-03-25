@@ -28,6 +28,7 @@ from lxml import etree
 from invenio_records_ui.utils import obj_or_import_string
 from invenio_records_ui.signals import record_viewed
 from invenio_oaiserver.response import getrecord
+from invenio_i18n.ext import current_i18n
 from weko_records_ui.models import InstitutionName
 from weko_index_tree.models import IndexStyle
 from .permissions import check_created_id, check_original_pdf_download_permission, check_file_download_permission
@@ -38,6 +39,7 @@ from invenio_files_rest.views import ObjectResource
 from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
 from .models import Identifier
+from weko_records.serializers import citeproc_v1
 import werkzeug
 from datetime import datetime
 from invenio_db import db
@@ -413,6 +415,18 @@ def set_pdfcoverpage_header():
 
     return redirect('/admin/pdfcoverpage')
 
+@blueprint.app_template_filter('citation')
+def citation(record, pid, style=None, ln=None):
+    """Render citation for record according to style and language."""
+    locale = ln or current_i18n.language
+    style = style or 'science'
+    try:
+        return citeproc_v1.serialize(pid, record, style=style, locale=locale)
+    except Exception:
+        current_app.logger.exception(
+            'Citation formatting for record {0} failed.'
+            .format(str(record.id)))
+        return None
 
 class ObjectResourceWeko(ObjectResource):
 
