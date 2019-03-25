@@ -30,6 +30,7 @@ from flask_login import login_required
 
 from .permissions import index_tree_permission
 from .api import Indexes
+from .utils import get_admin_coverpage_setting
 
 blueprint = Blueprint(
     'weko_index_tree',
@@ -41,16 +42,19 @@ blueprint = Blueprint(
 
 
 @blueprint.route('/')
+@blueprint.route("/<int:index_id>")
 @login_required
 @index_tree_permission.require(http_exception=403)
-def index():
+def index(index_id = 0):
     """Render the index tree edit page."""
 
     return render_template(
         current_app.config['WEKO_INDEX_TREE_INDEX_TEMPLATE'],
         get_tree_json=current_app.config['WEKO_INDEX_TREE_LIST_API'],
         upt_tree_json='',
-        mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API']
+        mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API'],
+        admin_coverpage_setting=str(get_admin_coverpage_setting()),
+        index_id = index_id
     )
 
 

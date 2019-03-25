@@ -12,6 +12,40 @@
           <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</span>
         </li>
       </ol>
+      <div class="row m-top-20" ng-if="journal_info">
+        <div class="col-xs-12">
+            <div class="col-xs-12">
+              <p>{{journal_info.publication_title}}</p>
+              <p>{{journal_info.publisher_name}}</p>
+              <p>{{journal_info.language}}</p>
+              <p>{{journal_info.online_identifier}}</p>
+              <br>
+              <p>URL: <a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
+              <br>
+              <p>{{journal_info.coverage_depth}}</p>
+              <p>{{journal_info.preceding_publication_title_id}}</p>
+              <p>{{journal_info.ncid}}</p>
+              <p>{{journal_info.print_identifier}}</p>
+              <p>{{journal_info.date_first_issue_online}}</p>
+              <p>{{journal_info.ndl_callno}}</p>
+              <p>{{journal_info.num_first_issue_online}}</p>
+              <p>{{journal_info.publication_type}}</p>
+              <p>{{journal_info.num_last_issue_online}}</p>
+              <p>{{journal_info.num_last_vol_online}}</p>
+              <p>{{journal_info.title_transcription}}</p>
+              <p>{{journal_info.ndl_bibid}}</p>
+              <p>{{journal_info.num_first_vol_online}}</p>
+              <p>{{journal_info.coverage_notes}}</p>
+              <p>{{journal_info.parent_publication_title_id}}</p>
+              <p>{{journal_info.jstage_code}}</p>
+              <p>{{journal_info.title_alternative}}</p>
+              <p>{{journal_info.date_last_issue_online}}</p>
+              <p>{{journal_info.ichushi_code}}</p>
+              <p>{{journal_info.embargo_info}}</p>
+              <p>{{journal_info.access_type}}</p>
+            </div>
+        </div>
+      </div>
     </div>
     <div id="index_tree_list">
       <ul class="list-group">
@@ -29,3 +63,4 @@
     </div>
   </div>
 </div>
+<input type="hidden" ng-value="vm.invenioSearchResults.aggregations.path.buckets[0].length" id="index_list_length">

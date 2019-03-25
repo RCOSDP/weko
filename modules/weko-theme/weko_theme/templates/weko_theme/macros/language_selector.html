@@ -19,15 +19,17 @@
 #}
 
 {% macro language_selector_dropdown() %}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/lang_combobox.js') }}"></script>
   <form id="language-code-form" class="form form-inline lang-select text-white"
         action="{{ url_for('invenio_i18n.set_lang')}}"
         method="POST">
     <div class="form-group">
       <span for="lang-code">{{ _('Language:') }}</span>
       <select class="form-control" id="lang-code" name="lang_code">
-        {% for l in current_i18n.get_locales() %}
-          <option {% if current_i18n.language == l.language %}selected {% endif %}value="{{ l.language }}">{{ l.get_display_name() }}</option>
-        {% endfor %}
+      {% for l in current_i18n.get_locales() %}
+           <option {% if current_i18n.language == l.language %}selected {% endif %}value="{{ l.language }}"></option>
+      {% endfor %}
       </select>
     </div>
   </form>

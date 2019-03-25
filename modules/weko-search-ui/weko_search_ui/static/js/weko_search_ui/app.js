@@ -43,6 +43,22 @@
         return str;
       }
     });
+    function showJournalInfo() {
+      var check = setInterval(show, 500);
+      function show() {
+        if($('#index_list_length').val() !== undefined && $('#index_list_length').val() !== '' && $('#index_list_length').val() !== null) {
+          if($('#index_tree_list').length){
+            $("#journal_info").remove();
+          } else {
+            $("#journal_info").css({ display: "block" });
+          }
+          clearInterval(check);
+        }
+      }
+    }
+    $(document).ready(function(){
+      showJournalInfo();
+    });
 });
 
 //add controller to invenioSearch
@@ -61,7 +77,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
      $rootScope.disable_flg = true;
      $rootScope.display_flg = true;
      $rootScope.index_id_q = $location.search().q;
-
+     $rootScope.journal_info = [];
 
      $scope.itemManagementTabDisplay= function(){
         $rootScope.disable_flg = true;
@@ -109,6 +125,22 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
           return true;
         }
      }
+
+     $scope.getJournalInfo= function(){
+        // request api
+        $http({
+            method: 'GET',
+            url: '/journal_info/'+$rootScope.index_id_q,
+            //data: post_data,
+          headers: {'Content-Type': 'application/json'},
+        }).then(function successCallback(response) {
+          $rootScope.journal_info = response.data;
+        }, function errorCallback(error) {
+          console.log(error);
+        });
+     }
+
+     $scope.getJournalInfo();
   }
 
 angular.module('invenioSearch')

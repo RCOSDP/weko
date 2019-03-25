@@ -19,10 +19,12 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
+from flask import session
+from invenio_i18n.ext import current_i18n
+from invenio_i18n.views import set_lang
 
 from . import config
-from .models import SearchManagement
-from flask import json, current_app
+from .models import AdminLangSettings, SearchManagement
 
 
 def get_response_json(result_list, n_lst):
@@ -91,3 +93,88 @@ def get_search_setting():
         return db_obj
     else:
         return config.WEKO_ADMIN_MANAGEMENT_OPTIONS
+
+
+def get_admin_lang_setting():
+    """
+    Convert language list to json
+    :return:
+    """
+    try:
+        active_lang_list = AdminLangSettings.get_active_language()
+    except Exception as e:
+        return str(e)
+    return active_lang_list
+
+
+def update_admin_lang_setting(admin_lang_settings):
+    """
+    Update language to admin_lang_settings table
+    :param admin_lang_settings: input data to update language into database
+    """
+    try:
+        for admin_lang in admin_lang_settings:
+            AdminLangSettings.update_lang(admin_lang.get('lang_code'),
+                                          admin_lang.get('lang_name'),
+                                          admin_lang.get('is_registered'),
+                                          admin_lang.get('sequence'))
+    except Exception as e:
+        return str(e)
+    return 'success'
+
+
+def get_selected_language():
+    result = {
+        'lang': '',
+        'selected': '',
+        'refresh': False
+    }
+    registered_languages = AdminLangSettings.get_registered_language()
+    if not registered_languages:
+        return result
+
+    result['lang'] = registered_languages
+    default_language = registered_languages[0].get('lang_code')
+    result['refresh'] = is_refresh(default_language)
+    result['selected'] = get_current_language(default_language)
+
+    return result
+
+
+def get_current_language(default_language):
+    """
+
+    :param default_language:
+    :return: selected language
+    """
+    if "selected_language" in session:
+        session['selected_language'] = current_i18n.language
+        return session['selected_language']
+    else:
+        session['selected_language'] = default_language
+        set_lang(default_language)
+        return session['selected_language']
+
+
+def set_default_language():
+    """
+    In case user opens the web for the first time,
+    set default language base on Admin language setting
+    """
+    if "selected_language" not in session:
+        registered_languages = AdminLangSettings.get_registered_language()
+        if registered_languages:
+            default_language = registered_languages[0].get('lang_code')
+            set_lang(default_language)
+
+
+def is_refresh(default_language):
+    """
+
+    :param default_language:
+    :return:
+    """
+    if "selected_language" not in session:
+        if default_language != current_i18n.language:
+            return True
+    return False

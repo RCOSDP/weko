@@ -23,15 +23,28 @@
 import six
 from flask import Blueprint, abort, current_app, render_template, \
     make_response, redirect, request, url_for, flash
-
+from flask_login import current_user
+from lxml import etree
 from invenio_records_ui.utils import obj_or_import_string
 from invenio_records_ui.signals import record_viewed
+from invenio_oaiserver.response import getrecord
+from weko_records_ui.models import InstitutionName
 from weko_index_tree.models import IndexStyle
-from .permissions import check_created_id
+from .permissions import check_created_id, check_original_pdf_download_permission, check_file_download_permission
 from weko_search_ui.api import get_search_detail_keyword
 from weko_deposit.api import WekoIndexer
 from .models import PDFCoverPageSettings
+from invenio_files_rest.views import ObjectResource
+from invenio_files_rest.views import file_downloaded, check_permission
+from invenio_files_rest.views import ObjectResource
+from .models import Identifier
 import werkzeug
+from datetime import datetime
+from invenio_db import db
+from sqlalchemy.exc import IntegrityError
+
+
+from invenio_stats import current_stats
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -54,7 +67,6 @@ def publish(pid, record, template=None, **kwargs):
     :return: The rendered template.
     """
 
-    from invenio_db import db
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
@@ -227,6 +239,19 @@ def get_license_icon(type):
 
     return lst
 
+@blueprint.app_template_filter('get_downloads_count')
+def get_downloads_count(record):
+    result = {}
+    try:
+        cfg = {'params': {'bucket_id': record['_buckets']['deposit'] }}
+        query_cfg = current_stats.queries['bucket-file-download-total']
+        query = query_cfg.query_class(**query_cfg.query_config)
+        reseponse = query.run(**cfg['params'])
+        for c in reseponse['buckets']:
+            result[c['key']] = int(c['value'])
+    except Exception as e:
+        current_app.logger.debug(str(e))
+    return result
 
 @blueprint.app_template_filter('check_permission')
 def check_permission(record):
@@ -237,14 +262,62 @@ def check_permission(record):
     """
     return check_created_id(record)
 
+@blueprint.app_template_filter('check_file_permission')
+def check_file_permission(record, fjson):
+    """Check File Download Permission.
 
-def default_view_method(pid, record, template=None, **kwargs):
+    :param record
+    :param fjson
+    :return: result
+    """
+    return check_file_download_permission(record, fjson)
+
+def _get_google_scholar_meta(record):
+    target_map = {
+        'dc:title':'citation_title',
+        'jpcoar:creatorName':'citation_author',
+        'dc:publisher':'citation_publisher',
+        'jpcoar:subject':'citation_keywords',
+        'jpcoar:sourceTitle':'citation_journal_title',
+        'jpcoar:volume':'citation_volume',
+        'jpcoar:issue':'citation_issue',
+        'jpcoar:pageStart':'citation_firstpage',
+        'jpcoar:pageEnd':'citation_lastpage',}
+    recstr = etree.tostring(getrecord(identifier=record['_oai']['id'], metadataPrefix='jpcoar', verb='getrecord'))
+    et = etree.fromstring(recstr)
+    mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
+    res = []
+    for target in target_map:
+        found = mtdata.find(target, namespaces=mtdata.nsmap)
+        if found is not None:
+            res.append({'name':target_map[target], 'data':found.text})
+    for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
+        if date.attrib.get('dateType') == 'Available':
+            res.append({'name':'citation_online_date', 'data':date.text})
+        elif date.attrib.get('dateType') == 'Issued':
+            res.append({'name':'citation_publication_date', 'data':date.text})
+    for relatedIdentifier in mtdata.findall('jpcoar:relatedIdentifier', namespaces=mtdata.nsmap):
+        if 'identifierType' in relatedIdentifier.attrib and relatedIdentifier.attrib['identifierType'] == 'DOI':
+            res.append({'name':'citation_doi', 'data':relatedIdentifier.text})
+    for sourceIdentifier in mtdata.findall('jpcoar:sourceIdentifier', namespaces=mtdata.nsmap):
+        if 'identifierType' in sourceIdentifier.attrib and sourceIdentifier.attrib['identifierType'] == 'ISSN':
+            res.append({'name':'citation_issn', 'data':sourceIdentifier.text})
+    pdf_url = mtdata.find('jpcoar:file/jpcoar:URI', namespaces=mtdata.nsmap)
+    if pdf_url is not None:
+        res.append({'name':'citation_pdf_url', 'data':pdf_url.text})
+    res.append({'name':'citation_dissertation_institution', 'data': InstitutionName.get_institution_name()})
+    res.append({'name':'citation_abstract_html_url', 'data': request.url})
+    return res
+
+
+def default_view_method(pid, record, filename=None, template=None, **kwargs):
     """Display default view.
 
     Sends record_viewed signal and renders template.
 
     :param pid: PID object.
     :param record: Record object.
+    :param filename: File name.
     :param template: Template to render.
     :param \*\*kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
@@ -277,14 +350,26 @@ def default_view_method(pid, record, template=None, **kwargs):
     else:
         record["relation"] = {}
 
+    google_scholar_meta = _get_google_scholar_meta(record)
+
+    pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
+    # Check if user has the permission to download original pdf file
+    # and the cover page setting is set and its value is enable (not disabled)
+    can_download_original = check_original_pdf_download_permission(record) \
+        and pdfcoverpage_set_rec is not None and pdfcoverpage_set_rec.avail != 'disable'
+
     return render_template(
         template,
         pid=pid,
         record=record,
+        filename=filename,
+        can_download_original_pdf=can_download_original,
+        is_logged_in=current_user and current_user.is_authenticated,
         community_id=community_id,
         width=width,
         detail_condition=detail_condition,
         height=height,
+        google_scholar_meta=google_scholar_meta,
         **ctx,
         **kwargs
     )
@@ -327,3 +412,23 @@ def set_pdfcoverpage_header():
         return redirect('/admin/pdfcoverpage')
 
     return redirect('/admin/pdfcoverpage')
+
+
+class ObjectResourceWeko(ObjectResource):
+
+    # redefine `send_object` method to implement the no-cache function
+    @staticmethod
+    def send_object(bucket, obj, expected_chksum=None, logger_data=None, restricted=True, as_attachment=False,
+                    cache_timeout=-1):
+        if not obj.is_head:
+            check_permission(
+                current_permission_factory(obj, 'object-read-version'),
+                hidden=False
+            )
+
+        if expected_chksum and obj.file.checksum != expected_chksum:
+            current_app.logger.warning(
+                'File checksum mismatch detected.', extra=logger_data)
+
+        file_downloaded.send(current_app._get_current_object(), obj=obj)
+        return obj.send_file(restricted=restricted, as_attachment=as_attachment)

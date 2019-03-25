@@ -189,9 +189,12 @@ var SchemaCheckboxes = React.createClass({
 			arr = this.state.enum.split('|');
 		}
 		return {
-			type: "string",
+			type: "array",
 			format: "checkboxes",
-			enum: arr
+			items: {
+			  type: "string",
+			  enum: arr
+			}
 		};
 	},
 	render: function render() {
@@ -639,42 +642,42 @@ var SchemaObject = React.createClass({
 									React.createElement(
 										'option',
 										{ value: 'text' },
-										'\u30C6\u30AD\u30B9\u30C8'
+										'Text'
 									),
 									React.createElement(
 										'option',
 										{ value: 'textarea' },
-										'\u30C6\u30AD\u30B9\u30C8\u30A8\u30EA\u30A2'
+										'Textarea'
 									),
 									React.createElement(
 										'option',
 										{ value: 'checkboxes' },
-										'\u30C1\u30A7\u30C3\u30AF\u30DC\u30C3\u30AF\u30B9'
+										'Checkboxes'
 									),
 									React.createElement(
 										'option',
 										{ value: 'radios' },
-										'\u30E9\u30B8\u30AA'
+										'Radios'
 									),
 									React.createElement(
 										'option',
 										{ value: 'select' },
-										'\u30D7\u30EB\u30C0\u30A6\u30F3'
+										'Select'
 									),
 									React.createElement(
 										'option',
 										{ value: 'datetime' },
-										'\u65E5\u4ED8'
+										'Datetime'
 									),
 									React.createElement(
 										'option',
 										{ value: 'array' },
-										'\u30EA\u30B9\u30C8'
+										'List'
 									),
 									React.createElement(
 										'option',
 										{ value: 'object' },
-										'\u30AA\u30D6\u30B8\u30A7\u30AF\u30C8'
+										'Object'
 									)
 								)
 							),

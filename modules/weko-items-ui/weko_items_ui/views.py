@@ -34,6 +34,7 @@ from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from weko_groups.api import Group
 from weko_records.api import ItemTypes
+from weko_deposit.api import WekoRecord
 
 from .permissions import item_permission
 
@@ -160,7 +161,7 @@ def iframe_save_model():
                 'redis://{host}:{port}/1'.format(
                     host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
                     port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-            sessionstore.put('activity_item_'+activity_id, json.dumps(data),
+            sessionstore.put('activity_item_'+activity_id, json.dumps(data).encode('utf-8'),
                              ttl_secs=60*60*24*7)
     except Exception as ex:
         current_app.logger.exception(str(ex))
@@ -212,17 +213,32 @@ def get_json_schema(item_type_id=0):
     """
     try:
         result = None
+        cur_lang = current_i18n.language
+
         if item_type_id > 0:
-            result = ItemTypes.get_record(item_type_id)
-            if 'filemeta' in json.dumps(result):
-                group_list = Group.get_group_list()
-                group_enum = list(group_list.keys())
-                filemeta_group = result.get('properties').get('filemeta').get(
-                    'items').get('properties').get('groups')
-                filemeta_group['enum'] = group_enum
+            if item_type_id == 20:
+                result = ItemTypes.get_by_id(item_type_id)
+                if result is None:
+                    return '{}'
+                json_schema = result.schema
+                properties = json_schema.get('properties')
+                for key, value in properties.items():
+                    if 'validationMessage_i18n' in value:
+                        value['validationMessage'] = value['validationMessage_i18n'][cur_lang]
+            else:
+                result = ItemTypes.get_record(item_type_id)
+                if 'filemeta' in json.dumps(result):
+                    group_list = Group.get_group_list()
+                    group_enum = list(group_list.keys())
+                    filemeta_group = result.get('properties').get('filemeta').get(
+                        'items').get('properties').get('groups')
+                    filemeta_group['enum'] = group_enum
+
+                json_schema = result
+
         if result is None:
             return '{}'
-        return jsonify(result)
+        return jsonify(json_schema)
     except:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
@@ -280,10 +296,17 @@ def items_index(pid_value=0):
     try:
         if pid_value == 0:
             return redirect(url_for('.index'))
+
+        record = WekoRecord.get_record_by_pid(pid_value)
+        action = 'private' if record.get('publish_status', '1') == '1' \
+            else 'publish'
+
         if request.method == 'GET':
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
-                pid_value=pid_value)
+                pid_value=pid_value,
+                action=action)
+
         if request.headers['Content-Type'] != 'application/json':
             flash(_('invalide request'), 'error')
             return render_template(
@@ -320,10 +343,17 @@ def iframe_items_index(pid_value=0):
     try:
         if pid_value == 0:
             return redirect(url_for('.iframe_index'))
+
+        record = WekoRecord.get_record_by_pid(pid_value)
+        action = 'private' if record.get('publish_status', '1') == '1' \
+            else 'publish'
+
         if request.method == 'GET':
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
-                pid_value=pid_value)
+                pid_value=pid_value,
+                action=action)
+
         if request.headers['Content-Type'] != 'application/json':
             flash(_('invalide request'), 'error')
             return render_template(

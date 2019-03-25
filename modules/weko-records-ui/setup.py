@@ -90,6 +90,8 @@ setup(
         'invenio_admin.views': [
             'weko_records_ui_setting = weko_records_ui.admin:item_adminview',
             'weko_records_ui_pdfcoverpage = weko_records_ui.admin:pdfcoverpage_adminview',
+            'weko_records_ui_institution = weko_records_ui.admin:institution_adminview',
+            'weko_records_ui_identifier = weko_records_ui.admin:identifier_adminview'
         ],
         'invenio_i18n.translations': [
             'messages = weko_records_ui',
@@ -98,11 +100,19 @@ setup(
             'weko_records_ui = weko_records_ui.config',
         ],
         'invenio_assets.bundles': [
+            'weko_records_ui_css = weko_records_ui.bundles:style',
             'weko_records_ui_js = weko_records_ui.bundles:js',
         ],
         'invenio_access.actions': [
             'detail_page_access'
             ' = weko_records_ui.permissions:action_detail_page_access',
+            'download_original_pdf_access = weko_records_ui.permissions:action_download_original_pdf_access',
+        ],
+        'invenio_db.alembic': [
+            'weko_records_ui = weko_records_ui:alembic',
+        ],
+        'invenio_db.models': [
+            'weko_records_ui = weko_records_ui.models',
         ],
     },
     extras_require=extras_require,

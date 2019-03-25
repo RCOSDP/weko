@@ -19,10 +19,10 @@
 # MA 02111-1307, USA.
 
 """ Utilities for making the PDF cover page and newly combined PDFs. """
-import io, unicodedata, json
+import io, unicodedata, json, os
 from datetime import datetime
 from fpdf import FPDF
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfFileWriter, PdfFileReader, utils
 from flask import send_file, current_app
 from weko_records.api import ItemsMetadata, ItemMetadata, ItemType
 from invenio_pidstore.models import PersistentIdentifier
@@ -32,6 +32,7 @@ from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 from weko_records.api import Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
 from .views import blueprint
+from .views import ObjectResourceWeko
 
 """ Function counting numbers of full-width character and half-width character differently """
 def get_east_asian_width_count(text):
@@ -45,23 +46,27 @@ def get_east_asian_width_count(text):
 
 
 """ Function making PDF cover page """
-def make_combined_pdf(pid, obj_file_uri):
+def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     """
-    meke the cover-page-combined PDF file
+    make the cover-page-combined PDF file
     :param pid: PID object
     :param file_uri: URI of the file object
+    :param lang_user: LANGUAGE of access user
     :return: cover-page-combined PDF file object
     """
+    lang_filepath = current_app.config['PDF_COVERPAGE_LANG_FILEPATH']\
+        + lang_user + current_app.config['PDF_COVERPAGE_LANG_FILENAME']
 
-    pid = pid.pid_value
-    pidObject = PersistentIdentifier.get('recid', pid)
+    pidObject = PersistentIdentifier.get('recid', pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pidObject.object_uuid)
-    item_metadata = db.session.query(ItemMetadata).filter_by(json=item_metadata_json).first()
+    #item_metadata = db.session.query(ItemMetadata).filter_by(json=item_metadata_json).first()
     item_type = db.session.query(ItemType).filter(ItemType.id==ItemMetadata.item_type_id).first()
     item_type_id = item_type.id
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
 
+    with open(lang_filepath) as json_datafile:
+        lang_data = json.loads(json_datafile.read())
 
     """ Initialize Instance """
     pdf = FPDF('P', 'mm', 'A4')
@@ -118,7 +123,9 @@ def make_combined_pdf(pid, obj_file_uri):
         pdf.set_y(55)
 
     """ Title """
-    title = item_metadata_json['title_en']
+    title = item_metadata_json['title_' + lang_user]
+    if title == None:
+        title = item_metadata_json['title_en']
     pdf.set_font('IPAexm', '', 20)
     pdf.multi_cell(w1 + w2, title_h, title, 0, 'L', False)
     pdf.ln(h='15')
@@ -137,6 +144,27 @@ def make_combined_pdf(pid, obj_file_uri):
     if _creator in item_map:
         _creator_item_id = item_map[_creator].split('.')[0]
 
+    item_types = db.session.query(ItemType).filter(ItemType.id==ItemMetadata.item_type_id).all()
+
+    publisher_attr_lang = 'publisher.@attributes.xml:lang'
+    publisher_value = 'publisher.@value'
+    publisher_item_id = None
+    publisher_lang_id = None
+    publisher_text_id = None
+
+    for item in item_types:
+        item_id = item.id
+        type_mapping_ = Mapping.get_record(item_id)
+        temp_map = get_mapping(type_mapping_, "jpcoar_mapping")
+        if publisher_attr_lang in temp_map:
+            publisher_item_id = temp_map[publisher_attr_lang].split('.')[0]
+            publisher_lang_id = temp_map[publisher_attr_lang].split('.')[1]
+        if publisher_attr_lang in temp_map:
+            publisher_item_id = temp_map[publisher_attr_lang].split('.')[0]
+            publisher_lang_id = temp_map[publisher_attr_lang].split('.')[1]
+        if publisher_value in temp_map:
+            publisher_text_id = temp_map[publisher_value].split('.')[1]
+
     pdf.set_font('Arial', '', 14)
     pdf.set_font('IPAexg', '', 14)
 
@@ -150,7 +178,18 @@ def make_combined_pdf(pid, obj_file_uri):
     except (KeyError, IndexError):
         lang = None
     try:
-        publisher = item_metadata_json[_creator_item_id].get(_creator_item_id)
+        #publisher = item_metadata_json[_creator_item_id].get(_creator_item_id)
+        publisher = None
+        default_publisher = None
+        publishers = item_metadata_json[publisher_item_id]
+        for publisher_data in publishers:
+            if publisher_data[publisher_lang_id] == lang_user:
+                publisher = publisher_data[publisher_text_id]
+            if publisher_data[publisher_lang_id] == 'en':
+                default_publisher = publisher_data[publisher_text_id]
+
+        if publisher == None:
+            publisher = default_publisher
     except (KeyError, IndexError):
         publisher = None
     try:
@@ -171,8 +210,16 @@ def make_combined_pdf(pid, obj_file_uri):
     except (KeyError, IndexError):
         creator_mail = None
     try:
-        #creator_name = item_metadata_json['item_1538028816158']['creatorNames'][0].get('creatorName')
-        creator_name = item_metadata_json[_creator_item_id]['creatorNames'][0].get('creatorName')
+        creator_name = None
+        default_creator_name = None
+        for creator_metadata in item_metadata_json[_creator_item_id]['creatorNames']:
+            if creator_metadata.get('creatorNameLang') == lang_user:
+                creator_name = creator_metadata.get('creatorName')
+            if creator_metadata.get('creatorNameLang') == 'en':
+                default_creator_name = creator_metadata.get('creatorName')
+
+        if creator_name == None:
+            creator_name = default_creator_name
     except (KeyError, IndexError):
         creator_name = None
     try:
@@ -198,14 +245,14 @@ def make_combined_pdf(pid, obj_file_uri):
             metadata_dict[key] = ''
 
     metadata_list = [
-        "Language: {}".format(metadata_dict["lang"]),
-        "Publisher: {}".format(metadata_dict["publisher"]),
-        "Date of Publication: {}".format(metadata_dict["pubdate"]),
-        "Keywords(Ja): {}".format(metadata_dict["keywords_ja"]),
-        "Keywords(En): {}".format(metadata_dict["keywords_en"]),
-        "Author: {}".format(metadata_dict["creator_name"]),
-        "E-mail: {}".format(metadata_dict["creator_mail"]),
-        "Affiliation: {}".format(metadata_dict["affiliation"])
+        "{}: {}".format(lang_data["Metadata"]["LANG"], metadata_dict["lang"]),
+        "{}: {}".format(lang_data["Metadata"]["PUBLISHER"], metadata_dict["publisher"]),
+        "{}: {}".format(lang_data["Metadata"]["PUBLICDATE"], metadata_dict["pubdate"]),
+        "{} (Ja): {}".format(lang_data["Metadata"]["KEY"], metadata_dict["keywords_ja"]),
+        "{} (En): {}".format(lang_data["Metadata"]["KEY"], metadata_dict["keywords_en"]),
+        "{}: {}".format(lang_data["Metadata"]["AUTHOR"], metadata_dict["creator_name"]),
+        "{}: {}".format(lang_data["Metadata"]["EMAIL"], metadata_dict["creator_mail"]),
+        "{}: {}".format(lang_data["Metadata"]["AFFILIATED"], metadata_dict["affiliation"])
     ]
 
     metadata = '\n'.join(metadata_list)
@@ -223,19 +270,19 @@ def make_combined_pdf(pid, obj_file_uri):
     top = pdf.y
     # Calculate x position of next cell
     offset = pdf.x + w1
-    pdf.multi_cell(w1, meta_h, 'Metadata' + '\n'*(metadata_lfnum+1), 1, 'C', True)
+    pdf.multi_cell(w1, meta_h, lang_data["Title"]["METADATA"] + '\n'*(metadata_lfnum + 1), 1, 'C', True)
     # Reset y coordinate
     pdf.y = top
     # Move to computed offset
     pdf.x = offset
     pdf.multi_cell(w2, meta_h, metadata, 1, 'L', False)
     top = pdf.y
-    pdf.multi_cell(w1, url_oapolicy_h, 'URL' + '\n'*(url_lfnum+1), 1, 'C', True)
+    pdf.multi_cell(w1, url_oapolicy_h, lang_data["Title"]["URL"] + '\n'*(url_lfnum + 1), 1, 'C', True)
     pdf.y = top
     pdf.x = offset
     pdf.multi_cell(w2, url_oapolicy_h, url, 1, 'L', False)
     top = pdf.y
-    pdf.multi_cell(w1, url_oapolicy_h, 'OA Policy' + '\n'*(oa_policy_lfnum+1), 1, 'C', True)
+    pdf.multi_cell(w1, url_oapolicy_h, lang_data["Title"]["OAPOLICY"] + '\n'*(oa_policy_lfnum + 1), 1, 'C', True)
     pdf.y = top
     pdf.x = offset
     pdf.multi_cell(w2, url_oapolicy_h, oa_policy, 1, 'L', False)
@@ -252,42 +299,42 @@ def make_combined_pdf(pid, obj_file_uri):
             txt = ''
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
     elif license == 'license_0': #Attribution
-        txt = 'This work is licensed under a Creative Commons Attribution 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_0"]
         src = blueprint.root_path + "/static/images/creative_commons/by.png"
         lnk = "http://creativecommons.org/licenses/by/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 1, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_1': #Attribution-ShareAlike
-        txt = 'This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_1"]
         src= blueprint.root_path + "/static/images/creative_commons/by-sa.png"
         lnk = "http://creativecommons.org/licenses/by-sa/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 1, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_2': #Attribution-NoDerivatives
-        txt = 'This work is licensed under a Creative Commons Attribution-NoDerivatives 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_2"]
         src = blueprint.root_path + "/static/images/creative_commons/by-nd.png"
         lnk = "http://creativecommons.org/licenses/by-nd/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_3': #Attribution-NonCommercial
-        txt = 'This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_3"]
         src = blueprint.root_path +  "/static/images/creative_commons/by-nc.png"
         lnk = "http://creativecommons.org/licenses/by-nc/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_4': #Attribution-NonCommercial-ShareAlike
-        txt = 'This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_4"]
         src = blueprint.root_path + "/static/images/creative_commons/by-nc-sa.png"
         lnk = "http://creativecommons.org/licenses/by-nc-sa/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
         pdf.image(src, x = cc_logo_xposition, y = None, w = 0, h = 0, type = '', link = lnk)
     elif license == 'license_5': #Attribution-NonCommercial-NoDerivatives
-        txt = 'This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.'
+        txt = lang_data["License"]["LICENSE_5"]
         src = blueprint.root_path + "/static/images/creative_commons/by-nc-nd.png"
         lnk = "http://creativecommons.org/licenses/by-nc-nd/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
@@ -304,6 +351,38 @@ def make_combined_pdf(pid, obj_file_uri):
     cover_page = PdfFileReader(b_output)
     f = open(obj_file_uri, "rb")
     existing_pages = PdfFileReader(f)
+
+    # In the case the PDF file is encrypted by the password, ''(i.e. not encrypted intentionally)
+    if existing_pages.isEncrypted:
+        try:
+            existing_pages.decrypt('')
+        except: # Errors such as NotImplementedError
+            return ObjectResourceWeko.send_object(
+                obj.bucket, obj,
+                expected_chksum=fileobj.get('checksum'),
+                logger_data={
+                    'bucket_id': obj.bucket_id,
+                    'pid_type': pid.pid_type,
+                    'pid_value': pid.pid_value,
+                },
+                as_attachment=False,
+                cache_timeout=-1
+            )
+
+    # In the case the PDF file is encrypted by the password except ''
+    if existing_pages.isEncrypted:
+        return ObjectResourceWeko.send_object(
+            obj.bucket, obj,
+            expected_chksum=fileobj.get('checksum'),
+            logger_data={
+                'bucket_id': obj.bucket_id,
+                'pid_type': pid.pid_type,
+                'pid_value': pid.pid_value,
+            },
+            as_attachment=False,
+            cache_timeout=-1
+        )
+
     combined_pages = PdfFileWriter()
     combined_pages.addPage(cover_page.getPage(0))
     for page_num in range(existing_pages.numPages):

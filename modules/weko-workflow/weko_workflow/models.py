@@ -27,8 +27,9 @@ from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
 from sqlalchemy.sql.expression import desc
-from sqlalchemy_utils.types import UUIDType
+from sqlalchemy_utils.types import UUIDType, JSONType
 from sqlalchemy_utils.types.choice import ChoiceType
+from sqlalchemy.dialects import postgresql
 
 from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
@@ -746,6 +747,9 @@ class ActivityAction(db.Model, TimestampMixin):
     action_comment = db.Column(db.Text, nullable=True)
     """action comment."""
 
+    action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
+    """action identifier grant."""
+
 
 class ActivityHistory(db.Model, TimestampMixin):
     """define ActivityHistory"""
@@ -781,6 +785,42 @@ class ActivityHistory(db.Model, TimestampMixin):
     action_comment = db.Column(db.Text, nullable=True)
     """action comment."""
 
+    action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
+    """action identifier grant."""
+
     user = db.relationship(User, backref=db.backref(
         'activity_history'))
     """User relaionship."""
+
+class ActionJournal(db.Model, TimestampMixin):
+    """ Define journal info. """
+
+    __tablename__ = 'workflow_action_journal'
+
+    id = db.Column(db.Integer(), nullable=False,
+                   primary_key=True, autoincrement=True)
+    """Activity_Action identifier."""
+
+    activity_id = db.Column(
+        db.String(24), nullable=False, unique=False, index=True)
+    """activity id of Activity Action."""
+
+    action_id = db.Column(
+        db.Integer(), db.ForeignKey(Action.id), nullable=True, unique=False)
+    """action id."""
+
+    action_journal = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Action journal info."""
