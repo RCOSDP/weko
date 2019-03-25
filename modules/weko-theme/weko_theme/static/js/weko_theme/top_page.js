@@ -221,4 +221,18 @@ require([
 //        });
 
     });
+
+    // タブの内容を実際に切り替える
+    function changeTab (contentName) {
+        var contentId = contentName + '_content';
+        console.log('contentId: ' + contentId);
+        $('[id$=content]').hide();
+        $('#' + contentId).show();
+    }
+
+    // タブを押下するたびにページ内容を変更
+    $('.top-tab').click(function (e) {
+        var name = $(this).attr('id').split('_')[0];
+        changeTab(name);
+    });
 });

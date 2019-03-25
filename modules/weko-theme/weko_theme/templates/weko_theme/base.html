@@ -113,6 +113,9 @@
     <script type="text/babel">
       // Left
       class WekoGridLeft extends React.Component {
+        shouldComponentUpdate(nextProps, nextState) {
+            return false;
+        }
         constructor(props) {
           super(props);
           this.state = {};
@@ -148,6 +151,9 @@
 
       // Right
       class WekoGridRight extends React.Component {
+        shouldComponentUpdate() {
+            return false;
+        }
         render(){
           var layout = [
             {i: 'a', x: 0, y: 0, w: 3, h: 2},
@@ -218,10 +224,18 @@
     {%- block page_header %}
       {% include config.THEME_HEADER_TEMPLATE %}
     {%- endblock page_header %}
-
     <div class="row" class="col-md-12">
       <div id="grid-info" class="col-md-12"></div>
     </div>
+<!--
+    <div>
+         inner info
+      <div key="a" class="grid-info">
+        inner inner info
+      <div dangerouslySetInnerHTML={this.createMarkup(this.state.html)}></div>
+    </div>
+-->
+
     <div class="row" class="col-md-12">
       <div id="grid-body-left" class="col-md-3">
       </div>
