@@ -459,7 +459,7 @@ def get_journals():
     else:
         flash('api!!')
         multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
-        datastore.put(cache_key, json.dumps(multiple_result))
+        datastore.put(cache_key, json.dumps(multiple_result).encode('utf-8'))
 
     return jsonify(multiple_result)
 
