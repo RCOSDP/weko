@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-records-ui."""
-
+import os
 from .views import blueprint
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
@@ -56,6 +56,32 @@ ITEM_SEARCH_FLG = 'name'
 
 EMAIL_DISPLAY_FLG = True
 # setting the email of author if display
+
+# CSL Citation Formatter
+# ======================
+#: Styles Endpoint for CSL
+CSL_STYLES_API_ENDPOINT = '/api/csl/styles'
+
+#: Records Endpoint for CSL
+CSL_RECORDS_API_ENDPOINT = '/api/records/'
+
+#: Template dirrectory for CSL
+CSL_JSTEMPLATE_DIR = 'node_modules/invenio-csl-js/dist/templates/'
+
+#: Template for CSL citation result
+CSL_JSTEMPLATE_CITEPROC = 'templates/invenio_csl/citeproc.html'
+
+#: Template for CSL citation list item
+CSL_JSTEMPLATE_LIST_ITEM = 'templates/invenio_csl/item.html'
+
+#: Template for CSL error
+CSL_JSTEMPLATE_ERROR = os.path.join(CSL_JSTEMPLATE_DIR, 'error.html')
+
+#: Template for CSL loading
+CSL_JSTEMPLATE_LOADING = os.path.join(CSL_JSTEMPLATE_DIR, 'loading.html')
+
+#: Template for CSL typeahead
+CSL_JSTEMPLATE_TYPEAHEAD = os.path.join(CSL_JSTEMPLATE_DIR, 'typeahead.html')
 
 RECORDS_UI_ENDPOINTS = dict(
     recid=dict(
