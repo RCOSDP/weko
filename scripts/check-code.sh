@@ -20,6 +20,8 @@
 
 # Check docs and sort source files in each module
 
+exit_code=0
+
 for mod_dir in "modules/"*
 do
     inner_dir=${mod_dir#*/} # Get module name from path
@@ -29,7 +31,7 @@ do
     # Let isort run through entire code before stopping TravisCI
     if [ $? -ne 0 ]; then
         exit_code=1
-        echo "$inner_dir :  Error with code style";
+        echo "$inner_dir :  Error with code style"
     fi
 done
 

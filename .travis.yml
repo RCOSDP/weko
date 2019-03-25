@@ -43,5 +43,5 @@ before_script:
   - pip install pydocstyle
 
 script:
-  - bash $TRAVIS_BUILD_DIR/scripts/check-code.sh | travis_terminate 1
+  - bash $TRAVIS_BUILD_DIR/scripts/check-code.sh || travis_terminate 1
   - docker-compose ps
