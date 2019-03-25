@@ -462,7 +462,7 @@ def get_journals():
 
         try:
             datastore.put(cache_key, json.dumps(multiple_result).encode('utf-8'))
-        except ValueError:
+        except Exception:
             pass
 
     return jsonify(multiple_result)
