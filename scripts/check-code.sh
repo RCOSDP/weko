@@ -23,8 +23,8 @@
 for mod_dir in "modules/"*
 do
     inner_dir=${mod_dir#*/} # Get module name from path
-    pydocstyle "$mod_dir/$inner_dir" "$mod_dir/tests" "$mod_dir/docs"
-    isort "$mod_dir" -rc -c -df
+    /bin/pydocstyle "$mod_dir/$inner_dir" "$mod_dir/tests" "$mod_dir/docs"
+    /bin/isort "$mod_dir" -rc -c -df
 
     # Let isort run through entire code before stopping TravisCI
     if [ $? -ne 0 ]; then
