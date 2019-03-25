@@ -24,12 +24,24 @@ import sys
 
 from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
+from flask_admin.form import rules
+from flask_admin.contrib.sqla import ModelView
+from flask_login import current_user
 from flask_babelex import gettext as _
 from werkzeug.local import LocalProxy
 from . import config
+from .models import Identifier
 from invenio_db import db
 from .models import PDFCoverPageSettings
+from .models import InstitutionName
 
+import unicodedata
+from datetime import datetime
+from invenio_communities.models import Community
+from flask_admin.contrib.sqla.fields import QuerySelectField
+from wtforms.validators import ValidationError
+from wtforms.fields import StringField
+from sqlalchemy.orm import load_only
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -66,6 +78,7 @@ class ItemSettingView(BaseView):
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 
+
 class PdfCoverPageSettingView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
@@ -95,6 +108,25 @@ class PdfCoverPageSettingView(BaseView):
             )
 
 
+class InstitutionNameSettingView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        if request.method == 'POST':
+            rf = request.form.to_dict()
+            InstitutionName.set_institution_name(rf['institution_name'])
+        institution_name = InstitutionName.get_institution_name()
+        return self.render(config.INSTITUTION_NAME_SETTING_TEMPLATE,
+                           institution_name = institution_name)
+
+
+institution_adminview = {
+    'view_class': InstitutionNameSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Others'),
+        'endpoint': 'others'
+    }
+}
 
 item_adminview = {
     'view_class': ItemSettingView,
@@ -114,9 +146,219 @@ pdfcoverpage_adminview = {
     }
 }
 
+
+class IdentifierSettingView(ModelView):
+    """Pidstore Identifier admin view."""
+
+    can_create = True
+    can_edit = True
+    can_delete = False
+    can_view_details = True
+    create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR
+    edit_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
+
+    column_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'cnri',
+        'suffix',
+        #### Debug
+        'jalc_flag',
+        'jalc_crossref_flag',
+        'jalc_datacite_flag',
+        'cnri_flag',)
+
+    column_searchable_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'cnri',
+        'suffix')
+
+    column_details_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'cnri',
+        'suffix', 'created_userId', 'created_date', 'updated_userId',
+        'updated_date')
+
+    form_extra_fields = {
+        'repo_selected': StringField('Repository Selector'),
+    }
+
+    form_create_rules = [rules.Header(_('Prefix')),
+                         'repository',
+                         'jalc_doi',
+                         'jalc_crossref_doi',
+                         'jalc_datacite_doi',
+                         'cnri',
+                         rules.Header(_('Suffix')),
+                         'suffix',
+                         rules.Header(_('Enable/Disable')),
+                         'jalc_flag',
+                         'jalc_crossref_flag',
+                         'jalc_datacite_flag',
+                         'cnri_flag',
+                         'repo_selected',
+                         ]
+
+    form_edit_rules = form_create_rules
+
+    column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
+                         jalc_crossref_doi=_('JaLC CrossRef DOI'),
+                         jalc_datacite_doi=_('JaLC DataCite DOI'),
+                         cnri=_('CNRI'),
+                         suffix=_('Semi-automatic Suffix')
+                         )
+
+    def _validator_halfwidth_input(form, field):
+        """
+            Valid input character set
+
+            :param form:
+                Form used to create/update model
+            :param field:
+                Template fields contain data need validator
+        """
+        if field.data is None:
+            return
+        else:
+            try:
+                for inchar in field.data:
+                    if unicodedata.east_asian_width(inchar) in 'FWA':
+                        raise ValidationError(
+                            _('Only allow halfwith 1-bytes character in input'))
+            except Exception as ex:
+                raise ValidationError('{}'.format(ex))
+
+    form_args = {
+        'jalc_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'jalc_crossref_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'jalc_datacite_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'cnri': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'suffix': {
+            'validators': [_validator_halfwidth_input]
+        }
+    }
+
+    form_widget_args = {
+        'jalc_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'jalc_crossref_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'jalc_datacite_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'cnri': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'suffix': {
+            'maxlength': 100,
+        }
+    }
+
+    form_overrides = {
+        'repository': QuerySelectField,
+    }
+
+    def on_model_change(self, form, model, is_created):
+        """
+            Perform some actions before a model is created or updated.
+
+            Called from create_model and update_model in the same transaction
+            (if it has any meaning for a store backend).
+
+            By default does nothing.
+
+            :param form:
+                Form used to create/update model
+            :param model:
+                Model that will be created/updated
+            :param is_created:
+                Will be set to True if model was created and to False if edited
+        """
+        ### Update hidden data automation
+        if is_created:
+            model.created_userId = current_user.get_id()
+            model.created_date = datetime.utcnow().replace(microsecond=0)
+        model.updated_userId = current_user.get_id()
+        model.updated_date = datetime.utcnow().replace(microsecond=0)
+        model.repository = str(model.repository)
+        pass
+
+    def on_form_prefill(self, form, id):
+        query_data = Community.query.options(load_only('id')).all()
+        data = [index.id for index in query_data]
+        pos = -1
+        try:
+            pos = data.index(form.repository.data)
+        except ValueError:
+            pos = -1
+        form.repo_selected.data = pos + 1
+        pass
+
+    def create_form(self, obj=None):
+        """
+            Instantiate model delete form and return it.
+
+            Override to implement custom behavior.
+
+            The delete form originally used a GET request, so delete_form
+            accepts both GET and POST request for backwards compatibility.
+        """
+        return self._use_append_repository(
+            super(IdentifierSettingView, self).create_form()
+        )
+
+    def edit_form(self, obj):
+        """
+            Instantiate model editing form and return it.
+
+            Override to implement custom behavior.
+        """
+        print('-------------------------OBJ_____________', obj.repository)
+        return self._use_append_repository(
+            super(IdentifierSettingView, self).edit_form(obj)
+        )
+
+    def _use_append_repository(self, form):
+        form.repository.query_factory = self._get_community_list
+        form.repo_selected.data = 0
+        return form
+
+    def _get_community_list(self):
+        try:
+            query_data = Community.query.all()
+            query_data.insert(0, Community(id='Root Index'))
+        except Exception as ex:
+            current_app.logger.debug(ex)
+        
+        return query_data
+
+
+identifier_adminview = dict(
+    modelview=IdentifierSettingView,
+    model=Identifier,
+    category=_('Setting'),
+    name=_('Identifier'),
+)
+
+
 __all__ = (
     'pdfcoverpage_adminview',
     'PdfCoverPageSettingView',
     'item_adminview',
     'ItemSettingView',
+    'institution_adminview',
+    'InstitutionNameSettingView'
 )

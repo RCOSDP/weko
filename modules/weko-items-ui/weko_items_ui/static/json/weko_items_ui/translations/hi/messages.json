@@ -1,0 +1,58 @@
+{
+    "Author_Add_Author": [
+        null,
+        "Add Author"
+    ],
+    "Author_Search": [
+        null,
+        "Search"
+    ],
+    "Author_Mail_Address": [
+        null,
+        "Mail Address"
+    ],
+    "Author_Edit": [
+        null,
+        "Edit"
+    ],
+    "Author_Search_No_Result": [
+        null,
+        "Sorry，No results."
+    ],
+    "Author_Page_Previous": [
+        null,
+        "Previous"
+    ],
+    "Author_Page_Next": [
+        null,
+        "Next"
+    ],
+    "Author_On_1_Page": [
+        null,
+        "On 1 Page:"
+    ],
+    "Author_Name": [
+        null,
+        "Name"
+    ],
+    "Author_Import": [
+        null,
+        "Import"
+    ],
+    "Designate_Index": [
+        null,
+        "DESIGNATE INDEX"
+    ],
+    "Send": [
+        null,
+        "Next"
+    ],
+    "Save": [
+        null,
+        "Save"
+    ],
+    "Index_Tree": [
+        null,
+        "INDEX TREE"
+    ]
+}

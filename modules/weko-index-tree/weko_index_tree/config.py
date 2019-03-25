@@ -70,3 +70,4 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
 
 WEKO_INDEX_TREE_UPDATED = True
 """For index tree cache."""
+

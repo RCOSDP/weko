@@ -31,7 +31,6 @@ from elasticsearch.exceptions import TransportError
 
 logger = get_task_logger(__name__)
 
-
 @shared_task(ignore_result=True)
 def delete_items_by_id(p_path):
     """

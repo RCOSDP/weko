@@ -20,13 +20,17 @@
 
 """Blueprint for weko-search-ui."""
 
+import os
+import sys
+import json
 from flask import Blueprint, current_app, render_template, request, \
-    redirect, url_for, make_response, jsonify
+    redirect, url_for, make_response, jsonify, abort
 from xml.etree import ElementTree as ET
 from weko_index_tree.models import Index, IndexStyle
 from weko_index_tree.api import Indexes
 from invenio_indexer.api import RecordIndexer
 from .api import SearchSetting
+from weko_indextree_journal.api import Journals
 from weko_search_ui.api import get_search_detail_keyword
 from invenio_i18n.ext import current_i18n
 from blinker import Namespace
@@ -111,14 +115,19 @@ def search():
                                index_id=cur_index_id, community_id=community_id,
                                width=width, height=height, **ctx)
     else:
+        journal_info = None
         if search_type in ('0', '1', '2'):
             searched.send(current_app._get_current_object(), search_args=getArgs)
+            if search_type == '2':
+                cur_index_id = request.args.get('q', '0')
+                journal_info = get_journal_info(cur_index_id)
         return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
                                index_id=cur_index_id, community_id=community_id,
                                sort_option=sort_options, disply_setting=disply_setting,
                                detail_condition=detail_condition, width=width, height=height,
                                index_link_enabled=style.index_link_enabled,
-                               index_link_list=index_link_list, **ctx)
+                               index_link_list=index_link_list,
+                               journal_info=journal_info, **ctx)
 
 
 
@@ -198,3 +207,47 @@ def save_sort():
         jfy['status'] = 405
         jfy['message'] = 'Error'
         return make_response(jsonify(jfy), jfy['status'])
+
+
+def get_journal_info(index_id = 0):
+    """Get journal information.
+    :return: The object.
+    """
+    try:
+        if index_id == 0:
+            return None
+        schema_file = os.path.join(
+            os.path.abspath(__file__ + "/../../../"),
+            'weko-indextree-journal/weko_indextree_journal',
+            current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'])
+        schema_data = json.load(open(schema_file))
+
+        cur_lang = current_i18n.language
+        journal = Journals.get_journal_by_index_id(index_id)
+        if len(journal) <= 0 or journal.get('is_output') is False:
+            return None
+
+        result = {}
+        for value in schema_data:
+            title = value.get('title_i18n')
+            if title is not None:
+                data = journal.get(value['key'])
+                dataMap = value.get('titleMap')
+                if dataMap is not None:
+                    res = [x['name'] for x in dataMap if x['value'] == data]
+                    data = res[0]
+                val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
+                result.update({value['key']: val})
+        # real url: ?action=repository_opensearch&index_id=
+        result.update({'openSearchUrl': request.url_root + "search?search_type=2&q={}".format(index_id)})
+
+    except:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        abort(500)
+    return result
+
+@blueprint.route("/journal_info/<int:index_id>", methods=['GET'])
+def journal_detail(index_id=0):
+    """Render a check view."""
+    result = get_journal_info(index_id)
+    return jsonify(result)

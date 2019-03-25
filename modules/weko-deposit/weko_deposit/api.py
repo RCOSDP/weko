@@ -19,10 +19,12 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit API."""
-
+import traceback
+import sys
 import redis
 from datetime import datetime
 from flask import abort, current_app, json, g, flash
+from flask_login import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, preserve, index
 from invenio_files_rest.models import Bucket, ObjectVersion
@@ -33,6 +35,7 @@ from invenio_records_rest.errors import PIDResolveRESTError
 from invenio_records_files.models import RecordsBuckets
 from invenio_files_rest.models import Bucket, MultipartObject, Part
 from simplekv.memory.redisstore import RedisStore
+from weko_user_profiles.models import UserProfile
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
 from weko_records.utils import (
@@ -292,8 +295,27 @@ class WekoDeposit(Deposit):
             data.pop('$schema')
 
         data['_buckets'] = {'deposit': str(bucket.id)}
-        deposit = super(WekoDeposit, cls).create(data, id_=id_)
 
+        # save user_name & display name.
+        data['_buckets'] = {'deposit': str(bucket.id)}
+
+        if current_user and current_user.is_authenticated:
+            creator_id = int(current_user.get_id())
+            user = UserProfile.get_by_userid(current_user.get_id())
+
+            username = ''
+            displayname = ''
+            if user is not None:
+                username = user._username
+                displayname = user._displayname     
+                
+            data['_deposit']['owners_ext'] = {
+                'username' : username,
+                'displayname' : displayname,
+                'email' : current_user.email
+            }
+
+        deposit = super(WekoDeposit, cls).create(data, id_=id_)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         # recid = PersistentIdentifier.get(
@@ -305,13 +327,13 @@ class WekoDeposit(Deposit):
 
         # PIDVersioning(parent=conceptrecid).insert_draft_child(child=recid)
         # RecordDraft.link(recid, depid)
-
         return deposit
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def update(self, *args, **kwargs):
         """Update only drafts."""
         dc = self.convert_item_metadata(args[0])
+
         super(WekoDeposit, self).update(dc)
         item_created.send(
             current_app._get_current_object(), item_id=self.pid)
@@ -473,7 +495,7 @@ class WekoDeposit(Deposit):
 
             data_str = datastore.get(cache_key)
             datastore.delete(cache_key)
-            data = json.loads(data_str)
+            data = json.loads(data_str.decode('utf-8'))
         except:
             abort(500, 'Failed to register item')
 
@@ -505,7 +527,8 @@ class WekoDeposit(Deposit):
         dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
 
-        pubs = '1' if 'private' in actions else '0'
+        # pubs = '1' if 'private' in actions else '0'
+        pubs = '1'
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
@@ -575,7 +598,9 @@ class WekoRecord(Record):
     def pid(self):
         """Return an instance of record PID."""
         pid = self.record_fetcher(self.id, self)
-        return PersistentIdentifier.get(pid.pid_type, pid.pid_value)
+        obj = PersistentIdentifier.get(pid.pid_type, pid.pid_value)
+        print(obj.__dict__)
+        return obj
 
     @property
     def navi(self):
@@ -591,6 +616,7 @@ class WekoRecord(Record):
     @property
     def items_show_list(self):
         """Return the item show list."""
+
         try:
 
             items = []
@@ -627,11 +653,13 @@ class WekoRecord(Record):
     @classmethod
     def get_record_by_pid(cls, pid):
         """"""
+
         pid = PersistentIdentifier.get('depid', pid)
         return cls.get_record(id_=pid.object_uuid)
 
     @classmethod
     def get_record_with_hps(cls, uuid):
+
         record = cls.get_record(id_=uuid)
         path = []
         path.extend(record.get('path'))
@@ -639,3 +667,14 @@ class WekoRecord(Record):
         if path:
             harvest_public_state = Indexes.get_harvest_public_state(path)
         return harvest_public_state, record
+
+    @classmethod
+    def get_record_cvs(cls, uuid):
+        
+        record = cls.get_record(id_=uuid)
+        path = []
+        path.extend(record.get('path'))
+        coverpage_state = False
+        if path:
+            coverpage_state = Indexes.get_coverpage_state(path)
+        return coverpage_state

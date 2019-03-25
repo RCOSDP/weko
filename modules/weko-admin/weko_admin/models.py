@@ -28,6 +28,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy_utils.types import JSONType
 from sqlalchemy.sql import func
 from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy import asc
 
 
 class SessionLifetime(db.Model):
@@ -109,10 +110,10 @@ class SearchManagement(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
-    default_dis_num = db.Column( db.Integer, nullable=False, default=20)
+    default_dis_num = db.Column(db.Integer, nullable=False, default=20)
     """ Default display number of search results"""
 
-    default_dis_sort_index = db.Column( db.Text, nullable=True, default="")
+    default_dis_sort_index = db.Column(db.Text, nullable=True, default="")
     """ Default display sort of index search"""
 
     default_dis_sort_keyword = db.Column(db.Text, nullable=True, default="")
@@ -180,7 +181,7 @@ class SearchManagement(db.Model):
                 dataObj.default_dis_sort_keyword = data.get('dlt_keyword_sort_selected')
                 dataObj.sort_setting = data.get('sort_options')
                 dataObj.search_conditions = data.get('detail_condition')
-                dataObj.search_setting_all= data
+                dataObj.search_setting_all = data
                 db.session.add(dataObj)
             db.session.commit()
         except BaseException as ex:
@@ -194,7 +195,7 @@ class SearchManagement(db.Model):
         """Get setting"""
         id = db.session.query(func.max(SearchManagement.id)).first()[0]
         if id is None:
-            return  None
+            return None
         return cls.query.filter_by(id=id).one_or_none()
 
     @classmethod
@@ -217,7 +218,147 @@ class SearchManagement(db.Model):
             raise
         return cls
 
+
+class AdminLangSettings(db.Model):
+    """
+    System Language Display Setting
+    Stored target language and registered language
+    """
+
+    __tablename__ = 'admin_lang_settings'
+
+    lang_code = db.Column(db.String(3), primary_key=True, nullable=False,
+                          unique=True)
+
+    lang_name = db.Column(db.String(30), nullable=False)
+
+    is_registered = db.Column(db.Boolean(name='registered'), default=True)
+
+    sequence = db.Column(db.Integer, default=0)
+
+    is_active = db.Column(db.Boolean(name='active'), default=True)
+
+    @classmethod
+    def parse_result(cls, in_result):
+        obj = {}
+        for k in in_result:
+            record = dict()
+            record['lang_code'] = k.lang_code
+            record['lang_name'] = k.lang_name
+            record['is_registered'] = k.is_registered
+            record['sequence'] = k.sequence
+            record['is_active'] = k.is_active
+            obj[k.lang_code] = record
+
+        json_list = []
+        for key in obj:
+            json_list.append({
+                'lang_code': '{0}'.format(obj[key]['lang_code']),
+                'lang_name': '{0}'.format(obj[key]['lang_name']),
+                'is_registered': obj[key]['is_registered'],
+                'sequence': obj[key]['sequence']
+            })
+        sorted_list = sorted(json_list, key=lambda k: k['sequence'])
+        return sorted_list
+
+    @classmethod
+    def load_lang(cls):
+        """
+        Get language list
+        :return: A list of language
+        """
+
+        lang_list = cls.query.all()
+
+        return cls.parse_result(lang_list)
+
+    @classmethod
+    def create(cls, lang_code, lang_name, is_registered, sequence, is_active):
+        """
+        Create language
+        """
+        try:
+            dataObj = AdminLangSettings()
+            with db.session.begin_nested():
+                dataObj.lang_code = lang_code
+                dataObj.lang_name = lang_name
+                dataObj.is_registered = is_registered
+                dataObj.sequence = sequence
+                dataObj.is_active = is_active
+                db.session.add(dataObj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    @classmethod
+    def update_lang(cls, lang_code=None, lang_name=None, is_registered=None,
+                    sequence=None, is_active=None):
+        """
+        Save list language into database
+        :param lang_code: input language code
+        :param lang_name: input language name
+        :param is_registered: input boolean is language registered
+        :param sequence: input order number of language
+        :param is_active: input boolean is active of language
+        :return: Updated record
+        """
+        with db.session.begin_nested():
+            lang_setting_data = cls.query.filter_by(lang_code=lang_code).one()
+            if lang_code is not None:
+                lang_setting_data.lang_code = lang_code
+            if lang_name is not None:
+                lang_setting_data.lang_name = lang_name
+            if is_registered is not None:
+                lang_setting_data.is_registered = is_registered
+            if sequence is not None:
+                lang_setting_data.sequence = sequence
+            if is_active is not None:
+                lang_setting_data.is_active = is_active
+            db.session.merge(lang_setting_data)
+
+        db.session.commit()
+        return cls
+
+    @classmethod
+    def get_lang_code(cls):
+        """
+        Get language code
+        :return: the language code
+        """
+        return cls.lang_code
+
+    @classmethod
+    def get_lang_name(cls):
+        """
+        Get language full name
+        :return: language full name
+        """
+        return cls.lang_name
+
+    @classmethod
+    def get_registered_language(cls):
+        """
+        Get registered languages
+        :return: All language have registered
+        """
+        result = cls.query.filter_by(is_registered=True)
+
+        return cls.parse_result(result)
+
+    @classmethod
+    def get_active_language(cls):
+        """
+        Get active languages
+        :return: All languages have activated
+        """
+        result = cls.query.filter_by(is_active=True).order_by(
+            asc('admin_lang_settings_sequence'))
+        return cls.parse_result(result)
+
+
 __all__ = ([
-    'SearchManagement',
-]
-)
+    'SearchManagement', 'AdminLangSettings'
+])

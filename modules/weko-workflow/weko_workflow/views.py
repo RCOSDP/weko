@@ -36,6 +36,9 @@ from weko_records.api import ItemsMetadata
 
 from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem, GetCommunity
 from .models import ActionStatusPolicy, ActivityStatusPolicy
+from .config import IDENTIFIER_GRANT_LIST
+
+from .romeo import search_romeo_jtitles
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -157,8 +160,16 @@ def display_activity(activity_id=0):
     action_id = cur_action.id
     temporary_comment = activity.get_activity_action_comment(
         activity_id=activity_id, action_id=action_id)
+    temporary_id_grant = 0
     if temporary_comment:
+        temporary_id_grant = temporary_comment.action_identifier_grant
         temporary_comment = temporary_comment.action_comment
+
+    temporary_journal = activity.get_action_journal(
+        activity_id=activity_id, action_id=action_id)
+    if temporary_journal:
+        temporary_journal = temporary_journal.action_journal
+
     cur_step = action_endpoint
     step_item_login_url = None
     approval_record = []
@@ -208,6 +219,9 @@ def display_activity(activity_id=0):
         action_id=action_id,
         cur_step=cur_step,
         temporary_comment=temporary_comment,
+        temporary_journal=temporary_journal,
+        temporary_id_grant=temporary_id_grant,
+        id_grant_options=IDENTIFIER_GRANT_LIST,
         record=approval_record,
         step_item_login_url=step_item_login_url,
         histories=histories,
@@ -273,13 +287,31 @@ def next_action(activity_id='0', action_id=0):
         action_status=ActionStatusPolicy.ACTION_DONE,
         commond=post_json.get('commond')
     )
+
     work_activity = WorkActivity()
-    if 1 == post_json.get('temporary_save'):
-        work_activity.upt_activity_action_comment(
+    id_grant = post_json.get('identifier_grant')
+    # If is action identifier_grant, then save to work_activity
+    if id_grant is not None:
+        work_activity.upt_activity_action_id_grant(
             activity_id=activity_id,
             action_id=action_id,
-            comment=post_json.get('commond')
+            identifier_grant=id_grant
         )
+        activity['identifier_grant'] = id_grant
+    if 1 == post_json.get('temporary_save'):
+        if 'journal' in post_json:
+            work_activity.create_or_update_action_journal(
+                activity_id=activity_id,
+                action_id=action_id,
+                journal=post_json.get('journal')
+            )
+        else:
+            work_activity.upt_activity_action_comment(
+                activity_id=activity_id,
+                action_id=action_id,
+                comment=post_json.get('commond')
+            )
+
         return jsonify(code=0, msg=_('success'))
     history = WorkActivityHistory()
     action = Action().get_action_detail(action_id)
@@ -302,7 +334,9 @@ def next_action(activity_id='0', action_id=0):
             resolver = Resolver(pid_type='recid', object_type='rec',
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
-            UpdateItem.publish(pid, approval_record)
+            
+            # TODO: Make private as default.
+            # UpdateItem.publish(pid, approval_record)
 
     if 'item_link'==action_endpoint:
         relation_data= post_json.get('link_data'),
@@ -400,3 +434,23 @@ def previous_action(activity_id='0', action_id=0, req=0):
         work_activity.upt_activity_action(
             activity_id=activity_id, action_id=previous_action_id)
     return jsonify(code=0, msg=_('success'))
+
+
+@blueprint.route('/journal/list', methods=['GET'])
+def get_journals():
+    key = request.values.get('key')
+    multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
+
+    return jsonify(multiple_result)
+
+
+@blueprint.route('/journal', methods=['GET'])
+def get_journal():
+    title = request.values.get('title')
+
+    result = search_romeo_jtitles(title, 'exact')
+    if result['romeoapi'] and int(result['romeoapi']['header']['numhits']) > 1:
+        result['romeoapi']['journals']['journal'] = \
+        result['romeoapi']['journals']['journal'][0]
+
+    return jsonify(result)

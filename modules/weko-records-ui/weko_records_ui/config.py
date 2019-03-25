@@ -25,16 +25,31 @@ from .views import blueprint
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
 WEKO_RECORDS_UI_BASE_TEMPLATE = 'weko_theme/page.html'
 
+WEKO_PERMISSION_REQUIRED_TEMPLATE = 'weko_workflow/permission_required.html'
+
 WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Repository Administrator',
                              'Contributor',
                              'General')
 
+WEKO_PERMISSION_SUPER_ROLE_USER = ('System Administrator',
+                                   'Repository Administrator')
+
 ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
 # author setting page template
 
+
 WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE = 'weko_records_ui/admin/pdfcoverpage.html'
 # pdfcoverpage templates
+
+INSTITUTION_NAME_SETTING_TEMPLATE = 'weko_records_ui/admin/institution_name_setting.html'
+# institution name setting page template
+
+WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR = 'weko_records_ui/admin/pidstore_identifier_creator.html'
+# pidstore identifier creator template
+
+WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR = 'weko_records_ui/admin/pidstore_identifier_editor.html'
+# pidstore identifier editor template
 
 ITEM_SEARCH_FLG = 'name'
 # setting author name search type: name or id
@@ -63,6 +78,15 @@ RECORDS_UI_ENDPOINTS = dict(
         pid_type='recid',
         route='/record/<pid_value>/files/<path:filename>',
         view_imp='weko_records_ui.fd.file_download_ui',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+    ),
+    recid_file_details=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/file_details/<path:filename>',
+        view_imp='weko_records_ui.views.default_view_method',
+        template='weko_records_ui/file_details.html',
         record_class='weko_deposit.api:WekoRecord',
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
@@ -170,4 +194,8 @@ JPAEXG_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexg00201/ipaexg.ttf"
 
 # Path to the JPAexm font file
 JPAEXM_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexm00201/ipaexm.ttf"
+
+PDF_COVERPAGE_LANG_FILEPATH = blueprint.root_path + "/translations/"
+
+PDF_COVERPAGE_LANG_FILENAME = "/pdf_coverpage.json"
 

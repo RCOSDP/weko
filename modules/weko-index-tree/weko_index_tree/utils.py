@@ -28,7 +28,9 @@ from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_i18n.ext import current_i18n
 from weko_groups.models import Group
-
+from invenio_db import db
+from .models import Index
+from sqlalchemy import Table, MetaData
 
 
 def is_index_tree_updated():
@@ -92,7 +94,9 @@ def get_tree_json(obj, pid=0):
             attr = ['public_state', 'public_date',
                     'browsing_role', 'contribute_role',
                     'browsing_group', 'contribute_group',
-                    'more_check', 'display_no']
+                    'more_check', 'display_no',
+                    'coverpage_state']
+
             for lst in plst:
                 lst['children'] = []
                 if isinstance(lst, dict):
@@ -157,6 +161,7 @@ def get_user_roles():
         return _check_admin(), [x.id for x in current_user.roles]
     return False, None
 
+
 def get_user_groups():
     grps = []
     groups = Group.query_by_user(current_user, eager=False)
@@ -164,6 +169,7 @@ def get_user_groups():
         grps.append(group.id)
 
     return grps
+
 
 def check_roles(user_role, roles):
     is_can = True
@@ -176,6 +182,7 @@ def check_roles(user_role, roles):
             is_can = False
     return is_can
 
+
 def check_groups(user_group, groups):
     is_can = True
     if current_user.is_authenticated:
@@ -184,6 +191,7 @@ def check_groups(user_group, groups):
             is_can = False
 
     return is_can
+
 
 def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
     if isinstance(tree, list):
@@ -239,6 +247,7 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         children.clear()
                         tree.pop(i)
 
+
 def get_index_id_list(indexes, id_list = []):
     if isinstance(indexes, list):
         for index in indexes:
@@ -252,6 +261,7 @@ def get_index_id_list(indexes, id_list = []):
                 get_index_id_list(children, id_list)
 
     return id_list
+
 
 def reduce_index_by_more(tree, more_ids=[]):
 
@@ -279,3 +289,24 @@ def reduce_index_by_more(tree, more_ids=[]):
 
             else:
                 reduce_index_by_more(tree=children, more_ids=more_ids)
+
+
+def get_admin_coverpage_setting():
+    """
+
+    Get 'avail' value from pdfcoverpage_set table
+    """
+    avail = 'disable'
+    try:
+        metadata = MetaData()
+        metadata.reflect(bind=db.engine)
+        table_name = 'pdfcoverpage_set'
+
+        pdfcoverpage_table = Table(table_name, metadata)
+        record = db.session.query(pdfcoverpage_table)
+
+        avail = record.first()[1]
+    except Exception as ex:
+        current_app.logger.debug(ex)
+    return avail == 'enable'
+

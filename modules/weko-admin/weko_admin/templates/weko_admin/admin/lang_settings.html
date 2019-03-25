@@ -1,0 +1,75 @@
+{#
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
+{% endblock %}
+
+{%- block javascript %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/weko_admin/lang_settings.js') }}"></script>
+{%- endblock javascript %}
+
+{%- block body %}
+<div class="row">
+  <div class="col-sm-12">
+    <div class="panel-group">
+      <div class="panel panel-default">
+        <div class="panel-body" id="color_setting">
+          <div class="row">
+            <div class="col-sm-10">
+              <span class="query-columns">
+                <span>
+                  <label>{{_('Target language')}}</label>
+                  <select id="leftSelect" multiple="multiple">
+                  </select>
+                </span>
+                <span class="buttons">
+                  <input type="button" id="moveRight" value="→" class="move-right">
+                  <input type="button" id="moveLeft" value="←" class="move-left">
+                </span>
+                <span>
+                  <label>{{_('Registered language')}}</label>
+                  <select id="rightSelect" multiple="multiple">
+                  </select>
+                </span>
+                <span class="buttons">
+                  <input type="button" value="⇈" id="moveTop">
+                  <input type="button" value="↑" id="moveUp">
+                  <input type="button" value="↓" id="moveDown">
+                  <input type="button" value="⇊" id="moveBottom">
+                </span>
+              </span>
+              <br>
+              <button id="btn_commit_lg" class="btn btn-primary">
+                {{_('Save')}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{%- endblock body %}

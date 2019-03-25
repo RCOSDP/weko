@@ -37,4 +37,5 @@ def base_factory(pid, **kwargs):
     links['index'] = "/api/deposits/redirect/" + pid.pid_value
     links['r'] = "/items/index/" + pid.pid_value
     links['iframe_tree'] = "/items/iframe/index/" + pid.pid_value
+
     return links

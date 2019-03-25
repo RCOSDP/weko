@@ -1,15 +1,15 @@
 # Translations template for weko-itemtypes-ui.
-# Copyright (C) 2018 National Institute of Informatics
+# Copyright (C) 2019 National Institute of Informatics
 # This file is distributed under the same license as the weko-itemtypes-ui
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:54+0900\n"
+"POT-Creation-Date: 2019-02-21 12:46+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,179 +18,250 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_itemtypes_ui/views.py:86 weko_itemtypes_ui/views.py:159
-#: weko_itemtypes_ui/views.py:212
+#: weko_itemtypes_ui/views.py:99 weko_itemtypes_ui/views.py:165
+#: weko_itemtypes_ui/views.py:311
 msgid "Header Error"
 msgstr ""
 
-#: weko_itemtypes_ui/views.py:101 weko_itemtypes_ui/views.py:172
-#: weko_itemtypes_ui/views.py:222
+#: weko_itemtypes_ui/views.py:114 weko_itemtypes_ui/views.py:178
+#: weko_itemtypes_ui/views.py:320
 msgid "Fail"
 msgstr ""
 
-#: weko_itemtypes_ui/views.py:103 weko_itemtypes_ui/views.py:173
-#: weko_itemtypes_ui/views.py:223
+#: weko_itemtypes_ui/views.py:116 weko_itemtypes_ui/views.py:179
+#: weko_itemtypes_ui/views.py:321
 msgid "Success"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:57
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:48
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:67
+msgid "Item Type"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:49
+msgid "Item Type for Harvesting"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:61
 msgid "New Property"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:58
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:62
 msgid "Mapping"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:69
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:73
 msgid "Item type name is blank."
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:73
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:77
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:59
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:56
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:51
 msgid "Item Types"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:74
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:78
 msgid "input new itemtype name"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:77
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:81
 msgid "Version Upgrade"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:80
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:84
 msgid "New Registration"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:86
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:90
 msgid "Do you want to register the content？"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:91
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:95
 msgid "Item Name"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:92
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:96
 msgid "Attribute"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:93
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:97
 msgid "Option"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:94
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:98
 msgid "Replacement"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:95
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:99
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:110
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:135
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:202
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:220
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:244
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:262
 msgid "Delete"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:100
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:104
 msgid "Title"
-msgstr ""
-
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:101
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:126
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:151
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:201
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:226
-msgid "Text"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:105
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:130
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:155
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:180
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:205
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:230
+msgid "Text"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:109
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:134
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:159
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:184
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:209
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:234
 msgid "Required"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:108
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:133
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:158
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:183
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:208
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:233
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:112
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:137
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:162
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:187
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:212
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:237
 msgid "Multiple"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:111
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:136
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:161
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:186
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:211
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:236
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:115
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:140
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:165
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:190
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:215
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:240
 msgid "List Display"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:114
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:139
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:164
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:189
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:214
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:239
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:118
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:143
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:168
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:193
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:218
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:243
 msgid "Specify Newline"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:117
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:142
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:167
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:192
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:217
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:242
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:121
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:146
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:171
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:196
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:221
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:246
 msgid "Hide"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:125
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:129
 msgid "Title(English)"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:150
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:154
 msgid "Language"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:175
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:179
 msgid "Publish Date"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:176
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:180
 msgid "Date"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:200
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:204
 msgid "Keyword"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:225
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:229
 msgid "Keyword(English)"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:252
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:256
 msgid "Add Metadata"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:255
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:259
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:123
 msgid "Sending"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:258
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:262
 msgid "Preview"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:311
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:315
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:291
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:137
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:83
 msgid "Result"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:317
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:321
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:299
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:143
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:89
 msgid "Close"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:44
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:177
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:44
+msgid "Itemtype List"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:52
+msgid "Schema List"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:67
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:70
+msgid "Parent"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:70
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:149
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:180
+msgid "JPCOAR"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:109
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:134
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:181
+msgid "Add"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:177
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:180
+msgid "Child"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:222
+msgid "Linking"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:264
+msgid "連結"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:272
+msgid "Create"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:279
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:298
+msgid "Submit"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:297
+msgid "OK"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:68
@@ -223,10 +294,6 @@ msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/error.html:34
 msgid "Register Itemtype"
-msgstr ""
-
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:44
-msgid "itemtype list"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:68

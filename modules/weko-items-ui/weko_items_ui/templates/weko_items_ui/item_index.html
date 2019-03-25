@@ -38,6 +38,7 @@
 {%- block page_body_main %}
   <div class="row">
     <div class="hide" id="post_url">{{ config.DEPOSIT_RECORDS_API.format(pid_value=pid_value) }}</div>
+    <div class="hide" id="pub_status">{{ action }}</div>
     <div class="hide" id="post_success_url"></div>
     <div class="hide" id="post_error_url"></div>
     <app-root-tree></app-root-tree>

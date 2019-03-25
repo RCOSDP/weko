@@ -21,12 +21,15 @@
 """Blueprint for weko-theme."""
 
 
-from flask import Blueprint, current_app, render_template, request, flash
+from flask import Blueprint, current_app, render_template, request, flash, session
 from weko_index_tree.models import Index, IndexStyle
 from flask_login import login_required
 from weko_search_ui.api import get_search_detail_keyword
 from invenio_i18n.ext import current_i18n
 from blinker import Namespace
+
+from weko_admin.utils import set_default_language
+
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
 
@@ -49,7 +52,9 @@ def index():
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
-
+    # In case user opens the web for the first time,
+    # set default language base on Admin language setting
+    set_default_language()
     # Get index style
     style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
     if not style:

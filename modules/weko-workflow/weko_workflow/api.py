@@ -40,7 +40,7 @@ from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
 from .models import WorkFlow as _WorkFlow
 from .models import ActionStatusPolicy, ActionCommentPolicy, \
-    ActivityStatusPolicy, FlowStatusPolicy
+    ActivityStatusPolicy, FlowStatusPolicy, ActionJournal
 
 class Flow(object):
     """Operated on the Flow"""
@@ -537,6 +537,44 @@ class WorkActivity(object):
                 action_id=action_id,).one_or_none()
             return activity_action
 
+    def create_or_update_action_journal(self, activity_id, action_id, journal):
+        """
+        Create or update action journal info.
+        :param activity_id:
+        :param action_id:
+        :param journal:
+        :return:
+        """
+        with db.session.begin_nested():
+            action_journal = ActionJournal.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id,).one_or_none()
+            if action_journal:
+                action_journal.action_journal = journal
+                db.session.merge(action_journal)
+            else:
+                new_action_journal = ActionJournal(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    action_journal=journal,
+                )
+                db.session.add(new_action_journal)
+
+        db.session.commit()
+
+    def get_action_journal(self, activity_id, action_id):
+        """
+        get action journal info.
+        :param activity_id:
+        :param action_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            action_journal = ActionJournal.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id,).one_or_none()
+            return action_journal
+
     def get_activity_action_status(self, activity_id, action_id):
         with db.session.no_autoflush:
             activity_ac = ActivityAction.query.filter_by(
@@ -544,6 +582,25 @@ class WorkActivity(object):
             action_stus = activity_ac.action_status
             return action_stus
     # add by ryuu end
+
+
+    def upt_activity_action_id_grant(self, activity_id, action_id, identifier_grant):
+        """
+        Update activity info
+        :param activity_id:
+        :param action_id:
+        :param identifier_grant:
+        :return:
+        """
+        with db.session.begin_nested():
+            activity_action = ActivityAction.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id,).one_or_none()
+            if activity_action:
+                activity_action.action_identifier_grant = identifier_grant
+                db.session.merge(activity_action)
+        db.session.commit()
+
 
     def upt_activity_item(self, activity, item_id):
         """
@@ -876,7 +933,8 @@ class WorkActivityHistory(object):
             action_status=activity.get('action_status'),
             action_user=current_user.get_id(),
             action_date=datetime.utcnow(),
-            action_comment=activity.get('commond')
+            action_comment=activity.get('commond'),
+            action_identifier_grant=activity.get('identifier_grant', 0)
         )
         new_history = False
         activity = WorkActivity()

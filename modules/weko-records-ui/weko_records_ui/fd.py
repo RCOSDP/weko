@@ -20,7 +20,8 @@
 
 """Utilities for download file."""
 
-import mimetypes, unicodedata
+import mimetypes
+import unicodedata
 from flask import abort, current_app, render_template, request
 from invenio_records_files.utils import record_file_factory
 from weko_records.api import FilesMetadata, ItemTypes
@@ -28,11 +29,15 @@ from .pdf import make_combined_pdf
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 from invenio_files_rest.proxies import current_permission_factory
-from .permissions import file_permission_factory
+from .permissions import file_permission_factory, check_original_pdf_download_permission
 from .models import PDFCoverPageSettings
 from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
 from invenio_files_rest.models import ObjectVersion, FileInstance
+from weko_deposit.api import WekoRecord
+from .views import ObjectResourceWeko
+from weko_user_profiles.models import UserProfile
+from flask_login import current_user
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -121,18 +126,6 @@ def prepare_response(pid_value, fd=True):
     return rv
 
 
-# def file_preview_ui(pid, _record_file_factory=None, **kwargs):
-#     """
-#
-#     :param pid:
-#     :param _record_file_factory:
-#     :param kwargs:
-#     :return:
-#     """
-#
-#     return prepare_response(pid.pid_value, False)
-#
-
 def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
     """File preview view for a given record.
 
@@ -207,44 +200,60 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
     # #Check permissions
     # ObjectResource.check_object_permission(obj)
 
+    # Get user's language
+    user = UserProfile.get_by_userid(current_user.get_id())
+    lang = 'en'     # Defautl language for PDF coverpage
+
+    if user == None:
+        lang = 'en'
+    else:
+        lang = user.language
+
     """ Send file without its pdf cover page """
 
-    class ObjectResourceWeko(ObjectResource):
+    try:
+        pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
+        coverpage_state = WekoRecord.get_record_cvs(pid.object_uuid)
 
-        # redefine `send_object` method to implement the no-cache function
-        @staticmethod
-        def send_object(bucket, obj, expected_chksum=None, logger_data=None, restricted=True, as_attachment=False, cache_timeout=-1):
-            if not obj.is_head:
-                check_permission(
-                    current_permission_factory(obj, 'object-read-version'),
-                    hidden=False
-                )
+        is_original = request.args.get('original') or False
+        is_pdf = 'pdf' in fileobj.mimetype
+        can_download_original_pdf = check_original_pdf_download_permission(
+            record)
 
-            if expected_chksum and obj.file.checksum != expected_chksum:
-                current_app.logger.warning(
-                    'File checksum mismatch detected.', extra=logger_data)
-
-            file_downloaded.send(current_app._get_current_object(), obj=obj)
-            return obj.send_file(restricted=restricted, as_attachment=as_attachment)
-
-    pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
-
-    if pdfcoverpage_set_rec.avail == 'disable': # Write this if statement later
-
+        # if not pdf or cover page disabled: Download directly
+        # if pdf and cover page enabled and has original in query param: check permission (user roles)
+        if is_pdf is False \
+                or pdfcoverpage_set_rec is None or pdfcoverpage_set_rec.avail == 'disable' \
+                or coverpage_state == False \
+                or (is_original and can_download_original_pdf):
+            return ObjectResourceWeko.send_object(
+                obj.bucket, obj,
+                expected_chksum=fileobj.get('checksum'),
+                logger_data={
+                    'bucket_id': obj.bucket_id,
+                    'pid_type': pid.pid_type,
+                    'pid_value': pid.pid_value,
+                },
+                as_attachment=not is_preview,
+                cache_timeout=-1
+            )
+    except AttributeError:
         return ObjectResourceWeko.send_object(
-        obj.bucket, obj,
-        expected_chksum=fileobj.get('checksum'),
-        logger_data={
-            'bucket_id': obj.bucket_id,
-            'pid_type': pid.pid_type,
-            'pid_value': pid.pid_value,
-        },
-        as_attachment=False,
-        cache_timeout=-1
+            obj.bucket, obj,
+            expected_chksum=fileobj.get('checksum'),
+            logger_data={
+                'bucket_id': obj.bucket_id,
+                'pid_type': pid.pid_type,
+                'pid_value': pid.pid_value,
+            },
+            as_attachment=not is_preview,
+            cache_timeout=-1
         )
 
     """ Send file with its pdf cover page """
-    object_version_record = ObjectVersion.query.filter_by(bucket_id= obj.bucket_id).first()
-    file_instance_record = FileInstance.query.filter_by(id=object_version_record.file_id).first()
+    object_version_record = ObjectVersion.query.filter_by(
+        bucket_id=obj.bucket_id).first()
+    file_instance_record = FileInstance.query.filter_by(
+        id=object_version_record.file_id).first()
     obj_file_uri = file_instance_record.uri
-    return make_combined_pdf(pid, obj_file_uri)
+    return make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang)
