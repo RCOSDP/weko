@@ -20,7 +20,8 @@
 
 """Blueprint for weko-workflow."""
 
-
+import redis, json
+from collections import OrderedDict
 from functools import wraps
 from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request, session, url_for
@@ -33,6 +34,7 @@ from invenio_pidstore.resolver import Resolver
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.utils import import_string
 from weko_records.api import ItemsMetadata
+from simplekv.memory.redisstore import RedisStore
 
 from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem, GetCommunity
 from .models import ActionStatusPolicy, ActivityStatusPolicy
@@ -334,7 +336,7 @@ def next_action(activity_id='0', action_id=0):
             resolver = Resolver(pid_type='recid', object_type='rec',
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
-            
+
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 
@@ -439,7 +441,22 @@ def previous_action(activity_id='0', action_id=0, req=0):
 @blueprint.route('/journal/list', methods=['GET'])
 def get_journals():
     key = request.values.get('key')
-    multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
+    if not key:
+        return jsonify({})
+
+    multiple_result = {}
+    datastore = RedisStore(redis.StrictRedis.from_url(
+        current_app.config['CACHE_REDIS_URL']))
+    cache_key = current_app.config[
+        'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
+
+    if datastore.redis.exists(cache_key):
+        str = datastore.get(cache_key)
+        multiple_result = json.loads(
+            str.decode('utf-8'),
+            object_pairs_hook=OrderedDict)
+    else:
+        multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
 
     return jsonify(multiple_result)
 
