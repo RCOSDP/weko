@@ -38,6 +38,10 @@ before_install:
   - docker-compose build
   - docker-compose up -d
 
+before_script:
+  - pip install isort
+  - pip install pydocstyle
+
 script:
   - bash $TRAVIS_BUILD_DIR/scripts/check-code.sh | travis_terminate 1
   - docker-compose ps
