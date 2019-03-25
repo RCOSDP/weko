@@ -448,7 +448,7 @@ def get_journals():
     datastore = RedisStore(redis.StrictRedis.from_url(
         current_app.config['CACHE_REDIS_URL']))
     cache_key = current_app.config[
-        'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key).encode('utf-8')
+        'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
 
     if datastore.redis.exists(cache_key):
         flash('redis!!')
@@ -459,7 +459,11 @@ def get_journals():
     else:
         flash('api!!')
         multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
-        datastore.put(cache_key, json.dumps(multiple_result).encode('utf-8'))
+
+        try:
+            datastore.put(cache_key, json.dumps(multiple_result).encode('utf-8'))
+        except ValueError:
+            pass
 
     return jsonify(multiple_result)
 
