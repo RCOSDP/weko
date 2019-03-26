@@ -21,6 +21,9 @@
 
     {% print("[Log]: record")%}
     {% print(record)%}
+
+    {% print("[Log]: citation_result")%}
+    {% print(citation_result)%}
     <invenio-csl
       {%- if citation_result %}
         ng-init="vm.citationResult = '{{citation_result}}'"
