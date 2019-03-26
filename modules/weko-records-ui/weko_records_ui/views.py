@@ -429,7 +429,10 @@ def citation(record, pid, style=None, ln=None):
     locale = ln or current_i18n.language
     style = style or 'science'
     try:
-        return citeproc_v1.serialize(pid, record, style=style, locale=locale)
+        result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
+        print("[Log]: citation >> result")
+        print(result)
+        return result
     except Exception:
         current_app.logger.exception(
             'Citation formatting for record {0} failed.'
