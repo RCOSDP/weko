@@ -353,25 +353,3 @@
   </div>
 </div>
 </div>
-<script type="text/javascript">
-  // Bootstrap the Invenio CSL Formatter and invenio-search-js
-  require([
-    "jquery",
-    'typeahead.js',
-    'bloodhound',
-    "node_modules/angular/angular",
-    "node_modules/invenio-csl-js/dist/invenio-csl-js",
-    "node_modules/invenio-search-js/dist/invenio-search-js",
-    ], function(typeahead, Bloodhound) {
-      angular.element(document).ready(function() {
-        angular.bootstrap(document.getElementById("invenio-csl"), [
-            'invenioCsl',
-          ]
-        );
-      });
-    }
-  );
-  $(function () {
-    $('[data-toggle="tooltip"]').tooltip();
-  });
-</script>
