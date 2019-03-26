@@ -45,7 +45,6 @@ js = NpmBundle(
     'node_modules/angular-loading-bar/build/*.js',
     'node_modules/typeahead.js/dist/*.js',
     'node_modules/invenio-csl-js/dist/*.js',
-    'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
     'js/weko_records_ui/detail.js',
     'js/weko_records_ui/app.js',
     filters='jsmin',
