@@ -40,9 +40,6 @@ js_dependencies = NpmBundle(
 js = NpmBundle(
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
     'node_modules/angular/angular.js',
-    'node_modules/angular-loading-bar/build/*.js',
-    'node_modules/typeahead.js/dist/*.js',
-    'node_modules/invenio-csl-js/dist/*.js',
     'js/weko_records_ui/detail.js',
     'js/weko_records_ui/app.js',
     depends=(
