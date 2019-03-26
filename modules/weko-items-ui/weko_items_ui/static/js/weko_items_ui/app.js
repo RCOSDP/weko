@@ -172,7 +172,16 @@ require([
           item_type_id: itemTypeId
         }
 
-        // Create requet
+        if (autoFillID == 'CrossRef'){
+          this.setItemMetadataCrossRefApi(param);
+        } else if (autoFillID == 'CiNii'){
+
+        }
+
+
+      }
+
+      $scope.setItemMetadataCrossRefApi = function (param) {
         $.ajax({
           url: '/api/autofill/crossref_api',
           headers: {
@@ -182,9 +191,8 @@ require([
           data: JSON.stringify(param),
           dataType: "json",
           success: (data, status)=>{
-            this.resetAutoFillErrorMessage()
             if (data.error) {
-              this.setAutoFillErrorMessage("An error have occurred!\nDetail: "+data.error);
+              this.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             }else {
               let items = data.items;
               if (!items) {
@@ -194,6 +202,7 @@ require([
               if (!result) {
                 this.setAutoFillErrorMessage($("#autofill_error_doi").val());
               } else {
+                this.resetAutoFillErrorMessage();
                 if (items.hasOwnProperty('creator')) {
                   if (items.creator.hasOwnProperty('affiliation')) {
                     if (items.creator.affiliation.hasOwnProperty('affiliationName')) {
@@ -347,7 +356,6 @@ require([
             this.setAutoFillErrorMessage("Cannot connect to server!");
           }
         });
-
       }
 
       $scope.searchSource = function(model_id,arrayFlg,form) {
