@@ -37,6 +37,12 @@ from weko_records.api import ItemTypes
 from weko_deposit.api import WekoRecord
 
 from .permissions import item_permission
+from .utils import (
+    get_list_username,
+    get_list_email,
+    get_user_info_by_username,
+    validate_user,
+    get_user_info_by_email)
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -44,6 +50,14 @@ blueprint = Blueprint(
     url_prefix='/items',
     template_folder='templates',
     static_folder='static',
+)
+
+blueprint_api = Blueprint(
+    'weko_items_ui',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+    url_prefix="/items",
 )
 
 
@@ -472,3 +486,59 @@ def index_upload():
     return render_template(
         current_app.config['WEKO_ITEMS_UI_UPLOAD_TEMPLATE']
     )
+
+
+@blueprint_api.route('/get_search_data/<data_type>', methods=['GET'])
+def get_search_data(data_type=''):
+    result = {
+        'results': '',
+        'error': '',
+    }
+    try:
+        if data_type == 'username':
+            result['results'] = get_list_username()
+        elif data_type == 'email':
+            result['results'] = get_list_email()
+        else:
+            result['error'] = 'Invaid method'
+    except Exception as e:
+        result['error'] = str(e)
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/validate_user_info', methods=['POST'])
+def validate_user_info():
+    result = {
+        'results': '',
+        'validation': '',
+        'error': ''
+    }
+
+    if request.headers['Content-Type'] != 'application/json':
+        """Check header of request"""
+        result['error'] = _('Header Error')
+        return jsonify(result)
+
+    data = request.get_json()
+    username = data.get('username', '')
+    email = data.get('email', '')
+
+    try:
+        if username is not None:
+            if email is None:
+                result['results'] = get_user_info_by_username(username)
+                result['validation'] = True
+            else:
+                result['validation'] = validate_user(username, email)
+            return jsonify(result)
+
+        if email is not None:
+            result['results'] = get_user_info_by_email(email)
+            result['validation'] = True
+
+            return jsonify(result)
+    except Exception as e:
+        result['error'] = str(e)
+
+    return jsonify(result)
