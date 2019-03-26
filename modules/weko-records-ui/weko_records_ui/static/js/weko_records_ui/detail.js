@@ -1,10 +1,10 @@
 require([
   "jquery",
   "bootstrap",
-  '/static/node_modules/typeahead.js',
-  "/static/node_modules/angular/angular",
-  "/static/node_modules/invenio-csl-js/dist/invenio-csl-js",
-  "/static/node_modules/invenio-search-js/dist/invenio-search-js",
+  'node_modules/typeahead.js',
+  "node_modules/angular/angular",
+  "node_modules/invenio-csl-js/dist/invenio-csl-js",
+  "node_modules/invenio-search-js/dist/invenio-search-js",
 ], function() {
   $('#btn_back').on('click', function(){
     window.history.back();
