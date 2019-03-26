@@ -256,35 +256,35 @@ def get_selected_lang():
         result = {'error': str(e)}
     return jsonify(result)
 
-# @blueprint_api.route('/get_api_cert_type', methods=['GET'])
-# def get_api_cert_type():
-#     """
-#     Get list of supported API.
-#     To display on the combobox on UI
+@blueprint_api.route('/get_api_cert_type', methods=['GET'])
+def get_api_cert_type():
+    """
+    Get list of supported API.
+    To display on the combobox on UI
 
-#     :return: Example
-#     {
-#         'result':[
-#         {
-#             'api_code': 'DOI',
-#             'api_name': 'CrossRef API'
-#         },
-#         {
-#             'api_code': 'AMA',
-#             'api_name': 'Amazon'
-#         }],
-#         'error':''
-#     }
-#     """
-#     result = {
-#         'results': '',
-#         'error': ''
-#     }
-#     try:
-#         result['results'] = get_api_certification_type()
-#     except Exception as e:
-#         result['error'] = str(e)
-#     return jsonify(result)
+    :return: Example
+    {
+        'result':[
+        {
+            'api_code': 'DOI',
+            'api_name': 'CrossRef API'
+        },
+        {
+            'api_code': 'AMA',
+            'api_name': 'Amazon'
+        }],
+        'error':''
+    }
+    """
+    result = {
+        'results': '',
+        'error': ''
+    }
+    try:
+        result['results'] = get_api_certification_type()
+    except Exception as e:
+        result['error'] = str(e)
+    return jsonify(result)
 
 
 # @blueprint_api.route('/validate_cert_data/<string:api_code>', methods=['POST'])
@@ -320,36 +320,36 @@ def get_selected_lang():
 #     return jsonify(result)
 
 
-# @blueprint_api.route('/get_curr_api_cert/<string:api_code>', methods=['GET'])
-# def get_curr_api_cert(api_code=''):
-#     """
-#     Get current API certification data
-#     Display on textboxs on UI
+@blueprint_api.route('/get_curr_api_cert/<string:api_code>', methods=['GET'])
+def get_curr_api_cert(api_code=''):
+    """
+    Get current API certification data
+    Display on textboxs on UI
 
-#     :param api_code: API code
-#     :return:
-#     {
-#         'results':
-#         {
-#             'api_code': 'DOI',
-#             'api_name': 'CrossRef API',
-#             'cert_data':
-#             {
-#                 'account': 'abc@xyz.com'
-#             }
-#         },
-#         'error':''
-#     }
-#     """
-#     result = {
-#         'results': '',
-#         'error': ''
-#     }
-#     try:
-#         result['results'] = get_current_api_certification(api_code)
-#     except Exception as e:
-#         result['error'] = str(e)
-#     return jsonify(result)
+    :param api_code: API code
+    :return:
+    {
+        'results':
+        {
+            'api_code': 'DOI',
+            'api_name': 'CrossRef API',
+            'cert_data':
+            {
+                'account': 'abc@xyz.com'
+            }
+        },
+        'error':''
+    }
+    """
+    result = {
+        'results': '',
+        'error': ''
+    }
+    try:
+        result['results'] = get_current_api_certification(api_code)
+    except Exception as e:
+        result['error'] = str(e)
+    return jsonify(result)
 
 
 @blueprint_api.route('/save_api_cert_data', methods=['POST'])

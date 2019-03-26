@@ -393,10 +393,10 @@ class ApiCertificate(db.Model):
         query_result = cls.query.all()
         result = []
         for record in query_result:
-            data = []
-            data.append(record.api_code)
-            data.append(record.api_name)
-            data.append(json.dumps(record.cert_data))
+            data = dict()
+            data['api_code'] = record.api_code
+            data['api_name'] = record.api_name
+            data['cert_data'] = record.cert_data
             result.append(data)
         return result
 
@@ -408,10 +408,13 @@ class ApiCertificate(db.Model):
         :return: certificate data corresponding with api code
         """
         query_result = cls.query.filter_by(api_code=api_code).one_or_none()
+        data = {}
         if query_result is not None:
-            data = query_result.cert_data
-            json_data = json.dumps(data)
-            return json_data
+            data['api_code'] = query_result.api_code
+            data['api_name'] = query_result.api_name
+            data['cert_data'] = query_result.cert_data
+
+            return data
         else:
             return None
 
@@ -447,16 +450,17 @@ class ApiCertificate(db.Model):
         :param cert_data: input certificate value with json format
         :return: True if success, otherwise False
         """
+        dict_name = {
+            "crf": "CrossRef",
+            "amz": "Amazon"
+        }
         # Insert new certificate in case certificate not exist in Database
         try:
             dataObj = ApiCertificate()
             with db.session.begin_nested():
                 if api_code is not None:
                     dataObj.api_code = api_code
-                    if api_code == 'crf':
-                        dataObj.api_name = 'CrossRef'
-                    elif api_code == 'amz':
-                        dataObj.api_name = 'Amazon'
+                    dataObj.api_name = dict_name.get(api_code)
                 if cert_data is not None:
                     dataObj.cert_data = cert_data
                 db.session.add(dataObj)
