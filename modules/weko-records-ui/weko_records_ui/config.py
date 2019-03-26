@@ -69,10 +69,10 @@ CSL_RECORDS_API_ENDPOINT = '/api/records/'
 CSL_JSTEMPLATE_DIR = 'node_modules/invenio-csl-js/dist/templates/'
 
 #: Template for CSL citation result
-CSL_JSTEMPLATE_CITEPROC = 'templates/invenio_csl/citeproc.html'
+CSL_JSTEMPLATE_CITEPROC = 'template/weko_records_ui/invenio_csl/citeproc.html'
 
 #: Template for CSL citation list item
-CSL_JSTEMPLATE_LIST_ITEM = 'templates/invenio_csl/item.html'
+CSL_JSTEMPLATE_LIST_ITEM = 'template/weko_records_ui/invenio_csl/item.html'
 
 #: Template for CSL error
 CSL_JSTEMPLATE_ERROR = os.path.join(CSL_JSTEMPLATE_DIR, 'error.html')
