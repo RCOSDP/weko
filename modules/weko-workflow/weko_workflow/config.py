@@ -29,6 +29,9 @@ WEKO_WORKFLOW_POP_PAGE = 'weko_workflow/admin/pop_page.html'
 WEKO_WORKFLOW_OAPOLICY_SEARCH = 'oa_policy_{keyword}'
 """OA Policy cache."""
 
+WEKO_WORKFLOW_OAPOLICY_CACHE_TTL = 24 * 60 * 60
+""" cache default timeout 1 day"""
+
 WEKO_WORKFLOW_ACTION_ENDPOINTS = {
     'item_login': {
         'endpoint': 'weko_items_ui.index',
