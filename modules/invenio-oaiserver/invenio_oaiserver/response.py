@@ -278,7 +278,7 @@ def getrecord(**kwargs):
     record_dumper = serializer(kwargs['metadataPrefix'])
     pid = OAIIDProvider.get(pid_value=kwargs['identifier']).pid
     # record = Record.get_record(pid.object_uuid)
-# TODO
+
     identify = OaiIdentify.get_all()
     harvest_public_state, record = WekoRecord.get_record_with_hps(pid.object_uuid)
     if (identify and not identify.outPutSetting) or not harvest_public_state:
