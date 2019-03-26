@@ -461,7 +461,9 @@ def get_journals():
         multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
 
         try:
-            datastore.put(cache_key, json.dumps(multiple_result).encode('utf-8'))
+            datastore.put(cache_key,
+                          json.dumps(multiple_result).encode('utf-8'),
+                          ttl_secs=int(current_app.config['WEKO_WORKFLOW_OAPOLICY_CACHE_TTL']))
         except Exception:
             pass
 
