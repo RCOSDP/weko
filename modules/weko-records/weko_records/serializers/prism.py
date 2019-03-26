@@ -17,12 +17,10 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
+"""Extends the FeedGenerator to add PRISM Elements to the feeds.
 
-"""
-    Extends the FeedGenerator to add PRISM Elements to the feeds.
-
-    prism partly taken from
-    http://prismstandard.org/namespaces/basic/2.0/
+prism partly taken from
+http://prismstandard.org/namespaces/basic/2.0/
 """
 
 from feedgen.ext.base import BaseExtension
@@ -30,10 +28,10 @@ from lxml import etree
 
 
 class PrismBaseExtension(BaseExtension):
-    """PRISM Elements extension.
-    """
+    """PRISM Elements extension."""
 
     def __init__(self):
+        """Init."""
         # http://prismstandard.org/namespaces/basic/2.0/
         self._prism_aggregationType = None
         self._prism_publicationName = None
@@ -48,6 +46,7 @@ class PrismBaseExtension(BaseExtension):
         self._prism_url = None
 
     def extend_ns(self):
+        """Extend ns."""
         return {'prism': 'http://prismstandard.org/namespaces/basic/2.0/'}
 
     def _extend_xml(self, xml_elem):
@@ -74,7 +73,6 @@ class PrismBaseExtension(BaseExtension):
         :param atom_feed: The feed root element
         :returns: The feed root element
         """
-
         self._extend_xml(atom_feed)
 
         return atom_feed
@@ -102,7 +100,9 @@ class PrismBaseExtension(BaseExtension):
         return jpcoar_feed
 
     def aggregationType(self, aggregationType=None, replace=False):
-        """Get or set the prism:aggregationType which is an entity responsible for
+        """Get or set the prism:aggregationType.
+
+        which is an entity responsible for
         making totalResults to the resource.
 
         :param aggregationType: aggregationType.
@@ -118,7 +118,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_aggregationType
 
     def publicationName(self, publicationName=None, replace=False):
-        """Get or set the prism:publicationName which is an entity responsible for
+        """Get or set the prism:publicationName.
+
+        which is an entity responsible for
         making publicationName to the resource.
 
         :param publicationName: publicationName.
@@ -134,7 +136,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_publicationName
 
     def issn(self, issn=None, replace=False):
-        """Get or set the prism:issn which is an entity responsible for
+        """Get or set the prism:issn.
+
+        which is an entity responsible for
         making issn to the resource.
 
         :param issn: issn.
@@ -150,7 +154,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_issn
 
     def volume(self, volume=None, replace=False):
-        """Get or set the prism:volume which is an entity responsible for
+        """Get or set the prism:volume.
+
+        which is an entity responsible for
         making volume to the resource.
 
         :param volume: volume.
@@ -166,7 +172,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_volume
 
     def number(self, number=None, replace=False):
-        """Get or set the prism:number which is an entity responsible for
+        """Get or set the prism:number.
+
+        which is an entity responsible for
         making number to the resource.
 
         :param number: number.
@@ -182,7 +190,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_number
 
     def startingPage(self, startingPage=None, replace=False):
-        """Get or set the prism:startingPage which is an entity responsible for
+        """Get or set the prism:startingPage.
+
+        which is an entity responsible for
         making startingPage to the resource.
 
         :param startingPage: startingPage.
@@ -198,7 +208,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_startingPage
 
     def endingPage(self, endingPage=None, replace=False):
-        """Get or set the prism:endingPage which is an entity responsible for
+        """Get or set the prism:endingPage.
+
+        which is an entity responsible for
         making endingPage to the resource.
 
         :param endingPage: endingPage.
@@ -214,7 +226,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_endingPage
 
     def publicationDate(self, publicationDate=None, replace=False):
-        """Get or set the prism:publicationDate which is an entity responsible for
+        """Get or set the prism:publicationDate.
+
+        which is an entity responsible for
         making publicationDate to the resource.
 
         :param publicationDate: publicationDate.
@@ -230,7 +244,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_publicationDate
 
     def creationDate(self, creationDate=None, replace=False):
-        """Get or set the prism:creationDate which is an entity responsible for
+        """Get or set the prism:creationDate.
+
+        which is an entity responsible for
         making creationDate to the resource.
 
         :param creationDate: creationDate.
@@ -246,7 +262,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_creationDate
 
     def modificationDate(self, modificationDate=None, replace=False):
-        """Get or set the prism:modificationDate which is an entity responsible for
+        """Get or set the prism:modificationDate.
+
+        which is an entity responsible for
         making modificationDate to the resource.
 
         :param modificationDate: modificationDate.
@@ -262,7 +280,9 @@ class PrismBaseExtension(BaseExtension):
         return self._prism_modificationDate
 
     def url(self, url=None, replace=False):
-        """Get or set the prism:url which is an entity responsible for
+        """Get or set the prism:url.
+
+        which is an entity responsible for
         making url to the resource.
 
         :param url: url.
@@ -279,13 +299,12 @@ class PrismBaseExtension(BaseExtension):
 
 
 class PrismExtension(PrismBaseExtension):
-    """Prism Elements extension.
-    """
+    """Prism Elements extension."""
 
 
 class PrismEntryExtension(PrismBaseExtension):
-    """Prism Elements extension.
-    """
+    """Prism Elements extension."""
+
     def extend_atom(self, entry):
         """Add Prism elements to an atom item. Alters the item itself.
 

@@ -32,6 +32,7 @@ from .views import blueprint
 
 current_plugins = LocalProxy(lambda: current_app.extensions['weko-plugins'])
 
+
 class WekoPlugins(object):
     """weko-plugins extension."""
 
@@ -79,8 +80,11 @@ class WekoPlugins(object):
 
     def get_enabled_plugins(self):
         """
-        return all enabled plugins list
+        Return all enabled plugins list.
+
         :return: Pluging List Info
+
         """
         plugins = get_enabled_plugins()
-        return tuple(map(lambda plugin: (plugin.name, plugin.identifier) if plugin.enabled else None, plugins))
+        return tuple(map(lambda plugin: (plugin.name, plugin.identifier)
+                         if plugin.enabled else None, plugins))

@@ -35,7 +35,7 @@ class WekoBibTexSerializer():
     """Weko bibtex serializer."""
 
     def __init__(self):
-
+        """Init."""
         # Load namespace
         self.ns = cache_schema('jpcoar_mapping').get('namespaces')
 
@@ -47,7 +47,10 @@ class WekoBibTexSerializer():
 
         self.book_types = ['book', 'book part']
         self.inproceedings_types = ['conference proceedings']
-        self.techreport_types = ['technical report', 'report', 'research report']
+        self.techreport_types = [
+            'technical report',
+            'report',
+            'research report']
         self.unpublished_types = ['conference object', 'conference poster']
 
         self.misc_types = ['thesis', 'bachelor thesis', 'master thesis',
@@ -265,8 +268,8 @@ class WekoBibTexSerializer():
                                                    'techreport'))
         # Unpublished
         elif self.is_bibtex_type(root,
-                                      self.unpublished_types,
-                                      self.unpublished_cols_required):
+                                 self.unpublished_types,
+                                 self.unpublished_cols_required):
 
             db.entries.append(self.get_bibtex_data(root,
                                                    self.unpublished_cols_all,
@@ -287,10 +290,12 @@ class WekoBibTexSerializer():
     @staticmethod
     def get_jpcoar_data(pid, record):
         """Get jpcoar record.
+
         :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
             instance.
         :param record: The :class:`invenio_records.api.Record` instance.
         :returns: The object serialized.
+
         """
         record.update({'@export_schema_type': 'jpcoar'})
         serializer = WekoXMLSerializer()
@@ -301,8 +306,10 @@ class WekoBibTexSerializer():
     def is_empty(self, root):
         """
         Determine whether the jpcoar record is empty.
+
         :param root:
         :return:
+
         """
         elements = root.findall('.//jpcoar:jpcoar', self.ns)
         if len(elements) == 0 or len(list(elements[0])) == 0:
@@ -313,7 +320,9 @@ class WekoBibTexSerializer():
     def is_bibtex_type(self, root, bibtex_types, bibtex_cols_required):
         """
         Determine jpcoar record types(except misc).
+
         :return:
+
         """
         type_value = ''
         for element in root.findall('.//dc:type', self.ns):
@@ -330,19 +339,21 @@ class WekoBibTexSerializer():
     def is_misc_type(self, root):
         """
         Determine jpcoar record type(misc).
+
         :param root:
         :return:
+
         """
         type_value = ''
         for element in root.findall('.//dc:type', self.ns):
             type_value = element.text
 
         if type_value.lower() in self.misc_types or \
-            type_value.lower() in self.article_types or \
-            type_value.lower() in  self.book_types or \
-            type_value.lower() in self.inproceedings_types or \
-            type_value.lower() in self.techreport_types or \
-            type_value.lower() in self.unpublished_types:
+                type_value.lower() in self.article_types or \
+                type_value.lower() in self.book_types or \
+                type_value.lower() in self.inproceedings_types or \
+                type_value.lower() in self.techreport_types or \
+                type_value.lower() in self.unpublished_types:
 
             return True
 
@@ -351,9 +362,11 @@ class WekoBibTexSerializer():
     def contains_all(self, root, field_list):
         """
         Determine whether all required items exist.
+
         :param root:
         :param field_list:
         :return:
+
         """
         for field in field_list:
             if len(root.findall('.//' + field, self.ns)) == 0:
@@ -364,12 +377,13 @@ class WekoBibTexSerializer():
     def get_bibtex_data(self, root, bibtex_cols_all={}, entry_type='article'):
         """
         Get bibtex data from jpcoar record.
+
         :param root:
         :param bibtex_cols_all:
         :param entry_type:
         :return:
-        """
 
+        """
         # Initialization
         data = {}
         page_start = ''
@@ -420,8 +434,10 @@ class WekoBibTexSerializer():
     def get_item_id(root):
         """
         Get item id from jpcoar record.
+
         :param root:
         :return:
+
         """
         item_id = ''
         namespace = 'http://www.openarchives.org/OAI/2.0/'
@@ -437,8 +453,10 @@ class WekoBibTexSerializer():
     def get_dates(dates):
         """
         Get year and month from date.
+
         :param dates:
         :return:
+
         """
         year = ''
         month = ''
