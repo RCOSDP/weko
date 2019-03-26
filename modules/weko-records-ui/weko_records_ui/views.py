@@ -287,24 +287,25 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    for target in target_map:
-        found = mtdata.find(target, namespaces=mtdata.nsmap)
-        if found is not None:
-            res.append({'name':target_map[target], 'data':found.text})
-    for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
-        if date.attrib.get('dateType') == 'Available':
-            res.append({'name':'citation_online_date', 'data':date.text})
-        elif date.attrib.get('dateType') == 'Issued':
-            res.append({'name':'citation_publication_date', 'data':date.text})
-    for relatedIdentifier in mtdata.findall('jpcoar:relatedIdentifier', namespaces=mtdata.nsmap):
-        if 'identifierType' in relatedIdentifier.attrib and relatedIdentifier.attrib['identifierType'] == 'DOI':
-            res.append({'name':'citation_doi', 'data':relatedIdentifier.text})
-    for sourceIdentifier in mtdata.findall('jpcoar:sourceIdentifier', namespaces=mtdata.nsmap):
-        if 'identifierType' in sourceIdentifier.attrib and sourceIdentifier.attrib['identifierType'] == 'ISSN':
-            res.append({'name':'citation_issn', 'data':sourceIdentifier.text})
-    pdf_url = mtdata.find('jpcoar:file/jpcoar:URI', namespaces=mtdata.nsmap)
-    if pdf_url is not None:
-        res.append({'name':'citation_pdf_url', 'data':pdf_url.text})
+    if mtdata:
+        for target in target_map:
+            found = mtdata.find(target, namespaces=mtdata.nsmap)
+            if found is not None:
+                res.append({'name':target_map[target], 'data':found.text})
+        for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
+            if date.attrib.get('dateType') == 'Available':
+                res.append({'name':'citation_online_date', 'data':date.text})
+            elif date.attrib.get('dateType') == 'Issued':
+                res.append({'name':'citation_publication_date', 'data':date.text})
+        for relatedIdentifier in mtdata.findall('jpcoar:relatedIdentifier', namespaces=mtdata.nsmap):
+            if 'identifierType' in relatedIdentifier.attrib and relatedIdentifier.attrib['identifierType'] == 'DOI':
+                res.append({'name':'citation_doi', 'data':relatedIdentifier.text})
+        for sourceIdentifier in mtdata.findall('jpcoar:sourceIdentifier', namespaces=mtdata.nsmap):
+            if 'identifierType' in sourceIdentifier.attrib and sourceIdentifier.attrib['identifierType'] == 'ISSN':
+                res.append({'name':'citation_issn', 'data':sourceIdentifier.text})
+        pdf_url = mtdata.find('jpcoar:file/jpcoar:URI', namespaces=mtdata.nsmap)
+        if pdf_url is not None:
+            res.append({'name':'citation_pdf_url', 'data':pdf_url.text})
     res.append({'name':'citation_dissertation_institution', 'data': InstitutionName.get_institution_name()})
     res.append({'name':'citation_abstract_html_url', 'data': request.url})
     return res
