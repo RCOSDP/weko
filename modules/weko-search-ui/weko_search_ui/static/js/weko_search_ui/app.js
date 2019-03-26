@@ -1,5 +1,5 @@
   require([
-    "jquery",
+    //"jquery",
     "bootstrap",
     "node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker"
     ], function() {
