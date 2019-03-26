@@ -30,8 +30,8 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_records_files.api import Record
 from invenio_records_rest.serializers.json import JSONSerializer
 
-# from zenodo.modules.records.serializers.pidrelations import \
-#    serialize_related_identifiers
+from weko_records.serializers.pidrelations import \
+    serialize_related_identifiers
 
 # from ..permissions import has_read_files_permission
 
@@ -42,16 +42,13 @@ class WekoJSONSerializer(JSONSerializer):
     Adds or removes files from depending on access rights and provides a
     context to the request serializer.
     """
-    """
     def preprocess_record(self, pid, record, links_factory=None):
-        Include files for single record retrievals.
+        """Include files for single record retrievals."""
         result = super(WekoJSONSerializer, self).preprocess_record(
             pid, record, links_factory=links_factory
         )
         # Add/remove files depending on access right.
         if isinstance(record, Record) and '_files' in record:
-            # if not has_request_context() or has_read_files_permission(
-            #        current_user, record):
             if not has_request_context():
                 result['files'] = record['_files']
             else:
@@ -65,7 +62,7 @@ class WekoJSONSerializer(JSONSerializer):
                 result['metadata'].setdefault(
                     'related_identifiers', []).extend(rels)
         return result
-    """
+
     def preprocess_search_hit(self, pid, record_hit, links_factory=None,
                               **kwargs):
         """Prepare a record hit from Elasticsearch for serialization."""
@@ -86,14 +83,12 @@ class WekoJSONSerializer(JSONSerializer):
         """Serialize object with schema."""
         return self.schema_class(context=context).dump(obj).data
 
-    """
     def transform_record(self, pid, record, links_factory=None):
-        #Transform record into an intermediate representation.
+        """Transform record into an intermediate representation."""
         return self.dump(
             self.preprocess_record(pid, record, links_factory=links_factory),
             context={'pid': pid}
         )
-    """
 
     def transform_search_hit(self, pid, record_hit, links_factory=None):
         """Transform search result hit into an intermediate representation."""

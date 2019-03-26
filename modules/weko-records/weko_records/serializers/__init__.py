@@ -22,7 +22,7 @@
 
 from pkg_resources import resource_filename
 
-# from .json import WekoJSONSerializer as JSONSerializer
+from .json import WekoJSONSerializer
 from .schemas.csl import RecordSchemaCSLJSON
 from invenio_records_rest.serializers.citeproc import CiteprocSerializer
 
@@ -48,7 +48,7 @@ opensearch_v1 = OpenSearchSerializer(RecordSchemaJSONV1)
 opensearch_v1_search = oepnsearch_responsify(opensearch_v1)
 
 #: CSL-JSON serializer
-csl_v1 = JSONSerializer(RecordSchemaCSLJSON, replace_refs=True)
+csl_v1 = WekoJSONSerializer(RecordSchemaCSLJSON, replace_refs=True)
 #: CSL Citation Formatter serializer
 citeproc_v1 = CiteprocSerializer(csl_v1)
 
