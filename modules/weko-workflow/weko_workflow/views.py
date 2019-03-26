@@ -451,13 +451,11 @@ def get_journals():
         'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
 
     if datastore.redis.exists(cache_key):
-        flash('redis!!')
         str = datastore.get(cache_key)
         multiple_result = json.loads(
             str.decode('utf-8'),
             object_pairs_hook=OrderedDict)
     else:
-        flash('api!!')
         multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
 
         try:
@@ -473,7 +471,10 @@ def get_journals():
 @blueprint.route('/journal', methods=['GET'])
 def get_journal():
     title = request.values.get('title')
+    if not title:
+        return jsonify({})
 
+    title = title.split(" / ")[0]
     result = search_romeo_jtitles(title, 'exact')
     if result['romeoapi'] and int(result['romeoapi']['header']['numhits']) > 1:
         result['romeoapi']['journals']['journal'] = \
