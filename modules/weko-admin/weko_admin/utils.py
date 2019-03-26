@@ -24,7 +24,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 
 from . import config
-from .models import AdminLangSettings, SearchManagement
+from .models import AdminLangSettings, SearchManagement, ApiCertificate
 
 
 def get_response_json(result_list, n_lst):
@@ -183,7 +183,10 @@ def get_api_certification_type():
     """
     :return: list of supported certification type
     """
-    raise ValueError("Not implement yet!")
+    try:
+        return ApiCertificate.select_all()
+    except Exception as e:
+        return str(e)
 
 
 def validate_certification(api_code, cert_data):
@@ -200,13 +203,37 @@ def get_current_api_certification(api_code):
     :param api_code: API code
     :return: API certification data if exist
     """
-    raise ValueError("Not implement yet!")
+    results = {
+        'api_code': api_code,
+        'api_name': '',
+        'cert_data': {}
+    }
+    try:
+        cert_data = ApiCertificate.select_by_api_code(api_code)
+        results['api_name'] = cert_data.get('api_name')
+        results['cert_data'] = cert_data.get('cert_data')
+
+    except Exception as e:
+        return str(e)
+
+    return results
 
 
 def save_api_certification(api_code, cert_data):
     """
     :param api_code: API code
     :param cert_data: certification data
-    :return: true if success, false if fail
+    :return: message 'success' if success, message error if fail
     """
-    raise ValueError("Not implement yet!")
+    # raise ValueError("Not implement yet!")
+    try:
+        if ApiCertificate.select_by_api_code(api_code) is not None:
+            """ Update database in case api_code exited """
+            ApiCertificate.update_cert_data(api_code, cert_data)
+        else:
+            """ Insert new certificate data incase api_code not existed in DB before """
+            ApiCertificate.insert_new_cert_data(api_code, cert_data)
+    except Exception as e:
+        return str(e)
+
+    return 'success'
