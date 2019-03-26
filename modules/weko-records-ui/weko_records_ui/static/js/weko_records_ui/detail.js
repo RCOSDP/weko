@@ -33,7 +33,7 @@ require([
       $('#public_status ').text('Public');
     };
   });
-  
+
   angular.element(document).ready(function() {
     angular.bootstrap(document.getElementById("invenio-csl"), [
         'invenioCsl',
