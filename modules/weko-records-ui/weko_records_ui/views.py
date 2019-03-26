@@ -418,6 +418,13 @@ def set_pdfcoverpage_header():
 @blueprint.app_template_filter('citation')
 def citation(record, pid, style=None, ln=None):
     """Render citation for record according to style and language."""
+    print("[Log]: citation")
+    print("[Log]: record")
+    print(record)
+    print("[Log]: pid")
+    print(pid)
+    print("[Log]: style")
+    print(style)
     locale = ln or current_i18n.language
     style = style or 'science'
     try:
