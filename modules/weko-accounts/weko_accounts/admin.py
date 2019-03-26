@@ -33,8 +33,11 @@ _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
 
 class ShibSettingView(BaseView):
+    """ShibSettingView."""
+
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        """Index."""
         try:
             shib_flg = '0'
             if current_app.config['SHIB_ACCOUNTS_LOGIN_ENABLED']:
@@ -49,11 +52,13 @@ class ShibSettingView(BaseView):
                         _app.config['SHIB_ACCOUNTS_LOGIN_ENABLED'] = True
                     else:
                         _app.config['SHIB_ACCOUNTS_LOGIN_ENABLED'] = False
-                    flash(_('Shibboleth flag was updated.'), category='success')
+                    flash(
+                        _('Shibboleth flag was updated.'),
+                        category='success')
 
             return self.render(config.WEKO_ACCOUNTS_SET_SHIB_TEMPLATE,
                                shib_flg=shib_flg)
-        except:
+        except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 

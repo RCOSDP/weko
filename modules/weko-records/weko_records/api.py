@@ -154,7 +154,7 @@ class ItemTypeNames(RecordBase):
 
     @classmethod
     def update(cls, obj):
-
+        """Update method."""
         def commit(olst, flg):
             with db.session.begin_nested():
                 for lst in olst:
@@ -1329,7 +1329,7 @@ class SiteLicense(RecordBase):
 
     @classmethod
     def update(cls, obj):
-
+        """Update method."""
         def get_addr(lst, id_):
             if lst and isinstance(lst, list):
                 sld = []

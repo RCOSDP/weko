@@ -36,6 +36,8 @@ _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
 
 
 class ShibUser(object):
+    """Shibuser."""
+
     def __init__(self, shib_attr=None):
         """
         Class ShibUser initialization.
@@ -50,8 +52,10 @@ class ShibUser(object):
 
     def get_relation_info(self):
         """
-        get weko user info by shibboleth user info
+        Get weko user info by shibboleth user info.
+
         :return: ShibbolethUser if exists relation else None
+
         """
         shib_user = None
         if self.shib_attr['shib_eppn'] is not None and len(
@@ -78,10 +82,12 @@ class ShibUser(object):
 
     def check_weko_user(self, account, pwd):
         """
-        check weko user info
+        Check weko user info.
+
         :param account:
         :param pwd:
         :return: Boolean
+
         """
         # if account != self.shib_attr['shib_mail']:
         #     return False
@@ -94,8 +100,10 @@ class ShibUser(object):
 
     def bind_relation_info(self, account):
         """
-        create new relation info with the user who belong with the email
+        Create new relation info with the user who belong with the email.
+
         :return: ShibbolenUser instance
+
         """
         self.user = User.query.filter_by(email=account).one_or_none()
         shib_user = ShibbolethUser.create(self.user, **self.shib_attr)
@@ -104,8 +112,10 @@ class ShibUser(object):
 
     def new_relation_info(self):
         """
-        create new relation info for shibboleth user when first login weko3
+        Create new relation info for shibboleth user when first login weko3.
+
         :return: ShibbolethUser instance
+
         """
         kwargs = dict(email=self.shib_attr.get('shib_eppn'), password='',
                       active=True)
@@ -119,8 +129,10 @@ class ShibUser(object):
 
     def new_shib_profile(self):
         """
-        create new profile info for shibboleth user
+        Create new profile info for shibboleth user.
+
         :return: UserProfile instance
+
         """
         with db.session.begin_nested():
             # create profile.
@@ -136,8 +148,10 @@ class ShibUser(object):
 
     def shib_user_login(self):
         """
-        create login info for shibboleth user
+        Create login info for shibboleth user.
+
         :return:
+
         """
         session['user_id'] = self.user.id
         session['user_src'] = 'Shib'
@@ -147,8 +161,10 @@ class ShibUser(object):
     @classmethod
     def shib_user_logout(cls):
         """
-        remove login info for shibboleth user
+        Remove login info for shibboleth user.
+
         :return:
+
         """
         user_logged_out.send(current_app._get_current_object(),
                              user=current_user)
