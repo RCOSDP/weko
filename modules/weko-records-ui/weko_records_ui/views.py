@@ -425,6 +425,7 @@ def citation(record, pid, style=None, ln=None):
     print(pid)
     print("[Log]: style")
     print(style)
+    print_trackback()
     locale = ln or current_i18n.language
     style = style or 'science'
     try:
@@ -434,6 +435,14 @@ def citation(record, pid, style=None, ln=None):
             'Citation formatting for record {0} failed.'
             .format(str(record.id)))
         return None
+
+def print_trackback():
+    try:
+        import traceback
+        for line in traceback.format_stack():
+            print(line.strip())
+    except Exception:
+        print("warning")
 
 class ObjectResourceWeko(ObjectResource):
 
