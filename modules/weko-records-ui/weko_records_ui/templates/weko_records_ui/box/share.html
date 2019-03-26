@@ -13,17 +13,6 @@
   <h4>Cite as</h4>
   <div id='invenio-csl'>
     {% set citation_result = record|citation(pid, style='apa') %}
-    {% print("[Log]: pid")%}
-    {% print(pid)%}
-
-    {% print("[Log]: style")%}
-    {% print(style)%}
-
-    {% print("[Log]: record")%}
-    {% print(record)%}
-
-    {% print("[Log]: citation_result")%}
-    {% print(citation_result)%}
     <invenio-csl
       {%- if citation_result %}
         ng-init="vm.citationResult = '{{citation_result}}'"
