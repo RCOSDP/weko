@@ -43,6 +43,8 @@ js_dependencies = NpmBundle(
         'typeahead.js': '~0.11.1',
         'typeahead.js-bootstrap-css': '~1.2.1',
     },
+    filters='requirejs',
+    output='gen/weko_records_ui.dependencies.%(version)s.js',
 )
 
 
