@@ -235,7 +235,8 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
                     'pid_value': pid.pid_value,
                 },
                 as_attachment=not is_preview,
-                cache_timeout=-1
+                cache_timeout=-1,
+                is_preview=is_preview
             )
     except AttributeError:
         return ObjectResourceWeko.send_object(
@@ -247,7 +248,8 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
                 'pid_value': pid.pid_value,
             },
             as_attachment=not is_preview,
-            cache_timeout=-1
+            cache_timeout=-1,
+            is_preview=is_preview
         )
 
     """ Send file with its pdf cover page """
