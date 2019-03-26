@@ -1,6 +1,11 @@
 require([
   "jquery",
-  "bootstrap"
+  "bootstrap",
+  'typeahead.js',
+  'bloodhound',
+  "node_modules/angular/angular",
+  "node_modules/invenio-csl-js/dist/invenio-csl-js",
+  "node_modules/invenio-search-js/dist/invenio-search-js",
 ], function() {
   $('#btn_back').on('click', function(){
     window.history.back();
@@ -28,5 +33,11 @@ require([
       $('#public_status ').text('Public');
     };
   });
-
+  
+  angular.element(document).ready(function() {
+    angular.bootstrap(document.getElementById("invenio-csl"), [
+        'invenioCsl',
+      ]
+    );
+  });
 });
