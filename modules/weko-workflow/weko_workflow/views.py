@@ -451,13 +451,13 @@ def get_journals():
         'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
 
     if datastore.redis.exists(cache_key):
-        str = datastore.get(cache_key)
+        data = datastore.get(cache_key)
         multiple_result = json.loads(
-            str.decode('utf-8'),
+            data.decode('utf-8'),
             object_pairs_hook=OrderedDict)
+
     else:
         multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
-
         try:
             datastore.put(cache_key,
                           json.dumps(multiple_result).encode('utf-8'),
