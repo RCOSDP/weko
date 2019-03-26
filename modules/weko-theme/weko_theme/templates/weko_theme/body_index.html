@@ -50,21 +50,3 @@
     </div>
   </div>
 </div>
-<script>
-  $(document).ready(function() {
-    adminHeight = $('#index-height').text();
-    if(adminHeight == null || adminHeight == '') return;
-    $('.index-body').css('height',adminHeight);
-  })
-</script>
-<script>
-    $(function(){
-      // bind change event to select
-      $("select[name='index_link']").on('change', function () {
-          if ($(this).val()) {
-            var url = '/search?search_type=2&q=' + $(this).val();
-            window.location = url;
-          }
-      });
-    });
-</script>
