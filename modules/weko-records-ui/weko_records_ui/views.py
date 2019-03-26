@@ -432,7 +432,8 @@ def citation(record, pid, style=None, ln=None):
         result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
         print("[Log]: citation >> result")
         print(result)
-        return result
+        #return result
+        return 'Family name, given names. (2018). DWD European Weather [Data set]. Zenodo. http://doi.org/10.5281/zenodo.2604860'
     except Exception:
         current_app.logger.exception(
             'Citation formatting for record {0} failed.'
