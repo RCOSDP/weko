@@ -1,7 +1,6 @@
 require([
   "jquery",
   "bootstrap",
-  'typeahead.js',
   'bloodhound',
   "node_modules/angular/angular",
   "node_modules/invenio-csl-js/dist/invenio-csl-js",
