@@ -20,17 +20,20 @@
 
 """Blueprint for weko-workflow."""
 
-
+import json
+from collections import OrderedDict
 from functools import wraps
 
-from flask import Blueprint, abort, current_app, jsonify, render_template, \
-    request, session, url_for
+import redis
+from flask import Blueprint, abort, current_app, flash, jsonify, \
+    render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
 from weko_records.api import ItemsMetadata
 from werkzeug.utils import import_string
@@ -335,7 +338,7 @@ def next_action(activity_id='0', action_id=0):
             resolver = Resolver(pid_type='recid', object_type='rec',
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
-            
+
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 
@@ -440,7 +443,29 @@ def previous_action(activity_id='0', action_id=0, req=0):
 @blueprint.route('/journal/list', methods=['GET'])
 def get_journals():
     key = request.values.get('key')
-    multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
+    if not key:
+        return jsonify({})
+
+    multiple_result = {}
+    datastore = RedisStore(redis.StrictRedis.from_url(
+        current_app.config['CACHE_REDIS_URL']))
+    cache_key = current_app.config[
+        'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
+
+    if datastore.redis.exists(cache_key):
+        data = datastore.get(cache_key)
+        multiple_result = json.loads(
+            data.decode('utf-8'),
+            object_pairs_hook=OrderedDict)
+
+    else:
+        multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
+        try:
+            datastore.put(cache_key,
+                          json.dumps(multiple_result).encode('utf-8'),
+                          ttl_secs=int(current_app.config['WEKO_WORKFLOW_OAPOLICY_CACHE_TTL']))
+        except Exception:
+            pass
 
     return jsonify(multiple_result)
 
@@ -448,7 +473,10 @@ def get_journals():
 @blueprint.route('/journal', methods=['GET'])
 def get_journal():
     title = request.values.get('title')
+    if not title:
+        return jsonify({})
 
+    title = title.split(" / ")[0]
     result = search_romeo_jtitles(title, 'exact')
     if result['romeoapi'] and int(result['romeoapi']['header']['numhits']) > 1:
         result['romeoapi']['journals']['journal'] = \

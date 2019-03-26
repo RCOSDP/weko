@@ -211,31 +211,24 @@ class ReportView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
         try:
-            aggs_results = None
-            cur_user_id = current_user.get_id()
-            if cur_user_id:
-                aggs_query = {
-                    "query": {
-                        "match": {
-                            "weko_creator_id": cur_user_id
-                        }
-                    },
-                    "aggs": {
-                        "aggs_term": {
-                            "terms": {
-                                "field": "publish_status",
-                                "order": {"_count": "desc"}
-                            }
+            aggs_query = {
+                "size": 0,
+                "aggs": {
+                    "aggs_term": {
+                        "terms": {
+                            "field": "publish_status",
+                            "order": {"_count": "desc"}
                         }
                     }
                 }
+            }
 
-                from invenio_stats.utils import get_aggregations
-                aggs_results = get_aggregations('weko', aggs_query)
+            from invenio_stats.utils import get_aggregations
+            aggs_results = get_aggregations('weko', aggs_query)
 
             total = 0
             result = {}
-            if aggs_results:
+            if aggs_results and 'aggs_term' in aggs_results:
                 for bucket in aggs_results['aggs_term']['buckets']:
                     bkt = {'open': bucket['doc_count']} if bucket['key'] == '0' \
                         else {'private': bucket['doc_count']}
