@@ -58,5 +58,6 @@ js = NpmBundle(
         'bootstrap-switch': '~3.0.2',
         'invenio-csl-js': '~0.1.3',
         'typeahead.js': '~0.11.1',
+        'typeahead.js-bootstrap-css': '~1.2.1',
     },
 )
