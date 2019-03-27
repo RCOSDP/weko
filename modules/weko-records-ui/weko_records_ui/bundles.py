@@ -55,7 +55,7 @@ js_dependencies_csl = NpmBundle(
 
 js_dependencies = NpmBundle(
     js_dependencies_csl,
-    filters='jsmin',
+    filters='requirejs',
     output='gen/weko_records_ui.dependencies.%(version)s.js',
 )
 
