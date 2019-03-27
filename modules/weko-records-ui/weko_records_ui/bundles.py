@@ -60,8 +60,6 @@ js_dependencies_csl = NpmBundle(
     'node_modules/typeahead.js/dist/typeahead.jquery.js',
     'node_modules/invenio-csl-js/dist/invenio-csl-js.js',
     'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
-    'js/weko_records_ui/detail.js',
-    'js/weko_records_ui/app.js',
     npm={
         'almond': '~0.3.1',
         'angular': '~1.4.9',
@@ -108,7 +106,7 @@ js = NpmBundle(
     'node_modules/angular/angular.js',
     'js/weko_records_ui/detail.js',
     'js/weko_records_ui/app.js',
-    filters='jsmin',
+    filters='requirejs',
     output="gen/weko_records_ui.%(version)s.js",
     npm={
         'angular-ui-bootstrap': '~0.13.2',
