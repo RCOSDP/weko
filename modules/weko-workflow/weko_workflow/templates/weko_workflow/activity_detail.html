@@ -30,13 +30,14 @@
 {{ super() }}
 {% include config.THEME_JAVASCRIPT_TEMPLATE %}
 {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
 {%- if 'item_link' == cur_step %}
 {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {% assets "workflow_item_link_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- elif 'identifier_grant' == cur_step %}
-{% assets "workflow_identifier_grant_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "workflow_identifier_grant_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- else %}
   {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- if 'oa_policy' == cur_step %}
@@ -179,7 +180,7 @@
         </div>
       </div>
       {%- if 'F' != activity.activity_status %}
-      <div class="hide" id="hide-res-check">{{res_check}}</div>
+      <div class="panel panel-default hide" id="hide-res-check">{{res_check}}</div>
       <div class="panel panel-default">
         {%- if 0 != res_check %}
           <div class="panel-body" id="step_page_permission">
@@ -203,26 +204,7 @@
               {%- endif %}
 
               {%- if 'identifier_grant' == cur_step %}
-                <!-- {%- block identifier_grant %}
-                {%- endblock identifier_grant %} -->
-                <div class="panel panel-default">
-                  <div class="panel-heading">
-                    <span>{{_('Identifier Grant')}}</span>
-                  </div>
-                  <div class="panel-body" style="line-height: 1.6;">
-                    <div class="form-group radio" style="display: inline-grid;">
-                      {%- for key, val in id_grant_options %}
-                        <label><input type="radio" name="identifier_grant" value="{{ key }}" {%- if key == temporary_id_grant %}checked{%- endif %}>{{ val }}</label>
-                      {%- endfor %}
-                    </div>
-                  </div>
-                </div>
-                <div class="m-top-20">
-                  <ul class="list-inline text-right" style="margin-bottom: 0;">
-                    <li><button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button></li>
-                    <li style="padding-right: 0;"><button type="button" class="btn btn-default" id="btn-finish">{{_('Next')}}</button></li>
-                  </ul>
-                </div>
+                {{ render_identifier_grant() }}
               {%- elif 'item_link' != cur_step and 'oa_policy' != cur_step %}
               <div class="form-group">
                 <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
@@ -332,3 +314,59 @@
 </div>
 {%- endif%}
 {%- endblock page_body %}
+
+{% macro render_identifier_grant() -%}
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <span>{{_('Identifier Grant')}}</span>
+    </div>
+    <div class="panel-body" style="line-height: 1.6;">
+      <div class="form-group radio" style="display: inline-grid;">
+        {%- if idf_grant_method == 0 %}
+          {%- for id, address, link, prefix, suffix, manual in idf_grant_input %}
+            <label>
+              <input type="radio" name="identifier_grant" value="{{ id }}" {%- if id == temporary_idf_grant %}checked{%- endif %}>
+              {{ address }}
+              {%- if id in [1, 2, 3] %}
+                {%- if item %}
+                  <label style="text-indent: 50px;">{{ link + prefix + pid }}
+                {%- else %}
+                  <label style="text-indent: 50px;">{{ link + prefix + '<No registration item>' }}
+                {%- endif %}
+              </label>
+              {%- endif %}
+            </label>
+          {%- endfor %}
+        {%- elif idf_grant_method == 1 %}
+          {%- for id, address, link, prefix, suffix, manual in idf_grant_input %}
+            <label style="line-height: 2em;">
+              <input type="radio" name="identifier_grant" value="{{ id }}" {%- if id == temporary_idf_grant %}checked{%- endif %}>
+              {{ address }}
+              {%- if id in [1, 2, 3] %}
+                <label style="text-indent: 50px;">{{ link + prefix + suffix }}</label>
+                <input type="text" name="idf_grant_input_{{ id }}">
+              {%- endif %}
+            </label>
+          {%- endfor %}
+        {%- else %}
+          {%- for id, address, link, prefix, suffix, manual in idf_grant_input %}
+            <label>
+              <input type="radio" name="identifier_grant" value="{{ id }}" {%- if id == temporary_idf_grant %}checked{%- endif %}>
+              {{ address }}
+              {%- if id in [1, 2, 3] %}
+                <label style="text-indent: 50px;"">{{ link + prefix }}</label>
+                <input type="text" name="idf_grant_input_{{ id }}">
+              {%- endif %}
+            </label>
+          {%- endfor %}
+        {%- endif %}
+      </div>
+    </div>
+  </div>
+  <div class="m-top-20">
+    <ul class="list-inline text-right" style="margin-bottom: 0;">
+      <li><button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button></li>
+      <li style="padding-right: 0;"><button type="button" class="btn btn-default" id="btn-finish">{{_('Next')}}</button></li>
+    </ul>
+  </div>
+{% endmacro %}

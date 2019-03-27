@@ -584,12 +584,17 @@ class WorkActivity(object):
     # add by ryuu end
 
 
-    def upt_activity_action_id_grant(self, activity_id, action_id, identifier_grant):
+    def upt_activity_action_id_grant(self, activity_id, action_id, identifier_grant,
+        identifier_grant_jalc_doi_suffix, identifier_grant_jalc_cr_doi_suffix,
+        identifier_grant_jalc_dc_doi_suffix):
         """
         Update activity info
         :param activity_id:
         :param action_id:
         :param identifier_grant:
+        :param identifier_grant_jalc_doi_suffix:
+        :param identifier_grant_jalc_cr_doi_suffix:
+        :param identifier_grant_jalc_dc_doi_suffix:
         :return:
         """
         with db.session.begin_nested():
@@ -598,6 +603,9 @@ class WorkActivity(object):
                 action_id=action_id,).one_or_none()
             if activity_action:
                 activity_action.action_identifier_grant = identifier_grant
+                activity_action.action_identifier_grant_jalc_doi_suffix = identifier_grant_jalc_doi_suffix
+                activity_action.action_identifier_grant_jalc_cr_doi_suffix = identifier_grant_jalc_cr_doi_suffix
+                activity_action.action_identifier_grant_jalc_dc_doi_suffix = identifier_grant_jalc_dc_doi_suffix
                 db.session.merge(activity_action)
         db.session.commit()
 
@@ -934,7 +942,10 @@ class WorkActivityHistory(object):
             action_user=current_user.get_id(),
             action_date=datetime.utcnow(),
             action_comment=activity.get('commond'),
-            action_identifier_grant=activity.get('identifier_grant', 0)
+            action_identifier_grant=activity.get('identifier_grant', 0),
+            action_identifier_grant_jalc_doi_suffix=activity.get('identifier_grant_jalc_doi_suffix', ""),
+            action_identifier_grant_jalc_cr_doi_suffix=activity.get('identifier_grant_jalc_cr_doi_suffix', ""),
+            action_identifier_grant_jalc_dc_doi_suffix=activity.get('identifier_grant_jalc_dc_doi_suffix', "")
         )
         new_history = False
         activity = WorkActivity()
