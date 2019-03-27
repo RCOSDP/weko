@@ -77,29 +77,11 @@ js_cites = NpmBundle(
     output='gen/weko_records_ui.dependencies.%(version)s.js',
 )
 
-# js_cites = NpmBundle(
-#     Bundle(
-#         'node_modules/almond/almond.js',
-#         filters='uglifyjs',
-#     ),
-#     depends=(
-#         'node_modules/angular-loading-bar/build/*.js',
-#         'node_modules/typeahead.js/dist/*.js',
-#         'node_modules/invenio-csl-js/dist/*.js',
-#         'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
-#     ),
-#     filters='jsmin',
-#     output="gen/weko_records_ui_cites.%(version)s.js",
-#     npm={
-#         'almond': '~0.3.1',
-#         'angular': '~1.4.9',
-#         'angular-sanitize': '~1.4.9',
-#         'angular-loading-bar': '~0.9.0',
-#         'bootstrap-switch': '~3.0.2',
-#         'invenio-csl-js': '~0.1.3',
-#         'typeahead.js': '~0.11.1',
-#     }
-# )
+js_dependencies = NpmBundle(
+    'js/weko_records_ui/detail.js',
+    filters='requirejs',
+    output="gen/weko_records_ui_detail.dependencies.%(version)s.js",
+)
 
 js = NpmBundle(
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
