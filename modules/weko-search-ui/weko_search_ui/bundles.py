@@ -39,16 +39,24 @@ js_dependencies_datepicker = NpmBundle(
     }
 )
 
+js_dependencies_csl = NpmBundle(
+    'node_modules/invenio-csl-js/dist/invenio-csl-js.js',
+    npm={
+        'invenio-csl-js': '~0.1.3',
+    }
+)
+
+
 js_dependecies = NpmBundle(
     js_dependencies_datepicker,
     filters='requirejs',
     output='gen/weko_search_ui.dependencies_abc.%(version)s.js',
 )
 
-js_dependencies = NpmBundle(
-    js_dependencies_datepicker,
+js_dependencies_extend = NpmBundle(
+    js_dependencies_csl,
     filters='requirejs',
-    output='gen/weko_search_ui.dependencies.%(version)s.js',
+    output='gen/weko_search_ui.dependencies_csl.%(version)s.js',
 )
 
 js = Bundle(
