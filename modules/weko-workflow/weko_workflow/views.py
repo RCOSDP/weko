@@ -161,14 +161,12 @@ def display_activity(activity_id=0):
     temporary_comment = activity.get_activity_action_comment(
         activity_id=activity_id, action_id=action_id)
     temporary_idf_grant = 0
-    temporary_idf_jalc_doi_suffix = ""
-    temporary_idf_jalc_cr_doi_suffix = ""
-    temporary_idf_jalc_dc_doi_suffix = ""
+    temporary_idf_grant_suffix = ["", "", ""]
     if temporary_comment:
         temporary_idf_grant = temporary_comment.action_identifier_grant
-        temporary_idf_jalc_doi_suffix = temporary_comment.action_identifier_grant_jalc_doi_suffix
-        temporary_idf_jalc_cr_doi_suffix = temporary_comment.action_identifier_grant_jalc_cr_doi_suffix
-        temporary_idf_jalc_dc_doi_suffix = temporary_comment.action_identifier_grant_jalc_dc_doi_suffix
+        temporary_idf_grant_suffix[0] = temporary_comment.action_identifier_grant_jalc_doi_suffix
+        temporary_idf_grant_suffix[1] = temporary_comment.action_identifier_grant_jalc_cr_doi_suffix
+        temporary_idf_grant_suffix[2] = temporary_comment.action_identifier_grant_jalc_dc_doi_suffix
         temporary_comment = temporary_comment.action_comment
 
     temporary_journal = activity.get_action_journal(
@@ -227,9 +225,7 @@ def display_activity(activity_id=0):
         temporary_comment=temporary_comment,
         temporary_journal=temporary_journal,
         temporary_idf_grant=temporary_idf_grant,
-        temporary_idf_jalc_doi_suffix=temporary_idf_jalc_doi_suffix,
-        temporary_idf_jalc_cr_doi_suffix=temporary_idf_jalc_cr_doi_suffix,
-        temporary_idf_jalc_dc_doi_suffix=temporary_idf_jalc_dc_doi_suffix,
+        temporary_idf_grant_suffix=temporary_idf_grant_suffix,
         idf_grant_input=IDENTIFIER_GRANT_LIST,
         idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
         record=approval_record,
