@@ -1,8 +1,8 @@
 require([
   "jquery",
   "bootstrap",
-  "typeahead",
   "bloodhound",
+  "typeahead.js",
   "node_modules/angular/angular",
   "node_modules/angular-sanitize/angular-sanitize",
   "node_modules/angular-loading-bar/build/loading-bar",
