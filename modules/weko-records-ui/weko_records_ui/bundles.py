@@ -29,7 +29,9 @@ style = Bundle(
 )
 
 js_dependencies_csl = NpmBundle(
-    'node_modules/typeahead.js/dist/*.js',
+    'node_modules/typeahead.js/dist/bloodhound.js',
+    'node_modules/typeahead.js/dist/typeahead.bundle.js',
+    'node_modules/typeahead.js/dist/typeahead.jquery.js',
     'node_modules/invenio-csl-js/dist/invenio-csl-js.js',
     'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
     'node_modules/angular-loading-bar/build/loading-bar.js',
