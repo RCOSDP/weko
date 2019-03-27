@@ -111,6 +111,8 @@ setup(
             'weko_search_ui_js = weko_search_ui.bundles:js',
             'weko_search_ui_dependencies_js = weko_search_ui.bundles:'
             'js_dependecies',
+            'weko_search_ui_dependencies_extend_js = weko_search_ui.bundles:'
+            'js_dependencies_extend',
         ],
         'invenio_i18n.translations': [
             'messages = weko_search_ui',
