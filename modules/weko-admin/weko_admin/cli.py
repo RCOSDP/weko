@@ -22,7 +22,7 @@
 import click
 from flask.cli import with_appcontext
 
-from .models import AdminLangSettings, SessionLifetime
+from .models import AdminLangSettings, SessionLifetime, ApiCertificate
 
 
 @click.group()
@@ -70,3 +70,36 @@ def insert_lang_to_db(lang_code, lang_name, is_registered, sequence, is_active):
         click.secho('insert language success')
     except Exception as e:
         click.secho(str(e))
+
+
+@click.group()
+def cert():
+    """Cert commands."""
+
+
+@cert.command('insert')
+@click.argument('api_code')
+@click.argument('cert_data')
+@with_appcontext
+def save_api_certification(api_code, cert_data):
+    """
+    cert insert api_code cert_data
+    """
+    if ApiCertificate.insert_new_cert_data(api_code, cert_data):
+        click.secho('insert cert success')
+    else:
+        click.secho('insert cert failed')
+
+
+@cert.command('update')
+@click.argument('api_code')
+@click.argument('cert_data')
+@with_appcontext
+def update_api_certification(api_code, cert_data):
+    """
+    cert update api_code cert_data
+    """
+    if ApiCertificate.update_cert_data(api_code, cert_data):
+        click.secho('update cert success')
+    else:
+        click.secho('update cert failed')

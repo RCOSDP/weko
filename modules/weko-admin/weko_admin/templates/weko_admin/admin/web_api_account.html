@@ -32,7 +32,7 @@
 
 {%- block body %}
 
-<div class="form-group">
+<div class="form-group row">
   <label for="input_type" class="control-label col-sm-2">{{_('Input Type')}}<span class="text-danger">&#8903;</span></label>
   <div class="controls col-sm-5">
     <select class="form-control" id="input_type" name="input_type">
@@ -40,7 +40,7 @@
     </select>
   </div>
 </div>
-<div class="form-group hidden" id="CrossRef_API">
+<div class="form-group hidden row" id="CrossRef_API" name="CrossRef_API">
   <label for="cross_ref_account" class="control-label col-sm-2">{{_('CrossRef Query Services Account')}}</label>
   <div class="controls col-sm-5">
     <input type="text" class="form-control" id="cross_ref_account" name="cross_ref_account" value={{ data }}>

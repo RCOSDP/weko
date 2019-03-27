@@ -22,6 +22,7 @@
 from flask import session
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
+import requests
 
 from . import config
 from .models import AdminLangSettings, SearchManagement, ApiCertificate
@@ -197,13 +198,28 @@ def get_api_certification_type():
         return str(e)
 
 
-def validate_certification(api_code, cert_data):
+def create_crossref_url(pid):
     """
-    :param api_code: API code
+    Create Crossref api url
+    :param pid:
+    :return Crossref api url:
+    """
+    if not pid:
+        raise ValueError('PID is required')
+    url = config.WEKO_ADMIN_CROSSREF_API_URL + config.WEKO_ADMIN_ENDPOINT + \
+        '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
+    return url
+
+
+def validate_certification(cert_data):
+    """
+    Validate certification
     :param cert_data: Certification data
-    :return: true if certification is valid, else return false
+    :return: true if certification is valid, false otherwise
     """
-    raise ValueError("Not implement yet!")
+    response = requests.get(create_crossref_url(cert_data))
+    return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
+        str(vars(response).get('_content', None))
 
 
 def get_current_api_certification(api_code):
