@@ -53,8 +53,6 @@ style = Bundle(
 # )
 
 js_dependencies_csl = NpmBundle(
-    'js/weko_records_ui/detail.js',
-    'js/weko_records_ui/app.js',
     'node_modules/almond/almond.js',
     'node_modules/angular-loading-bar/build/loading-bar.js',
     'node_modules/typeahead.js/dist/bloodhound.js',
@@ -62,6 +60,8 @@ js_dependencies_csl = NpmBundle(
     'node_modules/typeahead.js/dist/typeahead.jquery.js',
     'node_modules/invenio-csl-js/dist/invenio-csl-js.js',
     'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
+    'js/weko_records_ui/detail.js',
+    'js/weko_records_ui/app.js',
     npm={
         'almond': '~0.3.1',
         'angular': '~1.4.9',
