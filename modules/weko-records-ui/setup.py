@@ -102,7 +102,7 @@ setup(
         'invenio_assets.bundles': [
             'weko_records_ui_css = weko_records_ui.bundles:style',
             'weko_records_ui_js = weko_records_ui.bundles:js',
-            'weko_records_ui_dependencies_js = weko_search_ui.bundles:'
+            'weko_records_ui_dependencies_js = weko_records_ui.bundles:'
             'js_dependecies',
         ],
         'invenio_access.actions': [
