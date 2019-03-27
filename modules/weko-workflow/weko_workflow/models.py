@@ -750,6 +750,15 @@ class ActivityAction(db.Model, TimestampMixin):
     action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
     """action identifier grant."""
 
+    action_identifier_grant_jalc_doi_suffix = db.Column(db.String(100), nullable=True, default="")
+    """action jalc doi input."""
+
+    action_identifier_grant_jalc_cr_doi_suffix = db.Column(db.String(100), nullable=True, default="")
+    """action jalc crossref doi input."""
+
+    action_identifier_grant_jalc_dc_doi_suffix = db.Column(db.String(100), nullable=True, default="")
+    """action jalc datacite doi input."""
+
 
 class ActivityHistory(db.Model, TimestampMixin):
     """define ActivityHistory"""

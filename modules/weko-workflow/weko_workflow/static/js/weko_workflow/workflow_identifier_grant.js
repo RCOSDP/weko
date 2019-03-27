@@ -10,11 +10,25 @@ require([
   // prepare data for sending
   function preparePostData(tmp_save) {
     data_global.post_uri = $('.cur_step').data('next-uri');
-    data_global.post_data = {
-      identifier_grant: $("input[name='identifier_grant']:checked").val(),
-      action_version: $('.cur_step').data('action-version'),
-      temporary_save: tmp_save
-    };
+    if ($("input[name='idf_grant_input_1']").length) {
+      data_global.post_data = {
+        identifier_grant: $("input[name='identifier_grant']:checked").val(),
+        identifier_grant_jalc_doi_suffix : $("input[name='idf_grant_input_1']").val(),
+        identifier_grant_jalc_cr_doi_suffix: $("input[name='idf_grant_input_2']").val(),
+        identifier_grant_jalc_dc_doi_suffix: $("input[name='idf_grant_input_3']").val(),
+        action_version: $('.cur_step').data('action-version'),
+        temporary_save: tmp_save
+      };
+    } else {
+      data_global.post_data = {
+        identifier_grant: $("input[name='identifier_grant']:checked").val(),
+        identifier_grant_jalc_doi_suffix : "",
+        identifier_grant_jalc_cr_doi_suffix: "",
+        identifier_grant_jalc_dc_doi_suffix: "",
+        action_version: $('.cur_step').data('action-version'),
+        temporary_save: tmp_save
+      };
+    }
   }
 
   // send
@@ -37,7 +51,7 @@ require([
         }
       },
       error: function(jqXHE, status) {
-        alert('server error');
+        alert('Server error');
         $('#myModal').modal('hide');
       }
     });

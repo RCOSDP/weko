@@ -36,7 +36,7 @@ from weko_records.api import ItemsMetadata
 
 from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem, GetCommunity
 from .models import ActionStatusPolicy, ActivityStatusPolicy
-from .config import IDENTIFIER_GRANT_LIST
+from .config import IDENTIFIER_GRANT_SUFFIX_METHOD, IDENTIFIER_GRANT_LIST
 
 from .romeo import search_romeo_jtitles
 
@@ -160,9 +160,15 @@ def display_activity(activity_id=0):
     action_id = cur_action.id
     temporary_comment = activity.get_activity_action_comment(
         activity_id=activity_id, action_id=action_id)
-    temporary_id_grant = 0
+    temporary_idf_grant = 0
+    temporary_idf_jalc_doi_suffix = ""
+    temporary_idf_jalc_cr_doi_suffix = ""
+    temporary_idf_jalc_dc_doi_suffix = ""
     if temporary_comment:
-        temporary_id_grant = temporary_comment.action_identifier_grant
+        temporary_idf_grant = temporary_comment.action_identifier_grant
+        temporary_idf_jalc_doi_suffix = temporary_comment.temporary_idf_jalc_doi_suffix
+        temporary_idf_jalc_cr_doi_suffix = temporary_comment.temporary_idf_jalc_cr_doi_suffix
+        temporary_idf_jalc_dc_doi_suffix = temporary_comment.temporary_idf_jalc_dc_doi_suffix
         temporary_comment = temporary_comment.action_comment
 
     temporary_journal = activity.get_action_journal(
@@ -220,8 +226,12 @@ def display_activity(activity_id=0):
         cur_step=cur_step,
         temporary_comment=temporary_comment,
         temporary_journal=temporary_journal,
-        temporary_id_grant=temporary_id_grant,
-        id_grant_options=IDENTIFIER_GRANT_LIST,
+        temporary_idf_grant=temporary_idf_grant,
+        temporary_idf_jalc_doi_suffix=temporary_idf_jalc_doi_suffix,
+        temporary_idf_jalc_cr_doi_suffix=temporary_idf_jalc_cr_doi_suffix,
+        temporary_idf_jalc_dc_doi_suffix=temporary_idf_jalc_dc_doi_suffix,
+        idf_grant_input=IDENTIFIER_GRANT_LIST,
+        idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
         record=approval_record,
         step_item_login_url=step_item_login_url,
         histories=histories,
@@ -289,15 +299,24 @@ def next_action(activity_id='0', action_id=0):
     )
 
     work_activity = WorkActivity()
-    id_grant = post_json.get('identifier_grant')
+    idf_grant = post_json.get('identifier_grant')
+    idf_grant_jalc_doi_suffix = post_json.get('identifier_grant_jalc_doi_suffix')
+    idf_grant_jalc_cr_doi_suffix = post_json.get('identifier_grant_jalc_cr_doi_suffix')
+    idf_grant_jalc_dc_doi_suffix = post_json.get('identifier_grant_jalc_dc_doi_suffix')
     # If is action identifier_grant, then save to work_activity
-    if id_grant is not None:
+    if idf_grant is not None:
         work_activity.upt_activity_action_id_grant(
             activity_id=activity_id,
             action_id=action_id,
-            identifier_grant=id_grant
+            identifier_grant=idf_grant,
+            identifier_grant_jalc_doi_suffix=idf_grant_jalc_doi_suffix,
+            identifier_grant_jalc_cr_doi_suffix=idf_grant_jalc_cr_doi_suffix,
+            identifier_grant_jalc_dc_doi_suffix=idf_grant_jalc_dc_doi_suffix
         )
-        activity['identifier_grant'] = id_grant
+        activity['identifier_grant'] = idf_grant
+        activity['identifier_grant_jalc_doi_suffix'] = idf_grant_jalc_doi_suffix
+        activity['identifier_grant_jalc_cr_doi_suffix'] = idf_grant_jalc_cr_doi_suffix
+        activity['identifier_grant_jalc_dc_doi_suffix'] = idf_grant_jalc_dc_doi_suffix
     if 1 == post_json.get('temporary_save'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
