@@ -179,12 +179,20 @@ def is_refresh(default_language):
             return True
     return False
 
+
 def get_api_certification_type():
     """
     :return: list of supported certification type
     """
     try:
-        return ApiCertificate.select_all()
+        all_api = ApiCertificate.select_all()
+        result = []
+        for api in all_api:
+            data = dict()
+            data['api_code'] = api.get('api_code')
+            data['api_name'] = api.get('api_name')
+            result.append(data)
+        return result
     except Exception as e:
         return str(e)
 
@@ -225,7 +233,6 @@ def save_api_certification(api_code, cert_data):
     :param cert_data: certification data
     :return: message 'success' if success, message error if fail
     """
-    # raise ValueError("Not implement yet!")
     try:
         if ApiCertificate.select_by_api_code(api_code) is not None:
             """ Update database in case api_code exited """
