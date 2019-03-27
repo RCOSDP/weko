@@ -1,13 +1,13 @@
 require([
   "jquery",
   "bootstrap",
-  "bloodhound",
-  "typeahead.js",
   "node_modules/angular/angular",
   "node_modules/angular-sanitize/angular-sanitize",
   "node_modules/angular-loading-bar/build/loading-bar",
   "node_modules/invenio-csl-js/dist/invenio-csl-js",
   "node_modules/bootstrap-switch/dist/js/bootstrap-switch",
+  "bloodhound",
+  "typeahead.js",
 ], function() {
   $('#btn_back').on('click', function(){
     window.history.back();
