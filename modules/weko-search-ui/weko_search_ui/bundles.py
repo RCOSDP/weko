@@ -56,7 +56,7 @@ js_dependecies = NpmBundle(
 js_dependencies_extend = NpmBundle(
     js_dependencies_csl,
     filters='requirejs',
-    output='gen/weko_search_ui.dependencies.%(version)s.js',
+    output='gen/weko_search_ui.dependencies_cls.%(version)s.js',
 )
 
 js = Bundle(
