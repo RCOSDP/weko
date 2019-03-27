@@ -47,16 +47,16 @@ js_dependencies_csl = NpmBundle(
 )
 
 
-js_dependecies = NpmBundle(
-    js_dependencies_datepicker,
-    filters='requirejs',
-    output='gen/weko_search_ui.dependencies.%(version)s.js',
-)
+# js_dependecies = NpmBundle(
+#     js_dependencies_datepicker,
+#     filters='requirejs',
+#     output='gen/weko_search_ui.dependencies.%(version)s.js',
+# )
 
 js_dependencies_extend = NpmBundle(
     js_dependencies_csl,
     filters='requirejs',
-    output='gen/weko_search_ui.dependencies_csl.%(version)s.js',
+    output='gen/weko_search_ui.dependencies.%(version)s.js',
 )
 
 js = Bundle(
