@@ -52,19 +52,14 @@ style = Bundle(
 #     output='gen/weko_records_ui.dependencies.%(version)s.js',
 # )
 
-js_cites = NpmBundle(
-    Bundle(
-        'node_modules/almond/almond.js',
-        filters='uglifyjs',
-    ),
-    depends=(
-        'node_modules/angular-loading-bar/build/*.js',
-        'node_modules/typeahead.js/dist/*.js',
-        'node_modules/invenio-csl-js/dist/*.js',
-        'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
-    ),
-    filters='jsmin',
-    output="gen/weko_records_ui_cites.%(version)s.js",
+js_dependencies_csl = NpmBundle(
+    'node_modules/almond/almond.js',
+    'node_modules/angular-loading-bar/build/loading-bar.js',
+    'node_modules/typeahead.js/dist/bloodhound.js',
+    'node_modules/typeahead.js/dist/typeahead.bundle.js',
+    'node_modules/typeahead.js/dist/typeahead.jquery.js',
+    'node_modules/invenio-csl-js/dist/invenio-csl-js.js',
+    'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
     npm={
         'almond': '~0.3.1',
         'angular': '~1.4.9',
@@ -75,6 +70,36 @@ js_cites = NpmBundle(
         'typeahead.js': '~0.11.1',
     }
 )
+
+js_cites = NpmBundle(
+    js_dependencies_csl,
+    filters='requirejs',
+    output='gen/weko_records_ui.dependencies.%(version)s.js',
+)
+
+# js_cites = NpmBundle(
+#     Bundle(
+#         'node_modules/almond/almond.js',
+#         filters='uglifyjs',
+#     ),
+#     depends=(
+#         'node_modules/angular-loading-bar/build/*.js',
+#         'node_modules/typeahead.js/dist/*.js',
+#         'node_modules/invenio-csl-js/dist/*.js',
+#         'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
+#     ),
+#     filters='jsmin',
+#     output="gen/weko_records_ui_cites.%(version)s.js",
+#     npm={
+#         'almond': '~0.3.1',
+#         'angular': '~1.4.9',
+#         'angular-sanitize': '~1.4.9',
+#         'angular-loading-bar': '~0.9.0',
+#         'bootstrap-switch': '~3.0.2',
+#         'invenio-csl-js': '~0.1.3',
+#         'typeahead.js': '~0.11.1',
+#     }
+# )
 
 js = NpmBundle(
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
