@@ -28,14 +28,18 @@ style = Bundle(
     output="gen/weko_records_ui.%(version)s.css"
 )
 
-js_dependecies = NpmBundle(
-    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
-    'node_modules/angular/angular.js',
+
+js_dependecies_csl = NpmBundle(
+    'node_modules/invenio-csl-js/dist/invenio-csl-js.js',
     npm={
-        'angular-ui-bootstrap': '~0.13.2',
-    },
+        'angular-ui-bootstrap': '~0.1.3',
+    }
+)
+
+js_dependecies = NpmBundle(
+    js_dependecies_csl,
     filters='requirejs',
-    output='gen/weko_records_ui.dependencies.%(version)s.js',
+    output='gen/weko_records_ui.dependencies.csl.js',
 )
 
 # js = NpmBundle(
