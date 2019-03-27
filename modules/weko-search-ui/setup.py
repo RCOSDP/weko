@@ -110,7 +110,7 @@ setup(
             'weko_search_ui_search_i18n = weko_search_ui.bundles:i18n',
             'weko_search_ui_js = weko_search_ui.bundles:js',
             'weko_search_ui_dependencies_js = weko_search_ui.bundles:'
-            'js_dependecies',
+            'js_dependencies_extend',
             'weko_search_ui_dependencies_extend_js = weko_search_ui.bundles:'
             'js_dependencies_extend',
         ],
