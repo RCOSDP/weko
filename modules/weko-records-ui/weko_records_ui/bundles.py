@@ -63,7 +63,6 @@ js = NpmBundle(
     # ),
     Bundle(
         'node_modules/almond/almond.js',
-        'js/modernizr-custom.js',
         filters='uglifyjs',
     ),
     depends=(
