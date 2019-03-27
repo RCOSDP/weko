@@ -28,14 +28,14 @@ style = Bundle(
     output="gen/weko_records_ui.%(version)s.css"
 )
 
-js_dependencies = NpmBundle(
+js_dependecies = NpmBundle(
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
     'node_modules/angular/angular.js',
     npm={
         'angular-ui-bootstrap': '~0.13.2',
     },
     filters='requirejs',
-    output='gen/weko_records_ui.dependencies_abc.%(version)s.js',
+    output='gen/weko_records_ui.dependencies.%(version)s.js',
 )
 
 js = NpmBundle(
