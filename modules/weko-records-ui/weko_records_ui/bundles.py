@@ -77,11 +77,11 @@ js_cites = NpmBundle(
     output='gen/weko_records_ui.dependencies.%(version)s.js',
 )
 
-js_dependencies = NpmBundle(
-    'js/weko_records_ui/detail.js',
-    filters='requirejs',
-    output="gen/weko_records_ui_detail.dependencies.%(version)s.js",
-)
+# js_dependencies = NpmBundle(
+#     'js/weko_records_ui/detail.js',
+#     filters='requirejs',
+#     output="gen/weko_records_ui_detail.dependencies.%(version)s.js",
+# )
 
 js = NpmBundle(
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
