@@ -525,15 +525,17 @@ def validate_user_info():
     email = data.get('email', '')
 
     try:
-        if username is not None:
-            if email is None:
+        if username != "":
+            if email == "":
                 result['results'] = get_user_info_by_username(username)
                 result['validation'] = True
             else:
-                result['validation'] = validate_user(username, email)
+                validate_data = validate_user(username, email)
+                result['results'] = validate_data['results']
+                result['validation'] = validate_data['validation']
             return jsonify(result)
 
-        if email is not None:
+        if email != "":
             result['results'] = get_user_info_by_email(email)
             result['validation'] = True
 
