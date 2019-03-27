@@ -1,38 +1,45 @@
 $(document).ready(function () {
   $("#input_type").change((e) => {
-    let value = $(this).val();
+    let value = $("#input_type").val();
     if (value == "0") {
       $("#CrossRef_API").addClass("hidden");
-    } else if (value == "1") {
-      $("#CrossRef_API").removeClass("hidden");
+    } else {
+      if (value == "crf") {
+        $("#CrossRef_API").removeClass("hidden");
+      }
+      loadCurrentCertData();
     }
   });
-
+  loadDataForInputType();
   $("#api_account_save").click((e) => {
     save();
   });
 });
 
 save = () => {
-  let data = {
+  let param = {
     api_code: $('#input_type').val(),
     cert_data: $('#cross_ref_account').val()
   }
   $.ajax({
     url: "/api/admin/save_api_cert_data",
     type: 'POST',
-    data: data,
+    headers:{
+      'Content-Type': 'application/json'
+    },
+    data: JSON.stringify(param),
+    dataType: 'json',
 
-    success: function (data) {
+    success: function (data, status) {
+      console.log(data)
       let results = data.results;
       if (!results) {
         return;
       }
-
     },
     error: function (error) {
       console.log(error);
-      alert('Error when get languages');
+      alert('Error save certificate');
     }
   });
 }
@@ -61,6 +68,17 @@ loadDataForInputType = () => {
     error: function (error) {
       console.log(error);
       alert('Error when get languages');
+    }
+  });
+}
+
+loadCurrentCertData = () => {
+  let get_url = "/api/admin/get_curr_api_cert/" + $('#input_type').val();
+  $.ajax({
+    url: get_url,
+    type: 'GET',
+    success: (data, status) => {
+      $('#cross_ref_account').val(data.results.cert_data);
     }
   });
 }

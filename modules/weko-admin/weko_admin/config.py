@@ -52,6 +52,20 @@ WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = 'weko_admin/search_management.html'
 
 LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
 
+WEKO_ADMIN_CROSSREF_API_URL = 'https://doi.crossref.org/'
+""" URL of CrossRef API """
+
+WEKO_ADMIN_ENDPOINT = 'openurl'
+""" Endpoint to concate URL of CrossRef API """
+
+WEKO_ADMIN_TEST_DOI = '&id=doi:10.1047/0003-066X.59.1.29'
+""" DOI for check Certificate valid or not """
+
+WEKO_ADMIN_FORMAT = '&format=json'
+""" Format of CrossRef Certificate """
+
+WEKO_ADMIN_VALIDATION_MESSAGE = 'The login you supplied is not recognized'
+""" Validate message of certificate """
 
 # Search management json
 
