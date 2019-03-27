@@ -53,6 +53,8 @@ style = Bundle(
 # )
 
 js_dependencies_csl = NpmBundle(
+    'js/weko_records_ui/detail.js',
+    'js/weko_records_ui/app.js',
     'node_modules/almond/almond.js',
     'node_modules/angular-loading-bar/build/loading-bar.js',
     'node_modules/typeahead.js/dist/bloodhound.js',
