@@ -106,7 +106,7 @@ js = NpmBundle(
     'node_modules/angular/angular.js',
     'js/weko_records_ui/detail.js',
     'js/weko_records_ui/app.js',
-    filters='requirejs',
+    filters='jsmin',
     output="gen/weko_records_ui.%(version)s.js",
     npm={
         'angular-ui-bootstrap': '~0.13.2',
