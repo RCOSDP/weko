@@ -20,17 +20,126 @@
 
 """Module of weko-items-ui utils.."""
 
+from weko_user_profiles import UserProfile
+from invenio_accounts.models import User
+from sqlalchemy import Table, MetaData
+from invenio_db import db
+
+
 def get_list_username():
-    raise ValueError("Not Implement yet!")
+    user_index = 1
+    result = list()
+    while True:
+        try:
+            userinfo = UserProfile.get_by_userid(user_index)
+            result.append(userinfo._username)
+            user_index = user_index + 1
+        except:
+            break
+    return result
+
 
 def get_list_email():
-    raise ValueError("Not Implemeent yet!")
+    result = list()
+    try:
+        metadata = MetaData()
+        metadata.reflect(bind=db.engine)
+        table_name = 'accounts_user'
+
+        user_table = Table(table_name, metadata)
+        record = db.session.query(user_table)
+
+        data = record.all()
+
+        for item in data:
+            result.append(item[1])
+    except Exception as e:
+        result = str(e)
+
+    return result
+
 
 def get_user_info_by_username(username):
-    raise ValueError("Not Implement yet!")
+    result = dict()
+    try:
+        user = UserProfile.get_by_username(username)
+        user_id = user.user_id
+
+        metadata = MetaData()
+        metadata.reflect(bind=db.engine)
+        table_name = 'accounts_user'
+
+        user_table = Table(table_name, metadata)
+        record = db.session.query(user_table)
+
+        data = record.all()
+
+        for item in data:
+            if item[0] == user_id:
+                result['username'] = username
+                result['user_id'] = user_id
+                result['email'] = item[1]
+                return result
+        return None
+    except Exception as e:
+        result['error'] = str(e)
+
 
 def validate_user(username, email):
-    raise ValueError("Not Implement yet!")
+    result = {
+        'results': '',
+        'validation': False,
+        'error': ''
+    }
+    try:
+        user = UserProfile.get_by_username(username)
+        user_id = user.user_id
+
+        metadata = MetaData()
+        metadata.reflect(bind=db.engine)
+        table_name = 'accounts_user'
+
+        user_table = Table(table_name, metadata)
+        record = db.session.query(user_table)
+
+        data = record.all()
+
+        for item in data:
+            if item[1] == email:
+                if item[0] == user_id:
+                    user_info = dict()
+                    user_info['username'] = username
+                    user_info['user_id'] = user_id
+                    user_info['email'] = item[1]
+                    result['results'] = user_info
+                    result['validation'] = True
+                    return result
+        return result
+    except Exception as e:
+        result['error'] = str(e)
+
+    return result
+
 
 def get_user_info_by_email(email):
-    raise ValueError("Not Implement yet!")
+    result = dict()
+    try:
+        metadata = MetaData()
+        metadata.reflect(bind=db.engine)
+        table_name = 'accounts_user'
+
+        user_table = Table(table_name, metadata)
+        record = db.session.query(user_table)
+
+        data = record.all()
+
+        for item in data:
+            if item[1] == email:
+                user = UserProfile.get_by_userid(item[0])
+                result['username'] = user._username
+                result['user_id'] = item[0]
+                result['email'] = email
+                return result
+        return None
+    except Exception as e:
+        result['error'] = str(e)
