@@ -61,20 +61,21 @@ js = NpmBundle(
     #         'angular-ui-bootstrap': '~0.13.2',
     #     },
     # ),
+    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
+    'node_modules/angular/angular.js',
+    'js/weko_records_ui/detail.js',
+    'js/weko_records_ui/app.js',
+    'node_modules/angular-loading-bar/build/*.js',
+    'node_modules/typeahead.js/dist/*.js',
+    'node_modules/invenio-csl-js/dist/*.js',
+    'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
     Bundle(
         'node_modules/almond/almond.js',
         filters='uglifyjs',
     ),
-    depends=(
-        'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
-        'node_modules/angular/angular.js',
-        'js/weko_records_ui/detail.js',
-        'js/weko_records_ui/app.js',
-        'node_modules/angular-loading-bar/build/*.js',
-        'node_modules/typeahead.js/dist/*.js',
-        'node_modules/invenio-csl-js/dist/*.js',
-        'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
-    ),
+    #depends=(
+    #    
+    #),
     filters='jsmin',
     output="gen/weko_records_ui.%(version)s.js",
     npm={
