@@ -148,8 +148,7 @@ def display_activity(activity_id=0):
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
     workflow = WorkFlow()
-    workflow_detail = workflow.get_workflow_by_id(
-        activity_detail.workflow_id)
+    workflow_detail = workflow.get_workflow_by_id(activity_detail.workflow_id)
     if ActivityStatusPolicy.ACTIVITY_FINALLY != activity_detail.activity_status:
         activity_detail.activity_status_str = \
             request.args.get('status', 'ToDo')
@@ -370,73 +369,7 @@ def next_action(activity_id='0', action_id=0):
     # save pidstore_identifier to ItemsMetadata
     post_json.get('identifier_grant_jalc_dc_doi_suffix')
     if 'identifier_grant' == action_endpoint:
-        activity_obj = WorkActivity()
-        activity_detail = activity_obj.get_activity_detail(activity_id)
-        item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-        if post_json.get('identifier_grant') is not None:
-            # transfer to JPCOAR format
-            jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
-            jalcdoi_tail = jalcdoi_link.split('//')[1]
-            jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
-            jalcdoi_cr_tail = jalcdoi_link.split('//')[1]
-            jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
-            jalcdoi_dc_tail = jalcdoi_link.split('//')[1]
-            jalcdoi_dc_link = post_json.get('identifier_grant_crni_link')
-            res = {'pidstore_identifier': [
-                {
-                    'identifier': {
-                        'value': jalcdoi_link,
-                        'properties': {
-                            'identifierType': 'DOI'
-                        }
-                    },
-                    'identifierRegistration': {
-                        "value": jalcdoi_tail[1] + jalcdoi_tail[2],
-                        "properties": {
-                        "identifierType": "JaLC"
-                        }
-                    }
-                },
-                {
-                    'identifier': {
-                        'value': jalcdoi_cr_link,
-                        'properties': {
-                            'identifierType': 'DOI'
-                        }
-                    },
-                    'identifierRegistration': {
-                        "value": jalcdoi_cr_tail[1] + jalcdoi_cr_tail[2],
-                        "properties": {
-                        "identifierType": "Crossref"
-                        }
-                    }
-                },
-                {
-                    'identifier': {
-                        'value': jalcdoi_dc_link,
-                        'properties': {
-                            'identifierType': 'DOI'
-                        }
-                    },
-                    'identifierRegistration': {
-                        "value": jalcdoi_dc_tail[1] + jalcdoi_dc_tail[2],
-                        "properties": {
-                        "identifierType": "Datacite"
-                        }
-                    }
-                },
-                {
-                    'identifier': {
-                        'value': jalcdoi_dc_link,
-                        'properties': {
-                            'identifierType': 'HDL'
-                        }
-                    }
-                },
-            ]}
-            item.update(res)
-            item.commit()
-            # current_app.logger.debug(item)
+        pidstore_identifier_mapping(post_json, activity_id, action_id)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
@@ -467,6 +400,75 @@ def next_action(activity_id='0', action_id=0):
             work_activity.upt_activity_action(
                 activity_id=activity_id, action_id=next_action_id)
     return jsonify(code=0, msg=_('success'))
+
+
+def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
+    activity_obj = WorkActivity()
+    activity_detail = activity_obj.get_activity_detail(activity_id)
+    item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+    if post_json.get('identifier_grant') is not None:
+        # transfer to JPCOAR format
+        jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
+        jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
+        jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
+        jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
+        jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
+        jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
+        jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
+        res = {'pidstore_identifier': [
+            {
+                'identifier': {
+                    'value': jalcdoi_link,
+                    'properties': {
+                        'identifierType': 'DOI'
+                    }
+                },
+                'identifierRegistration': {
+                    "value": jalcdoi_tail[1] + jalcdoi_tail[2],
+                    "properties": {
+                    "identifierType": "JaLC"
+                    }
+                }
+            },
+            {
+                'identifier': {
+                    'value': jalcdoi_cr_link,
+                    'properties': {
+                        'identifierType': 'DOI'
+                    }
+                },
+                'identifierRegistration': {
+                    "value": jalcdoi_cr_tail[1] + jalcdoi_cr_tail[2],
+                    "properties": {
+                    "identifierType": "Crossref"
+                    }
+                }
+            },
+            {
+                'identifier': {
+                    'value': jalcdoi_dc_link,
+                    'properties': {
+                        'identifierType': 'DOI'
+                    }
+                },
+                'identifierRegistration': {
+                    "value": jalcdoi_dc_tail[1] + jalcdoi_dc_tail[2],
+                    "properties": {
+                    "identifierType": "Datacite"
+                    }
+                }
+            },
+            {
+                'identifier': {
+                    'value': jalcdoi_crni_link,
+                    'properties': {
+                        'identifierType': 'HDL'
+                    }
+                }
+            },
+        ]}
+        item.update(res)
+        item.commit()
 
 
 @blueprint.route(
