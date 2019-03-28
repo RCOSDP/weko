@@ -16,10 +16,10 @@
 //     // });  
 // });
 
-require([
-"jquery",
-"bootstrap"
-], function() {
-    console.log("Hello World");
-});
+(function (angular) {
+    // Bootstrap it!
+    angular.element(document).ready(function () {
+        console.log("Hello World ABC");
+    });
+})(angular);
   
