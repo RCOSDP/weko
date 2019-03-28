@@ -41,13 +41,14 @@ style = Bundle(
 #    },
 #)
 
-js_deposit = NpmBundle(
-    js_dependencies_jquery,
-    filters='uglifyjs',
-    output='gen/weko_records_ui.deposit.%(version)s.js',
-)
+# js_deposit = NpmBundle(
+#     js_dependencies_jquery,
+#     filters='uglifyjs',
+#     output='gen/weko_records_ui.deposit.%(version)s.js',
+# )
 
 js_dependencies_cites = NpmBundle(
+    js_dependencies_jquery,
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
     'node_modules/angular/angular.js',
     'node_modules/almond/almond.js',
