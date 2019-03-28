@@ -50,7 +50,6 @@ js_dependencies_cites = NpmBundle(
     'node_modules/typeahead.js/dist/typeahead.jquery.js',
     'node_modules/invenio-csl-js/dist/invenio-csl-js.js',
     'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
-    'js/weko_records_ui/csl.js',
     filters='requirejs',
     output="gen/weko_records_ui_cites.js",
     npm={
@@ -61,6 +60,12 @@ js_dependencies_cites = NpmBundle(
         'invenio-csl-js': '~0.1.3',
         'typeahead.js': '~0.11.1',
     }
+)
+
+js_csl = NpmBundle(
+    'js/weko_records_ui/csl.js',
+    filters='requirejs',
+    output="gen/weko_records_ui_csl.js",
 )
 
 js = NpmBundle(
