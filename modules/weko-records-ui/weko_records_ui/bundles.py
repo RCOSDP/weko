@@ -42,11 +42,6 @@ style = Bundle(
 #)
 
 js_dependencies_cites = NpmBundle(
-    'js/weko_records_ui/csl.js',
-    output="gen/weko_records_ui_csl.js",
-)
-
-js_dependencies_cites = NpmBundle(
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
     'node_modules/angular/angular.js',
     'node_modules/almond/almond.js',
