@@ -8,10 +8,9 @@ require([
     // "node_modules/invenio-search-js/dist/invenio-search-js",
 ], function() {
     console.log("Hello World");
-    // angular.element(document).ready(function() {
-    //     angular.bootstrap(document.getElementById("invenio-csl"), [
-    //         'invenioCsl',
-    //         ]
-    //     );
-    // });  
+    angular.element(document).ready(function() {
+        angular.bootstrap(document.getElementById("invenio-csl"), [
+            'invenioCsl',
+        ]);
+    });  
 });  
