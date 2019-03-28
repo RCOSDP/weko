@@ -19,7 +19,10 @@
 (function (angular) {
     // Bootstrap it!
     angular.element(document).ready(function () {
-        console.log("Hello World ABC");
+        angular.bootstrap(document.getElementById("invenio-csl"), [
+         'invenioCsl',
+        ]
+     );
     });
 })(angular);
   
