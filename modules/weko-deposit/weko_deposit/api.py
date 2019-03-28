@@ -509,7 +509,7 @@ class WekoDeposit(Deposit):
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
-
+        print(jrc)
         return dc
 
     @classmethod
