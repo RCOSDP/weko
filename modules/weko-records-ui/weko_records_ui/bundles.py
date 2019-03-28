@@ -22,6 +22,7 @@
 
 from flask_assets import Bundle
 from invenio_assets import NpmBundle
+from invenio_deposit.bundles import js_dependencies_jquery
 
 style = Bundle(
     'css/weko_records_ui/style.css',
@@ -39,6 +40,12 @@ style = Bundle(
 #        'angular-ui-bootstrap': '~0.13.2',
 #    },
 #)
+
+js_deposit = NpmBundle(
+    js_dependencies_jquery,
+    filters='uglifyjs',
+    output='gen/weko_records_ui.deposit.%(version)s.js',
+)
 
 js_dependencies_cites = NpmBundle(
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
