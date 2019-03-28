@@ -396,8 +396,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         combined_filename = 'CV_' + datetime.now().strftime('%Y%m%d') + '_' + item_metadata_json[_file_item_id][0].get("filename")
     except (KeyError, IndexError):
         combined_filename = 'CV_' + title + '.pdf'
-
-    combined_filepath = "/code/combined-pdfs/{}.pdf".format(combined_filename)
+    combined_filepath = "/code/invenio/{}.pdf".format(combined_filename)
     combined_file = open(combined_filepath, "wb")
     combined_pages.write(combined_file)
     combined_file.close()

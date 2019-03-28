@@ -19,11 +19,13 @@
 #}
 
 <div id="invenio-search">
-  <div id="item_management"class="hide">item_management</div>
+  <div id="item_management_custom_sort"class="hide">item_management_custom_sort</div>
   <div role="navigation">
     <ul class="nav nav-tabs">
-      <li id="tab_display" role="presentation" class="active activity_li">
-        <a class="active activity_li" data-show-tab="display">{{_('Custom Sort')}}</a></li>
+      {%- block item_management_tabs %}
+        {% from "weko_theme/macros/item_management_tabs_selector.html" import tabs_selector %}
+        {{ tabs_selector('custom_sort') }}
+      {%- endblock item_management_tabs%}
     </ul>
   </div>
   <br>
