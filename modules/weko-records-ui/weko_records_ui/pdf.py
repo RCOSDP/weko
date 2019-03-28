@@ -24,7 +24,6 @@ import json
 import os
 import unicodedata
 from datetime import datetime
-
 from flask import current_app, send_file
 from fpdf import FPDF
 from invenio_db import db
@@ -33,12 +32,15 @@ from PyPDF2 import PdfFileReader, PdfFileWriter, utils
 from weko_records.api import ItemMetadata, ItemsMetadata, ItemType, Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
 from weko_records.serializers.utils import get_mapping, get_metadata_from_map
-
 from .models import PDFCoverPageSettings
-from .views import ObjectResourceWeko, blueprint
+from .views import blueprint
+from invenio_files_rest.views import ObjectResource
 
-""" Function counting numbers of full-width character and half-width character differently """
+
 def get_east_asian_width_count(text):
+    """
+    Count numbers of full-width character and half-width character differently
+    """
     count = 0
     for c in text:
         if unicodedata.east_asian_width(c) in 'FWA':
@@ -48,7 +50,7 @@ def get_east_asian_width_count(text):
     return count
 
 
-""" Function making PDF cover page """
+
 def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     """
     make the cover-page-combined PDF file
@@ -71,7 +73,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     with open(lang_filepath) as json_datafile:
         lang_data = json.loads(json_datafile.read())
 
-    """ Initialize Instance """
+    # Initialize Instance
     pdf = FPDF('P', 'mm', 'A4')
     pdf.add_page()
     pdf.set_margins(20.0, 20.0)
@@ -97,7 +99,6 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     max_letters_num = 51  # number of maximum letters that can be contained in the right column
     cc_logo_xposition = 160  # x-position where Creative Commons logos are placed
 
-    """ Header """
     # Get the header settings
     record = PDFCoverPageSettings.find(1)
     header_display_type = record.header_display_type
@@ -125,7 +126,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         pdf.image(header_output_image, x=positions['img_position'], y=None, w=0, h=30, type='')
         pdf.set_y(55)
 
-    """ Title """
+    # Title settings
     title = item_metadata_json['title_' + lang_user]
     if title == None:
         title = item_metadata_json['title_en']
@@ -133,7 +134,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     pdf.multi_cell(w1 + w2, title_h, title, 0, 'L', False)
     pdf.ln(h='15')
 
-    """ Metadata """
+    # Metadata
     fg = WekoFeedGenerator()
     fe = fg.add_entry()
 
@@ -291,7 +292,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     pdf.multi_cell(w2, url_oapolicy_h, oa_policy, 1, 'L', False)
     pdf.ln(h=1)
 
-    ### Footer ###
+    # Footer
     pdf.set_font('Courier', '', 10)
     pdf.set_x(108)
 
@@ -346,11 +347,11 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     else:
         pdf.multi_cell(footer_w, footer_h, '', 0, 'L', False)
 
-    """ Convert PDF cover page data as bytecode """
+    # Convert PDF cover page data as bytecode
     output = pdf.output(dest = 'S').encode('latin-1')
     b_output = io.BytesIO(output)
 
-    """ Combining cover page and existing pages """
+    # Combine cover page and existing pages
     cover_page = PdfFileReader(b_output)
     f = open(obj_file_uri, "rb")
     existing_pages = PdfFileReader(f)
@@ -360,7 +361,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         try:
             existing_pages.decrypt('')
         except: # Errors such as NotImplementedError
-            return ObjectResourceWeko.send_object(
+            return ObjectResource.send_object(
                 obj.bucket, obj,
                 expected_chksum=fileobj.get('checksum'),
                 logger_data={
@@ -368,13 +369,12 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
                     'pid_type': pid.pid_type,
                     'pid_value': pid.pid_value,
                 },
-                as_attachment=False,
-                cache_timeout=-1
+                as_attachment=False
             )
 
     # In the case the PDF file is encrypted by the password except ''
     if existing_pages.isEncrypted:
-        return ObjectResourceWeko.send_object(
+        return ObjectResource.send_object(
             obj.bucket, obj,
             expected_chksum=fileobj.get('checksum'),
             logger_data={
@@ -382,8 +382,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
                 'pid_type': pid.pid_type,
                 'pid_value': pid.pid_value,
             },
-            as_attachment=False,
-            cache_timeout=-1
+            as_attachment=False
         )
 
     combined_pages = PdfFileWriter()
@@ -392,17 +391,14 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         existing_page = existing_pages.getPage(page_num)
         combined_pages.addPage(existing_page)
 
-    """ Download the newly generated combined PDF file """
+    # Download the newly generated combined PDF file
     try:
-        #combined_filename = 'CV_' + datetime.now().strftime('%Y%m%d') + '_' + item_metadata_json["item_1538028827221"][0].get("filename")
         combined_filename = 'CV_' + datetime.now().strftime('%Y%m%d') + '_' + item_metadata_json[_file_item_id][0].get("filename")
-
-
     except (KeyError, IndexError):
         combined_filename = 'CV_' + title + '.pdf'
+
     combined_filepath = "/code/combined-pdfs/{}.pdf".format(combined_filename)
     combined_file = open(combined_filepath, "wb")
     combined_pages.write(combined_file)
     combined_file.close()
-
     return send_file(combined_filepath, as_attachment = True, attachment_filename = combined_filename, mimetype ='application/pdf', cache_timeout = -1)
