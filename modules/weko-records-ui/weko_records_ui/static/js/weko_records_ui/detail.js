@@ -8,7 +8,7 @@ require([
   "node_modules/invenio-csl-js/dist/invenio-csl-js",
   "node_modules/bootstrap-switch/dist/js/bootstrap-switch",
   // "bloodhound",
-  "typeahead.js",
+  // "typeahead.js",
 ], function() {
   $('#btn_back').on('click', function(){
     window.history.back();
