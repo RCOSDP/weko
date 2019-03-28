@@ -38,12 +38,18 @@
           <td height="35">
             {%- if id in [1, 2, 3] %}
             {%- if item %}
-            <label>{{ link + prefix }}{{ activity.item_id }}</label>
+            <label>
+              <span name="idf_grant_link_{{ id }}">{{ link + prefix + activity.item_id }}</span>
+            </label>
             {%- else %}
-            <label>{{ link + prefix + '<No registration item>' }}</label>
+            <label>
+              <span name="idf_grant_link_{{ id }}">{{ link + prefix + '<No registration item>' }}</span>
+            </label>
             {%- endif %}
             {%- elif id == 4 %}
-            <label>{{ link }}</label>
+            <label>
+              <span name="idf_grant_link_{{ id }}">{{ link }}</span>
+            </label>
             {%- endif %}
           </td>
         </tr>
@@ -89,11 +95,13 @@
           <td height="35">
             {%- if id in [1, 2, 3] %}
             <label>
-              <span>{{ link + prefix }}</span>
+              <span name="idf_grant_link_{{ id }}">{{ link + prefix }}</span>
               <input type="text" name="idf_grant_input_{{ id }}" value="{{ temporary_idf_grant_suffix[id - 1] }}">
             </label>
             {%- elif id == 4 %}
-            <label>{{ link }}</label>
+            <label>
+              <span name="idf_grant_link_{{ id }}">{{ link }}</span>
+            </label>
             {%- endif %}
           </td>
         </tr>

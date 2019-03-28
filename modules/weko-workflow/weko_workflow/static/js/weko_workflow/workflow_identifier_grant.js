@@ -19,7 +19,7 @@ require([
         identifier_grant_jalc_cr_doi_link : $("span[name='idf_grant_link_2']").text() +  $("input[name='idf_grant_input_2']").val(),
         identifier_grant_jalc_dc_doi_suffix: $("input[name='idf_grant_input_3']").val(),
         identifier_grant_jalc_dc_doi_link : $("span[name='idf_grant_link_3']").text() +  $("input[name='idf_grant_input_3']").val(),
-        identifier_grant_crni_link : $("span[name='idf_grant_link_4']").text() +  $("input[name='idf_grant_input_4']").val(),
+        identifier_grant_crni_link : $("span[name='idf_grant_link_4']").text(),
         action_version: $('.cur_step').data('action-version'),
         temporary_save: tmp_save
       };
@@ -27,12 +27,12 @@ require([
       data_global.post_data = {
         identifier_grant: $("input[name='identifier_grant']:checked").val(),
         identifier_grant_jalc_doi_suffix : "",
-        identifier_grant_jalc_doi_link: "",
+        identifier_grant_jalc_doi_link: $("span[name='idf_grant_link_1']").text(),
         identifier_grant_jalc_cr_doi_suffix: "",
-        identifier_grant_jalc_cr_doi_link: "",
+        identifier_grant_jalc_cr_doi_link: $("span[name='idf_grant_link_2']").text(),
         identifier_grant_jalc_dc_doi_suffix: "",
-        identifier_grant_jalc_dc_doi_link: "",
-        identifier_grant_crni_link: "",
+        identifier_grant_jalc_dc_doi_link: $("span[name='idf_grant_link_3']").text(),
+        identifier_grant_crni_link: $("span[name='idf_grant_link_4']").text(),
         action_version: $('.cur_step').data('action-version'),
         temporary_save: tmp_save
       };
