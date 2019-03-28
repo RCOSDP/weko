@@ -41,11 +41,10 @@ style = Bundle(
 #    },
 #)
 
-# js_dependencies_cites = NpmBundle(
-#     js_dependencies_jquery,
-#     #filters='uglifyjs',
-#     #output='gen/weko_records_ui.deposit.%(version)s.js',
-# )
+js_dependencies_cites = NpmBundle(
+    'js/weko_records_ui/csl.js',
+    output="gen/weko_records_ui_csl.js",
+)
 
 # js_dependencies_cites = NpmBundle(
 #     js_dependencies_jquery,
