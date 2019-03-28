@@ -2,8 +2,8 @@
 
 $(document).ready(function () {
 
-  const urlLoad = '/api/admin/load_lang';
-  const urlUpdate = '/api/admin/save_lang';
+  let urlLoad = '/api/admin/load_lang?timestamp=' + new Date().getTime();
+  let urlUpdate = '/api/admin/save_lang?timestamp=' + new Date().getTime();
 
   const moveRight = $('#moveRight');
   const moveLeft = $('#moveLeft')
