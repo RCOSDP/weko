@@ -22,6 +22,7 @@
 
 from flask_assets import Bundle
 from invenio_assets import NpmBundle
+from invenio_deposit.bundles import js_dependencies_jquery
 
 style = Bundle(
     'css/weko_records_ui/style.css',
@@ -74,6 +75,7 @@ js_bootstrap_switch = NpmBundle(
 )
 
 js_dependecies = NpmBundle(
+    js_dependencies_jquery,
     js_angular_bootstrap,
     js_almond,
     js_angular_loading_bar,
