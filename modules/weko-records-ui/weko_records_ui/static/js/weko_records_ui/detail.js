@@ -1,7 +1,10 @@
 require([
   // "jquery",
   // "bootstrap",
-  // "node_modules/angular/angular",
+  "node_modules/jquery/jquery",
+  "node_modules/bootstrap/dist/js/bootstrap",
+  "node_modules/angular/angular",
+  "node_modules/typeahead.js/dist/typeahead.jquery",
   "node_modules/angular-loading-bar/build/loading-bar",
   "node_modules/invenio-csl-js/dist/invenio-csl-js",
   "node_modules/bootstrap-switch/dist/js/bootstrap-switch",

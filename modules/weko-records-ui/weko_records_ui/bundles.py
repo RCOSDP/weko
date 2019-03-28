@@ -53,6 +53,9 @@ style = Bundle(
 # )
 
 js_dependencies_csl = NpmBundle(
+    'node_modules/bootstrap/dist/js/bootstrap.js',
+    'node_modules/jquery/jquery.js',
+    'node_modules/angular/angular.js',
     'node_modules/almond/almond.js',
     'node_modules/angular-loading-bar/build/loading-bar.js',
     'node_modules/typeahead.js/dist/bloodhound.js',
