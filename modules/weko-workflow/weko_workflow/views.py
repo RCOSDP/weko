@@ -23,7 +23,7 @@
 
 from functools import wraps
 from flask import Blueprint, abort, current_app, jsonify, render_template, \
-    request, session, url_for
+    request, session, url_for, json
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -366,6 +366,77 @@ def next_action(activity_id='0', action_id=0):
         pid, item_record = resolver.resolve(pid_identifier.pid_value)
         updateItem = UpdateItem()
         updateItem.set_item_relation(relation_data, item_record)
+
+    # save pidstore_identifier to ItemsMetadata
+    post_json.get('identifier_grant_jalc_dc_doi_suffix')
+    if 'identifier_grant' == action_endpoint:
+        activity_obj = WorkActivity()
+        activity_detail = activity_obj.get_activity_detail(activity_id)
+        item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+        if post_json.get('identifier_grant') is not None:
+            # transfer to JPCOAR format
+            jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
+            jalcdoi_tail = jalcdoi_link.split('//')[1]
+            jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
+            jalcdoi_cr_tail = jalcdoi_link.split('//')[1]
+            jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
+            jalcdoi_dc_tail = jalcdoi_link.split('//')[1]
+            jalcdoi_dc_link = post_json.get('identifier_grant_crni_link')
+            res = {'pidstore_identifier': [
+                {
+                    'identifier': {
+                        'value': jalcdoi_link,
+                        'properties': {
+                            'identifierType': 'DOI'
+                        }
+                    },
+                    'identifierRegistration': {
+                        "value": jalcdoi_tail[1] + jalcdoi_tail[2],
+                        "properties": {
+                        "identifierType": "JaLC"
+                        }
+                    }
+                },
+                {
+                    'identifier': {
+                        'value': jalcdoi_cr_link,
+                        'properties': {
+                            'identifierType': 'DOI'
+                        }
+                    },
+                    'identifierRegistration': {
+                        "value": jalcdoi_cr_tail[1] + jalcdoi_cr_tail[2],
+                        "properties": {
+                        "identifierType": "Crossref"
+                        }
+                    }
+                },
+                {
+                    'identifier': {
+                        'value': jalcdoi_dc_link,
+                        'properties': {
+                            'identifierType': 'DOI'
+                        }
+                    },
+                    'identifierRegistration': {
+                        "value": jalcdoi_dc_tail[1] + jalcdoi_dc_tail[2],
+                        "properties": {
+                        "identifierType": "Datacite"
+                        }
+                    }
+                },
+                {
+                    'identifier': {
+                        'value': jalcdoi_dc_link,
+                        'properties': {
+                            'identifierType': 'HDL'
+                        }
+                    }
+                },
+            ]}
+            item.update(res)
+            item.commit()
+            # current_app.logger.debug(item)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:

@@ -1,0 +1,112 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <span>{{_('Identifier Grant')}}</span>
+  </div>
+  <div class="panel-body" style="line-height: 1.6;">
+    <div class="form-group radio" style="display: inline-grid;">
+      {%- if idf_grant_method == 0 %}
+      <table>
+        {%- for id, address, link, prefix, suffix in idf_grant_input %}
+        <TR>
+          <td height="35">
+            <label>
+              <input type="radio" name="identifier_grant" value="{{ id }}"
+                {%- if id == temporary_idf_grant %}checked{%- endif %}>
+              {{ address }}
+            </label>
+          </td>
+          <td height="35">
+            {%- if id in [1, 2, 3] %}
+            {%- if item %}
+            <label>{{ link + prefix }}{{ activity.item_id }}</label>
+            {%- else %}
+            <label>{{ link + prefix + '<No registration item>' }}</label>
+            {%- endif %}
+            {%- elif id == 4 %}
+            <label>{{ link }}</label>
+            {%- endif %}
+          </td>
+        </tr>
+        {%- endfor %}
+      </table>
+      {%- elif idf_grant_method == 1 %}
+      <table>
+        {%- for id, address, link, prefix, suffix in idf_grant_input %}
+        <tr>
+          <td height="35">
+            <label>
+              <input type="radio" name="identifier_grant" value="{{ id }}" id="idf_grant_radio_button_{{ id }}"
+                {%- if id == temporary_idf_grant %}checked{%- endif %}>
+              {{ address }}
+            </label>
+          </td>
+          <td height="35">
+            {%- if id in [1, 2, 3] %}
+            <label>
+              <span name="idf_grant_link_{{ id }}">{{ link + prefix + suffix }}</span>
+              <input type="text" name="idf_grant_input_{{ id }}" value="{{ temporary_idf_grant_suffix[id - 1] }}">
+            </label>
+            {%- elif id == 4 %}
+            <label>
+              <span name="idf_grant_link_{{ id }}">{{ link }}</span>
+            </label>
+            {%- endif %}
+          </td>
+        </tr>
+        {%- endfor %}
+      </table>
+      {%- else %}
+      <table>
+        {%- for id, address, link, prefix, suffix in idf_grant_input %}
+        <tr>
+          <td height="35">
+            <label>
+              <input type="radio" name="identifier_grant" value="{{ id }}" id="idf_grant_radio_button_{{ id }}"
+                {%- if id == temporary_idf_grant %}checked{%- endif %}>
+              {{ address }}
+            </label>
+          </td>
+          <td height="35">
+            {%- if id in [1, 2, 3] %}
+            <label>
+              <span>{{ link + prefix }}</span>
+              <input type="text" name="idf_grant_input_{{ id }}" value="{{ temporary_idf_grant_suffix[id - 1] }}">
+            </label>
+            {%- elif id == 4 %}
+            <label>{{ link }}</label>
+            {%- endif %}
+          </td>
+        </tr>
+        {%- endfor %}
+      </table>
+      {%- endif %}
+    </div>
+  </div>
+</div>
+<div class="m-top-20">
+  <ul class="list-inline text-right" style="margin-bottom: 0;">
+    <li><button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button></li>
+    <li style="padding-right: 0;"><button type="button" class="btn btn-default" id="btn-finish">{{_('Next')}}</button>
+    </li>
+  </ul>
+</div>

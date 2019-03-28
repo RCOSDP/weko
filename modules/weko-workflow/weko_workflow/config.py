@@ -34,14 +34,14 @@ WEKO_WORKFLOW_ACTION_ENDPOINTS = {
 }
 
 IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', '', '', ''),
-                         (1, 'JaLC DOI', 'http://doi.org/', '1000/', '1234-'),
-                         (2, 'JaLC CrossRef DOI', 'http://doi.org/', '2000/', '2345-'),
-                         (3, 'JaLC DataCite DOI', 'http://doi.org/', '3000/', '4567-'),
-                         (4, 'CNRI', 'http://hdl.handle.net/4000/', '', '')
+                         (1, 'JaLC DOI', 'http://doi.org/', '1000/', '1234'),
+                         (2, 'JaLC CrossRef DOI', 'http://doi.org/', '2000/', '2345'),
+                         (3, 'JaLC DataCite DOI', 'http://doi.org/', '3000/', '4567'),
+                         (4, 'CNRI', 'http://hdl.handle.net/4000/56789012', '', '')
                         ]
 """Options list for Identifier Grant action."""
 
-IDENTIFIER_GRANT_SUFFIX_METHOD = 0
+IDENTIFIER_GRANT_SUFFIX_METHOD = 1
 """
     Suffix input method for Identifier Grant action
 
