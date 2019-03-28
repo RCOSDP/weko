@@ -38,8 +38,8 @@ from werkzeug.local import LocalProxy
 from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_response_json, \
     get_search_setting, get_selected_language, update_admin_lang_setting, \
-    get_api_certification_type, validate_certification, \
-    get_current_api_certification, save_api_certification
+    get_api_certification_type, get_current_api_certification, \
+    save_api_certification
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -282,39 +282,6 @@ def get_api_cert_type():
     }
     try:
         result['results'] = get_api_certification_type()
-    except Exception as e:
-        result['error'] = str(e)
-    return jsonify(result)
-
-
-@blueprint_api.route('/validate_cert_data/<string:api_code>', methods=['POST'])
-def validate_cert_data(api_code = ''):
-    """
-    Check certification data still valid/exist or not.
-
-    :param api_code: API code
-    Post data - request: API certification data
-
-    :return: Example
-    {
-        'results': true,
-        'error': ''
-    }
-    """
-    result = {
-        'results': '',
-        'error': ''
-    }
-
-    if request.headers['Content-Type'] != 'application/json':
-        result['error'] = _('Header Error')
-        return jsonify(result)
-
-    data = request.get_json()
-    cert_data = data.get('cert_data', '')
-
-    try:
-        result['results'] = validate_certification(api_code, cert_data)
     except Exception as e:
         result['error'] = str(e)
     return jsonify(result)
