@@ -10,7 +10,240 @@ require([
     $('#myModal').modal('toggle');
     $("div.modal-backdrop").remove();
   });
+
 });
+
+// script for Contributor
+var username = [];
+var email = [];
+var filter = {
+  filter_username : "",
+  filter_email : ''
+}
+function autocomplete(inp, arr) {
+  var currentFocus;
+
+  inp.addEventListener("input", function(e) {
+    var a, b, i, val = this.value;
+    var mode = this.id;
+    var flag =false;
+    closeAllLists();
+    if (!val) { return false;}
+    currentFocus = -1;
+    a = document.createElement("DIV");
+    a.setAttribute("id", this.id + "autocomplete-list");
+    a.setAttribute("class", "autocomplete-items");
+    this.parentNode.appendChild(a);
+      /*for each item in the array...*/
+    for (i = 0; i < arr.length; i++) {
+      /*check if the item starts with the same letters as the text field value:*/
+      if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+        /*create a DIV element for each matching element:*/
+        b = document.createElement("DIV");
+        /*make the matching letters bold:*/
+        b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+        b.innerHTML += arr[i].substr(val.length);
+        /*insert a input field that will hold the current array item's value:*/
+        b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+        /*execute a function when someone clicks on the item value (DIV element):*/
+        b.addEventListener("click", function(e) {
+        /*insert the value for the autocomplete text field:*/
+        inp.value = this.getElementsByTagName("input")[0].value;
+        if(mode == 'share_username') {
+          filter.filter_username = inp.value;
+          // get exact user info contains username and email by username unique
+          get_autofill_data(filter.filter_username, "", mode);
+        } else {
+          if(mode == 'share_email') {
+            filter.filter_email = inp.value;
+            // get exact user info contains username and email by email
+            get_autofill_data('', filter.filter_email, mode);
+          }
+        }
+        closeAllLists();
+        });
+        a.appendChild(b);
+        flag = true;
+      }
+    }
+    if(flag == false) {
+        if($(".autocomplete-items div").length == 0) {
+          b = document.createElement("DIV");
+          b.innerHTML = "<p>No result found" +"</p>";
+          b.innerHTML += "<input type='hidden' value='No results found'>";
+          a.appendChild(b);
+        }
+    }
+  });
+  inp.addEventListener("keydown", function(e) {
+  var x = document.getElementById(this.id + "autocomplete-list");
+  if (x) x = x.getElementsByTagName("div");
+  if (e.keyCode == 40) {
+    /*If the arrow DOWN key is pressed,
+    increase the currentFocus variable:*/
+    currentFocus++;
+    /*and and make the current item more visible:*/
+    addActive(x);
+  } else if (e.keyCode == 38) { //up
+    /*If the arrow UP key is pressed,
+    decrease the currentFocus variable:*/
+    currentFocus--;
+    /*and and make the current item more visible:*/
+    addActive(x);
+  } else if (e.keyCode == 13) {
+                /*If the ENTER key is pressed, prevent the form from being submitted,*/
+                e.preventDefault();
+                if (currentFocus > -1) {
+                  /*and simulate a click on the "active" item:*/
+                  if (x) x[currentFocus].click();
+                }
+          }
+  });
+    function addActive(x) {
+        /*a function to classify an item as "active":*/
+        if (!x) return false;
+        /*start by removing the "active" class on all items:*/
+        removeActive(x);
+        if (currentFocus >= x.length) currentFocus = 0;
+        if (currentFocus < 0) currentFocus = (x.length - 1);
+          /*add class "autocomplete-active":*/
+        x[currentFocus].classList.add("autocomplete-active");
+      }
+      function removeActive(x) {
+        /*a function to remove the "active" class from all autocomplete items:*/
+        for (var i = 0; i < x.length; i++) {
+          x[i].classList.remove("autocomplete-active");
+        }
+      }
+      function closeAllLists(elmnt) {
+        /*close all autocomplete lists in the document,
+        except the one passed as an argument:*/
+        var x = document.getElementsByClassName("autocomplete-items");
+        for (var i = 0; i < x.length; i++) {
+          if (elmnt != x[i] && elmnt != inp) {
+             x[i].parentNode.removeChild(x[i]);
+          }
+        }
+      }
+      /*execute a function when someone clicks in the document:*/
+      document.addEventListener("click", function (e) {
+        closeAllLists(e.target);
+      });
+    }
+
+    get_search_data = function(keyword) {
+        get_search_data_url = '/api/items/get_search_data/' + keyword;
+        if(keyword == 'username') {
+          $("#id_spinners_username").css("display","");
+        } else {
+          if(keyword == 'email') {
+            $("#id_spinners_email").css("display","");
+          }
+        }
+
+        $.ajax({
+          url: get_search_data_url,
+          method: "GET",
+          success: (data, status) => {
+            if (data.error) {
+              alert("Some errors have occured!\nDetail:" + data.error);
+              return null;
+            } else {
+              if(keyword === 'username') {
+                $("#id_spinners_username").css("display","none");
+                $("#share_username").prop('readonly', false);
+                username = data.results;
+                // auto fill for username
+                autocomplete(document.getElementById("share_username"), username);
+
+              } else {
+                if( keyword === 'email') {
+                  $("#id_spinners_email").css("display","none");
+                  $("#share_email").prop('readonly', false);
+                  email = data.results;
+                  // auto fill for email input
+                  autocomplete(document.getElementById("share_email"), email);
+                }
+              }
+
+              return data.results;
+            }
+          },
+          error: (data, status) => {
+            alert("Cannot connect to server!");
+          }
+        });
+    }
+
+    get_autofill_data = function(keyword, data, mode) {
+        // If autofill, "keyword" = email or username, and username, email have to fill to "data"
+        // If validate, keyword = username, data = email
+        let param = {
+          username:"",
+          email:""
+        }
+        if (keyword == "username") {
+          param.username = data;
+        }else if (keyword == "email") {
+          param.email = data;
+        }else{
+          param.username = keyword;
+          param.email = data;
+        }
+
+        //Create request
+        $.ajax({
+          url: "/api/items/validate_user_info",
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(param),
+          dataType: "json",
+          success: (data, status) => {
+
+            if(mode == 'share_username') {
+              $("#share_email").val(data.results.email);
+            }else {
+              if(mode == 'share_email') {
+              $("#share_username").val(data.results.username);
+            }
+            }
+          },
+          error: (data, status) => {
+            alert("Cannot connect to server!");
+          }
+        });
+    }
+
+    $("#share_username").focusout(function() {
+      username = [];
+      $("#share_email").prop('readonly', true);
+
+    })
+
+    $("#share_email").focusout(function() {
+      email = [];
+      $("#share_username").prop('readonly', true);
+    })
+
+    function handleSharePermission(value) {
+      if(value == 'this_user'){
+        $(".form_share_permission").css('display', 'none');
+        $("#share_username").val("");
+        $("#share_email").val("");
+      }else {
+      if(value == 'other_user') {
+        $(".form_share_permission").css('display', '');
+        $("#share_username").val("");
+        $("#share_email").val("");
+        $("#id_spinners_username").css("display","none");
+        $("#share_username").prop('readonly', true);
+        $("#id_spinners_email").css("display","none");
+        $("#share_email").prop('readonly', true);
+      }
+    }
+  }
 
 (function (angular) {
   // Bootstrap it!
@@ -230,6 +463,7 @@ require([
           return true;
         }
       }
+
       $scope.updateDataJson = function(){
         var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
         var indexOfLink = str.indexOf("authorLink");
