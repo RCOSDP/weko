@@ -35,7 +35,6 @@ from invenio_files_rest.views import file_downloaded, check_permission
 from invenio_files_rest.views import ObjectResource
 from invenio_files_rest.models import ObjectVersion, FileInstance
 from weko_deposit.api import WekoRecord
-from .views import ObjectResourceWeko
 from weko_user_profiles.models import UserProfile
 from flask_login import current_user
 
@@ -226,7 +225,7 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
                 or pdfcoverpage_set_rec is None or pdfcoverpage_set_rec.avail == 'disable' \
                 or coverpage_state == False \
                 or (is_original and can_download_original_pdf):
-            return ObjectResourceWeko.send_object(
+            return ObjectResource.send_object(
                 obj.bucket, obj,
                 expected_chksum=fileobj.get('checksum'),
                 logger_data={
@@ -238,7 +237,7 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
                 cache_timeout=-1
             )
     except AttributeError:
-        return ObjectResourceWeko.send_object(
+        return ObjectResource.send_object(
             obj.bucket, obj,
             expected_chksum=fileobj.get('checksum'),
             logger_data={

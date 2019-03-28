@@ -32,7 +32,8 @@ from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 from weko_records.api import Mapping
 from weko_records.serializers.feed import WekoFeedGenerator
 from .views import blueprint
-from .views import ObjectResourceWeko
+from invenio_files_rest.views import ObjectResource
+
 
 """ Function counting numbers of full-width character and half-width character differently """
 def get_east_asian_width_count(text):
@@ -357,7 +358,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         try:
             existing_pages.decrypt('')
         except: # Errors such as NotImplementedError
-            return ObjectResourceWeko.send_object(
+            return ObjectResource.send_object(
                 obj.bucket, obj,
                 expected_chksum=fileobj.get('checksum'),
                 logger_data={
@@ -371,7 +372,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     # In the case the PDF file is encrypted by the password except ''
     if existing_pages.isEncrypted:
-        return ObjectResourceWeko.send_object(
+        return ObjectResource.send_object(
             obj.bucket, obj,
             expected_chksum=fileobj.get('checksum'),
             logger_data={
