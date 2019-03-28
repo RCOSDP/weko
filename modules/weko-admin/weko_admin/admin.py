@@ -292,7 +292,7 @@ web_api_account_adminview = {
     'view_class': WebApiAccount,
     'kwargs': {
         'category': _('Setting'),
-        'name': _('Web API Account'),
+        'name': _('WebAPI Account'),
         'endpoint': 'webapiaccount'
     }
 }

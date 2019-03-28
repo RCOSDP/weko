@@ -20,6 +20,7 @@
 
 """Utilities for convert response json."""
 from flask import session
+from flask_babelex import lazy_gettext as _
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 import requests
@@ -247,16 +248,26 @@ def save_api_certification(api_code, cert_data):
     """
     :param api_code: API code
     :param cert_data: certification data
-    :return: message 'success' if success, message error if fail
+    :return: dict
+    {
+        'results': true // true if save successfully
+        'error':''
+    }
     """
+    result = {
+        'results': '',
+        'error': ''
+    }
     try:
-        if ApiCertificate.select_by_api_code(api_code) is not None:
-            """ Update database in case api_code exited """
-            ApiCertificate.update_cert_data(api_code, cert_data)
+        if cert_data:
+            if ApiCertificate.select_by_api_code(api_code) is not None:
+                """ Update database in case api_code exited """
+                result['results'] = ApiCertificate.update_cert_data(api_code, cert_data)
+            else:
+                result['error'] = _("Input type is not valid.")
         else:
-            """ Insert new certificate data incase api_code not existed in DB before """
-            ApiCertificate.insert_new_cert_data(api_code, cert_data)
+            result['error'] = _("Input data is not valid.")
     except Exception as e:
-        return str(e)
+        result['error'] = str(e)
 
-    return 'success'
+    return result

@@ -366,10 +366,7 @@ def save_api_cert_data():
         'error':''
     }
     """
-    result = {
-        'results': '',
-        'error': ''
-    }
+    result = dict()
 
     if request.headers['Content-Type'] != 'application/json':
         result['error'] = _('Header Error')
@@ -379,8 +376,6 @@ def save_api_cert_data():
     api_code = data.get('api_code', '')
     cert_data = data.get('cert_data', '')
 
-    try:
-        result['results'] = save_api_certification(api_code, cert_data)
-    except Exception as e:
-        result['error'] = str(e)
+    result = save_api_certification(api_code, cert_data)
+
     return jsonify(result)
