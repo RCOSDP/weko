@@ -162,7 +162,11 @@ require([
                 query += $('#community').serialize().replace(/\+/g, ' ') + '&';
             }
             var btn = sessionStorage.getItem('btn', '');
-            window.location.href = ('/search?page=1&' + query).slice(0, -1);
+            if($("#item_management_bulk_update").length != 0) {
+              window.location.href = ('/search?page=1&item_management=update&' + query).slice(0, -1);
+            }else {
+              window.location.href = ('/search?page=1&' + query).slice(0, -1);
+            }
             // stop the form from submitting the normal way and refreshing the page
             event.preventDefault();
         })
