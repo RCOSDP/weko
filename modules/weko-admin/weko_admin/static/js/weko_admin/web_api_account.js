@@ -31,15 +31,18 @@ save = () => {
     dataType: 'json',
 
     success: function (data, status) {
-      console.log(data)
-      let results = data.results;
-      if (!results) {
+      let err_msg = data.error;
+      if (err_msg.length > 0) {
+        alert(err_msg);
         return;
+      } else if (!data.results) {
+        alert('Can not save when certificate data not found.');
+      } else {
+        alert('Certificate have been saved.');
       }
     },
     error: function (error) {
-      console.log(error);
-      alert('Error save certificate');
+      alert(error);
     }
   });
 }
@@ -52,10 +55,11 @@ loadDataForInputType = () => {
       let error = data.error;
       let results = data.results;
       if(error){
-        console.log(error)
+        alert(error);
         return;
       }
       if (!results) {
+        alert('Not found certificate data.');
         return;
       }
       let options = '';
@@ -66,8 +70,7 @@ loadDataForInputType = () => {
       select.append(options);
     },
     error: function (error) {
-      console.log(error);
-      alert('Error when get languages');
+      alert('Error when api certificate type.');
     }
   });
 }
@@ -79,6 +82,9 @@ loadCurrentCertData = () => {
     type: 'GET',
     success: (data, status) => {
       $('#cross_ref_account').val(data.results.cert_data);
+    },
+    error: function (error) {
+      alert('Error when load certificate data of ' + $('#input_type').val());
     }
   });
 }
