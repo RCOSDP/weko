@@ -27,6 +27,12 @@ from invenio_db import db
 
 
 def get_list_username():
+    """
+    Get list username
+    Query database to get all available username
+
+    return: list of username
+    """
     user_index = 1
     result = list()
     while True:
@@ -40,6 +46,12 @@ def get_list_username():
 
 
 def get_list_email():
+    """
+    Get list email:
+    Query database to get all available email
+
+    return: list of email
+    """
     result = list()
     try:
         metadata = MetaData()
@@ -60,6 +72,16 @@ def get_list_email():
 
 
 def get_user_info_by_username(username):
+    """
+    Get user information by username:
+    Query database to get user id by using username
+    Get email from database using user id
+    Pack response data: user id, user name, email
+
+    parameter:
+        username: The username
+    return: response pack 
+    """
     result = dict()
     try:
         user = UserProfile.get_by_username(username)
@@ -86,6 +108,21 @@ def get_user_info_by_username(username):
 
 
 def validate_user(username, email):
+    """
+    Validate user information:
+    Get user id from database using username
+    Get user id from database using email
+    Compare 2 user id to validate user information
+    Pack responde data:
+        results: user information (username, user id, email)
+        validation: username is match with email or not
+        error: null if no error occurs
+    
+    param:
+        username: The username
+        email: The email
+    return: response data
+    """
     result = {
         'results': '',
         'validation': False,
@@ -122,6 +159,16 @@ def validate_user(username, email):
 
 
 def get_user_info_by_email(email):
+    """
+    Get user information by email:
+    Query database to get user id by using email
+    Get username from database using user id
+    Pack response data: user id, user name, email
+
+    parameter:
+        email: The email
+    return: response
+    """
     result = dict()
     try:
         metadata = MetaData()
