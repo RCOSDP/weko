@@ -490,6 +490,15 @@ def index_upload():
 
 @blueprint_api.route('/get_search_data/<data_type>', methods=['GET'])
 def get_search_data(data_type=''):
+    """
+    Host the api provide search data:
+    Provide 2 search data: username and email
+
+    param: 
+        data_type: type of response data (username, email)
+    return:
+        list of search data
+    """
     result = {
         'results': '',
         'error': '',
@@ -509,6 +518,25 @@ def get_search_data(data_type=''):
 
 @blueprint_api.route('/validate_user_info', methods=['POST'])
 def validate_user_info():
+    """
+    Host the api which provide 2 service:
+        Get autofill data: return user information based on request data
+        Validate user information: check if user is exist
+
+    request:
+        header: Content type must be json
+        data:
+            username: The username
+            email: The email
+    return: response pack:
+        results: user information if user is valid
+        validation: 'true' if user is valid, other case return 'false'
+        error: return error message, empty if no error occurs
+
+    How to use:
+        1. Get autofill data: fill username or email
+        2. Validation: fill both username and email
+    """
     result = {
         'results': '',
         'validation': '',
@@ -525,15 +553,17 @@ def validate_user_info():
     email = data.get('email', '')
 
     try:
-        if username is not None:
-            if email is None:
+        if username != "":
+            if email == "":
                 result['results'] = get_user_info_by_username(username)
                 result['validation'] = True
             else:
-                result['validation'] = validate_user(username, email)
+                validate_data = validate_user(username, email)
+                result['results'] = validate_data['results']
+                result['validation'] = validate_data['validation']
             return jsonify(result)
 
-        if email is not None:
+        if email != "":
             result['results'] = get_user_info_by_email(email)
             result['validation'] = True
 
