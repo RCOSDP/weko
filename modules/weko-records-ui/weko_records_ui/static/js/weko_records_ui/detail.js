@@ -1,7 +1,7 @@
 require([
   // "jquery",
   // "bootstrap",
-  "node_modules/jquery/jquery",
+  "jquery",
   "node_modules/bootstrap/dist/js/bootstrap",
   "node_modules/angular/angular",
   "node_modules/typeahead.js/dist/typeahead.jquery",
