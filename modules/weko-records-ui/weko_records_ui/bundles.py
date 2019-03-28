@@ -76,5 +76,10 @@ js = NpmBundle(
     output="gen/weko_records_ui.%(version)s.js",
     npm={
         'angular-ui-bootstrap': '~0.13.2',
+        'almond': '~0.3.1',
+        'angular-loading-bar': '~0.9.0',
+        'bootstrap-switch': '~3.0.2',
+        'invenio-csl-js': '~0.1.3',
+        'typeahead.js': '~0.11.1',
     },
 )
