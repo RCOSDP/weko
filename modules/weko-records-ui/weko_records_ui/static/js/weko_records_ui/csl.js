@@ -1,6 +1,6 @@
 require([
     // "jquery",
-    "bootstrap",
+    // "bootstrap",
     "typeahead.js",
     "bloodhound",
     "node_modules/angular/angular",
