@@ -1,3 +1,4 @@
+"use strict";
 
 $(document).ready(function () {
 
@@ -33,10 +34,10 @@ $(document).ready(function () {
       for (let index = 0; index < results.length; index++) {
         const element = results[index];
         if (element.is_registered) {
-          rightOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
+          rightOption += '<option value="' + element.lang_code + '">' + element.lang_code + '&nbsp;' + element.lang_name + '</option>';
           continue;
         }
-        leftOption += `<option value="${element.lang_code}">${element.lang_code}&nbsp;${element.lang_name}</option>`;
+        leftOption += '<option value="' + element.lang_code + '">' + element.lang_code + '&nbsp;' + element.lang_name + '</option>';
       }
       leftSelect.append(leftOption);
       rightSelect.append(rightOption);
@@ -78,7 +79,7 @@ $(document).ready(function () {
     rightSelect.find('option:selected').detach().appendTo(rightSelect);
   });
 
-  rightSelect.on('change', function() {
+  rightSelect.on('change', function () {
     if (moveTop.prop('disabled')) {
       moveTop.prop('disabled', false);
       moveUp.prop('disabled', false);
@@ -113,9 +114,9 @@ $(document).ready(function () {
     const children = $('#leftSelect').children();
     const selectedChildren = $('#rightSelect').children();
     const map = {};
-    for (let ele of results) {
-      map[ele.lang_code] = ele;
-    }
+    results.forEach(function (element) {
+      map[element.lang_code] = element;
+    });
     for (let index = 0; index < children.length; index++) {
       const element = map[children[index].value];
       element.is_registered = false;
