@@ -57,10 +57,6 @@ js = NpmBundle(
         'node_modules/almond/almond.js',
         filters='uglifyjs',
     ),
-    Bundle(
-        'js/weko_records_ui/csl.js',
-        filters='requirejs',
-    ),
     depends=(
         'js/weko_records_ui/csl.js',
         'js/weko_records_ui/detail.js',
