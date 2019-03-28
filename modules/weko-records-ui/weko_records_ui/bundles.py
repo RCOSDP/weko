@@ -87,6 +87,7 @@ js_dependecies = NpmBundle(
 )
 
 js = NpmBundle(
+    js_dependencies_jquery,
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
     'node_modules/angular/angular.js',
     'js/weko_records_ui/detail.js',
