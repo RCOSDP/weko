@@ -1,7 +1,7 @@
 "use strict";
 
 $(document).ready(function () {
-  const urlLoad = '/api/admin/get_selected_lang';
+  let urlLoad = '/api/admin/get_selected_lang?timestamp=' + new Date().getTime();
   $.ajax({
     url: urlLoad,
     type: 'GET',
