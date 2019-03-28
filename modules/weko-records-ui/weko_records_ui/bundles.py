@@ -72,7 +72,7 @@ js_dependencies_cites = NpmBundle(
 
 js_csl = NpmBundle(
     'js/weko_records_ui/csl.js',
-    filters='jsmin',
+    # filters='jsmin',
     output="gen/weko_records_ui_csl.js",
 )
 
