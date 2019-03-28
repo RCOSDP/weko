@@ -141,6 +141,7 @@ class OpensearchBaseExtension(BaseExtension):
 class OpensearchExtension(OpensearchBaseExtension):
     """Opensearch Elements extension."""
 
+
 class OpensearchEntryExtension(OpensearchBaseExtension):
     """Opensearch Elements extension."""
 

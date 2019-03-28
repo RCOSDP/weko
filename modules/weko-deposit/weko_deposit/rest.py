@@ -172,7 +172,10 @@ class ItemResource(ContentNegotiatedMethodView):
             cache_key = current_app.config[
                 'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
-            datastore.put(cache_key, json.dumps(data).encode('utf-8'), ttl_secs=ttl_sec)
+            datastore.put(
+                cache_key,
+                json.dumps(data).encode('utf-8'),
+                ttl_secs=ttl_sec)
         except BaseException:
             abort(400, "Failed to register item")
 

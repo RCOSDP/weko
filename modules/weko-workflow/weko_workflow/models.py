@@ -328,6 +328,7 @@ class TimestampMixin(object):
     SQLAlchemy-Utils timestamp model does not have support for
     fractional seconds.
     """
+
     STATUSPOLICY = [
         (StatusPolicy.NEW, _('Record has be created.')),
         (StatusPolicy.UPT, _('Record has be updated.')),
@@ -354,7 +355,7 @@ class TimestampMixin(object):
 
 
 class ActionStatus(db.Model, TimestampMixin):
-    """define ActionStatus"""
+    """define ActionStatus."""
 
     __tablename__ = 'workflow_action_status'
 
@@ -403,7 +404,7 @@ class ActionStatus(db.Model, TimestampMixin):
 
 
 class Action(db.Model, TimestampMixin):
-    """define Action"""
+    """define Action."""
 
     __tablename__ = 'workflow_action'
 
@@ -434,7 +435,7 @@ class Action(db.Model, TimestampMixin):
 
 
 class FlowDefine(db.Model, TimestampMixin):
-    """define Flow"""
+    """Define Flow."""
 
     __tablename__ = 'workflow_flow_define'
 
@@ -485,7 +486,7 @@ class FlowDefine(db.Model, TimestampMixin):
 
 
 class FlowAction(db.Model, TimestampMixin):
-    """Action list belong to Flow"""
+    """Action list belong to Flow."""
 
     __tablename__ = 'workflow_flow_action'
 
@@ -540,7 +541,7 @@ class FlowAction(db.Model, TimestampMixin):
 
 
 class FlowActionRole(db.Model, TimestampMixin):
-    """FlowActionRole list belong to FlowAction
+    """FlowActionRole list belong to FlowAction.
 
     It relates an allowed action with a role or a user
     """
@@ -574,7 +575,7 @@ class FlowActionRole(db.Model, TimestampMixin):
 
 
 class WorkFlow(db.Model, TimestampMixin):
-    """define WorkFlow"""
+    """Define WorkFlow."""
 
     __tablename__ = 'workflow_workflow'
 
@@ -616,7 +617,7 @@ class WorkFlow(db.Model, TimestampMixin):
 
 
 class Activity(db.Model, TimestampMixin):
-    """define Activety"""
+    """Define Activety."""
 
     __tablename__ = 'workflow_activity'
 
@@ -722,7 +723,7 @@ class Activity(db.Model, TimestampMixin):
 
 
 class ActivityAction(db.Model, TimestampMixin):
-    """define Activety"""
+    """Define Activety."""
 
     __tablename__ = 'workflow_activity_action'
 
@@ -751,7 +752,7 @@ class ActivityAction(db.Model, TimestampMixin):
 
 
 class ActivityHistory(db.Model, TimestampMixin):
-    """define ActivityHistory"""
+    """Define ActivityHistory."""
 
     __tablename__ = 'workflow_action_history'
 
@@ -775,7 +776,9 @@ class ActivityHistory(db.Model, TimestampMixin):
         nullable=True)
     """the status description of action."""
 
-    action_user = db.Column(db.Integer(), db.ForeignKey(User.id), nullable=True)
+    action_user = db.Column(
+        db.Integer(), db.ForeignKey(
+            User.id), nullable=True)
     """the user of operate action."""
 
     action_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
@@ -791,8 +794,9 @@ class ActivityHistory(db.Model, TimestampMixin):
         'activity_history'))
     """User relaionship."""
 
+
 class ActionJournal(db.Model, TimestampMixin):
-    """ Define journal info. """
+    """Define journal info."""
 
     __tablename__ = 'workflow_action_journal'
 

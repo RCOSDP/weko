@@ -56,15 +56,25 @@ class PrismBaseExtension(BaseExtension):
         """
         PRISMELEMENTS_NS = 'http://prismstandard.org/namespaces/basic/2.0/'
 
-        for elem in ['aggregationType', 'publicationName', 'issn', 'volume', 'number',
-                     'startingPage', 'endingPage', 'publicationDate', 'creationDate',
-                     'modificationDate', 'url']:
+        for elem in [
+            'aggregationType',
+            'publicationName',
+            'issn',
+            'volume',
+            'number',
+            'startingPage',
+            'endingPage',
+            'publicationDate',
+            'creationDate',
+            'modificationDate',
+                'url']:
 
             if hasattr(self, '_prism_%s' % elem):
                 for val in getattr(self, '_prism_%s' % elem) or []:
 
-                    node = etree.SubElement(xml_elem,
-                                            '{%s}%s' % (PRISMELEMENTS_NS, elem))
+                    node = etree.SubElement(
+                        xml_elem, '{%s}%s' %
+                        (PRISMELEMENTS_NS, elem))
                     node.text = val
 
     def extend_atom(self, atom_feed):
