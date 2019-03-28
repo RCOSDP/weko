@@ -367,7 +367,6 @@ def next_action(activity_id='0', action_id=0):
         updateItem.set_item_relation(relation_data, item_record)
 
     # save pidstore_identifier to ItemsMetadata
-    post_json.get('identifier_grant_jalc_dc_doi_suffix')
     if 'identifier_grant' == action_endpoint:
         pidstore_identifier_mapping(post_json, activity_id, action_id)
 
