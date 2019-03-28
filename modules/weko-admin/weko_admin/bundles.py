@@ -29,7 +29,7 @@ js = Bundle(
     output="gen/weko_admin_ui.%(version)s.js",
 )
 
-search_management_js=Bundle(
+search_management_js = Bundle(
     'js/weko_admin/search_management.js',
     filters='requirejs',
     output="gen/weko_admin_ui_search.%(version)s.js",

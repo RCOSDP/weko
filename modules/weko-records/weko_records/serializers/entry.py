@@ -18,13 +18,12 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-'''
-    Extends the FeedGenerator to add PRISM Elements to the feeds.
+"""
+Extends the FeedGenerator to add PRISM Elements to the feeds.
 
-    prism partly taken from
-    http://prismstandard.org/namespaces/basic/2.0/
-
-'''
+prism partly taken from
+http://prismstandard.org/namespaces/basic/2.0/
+"""
 
 import warnings
 from datetime import datetime
@@ -39,8 +38,10 @@ from weko_schema_ui.utils import dumps_etree
 
 
 class WekoFeedEntry(FeedEntry):
+    """Weko feed entry."""
 
     def __init__(self):
+        """Init."""
         # ATOM
         # required
         self.__atom_id = None
@@ -83,7 +84,7 @@ class WekoFeedEntry(FeedEntry):
         self.__extensions_register = {}
 
     def atom_entry(self, extensions=True):
-        '''Create an ATOM entry and return it.'''
+        """Create an ATOM entry and return it."""
         entry = etree.Element('entry')
         if not (self.__atom_id and self.__atom_title and self.__atom_updated):
             raise ValueError('Required fields not set')
@@ -217,7 +218,7 @@ class WekoFeedEntry(FeedEntry):
         return entry
 
     def rss_entry(self, extensions=True):
-        '''Create a RSS item and return it.'''
+        """Create a RSS item and return it."""
         entry = etree.Element('item')
         if self.__rss_itemUrl:
             entry.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
@@ -291,7 +292,7 @@ class WekoFeedEntry(FeedEntry):
         return entry
 
     def jpcoar_entry(self, extensions=True):
-        '''Create a JPCOAR item and return it.'''
+        """Create a JPCOAR item and return it."""
         des = etree.Element('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description')
         des.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
             self.__jpcoar_itemUrl
@@ -308,83 +309,96 @@ class WekoFeedEntry(FeedEntry):
         return des
 
     def title(self, title=None):
-        '''Get or set the title value of the entry. It should contain a human
+        """Get or set the title value of the entry.
+
+        It should contain a human
         readable title for the entry. Title is mandatory for both ATOM and RSS
         and should not be blank.
         :param title: The new title of the entry.
         :returns: The entriess title.
-        '''
+        """
         if title is not None:
             self.__atom_title = title
             self.__rss_title = title
         return self.__atom_title
 
     def itemUrl(self, itemUrl=None):
-        '''Get or set the item url value of the entry. This is an RSS only
+        """Get or set the item url value of the entry.
+
+        This is an RSS only
         field.
         :param itemUrl: The item url of the entry.
         :returns: The item's url.
-        '''
+        """
         if itemUrl is not None:
             self.__rss_itemUrl = itemUrl
             self.__jpcoar_itemUrl = itemUrl
         return self.__rss_itemUrl
 
     def itemData(self, itemData=None):
-        '''Get or set the item metadata of the entry. This is an JPCOAR only
+        """Get or set the item metadata of the entry.
+
+        This is an JPCOAR only
         field.
         :param itemData: The item data of the entry.
         :returns: The item's data.
-        '''
+        """
         if itemData is not None:
             self.__jpcoar_itemData = itemData
         return self.__jpcoar_itemData
 
     def seeAlso(self, seeAlso=None):
-        '''Get or set the oai url value of the entry. This is an RSS only
+        """Get or set the oai url value of the entry.
+
+        This is an RSS only
         field.
         :param seeAlso: The oai url of the entry.
         :returns: The oai's url.
-        '''
+        """
         if seeAlso is not None:
             self.__rss_seeAlso = seeAlso
         return self.__rss_seeAlso
 
     def id(self, id=None):
-        '''Get or set the entry id which identifies the entry using a
-        universally unique and permanent URI. Two entries in a feed can have
+        """Get or set the entry id which identifies the entry.
+
+        using a universally unique and permanent URI. Two entries in a feed  have
         the same value for id if they represent the same entry at different
         points in time. This method will also set rss:guid with permalink set
         to False. Id is mandatory for an ATOM entry.
         :param id: New Id of the entry.
         :returns: Id of the entry.
-        '''
+        """
         if id is not None:
             self.__atom_id = id
             self.__rss_guid = {'guid': id, 'permalink': False}
         return self.__atom_id
 
     def guid(self, guid=None, permalink=False):
-        '''Get or set the entries guid which is a string that uniquely
+        """Get or set the entries guid which is a string.
+
+        that uniquely
         identifies the item. This will also set atom:id.
         :param guid: Id of the entry.
         :param permalink: If this is a permanent identifier for this item
         :returns: Id and permalink setting of the entry.
-        '''
+        """
         if guid is not None:
             self.__atom_id = guid
             self.__rss_guid = {'guid': guid, 'permalink': permalink}
         return self.__rss_guid
 
     def updated(self, updated=None):
-        '''Set or get the updated value which indicates the last time the entry
+        """Set or get the updated value which indicates.
+
+        the last time the entry
         was modified in a significant way.
         The value can either be a string which will automatically be parsed or
         a datetime.datetime object. In any case it is necessary that the value
         include timezone information.
         :param updated: The modification date.
         :returns: Modification date as datetime.datetime
-        '''
+        """
         if updated is not None:
             if isinstance(updated, string_types):
                 updated = dateutil.parser.parse(updated)
@@ -398,8 +412,9 @@ class WekoFeedEntry(FeedEntry):
         return self.__atom_updated
 
     def author(self, author=None, replace=False, **kwargs):
-        '''Get or set author data. An author element is a dict containing a
-        name, an email address and a uri. Name is mandatory for ATOM, email is
+        """Get or set author data. An author element is a dict containing.
+
+        A name, an email address and a uri. Name is mandatory for ATOM, email is
         mandatory for RSS.
         This method can be called with:
         - the fields of an author as keyword arguments
@@ -419,7 +434,7 @@ class WekoFeedEntry(FeedEntry):
                     {'name':'John Doe'}, {'name':'Max'}]
             >>> author(name='John Doe', email='jdoe@example.com', replace=True)
             [{'name':'John Doe','email':'jdoe@example.com'}]
-        '''
+        """
         if author is None and kwargs:
             author = kwargs
         if author is not None:
@@ -438,7 +453,9 @@ class WekoFeedEntry(FeedEntry):
         return self.__atom_author
 
     def content(self, content=None, lang=None, src=None, type=None):
-        '''Get or set the cntent of the entry which contains or links to the
+        """Get or set the cntent of the entry which contains or links.
+
+        to the
         complete content of the entry. Content must be provided for ATOM
         entries if there is no alternate link, and should be provided if there
         is no summary. If the content is set (not linked) it will also set
@@ -447,7 +464,7 @@ class WekoFeedEntry(FeedEntry):
         :param src: Link to the entries content.
         :param type: If type is CDATA content would not be escaped.
         :returns: Content element of the entry.
-        '''
+        """
         if src is not None:
             self.__atom_content = {'src': src}
         elif content is not None:
@@ -462,7 +479,8 @@ class WekoFeedEntry(FeedEntry):
         return self.__atom_content
 
     def link(self, link=None, replace=False, **kwargs):
-        '''Get or set link data. An link element is a dict with the fields
+        """Get or set link data. An link element is a dict with the fields.
+
         href, rel, type, hreflang, title, and length. Href is mandatory for
         ATOM.
         This method can be called with:
@@ -495,7 +513,7 @@ class WekoFeedEntry(FeedEntry):
         :param link:    Dict or list of dicts with data.
         :param replace: Add or replace old data.
         :returns: List of link data.
-        '''
+        """
         if link is None and kwargs:
             link = kwargs
         if link is not None:
@@ -519,7 +537,8 @@ class WekoFeedEntry(FeedEntry):
         return self.__atom_link
 
     def summary(self, summary=None):
-        '''Get or set the summary element of an entry which conveys a short
+        """Get or set the summary element of an entry which conveys a short.
+
         summary, abstract, or excerpt of the entry. Summary is an ATOM only
         element and should be provided if there either is no content provided
         for the entry, or that content is not inline (i.e., contains a src
@@ -528,7 +547,7 @@ class WekoFeedEntry(FeedEntry):
         contains the old value of summary.
         :param summary: Summary of the entries contents.
         :returns: Summary of the entries contents.
-        '''
+        """
         if summary is not None:
             # Replace the RSS description with the summary if it was the
             # summary before. Not if is the description.
@@ -539,7 +558,8 @@ class WekoFeedEntry(FeedEntry):
         return self.__atom_summary
 
     def description(self, description=None, isSummary=False):
-        '''Get or set the description value which is the item synopsis.
+        """Get or set the description value which is the item synopsis.
+
         Description is an RSS only element. For ATOM feeds it is split in
         summary and content. The isSummary parameter can be used to control
         which ATOM value is set when setting description.
@@ -547,7 +567,7 @@ class WekoFeedEntry(FeedEntry):
         :param isSummary: If the description should be used as content or
                           summary.
         :returns: The entries description.
-        '''
+        """
         if description is not None:
             self.__rss_description = description
             if isSummary:
@@ -557,7 +577,8 @@ class WekoFeedEntry(FeedEntry):
         return self.__rss_description
 
     def category(self, category=None, replace=False, **kwargs):
-        '''Get or set categories that the entry belongs to.
+        """Get or set categories that the entry belongs to.
+
         This method can be called with:
         - the fields of a category as keyword arguments
         - the fields of a category as a dictionary
@@ -571,7 +592,7 @@ class WekoFeedEntry(FeedEntry):
         :param category:    Dict or list of dicts with data.
         :param replace: Add or replace old data.
         :returns: List of category data.
-        '''
+        """
         if category is None and kwargs:
             category = kwargs
         if category is not None:
@@ -594,7 +615,9 @@ class WekoFeedEntry(FeedEntry):
         return self.__atom_category
 
     def contributor(self, contributor=None, replace=False, **kwargs):
-        '''Get or set the contributor data of the feed. This is an ATOM only
+        """Get or set the contributor data of the feed.
+
+        This is an ATOM only
         value.
         This method can be called with:
         - the fields of an contributor as keyword arguments
@@ -608,7 +631,7 @@ class WekoFeedEntry(FeedEntry):
                             data.
         :param replace: Add or replace old data.
         :returns: List of contributors as dictionaries.
-        '''
+        """
         if contributor is None and kwargs:
             contributor = kwargs
         if contributor is not None:
@@ -619,14 +642,16 @@ class WekoFeedEntry(FeedEntry):
         return self.__atom_contributor
 
     def published(self, published=None):
-        '''Set or get the published value which contains the time of the initial
+        """Set or get the published value which contains.
+
+        the time of the initial
         creation or first availability of the entry.
         The value can either be a string which will automatically be parsed or
         a datetime.datetime object. In any case it is necessary that the value
         include timezone information.
         :param published: The creation date.
         :returns: Creation date as datetime.datetime
-        '''
+        """
         if published is not None:
             if isinstance(published, string_types):
                 published = dateutil.parser.parse(published)
@@ -640,60 +665,66 @@ class WekoFeedEntry(FeedEntry):
         return self.__atom_published
 
     def pubDate(self, pubDate=None):
-        '''Get or set the pubDate of the entry which indicates when the entry
+        """Get or set the pubDate of the entry which indicates when the entry.
+
         was published. This method is just another name for the published(...)
         method.
-        '''
+        """
         return self.published(pubDate)
 
     def pubdate(self, pubDate=None):
-        '''Get or set the pubDate of the entry which indicates when the entry
+        """Get or set the pubDate of the entry which indicates when the entry.
+
         was published. This method is just another name for the published(...)
         method.
         pubdate(…) is deprecated and may be removed in feedgen ≥ 0.8. Use
         pubDate(…) instead.
-        '''
+        """
         warnings.warn('pubdate(…) is deprecated and may be removed in feedgen '
                       '≥ 0.8. Use pubDate(…) instead.')
         return self.published(pubDate)
 
     def rights(self, rights=None):
-        '''Get or set the rights value of the entry which conveys information
+        """Get or set the rights value of the entry which conveys information.
+
         about rights, e.g. copyrights, held in and over the entry. This ATOM
         value will also set rss:copyright.
         :param rights: Rights information of the feed.
         :returns: Rights information of the feed.
-        '''
+        """
         if rights is not None:
             self.__atom_rights = rights
         return self.__atom_rights
 
     def comments(self, comments=None):
-        '''Get or set the value of comments which is the URL of the comments
+        """Get or set the value of comments which is the URL of the comments.
+
         page for the item. This is a RSS only value.
         :param comments: URL to the comments page.
         :returns: URL to the comments page.
-        '''
+        """
         if comments is not None:
             self.__rss_comments = comments
         return self.__rss_comments
 
     def source(self, url=None, title=None):
-        '''Get or set the source for the current feed entry.
+        """Get or set the source for the current feed entry.
+
         Note that ATOM feeds support a lot more sub elements than title and URL
         (which is what RSS supports) but these are currently not supported.
         Patches are welcome.
         :param url: Link to the source.
         :param title: Title of the linked resource
         :returns: Source element as dictionaries.
-        '''
+        """
         if url is not None and title is not None:
             self.__rss_source = {'url': url, 'title': title}
             self.__atom_source = {'link': url, 'title': title}
         return self.__rss_source
 
     def enclosure(self, url=None, length=None, type=None):
-        '''Get or set the value of enclosure which describes a media object
+        """Get or set the value of enclosure which describes a media object.
+
         that is attached to the item. This is a RSS only value which is
         represented by link(rel=enclosure) in ATOM. ATOM feeds can furthermore
         contain several enclosures while RSS may contain only one. That is why
@@ -703,28 +734,31 @@ class WekoFeedEntry(FeedEntry):
         :param length: Size of the media in bytes.
         :param type: Mimetype of the linked media.
         :returns: Data of the enclosure element.
-        '''
+        """
         if url is not None:
             self.link(href=url, rel='enclosure', type=type, length=length)
         return self.__rss_enclosure
 
     def ttl(self, ttl=None):
-        '''Get or set the ttl value. It is an RSS only element. ttl stands for
+        """Get or set the ttl value. It is an RSS only element.
+
+        ttl stands for
         time to live. It's a number of minutes that indicates how long a
         channel can be cached before refreshing from the source.
         :param ttl: Integer value representing the time to live.
         :returns: Time to live of of the entry.
-        '''
+        """
         if ttl is not None:
             self.__rss_ttl = int(ttl)
         return self.__rss_ttl
 
     def load_extension(self, name, atom=True, rss=True):
-        '''Load a specific extension by name.
+        """Load a specific extension by name.
+
         :param name: Name of the extension to load.
         :param atom: If the extension should be used for ATOM feeds.
         :param rss: If the extension should be used for RSS feeds.
-        '''
+        """
         # Check loaded extensions
         if not isinstance(self.__extensions, dict):
             self.__extensions = {}
@@ -745,13 +779,14 @@ class WekoFeedEntry(FeedEntry):
 
     def register_extension(self, namespace, extension_class_entry=None,
                            atom=True, rss=True, jpcoar=True):
-        '''Register a specific extension by classes to a namespace.
+        """Register a specific extension by classes to a namespace.
+
         :param namespace: namespace for the extension
         :param extension_class_entry: Class of the entry extension to load.
         :param atom: If the extension should be used for ATOM feeds.
         :param rss: If the extension should be used for RSS feeds.
         :param jpcoar: If the extension should be used for JPCOAR feeds.
-        '''
+        """
         # Check loaded extensions
         # `load_extension` ignores the "Extension" suffix.
         if not isinstance(self.__extensions, dict):

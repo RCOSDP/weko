@@ -47,7 +47,9 @@ class WekoTheme(object):
         app.register_blueprint(blueprint)
         app.extensions['weko-theme'] = self
         app.add_template_filter(get_keywords_data_load, name='item_type_all')
-        app.add_template_filter(get_search_detail_keyword, name='detail_conditions')
+        app.add_template_filter(
+            get_search_detail_keyword,
+            name='detail_conditions')
 
     def init_config(self, app):
         """Initialize configuration.
