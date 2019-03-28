@@ -1,14 +1,6 @@
 require([
-  // "jquery",
-  // "bootstrap",
-  "node_modules/typeahead.js/dist/typeahead.jquery",
-  // "node_modules/bootstrap/dist/js/bootstrap",
-  // "node_modules/angular/angular",
-  "node_modules/angular-loading-bar/build/loading-bar",
-  "node_modules/invenio-csl-js/dist/invenio-csl-js",
-  "node_modules/bootstrap-switch/dist/js/bootstrap-switch",
-  // "bloodhound",
-  // "typeahead.js",
+  "jquery",
+  "bootstrap"
 ], function() {
   $('#btn_back').on('click', function(){
     window.history.back();
@@ -36,11 +28,5 @@ require([
       $('#public_status ').text('Public');
     };
   });
-  
-  angular.element(document).ready(function() {
-    angular.bootstrap(document.getElementById("invenio-csl"), [
-        'invenioCsl',
-      ]
-    );
-  });
+
 });
