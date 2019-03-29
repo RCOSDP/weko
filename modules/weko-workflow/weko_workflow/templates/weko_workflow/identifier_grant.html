@@ -39,7 +39,7 @@
             {%- if id in [1, 2, 3] %}
             {%- if item %}
             <label>
-              <span name="idf_grant_link_{{ id }}">{{ link + prefix + activity.item_id }}</span>
+              <span name="idf_grant_link_{{ id }}">{{ link + prefix }}{{ activity.item_id }}</span>
             </label>
             {%- else %}
             <label>
