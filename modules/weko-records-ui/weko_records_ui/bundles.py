@@ -75,7 +75,7 @@ js_bootstrap_switch = NpmBundle(
 )
 
 js_dependecies = NpmBundle(
-    js_dependencies_jquery,
+    # js_dependencies_jquery,
     js_angular_bootstrap,
     js_almond,
     js_angular_loading_bar,
