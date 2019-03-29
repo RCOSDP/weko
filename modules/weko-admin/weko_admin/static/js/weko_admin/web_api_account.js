@@ -38,9 +38,9 @@ var save = function () {
     success: function (data, status) {
       let err_msg = data.error;
       if (err_msg) {
-        alert(err_msg);
+        alert('Account information is invalid. Please check again.');
       } else if (!data.results) {
-        alert('Failed to update account info.');
+        alert('Account information is invalid. Please check again.');
       } else {
         alert('Account info has been saved successfully.');
       }
