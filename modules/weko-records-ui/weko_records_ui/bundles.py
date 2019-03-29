@@ -30,6 +30,12 @@ style = Bundle(
     'node_modules/bootstrap-switch/dist/css/bootstrap3',
     'css/weko_records_ui/style.css',
     output="gen/weko_records_ui.%(version)s.css"
+    npm={
+        'bootstrap-sass': '~3.3.5',
+        'bootstrap-switch': '~3.0.2',
+        'font-awesome': '~4.4.0',
+        'typeahead.js-bootstrap-css': '~1.2.1',
+    }
 )
 
 js_angular_bootstrap = NpmBundle(
