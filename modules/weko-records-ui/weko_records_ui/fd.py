@@ -25,6 +25,7 @@ import unicodedata
 
 from flask import abort, current_app, render_template, request
 from flask_login import current_user
+from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_files_rest.proxies import current_permission_factory
 from invenio_files_rest.views import ObjectResource, check_permission, \
@@ -40,13 +41,6 @@ from .models import PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
     file_permission_factory
-from invenio_files_rest.views import file_downloaded, check_permission
-from invenio_files_rest.views import ObjectResource
-from invenio_files_rest.models import ObjectVersion, FileInstance
-from weko_deposit.api import WekoRecord
-from weko_user_profiles.models import UserProfile
-from flask_login import current_user
-from invenio_files_rest import signals
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -249,8 +243,8 @@ def file_ui(
         # permission (user roles)
         if is_pdf is False \
                 or pdfcoverpage_set_rec is None or pdfcoverpage_set_rec.avail == 'disable' \
-            or coverpage_state == False \
-            or (is_original and can_download_original_pdf):
+                or coverpage_state is False \
+                or (is_original and can_download_original_pdf):
             return ObjectResource.send_object(
                 obj.bucket, obj,
                 expected_chksum=fileobj.get('checksum'),
@@ -278,6 +272,6 @@ def file_ui(
         id=obj.file_id).first()
     obj_file_uri = file_instance_record.uri
 
-    #return obj_file_uri
+    # return obj_file_uri
     signals.file_downloaded.send(current_app._get_current_object(), obj=obj)
     return make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang)

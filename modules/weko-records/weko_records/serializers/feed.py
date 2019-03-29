@@ -291,7 +291,6 @@ class WekoFeedGenerator(FeedGenerator):
 
         if not (self.__rss_title and
                 self.__rss_link):
-                # self.__rss_description):
             missing = ([] if self.__rss_title else ['title']) + \
                       ([] if self.__rss_link else ['link'])
             # ([] if self.__rss_description else ['description'])

@@ -68,7 +68,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     pidObject = PersistentIdentifier.get('recid', pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pidObject.object_uuid)
-    #item_metadata = db.session.query(ItemMetadata).filter_by(json=item_metadata_json).first()
+    # item_metadata = db.session.query(ItemMetadata).filter_by(json=item_metadata_json).first()
     item_type = db.session.query(ItemType).filter(
         ItemType.id == ItemMetadata.item_type_id).first()
     item_type_id = item_type.id
@@ -210,7 +210,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         lang = None
     try:
-        #publisher = item_metadata_json[_creator_item_id].get(_creator_item_id)
+        # publisher = item_metadata_json[_creator_item_id].get(_creator_item_id)
         publisher = None
         default_publisher = None
         publishers = item_metadata_json[publisher_item_id]
@@ -237,7 +237,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         keywords_en = None
     try:
-        #creator_mail = item_metadata_json['item_1538028816158']['creatorMails'][0].get('creatorMail')
+        # creator_mail = item_metadata_json['item_1538028816158']['creatorMails'][0].get('creatorMail')
         creator_mail = item_metadata_json[_creator_item_id]['creatorMails'][0].get(
             'creatorMail')
     except (KeyError, IndexError):
@@ -256,7 +256,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         creator_name = None
     try:
-        #affiliation = item_metadata_json['item_1538028816158']['affiliation'][0].get('affiliationNames')
+        # affiliation = item_metadata_json['item_1538028816158']['affiliation'][0].get('affiliationNames')
         affiliation = item_metadata_json[_creator_item_id]['affiliation'][0].get(
             'affiliationNames')
     except (KeyError, IndexError):

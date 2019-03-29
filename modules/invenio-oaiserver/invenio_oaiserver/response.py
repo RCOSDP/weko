@@ -16,16 +16,15 @@ from flask import current_app, url_for
 # from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
+from weko_deposit.api import WekoRecord
 
+from .api import OaiIdentify
 from .fetchers import oaiid_fetcher
 from .models import OAISet
 from .provider import OAIIDProvider
 from .query import get_records
 from .resumption_token import serialize
 from .utils import datetime_to_datestamp, serializer
-
-from .api import OaiIdentify
-from weko_deposit.api import WekoRecord
 
 NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 NS_OAIPMH_XSD = 'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -268,7 +267,6 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
-
     def get_error_code_msg():
         code = "noRecordsMatch"
         msg = "The combination of the values of the from, until, " \
