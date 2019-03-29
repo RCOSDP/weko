@@ -52,5 +52,6 @@ def _get_current_userprofile():
         g.userprofile = profile
     return profile
 
+
 current_userprofile = LocalProxy(lambda: _get_current_userprofile())
 """Proxy to the user profile of the currently login user."""

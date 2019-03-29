@@ -104,7 +104,7 @@ class SessionLifetime(db.Model):
 
 
 class SearchManagement(db.Model):
-    """Search setting model"""
+    """Search setting model."""
 
     __tablename__ = 'search_management'
 
@@ -172,13 +172,15 @@ class SearchManagement(db.Model):
 
     @classmethod
     def create(cls, data):
-        """Create data"""
+        """Create data."""
         try:
             dataObj = SearchManagement()
             with db.session.begin_nested():
                 dataObj.default_dis_num = data.get('dlt_dis_num_selected')
-                dataObj.default_dis_sort_index = data.get('dlt_index_sort_selected')
-                dataObj.default_dis_sort_keyword = data.get('dlt_keyword_sort_selected')
+                dataObj.default_dis_sort_index = data.get(
+                    'dlt_index_sort_selected')
+                dataObj.default_dis_sort_keyword = data.get(
+                    'dlt_keyword_sort_selected')
                 dataObj.sort_setting = data.get('sort_options')
                 dataObj.search_conditions = data.get('detail_condition')
                 dataObj.search_setting_all = data
@@ -192,7 +194,7 @@ class SearchManagement(db.Model):
 
     @classmethod
     def get(cls):
-        """Get setting"""
+        """Get setting."""
         id = db.session.query(func.max(SearchManagement.id)).first()[0]
         if id is None:
             return None
@@ -200,13 +202,15 @@ class SearchManagement(db.Model):
 
     @classmethod
     def update(cls, id, data):
-        """Update setting"""
+        """Update setting."""
         try:
             with db.session.begin_nested():
                 setting_data = cls.query.filter_by(id=id).one()
                 setting_data.default_dis_num = data.get('dlt_dis_num_selected')
-                setting_data.default_dis_sort_index = data.get('dlt_index_sort_selected')
-                setting_data.default_dis_sort_keyword = data.get('dlt_keyword_sort_selected')
+                setting_data.default_dis_sort_index = data.get(
+                    'dlt_index_sort_selected')
+                setting_data.default_dis_sort_keyword = data.get(
+                    'dlt_keyword_sort_selected')
                 setting_data.sort_setting = data.get('sort_options')
                 setting_data.search_conditions = data.get('detail_condition')
                 setting_data.search_setting_all = data
@@ -220,8 +224,8 @@ class SearchManagement(db.Model):
 
 
 class AdminLangSettings(db.Model):
-    """
-    System Language Display Setting
+    """System Language Display Setting.
+
     Stored target language and registered language
     """
 
@@ -240,6 +244,7 @@ class AdminLangSettings(db.Model):
 
     @classmethod
     def parse_result(cls, in_result):
+        """Parse results."""
         obj = {}
         for k in in_result:
             record = dict()
@@ -263,20 +268,17 @@ class AdminLangSettings(db.Model):
 
     @classmethod
     def load_lang(cls):
-        """
-        Get language list
+        """Get language list.
+
         :return: A list of language
         """
-
         lang_list = cls.query.all()
 
         return cls.parse_result(lang_list)
 
     @classmethod
     def create(cls, lang_code, lang_name, is_registered, sequence, is_active):
-        """
-        Create language
-        """
+        """Create language."""
         try:
             dataObj = AdminLangSettings()
             with db.session.begin_nested():
@@ -296,8 +298,8 @@ class AdminLangSettings(db.Model):
     @classmethod
     def update_lang(cls, lang_code=None, lang_name=None, is_registered=None,
                     sequence=None, is_active=None):
-        """
-        Save list language into database
+        """Save list language into database.
+
         :param lang_code: input language code
         :param lang_name: input language name
         :param is_registered: input boolean is language registered
@@ -324,24 +326,24 @@ class AdminLangSettings(db.Model):
 
     @classmethod
     def get_lang_code(cls):
-        """
-        Get language code
+        """Get language code.
+
         :return: the language code
         """
         return cls.lang_code
 
     @classmethod
     def get_lang_name(cls):
-        """
-        Get language full name
+        """Get language full name.
+
         :return: language full name
         """
         return cls.lang_name
 
     @classmethod
     def get_registered_language(cls):
-        """
-        Get registered languages
+        """Get registered languages.
+
         :return: All language have registered
         """
         result = cls.query.filter_by(is_registered=True)
@@ -350,8 +352,8 @@ class AdminLangSettings(db.Model):
 
     @classmethod
     def get_active_language(cls):
-        """
-        Get active languages
+        """Get active languages.
+
         :return: All languages have activated
         """
         result = cls.query.filter_by(is_active=True).order_by(

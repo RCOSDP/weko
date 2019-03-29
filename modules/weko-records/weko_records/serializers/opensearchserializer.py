@@ -31,16 +31,16 @@ from .rss import RssSerializer
 
 
 class OpenSearchSerializer(JSONSerializer):
-    """
-    extend JSONSerializer to modify search result
-    """
+    """Extend JSONSerializer to modify search result."""
 
     def serialize_search(self, pid_fetcher, search_result, links=None,
                          item_links_factory=None, **kwargs):
         """Serialize a search result.
+
         :param pid_fetcher: Persistent identifier fetcher.
         :param search_result: Elasticsearch search result.
         :param links: Dictionary of links to add to response.
+
         """
         format = request.values.get('format')
         if format and format == 'atom':
@@ -53,8 +53,8 @@ class OpenSearchSerializer(JSONSerializer):
             mimetype = 'application/rss+xml'
             rss_v1 = RssSerializer(RecordSchemaJSONV1)
             return rss_v1.serialize_search(pid_fetcher, search_result,
-                                            links=None, item_links_factory=None,
-                                            **kwargs), mimetype
+                                           links=None, item_links_factory=None,
+                                           **kwargs), mimetype
         elif format and format == 'jpcoar':
             mimetype = 'application/xml'
             jpcoar_v1 = JpcoarSerializer(RecordSchemaJSONV1)

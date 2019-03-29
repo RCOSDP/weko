@@ -37,16 +37,16 @@ from .prism import PrismEntryExtension, PrismExtension
 
 
 class JpcoarSerializer(JSONSerializer):
-    """
-    Serialize search result to jpcoar format.
-    """
+    """Serialize search result to jpcoar format."""
 
     def serialize_search(self, pid_fetcher, search_result, links=None,
                          item_links_factory=None, **kwargs):
         """Serialize a search result.
+
         :param pid_fetcher: Persistent identifier fetcher.
         :param search_result: Elasticsearch search result.
         :param links: Dictionary of links to add to response.
+
         """
         fg = WekoFeedGenerator()
 

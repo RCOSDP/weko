@@ -175,16 +175,16 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
     # @pass_record
     # @need_record_permission('read_permission_factory')
     def get(self, pid, record):
+        """Get Method."""
         pass
 
     # @need_record_permission('create_permission_factory')
     def post(self, **kwargs):
-        """Create a uuid and return a links dict. file upload step is below
-        create a uuuid.
+        """Create a uuid and return a links dict. file upload step is below create a uuuid.
 
         :returns: Json Response have a links dict.
-        """
 
+        """
         if request.mimetype not in self.loaders:
             raise UnsupportedMediaRESTError(request.mimetype)
 
@@ -217,7 +217,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
             fn = os.path.join(furl, (fn if '.' in fn else fn + '.xsd'))
 
             # if zip file unzip first
-            if not zip_file is None and zip_file.endswith('.zip'):
+            if zip_file is not None and zip_file.endswith('.zip'):
                 with zipfile.ZipFile(os.path.join(furl, zip_file)) as fp:
                     fp.extractall(furl)
 
@@ -277,10 +277,10 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
 
     # @need_record_permission('create_permission_factory')
     def put(self, **kwargs):
-        """Create a uuid and return a links dict. file upload step is below ②
-        upload file to server.
+        """Create a uuid and return a links dict. file upload step is below ②  upload file to server.
 
         :returns: Json Response have a links dict.
+
         """
         fn = request.view_args['key']
 
@@ -310,6 +310,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
 
 class SchemaFormatEditResource(ContentNegotiatedMethodView):
     """Edit metadata formats for OAI ListMetadataFormats."""
+
     view_name = '{0}_formats_edit'
 
     def __init__(self, ctx, *args, **kwargs):
@@ -323,9 +324,11 @@ class SchemaFormatEditResource(ContentNegotiatedMethodView):
 
     def post(self, **kwargs):
         """
+        Post Method.
 
         :param kwargs:
         :return:
+
         """
         if request.mimetype not in self.loaders:
             raise UnsupportedMediaRESTError(request.mimetype)

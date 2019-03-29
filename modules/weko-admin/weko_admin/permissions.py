@@ -32,6 +32,7 @@ _action2need_map = {
     'update-style-action': action_admin_update,
 }
 
+
 def admin_permission_factory(action):
     """Default factory for creating a permission for an admin.
 

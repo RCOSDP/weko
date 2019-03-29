@@ -74,9 +74,11 @@ def list():
 @login_required
 @schema_permission.require(http_exception=403)
 def delete(pid=None):
-    """
+    """Delete.
+
     :param pid:
     :return:
+
     """
     pid = pid or request.values.get('pid')
     schema_name = delete_schema(pid)
