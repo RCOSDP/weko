@@ -18,40 +18,206 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
+
+
 {%- extends admin_base_template %}
 
+{%- block head %}
+{{ super() }}
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" />
+{%- endblock head%}
+
 {%- block body %}
+
   <style>
     .content-font {
       font-size: 16px;
     }
   </style>
-  <div class="row">
-    <div class="col-md-3 text-center">
-      <h4>{{_('Number of items registered')}}</h4></div>
-  </div><br>
 
+<!-- Number of items registered -->
   <div class="row content-font">
-    <div class="row">
-      <div class="col-md-3 text-right">
+        <div class="col-md-1"></div>
+    <div class="col-md-11 pull-left">
+      <label>{{_('Number of items registered')}}</label>
+    </div>
+  </div>
+
+    <div class="row content-font">
+      <div class="col-md-2"></div>
+      <div class="col-md-10">
         {{_('Total number of items registered:')}}
         &nbsp;&nbsp;&nbsp;
         {{ result.total if result.total else 0  }}
       </div>
     </div>
-    <div class="row">
-      <div class="col-md-3 text-right">
+    <div class="row content-font">
+      <div class="col-md-2"></div>
+      <div class="col-md-10">
         {{_('Number of open items registered:')}}
         &nbsp;&nbsp;&nbsp;
         {{ result.open if result.open else 0 }}
       </div>
     </div>
-    <div class="row">
-      <div class="col-md-3 text-right">
+    <div class="row content-font">
+      <div class="col-md-2"></div>
+      <div class="col-md-10">
         {{_('Number of private items registered:')}}
         &nbsp;&nbsp;&nbsp;
         {{ result.private if result.private else 0 }}
       </div>
     </div>
+<hr>
+  <div class="row content-font">
+    <div class="col-md-1"></div>
+    <div class="col-md-11 pull-left">
+      <label>{{_('Downloads')}}</label>
+    </div>
   </div>
+  <div class="row content-font">
+    <div class="col-md-2"></div>
+    <div class="col-md-3">
+      <h4>{{_('Aggregation month')}}</h4>
+    </div>
+      <!--<span>{{_('year')}}</span>-->
+          <div class="dropdown col-md-1">
+                          <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton1"
+                                  data-toggle="dropdown"
+                                  aria-haspopup="true" aria-expanded="false">{{_('Year')}}
+                            <span class="caret"></span>
+                          </button>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                            <li><a href="#">period 1</a></li>
+                            <li><a href="#">period 2</a></li>
+                            <li><a href="#">period 3</a></li>
+                          </ul>
+                        </div>
+      <!--<span>{{_('month')}}</span>-->
+          <div class="dropdown col-md-1">
+                          <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton2"
+                                  data-toggle="dropdown"
+                                  aria-haspopup="true" aria-expanded="false">{{_('Month')}}
+                            <span class="caret"></span>
+                          </button>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                            <li><a href="#">period 1</a></li>
+                            <li><a href="#">period 2</a></li>
+                            <li><a href="#">period 3</a></li>
+                          </ul>
+                        </div>
+    <div class="col-md-3">
+          <button class="btn btn-primary">{{_('Download')}}</button>
+    </div>
+  </div>
+
+<hr>
+
+<div class="row content-font">
+    <div class="col-md-1"></div>
+    <div class="col-md-11 pull-left">
+      <label>{{_('Plays')}}</label>
+    </div>
+  </div>
+  <div class="row content-font">
+    <div class="col-md-2"></div>
+    <div class="col-md-3">
+      <h4>{{_('Aggregation month')}}</h4>
+    </div>
+      <!--<span>{{_('year')}}</span>-->
+          <div class="dropdown col-md-1">
+                          <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton1"
+                                  data-toggle="dropdown"
+                                  aria-haspopup="true" aria-expanded="false">{{_('Year')}}
+                            <span class="caret"></span>
+                          </button>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                            <li><a href="#">period 1</a></li>
+                            <li><a href="#">period 2</a></li>
+                            <li><a href="#">period 3</a></li>
+                          </ul>
+                        </div>
+      <!--<span>{{_('month')}}</span>-->
+          <div class="dropdown col-md-1">
+                          <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton2"
+                                  data-toggle="dropdown"
+                                  aria-haspopup="true" aria-expanded="false">{{_('Month')}}
+                            <span class="caret"></span>
+                          </button>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+                            <li><a href="#">period 1</a></li>
+                            <li><a href="#">period 2</a></li>
+                            <li><a href="#">period 3</a></li>
+                          </ul>
+                        </div>
+    <div class="col-md-3">
+          <button class="btn btn-primary">{{_('Download')}}</button>
+    </div>
+  </div>
+
+<hr>
+
+<!-- Custom Report -->
+  <div class="row content-font">
+        <div class="col-md-1"></div>
+    <div class="col-md-11 pull-left">
+      <label>{{_('Custom Reports')}}</label>
+    </div>
+  </div>
+
+<div class="row content-font">
+  <div class="col-md-2"></div>
+      <div class="col-md-2">
+          {{_('Start Date')}}
+      </div>
+  <div class="col-md-4">
+                    <div class="form-group">
+                        <div class='input-group date' id='datetimepicker1'>
+                            <input type='text' class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+  <div class="col-md-4">
+    <button class="btn btn-default">
+      {{_('Clear')}}
+    </button>
+  </div>
+</div>
+  <div class="row content-font">
+    <div class="col-md-2"></div>
+  <div class="col-md-2">
+    {{_('End Date')}}
+      </div>
+  <div class="col-md-4">
+                    <div class="form-group">
+                        <div class='input-group date' id='datetimepicker2'>
+                            <input type='text' class="form-control" />
+                            <span class="input-group-addon">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+    <div class="col-md-4">
+    <button class="btn btn-default">{{_('Clear')}}</button>
+  </div>
+</div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment-with-locales.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+        <script type="text/javascript">
+            $(function () {
+                $('#datetimepicker1').datetimepicker();
+            });
+            $(function () {
+                $('#datetimepicker2').datetimepicker();
+            });
+        </script>
 {%- endblock body %}
+
+
