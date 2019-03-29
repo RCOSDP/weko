@@ -23,16 +23,11 @@
 
 from datetime import datetime
 
-from flask import current_app, json
-from flask_babelex import lazy_gettext as _
 from invenio_db import db
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy_utils.types import JSONType
-from sqlalchemy.sql import func
-from sqlalchemy.dialects import mysql, postgresql
-from invenio_communities.models import Community
 
 """ PDF cover page model"""
+
+
 class PDFCoverPageSettings(db.Model):
     __tablename__ = 'pdfcoverpage_set'
 
@@ -50,16 +45,19 @@ class PDFCoverPageSettings(db.Model):
     header_output_image = db.Column(db.Text, nullable=True, default='')
     """ Header Output Image"""
 
-    header_display_position = db.Column(db.Text, nullable=True, default='center')
+    header_display_position = db.Column(db.Text, nullable=True,
+                                        default='center')
     """ Header Display Position """
 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     """ Created Date"""
 
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now,
+                           onupdate=datetime.now)
     """ Updated Date """
 
-    def __init__(self, avail, header_display_type, header_output_string, header_output_image, header_display_position):
+    def __init__(self, avail, header_display_type, header_output_string,
+                 header_output_image, header_display_position):
         self.avail = avail
         self.header_display_type = header_display_type
         self.header_output_string = header_output_string
@@ -74,9 +72,12 @@ class PDFCoverPageSettings(db.Model):
         return record
 
     @classmethod
-    def update(cls, id, avail, header_display_type, header_output_string, header_output_image, header_display_position):
-
-        settings = PDFCoverPageSettings(avail, header_display_type, header_output_string, header_output_image, header_display_position)
+    def update(cls, id, avail, header_display_type, header_output_string,
+               header_output_image, header_display_position):
+        settings = PDFCoverPageSettings(avail, header_display_type,
+                                        header_output_string,
+                                        header_output_image,
+                                        header_display_position)
 
         """ update record by ID """
         record = db.session.query(cls).filter_by(id=id).first()
@@ -91,6 +92,8 @@ class PDFCoverPageSettings(db.Model):
 
 
 """ Record UI models """
+
+
 class InstitutionName(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     institution_name = db.Column(db.String(255), default='')
@@ -118,83 +121,52 @@ class Identifier(db.Model):
         The Identifier object contains a ``created``, a ``updated``
         properties that are automatically updated.
     """
-
     __tablename__ = 'pidstore_identifier'
 
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
-    """Identifier of the index."""
+    """ Identifier of the index """
 
-    # community_id = db.Column(db.String(100), db.ForeignKey(Community.id), nullable=False)
-    """Identifier of the index."""
-
-    # repository = db.relationship(Community, foreign_keys=community_id)
-    repository = db.Column(db.String(100), nullable=False)
-    """repository of the community."""
+    repository = db.Column(db.String(100), nullable=False, unique=True)
+    """ Repository of the community """
 
     jalc_flag = db.Column(db.Boolean, default=True)
-    """jalc_flag of the Identifier."""
+    """ Jalc_flag of the Identifier """
 
     jalc_crossref_flag = db.Column(db.Boolean, default=True)
-    """jalc_crossref_flag of the Identifier."""
+    """ Jalc_crossref_flag of the Identifier """
 
     jalc_datacite_flag = db.Column(db.Boolean, default=True)
-    """jalc_datacite_flag of the Identifier."""
+    """ Jalc_datacite_flag of the Identifier """
 
     cnri_flag = db.Column(db.Boolean, default=True)
-    """cnri_flag of the Identifier."""
+    """ CNRI_flag of the Identifier """
 
-    jalc_doi = db.Column(
-        db.String(100),
-        nullable=True
-    )
-    """jalc_doi of the Identifier."""
+    jalc_doi = db.Column(db.String(100), nullable=True)
+    """ Jalc_doi of the Identifier """
 
-    jalc_crossref_doi = db.Column(
-        db.String(100),
-        nullable=True
-    )
-    """jalc_crossref_doi of the Identifier."""
+    jalc_crossref_doi = db.Column(db.String(100), nullable=True)
+    """ Jalc_crossref_doi of the Identifier """
 
-    jalc_datacite_doi = db.Column(
-        db.String(100),
-        nullable=True
-    )
-    """jalc_datacite_doi of the Identifier."""
+    jalc_datacite_doi = db.Column(db.String(100), nullable=True)
+    """ Jalc_datacite_doi of the Identifier """
 
-    cnri = db.Column(
-        db.String(100),
-        nullable=True
-    )
-    """cnri of the Identifier."""
+    cnri = db.Column(db.String(100), nullable=True)
+    """ CNRI of the Identifier """
 
-    suffix = db.Column(
-        db.String(100),
-        nullable=True
-    )
-    """suffix of the Identifier."""
+    suffix = db.Column(db.String(100), nullable=True)
+    """ Suffix of the Identifier """
 
-    created_userId = db.Column(
-        db.String(50),
-        nullable=False,
-    )
-    """created by user."""
+    created_userId = db.Column(db.String(50), nullable=False)
+    """ Created by user """
 
-    created_date = db.Column(
-        db.DateTime,
-        nullable=False,
-    )
-    """created date."""
+    created_date = db.Column(db.DateTime, nullable=False)
+    """ Created date """
 
-    updated_userId = db.Column(
-        db.String(50),
-        nullable=False,
-    )
-    """updated by user."""
+    updated_userId = db.Column(db.String(50), nullable=False)
+    """ Updated by user """
 
-    updated_date = db.Column(
-        db.DateTime,
-        nullable=True,
-    )
+    updated_date = db.Column(db.DateTime, nullable=True)
+    """ Created date """
 
 
 __all__ = ('Identifier', 'PDFCoverPageSettings')

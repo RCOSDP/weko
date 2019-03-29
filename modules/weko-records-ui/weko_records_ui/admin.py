@@ -326,7 +326,6 @@ class IdentifierSettingView(ModelView):
 
             Override to implement custom behavior.
         """
-        print('-------------------------OBJ_____________', obj.repository)
         return self._use_append_repository(
             super(IdentifierSettingView, self).edit_form(obj)
         )
