@@ -18,6 +18,8 @@ WEKO_ITEMS_AUTOFILL_API_UPDATED = True
 WEKO_ITEMS_AUTOFILL_CROSSREF_API_URL = 'https://doi.crossref.org'
 """Crossref API URL"""
 
+WEKO_ITEMS_AUTOFILL_CiNii_API_URL = 'https://ci.nii.ac.jp'
+
 WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID = ''
 """Crossref API PID"""
 

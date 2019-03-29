@@ -171,17 +171,10 @@ require([
           search_data: $.trim(value),
           item_type_id: itemTypeId
         }
-
-        if (autoFillID == 'CrossRef'){
-          this.setItemMetadataCrossRefApi(param);
-        } else if (autoFillID == 'CiNii'){
-
-        }
-
-
+        this.setItemMetadataCommonApi(param);
       }
 
-      $scope.setItemMetadataCrossRefApi = function (param) {
+      $scope.setItemMetadataCommonApi = function (param) {
         $.ajax({
           url: '/api/autofill/crossref_api',
           headers: {
@@ -277,18 +270,56 @@ require([
                   }
                 }
                 if (items.hasOwnProperty('date')){
-                  let id = items.date;
-                  let resultId = result.date;
-                  if (this.getAutoFillValue(this.dictValue(resultId,'@value'))){
-                    this.setValueToField(this.dictValue(id,'@attributes','dateType'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','dateType')));
-                    this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
-                  } else {
-                    this.setValueToField(this.dictValue(id,'@attributes','dateType'), "");
-                    this.setValueToField(this.dictValue(id,'@value'), "");
+                  if (param.api_type == 'CrossRef')
+                  {
+                    let id = items.date;
+                    let resultId = result.date;
+                    if (this.getAutoFillValue(this.dictValue(resultId,'@value'))){
+                      this.setValueToField(this.dictValue(id,'@attributes','dateType'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','dateType')));
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'@attributes','dateType'), "");
+                      this.setValueToField(this.dictValue(id,'@value'), "");
+                    }
+                  }
+                  else if(param.api_type == 'CiNii')
+                  {
+                    let id, resultId;
+                    for(let i=0; i < items.date.length; i++)
+                    {
+                      if(this.getAutoFillValue(this.dictValue(items.date[i],'date')) != "")
+                      {
+                        id = items.date[i];
+                        resultId = result.date[i];
+                        break;
+                      }
+                    }
+                    if (this.getAutoFillValue(this.dictValue(resultId,'date','@value'))){
+                      this.setValueToField(this.dictValue(id,'date', '@attributes','dateType'), this.getAutoFillValue(this.dictValue(resultId,'date', '@attributes','dateType')));
+                      this.setValueToField(this.dictValue(id,'date', '@value'), this.getAutoFillValue(this.dictValue(resultId,'date', '@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'date', '@attributes','dateType'), "");
+                      this.setValueToField(this.dictValue(id,'date', '@value'), "");
+                    }
                   }
                 }
                 if (items.hasOwnProperty('language')) {
-                  this.setValueToField(this.dictValue(items.language,'@value'), this.getAutoFillValue(this.dictValue(result.language,'@value')));
+                  if(param.api_type == 'CrossRef')
+                    this.setValueToField(this.dictValue(items.language,'@value'), this.getAutoFillValue(this.dictValue(result.language,'@value')));
+                  else if(param.api_type == 'CiNii')
+                  {
+                    let id, resultId;
+                    for(let i=0; i < items.language.length; i++)
+                    {
+                      if(this.getAutoFillValue(this.dictValue(items.language[i],'date')) != "")
+                      {
+                        id = items.language[i];
+                        resultId = result.language[i];
+                        break;
+                      }
+                    }
+                    this.setValueToField(this.dictValue(id,'language', '@value'), this.getAutoFillValue(this.dictValue(resultId,'language', '@value')));
+                  }
                 }
                 if (items.hasOwnProperty('numPages')) {
                   this.setValueToField(this.dictValue(items.numPages,'@value'), this.getAutoFillValue(this.dictValue(result.numPages,'@value')));
@@ -338,14 +369,37 @@ require([
                   }
                 }
                 if (items.hasOwnProperty('title')) {
-                  let id = items.title;
-                  let resultId = result.title;
-                  if(resultId && resultId['@value']) {
-                    this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','xml:lang')));
-                    this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
-                  } else {
-                    this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
-                    this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
+                  if (param.api_type == 'CrossRef')
+                  {
+                    let id = items.title;
+                    let resultId = result.title;
+                    if(resultId && resultId['@value']) {
+                      this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'@attributes','xml:lang')));
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'@value'), this.getAutoFillValue(this.dictValue(resultId,'@value')));
+                      this.setValueToField(this.dictValue(id,'@attributes','xml:lang'), "");
+                    }
+                  }
+                  else if(param.api_type == 'CiNii')
+                  {
+                    let id, resultId;
+                    for(let i=0; i < items.title.length; i++)
+                    {
+                      if(this.getAutoFillValue(this.dictValue(items.title[i],'title')) != "")
+                      {
+                        id = items.title[i];
+                        resultId = result.title[i];
+                        break;
+                      }
+                    }
+                    if (this.getAutoFillValue(this.dictValue(resultId,'title','@value'))){
+                      this.setValueToField(this.dictValue(id,'title', '@attributes','xml:lang'), this.getAutoFillValue(this.dictValue(resultId,'title', '@attributes','xml:lang')));
+                      this.setValueToField(this.dictValue(id,'title', '@value'), this.getAutoFillValue(this.dictValue(resultId,'title', '@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id,'title', '@attributes','xml:lang'), "");
+                      this.setValueToField(this.dictValue(id,'title', '@value'), "");
+                    }
                   }
                 }
                 $('#meta-search').modal('toggle');
@@ -357,6 +411,8 @@ require([
           }
         });
       }
+
+      
 
       $scope.searchSource = function(model_id,arrayFlg,form) {
 

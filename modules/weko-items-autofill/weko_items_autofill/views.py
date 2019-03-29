@@ -14,7 +14,8 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .permissions import auto_fill_permission
-from .utils import parse_crossref_json_response, get_item_id, get_crossref_data
+from .utils import parse_crossref_json_response, get_item_id, \
+        get_crossref_data, get_cinii_data, parse_cinii_json_response
 
 blueprint = Blueprint(
     "weko_items_autofill",
@@ -60,12 +61,16 @@ def get_items_autofill_data():
     item_type_id = data.get('item_type_id', '')
 
     try:
-        result['items'] = get_item_id(item_type_id)
         if api_type == 'CrossRef':
             pid = current_app.config['WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID']
             api_response = get_crossref_data(pid, search_data)
             result['result'] = parse_crossref_json_response(api_response,
                                                             result['items'])
+        elif api_type == 'CiNii':
+            result['items'] = get_item_id(item_type_id)
+            api_response = get_cinii_data(search_data)
+            result['result'] = parse_cinii_json_response(api_response,
+                                                         result['items'])
         else:
             result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:

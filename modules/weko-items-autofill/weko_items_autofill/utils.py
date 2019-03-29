@@ -28,6 +28,7 @@ from invenio_cache import current_cache
 from weko_records.api import Mapping
 
 from .crossref_api import CrossRefOpenURL
+from .CiNii_api import CiNiiURL
 
 
 def is_update_cache():
@@ -101,12 +102,19 @@ def try_assign_data(data, value, key_first, list_key=None):
     if data.get(key_first) is None:
         return
     else:
-        data_temp.append(data.get(key_first))
+        if type(data.get(key_first)) is list:
+            for item in data.get(key_first):
+                if type(item) is dict:
+                    if item.get(key_first) is not None:
+                        data_temp.append(item)
+        else:
+            data_temp.append(data.get(key_first))
         idx = 0
     if list_key is None:
         data_temp[0] = value
     else:
         for key in list_key:
+            if type(data_temp[idx]) is dict:
                 if key in data_temp[idx]:
                     if data_temp[idx].get(key):
                         data_temp.append(data_temp[idx].get(key))
@@ -132,8 +140,161 @@ def reset_dict_final_value(data):
     for k, v in temp_data.items():
         if isinstance(data[k], dict):
             reset_dict_final_value(data[k])
+        elif isinstance(data[k], list):
+            for key in data[k]:
+                reset_dict_final_value(key)
         else:
             data[k] = None
+
+
+def asssign_data_crossref_created_field(field, data):
+    """
+        Assign data from crossref created field to data container
+        @parameter: crossref created field, data container
+        @return:
+    """
+    try:
+        try_assign_data(data, field.get('affiliationName'),
+                        'creator',
+                        ['affiliation', 'affiliationName', '@value'])
+        try_assign_data(data,
+                        current_app.config[
+                            'WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'], 'creator',
+                        ['affiliation', 'affiliationName', '@attributes',
+                         'xml:lang'])
+        try_assign_data(data, field.get('nameIdentifier'),
+                        'creator', ['affiliation', 'nameIdentifier', '@value'])
+        try_assign_data(data,
+                        field.get('nameIdentifierScheme'),
+                        'creator',
+                        ['affiliation', 'nameIdentifier', '@attributes',
+                         'nameIdentifierScheme'])
+        try_assign_data(data, field.get('nameIdentifierURI'),
+                        'creator',
+                        ['affiliation', 'nameIdentifier', '@attributes',
+                         'nameIdentifierURI'])
+        try_assign_data(data,
+                        field.get('creatorAlternative'),
+                        'creator', ['creatorAlternative', '@value'])
+        try_assign_data(data, field.get('title'), 'title',
+                        ['@value'])
+        try_assign_data(data, field.get('nameIdentifier'),
+                        'creator', ['nameIdentifier', '@value'])
+        try_assign_data(data,
+                        field.get('nameIdentifierScheme'),
+                        'creator',
+                        ['nameIdentifier', '@attributes',
+                         'nameIdentifierScheme'])
+        try_assign_data(data, field.get('nameIdentifierURI'),
+                        'creator',
+                        ['nameIdentifier', '@attributes', 'nameIdentifierURI'])
+        try_assign_data(data, field.get('publisher'),
+                        'publisher', ['@value'])
+        try_assign_data(data, field.get('relationType'),
+                        'relation', ['@attributes', 'relationType'])
+        try_assign_data(data, '', 'relation',
+                        ['relatedTitle', '@value'])
+        isbn_item = field.get('ISBN')
+        try_assign_data(data, isbn_item[0], 'relation',
+                        ['relatedIdentifier', '@value'])
+        try_assign_data(data, 'ISBN', 'relation',
+                        ['relatedIdentifier', '@attributes', 'identifierType'])
+    except Exception as e:
+        pass
+
+
+def asssign_data_crossref_page_field(field, data):
+    """
+        Assign data from crossref page field to data container
+        @parameter: crossref page field, data container
+        @return:
+    """
+    try:
+        split_page = field.split('-')
+        try_assign_data(data, str(int(split_page[1]) - int(split_page[0]) + 1),
+                        'numPages', ['@value'])
+        try_assign_data(data, split_page[1], 'pageEnd', ['@value'])
+        try_assign_data(data, split_page[0], 'pageStart', ['@value'])
+    except Exception as e:
+        pass
+
+
+def asssign_data_crossref_author_field(field, data):
+    """
+        Assign data from crossref author field to data container
+        @parameter: crossref author field, data container
+        @return:
+    """
+    try:
+        given_name = field[0].get('given') or ''
+        family_name = field[0].get('family') or ''
+        creator_name = given_name + " " + family_name
+        try_assign_data(data, creator_name.strip(),
+                        'creator', ['creatorName', '@value'])
+        try_assign_data(data, family_name,
+                        'creator',
+                        ['familyName', '@value'])
+        try_assign_data(data, given_name,
+                        'creator',
+                        ['givenName', '@value'])
+    except Exception as e:
+        pass
+
+
+def asssign_data_crossref_issued_field(field, data):
+    """
+        Assign data from crossref issued field to data container
+        @parameter: crossref issued field, data container
+        @return:
+    """
+    try:
+        try_assign_data(data,
+                        convert_datetime_format(field.get('date-parts')),
+                        'date',
+                        ['@value'])
+        try_assign_data(data, 'Issued', 'date',
+                        ['@attributes', 'dateType'])
+    except Exception as e:
+        pass
+
+
+def asssign_data_crossref_default_field(field, data):
+    """
+        Assign data from default value to data container
+        Set default language to English(en or eng) because API does not return
+        the current language
+        @parameter: Default value, data container
+        @return:
+    """
+    try_assign_data(data, 'eng', 'language', ['@value'])
+    try_assign_data(data,
+                    field,
+                    'publisher',
+                    ['@attributes', 'xml:lang'])
+    try_assign_data(data,
+                    field,
+                    'relation',
+                    ['relatedTitle', '@attributes', 'xml:lang'])
+    try_assign_data(data,
+                    field,
+                    'title',
+                    ['@attributes', 'xml:lang'])
+    try_assign_data(data,
+                    field,
+                    'creator',
+                    ['creatorAlternative', '@attributes', 'xml:lang'])
+    try_assign_data(data,
+                    field,
+                    'creator',
+                    ['creatorName', '@attributes', 'xml:lang'])
+    try_assign_data(data,
+                    field,
+                    'creator',
+                    ['familyName', '@attributes', 'xml:lang'])
+    try_assign_data(data,
+                    field,
+                    'creator',
+                    ['givenName', '@attributes', 'xml:lang'])
 
 
 def parse_crossref_json_response(response, response_data_template):
@@ -145,128 +306,242 @@ def parse_crossref_json_response(response, response_data_template):
     reset_dict_final_value(response_data_convert)
     if response['response'] == '':
         return None
+    try:
+        created = response['response'].get('created')
+        issued = response['response'].get('issued')
+        author = response['response'].get('author')
+        page = response['response'].get('page')
 
-    created = response['response'].get("created")
-    issued = response['response'].get('issued')
-    author = response['response'].get('author')
-    page = response['response'].get('page')
-    if type(page) is str:
-        split_page = page.split('-')
-        if len(split_page) == 2:
-            try:
-                try_assign_data(response_data_convert,
-                                str(int(split_page[1]) - int(
-                                    split_page[0]) + 1),
-                                'numPages', ['@value'])
-                try_assign_data(response_data_convert, split_page[1], 'pageEnd',
+        asssign_data_crossref_created_field(created, response_data_convert)
+        asssign_data_crossref_page_field(page, response_data_convert)
+        asssign_data_crossref_author_field(author, response_data_convert)
+        asssign_data_crossref_issued_field(issued, response_data_convert)
+        asssign_data_crossref_default_field(
+                        current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                        response_data_convert)
+    except Exception as e:
+        pass
+
+    return response_data_convert
+
+
+def assign_data_cinii_dc_title_field(field, data):
+    """
+        Assign data from cinii dc_title field to data container
+        @parameter: cinii dc_title field, data container
+        @return:
+    """
+    try:
+        for item in field:
+            lang = item.get('@language')
+            if lang == 'en':
+                try_assign_data(data, item.get('@value'),
+                                'title', ['title', '@value'])
+                try_assign_data(data, lang, 'title',
+                                ['title', '@attributes', 'xml:lang'])
+    except Exception as e:
+        pass
+
+
+def assign_data_cinii_dc_creator_field(field, data):
+    """
+        Assign data from cinii dc_creator field to data container
+        @parameter: cinii dc_creator field, data container
+        @return:
+    """
+    try:
+        for item in field[0]:
+            lang = item.get('@language')
+            if lang == 'en':
+                try_assign_data(data, item.get('@value'),
+                                'creator', ['creatorName', '@value'])
+                try_assign_data(data, lang, 'creator',
+                                ['creatorName', '@attributes', 'xml:lang'])
+    except Exception as e:
+        pass
+
+
+def assign_data_cinii_page_field(page_start, page_end, data):
+    """
+        Assign data from cinii page field to data container
+        @parameter: cinii page field, data container
+        @return:
+    """
+    try:
+        try_assign_data(data, page_start, 'pageStart', ['@value'])
+        try_assign_data(data, page_end, 'pageEnd', ['@value'])
+        try_assign_data(data, str(int(page_end) - int(page_start) + 1),
+                        'numPages', ['@value'])
+    except Exception as e:
+        pass
+
+
+def assign_data_cinii_prism_publication_date_field(field, data):
+    """
+        Assign data from cinii prism_publication_date field to data container
+        @parameter: cinii prism_publication_date field, data container
+        @return:
+    """
+    try:
+        try_assign_data(data, field, 'date', ['date', '@value'])
+        try_assign_data(data, 'Issued', 'date',
+                        ['date', '@attributes', 'dateType'])
+    except Exception as e:
+        pass
+
+
+def assign_data_cinii_dc_publisher_field(field, data):
+    """
+        Assign data from cinii dc_publisher field to data container
+        @parameter: cinii dc_publisher field, data container
+        @return:
+    """
+    try:
+        for item in field:
+            lang = item.get('@language')
+            if lang == 'en':
+                try_assign_data(data, item.get('@value'), 'publisher',
                                 ['@value'])
-                try_assign_data(response_data_convert, split_page[0],
-                                'pageStart',
+                try_assign_data(data, lang, 'publisher',
+                                ['@attributes', 'xml:lang'])
+    except Exception as e:
+        pass
+
+
+def assign_data_cinii_floaf_maker_field(field, data):
+    """
+        Assign data from cinii floaf_maker field to data container
+        @parameter: cinii floaf_maker field, data container
+        @return:
+    """
+    try:
+        con_organization = field[0].get('con:organization')
+        floaf_name = con_organization[0].get('foaf:name')
+        for item in floaf_name:
+            lang = item.get('@language')
+            if lang == 'en':
+                try_assign_data(data, item.get('@value'), 'contributor',
+                                ['contributorName', '@value'])
+                try_assign_data(data, lang, 'contributor',
+                                ['contributorName', '@attributes', 'xml:lang'])
+    except Exception as e:
+        pass
+
+
+def assign_data_cinii_dc_description_field(field, data):
+    """
+        Assign data from cinii dc_description field to data container
+        @parameter: cinii dc_description field, data container
+        @return:
+    """
+    try:
+        for item in field:
+            lang = item.get('@language')
+            if lang == 'en':
+                try_assign_data(data, item.get('@value'), 'description',
                                 ['@value'])
-            except ValueError:
-                pass
+                try_assign_data(data, lang, 'description',
+                                ['@attributes', 'xml:lang'])
+                try_assign_data(data, 'Abstract', 'description',
+                                ['@attributes', 'descriptionType'])
+    except Exception as e:
+        pass
 
-    if type(created) is dict:
-        try_assign_data(response_data_convert, created.get('affiliationName'),
-                        'creator', ['affiliation', 'affiliationName', '@value'])
-        try_assign_data(response_data_convert,
-                        current_app.config[
-                            'WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'], 'creator',
-                        ['affiliation', 'affiliationName', '@attributes',
-                         'xml:lang'])
-        try_assign_data(response_data_convert, created.get('nameIdentifier'),
-                        'creator', ['affiliation', 'nameIdentifier', '@value'])
-        try_assign_data(response_data_convert,
-                        created.get('nameIdentifierScheme'),
-                        'creator',
-                        ['affiliation', 'nameIdentifier', '@attributes',
-                         'nameIdentifierScheme'])
-        try_assign_data(response_data_convert, created.get('nameIdentifierURI'),
-                        'creator',
-                        ['affiliation', 'nameIdentifier', '@attributes',
-                         'nameIdentifierURI'])
-        try_assign_data(response_data_convert,
-                        created.get('creatorAlternative'),
-                        'creator', ['creatorAlternative', '@value'])
-        try_assign_data(response_data_convert, created.get('title'), 'title',
+
+def assign_data_cinii_floaf_topic_field(field, data):
+    """
+        Assign data from cinii floaf_topic field to data container
+        @parameter: cinii floaf_topic field, data container
+        @return:
+    """
+    try:
+        dc_title_topic = field[0].get('dc:title')
+        try_assign_data(data, dc_title_topic[0].get('@value'), 'subject',
                         ['@value'])
-        try_assign_data(response_data_convert, created.get('nameIdentifier'),
-                        'creator', ['nameIdentifier', '@value'])
-        try_assign_data(response_data_convert,
-                        created.get('nameIdentifierScheme'),
-                        'creator',
-                        ['nameIdentifier', '@attributes',
-                         'nameIdentifierScheme'])
-        try_assign_data(response_data_convert, created.get('nameIdentifierURI'),
-                        'creator',
-                        ['nameIdentifier', '@attributes', 'nameIdentifierURI'])
-        try_assign_data(response_data_convert, created.get('publisher'),
-                        'publisher', ['@value'])
-        try_assign_data(response_data_convert, created.get('relationType'),
-                        'relation', ['@attributes', 'relationType'])
-        try_assign_data(response_data_convert, None, 'relation',
-                        ['relatedTitle', '@value'])
-        isbn_item = created.get('ISBN')
-        if type(isbn_item) is list:
-            try_assign_data(response_data_convert, isbn_item[0], 'relation',
-                            ['relatedIdentifier', '@value'])
-            try_assign_data(response_data_convert, 'ISBN', 'relation',
-                            ['relatedIdentifier', '@attributes',
-                             'identifierType'])
+        try_assign_data(data, field[0].get('@id'), 'subject',
+                        ['@attributes', 'subjectURI'])
+        try_assign_data(data, 'Other', 'subject',
+                        ['@attributes', 'subjectScheme'])
+        try_assign_data(data, 'ja', 'subject',
+                        ['@attributes', 'xml:lang'])
+    except Exception as e:
+        pass
 
-    if type(author) is list:
-        if type(author[0]) is dict:
-            given_name = author[0].get('given') or ''
-            family_name = author[0].get('family') or ''
-            creator_name = given_name + " " + family_name
-            try_assign_data(response_data_convert, creator_name.strip(),
-                            'creator', ['creatorName', '@value'])
-            try_assign_data(response_data_convert, family_name,
-                            'creator',
-                            ['familyName', '@value'])
-            try_assign_data(response_data_convert, given_name,
-                            'creator',
-                            ['givenName', '@value'])
 
-    if type(issued) is dict:
-        try_assign_data(response_data_convert,
-                        convert_datetime_format(issued.get('date-parts')),
-                        'date',
-                        ['@value'])
-        try_assign_data(response_data_convert, "Issued", 'date',
-                        ['@attributes', 'dateType'])
+def assign_data_cinii_prism_publicationName_field(field, data):
+    """
+        Assign data from cinii prism_publicationName field to data container
+        @parameter: cinii prism_publicationName field, data container
+        @return:
+    """
+    try:
+        for item in field:
+            lang = item.get('@language')
+            if lang == 'en':
+                try_assign_data(data, item.get('@value'), 'sourceTitle',
+                                ['@value'])
+                try_assign_data(data, lang, 'sourceTitle',
+                                ['@attributes', 'xml:lang'])
+    except Exception as e:
+        pass
 
-    """Set default language to English(en or eng) because API does not return 
-    the current language"""
-    try_assign_data(response_data_convert, 'eng', 'language', ['@value'])
-    try_assign_data(response_data_convert,
-                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
-                    'publisher',
-                    ['@attributes', 'xml:lang'])
-    try_assign_data(response_data_convert,
-                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
-                    'relation',
-                    ['relatedTitle', '@attributes', 'xml:lang'])
-    try_assign_data(response_data_convert,
-                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
-                    'title',
-                    ['@attributes', 'xml:lang'])
-    try_assign_data(response_data_convert,
-                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
-                    'creator',
-                    ['creatorAlternative', '@attributes', 'xml:lang'])
-    try_assign_data(response_data_convert,
-                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
-                    'creator',
-                    ['creatorName', '@attributes', 'xml:lang'])
-    try_assign_data(response_data_convert,
-                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
-                    'creator',
-                    ['familyName', '@attributes', 'xml:lang'])
-    try_assign_data(response_data_convert,
-                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
-                    'creator',
-                    ['givenName', '@attributes', 'xml:lang'])
+
+def assign_data_cinii_other_infomation_field(prism_volume,
+                                             prism_number, prism_issn, data):
+    """
+        Assign data from cinii other field information to data container
+        @parameter: cinii other field information, data container
+        @return:
+    """
+    try:
+        try_assign_data(data, prism_volume, 'volume', ['@value'])
+        try_assign_data(data, prism_number, 'issue', ['@value'])
+        try_assign_data(data, prism_issn, 'sourceIdentifier', ['@value'])
+        if prism_issn:
+            try_assign_data(data, 'ISSN', 'sourceIdentifier',
+                            ['@attributes', 'identifierType'])
+    except Exception as e:
+        pass
+
+
+def parse_cinii_json_response(response, response_data_template):
+    """ Convert response data from cinii API to auto fill data
+        response: data from cinii API
+        response_data_template: template of autofill data
+    """
+    response_data_convert = copy.deepcopy(response_data_template)
+    reset_dict_final_value(response_data_convert)
+    if response['response'] == '':
+        return None
+    try:
+        graph = response['response'].get('@graph')
+
+        assign_data_cinii_dc_title_field(graph[0].get('dc:title'),
+                                         response_data_convert)
+        assign_data_cinii_dc_creator_field(graph[0].get('dc:creator'),
+                                           response_data_convert)
+        assign_data_cinii_page_field(graph[0].get('prism:startingPage'),
+                                     graph[0].get('prism:endingPage'),
+                                     response_data_convert)
+        assign_data_cinii_prism_publication_date_field(
+            graph[0].get('prism:publicationDate'), response_data_convert)
+        assign_data_cinii_dc_publisher_field(graph[0].get('dc:publisher'),
+                                             response_data_convert)
+        assign_data_cinii_floaf_maker_field(graph[0].get('foaf:maker'),
+                                            response_data_convert)
+        assign_data_cinii_dc_description_field(graph[0].get('dc:description'),
+                                               response_data_convert)
+        assign_data_cinii_floaf_topic_field(graph[0].get('foaf:topic'),
+                                            response_data_convert)
+        assign_data_cinii_prism_publicationName_field(graph[0].get(
+            'prism:publicationName'), response_data_convert)
+        assign_data_cinii_other_infomation_field(graph[0].get('prism:volume'),
+                                                 graph[0].get('prism:number'),
+                                                 graph[0].get('prism:issn'),
+                                                 response_data_convert)
+
+    except Exception as e:
+        pass
 
     return response_data_convert
 
@@ -285,7 +560,17 @@ def get_item_id(item_type_id):
             jpcoar = v.get("jpcoar_mapping")
             if isinstance(jpcoar, dict):
                 for u, s in jpcoar.items():
-                    results[u] = s
+                    if results.get(u) is not None:
+                        data = list()
+                        if isinstance(results.get(u), list):
+                            data = results.get(u)
+                            data.append({u: s})
+                        else:
+                            data.append({u: results.get(u)})
+                            data.append({u: s})
+                        results[u] = data
+                    else:
+                        results[u] = s
     except Exception as e:
         results['error'] = str(e)
 
@@ -299,4 +584,14 @@ def get_crossref_data(pid, doi):
     search_data: DOI
     """
     api = CrossRefOpenURL(pid, doi)
+    return api.get_data()
+
+
+@cached_api_json(timeout=50,)
+def get_cinii_data(naid):
+    """Return cache-able data
+    pid: pid
+    search_data: DOI
+    """
+    api = CiNiiURL(naid)
     return api.get_data()
