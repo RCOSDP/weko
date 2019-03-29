@@ -27,7 +27,7 @@ from invenio_deposit.bundles import js_dependencies_jquery
 style = Bundle(
     'node_modules/angular-loading-bar/build/loading-bar.css',
     'node_modules/typeahead.js-bootstrap-css/typeaheadjs.css',
-    'node_modules/bootstrap-switch/dist/css/bootstrap3'
+    'node_modules/bootstrap-switch/dist/css/bootstrap3',
     'css/weko_records_ui/style.css',
     output="gen/weko_records_ui.%(version)s.css"
 )
