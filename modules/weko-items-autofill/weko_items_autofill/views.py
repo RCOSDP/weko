@@ -46,6 +46,10 @@ def index():
 @login_required
 @auto_fill_permission.require(http_exception=403)
 def get_items_autofill_data():
+    """
+    auto fill metadata from API response
+    :return: result, response from API
+    """
     result = {
         'result': '',
         'items': '',
@@ -61,13 +65,13 @@ def get_items_autofill_data():
     item_type_id = data.get('item_type_id', '')
 
     try:
+        result['items'] = get_item_id(item_type_id)
         if api_type == 'CrossRef':
             pid = current_app.config['WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID']
             api_response = get_crossref_data(pid, search_data)
             result['result'] = parse_crossref_json_response(api_response,
                                                             result['items'])
         elif api_type == 'CiNii':
-            result['items'] = get_item_id(item_type_id)
             api_response = get_cinii_data(search_data)
             result['result'] = parse_cinii_json_response(api_response,
                                                          result['items'])
