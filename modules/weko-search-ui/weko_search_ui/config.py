@@ -92,6 +92,14 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
     'application/json': ('weko_records.serializers'
                          ':opensearch_v1_search'),
 }
+
+# register cites serializers.
+RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
+    'text/x-bibliography': (
+                'weko_records.serializers'
+                ':citeproc_v1_response')
+}
+
 print("[Log]: =============================")
 print("[Log]: After RECORDS_REST_ENDPOINTS")
 print(RECORDS_REST_ENDPOINTS)
