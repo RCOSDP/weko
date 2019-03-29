@@ -302,9 +302,9 @@ def parse_crossref_json_response(response, response_data_template):
         response_data_template: template of autofill data
     """
     response_data_convert = copy.deepcopy(response_data_template)
-    reset_dict_final_value(response_data_convert)
     if response['response'] == '':
         return None
+    reset_dict_final_value(response_data_convert)
     try:
         created = response['response'].get('created')
         issued = response['response'].get('issued')
@@ -316,8 +316,8 @@ def parse_crossref_json_response(response, response_data_template):
         asssign_data_crossref_author_field(author, response_data_convert)
         asssign_data_crossref_issued_field(issued, response_data_convert)
         asssign_data_crossref_default_field(
-                        current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
-                        response_data_convert)
+                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                    response_data_convert)
     except Exception as e:
         pass
 
@@ -586,11 +586,10 @@ def get_crossref_data(pid, doi):
     return api.get_data()
 
 
-@cached_api_json(timeout=50,)
+# @cached_api_json(timeout=50,)
 def get_cinii_data(naid):
     """Return cache-able data
-    pid: pid
-    search_data: DOI
+    naid : naid
     """
     api = CiNiiURL(naid)
     return api.get_data()
