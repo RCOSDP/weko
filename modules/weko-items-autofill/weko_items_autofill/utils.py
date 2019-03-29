@@ -27,8 +27,7 @@ from flask import current_app
 from invenio_cache import current_cache
 from weko_records.api import Mapping
 
-from .crossref_api import CrossRefOpenURL
-from .CiNii_api import CiNiiURL
+from .api import CiNiiURL, CrossRefOpenURL
 
 
 def is_update_cache():
