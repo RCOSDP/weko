@@ -5,3 +5,7 @@
 .wrap {
   word-break: break-all;
 }
+
+.twitter-typeahead .tt-suggestion {
+  white-space: normal;
+}
