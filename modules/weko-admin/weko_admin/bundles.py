@@ -39,4 +39,3 @@ css = Bundle(
     'css/weko_admin/styles.css',
     output="gen/weko_admin_ui.%(version)s.css",
 )
-

@@ -20,33 +20,37 @@
 
 """Blueprint for weko-records-ui."""
 
+from datetime import datetime
+
 import six
-from flask import Blueprint, abort, current_app, render_template, \
-    make_response, redirect, request, url_for, flash
+import werkzeug
+from flask import Blueprint, abort, current_app, flash, make_response, \
+    redirect, render_template, request, url_for
 from flask_login import current_user
 from lxml import etree
+from sqlalchemy.exc import IntegrityError
+from invenio_db import db
+from invenio_files_rest.views import ObjectResource, check_permission, \
+    file_downloaded
+from invenio_oaiserver.response import getrecord
+from invenio_records_ui.signals import record_viewed
+from invenio_records_ui.utils import obj_or_import_string
+from invenio_stats import current_stats
 from invenio_records_ui.utils import obj_or_import_string
 from invenio_records_ui.signals import record_viewed
 from invenio_oaiserver.response import getrecord
 from invenio_i18n.ext import current_i18n
+from invenio_files_rest.views import ObjectResource, file_downloaded, check_permission
 from weko_records_ui.models import InstitutionName
-from weko_index_tree.models import IndexStyle
-from .permissions import check_created_id, check_original_pdf_download_permission, check_file_download_permission
-from weko_search_ui.api import get_search_detail_keyword
 from weko_deposit.api import WekoIndexer
-from .models import PDFCoverPageSettings
-from invenio_files_rest.views import ObjectResource
-from invenio_files_rest.views import file_downloaded, check_permission
-from invenio_files_rest.views import ObjectResource
-from .models import Identifier
+from weko_index_tree.models import IndexStyle
+from weko_search_ui.api import get_search_detail_keyword
 from weko_records.serializers import citeproc_v1
-import werkzeug
-from datetime import datetime
-from invenio_db import db
-from sqlalchemy.exc import IntegrityError
+from weko_records_ui.models import InstitutionName
 
-
-from invenio_stats import current_stats
+from .models import Identifier, PDFCoverPageSettings
+from .permissions import check_created_id, check_file_download_permission, \
+    check_original_pdf_download_permission
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -447,6 +451,7 @@ def print_trackback():
             print(line.strip())
     except Exception:
         print("warning")
+
 
 class ObjectResourceWeko(ObjectResource):
 

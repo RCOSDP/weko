@@ -22,6 +22,7 @@
 
 
 from functools import wraps
+
 from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request, session, url_for
 from flask_babelex import gettext as _
@@ -31,13 +32,13 @@ from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from sqlalchemy.orm.exc import NoResultFound
-from werkzeug.utils import import_string
 from weko_records.api import ItemsMetadata
+from werkzeug.utils import import_string
 
-from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem, GetCommunity
-from .models import ActionStatusPolicy, ActivityStatusPolicy
+from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
+    WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST
-
+from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_jtitles
 
 blueprint = Blueprint(

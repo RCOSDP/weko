@@ -20,16 +20,16 @@
 
 """Views for weko-authors."""
 
-from flask import (
-    Blueprint, current_app, json, jsonify, render_template, request)
+from flask import Blueprint, current_app, json, jsonify, render_template, \
+    request
 from flask_babelex import gettext as _
 from flask_login import login_required
-from invenio_indexer.api import RecordIndexer
-
-from .permissions import author_permission
 from invenio_db import db
-from .models import Authors
+from invenio_indexer.api import RecordIndexer
 from weko_records.models import ItemMetadata
+
+from .models import Authors
+from .permissions import author_permission
 
 blueprint = Blueprint(
     'weko_authors',
@@ -394,9 +394,3 @@ def gatherById():
         return jsonify({'code': 204, 'msg': 'Faild'})
 
     return jsonify({'code': 0, 'msg': 'Success'})
-
-
-
-
-
-

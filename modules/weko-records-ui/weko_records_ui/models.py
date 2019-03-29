@@ -25,12 +25,12 @@ from datetime import datetime
 
 from flask import current_app, json
 from flask_babelex import lazy_gettext as _
-from invenio_db import db
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy_utils.types import JSONType
-from sqlalchemy.sql import func
-from sqlalchemy.dialects import mysql, postgresql
 from invenio_communities.models import Community
+from invenio_db import db
+from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.sql import func
+from sqlalchemy_utils.types import JSONType
 
 """ PDF cover page model"""
 class PDFCoverPageSettings(db.Model):

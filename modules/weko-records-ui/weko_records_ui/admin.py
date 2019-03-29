@@ -21,27 +21,25 @@
 """WEKO3 module docstring."""
 
 import sys
+import unicodedata
+from datetime import datetime
 
 from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
-from flask_admin.form import rules
 from flask_admin.contrib.sqla import ModelView
-from flask_login import current_user
-from flask_babelex import gettext as _
-from werkzeug.local import LocalProxy
-from . import config
-from .models import Identifier
-from invenio_db import db
-from .models import PDFCoverPageSettings
-from .models import InstitutionName
-
-import unicodedata
-from datetime import datetime
-from invenio_communities.models import Community
 from flask_admin.contrib.sqla.fields import QuerySelectField
-from wtforms.validators import ValidationError
-from wtforms.fields import StringField
+from flask_admin.form import rules
+from flask_babelex import gettext as _
+from flask_login import current_user
+from invenio_communities.models import Community
+from invenio_db import db
 from sqlalchemy.orm import load_only
+from werkzeug.local import LocalProxy
+from wtforms.fields import StringField
+from wtforms.validators import ValidationError
+
+from . import config
+from .models import Identifier, InstitutionName, PDFCoverPageSettings
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 

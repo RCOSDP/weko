@@ -22,14 +22,14 @@
 
 import sys
 
-from flask import Blueprint, Flask, abort, current_app, json, jsonify, \
-    make_response, redirect, render_template, request, url_for, flash
+from flask import Blueprint, Flask, abort, current_app, flash, json, jsonify, \
+    make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from weko_records.api import ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
-from invenio_i18n.ext import current_i18n
 
 from .permissions import item_type_permission
 

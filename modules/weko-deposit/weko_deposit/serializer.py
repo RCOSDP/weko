@@ -21,6 +21,7 @@ from flask_login import current_user
 from invenio_accounts.models import User
 from weko_user_profiles.models import UserProfile
 
+
 def file_uploaded_owner(created_user_id = 0, updated_user_id = 0):
     """Build upload file owners.
 

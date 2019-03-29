@@ -21,8 +21,8 @@
 """Flask extension for weko-index-tree."""
 
 from . import config
-from .views import blueprint
 from .rest import create_blueprint
+from .views import blueprint
 
 
 class WekoIndexTree(object):

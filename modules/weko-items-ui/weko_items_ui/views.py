@@ -24,17 +24,16 @@ import os
 import sys
 
 import redis
-from flask import (
-    Blueprint, abort, current_app, flash, json, jsonify, redirect,
-    render_template, request, session, url_for)
+from flask import Blueprint, abort, current_app, flash, json, jsonify, \
+    redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_i18n.ext import current_i18n
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
+from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import ItemTypes
-from weko_deposit.api import WekoRecord
 
 from .permissions import item_permission
 
