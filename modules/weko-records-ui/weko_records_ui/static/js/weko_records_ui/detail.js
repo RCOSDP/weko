@@ -1,5 +1,5 @@
 require([
-  "node_modules/jquery/jquery",
+  "jquery",
   "bootstrap",
   "typeahead.js",
   "bloodhound",
