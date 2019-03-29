@@ -30,7 +30,7 @@
 
 {%- block javascript %}
   {{ super() }}  
-  <!-- {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %} -->
+  {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   <!-- {% assets "weko_records_ui_cites_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %} -->
   {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
