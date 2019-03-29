@@ -9,3 +9,7 @@
 .twitter-typeahead .tt-suggestion {
   white-space: normal !important;
 }
+
+#invenio-csl .ng-binding {
+  word-break: break-all;
+}
