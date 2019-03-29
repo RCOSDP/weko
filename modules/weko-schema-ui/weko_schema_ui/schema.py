@@ -32,9 +32,9 @@ from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import Mapping
-from xmlschema.validators import (
-    XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup,
-    XsdPatternsFacet, XsdSingleFacet, XsdUnion, XsdAnyElement)
+from xmlschema.validators import XsdAnyElement, XsdAtomicBuiltin, \
+    XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, XsdPatternsFacet, \
+    XsdSingleFacet, XsdUnion
 
 from .api import WekoSchema
 

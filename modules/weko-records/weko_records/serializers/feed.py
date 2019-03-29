@@ -31,13 +31,13 @@ from datetime import datetime
 
 import dateutil.parser
 import dateutil.tz
-from lxml import etree
-
 import feedgen.version
 from feedgen.compat import string_types
-from .entry import WekoFeedEntry
-from feedgen.util import ensure_format, formatRFC2822
 from feedgen.feed import FeedGenerator
+from feedgen.util import ensure_format, formatRFC2822
+from lxml import etree
+
+from .entry import WekoFeedEntry
 
 _feedgen_version = feedgen.version.version_str
 

@@ -25,9 +25,9 @@
     http://prismstandard.org/namespaces/basic/2.0/
 """
 
+from feedgen.ext.base import BaseExtension
 from lxml import etree
 
-from feedgen.ext.base import BaseExtension
 
 class PrismBaseExtension(BaseExtension):
     """PRISM Elements extension.

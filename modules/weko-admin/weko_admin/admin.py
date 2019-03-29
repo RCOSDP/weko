@@ -20,15 +20,18 @@
 
 """WEKO3 module docstring."""
 
+import hashlib
 import os
 import sys
-import hashlib
-from flask import abort, current_app, flash, request, jsonify
+
+from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+
 from .permissions import admin_permission_factory
 from .utils import allowed_file
+
 
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])

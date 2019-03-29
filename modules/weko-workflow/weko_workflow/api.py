@@ -21,26 +21,26 @@
 """WEKO3 module docstring."""
 
 import uuid
-
 from datetime import datetime
+
 from flask import current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import User
 from invenio_db import db
-from sqlalchemy import asc,desc
+from sqlalchemy import asc, desc
 from sqlalchemy.orm.exc import NoResultFound
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
+from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
-from .models import ActivityAction
-from .models import ActivityHistory
-from .models import FlowDefine as _Flow
+from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
+from .models import FlowDefine as _Flow
+from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
-from .models import ActionStatusPolicy, ActionCommentPolicy, \
-    ActivityStatusPolicy, FlowStatusPolicy, ActionJournal
+
 
 class Flow(object):
     """Operated on the Flow"""

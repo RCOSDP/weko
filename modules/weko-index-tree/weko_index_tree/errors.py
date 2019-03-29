@@ -24,6 +24,7 @@
 
 """Index errors."""
 from invenio_rest.errors import RESTException
+
 # from flask_babelex import gettext as _
 
 

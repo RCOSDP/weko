@@ -26,9 +26,8 @@
 
 """
 
-from lxml import etree
-
 from feedgen.ext.base import BaseExtension
+from lxml import etree
 
 
 class OpensearchBaseExtension(BaseExtension):

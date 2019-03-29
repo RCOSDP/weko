@@ -20,13 +20,15 @@
 
 """WEKO Search Serializer."""
 
-from flask import current_app, json, request, render_template, render_template_string, flash
-
+from flask import current_app, flash, json, render_template, \
+    render_template_string, request
 from invenio_records_rest.serializers.json import JSONSerializer
 from invenio_records_rest.serializers.schemas.json import RecordSchemaJSONV1
+
 from .atom import AtomSerializer
-from .rss import RssSerializer
 from .jpcoar import JpcoarSerializer
+from .rss import RssSerializer
+
 
 class OpenSearchSerializer(JSONSerializer):
     """

@@ -21,14 +21,14 @@
 """Blueprint for weko-theme."""
 
 
-from flask import Blueprint, current_app, render_template, request, flash, session
-from weko_index_tree.models import Index, IndexStyle
-from flask_login import login_required
-from weko_search_ui.api import get_search_detail_keyword
-from invenio_i18n.ext import current_i18n
 from blinker import Namespace
-
+from flask import Blueprint, current_app, flash, render_template, request, \
+    session
+from flask_login import login_required
+from invenio_i18n.ext import current_i18n
 from weko_admin.utils import set_default_language
+from weko_index_tree.models import Index, IndexStyle
+from weko_search_ui.api import get_search_detail_keyword
 
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')

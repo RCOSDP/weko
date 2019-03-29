@@ -23,13 +23,13 @@
 
 import os
 
-from flask import Blueprint, abort, current_app, \
-    flash, jsonify, render_template, request, url_for,session
+from flask import Blueprint, abort, current_app, flash, jsonify, \
+    render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 
-from .permissions import index_tree_permission
 from .api import Indexes
+from .permissions import index_tree_permission
 from .utils import get_admin_coverpage_setting
 
 blueprint = Blueprint(

@@ -20,17 +20,17 @@
 
 """WEKO3 module docstring."""
 
-import click
 import datetime
 import uuid
-from flask.cli import with_appcontext
-from sqlalchemy import asc
-from invenio_db import db
 
+import click
+from flask.cli import with_appcontext
+from invenio_db import db
+from sqlalchemy import asc
 from weko_records.api import ItemTypes
 
-from .models import ActionStatus, Action, ActionStatusPolicy, FlowDefine, \
-    FlowAction, FlowStatusPolicy, WorkFlow
+from .models import Action, ActionStatus, ActionStatusPolicy, FlowAction, \
+    FlowDefine, FlowStatusPolicy, WorkFlow
 
 
 @click.group()

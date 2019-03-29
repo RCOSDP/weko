@@ -21,8 +21,9 @@
 """Flask extension for weko-search-ui."""
 
 from . import config
-from .views import blueprint
 from .rest import create_blueprint
+from .views import blueprint
+
 
 class WekoSearchUI(object):
     """weko-search-ui extension."""

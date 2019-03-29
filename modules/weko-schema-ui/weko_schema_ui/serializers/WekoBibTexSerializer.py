@@ -21,15 +21,15 @@
 """WEKO BibTex Serializer."""
 
 import xml.etree.ElementTree as ET
-
 from datetime import datetime
 
-from flask import abort
-from bibtexparser.bwriter import BibTexWriter
 from bibtexparser.bibdatabase import BibDatabase
+from bibtexparser.bwriter import BibTexWriter
+from flask import abort
 
-from .wekoxml import WekoXMLSerializer
 from ..schema import SchemaTree, cache_schema
+from .wekoxml import WekoXMLSerializer
+
 
 class WekoBibTexSerializer():
     """Weko bibtex serializer."""

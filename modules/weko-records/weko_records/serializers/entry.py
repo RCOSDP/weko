@@ -26,19 +26,16 @@
 
 '''
 
-from feedgen.entry import FeedEntry
+import warnings
 from datetime import datetime
 
 import dateutil.parser
 import dateutil.tz
-import warnings
-from lxml import etree
-
 from feedgen.compat import string_types
+from feedgen.entry import FeedEntry
 from feedgen.util import ensure_format, formatRFC2822
-
+from lxml import etree
 from weko_schema_ui.utils import dumps_etree
-
 
 
 class WekoFeedEntry(FeedEntry):

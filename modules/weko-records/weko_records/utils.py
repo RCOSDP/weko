@@ -28,9 +28,9 @@ from flask import current_app
 from flask_security import current_user
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.ext import pid_exists
+from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
-from weko_schema_ui.schema import SchemaTree
 
 
 def json_loader(data, pid):
