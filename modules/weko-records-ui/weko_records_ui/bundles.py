@@ -24,7 +24,7 @@ from flask_assets import Bundle
 from invenio_assets import NpmBundle
 from invenio_deposit.bundles import js_dependencies_jquery
 
-style = Bundle(
+style = NpmBundle(
     'node_modules/angular-loading-bar/build/loading-bar.css',
     'node_modules/typeahead.js-bootstrap-css/typeaheadjs.css',
     'node_modules/bootstrap-switch/dist/css/bootstrap3',
