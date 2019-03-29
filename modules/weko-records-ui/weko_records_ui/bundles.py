@@ -82,7 +82,7 @@ js_dependecies = NpmBundle(
     js_typeahead,
     js_invenio_csl,
     js_bootstrap_switch,
-    filters='requirejs',
+    filters='jsmin',
     output='gen/weko_records_ui.dependencies.%(version)s.js',
 )
 
