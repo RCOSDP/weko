@@ -36,9 +36,9 @@ from .api import SearchSetting
 from .permissions import search_permission
 
 
-def get_item_type_aggs(search_index):
-    """
-     get item types aggregations
+def Get_item_type_aggs(search_index):
+    """Get item types aggregations.
+
     :return: aggs dict
     """
     return current_app.config['RECORDS_REST_FACETS']. \
@@ -46,6 +46,7 @@ def get_item_type_aggs(search_index):
 
 
 def get_permission_filter(comm_id=None):
+    """Get permission filter."""
     # check permission
     is_perm = search_permission.can()
     mut = []
@@ -58,7 +59,7 @@ def get_permission_filter(comm_id=None):
     mst = []
     if comm_id is not None:
         path_list = Indexes.get_all_path_list(comm_id)
-        match_list=[]
+        match_list = []
         for p_l in path_list:
             match_q = Q('match', path=p_l)
             match_list.append(match_q)
@@ -82,7 +83,7 @@ def get_permission_filter(comm_id=None):
 
 
 def get_index_filter():
-
+    """Get Index Filter."""
     paths = Indexes.get_browsing_tree_paths()
     mst = []
     q_list = []
@@ -102,10 +103,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     :param query_parser: Query parser. (Default: ``None``)
     :returns: Tuple with search instance and URL arguments.
     """
+    def _Get_search_qs_query(qs=None):
+        """Qs of search bar keywords for detail simple search.
 
-    def _get_search_qs_query(qs=None):
-        """
-        qs of search bar keywords for detail simple search.
         :param qs: Query string.
         :return: Query parser.
         """
@@ -113,13 +113,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
               fields=['search_*', 'search_*.ja']) if qs else None
         return q
 
-    def _get_detail_keywords_query():
-        """
-        Get keywords query
+    def _Get_detail_keywords_query():
+        """Get keywords query.
+
         :return: Query parser.
         """
-
-        def _get_keywords_query(k, v):
+        def _Get_keywords_query(k, v):
             qry = None
             kv = request.values.get(k)
             if not kv:
@@ -138,8 +137,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     if isinstance(vlst, list):
                         shud = []
                         kvl = [x for x in kv.split(',')
-                              if x.isdecimal() and int(x) < len(vlst)]
-                        for j in map(partial(lambda x, y: x[int(y)], vlst), kvl):
+                               if x.isdecimal() and int(x) < len(vlst)]
+                        for j in map(
+                                partial(lambda x, y: x[int(y)], vlst), kvl):
                             name_dict = dict(operator="and")
                             name_dict.update(dict(query=j))
                             shud.append(Q('match', **{key: name_dict}))
@@ -161,7 +161,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             return qry
 
-        def _get_nested_query(k, v):
+        def _Get_nested_query(k, v):
             # text value
             kv = request.values.get(k)
             if not kv:
@@ -170,7 +170,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             shuld = []
             if isinstance(v, tuple) and len(v) > 1 and isinstance(v[1], dict):
                 # attr keyword in request url
-                for attr_key, attr_val_str in map(lambda x: (x, request.values.get(x)), list(v[1].keys())):
+                for attr_key, attr_val_str in map(
+                    lambda x: (
+                        x, request.values.get(x)), list(
+                        v[1].keys())):
                     attr_obj = v[1].get(attr_key)
                     if isinstance(attr_obj, dict) and attr_val_str:
                         if isinstance(v[0], str) and not len(v[0]):
@@ -187,23 +190,28 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             name = alst[0] + ".value"
                                             name_dict = dict(operator="and")
                                             name_dict.update(dict(query=kv))
-                                            mut = [Q('match', **{name: name_dict})]
+                                            mut = [
+                                                Q('match', **{name: name_dict})]
 
                                             qt = None
                                             if '=*' not in alst[1]:
-                                                name = alst[0] + "." + val_attr_lst[0]
-                                                qt = [Q('term', **{name: val_attr_lst[1]})]
+                                                name = alst[0] + \
+                                                    "." + val_attr_lst[0]
+                                                qt = [
+                                                    Q('term', **{name: val_attr_lst[1]})]
 
                                             mut.extend(qt or [])
                                             qry = Q('bool', must=mut)
-                                            shuld.append(Q('nested', path=alst[0], query=qry))
+                                            shuld.append(
+                                                Q('nested', path=alst[0], query=qry))
                         else:
-                            attr_key_hit = [x for x in attr_obj.keys() if v[0] + "." in x]
+                            attr_key_hit = [
+                                x for x in attr_obj.keys() if v[0] + "." in x]
                             if attr_key_hit:
                                 vlst = attr_obj.get(attr_key_hit[0])
                                 if isinstance(vlst, list):
-                                    attr_val = [x for x in attr_val_str.split(',')
-                                                if x.isdecimal() and int(x) < len(vlst)]
+                                    attr_val = [x for x in attr_val_str.split(
+                                        ',') if x.isdecimal() and int(x) < len(vlst)]
                                     if attr_val:
                                         shud = []
                                         name = v[0] + ".value"
@@ -211,17 +219,18 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         name_dict.update(dict(query=kv))
                                         qm = Q('match', **{name: name_dict})
 
-                                        for j in map(partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                        for j in map(
+                                                partial(lambda m, n: m[int(n)], vlst), attr_val):
                                             name = attr_key_hit[0]
                                             qm = Q('term', **{name: j})
                                             shud.append(qm)
 
-                                        shuld.append(Q('nested', path=v[0],
-                                                       query=Q('bool', should=shud, must=[qm])))
+                                        shuld.append(Q('nested', path=v[0], query=Q(
+                                            'bool', should=shud, must=[qm])))
 
             return Q('bool', should=shuld) if shuld else None
 
-        def _get_date_query(k, v):
+        def _Get_date_query(k, v):
             # text value
             qry = None
             if isinstance(v, list) and len(v) >= 2:
@@ -230,8 +239,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 if not date_from or not date_to:
                     return
 
-                date_from = datetime.strptime(date_from, '%Y%m%d').strftime('%Y-%m-%d')
-                date_to = datetime.strptime(date_to, '%Y%m%d').strftime('%Y-%m-%d')
+                date_from = datetime.strptime(
+                    date_from, '%Y%m%d').strftime('%Y-%m-%d')
+                date_to = datetime.strptime(
+                    date_to, '%Y%m%d').strftime('%Y-%m-%d')
 
                 qv = {}
                 qv.update(dict(gte=date_from))
@@ -242,21 +253,31 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                     path = v[1][0]
                     dt = v[1][1]
                     if isinstance(dt, dict):
-                        for attr_key, attr_val_str in map(lambda x: (x, request.values.get(x)), list(dt.keys())):
+                        for attr_key, attr_val_str in map(
+                            lambda x: (
+                                x, request.values.get(x)), list(
+                                dt.keys())):
                             attr_obj = dt.get(attr_key)
                             if isinstance(attr_obj, dict) and attr_val_str:
-                                attr_key_hit = [x for x in attr_obj.keys() if path + "." in x]
+                                attr_key_hit = [
+                                    x for x in attr_obj.keys() if path + "." in x]
                                 if attr_key_hit:
                                     vlst = attr_obj.get(attr_key_hit[0])
                                     if isinstance(vlst, list):
-                                        attr_val = [x for x in attr_val_str.split(',')]
+                                        attr_val = [
+                                            x for x in attr_val_str.split(',')]
                                         shud = []
-                                        for j in map(partial(lambda m, n: m[int(n)], vlst), attr_val):
-                                            qt = Q('term', **{attr_key_hit[0]: j})
+                                        for j in map(
+                                                partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                            qt = Q(
+                                                'term', **{attr_key_hit[0]: j})
                                             shud.append(qt)
 
-                                        qry = Q('range', **{path + ".value": qv})
-                                        qry = Q('nested', path=path, query=Q('bool', should=shud, must=[qry]))
+                                        qry = Q(
+                                            'range', **{path + ".value": qv})
+                                        qry = Q(
+                                            'nested', path=path, query=Q(
+                                                'bool', should=shud, must=[qry]))
             return qry
 
         kwd = current_app.config['WEKO_SEARCH_KEYWORDS_DICT']
@@ -285,9 +306,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 'Detail search query parser failed. err:{0}'.format(e))
         return mut
 
-    def _get_simple_search_query(qs=None):
-        """
-          query parser for simple search
+    def _Get_simple_search_query(qs=None):
+        """Query parser for simple search.
+
         :param qs: Query string.
         :return: Query parser.
         """
@@ -299,9 +320,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         mt.extend(_get_detail_keywords_query())
         return Q('bool', must=mt) if mt else Q()
 
-    def _get_simple_search_community_query(community_id,qs=None):
-        """
-          query parser for simple search
+    def _Get_simple_search_community_query(community_id, qs=None):
+        """Query parser for simple search.
+
         :param qs: Query string.
         :return: Query parser.
         """
@@ -319,8 +340,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
     def _default_parser(qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
+
            Full text Search.
            Detail Search.
+
         :param qstr: Query string.
         :returns: Query parser.
         """
@@ -348,8 +371,10 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
     def _default_parser_community(community_id, qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
+
            Full text Search.
            Detail Search.
+
         :param qstr: Query string.
         :returns: Query parser.
         """
@@ -377,7 +402,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                         type='most_fields', minimum_should_match='75%')
                 mt.append(q_s)
         return Q('bool', must=mt) if mt else Q()
-
 
     from invenio_records_rest.facets import default_facets_factory
     from invenio_records_rest.sorter import default_sorter_factory
@@ -436,16 +460,17 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
     # defalult sort
     if not sortkwargs:
-        sort_key, sort = SearchSetting.get_default_sort(current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
-        sort_obj=dict()
+        sort_key, sort = SearchSetting.get_default_sort(
+            current_app.config['WEKO_SEARCH_TYPE_KEYWORD'])
+        sort_obj = dict()
         key_fileds = SearchSetting.get_sort_key(sort_key)
-        if sort=='desc':
+        if sort == 'desc':
             sort_obj[key_fileds] = dict(order='desc')
-            sort_key = '-'+sort_key
+            sort_key = '-' + sort_key
         else:
             sort_obj[key_fileds] = dict(order='asc')
         search._sort.append(sort_obj)
-        urlkwargs.add('sort',sort_key)
+        urlkwargs.add('sort', sort_key)
 
     urlkwargs.add('q', query_q)
     return search, urlkwargs
@@ -458,7 +483,6 @@ def item_path_search_factory(self, search, index_id=None):
     :param search: Elastic search DSL search instance.
     :returns: Tuple with search instance and URL arguments.
     """
-
     def _get_index_earch_query():
 
         query_q = {
@@ -529,8 +553,8 @@ def item_path_search_factory(self, search, index_id=None):
             mut = list(map(lambda x: x.to_dict(), mut))
             post_filter = query_q['post_filter']
             if mut[0].get('bool'):
-                post_filter['bool'] = {'must': [{'term': post_filter.pop('term')}, mut[0]['bool']['must'][0]],
-                                       'should': mut[0]['bool']['should']}
+                post_filter['bool'] = {'must': [{'term': post_filter.pop(
+                    'term')}, mut[0]['bool']['must'][0]], 'should': mut[0]['bool']['should']}
                 # post_filter['bool'] = {'must': [{'term': post_filter.pop('term')}],
                 #                        'should': mut[0]['bool']['should']}
             else:
@@ -573,10 +597,12 @@ def item_path_search_factory(self, search, index_id=None):
         if 'custom_sort' in value:
             ind_id = request.values.get('q', '')
             search._sort = []
-            if value == 'custom_sort' :
-                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, 'asc')
+            if value == 'custom_sort':
+                script_str, default_sort = SearchSetting.get_custom_sort(
+                    ind_id, 'asc')
             else:
-                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, 'desc')
+                script_str, default_sort = SearchSetting.get_custom_sort(
+                    ind_id, 'desc')
 
             search._sort.append(script_str)
             search._sort.append(default_sort)
@@ -586,7 +612,8 @@ def item_path_search_factory(self, search, index_id=None):
 
     # default sort
     if not sortkwargs:
-        sort_key, sort = SearchSetting.get_default_sort(current_app.config['WEKO_SEARCH_TYPE_INDEX'])
+        sort_key, sort = SearchSetting.get_default_sort(
+            current_app.config['WEKO_SEARCH_TYPE_INDEX'])
         sort_obj = dict()
         key_fileds = SearchSetting.get_sort_key(sort_key)
         if 'custom_sort' not in sort_key:
@@ -599,10 +626,12 @@ def item_path_search_factory(self, search, index_id=None):
         else:
             if sort == 'desc':
                 ind_id = request.values.get('q', '')
-                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, 'desc')
+                script_str, default_sort = SearchSetting.get_custom_sort(
+                    ind_id, 'desc')
                 sort_key = '-' + sort_key
             else:
-                script_str, default_sort = SearchSetting.get_custom_sort(ind_id, 'asc')
+                script_str, default_sort = SearchSetting.get_custom_sort(
+                    ind_id, 'asc')
 
             search._sort = []
             search._sort.append(script_str)
@@ -618,6 +647,7 @@ def item_path_search_factory(self, search, index_id=None):
 def check_admin_user():
     """
     Check administrator role user.
+
     :return: result
     """
     result = True
@@ -631,12 +661,14 @@ def check_admin_user():
                 result = True
     return user_id, result
 
+
 weko_search_factory = item_path_search_factory
 es_search_factory = default_search_factory
 
+
 def opensearch_factory(self, search, query_parser=None):
-    """
-    Factory for opensearch.
+    """Factory for opensearch.
+
     :param self:
     :param search:
     :param query_parser:

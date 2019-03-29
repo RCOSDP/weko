@@ -68,7 +68,6 @@ def publish(pid, record, template=None, **kwargs):
     :param \*\*kwargs: Additional view arguments based on URL rule.
     :return: The rendered template.
     """
-
     from weko_deposit.api import WekoIndexer
     status = request.values.get('status')
     publish_status = record.get('publish_status')
@@ -241,11 +240,13 @@ def get_license_icon(type):
 
     return lst
 
+
 @blueprint.app_template_filter('get_downloads_count')
 def get_downloads_count(record):
+    """Get downloads count."""
     result = {}
     try:
-        cfg = {'params': {'bucket_id': record['_buckets']['deposit'] }}
+        cfg = {'params': {'bucket_id': record['_buckets']['deposit']}}
         query_cfg = current_stats.queries['bucket-file-download-total']
         query = query_cfg.query_class(**query_cfg.query_config)
         reseponse = query.run(**cfg['params'])
@@ -255,6 +256,7 @@ def get_downloads_count(record):
         current_app.logger.debug(str(e))
     return result
 
+
 @blueprint.app_template_filter('check_permission')
 def check_permission(record):
     """Check Permission on Page.
@@ -263,6 +265,7 @@ def check_permission(record):
     :return: result
     """
     return check_created_id(record)
+
 
 @blueprint.app_template_filter('check_file_permission')
 def check_file_permission(record, fjson):
@@ -274,18 +277,23 @@ def check_file_permission(record, fjson):
     """
     return check_file_download_permission(record, fjson)
 
+
 def _get_google_scholar_meta(record):
     target_map = {
-        'dc:title':'citation_title',
-        'jpcoar:creatorName':'citation_author',
-        'dc:publisher':'citation_publisher',
-        'jpcoar:subject':'citation_keywords',
-        'jpcoar:sourceTitle':'citation_journal_title',
-        'jpcoar:volume':'citation_volume',
-        'jpcoar:issue':'citation_issue',
-        'jpcoar:pageStart':'citation_firstpage',
-        'jpcoar:pageEnd':'citation_lastpage',}
-    recstr = etree.tostring(getrecord(identifier=record['_oai']['id'], metadataPrefix='jpcoar', verb='getrecord'))
+        'dc:title': 'citation_title',
+        'jpcoar:creatorName': 'citation_author',
+        'dc:publisher': 'citation_publisher',
+        'jpcoar:subject': 'citation_keywords',
+        'jpcoar:sourceTitle': 'citation_journal_title',
+        'jpcoar:volume': 'citation_volume',
+        'jpcoar:issue': 'citation_issue',
+        'jpcoar:pageStart': 'citation_firstpage',
+        'jpcoar:pageEnd': 'citation_lastpage', }
+    recstr = etree.tostring(
+        getrecord(
+            identifier=record['_oai']['id'],
+            metadataPrefix='jpcoar',
+            verb='getrecord'))
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
@@ -293,31 +301,42 @@ def _get_google_scholar_meta(record):
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
             if found is not None:
-                res.append({'name':target_map[target], 'data':found.text})
+                res.append({'name': target_map[target], 'data': found.text})
         for date in mtdata.findall('datacite:date', namespaces=mtdata.nsmap):
             if date.attrib.get('dateType') == 'Available':
-                res.append({'name':'citation_online_date', 'data':date.text})
+                res.append({'name': 'citation_online_date', 'data': date.text})
             elif date.attrib.get('dateType') == 'Issued':
-                res.append({'name':'citation_publication_date', 'data':date.text})
-        for relatedIdentifier in mtdata.findall('jpcoar:relatedIdentifier', namespaces=mtdata.nsmap):
-            if 'identifierType' in relatedIdentifier.attrib and relatedIdentifier.attrib['identifierType'] == 'DOI':
-                res.append({'name':'citation_doi', 'data':relatedIdentifier.text})
-        for sourceIdentifier in mtdata.findall('jpcoar:sourceIdentifier', namespaces=mtdata.nsmap):
-            if 'identifierType' in sourceIdentifier.attrib and sourceIdentifier.attrib['identifierType'] == 'ISSN':
-                res.append({'name':'citation_issn', 'data':sourceIdentifier.text})
-        pdf_url = mtdata.find('jpcoar:file/jpcoar:URI', namespaces=mtdata.nsmap)
+                res.append(
+                    {'name': 'citation_publication_date', 'data': date.text})
+        for relatedIdentifier in mtdata.findall(
+            'jpcoar:relatedIdentifier',
+                namespaces=mtdata.nsmap):
+            if 'identifierType' in relatedIdentifier.attrib and relatedIdentifier.attrib[
+                    'identifierType'] == 'DOI':
+                res.append({'name': 'citation_doi',
+                            'data': relatedIdentifier.text})
+        for sourceIdentifier in mtdata.findall(
+            'jpcoar:sourceIdentifier',
+                namespaces=mtdata.nsmap):
+            if 'identifierType' in sourceIdentifier.attrib and sourceIdentifier.attrib[
+                    'identifierType'] == 'ISSN':
+                res.append({'name': 'citation_issn',
+                            'data': sourceIdentifier.text})
+        pdf_url = mtdata.find(
+            'jpcoar:file/jpcoar:URI',
+            namespaces=mtdata.nsmap)
         if pdf_url is not None:
-            res.append({'name':'citation_pdf_url', 'data':pdf_url.text})
-    res.append({'name':'citation_dissertation_institution', 'data': InstitutionName.get_institution_name()})
-    res.append({'name':'citation_abstract_html_url', 'data': request.url})
+            res.append({'name': 'citation_pdf_url', 'data': pdf_url.text})
+    res.append({'name': 'citation_dissertation_institution',
+                'data': InstitutionName.get_institution_name()})
+    res.append({'name': 'citation_abstract_html_url', 'data': request.url})
     return res
 
 
 def default_view_method(pid, record, filename=None, template=None, **kwargs):
-    """Display default view.
+    r"""Display default view.
 
     Sends record_viewed signal and renders template.
-
     :param pid: PID object.
     :param record: Record object.
     :param filename: File name.
@@ -340,16 +359,17 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         community_id = comm.id
 
     # Get index style
-    style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+    style = IndexStyle.get(
+        current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
     width = style.width if style else '3'
     height = style.height if style else None
 
-    detail_condition=get_search_detail_keyword('')
+    detail_condition = get_search_detail_keyword('')
 
     weko_indexer = WekoIndexer()
-    res = weko_indexer.get_item_link_info(pid= record.get("control_number"))
+    res = weko_indexer.get_item_link_info(pid=record.get("control_number"))
     if res is not None:
-        record["relation"]=res
+        record["relation"] = res
     else:
         record["relation"] = {}
 
@@ -380,7 +400,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
 @blueprint.route("/item_management/bulk_update", methods=['GET'])
 def bulk_update():
-
     """Render view."""
     detail_condition = get_search_detail_keyword('')
     return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
@@ -394,7 +413,6 @@ def bulk_update():
 @login_required
 def get_items_metadata():
     """Get the metadata of items to bulk update."""
-
     def get_file_data(meta):
         file_data = {}
         for key in meta:
@@ -432,7 +450,8 @@ def get_items_metadata():
 
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
 def set_pdfcoverpage_header():
-    #limit upload file size : 1MB
+    """Set pdfcoverage header."""
+    # limit upload file size : 1MB
     current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 
     @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)

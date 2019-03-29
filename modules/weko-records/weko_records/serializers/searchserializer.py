@@ -29,11 +29,10 @@ from weko_records.utils import sort_meta_data_by_options
 
 
 class SearchSerializer(JSONSerializer):
-    """
-    extend JSONSerializer to modify search result
-    """
+    """Extend JSONSerializer to modify search result."""
 
     def transform_search_hit(self, pid, record_hit, links_factory=None):
+        """Transform search hit."""
         sort_meta_data_by_options(record_hit)
         return super(SearchSerializer, self).\
             transform_search_hit(pid, record_hit, links_factory)

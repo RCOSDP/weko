@@ -36,7 +36,6 @@ class WekoSearchUI(object):
         if app:
             self.init_app(app)
 
-
     def init_app(self, app):
         """Flask application initialization.
 
@@ -62,7 +61,7 @@ class WekoSearchUI(object):
                 app.config['BASE_PAGE_TEMPLATE'],
             )
 
-        app.config.setdefault( 'INDEX_IMG', app.config['INDEX_IMG'])
+        app.config.setdefault('INDEX_IMG', app.config['INDEX_IMG'])
 
         app.config.update(
             SEARCH_UI_SEARCH_TEMPLATE=getattr(
@@ -85,9 +84,7 @@ class WekoSearchUI(object):
 
 
 class WekoSearchREST(object):
-    """
-      Index Search Rest Obj
-    """
+    """Index Search Rest Obj."""
 
     def __init__(self, app=None):
         """Extension initialization.

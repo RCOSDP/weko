@@ -51,6 +51,7 @@ js = Bundle(
     output="gen/weko_search_ui.%(version)s.js",
 )
 
+
 def catalog(domain):
     """Return glob matching path to tranlated messages for a given domain."""
     return os.path.join(

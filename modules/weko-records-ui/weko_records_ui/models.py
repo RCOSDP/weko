@@ -33,7 +33,11 @@ from sqlalchemy.sql import func
 from sqlalchemy_utils.types import JSONType
 
 """ PDF cover page model"""
+
+
 class PDFCoverPageSettings(db.Model):
+    """PDF Cover Page Settings."""
+
     __tablename__ = 'pdfcoverpage_set'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -50,16 +54,28 @@ class PDFCoverPageSettings(db.Model):
     header_output_image = db.Column(db.Text, nullable=True, default='')
     """ Header Output Image"""
 
-    header_display_position = db.Column(db.Text, nullable=True, default='center')
+    header_display_position = db.Column(
+        db.Text, nullable=True, default='center')
     """ Header Display Position """
 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     """ Created Date"""
 
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+    updated_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.now,
+        onupdate=datetime.now)
     """ Updated Date """
 
-    def __init__(self, avail, header_display_type, header_output_string, header_output_image, header_display_position):
+    def __init__(
+            self,
+            avail,
+            header_display_type,
+            header_output_string,
+            header_output_image,
+            header_display_position):
+        """Init."""
         self.avail = avail
         self.header_display_type = header_display_type
         self.header_output_string = header_output_string
@@ -68,15 +84,26 @@ class PDFCoverPageSettings(db.Model):
 
     @classmethod
     def find(cls, id):
-        """ find record by ID """
-
+        """Find record by ID."""
         record = db.session.query(cls).filter_by(id=id).first()
         return record
 
     @classmethod
-    def update(cls, id, avail, header_display_type, header_output_string, header_output_image, header_display_position):
-
-        settings = PDFCoverPageSettings(avail, header_display_type, header_output_string, header_output_image, header_display_position)
+    def update(
+            cls,
+            id,
+            avail,
+            header_display_type,
+            header_output_string,
+            header_output_image,
+            header_display_position):
+        """Update."""
+        settings = PDFCoverPageSettings(
+            avail,
+            header_display_type,
+            header_output_string,
+            header_output_image,
+            header_display_position)
 
         """ update record by ID """
         record = db.session.query(cls).filter_by(id=id).first()
@@ -91,6 +118,8 @@ class PDFCoverPageSettings(db.Model):
 
 
 """ Record UI models """
+
+
 class InstitutionName(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     institution_name = db.Column(db.String(255), default='')
@@ -112,11 +141,10 @@ class InstitutionName(db.Model):
 
 
 class Identifier(db.Model):
-    """
-        Represent an Identifier.
+    """Represent an Identifier.
 
-        The Identifier object contains a ``created``, a ``updated``
-        properties that are automatically updated.
+    The Identifier object contains a ``created``, a ``updated``
+    properties that are automatically updated.
     """
 
     __tablename__ = 'pidstore_identifier'

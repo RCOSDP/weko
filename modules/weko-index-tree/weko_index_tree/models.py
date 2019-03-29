@@ -68,15 +68,18 @@ class Index(db.Model, Timestamp):
     index_link_name_english = db.Column(db.Text, nullable=False, default='')
     """English Name of the index link."""
 
-    index_link_enabled = db.Column(db.Boolean(name='index_link_enabled'), nullable=False,
-                             default=False)
+    index_link_enabled = db.Column(
+        db.Boolean(
+            name='index_link_enabled'),
+        nullable=False,
+        default=False)
     """Index link enable flag."""
 
     comment = db.Column(db.Text, nullable=True, default='')
     """Comment of the index."""
 
     more_check = db.Column(db.Boolean(name='more_check'), nullable=False,
-                             default=False)
+                           default=False)
     """More Status of the index."""
 
     display_no = db.Column(db.Integer, nullable=False, default=0)
@@ -86,10 +89,10 @@ class Index(db.Model, Timestamp):
                                      nullable=False, default=True)
     """Harvest public State of the index."""
 
-    display_format = db.Column(db.Text,nullable=True, default='1')
+    display_format = db.Column(db.Text, nullable=True, default='1')
     """The Format of Search Resault."""
 
-    image_name = db.Column(db.Text, nullable=False,default='')
+    image_name = db.Column(db.Text, nullable=False, default='')
     """The Name of upload image."""
 
     public_state = db.Column(db.Boolean(name='public_state'), nullable=False,
@@ -105,12 +108,18 @@ class Index(db.Model, Timestamp):
         db.Boolean(name='recs_public_state'), nullable=True, default=False)
     """Recursive Public State of the index."""
 
-    coverpage_state = db.Column(db.Boolean(name='coverpage_state'), nullable=True,
-                             default=False)
+    coverpage_state = db.Column(
+        db.Boolean(
+            name='coverpage_state'),
+        nullable=True,
+        default=False)
     """PDF Cover Page State of the index."""
 
     recursive_coverpage_check = db.Column(
-        db.Boolean(name='recursive_coverpage_check'), nullable=True, default=False)
+        db.Boolean(
+            name='recursive_coverpage_check'),
+        nullable=True,
+        default=False)
     """Recursive PDF Cover Page State of the index."""
 
     browsing_role = db.Column(db.Text, nullable=True)
@@ -165,9 +174,10 @@ class Index(db.Model, Timestamp):
     # index_items = db.relationship('IndexItems', back_populates='index', cascade='delete')
 
     def __iter__(self):
+        """Iter."""
         for name in dir(Index):
             if not name.startswith('__') and not name.startswith('_') \
-                 and name not in dir(Timestamp):
+                    and name not in dir(Timestamp):
                 value = getattr(self, name)
                 if value is None:
                     value = ""
@@ -179,10 +189,12 @@ class Index(db.Model, Timestamp):
 
     def __str__(self):
         """Representation."""
-        return 'Index <id={0.id}, index_name={0.index_name_english}>'.format(self)
+        return 'Index <id={0.id}, index_name={0.index_name_english}>'.format(
+            self)
 
     @classmethod
     def have_children(cls, id):
+        """Have Children."""
         children = cls.query.filter_by(parent=id).all()
         return False if (children is None or len(children) == 0) else True
 
@@ -212,7 +224,9 @@ listen(Index, 'after_insert', index_removed_or_inserted)
 listen(Index, 'after_delete', index_removed_or_inserted)
 listen(Index, 'after_update', index_removed_or_inserted)
 
+
 class IndexStyle(db.Model, Timestamp):
+    """Index style."""
 
     __tablename__ = 'index_style'
 
@@ -226,10 +240,11 @@ class IndexStyle(db.Model, Timestamp):
     """Index area height."""
 
     index_link_enabled = db.Column(db.Boolean(name='index_link_enabled'),
-        nullable=False, default=False)
+                                   nullable=False, default=False)
 
     @classmethod
     def create(cls, community_id, **data):
+        """Create."""
         try:
             with db.session.begin_nested():
                 obj = cls(id=community_id, **data)

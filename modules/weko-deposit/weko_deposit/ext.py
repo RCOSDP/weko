@@ -63,9 +63,7 @@ class WekoDeposit(object):
 
 
 class WekoDepositREST(object):
-    """
-      Weko Deposit Rest Obj
-    """
+    """Weko Deposit Rest Obj."""
 
     def __init__(self, app=None):
         """Extension initialization.

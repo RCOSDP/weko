@@ -292,6 +292,7 @@ def get_schema_form(item_type_id=0):
 @login_required
 @item_permission.require(http_exception=403)
 def items_index(pid_value=0):
+    """Items index."""
     try:
         if pid_value == 0:
             return redirect(url_for('.index'))
@@ -339,6 +340,7 @@ def items_index(pid_value=0):
 @login_required
 @item_permission.require(http_exception=403)
 def iframe_items_index(pid_value=0):
+    """Iframe items index."""
     try:
         if pid_value == 0:
             return redirect(url_for('.iframe_index'))

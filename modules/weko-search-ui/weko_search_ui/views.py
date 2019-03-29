@@ -59,9 +59,9 @@ blueprint_api = Blueprint(
 
 @blueprint.route("/search/index")
 def search():
-    """ Index Search page ui."""
+    """Index Search page ui."""
     search_type = request.args.get('search_type', '0')
-    getArgs= request.args
+    getArgs = request.args
     community_id = ""
     ctx = {'community': None}
     cur_index_id = search_type if search_type not in ('0', '1', ) else None
@@ -72,12 +72,13 @@ def search():
         community_id = comm.id
 
     # Get index style
-    style = IndexStyle.get(current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+    style = IndexStyle.get(
+        current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
     width = style.width if style else '3'
 
     # add at 1206 for search management
     sort_options, display_number = SearchSetting.get_results_setting()
-    disply_setting =dict(size=display_number)
+    disply_setting = dict(size=display_number)
 
     detail_condition = get_search_detail_keyword('')
 
@@ -85,14 +86,16 @@ def search():
 
     index_link_list = []
     for index in Index.query.all():
-        if index.index_link_enabled == True and index.public_state == True:
+        if index.index_link_enabled and index.public_state:
             if hasattr(current_i18n, 'language'):
                 if current_i18n.language == 'ja' and index.index_link_name:
                     index_link_list.append((index.id, index.index_link_name))
                 else:
-                    index_link_list.append((index.id, index.index_link_name_english))
+                    index_link_list.append(
+                        (index.id, index.index_link_name_english))
             else:
-                index_link_list.append((index.id, index.index_link_name_english))
+                index_link_list.append(
+                    (index.id, index.index_link_name_english))
 
     if 'item_management' in getArgs:
         management_type = request.args.get('item_management', 'sort')
@@ -104,49 +107,59 @@ def search():
                                detail_condition=detail_condition, **ctx)
 
     elif 'item_link' in getArgs:
-        activity_id=request.args.get('item_link')
+        activity_id = request.args.get('item_link')
         from weko_workflow.api import WorkActivity
         workFlowActivity = WorkActivity()
         activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx \
             = workFlowActivity.get_activity_index_search(activity_id=activity_id)
-        return render_template('weko_workflow/activity_detail.html',
-                               activity=activity_detail,
-                               item=item,
-                               steps=steps,
-                               action_id=action_id,
-                               cur_step=cur_step,
-                               temporary_comment=temporary_comment,
-                               record=approval_record,
-                               step_item_login_url=step_item_login_url,
-                               histories=histories,
-                               res_check=res_check,
-                               pid=pid,
-                               index_id=cur_index_id, community_id=community_id,
-                               width=width, height=height, **ctx)
+        return render_template(
+            'weko_workflow/activity_detail.html',
+            activity=activity_detail,
+            item=item,
+            steps=steps,
+            action_id=action_id,
+            cur_step=cur_step,
+            temporary_comment=temporary_comment,
+            record=approval_record,
+            step_item_login_url=step_item_login_url,
+            histories=histories,
+            res_check=res_check,
+            pid=pid,
+            index_id=cur_index_id,
+            community_id=community_id,
+            width=width,
+            height=height,
+            **ctx)
     else:
         journal_info = None
         if search_type in ('0', '1', '2'):
-            searched.send(current_app._get_current_object(), search_args=getArgs)
+            searched.send(
+                current_app._get_current_object(),
+                search_args=getArgs)
             if search_type == '2':
                 cur_index_id = request.args.get('q', '0')
                 journal_info = get_journal_info(cur_index_id)
-        return render_template(current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
-                               index_id=cur_index_id, community_id=community_id,
-                               sort_option=sort_options, disply_setting=disply_setting,
-                               detail_condition=detail_condition, width=width, height=height,
-                               index_link_enabled=style.index_link_enabled,
-                               index_link_list=index_link_list,
-                               journal_info=journal_info, **ctx)
-
+        return render_template(
+            current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
+            index_id=cur_index_id,
+            community_id=community_id,
+            sort_option=sort_options,
+            disply_setting=disply_setting,
+            detail_condition=detail_condition,
+            width=width,
+            height=height,
+            index_link_enabled=style.index_link_enabled,
+            index_link_list=index_link_list,
+            journal_info=journal_info,
+            **ctx)
 
 
 @blueprint_api.route('/opensearch/description.xml', methods=['GET'])
 def opensearch_description():
-    """
-    Returns WEKO3 opensearch description document.
+    """Returns WEKO3 opensearch description document.
+
     :return:
     """
-
     # create a response
     response = current_app.response_class()
 
@@ -159,25 +172,25 @@ def opensearch_description():
 
     root = ET.Element('OpenSearchDescription')
 
-    sname = ET.SubElement(root, '{'+ ns_opensearch + '}ShortName')
+    sname = ET.SubElement(root, '{' + ns_opensearch + '}ShortName')
     sname.text = current_app.config['WEKO_OPENSEARCH_SYSTEM_SHORTNAME']
 
-    des = ET.SubElement(root, '{'+ ns_opensearch + '}Description')
+    des = ET.SubElement(root, '{' + ns_opensearch + '}Description')
     des.text = current_app.config['WEKO_OPENSEARCH_SYSTEM_DESCRIPTION']
 
-    img = ET.SubElement(root, '{'+ ns_opensearch + '}Image')
+    img = ET.SubElement(root, '{' + ns_opensearch + '}Image')
     img.set('height', '16')
     img.set('width', '16')
     img.set('type', 'image/x-icon')
     img.text = request.host_url + \
-               current_app.config['WEKO_OPENSEARCH_IMAGE_URL']
+        current_app.config['WEKO_OPENSEARCH_IMAGE_URL']
 
-    url = ET.SubElement(root, '{'+ ns_opensearch + '}Url')
+    url = ET.SubElement(root, '{' + ns_opensearch + '}Url')
     url.set('type', 'application/atom+xml')
     url.set('template', request.host_url +
             'api/opensearch/search?q={searchTerms}')
 
-    url = ET.SubElement(root, '{'+ ns_opensearch + '}Url')
+    url = ET.SubElement(root, '{' + ns_opensearch + '}Url')
     url.set('type', 'application/atom+xml')
     url.set('template', request.host_url +
             'api/opensearch/search?q={searchTerms}&amp;format=atom')
@@ -191,16 +204,16 @@ def opensearch_description():
 
 @blueprint.route("/item_management/save", methods=['POST'])
 def save_sort():
-    """ Save custom sort"""
+    """Save custom sort."""
     try:
         data = request.get_json()
         index_id = data.get("q_id")
         sort_data = data.get("sort")
 
         # save data to DB
-        item_sort={}
+        item_sort = {}
         for sort in sort_data:
-            item_sort[sort.get('id')]=sort.get('custom_sort').get(index_id)
+            item_sort[sort.get('id')] = sort.get('custom_sort').get(index_id)
 
         Indexes.set_item_sort_custom(index_id, item_sort)
 
@@ -218,8 +231,9 @@ def save_sort():
         return make_response(jsonify(jfy), jfy['status'])
 
 
-def get_journal_info(index_id = 0):
+def get_journal_info(index_id=0):
     """Get journal information.
+
     :return: The object.
     """
     try:
@@ -248,12 +262,14 @@ def get_journal_info(index_id = 0):
                 val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
                 result.update({value['key']: val})
         # real url: ?action=repository_opensearch&index_id=
-        result.update({'openSearchUrl': request.url_root + "search?search_type=2&q={}".format(index_id)})
+        result.update({'openSearchUrl': request.url_root +
+                       "search?search_type=2&q={}".format(index_id)})
 
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         abort(500)
     return result
+
 
 @blueprint.route("/journal_info/<int:index_id>", methods=['GET'])
 def journal_detail(index_id=0):
