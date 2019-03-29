@@ -20,10 +20,10 @@
 
 """Blueprint for weko-workflow."""
 
-
 from functools import wraps
-from flask import Blueprint, abort, current_app, jsonify, render_template, \
-    request, session, url_for, json
+
+from flask import Blueprint, current_app, jsonify, render_template, \
+    request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -31,13 +31,13 @@ from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from sqlalchemy.orm.exc import NoResultFound
-from werkzeug.utils import import_string
 from weko_records.api import ItemsMetadata
+from werkzeug.utils import import_string
 
-from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem, GetCommunity
-from .models import ActionStatusPolicy, ActivityStatusPolicy
+from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, \
+    UpdateItem, GetCommunity
 from .config import IDENTIFIER_GRANT_SUFFIX_METHOD, IDENTIFIER_GRANT_LIST
-
+from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_jtitles
 
 blueprint = Blueprint(
@@ -61,13 +61,14 @@ def index():
         activities = activity.get_activity_list(request.args.get('community'))
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id =comm.id
+        community_id = comm.id
     else:
         activities = activity.get_activity_list()
     return render_template(
         'weko_workflow/activity_list.html',
         activities=activities, community_id=community_id, **ctx
     )
+
 
 @blueprint.route('/iframe/success', methods=['GET'])
 def iframe_success():
@@ -85,14 +86,14 @@ def new_activity():
     workflows = workflow.get_workflow_list()
     getargs = request.args
     ctx = {'community': None}
-    community_id=""
+    community_id = ""
     if 'community' in getargs:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
     return render_template(
         'weko_workflow/workflow_list.html',
-        workflows=workflows, community_id =community_id, **ctx
+        workflows=workflows, community_id=community_id, **ctx
     )
 
 
@@ -103,7 +104,8 @@ def init_activity():
     activity = WorkActivity()
     getargs = request.args
     if 'community' in getargs:
-        rtn = activity.init_activity(post_activity, request.args.get('community'))
+        rtn = activity.init_activity(post_activity,
+                                     request.args.get('community'))
     else:
         rtn = activity.init_activity(post_activity)
     if rtn is None:
@@ -163,9 +165,12 @@ def display_activity(activity_id=0):
     temporary_idf_grant_suffix = ["", "", ""]
     if temporary_comment:
         temporary_idf_grant = temporary_comment.action_identifier_grant
-        temporary_idf_grant_suffix[0] = temporary_comment.action_identifier_grant_jalc_doi_suffix
-        temporary_idf_grant_suffix[1] = temporary_comment.action_identifier_grant_jalc_cr_doi_suffix
-        temporary_idf_grant_suffix[2] = temporary_comment.action_identifier_grant_jalc_dc_doi_suffix
+        temporary_idf_grant_suffix[
+            0] = temporary_comment.action_identifier_grant_jalc_doi_suffix
+        temporary_idf_grant_suffix[
+            1] = temporary_comment.action_identifier_grant_jalc_cr_doi_suffix
+        temporary_idf_grant_suffix[
+            2] = temporary_comment.action_identifier_grant_jalc_dc_doi_suffix
         temporary_comment = temporary_comment.action_comment
 
     temporary_journal = activity.get_action_journal(
@@ -204,14 +209,14 @@ def display_activity(activity_id=0):
                             getter=record_class.get_record)
         pid, approval_record = resolver.resolve(pid_identifier.pid_value)
 
-    res_check = check_authority_action(activity_id,action_id)
+    res_check = check_authority_action(activity_id, action_id)
 
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
     if 'community' in getargs:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        community_id=request.args.get('community')
+        community_id = request.args.get('community')
         ctx = {'community': comm}
         community_id = comm.id
     return render_template(
@@ -257,6 +262,7 @@ def check_authority(func):
             if roles['allow'] and role.id not in roles['allow']:
                 return jsonify(code=403, msg=_('Authorization required'))
         return func(*args, **kwargs)
+
     return decorated_function
 
 
@@ -295,9 +301,12 @@ def next_action(activity_id='0', action_id=0):
 
     work_activity = WorkActivity()
     idf_grant = post_json.get('identifier_grant')
-    idf_grant_jalc_doi_suffix = post_json.get('identifier_grant_jalc_doi_suffix')
-    idf_grant_jalc_cr_doi_suffix = post_json.get('identifier_grant_jalc_cr_doi_suffix')
-    idf_grant_jalc_dc_doi_suffix = post_json.get('identifier_grant_jalc_dc_doi_suffix')
+    idf_grant_jalc_doi_suffix = post_json.get(
+        'identifier_grant_jalc_doi_suffix')
+    idf_grant_jalc_cr_doi_suffix = post_json.get(
+        'identifier_grant_jalc_cr_doi_suffix')
+    idf_grant_jalc_dc_doi_suffix = post_json.get(
+        'identifier_grant_jalc_dc_doi_suffix')
     # If is action identifier_grant, then save to work_activity
     if idf_grant is not None:
         work_activity.upt_activity_action_id_grant(
@@ -310,8 +319,10 @@ def next_action(activity_id='0', action_id=0):
         )
         activity['identifier_grant'] = idf_grant
         activity['identifier_grant_jalc_doi_suffix'] = idf_grant_jalc_doi_suffix
-        activity['identifier_grant_jalc_cr_doi_suffix'] = idf_grant_jalc_cr_doi_suffix
-        activity['identifier_grant_jalc_dc_doi_suffix'] = idf_grant_jalc_dc_doi_suffix
+        activity[
+            'identifier_grant_jalc_cr_doi_suffix'] = idf_grant_jalc_cr_doi_suffix
+        activity[
+            'identifier_grant_jalc_dc_doi_suffix'] = idf_grant_jalc_dc_doi_suffix
     if 1 == post_json.get('temporary_save'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
@@ -348,12 +359,12 @@ def next_action(activity_id='0', action_id=0):
             resolver = Resolver(pid_type='recid', object_type='rec',
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
-            
+
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 
-    if 'item_link'==action_endpoint:
-        relation_data= post_json.get('link_data'),
+    if 'item_link' == action_endpoint:
+        relation_data = post_json.get('link_data'),
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
         item = ItemsMetadata.get_record(id_=activity_detail.item_id)
@@ -425,7 +436,7 @@ def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
                 'identifierRegistration': {
                     "value": jalcdoi_tail[1] + jalcdoi_tail[2],
                     "properties": {
-                    "identifierType": "JaLC"
+                        "identifierType": "JaLC"
                     }
                 }
             },
@@ -439,7 +450,7 @@ def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
                 'identifierRegistration': {
                     "value": jalcdoi_cr_tail[1] + jalcdoi_cr_tail[2],
                     "properties": {
-                    "identifierType": "Crossref"
+                        "identifierType": "Crossref"
                     }
                 }
             },
@@ -453,7 +464,7 @@ def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
                 'identifierRegistration': {
                     "value": jalcdoi_dc_tail[1] + jalcdoi_dc_tail[2],
                     "properties": {
-                    "identifierType": "Datacite"
+                        "identifierType": "Datacite"
                     }
                 }
             },
@@ -538,6 +549,6 @@ def get_journal():
     result = search_romeo_jtitles(title, 'exact')
     if result['romeoapi'] and int(result['romeoapi']['header']['numhits']) > 1:
         result['romeoapi']['journals']['journal'] = \
-        result['romeoapi']['journals']['journal'][0]
+            result['romeoapi']['journals']['journal'][0]
 
     return jsonify(result)
