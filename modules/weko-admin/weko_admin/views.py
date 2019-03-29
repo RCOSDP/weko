@@ -256,7 +256,6 @@ def get_selected_lang():
         result = {'error': str(e)}
     return jsonify(result)
 
-
 @blueprint_api.route('/get_api_cert_type', methods=['GET'])
 def get_api_cert_type():
     """
@@ -343,8 +342,9 @@ def save_api_cert_data():
     data = request.get_json()
     api_code = data.get('api_code', '')
     cert_data = data.get('cert_data', '')
-    is_valid = validate_certification(cert_data)
-    if is_valid:
+    if not cert_data:
+        result['error'] = _('Account information is invalid. Please check again.')
+    elif validate_certification(cert_data):
         result = save_api_certification(api_code, cert_data)
     else:
         result['error'] = _('Account information is invalid. Please check again.')
