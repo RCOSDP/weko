@@ -40,7 +40,7 @@ var save = function () {
       if (err_msg) {
         alert(err_msg);
       } else if (!data.results) {
-        alert('Failed to update certificate data.');
+        alert('Failed to update account info.');
       } else {
         alert('Account info has been saved successfully.');
       }
@@ -74,7 +74,7 @@ var loadDataForInputType = function () {
       select.append(options);
     },
     error: function (error) {
-      alert('Error when api certificate type.');
+      alert('Error when load account info.');
     }
   });
 }
