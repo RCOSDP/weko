@@ -4,7 +4,7 @@ require([
   "typeahead.js",
   "bloodhound",
   "node_modules/angular/angular",
-  "node_modules/invenio-csl-js/dist/invenio-csl-js",
+  // "node_modules/invenio-csl-js/dist/invenio-csl-js",
 ], function(typeahead, Bloodhound) {
   $('#btn_back').on('click', function(){
     window.history.back();
