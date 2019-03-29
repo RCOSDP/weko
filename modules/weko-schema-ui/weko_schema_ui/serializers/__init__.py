@@ -22,8 +22,8 @@
 
 from pkg_resources import resource_filename
 
-from .wekoxml import WekoXMLSerializer
 from .WekoBibTexSerializer import WekoBibTexSerializer
+from .wekoxml import WekoXMLSerializer
 
 xslt_dublincore_oai = resource_filename(
     'weko_records', 'xslts/toDc_oai_v2.xsl')

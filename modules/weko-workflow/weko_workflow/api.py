@@ -936,7 +936,7 @@ class WorkActivityHistory(object):
 
     def create_activity_history(self, activity):
         """Create new activity history.
-        
+
         :param activity:
         :return:
         """

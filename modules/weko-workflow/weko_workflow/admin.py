@@ -211,7 +211,7 @@ class WorkFlowSettingView(BaseView):
     @expose('/<string:workflow_id>', methods=['DELETE'])
     def delete_workflow(self, workflow_id='0'):
         """Update workflow info.
-        
+
         :return:
         """
         workflow = WorkFlow()
