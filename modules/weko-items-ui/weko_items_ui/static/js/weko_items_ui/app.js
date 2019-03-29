@@ -464,7 +464,56 @@ function autocomplete(inp, arr) {
         }
       }
 
-      $scope.updateDataJson = function(){
+      $scope.registerUserPermission = function() {
+        // let userSelection = $('#input').val();
+        let userSelection = $(".form_share_permission").css('display');
+        if (userSelection == 'none') {
+          return;
+        }else if (userSelection == 'block') {
+          let _username = $('#share_username').val();
+          let _email = $('#share_email').val();
+      
+          let param = {
+            username: _username,
+            email: _email
+          };
+          $.ajax({
+            url: '/api/items/validate_user_info',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            method: 'POST',
+            async: false,
+            data: JSON.stringify(param),
+            dataType: "json",
+            success: (data, stauts) => {
+              if (data.error){
+                alert('Some errors have occured!\nDetail: ' + data.error);
+              } else {
+                if(data.validation) {
+                  userInfo = data.results;
+                  let otherUser = {
+                    username : userInfo.username,
+                    email : userInfo.email,
+                    userID : userInfo.user_id
+                  };
+                  $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = otherUser.userID;
+                }else {
+                  alert('Shared user information is not valid\nPlease check it again!')
+                }
+              }
+            },
+            error: (data, status) => {
+              alert('Cannot connect to server!');
+            }
+          })
+        }else {
+          alert('Some errors have occured when edit Contributer');
+        }
+      }
+
+      $scope.updateDataJson = async function(){
+        await this.registerUserPermission();
         var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
         var indexOfLink = str.indexOf("authorLink");
         if(indexOfLink != -1){
@@ -473,6 +522,7 @@ function autocomplete(inp, arr) {
         $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
       }
       $scope.saveDataJson = function(item_save_uri){
+        this.registerUserPermission();
         var metainfo = {'metainfo': $rootScope.recordsVM.invenioRecordsModel};
         if(!angular.isUndefined($rootScope.filesVM)) {
           metainfo = angular.merge(
