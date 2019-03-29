@@ -293,7 +293,7 @@ class IdentifierSettingView(ModelView):
             model.created_date = datetime.utcnow().replace(microsecond=0)
         model.updated_userId = current_user.get_id()
         model.updated_date = datetime.utcnow().replace(microsecond=0)
-        model.repository = str(model.repository)
+        model.repository = str(model.repository.id)
         pass
 
     def on_form_prefill(self, form, id):
