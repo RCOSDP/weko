@@ -256,6 +256,7 @@ def get_selected_lang():
         result = {'error': str(e)}
     return jsonify(result)
 
+
 @blueprint_api.route('/get_api_cert_type', methods=['GET'])
 def get_api_cert_type():
     """
