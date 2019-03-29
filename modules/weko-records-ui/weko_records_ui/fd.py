@@ -225,7 +225,7 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
         coverpage_state = WekoRecord.get_record_cvs(pid.object_uuid)
 
         is_original = request.args.get('original') or False
-        is_pdf = fileobj.mimetype
+        is_pdf = 'pdf' in fileobj.mimetype
         can_download_original_pdf = check_original_pdf_download_permission(
             record)
 
