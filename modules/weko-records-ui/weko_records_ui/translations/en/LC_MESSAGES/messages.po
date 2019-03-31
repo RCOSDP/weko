@@ -341,6 +341,10 @@ msgstr ""
 msgid "Schema"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/box/preview.html:49
+msgid "Size"
+msgstr ""
+
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:58
 msgid ""
 "This is the file fingerprint (MD5 checksum), which can be used to verify "

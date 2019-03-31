@@ -294,6 +294,7 @@ msgstr ""
 msgid "Update"
 msgstr "アップデート"
 
+
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:29
 msgid "Search Author"
 msgstr ""
@@ -326,6 +327,7 @@ msgstr "ヘッダー設定"
 #: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:238
 msgid " Update"
 msgstr "アップデート"
+
 
 #: weko_records_ui/templates/weko_records_ui/box/meta.html:42
 msgid "Publication date"
