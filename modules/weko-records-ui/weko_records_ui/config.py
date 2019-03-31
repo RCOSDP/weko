@@ -94,11 +94,10 @@ RECORDS_UI_ENDPOINTS = dict(
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
         # read_permission_factory_imp=allow_all,
-        record_serializers={
-            'text/x-bibliography': (
-                'weko_records.serializers',
-                ':citeproc_v1_response'),
-        }
+        # record_serializers={
+        #     'text/x-bibliography': ('weko_records.serializers',
+        #         ':citeproc_v1_response'),
+        # }
     ),
     recid_export=dict(
         pid_type='recid',
