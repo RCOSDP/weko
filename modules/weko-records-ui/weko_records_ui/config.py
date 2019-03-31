@@ -93,7 +93,7 @@ RECORDS_UI_ENDPOINTS = dict(
         record_class='weko_deposit.api:WekoRecord',
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
-        read_permission_factory_imp=allow_all,
+        # read_permission_factory_imp=allow_all,
         record_serializers={
             'text/x-bibliography': (
                 'weko_records.serializers',
