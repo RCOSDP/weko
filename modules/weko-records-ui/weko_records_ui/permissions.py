@@ -52,6 +52,9 @@ def page_permission_factory(record, *args, **kwargs):
             if kwargs.get('flg'):
                 if not is_can or (is_can and not is_himself):
                     is_ok = False
+
+        print("[Log]: is_ok")
+        print(is_ok)
         return is_ok
 
     return type('DetailPagePermissionChecker', (), {'can': can})()
