@@ -20,7 +20,7 @@
 
 """Blueprint for weko-records-ui."""
 
-import six
+import six, requests, os
 from flask import Blueprint, abort, current_app, render_template, \
     make_response, redirect, request, url_for, flash
 from flask_login import current_user
@@ -42,11 +42,8 @@ import werkzeug
 from datetime import datetime
 from invenio_db import db
 from sqlalchemy.exc import IntegrityError
-
-
 from invenio_stats import current_stats
-
-from invenio_stats import current_stats
+from invenio_stats.views import QueryRecordViewCount
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -241,20 +238,6 @@ def get_license_icon(type):
 
     return lst
 
-@blueprint.app_template_filter('get_downloads_count')
-def get_downloads_count(record):
-    result = {}
-    try:
-        cfg = {'params': {'bucket_id': record['_buckets']['deposit'] }}
-        query_cfg = current_stats.queries['bucket-file-download-total']
-        query = query_cfg.query_class(**query_cfg.query_config)
-        reseponse = query.run(**cfg['params'])
-        for c in reseponse['buckets']:
-            result[c['key']] = int(c['value'])
-    except Exception as e:
-        current_app.logger.debug(str(e))
-    return result
-
 @blueprint.app_template_filter('check_permission')
 def check_permission(record):
     """Check Permission on Page.
@@ -310,7 +293,6 @@ def _get_google_scholar_meta(record):
     res.append({'name':'citation_dissertation_institution', 'data': InstitutionName.get_institution_name()})
     res.append({'name':'citation_abstract_html_url', 'data': request.url})
     return res
-
 
 def default_view_method(pid, record, filename=None, template=None, **kwargs):
     """Display default view.
@@ -376,18 +358,29 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         **kwargs
     )
 
-@blueprint.app_template_filter('get_view_count')
-def get_view_count(record):
-    result = 0
-    try:
-        cfg = {'params': {'record_id': record.id }}
-        query_cfg = current_stats.queries['bucket-record-view-total']
-        query = query_cfg.query_class(**query_cfg.query_config)
-        reseponse = query.run(**cfg['params'])
-        result = int(reseponse['count'])
-    except Exception as e:
-        current_app.logger.debug(str(e))
-    return result
+
+@blueprint.app_template_filter('get_views_count')
+def get_views_count(record):
+    response = QueryRecordViewCount.get_count(record.id)
+    return response
+
+# @blueprint.app_template_filter('get_downloads_count')
+# def get_downloads_count(record):
+#     result = {}
+#     try:
+#         cfg = {'params': {'bucket_id': record['_buckets']['deposit'] }}
+#         query_cfg = current_stats.queries['bucket-file-download-total']
+#         query = query_cfg.query_class(**query_cfg.query_config)
+#         reseponse = query.run(**cfg['params'])
+#         for c in reseponse['buckets']:
+#             result[c['key']] = int(c['value'])
+#     except Exception as e:
+#         current_app.logger.debug(str(e))
+#     return result
+
+@blueprint.app_template_filter('get_downloads_count')
+def get_downloads_count(record):
+    pass
 
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
 def set_pdfcoverpage_header():
@@ -423,7 +416,7 @@ def set_pdfcoverpage_header():
                                     header_display_position
                                     )
 
-        flash('PDF cover page settings have been updated.', category='success')
+        flash({{_('PDF cover page settings have been updated.')}}, category='success')
         return redirect('/admin/pdfcoverpage')
 
     return redirect('/admin/pdfcoverpage')
