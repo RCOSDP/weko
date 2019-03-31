@@ -103,3 +103,13 @@ class WekoJSONSerializer(JSONSerializer):
         return json.dumps(
             self.transform_search_hit(pid, record)
         ).encode('utf8')  + b'\n'
+
+    def serialize(self, pid, record, links_factory=None, **kwargs):
+        print("[Log]: WekoJSONSerializer >> serialize")
+        print(pid)
+        print(record)
+        result = super(WekoJSONSerializer, self).serialize(
+            pid, record, links_factory=links_factory, **kwargs
+        )
+
+        return result
