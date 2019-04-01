@@ -23,13 +23,16 @@ from invenio_communities.models import Community
 
 def get_community_id_by_index(indexName):
     """
-     Get a json of item type info
+        Get community use indexName input is index_name_english
+    :param: index_name_english
     :return: dict of item type info
     """
-    # Community.get(community_address[0].id).index.index_name_english
     communities = Community.query.all()
+    ret_community = []
     for community in communities:
         if community.index.index_name_english == indexName:
-            return community.id
+            ret_community.append(community.id)
 
+    if len(ret_community) > 0:
+        return ret_community[0]
     return None

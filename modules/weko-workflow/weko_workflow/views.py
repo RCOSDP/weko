@@ -31,14 +31,19 @@ from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from sqlalchemy.orm.exc import NoResultFound
+from weko_deposit.api import WekoRecord
+from weko_index_tree.models import Index
 from weko_records.api import ItemsMetadata
+from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, \
     UpdateItem, GetCommunity
-from .config import IDENTIFIER_GRANT_SUFFIX_METHOD, IDENTIFIER_GRANT_LIST
+from .config import IDENTIFIER_GRANT_SUFFIX_METHOD, IDENTIFIER_GRANT_LIST, \
+    IDENTIFIER_ITEMSMETADATA_FORM
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_jtitles
+from .utils import get_community_id_by_index
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -162,36 +167,46 @@ def display_activity(activity_id=0):
     temporary_comment = activity.get_activity_action_comment(
         activity_id=activity_id, action_id=action_id)
 
-    ### display_activity of Identifier grant
-    from weko_records_ui.models import Identifier
-    from weko_deposit.api import WekoRecord
-    from weko_index_tree.models import Index
-    from .utils import get_community_id_by_index
-    pidstore_idf = None
-    if item:
-        path = WekoRecord.get_record(item.id).get('path')
-        if len(path) > 1:
-            pass
-        else:
-            index_address = path.pop(-1).split('/')
-            index_id = Index.query.filter_by(id=index_address.pop()).one()
-            # current_app.logger.debug(index_id.index_name_english)
-            community_id = get_community_id_by_index(index_id.index_name_english)
-            if community_id == None:
+    # display_activity of Identifier grant
+    idf_grant_data = None
+    if 'identifier_grant' == action_endpoint:
+        if item:
+            path = WekoRecord.get_record(item.id).get('path')
+            if len(path) > 1:
                 community_id = 'Root Index'
-            # current_app.logger.debug(Identifier.query.filter_by(repository=community_id).one())
-            pidstore_idf = Identifier.query.filter_by(repository=community_id).one()
+            else:
+                index_address = path.pop(-1).split('/')
+                index_id = Index.query.filter_by(id=index_address.pop()).one()
+                community_id = get_community_id_by_index(
+                    index_id.index_name_english)
+
+            idf_grant_data = Identifier.query.filter_by(
+                repository=community_id).all()
+            # valid date pidstore_identifier data
+            if idf_grant_data is not None:
+                if len(idf_grant_data) > 0:
+                    idf_grant_data = idf_grant_data[0]
+                if idf_grant_data.jalc_doi is None:
+                    idf_grant_data.jalc_doi = '«Empty»'
+                if idf_grant_data.jalc_crossref_doi is None:
+                    idf_grant_data.jalc_crossref_doi = '«Empty»'
+                if idf_grant_data.jalc_datacite_doi is None:
+                    idf_grant_data.jalc_datacite_doi = '«Empty»'
+                if idf_grant_data.cnri is None:
+                    idf_grant_data.cnri = '«Empty»'
+                if idf_grant_data.suffix is None:
+                    idf_grant_data.suffix = '«Empty»'
 
     temporary_idf_grant = 0
-    temporary_idf_grant_suffix = ["", "", ""]
+    temporary_idf_grant_suffix = []
     if temporary_comment:
         temporary_idf_grant = temporary_comment.action_identifier_grant
-        temporary_idf_grant_suffix[
-            0] = temporary_comment.action_identifier_grant_jalc_doi_suffix
-        temporary_idf_grant_suffix[
-            1] = temporary_comment.action_identifier_grant_jalc_cr_doi_suffix
-        temporary_idf_grant_suffix[
-            2] = temporary_comment.action_identifier_grant_jalc_dc_doi_suffix
+        temporary_idf_grant_suffix.append(
+            temporary_comment.action_identifier_grant_jalc_doi_manual)
+        temporary_idf_grant_suffix.append(
+            temporary_comment.action_identifier_grant_jalc_cr_doi_manual)
+        temporary_idf_grant_suffix.append(
+            temporary_comment.action_identifier_grant_jalc_dc_doi_manual)
         temporary_comment = temporary_comment.action_comment
 
     temporary_journal = activity.get_action_journal(
@@ -251,7 +266,7 @@ def display_activity(activity_id=0):
         temporary_journal=temporary_journal,
         temporary_idf_grant=temporary_idf_grant,
         temporary_idf_grant_suffix=temporary_idf_grant_suffix,
-        pidstore_idf=pidstore_idf,
+        idf_grant_data=idf_grant_data,
         idf_grant_input=IDENTIFIER_GRANT_LIST,
         idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
         record=approval_record,
@@ -323,11 +338,11 @@ def next_action(activity_id='0', action_id=0):
 
     work_activity = WorkActivity()
     idf_grant = post_json.get('identifier_grant')
-    idf_grant_jalc_doi_suffix = post_json.get(
+    idf_grant_jalc_doi_manual = post_json.get(
         'identifier_grant_jalc_doi_suffix')
-    idf_grant_jalc_cr_doi_suffix = post_json.get(
+    idf_grant_jalc_cr_doi_manual = post_json.get(
         'identifier_grant_jalc_cr_doi_suffix')
-    idf_grant_jalc_dc_doi_suffix = post_json.get(
+    idf_grant_jalc_dc_doi_manual = post_json.get(
         'identifier_grant_jalc_dc_doi_suffix')
     # If is action identifier_grant, then save to work_activity
     if idf_grant is not None:
@@ -335,16 +350,16 @@ def next_action(activity_id='0', action_id=0):
             activity_id=activity_id,
             action_id=action_id,
             identifier_grant=idf_grant,
-            identifier_grant_jalc_doi_suffix=idf_grant_jalc_doi_suffix,
-            identifier_grant_jalc_cr_doi_suffix=idf_grant_jalc_cr_doi_suffix,
-            identifier_grant_jalc_dc_doi_suffix=idf_grant_jalc_dc_doi_suffix
+            identifier_grant_jalc_doi_suffix=idf_grant_jalc_doi_manual,
+            identifier_grant_jalc_cr_doi_suffix=idf_grant_jalc_cr_doi_manual,
+            identifier_grant_jalc_dc_doi_suffix=idf_grant_jalc_dc_doi_manual,
         )
         activity['identifier_grant'] = idf_grant
-        activity['identifier_grant_jalc_doi_suffix'] = idf_grant_jalc_doi_suffix
-        activity[
-            'identifier_grant_jalc_cr_doi_suffix'] = idf_grant_jalc_cr_doi_suffix
-        activity[
-            'identifier_grant_jalc_dc_doi_suffix'] = idf_grant_jalc_dc_doi_suffix
+        activity['identifier_grant_jalc_doi_suffix'] = idf_grant_jalc_doi_manual
+        activity['identifier_grant_jalc_cr_doi_suffix'] = \
+            idf_grant_jalc_cr_doi_manual
+        activity['identifier_grant_jalc_dc_doi_suffix'] = \
+            idf_grant_jalc_dc_doi_manual
     if 1 == post_json.get('temporary_save'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
@@ -358,13 +373,15 @@ def next_action(activity_id='0', action_id=0):
                 action_id=action_id,
                 comment=post_json.get('commond')
             )
-
         return jsonify(code=0, msg=_('success'))
+
     history = WorkActivityHistory()
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
+
     if 'begin_action' == action_endpoint:
         return jsonify(code=0, msg=_('success'))
+
     if 'end_action' == action_endpoint:
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
@@ -401,7 +418,8 @@ def next_action(activity_id='0', action_id=0):
 
     # save pidstore_identifier to ItemsMetadata
     if 'identifier_grant' == action_endpoint:
-        pidstore_identifier_mapping(post_json, activity_id, action_id)
+        if int(post_json.get('identifier_grant')) > 0:
+            pidstore_identifier_mapping(post_json, activity_id, action_id)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
@@ -438,69 +456,57 @@ def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
     activity_obj = WorkActivity()
     activity_detail = activity_obj.get_activity_detail(activity_id)
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-    if post_json.get('identifier_grant') is not None:
-        # transfer to JPCOAR format
-        jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
+
+    # transfer to JPCOAR format
+    res = {'pidstore_identifier': []}
+    tempdata = IDENTIFIER_ITEMSMETADATA_FORM
+
+    jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
+    if not jalcdoi_link:
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
-        jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
+        tempdata['identifier']['value'] = jalcdoi_link
+        tempdata['identifier']['properties']['identifierType'] = 'DOI'
+        tempdata['identifierRegistration']['value'] = \
+            jalcdoi_tail[1] + \
+            jalcdoi_tail[2]
+        tempdata['identifierRegistration']['properties'][
+            'identifierType'] = 'JaLC'
+        res['pidstore_identifier'].append(tempdata)
+
+    jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
+    if not jalcdoi_cr_link:
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
-        jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
+        tempdata['identifier']['value'] = jalcdoi_cr_link
+        tempdata['identifierRegistration']['value'] = \
+            jalcdoi_cr_tail[1] + \
+            jalcdoi_cr_tail[2]
+        tempdata['identifierRegistration']['properties'][
+            'identifierType'] = 'Crossref'
+        res['pidstore_identifier'].append(tempdata)
+
+    jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
+    if not jalcdoi_dc_link:
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
-        jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
-        res = {'pidstore_identifier': [
-            {
-                'identifier': {
-                    'value': jalcdoi_link,
-                    'properties': {
-                        'identifierType': 'DOI'
-                    }
-                },
-                'identifierRegistration': {
-                    "value": jalcdoi_tail[1] + jalcdoi_tail[2],
-                    "properties": {
-                        "identifierType": "JaLC"
-                    }
-                }
-            },
-            {
-                'identifier': {
-                    'value': jalcdoi_cr_link,
-                    'properties': {
-                        'identifierType': 'DOI'
-                    }
-                },
-                'identifierRegistration': {
-                    "value": jalcdoi_cr_tail[1] + jalcdoi_cr_tail[2],
-                    "properties": {
-                        "identifierType": "Crossref"
-                    }
-                }
-            },
-            {
-                'identifier': {
-                    'value': jalcdoi_dc_link,
-                    'properties': {
-                        'identifierType': 'DOI'
-                    }
-                },
-                'identifierRegistration': {
-                    "value": jalcdoi_dc_tail[1] + jalcdoi_dc_tail[2],
-                    "properties": {
-                        "identifierType": "Datacite"
-                    }
-                }
-            },
-            {
-                'identifier': {
-                    'value': jalcdoi_crni_link,
-                    'properties': {
-                        'identifierType': 'HDL'
-                    }
-                }
-            },
-        ]}
+        tempdata['identifier']['value'] = jalcdoi_dc_link
+        tempdata['identifierRegistration']['value'] = \
+            jalcdoi_dc_tail[1] + \
+            jalcdoi_dc_tail[2]
+        tempdata['identifierRegistration']['properties'][
+            'identifierType'] = 'Datacite'
+        res['pidstore_identifier'].append(tempdata)
+
+    jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
+    if not jalcdoi_crni_link:
+        tempdata['identifier']['value'] = jalcdoi_crni_link
+        tempdata['identifier']['properties']['identifierType'] = 'HDL'
+        del tempdata['identifierRegistration']
+        res['pidstore_identifier'].append(tempdata)
+
+    try:
         item.update(res)
         item.commit()
+    except Exception as ex:
+        current_app.logger.exception(str(ex))
 
 
 @blueprint.route(

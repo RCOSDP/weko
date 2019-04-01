@@ -13,20 +13,20 @@ require([
     if ($("input[name='idf_grant_input_1']").length) {
       data_global.post_data = {
         identifier_grant: $("input[name='identifier_grant']:checked").val(),
-        identifier_grant_jalc_doi_suffix : $("input[name='idf_grant_input_1']").val(),
-        identifier_grant_jalc_doi_link : $("span[name='idf_grant_link_1']").text() +  $("input[name='idf_grant_input_1']").val(),
+        identifier_grant_jalc_doi_suffix: $("input[name='idf_grant_input_1']").val(),
+        identifier_grant_jalc_doi_link: $("span[name='idf_grant_link_1']").text() + $("input[name='idf_grant_input_1']").val(),
         identifier_grant_jalc_cr_doi_suffix: $("input[name='idf_grant_input_2']").val(),
-        identifier_grant_jalc_cr_doi_link : $("span[name='idf_grant_link_2']").text() +  $("input[name='idf_grant_input_2']").val(),
+        identifier_grant_jalc_cr_doi_link: $("span[name='idf_grant_link_2']").text() + $("input[name='idf_grant_input_2']").val(),
         identifier_grant_jalc_dc_doi_suffix: $("input[name='idf_grant_input_3']").val(),
-        identifier_grant_jalc_dc_doi_link : $("span[name='idf_grant_link_3']").text() +  $("input[name='idf_grant_input_3']").val(),
-        identifier_grant_crni_link : $("span[name='idf_grant_link_4']").text(),
+        identifier_grant_jalc_dc_doi_link: $("span[name='idf_grant_link_3']").text() + $("input[name='idf_grant_input_3']").val(),
+        identifier_grant_crni_link: $("span[name='idf_grant_link_4']").text(),
         action_version: $('.cur_step').data('action-version'),
         temporary_save: tmp_save
       };
     } else {
       data_global.post_data = {
         identifier_grant: $("input[name='identifier_grant']:checked").val(),
-        identifier_grant_jalc_doi_suffix : "",
+        identifier_grant_jalc_doi_suffix: "",
         identifier_grant_jalc_doi_link: $("span[name='idf_grant_link_1']").text(),
         identifier_grant_jalc_cr_doi_suffix: "",
         identifier_grant_jalc_cr_doi_link: $("span[name='idf_grant_link_2']").text(),
@@ -47,10 +47,10 @@ require([
       async: true,
       contentType: 'application/json',
       data: JSON.stringify(data_global.post_data),
-      success: function(data, status) {
-        if(0 == data.code) {
-          if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href=data.data.redirect;
+      success: function (data, status) {
+        if (0 == data.code) {
+          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+            document.location.href = data.data.redirect;
           } else {
             document.location.reload(true);
           }
@@ -58,7 +58,7 @@ require([
           alert(data.msg);
         }
       },
-      error: function(jqXHE, status) {
+      error: function (jqXHE, status) {
         alert('Server error');
         $('#myModal').modal('hide');
       }
@@ -66,13 +66,13 @@ require([
   }
 
   // click button Next
-  $('#btn-finish').on('click', function(){
+  $('#btn-finish').on('click', function () {
     preparePostData(0);
     send();
   });
 
   // click button Save
-  $('#btn-draft').on('click', function(){
+  $('#btn-draft').on('click', function () {
     preparePostData(1);
     send();
   });

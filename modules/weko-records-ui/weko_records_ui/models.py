@@ -168,5 +168,9 @@ class Identifier(db.Model):
     updated_date = db.Column(db.DateTime, nullable=True)
     """ Created date """
 
+    def __repr__(self):
+        """String representation of the Pidstore Identifier object."""
+        return '<Identifier {}, Repository: {}>'.format(self.id, self.repository)
+
 
 __all__ = ('Identifier', 'PDFCoverPageSettings')
