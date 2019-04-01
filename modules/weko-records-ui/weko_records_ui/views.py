@@ -425,7 +425,7 @@ def set_pdfcoverpage_header():
 def citation(record, pid, style=None, ln=None):
     """Render citation for record according to style and language."""
     locale = "en-US" # ln or current_i18n.language
-    style = "4or" # style or 'science'
+    style = "abi-technik" # style or 'science'
     try:
         result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
         return result
