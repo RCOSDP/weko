@@ -1,5 +1,5 @@
 require([
-  'jquery'
+  //'jquery'
 ],function () {
   $('#myModal').modal({
     show: false
@@ -53,7 +53,7 @@ require([
       idData = JSON.parse(demoList[idx]);
       itemData = JSON.parse(demoList[++idx]);
       indexData = JSON.parse(demoList[++idx]);
-      
+
       // Get item files
       var files = {};
       var isAllFileSelected = true;
@@ -120,9 +120,9 @@ require([
                   processData: false,
                   success: function() {
                     // Update items
-                    updateItems(index_url, 
-                                self_url, 
-                                JSON.stringify(itemData), 
+                    updateItems(index_url,
+                                self_url,
+                                JSON.stringify(itemData),
                                 JSON.stringify(indexData),
                                 error,
                                 errorFlg);
@@ -143,9 +143,9 @@ require([
         // No file
         }else {
           // Update items
-          updateItems(index_url, 
-                      self_url, 
-                      JSON.stringify(itemData), 
+          updateItems(index_url,
+                      self_url,
+                      JSON.stringify(itemData),
                       JSON.stringify(indexData),
                       error,
                       errorFlg);
@@ -167,7 +167,7 @@ require([
           success: function(data){
             index_url = redirect_url + "/" + data['id'];
             self_url = items_url + "/" + data['id'];
-    
+
             // Has File
             if (Object.keys(files) != 0) {
               // Upload files
@@ -183,9 +183,9 @@ require([
                   processData: false,
                   success: function() {
                     // Update items
-                    updateItems(index_url, 
-                                self_url, 
-                                JSON.stringify(itemData), 
+                    updateItems(index_url,
+                                self_url,
+                                JSON.stringify(itemData),
                                 JSON.stringify(indexData),
                                 error,
                                 errorFlg);
@@ -200,9 +200,9 @@ require([
             // No file
             } else {
               // Update items
-              updateItems(index_url, 
-                          self_url, 
-                          JSON.stringify(itemData), 
+              updateItems(index_url,
+                          self_url,
+                          JSON.stringify(itemData),
                           JSON.stringify(indexData),
                           error,
                           errorFlg);
@@ -220,9 +220,9 @@ require([
     }
 
     // Display message
-    $('.modal-body').html('Upload completed. &nbsp;【&nbsp;Success(' + 
-                        (totalNo - errorList.length) + ')&nbsp;&nbsp;+&nbsp;&nbsp;Error(' + 
-                        errorList.length + ')&nbsp;&nbsp;/&nbsp;&nbsp;Total(' + 
+    $('.modal-body').html('Upload completed. &nbsp;【&nbsp;Success(' +
+                        (totalNo - errorList.length) + ')&nbsp;&nbsp;+&nbsp;&nbsp;Error(' +
+                        errorList.length + ')&nbsp;&nbsp;/&nbsp;&nbsp;Total(' +
                         totalNo + ')&nbsp;&nbsp;item(s)&nbsp;】');
     $('#myModal').modal('show');
 
@@ -267,13 +267,13 @@ require([
 
     // Add error list
     for (var index in errorList) {
-      $('#result-list').append('<tr><td>' + errorList[index]['category'] + 
-                              '</td><td>' + errorList[index]['line'] + 
-                              '</td><td>' + errorList[index]['item'] + 
+      $('#result-list').append('<tr><td>' + errorList[index]['category'] +
+                              '</td><td>' + errorList[index]['line'] +
+                              '</td><td>' + errorList[index]['item'] +
                               '</td><td>' + errorList[index]['eMsg'] +'</td></tr>');
     }
     $('#result-label').html("Error List:<br>&nbsp;&nbsp;" + errorList.length + " error(s) of " + totalNo +" item(s)");
     $('#result').removeClass('hidden');
   }
-  
+
 });

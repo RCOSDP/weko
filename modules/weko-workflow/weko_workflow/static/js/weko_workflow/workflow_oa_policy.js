@@ -1,6 +1,6 @@
 require([
-  "jquery",
-  "bootstrap"
+//  "jquery",
+//  "bootstrap"
 ], function () {
   $(document).ready(function() {
     var journalNames = [];
@@ -24,6 +24,12 @@ require([
     });
 
     $('#search-key').on('keypress', function() {
+      clearTimeout(getJournalsTimer);
+      getJournalsTimer = setTimeout(function(){ getJournals(); }, 1000);
+    });
+
+    // After paste
+    $('#search-key').on('paste', function() {
       clearTimeout(getJournalsTimer);
       getJournalsTimer = setTimeout(function(){ getJournals(); }, 1000);
     });

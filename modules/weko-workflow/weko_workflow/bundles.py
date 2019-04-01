@@ -22,7 +22,6 @@
 
 from flask_assets import Bundle
 
-
 js_workflow = Bundle(
     'js/weko_workflow/workflow_detail.js',
     filters='requirejs',

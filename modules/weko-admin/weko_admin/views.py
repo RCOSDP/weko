@@ -171,7 +171,7 @@ def site_license():
             SiteLicense.update(request.get_json())
             jfy['status'] = 201
             jfy['message'] = 'Site license was successfully updated.'
-        except:
+        except BaseException:
             jfy['status'] = 500
             jfy['message'] = 'Failed to update site license.'
         return make_response(jsonify(jfy), jfy['status'])
@@ -185,7 +185,7 @@ def site_license():
         return render_template(
             current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
             result=json.dumps(result))
-    except:
+    except BaseException:
         abort(500)
 
 
@@ -209,7 +209,7 @@ def set_search():
                 SearchManagement.create(dbData)
             jfy['status'] = 201
             jfy['message'] = 'Search setting was successfully updated.'
-        except:
+        except BaseException:
             jfy['status'] = 500
             jfy['message'] = 'Failed to update search setting.'
         return make_response(jsonify(jfy), jfy['status'])
@@ -219,12 +219,13 @@ def set_search():
             current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
             setting_data=result
         )
-    except:
+    except BaseException:
         abort(500)
 
 
 @blueprint_api.route('/load_lang', methods=['GET'])
 def get_lang_list():
+    """Get Language List."""
     results = dict()
     try:
         results['results'] = get_admin_lang_setting()
@@ -237,6 +238,7 @@ def get_lang_list():
 
 @blueprint_api.route('/save_lang', methods=['POST'])
 def save_lang_list():
+    """Save Language List."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
@@ -248,6 +250,7 @@ def save_lang_list():
 
 @blueprint_api.route('/get_selected_lang', methods=['GET'])
 def get_selected_lang():
+    """Get selected language."""
     try:
         result = get_selected_language()
     except Exception as e:

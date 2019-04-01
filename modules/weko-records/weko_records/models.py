@@ -92,8 +92,8 @@ class ItemType(db.Model, Timestamp):
     """Name information from ItemTypeName class."""
 
     harvesting_type = db.Column(db.Boolean(name='harvesting_type'),
-        nullable=False,
-        default=False)
+                                nullable=False,
+                                default=False)
 
     schema = db.Column(
         db.JSON().with_variant(
@@ -442,12 +442,14 @@ class ItemTypeProperty(db.Model, Timestamp):
     sort = db.Column(db.Integer, nullable=True, unique=True)
     """Sort number of itemtype property."""
 
+
 class SiteLicenseInfo(db.Model, Timestamp):
     """Represent a SiteLicenseInfo data.
 
     The SiteLicenseInfo object contains a ``created`` and  a ``updated``
     properties that are automatically updated.
     """
+
     __tablename__ = 'sitelicense_info'
 
     organization_id = db.Column(
@@ -477,6 +479,7 @@ class SiteLicenseInfo(db.Model, Timestamp):
     """Relationship to SiteLicenseIpAddress."""
 
     def __iter__(self):
+        """TODO: __iter__."""
         sl = {}
         for name in dir(SiteLicenseInfo):
             if not name.startswith('__') and not name.startswith('_'):
@@ -497,6 +500,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
     The SiteLicenseIpAddress object contains a ``created`` and  a
     ``updated`` properties that are automatically updated.
     """
+
     __tablename__ = 'sitelicense_ip_address'
 
     organization_id = db.Column(
@@ -522,6 +526,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
     )
 
     def __iter__(self):
+        """TODO: __iter__."""
         for name in dir(SiteLicenseIpAddress):
             if not name.startswith('__') and not name.startswith('_'):
                 value = getattr(self, name)

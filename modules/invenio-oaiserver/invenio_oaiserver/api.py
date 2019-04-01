@@ -22,11 +22,12 @@
 
 from invenio_db import db
 from sqlalchemy import *
+
 from .models import Identify
 
 
 class OaiIdentify():
-    """OAI-PMH Identify"""
+    """OAI-PMH Identify."""
 
     @classmethod
     def get_all(cls):
@@ -41,10 +42,7 @@ class OaiIdentify():
 
     @classmethod
     def get_count(cls):
-         """Get the count of Setting"""
-
-         with db.session.no_autoflush:
-             # cnt = OAIPMH.query.count()
-             return 0
-
-
+        """Get the count of Setting."""
+        with db.session.no_autoflush:
+            # cnt = OAIPMH.query.count()
+            return 0
