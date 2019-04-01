@@ -402,6 +402,104 @@ require([
                     }
                   }
                 }
+                if(items.hasOwnProperty('contributor'))
+                {
+                  let contributor = items.contributor;
+                  let resultId = result.contributor;
+                  if(contributor.hasOwnProperty('contributorName'))
+                  {
+                    let id = contributor.contributorName;
+                    let subresultId = resultId.contributorName;
+                    if(subresultId && subresultId['@value'])
+                    {
+                      this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(subresultId, '@attributes', 'xml:lang')));
+                      this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(subresultId, '@value')));
+                    } else {
+                      this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
+                      this.setValueToField(this.dictValue(id, '@value'), "");
+                    }
+                  }
+                }
+                if(items.hasOwnProperty('subject'))
+                {
+                  let subject = items.subject;
+                  let resultId = result.subject;
+                  if(resultId && resultId['@value'])
+                  {
+                    this.setValueToField(this.dictValue(subject, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
+                    this.setValueToField(this.dictValue(subject, '@attributes', 'subjectScheme'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'subjectScheme')));
+                    this.setValueToField(this.dictValue(subject, '@attributes', 'subjectURI'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'subjectURI')));
+                    this.setValueToField(this.dictValue(subject, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                  } else {
+                    this.setValueToField(this.dictValue(subject, '@attributes', 'xml:lang'), "");
+                    this.setValueToField(this.dictValue(subject, '@value'), "");
+                    this.setValueToField(this.dictValue(subject, '@attributes', 'subjectScheme'), "");
+                    this.setValueToField(this.dictValue(subject, '@attributes', 'subjectURI'), "");
+                  }
+                }
+                if(items.hasOwnProperty('description'))
+                {
+                  let description = items.description;
+                  let resultId = result.description;
+                  if(resultId && resultId['@value'])
+                  {
+                    this.setValueToField(this.dictValue(description, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
+                    this.setValueToField(this.dictValue(description, '@attributes', 'descriptionType'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'descriptionType')));
+                    this.setValueToField(this.dictValue(description, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                  } else {
+                    this.setValueToField(this.dictValue(description, '@attributes', 'xml:lang'), "");
+                    this.setValueToField(this.dictValue(description, '@value'), "");
+                    this.setValueToField(this.dictValue(description, '@attributes', 'descriptionType'), "");
+                  }
+                }
+                if(items.hasOwnProperty('sourceTitle'))
+                {
+                  let sourceTitle = items.sourceTitle;
+                  let resultId = result.sourceTitle;
+                  if(resultId && resultId['@value'])
+                  {
+                    this.setValueToField(this.dictValue(sourceTitle, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
+                    this.setValueToField(this.dictValue(sourceTitle, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                  } else {
+                    this.setValueToField(this.dictValue(sourceTitle, '@attributes', 'xml:lang'), "");
+                    this.setValueToField(this.dictValue(sourceTitle, '@value'), "");
+                  }
+                }
+                if(items.hasOwnProperty('volume'))
+                {
+                  let volume = items.volume;
+                  let resultId = result.volume;
+                  if(resultId && resultId['@value'])
+                  {
+                    this.setValueToField(this.dictValue(volume, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                  } else {
+                    this.setValueToField(this.dictValue(volume, '@value'), "");
+                  }
+                }
+                if(items.hasOwnProperty('issue'))
+                {
+                  let issue = items.issue;
+                  let resultId = result.issue;
+                  if(resultId && resultId['@value'])
+                  {
+                    this.setValueToField(this.dictValue(issue, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                  } else {
+                    this.setValueToField(this.dictValue(issue, '@value'), "");
+                  }
+                }
+                if(items.hasOwnProperty('sourceIdentifier'))
+                {
+                  let sourceIdentifier = items.sourceIdentifier;
+                  let resultId = result.sourceIdentifier;
+                  if(resultId && resultId['@value'])
+                  {
+                    this.setValueToField(this.dictValue(sourceIdentifier, '@attributes', 'identifierType'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'identifierType')));
+                    this.setValueToField(this.dictValue(sourceIdentifier, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                  } else {
+                    this.setValueToField(this.dictValue(sourceIdentifier, '@attributes', 'xml:lang'), "");
+                    this.setValueToField(this.dictValue(sourceIdentifier, '@value'), "");
+                  }
+                }
                 $('#meta-search').modal('toggle');
               }
             }

@@ -45,7 +45,7 @@ def cached_api_json(timeout=50, key_prefix="cached_api_json"):
     def caching(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            key = key_prefix + args[len(args)-1]
+            key = key_prefix + args[len(args) - 1]
             cache_fun = current_cache.cached(
                 timeout=timeout,
                 key_prefix=key,
@@ -109,7 +109,7 @@ def try_assign_data(data, value, key_first, list_key=None):
             data_temp.append(data.get(key_first))
         idx = 0
     if list_key is None:
-        data_temp[0] = value
+        data_temp[0] = convert_html_escape(value)
     else:
         for key in list_key:
             if type(data_temp[idx]) is dict:
@@ -119,7 +119,7 @@ def try_assign_data(data, value, key_first, list_key=None):
                         idx += 1
                     else:
                         temp = data_temp[idx]
-                        temp[key] = value
+                        temp[key] = convert_html_escape(value)
                         return
                 else:
                     return
@@ -197,7 +197,7 @@ def asssign_data_crossref_created_field(field, data):
                         ['relatedIdentifier', '@value'])
         try_assign_data(data, 'ISBN', 'relation',
                         ['relatedIdentifier', '@attributes', 'identifierType'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -213,7 +213,7 @@ def asssign_data_crossref_page_field(field, data):
                         'numPages', ['@value'])
         try_assign_data(data, split_page[1], 'pageEnd', ['@value'])
         try_assign_data(data, split_page[0], 'pageStart', ['@value'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -235,7 +235,7 @@ def asssign_data_crossref_author_field(field, data):
         try_assign_data(data, given_name,
                         'creator',
                         ['givenName', '@value'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -252,7 +252,7 @@ def asssign_data_crossref_issued_field(field, data):
                         ['@value'])
         try_assign_data(data, 'Issued', 'date',
                         ['@attributes', 'dateType'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -315,9 +315,9 @@ def parse_crossref_json_response(response, response_data_template):
         asssign_data_crossref_author_field(author, response_data_convert)
         asssign_data_crossref_issued_field(issued, response_data_convert)
         asssign_data_crossref_default_field(
-                    current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
-                    response_data_convert)
-    except Exception as e:
+            current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+            response_data_convert)
+    except Exception:
         pass
 
     return response_data_convert
@@ -332,12 +332,12 @@ def assign_data_cinii_dc_title_field(field, data):
     try:
         for item in field:
             lang = item.get('@language')
-            if lang == 'en':
+            if lang is None and item.get('@value'):
                 try_assign_data(data, item.get('@value'),
                                 'title', ['title', '@value'])
-                try_assign_data(data, lang, 'title',
+                try_assign_data(data, 'ja', 'title',
                                 ['title', '@attributes', 'xml:lang'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -350,12 +350,12 @@ def assign_data_cinii_dc_creator_field(field, data):
     try:
         for item in field[0]:
             lang = item.get('@language')
-            if lang == 'en':
+            if lang is None and item.get('@value'):
                 try_assign_data(data, item.get('@value'),
                                 'creator', ['creatorName', '@value'])
-                try_assign_data(data, lang, 'creator',
+                try_assign_data(data, 'ja', 'creator',
                                 ['creatorName', '@attributes', 'xml:lang'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -370,7 +370,7 @@ def assign_data_cinii_page_field(page_start, page_end, data):
         try_assign_data(data, page_end, 'pageEnd', ['@value'])
         try_assign_data(data, str(int(page_end) - int(page_start) + 1),
                         'numPages', ['@value'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -381,10 +381,12 @@ def assign_data_cinii_prism_publication_date_field(field, data):
         @return:
     """
     try:
-        try_assign_data(data, field, 'date', ['date', '@value'])
+        date_list = field.split('-')
+        try_assign_data(data, convert_datetime_format(date_list), 'date',
+                        ['date', '@value'])
         try_assign_data(data, 'Issued', 'date',
                         ['date', '@attributes', 'dateType'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -397,19 +399,19 @@ def assign_data_cinii_dc_publisher_field(field, data):
     try:
         for item in field:
             lang = item.get('@language')
-            if lang == 'en':
+            if lang is None and item.get('@value'):
                 try_assign_data(data, item.get('@value'), 'publisher',
                                 ['@value'])
-                try_assign_data(data, lang, 'publisher',
+                try_assign_data(data, 'ja', 'publisher',
                                 ['@attributes', 'xml:lang'])
-    except Exception as e:
+    except Exception:
         pass
 
 
-def assign_data_cinii_floaf_maker_field(field, data):
+def assign_data_cinii_foaf_maker_field(field, data):
     """
-        Assign data from cinii floaf_maker field to data container
-        @parameter: cinii floaf_maker field, data container
+        Assign data from cinii foaf_maker field to data container
+        @parameter: cinii foaf_maker field, data container
         @return:
     """
     try:
@@ -417,12 +419,12 @@ def assign_data_cinii_floaf_maker_field(field, data):
         floaf_name = con_organization[0].get('foaf:name')
         for item in floaf_name:
             lang = item.get('@language')
-            if lang == 'en':
+            if lang is None and item.get('@value'):
                 try_assign_data(data, item.get('@value'), 'contributor',
                                 ['contributorName', '@value'])
-                try_assign_data(data, lang, 'contributor',
+                try_assign_data(data, 'ja', 'contributor',
                                 ['contributorName', '@attributes', 'xml:lang'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -435,21 +437,21 @@ def assign_data_cinii_dc_description_field(field, data):
     try:
         for item in field:
             lang = item.get('@language')
-            if lang == 'en':
+            if lang is None and item.get('@value'):
                 try_assign_data(data, item.get('@value'), 'description',
                                 ['@value'])
-                try_assign_data(data, lang, 'description',
+                try_assign_data(data, 'ja', 'description',
                                 ['@attributes', 'xml:lang'])
                 try_assign_data(data, 'Abstract', 'description',
                                 ['@attributes', 'descriptionType'])
-    except Exception as e:
+    except Exception:
         pass
 
 
-def assign_data_cinii_floaf_topic_field(field, data):
+def assign_data_cinii_foaf_topic_field(field, data):
     """
-        Assign data from cinii floaf_topic field to data container
-        @parameter: cinii floaf_topic field, data container
+        Assign data from cinii foaf_topic field to data container
+        @parameter: cinii foaf_topic field, data container
         @return:
     """
     try:
@@ -462,11 +464,11 @@ def assign_data_cinii_floaf_topic_field(field, data):
                         ['@attributes', 'subjectScheme'])
         try_assign_data(data, 'ja', 'subject',
                         ['@attributes', 'xml:lang'])
-    except Exception as e:
+    except Exception:
         pass
 
 
-def assign_data_cinii_prism_publicationName_field(field, data):
+def assign_data_cinii_prism_publication_name_field(field, data):
     """
         Assign data from cinii prism_publicationName field to data container
         @parameter: cinii prism_publicationName field, data container
@@ -475,17 +477,17 @@ def assign_data_cinii_prism_publicationName_field(field, data):
     try:
         for item in field:
             lang = item.get('@language')
-            if lang == 'en':
+            if lang is None and item.get('@value'):
                 try_assign_data(data, item.get('@value'), 'sourceTitle',
                                 ['@value'])
-                try_assign_data(data, lang, 'sourceTitle',
+                try_assign_data(data, 'ja', 'sourceTitle',
                                 ['@attributes', 'xml:lang'])
-    except Exception as e:
+    except Exception:
         pass
 
 
-def assign_data_cinii_other_infomation_field(prism_volume,
-                                             prism_number, prism_issn, data):
+def assign_data_cinii_other_information_field(prism_volume,
+                                              prism_number, prism_issn, data):
     """
         Assign data from cinii other field information to data container
         @parameter: cinii other field information, data container
@@ -498,7 +500,7 @@ def assign_data_cinii_other_infomation_field(prism_volume,
         if prism_issn:
             try_assign_data(data, 'ISSN', 'sourceIdentifier',
                             ['@attributes', 'identifierType'])
-    except Exception as e:
+    except Exception:
         pass
 
 
@@ -525,20 +527,20 @@ def parse_cinii_json_response(response, response_data_template):
             graph[0].get('prism:publicationDate'), response_data_convert)
         assign_data_cinii_dc_publisher_field(graph[0].get('dc:publisher'),
                                              response_data_convert)
-        assign_data_cinii_floaf_maker_field(graph[0].get('foaf:maker'),
-                                            response_data_convert)
+        assign_data_cinii_foaf_maker_field(graph[0].get('foaf:maker'),
+                                           response_data_convert)
         assign_data_cinii_dc_description_field(graph[0].get('dc:description'),
                                                response_data_convert)
-        assign_data_cinii_floaf_topic_field(graph[0].get('foaf:topic'),
-                                            response_data_convert)
-        assign_data_cinii_prism_publicationName_field(graph[0].get(
+        assign_data_cinii_foaf_topic_field(graph[0].get('foaf:topic'),
+                                           response_data_convert)
+        assign_data_cinii_prism_publication_name_field(graph[0].get(
             'prism:publicationName'), response_data_convert)
-        assign_data_cinii_other_infomation_field(graph[0].get('prism:volume'),
-                                                 graph[0].get('prism:number'),
-                                                 graph[0].get('prism:issn'),
-                                                 response_data_convert)
+        assign_data_cinii_other_information_field(graph[0].get('prism:volume'),
+                                                  graph[0].get('prism:number'),
+                                                  graph[0].get('prism:issn'),
+                                                  response_data_convert)
 
-    except Exception as e:
+    except Exception:
         pass
 
     return response_data_convert
@@ -547,7 +549,7 @@ def parse_cinii_json_response(response, response_data_template):
 def get_item_id(item_type_id):
     """
     return dictionary contain item id
-    get from mapping between itemtype and jpcoar
+    get from mapping between item type and jpcoar
     :param item_type_id: The item type id
     :return: dictionary
     """
@@ -592,3 +594,22 @@ def get_cinii_data(naid):
     """
     api = CiNiiURL(naid)
     return api.get_data()
+
+
+def convert_html_escape(text):
+    """
+    Convert escape HTML to character
+    :type text: String
+    """
+    html_escape = {
+        "&amp;": "&",
+        "&quot;": '"',
+        "&apos;": "'",
+        "&gt;": ">",
+        "&lt;": "<",
+    }
+
+    for key, value in html_escape:
+        text.replace(key, value)
+
+    return text
