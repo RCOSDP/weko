@@ -105,12 +105,21 @@ class WekoJSONSerializer(JSONSerializer):
         ).encode('utf8')  + b'\n'
 
     def serialize(self, pid, record, links_factory=None, **kwargs):
-        print("[Log]: WekoJSONSerializer >> serialize")
+        print("[Log]: ========= WekoJSONSerializer >> serialize =========")
         print(kwargs)
         print(links_factory)
-        print("[Log]: WekoJSONSerializer >> done")
+        self.print_trackback()
+        print("[Log]: ========= WekoJSONSerializer >> done =========")
         result = super(WekoJSONSerializer, self).serialize(
             pid, record, links_factory=links_factory, **kwargs
         )
 
         return result
+
+    def print_trackback():
+        try:
+            import traceback
+            for line in traceback.format_stack():
+                print(line.strip())
+        except Exception:
+            print("warning")
