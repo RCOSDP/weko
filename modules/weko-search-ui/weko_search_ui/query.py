@@ -36,7 +36,7 @@ from .api import SearchSetting
 from .permissions import search_permission
 
 
-def Get_item_type_aggs(search_index):
+def get_item_type_aggs(search_index):
     """Get item types aggregations.
 
     :return: aggs dict
