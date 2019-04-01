@@ -365,7 +365,8 @@ class ApiCertificate(db.Model):
     """
     __tablename__ = 'api_certificate'
 
-    api_code = db.Column(db.String(3), primary_key=True, nullable=False, unique=True)
+    api_code = db.Column(db.String(3), primary_key=True, nullable=False,
+                         unique=True)
 
     api_name = db.Column(db.String(25), nullable=False, unique=True)
 
@@ -421,7 +422,8 @@ class ApiCertificate(db.Model):
     @classmethod
     def update_cert_data(cls, api_code, cert_data):
         """
-        Overwrite if certificate existed, otherwise insert new certificate into database
+        Overwrite if certificate existed, otherwise insert new certificate
+        into database
         :param api_code: input api short name
         :param cert_data: input certificate value
         :return: true if success, otherwise false
@@ -443,24 +445,20 @@ class ApiCertificate(db.Model):
                 return False
 
     @classmethod
-    def insert_new_cert_data(cls, api_code, cert_data):
+    def insert_new_api_cert(cls, api_code, api_name, cert_data=None):
         """
         Insert new certificate
-        :param api_code: input certificate type
+        :param api_code: input api code
+        :param api_name: input api name
         :param cert_data: input certificate value with json format
         :return: True if success, otherwise False
         """
-        dict_name = {
-            "crf": "CrossRef",
-            "amz": "Amazon"
-        }
-        # Insert new certificate in case certificate not exist in Database
         try:
             dataObj = ApiCertificate()
             with db.session.begin_nested():
                 if api_code is not None:
                     dataObj.api_code = api_code
-                    dataObj.api_name = dict_name.get(api_code)
+                    dataObj.api_name = api_name
                 if cert_data is not None:
                     dataObj.cert_data = cert_data
                 db.session.add(dataObj)
@@ -470,6 +468,34 @@ class ApiCertificate(db.Model):
             db.session.rollback()
             current_app.logger.debug(ex)
             return False
+
+    @classmethod
+    def update_api_cert(cls, api_code, api_name, cert_data):
+        """
+        Overwrite if certificate existed, otherwise insert new certificate
+        into database
+        :param api_code: input api code
+        :param api_name: input api name
+        :param cert_data: input certificate value
+        :return: true if success, otherwise false
+        """
+        # Get current api data
+        query_result = cls.query.filter_by(api_code=api_code).one_or_none()
+
+        if query_result is None:
+            return False
+        else:
+            try:
+                with db.session.begin_nested():
+                    query_result.api_name = api_name
+                    query_result.cert_data = cert_data
+                    db.session.merge(query_result)
+                db.session.commit()
+                return True
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
+                return False
 
 
 __all__ = ([

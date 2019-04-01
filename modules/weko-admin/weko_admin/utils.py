@@ -238,7 +238,8 @@ def save_api_certification(api_code, cert_data):
         if cert_data:
             if ApiCertificate.select_by_api_code(api_code) is not None:
                 """ Update database in case api_code exited """
-                result['results'] = ApiCertificate.update_cert_data(api_code, cert_data)
+                result['results'] = ApiCertificate.update_cert_data(api_code,
+                                                                    cert_data)
             else:
                 result['error'] = _("Input type is not valid.")
         else:

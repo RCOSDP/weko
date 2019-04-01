@@ -256,3 +256,6 @@ ${INVENIO_WEB_INSTANCE} users create \
        --active
 ##### sphinxdoc-create-test-data-end
 
+# sphinxdoc-set-web-api-account-combobox-begin
+${INVENIO_WEB_INSTANCE} cert insert crf CrossRef
+# sphinxdoc-set-web-api-account-combobox-end

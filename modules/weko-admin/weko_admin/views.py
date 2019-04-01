@@ -291,7 +291,7 @@ def get_api_cert_type():
 def get_curr_api_cert(api_code=''):
     """
     Get current API certification data
-    Display on textboxs on UI
+    Display on textbox on UI
 
     :param api_code: API code
     :return:
@@ -323,8 +323,6 @@ def get_curr_api_cert(api_code=''):
 def save_api_cert_data():
     """
     Save api certification data to database
-
-    :param api_code: API code
     Post data - request: API certification data
 
     :return: Example
@@ -347,39 +345,7 @@ def save_api_cert_data():
     elif validate_certification(cert_data):
         result = save_api_certification(api_code, cert_data)
     else:
-        result['error'] = _('Account information is invalid. Please check again.')
+        result['error'] = _(
+            'Account information is invalid. Please check again.')
 
-    return jsonify(result)
-
-
-@blueprint_api.route('/validate_cert_data/<string:api_code>', methods=['POST'])
-def validate_cert_data(api_code = ''):
-    """
-    Check certification data still valid/exist or not.
-
-    :param api_code: API code
-    Post data - request: API certification data
-
-    :return: Example
-    {
-        'results': true,
-        'error': ''
-    }
-    """
-    result = {
-        'results': '',
-        'error': ''
-    }
-
-    if request.headers['Content-Type'] != 'application/json':
-        result['error'] = _('Header Error')
-        return jsonify(result)
-
-    data = request.get_json()
-    cert_data = data.get('cert_data', '')
-
-    try:
-        result['results'] = validate_certification(api_code, cert_data)
-    except Exception as e:
-        result['error'] = str(e)
     return jsonify(result)
