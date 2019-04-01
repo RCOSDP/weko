@@ -21,6 +21,7 @@
 """Module of weko-items-ui utils.."""
 
 from weko_user_profiles import UserProfile
+from flask_login import current_user
 from invenio_accounts.models import User
 from sqlalchemy import Table, MetaData
 from invenio_db import db
@@ -215,3 +216,11 @@ def get_user_information(user_id):
             return result
 
     return result
+
+def get_user_permission(user_id):
+    current_id = current_user.get_id()
+    if current_id is None:
+        return False
+    if str(user_id) == current_id:
+        return True
+    return False

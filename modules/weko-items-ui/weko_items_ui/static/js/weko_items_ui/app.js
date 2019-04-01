@@ -319,25 +319,35 @@ function autocomplete(inp, arr) {
         });
         $rootScope.$broadcast('schemaFormRedraw');
         // implement by hieu vo - 1/4/2019
+        $("#contributor-panel").addClass("hidden");
+        // Load Contributor information
         let recordModel = $rootScope.recordsVM.invenioRecordsModel;
         if (!recordModel.hasOwnProperty('shared_user_id')) {
+          $("#contributor-panel").removeClass("hidden");
           $(".input_contributor").prop("checked", true);
           $("#share_username").val("");
           $("#share_email").val("");
         }else{
           if (recordModel.shared_user_id) {
             // Call rest api to get user information
-            get_user_url = '/api/items/get_user_info/' + recordModel.shared_user_id;
+            let get_user_url = '/api/items/get_user_info/' + recordModel.shared_user_id;
             $.ajax({
               url: get_user_url,
               method: 'GET',
               success: (data, stauts) => {
-                $(".other_user_rad").click();
-                $("#share_username").val(data.username);
-                $("#share_email").val(data.email);
+                if (data.owner) {
+                  $("#contributor-panel").removeClass("hidden");
+                  $(".other_user_rad").click();
+                  $("#share_username").val(data.username);
+                  $("#share_email").val(data.email);
+                }
+              },
+              error: (data, status) => {
+                alert("Cannot connect to server!");
               }
             })
           }else {
+            $("#contributor-panel").removeClass("hidden");
             $(".input_contributor").prop("checked", true);
             $("#share_username").val("");
             $("#share_email").val("");
