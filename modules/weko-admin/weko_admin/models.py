@@ -24,11 +24,11 @@ from datetime import datetime
 
 from flask import current_app, json
 from invenio_db import db
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy_utils.types import JSONType
-from sqlalchemy.sql import func
-from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy import asc
+from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.sql import func
+from sqlalchemy_utils.types import JSONType
 
 
 class SessionLifetime(db.Model):
