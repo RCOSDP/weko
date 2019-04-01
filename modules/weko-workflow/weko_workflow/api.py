@@ -21,26 +21,27 @@
 """WEKO3 module docstring."""
 
 import uuid
-
 from datetime import datetime
+
 from flask import current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import User
 from invenio_db import db
-from sqlalchemy import asc,desc
+from sqlalchemy import asc, desc
 from sqlalchemy.orm.exc import NoResultFound
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
+from .models import ActionStatusPolicy, ActionCommentPolicy, \
+    ActivityStatusPolicy, FlowStatusPolicy, ActionJournal
 from .models import Activity as _Activity
 from .models import ActivityAction
 from .models import ActivityHistory
-from .models import FlowDefine as _Flow
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
+from .models import FlowDefine as _Flow
 from .models import WorkFlow as _WorkFlow
-from .models import ActionStatusPolicy, ActionCommentPolicy, \
-    ActivityStatusPolicy, FlowStatusPolicy, ActionJournal
+
 
 class Flow(object):
     """Operated on the Flow"""
@@ -232,6 +233,7 @@ class Flow(object):
 
 class WorkFlow(object):
     """Operated on the WorkFlow"""
+
     def create_workflow(self, workflow):
         """
         Create new workflow
@@ -319,6 +321,7 @@ class WorkFlow(object):
 
 class Action(object):
     """Operated on the Action"""
+
     def create_action(self, action):
         """
         Create new action info
@@ -366,6 +369,7 @@ class Action(object):
 
 class ActionStatus(object):
     """Operated on the ActionStatus"""
+
     def create_action_status(self, action_status):
         """
         Create new action status info
@@ -461,7 +465,7 @@ class WorkActivity(object):
 
                 for flow_action in flow_actions:
                     db_activity_action = ActivityAction(
-                        activity_id= db_activity.activity_id,
+                        activity_id=db_activity.activity_id,
                         action_id=flow_action.action_id,
                         action_status=ActionStatusPolicy.ACTION_DONE,
                     )
@@ -502,7 +506,7 @@ class WorkActivity(object):
         with db.session.begin_nested():
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             activity_action.action_status = action_status
             db.session.merge(activity_action)
         db.session.commit()
@@ -518,7 +522,7 @@ class WorkActivity(object):
         with db.session.begin_nested():
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             if activity_action:
                 activity_action.action_comment = comment
                 db.session.merge(activity_action)
@@ -534,7 +538,7 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             return activity_action
 
     def create_or_update_action_journal(self, activity_id, action_id, journal):
@@ -548,7 +552,7 @@ class WorkActivity(object):
         with db.session.begin_nested():
             action_journal = ActionJournal.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             if action_journal:
                 action_journal.action_journal = journal
                 db.session.merge(action_journal)
@@ -572,7 +576,7 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             action_journal = ActionJournal.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             return action_journal
 
     def get_activity_action_status(self, activity_id, action_id):
@@ -581,12 +585,14 @@ class WorkActivity(object):
                 activity_id=activity_id, action_id=action_id).one()
             action_stus = activity_ac.action_status
             return action_stus
+
     # add by ryuu end
 
-
-    def upt_activity_action_id_grant(self, activity_id, action_id, identifier_grant,
-        identifier_grant_jalc_doi_suffix, identifier_grant_jalc_cr_doi_suffix,
-        identifier_grant_jalc_dc_doi_suffix):
+    def upt_activity_action_id_grant(self, activity_id, action_id,
+                                     identifier_grant,
+                                     identifier_grant_jalc_doi_suffix,
+                                     identifier_grant_jalc_cr_doi_suffix,
+                                     identifier_grant_jalc_dc_doi_suffix):
         """
         Update activity info
         :param activity_id:
@@ -600,15 +606,17 @@ class WorkActivity(object):
         with db.session.begin_nested():
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             if activity_action:
                 activity_action.action_identifier_grant = identifier_grant
-                activity_action.action_identifier_grant_jalc_doi_suffix = identifier_grant_jalc_doi_suffix
-                activity_action.action_identifier_grant_jalc_cr_doi_suffix = identifier_grant_jalc_cr_doi_suffix
-                activity_action.action_identifier_grant_jalc_dc_doi_suffix = identifier_grant_jalc_dc_doi_suffix
+                activity_action.action_identifier_grant_jalc_doi_manual = \
+                    identifier_grant_jalc_doi_suffix
+                activity_action.action_identifier_grant_jalc_cr_doi_manual = \
+                    identifier_grant_jalc_cr_doi_suffix
+                activity_action.action_identifier_grant_jalc_dc_doi_manual = \
+                    identifier_grant_jalc_dc_doi_suffix
                 db.session.merge(activity_action)
         db.session.commit()
-
 
     def upt_activity_item(self, activity, item_id):
         """
@@ -748,11 +756,11 @@ class WorkActivity(object):
                         for role in db_flow_action.action_roles:
                             activi.type = 'Wait'
                             if role.action_user == self_user_id and \
-                                    role.action_user_exclude is False:
+                                role.action_user_exclude is False:
                                 activi.type = 'ToDo'
                                 break
                             if role.action_role in self_group_ids and \
-                                    role.action_role_exclude is False:
+                                role.action_role_exclude is False:
                                 activi.type = 'ToDo'
                                 break
             return activities
@@ -918,7 +926,8 @@ class WorkActivity(object):
         ctx = {'community': None}
         community_id = ""
         if 'community' in getargs:
-            comm = GetCommunity.get_community_by_id(request.args.get('community'))
+            comm = GetCommunity.get_community_by_id(
+                request.args.get('community'))
             community_id = request.args.get('community')
             ctx = {'community': comm}
             community_id = comm.id
@@ -928,6 +937,7 @@ class WorkActivity(object):
 
 class WorkActivityHistory(object):
     """Operated on the Activity"""
+
     def create_activity_history(self, activity):
         """
         Create new activity history
@@ -943,15 +953,18 @@ class WorkActivityHistory(object):
             action_date=datetime.utcnow(),
             action_comment=activity.get('commond'),
             action_identifier_grant=activity.get('identifier_grant', 0),
-            action_identifier_grant_jalc_doi_suffix=activity.get('identifier_grant_jalc_doi_suffix', ""),
-            action_identifier_grant_jalc_cr_doi_suffix=activity.get('identifier_grant_jalc_cr_doi_suffix', ""),
-            action_identifier_grant_jalc_dc_doi_suffix=activity.get('identifier_grant_jalc_dc_doi_suffix', "")
+            action_identifier_grant_jalc_doi_manual=activity.get(
+                'identifier_grant_jalc_doi_suffix', ""),
+            action_identifier_grant_jalc_cr_doi_manual=activity.get(
+                'identifier_grant_jalc_cr_doi_suffix', ""),
+            action_identifier_grant_jalc_dc_doi_manual=activity.get(
+                'identifier_grant_jalc_dc_doi_suffix', "")
         )
         new_history = False
         activity = WorkActivity()
         activity = activity.get_activity_detail(db_history.activity_id)
         if activity.action_id != db_history.action_id or \
-                activity.action_status != db_history.action_status:
+            activity.action_status != db_history.action_status:
             new_history = True
             activity.action_id = db_history.action_id
             activity.action_status = db_history.action_status
@@ -1020,6 +1033,7 @@ class WorkActivityHistory(object):
             db.session.rollback()
             return None
 
+
 class UpdateItem(object):
     """the class about item"""
 
@@ -1065,6 +1079,7 @@ class UpdateItem(object):
 
 class GetCommunity(object):
     """Get Community Info"""
+
     @classmethod
     def get_community_by_id(self, community_id):
         """"""
