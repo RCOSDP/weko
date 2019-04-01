@@ -35,8 +35,13 @@ from weko_index_tree.models import Index, IndexStyle
 from weko_indextree_journal.api import Journals
 
 from weko_search_ui.api import get_search_detail_keyword
+from invenio_search import RecordsSearch
+from invenio_records.api import Record
+from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier
 
 from .api import SearchSetting
+from .query import item_path_search_factory
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -200,6 +205,79 @@ def opensearch_description():
     # update headers
     response.headers['Content-Type'] = 'application/xml'
     return response
+
+
+@blueprint.route("/item_management/bulk_delete", methods=['GET', 'PUT'])
+def bulk_delete():
+
+    def delete_records(index_tree_id):
+        search_obj = RecordsSearch()
+        search = search_obj.with_preference_param().params(version=True)
+        search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+        search, qs_kwargs = item_path_search_factory(None,
+                                 search,
+                                 index_id=index_tree_id)
+        search_result = search.execute()
+        rd = search_result.to_dict()
+
+        record_indexer = RecordIndexer()
+        hits = rd.get('hits').get('hits')
+        for hit in hits:
+            recid = hit.get('_id')
+            record = Record.get_record(recid)
+            if record is not None:
+                # Delete schema
+                record_indexer.delete_by_id(recid)
+
+                pids = PersistentIdentifier.query.filter_by(
+                    object_uuid=recid).all()
+                for pid in pids:
+                    db.session.delete(pid) # Delete PersistentId
+
+                # Delete this record
+                Record.get_record(recid).delete()   # flag as deleted
+                db.session.commit()                     # terminate the transaction
+
+    if request.method == 'PUT':
+        # Do delete items inside the current index tree (maybe root tree)
+        q = request.values.get('q')
+        if q.isdigit():
+            current_tree = Indexes.get_index(q)
+            recursive_tree = Indexes.get_recursive_tree(q)
+
+            if current_tree is not None:
+
+                # Delete items in current_tree
+                delete_records(current_tree.id)
+
+                # If recursively, then delete all child index trees and theirs items
+                if request.values.get('recursively') == 'true' and recursive_tree is not None:
+                    # Delete recursively
+                    direct_child_trees = []
+                    for index, obj in enumerate(recursive_tree):
+                        if obj[1] != current_tree.id:
+                            child_tree = Indexes.get_index(obj[1])
+
+                            # Do delete items in child_tree
+                            delete_records(child_tree.id)
+
+                            # Add the level 1 child into the current_tree
+                            if obj[0] == current_tree.id:
+                                direct_child_trees.append(child_tree.id)
+                    # Then do delete child_tree inside current_tree
+                    for cid in direct_child_trees:
+                        # Delete this tree and children
+                        Indexes.delete(cid)
+
+                return jsonify({'status': 1})
+        else:
+            return jsonify({'status': 0, 'msg': 'Invalid tree'})
+
+    """Render view."""
+    detail_condition = get_search_detail_keyword('')
+    return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
+                           management_type='delete',
+                           detail_condition=detail_condition)
 
 
 @blueprint.route("/item_management/save", methods=['POST'])
