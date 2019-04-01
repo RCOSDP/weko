@@ -190,3 +190,28 @@ def get_user_info_by_email(email):
         return None
     except Exception as e:
         result['error'] = str(e)
+
+
+def get_user_information(user_id):
+    result = {
+        'username': '',
+        'email': ''
+    }
+    userinfo = UserProfile.get_by_userid(user_id)
+    result['username'] = userinfo._username
+
+    metadata = MetaData()
+    metadata.reflect(bind=db.engine)
+    table_name = 'accounts_user'
+
+    user_table = Table(table_name, metadata)
+    record = db.session.query(user_table)
+
+    data = record.all()
+
+    for item in data:
+        if item[0] == user_id:
+            result['email'] = item[1]
+            return result
+
+    return result
