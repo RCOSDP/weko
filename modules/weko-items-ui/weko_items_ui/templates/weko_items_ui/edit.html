@@ -133,33 +133,43 @@
                       <div class="panel-heading">
                         <h3 class="panel-title">Contributor</h3>
                       </div>
-                      <div class="panel-body">
-
-                        <div class="container">               
-                          <div class="row">
+                      <div class="panel-body">    
+                          <div class="row" id="radio_form_share">
                             <div class="radio">
                               <label>
-                               <input type="radio" name="checkedSharePermiss" id="input" value="this_user" checked="checked" onchange="handleSharePermission(this.value)">This user</label>
-                               <br><label><input type="radio" onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input" value="other_user">Other user</label>
+                               <input type="radio" name="checkedSharePermiss" id="input" class="input_contributor" value="this_user" checked="checked" onchange="handleSharePermission(this.value)">This user</label>
+                               <br><label><input type="radio" onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input" value="other_user" class="other_user_rad">Other user</label>
                             </div>
                           </div>
-                          <div class="form_share_permission" style="display: none;">     
-                            <div class="row">
-                              <label for="share_username">Usernames: </label>
-                                <div class="autocomplete">
-                                  <input id="share_username" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
-                                  <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_username"></span>
-                                </div>
+                          <div class="form_share_permission">     
+                            <div class="row" id="pd_username">
+                              
+                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
+                                  <label for="share_username">Username </label>
+                              </div>
+                              
+                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                                  <div class="autocomplete">
+                                      <input id="share_username" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
+                                      <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_username"></span>
+                                    </div>
+                              </div>
                             </div>
                             <div class="row">
-                              <label for="share_email">Email: </label>
-                                <div class="autocomplete">
-                                    <input id="share_email" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
-                                    <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_email"></span>
-                                </div>
+                              
+                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
+                                  <label for="share_email">Email </label>
+                              </div>
+                              
+                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                                  <div class="autocomplete">
+                                      <input id="share_email" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
+                                      <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_email"></span>
+                                  </div>
+                              </div>
                             </div>      
                           </div>             
-                        </div>    
+                        
                       </div>
                   </div>
 
@@ -174,7 +184,7 @@
               <div class="row" ng-hide="false">
                 <div class="col-sm-9" ng-show="true">
                   <ul class="list-inline text-right">
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson();recordsVM.actionHandler(['index', 'PUT'], 'iframe_tree')">{{_('Next')}}</button></li>
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson();recordsVM.actionHandler(['index', 'PUT'], 'r')">{{_('Next')}}</button></li>
                     {%- if pid %}
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">{{_('Delete')}}</button></li>
                     {%- endif %}

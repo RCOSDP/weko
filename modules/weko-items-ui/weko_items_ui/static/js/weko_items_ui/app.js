@@ -28,12 +28,15 @@ function autocomplete(inp, arr) {
     var mode = this.id;
     var flag =false;
     closeAllLists();
-    if (!val) { return false;}
+    if (!val) { 
+      return false;
+    }
     currentFocus = -1;
     a = document.createElement("DIV");
     a.setAttribute("id", this.id + "autocomplete-list");
     a.setAttribute("class", "autocomplete-items");
     this.parentNode.appendChild(a);
+
       /*for each item in the array...*/
     for (i = 0; i < arr.length; i++) {
       /*check if the item starts with the same letters as the text field value:*/
@@ -45,59 +48,71 @@ function autocomplete(inp, arr) {
         b.innerHTML += arr[i].substr(val.length);
         /*insert a input field that will hold the current array item's value:*/
         b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+
         /*execute a function when someone clicks on the item value (DIV element):*/
-        b.addEventListener("click", function(e) {
-        /*insert the value for the autocomplete text field:*/
-        inp.value = this.getElementsByTagName("input")[0].value;
-        if(mode == 'share_username') {
-          filter.filter_username = inp.value;
-          // get exact user info contains username and email by username unique
-          get_autofill_data(filter.filter_username, "", mode);
-        } else {
-          if(mode == 'share_email') {
-            filter.filter_email = inp.value;
-            // get exact user info contains username and email by email
-            get_autofill_data('', filter.filter_email, mode);
+        b.addEventListener('click', function(e) {            
+          /*insert the value for the autocomplete text field:*/
+          inp.value = this.getElementsByTagName("input")[0].value;
+          if(mode == 'share_username') {
+            filter.filter_username = inp.value;
+            // get exact user info contains username and email by username unique
+            get_autofill_data(filter.filter_username, "", mode);
+          } else {
+            if(mode == 'share_email') {
+              filter.filter_email = inp.value;
+              // get exact user info contains username and email by email
+              get_autofill_data('', filter.filter_email, mode);
+            }
           }
-        }
-        closeAllLists();
+          closeAllLists(); 
         });
+
         a.appendChild(b);
         flag = true;
       }
     }
     if(flag == false) {
-        if($(".autocomplete-items div").length == 0) {
-          b = document.createElement("DIV");
-          b.innerHTML = "<p>No result found" +"</p>";
-          b.innerHTML += "<input type='hidden' value='No results found'>";
-          a.appendChild(b);
-        }
+      if($(".autocomplete-items div").length == 0) {
+        b = document.createElement("DIV");
+        b.innerHTML = "<p>No result found" +"</p>";
+        b.innerHTML += "<input type='hidden' value='No results found'>";
+        a.appendChild(b);
+      }
     }
   });
   inp.addEventListener("keydown", function(e) {
-  var x = document.getElementById(this.id + "autocomplete-list");
-  if (x) x = x.getElementsByTagName("div");
-  if (e.keyCode == 40) {
-    /*If the arrow DOWN key is pressed,
-    increase the currentFocus variable:*/
-    currentFocus++;
-    /*and and make the current item more visible:*/
-    addActive(x);
-  } else if (e.keyCode == 38) { //up
-    /*If the arrow UP key is pressed,
-    decrease the currentFocus variable:*/
-    currentFocus--;
-    /*and and make the current item more visible:*/
-    addActive(x);
-  } else if (e.keyCode == 13) {
-                /*If the ENTER key is pressed, prevent the form from being submitted,*/
-                e.preventDefault();
-                if (currentFocus > -1) {
-                  /*and simulate a click on the "active" item:*/
-                  if (x) x[currentFocus].click();
-                }
+    var x = document.getElementById(this.id + "autocomplete-list");
+    if (x) {
+      x = x.getElementsByTagName("div");
+    }
+    if (e.keyCode == 40) {
+      /*If the arrow DOWN key is pressed,
+      increase the currentFocus variable:*/
+      currentFocus++;
+      /*and and make the current item more visible:*/
+      addActive(x);
+    } else if (e.keyCode == 38) { //up
+      /*If the arrow UP key is pressed,
+      decrease the currentFocus variable:*/
+      currentFocus--;
+      /*and and make the current item more visible:*/
+      addActive(x);
+    } else if (e.keyCode == 13) {
+      /*If the ENTER key is pressed, prevent the form from being submitted,*/
+      e.preventDefault();
+      if (currentFocus > -1) {
+        /*and simulate a click on the "active" item:*/
+        if (x) {
+          x[currentFocus].click();
+        }
+      } else {
+        if (currentFocus == -1 && $("#share_username").val() != '') {
+          if (x) {
+          x[0].click();
           }
+        }
+      }
+    }
   });
     function addActive(x) {
         /*a function to classify an item as "active":*/
@@ -115,6 +130,7 @@ function autocomplete(inp, arr) {
           x[i].classList.remove("autocomplete-active");
         }
       }
+
       function closeAllLists(elmnt) {
         /*close all autocomplete lists in the document,
         except the one passed as an argument:*/
@@ -125,6 +141,7 @@ function autocomplete(inp, arr) {
           }
         }
       }
+
       /*execute a function when someone clicks in the document:*/
       document.addEventListener("click", function (e) {
         closeAllLists(e.target);
@@ -234,7 +251,7 @@ function autocomplete(inp, arr) {
         $("#share_email").val("");
       }else {
       if(value == 'other_user') {
-        $(".form_share_permission").css('display', '');
+        $(".form_share_permission").css('display', 'block');
         $("#share_username").val("");
         $("#share_email").val("");
         $("#id_spinners_username").css("display","none");
@@ -244,6 +261,11 @@ function autocomplete(inp, arr) {
       }
     }
   }
+
+  // $(document).ready(function() {
+  //   $(".form_share_permission").css('display', 'none');
+  //   $(".input_contributor").prop("checked", true);
+  // })
 
 (function (angular) {
   // Bootstrap it!
@@ -296,6 +318,32 @@ function autocomplete(inp, arr) {
           }
         });
         $rootScope.$broadcast('schemaFormRedraw');
+        // implement by hieu vo - 1/4/2019
+        let recordModel = $rootScope.recordsVM.invenioRecordsModel;
+        if (!recordModel.hasOwnProperty('shared_user_id')) {
+          $(".input_contributor").prop("checked", true);
+          $("#share_username").val("");
+          $("#share_email").val("");
+        }else{
+          if (recordModel.shared_user_id) {
+            // Call rest api to get user information
+            get_user_url = '/api/items/get_user_info/' + recordModel.shared_user_id;
+            $.ajax({
+              url: get_user_url,
+              method: 'GET',
+              success: (data, stauts) => {
+                $(".other_user_rad").click();
+                $("#share_username").val(data.username);
+                $("#share_email").val(data.email);
+              }
+            })
+          }else {
+            $(".input_contributor").prop("checked", true);
+            $("#share_username").val("");
+            $("#share_email").val("");
+          }
+        }
+        // implement by hieu vo - 1/4/2019
       }
 
       $rootScope.$on('invenio.records.loading.stop', function(ev){
