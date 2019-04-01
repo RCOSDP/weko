@@ -70,7 +70,7 @@ def get_permission_filter(comm_id=None):
     else:
         user_id, result = check_admin_user()
         if result:
-            shuld = [Q('match', weko_creator_id=user_id), Q('match', weko_shared_id=2)]
+            shuld = [Q('match', weko_creator_id=user_id), Q('match', weko_shared_id=user_id)]
             mut2 = [match, rng]
             shuld.append(Q('bool', must=mut2))
             if comm_id is not None:
