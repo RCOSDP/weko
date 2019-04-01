@@ -424,8 +424,8 @@ def set_pdfcoverpage_header():
 @blueprint.app_template_filter('citation')
 def citation(record, pid, style=None, ln=None):
     """Render citation for record according to style and language."""
-    locale = ln or current_i18n.language
-    style = style or 'science'
+    locale = "en-US" # ln or current_i18n.language
+    style = "4or" # style or 'science'
     try:
         result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
         return result
