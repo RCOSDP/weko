@@ -80,13 +80,14 @@ def cert():
 
 @cert.command('insert')
 @click.argument('api_code')
-@click.argument('cert_data')
+@click.argument('api_name')
+@click.argument('cert_data', default='')
 @with_appcontext
-def save_api_certification(api_code, cert_data):
+def save_api_certification(api_code, api_name, cert_data):
     """
     cert insert api_code cert_data
     """
-    if ApiCertificate.insert_new_cert_data(api_code, cert_data):
+    if ApiCertificate.insert_new_api_cert(api_code, api_name, cert_data):
         click.secho('insert cert success')
     else:
         click.secho('insert cert failed')
@@ -94,13 +95,14 @@ def save_api_certification(api_code, cert_data):
 
 @cert.command('update')
 @click.argument('api_code')
-@click.argument('cert_data')
+@click.argument('api_name')
+@click.argument('cert_data', default='')
 @with_appcontext
-def update_api_certification(api_code, cert_data):
+def update_api_certification(api_code, api_name, cert_data):
     """
     cert update api_code cert_data
     """
-    if ApiCertificate.update_cert_data(api_code, cert_data):
+    if ApiCertificate.update_api_cert(api_code, api_name, cert_data):
         click.secho('update cert success')
     else:
         click.secho('update cert failed')
