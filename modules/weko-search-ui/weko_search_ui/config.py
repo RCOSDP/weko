@@ -90,8 +90,7 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_factory_imp'] = \
     'weko_search_ui.query.opensearch_factory'
 RECORDS_REST_ENDPOINTS['opensearch']['list_route'] = '/opensearch/search'
 RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
-    'application/json': ('weko_records.serializers'
-                         ':opensearch_v1_search'),
+    'application/json': ('weko_records.serializers:opensearch_v1_search'),
 }
 
 # register cites serializers.
@@ -101,9 +100,7 @@ RECORDS_REST_ENDPOINTS['recid']['item_route'] = '/records/<{0}:pid_value>'.forma
         ),
 
 RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
-    'text/x-bibliography': (
-                'weko_records.serializers'
-                ':citeproc_v1_response')
+    'text/x-bibliography': ('weko_records.serializers:citeproc_v1_response')
 }
 
 # RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all  
