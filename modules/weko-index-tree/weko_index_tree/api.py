@@ -33,7 +33,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from weko_groups.api import Group
 from .models import Index
 from .utils import get_tree_json, cached_index_tree_json, reset_tree, \
-    get_index_id_list, get_admin_coverpage_setting
+    get_index_id_list
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 

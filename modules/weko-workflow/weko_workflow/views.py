@@ -161,6 +161,27 @@ def display_activity(activity_id=0):
     action_id = cur_action.id
     temporary_comment = activity.get_activity_action_comment(
         activity_id=activity_id, action_id=action_id)
+
+    ### display_activity of Identifier grant
+    from weko_records_ui.models import Identifier
+    from weko_deposit.api import WekoRecord
+    from weko_index_tree.models import Index
+    from .utils import get_community_id_by_index
+    pidstore_idf = None
+    if item:
+        path = WekoRecord.get_record(item.id).get('path')
+        if len(path) > 1:
+            pass
+        else:
+            index_address = path.pop(-1).split('/')
+            index_id = Index.query.filter_by(id=index_address.pop()).one()
+            # current_app.logger.debug(index_id.index_name_english)
+            community_id = get_community_id_by_index(index_id.index_name_english)
+            if community_id == None:
+                community_id = 'Root Index'
+            # current_app.logger.debug(Identifier.query.filter_by(repository=community_id).one())
+            pidstore_idf = Identifier.query.filter_by(repository=community_id).one()
+
     temporary_idf_grant = 0
     temporary_idf_grant_suffix = ["", "", ""]
     if temporary_comment:
@@ -230,6 +251,7 @@ def display_activity(activity_id=0):
         temporary_journal=temporary_journal,
         temporary_idf_grant=temporary_idf_grant,
         temporary_idf_grant_suffix=temporary_idf_grant_suffix,
+        pidstore_idf=pidstore_idf,
         idf_grant_input=IDENTIFIER_GRANT_LIST,
         idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
         record=approval_record,
