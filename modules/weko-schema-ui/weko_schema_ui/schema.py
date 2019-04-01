@@ -32,16 +32,18 @@ from lxml import etree
 from lxml.builder import ElementMaker
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import Mapping
-from xmlschema.validators import (
-    XsdAtomicBuiltin, XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup,
-    XsdPatternsFacet, XsdSingleFacet, XsdUnion, XsdAnyElement)
+from xmlschema.validators import XsdAnyElement, XsdAtomicBuiltin, \
+    XsdAtomicRestriction, XsdEnumerationFacet, XsdGroup, XsdPatternsFacet, \
+    XsdSingleFacet, XsdUnion
 
 from .api import WekoSchema
 
 
 class SchemaConverter:
+    """SchemaConverter."""
 
     def __init__(self, schemafile, rootname):
+        """Init."""
         if schemafile is None:
             abort(400, "Error creating Schema: Invalid schema file used")
         if not rootname:
@@ -52,9 +54,11 @@ class SchemaConverter:
             self.create_schema(schemafile)
 
     def to_dict(self):
+        """To_dict."""
         return json.dumps(self.schema)
 
     def create_schema(self, schema_file):
+        """Creat_schema."""
         def getXSVal(element_name):  # replace prefix namespace
             if "}" in element_name:
                 for k, nsp in schema_data.namespaces.items():
@@ -182,12 +186,15 @@ class SchemaConverter:
 
 
 class SchemaTree:
+    """Schematree."""
 
     def __init__(self, record=None, schema_name=None):
         """
+        Init.
 
         :param record: item metadata
         :param schema_name: schema name
+
         """
         self._record = record["metadata"] \
             if record and record.get("metadata") else None
@@ -207,8 +214,10 @@ class SchemaTree:
 
     def get_mapping_data(self):
         """
-         Get mapping info and return  schema and schema's root name namespace
+         Get mapping info and return  schema and schema's root name namespace.
+
         :return: root name, namespace and schema
+
         """
         # Get Schema info
         rec = cache_schema(self._schema_name)
@@ -259,11 +268,13 @@ class SchemaTree:
                 val = node.get(self._v)
                 attr = node.get(self._atr)
                 if val:
-                    alst = list(filter(lambda x: get_attr(x) in _need_to_nested,
-                                       attr.keys())) if attr else []
+                    alst = list(
+                        filter(
+                            lambda x: get_attr(x) in _need_to_nested,
+                            attr.keys())) if attr else []
                     if attr and alst:
-                        return list(map(partial(create_json, get_attr(alst[0])), list_reduce([attr.get(alst[0])]),
-                                        list(list_reduce(val))))
+                        return list(map(partial(create_json, get_attr(alst[0])), list_reduce(
+                            [attr.get(alst[0])]), list(list_reduce(val))))
 
                     return list(list_reduce(val))
                 else:
@@ -280,12 +291,13 @@ class SchemaTree:
     @classmethod
     def get_jpcoar_json(cls, records, schema_name="jpcoar_mapping"):
         """
-        Find elements values and return a jpcoar json
+        Find elements values and return a jpcoar json.
+
         :param records:
         :param schema_name: default set jpcoar_mapping
         :return: json
-        """
 
+        """
         obj = cls(schema_name=schema_name)
         obj._record = records
         vlst = list(map(obj.__converter,
@@ -296,8 +308,7 @@ class SchemaTree:
         return json_merge_all(vlst)
 
     def __get_value_list(self):
-        """ Find values to a list"""
-
+        """Find values to a list."""
         def analysis(field):
             exp = (',',)
             return exp[0], field.split(exp[0])
@@ -341,8 +352,8 @@ class SchemaTree:
                     pid = self._record.get('control_number')
                     if pid:
                         return request.host_url[:-1] + \
-                               url_for('invenio_records_ui.recid_files',
-                                       pid_value=pid, filename=val)
+                            url_for('invenio_records_ui.recid_files',
+                                    pid_value=pid, filename=val)
                     else:
                         return val
                 else:
@@ -485,10 +496,11 @@ class SchemaTree:
 
     def create_xml(self):
         """
-        create schema xml tree
-        :return:
-        """
+        Create schema xml tree.
 
+        :return:
+
+        """
         def check_node(node):
             if isinstance(node, dict):
                 if node.get(self._v):
@@ -619,8 +631,7 @@ class SchemaTree:
         return root
 
     def to_list(self):
-        """Get a elementName List
-        """
+        """Get a elementName List."""
         elst = []
         klst = []
 
@@ -652,12 +663,13 @@ class SchemaTree:
 
     def get_node(self, dc, key=None):
         """
-        Create generator for get node
+        Create generator for get node.
+
         :param dc:
         :param key:
         :return: node
-        """
 
+        """
         if key:
             yield key
 
@@ -667,8 +679,7 @@ class SchemaTree:
                     yield x
 
     def find_nodes(self, mlst):
-        """"""
-
+        """Find_nodes."""
         def get_generator(nlst):
             gdc.clear()
 
@@ -763,11 +774,12 @@ class SchemaTree:
 
 def cache_schema(schema_name, delete=False):
     """
-    cache the schema to Redis
+    Cache the schema to Redis.
+
     :param schema_name:
     :return:
-    """
 
+    """
     def get_schema():
         try:
             rec = WekoSchema.get_record_by_name(schema_name)
@@ -782,7 +794,7 @@ def cache_schema(schema_name, delete=False):
                 rec.model.namespaces.clear()
                 del rec
                 return dstore
-        except:
+        except BaseException:
             return None
 
     try:
@@ -811,9 +823,11 @@ def cache_schema(schema_name, delete=False):
 
 def delete_schema_cache(schema_name):
     """
-    delete schema cache on redis
+    Delete schema cache on redis.
+
     :param schema_name:
     :return:
+
     """
     try:
         # schema cached on Redis by schema name
@@ -828,12 +842,13 @@ def delete_schema_cache(schema_name):
 
 def schema_list_render(pid=None, **kwargs):
     """
-    return records for template
+    Return records for template.
+
     :param pid:
     :param kwargs:
     :return: records
-    """
 
+    """
     lst = WekoSchema.get_all()
 
     records = []
@@ -851,19 +866,22 @@ def schema_list_render(pid=None, **kwargs):
 
 def delete_schema(pid):
     """
-    delete schema by pid
+    Delete schema by pid.
+
     :param pid:
     :return:
+
     """
     return WekoSchema.delete_by_id(pid)
 
 
 def reset_oai_metadata_formats(app):
     """
-    reset oaiserver metadata formats dict
-    :return:
-    """
+    Reset oaiserver metadata formats dict.
 
+    :return:
+
+    """
     @app.before_first_request
     def set_metadata_formats():
         oad = app.config.get('OAISERVER_METADATA_FORMATS', {})

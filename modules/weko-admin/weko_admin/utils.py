@@ -28,13 +28,12 @@ from .models import AdminLangSettings, SearchManagement
 
 
 def get_response_json(result_list, n_lst):
-    """
-     Get a response json
+    """Get a response json.
+
     :param result_list:
     :param n_lst:
     :return: result
     """
-
     result = {}
     if isinstance(result_list, list):
         newlst = []
@@ -42,8 +41,10 @@ def get_response_json(result_list, n_lst):
             adr_lst = rlst.get('addresses')
             if isinstance(adr_lst, list):
                 for alst in adr_lst:
-                    alst['start_ip_address'] = alst['start_ip_address'].split('.')
-                    alst['finish_ip_address'] = alst['finish_ip_address'].split('.')
+                    alst['start_ip_address'] = alst['start_ip_address'].split(
+                        '.')
+                    alst['finish_ip_address'] = alst['finish_ip_address'].split(
+                        '.')
             newlst.append(rlst.dumps())
         result.update(dict(site_license=newlst))
         del result_list
@@ -68,20 +69,20 @@ def get_response_json(result_list, n_lst):
 
 
 def allowed_file(filename):
+    """Allowed file."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in config.LOGO_ALLOWED_EXTENSIONS
 
 
 def get_search_setting():
-    """
-    Get search setting from DB
+    """Get search setting from DB.
+
     :return: Setting data by Json
     """
-
     res = SearchManagement.get()
 
     if res:
-        db_obj= res.search_setting_all
+        db_obj = res.search_setting_all
         # current_app.logger.debug(db_str)
         # if 'False' in db_str:
         #     db_str.replace('False','false')
@@ -96,8 +97,8 @@ def get_search_setting():
 
 
 def get_admin_lang_setting():
-    """
-    Convert language list to json
+    """Convert language list to json.
+
     :return:
     """
     try:
@@ -108,8 +109,8 @@ def get_admin_lang_setting():
 
 
 def update_admin_lang_setting(admin_lang_settings):
-    """
-    Update language to admin_lang_settings table
+    """Update language to admin_lang_settings table.
+
     :param admin_lang_settings: input data to update language into database
     """
     try:
@@ -124,6 +125,7 @@ def update_admin_lang_setting(admin_lang_settings):
 
 
 def get_selected_language():
+    """Get selected language."""
     result = {
         'lang': '',
         'selected': '',
@@ -142,7 +144,7 @@ def get_selected_language():
 
 
 def get_current_language(default_language):
-    """
+    """Get current language.
 
     :param default_language:
     :return: selected language
@@ -157,7 +159,8 @@ def get_current_language(default_language):
 
 
 def set_default_language():
-    """
+    """Set the default language.
+
     In case user opens the web for the first time,
     set default language base on Admin language setting
     """
@@ -169,7 +172,7 @@ def set_default_language():
 
 
 def is_refresh(default_language):
-    """
+    """Is refresh.
 
     :param default_language:
     :return:

@@ -27,18 +27,16 @@ from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
-from invenio_records.signals import (
-    after_record_delete, after_record_insert, after_record_revert,
-    after_record_update, before_record_delete, before_record_insert,
-    before_record_revert, before_record_update)
+from invenio_records.signals import after_record_delete, after_record_insert, \
+    after_record_revert, after_record_update, before_record_delete, \
+    before_record_insert, before_record_revert, before_record_update
 from jsonpatch import apply_patch
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import desc, asc
+from sqlalchemy.sql.expression import asc, desc
 from werkzeug.local import LocalProxy
 
-from .models import (
-    FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, ItemTypeName,
-    ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress)
+from .models import FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, \
+    ItemTypeName, ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress
 
 _records_state = LocalProxy(
     lambda: current_app.extensions['invenio-records'])
@@ -156,7 +154,7 @@ class ItemTypeNames(RecordBase):
 
     @classmethod
     def update(cls, obj):
-
+        """Update method."""
         def commit(olst, flg):
             with db.session.begin_nested():
                 for lst in olst:
@@ -1331,14 +1329,14 @@ class SiteLicense(RecordBase):
 
     @classmethod
     def update(cls, obj):
-
+        """Update method."""
         def get_addr(lst, id_):
             if lst and isinstance(lst, list):
                 sld = []
                 for j in range(len(lst)):
                     sl = SiteLicenseIpAddress(
                         organization_id=id_,
-                        organization_no=j+1,
+                        organization_no=j + 1,
                         start_ip_address='.'.join(
                             lst[j].get('start_ip_address')),
                         finish_ip_address='.'.join(
@@ -1354,12 +1352,14 @@ class SiteLicense(RecordBase):
             sif = []
             for i in range(len(site_license)):
                 lst = site_license[i]
-                slif = SiteLicenseInfo(organization_id=i+1,
-                                       organization_name=lst.get(
-                                           'organization_name'),
-                                       mail_address=lst.get('mail_address'),
-                                       domain_name=lst.get('domain_name'),
-                                       addresses=get_addr(lst.get('addresses'), i))
+                slif = SiteLicenseInfo(
+                    organization_id=i + 1,
+                    organization_name=lst.get('organization_name'),
+                    mail_address=lst.get('mail_address'),
+                    domain_name=lst.get('domain_name'),
+                    addresses=get_addr(
+                        lst.get('addresses'),
+                        i))
                 sif.append(slif)
 
             # delete all rows first

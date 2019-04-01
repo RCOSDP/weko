@@ -123,7 +123,8 @@ def create_blueprint(app, endpoints):
 
 
 class ItemResource(ContentNegotiatedMethodView):
-    """redirect to next page(index select) """
+    """Redirect to next page(index select)."""
+
     view_name = '{0}_item'
 
     def __init__(self, ctx, search_serializers=None,
@@ -151,14 +152,14 @@ class ItemResource(ContentNegotiatedMethodView):
 
     @pass_record
     def post(self, pid, record, **kwargs):
-        """"""
+        """Post."""
         from weko_deposit.links import base_factory
         response = self.make_response(pid, record, 201,
                                       links_factory=base_factory)
         return response
 
     def put(self, **kwargs):
-        """"""
+        """Put."""
         try:
             data = request.get_json()
             pid = kwargs.get('pid_value').value
@@ -171,7 +172,10 @@ class ItemResource(ContentNegotiatedMethodView):
             cache_key = current_app.config[
                 'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=pid)
             ttl_sec = int(current_app.config['WEKO_DEPOSIT_ITEMS_CACHE_TTL'])
-            datastore.put(cache_key, json.dumps(data).encode('utf-8'), ttl_secs=ttl_sec)
+            datastore.put(
+                cache_key,
+                json.dumps(data).encode('utf-8'),
+                ttl_secs=ttl_sec)
         except BaseException:
             abort(400, "Failed to register item")
 

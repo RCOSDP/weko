@@ -19,20 +19,20 @@
 # MA 02111-1307, USA.
 
 """WEKO3 module docstring."""
-import requests, xmltodict
+import requests
+import xmltodict
 from flask import jsonify
 
 romeo_api_base_url = 'http://www.sherpa.ac.uk/romeo/api29.php'
 
 
 def search_romeo_jtitles(keywords, qtype):
-    """
-    Search by title.
+    """Search by title.
+
     :param keywords:
     :param qtype:
     :return:
     """
-
     payloads = {
         'jtitle': keywords,
         'qtype': qtype
@@ -50,11 +50,11 @@ def search_romeo_jtitles(keywords, qtype):
 
 
 def search_romeo_issn(query):
-    """
+    """Search journal using ISSN.
+
     Searching for one journal with the ISSN selected by the user
     to get the journal's Romeo info
     """
-
     # ISSN contained in the query
     payloads = {
         'issn': query  # ISSN search - Single Result
@@ -71,11 +71,11 @@ def search_romeo_issn(query):
 
 
 def search_romeo_jtitle(query):
-    """
+    """Search the journal using query.
+
     Searching for journals with the input query
     to get their Romeo info
     """
-
     payloads = {
         'jtitle': query
     }
