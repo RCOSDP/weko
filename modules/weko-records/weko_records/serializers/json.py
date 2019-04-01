@@ -107,6 +107,7 @@ class WekoJSONSerializer(JSONSerializer):
     def serialize(self, pid, record, links_factory=None, **kwargs):
         print("[Log]: WekoJSONSerializer >> serialize")
         print(kwargs)
+        print(links_factory)
         print("[Log]: WekoJSONSerializer >> done")
         result = super(WekoJSONSerializer, self).serialize(
             pid, record, links_factory=links_factory, **kwargs
