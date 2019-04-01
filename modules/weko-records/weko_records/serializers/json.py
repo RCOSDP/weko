@@ -116,7 +116,7 @@ class WekoJSONSerializer(JSONSerializer):
 
         return result
 
-    def print_trackback():
+    def print_trackback(self):
         try:
             import traceback
             for line in traceback.format_stack():
