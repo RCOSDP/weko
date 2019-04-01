@@ -106,7 +106,7 @@ RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
                 ':citeproc_v1_response')
 }
 
-RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all  
+# RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all  
 print("[Log]: =============================")
 print("[Log]: After RECORDS_REST_ENDPOINTS")
 print(RECORDS_REST_ENDPOINTS)
