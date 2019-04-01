@@ -43,7 +43,8 @@ from .utils import (
     get_user_info_by_username,
     validate_user,
     get_user_info_by_email,
-    get_user_information)
+    get_user_information,
+    get_user_permission)
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -577,15 +578,27 @@ def validate_user_info():
 
 @blueprint_api.route('/get_user_info/<int:user_id>', methods=['GET'])
 def get_user_info(user_id):
+    """
+    Get username and password by querying user id
+
+    param:
+        user_id: The user ID
+    return: The result json:
+        username: The username,
+        email: The email,
+        error: null if no error occurs
+    """
     result = {
         'username': '',
         'email': '',
+        'owner':'',
         'error': ''
     }
     try:
         user_info = get_user_information(user_id)
         result['username'] = user_info['username']
         result['email'] = user_info['email']
+        result['owner'] = get_user_permission(user_id)
     except Exception as e:
         result['error'] = e
     
