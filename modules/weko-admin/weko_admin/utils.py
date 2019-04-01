@@ -241,9 +241,11 @@ def save_api_certification(api_code, cert_data):
                 result['results'] = ApiCertificate.update_cert_data(api_code,
                                                                     cert_data)
             else:
-                result['error'] = _("Input type is not valid.")
+                result['error'] = _(
+                    "Input type is invalid. Please check again.")
         else:
-            result['error'] = _("Input data is not valid.")
+            result['error'] = _(
+                "Account information is invalid. Please check again.")
     except Exception as e:
         result['error'] = str(e)
 
