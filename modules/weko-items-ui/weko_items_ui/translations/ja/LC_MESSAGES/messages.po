@@ -136,15 +136,15 @@ msgstr "取得"
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:116
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:279
-msgid "Please select the ID"
+msgid "Please select the ID."
 msgstr "IDを選択ください。"
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:116
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:280
-msgid "Please input value"
+msgid "Please input value."
 msgstr "値を入力ください。"
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:116
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:281
-msgid "Specified DOI does not exist"
-msgstr "指定したDOIが存在しません。"
+msgid "Specified ID does not exist."
+msgstr "指定したIDが存在しません。"
