@@ -94,10 +94,10 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
 }
 
 # register cites serializers.
-RECORDS_REST_ENDPOINTS['recid']['list_route'] = '/records/'
-RECORDS_REST_ENDPOINTS['recid']['item_route'] = '/records/<{0}:pid_value>'.format(
-            'pid(recid,record_class="weko_records.api:WekoRecord")'
-        ),
+# RECORDS_REST_ENDPOINTS['recid']['list_route'] = '/records/'
+# RECORDS_REST_ENDPOINTS['recid']['item_route'] = '/records/<{0}:pid_value>'.format(
+#            'pid(recid,record_class="weko_records.api:WekoRecord")'
+#        ),
 
 RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
     'text/x-bibliography': ('weko_records.serializers:citeproc_v1_response')
