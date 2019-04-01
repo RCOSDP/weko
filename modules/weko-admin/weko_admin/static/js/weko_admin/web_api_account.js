@@ -23,9 +23,18 @@ $(document).ready(function () {
 });
 
 var save = function () {
+  let api_code = $.trim($('#input_type').val());
+  let cert_data = $.trim($('#cross_ref_account').val());
+  if (!api_code || api_code == '0'){
+    alert('Input type is invalid. Please check again.');
+    return;
+  } else if(!cert_data){
+    alert('Account information is invalid. Please check again.');
+    return;
+  }
   let param = {
-    "api_code": $.trim($('#input_type').val()),
-    "cert_data": $.trim($('#cross_ref_account').val())
+    "api_code": api_code,
+    "cert_data": cert_data
   }
   $.ajax({
     url: "/api/admin/save_api_cert_data",
@@ -38,7 +47,7 @@ var save = function () {
     success: function (data, status) {
       let err_msg = data.error;
       if (err_msg) {
-        alert('Account information is invalid. Please check again.');
+        alert(err_msg);
       } else if (!data.results) {
         alert('Account information is invalid. Please check again.');
       } else {
