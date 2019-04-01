@@ -45,7 +45,7 @@ def cached_api_json(timeout=50, key_prefix="cached_api_json"):
     def caching(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            key = key_prefix + args[1]
+            key = key_prefix + args[len(args)-1]
             cache_fun = current_cache.cached(
                 timeout=timeout,
                 key_prefix=key,
@@ -57,7 +57,6 @@ def cached_api_json(timeout=50, key_prefix="cached_api_json"):
                 return data
             else:
                 return current_cache.get(key)
-
         return wrapper
 
     return caching
@@ -586,7 +585,7 @@ def get_crossref_data(pid, doi):
     return api.get_data()
 
 
-# @cached_api_json(timeout=50,)
+@cached_api_json(timeout=50,)
 def get_cinii_data(naid):
     """Return cache-able data
     naid : naid
