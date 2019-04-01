@@ -36,10 +36,10 @@ from weko_records.api import ItemTypes, SiteLicense
 from werkzeug.local import LocalProxy
 
 from .models import SearchManagement, SessionLifetime
-from .utils import get_admin_lang_setting, get_response_json, \
-    get_search_setting, get_selected_language, update_admin_lang_setting, \
-    get_api_certification_type, get_current_api_certification, \
-    save_api_certification, validate_certification
+from .utils import get_admin_lang_setting, get_api_certification_type, \
+    get_current_api_certification, get_response_json, get_search_setting, \
+    get_selected_language, save_api_certification, update_admin_lang_setting, \
+    validate_certification
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -256,6 +256,7 @@ def get_selected_lang():
         result = {'error': str(e)}
     return jsonify(result)
 
+
 @blueprint_api.route('/get_api_cert_type', methods=['GET'])
 def get_api_cert_type():
     """
@@ -341,7 +342,8 @@ def save_api_cert_data():
     api_code = data.get('api_code', '')
     cert_data = data.get('cert_data', '')
     if not cert_data:
-        result['error'] = _('Account information is invalid. Please check again.')
+        result['error'] = _(
+            'Account information is invalid. Please check again.')
     elif validate_certification(cert_data):
         result = save_api_certification(api_code, cert_data)
     else:

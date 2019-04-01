@@ -19,14 +19,14 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
+import requests
 from flask import session
 from flask_babelex import lazy_gettext as _
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
-import requests
 
 from . import config
-from .models import AdminLangSettings, SearchManagement, ApiCertificate
+from .models import AdminLangSettings, ApiCertificate, SearchManagement
 
 
 def get_response_json(result_list, n_lst):
