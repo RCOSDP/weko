@@ -294,14 +294,7 @@ class IdentifierSettingView(ModelView):
         pass
 
     def on_form_prefill(self, form, id):
-        query_data = Community.query.options(load_only('id')).all()
-        data = [index.id for index in query_data]
-        pos = -1
-        try:
-            pos = data.index(form.repository.data)
-        except ValueError:
-            pos = -1
-        form.repo_selected.data = pos + 1
+        form.repo_selected.data = form.repository.data
         pass
 
     def create_form(self, obj=None):
@@ -332,7 +325,7 @@ class IdentifierSettingView(ModelView):
 
     def _use_append_repository(self, form):
         form.repository.query_factory = self._get_community_list
-        form.repo_selected.data = 0
+        form.repo_selected.data = 'Root Index'
         return form
 
     def _get_community_list(self):
