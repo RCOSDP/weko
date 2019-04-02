@@ -209,6 +209,7 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
     else:
         lang = user.language
 
+    add_signals_info(record, obj)
     """ Send file without its pdf cover page """
 
     try:
@@ -259,3 +260,32 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
         id=object_version_record.file_id).first()
     obj_file_uri = file_instance_record.uri
     return make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang)
+
+def add_signals_info(record, obj):
+    # Add user role info to send_obj
+    userrole = 'guest'
+    if hasattr(current_user, 'id'):
+        if len(current_user.roles) == 0:
+            userrole = 'user'
+        elif len(current_user.roles) == 1:
+            userrole = current_user.roles[0].name
+        else:
+            max_power_role_id = 999
+            for r in current_user.roles:
+                if max_power_role_id > r.id:
+                    max_power_role_id = r.id
+                    userrole = r.name
+    obj.userrole = userrole
+
+    # Add site license flag to send_obj
+    if hasattr(current_user, 'site_license_flag'):
+        obj.site_license_flag = True
+    else:
+        obj.site_license_flag = False
+
+    # Add index list info to send_obj
+    index_list = ''
+    if len(record.navi) > 0:
+        for index in record.navi:
+            index_list += index[3] + '|'
+    obj.index_list = index_list[:len(index_list) - 1]
