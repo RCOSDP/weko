@@ -131,7 +131,7 @@ def validate_user(username, email):
     }
     try:
         user = UserProfile.get_by_username(username)
-        user_id = user.user_id
+        user_id = 0
 
         metadata = MetaData()
         metadata.reflect(bind=db.engine)
@@ -144,14 +144,16 @@ def validate_user(username, email):
 
         for item in data:
             if item[1] == email:
-                if item[0] == user_id:
-                    user_info = dict()
-                    user_info['username'] = username
-                    user_info['user_id'] = user_id
-                    user_info['email'] = item[1]
-                    result['results'] = user_info
-                    result['validation'] = True
-                    return result
+                user_id = item[0]
+                break
+
+        if user.user_id == user_id:
+            user_info = dict()
+            user_info['username'] = username
+            user_info['user_id'] = user_id
+            user_info['email'] = email
+            result['results'] = user_info
+            result['validation'] = True
         return result
     except Exception as e:
         result['error'] = str(e)
@@ -180,16 +182,23 @@ def get_user_info_by_email(email):
         record = db.session.query(user_table)
 
         data = record.all()
-
+        print(data)
+        print("Data:::::::")
         for item in data:
+            print(item[1])
+            print("=========")
             if item[1] == email:
                 user = UserProfile.get_by_userid(item[0])
-                result['username'] = user._username
+                if user is None:
+                    result['username'] = ""
+                else:
+                    result['username'] = user._username
                 result['user_id'] = item[0]
                 result['email'] = email
                 return result
         return None
     except Exception as e:
+        print(str(e))
         result['error'] = str(e)
 
 
@@ -199,7 +208,8 @@ def get_user_information(user_id):
         'email': ''
     }
     userinfo = UserProfile.get_by_userid(user_id)
-    result['username'] = userinfo._username
+    if userinfo is not None:
+        result['username'] = userinfo._username
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
