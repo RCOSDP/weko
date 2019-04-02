@@ -106,16 +106,17 @@ def search():
         management_type = request.args.get('item_management', 'sort')
         return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
                                index_id=cur_index_id, community_id=community_id,
-                               width=width, height=height,management_type=management_type,
+                               width=width, height=height, management_type=management_type,
                                fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
-                               licences = current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
+                               licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
                                detail_condition=detail_condition, **ctx)
 
     elif 'item_link' in getArgs:
         activity_id = request.args.get('item_link')
         from weko_workflow.api import WorkActivity
         workFlowActivity = WorkActivity()
-        activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx \
+        activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, \
+            step_item_login_url, histories, res_check, pid, community_id, ctx \
             = workFlowActivity.get_activity_index_search(activity_id=activity_id)
         return render_template(
             'weko_workflow/activity_detail.html',
@@ -216,8 +217,8 @@ def bulk_delete():
         search = search_obj.with_preference_param().params(version=True)
         search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
         search, qs_kwargs = item_path_search_factory(None,
-                                 search,
-                                 index_id=index_tree_id)
+                                                     search,
+                                                     index_id=index_tree_id)
         search_result = search.execute()
         rd = search_result.to_dict()
 
@@ -233,7 +234,7 @@ def bulk_delete():
                 pids = PersistentIdentifier.query.filter_by(
                     object_uuid=recid).all()
                 for pid in pids:
-                    db.session.delete(pid) # Delete PersistentId
+                    db.session.delete(pid)  # Delete PersistentId
 
                 # Delete this record
                 Record.get_record(recid).delete()   # flag as deleted
