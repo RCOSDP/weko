@@ -32,14 +32,13 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
-from .models import ActionStatusPolicy, ActionCommentPolicy, \
-    ActivityStatusPolicy, FlowStatusPolicy, ActionJournal
+from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
-from .models import ActivityAction
-from .models import ActivityHistory
+from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
+from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
 
 
@@ -48,7 +47,8 @@ class Flow(object):
 
     def create_flow(self, flow):
         """
-        Create new flow
+        Create new flow.
+
         :param flow:
         :return:
         """

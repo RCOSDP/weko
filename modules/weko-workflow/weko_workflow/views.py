@@ -185,15 +185,15 @@ def display_activity(activity_id=0):
 
             # valid date pidstore_identifier data
             if idf_grant_data is not None:
-                if idf_grant_data.jalc_doi is None:
+                if not idf_grant_data.jalc_doi:
                     idf_grant_data.jalc_doi = '«Empty»'
-                if idf_grant_data.jalc_crossref_doi is None:
+                if not idf_grant_data.jalc_crossref_doi:
                     idf_grant_data.jalc_crossref_doi = '«Empty»'
-                if idf_grant_data.jalc_datacite_doi is None:
+                if not idf_grant_data.jalc_datacite_doi:
                     idf_grant_data.jalc_datacite_doi = '«Empty»'
-                if idf_grant_data.cnri is None:
+                if not idf_grant_data.cnri:
                     idf_grant_data.cnri = '«Empty»'
-                if idf_grant_data.suffix is None:
+                if not idf_grant_data.suffix:
                     idf_grant_data.suffix = '«Empty»'
 
     temporary_idf_grant = 0
@@ -343,6 +343,13 @@ def next_action(activity_id='0', action_id=0):
         'identifier_grant_jalc_cr_doi_suffix')
     idf_grant_jalc_dc_doi_manual = post_json.get(
         'identifier_grant_jalc_dc_doi_suffix')
+    if not idf_grant_jalc_doi_manual:
+        idf_grant_jalc_doi_manual = ''
+    if not idf_grant_jalc_cr_doi_manual:
+        idf_grant_jalc_cr_doi_manual = ''
+    if not idf_grant_jalc_dc_doi_manual:
+        idf_grant_jalc_dc_doi_manual = ''
+
     # If is action identifier_grant, then save to work_activity
     if idf_grant is not None:
         work_activity.upt_activity_action_id_grant(
