@@ -49,8 +49,8 @@ angular.module('myApp', ['ui.bootstrap'])
             return second.updated - first.updated;
         });
         let txt_filename = $('#txt_filename').val()
-        let txt_published = $('#txt_published').val()
-        let txt_private = $('#txt_private').val()
+        let txt_show = $('#txt_show').val()
+        let txt_hide = $('#txt_hide').val()
         let is_logged_in = $('#txt_is_logged_in').val()
 
         // Remove the versions which does not match the current file
@@ -70,8 +70,8 @@ angular.module('myApp', ['ui.bootstrap'])
             const nameRadio = `radio${index}`;
             let radio = index == 0 ? "" : `
             <div class="radio">
-                <label style="margin-left: 5px"><input type="radio" name="${nameRadio}">${txt_published}</label>
-                <label style="margin-left: 5px"><input type="radio" name="${nameRadio}" checked>${txt_private}</label>
+                <label style="margin-left: 5px"><input type="radio" name="${nameRadio}">${txt_show}</label>
+                <label style="margin-left: 5px"><input type="radio" name="${nameRadio}" checked>${txt_hide}</label>
             </div>
             `;
             // if (!isPublished) {
@@ -108,8 +108,7 @@ angular.module('myApp', ['ui.bootstrap'])
 
             var username = ''
             if (is_logged_in == 'True' && ele.uploaded_owners && ele.uploaded_owners.created_user) {
-              username =  ele.uploaded_owners.created_user.username == '' ?
-                  ele.uploaded_owners.created_user.email : ele.uploaded_owners.created_user.username
+              username =  ele.uploaded_owners.created_user.username;
             }
 
             results += `
