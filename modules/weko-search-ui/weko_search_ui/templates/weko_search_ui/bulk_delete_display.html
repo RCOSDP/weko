@@ -47,8 +47,10 @@
       </div>
       <div class="panel-body">
         <div id="index_item_list">
+          {%- set delete_button_class = 'disabled' -%}
           {%- if not page_id %}
           {%- if index_id %}
+          {%- set delete_button_class = '' -%}
           <invenio-search-results
             template="{{ url_for('static', filename=config.WEKO_ITEM_MANAGEMENT_JSTEMPLATE_BREAD) }}">
           </invenio-search-results>
@@ -59,7 +61,7 @@
         </div>
         <div class="row text-center">
           <p></p>
-          <a data-toggle="modal" href="#bulk_delete_confirmation" class="btn btn-primary btn-md">{{ _('Bulk Delete') }}</a>
+          <a data-toggle="modal" href="#bulk_delete_confirmation" class="btn btn-primary btn-md {{delete_button_class}}">{{ _('Bulk Delete') }}</a>
         </div>
         <div id="bulk_delete_confirmation" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="deleteHeader"
              aria-hidden="true">
