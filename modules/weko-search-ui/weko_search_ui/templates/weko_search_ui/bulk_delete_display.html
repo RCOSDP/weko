@@ -47,10 +47,8 @@
       </div>
       <div class="panel-body">
         <div id="index_item_list">
-          {%- set delete_button_class = 'disabled' -%}
           {%- if not page_id %}
           {%- if index_id %}
-          {%- set delete_button_class = '' -%}
           <invenio-search-results
             template="{{ url_for('static', filename=config.WEKO_ITEM_MANAGEMENT_JSTEMPLATE_BREAD) }}">
           </invenio-search-results>
@@ -59,6 +57,11 @@
           <input type="checkbox" id="recursively" name="recursively">{{_('Delete items of child recursively')}}
           {%- endif %}
         </div>
+
+        {%- set delete_button_class = 'disabled' -%}
+        {%- if has_items or has_child_trees -%}
+        {%- set delete_button_class = '' -%}
+        {%- endif -%}
         <div class="row text-center">
           <p></p>
           <a data-toggle="modal" href="#bulk_delete_confirmation" class="btn btn-primary btn-md {{delete_button_class}}">{{ _('Bulk Delete') }}</a>

@@ -104,11 +104,29 @@ def search():
 
     if 'item_management' in getArgs:
         management_type = request.args.get('item_management', 'sort')
+
+        has_items = False
+        has_child_trees = False
+        if management_type == 'delete':
+            # Does this tree has items or children?
+            q = request.args.get('q')
+            if q is not None and q.isdigit():
+                    current_tree = Indexes.get_index(q)
+                    recursive_tree = Indexes.get_recursive_tree(q)
+
+                    if current_tree is not None:
+                        tree_items = get_tree_items(current_tree.id)
+                        has_items = len(tree_items) > 0
+                        if recursive_tree is not None:
+                            has_child_trees = len(recursive_tree) > 1
+
         return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
                                index_id=cur_index_id, community_id=community_id,
                                width=width, height=height, management_type=management_type,
                                fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
                                licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
+                               has_items=has_items,
+                               has_child_trees=has_child_trees,
                                detail_condition=detail_condition, **ctx)
 
     elif 'item_link' in getArgs:
@@ -208,22 +226,27 @@ def opensearch_description():
     return response
 
 
+def get_tree_items(index_tree_id):
+    """Get tree items."""
+    records_search = RecordsSearch()
+    records_search = records_search.with_preference_param().params(version=True)
+    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    search_instance, qs_kwargs = item_path_search_factory(None,
+                                                          records_search,
+                                                          index_id=index_tree_id)
+    search_result = search_instance.execute()
+    rd = search_result.to_dict()
+
+    return rd.get('hits').get('hits')
+
+
 @blueprint.route("/item_management/bulk_delete", methods=['GET', 'PUT'])
 def bulk_delete():
     """Bulk delete items and index trees."""
 
     def delete_records(index_tree_id):
-        search_obj = RecordsSearch()
-        search = search_obj.with_preference_param().params(version=True)
-        search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-        search, qs_kwargs = item_path_search_factory(None,
-                                                     search,
-                                                     index_id=index_tree_id)
-        search_result = search.execute()
-        rd = search_result.to_dict()
-
         record_indexer = RecordIndexer()
-        hits = rd.get('hits').get('hits')
+        hits = get_tree_items(index_tree_id)
         for hit in hits:
             recid = hit.get('_id')
             record = Record.get_record(recid)
@@ -243,7 +266,7 @@ def bulk_delete():
     if request.method == 'PUT':
         # Do delete items inside the current index tree (maybe root tree)
         q = request.values.get('q')
-        if q.isdigit():
+        if q is not None and q.isdigit():
             current_tree = Indexes.get_index(q)
             recursive_tree = Indexes.get_recursive_tree(q)
 
