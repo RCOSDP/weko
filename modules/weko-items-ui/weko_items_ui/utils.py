@@ -20,37 +20,35 @@
 
 """Module of weko-items-ui utils.."""
 
-from weko_user_profiles import UserProfile
 from flask_login import current_user
-from invenio_accounts.models import User
-from sqlalchemy import Table, MetaData
 from invenio_db import db
+from sqlalchemy import MetaData, Table
+from weko_user_profiles import UserProfile
 
 
 def get_list_username():
-    """
-    Get list username
-    Query database to get all available username
+    """Get list username.
 
+    Query database to get all available username
     return: list of username
     """
     user_index = 1
     result = list()
     while True:
         try:
-            userinfo = UserProfile.get_by_userid(user_index)
-            result.append(userinfo._username)
+            user_info = UserProfile.get_by_userid(user_index)
+            result.append(user_info.get_username)
             user_index = user_index + 1
-        except:
+        except Exception:
             break
+
     return result
 
 
 def get_list_email():
-    """
-    Get list email:
-    Query database to get all available email
+    """Get list email.
 
+    Query database to get all available email
     return: list of email
     """
     result = list()
@@ -73,15 +71,15 @@ def get_list_email():
 
 
 def get_user_info_by_username(username):
-    """
-    Get user information by username:
+    """Get user information by username.
+
     Query database to get user id by using username
     Get email from database using user id
     Pack response data: user id, user name, email
 
     parameter:
         username: The username
-    return: response pack 
+    return: response pack
     """
     result = dict()
     try:
@@ -109,8 +107,8 @@ def get_user_info_by_username(username):
 
 
 def validate_user(username, email):
-    """
-    Validate user information:
+    """Validate user information.
+
     Get user id from database using username
     Get user id from database using email
     Compare 2 user id to validate user information
@@ -118,7 +116,7 @@ def validate_user(username, email):
         results: user information (username, user id, email)
         validation: username is match with email or not
         error: null if no error occurs
-    
+
     param:
         username: The username
         email: The email
@@ -163,7 +161,8 @@ def validate_user(username, email):
 
 def get_user_info_by_email(email):
     """
-    Get user information by email:
+    Get user information by email.
+
     Query database to get user id by using email
     Get username from database using user id
     Pack response data: user id, user name, email
@@ -192,7 +191,7 @@ def get_user_info_by_email(email):
                 if user is None:
                     result['username'] = ""
                 else:
-                    result['username'] = user._username
+                    result['username'] = user.get_username
                 result['user_id'] = item[0]
                 result['email'] = email
                 return result
@@ -203,13 +202,24 @@ def get_user_info_by_email(email):
 
 
 def get_user_information(user_id):
+    """
+    Get user information user_id.
+
+    Query database to get email by using user_id
+    Get username from database using user id
+    Pack response data: user id, user name, email
+
+    parameter:
+        user_id: The user_id
+    return: response
+    """
     result = {
         'username': '',
         'email': ''
     }
-    userinfo = UserProfile.get_by_userid(user_id)
-    if userinfo is not None:
-        result['username'] = userinfo._username
+    user_info = UserProfile.get_by_userid(user_id)
+    if user_info is not None:
+        result['username'] = user_info.get_username
 
     metadata = MetaData()
     metadata.reflect(bind=db.engine)
@@ -227,7 +237,16 @@ def get_user_information(user_id):
 
     return result
 
+
 def get_user_permission(user_id):
+    """
+    Get user permission user_id.
+
+    Compare current id with id of current user
+    parameter:
+        user_id: The user_id
+    return: true if current id is the same with id of current user. If not return false
+    """
     current_id = current_user.get_id()
     if current_id is None:
         return False
