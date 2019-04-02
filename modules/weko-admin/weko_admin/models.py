@@ -422,7 +422,10 @@ class ApiCertificate(db.Model):
 
     @classmethod
     def update_cert_data(cls, api_code, cert_data):
-        """Overwrite if certificate existed, otherwise insert new certificate into database.
+        """Update certification data.
+
+        Overwrite if certificate existed,
+        otherwise insert new certificate into database.
 
         :param api_code: input api short name
         :param cert_data: input certificate value
@@ -471,7 +474,10 @@ class ApiCertificate(db.Model):
 
     @classmethod
     def update_api_cert(cls, api_code, api_name, cert_data):
-        """Overwrite if certificate existed, otherwise insert new certificate into database.
+        """Update API certification.
+
+        Overwrite if certificate existed,
+        otherwise insert new certificate into database.
 
         :param api_code: input api code
         :param api_name: input api name
