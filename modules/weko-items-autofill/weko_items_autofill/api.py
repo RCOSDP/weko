@@ -25,9 +25,8 @@ from . import config
 
 
 class CrossRefOpenURL:
-    """
-    The Class retrieves the metadata from CrossRef.
-    """
+    """The Class retrieves the metadata from CrossRef."""
+
     ENDPOINT = 'openurl'
     JSON_FORMAT = 'json'
     XML_FORMAT = 'xml'
@@ -41,6 +40,15 @@ class CrossRefOpenURL:
 
     def __init__(self, pid, doi, response_format=None, timeout=None,
                  http_proxy=None, https_proxy=None):
+        """Init CrossrefOpenURL API.
+
+        :param pid:
+        :param doi:
+        :param response_format:
+        :param timeout:
+        :param http_proxy:
+        :param https_proxy:
+        """
         if not pid:
             raise ValueError('PID is required.')
         if not doi:
@@ -57,8 +65,8 @@ class CrossRefOpenURL:
             self._proxy['https'] = https_proxy
 
     def _create_endpoint(self):
-        """
-        Create endpoint
+        """Create endpoint.
+
         :return: endpoint string.
         """
         endpoint_url = self.ENDPOINT + '?pid=' + self._pid
@@ -68,8 +76,8 @@ class CrossRefOpenURL:
         return endpoint_url
 
     def _create_url(self):
-        """
-        Create request URL
+        """Create request URL.
+
         :return:
         """
         endpoint = self._create_endpoint()
@@ -78,6 +86,10 @@ class CrossRefOpenURL:
 
     @property
     def url(self):
+        """URL property.
+
+        :return: Request URL
+        """
         return self._create_url()
 
     def _do_http_request(self):
@@ -85,9 +97,7 @@ class CrossRefOpenURL:
                             proxies=self._proxy)
 
     def get_data(self):
-        """
-        This method retrieves the metadata from CrossRef.
-        """
+        """This method retrieves the metadata from CrossRef."""
         response = {
             'response': '',
             'error': ''
@@ -102,9 +112,8 @@ class CrossRefOpenURL:
 
 
 class CiNiiURL:
-    """
-    The Class retrieves the metadata from CiNii.
-    """
+    """The Class retrieves the metadata from CiNii."""
+
     ENDPOINT = 'naid'
     POST_FIX = '.json'
     # Set default value
@@ -115,6 +124,13 @@ class CiNiiURL:
     }
 
     def __init__(self, naid, timeout=None, http_proxy=None, https_proxy=None):
+        """Init CiNiiURL API.
+
+        :param naid:
+        :param timeout:
+        :param http_proxy:
+        :param https_proxy:
+        """
         if not naid:
             raise ValueError('NAID is required.')
         self._naid = naid
@@ -127,16 +143,16 @@ class CiNiiURL:
             self._proxy['https'] = https_proxy
 
     def _create_endpoint(self):
-        """
-        Create endpoint
+        """Create endpoint.
+
         :return: endpoint string.
         """
         endpoint_url = self.ENDPOINT + '/' + self._naid + self.POST_FIX
         return endpoint_url
 
     def _create_url(self):
-        """
-        Create request URL
+        """Create request URL.
+
         :return:
         """
         endpoint = self._create_endpoint()
@@ -145,6 +161,10 @@ class CiNiiURL:
 
     @property
     def url(self):
+        """URL property.
+
+        :return: Request URL
+        """
         return self._create_url()
 
     def _do_http_request(self):
@@ -152,9 +172,7 @@ class CiNiiURL:
                             proxies=self._proxy)
 
     def get_data(self):
-        """
-        This method retrieves the metadata from CrossRef.
-        """
+        """This method retrieves the metadata from CrossRef."""
         response = {
             'response': '',
             'error': ''
