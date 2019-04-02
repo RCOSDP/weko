@@ -21,9 +21,9 @@
 """Flask extension for weko-schema-ui."""
 
 from . import config
-from .views import blueprint
 from .rest import create_blueprint
 from .schema import reset_oai_metadata_formats
+from .views import blueprint
 
 
 class WekoSchemaUI(object):

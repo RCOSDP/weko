@@ -27,31 +27,33 @@ import uuid
 # from copy import deepcopy
 from functools import partial
 
-from flask import (
-    Blueprint, abort, current_app, jsonify, redirect, request, url_for)
+from flask import Blueprint, abort, current_app, jsonify, redirect, request, \
+    url_for
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
+from invenio_i18n.ext import current_i18n
 from invenio_oauth2server import require_api_auth, require_oauth_scopes
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_records.api import Record
-from invenio_records_rest.errors import (
-    InvalidDataRESTError, MaxResultWindowRESTError, UnsupportedMediaRESTError)
+from invenio_records_rest.errors import InvalidDataRESTError, \
+    MaxResultWindowRESTError, UnsupportedMediaRESTError
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
-from invenio_records_rest.views import (
-    create_url_rules, need_record_permission, pass_record)
+from invenio_records_rest.views import create_url_rules, \
+    need_record_permission, pass_record
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from webargs import fields
 from webargs.flaskparser import use_kwargs
+from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
 from werkzeug.utils import secure_filename
-from invenio_i18n.ext import current_i18n
+
 from . import config
-from weko_admin.models import SearchManagement as sm
+
 
 def create_blueprint(app, endpoints):
     """Create Invenio-Deposit-REST blueprint.
@@ -142,9 +144,8 @@ def create_blueprint(app, endpoints):
 
 
 class IndexSearchResource(ContentNegotiatedMethodView):
-    """
-     Index aggs Seach API
-    """
+    """Index aggs Seach API."""
+
     view_name = '{0}_index'
 
     def __init__(self, ctx, search_serializers=None,
@@ -174,7 +175,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         :returns: the search result containing hits and aggregations as
         returned by invenio-search.
         """
-
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
 
@@ -241,8 +241,13 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                             m = 1
                         break
                 if m == 0:
-                    nd = {'doc_count': 0, 'key': p.path, 'name': p.name if lang == "ja" else p.name_en,
-                          'date_range': {'pub_cnt': 0, 'un_pub_cnt': 0}}
+                    nd = {
+                        'doc_count': 0,
+                        'key': p.path,
+                        'name': p.name if lang == "ja" else p.name_en,
+                        'date_range': {
+                            'pub_cnt': 0,
+                            'un_pub_cnt': 0}}
                     nlst.append(nd)
             agp.clear()
             # process index tree image info
@@ -252,7 +257,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     else index_id.split('/').pop()
                 index_info = Indexes.get_index(index_id=index_id)
                 if index_info.display_format == '2' \
-                    and len(index_info.image_name) > 0:
+                        and len(index_info.image_name) > 0:
                     nlst[0]['img'] = index_info.image_name
             agp.append(nlst)
         return self.make_response(
@@ -261,4 +266,3 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             links=links,
             item_links_factory=self.links_factory,
         )
-

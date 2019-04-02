@@ -22,8 +22,8 @@
 
 from pkg_resources import resource_filename
 
-from .wekoxml import WekoXMLSerializer
 from .WekoBibTexSerializer import WekoBibTexSerializer
+from .wekoxml import WekoXMLSerializer
 
 xslt_dublincore_oai = resource_filename(
     'weko_records', 'xslts/toDc_oai_v2.xsl')
@@ -39,7 +39,7 @@ Junii2_v2 = WekoXMLSerializer(xslt_filename=xslt_junii2)
 Jpcoar_v1 = WekoXMLSerializer(xslt_filename=xslt_jpcoar)
 
 #: dublincore serializer.
-dublincore_v2  = WekoXMLSerializer(xslt_filename=xslt_dublincore_oai)
+dublincore_v2 = WekoXMLSerializer(xslt_filename=xslt_dublincore_oai)
 
 # OAI-PMH record serializers.
 # ===========================

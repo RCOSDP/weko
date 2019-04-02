@@ -19,28 +19,28 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit API."""
-import traceback
 import sys
-import redis
+import traceback
 from datetime import datetime
-from flask import abort, current_app, json, g, flash
+
+import redis
+from flask import abort, current_app, flash, g, json
 from flask_login import current_user
 from invenio_db import db
-from invenio_deposit.api import Deposit, preserve, index
-from invenio_files_rest.models import Bucket, ObjectVersion
+from invenio_deposit.api import Deposit, index, preserve
+from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
+    Part
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records_files.api import FileObject, Record
-from invenio_records_rest.errors import PIDResolveRESTError
 from invenio_records_files.models import RecordsBuckets
-from invenio_files_rest.models import Bucket, MultipartObject, Part
+from invenio_records_rest.errors import PIDResolveRESTError
 from simplekv.memory.redisstore import RedisStore
-from weko_user_profiles.models import UserProfile
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
-from weko_records.utils import (
-    get_options_and_order_list, get_all_items, json_loader,
-    set_timestamp)
+from weko_records.utils import get_all_items, get_options_and_order_list, \
+    json_loader, set_timestamp
+from weko_user_profiles.models import UserProfile
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 from .signals import item_created
@@ -69,6 +69,7 @@ class WekoFileObject(FileObject):
         self.info()
 
     def info(self):
+        """Info."""
         super(WekoFileObject, self).dumps()
         self.data.update(self.obj.file.json)
         index = self['filename'].rfind('.')
@@ -120,6 +121,7 @@ class WekoIndexer(RecordIndexer):
                 pass
 
     def update_publish_status(self, record):
+        """Update publish status."""
         self.get_es_index()
         pst = 'publish_status'
         body = {'doc': {pst: record.get(pst)}}
@@ -132,29 +134,35 @@ class WekoIndexer(RecordIndexer):
         )
 
     def update_relation_info(self, record, relation_info):
+        """Update relation info."""
         self.get_es_index()
         relation = 'relation'
         relation_type = 'relation_type'
-        relation_type_val=[]
+        relation_type_val = []
         for d in relation_info[0]:
-            pid = d.get('item_data').get('links').get('self').split('/')[len(d.get('item_data').get('links').get('self').split('/'))-1]
-            links= '/records/'+pid
-            sub_data=dict(item_links=links, item_title=d.get('item_title'), value=d.get('sele_id'))
+            pid = d.get('item_data').get('links').get('self').split(
+                '/')[len(d.get('item_data').get('links').get('self').split('/')) - 1]
+            links = '/records/' + pid
+            sub_data = dict(
+                item_links=links,
+                item_title=d.get('item_title'),
+                value=d.get('sele_id'))
             relation_type_val.append(sub_data)
         if relation_info[0]:
-            body = {'doc': {relation: {relation_type:relation_type_val}}}
+            body = {'doc': {relation: {relation_type: relation_type_val}}}
         else:
             body = {'doc': {relation: {}}}
         return self.client.update(
-                index=self.es_index,
-                doc_type=self.es_doc_type,
-                id=str(record.id),
-                body=body
-            )
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(record.id),
+            body=body
+        )
 
     def get_item_link_info(self, pid):
+        """Get item link info."""
         try:
-            item_link_info=None
+            item_link_info = None
             get_item_link_q = {
                 "query": {
                     "match": {
@@ -162,16 +170,19 @@ class WekoIndexer(RecordIndexer):
                     }
                 }
             }
-            query_q = json.dumps(get_item_link_q).replace("@control_number", pid)
+            query_q = json.dumps(get_item_link_q).replace(
+                "@control_number", pid)
             query_q = json.loads(query_q)
             indexer = RecordIndexer()
             res = indexer.client.search(index="weko", body=query_q)
-            item_link_info = res.get("hits").get("hits")[0].get('_source').get("relation")
+            item_link_info = res.get("hits").get(
+                "hits")[0].get('_source').get("relation")
         except Exception as ex:
             current_app.logger.debug(ex)
         return item_link_info
 
     def update_path(self, record):
+        """Update path."""
         self.get_es_index()
         path = 'path'
         body = {'doc': {path: record.get(path)}}
@@ -222,7 +233,7 @@ class WekoIndexer(RecordIndexer):
         return search_result.get('count')
 
     def get_pid_by_es_scroll(self, path):
-        """
+        """Get pid by es scroll.
 
         :param path:
         :return: _scroll_id
@@ -307,12 +318,12 @@ class WekoDeposit(Deposit):
             displayname = ''
             if user is not None:
                 username = user._username
-                displayname = user._displayname     
-                
+                displayname = user._displayname
+
             data['_deposit']['owners_ext'] = {
-                'username' : username,
-                'displayname' : displayname,
-                'email' : current_user.email
+                'username': username,
+                'displayname': displayname,
+                'email': current_user.email
             }
 
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
@@ -353,7 +364,6 @@ class WekoDeposit(Deposit):
         :param pid: Force pid object.  (Default: ``None``)
         :returns: A new Deposit object.
         """
-
         # Delete the recid
         recid = PersistentIdentifier.get(
             pid_type='recid', pid_value=self.pid.pid_value)
@@ -383,7 +393,6 @@ class WekoDeposit(Deposit):
 
     def commit(self, *args, **kwargs):
         """Store changes on current instance in database and index it."""
-
         super(WekoDeposit, self).commit(*args, **kwargs)
         if self.data and len(self.data):
             # save item metadata
@@ -427,10 +436,11 @@ class WekoDeposit(Deposit):
                                 mimetypes = current_app.config[
                                     'WEKO_MIMETYPE_WHITELIST_FOR_ES']
                                 if file.obj.file.size <= file_size_max and \
-                                    file.obj.mimetype in mimetypes:
+                                        file.obj.mimetype in mimetypes:
 
                                     content = lst.copy()
-                                    content.update({"file": file.obj.file.read_file(lst)})
+                                    content.update(
+                                        {"file": file.obj.file.read_file(lst)})
                                     contents.append(content)
 
                             except Exception as e:
@@ -439,6 +449,7 @@ class WekoDeposit(Deposit):
             self.jrc.update({'content': contents})
 
     def get_file_data(self):
+        """Get file data."""
         file_data = []
         for key in self.data:
             if isinstance(self.data.get(key), list):
@@ -475,8 +486,9 @@ class WekoDeposit(Deposit):
                 self.indexer.delete_file_index(klst, self.pid.object_uuid)
 
     def convert_item_metadata(self, index_obj):
-        """
-        1. Convert Item Metadata
+        """Convert Item Metadata.
+
+        1. Convert item Metadata.
         2. Inject index tree id to dict
         3. Set Publish Status
         :param index_obj:
@@ -496,7 +508,7 @@ class WekoDeposit(Deposit):
             data_str = datastore.get(cache_key)
             datastore.delete(cache_key)
             data = json.loads(data_str.decode('utf-8'))
-        except:
+        except BaseException:
             abort(500, 'Failed to register item')
 
         # Get index path
@@ -504,7 +516,8 @@ class WekoDeposit(Deposit):
         plst = Indexes.get_path_list(index_lst)
 
         if not plst or len(index_lst) != len(plst):
-            raise PIDResolveRESTError(description='Any tree index has been deleted')
+            raise PIDResolveRESTError(
+                description='Any tree index has been deleted')
 
         index_lst.clear()
         for lst in plst:
@@ -519,7 +532,7 @@ class WekoDeposit(Deposit):
         # Save Index Path on ES
         jrc.update(dict(path=index_lst))
         # add at 20181121 start
-        sub_sort={}
+        sub_sort = {}
         for pth in index_lst:
             # es setting
             sub_sort[pth[-13:]] = ""
@@ -537,6 +550,7 @@ class WekoDeposit(Deposit):
 
     @classmethod
     def delete_by_index_tree_id(cls, path):
+        """Delete by index tree id."""
         # first update target pid when index tree id was deleted
         if cls.update_pid_by_index_tree_id(cls, path):
             from .tasks import delete_items_by_id
@@ -544,14 +558,15 @@ class WekoDeposit(Deposit):
 
     @classmethod
     def update_by_index_tree_id(cls, path, target):
+        """Update by index tree id."""
         # update item path only
         from .tasks import update_items_by_id
         update_items_by_id.delay(path)
         # update_items_by_id(path, target)
 
     def update_pid_by_index_tree_id(self, path):
-        """
-         Update pid by index tree id
+        """Update pid by index tree id.
+
         :param path:
         :return: True: process success False: process failed
         """
@@ -572,15 +587,17 @@ class WekoDeposit(Deposit):
             return False
 
     def update_item_by_task(self, *args, **kwargs):
+        """Update item by task."""
         return super(Deposit, self).commit(*args, **kwargs)
 
     def delete_es_index_attempt(self, pid):
+        """Delete es index attempt."""
         # if this item has been deleted
         if pid.status == PIDStatus.DELETED:
             # attempt to delete index on es
             try:
                 self.indexer.delete(self)
-            except:
+            except BaseException:
                 pass
             raise PIDResolveRESTError(description='This item has been deleted')
 
@@ -616,11 +633,11 @@ class WekoRecord(Record):
     @property
     def items_show_list(self):
         """Return the item show list."""
-
         try:
 
             items = []
-            solst, meta_options = get_options_and_order_list(self.get('item_type_id'))
+            solst, meta_options = get_options_and_order_list(
+                self.get('item_type_id'))
 
             for lst in solst:
                 key = lst[0]
@@ -647,19 +664,18 @@ class WekoRecord(Record):
                 else:
                     items.append(val)
             return items
-        except:
+        except BaseException:
             abort(500)
 
     @classmethod
     def get_record_by_pid(cls, pid):
-        """"""
-
+        """Get record by pid."""
         pid = PersistentIdentifier.get('depid', pid)
         return cls.get_record(id_=pid.object_uuid)
 
     @classmethod
     def get_record_with_hps(cls, uuid):
-
+        """Get record with hps."""
         record = cls.get_record(id_=uuid)
         path = []
         path.extend(record.get('path'))
@@ -670,7 +686,7 @@ class WekoRecord(Record):
 
     @classmethod
     def get_record_cvs(cls, uuid):
-        
+        """Get record cvs."""
         record = cls.get_record(id_=uuid)
         path = []
         path.extend(record.get('path'))

@@ -20,16 +20,16 @@
 
 """Views for weko-authors."""
 
-from flask import (
-    Blueprint, current_app, json, jsonify, render_template, request)
+from flask import Blueprint, current_app, json, jsonify, render_template, \
+    request
 from flask_babelex import gettext as _
 from flask_login import login_required
-from invenio_indexer.api import RecordIndexer
-
-from .permissions import author_permission
 from invenio_db import db
-from .models import Authors
+from invenio_indexer.api import RecordIndexer
 from weko_records.models import ItemMetadata
+
+from .models import Authors
+from .permissions import author_permission
 
 blueprint = Blueprint(
     'weko_authors',
@@ -76,6 +76,7 @@ def edit():
         current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
 # add by ryuu at 20180808 end
 
+
 @blueprint_api.route("/add", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
@@ -85,7 +86,7 @@ def create():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
-    data["gather_flg"]=0
+    data["gather_flg"] = 0
     indexer = RecordIndexer()
     indexer.client.index(index="authors",
                          doc_type="author",
@@ -93,8 +94,8 @@ def create():
 
     author_data = dict()
 
-    author_data["id"]= json.loads(json.dumps(data))["pk_id"]
-    author_data["json"]= json.dumps(data)
+    author_data["id"] = json.loads(json.dumps(data))["pk_id"]
+    author_data["json"] = json.dumps(data)
 
     with db.session.begin_nested():
         author = Authors(**author_data)
@@ -123,12 +124,14 @@ def update_author():
     )
 
     with db.session.begin_nested():
-        author_data = Authors.query.filter_by(id=json.loads(json.dumps(data))["pk_id"]).one()
+        author_data = Authors.query.filter_by(
+            id=json.loads(json.dumps(data))["pk_id"]).one()
         author_data.json = json.dumps(data)
         db.session.merge(author_data)
     db.session.commit()
 
     return jsonify(msg=_('Success'))
+
 
 @blueprint_api.route("/delete", methods=['post'])
 @login_required
@@ -146,7 +149,8 @@ def delete_author():
                           doc_type="author",)
 
     with db.session.begin_nested():
-        author_data = Authors.query.filter_by(id=json.loads(json.dumps(data))["pk_id"]).one()
+        author_data = Authors.query.filter_by(
+            id=json.loads(json.dumps(data))["pk_id"]).one()
         db.session.delete(author_data)
     db.session.commit()
 
@@ -163,7 +167,7 @@ def get():
     data = request.get_json()
 
     search_key = data.get('searchKey') or ''
-    query = {"match": {"gather_flg":0}}
+    query = {"match": {"gather_flg": 0}}
 
     if search_key:
         search_keys = search_key.split(" ")
@@ -173,18 +177,17 @@ def get():
                 match.append({"match": {"_all": key}})
         # query = {"bool": {"should": match},"filter":{"term":{"gather_flg":0}}}
         query = {
-            "filtered":{
-                "filter":{
-                    "bool":{
-                        "should":match,
-                        "must":{
-                            "term":{"gather_flg":0}
+            "filtered": {
+                "filter": {
+                    "bool": {
+                        "should": match,
+                        "must": {
+                            "term": {"gather_flg": 0}
                         }
                     }
                 }
             }
         }
-
 
     size = (data.get('numOfPage') or
             current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
@@ -203,23 +206,23 @@ def get():
         "size": size,
         "sort": sort
     }
-    query_item={
-      "size": 0,
-      "query": {
-          "bool": {
-              "must_not": {
-                  "match": {
-                      "weko_id": "",
-                  }
-              }
-          }
-      },"aggs":{
-          "item_count": {
-              "terms": {
-                "field": "weko_id"
-               }
-          }
-       }
+    query_item = {
+        "size": 0,
+        "query": {
+            "bool": {
+                "must_not": {
+                    "match": {
+                        "weko_id": "",
+                    }
+                }
+            }
+        }, "aggs": {
+            "item_count": {
+                "terms": {
+                    "field": "weko_id"
+                }
+            }
+        }
     }
 
     indexer = RecordIndexer()
@@ -229,6 +232,7 @@ def get():
     result['item_cnt'] = result_itemCnt
 
     return jsonify(result)
+
 
 @blueprint_api.route("/search_edit", methods=['POST'])
 @login_required
@@ -300,20 +304,21 @@ def mapping():
     current_app.logger.debug([last])
     return json.dumps([last])
 
+
 @blueprint_api.route("/gather", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
 def gatherById():
-    """gather author."""
+    """Gather author."""
     data = request.get_json()
     gatherFrom = data["idFrom"]
     gatherFromPkId = data["idFromPkId"]
     gatherTo = data["idTo"]
 
-    #update DB of Author
+    # update DB of Author
     try:
         with db.session.begin_nested():
-            for j in gatherFromPkId :
+            for j in gatherFromPkId:
                 author_data = Authors.query.filter_by(id=j).one()
                 author_data.gather_flg = 1
                 db.session.merge(author_data)
@@ -338,8 +343,8 @@ def gatherById():
         res = indexer.client.search(index="authors", body=q)
         for h in res.get("hits").get("hits"):
             body = {
-                'doc':{
-                    'gather_flg':1
+                'doc': {
+                    'gather_flg': 1
                 }
             }
             indexer.client.update(
@@ -349,7 +354,7 @@ def gatherById():
                 body=body
             )
 
-    update_q ={
+    update_q = {
         "query": {
             "match": {
                 "weko_id": "@id"
@@ -357,19 +362,19 @@ def gatherById():
         }
     }
     indexer = RecordIndexer()
-    item_pk_id =[]
+    item_pk_id = []
     for t in gatherFrom:
         q = json.dumps(update_q).replace("@id", t)
         q = json.loads(q)
         res = indexer.client.search(index="weko", body=q)
         current_app.logger.debug(res.get("hits").get("hits"))
         for h in res.get("hits").get("hits"):
-            sub = {"id":h.get("_id"),"weko_id":t}
+            sub = {"id": h.get("_id"), "weko_id": t}
             item_pk_id.append(sub)
             body = {
-                'doc':{
-                    "weko_id":gatherTo,
-                    "weko_id_hidden":gatherTo
+                'doc': {
+                    "weko_id": gatherTo,
+                    "weko_id_hidden": gatherTo
                 }
             }
             indexer.client.update(
@@ -384,7 +389,7 @@ def gatherById():
             for j in item_pk_id:
                 itemData = ItemMetadata.query.filter_by(id=j.get("id")).one()
                 itemJson = json.dumps(itemData.json)
-                itemJson = itemJson.replace(j.get("weko_id"),gatherTo)
+                itemJson = itemJson.replace(j.get("weko_id"), gatherTo)
                 itemData.json = json.loads(itemJson)
                 db.session.merge(itemData)
         db.session.commit()
@@ -394,9 +399,3 @@ def gatherById():
         return jsonify({'code': 204, 'msg': 'Faild'})
 
     return jsonify({'code': 0, 'msg': 'Success'})
-
-
-
-
-
-
