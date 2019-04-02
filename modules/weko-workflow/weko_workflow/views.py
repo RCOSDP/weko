@@ -20,7 +20,6 @@
 
 """Blueprint for weko-workflow."""
 
-<<<<<<< HEAD
 import json
 from collections import OrderedDict
 from functools import wraps
@@ -28,12 +27,6 @@ from functools import wraps
 import redis
 from flask import Blueprint, abort, current_app, flash, jsonify, \
     render_template, request, session, url_for
-=======
-from functools import wraps
-
-from flask import Blueprint, current_app, jsonify, render_template, \
-    request, session, url_for
->>>>>>> feature/sp6-IdentifierGrantSuffix-dev24
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -42,14 +35,6 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
-<<<<<<< HEAD
-from weko_records.api import ItemsMetadata
-from werkzeug.utils import import_string
-
-from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
-    WorkActivityHistory, WorkFlow
-from .config import IDENTIFIER_GRANT_LIST
-=======
 from weko_deposit.api import WekoRecord
 from weko_index_tree.models import Index
 from weko_records.api import ItemsMetadata
@@ -60,7 +45,6 @@ from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, \
     UpdateItem, GetCommunity
 from .config import IDENTIFIER_GRANT_SUFFIX_METHOD, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_ITEMSMETADATA_FORM
->>>>>>> feature/sp6-IdentifierGrantSuffix-dev24
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_jtitles
 from .utils import get_community_id_by_index
@@ -131,13 +115,8 @@ def init_activity():
     activity = WorkActivity()
     getargs = request.args
     if 'community' in getargs:
-<<<<<<< HEAD
         rtn = activity.init_activity(
             post_activity, request.args.get('community'))
-=======
-        rtn = activity.init_activity(post_activity,
-                                     request.args.get('community'))
->>>>>>> feature/sp6-IdentifierGrantSuffix-dev24
     else:
         rtn = activity.init_activity(post_activity)
     if rtn is None:
