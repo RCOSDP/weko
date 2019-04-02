@@ -734,12 +734,14 @@ class WorkActivity(object):
                         activi.ItemName = ''
                 activi.StatusDesc = ActionStatusPolicy.describe(
                     ActionStatusPolicy.ACTION_DONE) \
-                    if ActivityStatusPolicy.ACTIVITY_FINALLY == activi.activity_status \
+                    if ActivityStatusPolicy.ACTIVITY_FINALLY == \
+                    activi.activity_status \
                     else ActionStatusPolicy.describe(
                     ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
-                if ActivityStatusPolicy.ACTIVITY_FINALLY == activi.activity_status:
+                if ActivityStatusPolicy.ACTIVITY_FINALLY == \
+                        activi.activity_status:
                     activi.type = 'All'
                     continue
                 activi.type = 'ToDo'
@@ -756,11 +758,11 @@ class WorkActivity(object):
                         for role in db_flow_action.action_roles:
                             activi.type = 'Wait'
                             if role.action_user == self_user_id and \
-                                role.action_user_exclude is False:
+                                    role.action_user_exclude is False:
                                 activi.type = 'ToDo'
                                 break
                             if role.action_role in self_group_ids and \
-                                role.action_role_exclude is False:
+                                    role.action_role_exclude is False:
                                 activi.type = 'ToDo'
                                 break
             return activities
@@ -778,25 +780,28 @@ class WorkActivity(object):
                                                     action_id=history.action_id)
                 )
             }
-        with db.session.no_autoflush:
-            activity = _Activity.query.filter_by(
-                activity_id=activity_id).one_or_none()
-            if activity is not None:
-                flow_actions = _FlowAction.query.filter_by(
-                    flow_id=activity.flow_define.flow_id).order_by(asc(
-                    _FlowAction.action_order)).all()
-                for flow_action in flow_actions:
-                    steps.append({
-                        'ActivityId': activity_id,
-                        'ActionId': flow_action.action_id,
-                        'ActionName': flow_action.action.action_name,
-                        'ActionVersion': flow_action.action_version,
-                        'ActionEndpoint': flow_action.action.action_endpoint,
-                        'Author': history_dict[flow_action.action_id].get(
-                            'Updater') if flow_action.action_id in history_dict else '',
-                        'Status': history_dict[flow_action.action_id].get(
-                            'Result') if flow_action.action_id in history_dict else ' '
-                    })
+            with db.session.no_autoflush:
+                activity = _Activity.query.filter_by(
+                    activity_id=activity_id).one_or_none()
+                if activity is not None:
+                    flow_actions = _FlowAction.query.filter_by(
+                        flow_id=activity.flow_define.flow_id).order_by(asc(
+                            _FlowAction.action_order)).all()
+                    for flow_action in flow_actions:
+                        steps.append({
+                            'ActivityId': activity_id,
+                            'ActionId': flow_action.action_id,
+                            'ActionName': flow_action.action.action_name,
+                            'ActionVersion': flow_action.action_version,
+                            'ActionEndpoint':
+                                flow_action.action.action_endpoint,
+                            'Author': history_dict[flow_action.action_id].get(
+                                'Updater') if flow_action.action_id in
+                            history_dict else '',
+                            'Status': history_dict[flow_action.action_id].get(
+                                'Result') if flow_action.action_id in
+                            history_dict else ' '
+                        })
 
         return steps
 
@@ -877,7 +882,8 @@ class WorkActivity(object):
         workflow = WorkFlow()
         workflow_detail = workflow.get_workflow_by_id(
             activity_detail.workflow_id)
-        if ActivityStatusPolicy.ACTIVITY_FINALLY != activity_detail.activity_status:
+        if ActivityStatusPolicy.ACTIVITY_FINALLY != \
+                activity_detail.activity_status:
             activity_detail.activity_status_str = \
                 request.args.get('status', 'ToDo')
         else:
@@ -932,7 +938,9 @@ class WorkActivity(object):
             ctx = {'community': comm}
             community_id = comm.id
 
-        return activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx
+        return activity_detail, item, steps, action_id, cur_step, \
+            temporary_comment, approval_record, step_item_login_url, histories,\
+            res_check, pid, community_id, ctx
 
 
 class WorkActivityHistory(object):
@@ -964,7 +972,7 @@ class WorkActivityHistory(object):
         activity = WorkActivity()
         activity = activity.get_activity_detail(db_history.activity_id)
         if activity.action_id != db_history.action_id or \
-            activity.action_status != db_history.action_status:
+                activity.action_status != db_history.action_status:
             new_history = True
             activity.action_id = db_history.action_id
             activity.action_status = db_history.action_status
@@ -1078,7 +1086,9 @@ class UpdateItem(object):
 
 
 class GetCommunity(object):
-    """Get Community Info"""
+    """
+    Get Community Info
+    """
 
     @classmethod
     def get_community_by_id(self, community_id):

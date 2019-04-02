@@ -21,16 +21,15 @@
 """WEKO3 module docstring."""
 
 import uuid
-
 from datetime import datetime
+
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils.types import UUIDType, JSONType
 from sqlalchemy_utils.types.choice import ChoiceType
-from sqlalchemy.dialects import postgresql
-
 from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
 
@@ -696,7 +695,8 @@ class Activity(db.Model, TimestampMixin):
         (ActivityStatusPolicy.ACTIVITY_FINALLY,
          ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_FINALLY)),
         (ActivityStatusPolicy.ACTIVITY_FORCE_END,
-         ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_FORCE_END)),
+         ActivityStatusPolicy.describe(
+             ActivityStatusPolicy.ACTIVITY_FORCE_END)),
         (ActivityStatusPolicy.ACTIVITY_CANCEL,
          ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_CANCEL)),
         (ActivityStatusPolicy.ACTIVITY_MAKING,
@@ -750,13 +750,19 @@ class ActivityAction(db.Model, TimestampMixin):
     action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
     """action identifier grant."""
 
-    action_identifier_grant_jalc_doi_manual = db.Column(db.String(100), nullable=True, default="")
+    action_identifier_grant_jalc_doi_manual = db.Column(db.String(100),
+                                                        nullable=True,
+                                                        default="")
     """action jalc doi input."""
 
-    action_identifier_grant_jalc_cr_doi_manual = db.Column(db.String(100), nullable=True, default="")
+    action_identifier_grant_jalc_cr_doi_manual = db.Column(db.String(100),
+                                                           nullable=True,
+                                                           default="")
     """action jalc crossref doi input."""
 
-    action_identifier_grant_jalc_dc_doi_manual = db.Column(db.String(100), nullable=True, default="")
+    action_identifier_grant_jalc_dc_doi_manual = db.Column(db.String(100),
+                                                           nullable=True,
+                                                           default="")
     """action jalc datacite doi input."""
 
 
@@ -797,18 +803,25 @@ class ActivityHistory(db.Model, TimestampMixin):
     action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
     """action identifier grant."""
 
-    action_identifier_grant_jalc_doi_manual = db.Column(db.String(100), nullable=True, default="")
+    action_identifier_grant_jalc_doi_manual = db.Column(db.String(100),
+                                                        nullable=True,
+                                                        default="")
     """action jalc doi input."""
 
-    action_identifier_grant_jalc_cr_doi_manual = db.Column(db.String(100), nullable=True, default="")
+    action_identifier_grant_jalc_cr_doi_manual = db.Column(db.String(100),
+                                                           nullable=True,
+                                                           default="")
     """action jalc crossref doi input."""
 
-    action_identifier_grant_jalc_dc_doi_manual = db.Column(db.String(100), nullable=True, default="")
+    action_identifier_grant_jalc_dc_doi_manual = db.Column(db.String(100),
+                                                           nullable=True,
+                                                           default="")
     """action jalc datacite doi input."""
 
     user = db.relationship(User, backref=db.backref(
         'activity_history'))
     """User relaionship."""
+
 
 class ActionJournal(db.Model, TimestampMixin):
     """ Define journal info. """

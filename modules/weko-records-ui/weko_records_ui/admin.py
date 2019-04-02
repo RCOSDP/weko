@@ -21,27 +21,27 @@
 """WEKO3 module docstring."""
 
 import sys
+import unicodedata
+from datetime import datetime
 
 from flask import abort, current_app, flash, request
 from flask_admin import BaseView, expose
-from flask_admin.form import rules
 from flask_admin.contrib.sqla import ModelView
-from flask_login import current_user
+from flask_admin.contrib.sqla.fields import QuerySelectField
+from flask_admin.form import rules
 from flask_babelex import gettext as _
+from flask_login import current_user
+from invenio_communities.models import Community
+from invenio_db import db
+from sqlalchemy.orm import load_only
 from werkzeug.local import LocalProxy
+from wtforms.fields import StringField
+from wtforms.validators import ValidationError
+
 from . import config
 from .models import Identifier
-from invenio_db import db
-from .models import PDFCoverPageSettings
 from .models import InstitutionName
-
-import unicodedata
-from datetime import datetime
-from invenio_communities.models import Community
-from flask_admin.contrib.sqla.fields import QuerySelectField
-from wtforms.validators import ValidationError
-from wtforms.fields import StringField
-from sqlalchemy.orm import load_only
+from .models import PDFCoverPageSettings
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -74,7 +74,7 @@ class ItemSettingView(BaseView):
             return self.render(config.ADMIN_SET_ITEM_TEMPLATE,
                                search_author_flg=search_author_flg,
                                email_display_flg=email_display_flg)
-        except:
+        except ImportError:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
 
@@ -87,24 +87,28 @@ class PdfCoverPageSettingView(BaseView):
         try:
             return self.render(
                 current_app.config["WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE"],
-                avail = record.avail,
-                header_display_type = record.header_display_type,
-                header_output_string = record.header_output_string,
-                header_output_image = record.header_output_image,
-                header_display_position = record.header_display_position
+                avail=record.avail,
+                header_display_type=record.header_display_type,
+                header_output_string=record.header_output_string,
+                header_output_image=record.header_output_image,
+                header_display_position=record.header_display_position
             )
         except AttributeError:
-            makeshift = PDFCoverPageSettings(avail='disable', header_display_type=None, header_output_string=None, header_output_image = None, header_display_position = None)
+            makeshift = PDFCoverPageSettings(avail='disable',
+                                             header_display_type=None,
+                                             header_output_string=None,
+                                             header_output_image=None,
+                                             header_display_position=None)
             db.session.add(makeshift)
             db.session.commit()
             record = PDFCoverPageSettings.find(1)
             return self.render(
                 current_app.config["WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE"],
-                avail = record.avail,
-                header_display_type = record.header_display_type,
-                header_output_string = record.header_output_string,
-                header_output_image = record.header_output_image,
-                header_display_position = record.header_display_position
+                avail=record.avail,
+                header_display_type=record.header_display_type,
+                header_output_string=record.header_output_string,
+                header_output_image=record.header_output_image,
+                header_display_position=record.header_display_position
             )
 
 
@@ -116,7 +120,7 @@ class InstitutionNameSettingView(BaseView):
             InstitutionName.set_institution_name(rf['institution_name'])
         institution_name = InstitutionName.get_institution_name()
         return self.render(config.INSTITUTION_NAME_SETTING_TEMPLATE,
-                           institution_name = institution_name)
+                           institution_name=institution_name)
 
 
 institution_adminview = {
@@ -161,7 +165,6 @@ class IdentifierSettingView(ModelView):
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
         'suffix',
-        #### Debug
         'jalc_flag',
         'jalc_crossref_flag',
         'jalc_datacite_flag',
@@ -209,12 +212,10 @@ class IdentifierSettingView(ModelView):
 
     def _validator_halfwidth_input(form, field):
         """
-            Valid input character set
+        Valid input character set.
 
-            :param form:
-                Form used to create/update model
-            :param field:
-                Template fields contain data need validator
+        :param form: Form used to create/update model
+        :param field: Template fields contain data need validator
         """
         if field.data is None:
             return
@@ -273,21 +274,17 @@ class IdentifierSettingView(ModelView):
 
     def on_model_change(self, form, model, is_created):
         """
-            Perform some actions before a model is created or updated.
+        Perform some actions before a model is created or updated.
 
-            Called from create_model and update_model in the same transaction
-            (if it has any meaning for a store backend).
+        Called from create_model and update_model in the same transaction
+        (if it has any meaning for a store backend).
+        By default does nothing.
 
-            By default does nothing.
-
-            :param form:
-                Form used to create/update model
-            :param model:
-                Model that will be created/updated
-            :param is_created:
-                Will be set to True if model was created and to False if edited
+        :param form: Form used to create/update model
+        :param model: Model that will be created/updated
+        :param is_created: Will be set to True if model was created and to False if edited
         """
-        ### Update hidden data automation
+        # Update hidden data automation
         if is_created:
             model.created_userId = current_user.get_id()
             model.created_date = datetime.utcnow().replace(microsecond=0)
@@ -309,12 +306,13 @@ class IdentifierSettingView(ModelView):
 
     def create_form(self, obj=None):
         """
-            Instantiate model delete form and return it.
+        Instantiate model delete form and return it.
 
-            Override to implement custom behavior.
+        Override to implement custom behavior.
+        The delete form originally used a GET request, so delete_form
+        accepts both GET and POST request for backwards compatibility.
 
-            The delete form originally used a GET request, so delete_form
-            accepts both GET and POST request for backwards compatibility.
+        :param obj: input object
         """
         return self._use_append_repository(
             super(IdentifierSettingView, self).create_form()
@@ -322,9 +320,11 @@ class IdentifierSettingView(ModelView):
 
     def edit_form(self, obj):
         """
-            Instantiate model editing form and return it.
+        Instantiate model editing form and return it.
 
-            Override to implement custom behavior.
+        Override to implement custom behavior.
+
+        :param obj: input object
         """
         return self._use_append_repository(
             super(IdentifierSettingView, self).edit_form(obj)
@@ -341,7 +341,7 @@ class IdentifierSettingView(ModelView):
             query_data.insert(0, Community(id='Root Index'))
         except Exception as ex:
             current_app.logger.debug(ex)
-        
+
         return query_data
 
 
@@ -351,7 +351,6 @@ identifier_adminview = dict(
     category=_('Setting'),
     name=_('Identifier'),
 )
-
 
 __all__ = (
     'pdfcoverpage_adminview',

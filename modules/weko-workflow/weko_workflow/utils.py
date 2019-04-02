@@ -18,12 +18,15 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+"""Module of weko-workflow utils."""
+
 from invenio_communities.models import Community
 
 
 def get_community_id_by_index(indexName):
     """
-        Get community use indexName input is index_name_english
+    Get community use indexName input is index_name_english.
+
     :param: index_name_english
     :return: dict of item type info
     """
@@ -36,3 +39,4 @@ def get_community_id_by_index(indexName):
     if len(ret_community) > 0:
         return ret_community[0]
     return None
+

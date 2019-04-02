@@ -38,7 +38,7 @@ IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          (2, 'JaLC CrossRef DOI', 'http://doi.org'),
                          (3, 'JaLC DataCite DOI', 'http://doi.org'),
                          (4, 'CNRI', 'http://hdl.handle.net')
-                        ]
+                         ]
 """Options list for Identifier Grant action."""
 
 IDENTIFIER_GRANT_SUFFIX_METHOD = 0
@@ -51,17 +51,17 @@ IDENTIFIER_GRANT_SUFFIX_METHOD = 0
 """
 
 IDENTIFIER_ITEMSMETADATA_FORM = {
-            'identifier': {
-                'value': '',
-                'properties': {
-                    'identifierType': ''
-                }
-            },
-            'identifierRegistration': {
-                "value": '',
-                "properties": {
-                    "identifierType": ''
-                }
-            }
+    'identifier': {
+        'value': '',
+        'properties': {
+            'identifierType': ''
         }
+    },
+    'identifierRegistration': {
+        "value": '',
+        "properties": {
+            "identifierType": ''
+        }
+    }
+}
 """ItemsMetadata format for Identifier Grant action."""
