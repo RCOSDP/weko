@@ -181,11 +181,10 @@ def display_activity(activity_id=0):
                     index_id.index_name_english)
 
             idf_grant_data = Identifier.query.filter_by(
-                repository=community_id).all()
+                repository=community_id).one_or_none()
+
             # valid date pidstore_identifier data
             if idf_grant_data is not None:
-                if len(idf_grant_data) > 0:
-                    idf_grant_data = idf_grant_data[0]
                 if idf_grant_data.jalc_doi is None:
                     idf_grant_data.jalc_doi = '«Empty»'
                 if idf_grant_data.jalc_crossref_doi is None:
@@ -453,6 +452,13 @@ def next_action(activity_id='0', action_id=0):
 
 
 def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
+    """
+    Mapp pidstore identifier data to ItemMetadata.
+
+    :param post_json: identifier data
+    :param acitivity_id: activity id number
+    :param action_id: action id number
+    """
     activity_obj = WorkActivity()
     activity_detail = activity_obj.get_activity_detail(activity_id)
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)

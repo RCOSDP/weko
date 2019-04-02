@@ -116,11 +116,12 @@ class InstitutionName(db.Model):
 
 class Identifier(db.Model):
     """
-        Represent an Identifier.
+    Represent an Identifier.
 
-        The Identifier object contains a ``created``, a ``updated``
-        properties that are automatically updated.
+    The Identifier object contains a ``created``, a ``updated``
+    properties that are automatically updated.
     """
+
     __tablename__ = 'pidstore_identifier'
 
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
@@ -170,7 +171,8 @@ class Identifier(db.Model):
 
     def __repr__(self):
         """String representation of the Pidstore Identifier object."""
-        return '<Identifier {}, Repository: {}>'.format(self.id, self.repository)
+        return '<Identifier {}, Repository: {}>'.format(self.id,
+                                                        self.repository)
 
 
 __all__ = ('Identifier', 'PDFCoverPageSettings')
