@@ -1,6 +1,6 @@
 require([
-  "jquery",
-  "bootstrap"
+  //"jquery",
+  //"bootstrap"
 ], function() {
   $("#step_item_login", parent.document).attr('height', '240px');
   $('#btn-finish').on('click', function(){

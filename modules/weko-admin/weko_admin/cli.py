@@ -22,7 +22,7 @@
 import click
 from flask.cli import with_appcontext
 
-from .models import AdminLangSettings, SessionLifetime, ApiCertificate
+from .models import AdminLangSettings, ApiCertificate, SessionLifetime
 
 
 @click.group()
@@ -60,11 +60,13 @@ def language():
 @click.argument('sequence')
 @click.argument('is_active')
 @with_appcontext
-def insert_lang_to_db(lang_code, lang_name,
-                      is_registered, sequence, is_active):
-    """
-    Ex: ja Japanese true 12 true
-    """
+def insert_lang_to_db(
+        lang_code,
+        lang_name,
+        is_registered,
+        sequence,
+        is_active):
+    """Ex: ja Japanese true 12 true."""
     try:
         AdminLangSettings.create(lang_code, lang_name,
                                  is_registered, sequence, is_active)

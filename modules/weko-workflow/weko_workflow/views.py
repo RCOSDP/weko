@@ -20,24 +20,28 @@
 
 """Blueprint for weko-workflow."""
 
-
+import json
+from collections import OrderedDict
 from functools import wraps
-from flask import Blueprint, abort, current_app, jsonify, render_template, \
-    request, session, url_for
+
+import redis
+from flask import Blueprint, abort, current_app, flash, jsonify, \
+    render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
-from werkzeug.utils import import_string
 from weko_records.api import ItemsMetadata
+from werkzeug.utils import import_string
 
-from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, UpdateItem, GetCommunity
-from .models import ActionStatusPolicy, ActivityStatusPolicy
+from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
+    WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST
-
+from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_jtitles
 
 blueprint = Blueprint(
@@ -61,13 +65,14 @@ def index():
         activities = activity.get_activity_list(request.args.get('community'))
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
-        community_id =comm.id
+        community_id = comm.id
     else:
         activities = activity.get_activity_list()
     return render_template(
         'weko_workflow/activity_list.html',
         activities=activities, community_id=community_id, **ctx
     )
+
 
 @blueprint.route('/iframe/success', methods=['GET'])
 def iframe_success():
@@ -81,29 +86,32 @@ def iframe_success():
 @blueprint.route('/activity/new', methods=['GET'])
 @login_required
 def new_activity():
+    """New activity."""
     workflow = WorkFlow()
     workflows = workflow.get_workflow_list()
     getargs = request.args
     ctx = {'community': None}
-    community_id=""
+    community_id = ""
     if 'community' in getargs:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
     return render_template(
         'weko_workflow/workflow_list.html',
-        workflows=workflows, community_id =community_id, **ctx
+        workflows=workflows, community_id=community_id, **ctx
     )
 
 
 @blueprint.route('/activity/init', methods=['POST'])
 @login_required
 def init_activity():
+    """Init activity."""
     post_activity = request.get_json()
     activity = WorkActivity()
     getargs = request.args
     if 'community' in getargs:
-        rtn = activity.init_activity(post_activity, request.args.get('community'))
+        rtn = activity.init_activity(
+            post_activity, request.args.get('community'))
     else:
         rtn = activity.init_activity(post_activity)
     if rtn is None:
@@ -123,6 +131,7 @@ def init_activity():
 @blueprint.route('/activity/list', methods=['GET'])
 @login_required
 def list_activity():
+    """List activity."""
     activity = WorkActivity()
     activities = activity.get_activity_list()
     return render_template(
@@ -134,6 +143,7 @@ def list_activity():
 @blueprint.route('/activity/detail/<string:activity_id>', methods=['GET'])
 @login_required
 def display_activity(activity_id=0):
+    """Display activity."""
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
     item = None
@@ -201,14 +211,14 @@ def display_activity(activity_id=0):
                             getter=record_class.get_record)
         pid, approval_record = resolver.resolve(pid_identifier.pid_value)
 
-    res_check = check_authority_action(activity_id,action_id)
+    res_check = check_authority_action(activity_id, action_id)
 
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
     if 'community' in getargs:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        community_id=request.args.get('community')
+        community_id = request.args.get('community')
         ctx = {'community': comm}
         community_id = comm.id
     return render_template(
@@ -233,6 +243,7 @@ def display_activity(activity_id=0):
 
 
 def check_authority(func):
+    """Check Authority."""
     @wraps(func)
     def decorated_function(*args, **kwargs):
         work = WorkActivity()
@@ -256,6 +267,7 @@ def check_authority(func):
 
 
 def check_authority_action(activity_id='0', action_id=0):
+    """Check authority."""
     work = WorkActivity()
     roles, users = work.get_activity_action_role(activity_id, action_id)
     cur_user = current_user.get_id()
@@ -279,6 +291,7 @@ def check_authority_action(activity_id='0', action_id=0):
 @login_required
 @check_authority
 def next_action(activity_id='0', action_id=0):
+    """Next action."""
     post_json = request.get_json()
     activity = dict(
         activity_id=activity_id,
@@ -334,12 +347,12 @@ def next_action(activity_id='0', action_id=0):
             resolver = Resolver(pid_type='recid', object_type='rec',
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
-            
+
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 
-    if 'item_link'==action_endpoint:
-        relation_data= post_json.get('link_data'),
+    if 'item_link' == action_endpoint:
+        relation_data = post_json.get('link_data'),
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
         item = ItemsMetadata.get_record(id_=activity_detail.item_id)
@@ -390,6 +403,7 @@ def next_action(activity_id='0', action_id=0):
 @login_required
 @check_authority
 def previous_action(activity_id='0', action_id=0, req=0):
+    """Previous action."""
     post_data = request.get_json()
     activity = dict(
         activity_id=activity_id,
@@ -438,19 +452,48 @@ def previous_action(activity_id='0', action_id=0, req=0):
 
 @blueprint.route('/journal/list', methods=['GET'])
 def get_journals():
+    """Get journals."""
     key = request.values.get('key')
-    multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
+    if not key:
+        return jsonify({})
+
+    multiple_result = {}
+    datastore = RedisStore(redis.StrictRedis.from_url(
+        current_app.config['CACHE_REDIS_URL']))
+    cache_key = current_app.config[
+        'WEKO_WORKFLOW_OAPOLICY_SEARCH'].format(keyword=key)
+
+    if datastore.redis.exists(cache_key):
+        data = datastore.get(cache_key)
+        multiple_result = json.loads(
+            data.decode('utf-8'),
+            object_pairs_hook=OrderedDict)
+
+    else:
+        multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
+        try:
+            datastore.put(
+                cache_key,
+                json.dumps(multiple_result).encode('utf-8'),
+                ttl_secs=int(
+                    current_app.config['WEKO_WORKFLOW_OAPOLICY_CACHE_TTL']))
+        except Exception:
+            pass
 
     return jsonify(multiple_result)
 
 
 @blueprint.route('/journal', methods=['GET'])
 def get_journal():
+    """Get journal."""
     title = request.values.get('title')
+    if not title:
+        return jsonify({})
 
+    title = title.split(" / ")[0]
     result = search_romeo_jtitles(title, 'exact')
     if result['romeoapi'] and int(result['romeoapi']['header']['numhits']) > 1:
         result['romeoapi']['journals']['journal'] = \
-        result['romeoapi']['journals']['journal'][0]
+            result['romeoapi']['journals']['journal'][0]
 
     return jsonify(result)

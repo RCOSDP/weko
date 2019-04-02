@@ -28,6 +28,7 @@ item_permission = Permission(action_item_access)
 
 
 def edit_permission_factory(record, **kwargs):
+    """Edit permission factory."""
     def can(self):
         return page_permission_factory(record, flg='Edit').can()
     return type('EditPermissionChecker', (), {'can': can})()

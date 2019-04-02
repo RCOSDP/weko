@@ -26,13 +26,14 @@ from flask import current_app
 from invenio_db import db
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.event import listen
-from weko_records.models import Timestamp
 # from sqlalchemy_utils.types import UUIDType
 from sqlalchemy_utils.types import JSONType, UUIDType
+from weko_records.models import Timestamp
+
 # from invenio_records.models import RecordMetadata
 
 
-class Authors(db.Model,Timestamp):
+class Authors(db.Model, Timestamp):
     """
     Represent an index.
 
@@ -45,7 +46,11 @@ class Authors(db.Model,Timestamp):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """id of the authors."""
 
-    gather_flg = db.Column(db.BigInteger, primary_key=False, unique=False,default=0)
+    gather_flg = db.Column(
+        db.BigInteger,
+        primary_key=False,
+        unique=False,
+        default=0)
     """gather_flg of the authors."""
 
     json = db.Column(

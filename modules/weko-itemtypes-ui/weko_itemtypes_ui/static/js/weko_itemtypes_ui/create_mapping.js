@@ -1,6 +1,6 @@
   require([
-    "jquery",
-    "bootstrap"
+    //"jquery",
+    //"bootstrap"
     ], function() {
     $('#myModal').modal({
       show: false
