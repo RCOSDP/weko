@@ -601,6 +601,8 @@ def convert_html_escape(text):
     Convert escape HTML to character
     :type text: String
     """
+    if not isinstance(text, str):
+        return
     html_escape = {
         "&amp;": "&",
         "&quot;": '"',
@@ -608,8 +610,10 @@ def convert_html_escape(text):
         "&gt;": ">",
         "&lt;": "<",
     }
-
-    for key, value in html_escape:
-        text.replace(key, value)
+    try:
+        for key, value in html_escape.items():
+            text = text.replace(key, value)
+    except Exception:
+        pass
 
     return text
