@@ -18,40 +18,258 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
+
+
 {%- extends admin_base_template %}
 
-{%- block body %}
-  <style>
-    .content-font {
-      font-size: 16px;
-    }
-  </style>
-  <div class="row">
-    <div class="col-md-3 text-center">
-      <h4>{{_('Number of items registered')}}</h4></div>
-  </div><br>
 
-  <div class="row content-font">
-    <div class="row">
-      <div class="col-md-3 text-right">
-        {{_('Total number of items registered:')}}
-        &nbsp;&nbsp;&nbsp;
-        {{ result.total if result.total else 0  }}
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-3 text-right">
-        {{_('Number of open items registered:')}}
-        &nbsp;&nbsp;&nbsp;
-        {{ result.open if result.open else 0 }}
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-3 text-right">
-        {{_('Number of private items registered:')}}
-        &nbsp;&nbsp;&nbsp;
-        {{ result.private if result.private else 0 }}
-      </div>
-    </div>
+{%- block head %}
+{{ super() }}
+<!-- Datepicker for Bootstrap -->
+<!-- Bootstrap -->
+
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.1/css/bootstrap-datepicker.min.css">
+{%- endblock head%}
+
+
+{%- block body %}
+
+<style>
+  .content-font {
+    font-size: 16px;
+  }
+</style>
+
+<!-- Number of items registered -->
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('Number of items registered')}}</h4>
   </div>
+</div>
+
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <label>{{_('Total number of items registered:')}}</label>
+    &nbsp;&nbsp;&nbsp;
+    {{ result.total if result.total else 0 }}
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <label>{{_('Number of open items registered:')}}</label>
+    &nbsp;&nbsp;&nbsp;
+    {{ result.open if result.open else 0 }}
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <label>{{_('Number of private items registered:')}}</label>
+    &nbsp;&nbsp;&nbsp;
+    {{ result.private if result.private else 0 }}
+  </div>
+</div>
+<hr>
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('Downloads')}}</h4>
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-3">
+    <label>{{_('Aggregation month')}}</label>
+  </div>
+  <!--<span>{{_('year')}}</span>-->
+  <div class="dropdown col-md-1">
+    <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton1"
+            data-toggle="dropdown"
+            aria-haspopup="true" aria-expanded="false">{{_('Year')}}
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+      <li><a href="#">period 1</a></li>
+      <li><a href="#">period 2</a></li>
+      <li><a href="#">period 3</a></li>
+    </ul>
+  </div>
+  <!--<span>{{_('month')}}</span>-->
+  <div class="dropdown col-md-1">
+    <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton2"
+            data-toggle="dropdown"
+            aria-haspopup="true" aria-expanded="false">{{_('Month')}}
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
+      <li><a href="#">period 1</a></li>
+      <li><a href="#">period 2</a></li>
+      <li><a href="#">period 3</a></li>
+    </ul>
+  </div>
+  <div class="col-md-3">
+    <button class="btn btn-primary">{{_('Download')}}</button>
+  </div>
+</div>
+
+<hr>
+
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('Plays')}}</h4>
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-3">
+    <label>{{_('Aggregation month')}}</label>
+  </div>
+  <!--<span>{{_('year')}}</span>-->
+  <div class="dropdown col-md-1">
+    <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton3"
+            data-toggle="dropdown"
+            aria-haspopup="true" aria-expanded="false">{{_('Year')}}
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton3">
+      <li><a href="#">period 1</a></li>
+      <li><a href="#">period 2</a></li>
+      <li><a href="#">period 3</a></li>
+    </ul>
+  </div>
+  <!--<span>{{_('month')}}</span>-->
+  <div class="dropdown col-md-1">
+    <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton4"
+            data-toggle="dropdown"
+            aria-haspopup="true" aria-expanded="false">{{_('Month')}}
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton4">
+      <li><a href="#">period 1</a></li>
+      <li><a href="#">period 2</a></li>
+      <li><a href="#">period 3</a></li>
+    </ul>
+  </div>
+  <div class="col-md-3">
+    <button class="btn btn-primary">{{_('Download')}}</button>
+  </div>
+</div>
+
+<hr>
+
+<!-- Custom Report -->
+<div class="row">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('Custom Reports')}}</h4>
+  </div>
+</div>
+
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-2">
+    <label>{{_('Start Date')}}</label>
+  </div>
+  <div class="col-md-4">
+      <div class="form-group">
+        <input type="text" class="form-control datepicker" name="start-date" id="start-date" placeholder="yyyy/mm/dd" >
+      </div>
+  </div>
+  <div class="col-md-4">
+    <button class="btn btn-default">
+      {{_('Clear')}}
+    </button>
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-2">
+    <label>{{_('End Date')}}</label>
+  </div>
+  <div class="col-md-4">
+      <div class="form-group">
+        <input type="text" class="form-control datepicker" name="end-date" id="end-date" placeholder="yyyy/mm/dd" >
+      </div>
+  </div>
+  <div class="col-md-4">
+    <button class="btn btn-default">{{_('Clear')}}</button>
+  </div>
+</div>
+
+<div class="row content-font">
+  <div class="col-md-2"></div>
+<div class="col-md-2">
+  <label for="target-report">{{_('Target Report')}}</label>
+</div>
+  <div class="col-md-8">
+<select id="target-report" name="target-report">
+  <option value='' disabled selected style="display:none;">
+    {{_('Please select the report')}}
+  </option>
+<option value="en">{{_('Item registration report')}}</option>
+</select>
+    </div>
+</div>
+
+
+<!-- unit -->
+<div class="row content-font">
+  <div class="col-md-2"></div>
+<div class="col-md-2">
+  <label for="unit">{{_('Unit')}}</label>
+</div>
+  <div class="col-md-8">
+<select id="unit" name="unit">
+  <option value='' disabled selected style="display:none;">
+    {{_('Please select the unit')}}
+  </option>
+<option value="en">{{_('Day')}}</option>
+  <option value="en">{{_('Week')}}</option>
+  <option value="en">{{_('Year')}}</option>
+  <option value="en">{{_('Host')}}</option>
+</select>
+    </div>
+</div>
+
+
+<!-- Display -->
+<div class="row content-font">
+    <div class="col-md-7"></div>
+   <div class="col-md-5">
+    <button class="btn btn-primary">{{_('Display')}}</button>
+  </div>
+</div>
+
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<!-- Datepicker for Bootstrap -->
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.1/js/bootstrap-datepicker.min.js"></script>
+
+<!-- for Ja -->
+<!--<script type="text/javascript"-->
+        <!--src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.1/locales/bootstrap-datepicker.ja.min.js"></script>-->
+
+
+<script>
+  $('.datepicker').datepicker({
+    format: "yyyy/mm/dd",
+    language: "en",
+    autoclose: true,
+    orientation: 'bottom left'
+  });
+</script>
+
+
 {%- endblock body %}
+
+
