@@ -186,7 +186,8 @@ def is_refresh(default_language):
 
 
 def get_api_certification_type():
-    """
+    """Get API certification type.
+
     :return: list of supported certification type
     """
     try:
@@ -203,7 +204,8 @@ def get_api_certification_type():
 
 
 def get_current_api_certification(api_code):
-    """
+    """Get current API certification.
+
     :param api_code: API code
     :return: API certification data if exist
     """
@@ -224,7 +226,8 @@ def get_current_api_certification(api_code):
 
 
 def save_api_certification(api_code, cert_data):
-    """
+    """Save API certification to DB base on api code.
+
     :param api_code: API code
     :param cert_data: certification data
     :return: dict
@@ -256,8 +259,8 @@ def save_api_certification(api_code, cert_data):
 
 
 def create_crossref_url(pid):
-    """
-    Create Crossref api url
+    """Create Crossref api url.
+
     :param pid:
     :return Crossref api url:
     """
@@ -269,8 +272,8 @@ def create_crossref_url(pid):
 
 
 def validate_certification(cert_data):
-    """
-    Validate certification
+    """Validate certification.
+
     :param cert_data: Certification data
     :return: true if certification is valid, false otherwise
     """

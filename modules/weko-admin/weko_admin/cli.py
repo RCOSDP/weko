@@ -86,9 +86,7 @@ def cert():
 @click.argument('cert_data', default='')
 @with_appcontext
 def save_api_certification(api_code, api_name, cert_data):
-    """
-    cert insert api_code cert_data
-    """
+    """Insert API Certification."""
     if ApiCertificate.insert_new_api_cert(api_code, api_name, cert_data):
         click.secho('insert cert success')
     else:
@@ -101,9 +99,7 @@ def save_api_certification(api_code, api_name, cert_data):
 @click.argument('cert_data', default='')
 @with_appcontext
 def update_api_certification(api_code, api_name, cert_data):
-    """
-    cert update api_code cert_data
-    """
+    """Update API Certification."""
     if ApiCertificate.update_api_cert(api_code, api_name, cert_data):
         click.secho('update cert success')
     else:

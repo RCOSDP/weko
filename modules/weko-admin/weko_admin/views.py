@@ -262,9 +262,7 @@ def get_selected_lang():
 
 @blueprint_api.route('/get_api_cert_type', methods=['GET'])
 def get_api_cert_type():
-    """
-    Get list of supported API.
-    To display on the combobox on UI
+    """Get list of supported API, to display on the combobox on UI.
 
     :return: Example
     {
@@ -293,9 +291,7 @@ def get_api_cert_type():
 
 @blueprint_api.route('/get_curr_api_cert/<string:api_code>', methods=['GET'])
 def get_curr_api_cert(api_code=''):
-    """
-    Get current API certification data
-    Display on textbox on UI
+    """Get current API certification data, to display on textbox on UI.
 
     :param api_code: API code
     :return:
@@ -325,9 +321,7 @@ def get_curr_api_cert(api_code=''):
 
 @blueprint_api.route('/save_api_cert_data', methods=['POST'])
 def save_api_cert_data():
-    """
-    Save api certification data to database
-    Post data - request: API certification data
+    """Save api certification data to database.
 
     :return: Example
     {
