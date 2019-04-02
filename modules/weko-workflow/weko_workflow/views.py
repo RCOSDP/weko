@@ -20,6 +20,7 @@
 
 """Blueprint for weko-workflow."""
 
+<<<<<<< HEAD
 import json
 from collections import OrderedDict
 from functools import wraps
@@ -27,6 +28,12 @@ from functools import wraps
 import redis
 from flask import Blueprint, abort, current_app, flash, jsonify, \
     render_template, request, session, url_for
+=======
+from functools import wraps
+
+from flask import Blueprint, current_app, jsonify, render_template, \
+    request, session, url_for
+>>>>>>> feature/sp6-IdentifierGrantSuffix-dev24
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -35,14 +42,28 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
+<<<<<<< HEAD
 from weko_records.api import ItemsMetadata
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST
+=======
+from weko_deposit.api import WekoRecord
+from weko_index_tree.models import Index
+from weko_records.api import ItemsMetadata
+from weko_records_ui.models import Identifier
+from werkzeug.utils import import_string
+
+from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, \
+    UpdateItem, GetCommunity
+from .config import IDENTIFIER_GRANT_SUFFIX_METHOD, IDENTIFIER_GRANT_LIST, \
+    IDENTIFIER_ITEMSMETADATA_FORM
+>>>>>>> feature/sp6-IdentifierGrantSuffix-dev24
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_jtitles
+from .utils import get_community_id_by_index
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -110,8 +131,13 @@ def init_activity():
     activity = WorkActivity()
     getargs = request.args
     if 'community' in getargs:
+<<<<<<< HEAD
         rtn = activity.init_activity(
             post_activity, request.args.get('community'))
+=======
+        rtn = activity.init_activity(post_activity,
+                                     request.args.get('community'))
+>>>>>>> feature/sp6-IdentifierGrantSuffix-dev24
     else:
         rtn = activity.init_activity(post_activity)
     if rtn is None:
@@ -158,8 +184,7 @@ def display_activity(activity_id=0):
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
     workflow = WorkFlow()
-    workflow_detail = workflow.get_workflow_by_id(
-        activity_detail.workflow_id)
+    workflow_detail = workflow.get_workflow_by_id(activity_detail.workflow_id)
     if ActivityStatusPolicy.ACTIVITY_FINALLY != activity_detail.activity_status:
         activity_detail.activity_status_str = \
             request.args.get('status', 'ToDo')
@@ -170,9 +195,46 @@ def display_activity(activity_id=0):
     action_id = cur_action.id
     temporary_comment = activity.get_activity_action_comment(
         activity_id=activity_id, action_id=action_id)
-    temporary_id_grant = 0
+
+    # display_activity of Identifier grant
+    idf_grant_data = None
+    if 'identifier_grant' == action_endpoint:
+        if item:
+            path = WekoRecord.get_record(item.id).get('path')
+            if len(path) > 1:
+                community_id = 'Root Index'
+            else:
+                index_address = path.pop(-1).split('/')
+                index_id = Index.query.filter_by(id=index_address.pop()).one()
+                community_id = get_community_id_by_index(
+                    index_id.index_name_english)
+
+            idf_grant_data = Identifier.query.filter_by(
+                repository=community_id).one_or_none()
+
+            # valid date pidstore_identifier data
+            if idf_grant_data is not None:
+                if not idf_grant_data.jalc_doi:
+                    idf_grant_data.jalc_doi = '«Empty»'
+                if not idf_grant_data.jalc_crossref_doi:
+                    idf_grant_data.jalc_crossref_doi = '«Empty»'
+                if not idf_grant_data.jalc_datacite_doi:
+                    idf_grant_data.jalc_datacite_doi = '«Empty»'
+                if not idf_grant_data.cnri:
+                    idf_grant_data.cnri = '«Empty»'
+                if not idf_grant_data.suffix:
+                    idf_grant_data.suffix = '«Empty»'
+
+    temporary_idf_grant = 0
+    temporary_idf_grant_suffix = []
     if temporary_comment:
-        temporary_id_grant = temporary_comment.action_identifier_grant
+        temporary_idf_grant = temporary_comment.action_identifier_grant
+        temporary_idf_grant_suffix.append(
+            temporary_comment.action_identifier_grant_jalc_doi_manual)
+        temporary_idf_grant_suffix.append(
+            temporary_comment.action_identifier_grant_jalc_cr_doi_manual)
+        temporary_idf_grant_suffix.append(
+            temporary_comment.action_identifier_grant_jalc_dc_doi_manual)
         temporary_comment = temporary_comment.action_comment
 
     temporary_journal = activity.get_action_journal(
@@ -230,8 +292,11 @@ def display_activity(activity_id=0):
         cur_step=cur_step,
         temporary_comment=temporary_comment,
         temporary_journal=temporary_journal,
-        temporary_id_grant=temporary_id_grant,
-        id_grant_options=IDENTIFIER_GRANT_LIST,
+        temporary_idf_grant=temporary_idf_grant,
+        temporary_idf_grant_suffix=temporary_idf_grant_suffix,
+        idf_grant_data=idf_grant_data,
+        idf_grant_input=IDENTIFIER_GRANT_LIST,
+        idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
         record=approval_record,
         step_item_login_url=step_item_login_url,
         histories=histories,
@@ -263,6 +328,7 @@ def check_authority(func):
             if roles['allow'] and role.id not in roles['allow']:
                 return jsonify(code=403, msg=_('Authorization required'))
         return func(*args, **kwargs)
+
     return decorated_function
 
 
@@ -302,15 +368,36 @@ def next_action(activity_id='0', action_id=0):
     )
 
     work_activity = WorkActivity()
-    id_grant = post_json.get('identifier_grant')
+    idf_grant = post_json.get('identifier_grant')
+    idf_grant_jalc_doi_manual = post_json.get(
+        'identifier_grant_jalc_doi_suffix')
+    idf_grant_jalc_cr_doi_manual = post_json.get(
+        'identifier_grant_jalc_cr_doi_suffix')
+    idf_grant_jalc_dc_doi_manual = post_json.get(
+        'identifier_grant_jalc_dc_doi_suffix')
+    if not idf_grant_jalc_doi_manual:
+        idf_grant_jalc_doi_manual = ''
+    if not idf_grant_jalc_cr_doi_manual:
+        idf_grant_jalc_cr_doi_manual = ''
+    if not idf_grant_jalc_dc_doi_manual:
+        idf_grant_jalc_dc_doi_manual = ''
+
     # If is action identifier_grant, then save to work_activity
-    if id_grant is not None:
+    if idf_grant is not None:
         work_activity.upt_activity_action_id_grant(
             activity_id=activity_id,
             action_id=action_id,
-            identifier_grant=id_grant
+            identifier_grant=idf_grant,
+            identifier_grant_jalc_doi_suffix=idf_grant_jalc_doi_manual,
+            identifier_grant_jalc_cr_doi_suffix=idf_grant_jalc_cr_doi_manual,
+            identifier_grant_jalc_dc_doi_suffix=idf_grant_jalc_dc_doi_manual,
         )
-        activity['identifier_grant'] = id_grant
+        activity['identifier_grant'] = idf_grant
+        activity['identifier_grant_jalc_doi_suffix'] = idf_grant_jalc_doi_manual
+        activity['identifier_grant_jalc_cr_doi_suffix'] = \
+            idf_grant_jalc_cr_doi_manual
+        activity['identifier_grant_jalc_dc_doi_suffix'] = \
+            idf_grant_jalc_dc_doi_manual
     if 1 == post_json.get('temporary_save'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
@@ -324,13 +411,15 @@ def next_action(activity_id='0', action_id=0):
                 action_id=action_id,
                 comment=post_json.get('commond')
             )
-
         return jsonify(code=0, msg=_('success'))
+
     history = WorkActivityHistory()
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
+
     if 'begin_action' == action_endpoint:
         return jsonify(code=0, msg=_('success'))
+
     if 'end_action' == action_endpoint:
         work_activity.end_activity(activity)
         return jsonify(code=0, msg=_('success'))
@@ -365,6 +454,11 @@ def next_action(activity_id='0', action_id=0):
         updateItem = UpdateItem()
         updateItem.set_item_relation(relation_data, item_record)
 
+    # save pidstore_identifier to ItemsMetadata
+    if 'identifier_grant' == action_endpoint:
+        if int(post_json.get('identifier_grant')) > 0:
+            pidstore_identifier_mapping(post_json, activity_id, action_id)
+
     rtn = history.create_activity_history(activity)
     if rtn is None:
         return jsonify(code=-1, msg=_('error'))
@@ -394,6 +488,70 @@ def next_action(activity_id='0', action_id=0):
             work_activity.upt_activity_action(
                 activity_id=activity_id, action_id=next_action_id)
     return jsonify(code=0, msg=_('success'))
+
+
+def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
+    """
+    Mapp pidstore identifier data to ItemMetadata.
+
+    :param post_json: identifier data
+    :param acitivity_id: activity id number
+    :param action_id: action id number
+    """
+    activity_obj = WorkActivity()
+    activity_detail = activity_obj.get_activity_detail(activity_id)
+    item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+
+    # transfer to JPCOAR format
+    res = {'pidstore_identifier': []}
+    tempdata = IDENTIFIER_ITEMSMETADATA_FORM
+
+    jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
+    if not jalcdoi_link:
+        jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
+        tempdata['identifier']['value'] = jalcdoi_link
+        tempdata['identifier']['properties']['identifierType'] = 'DOI'
+        tempdata['identifierRegistration']['value'] = \
+            jalcdoi_tail[1] + \
+            jalcdoi_tail[2]
+        tempdata['identifierRegistration']['properties'][
+            'identifierType'] = 'JaLC'
+        res['pidstore_identifier'].append(tempdata)
+
+    jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
+    if not jalcdoi_cr_link:
+        jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
+        tempdata['identifier']['value'] = jalcdoi_cr_link
+        tempdata['identifierRegistration']['value'] = \
+            jalcdoi_cr_tail[1] + \
+            jalcdoi_cr_tail[2]
+        tempdata['identifierRegistration']['properties'][
+            'identifierType'] = 'Crossref'
+        res['pidstore_identifier'].append(tempdata)
+
+    jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
+    if not jalcdoi_dc_link:
+        jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
+        tempdata['identifier']['value'] = jalcdoi_dc_link
+        tempdata['identifierRegistration']['value'] = \
+            jalcdoi_dc_tail[1] + \
+            jalcdoi_dc_tail[2]
+        tempdata['identifierRegistration']['properties'][
+            'identifierType'] = 'Datacite'
+        res['pidstore_identifier'].append(tempdata)
+
+    jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
+    if not jalcdoi_crni_link:
+        tempdata['identifier']['value'] = jalcdoi_crni_link
+        tempdata['identifier']['properties']['identifierType'] = 'HDL'
+        del tempdata['identifierRegistration']
+        res['pidstore_identifier'].append(tempdata)
+
+    try:
+        item.update(res)
+        item.commit()
+    except Exception as ex:
+        current_app.logger.exception(str(ex))
 
 
 @blueprint.route(
