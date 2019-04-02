@@ -36,12 +36,12 @@ def is_update_cache():
 
 
 def cached_api_json(timeout=50, key_prefix="cached_api_json"):
-    """Cache Api data
+    """Cache Api response data.
+
     :param timeout: Cache timeout
     :param key_prefix: prefix key
     :return:
     """
-
     def caching(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -57,19 +57,22 @@ def cached_api_json(timeout=50, key_prefix="cached_api_json"):
                 return data
             else:
                 return current_cache.get(key)
+
         return wrapper
 
     return caching
 
 
 def convert_datetime_format(list_date):
-    """Convert datetime from response to the format of GUI
+    """Convert datetime from response to the format of GUI.
+
     @param list_date: list include the value of day, month,
     year of the publication date
     @return:
     if the response has full of 3 index(yyyy-mm-dd).
     Convert it to datetime format and return true string format
-    else return none"""
+    else return none
+    """
     if type(list_date) is list:
         if len(list_date) == 3:
             date = datetime.datetime.strptime(
@@ -83,17 +86,18 @@ def convert_datetime_format(list_date):
 
 
 def try_assign_data(data, value, key_first, list_key=None):
-    """Try to assign value into dictionary data
-            Basic flow: If dictionary path is exist,
-                value will be assigned to dictionary data
-            Alternative flow: If dictionary path is not exist,
-                no change could be saved
-        Parameter:
-            data: dictionary data
-            value: value have to be assigned
-            default_key: first/default dictionary path
-            list_key: child of dictionary path
-        Return:
+    """Try to assign value into dictionary data.
+
+    Basic flow: If dictionary path is exist,
+        value will be assigned to dictionary data
+    Alternative flow: If dictionary path is not exist,
+        no change could be saved
+    Parameter:
+        data: dictionary data
+        value: value have to be assigned
+        default_key: first/default dictionary path
+        list_key: child of dictionary path
+    Return:
             Dictionary with validated values
     """
     data_temp = list()
@@ -126,13 +130,14 @@ def try_assign_data(data, value, key_first, list_key=None):
 
 
 def reset_dict_final_value(data):
-    """
-        Set template dictionary data to empty
-            Basic flow: Remove all final value of dictionary
-        Parameter:
-            data: dictionary data
-        Return:
-            Dictionary with all final value is empty.
+    """Reset diction data.
+
+    Set template dictionary data to empty
+        Basic flow: Remove all final value of dictionary
+    Parameter:
+        data: dictionary data
+    Return:
+        Dictionary with all final value is empty.
     """
     temp_data = copy.deepcopy(data)
     for k, v in temp_data.items():
@@ -146,10 +151,9 @@ def reset_dict_final_value(data):
 
 
 def asssign_data_crossref_created_field(field, data):
-    """
-        Assign data from crossref created field to data container
-        @parameter: crossref created field, data container
-        @return:
+    """Assign data from Crossref created field to data container.
+
+    @parameter: Crossref created field, data container
     """
     try:
         try_assign_data(data, field.get('affiliationName'),
@@ -202,10 +206,9 @@ def asssign_data_crossref_created_field(field, data):
 
 
 def asssign_data_crossref_page_field(field, data):
-    """
-        Assign data from crossref page field to data container
-        @parameter: crossref page field, data container
-        @return:
+    """Assign data from Crossref page field to data container.
+
+    @parameter: Crossref page field, data container
     """
     try:
         split_page = field.split('-')
@@ -218,10 +221,9 @@ def asssign_data_crossref_page_field(field, data):
 
 
 def asssign_data_crossref_author_field(field, data):
-    """
-        Assign data from crossref author field to data container
-        @parameter: crossref author field, data container
-        @return:
+    """Assign data from Crossref author field to data container.
+
+    @parameter: Crossref author field, data container
     """
     try:
         given_name = field[0].get('given') or ''
@@ -240,10 +242,9 @@ def asssign_data_crossref_author_field(field, data):
 
 
 def asssign_data_crossref_issued_field(field, data):
-    """
-        Assign data from crossref issued field to data container
-        @parameter: crossref issued field, data container
-        @return:
+    """Assign data from Crossref issued field to data container.
+
+    @parameter: Crossref issued field, data container
     """
     try:
         try_assign_data(data,
@@ -257,12 +258,11 @@ def asssign_data_crossref_issued_field(field, data):
 
 
 def asssign_data_crossref_default_field(field, data):
-    """
-        Assign data from default value to data container
-        Set default language to English(en or eng) because API does not return
+    """Assign data from default value to data container.
+
+    Set default language to English(en or eng) because API does not return
         the current language
-        @parameter: Default value, data container
-        @return:
+    @parameter: Default value, data container
     """
     try_assign_data(data, 'eng', 'language', ['@value'])
     try_assign_data(data,
@@ -296,9 +296,10 @@ def asssign_data_crossref_default_field(field, data):
 
 
 def parse_crossref_json_response(response, response_data_template):
-    """ Convert response data from crossref API to auto fill data
-        response: data from crossref API
-        response_data_template: template of autofill data
+    """Convert response data from Crossref API to auto fill data.
+
+    response: data from crossref API
+    response_data_template: template of autofill data
     """
     response_data_convert = copy.deepcopy(response_data_template)
     if response['response'] == '':
@@ -324,10 +325,9 @@ def parse_crossref_json_response(response, response_data_template):
 
 
 def assign_data_cinii_dc_title_field(field, data):
-    """
-        Assign data from cinii dc_title field to data container
-        @parameter: cinii dc_title field, data container
-        @return:
+    """Assign data from CiNii dc_title field to data container.
+
+    @parameter: CiNii dc_title field, data container
     """
     try:
         for item in field:
@@ -342,10 +342,9 @@ def assign_data_cinii_dc_title_field(field, data):
 
 
 def assign_data_cinii_dc_creator_field(field, data):
-    """
-        Assign data from cinii dc_creator field to data container
-        @parameter: cinii dc_creator field, data container
-        @return:
+    """Assign data from CiNii dc_creator field to data container.
+
+    @parameter: CiNii dc_creator field, data container
     """
     try:
         for item in field[0]:
@@ -360,10 +359,9 @@ def assign_data_cinii_dc_creator_field(field, data):
 
 
 def assign_data_cinii_page_field(page_start, page_end, data):
-    """
-        Assign data from cinii page field to data container
-        @parameter: cinii page field, data container
-        @return:
+    """Assign data from CiNii page field to data container.
+
+    @parameter: CiNii page field, data container
     """
     try:
         try_assign_data(data, page_start, 'pageStart', ['@value'])
@@ -375,10 +373,9 @@ def assign_data_cinii_page_field(page_start, page_end, data):
 
 
 def assign_data_cinii_prism_publication_date_field(field, data):
-    """
-        Assign data from cinii prism_publication_date field to data container
-        @parameter: cinii prism_publication_date field, data container
-        @return:
+    """Assign data from CiNii prism_publication_date field to data container.
+
+    @parameter: CiNii prism_publication_date field, data container
     """
     try:
         date_list = field.split('-')
@@ -391,10 +388,9 @@ def assign_data_cinii_prism_publication_date_field(field, data):
 
 
 def assign_data_cinii_dc_publisher_field(field, data):
-    """
-        Assign data from cinii dc_publisher field to data container
-        @parameter: cinii dc_publisher field, data container
-        @return:
+    """Assign data from CiNii dc_publisher field to data container.
+
+    @parameter: CiNii dc_publisher field, data container
     """
     try:
         for item in field:
@@ -409,10 +405,9 @@ def assign_data_cinii_dc_publisher_field(field, data):
 
 
 def assign_data_cinii_foaf_maker_field(field, data):
-    """
-        Assign data from cinii foaf_maker field to data container
-        @parameter: cinii foaf_maker field, data container
-        @return:
+    """Assign data from CiNii foaf_maker field to data container.
+
+    @parameter: CiNii foaf_maker field, data container
     """
     try:
         con_organization = field[0].get('con:organization')
@@ -429,10 +424,9 @@ def assign_data_cinii_foaf_maker_field(field, data):
 
 
 def assign_data_cinii_dc_description_field(field, data):
-    """
-        Assign data from cinii dc_description field to data container
-        @parameter: cinii dc_description field, data container
-        @return:
+    """Assign data from CiNii dc_description field to data container.
+
+    @parameter: CiNii dc_description field, data container
     """
     try:
         for item in field:
@@ -449,10 +443,9 @@ def assign_data_cinii_dc_description_field(field, data):
 
 
 def assign_data_cinii_foaf_topic_field(field, data):
-    """
-        Assign data from cinii foaf_topic field to data container
-        @parameter: cinii foaf_topic field, data container
-        @return:
+    """Assign data from CiNii foaf_topic field to data container.
+
+    @parameter: CiNii foaf_topic field, data container
     """
     try:
         dc_title_topic = field[0].get('dc:title')
@@ -469,10 +462,9 @@ def assign_data_cinii_foaf_topic_field(field, data):
 
 
 def assign_data_cinii_prism_publication_name_field(field, data):
-    """
-        Assign data from cinii prism_publicationName field to data container
-        @parameter: cinii prism_publicationName field, data container
-        @return:
+    """Assign data from CiNii prism_publicationName field to data container.
+
+    @parameter: CiNii prism_publicationName field, data container
     """
     try:
         for item in field:
@@ -488,10 +480,9 @@ def assign_data_cinii_prism_publication_name_field(field, data):
 
 def assign_data_cinii_other_information_field(prism_volume,
                                               prism_number, prism_issn, data):
-    """
-        Assign data from cinii other field information to data container
-        @parameter: cinii other field information, data container
-        @return:
+    """Assign data from CiNii other field information to data container.
+
+    @parameter: CiNii other field information, data container
     """
     try:
         try_assign_data(data, prism_volume, 'volume', ['@value'])
@@ -505,9 +496,10 @@ def assign_data_cinii_other_information_field(prism_volume,
 
 
 def parse_cinii_json_response(response, response_data_template):
-    """ Convert response data from cinii API to auto fill data
-        response: data from cinii API
-        response_data_template: template of autofill data
+    """Convert response data from CiNii API to auto fill data.
+
+    response: data from CiNii API
+    response_data_template: template of autofill data
     """
     response_data_convert = copy.deepcopy(response_data_template)
     reset_dict_final_value(response_data_convert)
@@ -547,9 +539,9 @@ def parse_cinii_json_response(response, response_data_template):
 
 
 def get_item_id(item_type_id):
-    """
-    return dictionary contain item id
-    get from mapping between item type and jpcoar
+    """Get dictionary contain item id.
+
+    Get from mapping between item type and jpcoar
     :param item_type_id: The item type id
     :return: dictionary
     """
@@ -577,9 +569,10 @@ def get_item_id(item_type_id):
     return results
 
 
-@cached_api_json(timeout=50,)
+@cached_api_json(timeout=50, key_prefix="crossref_data")
 def get_crossref_data(pid, doi):
-    """Return cache-able data
+    """Get autofill data from Crossref API.
+
     pid: pid
     search_data: DOI
     """
@@ -587,9 +580,10 @@ def get_crossref_data(pid, doi):
     return api.get_data()
 
 
-@cached_api_json(timeout=50,)
+@cached_api_json(timeout=50, key_prefix="cinii_data")
 def get_cinii_data(naid):
-    """Return cache-able data
+    """Get autofill data from CiNii API.
+
     naid : naid
     """
     api = CiNiiURL(naid)
@@ -597,8 +591,8 @@ def get_cinii_data(naid):
 
 
 def convert_html_escape(text):
-    """
-    Convert escape HTML to character
+    """Convert escape HTML to character.
+
     :type text: String
     """
     if not isinstance(text, str):

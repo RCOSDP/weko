@@ -31,111 +31,13 @@
   <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-  <script type="text/babel">
-    class ModalHeader extends React.Component {
-      render(){
-        return (
-          <div className="text-right">
-            <h3>{{_('Metadata Auto Input')}}</h3>
-          </div>
-        )
-      }
-    }
-    class SearchMetaForm extends React.Component {
-      constructor(props) {
-        super(props);
-        this.state ={
-          idType: '',
-          itemId: '',
-          selectOptions : []
-        };
-
-        this.handleChange = this.handleChange.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-      }
-
-      componentDidMount() {
-        axios.get('/api/autofill/select_options')
-          .then(res => res.data)
-          .then((result) => {
-              let options = result.options.map((option)=>{
-                return(
-                  <option key={option.value} value={option.value}>{option.text}</option>
-                )
-              });
-              this.setState({
-                selectOptions : options
-              });
-            }
-          )
-          .catch((error) => {
-            this.setState({
-                isLoaded: true,
-                error
-              });
-            console.log(error);
-          });
-      }
-
-      handleChange(event) {
-        const target = event.target;
-        const value = target.value;
-        const name = target.name;
-        this.setState({[name]: value});
-      }
-
-      handleSubmit(event) {
-        this.clickItemMetadata();
-        event.preventDefault();
-      }
-
-      clickItemMetadata() {
-            setTimeout(function() {
-              angular.element('#btn_setItemMetadata').triggerHandler('click');
-            },0);
-      };
-
-      render() {
-        return (
-          <div>
-            <ModalHeader />
-            <form onSubmit={this.handleSubmit}>
-                <div className="form-inline">
-                    <label className="input-group-text" for="autofill_id_type">
-                        {{_('Automatic metadata input')}}
-                    </label>
-                    &nbsp;&nbsp;
-                    <select name="idType" id="autofill_id_type" value={this.state.idType.value}
-                        onChange={this.handleChange} className="form-control">
-                        {this.state.selectOptions}
-                    </select>
-                    &nbsp;&nbsp;
-                    <input name="itemId" type="text" id="autofill_item_id" 
-                        value={this.state.itemId.value} onChange={this.handleChange} 
-                        className="form-control ng-untouched ng-pristine ng-valid" />
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <input type="submit" value="{{_('Get')}}" className="btn btn-info" />
-                </div>
-				<br />
-                <div id="auto-fill-error-div">
-                  <span id="autofill-error-message"></span>
-                </div>
-            </form>
-        </div>
-        );
-      }
-    }
-    ReactDOM.render(
-      <SearchMetaForm />,
-      document.getElementById('meta-search-body')
-    )
-  </script>
-
+  <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha384-aJ21OjlMXNL5UyIl/XNwTMqvzeRMZH2w8c5cRVpzpU8Y5bApTppSuUkhZXN0VxHd" crossorigin="anonymous"></script>
 {%- endblock javascript %}
 
 {%- block page_header %}
@@ -279,6 +181,9 @@
         <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID.')}}">
         <input type="hidden" id="autofill_error_input_value" name="autofill_item_type_id" value="{{_('Please input value.')}}">
         <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id" value="{{_('Specified ID does not exist.')}}">
+        <input type="hidden" id="autofill_header_name" name="autofill_header_name" value="{{_('Metadata Auto Input')}}">
+        <input type="hidden" id="autofill_select_meta" name="autofill_select_meta" value="{{_('Automatic metadata input')}}">
+        <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">{{_('Close')}}</button>

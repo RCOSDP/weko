@@ -9,13 +9,13 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, jsonify, render_template, request, current_app
+from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .permissions import auto_fill_permission
-from .utils import parse_crossref_json_response, get_item_id, \
-        get_crossref_data, get_cinii_data, parse_cinii_json_response
+from .utils import get_cinii_data, get_crossref_data, get_item_id, \
+    parse_cinii_json_response, parse_crossref_json_response
 
 blueprint = Blueprint(
     "weko_items_autofill",
@@ -42,12 +42,12 @@ def index():
     )
 
 
-@blueprint_api.route('/crossref_api', methods=['POST'])
+@blueprint_api.route('/get_items_autofill_data', methods=['POST'])
 @login_required
 @auto_fill_permission.require(http_exception=403)
 def get_items_autofill_data():
-    """
-    auto fill metadata from API response
+    """Get auto fill metadata from API response.
+
     :return: result, response from API
     """
     result = {
@@ -87,19 +87,13 @@ def get_items_autofill_data():
 @login_required
 @auto_fill_permission.require(http_exception=403)
 def get_selection_option():
+    """Get metadata  select options.
+
+    :return: json: Metadata select options
+    """
     options = [{'value': 'Default', 'text': _('Select the ID')}]
     options.extend(current_app.config['WEKO_ITEMS_AUTOFILL_SELECT_OPTION'])
     result = {
         'options': options
     }
     return jsonify(result)
-
-
-@blueprint_api.route('/get_item_map/<int:item_type_id>', methods=['GET'])
-def get_item_map(item_type_id=0):
-    """
-    host to ~/api/autofill/get_item_map/{id}
-    function return the dictionary of sub item id
-    """
-    results = get_item_id(item_type_id)
-    return jsonify(results)
