@@ -591,14 +591,15 @@ def get_user_info(owner, shared_user_id):
     result = {
         'username': '',
         'email': '',
-        'owner':'',
+        'owner': False,
         'error': ''
     }
     try:
         user_info = get_user_information(shared_user_id)
         result['username'] = user_info['username']
         result['email'] = user_info['email']
-        result['owner'] = get_user_permission(owner)
+        if owner != 0:
+            result['owner'] = get_user_permission(owner)
     except Exception as e:
         result['error'] = e
     
