@@ -41,6 +41,7 @@ from weko_records.utils import (
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 from .signals import item_created
+from flask_security import current_user
 
 PRESERVE_FIELDS = (
     '_deposit',
@@ -432,6 +433,12 @@ class WekoDeposit(Deposit):
         Save when register a new item type, Update when edit an item
         type.
         """
+        current_user_id = current_user.get_id()
+        if current_user_id:
+            dc_owner = self.data.get("owner", None)
+            if not dc_owner:
+                self.data.update(dict(owner=current_user_id))
+
         if self.is_edit:
             obj = ItemsMetadata.get_record(self.id)
             obj.update(self.data)

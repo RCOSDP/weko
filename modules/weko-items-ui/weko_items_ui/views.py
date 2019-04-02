@@ -567,8 +567,8 @@ def validate_user_info():
 
         if email != "":
             result['results'] = get_user_info_by_email(email)
+            
             result['validation'] = True
-
             return jsonify(result)
     except Exception as e:
         result['error'] = str(e)
@@ -576,8 +576,8 @@ def validate_user_info():
     return jsonify(result)
 
 
-@blueprint_api.route('/get_user_info/<int:user_id>', methods=['GET'])
-def get_user_info(user_id):
+@blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>', methods=['GET'])
+def get_user_info(owner, shared_user_id):
     """
     Get username and password by querying user id
 
@@ -595,10 +595,10 @@ def get_user_info(user_id):
         'error': ''
     }
     try:
-        user_info = get_user_information(user_id)
+        user_info = get_user_information(shared_user_id)
         result['username'] = user_info['username']
         result['email'] = user_info['email']
-        result['owner'] = get_user_permission(user_id)
+        result['owner'] = get_user_permission(owner)
     except Exception as e:
         result['error'] = e
     

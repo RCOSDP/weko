@@ -223,7 +223,9 @@ function autocomplete(inp, arr) {
               $("#share_email").val(data.results.email);
             }else {
               if(mode == 'share_email') {
-              $("#share_username").val(data.results.username);
+                if (data.results.username) {
+                  $("#share_username").val(data.results.username);
+                }
             }
             }
           },
@@ -275,7 +277,7 @@ function autocomplete(inp, arr) {
 //      $scope.items = [ 'item1', 'item2', 'item3' ];
       $scope.filemeta_key = '';
       $scope.filemeta_form_idx = -1;
-
+      $scope.is_item_owner = false;
       $scope.searchFilemetaKey = function() {
           if($scope.filemeta_key.length > 0) {
             return $scope.filemeta_key;
@@ -330,12 +332,13 @@ function autocomplete(inp, arr) {
         }else{
           if (recordModel.shared_user_id) {
             // Call rest api to get user information
-            let get_user_url = '/api/items/get_user_info/' + recordModel.shared_user_id;
+            let get_user_url = '/api/items/get_user_info/' + recordModel.owner+'/'+recordModel.shared_user_id;
             $.ajax({
               url: get_user_url,
               method: 'GET',
               success: (data, stauts) => {
                 if (data.owner) {
+                  $scope.is_item_owner = true;
                   $("#contributor-panel").removeClass("hidden");
                   $(".other_user_rad").click();
                   $("#share_username").val(data.username);
@@ -525,6 +528,7 @@ function autocomplete(inp, arr) {
       $scope.registerUserPermission = function() {
         // let userSelection = $('#input').val();
         let userSelection = $(".form_share_permission").css('display');
+        let result = false;
         if (userSelection == 'none') {
           return;
         }else if (userSelection == 'block') {
@@ -556,8 +560,9 @@ function autocomplete(inp, arr) {
                     userID : userInfo.user_id
                   };
                   $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = otherUser.userID;
+                  result = true;
                 }else {
-                  alert('Shared user information is not valid\nPlease check it again!')
+                  alert('Shared user information is not valid\nPlease check it again!');
                 }
               }
             },
@@ -568,16 +573,31 @@ function autocomplete(inp, arr) {
         }else {
           alert('Some errors have occured when edit Contributer');
         }
+        return result;
       }
 
       $scope.updateDataJson = async function(){
-        await this.registerUserPermission();
-        var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
-        var indexOfLink = str.indexOf("authorLink");
-        if(indexOfLink != -1){
-          str = str.split(',"authorLink":[]').join('');
+        if ($scope.is_item_owner) {
+          if (!this.registerUserPermission()){
+            // Do nothing
+          }else {
+            var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
+            var indexOfLink = str.indexOf("authorLink");
+            if(indexOfLink != -1){
+              str = str.split(',"authorLink":[]').join('');
+            }
+            $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+            $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
+          }
+        }else {
+          var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
+          var indexOfLink = str.indexOf("authorLink");
+          if(indexOfLink != -1){
+            str = str.split(',"authorLink":[]').join('');
+          }
+          $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+          $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
         }
-        $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
       }
       $scope.saveDataJson = function(item_save_uri){
         this.registerUserPermission();
