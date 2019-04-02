@@ -28,6 +28,7 @@ readme = open('README.rst').read()
 history = open('CHANGES.rst').read()
 
 tests_require = [
+    'SQLAlchemy-Continuum>=1.2.1',
     'check-manifest>=0.25',
     'coverage>=4.0',
     'isort>=4.2.2',
@@ -41,6 +42,22 @@ tests_require = [
 extras_require = {
     'docs': [
         'Sphinx>=1.5.1',
+    ],
+    'admin': [
+        'invenio-admin>=1.0.0b1',
+    ],
+    'docs': [
+        'Sphinx>=1.5.1',
+        'invenio-mail>=1.0.0b1',
+    ],
+    'mysql': [
+        'invenio-db[mysql]>=1.0.0b3',
+    ],
+    'postgresql': [
+        'invenio-db[postgresql]>=1.0.0b3',
+    ],
+    'sqlite': [
+        'invenio-db>=1.0.0b3',
     ],
     'tests': tests_require,
 }
@@ -56,6 +73,15 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.2',
+    'Flask-Breadcrumbs>=0.3.0',
+    'Flask-Mail>=0.9.1',
+    'Flask-Menu>=0.4.0',
+    'Flask-WTF>=0.13.1',
+    'Flask>=0.11.1',
+    'invenio-accounts>=1.0.0b3',
+    'invenio-access>=1.0.0b1',
+    'invenio-search>=1.0.0a7',
+    'WTForms>=2.0.1',
 ]
 
 packages = find_packages()

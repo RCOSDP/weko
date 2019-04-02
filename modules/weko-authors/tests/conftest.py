@@ -20,12 +20,31 @@
 
 """Pytest configuration."""
 
+import os
 import shutil
 import tempfile
-
 import pytest
+
+from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_babelex import Babel
+from flask_mail import Mail
+from flask_menu import Menu
+from flask_security.utils import encrypt_password
+from invenio_access import InvenioAccess
+from invenio_access.models import ActionRoles, ActionUsers
+from invenio_access.permissions import superuser_access
+from invenio_accounts import InvenioAccounts
+from invenio_accounts.models import Role, User
+from invenio_accounts.views import blueprint as accounts_blueprint
+from invenio_admin import InvenioAdmin
+from invenio_db import InvenioDB, db
+from invenio_indexer import InvenioIndexer
+from invenio_indexer.api import RecordIndexer
+from invenio_search import InvenioSearch
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
+from weko_admin import WekoAdmin
 
 
 @pytest.yield_fixture()
@@ -36,16 +55,54 @@ def instance_path():
     shutil.rmtree(path)
 
 
-@pytest.fixture()
-def base_app(instance_path):
+@pytest.yield_fixture()
+def base_app():
     """Flask application fixture."""
-    app_ = Flask('testapp', instance_path=instance_path)
+    instance_path = tempfile.mkdtemp()
+    app_ = Flask(__name__, instance_path=instance_path)
+
     app_.config.update(
-        SECRET_KEY='SECRET_KEY',
+        ACCOUNTS_USE_CELERY=False,
+        LOGIN_DISABLED=False,
+        SECRET_KEY='SECRET_KEY!#$',
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                          'sqlite://'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        TEST_USER_EMAIL='info@inveniosoftware.org',
+        TEST_USER_PASSWORD='uspass123',
         TESTING=True,
+        WTF_CSRF_ENABLED=False
     )
     Babel(app_)
-    return app_
+    Mail(app_)
+    Menu(app_)
+    InvenioDB(app_)
+    InvenioAccounts(app_)
+    app_.register_blueprint(accounts_blueprint)
+    InvenioAccess(app_)
+
+    # client = Elasticsearch(hosts=[os.environ.get('ES_HOST', 'localhost')])
+    # search = InvenioSearch(app_, client=client)
+    # search.register_mappings('records', 'data')
+    # InvenioIndexer(app_)
+    # RecordIndexer(app_)
+
+    WekoAdmin(app_)
+    InvenioAdmin(app_)
+
+    with app_.app_context():
+        if str(db.engine.url) != "sqlite://" and \
+                not database_exists(str(db.engine.url)):
+            create_database(str(db.engine.url))
+        db.create_all()
+        # list(search.create(ignore=[400]))
+        # search.flush_and_refresh('_all')
+
+    yield app_
+
+    with app_.app_context():
+        drop_database(str(db.engine.url))
+    shutil.rmtree(instance_path)
 
 
 @pytest.yield_fixture()
