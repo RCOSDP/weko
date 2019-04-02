@@ -34,7 +34,6 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import func, literal_column
 from weko_groups.api import Group
-from weko_deposit.api import WekoDeposit
 
 from .models import Index
 from .utils import get_tree_json, cached_index_tree_json, reset_tree, \
@@ -272,6 +271,7 @@ class Indexes(object):
         :param path: path of the index.
         :return: bool True: Delete success None: Delete failed
         """
+        from weko_deposit.api import WekoDeposit
         if "move" == action:
             result = cls.delete(index_id, True)
             if result is not None:
