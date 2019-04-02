@@ -209,6 +209,7 @@ def opensearch_description():
 
 @blueprint.route("/item_management/bulk_delete", methods=['GET', 'PUT'])
 def bulk_delete():
+    """Bulk delete items and index trees."""
 
     def delete_records(index_tree_id):
         search_obj = RecordsSearch()
