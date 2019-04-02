@@ -125,7 +125,7 @@ require([
         $("#auto-fill-error-div").addClass("alert alert-danger");
       }
 
-      $scope.resetAutoFillErrorMessage = () => {
+      $scope.resetAutoFillErrorMessage = function () {
         $("#autofill-error-message").text("");
         $("#auto-fill-error-div").removeClass("alert alert-danger");
       }
@@ -232,10 +232,10 @@ require([
                   let resultId = result.contributor;
                   if (contributor.hasOwnProperty('contributorName')) {
                     let id = contributor.contributorName;
-                    let subresultId = resultId.contributorName;
-                    if (subresultId && subresultId['@value']) {
-                      this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(subresultId, '@attributes', 'xml:lang')));
-                      this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(subresultId, '@value')));
+                    let subResultId = resultId.contributorName;
+                    if (subResultId && subResultId['@value']) {
+                      this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(subResultId, '@attributes', 'xml:lang')));
+                      this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(subResultId, '@value')));
                     } else {
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
                       this.setValueToField(this.dictValue(id, '@value'), "");
@@ -312,7 +312,7 @@ require([
                     this.setValueToField(this.dictValue(sourceIdentifier, '@attributes', 'identifierType'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'identifierType')));
                     this.setValueToField(this.dictValue(sourceIdentifier, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
                   } else {
-                    this.setValueToField(this.dictValue(sourceIdentifier, '@attributes', 'xml:lang'), "");
+                    this.setValueToField(this.dictValue(sourceIdentifier, '@attributes', 'identifierType'), "");
                     this.setValueToField(this.dictValue(sourceIdentifier, '@value'), "");
                   }
                 }
@@ -412,6 +412,19 @@ require([
             this.setValueToField(this.dictValue(id, 'title', '@value'), "");
           }
         }
+
+        if (items.hasOwnProperty('alternative')) {
+          let id, resultId;
+          id = items.alternative;
+          resultId = result.alternative;
+          if (this.getAutoFillValue(this.dictValue(resultId, '@value'))) {
+            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
+            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+          } else {
+            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
+            this.setValueToField(this.dictValue(id, '@value'), "");
+          }
+        }
       }
 
       $scope.setItemMetadataCreator = function (items, result) {
@@ -427,6 +440,7 @@ require([
               this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
             }
           }
+
           if (items.creator.affiliation.hasOwnProperty('nameIdentifier')) {
             let id = items.creator.affiliation.nameIdentifier;
             let resultId = result.creator.affiliation.nameIdentifier;
@@ -435,6 +449,7 @@ require([
             this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(resultId['@value']));
           }
         }
+
         if (items.creator.hasOwnProperty('creatorAlternative')) {
           let id = items.creator.creatorAlternative;
           let resultId = result.creator.creatorAlternative;
@@ -446,6 +461,7 @@ require([
             this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
           }
         }
+
         if (items.creator.hasOwnProperty('creatorName')) {
           let id = items.creator.creatorName;
           let resultId = result.creator.creatorName;
@@ -457,6 +473,7 @@ require([
             this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
           }
         }
+
         if (items.creator.hasOwnProperty('familyName')) {
           let id = items.creator.familyName;
           let resultId = result.creator.familyName;
@@ -468,6 +485,7 @@ require([
             this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
           }
         }
+
         if (items.creator.hasOwnProperty('givenName')) {
           let id = items.creator.givenName;
           let resultId = result.creator.givenName;
@@ -479,6 +497,7 @@ require([
             this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
           }
         }
+
         if (items.creator.hasOwnProperty('nameIdentifier')) {
           let id = items.creator.nameIdentifier;
           let resultId = result.creator.nameIdentifier;
@@ -504,6 +523,7 @@ require([
               this.setValueToField(this.dictValue(id, '@attributes', 'identifierType'), "");
             }
           }
+
           if (relation.hasOwnProperty('relatedTitle')) {
             let id = relation.relatedTitle;
             let subresultId = resultId.relatedTitle;

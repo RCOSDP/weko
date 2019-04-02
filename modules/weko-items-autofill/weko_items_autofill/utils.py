@@ -333,10 +333,16 @@ def assign_data_cinii_dc_title_field(field, data):
         for item in field:
             lang = item.get('@language')
             if lang is None and item.get('@value'):
+                # Set dc:title
                 try_assign_data(data, item.get('@value'),
                                 'title', ['title', '@value'])
                 try_assign_data(data, 'ja', 'title',
                                 ['title', '@attributes', 'xml:lang'])
+                # Set dcterms:alternative
+                try_assign_data(data, item.get('@value'),
+                                'alternative', ['@value'])
+                try_assign_data(data, 'ja', 'alternative',
+                                ['@attributes', 'xml:lang'])
     except Exception:
         pass
 
@@ -411,8 +417,8 @@ def assign_data_cinii_foaf_maker_field(field, data):
     """
     try:
         con_organization = field[0].get('con:organization')
-        floaf_name = con_organization[0].get('foaf:name')
-        for item in floaf_name:
+        foaf_name = con_organization[0].get('foaf:name')
+        for item in foaf_name:
             lang = item.get('@language')
             if lang is None and item.get('@value'):
                 try_assign_data(data, item.get('@value'), 'contributor',
@@ -478,8 +484,40 @@ def assign_data_cinii_prism_publication_name_field(field, data):
         pass
 
 
+def assign_data_cinii_prism_issn(field, data):
+    """Assign data from CiNii prism issn field information to data container.
+
+    :type field: object
+    :type data: object
+    """
+    try:
+        try_assign_data(data, field, 'sourceIdentifier', ['@value'])
+        if field:
+            try_assign_data(data, 'ISSN（非推奨）', 'sourceIdentifier',
+                            ['@attributes', 'identifierType'])
+    except Exception:
+        pass
+
+
+def assign_data_cinii_cinii_naid(field, data):
+    """Assign data from CiNii cinii naid field information to data container.
+
+    :type field: object
+    :type data: object
+    """
+    try:
+        try_assign_data(data, field, 'relation',
+                        ['relatedIdentifier', '@value'])
+        if field:
+            try_assign_data(data, 'NAID', 'relation',
+                            ['relatedIdentifier', '@attributes',
+                             'identifierType'])
+    except Exception:
+        pass
+
+
 def assign_data_cinii_other_information_field(prism_volume,
-                                              prism_number, prism_issn, data):
+                                              prism_number, data):
     """Assign data from CiNii other field information to data container.
 
     @parameter: CiNii other field information, data container
@@ -487,10 +525,6 @@ def assign_data_cinii_other_information_field(prism_volume,
     try:
         try_assign_data(data, prism_volume, 'volume', ['@value'])
         try_assign_data(data, prism_number, 'issue', ['@value'])
-        try_assign_data(data, prism_issn, 'sourceIdentifier', ['@value'])
-        if prism_issn:
-            try_assign_data(data, 'ISSN', 'sourceIdentifier',
-                            ['@attributes', 'identifierType'])
     except Exception:
         pass
 
@@ -507,6 +541,9 @@ def parse_cinii_json_response(response, response_data_template):
         return None
     try:
         graph = response['response'].get('@graph')
+
+        if not graph:
+            return response_data_convert
 
         assign_data_cinii_dc_title_field(graph[0].get('dc:title'),
                                          response_data_convert)
@@ -527,11 +564,13 @@ def parse_cinii_json_response(response, response_data_template):
                                            response_data_convert)
         assign_data_cinii_prism_publication_name_field(graph[0].get(
             'prism:publicationName'), response_data_convert)
+        assign_data_cinii_prism_issn(graph[0].get('prism:issn'),
+                                     response_data_convert)
+        assign_data_cinii_cinii_naid(graph[0].get('cinii:naid'),
+                                     response_data_convert)
         assign_data_cinii_other_information_field(graph[0].get('prism:volume'),
                                                   graph[0].get('prism:number'),
-                                                  graph[0].get('prism:issn'),
                                                   response_data_convert)
-
     except Exception:
         pass
 
