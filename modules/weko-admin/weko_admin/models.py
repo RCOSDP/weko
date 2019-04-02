@@ -362,9 +362,8 @@ class AdminLangSettings(db.Model):
 
 
 class ApiCertificate(db.Model):
-    """
-    Database for API Certificate
-    """
+    """Database for API Certificate."""
+
     __tablename__ = 'api_certificate'
 
     api_code = db.Column(db.String(3), primary_key=True, nullable=False,
@@ -389,8 +388,8 @@ class ApiCertificate(db.Model):
 
     @classmethod
     def select_all(cls):
-        """
-        Get all information about certificates in database
+        """Get all information about certificates in database.
+
         :return: list of pair (api short name, api full name, certificate data)
         """
         query_result = cls.query.all()
@@ -405,8 +404,8 @@ class ApiCertificate(db.Model):
 
     @classmethod
     def select_by_api_code(cls, api_code):
-        """
-        Get certificate value by certificate type
+        """Get certificate value by certificate type.
+
         :param api_code: input api short name
         :return: certificate data corresponding with api code
         """
@@ -423,9 +422,8 @@ class ApiCertificate(db.Model):
 
     @classmethod
     def update_cert_data(cls, api_code, cert_data):
-        """
-        Overwrite if certificate existed, otherwise insert new certificate
-        into database
+        """Overwrite if certificate existed, otherwise insert new certificate into database.
+
         :param api_code: input api short name
         :param cert_data: input certificate value
         :return: true if success, otherwise false
@@ -448,8 +446,8 @@ class ApiCertificate(db.Model):
 
     @classmethod
     def insert_new_api_cert(cls, api_code, api_name, cert_data=None):
-        """
-        Insert new certificate
+        """Insert new certificate.
+
         :param api_code: input api code
         :param api_name: input api name
         :param cert_data: input certificate value with json format
@@ -473,9 +471,8 @@ class ApiCertificate(db.Model):
 
     @classmethod
     def update_api_cert(cls, api_code, api_name, cert_data):
-        """
-        Overwrite if certificate existed, otherwise insert new certificate
-        into database
+        """Overwrite if certificate existed, otherwise insert new certificate into database.
+
         :param api_code: input api code
         :param api_name: input api name
         :param cert_data: input certificate value
