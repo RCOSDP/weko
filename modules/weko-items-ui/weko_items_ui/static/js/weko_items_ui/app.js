@@ -14,8 +14,8 @@ require([
 });
 
 // script for Contributor
-var username = [];
-var email = [];
+var username_arr = [];
+var email_arr = [];
 var filter = {
   filter_username: "",
   filter_email: ''
@@ -24,7 +24,7 @@ function autocomplete(inp, arr) {
   var currentFocus;
 
   inp.addEventListener("input", function (e) {
-    var a, b, i, val = this.value;
+    var form_share_other_user, droplist_show_other_user, i, val = this.value;
     var mode = this.id;
     var flag = false;
     closeAllLists();
@@ -32,25 +32,25 @@ function autocomplete(inp, arr) {
       return false;
     }
     currentFocus = -1;
-    a = document.createElement("DIV");
-    a.setAttribute("id", this.id + "autocomplete-list");
-    a.setAttribute("class", "autocomplete-items");
-    this.parentNode.appendChild(a);
+    form_share_other_user = document.createElement("DIV");
+    form_share_other_user.setAttribute("id", this.id + "autocomplete-list");
+    form_share_other_user.setAttribute("class", "autocomplete-items");
+    this.parentNode.appendChild(form_share_other_user);
 
     /*for each item in the array...*/
     for (i = 0; i < arr.length; i++) {
       /*check if the item starts with the same letters as the text field value:*/
       if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
         /*create a DIV element for each matching element:*/
-        b = document.createElement("DIV");
+        droplist_show_other_user = document.createElement("DIV");
         /*make the matching letters bold:*/
-        b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
-        b.innerHTML += arr[i].substr(val.length);
+        droplist_show_other_user.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+        droplist_show_other_user.innerHTML += arr[i].substr(val.length);
         /*insert a input field that will hold the current array item's value:*/
-        b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+        droplist_show_other_user.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
 
         /*execute a function when someone clicks on the item value (DIV element):*/
-        b.addEventListener('click', function (e) {
+        droplist_show_other_user.addEventListener('click', function (e) {
           /*insert the value for the autocomplete text field:*/
           inp.value = this.getElementsByTagName("input")[0].value;
           if (mode == 'share_username') {
@@ -67,16 +67,16 @@ function autocomplete(inp, arr) {
           closeAllLists();
         });
 
-        a.appendChild(b);
+        form_share_other_user.appendChild(droplist_show_other_user);
         flag = true;
       }
     }
     if (flag == false) {
       if ($(".autocomplete-items div").length == 0) {
-        b = document.createElement("DIV");
-        b.innerHTML = "<p>No result found" + "</p>";
-        b.innerHTML += "<input type='hidden' value='No results found'>";
-        a.appendChild(b);
+        droplist_show_other_user = document.createElement("DIV");
+        droplist_show_other_user.innerHTML = "<p>No result found" + "</p>";
+        droplist_show_other_user.innerHTML += "<input type='hidden' value='No results found'>";
+        form_share_other_user.appendChild(droplist_show_other_user);
       }
     }
   });
@@ -168,19 +168,18 @@ get_search_data = function (keyword) {
       } else {
         if (keyword === 'username') {
           $("#id_spinners_username").css("display", "none");
-          username = data.results;
+          username_arr = data.results;
           // auto fill for username
-          autocomplete(document.getElementById("share_username"), username);
+          autocomplete(document.getElementById("share_username"), username_arr);
 
         } else {
           if (keyword === 'email') {
             $("#id_spinners_email").css("display", "none");
-            email = data.results;
+            email_arr = data.results;
             // auto fill for email input
-            autocomplete(document.getElementById("share_email"), email);
+            autocomplete(document.getElementById("share_email"), email_arr);
           }
         }
-
         return data.results;
       }
     },
@@ -217,10 +216,12 @@ get_autofill_data = function (keyword, data, mode) {
     dataType: "json",
     success: function(data, status) {
       if (mode == 'share_username') {
+        $("#share_email").val("");
         $("#share_email").val(data.results.email);
       } else {
         if (mode == 'share_email') {
           if (data.results.username) {
+            $("#share_username").val("");
             $("#share_username").val(data.results.username);
           }
         }
