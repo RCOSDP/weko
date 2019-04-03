@@ -181,18 +181,27 @@ class WekoIndexer(RecordIndexer):
             current_app.logger.debug(ex)
         return item_link_info
 
-    def update_path(self, record):
+    def update_path(self, record, update_revision=True):
         """Update path."""
         self.get_es_index()
         path = 'path'
         body = {'doc': {path: record.get(path)}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(record.id),
-            version=record.revision_id,
-            body=body
-        )
+        if update_revision:
+            return self.client.update(
+                index=self.es_index,
+                doc_type=self.es_doc_type,
+                id=str(record.id),
+                version=record.revision_id,
+                body=body
+            )
+        else:
+            return self.client.update(
+                index=self.es_index,
+                doc_type=self.es_doc_type,
+                id=str(record.id),
+                body=body
+            )
+
 
     def index(self, record):
         """Index a record.
