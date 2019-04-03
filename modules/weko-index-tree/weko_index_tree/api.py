@@ -264,7 +264,7 @@ class Indexes(object):
     @classmethod
     def delete_by_action(cls, action, index_id, path):
         """
-        Delete_by_action
+        Delete_by_action.
 
         :param action: action of the index.
         :param index_id: Identifier of the index.
@@ -1105,4 +1105,3 @@ class Indexes(object):
                    synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
             cls.set_coverpage_state_resc(index.id, state)
-

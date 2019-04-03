@@ -290,7 +290,8 @@ class IdentifierSettingView(ModelView):
 
         :param form: Form used to create/update model
         :param model: Model that will be created/updated
-        :param is_created: Will be set to True if model was created and to False if edited
+        :param is_created: Will be set to True if model was created
+            and to False if edited
         """
         # Update hidden data automation
         if is_created:
@@ -361,4 +362,3 @@ __all__ = (
     'institution_adminview',
     'InstitutionNameSettingView'
 )
-
