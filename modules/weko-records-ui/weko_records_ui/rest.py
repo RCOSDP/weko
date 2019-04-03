@@ -131,13 +131,17 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
 
     # @pass_record
     # @need_record_permission('read_permission_factory')
-    def get(self, pid_value, pid, record):
+    def get(self, pid_value):
         print('pid_value')
         print(pid_value)
 
-        print('pid')
-        print(pid)
-
-        print('record')
-        print(record)
+        self.print_trackback()
         return jsonify({'code': 0, 'msg': 'success'})
+
+    def print_trackback(self):
+        try:
+            import traceback
+            for line in traceback.format_stack():
+                print(line.strip())
+        except Exception:
+            print("warning")
