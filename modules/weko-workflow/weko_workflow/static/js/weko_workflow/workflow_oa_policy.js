@@ -1,6 +1,6 @@
 require([
-//  "jquery",
-//  "bootstrap"
+  "jquery",
+  "bootstrap"
 ], function () {
   $(document).ready(function() {
     var journalNames = [];
