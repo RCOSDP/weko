@@ -15,7 +15,7 @@
       <div class="row m-top-20" ng-if="journal_info">
         <div class="col-xs-12">
           <div class="col-xs-12">
-            <p style="font-size: 20px;">{{'Title'}}{{_('Title')}}</p>
+            <p style="font-size: 20px;" ng-bind="journal_details"></p>
             <div style="padding-left: 10px;">
               <p>{{journal_info.publication_title}}</p>
               <p>{{journal_info.publisher_name}}</p>
@@ -24,9 +24,9 @@
               <p style="margin: 20px 0;">URL: <a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
             </div>
             <p>
-              <a ng-click="collapse_flg = !collapse_flg" class="collapsed-link">
+              <a ng-click="collapse_flg = !collapse_flg" class="collapsed-link" ng-bind="journal_title">
                 <span class="icon-right pull-left ng-hide" ng-show="collapse_flg"></span>
-                <span class="icon-down pull-left" ng-hide="collapse_flg"></span>{{'Details'}}{{_('Details')}}</a>
+                <span class="icon-down pull-left" ng-hide="collapse_flg"></span></a>
             </p>
             <div ng-hide="collapse_flg" style="padding-left: 15px;">
               <p>{{journal_info.coverage_depth}}</p>
