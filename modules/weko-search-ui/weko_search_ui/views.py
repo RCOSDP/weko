@@ -260,7 +260,7 @@ def bulk_delete():
                     db.session.delete(pid)  # Delete PersistentId
 
                 # Delete this record
-                Record.get_record(recid).delete()   # flag as deleted
+                # Record.get_record(recid).delete()   # flag as deleted, this will delete files and related things
                 db.session.commit()                     # terminate the transaction
 
     if request.method == 'PUT':
