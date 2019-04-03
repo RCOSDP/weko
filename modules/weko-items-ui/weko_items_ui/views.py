@@ -493,7 +493,8 @@ def index_upload():
 
 @blueprint_api.route('/get_search_data/<data_type>', methods=['GET'])
 def get_search_data(data_type=''):
-    """
+    """get_search_data.
+
     Host the api provide search data:
     Provide 2 search data: username and email
 
@@ -521,7 +522,8 @@ def get_search_data(data_type=''):
 
 @blueprint_api.route('/validate_user_info', methods=['POST'])
 def validate_user_info():
-    """
+    """validate_user_info.
+
     Host the api which provide 2 service:
         Get autofill data: return user information based on request data
         Validate user information: check if user is exist
@@ -580,7 +582,8 @@ def validate_user_info():
 @blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>',
                      methods=['GET'])
 def get_user_info(owner, shared_user_id):
-    """
+    """get_user_info.
+
     Get username and password by querying user id
 
     param:
@@ -610,7 +613,8 @@ def get_user_info(owner, shared_user_id):
 
 @blueprint_api.route('/get_current_login_user_id', methods=['GET'])
 def get_current_login_user_id():
-    """
+    """get_current_login_user_id.
+
     Get user id of user is currently login
     """
     result = {
