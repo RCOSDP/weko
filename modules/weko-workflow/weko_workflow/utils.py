@@ -39,4 +39,3 @@ def get_community_id_by_index(indexName):
     if len(ret_community) > 0:
         return ret_community[0]
     return None
-
