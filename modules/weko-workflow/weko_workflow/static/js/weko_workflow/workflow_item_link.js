@@ -1,6 +1,6 @@
 require([
-  //"jquery",
-  //"bootstrap"
+  "jquery",
+  "bootstrap"
 ], function () {
   $('.btn-begin').on('click', function () {
       let post_uri = $('#post_uri').text();

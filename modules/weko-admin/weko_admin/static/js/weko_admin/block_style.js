@@ -1,6 +1,6 @@
 require([
-  //"jquery",
-  //"bootstrap"
+  "jquery",
+  "bootstrap"
   ], function() {
     $(document).ready(function() {
         $('#color_setting select').each(function(){

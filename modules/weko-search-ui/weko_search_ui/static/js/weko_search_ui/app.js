@@ -1,6 +1,6 @@
   require([
-    //"jquery",
-    //"bootstrap",
+    "jquery",
+    "bootstrap",
     "node_modules/bootstrap-datepicker/dist/js/bootstrap-datepicker"
     ], function() {
     // loading all the jQuery modules for the not require.js ready scripts

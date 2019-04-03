@@ -36,8 +36,10 @@ from weko_records.api import ItemTypes, SiteLicense
 from werkzeug.local import LocalProxy
 
 from .models import SearchManagement, SessionLifetime
-from .utils import get_admin_lang_setting, get_response_json, \
-    get_search_setting, get_selected_language, update_admin_lang_setting
+from .utils import get_admin_lang_setting, get_api_certification_type, \
+    get_current_api_certification, get_response_json, get_search_setting, \
+    get_selected_language, save_api_certification, update_admin_lang_setting, \
+    validate_certification
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -255,4 +257,94 @@ def get_selected_lang():
         result = get_selected_language()
     except Exception as e:
         result = {'error': str(e)}
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_api_cert_type', methods=['GET'])
+def get_api_cert_type():
+    """Get list of supported API, to display on the combobox on UI.
+
+    :return: Example
+    {
+        'result':[
+        {
+            'api_code': 'DOI',
+            'api_name': 'CrossRef API'
+        },
+        {
+            'api_code': 'AMA',
+            'api_name': 'Amazon'
+        }],
+        'error':''
+    }
+    """
+    result = {
+        'results': '',
+        'error': ''
+    }
+    try:
+        result['results'] = get_api_certification_type()
+    except Exception as e:
+        result['error'] = str(e)
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_curr_api_cert/<string:api_code>', methods=['GET'])
+def get_curr_api_cert(api_code=''):
+    """Get current API certification data, to display on textbox on UI.
+
+    :param api_code: API code
+    :return:
+    {
+        'results':
+        {
+            'api_code': 'DOI',
+            'api_name': 'CrossRef API',
+            'cert_data':
+            {
+                'account': 'abc@xyz.com'
+            }
+        },
+        'error':''
+    }
+    """
+    result = {
+        'results': '',
+        'error': ''
+    }
+    try:
+        result['results'] = get_current_api_certification(api_code)
+    except Exception as e:
+        result['error'] = str(e)
+    return jsonify(result)
+
+
+@blueprint_api.route('/save_api_cert_data', methods=['POST'])
+def save_api_cert_data():
+    """Save api certification data to database.
+
+    :return: Example
+    {
+        'results': true // true if save successfully
+        'error':''
+    }
+    """
+    result = dict()
+
+    if request.headers['Content-Type'] != 'application/json':
+        result['error'] = _('Header Error')
+        return jsonify(result)
+
+    data = request.get_json()
+    api_code = data.get('api_code', '')
+    cert_data = data.get('cert_data', '')
+    if not cert_data:
+        result['error'] = _(
+            'Account information is invalid. Please check again.')
+    elif validate_certification(cert_data):
+        result = save_api_certification(api_code, cert_data)
+    else:
+        result['error'] = _(
+            'Account information is invalid. Please check again.')
+
     return jsonify(result)
