@@ -131,7 +131,13 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
 
     # @pass_record
     # @need_record_permission('read_permission_factory')
-    def get(self, pid_value):
+    def get(self, pid_value, pid, record):
         print('pid_value')
         print(pid_value)
+
+        print('pid')
+        print(pid)
+
+        print('record')
+        print(record)
         return jsonify({'code': 0, 'msg': 'success'})
