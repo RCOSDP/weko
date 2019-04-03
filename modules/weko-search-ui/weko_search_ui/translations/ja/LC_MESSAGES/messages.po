@@ -138,7 +138,7 @@ msgstr "カスタム（降順）"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:119
 msgid "Display Number"
-msgstr "詳細"
+msgstr "表示数"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:138
 msgid "Search failed."
@@ -147,14 +147,6 @@ msgstr "検索に失敗しました。"
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:144
 msgid "Loading..."
 msgstr "読み込み中"
-
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:35
-msgid "Details"
-msgstr "詳細"
-
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:24
-msgid "Title"
-msgstr "タイトル"
 
 #~ msgid "Search"
 #~ msgstr "キーワード検索"
