@@ -191,7 +191,7 @@ WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
             'text/x-bibliography': ('weko_records.serializers',
                                     ':citeproc_v1_response'),
         },
-        'cites_route': '/record/cites/<pid_value>',
+        'cites_route': '/record/cites/<int:pid_value>',
         'default_media_type': 'application/json',
         'max_result_window': 10000,
     },
