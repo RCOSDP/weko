@@ -249,7 +249,9 @@ require([
           console.log(xhr.status);
 
           if (data.status == 1) {
-            location.reload();
+            setTimeout(function() {
+              location.reload();
+            }, 1000)
           } else {
             alert(data.msg)
           }
