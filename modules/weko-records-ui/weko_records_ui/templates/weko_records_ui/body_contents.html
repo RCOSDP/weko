@@ -63,6 +63,7 @@
               {%- set files = record.files -%}
               {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
               {%- if files -%}
+              {%- set downloads_count_list = record | get_downloads_count -%}
               <table class="table table-bordered table-striped">
                 <thead>
                 <tr >
@@ -75,8 +76,11 @@
                 {%- set img = file.mimetype | get_image_src -%}
                 {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                 filename=file.key) %}
+                {%- set access_permission = record | check_file_permission(file.info()) -%}
+                {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
+                filename=file.key) %}
                 <tr >
-                  <td >{{file.filename}}</td>
+                  <td >{{file.filename}} <a href="{{file_details_url}}">{{_('Detail')}}</a></td>
                   <td rowspan="2">
                     {%- if not 'simple' in file.displaytype -%}
                     {%- if 'license_free' == file.licensetype -%}
@@ -94,11 +98,20 @@
                   <td>
                       <span class="filename">
                         <img src="{{img}}" alt={{ file.filename }} />
+                        {%- if not access_permission and file.accessrole == 'open_login' -%}
+                            {%- set file_url = url_for_security('login', next=request.path) -%}
+                        {%- endif -%}
                         <a class="forcewrap"
                            href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
-                        <span>[ 0 downloads ]</span><br>
-                        <span>{{file.checksum.split(':')[0]}}</span>
-                        <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                        <span>[ {{ downloads_count_list[file.key] if file.key in downloads_count_list else 0 }} downloads ]</span><br>
+                        {%- if access_permission -%}
+                          <span>{{file.checksum.split(':')[0]}}</span>
+                          <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                        {%- else -%}
+                          <div class="panel-body">
+                            <span class="fa fa-key" style="font-size:18px;font-weight:bold">&nbsp;{{_('Restricted Access')}}</span>
+                          </div>
+                        {%- endif -%}
                       </span>
 
                       {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
@@ -113,19 +126,22 @@
                 <!-- demo -->
                 {%- if record | check_permission -%}
                 {%- if 'pdf' in file.mimetype -%}
-                   <tr><td colspan="2">
-<a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
-                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>剽窃チェック</a>
-                </td></tr>
+                <tr>
+                  <td colspan="2">
+                    <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
+                      <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>剽窃チェック</a>
+                  </td>
+                </tr>
                 {%- endif -%}
                 {%- endif -%}
                 <!-- demo -->
+                {%- if access_permission -%}
                 {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
                 <tr >
                   <td colspan="2">
                     <div class="panel panel-default" id="preview_de">
                       <div class="panel-heading">
-                        <a class="panel-toggle" data-toggle="collapse" data-target="#preview_{{loop.index}}">
+                        <a class="panel-toggle collapsed" data-toggle="collapse" data-target="#preview_{{loop.index}}">
                           {{_('Preview')}}
                           <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
                           <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
@@ -149,7 +165,7 @@
                   <td colspan="2">
                     <div class="panel panel-default" id="preview">
                       <div class="panel-heading">
-                        <a class="panel-toggle" data-toggle="collapse" data-target="#preview_{{loop.index}}">
+                        <a class="panel-toggle collapsed" data-toggle="collapse" data-target="#preview_{{loop.index}}">
                           {{_('Preview')}}
                           <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
                           <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
@@ -169,7 +185,7 @@
                             <object data="{{file_preview_url}}" type="{{file.mimetype}}"/>
                           {%- else -%}
                             <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
-                                  src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
+                              src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
                             </iframe>
                           {%- endif -%}
                         </div>
@@ -177,6 +193,7 @@
                     </div>
                   </td>
                 </tr>
+                {%- endif -%}
                 {%- endif -%}
                 {%- endfor -%}
                 </tbody>

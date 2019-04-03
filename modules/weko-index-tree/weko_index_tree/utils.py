@@ -20,17 +20,18 @@
 
 """Module of weko-index-tree utils."""
 
-from functools import wraps
 from datetime import date, datetime
+from functools import wraps
 
 from flask import current_app, flash
 from flask_login import current_user
 from invenio_cache import current_cache
-from invenio_i18n.ext import current_i18n
-from weko_groups.models import Group
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from sqlalchemy import MetaData, Table
+from weko_groups.models import Group
+
 from .models import Index
-from sqlalchemy import Table, MetaData
 
 
 def is_index_tree_updated():
@@ -44,7 +45,7 @@ def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
         @wraps(f)
         def wrapper(*args, **kwargs):
             cache_fun = current_cache.cached(
-                timeout=timeout, key_prefix=key_prefix+current_i18n.language,
+                timeout=timeout, key_prefix=key_prefix + current_i18n.language,
                 forced_update=is_index_tree_updated)
             return cache_fun(f)(*args, **kwargs)
         return wrapper
@@ -79,8 +80,8 @@ def reset_tree(tree, path=None, more_ids=[]):
 
 
 def get_tree_json(obj, pid=0):
-    """
-    Get Tree Json
+    """Get Tree Json.
+
     :param obj:
     :return:
     """
@@ -131,9 +132,13 @@ def get_tree_json(obj, pid=0):
     # update by ryuu for invenio community start
     # parent = [remove_keys(x) for x in filter(lambda node: node.pid == 0, obj)]
     if pid != 0:
-        parent = [remove_keys(x) for x in filter(lambda node: node.cid == pid, obj)]
+        parent = [
+            remove_keys(x) for x in filter(
+                lambda node: node.cid == pid, obj)]
     else:
-        parent = [remove_keys(x) for x in filter(lambda node: node.pid == pid, obj)]
+        parent = [
+            remove_keys(x) for x in filter(
+                lambda node: node.pid == pid, obj)]
     # update by ryuu for invenio community end
     ntree = obj[len(parent):]
     set_node(parent)
@@ -145,7 +150,7 @@ def get_tree_json(obj, pid=0):
 
 
 def get_user_roles():
-
+    """Get user roles."""
     def _check_admin():
         result = False
         users = current_app.config['WEKO_PERMISSION_ROLE_USER']
@@ -163,6 +168,7 @@ def get_user_roles():
 
 
 def get_user_groups():
+    """Get user groups."""
     grps = []
     groups = Group.query_by_user(current_user, eager=False)
     for group in groups:
@@ -172,6 +178,7 @@ def get_user_groups():
 
 
 def check_roles(user_role, roles):
+    """Check roles."""
     is_can = True
     if not user_role[0]:
         if current_user.is_authenticated:
@@ -184,6 +191,7 @@ def check_roles(user_role, roles):
 
 
 def check_groups(user_group, groups):
+    """Check groups."""
     is_can = True
     if current_user.is_authenticated:
         group = [x for x in user_group if str(x) in (groups or [])]
@@ -194,6 +202,7 @@ def check_groups(user_group, groups):
 
 
 def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
+    """Reduce index by."""
     if isinstance(tree, list):
         i = 0
         while i < len(tree):
@@ -215,8 +224,10 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                     if roles[0] or (check_roles(roles, brw_role) and
                                     check_groups(groups, brw_group)):
 
-                        if public_state or (isinstance(public_date, datetime)
-                                            and date.today() >= public_date.date()):
+                        if public_state or (
+                            isinstance(
+                                public_date,
+                                datetime) and date.today() >= public_date.date()):
                             reduce_index_by_role(children, roles, groups)
                             i += 1
                         else:
@@ -240,7 +251,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                                 settings['checked'] = True
                                 plst.remove(tree_id)
 
-                        reduce_index_by_role(children, roles, groups, False, plst)
+                        reduce_index_by_role(
+                            children, roles, groups, False, plst)
                         i += 1
 
                     else:
@@ -248,7 +260,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         tree.pop(i)
 
 
-def get_index_id_list(indexes, id_list = []):
+def get_index_id_list(indexes, id_list=[]):
+    """Get index id list."""
     if isinstance(indexes, list):
         for index in indexes:
             if isinstance(index, dict):
@@ -264,7 +277,7 @@ def get_index_id_list(indexes, id_list = []):
 
 
 def reduce_index_by_more(tree, more_ids=[]):
-
+    """Reduce index by more."""
     for node in tree:
         if isinstance(node, dict):
             id = node.get('id')
@@ -273,8 +286,8 @@ def reduce_index_by_more(tree, more_ids=[]):
             display_no = node.get('display_no')
 
             if more_check and \
-                len(children) > display_no and \
-                (len(more_ids) == 0 or id not in more_ids):
+                    len(children) > display_no and \
+                    (len(more_ids) == 0 or id not in more_ids):
 
                 # Delete child node
                 i = display_no
@@ -292,10 +305,7 @@ def reduce_index_by_more(tree, more_ids=[]):
 
 
 def get_admin_coverpage_setting():
-    """
-
-    Get 'avail' value from pdfcoverpage_set table
-    """
+    """Get 'avail' value from pdfcoverpage_set table."""
     avail = 'disable'
     try:
         metadata = MetaData()
@@ -309,4 +319,3 @@ def get_admin_coverpage_setting():
     except Exception as ex:
         current_app.logger.debug(ex)
     return avail == 'enable'
-

@@ -29,7 +29,7 @@ external_url_for = partial(url_for, _external=True)
 
 
 class DepositSchemaV1(Schema):
-    """"""
+    """TODO:DepositSchemaV1."""
 
     id = fields.Integer(attribute='pid.pid_value', dump_only=True)
     links = fields.Method('dump_links', dump_only=True)

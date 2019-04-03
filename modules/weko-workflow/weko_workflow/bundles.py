@@ -22,7 +22,6 @@
 
 from flask_assets import Bundle
 
-
 js_workflow = Bundle(
     'js/weko_workflow/workflow_detail.js',
     filters='requirejs',
@@ -45,6 +44,18 @@ js_iframe = Bundle(
     'js/weko_workflow/iframe_pop.js',
     filters='requirejs',
     output="gen/workflow_iframe_pop.js"
+)
+
+js_oa_policy = Bundle(
+    'js/weko_workflow/workflow_oa_policy.js',
+    filters='requirejs',
+    output="gen/workflow_oa_policy.js"
+)
+
+js_identifier_grant = Bundle(
+    'js/weko_workflow/workflow_identifier_grant.js',
+    filters='requirejs',
+    output="gen/workflow_identifier_grant.%(version)s.js"
 )
 
 css_workflow = Bundle(
