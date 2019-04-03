@@ -104,7 +104,9 @@ def create_blueprint(endpoints):
             methods=['GET'],
         )
 
-        
+    print("create_blueprint") 
+    print(blueprint)
+
     return blueprint
 
 
