@@ -229,7 +229,7 @@ def opensearch_description():
 def get_tree_items(index_tree_id):
     """Get tree items."""
     records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(version=True)
+    records_search = records_search.with_preference_param().params(version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
     search_instance, qs_kwargs = item_path_search_factory(None,
                                                           records_search,
