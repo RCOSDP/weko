@@ -1,6 +1,6 @@
 require([
-  //'jquery',
-  //'bootstrap'
+  'jquery',
+  'bootstrap'
 ],function () {
   $('#weko_id_hidden').hide();
   $("#item-type-lists").change(function (ev) {

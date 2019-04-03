@@ -20,7 +20,7 @@
 
 
 require([
-  //'jquery',
+  'jquery',
 ], function () {
   'use strict';
 

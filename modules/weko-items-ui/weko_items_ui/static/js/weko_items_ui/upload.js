@@ -1,5 +1,5 @@
 require([
-  //'jquery'
+  'jquery'
 ],function () {
   $('#myModal').modal({
     show: false

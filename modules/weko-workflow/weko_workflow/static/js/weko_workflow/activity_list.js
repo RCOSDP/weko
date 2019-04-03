@@ -1,6 +1,6 @@
 require([
-  //"jquery",
-  //"bootstrap"
+  "jquery",
+  "bootstrap"
   ], function() {
     $('.tb-todo').removeClass('hide');
     $('.tb-todo').each(function(index){
