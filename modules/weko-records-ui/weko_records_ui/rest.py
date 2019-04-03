@@ -134,4 +134,4 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
     def get(self, pid_value):
         print('pid_value')
         print(pid_value)
-        pass
+        return jsonify({'code': 0, 'msg': 'success'})
