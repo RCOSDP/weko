@@ -83,7 +83,7 @@ def create_blueprint(endpoints):
             links_factory=obj_or_import_string(
                 options.get('links_factory_imp'), default=default_links_factory
             ),
-            # pid_type=options.get('pid_type'),
+            pid_type=options.get('pid_type'),
             # pid_minter=options.get('pid_minter'),
             # pid_fetcher=options.get('pid_fetcher'),
             loaders={
