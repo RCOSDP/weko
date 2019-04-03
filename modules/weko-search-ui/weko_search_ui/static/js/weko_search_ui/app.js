@@ -60,6 +60,8 @@
       showJournalInfo();
       $("#displayDetails").click(function(){
         $("#collapsedDetails").collapse('toggle');
+        $(".icon-right").collapse('toggle');
+        $(".icon-down").collapse('toggle');
       });
     });
 });
