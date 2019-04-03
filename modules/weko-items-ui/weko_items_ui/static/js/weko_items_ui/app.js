@@ -609,7 +609,7 @@ function handleSharePermission(value) {
               str = str.split(',"authorLink":[]').join('');
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-            $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
+            $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'iframe_tree');
           }
         } else {
           var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
