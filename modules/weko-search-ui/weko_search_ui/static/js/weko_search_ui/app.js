@@ -59,9 +59,9 @@
     $(document).ready(function(){
       showJournalInfo();
       $("#display_details").click(function(){
+        $(".icon-right").toggle(50);
         $("#collapsed_details").collapse('toggle');
-        $(".icon-right").collapse('toggle');
-        $(".icon-down").collapse('toggle');
+        $(".icon-down").toggle(50);
       });
     });
 });
