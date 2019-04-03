@@ -1,0 +1,81 @@
+/* Fixes for IE < 8 */
+@media screen\9 {
+.fileinput-button input {
+        filter: alpha(opacity=0);
+        font-size: 100%;
+        height: 100%;
+    }
+}
+
+.panel-info {
+    margin-top: 20px;
+}
+
+.pull-left {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group-label {
+    float: left;
+    width: 35%;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.form-group-item {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.form-group-content {
+    float: left;
+    width: 65%;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.form-group-content input {
+    margin-right: 0.5rem;
+    vertical-align: -0.2em;
+}
+
+.clear {
+    clear: left;
+}
+
+#image {
+    height: 150px;
+}
+
+#present-image {
+    height: 150px;
+}
+
+.query-columns>span {
+    display:inline-block;
+    height:100%;
+    vertical-align: middle;
+}
+.query-columns label {
+    display:block;
+}
+.query-columns .buttons input[type=button] {
+    width:35px;
+    display:block;
+    margin: 10px;
+}
+
+.query-columns .buttons input[type=button]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.query-columns select {
+    width: 200px;
+    height: 123px;
+}
+
+#btn_commit_lg {
+    margin-top: 10px;
+}

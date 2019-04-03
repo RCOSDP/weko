@@ -24,17 +24,16 @@ import os
 import sys
 
 import redis
-from flask import (
-    Blueprint, abort, current_app, flash, json, jsonify, redirect,
-    render_template, request, session, url_for)
+from flask import Blueprint, abort, current_app, flash, json, jsonify, \
+    redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_i18n.ext import current_i18n
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
+from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_records.api import ItemTypes
-from weko_deposit.api import WekoRecord
 
 from .permissions import item_permission
 from .utils import (
@@ -100,7 +99,7 @@ def index(item_type_id=0):
             id=item_type_id,
             files=[]
         )
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
@@ -132,8 +131,8 @@ def iframe_index(item_type_id=0):
         activity_session = session['activity_info']
         activity_id = activity_session.get('activity_id', None)
         if activity_id and sessionstore.redis.exists(
-                'activity_item_'+activity_id):
-            item_str = sessionstore.get('activity_item_'+activity_id)
+                'activity_item_' + activity_id):
+            item_str = sessionstore.get('activity_item_' + activity_id)
             item_json = json.loads(item_str)
             if 'metainfo' in item_json:
                 record = item_json.get('metainfo')
@@ -155,7 +154,7 @@ def iframe_index(item_type_id=0):
             files=files,
             endpoints=endpoints
         )
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
@@ -178,8 +177,10 @@ def iframe_save_model():
                 'redis://{host}:{port}/1'.format(
                     host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
                     port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-            sessionstore.put('activity_item_'+activity_id, json.dumps(data),
-                             ttl_secs=60*60*24*7)
+            sessionstore.put(
+                'activity_item_' + activity_id,
+                json.dumps(data).encode('utf-8'),
+                ttl_secs=60 * 60 * 24 * 7)
     except Exception as ex:
         current_app.logger.exception(str(ex))
         return jsonify(code=1, msg='Model save error')
@@ -247,8 +248,8 @@ def get_json_schema(item_type_id=0):
                 if 'filemeta' in json.dumps(result):
                     group_list = Group.get_group_list()
                     group_enum = list(group_list.keys())
-                    filemeta_group = result.get('properties').get('filemeta').get(
-                        'items').get('properties').get('groups')
+                    filemeta_group = result.get('properties').get(
+                        'filemeta').get('items').get('properties').get('groups')
                     filemeta_group['enum'] = group_enum
 
                 json_schema = result
@@ -256,7 +257,7 @@ def get_json_schema(item_type_id=0):
         if result is None:
             return '{}'
         return jsonify(json_schema)
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
@@ -301,7 +302,7 @@ def get_schema_form(item_type_id=0):
                                     sub_elem['title'] = sub_elem['title_i18n'][
                                         cur_lang]
         return jsonify(schema_form)
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
@@ -310,6 +311,7 @@ def get_schema_form(item_type_id=0):
 @login_required
 @item_permission.require(http_exception=403)
 def items_index(pid_value=0):
+    """Items index."""
     try:
         if pid_value == 0:
             return redirect(url_for('.index'))
@@ -344,10 +346,12 @@ def items_index(pid_value=0):
             current_app.logger.debug(item)
         elif request.method == 'POST':
             """update item data info."""
-            sessionstore.put('item_index_{}'.format(pid_value), json.dumps(data),
-                             ttl_secs=300)
+            sessionstore.put(
+                'item_index_{}'.format(pid_value),
+                json.dumps(data),
+                ttl_secs=300)
         return jsonify(data)
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
@@ -357,6 +361,7 @@ def items_index(pid_value=0):
 @login_required
 @item_permission.require(http_exception=403)
 def iframe_items_index(pid_value=0):
+    """Iframe items index."""
     try:
         if pid_value == 0:
             return redirect(url_for('.iframe_index'))
@@ -391,10 +396,12 @@ def iframe_items_index(pid_value=0):
             current_app.logger.debug(item)
         elif request.method == 'POST':
             """update item data info."""
-            sessionstore.put('item_index_{}'.format(pid_value), json.dumps(data),
-                             ttl_secs=300)
+            sessionstore.put(
+                'item_index_{}'.format(pid_value),
+                json.dumps(data),
+                ttl_secs=300)
         return jsonify(data)
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 

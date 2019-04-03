@@ -24,7 +24,8 @@ from flask import g
 from flask_security import current_user
 from werkzeug.local import LocalProxy
 
-from .config import USERPROFILES_LANGUAGE_DEFAULT, USERPROFILES_TIMEZONE_DEFAULT
+from .config import USERPROFILES_LANGUAGE_DEFAULT, \
+    USERPROFILES_TIMEZONE_DEFAULT
 from .models import AnonymousUserProfile, UserProfile
 
 
@@ -50,6 +51,7 @@ def _get_current_userprofile():
                               language=USERPROFILES_LANGUAGE_DEFAULT)
         g.userprofile = profile
     return profile
+
 
 current_userprofile = LocalProxy(lambda: _get_current_userprofile())
 """Proxy to the user profile of the currently login user."""

@@ -21,15 +21,15 @@
 """WEKO3 module docstring."""
 
 import uuid
-
 from datetime import datetime
+
 from flask_babelex import gettext as _
 from invenio_accounts.models import Role, User
 from invenio_db import db
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.expression import desc
-from sqlalchemy_utils.types import UUIDType
+from sqlalchemy_utils.types import JSONType, UUIDType
 from sqlalchemy_utils.types.choice import ChoiceType
-
 from weko_groups.widgets import RadioGroupWidget
 from weko_records.models import ItemType
 
@@ -328,6 +328,7 @@ class TimestampMixin(object):
     SQLAlchemy-Utils timestamp model does not have support for
     fractional seconds.
     """
+
     STATUSPOLICY = [
         (StatusPolicy.NEW, _('Record has be created.')),
         (StatusPolicy.UPT, _('Record has be updated.')),
@@ -354,7 +355,7 @@ class TimestampMixin(object):
 
 
 class ActionStatus(db.Model, TimestampMixin):
-    """define ActionStatus"""
+    """define ActionStatus."""
 
     __tablename__ = 'workflow_action_status'
 
@@ -403,7 +404,7 @@ class ActionStatus(db.Model, TimestampMixin):
 
 
 class Action(db.Model, TimestampMixin):
-    """define Action"""
+    """define Action."""
 
     __tablename__ = 'workflow_action'
 
@@ -434,7 +435,7 @@ class Action(db.Model, TimestampMixin):
 
 
 class FlowDefine(db.Model, TimestampMixin):
-    """define Flow"""
+    """Define Flow."""
 
     __tablename__ = 'workflow_flow_define'
 
@@ -485,7 +486,7 @@ class FlowDefine(db.Model, TimestampMixin):
 
 
 class FlowAction(db.Model, TimestampMixin):
-    """Action list belong to Flow"""
+    """Action list belong to Flow."""
 
     __tablename__ = 'workflow_flow_action'
 
@@ -540,7 +541,7 @@ class FlowAction(db.Model, TimestampMixin):
 
 
 class FlowActionRole(db.Model, TimestampMixin):
-    """FlowActionRole list belong to FlowAction
+    """FlowActionRole list belong to FlowAction.
 
     It relates an allowed action with a role or a user
     """
@@ -574,7 +575,7 @@ class FlowActionRole(db.Model, TimestampMixin):
 
 
 class WorkFlow(db.Model, TimestampMixin):
-    """define WorkFlow"""
+    """Define WorkFlow."""
 
     __tablename__ = 'workflow_workflow'
 
@@ -616,7 +617,7 @@ class WorkFlow(db.Model, TimestampMixin):
 
 
 class Activity(db.Model, TimestampMixin):
-    """define Activety"""
+    """Define Activety."""
 
     __tablename__ = 'workflow_activity'
 
@@ -695,7 +696,8 @@ class Activity(db.Model, TimestampMixin):
         (ActivityStatusPolicy.ACTIVITY_FINALLY,
          ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_FINALLY)),
         (ActivityStatusPolicy.ACTIVITY_FORCE_END,
-         ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_FORCE_END)),
+         ActivityStatusPolicy.describe(
+             ActivityStatusPolicy.ACTIVITY_FORCE_END)),
         (ActivityStatusPolicy.ACTIVITY_CANCEL,
          ActivityStatusPolicy.describe(ActivityStatusPolicy.ACTIVITY_CANCEL)),
         (ActivityStatusPolicy.ACTIVITY_MAKING,
@@ -722,7 +724,7 @@ class Activity(db.Model, TimestampMixin):
 
 
 class ActivityAction(db.Model, TimestampMixin):
-    """define Activety"""
+    """Define Activety."""
 
     __tablename__ = 'workflow_activity_action'
 
@@ -746,9 +748,27 @@ class ActivityAction(db.Model, TimestampMixin):
     action_comment = db.Column(db.Text, nullable=True)
     """action comment."""
 
+    action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
+    """action identifier grant."""
+
+    action_identifier_grant_jalc_doi_manual = db.Column(db.String(100),
+                                                        nullable=True,
+                                                        default="")
+    """action jalc doi input."""
+
+    action_identifier_grant_jalc_cr_doi_manual = db.Column(db.String(100),
+                                                           nullable=True,
+                                                           default="")
+    """action jalc crossref doi input."""
+
+    action_identifier_grant_jalc_dc_doi_manual = db.Column(db.String(100),
+                                                           nullable=True,
+                                                           default="")
+    """action jalc datacite doi input."""
+
 
 class ActivityHistory(db.Model, TimestampMixin):
-    """define ActivityHistory"""
+    """Define ActivityHistory."""
 
     __tablename__ = 'workflow_action_history'
 
@@ -772,7 +792,9 @@ class ActivityHistory(db.Model, TimestampMixin):
         nullable=True)
     """the status description of action."""
 
-    action_user = db.Column(db.Integer(), db.ForeignKey(User.id), nullable=True)
+    action_user = db.Column(
+        db.Integer(), db.ForeignKey(
+            User.id), nullable=True)
     """the user of operate action."""
 
     action_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
@@ -781,6 +803,58 @@ class ActivityHistory(db.Model, TimestampMixin):
     action_comment = db.Column(db.Text, nullable=True)
     """action comment."""
 
+    action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
+    """action identifier grant."""
+
+    action_identifier_grant_jalc_doi_manual = db.Column(db.String(100),
+                                                        nullable=True,
+                                                        default="")
+    """action jalc doi input."""
+
+    action_identifier_grant_jalc_cr_doi_manual = db.Column(db.String(100),
+                                                           nullable=True,
+                                                           default="")
+    """action jalc crossref doi input."""
+
+    action_identifier_grant_jalc_dc_doi_manual = db.Column(db.String(100),
+                                                           nullable=True,
+                                                           default="")
+    """action jalc datacite doi input."""
+
     user = db.relationship(User, backref=db.backref(
         'activity_history'))
     """User relaionship."""
+
+
+class ActionJournal(db.Model, TimestampMixin):
+    """Define journal info."""
+
+    __tablename__ = 'workflow_action_journal'
+
+    id = db.Column(db.Integer(), nullable=False,
+                   primary_key=True, autoincrement=True)
+    """Activity_Action identifier."""
+
+    activity_id = db.Column(
+        db.String(24), nullable=False, unique=False, index=True)
+    """activity id of Activity Action."""
+
+    action_id = db.Column(
+        db.Integer(), db.ForeignKey(Action.id), nullable=True, unique=False)
+    """action id."""
+
+    action_journal = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Action journal info."""

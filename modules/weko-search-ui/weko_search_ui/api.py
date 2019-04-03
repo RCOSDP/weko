@@ -23,21 +23,21 @@
 
 from flask import current_app, json
 from invenio_db import db
+from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
-from weko_admin import config as ad_config
 from weko_records.utils import get_keywords_data_load
 
 
 class SearchSetting(object):
-    """About search setting"""
+    """About search setting."""
 
     @classmethod
     def get_results_setting(cls):
-        """Get result setting"""
+        """Get result setting."""
         res = sm.get()
-        options =dict()
-        sort_options=dict()
+        options = dict()
+        sort_options = dict()
         display_number = 20
         if res:
             display_number = res.default_dis_num
@@ -47,10 +47,11 @@ class SearchSetting(object):
 
         for x in res:
             key_str = x.get('id')
-            key = key_str[0:key_str.rfind('_',1)]
-            val = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key)
-            if not key in options.keys():
-                options[key]= val
+            key = key_str[0:key_str.rfind('_', 1)]
+            val = current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
+                current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key)
+            if key not in options.keys():
+                options[key] = val
 
         sort_options[current_app.config['SEARCH_UI_SEARCH_INDEX']] = options
 
@@ -58,12 +59,12 @@ class SearchSetting(object):
 
     @classmethod
     def get_default_sort(cls, search_type):
-        """Get default sort """
+        """Get default sort."""
         res = sm.get()
-        sort_str=None
-        if res :
+        sort_str = None
+        if res:
             if search_type == current_app.config['WEKO_SEARCH_TYPE_KEYWORD']:
-                sort_str=res.default_dis_sort_keyword
+                sort_str = res.default_dis_sort_keyword
             else:
                 sort_str = res.default_dis_sort_index
         else:
@@ -74,19 +75,20 @@ class SearchSetting(object):
 
         sort_key = sort_str[0:sort_str.rfind('_', 1)]
 
-        sort = sort_str[sort_str.rfind('_', 1)+1:]
+        sort = sort_str[sort_str.rfind('_', 1) + 1:]
 
-        return  sort_key, sort
+        return sort_key, sort
 
     @classmethod
     def get_sort_key(cls, key_str):
-
-        return current_app.config['RECORDS_REST_SORT_OPTIONS'].get(current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key_str).get('fields')[0]
+        """Get sort key."""
+        return current_app.config['RECORDS_REST_SORT_OPTIONS'].get(
+            current_app.config['SEARCH_UI_SEARCH_INDEX']).get(key_str).get('fields')[0]
 
     @classmethod
     def get_custom_sort(cls, index_id, sort_type):
-        """Get custom sort"""
-        if sort_type =="asc":
+        """Get custom sort."""
+        if sort_type == "asc":
             factor_obj = Indexes.get_item_sort(index_id)
             script_str = {
                 "_script": {
@@ -117,31 +119,30 @@ class SearchSetting(object):
 
 
 def get_search_detail_keyword(str):
-        """Get search detail keyword"""
-        res = sm.get()
-        options=None
-        key_options = dict()
-        if res :
-            options = res.search_conditions
-        else :
-            options = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['detail_condition']
+    """Get search detail keyword."""
+    res = sm.get()
+    options = None
+    key_options = dict()
+    if res:
+        options = res.search_conditions
+    else:
+        options = ad_config.WEKO_ADMIN_MANAGEMENT_OPTIONS['detail_condition']
 
-        item_type_list = get_keywords_data_load('')
-        check_val=[]
-        for x in item_type_list:
-            sub=dict(id=x[1],contents=x[0],checkStus=False)
-            check_val.append(sub)
+    item_type_list = get_keywords_data_load('')
+    check_val = []
+    for x in item_type_list:
+        sub = dict(id=x[1], contents=x[0], checkStus=False)
+        check_val.append(sub)
 
-        for k_v in options:
-            if k_v.get('id') == 'itemtype':
-                k_v['check_val'] = check_val
-                break
+    for k_v in options:
+        if k_v.get('id') == 'itemtype':
+            k_v['check_val'] = check_val
+            break
 
-        key_options['condition_setting']= options
+    key_options['condition_setting'] = options
 
-        key_options_str = json.dumps(key_options)
-        key_options_str.replace('False','false')
-        key_options_str.replace('True', 'true')
+    key_options_str = json.dumps(key_options)
+    key_options_str.replace('False', 'false')
+    key_options_str.replace('True', 'true')
 
-        return key_options_str
-
+    return key_options_str

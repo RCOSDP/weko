@@ -21,33 +21,34 @@
 """WEKO3 module docstring."""
 
 import uuid
-
 from datetime import datetime
+
 from flask import current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import User
 from invenio_db import db
-from sqlalchemy import asc,desc
+from sqlalchemy import asc, desc
 from sqlalchemy.orm.exc import NoResultFound
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
+from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
-from .models import ActivityAction
-from .models import ActivityHistory
-from .models import FlowDefine as _Flow
+from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
+from .models import FlowDefine as _Flow
+from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
-from .models import ActionStatusPolicy, ActionCommentPolicy, \
-    ActivityStatusPolicy, FlowStatusPolicy
+
 
 class Flow(object):
-    """Operated on the Flow"""
+    """Operated on the Flow."""
 
     def create_flow(self, flow):
         """
-        Create new flow
+        Create new flow.
+
         :param flow:
         :return:
         """
@@ -86,8 +87,8 @@ class Flow(object):
             return None
 
     def upt_flow(self, flow_id, flow):
-        """
-        Update flow info
+        """Update flow info.
+
         :param flow_id:
         :param flow:
         :return:
@@ -108,8 +109,8 @@ class Flow(object):
             return None
 
     def get_flow_list(self):
-        """
-        get flow list info
+        """Get flow list info.
+
         :return:
         """
         with db.session.no_autoflush:
@@ -117,8 +118,8 @@ class Flow(object):
             return query.all()
 
     def get_flow_detail(self, flow_id):
-        """
-        get flow detail info
+        """Get flow detail info.
+
         :param flow_id:
         :return:
         """
@@ -133,8 +134,8 @@ class Flow(object):
             return flow_detail
 
     def del_flow(self, flow_id):
-        """
-        Delete flow info
+        """Delete flow info.
+
         :param flow_id:
         :return:
         """
@@ -147,7 +148,7 @@ class Flow(object):
         return True
 
     def upt_flow_action(self, flow_id, actions):
-        """Update FlowAction Info"""
+        """Update FlowAction Info."""
         with db.session.begin_nested():
             for order, action in enumerate(actions):
                 flowaction_filter = _FlowAction.query.filter_by(
@@ -167,7 +168,8 @@ class Flow(object):
                         action_order=order + 1,
                         action_version=action.get('version')
                     )
-                    _flow = _Flow.query.filter_by(flow_id=flow_id).one_or_none()
+                    _flow = _Flow.query.filter_by(
+                        flow_id=flow_id).one_or_none()
                     _flow.flow_status = FlowStatusPolicy.AVAILABLE
                     db.session.add(flowaction)
                 else:
@@ -192,8 +194,8 @@ class Flow(object):
         db.session.commit()
 
     def get_next_flow_action(self, flow_id, cur_action_id):
-        """
-        return next action info
+        """Return next action info.
+
         :param flow_id:
         :param cur_action_id:
         :return:
@@ -211,8 +213,8 @@ class Flow(object):
         return None
 
     def get_previous_flow_action(self, flow_id, cur_action_id):
-        """
-        return next action info
+        """Return next action info.
+
         :param flow_id:
         :param cur_action_id:
         :return:
@@ -231,10 +233,11 @@ class Flow(object):
 
 
 class WorkFlow(object):
-    """Operated on the WorkFlow"""
+    """Operated on the WorkFlow."""
+
     def create_workflow(self, workflow):
-        """
-        Create new workflow
+        """Create new workflow.
+
         :param workflow:
         :return:
         """
@@ -250,8 +253,8 @@ class WorkFlow(object):
             return None
 
     def upt_workflow(self, workflow):
-        """
-        Update workflow info
+        """Update workflow info.
+
         :param workflow:
         :return:
         """
@@ -274,8 +277,8 @@ class WorkFlow(object):
             return None
 
     def get_workflow_list(self):
-        """
-        get workflow list info
+        """Get workflow list info.
+
         :return:
         """
         with db.session.no_autoflush:
@@ -283,8 +286,8 @@ class WorkFlow(object):
             return query.all()
 
     def get_workflow_detail(self, workflow_id):
-        """
-        get workflow detail info
+        """Get workflow detail info.
+
         :param workflow_id:
         :return:
         """
@@ -294,8 +297,8 @@ class WorkFlow(object):
             return query.one_or_none()
 
     def get_workflow_by_id(self, workflow_id):
-        """
-        get workflow detail info
+        """Get workflow detail info.
+
         :param workflow_id:
         :return:
         """
@@ -305,8 +308,8 @@ class WorkFlow(object):
             return query.one_or_none()
 
     def del_workflow(self, workflow_id):
-        """
-        Delete flow info
+        """Delete flow info.
+
         :param workflow_id:
         :return:
         """
@@ -318,26 +321,27 @@ class WorkFlow(object):
 
 
 class Action(object):
-    """Operated on the Action"""
+    """Operated on the Action."""
+
     def create_action(self, action):
-        """
-        Create new action info
+        """Create new action info.
+
         :param action:
         :return:
         """
         pass
 
     def upt_action(self, action):
-        """
-        Update action info
+        """Update action info.
+
         :param action:
         :return:
         """
         pass
 
     def get_action_list(self, is_deleted=False):
-        """
-        Get action list info
+        """Get action list info.
+
         :param is_deleted:
         :return:
         """
@@ -346,8 +350,8 @@ class Action(object):
             return query.all()
 
     def get_action_detail(self, action_id):
-        """
-        Get detail info of action
+        """Get detail info of action.
+
         :param action_id:
         :return:
         """
@@ -356,8 +360,8 @@ class Action(object):
             return query.one_or_none()
 
     def del_action(self, action_id):
-        """
-        Delete the action info
+        """Delete the action info.
+
         :param action_id:
         :return:
         """
@@ -365,42 +369,43 @@ class Action(object):
 
 
 class ActionStatus(object):
-    """Operated on the ActionStatus"""
+    """Operated on the ActionStatus."""
+
     def create_action_status(self, action_status):
-        """
-        Create new action status info
+        """Create new action status info.
+
         :param action_status:
         :return:
         """
         pass
 
     def upt_action_status(self, action_status):
-        """
-        Update action status info
+        """Update action status info.
+
         :param action_status:
         :return:
         """
         pass
 
     def get_action_status_list(self, is_deleted=False):
-        """
-        Get action status list info
+        """Get action status list info.
+
         :param is_deleted:
         :return:
         """
         pass
 
     def get_action_status_detail(self, action_status_id):
-        """
-        Get detail info of action status
+        """Get detail info of action status.
+
         :param action_status_id:
         :return:
         """
         pass
 
     def del_action_status(self, action_status_id):
-        """
-        Delete the action status info
+        """Delete the action status info.
+
         :param action_status_id:
         :return:
         """
@@ -408,11 +413,11 @@ class ActionStatus(object):
 
 
 class WorkActivity(object):
-    """Operated on the Activity"""
+    """Operated on the Activity."""
 
     def init_activity(self, activity, community_id=None):
-        """
-        Create new activity
+        """Create new activity.
+
         :param activity:
         :return:
         """
@@ -461,7 +466,7 @@ class WorkActivity(object):
 
                 for flow_action in flow_actions:
                     db_activity_action = ActivityAction(
-                        activity_id= db_activity.activity_id,
+                        activity_id=db_activity.activity_id,
                         action_id=flow_action.action_id,
                         action_status=ActionStatusPolicy.ACTION_DONE,
                     )
@@ -476,8 +481,8 @@ class WorkActivity(object):
             return db_activity
 
     def upt_activity_action(self, activity_id, action_id):
-        """
-        Update activity info
+        """Update activity info.
+
         :param activity_id:
         :param action_id:
         :return:
@@ -491,9 +496,13 @@ class WorkActivity(object):
         db.session.commit()
 
     # add by ryuu sta
-    def upt_activity_action_status(self, activity_id, action_id, action_status):
-        """
-        Update activity info
+    def upt_activity_action_status(
+            self,
+            activity_id,
+            action_id,
+            action_status):
+        """Update activity info.
+
         :param activity_id:
         :param action_id:
         :param action_status:
@@ -502,14 +511,14 @@ class WorkActivity(object):
         with db.session.begin_nested():
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             activity_action.action_status = action_status
             db.session.merge(activity_action)
         db.session.commit()
 
     def upt_activity_action_comment(self, activity_id, action_id, comment):
-        """
-        Update activity info
+        """Update activity info.
+
         :param activity_id:
         :param action_id:
         :param comment:
@@ -518,15 +527,15 @@ class WorkActivity(object):
         with db.session.begin_nested():
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             if activity_action:
                 activity_action.action_comment = comment
                 db.session.merge(activity_action)
         db.session.commit()
 
     def get_activity_action_comment(self, activity_id, action_id):
-        """
-        get activity info
+        """Get activity info.
+
         :param activity_id:
         :param action_id:
         :return:
@@ -534,20 +543,90 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             return activity_action
 
+    def create_or_update_action_journal(self, activity_id, action_id, journal):
+        """Create or update action journal info.
+
+        :param activity_id:
+        :param action_id:
+        :param journal:
+        :return:
+        """
+        with db.session.begin_nested():
+            action_journal = ActionJournal.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id, ).one_or_none()
+            if action_journal:
+                action_journal.action_journal = journal
+                db.session.merge(action_journal)
+            else:
+                new_action_journal = ActionJournal(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    action_journal=journal,
+                )
+                db.session.add(new_action_journal)
+
+        db.session.commit()
+
+    def get_action_journal(self, activity_id, action_id):
+        """Get action journal info.
+
+        :param activity_id:
+        :param action_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            action_journal = ActionJournal.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id, ).one_or_none()
+            return action_journal
+
     def get_activity_action_status(self, activity_id, action_id):
+        """Get activity action status."""
         with db.session.no_autoflush:
             activity_ac = ActivityAction.query.filter_by(
                 activity_id=activity_id, action_id=action_id).one()
             action_stus = activity_ac.action_status
             return action_stus
+
     # add by ryuu end
 
-    def upt_activity_item(self, activity, item_id):
+    def upt_activity_action_id_grant(self, activity_id, action_id,
+                                     identifier_grant,
+                                     identifier_grant_jalc_doi_suffix,
+                                     identifier_grant_jalc_cr_doi_suffix,
+                                     identifier_grant_jalc_dc_doi_suffix):
+        """Update activity info.
+
+        :param activity_id:
+        :param action_id:
+        :param identifier_grant:
+        :param identifier_grant_jalc_doi_suffix:
+        :param identifier_grant_jalc_cr_doi_suffix:
+        :param identifier_grant_jalc_dc_doi_suffix:
+        :return:
         """
-        Update activity info for item id
+        with db.session.begin_nested():
+            activity_action = ActivityAction.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id, ).one_or_none()
+            if activity_action:
+                activity_action.action_identifier_grant = identifier_grant
+                activity_action.action_identifier_grant_jalc_doi_manual = \
+                    identifier_grant_jalc_doi_suffix
+                activity_action.action_identifier_grant_jalc_cr_doi_manual = \
+                    identifier_grant_jalc_cr_doi_suffix
+                activity_action.action_identifier_grant_jalc_dc_doi_manual = \
+                    identifier_grant_jalc_dc_doi_suffix
+                db.session.merge(activity_action)
+        db.session.commit()
+
+    def upt_activity_item(self, activity, item_id):
+        """Update activity info for item id.
+
         :param activity:
         :param item_id:
         :return:
@@ -580,6 +659,7 @@ class WorkActivity(object):
             return None
 
     def end_activity(self, activity):
+        """End activity."""
         try:
             with db.session.begin_nested():
                 db_activity = _Activity.query.filter_by(
@@ -598,9 +678,7 @@ class WorkActivity(object):
                         action_status=activity.get('action_status'),
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
-                        action_comment=
-                        ActionCommentPolicy.FINALLY_ACTION_COMMENT
-                    )
+                        action_comment=ActionCommentPolicy.FINALLY_ACTION_COMMENT)
                     db.session.add(db_history)
             db.session.commit()
         except Exception as ex:
@@ -608,8 +686,8 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
 
     def get_activity_list(self, community_id=None):
-        """
-        get activity list info
+        """Get activity list info.
+
         :return:
         """
         with db.session.no_autoflush:
@@ -661,12 +739,14 @@ class WorkActivity(object):
                         activi.ItemName = ''
                 activi.StatusDesc = ActionStatusPolicy.describe(
                     ActionStatusPolicy.ACTION_DONE) \
-                    if ActivityStatusPolicy.ACTIVITY_FINALLY == activi.activity_status \
+                    if ActivityStatusPolicy.ACTIVITY_FINALLY == \
+                    activi.activity_status \
                     else ActionStatusPolicy.describe(
                     ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
-                if ActivityStatusPolicy.ACTIVITY_FINALLY == activi.activity_status:
+                if ActivityStatusPolicy.ACTIVITY_FINALLY == \
+                        activi.activity_status:
                     activi.type = 'All'
                     continue
                 activi.type = 'ToDo'
@@ -693,6 +773,7 @@ class WorkActivity(object):
             return activities
 
     def get_activity_steps(self, activity_id):
+        """Get activity steps."""
         steps = []
         his = WorkActivityHistory()
         histories = his.get_activity_history_list(activity_id)
@@ -711,7 +792,7 @@ class WorkActivity(object):
             if activity is not None:
                 flow_actions = _FlowAction.query.filter_by(
                     flow_id=activity.flow_define.flow_id).order_by(asc(
-                    _FlowAction.action_order)).all()
+                        _FlowAction.action_order)).all()
                 for flow_action in flow_actions:
                     steps.append({
                         'ActivityId': activity_id,
@@ -728,8 +809,8 @@ class WorkActivity(object):
         return steps
 
     def get_activity_detail(self, activity_id):
-        """
-        get activity detail info
+        """Get activity detail info.
+
         :param activity_id:
         :return:
         """
@@ -748,6 +829,7 @@ class WorkActivity(object):
             return activity
 
     def get_activity_action_role(self, activity_id, action_id):
+        """Get activity action."""
         roles = {
             'allow': [],
             'deny': []
@@ -774,15 +856,15 @@ class WorkActivity(object):
             return roles, users
 
     def del_activity(self, activity_id):
-        """
-        Delete activity info
+        """Delete activity info.
+
         :param activity_id:
         :return:
         """
         pass
 
     def get_activity_index_search(self, activity_id):
-        """Get page info after item search"""
+        """Get page info after item search."""
         from weko_records.api import ItemsMetadata
         from flask_babelex import gettext as _
         from invenio_pidstore.models import PersistentIdentifier
@@ -804,7 +886,8 @@ class WorkActivity(object):
         workflow = WorkFlow()
         workflow_detail = workflow.get_workflow_by_id(
             activity_detail.workflow_id)
-        if ActivityStatusPolicy.ACTIVITY_FINALLY != activity_detail.activity_status:
+        if ActivityStatusPolicy.ACTIVITY_FINALLY != \
+                activity_detail.activity_status:
             activity_detail.activity_status_str = \
                 request.args.get('status', 'ToDo')
         else:
@@ -853,19 +936,23 @@ class WorkActivity(object):
         ctx = {'community': None}
         community_id = ""
         if 'community' in getargs:
-            comm = GetCommunity.get_community_by_id(request.args.get('community'))
+            comm = GetCommunity.get_community_by_id(
+                request.args.get('community'))
             community_id = request.args.get('community')
             ctx = {'community': comm}
             community_id = comm.id
 
-        return activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx
+        return activity_detail, item, steps, action_id, cur_step, \
+            temporary_comment, approval_record, step_item_login_url, histories,\
+            res_check, pid, community_id, ctx
 
 
 class WorkActivityHistory(object):
-    """Operated on the Activity"""
+    """Operated on the Activity."""
+
     def create_activity_history(self, activity):
-        """
-        Create new activity history
+        """Create new activity history.
+
         :param activity:
         :return:
         """
@@ -876,7 +963,14 @@ class WorkActivityHistory(object):
             action_status=activity.get('action_status'),
             action_user=current_user.get_id(),
             action_date=datetime.utcnow(),
-            action_comment=activity.get('commond')
+            action_comment=activity.get('commond'),
+            action_identifier_grant=activity.get('identifier_grant', 0),
+            action_identifier_grant_jalc_doi_manual=activity.get(
+                'identifier_grant_jalc_doi_suffix', ""),
+            action_identifier_grant_jalc_cr_doi_manual=activity.get(
+                'identifier_grant_jalc_cr_doi_suffix', ""),
+            action_identifier_grant_jalc_dc_doi_manual=activity.get(
+                'identifier_grant_jalc_dc_doi_suffix', "")
         )
         new_history = False
         activity = WorkActivity()
@@ -902,8 +996,8 @@ class WorkActivityHistory(object):
             return db_history
 
     def get_activity_history_list(self, activity_id):
-        """
-        get activity history list info
+        """Get activity history list info.
+
         :param activity_id:
         :return:
         """
@@ -921,16 +1015,16 @@ class WorkActivityHistory(object):
             return histories
 
     def get_activity_history_detail(self, activity_id):
-        """
-        get activity history detail info
+        """Get activity history detail info.
+
         :param activity_id:
         :return:
         """
         pass
 
     def upd_activity_history_detail(self, activity_id, action_id):
-        """
-        get activity history detail info
+        """Get activity history detail info.
+
         :param activity_id:
         :param action_id:
         :return:
@@ -951,14 +1045,15 @@ class WorkActivityHistory(object):
             db.session.rollback()
             return None
 
+
 class UpdateItem(object):
-    """the class about item"""
+    """The class about item."""
 
     def publish(pid, record):
         r"""Record publish  status change view.
 
-        Change record publish status with given status and renders record export
-        template.
+        Change record publish status with given status and renders record
+        export template.
 
         :param pid: PID object.
         :param record: Record object.
@@ -966,7 +1061,6 @@ class UpdateItem(object):
         :param \*\*kwargs: Additional view arguments based on URL rule.
         :return: The rendered template.
         """
-
         from invenio_db import db
         from weko_deposit.api import WekoIndexer
         publish_status = record.get('publish_status')
@@ -982,12 +1076,11 @@ class UpdateItem(object):
         indexer.update_publish_status(record)
 
     def set_item_relation(self, relationData, record):
-        """
-        set relation info of item
+        """Set relation info of item.
+
         :param relationData: item relation data
         :param record: item info
         """
-
         from weko_deposit.api import WekoIndexer
 
         indexer = WekoIndexer()
@@ -995,10 +1088,11 @@ class UpdateItem(object):
 
 
 class GetCommunity(object):
-    """Get Community Info"""
+    """Get Community Info."""
+
     @classmethod
     def get_community_by_id(self, community_id):
-        """"""
+        """Get Community by ID."""
         from invenio_communities.models import Community
         c = Community.get(community_id)
         return c

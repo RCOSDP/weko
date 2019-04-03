@@ -31,12 +31,18 @@ require([
       });
   });
   $('#btn-finish').on('click', function(){
+    let comment = ''
+    if($('#input-comment') && $('#input-comment').val()){
+      comment = $('#input-comment').val();
+    }
+
     let post_uri = $('.cur_step').data('next-uri');
     let post_data = {
-      commond: $('#input-comment').val(),
+      commond: comment,
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 0
     };
+
     $.ajax({
       url: post_uri,
       method: 'POST',
@@ -61,12 +67,33 @@ require([
     });
   });
   $('#btn-draft').on('click', function(){
+    let comment = ''
+    if($('#input-comment') && $('#input-comment').val()){
+      comment = $('#input-comment').val();
+    }
+
     let post_uri = $('.cur_step').data('next-uri');
     let post_data = {
-      commond: $('#input-comment').val(),
+      commond: comment,
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 1
     };
+
+    // Get Journal
+    if($('#action-journal')){
+      if($('#action-journal').text()) {
+        post_data['journal'] = $.parseJSON($('#action-journal').text());
+      }else {
+        if ($("#journal-info").attr("hidden")){
+          if ($('#search-key').val()){
+            post_data['journal'] = {keywords: $('#search-key').val()};
+          }else {
+            post_data['journal'] = {keywords: ''};
+          }
+        }
+      }
+    }
+
     $.ajax({
       url: post_uri,
       method: 'POST',

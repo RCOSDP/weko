@@ -65,7 +65,7 @@ def preview(pid, record, template=None, **kwargs):
         return zip_preview(fileobj)
     else:
         for plugin in current_previewer.iter_previewers(
-            previewers=[file_previewer] if file_previewer else None):
+                previewers=[file_previewer] if file_previewer else None):
             if plugin.can_preview(fileobj):
                 try:
                     return plugin.preview(fileobj)
@@ -81,7 +81,6 @@ def preview(pid, record, template=None, **kwargs):
 
 def children_to_list(node):
     """Organize children structure."""
-
     # to decode garbled zip file name
     name = node.get('name')
     if name:
@@ -112,6 +111,7 @@ def zip_preview(file):
 
 
 def decode_name(k):
+    """Decode name."""
     try:
         name = k.encode('cp437')
         encode = chardet.detect(name).get('encoding')
@@ -128,5 +128,5 @@ def decode_name(k):
         else:
             name = name.decode(encode)
         return name
-    except:
+    except BaseException:
         return k

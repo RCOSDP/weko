@@ -419,7 +419,7 @@ msgid "Save WorkFlow"
 msgstr "登録"
 
 #: weko_workflow/templates/weko_workflow/admin/workflow_list.html:28
-msgid "Create WrokFlow"
+msgid "Create WorkFlow"
 msgstr "フロー作成"
 
 

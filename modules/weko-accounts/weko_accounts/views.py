@@ -28,8 +28,8 @@ import json
 import sys
 
 import redis
-from flask import Blueprint, abort, current_app, flash, \
-    redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, \
+    render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -70,7 +70,7 @@ def index():
 
 @blueprint.route('/auto/login', methods=['GET'])
 def shib_auto_login():
-    """create new account and auto login when shibboleth user first login.
+    """Create new account and auto login when shibboleth user first login.
 
     :return: next url
     """
@@ -101,14 +101,14 @@ def shib_auto_login():
             shib_user.shib_user_login()
         datastore.delete(cache_key)
         return redirect(session['next'] if 'next' in session else '/')
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
 
 @blueprint.route('/confim/user', methods=['POST'])
 def confirm_user():
-    """check weko user info.
+    """Check weko user info.
 
     :return:
     """
@@ -140,14 +140,14 @@ def confirm_user():
             shib_user.shib_user_login()
         datastore.delete(cache_key)
         return redirect(session['next'] if 'next' in session else '/')
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
 
 @blueprint.route('/shib/login', methods=['GET'])
 def shib_login():
-    """get shibboleth user login page.
+    """Get shibboleth user login page.
 
     :return: confirm user page when relation is empty
     """
@@ -173,14 +173,14 @@ def shib_login():
             csrf_random=csrf_random,
             email=cache_val['shib_mail'] if len(
                 cache_val['shib_mail']) > 0 else '')
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
 
 @blueprint.route('/shib/login', methods=['POST'])
 def shib_sp_login():
-    """the request from shibboleth sp.
+    """The request from shibboleth sp.
 
     :return: confirm page when relation is empty
     """
@@ -211,14 +211,14 @@ def shib_sp_login():
             '_method': 'GET'
         }
         return url_for(next_url, **query_string)
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return url_for_security('login')
 
 
 @blueprint.route('/shib/sp/login', methods=['GET'])
 def shib_stub_login():
-    """shibboleth sp test page.
+    """Shibboleth sp test page.
 
     :return:
     """
@@ -230,7 +230,7 @@ def shib_stub_login():
 
 @blueprint.route('/shib/logout')
 def shib_logout():
-    """shibboleth user logout.
+    """Shibboleth user logout.
 
     :return:
     """
