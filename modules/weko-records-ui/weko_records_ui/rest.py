@@ -104,13 +104,14 @@ def create_blueprint(endpoints):
             methods=['GET'],
         )
 
+        
     return blueprint
 
 
 class WekoRecordsCitesResource(ContentNegotiatedMethodView):
     """Schema files resource."""
 
-    view_name = '{0}_files'
+    view_name = '{0}_cites'
 
     def __init__(self, serializers, pid_type, ctx, *args, **kwargs):
         """Constructor."""
