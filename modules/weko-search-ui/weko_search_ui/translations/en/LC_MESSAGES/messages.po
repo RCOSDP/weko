@@ -24,3 +24,11 @@ msgstr "Search"
 
 msgid "DetailSearch"
 msgstr "DetailSearch"
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:24
+msgid "Title"
+msgstr ""
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:32
+msgid "Details"
+msgstr ""
