@@ -33,6 +33,7 @@ from invenio_indexer.api import RecordIndexer
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
 from weko_indextree_journal.api import Journals
+from weko_deposit.api import WekoIndexer
 
 from weko_search_ui.api import get_search_detail_keyword
 from invenio_search import RecordsSearch
@@ -250,18 +251,23 @@ def bulk_delete():
         for hit in hits:
             recid = hit.get('_id')
             record = Record.get_record(recid)
-            if record is not None:
-                # Delete schema
-                record_indexer.delete_by_id(recid)
+            if record is not None and record['path'] is not None:
+                paths = record['path']
+                if len(paths) > 0:
+                    # Remove the element which matches the index_tree_id
+                    for path in paths:
+                        if path.endswith(str(index_tree_id)):
+                            paths.remove(path)
+                            break
 
-                pids = PersistentIdentifier.query.filter_by(
-                    object_uuid=recid).all()
-                for pid in pids:
-                    db.session.delete(pid)  # Delete PersistentId
+                    # Do update the path on record
+                    record.update({'path': paths})
+                    record.commit()
+                    db.session.commit()
 
-                # Delete this record
-                # Record.get_record(recid).delete()   # flag as deleted, this will delete files and related things
-                db.session.commit()                     # terminate the transaction
+                    # Indexing
+                    indexer = WekoIndexer()
+                    indexer.update_path(record, update_revision=False)
 
     if request.method == 'PUT':
         # Do delete items inside the current index tree (maybe root tree)
