@@ -58,8 +58,8 @@
     }
     $(document).ready(function(){
       showJournalInfo();
-      $("#displayDetails").click(function(){
-        $("#collapsedDetails").collapse('toggle');
+      $("#display_details").click(function(){
+        $("#collapsed_details").collapse('toggle');
         $(".icon-right").collapse('toggle');
         $(".icon-down").collapse('toggle');
       });
