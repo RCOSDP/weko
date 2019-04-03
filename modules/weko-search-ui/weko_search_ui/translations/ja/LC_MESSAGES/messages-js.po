@@ -27,3 +27,11 @@ msgstr "昇順"
 #: weko_search_ui/static/templates/weko_search_ui/togglebutton.html:3
 msgid "desc"
 msgstr "降順"
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:24
+msgid "Title"
+msgstr "タイトル"
+
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:35
+msgid "Details"
+msgstr "詳細"
