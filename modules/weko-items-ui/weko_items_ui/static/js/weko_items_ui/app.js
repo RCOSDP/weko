@@ -151,9 +151,11 @@ function autocomplete(inp, arr) {
 get_search_data = function (keyword) {
   get_search_data_url = '/api/items/get_search_data/' + keyword;
   if (keyword == 'username') {
+    $("#share_username").prop('readonly', true);
     $("#id_spinners_username").css("display", "");
   } else {
     if (keyword == 'email') {
+      $("#share_email").prop('readonly', true);
       $("#id_spinners_email").css("display", "");
     }
   }
@@ -168,6 +170,7 @@ get_search_data = function (keyword) {
       } else {
         if (keyword === 'username') {
           $("#id_spinners_username").css("display", "none");
+          $("#share_username").prop('readonly', false);
           username_arr = data.results;
           // auto fill for username
           autocomplete(document.getElementById("share_username"), username_arr);
@@ -175,6 +178,7 @@ get_search_data = function (keyword) {
         } else {
           if (keyword === 'email') {
             $("#id_spinners_email").css("display", "none");
+            $("#share_email").prop('readonly', false);
             email_arr = data.results;
             // auto fill for email input
             autocomplete(document.getElementById("share_email"), email_arr);
@@ -216,13 +220,13 @@ get_autofill_data = function (keyword, data, mode) {
     dataType: "json",
     success: function(data, status) {
       if (mode == 'share_username') {
-        $("#share_email").val("");
         $("#share_email").val(data.results.email);
       } else {
         if (mode == 'share_email') {
           if (data.results.username) {
-            $("#share_username").val("");
             $("#share_username").val(data.results.username);
+          }else {
+            $("#share_username").val("");
           }
         }
       }
@@ -232,6 +236,16 @@ get_autofill_data = function (keyword, data, mode) {
     }
   });
 }
+$("#share_username").focusout(function () {
+  username_arr = [];
+  $("#share_email").prop('readonly', true);
+
+})
+
+$("#share_email").focusout(function () {
+  email_arr = [];
+  $("#share_username").prop('readonly', true);
+})
 
 function handleSharePermission(value) {
   if (value == 'this_user') {
@@ -244,7 +258,9 @@ function handleSharePermission(value) {
       $("#share_username").val("");
       $("#share_email").val("");
       $("#id_spinners_username").css("display", "none");
+      $("#share_username").prop('readonly', true);
       $("#id_spinners_email").css("display", "none");
+      $("#share_email").prop('readonly', true);
     }
   }
 }
@@ -593,7 +609,7 @@ function handleSharePermission(value) {
               str = str.split(',"authorLink":[]').join('');
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-            $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
+            $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'iframe_tree');
           }
         } else {
           var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
@@ -602,7 +618,7 @@ function handleSharePermission(value) {
             str = str.split(',"authorLink":[]').join('');
           }
           $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-          $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
+          $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'iframe_tree');
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
