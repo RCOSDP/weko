@@ -87,6 +87,9 @@ setup(
         'invenio_base.apps': [
             'weko_records_ui = weko_records_ui:WekoRecordsUI',
         ],
+        'invenio_base.api_apps': [
+            'weko_records_ui_cites_rest = weko_records_ui:WekoRecordsCitesREST',
+        ],
         'invenio_admin.views': [
             'weko_records_ui_setting = weko_records_ui.admin:item_adminview',
             'weko_records_ui_pdfcoverpage = weko_records_ui.admin:pdfcoverpage_adminview',

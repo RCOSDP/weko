@@ -64,7 +64,7 @@ EMAIL_DISPLAY_FLG = True
 CSL_STYLES_API_ENDPOINT = '/api/csl/styles'
 
 #: Records Endpoint for CSL
-CSL_RECORDS_API_ENDPOINT = '/api/records/'
+CSL_RECORDS_API_ENDPOINT = '/api/record/cites/'
 
 #: Template dirrectory for CSL
 CSL_JSTEMPLATE_DIR = 'node_modules/invenio-csl-js/dist/templates/'
@@ -179,6 +179,22 @@ RECORDS_UI_EXPORT_FORMATS = {
             order=5,
         ),
     }
+}
+
+WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
+    'depid': {
+        'pid_type': 'depid',
+        'pid_minter': 'deposit',
+        'pid_fetcher': 'deposit',
+        'record_class': 'weko_deposit.api:WekoRecord',
+        'record_serializers': {
+            'text/x-bibliography': ('weko_records.serializers',
+                                    ':citeproc_v1_response'),
+        },
+        'cites_route': '/record/cites/<pid_value>',
+        'default_media_type': 'application/json',
+        'max_result_window': 10000,
+    },
 }
 
 OAISERVER_METADATA_FORMATS = {
