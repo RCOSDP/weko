@@ -30,11 +30,11 @@
       <p>URL: <a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
       <br>
       <p>
-        <a href="javascript:;" data-toggle="collapse" data-target="#collapsed">{{_('Details')}}<span class="pull-left ng-hide" ng-show="collapsed"><i class="glyphicon glyphicon-chevron-right"></i></span>
-          <span class="pull-left ng-hide" ng-hide="collapsed"><i class="glyphicon glyphicon-chevron-down"></i></span>
+        <a href="javascript:;" id="displayDetails">{{_('Details')}}<span class="icon-right pull-left"><i class="glyphicon glyphicon-chevron-right"></i></span>
+          <span class="icon-down pull-left ng-hide"><i class="glyphicon glyphicon-chevron-down"></i></span>
         </a>
       </p>
-      <div id="collapsed" class="panel-collapse collapse in">
+      <div id="collapsedDetails">
         <p>{{journal_info.coverage_depth}}</p>
         <p>{{journal_info.preceding_publication_title_id}}</p>
         <p>{{journal_info.ncid}}</p>

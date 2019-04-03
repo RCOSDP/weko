@@ -58,6 +58,9 @@
     }
     $(document).ready(function(){
       showJournalInfo();
+      $("#displayDetails").click(function(){
+        $("#collapsedDetails").collapse('toggle');
+      });
     });
 });
 
