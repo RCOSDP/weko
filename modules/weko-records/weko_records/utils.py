@@ -145,12 +145,14 @@ def json_loader(data, pid):
             if  not jrc_weko_creator_id:
                 # in case first time create record
                 jrc.update(dict(weko_creator_id=current_user_id))
-                jrc.update(dict(weko_shared_id=data.get('shared_user_id', None)))
+                jrc.update(dict(weko_shared_id=data.get('shared_user_id',
+                                                        None)))
             else:
                 # incase record is end and someone is updating record
                 if current_user_id == int(jrc_weko_creator_id):
                     # just allow owner update shared_user_id
-                    jrc.update(dict(weko_shared_id=data.get('shared_user_id', None)))
+                    jrc.update(dict(weko_shared_id=data.get('shared_user_id',
+                                                            None)))
 
             # dc js saved on postgresql
             dc_owner = dc.get("owner", None)
@@ -159,7 +161,8 @@ def json_loader(data, pid):
                 dc.update(dict(owner=current_user_id))
             else:
                 if current_user_id == int(dc_owner):
-                    dc.update(dict(weko_shared_id=data.get('shared_user_id', None)))
+                    dc.update(dict(weko_shared_id=data.get('shared_user_id',
+                                                           None)))
 
     del ojson, mjson, item
     return dc, jrc, is_edit
