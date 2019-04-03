@@ -361,6 +361,148 @@ class AdminLangSettings(db.Model):
         return cls.parse_result(result)
 
 
+class ApiCertificate(db.Model):
+    """Database for API Certificate."""
+
+    __tablename__ = 'api_certificate'
+
+    api_code = db.Column(db.String(3), primary_key=True, nullable=False,
+                         unique=True)
+
+    api_name = db.Column(db.String(25), nullable=False, unique=True)
+
+    cert_data = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
+    @classmethod
+    def select_all(cls):
+        """Get all information about certificates in database.
+
+        :return: list of pair (api short name, api full name, certificate data)
+        """
+        query_result = cls.query.all()
+        result = []
+        for record in query_result:
+            data = dict()
+            data['api_code'] = record.api_code
+            data['api_name'] = record.api_name
+            data['cert_data'] = record.cert_data
+            result.append(data)
+        return result
+
+    @classmethod
+    def select_by_api_code(cls, api_code):
+        """Get certificate value by certificate type.
+
+        :param api_code: input api short name
+        :return: certificate data corresponding with api code
+        """
+        query_result = cls.query.filter_by(api_code=api_code).one_or_none()
+        data = {}
+        if query_result is not None:
+            data['api_code'] = query_result.api_code
+            data['api_name'] = query_result.api_name
+            data['cert_data'] = query_result.cert_data
+
+            return data
+        else:
+            return None
+
+    @classmethod
+    def update_cert_data(cls, api_code, cert_data):
+        """Update certification data.
+
+        Overwrite if certificate existed,
+        otherwise insert new certificate into database.
+
+        :param api_code: input api short name
+        :param cert_data: input certificate value
+        :return: true if success, otherwise false
+        """
+        query_result = cls.query.filter_by(api_code=api_code).one_or_none()
+        # Update in case certificate already existed in database
+        if query_result is None:
+            return False
+        else:
+            try:
+                with db.session.begin_nested():
+                    query_result.cert_data = cert_data
+                    db.session.merge(query_result)
+                db.session.commit()
+                return True
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
+                return False
+
+    @classmethod
+    def insert_new_api_cert(cls, api_code, api_name, cert_data=None):
+        """Insert new certificate.
+
+        :param api_code: input api code
+        :param api_name: input api name
+        :param cert_data: input certificate value with json format
+        :return: True if success, otherwise False
+        """
+        try:
+            dataObj = ApiCertificate()
+            with db.session.begin_nested():
+                if api_code is not None:
+                    dataObj.api_code = api_code
+                    dataObj.api_name = api_name
+                if cert_data is not None:
+                    dataObj.cert_data = cert_data
+                db.session.add(dataObj)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            return False
+
+    @classmethod
+    def update_api_cert(cls, api_code, api_name, cert_data):
+        """Update API certification.
+
+        Overwrite if certificate existed,
+        otherwise insert new certificate into database.
+
+        :param api_code: input api code
+        :param api_name: input api name
+        :param cert_data: input certificate value
+        :return: true if success, otherwise false
+        """
+        # Get current api data
+        query_result = cls.query.filter_by(api_code=api_code).one_or_none()
+
+        if query_result is None:
+            return False
+        else:
+            try:
+                with db.session.begin_nested():
+                    query_result.api_name = api_name
+                    query_result.cert_data = cert_data
+                    db.session.merge(query_result)
+                db.session.commit()
+                return True
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
+                return False
+
+
 __all__ = ([
-    'SearchManagement', 'AdminLangSettings'
+    'SearchManagement', 'AdminLangSettings', 'ApiCertificate'
 ])

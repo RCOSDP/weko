@@ -253,6 +253,14 @@ class LanguageSettingView(BaseView):
         )
 
 
+class WebApiAccount(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_WEB_API_ACCOUNT"]
+        )
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -280,8 +288,18 @@ language_adminview = {
     }
 }
 
+web_api_account_adminview = {
+    'view_class': WebApiAccount,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('WebAPI Account'),
+        'endpoint': 'webapiaccount'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
-    'language_adminview'
+    'language_adminview',
+    'web_api_account_adminview'
 )

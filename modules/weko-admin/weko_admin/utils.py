@@ -19,12 +19,14 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
+import requests
 from flask import session
+from flask_babelex import lazy_gettext as _
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 
 from . import config
-from .models import AdminLangSettings, SearchManagement
+from .models import AdminLangSettings, ApiCertificate, SearchManagement
 
 
 def get_response_json(result_list, n_lst):
@@ -181,3 +183,100 @@ def is_refresh(default_language):
         if default_language != current_i18n.language:
             return True
     return False
+
+
+def get_api_certification_type():
+    """Get API certification type.
+
+    :return: list of supported certification type
+    """
+    try:
+        all_api = ApiCertificate.select_all()
+        result = []
+        for api in all_api:
+            data = dict()
+            data['api_code'] = api.get('api_code')
+            data['api_name'] = api.get('api_name')
+            result.append(data)
+        return result
+    except Exception as e:
+        return str(e)
+
+
+def get_current_api_certification(api_code):
+    """Get current API certification.
+
+    :param api_code: API code
+    :return: API certification data if exist
+    """
+    results = {
+        'api_code': api_code,
+        'api_name': '',
+        'cert_data': {}
+    }
+    try:
+        cert_data = ApiCertificate.select_by_api_code(api_code)
+        results['api_name'] = cert_data.get('api_name')
+        results['cert_data'] = cert_data.get('cert_data')
+
+    except Exception as e:
+        return str(e)
+
+    return results
+
+
+def save_api_certification(api_code, cert_data):
+    """Save API certification to DB base on api code.
+
+    :param api_code: API code
+    :param cert_data: certification data
+    :return: dict
+    {
+        'results': true // true if save successfully
+        'error':''
+    }
+    """
+    result = {
+        'results': '',
+        'error': ''
+    }
+    try:
+        if cert_data:
+            if ApiCertificate.select_by_api_code(api_code) is not None:
+                """ Update database in case api_code exited """
+                result['results'] = ApiCertificate.update_cert_data(api_code,
+                                                                    cert_data)
+            else:
+                result['error'] = _(
+                    "Input type is invalid. Please check again.")
+        else:
+            result['error'] = _(
+                "Account information is invalid. Please check again.")
+    except Exception as e:
+        result['error'] = str(e)
+
+    return result
+
+
+def create_crossref_url(pid):
+    """Create Crossref api url.
+
+    :param pid:
+    :return Crossref api url:
+    """
+    if not pid:
+        raise ValueError('PID is required')
+    url = config.WEKO_ADMIN_CROSSREF_API_URL + config.WEKO_ADMIN_ENDPOINT + \
+        '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
+    return url
+
+
+def validate_certification(cert_data):
+    """Validate certification.
+
+    :param cert_data: Certification data
+    :return: true if certification is valid, false otherwise
+    """
+    response = requests.get(create_crossref_url(cert_data))
+    return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
+        str(vars(response).get('_content', None))
