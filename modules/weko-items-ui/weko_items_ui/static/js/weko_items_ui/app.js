@@ -346,7 +346,7 @@ require([
                   {
                     if (resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-                      this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(thiis.dictValue(resultId, '@value')));
+                      this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
                     } else {
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
