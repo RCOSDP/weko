@@ -168,7 +168,6 @@ get_search_data = function (keyword) {
       } else {
         if (keyword === 'username') {
           $("#id_spinners_username").css("display", "none");
-          $("#share_username").prop('readonly', false);
           username = data.results;
           // auto fill for username
           autocomplete(document.getElementById("share_username"), username);
@@ -176,7 +175,6 @@ get_search_data = function (keyword) {
         } else {
           if (keyword === 'email') {
             $("#id_spinners_email").css("display", "none");
-            $("#share_email").prop('readonly', false);
             email = data.results;
             // auto fill for email input
             autocomplete(document.getElementById("share_email"), email);
@@ -234,17 +232,6 @@ get_autofill_data = function (keyword, data, mode) {
   });
 }
 
-$("#share_username").focusout(function () {
-  username = [];
-  $("#share_email").prop('readonly', true);
-
-})
-
-$("#share_email").focusout(function () {
-  email = [];
-  $("#share_username").prop('readonly', true);
-})
-
 function handleSharePermission(value) {
   if (value == 'this_user') {
     $(".form_share_permission").css('display', 'none');
@@ -256,9 +243,7 @@ function handleSharePermission(value) {
       $("#share_username").val("");
       $("#share_email").val("");
       $("#id_spinners_username").css("display", "none");
-      $("#share_username").prop('readonly', true);
       $("#id_spinners_email").css("display", "none");
-      $("#share_email").prop('readonly', true);
     }
   }
 }
@@ -318,6 +303,12 @@ function handleSharePermission(value) {
         $("#contributor-panel").addClass("hidden");
         // Load Contributor information
         let recordModel = $rootScope.recordsVM.invenioRecordsModel;
+        let owner_id = 0
+            if (recordModel.owner) {
+              owner_id = recordModel.owner;
+            } else {
+              $scope.is_item_owner = true;
+            }
         if (!recordModel.hasOwnProperty('shared_user_id')) {
           $("#contributor-panel").removeClass("hidden");
           $(".input_contributor").prop("checked", true);
@@ -326,10 +317,6 @@ function handleSharePermission(value) {
         } else {
           if (recordModel.shared_user_id) {
             // Call rest api to get user information
-            let owner_id = 0
-            if (recordModel.owner) {
-              owner_id = recordModel.owner;
-            } 
             let get_user_url = '/api/items/get_user_info/' + owner_id + '/' + recordModel.shared_user_id;
             $.ajax({
               url: get_user_url,
@@ -342,9 +329,6 @@ function handleSharePermission(value) {
                   $("#share_username").val(data.username);
                   $("#share_email").val(data.email);
                 }else {
-                  if (owner_id == 0) {
-                    $scope.is_item_owner = true;
-                  }
                   $(".other_user_rad").click();
                   $("#share_username").val(data.username);
                   $("#share_email").val(data.email);
@@ -535,7 +519,8 @@ function handleSharePermission(value) {
         let userSelection = $(".form_share_permission").css('display');
         let result = false;
         if (userSelection == 'none') {
-          return;
+          $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = '';
+          result = true;
         } else if (userSelection == 'block') {
           let _username = $('#share_username').val();
           let _email = $('#share_email').val();
@@ -607,7 +592,7 @@ function handleSharePermission(value) {
               str = str.split(',"authorLink":[]').join('');
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-            // $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
+            $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
           }
         } else {
           var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
@@ -616,7 +601,7 @@ function handleSharePermission(value) {
             str = str.split(',"authorLink":[]').join('');
           }
           $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-          // $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
+          $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
