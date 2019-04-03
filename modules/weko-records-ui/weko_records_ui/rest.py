@@ -40,6 +40,7 @@ from invenio_records_rest.views import \
 from invenio_records_rest.serializers import record_responsify
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
+from sqlalchemy.exc import SQLAlchemyError
 
 def create_error_handlers(blueprint):
     """Create error handlers on blueprint."""
