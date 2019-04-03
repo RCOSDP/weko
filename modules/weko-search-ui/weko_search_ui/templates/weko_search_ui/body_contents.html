@@ -30,11 +30,11 @@
         <p style="margin: 20px 0;">URL: <a href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
       </div>
       <p>
-        <a href="javascript:;" id="displayDetails" style="color: inherit; padding-left: 5px;">{{_('Details')}}<span class="icon-right pull-left collapse in"><i class="glyphicon glyphicon-chevron-right"></i></span>
-          <span class="icon-down pull-left collapse"><i class="glyphicon glyphicon-chevron-down"></i></span>
-        </a>
+        <a href="javascript:;" id="display_details" class="collapsed-link">
+          <span class="icon-right collapse in"></span>
+          <span class="icon-down collapse"></span>{{_('Details')}}</a>
       </p>
-      <div id="collapsedDetails" class="collapse" style="padding-left: 15px;">
+      <div id="collapsed_details" class="collapse" style="padding-left: 15px;">
         <p>{{journal_info.coverage_depth}}</p>
         <p>{{journal_info.preceding_publication_title_id}}</p>
         <p>{{journal_info.ncid}}</p>
