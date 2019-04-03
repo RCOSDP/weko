@@ -378,11 +378,11 @@ def assign_data_cinii_dc_title_field(field, data):
             list_title = data.get('title')
             for title in list_title:
                 if title.get('title'):
-                    try_assign_data(title, item.get('@value'),
-                                    'title', ['@value'])
-                    try_assign_data(title, lang, 'title',
-                                    ['@attributes', 'xml:lang'])
-                break
+                    try_assign_data(data, item.get('@value'),
+                                    'title', ['title', '@value'])
+                    try_assign_data(data, lang, 'title',
+                                    ['title', '@attributes', 'xml:lang'])
+                    break
         else:
             try_assign_data(data, item.get('@value'), 'title',
                             ['@value'])
