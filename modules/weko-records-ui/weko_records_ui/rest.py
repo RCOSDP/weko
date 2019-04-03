@@ -37,6 +37,7 @@ from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
+from invenio_records_rest.serializers 
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 
@@ -131,9 +132,16 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
 
     # @pass_record
     # @need_record_permission('read_permission_factory')
-    def get(self, pid_value):
+    def get(self, pid_value, **kwargs):
         print('pid_value')
         print(pid_value)
+
+        try:
+            pid, record = request.view_args['pid_value'].data
+            print(pid)
+            print(record)
+        except SQLAlchemyError:
+            return jsonify({'code': 1, 'msg': 'error'})
 
         self.print_trackback()
         return jsonify({'code': 0, 'msg': 'success'})
