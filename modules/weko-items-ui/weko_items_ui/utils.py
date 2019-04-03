@@ -32,12 +32,16 @@ def get_list_username():
     Query database to get all available username
     return: list of username
     """
+    current_user_id = current_user.get_id()
     user_index = 1
     result = list()
     while True:
         try:
-            user_info = UserProfile.get_by_userid(user_index)
-            result.append(user_info.get_username)
+            if (int(current_user_id) == user_index):
+                pass
+            else:
+                user_info = UserProfile.get_by_userid(user_index)
+                result.append(user_info.get_username)
             user_index = user_index + 1
         except Exception:
             break
@@ -51,6 +55,7 @@ def get_list_email():
     Query database to get all available email
     return: list of email
     """
+    current_user_id = current_user.get_id()
     result = list()
     try:
         metadata = MetaData()
@@ -63,7 +68,10 @@ def get_list_email():
         data = record.all()
 
         for item in data:
-            result.append(item[1])
+            if (int(current_user_id) == item[0]):
+                pass
+            else:
+                result.append(item[1])
     except Exception as e:
         result = str(e)
 
@@ -181,11 +189,7 @@ def get_user_info_by_email(email):
         record = db.session.query(user_table)
 
         data = record.all()
-        print(data)
-        print("Data:::::::")
         for item in data:
-            print(item[1])
-            print("=========")
             if item[1] == email:
                 user = UserProfile.get_by_userid(item[0])
                 if user is None:
@@ -197,7 +201,6 @@ def get_user_info_by_email(email):
                 return result
         return None
     except Exception as e:
-        print(str(e))
         result['error'] = str(e)
 
 
@@ -245,7 +248,8 @@ def get_user_permission(user_id):
     Compare current id with id of current user
     parameter:
         user_id: The user_id
-    return: true if current id is the same with id of current user. If not return false
+    return: true if current id is the same with id of current user.
+    If not return false
     """
     current_id = current_user.get_id()
     if current_id is None:
@@ -253,3 +257,11 @@ def get_user_permission(user_id):
     if str(user_id) == current_id:
         return True
     return False
+
+
+def get_current_user():
+    """
+    Get user id of user currently login
+    """
+    current_id = current_user.get_id()
+    return current_id

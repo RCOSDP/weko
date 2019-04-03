@@ -161,7 +161,7 @@ get_search_data = function (keyword) {
   $.ajax({
     url: get_search_data_url,
     method: "GET",
-    success: (data, status) => {
+    success: function(data, status) {
       if (data.error) {
         alert("Some errors have occured!\nDetail:" + data.error);
         return null;
@@ -186,7 +186,7 @@ get_search_data = function (keyword) {
         return data.results;
       }
     },
-    error: (data, status) => {
+    error: function(data, status) {
       alert("Cannot connect to server!");
     }
   });
@@ -217,8 +217,7 @@ get_autofill_data = function (keyword, data, mode) {
     },
     data: JSON.stringify(param),
     dataType: "json",
-    success: (data, status) => {
-
+    success: function(data, status) {
       if (mode == 'share_username') {
         $("#share_email").val(data.results.email);
       } else {
@@ -229,7 +228,7 @@ get_autofill_data = function (keyword, data, mode) {
         }
       }
     },
-    error: (data, status) => {
+    error: function(data, status) {
       alert("Cannot connect to server!");
     }
   });
@@ -335,24 +334,23 @@ function handleSharePermission(value) {
             $.ajax({
               url: get_user_url,
               method: 'GET',
-              success: (data, stauts) => {
-                console.log(data);
+              success: function(data, stauts) {
                 if (data.owner) {
-                  console.log(1);
                   $scope.is_item_owner = true;
                   $("#contributor-panel").removeClass("hidden");
                   $(".other_user_rad").click();
                   $("#share_username").val(data.username);
                   $("#share_email").val(data.email);
                 }else {
-                  console.log(2);
+                  if (owner_id == 0) {
+                    $scope.is_item_owner = true;
+                  }
                   $(".other_user_rad").click();
                   $("#share_username").val(data.username);
                   $("#share_email").val(data.email);
-                  console.log(3);
                 }
               },
-              error: (data, status) => {
+              error: function(data, status) {
                 alert("Cannot connect to server!");
               }
             })
@@ -541,7 +539,18 @@ function handleSharePermission(value) {
         } else if (userSelection == 'block') {
           let _username = $('#share_username').val();
           let _email = $('#share_email').val();
-
+          let current_login_user = 0;
+          // Get current login user
+          $.ajax({
+            url: '/api/items/get_current_login_user_id',
+            method: 'GET',
+            async: false,
+            success: function(data, status) {
+              if (data.user_id){
+                current_login_user = data.user_id;
+              }
+            }
+          });
           let param = {
             username: _username,
             email: _email
@@ -555,7 +564,7 @@ function handleSharePermission(value) {
             async: false,
             data: JSON.stringify(param),
             dataType: "json",
-            success: (data, stauts) => {
+            success: function(data, stauts) {
               if (data.error) {
                 alert('Some errors have occured!\nDetail: ' + data.error);
               } else {
@@ -566,14 +575,18 @@ function handleSharePermission(value) {
                     email: userInfo.email,
                     userID: userInfo.user_id
                   };
-                  $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = otherUser.userID;
-                  result = true;
+                  if (otherUser.userID == current_login_user) {
+                    alert('You cannot specify yourself in "Other users" setting.');
+                  }else {
+                    $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = otherUser.userID;
+                    result = true;
+                  }
                 } else {
                   alert('Shared user information is not valid\nPlease check it again!');
                 }
               }
             },
-            error: (data, status) => {
+            error: function(data, status) {
               alert('Cannot connect to server!');
             }
           })
@@ -594,7 +607,7 @@ function handleSharePermission(value) {
               str = str.split(',"authorLink":[]').join('');
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-            $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
+            // $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
           }
         } else {
           var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
@@ -603,7 +616,7 @@ function handleSharePermission(value) {
             str = str.split(',"authorLink":[]').join('');
           }
           $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-          $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
+          // $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'r');
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
