@@ -138,8 +138,9 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
         print(pid_value)
 
         try:
-            pid, record = request.view_args['pid_value'].data
+            pid = PersistentIdentifier.get('depid', pid_value)
             print(pid)
+            record = Record.get_record(pid.object_uuid)
             print(record)
         except SQLAlchemyError:
             return jsonify({'code': 1, 'msg': 'error'})
