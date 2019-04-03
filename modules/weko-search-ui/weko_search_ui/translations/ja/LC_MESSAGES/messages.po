@@ -138,7 +138,7 @@ msgstr "カスタム（降順）"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:119
 msgid "Display Number"
-msgstr "表示数"
+msgstr "詳細"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:138
 msgid "Search failed."
