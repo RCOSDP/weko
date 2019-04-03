@@ -43,6 +43,7 @@ from invenio_records_rest.serializers import record_responsify
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from sqlalchemy.exc import SQLAlchemyError
+from weko_records.serializers import citeproc_v1
 
 def create_error_handlers(blueprint):
     """Create error handlers on blueprint."""
@@ -144,6 +145,8 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
             print(pid)
             record = Record.get_record(pid.object_uuid)
             print(record)
+
+            return record_responsify(citeproc_v1, 'text/x-bibliography')
         except SQLAlchemyError:
             return jsonify({'code': 1, 'msg': 'error'})
 
