@@ -29,6 +29,6 @@ msgstr "DetailSearch"
 msgid "Title"
 msgstr ""
 
-#: weko_search_ui/templates/weko_search_ui/body_contents.html:32
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:35
 msgid "Details"
 msgstr ""
