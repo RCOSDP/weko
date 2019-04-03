@@ -148,6 +148,10 @@ msgstr "検索に失敗しました。"
 msgid "Loading..."
 msgstr "読み込み中"
 
+#: weko_search_ui/templates/weko_search_ui/body_contents.html:35
+msgid "Details"
+msgstr "詳細"
+
 #~ msgid "Search"
 #~ msgstr "キーワード検索"
 
