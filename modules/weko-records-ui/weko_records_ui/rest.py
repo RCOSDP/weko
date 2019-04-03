@@ -83,9 +83,9 @@ def create_blueprint(endpoints):
             links_factory=obj_or_import_string(
                 options.get('links_factory_imp'), default=default_links_factory
             ),
-            pid_type=options.get('pid_type'),
-            pid_minter=options.get('pid_minter'),
-            pid_fetcher=options.get('pid_fetcher'),
+            # pid_type=options.get('pid_type'),
+            # pid_minter=options.get('pid_minter'),
+            # pid_fetcher=options.get('pid_fetcher'),
             loaders={
                 options.get('default_media_type'): lambda: request.get_json()},
             default_media_type=options.get('default_media_type'),
@@ -94,8 +94,9 @@ def create_blueprint(endpoints):
         cites = WekoRecordsCitesResource.as_view(
             WekoRecordsCitesResource.view_name.format(endpoint),
             serializers=serializers,
-            pid_type=options['pid_type'],
+            # pid_type=options['pid_type'],
             ctx=ctx,
+            default_media_type=options.get('default_media_type'),
         )
 
         blueprint.add_url_rule(
