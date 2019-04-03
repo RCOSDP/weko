@@ -36,8 +36,8 @@ from sqlalchemy.sql.expression import func, literal_column
 from weko_groups.api import Group
 
 from .models import Index
-from .utils import get_tree_json, cached_index_tree_json, reset_tree, \
-    get_index_id_list
+from .utils import cached_index_tree_json, get_index_id_list, get_tree_json, \
+    reset_tree
 
 
 class Indexes(object):

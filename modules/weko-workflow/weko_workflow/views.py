@@ -41,9 +41,9 @@ from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
 
-from .api import Action, Flow, WorkActivity, WorkActivityHistory, WorkFlow, \
-    UpdateItem, GetCommunity
-from .config import IDENTIFIER_GRANT_SUFFIX_METHOD, IDENTIFIER_GRANT_LIST, \
+from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
+    WorkActivityHistory, WorkFlow
+from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     IDENTIFIER_ITEMSMETADATA_FORM
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_jtitles
