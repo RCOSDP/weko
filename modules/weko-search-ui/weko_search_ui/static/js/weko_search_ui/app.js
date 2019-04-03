@@ -83,6 +83,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
      $rootScope.display_flg = true;
      $rootScope.index_id_q = $location.search().q;
      $rootScope.journal_info = [];
+     $rootScope.collapse_flg = true;
 
      $scope.itemManagementTabDisplay= function(){
         $rootScope.disable_flg = true;
