@@ -599,8 +599,8 @@ class WorkActivity(object):
                                      identifier_grant_jalc_doi_suffix,
                                      identifier_grant_jalc_cr_doi_suffix,
                                      identifier_grant_jalc_dc_doi_suffix):
-        """
-        Update activity info
+        """Update activity info.
+
         :param activity_id:
         :param action_id:
         :param identifier_grant:
