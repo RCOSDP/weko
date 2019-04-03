@@ -21,6 +21,7 @@
 """Flask extension for weko-records-ui."""
 
 from . import config
+from .rest import create_blueprint
 from .views import blueprint
 
 
