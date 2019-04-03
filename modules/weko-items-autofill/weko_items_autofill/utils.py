@@ -178,8 +178,23 @@ def asssign_data_crossref_created_field(field, data):
         try_assign_data(data,
                         field.get('creatorAlternative'),
                         'creator', ['creatorAlternative', '@value'])
-        try_assign_data(data, field.get('title'), 'title',
-                        ['@value'])
+        if type(data.get('title')) is list:
+            list_title = data.get('title')
+            for title in list_title:
+                if title.get('title'):
+                    try_assign_data(title, field.get('title'), 'title',
+                                    ['@value'])
+                    try_assign_data(title,
+                                    current_app.config
+                                    ['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'],
+                                    'title', ['@attributes', 'xml:lang'])
+                    break
+        else:
+            try_assign_data(data, field.get('title'), 'title',
+                            ['@value'])
+            try_assign_data(data, current_app.config
+                            ['WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE'], 'title',
+                            ['@attributes', 'xml:lang'])
         try_assign_data(data, field.get('nameIdentifier'),
                         'creator', ['nameIdentifier', '@value'])
         try_assign_data(data,
@@ -247,12 +262,25 @@ def asssign_data_crossref_issued_field(field, data):
     @parameter: Crossref issued field, data container
     """
     try:
-        try_assign_data(data,
-                        convert_datetime_format(field.get('date-parts')),
-                        'date',
-                        ['@value'])
-        try_assign_data(data, 'Issued', 'date',
-                        ['@attributes', 'dateType'])
+        if type(data.get('date')) is list:
+            list_date = data.get('date')
+            for date in list_date:
+                if date.get('date'):
+                    try_assign_data(date,
+                                    convert_datetime_format(field.get
+                                                            ('date-parts')),
+                                    'date',
+                                    ['@value'])
+                    try_assign_data(date, 'Issued', 'date',
+                                    ['@attributes', 'dateType'])
+                    break
+        else:
+            try_assign_data(data,
+                            convert_datetime_format(field.get('date-parts')),
+                            'date',
+                            ['@value'])
+            try_assign_data(data, 'Issued', 'date',
+                            ['@attributes', 'dateType'])
     except Exception:
         pass
 
@@ -264,7 +292,15 @@ def asssign_data_crossref_default_field(field, data):
         the current language
     @parameter: Default value, data container
     """
-    try_assign_data(data, 'eng', 'language', ['@value'])
+    if type(data.get('language')) is list:
+        list_language = data.get('language')
+        for language in list_language:
+            if language.get('language'):
+                try_assign_data(language, 'eng', 'language', ['@value'])
+                break
+    else:
+        try_assign_data(data, 'eng', 'language', ['@value'])
+
     try_assign_data(data,
                     field,
                     'publisher',
@@ -273,10 +309,6 @@ def asssign_data_crossref_default_field(field, data):
                     field,
                     'relation',
                     ['relatedTitle', '@attributes', 'xml:lang'])
-    try_assign_data(data,
-                    field,
-                    'title',
-                    ['@attributes', 'xml:lang'])
     try_assign_data(data,
                     field,
                     'creator',
@@ -330,19 +362,32 @@ def assign_data_cinii_dc_title_field(field, data):
     @parameter: CiNii dc_title field, data container
     """
     try:
-        for item in field:
-            lang = item.get('@language')
-            if lang is None and item.get('@value'):
-                # Set dc:title
-                try_assign_data(data, item.get('@value'),
-                                'title', ['title', '@value'])
-                try_assign_data(data, 'ja', 'title',
-                                ['title', '@attributes', 'xml:lang'])
-                # Set dcterms:alternative
-                try_assign_data(data, item.get('@value'),
-                                'alternative', ['@value'])
-                try_assign_data(data, 'ja', 'alternative',
-                                ['@attributes', 'xml:lang'])
+        item = field[0]
+        lang = item.get('@language')
+        if lang is None:
+            lang = 'ja'
+
+        # Set dcterms:alternative
+        try_assign_data(data, item.get('@value'),
+                        'alternative', ['@value'])
+        try_assign_data(data, lang, 'alternative',
+                        ['@attributes', 'xml:lang'])
+
+        # Set dc:title
+        if type(data.get('title')) is list:
+            list_title = data.get('title')
+            for title in list_title:
+                if title.get('title'):
+                    try_assign_data(title, item.get('@value'),
+                                    'title', ['@value'])
+                    try_assign_data(title, lang, 'title',
+                                    ['@attributes', 'xml:lang'])
+                break
+        else:
+            try_assign_data(data, item.get('@value'), 'title',
+                            ['@value'])
+            try_assign_data(data, lang, 'title',
+                            ['@attributes', 'xml:lang'])
     except Exception:
         pass
 
@@ -385,10 +430,20 @@ def assign_data_cinii_prism_publication_date_field(field, data):
     """
     try:
         date_list = field.split('-')
-        try_assign_data(data, convert_datetime_format(date_list), 'date',
-                        ['date', '@value'])
-        try_assign_data(data, 'Issued', 'date',
-                        ['date', '@attributes', 'dateType'])
+        if type(data.get('date')) is list:
+            list_date = data.get('date')
+            for date in list_date:
+                if date.get('date'):
+                    try_assign_data(date, convert_datetime_format(date_list),
+                                    'date', ['@value'])
+                    try_assign_data(date, 'Issued', 'date',
+                                    ['@attributes', 'dateType'])
+                    break
+        else:
+            try_assign_data(data, convert_datetime_format(date_list), 'date',
+                            ['@value'])
+            try_assign_data(data, 'Issued', 'date',
+                            ['@attributes', 'dateType'])
     except Exception:
         pass
 
@@ -499,6 +554,21 @@ def assign_data_cinii_prism_issn(field, data):
         pass
 
 
+def assign_data_cinii_cinii_ncid(field, data):
+    """Assign data from CiNii prism ncid field information to data container.
+
+    :type field: object
+    :type data: object
+    """
+    try:
+        try_assign_data(data, field, 'sourceIdentifier', ['@value'])
+        if field:
+            try_assign_data(data, 'NCID', 'sourceIdentifier',
+                            ['@attributes', 'identifierType'])
+    except Exception:
+        pass
+
+
 def assign_data_cinii_cinii_naid(field, data):
     """Assign data from CiNii cinii naid field information to data container.
 
@@ -510,6 +580,23 @@ def assign_data_cinii_cinii_naid(field, data):
                         ['relatedIdentifier', '@value'])
         if field:
             try_assign_data(data, 'NAID', 'relation',
+                            ['relatedIdentifier', '@attributes',
+                             'identifierType'])
+    except Exception:
+        pass
+
+
+def assign_data_cinii_prism_doi(field, data):
+    """Assign data from CiNii prism doi field information to data container.
+
+    :type field: object
+    :type data: object
+    """
+    try:
+        try_assign_data(data, field, 'relation',
+                        ['relatedIdentifier', '@value'])
+        if field:
+            try_assign_data(data, 'DOI', 'relation',
                             ['relatedIdentifier', '@attributes',
                              'identifierType'])
     except Exception:
@@ -547,27 +634,46 @@ def parse_cinii_json_response(response, response_data_template):
 
         assign_data_cinii_dc_title_field(graph[0].get('dc:title'),
                                          response_data_convert)
+
         assign_data_cinii_dc_creator_field(graph[0].get('dc:creator'),
                                            response_data_convert)
+
         assign_data_cinii_page_field(graph[0].get('prism:startingPage'),
                                      graph[0].get('prism:endingPage'),
                                      response_data_convert)
+
         assign_data_cinii_prism_publication_date_field(
             graph[0].get('prism:publicationDate'), response_data_convert)
+
         assign_data_cinii_dc_publisher_field(graph[0].get('dc:publisher'),
                                              response_data_convert)
+
         assign_data_cinii_foaf_maker_field(graph[0].get('foaf:maker'),
                                            response_data_convert)
+
         assign_data_cinii_dc_description_field(graph[0].get('dc:description'),
                                                response_data_convert)
+
         assign_data_cinii_foaf_topic_field(graph[0].get('foaf:topic'),
                                            response_data_convert)
+
         assign_data_cinii_prism_publication_name_field(graph[0].get(
             'prism:publicationName'), response_data_convert)
-        assign_data_cinii_prism_issn(graph[0].get('prism:issn'),
-                                     response_data_convert)
-        assign_data_cinii_cinii_naid(graph[0].get('cinii:naid'),
-                                     response_data_convert)
+
+        if graph[0].get('prism:issn'):
+            assign_data_cinii_prism_issn(graph[0].get('prism:issn'),
+                                         response_data_convert)
+        elif graph[0].get('cinii:ncid'):
+            assign_data_cinii_prism_issn(graph[0].get('cinii:ncid'),
+                                         response_data_convert)
+
+        if graph[0].get('cinii:naid'):
+            assign_data_cinii_cinii_naid(graph[0].get('cinii:naid'),
+                                         response_data_convert)
+        elif graph[0].get('prism:doi'):
+            assign_data_cinii_cinii_naid(graph[0].get('prism:doi'),
+                                         response_data_convert)
+
         assign_data_cinii_other_information_field(graph[0].get('prism:volume'),
                                                   graph[0].get('prism:number'),
                                                   response_data_convert)
