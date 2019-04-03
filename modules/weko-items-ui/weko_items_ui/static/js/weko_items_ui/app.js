@@ -184,7 +184,7 @@ require([
           method: "POST",
           data: JSON.stringify(param),
           dataType: "json",
-          success: function (data, status) {
+          success: (data, status) => {
             if (data.error) {
               this.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             } else {
@@ -403,7 +403,7 @@ require([
               }
             }
           },
-          error: function (data, status) {
+          error: (data, status) => {
             this.setAutoFillErrorMessage("Cannot connect to server!");
           }
         });
