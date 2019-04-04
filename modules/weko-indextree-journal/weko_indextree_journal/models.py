@@ -70,13 +70,13 @@ class Journal(db.Model, Timestamp):
     """
         varchar(20)
         It complies with the format of ISBN or ISSN.
-        　ISSN：
-        　　「^\d{4}-?\d{3}[0-9X]$」
-        　ISBN：
-        　　「^\d{9}[0-9X]$」
-        　　「^\d+-\d+-\d+-[0-9X]$」
-        　　「^97[8-9]\d{9}[0-9X]$」
-        　　「^97[8-9]-\d+-\d+-\d+-[0-9X]$」
+          ISSN：
+            「^\\d{4}-?\\d{3}[0-9X]$」
+          ISBN：
+            「^\\d{9}[0-9X]$」
+            「^\\d+-\\d+-\\d+-[0-9X]$」
+            「^97[8-9]\\d{9}[0-9X]$」
+            「^97[8-9]-\\d+-\\d+-\\d+-[0-9X]$」
     """
 
     online_identifier = db.Column(db.Text, nullable=True, default='')
@@ -85,12 +85,12 @@ class Journal(db.Model, Timestamp):
         varchar(20)
         It complies with the format of ISBN or ISSN.
         　ISSN：
-        　　「^\d{4}-?\d{3}[0-9X]$」
+            「^\\d{4}-?\\d{3}[0-9X]$」
         　ISBN：
-        　　「^\d{9}[0-9X]$」
-        　　「^\d+-\d+-\d+-[0-9X]$」
-        　　「^97[8-9]\d{9}[0-9X]$」
-        　　「^97[8-9]-\d+-\d+-\d+-[0-9X]$」
+            「^\\d{9}[0-9X]$」
+            「^\\d+-\\d+-\\d+-[0-9X]$」
+            「^97[8-9]\\d{9}[0-9X]$」
+            「^97[8-9]-\\d+-\\d+-\\d+-[0-9X]$」
     """
 
     date_first_issue_online = db.Column(db.Text, nullable=True, default='')
@@ -209,7 +209,8 @@ class Journal(db.Model, Timestamp):
         varchar(1)
         Select 1 of the following items: F、P
         Initial selection is  "F"
-        Describe the following in item name of WEKO when registering journal information.
+        Describe the following in item name of WEKO
+        when registering journal information.
         　・F：Free（無料・オープンアクセス）
         　・P：Paid（有料）
     """
@@ -281,13 +282,13 @@ class Journal(db.Model, Timestamp):
         """
         for name in dir(Journal):
             if not name.startswith('__') and not name.startswith('_') \
-                and name not in dir(Timestamp):
+                    and name not in dir(Timestamp):
                 value = getattr(self, name)
                 if value is None:
                     value = ""
                 if isinstance(value, str) or isinstance(value, bool) \
-                    or isinstance(value, datetime) \
-                    or isinstance(value, int):
+                        or isinstance(value, datetime) \
+                        or isinstance(value, int):
                     yield (name, value)
 
     # format setting for community admin page
