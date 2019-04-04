@@ -138,11 +138,14 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
     # @need_record_permission('read_permission_factory')
     def get(self, pid_value, style, locale, **kwargs):
         """Render citation for record according to style and language."""
-        locale = "en-US" # ln or current_i18n.language
-        style = "abi-technik" # style or 'science'
+        
+        style = request.values.get('style', 1) # style or 'science'
+        locale = request.values.get('locale', 2)
         try:
-            print("kwargs")
-            print(kwargs)
+            print("style")
+            print(style)
+            print("locale")
+            print(locale)
             print('pid_value')
             print(pid_value)
 
