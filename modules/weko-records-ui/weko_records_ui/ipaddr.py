@@ -21,6 +21,7 @@
 """Utilities for site license check."""
 
 import ipaddress
+
 from flask import current_app, request
 from flask_security import current_user
 from weko_records.api import SiteLicense
