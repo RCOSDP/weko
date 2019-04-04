@@ -136,7 +136,7 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
 
     # @pass_record
     # @need_record_permission('read_permission_factory')
-    def get(self, pid_value, style, locale, **kwargs):
+    def get(self, pid_value, **kwargs):
         """Render citation for record according to style and language."""
         
         style = request.values.get('style', 1) # style or 'science'
