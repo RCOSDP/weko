@@ -316,7 +316,9 @@ function handleSharePermission(value) {
           }
         });
         $rootScope.$broadcast('schemaFormRedraw');
-        // implement by hieu vo - 1/4/2019
+        
+      }
+      $scope.initContributorData = function() {
         $("#contributor-panel").addClass("hidden");
         // Load Contributor information
         let recordModel = $rootScope.recordsVM.invenioRecordsModel;
@@ -331,8 +333,12 @@ function handleSharePermission(value) {
           $(".input_contributor").prop("checked", true);
           $("#share_username").val("");
           $("#share_email").val("");
+          // Apply for run feature when Display Workflow is error.
+          // When Display Workflow is fixed, please remove this
+          $scope.is_item_owner = true;
+          // ----
         } else {
-          if (recordModel.shared_user_id) {
+          if (recordModel.shared_user_id && recordModel.shared_user_id != -1) {
             // Call rest api to get user information
             let get_user_url = '/api/items/get_user_info/' + owner_id + '/' + recordModel.shared_user_id;
             $.ajax({
@@ -354,18 +360,22 @@ function handleSharePermission(value) {
               error: function(data, status) {
                 alert("Cannot connect to server!");
               }
-            })
+            });
           } else {
             $("#contributor-panel").removeClass("hidden");
             $(".input_contributor").prop("checked", true);
             $("#share_username").val("");
             $("#share_email").val("");
+            // Apply for run feature when Display Workflow is error.
+            // When Display Workflow is fixed, please remove this
+            $scope.is_item_owner = true;
+            // ----
           }
         }
-        // implement by hieu vo - 1/4/2019
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
+        $scope.initContributorData();
         $scope.initFilenameList();
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
@@ -536,7 +546,7 @@ function handleSharePermission(value) {
         let userSelection = $(".form_share_permission").css('display');
         let result = false;
         if (userSelection == 'none') {
-          $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = '';
+          $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = -1;
           result = true;
         } else if (userSelection == 'block') {
           let _username = $('#share_username').val();
@@ -599,6 +609,7 @@ function handleSharePermission(value) {
       }
 
       $scope.updateDataJson = async function () {
+        let next_frame = $('#next-frame').val();
         if ($scope.is_item_owner) {
           if (!this.registerUserPermission()) {
             // Do nothing
@@ -609,7 +620,7 @@ function handleSharePermission(value) {
               str = str.split(',"authorLink":[]').join('');
             }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-            $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'iframe_tree');
+            $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
         } else {
           var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
@@ -618,7 +629,7 @@ function handleSharePermission(value) {
             str = str.split(',"authorLink":[]').join('');
           }
           $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-          $rootScope.recordsVM.actionHandler(['index', 'PUT'], 'iframe_tree');
+          $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
