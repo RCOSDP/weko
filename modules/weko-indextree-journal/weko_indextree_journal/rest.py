@@ -22,15 +22,18 @@
 
 from functools import wraps
 
-from flask import Blueprint, abort, current_app, jsonify, make_response, request
+from flask import Blueprint, abort, current_app, jsonify, make_response, \
+    request
+from invenio_communities.models import Community
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_rest import ContentNegotiatedMethodView
 
 from .api import Journals
-from .models import Journal
 from .errors import JournalAddedRESTError, JournalBaseRESTError, \
-    JournalDeletedRESTError, JournalMovedRESTError, JournalNotFoundRESTError, \
-    JournalUpdatedRESTError, JournalInvalidDataRESTError
+    JournalDeletedRESTError, JournalInvalidDataRESTError, \
+    JournalMovedRESTError, JournalNotFoundRESTError, JournalUpdatedRESTError
+from .models import Journal
+
 
 def need_record_permission(factory_name):
     """Decorator checking that the user has the required permissions on record.
@@ -111,7 +114,7 @@ def create_blueprint(app, endpoints):
         #     record_serializers=record_serializers,
         #     default_media_type=options.get('default_media_type'),
         # )
-        
+
         blueprint.add_url_rule(
             options.pop('indextree_journal_route'),
             view_func=iar,
@@ -141,6 +144,7 @@ def create_blueprint(app, endpoints):
 
 class JournalActionResource(ContentNegotiatedMethodView):
     """Journal create update delete view."""
+
     view_name = '{0}_journal_action'
 
     def __init__(self, ctx, record_serializers=None,
@@ -168,7 +172,6 @@ class JournalActionResource(ContentNegotiatedMethodView):
     @need_record_permission('read_permission_factory')
     def get(self, journal_id, **kwargs):
         """Get a journal record."""
-
         try:
             if journal_id != 0:
                 journal = self.record_class.get_journal(journal_id)
@@ -186,7 +189,7 @@ class JournalActionResource(ContentNegotiatedMethodView):
     def post(self, **kwargs):
         """Create a journal."""
         data = self.loaders[request.mimetype]()
-        
+
         if not data:
             raise JournalInvalidDataRESTError()
         if not self.record_class.create(data):
@@ -195,7 +198,8 @@ class JournalActionResource(ContentNegotiatedMethodView):
         status = 201
         msg = 'Journal created successfully.'
 
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)
 
     @need_record_permission('update_permission_factory')
     def put(self, journal_id, **kwargs):
@@ -208,12 +212,12 @@ class JournalActionResource(ContentNegotiatedMethodView):
 
         status = 200
         msg = 'Journal updated successfully.'
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)
 
     @need_record_permission('delete_permission_factory')
     def delete(self, journal_id, **kwargs):
         """Delete a journal."""
-
         if not journal_id or journal_id <= 0:
             raise JournalNotFoundRESTError()
 
@@ -226,10 +230,12 @@ class JournalActionResource(ContentNegotiatedMethodView):
             result = self.record_class.\
                 delete_by_action(action, journal_id, res.path)
             if not result:
-                raise JournalBaseRESTError(description='Could not delete data.')
+                raise JournalBaseRESTError(
+                    description='Could not delete data.')
         else:
             raise JournalInvalidDataRESTError()
 
         status = 200
         msg = 'Journal deleted successfully.'
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)

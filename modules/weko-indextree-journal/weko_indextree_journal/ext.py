@@ -13,8 +13,8 @@ from __future__ import absolute_import, print_function
 from flask_babelex import gettext as _
 
 from . import config
-from .views import blueprint
 from .rest import create_blueprint
+from .views import blueprint
 
 
 class WekoIndextreeJournal(object):
@@ -48,10 +48,9 @@ class WekoIndextreeJournal(object):
             if k.startswith('WEKO_INDEXTREE_JOURNAL_'):
                 app.config.setdefault(k, getattr(config, k))
 
+
 class WekoIndextreeJournalREST(object):
-    """
-      weko-indextree-journal Rest Obj
-    """
+    """WEKO-Indextree-Journal Rest Obj."""
 
     def __init__(self, app=None):
         """Extension initialization.
@@ -71,8 +70,8 @@ class WekoIndextreeJournalREST(object):
         """
         self.init_config(app)
 
-        blueprint = create_blueprint(app,
-                                     app.config['WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS'])
+        blueprint = create_blueprint(
+            app, app.config['WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
         app.extensions['weko-indextree-journal-rest'] = self
 
