@@ -57,6 +57,7 @@
           if($("#thumbnail_img").length > 0) {
             $("#journal_info_img").show();
             $("#journal_info_img").html($("#thumbnail_img").get(0));
+            $("#thumbnail_img").removeClass("ng-hide");
           }
         }
       }
