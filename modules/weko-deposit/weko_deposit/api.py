@@ -26,6 +26,7 @@ from datetime import datetime
 import redis
 from flask import abort, current_app, flash, g, json
 from flask_login import current_user
+from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
@@ -44,7 +45,6 @@ from weko_user_profiles.models import UserProfile
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
 from .signals import item_created
-from flask_security import current_user
 
 PRESERVE_FIELDS = (
     '_deposit',

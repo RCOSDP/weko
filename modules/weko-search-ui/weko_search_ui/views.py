@@ -28,18 +28,18 @@ from xml.etree import ElementTree as ET
 from blinker import Namespace
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     redirect, render_template, request, url_for
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
+from invenio_pidstore.models import PersistentIdentifier
+from invenio_records.api import Record
+from invenio_search import RecordsSearch
+from weko_deposit.api import WekoIndexer
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
 from weko_indextree_journal.api import Journals
-from weko_deposit.api import WekoIndexer
 
 from weko_search_ui.api import get_search_detail_keyword
-from invenio_search import RecordsSearch
-from invenio_records.api import Record
-from invenio_db import db
-from invenio_pidstore.models import PersistentIdentifier
 
 from .api import SearchSetting
 from .query import item_path_search_factory
@@ -112,23 +112,28 @@ def search():
             # Does this tree has items or children?
             q = request.args.get('q')
             if q is not None and q.isdigit():
-                    current_tree = Indexes.get_index(q)
-                    recursive_tree = Indexes.get_recursive_tree(q)
+                current_tree = Indexes.get_index(q)
+                recursive_tree = Indexes.get_recursive_tree(q)
 
-                    if current_tree is not None:
-                        tree_items = get_tree_items(current_tree.id)
-                        has_items = len(tree_items) > 0
-                        if recursive_tree is not None:
-                            has_child_trees = len(recursive_tree) > 1
+                if current_tree is not None:
+                    tree_items = get_tree_items(current_tree.id)
+                    has_items = len(tree_items) > 0
+                    if recursive_tree is not None:
+                        has_child_trees = len(recursive_tree) > 1
 
-        return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
-                               index_id=cur_index_id, community_id=community_id,
-                               width=width, height=height, management_type=management_type,
-                               fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
-                               licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
-                               has_items=has_items,
-                               has_child_trees=has_child_trees,
-                               detail_condition=detail_condition, **ctx)
+        return render_template(
+            current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
+            index_id=cur_index_id,
+            community_id=community_id,
+            width=width,
+            height=height,
+            management_type=management_type,
+            fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
+            licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
+            has_items=has_items,
+            has_child_trees=has_child_trees,
+            detail_condition=detail_condition,
+            **ctx)
 
     elif 'item_link' in getArgs:
         activity_id = request.args.get('item_link')
@@ -232,19 +237,16 @@ def get_tree_items(index_tree_id):
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    search_instance, qs_kwargs = item_path_search_factory(None,
-                                                          records_search,
-                                                          index_id=index_tree_id)
+    search_instance, qs_kwargs = item_path_search_factory(
+        None, records_search, index_id=index_tree_id)
     search_result = search_instance.execute()
     rd = search_result.to_dict()
 
     return rd.get('hits').get('hits')
 
-
 @blueprint.route("/item_management/bulk_delete", methods=['GET', 'PUT'])
 def bulk_delete():
     """Bulk delete items and index trees."""
-
     def delete_records(index_tree_id):
         record_indexer = RecordIndexer()
         hits = get_tree_items(index_tree_id)
@@ -289,8 +291,10 @@ def bulk_delete():
                 # Delete items in current_tree
                 delete_records(current_tree.id)
 
-                # If recursively, then delete all child index trees and theirs items
-                if request.values.get('recursively') == 'true' and recursive_tree is not None:
+                # If recursively, then delete all child index trees and theirs
+                # items
+                if request.values.get(
+                        'recursively') == 'true' and recursive_tree is not None:
                     # Delete recursively
                     direct_child_trees = []
                     for index, obj in enumerate(recursive_tree):
