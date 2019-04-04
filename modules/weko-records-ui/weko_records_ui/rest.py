@@ -136,22 +136,27 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
 
     # @pass_record
     # @need_record_permission('read_permission_factory')
-    def get(self, pid_value, **kwargs):
-        print('pid_value')
-        print(pid_value)
-
+    def get(self, pid_value, style, locale, **kwargs):
+        """Render citation for record according to style and language."""
+        locale = "en-US" # ln or current_i18n.language
+        style = "abi-technik" # style or 'science'
         try:
+            print('pid_value')
+            print(pid_value)
+
             pid = PersistentIdentifier.get('depid', pid_value)
             print(pid)
+
             record = Record.get_record(pid.object_uuid)
             print(record)
 
-            return record_responsify(citeproc_v1, 'text/x-bibliography')
-        except SQLAlchemyError:
-            return jsonify({'code': 1, 'msg': 'error'})
-
-        self.print_trackback()
-        return jsonify({'code': 0, 'msg': 'success'})
+            result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
+            return result
+            # return 'Family name, given names. (2018). DWD European Weather [Data set]. Zenodo. http://doi.org/10.5281/zenodo.2604860'
+        except Exception:
+            current_app.logger.exception(
+                'Citation formatting for record {0} failed.'.format(str(record.id)))
+            return None
 
     def print_trackback(self):
         try:
