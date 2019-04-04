@@ -14,7 +14,9 @@
       </ol>
       <div class="row m-top-20" ng-if="journal_info">
         <div class="col-xs-12">
-          <div class="col-xs-12">
+          <div class="col-xs-4" id="journal_info_img" style="padding:0 0 15px; display:none;">
+          </div>
+          <div class="col-xs-6">
             <p style="font-size: 20px;" ng-bind="journal_title"></p>
             <div style="padding-left: 10px;">
               <p>{{journal_info.publication_title}}</p>
@@ -69,7 +71,9 @@
       </ul>
     </div>
     <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')">
-      <img ng-if="$last" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}" class="img-thumbnail" id="thumbnail_img" alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}} ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
+      <img ng-if="$last" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}" class="img-thumbnail ng-hide"
+           id="thumbnail_img" alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}
+           ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
     </div>
   </div>
 </div>

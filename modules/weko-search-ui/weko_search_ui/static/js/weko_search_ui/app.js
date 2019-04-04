@@ -53,6 +53,11 @@
             $("#journal_info").css({ display: "block" });
           }
           clearInterval(check);
+          // display image
+          if($("#thumbnail_img").length > 0) {
+            $("#journal_info_img").show();
+            $("#journal_info_img").html($("#thumbnail_img").get(0));
+          }
         }
       }
     }
