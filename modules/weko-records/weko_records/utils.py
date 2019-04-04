@@ -28,14 +28,14 @@ from flask import current_app
 from flask_security import current_user
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.ext import pid_exists
+from weko_schema_ui.schema import SchemaTree
 
 from .api import ItemTypes, Mapping
-from weko_schema_ui.schema import SchemaTree
 
 
 def json_loader(data, pid):
-    """
-    Convert the item data and mapping to jpcoar
+    """Convert the item data and mapping to jpcoar.
+
     :param data: json from item form post.
     :param pid: pid value.
     :return: dc, jrc, is_edit
@@ -145,6 +145,7 @@ def json_loader(data, pid):
 
 
 def set_timestamp(jrc, created, updated):
+    """Set timestamp."""
     jrc.update(
         {"_created": pytz.utc.localize(created)
             .isoformat() if created else None})
@@ -155,6 +156,7 @@ def set_timestamp(jrc, created, updated):
 
 
 def make_itemlist_desc(es_record):
+    """Make itemlist description."""
     rlt = ""
     src = es_record
     op = src.pop("_options", {})
@@ -181,7 +183,7 @@ def make_itemlist_desc(es_record):
                         # list index value
                         if is_show:
                             rlt = rlt + ((vals[i] + ",") if not crtf
-                            else vals[i] + "\n")
+                                         else vals[i] + "\n")
             elif isinstance(vals, str):
                 crtf = v.get("crtf")
                 showlist = v.get("showlist")
@@ -189,7 +191,7 @@ def make_itemlist_desc(es_record):
                 is_show = False if hidden else showlist
                 if is_show:
                     rlt = rlt + ((vals + ",") if not crtf
-                    else vals + "\n")
+                                 else vals + "\n")
         if len(rlt) > 0:
             if rlt[-1] == ',':
                 rlt = rlt[:-1]
@@ -199,8 +201,8 @@ def make_itemlist_desc(es_record):
 
 
 def sort_records(records, form):
-    """
-    sort records
+    """Sort records.
+
     :param records:
     :param form:
     :return:
@@ -220,8 +222,8 @@ def sort_records(records, form):
 
 
 def sort_op(record, kd, form):
-    """
-    sort options dict
+    """Sort options dict.
+
     :param record:
     :param kd:
     :param form:
@@ -247,8 +249,8 @@ def sort_op(record, kd, form):
 
 
 def find_items(form):
-    """
-    find sorted items into a list
+    """Find sorted items into a list.
+
     :param form:
     :return: lst
     """
@@ -278,8 +280,8 @@ def find_items(form):
 
 
 def get_all_items(nlst, klst):
-    """
-    convert and sort item list
+    """Convert and sort item list.
+
     :param nlst:
     :param klst:
     :return: alst
@@ -308,8 +310,8 @@ def get_all_items(nlst, klst):
 
 
 def to_orderdict(alst, klst):
-    """
-    sort item list
+    """Sort item list.
+
     :param alst:
     :param klst:
     """
@@ -340,8 +342,8 @@ def to_orderdict(alst, klst):
 
 
 def get_options_and_order_list(item_type_id):
-    """
-     Get Options by item type id
+    """Get Options by item type id.
+
     :param item_type_id:
     :return: options dict and sorted list
     """
@@ -353,15 +355,15 @@ def get_options_and_order_list(item_type_id):
 
 
 def sort_meta_data_by_options(record_hit):
-    """
-    reset metadata by '_options'
+    """Reset metadata by '_options'.
+
     :param record_hit:
     """
     try:
 
         src = record_hit['_source'].pop('_item_metadata')
         item_type_id = record_hit['_source'].get('item_type_id') \
-                       or src.get('item_type_id')
+            or src.get('item_type_id')
         if not item_type_id:
             return
 
@@ -415,12 +417,12 @@ def sort_meta_data_by_options(record_hit):
 
 
 def get_keywords_data_load(str):
-    """
-     Get a json of item type info
+    """Get a json of item type info.
+
     :return: dict of item type info
     """
     try:
         return [(x.name, x.id) for x in ItemTypes.get_latest()]
-    except:
+    except BaseException:
         pass
     return []

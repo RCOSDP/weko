@@ -51,6 +51,7 @@ js = Bundle(
     output="gen/weko_search_ui.%(version)s.js",
 )
 
+
 def catalog(domain):
     """Return glob matching path to tranlated messages for a given domain."""
     return os.path.join(
@@ -66,4 +67,3 @@ i18n = GlobBundle(
     filters=AngularGettextFilter(catalog_name='invenioSearch'),
     output='gen/translations/weko-search-ui.%(version)s.js',
 )
-

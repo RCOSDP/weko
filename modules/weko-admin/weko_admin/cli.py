@@ -22,7 +22,7 @@
 import click
 from flask.cli import with_appcontext
 
-from .models import AdminLangSettings, SessionLifetime
+from .models import AdminLangSettings, ApiCertificate, SessionLifetime
 
 
 @click.group()
@@ -60,13 +60,47 @@ def language():
 @click.argument('sequence')
 @click.argument('is_active')
 @with_appcontext
-def insert_lang_to_db(lang_code, lang_name, is_registered, sequence, is_active):
-    """
-    Ex: ja Japanese true 12 true
-    """
+def insert_lang_to_db(
+        lang_code,
+        lang_name,
+        is_registered,
+        sequence,
+        is_active):
+    """Ex: ja Japanese true 12 true."""
     try:
         AdminLangSettings.create(lang_code, lang_name,
                                  is_registered, sequence, is_active)
         click.secho('insert language success')
     except Exception as e:
         click.secho(str(e))
+
+
+@click.group()
+def cert():
+    """Cert commands."""
+
+
+@cert.command('insert')
+@click.argument('api_code')
+@click.argument('api_name')
+@click.argument('cert_data', default='')
+@with_appcontext
+def save_api_certification(api_code, api_name, cert_data):
+    """Insert API Certification."""
+    if ApiCertificate.insert_new_api_cert(api_code, api_name, cert_data):
+        click.secho('insert cert success')
+    else:
+        click.secho('insert cert failed')
+
+
+@cert.command('update')
+@click.argument('api_code')
+@click.argument('api_name')
+@click.argument('cert_data', default='')
+@with_appcontext
+def update_api_certification(api_code, api_name, cert_data):
+    """Update API Certification."""
+    if ApiCertificate.update_api_cert(api_code, api_name, cert_data):
+        click.secho('update cert success')
+    else:
+        click.secho('update cert failed')

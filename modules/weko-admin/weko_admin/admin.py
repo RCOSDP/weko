@@ -20,15 +20,18 @@
 
 """WEKO3 module docstring."""
 
+import hashlib
 import os
 import sys
-import hashlib
-from flask import abort, current_app, flash, request, jsonify
+
+from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+
 from .permissions import admin_permission_factory
 from .utils import allowed_file
+
 
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -63,27 +66,31 @@ class StyleSettingView(BaseView):
             from weko_theme.views import blueprint as theme_bp
 
             # Header
-            f_path_header_wysiwyg = os.path.join(theme_bp.root_path,
-                                                 theme_bp.template_folder,
-                                                 current_app.config['THEME_HEADER_WYSIWYG_TEMPLATE'])
+            f_path_header_wysiwyg = os.path.join(
+                theme_bp.root_path,
+                theme_bp.template_folder,
+                current_app.config['THEME_HEADER_WYSIWYG_TEMPLATE'])
             header_array_wysiwyg = self.get_contents(f_path_header_wysiwyg)
 
-            f_path_header_editor = os.path.join(theme_bp.root_path,
-                                                theme_bp.template_folder,
-                                                current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
+            f_path_header_editor = os.path.join(
+                theme_bp.root_path,
+                theme_bp.template_folder,
+                current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
 
             if self.cmp_files(f_path_header_wysiwyg, f_path_header_editor):
                 header_array_wysiwyg = wysiwyg_editor_default
 
             # Footer
-            f_path_footer_wysiwyg = os.path.join(theme_bp.root_path,
-                                                 theme_bp.template_folder,
-                                                 current_app.config['THEME_FOOTER_WYSIWYG_TEMPLATE'])
+            f_path_footer_wysiwyg = os.path.join(
+                theme_bp.root_path,
+                theme_bp.template_folder,
+                current_app.config['THEME_FOOTER_WYSIWYG_TEMPLATE'])
             footer_array_wysiwyg = self.get_contents(f_path_footer_wysiwyg)
 
-            f_path_footer_editor = os.path.join(theme_bp.root_path,
-                                                theme_bp.template_folder,
-                                                current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
+            f_path_footer_editor = os.path.join(
+                theme_bp.root_path,
+                theme_bp.template_folder,
+                current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
 
             if self.cmp_files(f_path_footer_wysiwyg, f_path_footer_editor):
                 footer_array_wysiwyg = wysiwyg_editor_default
@@ -134,7 +141,6 @@ class StyleSettingView(BaseView):
     @expose('/upload_editor', methods=['POST'])
     def upload_editor(self):
         """Upload header/footer settings from wysiwyg editor."""
-
         try:
             from html import unescape
             from weko_theme.views import blueprint as theme_bp
@@ -146,9 +152,8 @@ class StyleSettingView(BaseView):
 
             if 'footer' == temp:
                 if 'True' == str(data.get('isEmpty')):
-                    read_path = os.path.join(folder_path,
-                                             current_app.config[
-                                                 'THEME_FOOTER_EDITOR_TEMPLATE'])
+                    read_path = os.path.join(
+                        folder_path, current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
                     wysiwyg_html = self.get_contents(read_path)
 
                 write_path = os.path.join(folder_path,
@@ -156,9 +161,8 @@ class StyleSettingView(BaseView):
                                               'THEME_FOOTER_WYSIWYG_TEMPLATE'])
             elif 'header' == temp:
                 if 'True' == str(data.get('isEmpty')):
-                    read_path = os.path.join(folder_path,
-                                             current_app.config[
-                                                 'THEME_HEADER_EDITOR_TEMPLATE'])
+                    read_path = os.path.join(
+                        folder_path, current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
                     wysiwyg_html = self.get_contents(read_path)
 
                 write_path = os.path.join(folder_path,
@@ -176,7 +180,6 @@ class StyleSettingView(BaseView):
 
     def get_contents(self, f_path):
         """Get the contents of the file."""
-
         array = []
         try:
             with open(f_path, 'r', encoding='utf-8') as fp:
@@ -189,7 +192,6 @@ class StyleSettingView(BaseView):
 
     def cmp_files(self, f_path1, f_path2):
         """Compare the contents of the file."""
-
         checksum1 = ''
         checksum2 = ''
         try:
@@ -208,44 +210,40 @@ class ReportView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
         try:
-            aggs_results = None
-            cur_user_id = current_user.get_id()
-            if cur_user_id:
-                aggs_query = {
-                    "query": {
-                        "match": {
-                            "weko_creator_id": cur_user_id
-                        }
-                    },
-                    "aggs": {
-                        "aggs_term": {
-                            "terms": {
-                                "field": "publish_status",
-                                "order": {"_count": "desc"}
-                            }
+            aggs_query = {
+                "size": 0,
+                "aggs": {
+                    "aggs_term": {
+                        "terms": {
+                            "field": "publish_status",
+                            "order": {"_count": "desc"}
                         }
                     }
                 }
+            }
 
-                from invenio_stats.utils import get_aggregations
-                aggs_results = get_aggregations('weko', aggs_query)
+            from invenio_stats.utils import get_aggregations
+            aggs_results = get_aggregations('weko', aggs_query)
 
             total = 0
             result = {}
-            if aggs_results:
+            if aggs_results and 'aggs_term' in aggs_results:
                 for bucket in aggs_results['aggs_term']['buckets']:
-                    bkt = {'open': bucket['doc_count']} if bucket['key'] == '0' \
-                        else {'private': bucket['doc_count']}
+                    bkt = {
+                        'open': bucket['doc_count']} if bucket['key'] == '0' else {
+                        'private': bucket['doc_count']}
                     result.update(bkt)
                     total = total + bucket['doc_count']
 
             result.update({'total': total})
 
-            return self.render(current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
-                               result=result)
+            return self.render(
+                current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
+                result=result)
         except Exception:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
+
 
 class LanguageSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -253,6 +251,15 @@ class LanguageSettingView(BaseView):
         return self.render(
             current_app.config["WEKO_ADMIN_LANG_SETTINGS"]
         )
+
+
+class WebApiAccount(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_WEB_API_ACCOUNT"]
+        )
+
 
 style_adminview = {
     'view_class': StyleSettingView,
@@ -281,8 +288,18 @@ language_adminview = {
     }
 }
 
+web_api_account_adminview = {
+    'view_class': WebApiAccount,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('WebAPI Account'),
+        'endpoint': 'webapiaccount'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
-    'language_adminview'
+    'language_adminview',
+    'web_api_account_adminview'
 )
