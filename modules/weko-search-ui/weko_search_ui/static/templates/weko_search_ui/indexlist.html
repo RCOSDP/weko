@@ -70,7 +70,7 @@
         </a>
       </ul>
     </div>
-    <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" style="padding-bottom: 10px;">
+    <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')">
       <img ng-if="$last" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}" class="img-thumbnail ng-hide"
            id="thumbnail_img" alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}
            ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
