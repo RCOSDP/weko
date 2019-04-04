@@ -22,14 +22,15 @@
 
 import copy
 
+
 def get_mapping(item_type_mapping, mapping_type):
-    """
-    Format itemtype mapping data. [Key:Schema, Value:ItemId]
+    """Format itemtype mapping data.
+
+    [Key:Schema, Value:ItemId]
     :param item_type_mapping:
     :param mapping_type:
     :return:
     """
-
     def get_schema_key_info(schema, parent_key, schema_json={}):
 
         for k, v in schema.items():
@@ -52,14 +53,14 @@ def get_mapping(item_type_mapping, mapping_type):
 
     return schema
 
+
 def get_metadata_from_map(item_data, item_id):
-    """
-    Get item metadata from search result.
+    """Get item metadata from search result.
+
     :param item_data:
     :param item_id:
     :return:
     """
-
     def get_sub_item_data(props, parent_key=''):
         key = parent_key if parent_key else ''
         value = {}

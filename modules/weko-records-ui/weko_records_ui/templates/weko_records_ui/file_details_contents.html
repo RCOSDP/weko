@@ -46,7 +46,6 @@
               {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id')
               -%}
               {%- if files -%}
-              {%- set downloads_count_list = record | get_downloads_count -%}
               <table class="table table-bordered table-striped">
                 <thead>
                 <tr>

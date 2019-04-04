@@ -20,27 +20,30 @@
 
 """WEKO Search Serializer."""
 
-from flask import current_app, json, request, url_for
-
-from invenio_records_rest.serializers.json import JSONSerializer
-from weko_records.api import Mapping
-from .feed import WekoFeedGenerator
+import copy
 from datetime import datetime
-import pytz, copy
-from .opensearch import OpensearchExtension, OpensearchEntryExtension
-from .prism import PrismExtension, PrismEntryExtension
-from .dc import DcWekoBaseExtension, DcWekoEntryExtension
-from .utils import get_mapping, get_metadata_from_map
+
+import pytz
+from flask import current_app, json, request, url_for
+from invenio_records_rest.serializers.json import JSONSerializer
 from weko_index_tree.api import Index
 
+from weko_records.api import Mapping
+
+from .dc import DcWekoBaseExtension, DcWekoEntryExtension
+from .feed import WekoFeedGenerator
+from .opensearch import OpensearchEntryExtension, OpensearchExtension
+from .prism import PrismEntryExtension, PrismExtension
+from .utils import get_mapping, get_metadata_from_map
+
+
 class AtomSerializer(JSONSerializer):
-    """
-    Serialize search result to atom format.
-    """
+    """Serialize search result to atom format."""
 
     def serialize_search(self, pid_fetcher, search_result, links=None,
                          item_links_factory=None, **kwargs):
         """Serialize a search result.
+
         :param pid_fetcher: Persistent identifier fetcher.
         :param search_result: Elasticsearch search result.
         :param links: Dictionary of links to add to response.
@@ -161,7 +164,8 @@ class AtomSerializer(JSONSerializer):
 
             # Set oai
             _oai = hit['_source']['_oai']['id']
-            item_url = request.host_url + 'oai2d?verb=GetRecord&metadataPrefix=jpcoar&identifier=' + _oai
+            item_url = request.host_url + \
+                'oai2d?verb=GetRecord&metadataPrefix=jpcoar&identifier=' + _oai
             fe.link(href=item_url, rel='alternate', type='text/xml')
 
             # Set id
@@ -260,11 +264,11 @@ class AtomSerializer(JSONSerializer):
                         else:
                             if request_lang:
                                 if creator_name_langs == request_lang:
-                                    fe.author({'name':creator_names,
-                                               'lang':creator_name_langs})
+                                    fe.author({'name': creator_names,
+                                               'lang': creator_name_langs})
                             else:
                                 fe.author({'name': creator_names,
-                                           'lang':creator_name_langs})
+                                           'lang': creator_name_langs})
 
             # Set publisher
             _publisher_attr_lang = 'publisher.@attributes.xml:lang'
@@ -475,9 +479,11 @@ class AtomSerializer(JSONSerializer):
                                 description_lang = description_langs[i]
                                 if request_lang:
                                     if description_lang == request_lang:
-                                        fe.content(descriptions[i], description_lang)
+                                        fe.content(
+                                            descriptions[i], description_lang)
                                 else:
-                                    fe.content(descriptions[i], description_lang)
+                                    fe.content(
+                                        descriptions[i], description_lang)
                         else:
                             if request_lang:
                                 if description_langs == request_lang:

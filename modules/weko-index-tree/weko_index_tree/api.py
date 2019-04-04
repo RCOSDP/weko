@@ -20,36 +20,37 @@
 
 """API for weko-index-tree."""
 
-from datetime import datetime
 from copy import deepcopy
+from datetime import datetime
+
 from flask import current_app, json
 from flask_login import current_user
-from invenio_db import db
 from invenio_accounts.models import Role
+from invenio_db import db
+from invenio_i18n.ext import current_i18n
+from invenio_indexer.api import RecordIndexer
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import func, literal_column
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from weko_groups.api import Group
+
 from .models import Index
-from .utils import get_tree_json, cached_index_tree_json, reset_tree, \
-    get_index_id_list, get_admin_coverpage_setting
-from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
+from .utils import cached_index_tree_json, get_index_id_list, get_tree_json, \
+    reset_tree
+
 
 class Indexes(object):
     """Define API for index tree creation and update."""
 
     @classmethod
     def create(cls, pid=None, indexes=None):
-        """
-        Create the indexes. Delete all indexes before creation.
+        """Create the indexes. Delete all indexes before creation.
 
         :param pid: parent index id.
         :param indexes: the index information.
         :returns: The :class:`Index` instance lists or None.
         """
-
         def _add_index(data):
             with db.session.begin_nested():
                 index = Index(**data)
@@ -79,7 +80,8 @@ class Indexes(object):
             data["contribute_role"] = data["browsing_role"]
 
             data["more_check"] = False
-            data["display_no"] = current_app.config['WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER']
+            data["display_no"] = current_app.config[
+                'WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER']
 
             data["coverpage_state"] = False
             data["recursive_coverpage_check"] = False
@@ -99,7 +101,7 @@ class Indexes(object):
                 pid_info = cls.get_root_index_count()
                 data["position"] = 0 if not pid_info else \
                     (0 if pid_info.position_max is None
-                        else pid_info.position_max + 1)
+                     else pid_info.position_max + 1)
             else:
                 pid_info = cls.get_index(pid, with_count=True)
 
@@ -115,19 +117,24 @@ class Indexes(object):
                     if iobj.recursive_public_state:
                         data["public_state"] = iobj.public_state
                         data["public_date"] = iobj.public_date
-                        data["recursive_public_state"] = iobj.recursive_public_state
+                        data["recursive_public_state"] = \
+                            iobj.recursive_public_state
                     if iobj.recursive_browsing_role:
                         data["browsing_role"] = iobj.browsing_role
-                        data["recursive_browsing_role"] = iobj.recursive_browsing_role
+                        data["recursive_browsing_role"] = \
+                            iobj.recursive_browsing_role
                     if iobj.recursive_contribute_role:
                         data["contribute_role"] = iobj.contribute_role
-                        data["recursive_contribute_role"] = iobj.recursive_contribute_role
+                        data["recursive_contribute_role"] = \
+                            iobj.recursive_contribute_role
                     if iobj.recursive_browsing_group:
                         data["browsing_group"] = iobj.browsing_group
-                        data["recursive_browsing_group"] = iobj.recursive_browsing_group
+                        data["recursive_browsing_group"] = \
+                            iobj.recursive_browsing_group
                     if iobj.recursive_contribute_group:
                         data["contribute_group"] = iobj.contribute_group
-                        data["recursive_contribute_group"] = iobj.recursive_contribute_group
+                        data["recursive_contribute_group"] = \
+                            iobj.recursive_contribute_group
 
                 else:
                     return
@@ -139,7 +146,7 @@ class Indexes(object):
                     pid_info = cls.get_index(pid, with_count=True)
                     data["position"] = 0 if not pid_info else \
                         (pid_info.position_max + 1
-                            if pid_info.position_max is not None else 0)
+                         if pid_info.position_max is not None else 0)
                     _add_index(data)
                 except SQLAlchemyError as ex:
                     is_ok = False
@@ -187,7 +194,10 @@ class Indexes(object):
                     setattr(index, k, v)
 
                 if getattr(index, "recursive_coverpage_check"):
-                    cls.set_coverpage_state_resc(index_id, getattr(index, "coverpage_state"))
+                    cls.set_coverpage_state_resc(
+                            index_id,
+                            getattr(index, "coverpage_state")
+                    )
                     setattr(index, "recursive_coverpage_check", False)
 
                 index.owner_user_id = current_user.get_id()
@@ -214,7 +224,8 @@ class Indexes(object):
                     if not slf:
                         return
 
-                    dct = db.session.query(Index).filter(Index.parent == index_id).\
+                    dct = db.session.query(Index).filter(
+                        Index.parent == index_id). \
                         update({Index.parent: slf.parent,
                                 Index.owner_user_id: current_user.get_id(),
                                 Index.updated: datetime.utcnow()},
@@ -225,18 +236,22 @@ class Indexes(object):
             else:
                 with db.session.no_autoflush:
                     recursive_t = cls.recs_query(pid=index_id)
-                    obj = db.session.query(recursive_t).\
-                    union_all(db.session.query(Index.parent, Index.id,
-                                               literal_column("''", db.Text).label("path"),
-                                               literal_column("''", db.Text).label("name"),
-                                               literal_column("''", db.Text).label("name_en"),
-                                               literal_column("0", db.Integer).label("lev")).
-                              filter(Index.id == index_id)).all()
+                    obj = db.session.query(recursive_t). \
+                        union_all(db.session.query(
+                                    Index.parent,
+                                    Index.id,
+                                    literal_column("''", db.Text).label("path"),
+                                    literal_column("''", db.Text).label("name"),
+                                    literal_column("''", db.Text).label(
+                                        "name_en"),
+                                    literal_column("0", db.Integer).label("lev")
+                                  ).filter(Index.id == index_id)).all()
 
                 if obj:
                     p_lst = [o.cid for o in obj]
                     with db.session.begin_nested():
-                        dct = db.session.query(Index).filter(Index.id.in_(p_lst)).\
+                        dct = db.session.query(Index).filter(
+                            Index.id.in_(p_lst)). \
                             delete(synchronize_session='fetch')
                     db.session.commit()
                     return dct
@@ -248,6 +263,14 @@ class Indexes(object):
 
     @classmethod
     def delete_by_action(cls, action, index_id, path):
+        """
+        Delete_by_action.
+
+        :param action: action of the index.
+        :param index_id: Identifier of the index.
+        :param path: path of the index.
+        :return: bool True: Delete success None: Delete failed
+        """
         from weko_deposit.api import WekoDeposit
         if "move" == action:
             result = cls.delete(index_id, True)
@@ -269,7 +292,7 @@ class Indexes(object):
 
     @classmethod
     def move(cls, index_id, **data):
-
+        """Move."""
         def _update_index(parent=None):
             with db.session.begin_nested():
                 index = Index.query.filter_by(id=index_id).one()
@@ -326,8 +349,9 @@ class Indexes(object):
                         position_max = position
                         try:
                             with db.session.begin_nested():
-                                nlst = Index.query.filter_by(parent=parent).\
-                                    order_by(Index.position).with_for_update().all()
+                                nlst = Index.query.filter_by(parent=parent). \
+                                    order_by(
+                                    Index.position).with_for_update().all()
                                 n = t = -1
 
                                 for i in range(len(nlst)):
@@ -372,9 +396,11 @@ class Indexes(object):
                     except IntegrityError as ie:
                         if 'uix_position' in ''.join(ie.args):
                             try:
-                                parent_info = cls.get_index(parent, with_count=True)
+                                parent_info = cls.get_index(parent,
+                                                            with_count=True)
                                 position_max = parent_info.position_max + 1 \
-                                    if parent_info.position_max is not None else 0
+                                    if parent_info.position_max is not None \
+                                    else 0
                                 _update_index()
                             except SQLAlchemyError as ex:
                                 is_ok = False
@@ -392,31 +418,35 @@ class Indexes(object):
                     # move items
                     target = cls.get_self_path(index_id)
                     from weko_deposit.api import WekoDeposit
-                    WekoDeposit.update_by_index_tree_id(slf_path.path, target.path)
+                    WekoDeposit.update_by_index_tree_id(slf_path.path,
+                                                        target.path)
             except Exception:
                 is_ok = False
         return is_ok
 
     @classmethod
     @cached_index_tree_json(timeout=None,)
-    def get_index_tree(cls,pid=0):
-        """Get index tree json"""
+    def get_index_tree(cls, pid=0):
+        """Get index tree json."""
         return get_tree_json(cls.get_recursive_tree(pid), pid)
 
     @classmethod
-    def get_browsing_tree(cls,pid=0):
+    def get_browsing_tree(cls, pid=0):
+        """Get browsing tree."""
         tree = cls.get_index_tree(pid)
         reset_tree(tree=tree)
         return tree
 
     @classmethod
     def get_more_browsing_tree(cls, pid=0, more_ids=[]):
+        """Get more browsing tree."""
         tree = cls.get_index_tree(pid)
         reset_tree(tree=tree, more_ids=more_ids)
         return tree
 
     @classmethod
-    def get_browsing_tree_paths(cls,pid=0):
+    def get_browsing_tree_paths(cls, pid=0):
+        """Get browsing tree paths."""
         id_list = get_index_id_list(cls.get_browsing_tree(pid), [])
         paths = []
         if id_list:
@@ -426,8 +456,8 @@ class Indexes(object):
         return paths
 
     @classmethod
-    def get_contribute_tree(cls, pid,root_node_id=0):
-        """"""
+    def get_contribute_tree(cls, pid, root_node_id=0):
+        """Get Contrbute tree."""
         from weko_deposit.api import WekoRecord
         record = WekoRecord.get_record_by_pid(pid)
         tree = cls.get_index_tree(root_node_id)
@@ -440,18 +470,26 @@ class Indexes(object):
 
     @classmethod
     def get_recursive_tree(cls, pid=0):
-        """"""
+        """Get recursive tree."""
         with db.session.begin_nested():
             recursive_t = cls.recs_tree_query(pid)
             if pid != 0:
                 recursive_t = cls.recs_root_tree_query(pid)
-            qlst = [recursive_t.c.pid, recursive_t.c.cid,
-                    recursive_t.c.position, recursive_t.c.name,
-                    recursive_t.c.public_state, recursive_t.c.public_date,
-                    recursive_t.c.browsing_role, recursive_t.c.contribute_role,
-                    recursive_t.c.browsing_group, recursive_t.c.contribute_group,
-                    recursive_t.c.more_check, recursive_t.c.display_no,
-                    recursive_t.c.coverpage_state, recursive_t.c.recursive_coverpage_check]
+            qlst = [
+                recursive_t.c.pid,
+                recursive_t.c.cid,
+                recursive_t.c.position,
+                recursive_t.c.name,
+                recursive_t.c.public_state,
+                recursive_t.c.public_date,
+                recursive_t.c.browsing_role,
+                recursive_t.c.contribute_role,
+                recursive_t.c.browsing_group,
+                recursive_t.c.contribute_group,
+                recursive_t.c.more_check,
+                recursive_t.c.display_no,
+                recursive_t.c.coverpage_state,
+                recursive_t.c.recursive_coverpage_check]
             obj = db.session.query(*qlst). \
                 order_by(recursive_t.c.lev,
                          recursive_t.c.pid,
@@ -460,7 +498,7 @@ class Indexes(object):
 
     @classmethod
     def get_index_with_role(cls, index_id):
-
+        """Get Index with role."""
         def _get_allow_deny(allow, role):
             alw = []
             deny = []
@@ -480,7 +518,7 @@ class Indexes(object):
                 return allow, deny
             for group in groups:
                 if str(group.id) in allow_group_id:
-                    allow.append({'id':str(group.id), 'name':group.name})
+                    allow.append({'id': str(group.id), 'name': group.name})
                 else:
                     deny.append({'id': str(group.id), 'name': group.name})
 
@@ -528,33 +566,35 @@ class Indexes(object):
 
     @classmethod
     def get_index(cls, index_id, with_count=False):
+        """Get index."""
         with db.session.begin_nested():
             if with_count:
                 stmt = db.session.query(Index.parent, func.max(Index.position).
-                                        label('position_max'))\
-                    .filter(Index.parent == index_id)\
+                                        label('position_max')) \
+                    .filter(Index.parent == index_id) \
                     .group_by(Index.parent).subquery()
                 obj = db.session.query(Index, stmt.c.position_max). \
-                    outerjoin(stmt, Index.id == stmt.c.parent).\
+                    outerjoin(stmt, Index.id == stmt.c.parent). \
                     filter(Index.id == index_id).one_or_none()
             else:
-                obj = db.session.query(Index).\
+                obj = db.session.query(Index). \
                     filter_by(id=index_id).one_or_none()
 
         return obj
 
     @classmethod
     def get_root_index_count(cls):
+        """Get root index."""
         with db.session.begin_nested():
             obj = db.session.query(Index.parent,
                                    func.max(Index.position).
-                                   label('position_max')).\
+                                   label('position_max')). \
                 filter_by(parent=0).group_by(Index.parent).one_or_none()
         return obj
 
     @classmethod
     def get_account_role(cls):
-
+        """Get account role."""
         def _get_dict(x):
             dt = dict()
             for k, v in x.__dict__.items():
@@ -619,13 +659,11 @@ class Indexes(object):
 
     @classmethod
     def get_all_path_list(cls, node_path):
-        """
-        Get child of index list info.
+        """Get child of index list info.
 
         :param node_path: Identifier of the index.
         :return: the list of index.
         """
-
         # def get_path_list(node_path):
         #     """
         #     Get index list info.
@@ -658,8 +696,8 @@ class Indexes(object):
 
     @classmethod
     def get_self_path(cls, node_id):
-        """
-        Get index view path info.
+        """Get index view path info.
+
         :param node_id: Identifier of the index.
         :return: the type of Index.
         """
@@ -671,7 +709,6 @@ class Indexes(object):
             current_app.logger.debug(ex)
             db.session.rollback()
             return False
-
 
     @classmethod
     def recs_query(cls, pid=0):
@@ -710,7 +747,7 @@ class Indexes(object):
         return recursive_t
 
     @classmethod
-    def recs_tree_query(cls, pid=0,):
+    def recs_tree_query(cls, pid=0, ):
         """
         Init select condition of index.
 
@@ -721,8 +758,12 @@ class Indexes(object):
             recursive_t = db.session.query(
                 Index.parent.label("pid"),
                 Index.id.label("cid"),
-                func.cast(Index.id, db.Text).label("path"),
-                func.coalesce(Index.index_name, Index.index_name_english).label("name"),
+                func.cast(
+                    Index.id,
+                    db.Text).label("path"),
+                func.coalesce(
+                    Index.index_name,
+                    Index.index_name_english).label("name"),
                 Index.position,
                 Index.public_state,
                 Index.public_date,
@@ -734,9 +775,12 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
-                literal_column("1", db.Integer).label("lev")).filter(
-                Index.parent == pid). \
-                cte(name="recursive_t", recursive=True)
+                literal_column(
+                    "1",
+                    db.Integer).label("lev")).filter(
+                Index.parent == pid). cte(
+                        name="recursive_t",
+                recursive=True)
 
             rec_alias = aliased(recursive_t, name="rec")
             test_alias = aliased(Index, name="t")
@@ -744,8 +788,14 @@ class Indexes(object):
                 db.session.query(
                     test_alias.parent,
                     test_alias.id,
-                    rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                    func.coalesce(test_alias.index_name, test_alias.index_name_english),
+                    rec_alias.c.path +
+                    '/' +
+                    func.cast(
+                        test_alias.id,
+                        db.Text),
+                    func.coalesce(
+                        test_alias.index_name,
+                        test_alias.index_name_english),
                     test_alias.position,
                     test_alias.public_state,
                     test_alias.public_date,
@@ -757,9 +807,9 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev + 1).filter(
-                    test_alias.parent == rec_alias.c.cid)
-            )
+                    rec_alias.c.lev +
+                    1).filter(
+                    test_alias.parent == rec_alias.c.cid))
         else:
             recursive_t = db.session.query(
                 Index.parent.label("pid"),
@@ -818,8 +868,12 @@ class Indexes(object):
             recursive_t = db.session.query(
                 Index.parent.label("pid"),
                 Index.id.label("cid"),
-                func.cast(Index.id, db.Text).label("path"),
-                func.coalesce(Index.index_name, Index.index_name_english).label("name"),
+                func.cast(
+                    Index.id,
+                    db.Text).label("path"),
+                func.coalesce(
+                    Index.index_name,
+                    Index.index_name_english).label("name"),
                 Index.position,
                 Index.public_state,
                 Index.public_date,
@@ -831,9 +885,12 @@ class Indexes(object):
                 Index.display_no,
                 Index.coverpage_state,
                 Index.recursive_coverpage_check,
-                literal_column("1", db.Integer).label("lev")).filter(
-                Index.id == pid). \
-                cte(name="recursive_t", recursive=True)
+                literal_column(
+                    "1",
+                    db.Integer).label("lev")).filter(
+                Index.id == pid). cte(
+                        name="recursive_t",
+                recursive=True)
 
             rec_alias = aliased(recursive_t, name="rec")
             test_alias = aliased(Index, name="t")
@@ -841,8 +898,14 @@ class Indexes(object):
                 db.session.query(
                     test_alias.parent,
                     test_alias.id,
-                    rec_alias.c.path + '/' + func.cast(test_alias.id, db.Text),
-                    func.coalesce(test_alias.index_name, test_alias.index_name_english),
+                    rec_alias.c.path +
+                    '/' +
+                    func.cast(
+                        test_alias.id,
+                        db.Text),
+                    func.coalesce(
+                        test_alias.index_name,
+                        test_alias.index_name_english),
                     test_alias.position,
                     test_alias.public_state,
                     test_alias.public_date,
@@ -854,9 +917,9 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev + 1).filter(
-                    test_alias.parent == rec_alias.c.cid)
-            )
+                    rec_alias.c.lev +
+                    1).filter(
+                    test_alias.parent == rec_alias.c.cid))
         else:
             recursive_t = db.session.query(
                 Index.parent.label("pid"),
@@ -905,18 +968,21 @@ class Indexes(object):
 
     @classmethod
     def get_harvest_public_state(cls, path):
+        """Get harvest public state."""
         try:
             last_path = path.pop(-1).split('/')
-            qry = db.session.\
+            qry = db.session. \
                 query(func.every(Index.harvest_public_state).
                       label('parent_state')).filter(Index.id.in_(last_path))
             for i in range(len(path)):
                 path[i] = path[i].split('/')
-                path[i] = db.session.\
-                    query(func.every(Index.harvest_public_state)).\
+                path[i] = db.session. \
+                    query(func.every(Index.harvest_public_state)). \
                     filter(Index.id.in_(path[i]))
             smt = qry.union_all(*path).subquery()
-            result = db.session.query(func.bool_or(smt.c.parent_state).label('parent_state')).one()
+            result = db.session.query(
+                func.bool_or(
+                    smt.c.parent_state).label('parent_state')).one()
             return result.parent_state
         except Exception as se:
             current_app.logger.debug(se)
@@ -924,12 +990,11 @@ class Indexes(object):
 
     @classmethod
     def set_item_sort_custom(cls, index_id, sort_json={}):
-        """Set custom sort"""
-
+        """Set custom sort."""
         # change type of custom sort data
         sort_dict_db = dict(sort_json)
 
-        for k,v in sort_dict_db.items():
+        for k, v in sort_dict_db.items():
             if v != "":
                 sort_dict_db[k] = int(v)
             else:
@@ -951,8 +1016,8 @@ class Indexes(object):
 
     @classmethod
     def update_item_sort_custom_es(cls, index_path, sort_json=[]):
-        """
-        Set custom sort
+        """Set custom sort.
+
         :param index_path selected index path
         :param sort_json custom setted item sort
 
@@ -972,7 +1037,9 @@ class Indexes(object):
 
             for d in sort_json:
                 for h in res.get("hits").get("hits"):
-                    if int(h.get('_source').get('control_number')) == int(d.get("id")):
+                    if int(
+                            h.get('_source').get('control_number')) == int(
+                            d.get("id")):
                         body = {
                             'doc': {
                                 'custom_sort': d.get('custom_sort'),
@@ -992,24 +1059,34 @@ class Indexes(object):
 
     @classmethod
     def get_item_sort(cls, index_id):
-        """
+        """Get items sort.
+
         :param index_id: search index id
         :return: sort list
 
         """
-        item_custom_sort=db.session.query(Index.item_custom_sort).filter(Index.id == index_id).one()
+        item_custom_sort = db.session.query(
+            Index.item_custom_sort).filter(
+            Index.id == index_id).one()
 
         return item_custom_sort[0]
 
     @classmethod
     def have_children(cls, index_id):
+        """Have children."""
         return Index.get_children(index_id)
 
     @classmethod
     def get_coverpage_state(cls, path):
+        """
+        Get coverpage state from index path.
+
+        :param path: item's index path
+        """
         try:
             last_path = path.pop(-1).split('/')
-            return Index.query.filter_by(id=last_path.pop()).one().coverpage_state
+            return Index.query.filter_by(
+                id=last_path.pop()).one().coverpage_state
 
         except Exception as se:
             current_app.logger.debug(se)
@@ -1018,13 +1095,13 @@ class Indexes(object):
     @classmethod
     def set_coverpage_state_resc(cls, index_id, state):
         """
+        Set coverpage state for all index's children.
+
         :param index_id: search index id
         :param state: coverpage state of search index id
-
         """
-        Index.query.filter_by(parent=index_id).\
+        Index.query.filter_by(parent=index_id). \
             update({Index.coverpage_state: state},
-            synchronize_session='fetch')
+                   synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
             cls.set_coverpage_state_resc(index.id, state)
-

@@ -23,7 +23,6 @@
 
 from flask.signals import Namespace
 
-
 _signals = Namespace()
 
 

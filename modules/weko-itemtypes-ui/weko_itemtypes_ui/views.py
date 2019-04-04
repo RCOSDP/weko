@@ -22,14 +22,14 @@
 
 import sys
 
-from flask import Blueprint, Flask, abort, current_app, json, jsonify, \
-    make_response, redirect, render_template, request, url_for, flash
+from flask import Blueprint, Flask, abort, current_app, flash, json, jsonify, \
+    make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 from weko_records.api import ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
-from invenio_i18n.ext import current_i18n
 
 from .permissions import item_type_permission
 
@@ -71,6 +71,7 @@ def index(item_type_id=0):
 @login_required
 @item_type_permission.require(http_exception=403)
 def render(item_type_id=0):
+    """Renderer."""
     result = None
     if item_type_id > 0:
         result = ItemTypes.get_by_id(id_=item_type_id)
@@ -127,6 +128,7 @@ def custom_property(property_id=0):
         lists=lists
     )
 
+
 @blueprint.route('/property/list', methods=['GET'])
 @login_required
 @item_type_permission.require(http_exception=403)
@@ -139,7 +141,7 @@ def get_property_list(property_id=0):
     for k in props:
         name = k.name
         if lang and 'title_i18n' in k.form and \
-            lang in k.form['title_i18n'] and k.form['title_i18n'][lang]:
+                lang in k.form['title_i18n'] and k.form['title_i18n'][lang]:
             name = k.form['title_i18n'][lang]
 
         tmp = {'name': name, 'schema': k.schema, 'form': k.form,
@@ -149,6 +151,7 @@ def get_property_list(property_id=0):
     lists['defaults'] = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
 
     return jsonify(lists)
+
 
 @blueprint.route('/property/<int:property_id>', methods=['GET'])
 @login_required
@@ -188,6 +191,7 @@ def custom_property_new(property_id=0):
 
 @blueprint_api.route('/<int:ItemTypeID>/mapping', methods=['GET'])
 def itemtype_mapping(ItemTypeID=0):
+    """Itemtype mapping."""
     item_type_mapping = Mapping.get_record(ItemTypeID)
     return jsonify(item_type_mapping)
 
@@ -224,7 +228,8 @@ def mapping_index(ItemTypeID=0):
                             if 'key' in sub_elem and sub_elem['key'] == key:
                                 if 'title_i18n' in sub_elem:
                                     if cur_lang in sub_elem['title_i18n']:
-                                        if len(sub_elem['title_i18n'][cur_lang]) > 0:
+                                        if len(
+                                                sub_elem['title_i18n'][cur_lang]) > 0:
                                             elemStr = sub_elem['title_i18n'][
                                                 cur_lang]
                                 else:
@@ -269,7 +274,7 @@ def mapping_index(ItemTypeID=0):
             itemtype_list=itemtype_list,
             id=ItemTypeID
         )
-    except:
+    except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
 
@@ -280,6 +285,7 @@ def mapping_index(ItemTypeID=0):
 @login_required
 @item_type_permission.require(http_exception=403)
 def schema_list(SchemaName=None):
+    """Schema list."""
     jpcoar_lists = {}
     if SchemaName is None:
         jpcoar_xsd = WekoSchema.get_all()
@@ -293,6 +299,7 @@ def schema_list(SchemaName=None):
 
 
 def remove_xsd_prefix(jpcoar_lists):
+    """Remove xsd prefix."""
     jpcoar_copy = {}
 
     def remove_prefix(jpcoar_src, jpcoar_dst):
