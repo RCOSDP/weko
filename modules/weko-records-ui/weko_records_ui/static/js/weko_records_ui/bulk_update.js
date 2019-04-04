@@ -227,6 +227,41 @@ require([
       });
     });
 
+    // For bulk delete's actions
+    $("#bulk_delete_confirmation_continue").click(function(){
+      $('#bulk_delete_confirmation').trigger('click');
+      // Do submit data
+      // Get index id
+      var data = {
+        'q': GetUrlParam("q"),
+        'recursively': $("#recursively").prop('checked'),
+        'sort': 'custom_sort'
+      }
+
+      // Update
+      $.ajax({
+        method: 'PUT',
+        url: '/item_management/bulk_delete',
+        async: false,
+        cache: false,
+        data: data,
+        success: function(data, status, xhr){
+          console.log(xhr.status);
+
+          if (data.status == 1) {
+            setTimeout(function() {
+              location.reload();
+            }, 1000)
+          } else {
+            alert(data.msg)
+          }
+        },
+        error: function(status, error){
+          alert(error);
+        }
+      });
+    });
+
     function updateItems(index_url, self_url, itemData, indexData, error) {
       // Post to index select
       $.ajax({
@@ -290,4 +325,16 @@ require([
       return yyyy + "-" + mm + "-" + dd;
     }
 
+    //urlからパラメタ―の値を取得
+    function GetUrlParam(sParam) {
+        var sURL = window.location.search.substring(1);
+        var sURLVars = sURL.split('&');
+        for (var i = 0; i < sURLVars.length; i++) {
+            var sParamArr = sURLVars[i].split('=');
+            if (sParamArr[0] == sParam) {
+                return decodeURIComponent(sParamArr[1]);
+            }
+        }
+        return false;
+    }
 });

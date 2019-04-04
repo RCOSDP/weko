@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
+{%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
 
 {%- from "invenio_communities/macros.html" import community_header, community_footer %}
 
@@ -54,8 +54,10 @@
       <div class="row">
         {%- if management_type == "sort" %}
           {% include "weko_search_ui/item_list_display.html" %}
-        {%- else %}
+        {%- elif management_type == "update" %}
           {% include "weko_records_ui/bulk_update_display.html" %}
+        {%- elif management_type == "delete" %}
+          {% include "weko_search_ui/bulk_delete_display.html" %}
         {%- endif %}
       </div>
     </div>
