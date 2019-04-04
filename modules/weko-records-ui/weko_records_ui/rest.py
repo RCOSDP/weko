@@ -141,6 +141,8 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
         locale = "en-US" # ln or current_i18n.language
         style = "abi-technik" # style or 'science'
         try:
+            print("kwargs")
+            print(kwargs)
             print('pid_value')
             print(pid_value)
 
