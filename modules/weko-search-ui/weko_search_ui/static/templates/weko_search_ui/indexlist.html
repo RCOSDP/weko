@@ -12,7 +12,7 @@
           <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</span>
         </li>
       </ol>
-      <div class="row m-top-20" ng-if="journal_info">
+      <div class="row m-top-20" ng-if="journal_info && vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1">
         <div class="col-xs-12">
           <div class="col-xs-4" id="journal_info_img" style="padding:0 0 15px; display:none;">
           </div>
@@ -78,3 +78,4 @@
   </div>
 </div>
 <input type="hidden" ng-value="vm.invenioSearchResults.aggregations.path.buckets[0].length" id="index_list_length">
+<input type="hidden" ng-value="vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format" id="display_format">
