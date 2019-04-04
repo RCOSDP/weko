@@ -28,8 +28,12 @@
 <!-- Datepicker for Bootstrap -->
 <!-- Bootstrap -->
 
-<link rel="stylesheet"
+<!--<link rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.1/css/bootstrap-datepicker.min.css">
+-->
+
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    
 {%- endblock head%}
 
 
@@ -77,7 +81,7 @@
 <div class="row content-font">
   <div class="col-md-1"></div>
   <div class="col-md-11 pull-left">
-    <h4>{{_('Downloads')}}</h4>
+    <h4>{{_('Fixed From reports')}}</h4>
   </div>
 </div>
 <div class="row content-font">
@@ -93,9 +97,11 @@
       <span class="caret"></span>
     </button>
     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-      <li><a href="#">period 1</a></li>
-      <li><a href="#">period 2</a></li>
-      <li><a href="#">period 3</a></li>
+            <li><a href="#">{{_('2015')}}</a></li>
+            <li><a href="#">{{_('2016')}}</a></li>
+            <li><a href="#">{{_('2017')}}</a></li>
+            <li><a href="#">{{_('2018')}}</a></li>
+            <li><a href="#">{{_('2019')}}</a></li> 
     </ul>
   </div>
   <!--<span>{{_('month')}}</span>-->
@@ -106,9 +112,18 @@
       <span class="caret"></span>
     </button>
     <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton2">
-      <li><a href="#">period 1</a></li>
-      <li><a href="#">period 2</a></li>
-      <li><a href="#">period 3</a></li>
+            <li><a href="#">{{_('01')}}</a></li>
+            <li><a href="#">{{_('02')}}</a></li>
+            <li><a href="#">{{_('03')}}</a></li>
+            <li><a href="#">{{_('04')}}</a></li>
+            <li><a href="#">{{_('05')}}</a></li>
+            <li><a href="#">{{_('06')}}</a></li>
+            <li><a href="#">{{_('07')}}</a></li>
+            <li><a href="#">{{_('08')}}</a></li>
+            <li><a href="#">{{_('09')}}</a></li>
+            <li><a href="#">{{_('10')}}</a></li>
+            <li><a href="#">{{_('11')}}</a></li>
+            <li><a href="#">{{_('12')}}</a></li>
     </ul>
   </div>
   <div class="col-md-3">
@@ -116,6 +131,7 @@
   </div>
 </div>
 
+<!--
 <hr>
 
 <div class="row content-font">
@@ -130,7 +146,7 @@
     <label>{{_('Aggregation month')}}</label>
   </div>
   <!--<span>{{_('year')}}</span>-->
-  <div class="dropdown col-md-1">
+<!--  <div class="dropdown col-md-1">
     <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton3"
             data-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">{{_('Year')}}
@@ -143,7 +159,7 @@
     </ul>
   </div>
   <!--<span>{{_('month')}}</span>-->
-  <div class="dropdown col-md-1">
+<!--  <div class="dropdown col-md-1">
     <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton4"
             data-toggle="dropdown"
             aria-haspopup="true" aria-expanded="false">{{_('Month')}}
@@ -163,7 +179,7 @@
 <hr>
 
 <!-- Custom Report -->
-<div class="row">
+<!--<div class="row">
   <div class="col-md-1"></div>
   <div class="col-md-11 pull-left">
     <h4>{{_('Custom Reports')}}</h4>
@@ -218,7 +234,7 @@
 
 
 <!-- unit -->
-<div class="row content-font">
+<!--<div class="row content-font">
   <div class="col-md-2"></div>
 <div class="col-md-2">
   <label for="unit">{{_('Unit')}}</label>
@@ -238,7 +254,7 @@
 
 
 <!-- Display -->
-<div class="row content-font">
+<!--<div class="row content-font">
     <div class="col-md-7"></div>
    <div class="col-md-5">
     <button class="btn btn-primary">{{_('Display')}}</button>
@@ -247,12 +263,12 @@
 
 
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 <!-- Include all compiled plugins (below), or include individual files as needed -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<!--<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 <!-- Datepicker for Bootstrap -->
-<script type="text/javascript"
+<!--<script type="text/javascript"
         src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.1/js/bootstrap-datepicker.min.js"></script>
 
 <!-- for Ja -->
@@ -260,7 +276,7 @@
         <!--src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.1/locales/bootstrap-datepicker.ja.min.js"></script>-->
 
 
-<script>
+<!--<script>
   $('.datepicker').datepicker({
     format: "yyyy/mm/dd",
     language: "en",
@@ -268,7 +284,7 @@
     orientation: 'bottom left'
   });
 </script>
-
+-->
 
 {%- endblock body %}
 

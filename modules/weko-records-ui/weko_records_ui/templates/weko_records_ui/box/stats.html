@@ -1,30 +1,18 @@
-{%- set views_count = record | get_views_count -%}
-
 <div class="well stats">
   <div class="row">
     <div class="col-sm-6 pull-left">
       <dt>{{_('Stats')}}</dt>
     </div>
-    <!-- period dropdown -->
-    <div class="dropdown col-sm-6 pull-right">
-      <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton" data-toggle="dropdown"
-              aria-haspopup="true" aria-expanded="false">
-        {{_('Period')}}
-        <span class="caret"></span>
-      </button>
-      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-        <li><a href="#">period 1</a></li>
-        <li><a href="#">period 2</a></li>
-        <li><a href="#">period 3</a></li>
-        <li><a href="#">period 4</a></li>
-      </ul>
-    </div>
+    <select id="record_view_period" class="btn btn-default btn-sm"
+        onchange="period_change(this)">
+        <option value="total">total</option>
+    </select>
   </div>
 
   <div class="row">
     <!--<div class="total-views">-->
     <div class="col-sm-3"><i class="fa fa-eye" aria-hidden="true"></i></div>
-    <div class="col-sm-3"><span id="views-num">{{ views_count.get('total') }}</span></div>
+    <div id="record_view_num" class="col-sm-3"><span id="views-num">0</span></div>
     <div class="col-sm-3"><span id="views-txt">views</span></div>
     <div class="col-sm-3"></div>
     <!--</div>-->
@@ -36,20 +24,14 @@
   </div>
   <div class="row collapse" id="collapse-stats">
     <table class="table stats-table">
-      <tbody>
-      <tr>
-        <th></th>
-        <th>{{_('Views')}}</th>
-      </tr>
-      <tr>
-        <td>***.hoge</td>
-        <td>xxx</td>
-      </tr>
-      <tr>
-        <td>***.fuga</td>
-        <td>yyy</td>
-      </tr>
-      </tbody>
+        <thead>
+            <tr>
+                <th></th>
+                <th>{{_('Views')}}</th>
+            </tr>
+        </thead>
+        <tbody id="record_view_domain">
+        </tbody>
     </table>
   </div>
 </div>

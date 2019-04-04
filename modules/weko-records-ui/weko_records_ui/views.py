@@ -43,7 +43,6 @@ from datetime import datetime
 from invenio_db import db
 from sqlalchemy.exc import IntegrityError
 from invenio_stats import current_stats
-from invenio_stats.views import QueryRecordViewCount
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -361,8 +360,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
 @blueprint.app_template_filter('get_views_count')
 def get_views_count(record):
-    response = QueryRecordViewCount.get_count(record.id)
-    return response
+    #response = QueryRecordViewCount.get_count(record.id)
+    #return response
+    return {}
 
 # @blueprint.app_template_filter('get_downloads_count')
 # def get_downloads_count(record):
