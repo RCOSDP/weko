@@ -201,7 +201,10 @@ def check_created_id(record):
                 user_id = current_user.get_id() \
                     if current_user and current_user.is_authenticated else None
                 created_id = record.get('_deposit', {}).get('created_by')
+                shared_id = record.get('weko_shared_id')
                 if user_id and created_id and user_id == str(created_id):
+                    is_himself = True
+                elif user_id and shared_id and user_id == str(shared_id):
                     is_himself = True
             elif lst.name == users[3]:
                 is_himself = False
