@@ -142,7 +142,7 @@ def json_loader(data, pid):
             # jrc is saved on elastic
             jrc_weko_shared_id = jrc.get("weko_shared_id", None)
             jrc_weko_creator_id = jrc.get("weko_creator_id", None)
-            if  not jrc_weko_creator_id:
+            if not jrc_weko_creator_id:
                 # in case first time create record
                 jrc.update(dict(weko_creator_id=current_user_id))
                 jrc.update(dict(weko_shared_id=data.get('shared_user_id',

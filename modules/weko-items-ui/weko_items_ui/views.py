@@ -36,15 +36,9 @@ from weko_groups.api import Group
 from weko_records.api import ItemTypes
 
 from .permissions import item_permission
-from .utils import (
-    get_list_username,
-    get_list_email,
-    get_user_info_by_username,
-    validate_user,
-    get_user_info_by_email,
-    get_user_information,
-    get_user_permission,
-    get_current_user)
+from .utils import get_current_user, get_list_email, get_list_username, \
+    get_user_info_by_email, get_user_info_by_username, get_user_information, \
+    get_user_permission, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
