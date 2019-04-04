@@ -255,7 +255,7 @@ def get_journal_info(index_id=0):
             title = value.get('title_i18n')
             if title is not None:
                 data = journal.get(value['key'])
-                if data is not None and len(data) > 0:
+                if data is not None and len(str(data)) > 0:
                     dataMap = value.get('titleMap')
                     if dataMap is not None:
                         res = [x['name'] for x in dataMap if x['value'] == data]
