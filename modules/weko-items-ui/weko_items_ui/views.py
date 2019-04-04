@@ -36,6 +36,15 @@ from weko_groups.api import Group
 from weko_records.api import ItemTypes
 
 from .permissions import item_permission
+from .utils import (
+    get_list_username,
+    get_list_email,
+    get_user_info_by_username,
+    validate_user,
+    get_user_info_by_email,
+    get_user_information,
+    get_user_permission,
+    get_current_user)
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -43,6 +52,14 @@ blueprint = Blueprint(
     url_prefix='/items',
     template_folder='templates',
     static_folder='static',
+)
+
+blueprint_api = Blueprint(
+    'weko_items_ui',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+    url_prefix="/items",
 )
 
 
@@ -479,3 +496,143 @@ def index_upload():
     return render_template(
         current_app.config['WEKO_ITEMS_UI_UPLOAD_TEMPLATE']
     )
+
+
+@blueprint_api.route('/get_search_data/<data_type>', methods=['GET'])
+def get_search_data(data_type=''):
+    """get_search_data.
+
+    Host the api provide search data:
+    Provide 2 search data: username and email
+
+    param:
+        data_type: type of response data (username, email)
+    return:
+        list of search data
+    """
+    result = {
+        'results': '',
+        'error': '',
+    }
+    try:
+        if data_type == 'username':
+            result['results'] = get_list_username()
+        elif data_type == 'email':
+            result['results'] = get_list_email()
+        else:
+            result['error'] = 'Invaid method'
+    except Exception as e:
+        result['error'] = str(e)
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/validate_user_info', methods=['POST'])
+def validate_user_info():
+    """validate_user_info.
+
+    Host the api which provide 2 service:
+        Get autofill data: return user information based on request data
+        Validate user information: check if user is exist
+
+    request:
+        header: Content type must be json
+        data:
+            username: The username
+            email: The email
+    return: response pack:
+        results: user information if user is valid
+        validation: 'true' if user is valid, other case return 'false'
+        error: return error message, empty if no error occurs
+
+    How to use:
+        1. Get autofill data: fill username or email
+        2. Validation: fill both username and email
+    """
+    result = {
+        'results': '',
+        'validation': '',
+        'error': ''
+    }
+
+    if request.headers['Content-Type'] != 'application/json':
+        """Check header of request"""
+        result['error'] = _('Header Error')
+        return jsonify(result)
+
+    data = request.get_json()
+    username = data.get('username', '')
+    email = data.get('email', '')
+
+    try:
+        if username != "":
+            if email == "":
+                result['results'] = get_user_info_by_username(username)
+                result['validation'] = True
+            else:
+                validate_data = validate_user(username, email)
+                result['results'] = validate_data['results']
+                result['validation'] = validate_data['validation']
+            return jsonify(result)
+
+        if email != "":
+            result['results'] = get_user_info_by_email(email)
+
+            result['validation'] = True
+            return jsonify(result)
+    except Exception as e:
+        result['error'] = str(e)
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_user_info/<int:owner>/<int:shared_user_id>',
+                     methods=['GET'])
+def get_user_info(owner, shared_user_id):
+    """get_user_info.
+
+    Get username and password by querying user id
+
+    param:
+        user_id: The user ID
+    return: The result json:
+        username: The username,
+        email: The email,
+        error: null if no error occurs
+    """
+    result = {
+        'username': '',
+        'email': '',
+        'owner': False,
+        'error': ''
+    }
+    try:
+        user_info = get_user_information(shared_user_id)
+        result['username'] = user_info['username']
+        result['email'] = user_info['email']
+        if owner != 0:
+            result['owner'] = get_user_permission(owner)
+    except Exception as e:
+        result['error'] = str(e)
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_current_login_user_id', methods=['GET'])
+def get_current_login_user_id():
+    """get_current_login_user_id.
+
+    Get user id of user is currently login
+    """
+    result = {
+        'user_id': '',
+        'error': ''
+    }
+
+    try:
+        user_id = get_current_user()
+        result['user_id'] = user_id
+    except Exception as e:
+        result['error'] = str(e)
+
+    return jsonify(result)
