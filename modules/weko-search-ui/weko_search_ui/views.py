@@ -269,6 +269,14 @@ def bulk_delete():
                     indexer = WekoIndexer()
                     indexer.update_path(record, update_revision=False)
 
+                    if len(paths) == 0:
+                        record_indexer.delete_by_id(recid)
+                        pids = PersistentIdentifier.query.filter_by(
+                            object_uuid=recid).all()
+                        for pid in pids:
+                            db.session.delete(pid)  # Delete PersistentId
+                        db.session.commit()  # terminate the transaction
+
     if request.method == 'PUT':
         # Do delete items inside the current index tree (maybe root tree)
         q = request.values.get('q')
