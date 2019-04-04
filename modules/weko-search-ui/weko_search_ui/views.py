@@ -376,12 +376,13 @@ def get_journal_info(index_id=0):
             title = value.get('title_i18n')
             if title is not None:
                 data = journal.get(value['key'])
-                dataMap = value.get('titleMap')
-                if dataMap is not None:
-                    res = [x['name'] for x in dataMap if x['value'] == data]
-                    data = res[0]
-                val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
-                result.update({value['key']: val})
+                if data is not None and len(str(data)) > 0:
+                    dataMap = value.get('titleMap')
+                    if dataMap is not None:
+                        res = [x['name'] for x in dataMap if x['value'] == data]
+                        data = res[0]
+                    val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
+                    result.update({value['key']: val})
         # real url: ?action=repository_opensearch&index_id=
         result.update({'openSearchUrl': request.url_root +
                        "search?search_type=2&q={}".format(index_id)})
