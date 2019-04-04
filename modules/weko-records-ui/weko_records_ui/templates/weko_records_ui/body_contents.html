@@ -19,7 +19,6 @@
 # MA 02111-1307, USA.
 #}
 
-
 <div class="panel-group">
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
@@ -60,11 +59,11 @@
       <div class="panel-body">
         <div class="row">
           <div class="col-sm-9 col-md-9 col-left">
+            <div id="record_id" class="hide">{{ record.id }}</div>
             {%- block record_author %}
               {%- set files = record.files -%}
               {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
               {%- if files -%}
-              {%- set downloads_count_list = record | get_downloads_count -%}
               <table class="table table-bordered table-striped">
                 <thead>
                 <tr >
@@ -354,3 +353,8 @@
   </div>
 </div>
 </div>
+
+{%- block javascript %}
+<script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}">
+</script>
+{%- endblock javascript %}
