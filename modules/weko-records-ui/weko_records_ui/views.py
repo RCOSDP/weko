@@ -21,6 +21,7 @@
 """Blueprint for weko-records-ui."""
 
 from datetime import datetime
+
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
@@ -239,6 +240,7 @@ def get_license_icon(type):
 
     return lst
 
+
 @blueprint.app_template_filter('check_permission')
 def check_permission(record):
     """Check Permission on Page.
@@ -314,6 +316,7 @@ def _get_google_scholar_meta(record):
     res.append({'name': 'citation_abstract_html_url', 'data': request.url})
     return res
 
+
 def default_view_method(pid, record, filename=None, template=None, **kwargs):
     r"""Display default view.
 
@@ -383,11 +386,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 def bulk_update():
     """Render view."""
     detail_condition = get_search_detail_keyword('')
-    return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
-                           fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
-                           licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
-                           management_type='update',
-                           detail_condition=detail_condition)
+    return render_template(
+        current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
+        fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
+        licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
+        management_type='update',
+        detail_condition=detail_condition)
 
 
 @blueprint.route('/bulk_update/items_metadata', methods=['GET'])
@@ -428,6 +432,7 @@ def get_items_metadata():
 
     return jsonify(data)
 
+
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
 def set_pdfcoverpage_header():
     """Set pdfcoverage header."""
@@ -463,7 +468,8 @@ def set_pdfcoverpage_header():
                                     header_display_position
                                     )
 
-        flash({{_('PDF cover page settings have been updated.')}}, category='success')
+        flash({{_('PDF cover page settings have been updated.')}},
+              category='success')
         return redirect('/admin/pdfcoverpage')
 
     return redirect('/admin/pdfcoverpage')

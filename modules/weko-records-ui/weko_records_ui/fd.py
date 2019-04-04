@@ -279,7 +279,15 @@ def file_ui(
     signals.file_downloaded.send(current_app._get_current_object(), obj=obj)
     return make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang)
 
+
 def add_signals_info(record, obj):
+    """Add event signals info.
+
+    Add user role, site license flag, item index list.
+
+    :param record: the record metadate.
+    :param obj: send object.
+    """
     # Add user role info to send_obj
     userrole = 'guest'
     if hasattr(current_user, 'id'):
