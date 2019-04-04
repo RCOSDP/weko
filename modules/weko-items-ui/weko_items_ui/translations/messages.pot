@@ -112,3 +112,33 @@ msgstr ""
 #: app-author-add/src/app/app.component.html:21
 msgid "Index_Tree"
 msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:38
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:38
+msgid "Metadata Auto Input"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:104
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:104
+msgid "Automatic metadata input"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:116
+msgid "Get"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:279
+msgid "Please select the ID."
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:280
+msgid "Please input value."
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:116
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:281
+msgid "Specified ID does not exist."
+msgstr ""
