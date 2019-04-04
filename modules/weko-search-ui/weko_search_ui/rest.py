@@ -257,8 +257,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     else index_id.split('/').pop()
                 index_info = Indexes.get_index(index_id=index_id)
                 # update by weko_dev17 at 2019/04/04
-                if index_info.display_format == '1' \
-                        and len(index_info.image_name) > 0:
+                if len(index_info.image_name) > 0:
                     nlst[0]['img'] = index_info.image_name
                 nlst[0]['display_format'] = index_info.display_format
             agp.append(nlst)

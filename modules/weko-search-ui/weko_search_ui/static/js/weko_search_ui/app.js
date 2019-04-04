@@ -48,8 +48,7 @@
       var check = setInterval(show, 500);
       function show() {
         if($('#index_list_length').val() !== undefined && $('#index_list_length').val() !== '' && $('#index_list_length').val() !== null) {
-          console.log($('#display_format_flg').val());
-          page_global.display_list_flg = $('#display_format_flg').val() == 1;
+          page_global.display_list_flg = $('#display_format').val() == 1;
           if($('#index_tree_list').length || !page_global.display_list_flg){
             $("#journal_info").remove();
           } else {
@@ -60,8 +59,8 @@
           if($("#thumbnail_img").length > 0 && page_global.display_list_flg) {
             $("#journal_info_img").show();
             $("#journal_info_img").html($("#thumbnail_img").get(0));
-            $("#thumbnail_img").removeClass("ng-hide");
           }
+          $("#thumbnail_img").removeClass("ng-hide");
         }
       }
     }
