@@ -255,8 +255,10 @@ def bulk_delete():
                 paths = record['path']
                 if len(paths) > 0:
                     # Remove the element which matches the index_tree_id
+                    removed_path = None
                     for path in paths:
                         if path.endswith(str(index_tree_id)):
+                            removed_path = path
                             paths.remove(path)
                             break
 
@@ -269,12 +271,10 @@ def bulk_delete():
                     indexer = WekoIndexer()
                     indexer.update_path(record, update_revision=False)
 
-                    if len(paths) == 0:
-                        record_indexer.delete_by_id(recid)
-                        pids = PersistentIdentifier.query.filter_by(
-                            object_uuid=recid).all()
-                        for pid in pids:
-                            db.session.delete(pid)  # Delete PersistentId
+                    if len(paths) == 0 and removed_path is not None:
+                        from weko_deposit.api import WekoDeposit
+                        WekoDeposit.delete_by_index_tree_id(removed_path)
+                        Record.get_record(recid).delete()  # flag as deleted
                         db.session.commit()  # terminate the transaction
 
     if request.method == 'PUT':
