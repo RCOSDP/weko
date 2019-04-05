@@ -62,7 +62,7 @@ def index():
     else:
         activities = activity.get_activity_list()
     return render_template(
-        'weko_workflow/activity_list.html',
+        'weko_workflow/drag_test.html',
         activities=activities, community_id=community_id, **ctx
     )
 
