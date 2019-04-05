@@ -264,7 +264,7 @@ def get_current_user():
     Get user id of user currently login.
 
     parameter:
-    return: 
+    return: current_id
     """
     current_id = current_user.get_id()
     return current_id
