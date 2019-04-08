@@ -365,6 +365,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     can_download_original = check_original_pdf_download_permission(record) \
         and pdfcoverpage_set_rec is not None and pdfcoverpage_set_rec.avail != 'disable'
 
+    # Get item meta data
+    meta = ItemsMetadata.get_record(pid.object_uuid)
+    record['permalink_uri'] = None
+    if meta is not None:
+        pidstore_identifier = meta.get('pidstore_identifier')
+        if pidstore_identifier is None:
+            record['permalink_uri'] = request.url
+
     return render_template(
         template,
         pid=pid,
