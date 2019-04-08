@@ -8,11 +8,6 @@
     </li>
   </ol>
 </div>
-<div class="row">
-  <div class="col-sm-12">
-    <span class="pull-right">Permalink : {{permalink_uri}}</span>
-  </div>
-</div>
 <div ng-if="vm.invenioSearchResults.aggregations.hasOwnProperty('path') && vm.invenioSearchResults.aggregations.path.buckets[0].length < 2">
   <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" style="padding-bottom: 10px;">
     <img ng-if="$last" ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index"
