@@ -103,6 +103,7 @@
     <div id="search-result-body" class="panel-body">
       <div id="index_item_list">
         {%- if index_id %}
+          <input type="hidden" value="{{ request.url }}" id="permalink_uri">
           <invenio-search-results
            template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_BREAD) }}">
           </invenio-search-results>
