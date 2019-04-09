@@ -165,7 +165,16 @@ angular.module('myApp', ['ui.bootstrap'])
               continue;
             }
 
-            let txt_link = `<a href="${ele.links.self}">${ele.key}</a>`;
+            // Hide the extension
+            var filename = ele.key;
+            var lastIndex = filename.lastIndexOf(".");
+            if (lastIndex != -1) {
+              filename = filename.substr(0, lastIndex);
+            }
+            if (filename == "") {
+              filename = ele.key
+            }
+            let txt_link = `<a href="${ele.links.self}">${filename}</a>`;
 
             let size = formatBytes(ele.size, 2);
 
