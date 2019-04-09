@@ -37,7 +37,6 @@ action_download_original_pdf_access = action_factory('download-original-pdf-acce
 download_original_pdf_permission = Permission(action_download_original_pdf_access)
 
 def page_permission_factory(record, *args, **kwargs):
-    print("[Log] Call permission factory of weko request record")
     def can(self):
         is_ok = True
         # item publish status check
@@ -53,9 +52,6 @@ def page_permission_factory(record, *args, **kwargs):
             if kwargs.get('flg'):
                 if not is_can or (is_can and not is_himself):
                     is_ok = False
-
-        print("[Log]: is_ok")
-        print(is_ok)
         return is_ok
 
     return type('DetailPagePermissionChecker', (), {'can': can})()

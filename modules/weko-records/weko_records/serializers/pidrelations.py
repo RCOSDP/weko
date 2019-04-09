@@ -31,7 +31,6 @@ from invenio_pidstore.models import PersistentIdentifier
 
 from weko_records.api import WekoRecord
 
-
 def serialize_related_identifiers(pid):
     """Serialize PID Versioning relations as related_identifiers metadata."""
     pv = PIDVersioning(child=pid)
