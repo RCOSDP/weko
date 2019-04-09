@@ -156,7 +156,7 @@ def get_user_roles():
         users = current_app.config['WEKO_PERMISSION_ROLE_USER']
         for lst in list(current_user.roles or []):
             # if is administrator
-            if lst.name in users[0:2]:
+            if lst.name in users[0:3]:
                 result = True
         return result
 

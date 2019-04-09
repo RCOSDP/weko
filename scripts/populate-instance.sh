@@ -200,6 +200,11 @@ ${INVENIO_WEB_INSTANCE} access \
        allow "author-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "items-autofill" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
 # sphinxdoc-set-role-access-end
 
 #### sphinxdoc-create-language-data-begin
@@ -256,3 +261,6 @@ ${INVENIO_WEB_INSTANCE} users create \
        --active
 ##### sphinxdoc-create-test-data-end
 
+# sphinxdoc-set-web-api-account-combobox-begin
+${INVENIO_WEB_INSTANCE} cert insert crf CrossRef
+# sphinxdoc-set-web-api-account-combobox-end

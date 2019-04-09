@@ -241,22 +241,6 @@ def get_license_icon(type):
     return lst
 
 
-@blueprint.app_template_filter('get_downloads_count')
-def get_downloads_count(record):
-    """Get downloads count."""
-    result = {}
-    try:
-        cfg = {'params': {'bucket_id': record['_buckets']['deposit']}}
-        query_cfg = current_stats.queries['bucket-file-download-total']
-        query = query_cfg.query_class(**query_cfg.query_config)
-        reseponse = query.run(**cfg['params'])
-        for c in reseponse['buckets']:
-            result[c['key']] = int(c['value'])
-    except Exception as e:
-        current_app.logger.debug(str(e))
-    return result
-
-
 @blueprint.app_template_filter('check_permission')
 def check_permission(record):
     """Check Permission on Page.
@@ -402,11 +386,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 def bulk_update():
     """Render view."""
     detail_condition = get_search_detail_keyword('')
-    return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
-                           fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
-                           licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
-                           management_type='update',
-                           detail_condition=detail_condition)
+    return render_template(
+        current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
+        fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
+        licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
+        management_type='update',
+        detail_condition=detail_condition)
 
 
 @blueprint.route('/bulk_update/items_metadata', methods=['GET'])
@@ -483,7 +468,8 @@ def set_pdfcoverpage_header():
                                     header_display_position
                                     )
 
-        flash('PDF cover page settings have been updated.', category='success')
+        flash({{_('PDF cover page settings have been updated.')}},
+              category='success')
         return redirect('/admin/pdfcoverpage')
 
     return redirect('/admin/pdfcoverpage')

@@ -46,7 +46,8 @@ class Flow(object):
     """Operated on the Flow."""
 
     def create_flow(self, flow):
-        """Create new flow.
+        """
+        Create new flow.
 
         :param flow:
         :return:
@@ -510,7 +511,7 @@ class WorkActivity(object):
         with db.session.begin_nested():
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             activity_action.action_status = action_status
             db.session.merge(activity_action)
         db.session.commit()
@@ -526,7 +527,7 @@ class WorkActivity(object):
         with db.session.begin_nested():
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             if activity_action:
                 activity_action.action_comment = comment
                 db.session.merge(activity_action)
@@ -542,7 +543,7 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             return activity_action
 
     def create_or_update_action_journal(self, activity_id, action_id, journal):
@@ -556,7 +557,7 @@ class WorkActivity(object):
         with db.session.begin_nested():
             action_journal = ActionJournal.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             if action_journal:
                 action_journal.action_journal = journal
                 db.session.merge(action_journal)
@@ -580,7 +581,7 @@ class WorkActivity(object):
         with db.session.no_autoflush:
             action_journal = ActionJournal.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             return action_journal
 
     def get_activity_action_status(self, activity_id, action_id):
@@ -590,26 +591,36 @@ class WorkActivity(object):
                 activity_id=activity_id, action_id=action_id).one()
             action_stus = activity_ac.action_status
             return action_stus
+
     # add by ryuu end
 
-    def upt_activity_action_id_grant(
-            self,
-            activity_id,
-            action_id,
-            identifier_grant):
+    def upt_activity_action_id_grant(self, activity_id, action_id,
+                                     identifier_grant,
+                                     identifier_grant_jalc_doi_suffix,
+                                     identifier_grant_jalc_cr_doi_suffix,
+                                     identifier_grant_jalc_dc_doi_suffix):
         """Update activity info.
 
         :param activity_id:
         :param action_id:
         :param identifier_grant:
+        :param identifier_grant_jalc_doi_suffix:
+        :param identifier_grant_jalc_cr_doi_suffix:
+        :param identifier_grant_jalc_dc_doi_suffix:
         :return:
         """
         with db.session.begin_nested():
             activity_action = ActivityAction.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id,).one_or_none()
+                action_id=action_id, ).one_or_none()
             if activity_action:
                 activity_action.action_identifier_grant = identifier_grant
+                activity_action.action_identifier_grant_jalc_doi_manual = \
+                    identifier_grant_jalc_doi_suffix
+                activity_action.action_identifier_grant_jalc_cr_doi_manual = \
+                    identifier_grant_jalc_cr_doi_suffix
+                activity_action.action_identifier_grant_jalc_dc_doi_manual = \
+                    identifier_grant_jalc_dc_doi_suffix
                 db.session.merge(activity_action)
         db.session.commit()
 
@@ -728,12 +739,14 @@ class WorkActivity(object):
                         activi.ItemName = ''
                 activi.StatusDesc = ActionStatusPolicy.describe(
                     ActionStatusPolicy.ACTION_DONE) \
-                    if ActivityStatusPolicy.ACTIVITY_FINALLY == activi.activity_status \
+                    if ActivityStatusPolicy.ACTIVITY_FINALLY == \
+                    activi.activity_status \
                     else ActionStatusPolicy.describe(
                     ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
-                if ActivityStatusPolicy.ACTIVITY_FINALLY == activi.activity_status:
+                if ActivityStatusPolicy.ACTIVITY_FINALLY == \
+                        activi.activity_status:
                     activi.type = 'All'
                     continue
                 activi.type = 'ToDo'
@@ -873,7 +886,8 @@ class WorkActivity(object):
         workflow = WorkFlow()
         workflow_detail = workflow.get_workflow_by_id(
             activity_detail.workflow_id)
-        if ActivityStatusPolicy.ACTIVITY_FINALLY != activity_detail.activity_status:
+        if ActivityStatusPolicy.ACTIVITY_FINALLY != \
+                activity_detail.activity_status:
             activity_detail.activity_status_str = \
                 request.args.get('status', 'ToDo')
         else:
@@ -928,7 +942,9 @@ class WorkActivity(object):
             ctx = {'community': comm}
             community_id = comm.id
 
-        return activity_detail, item, steps, action_id, cur_step, temporary_comment, approval_record, step_item_login_url, histories, res_check, pid, community_id, ctx
+        return activity_detail, item, steps, action_id, cur_step, \
+            temporary_comment, approval_record, step_item_login_url, histories,\
+            res_check, pid, community_id, ctx
 
 
 class WorkActivityHistory(object):
@@ -948,7 +964,13 @@ class WorkActivityHistory(object):
             action_user=current_user.get_id(),
             action_date=datetime.utcnow(),
             action_comment=activity.get('commond'),
-            action_identifier_grant=activity.get('identifier_grant', 0)
+            action_identifier_grant=activity.get('identifier_grant', 0),
+            action_identifier_grant_jalc_doi_manual=activity.get(
+                'identifier_grant_jalc_doi_suffix', ""),
+            action_identifier_grant_jalc_cr_doi_manual=activity.get(
+                'identifier_grant_jalc_cr_doi_suffix', ""),
+            action_identifier_grant_jalc_dc_doi_manual=activity.get(
+                'identifier_grant_jalc_dc_doi_suffix', "")
         )
         new_history = False
         activity = WorkActivity()

@@ -173,7 +173,6 @@ class IdentifierSettingView(ModelView):
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
         'cnri',
         'suffix',
-        # Debug
         'jalc_flag',
         'jalc_crossref_flag',
         'jalc_datacite_flag',
@@ -220,12 +219,11 @@ class IdentifierSettingView(ModelView):
                          )
 
     def _validator_halfwidth_input(form, field):
-        """Valid input character set.
+        """
+        Valid input character set.
 
-        :param form:
-        Form used to create/update model
-        :param field:
-        Template fields contain data need validator
+        :param form: Form used to create/update model
+        :param field: Template fields contain data need validator
         """
         if field.data is None:
             return
@@ -283,18 +281,17 @@ class IdentifierSettingView(ModelView):
     }
 
     def on_model_change(self, form, model, is_created):
-        """Perform some actions before a model is created or updated.
+        """
+        Perform some actions before a model is created or updated.
 
         Called from create_model and update_model in the same transaction
         (if it has any meaning for a store backend).
-
         By default does nothing.
-        :param form:
-        Form used to create/update model
-        :param model:
-        Model that will be created/updated
-        :param is_created:
-        Will be set to True if model was created and to False if edited
+
+        :param form: Form used to create/update model
+        :param model: Model that will be created/updated
+        :param is_created: Will be set to True if model was created
+            and to False if edited
         """
         # Update hidden data automation
         if is_created:
@@ -302,46 +299,42 @@ class IdentifierSettingView(ModelView):
             model.created_date = datetime.utcnow().replace(microsecond=0)
         model.updated_userId = current_user.get_id()
         model.updated_date = datetime.utcnow().replace(microsecond=0)
-        model.repository = str(model.repository)
+        model.repository = str(model.repository.id)
         pass
 
     def on_form_prefill(self, form, id):
-        """On form prefill."""
-        query_data = Community.query.options(load_only('id')).all()
-        data = [index.id for index in query_data]
-        pos = -1
-        try:
-            pos = data.index(form.repository.data)
-        except ValueError:
-            pos = -1
-        form.repo_selected.data = pos + 1
+        form.repo_selected.data = form.repository.data
         pass
 
     def create_form(self, obj=None):
-        """Instantiate model delete form and return it.
+        """
+        Instantiate model delete form and return it.
 
         Override to implement custom behavior.
-
         The delete form originally used a GET request, so delete_form
         accepts both GET and POST request for backwards compatibility.
+
+        :param obj: input object
         """
         return self._use_append_repository(
             super(IdentifierSettingView, self).create_form()
         )
 
     def edit_form(self, obj):
-        """Instantiate model editing form and return it.
+        """
+        Instantiate model editing form and return it.
 
         Override to implement custom behavior.
+
+        :param obj: input object
         """
-        print('-------------------------OBJ_____________', obj.repository)
         return self._use_append_repository(
             super(IdentifierSettingView, self).edit_form(obj)
         )
 
     def _use_append_repository(self, form):
         form.repository.query_factory = self._get_community_list
-        form.repo_selected.data = 0
+        form.repo_selected.data = 'Root Index'
         return form
 
     def _get_community_list(self):
@@ -360,7 +353,6 @@ identifier_adminview = dict(
     category=_('Setting'),
     name=_('Identifier'),
 )
-
 
 __all__ = (
     'pdfcoverpage_adminview',

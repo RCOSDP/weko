@@ -36,7 +36,7 @@ from .api import SearchSetting
 from .permissions import search_permission
 
 
-def Get_item_type_aggs(search_index):
+def get_item_type_aggs(search_index):
     """Get item types aggregations.
 
     :return: aggs dict
@@ -71,7 +71,8 @@ def get_permission_filter(comm_id=None):
     else:
         user_id, result = check_admin_user()
         if result:
-            shuld = [Q('match', weko_creator_id=user_id)]
+            shuld = [Q('match', weko_creator_id=user_id),
+                     Q('match', weko_shared_id=user_id)]
             mut2 = [match, rng]
             shuld.append(Q('bool', must=mut2))
             if comm_id is not None:
@@ -103,7 +104,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     :param query_parser: Query parser. (Default: ``None``)
     :returns: Tuple with search instance and URL arguments.
     """
-    def _Get_search_qs_query(qs=None):
+    def _get_search_qs_query(qs=None):
         """Qs of search bar keywords for detail simple search.
 
         :param qs: Query string.
@@ -113,12 +114,12 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
               fields=['search_*', 'search_*.ja']) if qs else None
         return q
 
-    def _Get_detail_keywords_query():
+    def _get_detail_keywords_query():
         """Get keywords query.
 
         :return: Query parser.
         """
-        def _Get_keywords_query(k, v):
+        def _get_keywords_query(k, v):
             qry = None
             kv = request.values.get(k)
             if not kv:
@@ -161,7 +162,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             return qry
 
-        def _Get_nested_query(k, v):
+        def _get_nested_query(k, v):
             # text value
             kv = request.values.get(k)
             if not kv:
@@ -230,7 +231,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
             return Q('bool', should=shuld) if shuld else None
 
-        def _Get_date_query(k, v):
+        def _get_date_query(k, v):
             # text value
             qry = None
             if isinstance(v, list) and len(v) >= 2:
@@ -306,7 +307,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                 'Detail search query parser failed. err:{0}'.format(e))
         return mut
 
-    def _Get_simple_search_query(qs=None):
+    def _get_simple_search_query(qs=None):
         """Query parser for simple search.
 
         :param qs: Query string.
@@ -320,7 +321,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         mt.extend(_get_detail_keywords_query())
         return Q('bool', must=mt) if mt else Q()
 
-    def _Get_simple_search_community_query(community_id, qs=None):
+    def _get_simple_search_community_query(community_id, qs=None):
         """Query parser for simple search.
 
         :param qs: Query string.
