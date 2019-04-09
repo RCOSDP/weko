@@ -607,7 +607,7 @@ def get_journals():
             object_pairs_hook=OrderedDict)
 
     else:
-        multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
+        multiple_result = search_romeo_jtitles(key, 'starts') if key else {}
         try:
             datastore.put(
                 cache_key,
