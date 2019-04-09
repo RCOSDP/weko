@@ -58,8 +58,34 @@
                 {% endfor %}
               </select>
             </div>
-            <a type="button" class="btn btn-default pull-right" href="{{ url_for('weko_itemtypes_ui.custom_property') }}">{{ _('New Property') }}</a>
-            <a type="button" class="btn btn-default pull-right" href="{{ url_for('weko_itemtypes_ui.mapping_index') }}">{{ _('Mapping') }}</a>
+            <div class="pull-right">
+              <a role="button" class="btn btn-default" href="{{ url_for('weko_itemtypes_ui.mapping_index') }}">{{ _('Mapping') }}</a>
+              <a role="button" class="btn btn-default" href="{{ url_for('weko_itemtypes_ui.custom_property') }}">{{ _('New Property') }}</a>
+              <a role="button" class="btn btn-danger" href="javascript:;" id="btn_delete_item">{{ _('Delete') }}</a>
+              <div id="item_type_delete_confirmation" class="modal fade" tabindex="-1"
+                   role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                      <h4 class="modal-title" id="deleteHeader">WEKO</h4>
+                    </div>
+                    <div class="modal-body" style="overflow-x: auto;">
+                      <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
+                      <span>{{_('Are you sure you want to delete this item type?')}}</span>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-primary" id="item_type_delete_continue">{{_('Continue')}} </button>
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">{{_('Cancel')}}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" value="{{_('Cannot delete Item Type for Harvesting.')}}" id="msg_for_harvesting">
+              <input type="hidden" value="{{_('Cannot delete because there is belonging item.')}}" id="msg_for_registered_item">
+            </div>
           </div>
         </div>
       </div>

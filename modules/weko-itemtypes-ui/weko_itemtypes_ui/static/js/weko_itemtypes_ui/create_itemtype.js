@@ -987,4 +987,14 @@
     } else if ($("#item-type-lists option:selected").hasClass('harvesting_type')) {
         $('input[type=radio][name=item_type][value=harvesting]').click()
     }
+
+    $('#btn_delete_item').on('click', function(){
+      var selected_item_type = $("#item-type-lists :selected");
+      var is_harvesting_type = selected_item_type.attr("class") === "harvesting_type";
+      if (!is_harvesting_type) {
+        alert($("#msg_for_harvesting").val());
+      } else {
+        $("#item_type_delete_confirmation").modal();
+      }
+    });
 });

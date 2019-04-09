@@ -300,3 +300,18 @@ msgstr ""
 msgid "sending"
 msgstr ""
 
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:77
+msgid "Are you sure you want to delete this item type?"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:80
+msgid "Continue"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:86
+msgid "Cannot delete Item Type for Harvesting."
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:87
+msgid "Cannot delete because there is belonging item."
+msgstr ""
