@@ -61,6 +61,7 @@ class SearchMetaForm extends React.Component {
         return (
             <div>
                 <ModalHeader headerName={this.props.headerName} />
+                <br></br>
                 <form onSubmit={this.handleSubmit}>
                     <div className="form-inline">
                         <label className="input-group-text" for="autofill_id_type">
