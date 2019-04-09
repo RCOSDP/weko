@@ -473,3 +473,27 @@ def set_pdfcoverpage_header():
         return redirect('/admin/pdfcoverpage')
 
     return redirect('/admin/pdfcoverpage')
+
+
+@blueprint.route("/file_version/update", methods=['PUT'])
+def file_version_update():
+    """Bulk delete items and index trees."""
+
+    #
+    bucket_id = request.values.get('bucket_id')
+    key = request.values.get('key')
+    version_id = request.values.get('version_id')
+    is_show = request.values.get('is_show')
+    if bucket_id is not None and key is not None and version_id is not None:
+        from invenio_files_rest.models import ObjectVersion
+        object_version = ObjectVersion.get(bucket=bucket_id, key=key, version_id=version_id)
+        if object_version is not None:
+            # Do update the path on record
+            object_version.is_show = True if is_show == '1' else False
+            db.session.commit()
+
+            return jsonify({'status': 1})
+        else:
+            return jsonify({'status': 0, 'msg': 'Version not found'})
+    else:
+        return jsonify({'status': 0, 'msg': 'Invalid data'})
