@@ -164,7 +164,7 @@ class ItemType(db.Model, Timestamp):
     }
 
     deleted_flg = db.Column(
-        db.Integer,
+        db.Integer(),
         nullable=True,
         default=0)
     """deleted_flg of item type."""
@@ -198,7 +198,7 @@ class ItemTypeName(db.Model, Timestamp):
     """site license identify."""
 
     deleted_flg = db.Column(
-        db.Integer,
+        db.Integer(),
         nullable=True,
         default=0)
     """deleted_flg of item type."""
@@ -254,7 +254,7 @@ class ItemTypeMapping(db.Model, Timestamp):
     }
 
     deleted_flg = db.Column(
-        db.Integer,
+        db.Integer(),
         nullable=True,
         default=0)
     """deleted_flg of item type."""
