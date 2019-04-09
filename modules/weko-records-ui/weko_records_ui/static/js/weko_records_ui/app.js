@@ -78,12 +78,7 @@ angular.module('myApp', ['ui.bootstrap'])
           success: function(data, status, xhr){
             showVersionPrivacyLoading(false);
 
-            if (data.status == 1) {
-              let element = $("#version_link_" + index);
-              let link = $("#link_" + index).val();
-              let txt_link = value == 1 ? `<a href="${link}">${element.text()}</a>` : element.text();
-              element.html(txt_link);
-            } else {
+            if (data.status != 1) {
               // Revert the checked radio
               revertCheckedStatus(radio.value);
               // Log to console
@@ -134,7 +129,7 @@ angular.module('myApp', ['ui.bootstrap'])
 
             // const isPublished = ele.pubPri === 'Published' ? 1 : 0;
             const nameRadio = `radio_${index}`;
-            let radio = index == 0 ? "" : `
+            let radio = index == 0 || is_logged_in == 'False' ? "" : `
             <div id="version_radios_${index}" class="radio">
                 <label style="margin-left: 5px">
                   <input type="radio" name="${nameRadio}" value="1" ${ele.is_show ? " checked " : ""} onchange="versionPrivacyChanged(\'${bucket_id}\', \'${key}\', \'${version_id}\', ${index}, this)">${txt_show}
@@ -165,8 +160,12 @@ angular.module('myApp', ['ui.bootstrap'])
                 version = 'Current';
             }
 
-            // Check the permission of file to be able download or not
-            let txt_link = index != 0 && !ele.is_show ? ele.key : `<a href="${ele.links.self}">${ele.key}</a>`;
+            if (ele.links.self == '') {
+              // User does not have the permission to show this version, so that we would not render this row
+              continue;
+            }
+
+            let txt_link = `<a href="${ele.links.self}">${ele.key}</a>`;
 
             let size = formatBytes(ele.size, 2);
 
@@ -185,13 +184,12 @@ angular.module('myApp', ['ui.bootstrap'])
             results += `
             <tr>
                 <td>
-                  <input type="hidden" id="link_${index}" value="${ele.links.self}"/>
                   ${version}
                 </td>
                 <td class="nowrap">
                   ${formatDate(new Date(ele.updated))}
                 </td>
-                <td id="version_link_${index}">
+                <td>
                   ${txt_link}
                 </td>
                 <td>

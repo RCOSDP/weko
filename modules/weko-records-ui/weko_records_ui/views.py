@@ -476,6 +476,7 @@ def set_pdfcoverpage_header():
 
 
 @blueprint.route("/file_version/update", methods=['PUT'])
+@login_required
 def file_version_update():
     """Bulk delete items and index trees."""
 
