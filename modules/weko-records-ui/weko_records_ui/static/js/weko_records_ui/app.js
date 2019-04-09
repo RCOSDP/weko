@@ -143,7 +143,7 @@ angular.module('myApp', ['ui.bootstrap'])
                   <input type="radio" name="${nameRadio}" value="0" ${!ele.is_show ? " checked " : ""} onchange="versionPrivacyChanged(\'${bucket_id}\', \'${key}\', \'${version_id}\', ${index}, this)">${txt_hide}
                 </label>
             </div>
-            <div id="version_loading_${index}" class="hidden fa fa-circle-o-notch fa-spin text-center></div>
+            <div id="version_loading_${index}" class="hidden fa fa-circle-o-notch fa-spin text-center"></div>
             `;
             // if (!isPublished) {
             //   radio = `
