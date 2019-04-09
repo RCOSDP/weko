@@ -319,7 +319,7 @@ msgstr "このアイテムタイプを削除してよろしいですか。"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:80
 msgid "Continue"
-msgstr ""
+msgstr "継続"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:86
 msgid "Cannot delete Item Type for Harvesting."
