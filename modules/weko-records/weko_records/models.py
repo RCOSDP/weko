@@ -163,6 +163,12 @@ class ItemType(db.Model, Timestamp):
         'version_id_col': version_id
     }
 
+    deleted_flg = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0)
+    """deleted_flg of item type."""
+
 
 class ItemTypeName(db.Model, Timestamp):
     """Represent an item type name.
@@ -190,6 +196,12 @@ class ItemTypeName(db.Model, Timestamp):
     has_site_license = db.Column(db.Boolean(name='has_site_license'),
                                  default=True, nullable=False)
     """site license identify."""
+
+    deleted_flg = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0)
+    """deleted_flg of item type."""
 
 
 class ItemTypeMapping(db.Model, Timestamp):
@@ -240,6 +252,12 @@ class ItemTypeMapping(db.Model, Timestamp):
     __mapper_args__ = {
         'version_id_col': version_id
     }
+
+    deleted_flg = db.Column(
+        db.Integer,
+        nullable=True,
+        default=0)
+    """deleted_flg of item type."""
 
 
 class ItemMetadata(db.Model, Timestamp):
