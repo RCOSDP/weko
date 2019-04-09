@@ -53,10 +53,10 @@ angular.module('myApp', ['ui.bootstrap'])
       var revertCheckedStatus = function(value) {
         if (value == 1) {
           // Change radio 0 to checked
-          $("input[name=radio_" + index + "][value='0']").prop("checked",true);
+          $("input[name=radio_" + index + "][value='0']").prop("checked", true);
         } else {
           // Change radio 1 to checked
-          $("input[name=radio_" + index + "][value='1']").prop("checked",true);
+          $("input[name=radio_" + index + "][value='1']").prop("checked", true);
         }
       }
 
@@ -85,15 +85,15 @@ angular.module('myApp', ['ui.bootstrap'])
               element.html(txt_link);
             } else {
               // Revert the checked radio
-              revertCheckedStatus(radio.value)
+              revertCheckedStatus(radio.value);
               // Log to console
-              console.log(data.msg)
+              console.log(data.msg);
             }
           },
           error: function(status, error){
             showVersionPrivacyLoading(false);
             // Revert the checked radio
-            revertCheckedStatus(radio.value)
+            revertCheckedStatus(radio.value);
             // Log to console
             console.log(error);
           }
@@ -111,10 +111,10 @@ angular.module('myApp', ['ui.bootstrap'])
         response.contents.sort(function(first, second) {
             return second.updated - first.updated;
         });
-        let txt_filename = $('#txt_filename').val()
-        let txt_show = $('#txt_show').val()
-        let txt_hide = $('#txt_hide').val()
-        let is_logged_in = $('#txt_is_logged_in').val()
+        let txt_filename = $('#txt_filename').val();
+        let txt_show = $('#txt_show').val();
+        let txt_hide = $('#txt_hide').val();
+        let is_logged_in = $('#txt_is_logged_in').val();
 
         // Remove the versions which does not match the current file
         for (let index = 0; index < contents.length; index++) {
@@ -129,8 +129,8 @@ angular.module('myApp', ['ui.bootstrap'])
         for (let index = 0; index < contents.length; index++) {
             const ele = contents[index];
 
-            const version_id = ele.version_id
-            const key = ele.key
+            const version_id = ele.version_id;
+            const key = ele.key;
 
             // const isPublished = ele.pubPri === 'Published' ? 1 : 0;
             const nameRadio = `radio_${index}`;
@@ -166,7 +166,7 @@ angular.module('myApp', ['ui.bootstrap'])
             }
 
             // Check the permission of file to be able download or not
-            let txt_link = index != 0 && !ele.is_show ? ele.key : `<a href="${ele.links.self}">${ele.key}</a>`
+            let txt_link = index != 0 && !ele.is_show ? ele.key : `<a href="${ele.links.self}">${ele.key}</a>`;
 
             let size = formatBytes(ele.size, 2);
 
@@ -174,10 +174,10 @@ angular.module('myApp', ['ui.bootstrap'])
             var checksum = ele.checksum
             var checksumIndex = ele.checksum.indexOf(":")
             if (checksumIndex != -1) {
-              checksum = ele.checksum.substr(0, checksumIndex) + " <span class=\"wrap\">" + ele.checksum.substr(checksumIndex + 1) + "</span>"
+              checksum = ele.checksum.substr(0, checksumIndex) + " <span class=\"wrap\">" + ele.checksum.substr(checksumIndex + 1) + "</span>";
             }
 
-            var username = ''
+            var username = '';
             if (is_logged_in == 'True' && ele.uploaded_owners && ele.uploaded_owners.created_user) {
               username =  ele.uploaded_owners.created_user.username;
             }
