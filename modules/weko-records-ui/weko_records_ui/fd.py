@@ -227,6 +227,7 @@ def file_ui(
     else:
         lang = user.language
 
+    add_signals_info(record, obj)
     """ Send file without its pdf cover page """
 
     try:
@@ -253,7 +254,8 @@ def file_ui(
                     'pid_type': pid.pid_type,
                     'pid_value': pid.pid_value,
                 },
-                as_attachment=not is_preview
+                as_attachment=not is_preview,
+                is_preview=is_preview
             )
     except AttributeError:
         return ObjectResource.send_object(
@@ -264,7 +266,8 @@ def file_ui(
                 'pid_type': pid.pid_type,
                 'pid_value': pid.pid_value,
             },
-            as_attachment=not is_preview
+            as_attachment=not is_preview,
+            is_preview=is_preview
         )
 
     # Send file with its pdf cover page
@@ -275,3 +278,40 @@ def file_ui(
     # return obj_file_uri
     signals.file_downloaded.send(current_app._get_current_object(), obj=obj)
     return make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang)
+
+
+def add_signals_info(record, obj):
+    """Add event signals info.
+
+    Add user role, site license flag, item index list.
+
+    :param record: the record metadate.
+    :param obj: send object.
+    """
+    # Add user role info to send_obj
+    userrole = 'guest'
+    if hasattr(current_user, 'id'):
+        if len(current_user.roles) == 0:
+            userrole = 'user'
+        elif len(current_user.roles) == 1:
+            userrole = current_user.roles[0].name
+        else:
+            max_power_role_id = 999
+            for r in current_user.roles:
+                if max_power_role_id > r.id:
+                    max_power_role_id = r.id
+                    userrole = r.name
+    obj.userrole = userrole
+
+    # Add site license flag to send_obj
+    if hasattr(current_user, 'site_license_flag'):
+        obj.site_license_flag = True
+    else:
+        obj.site_license_flag = False
+
+    # Add index list info to send_obj
+    index_list = ''
+    if len(record.navi) > 0:
+        for index in record.navi:
+            index_list += index[3] + '|'
+    obj.index_list = index_list[:len(index_list) - 1]

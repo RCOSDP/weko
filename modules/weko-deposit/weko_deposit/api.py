@@ -26,6 +26,7 @@ from datetime import datetime
 import redis
 from flask import abort, current_app, flash, g, json
 from flask_login import current_user
+from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
@@ -181,18 +182,26 @@ class WekoIndexer(RecordIndexer):
             current_app.logger.debug(ex)
         return item_link_info
 
-    def update_path(self, record):
+    def update_path(self, record, update_revision=True):
         """Update path."""
         self.get_es_index()
         path = 'path'
         body = {'doc': {path: record.get(path)}}
-        return self.client.update(
-            index=self.es_index,
-            doc_type=self.es_doc_type,
-            id=str(record.id),
-            version=record.revision_id,
-            body=body
-        )
+        if update_revision:
+            return self.client.update(
+                index=self.es_index,
+                doc_type=self.es_doc_type,
+                id=str(record.id),
+                version=record.revision_id,
+                body=body
+            )
+        else:
+            return self.client.update(
+                index=self.es_index,
+                doc_type=self.es_doc_type,
+                id=str(record.id),
+                body=body
+            )
 
     def index(self, record):
         """Index a record.
@@ -465,6 +474,12 @@ class WekoDeposit(Deposit):
         Save when register a new item type, Update when edit an item
         type.
         """
+        current_user_id = current_user.get_id()
+        if current_user_id:
+            dc_owner = self.data.get("owner", None)
+            if not dc_owner:
+                self.data.update(dict(owner=current_user_id))
+
         if self.is_edit:
             obj = ItemsMetadata.get_record(self.id)
             obj.update(self.data)
@@ -540,12 +555,11 @@ class WekoDeposit(Deposit):
         dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
 
-        # pubs = '1' if 'private' in actions else '0'
-        pubs = '1'
+        pubs = '1' if 'private' in actions else '0'
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
-
+        print(jrc)
         return dc
 
     @classmethod

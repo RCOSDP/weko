@@ -24,9 +24,15 @@
   {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
+  <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
 {%- endblock css %}
 
 {%- block javascript %}
+  <script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -94,7 +100,8 @@
             <div class="row" ng-hide="false">
               <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
-                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="recordsVM.actionHandler(['index', 'PUT'], 'r')">{{_('Next')}}</button></li>
+                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson()">{{_('Next')}}</button></li>
+                  <input type="hidden" id="next-frame" value="r">
                   {%- if pid %}
                   <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">{{_('Delete')}}</button></li>
                   {%- endif %}
@@ -117,6 +124,16 @@
             </div>
             {%- endif %}
             <div ng-controller="WekoRecordsCtrl">
+              <div class="row" ng-hide="false">
+                <div class="col-sm-9" ng-show="true">
+                <p class="text-center">
+                  <button class="btn btn-primary" ng-click="getItemMetadata()">
+                    <span class="glyphicon glyphicon-search"></span>
+                    {{_('Automatic metadata input')}}
+                </button>
+                </p>
+                </div>
+              </div>
               <!--add by ryuu. start 20180410-->
               <div ng-show="false" type="text" id="btn_id" ></div>
               <div ng-show="false" type="text" id="author_info" ></div>
@@ -125,6 +142,58 @@
               <div ng-show="false" type="text" id="weko_id" ></div>
               <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
               <!--add by ryuu. end 20180410-->
+              <div class="row hidden" id="contributor-panel">
+                <div class="col-sm-9">
+
+                  <div class="panel panel-default">
+                      <div class="panel-heading">
+                        <h3 class="panel-title">Contributor</h3>
+                      </div>
+                      <div class="panel-body">    
+                          <div class="row" id="radio_form_share">
+                            <div class="radio">
+                              <label>
+                               <input type="radio" name="checkedSharePermiss" id="input" class="input_contributor" value="this_user" checked="checked" onchange="handleSharePermission(this.value)">This user</label>
+                               <br><label><input type="radio" onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input" value="other_user" class="other_user_rad">Other user</label>
+                            </div>
+                          </div>
+                          <div class="form_share_permission">     
+                            <div class="row" id="pd_username">
+                              
+                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
+                                  <label for="share_username">Username </label>
+                              </div>
+                              
+                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                                  <div class="autocomplete">
+                                      <input id="share_username" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
+                                      <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_username"></span>
+                                    </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              
+                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
+                                  <label for="share_email">Email </label>
+                              </div>
+                              
+                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                                  <div class="autocomplete">
+                                      <input id="share_email" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
+                                      <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_email"></span>
+                                  </div>
+                              </div>
+                            </div>      
+                          </div>             
+                        
+                      </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
+
               <invenio-records-form
                 form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
                 form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
@@ -133,7 +202,7 @@
               <div class="row" ng-hide="false">
                 <div class="col-sm-9" ng-show="true">
                   <ul class="list-inline text-right">
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson();recordsVM.actionHandler(['index', 'PUT'], 'r')">{{_('Next')}}</button></li>
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson()">{{_('Next')}}</button></li>
                     {%- if pid %}
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">{{_('Delete')}}</button></li>
                     {%- endif %}
@@ -148,6 +217,7 @@
       </div>
     </div>
   </div>
+
 {%- endblock page_body_main %}
 {%- block page_body %}
 {{ super() }}
@@ -163,5 +233,24 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-{%- endblock page_body %}
+<div class="modal fade" tabindex="-1" role="dialog" id="meta-search">
+  <div class="modal-dialog modelWidth" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div id="meta-search-body"></div>
+        <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
+        <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID.')}}">
+        <input type="hidden" id="autofill_error_input_value" name="autofill_item_type_id" value="{{_('Please input value.')}}">
+        <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id" value="{{_('Specified ID does not exist.')}}">
+        <input type="hidden" id="autofill_header_name" name="autofill_header_name" value="{{_('Metadata Auto Input')}}">
+        <input type="hidden" id="autofill_select_meta" name="autofill_select_meta" value="{{_('Automatic metadata input')}}">
+        <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">{{_('Close')}}</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
+{%- endblock page_body %}

@@ -1,6 +1,6 @@
   require([
-    //"jquery",
-    //"bootstrap"
+    "jquery",
+    "bootstrap"
   ],function() {
     src_render = {};
     src_mapping = {};

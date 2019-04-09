@@ -21,6 +21,7 @@
 
 
 {%- set record_url = url_for('invenio_records_ui.recid', pid_value=pid.pid_value) %}
+
 <div class="panel-group">
   <div class="panel panel-default" ng-app="myApp" ng-controller="ItemController">
     <div class="panel-heading clearfix">
@@ -40,6 +41,7 @@
               {%- block record_author %}
               {%- set files = record.files -%}
               {%- set record = record -%}
+
               {%- set deposit = record['_buckets']['deposit'] -%}
               {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id')
               -%}
@@ -163,6 +165,8 @@
                       </div>
                     </td>
                   </tr>
+                  <div id="bucket_id" class="hide">{{ record._buckets['deposit'] }}</div>
+                  <div id="file_key" class="hide">{{ file.key }}<div>
                   {%- endif -%}
                   {%- endfor -%}
                   </tbody>
@@ -206,40 +210,29 @@
                       <div class="row">
                         <div class="col-sm-2">
                           <!-- period dropdown -->
-                          <div class="dropdown">
-                            <button type="button" class="btn btn-default btn-sm" id="dropdownMenuButton"
-                                    data-toggle="dropdown"
-                                    aria-haspopup="true" aria-expanded="false">{{_('Period')}}
-                              <span class="caret"></span>
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                              <li><a href="#">period 1</a></li>
-                              <li><a href="#">period 2</a></li>
-                              <li><a href="#">period 3</a></li>
-                            </ul>
-                          </div>
+                          <select id="file_period" class="btn btn-default
+                          btn-sm" onchange="period_change(this)">
+                              <option value="total">total</option>
+                          </select>
                         </div>
                         <div class="col-sm-3">
                           <p class="file-stats-data">
                             <i class="fa fa-download" aria-hidden="true"></i>
                             {{_('Downloads')}}</p>
                         </div>
-                        <div class="col-sm-2">
-                          <p class="file-stats-data">xxx</p>
+                        <div class="col-sm-2" id="file_download_num">
+                            <p class="file-stats-data">0</p>
                         </div>
                         <div class="col-sm-3">
                           <p class="file-stats-data">
                             <i class="fa fa-play-circle" aria-hidden="true"></i>
                             {{_('Plays')}}</p>
                         </div>
-                        <div class="col-sm-2">
-                          <p class="file-stats-data">yyy</p>
+                        <div class="col-sm-2" id="file_preview_num">
+                          <p class="file-stats-data">0</p>
                         </div>
-
                       </div>
-
                       <div class="row" id="toggle-stats">
-
                         <div class="col-sm-2"></div>
                         <div class="col-sm-2 col-sm-offset-4">
                           <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false"
@@ -250,22 +243,14 @@
                       </div>
                       <div class="collapse" id="collapse-stats">
                         <table class="table stats-table">
-                          <tbody>
+                          <thead>
                           <tr>
                             <th></th>
-                            <th><i class="fa fa-download" aria-hidden="true"></i>&nbsp;{{_('Downloads')}}</th>
-                            <th><i class="fa fa-play-circle" aria-hidden="true"></i>&nbsp;{{_('Plays')}}</th>
+                            <th><i class="fa fa-download" aria-hidden="true"></i></th>
+                            <th><i class="fa fa-play-circle" aria-hidden="true"></i></th>
                           </tr>
-                          <tr>
-                            <td>***.hoge</td>
-                            <td>xxx</td>
-                            <td>yyy</td>
-                          </tr>
-                          <tr>
-                            <td>***.huga</td>
-                            <td>xxx</td>
-                            <td>yyy</td>
-                          </tr>
+                          </thead>
+                          <tbody id="file_domain">
                           </tbody>
                         </table>
                       </div>
