@@ -1,7 +1,7 @@
 class ModalHeader extends React.Component {
     render() {
         return (
-            <div className="text-right">
+            <div className="text-left">
                 <h3>{this.props.headerName}</h3>
             </div>
         )
