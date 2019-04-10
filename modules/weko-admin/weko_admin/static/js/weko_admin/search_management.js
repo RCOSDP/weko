@@ -3,7 +3,6 @@
   angular.element(document).ready(function() {
     angular.module('searchManagement.controllers', []);
     function searchManagementCtrl($scope, $rootScope,$http,$location){
-      $scope.test_data='Title_Desc';
       $scope.initData = function(data){
         $scope.dataJson = angular.fromJson(data);
         $scope.rowspanNum = $scope.dataJson.detail_condition.length+1;
