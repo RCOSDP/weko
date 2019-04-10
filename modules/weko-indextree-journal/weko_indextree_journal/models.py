@@ -299,6 +299,47 @@ class Journal(db.Model, Timestamp):
             self)
 
 
+class Journal_export_processing(db.Model, Timestamp):
+    """
+    Represent an journal.
+
+    The Journal object contains a ``created``, a ``updated``
+    properties that are automatically updated.
+    """
+
+    __tablename__ = 'journal_export_processing'
+
+    id = db.Column(db.BigInteger, primary_key=True, unique=True)
+    """id of the journal export process."""
+
+    start_time = db.Column(db.DateTime, default=datetime.now)
+    """start time to export journal."""
+
+    end_time = db.Column(db.DateTime, default=datetime.now)
+    """end time to export journal."""
+
+    status = db.Column(db.Boolean, nullable=True)
+    """status of processing when export journal data."""
+
+    @classmethod
+    def save_export_info(cls, data):
+        """Save export journal info."""
+        try:
+            with db.session.begin_nested():
+                db.session.add(data)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    @classmethod
+    def get(cls):
+        """Get last process of journal info."""
+        return db.session.query(Journal_export_processing).order_by(Journal_export_processing.id.desc()).first()
+
+
 def journal_removed_or_inserted(mapper, connection, target):
     current_app.config['WEKO_INDEXTREE_JOURNAL_UPDATED'] = True
 
@@ -307,4 +348,4 @@ listen(Journal, 'after_insert', journal_removed_or_inserted)
 listen(Journal, 'after_delete', journal_removed_or_inserted)
 listen(Journal, 'after_update', journal_removed_or_inserted)
 
-__all__ = ('IndexJournal')
+__all__ = ('IndexJournal', 'Journal_export_processing')

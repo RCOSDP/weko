@@ -22,16 +22,14 @@
 
 import datetime
 import os
-import time
 
-import numpy
+
 from celery import shared_task
-from celery.utils.log import get_task_logger
 from flask import Blueprint, current_app
 
 from .api import Journals
+from .models import Journal_export_processing
 
-logger = get_task_logger(__name__)
 
 blueprint = Blueprint(
     'weko_index_tree',
@@ -40,22 +38,36 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
-# @shared_task(ignore_result=True)
-@shared_task
+
+@shared_task(ignore_result=True)
 def export_journal_task(p_path):
-    u"""Output the file name of KBART2 extended format included.
+    """
+    Output the file name of KBART2 extended format.
 
-    last update date to the file "Own institution repository URL" ＋
-    「/weko/kbart/filelist.txt」
-
+    included last update date to the file "Own institution repository URL" ＋「/weko/kbart/filelist.txt」
     Output journal info with KBART2 extended format by tsv format to
     "Own institution repository URL" ＋
     「/weko/kbart/{Repository name}_Global_AllTitles_{Last update date}.txt
 
     export journal information to file.
+
     :param p_path:
     """
+    current_app.logger.debug('Export journal task is running.')
     try:
+        # Get processing status to verify whether there is another working task
+        db_processing_status = Journal_export_processing.get()
+
+        if db_processing_status is None:
+            db_processing_status = Journal_export_processing()
+            db_processing_status.status = False
+
+        if db_processing_status.status:
+            current_app.logger.error('[{0}] Execution failed due to multiple execution errors'.format(3))
+            return {}
+        db_processing_status.status = True
+        db_processing_status.save_export_info(db_processing_status)
+
         # Get file name of journal info with KBART2 format.
         # Own institution repository URL" ＋「/weko/kbart/{Repository
         # name}_Global_AllTitles_{Last update date}.txt
@@ -116,6 +128,7 @@ def export_journal_task(p_path):
         header_string = "\t".join(header)
 
         # Get journal data.
+        current_app.logger.info('[{0}] [{1}]'.format(0, 'Celery export_journal_task call api get all journal'))
         journals = Journals.get_all_journals()
         journals_list = []
         if journals is not None:
@@ -183,10 +196,15 @@ def export_journal_task(p_path):
 
         numpy.savetxt(filelist_path, filelist_data_saved, "%s", "")
 
+        db_processing_status.status = False
+        db_processing_status.save_export_info(db_processing_status)
         return journals_list
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
     except Exception as ex:
-        current_app.logger.error(ex)
+        current_app.logger. \
+            error('[{0}] [{1}] End with unknown error. Error:{2}'.format(1, 'Export Journal Task', ex))
 
+    db_processing_status.status = False
+    db_processing_status.save_export_info(db_processing_status)
     return {}
