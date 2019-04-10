@@ -994,26 +994,34 @@
       if (is_harvesting_type) {
         alert($("#msg_for_harvesting").val());
       } else {
-        $("#item_type_delete_confirmation").modal();
+        $("#item_type_delete_confirmation").modal("show");
       }
     });
 
     $('#item_type_delete_continue').on('click', function(){
-      send('/itemtypes/delete/' + $('#item-type-lists').val());
+      $("#item_type_delete_confirmation").modal("hide");
+      send('/itemtypes/delete/' + $('#item-type-lists').val(), {},
+        function(data){
+          alert(data.msg);
+        },
+        function(errmsg){
+          alert(JSON.stringify(errmsg));
+      });
     });
 
-    function send(url){
+    function send(url, data, handleSuccess, handleError){
       $.ajax({
         method: 'POST',
         url: url,
         async: true,
         contentType: 'application/json',
         dataType: 'json',
+        data: JSON.stringify(data),
         success: function(data,textStatus){
-          alert(data.msg);
+          handleSuccess(data);
         },
         error: function(textStatus,errorThrown){
-          alert(JSON.stringify(textStatus));
+          handleError(textStatus);
         }
       });
     }
