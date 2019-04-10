@@ -280,3 +280,50 @@ def validate_certification(cert_data):
     response = requests.get(create_crossref_url(cert_data))
     return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
         str(vars(response).get('_content', None))
+
+
+def get_repository_list():
+    result = {
+        "repositories": [],
+        "error": ""
+    }
+    try:
+        from invenio_communities.models import Community
+        communities = Community.query.all()
+        if communities:
+            for community in communities:
+                community_result = dict()
+                community_result['id'] = community.id
+                community_result['title'] = community.title
+                result['repositories'].append(community_result)
+    except Exception as e:
+        result['error'] = str(e)
+
+    return result
+
+
+def get_chunk_list():
+    result = {
+        "chunk-list": [],
+        "error": ""
+    }
+
+    return result
+
+
+def get_chunk_layout_setting(repository_id):
+    result = {
+        "chunk-layout-settings": [],
+        "error": ""
+    }
+
+    return result
+
+
+def update_chunk_layout_setting(data):
+    result = {
+        "result": '',
+        "error": ''
+    }
+
+    return result
