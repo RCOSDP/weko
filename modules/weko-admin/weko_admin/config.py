@@ -50,6 +50,9 @@ WEKO_ADMIN_CHUNK_SETTINGS = 'weko_admin/admin/chunk_settings.html'
 WEKO_ADMIN_WEB_API_ACCOUNT = 'weko_admin/admin/web_api_account.html'
 """Web Api Account templates."""
 
+WEKO_ADMIN_CHUNK_DESIGN = 'weko_admin/admin/chunk_design.html'
+"""Chunk Design templates."""
+
 WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = 'weko_admin/search_management.html'
 """Site-license templates."""
 
