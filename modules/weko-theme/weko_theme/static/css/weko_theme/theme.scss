@@ -168,9 +168,9 @@ tree-internal ul .value-container {
 .hide-on-collapsed {
   display:block
 }
-.panel-toggle.collapsed .hide-on-collapsed,.show-on-collapsed {
+.panel-toggle.collapsed,.panel-toggle.weko-collapsed .hide-on-collapsed,.show-on-collapsed {
   display:none
 }
-.panel-toggle.collapsed .show-on-collapsed {
+.panel-toggle.collapsed,.panel-toggle.weko-collapsed .show-on-collapsed {
   display:block
 }

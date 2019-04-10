@@ -48,3 +48,8 @@ js = NpmBundle(
         'angular-ui-bootstrap': '~0.13.2',
     },
 )
+
+details_js = Bundle(
+    'js/weko_records_ui/details_preview.js',
+    output="gen/weko_records_ui_details.%(version)s.js",
+)
