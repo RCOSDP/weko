@@ -343,10 +343,10 @@ def mapping_register():
 def delete_itemtype(item_type_id=0):
     """Soft-delete an item type."""
     if item_type_id > 0:
-        record = ItemTypes.get_by_id(id_=item_type_id)
+        record = ItemTypes.get_record(id_=item_type_id)
         if record is not None:
             try:
-                record.delete();
+                record.delete()
                 db.session.commit()
             except BaseException:
                 db.session.rollback()
