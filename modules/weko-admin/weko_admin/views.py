@@ -39,7 +39,7 @@ from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_response_json, get_search_setting, \
     get_selected_language, save_api_certification, update_admin_lang_setting, \
-    validate_certification
+    validate_certification, get_repository_list
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -346,5 +346,33 @@ def save_api_cert_data():
     else:
         result['error'] = _(
             'Account information is invalid. Please check again.')
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/load_repository', methods=['GET'])
+def load_repository():
+    result = get_repository_list()
+    return jsonify(result)
+
+
+@blueprint_api.route('/load_chunk_list', methods=['GET'])
+def load_chunk_list():
+    result = dict()
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/load_chunk_layout_setting/<string:repository_id>',
+                     methods=['GET'])
+def load_chunk_layout_setting(repository_id):
+    result = dict()
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/save_chunk_layout_setting', methods=['POST'])
+def save_chunk_layout_setting():
+    result = dict()
 
     return jsonify(result)
