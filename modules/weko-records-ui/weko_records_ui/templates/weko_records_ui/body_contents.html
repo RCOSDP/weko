@@ -42,6 +42,9 @@
         </ol>
         {%- endfor -%}
       {%- endif -%}
+      {%- if record.permalink_uri -%}
+      <span class="pull-right">Permalink : {{ record.permalink_uri }}</span>
+      {%- endif -%}
     </div>
   </div>
 </div>
