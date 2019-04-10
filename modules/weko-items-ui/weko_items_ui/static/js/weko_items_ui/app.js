@@ -408,7 +408,10 @@ function handleSharePermission(value) {
       $scope.setValueToField = function (id, value) {
         if (!id) {
           return;
+        } else if (!$scope.depositionForm[id]) {
+          return;
         }
+
         if (!value) {
           // Reset current value
           $scope.depositionForm[id].$setViewValue("");
@@ -769,6 +772,9 @@ function handleSharePermission(value) {
       }
 
       $scope.setItemMetadataCreator = function (items, result) {
+        if (!items.hasOwnProperty('creator')){
+          return;
+        }
         if (items.creator.hasOwnProperty('affiliation')) {
           if (items.creator.affiliation.hasOwnProperty('affiliationName')) {
             let id = items.creator.affiliation.affiliationName;
