@@ -26,8 +26,8 @@ import six
 import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
-from flask_login import current_user, login_required
 from flask_babelex import gettext as _
+from flask_login import current_user, login_required
 from invenio_db import db
 from invenio_files_rest.views import ObjectResource, check_permission, \
     file_downloaded
