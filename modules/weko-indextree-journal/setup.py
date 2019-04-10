@@ -47,6 +47,7 @@ setup_requires = [
 
 install_requires = [
     'Flask-BabelEx>=0.9.3',
+    'invenio-logging>=1.0.0b3',
 ]
 
 packages = find_packages()
