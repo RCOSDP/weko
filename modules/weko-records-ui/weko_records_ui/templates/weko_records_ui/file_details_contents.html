@@ -25,238 +25,228 @@
 <div class="panel-group">
   <div class="panel panel-default" ng-app="myApp" ng-controller="ItemController">
     <div class="panel-heading clearfix">
-      <h3 class="panel-title">{{_('Item')}}</h3>
+      <h3 class="panel-title" style="display: inline;">{{_('Item')}}</h3>
+      <a class="forcewrap" href="{{record_url}}" style="margin-left: 0.5em;"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+        {{ record.get('item_title', _('No title')) }}</a>
+      / {{ filename.split('.')[0] }}
     </div>
     <div class="panel-body">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <div class="form-inline">
-            <a class="forcewrap" href="{{record_url}}"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>
-              {{ record.get('item_title', _('No title')) }}</a>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div class="row">
-            <div class="col-sm-12 col-md-12 col-left">
-              {%- block record_author %}
-              {%- set files = record.files -%}
-              {%- set record = record -%}
+      <div class="row">
+        <div class="col-sm-12 col-md-12 col-left">
+          {%- block record_author %}
+          {%- set files = record.files -%}
+          {%- set record = record -%}
 
-              {%- set deposit = record['_buckets']['deposit'] -%}
-              {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id')
-              -%}
-              {%- if files -%}
-              <table class="table table-bordered table-striped">
-                <thead>
-                <tr>
-                  <th>{{_('Name')}} / {{_('File')}}</th>
-                  <th class="license">{{_('License')}}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {%- for file in files | sort(attribute='key') if file.key == filename -%}
-                {%- set img = file.mimetype | get_image_src -%}
-                {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                filename=file.key) %}
-                <tr>
-                  <td>{{file.filename}}</td>
-                  <td rowspan="2">
-                    {%- if not 'simple' in file.displaytype -%}
-                    {%- if 'license_free' == file.licensetype -%}
-                    <span class="break-word">{{ file.licensefree }}</span>
-                    {%- else %}
-                    {% set lst = file.licensetype | get_license_icon %}
-                    <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
-                      <img src="{{lst[0]}}" alt="license.icon"/></a><br>
-                    {{ lst[1] }}
-                    {%- endif %}
-                    {%- endif -%}
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                      <span class="filename">
-                        <img src="{{img}}" alt={{ file.filename }}/>
-                        <a class="forcewrap"
-                           href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
+          {%- set deposit = record['_buckets']['deposit'] -%}
+          {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id')
+          -%}
+          {%- if files -%}
+          <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+              <th>{{_('File')}}</th>
+              <th class="license">{{_('License')}}</th>
+            </tr>
+            </thead>
+            <tbody>
+            {%- for file in files | sort(attribute='key') if file.key == filename -%}
+            {%- set img = file.mimetype | get_image_src -%}
+            {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+            filename=file.key) %}
+            <tr>
+              <td>
+                  <span class="filename">
+                    <img src="{{img}}" alt={{ file.filename }}/>
+                    <a class="forcewrap"
+                        href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
 
-                        <span>{{file.checksum.split(':')[0]}}</span>
-                        <span class="break-word">{{file.checksum.split(':')[1]}}</span>
-                      </span>
+                    <span>{{file.checksum.split(':')[0]}}</span>
+                    <span class="break-word">{{file.checksum.split(':')[1]}}</span>
+                  </span>
 
-                    {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
-                    {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
-                    filename=file.key, original=1) %}
-                    <div class="text-right">
-                      <a class="forcewrap" href="{{original_file_url}}">{{_('Original')}}</a>
-                    </div>
-                    {%- endif -%}
-                  </td>
-                </tr>
-                <!-- demo -->
-                {%- if record | check_permission -%}
-                {%- if 'pdf' in file.mimetype -%}
-                <tr>
-                  <td colspan="2">
-                    <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
-                      <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>剽窃チェック</a>
-                  </td>
-                </tr>
+                {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
+                {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                filename=file.key, original=1) %}
+                <div class="text-right">
+                  <a class="forcewrap" href="{{original_file_url}}">{{_('Original')}}</a>
+                </div>
                 {%- endif -%}
+              </td>
+              <td>
+                {%- if not 'simple' in file.displaytype -%}
+                {%- if 'license_free' == file.licensetype -%}
+                <span class="break-word">{{ file.licensefree }}</span>
+                {%- else %}
+                {% set lst = file.licensetype | get_license_icon %}
+                <a target="_blank" href="{{lst[2]}}" alt="Creative Commons Licenses">
+                  <img src="{{lst[0]}}" alt="license.icon"/></a><br>
+                {{ lst[1] }}
+                {%- endif %}
                 {%- endif -%}
-                <!-- demo -->
-                {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
-                <tr>
-                  <td colspan="2">
-                    <div class="panel panel-default" id="preview_de">
-                      <div class="panel-heading">
-                        <a class="panel-toggle" data-toggle="collapse" href="#preview_{{loop.index}}"
-                           aria-expanded="false">
-                          {{_('Preview')}}
-                          <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
-                          <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
-                        </a>
-                      </div>
-                      <div id="preview_{{loop.index}}" class="collapse">
-                        <div class="embed-responsive embed-responsive-16by9">
-                          <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
-                                  src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
-                          </iframe>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                {%- endif -%}
-                {%- if 'preview' in file.displaytype -%}
-                {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview', pid_value=pid.pid_value,
-                filename=file.key) %}
-                <tr>
-                  <td colspan="2">
-                    <div class="panel panel-default" id="preview">
-                      <div class="panel-heading">
-                        <a class="panel-toggle" data-toggle="collapse" href="#preview_{{loop.index}}"
-                           aria-expanded="false">
-                          {{_('Preview')}}
-                          <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
-                          <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
-                        </a>
-                      </div>
-                      <div id="preview_{{loop.index}}" class="collapse">
-                        <div class="embed-responsive embed-responsive-16by9">
-                          {%- if 'audio' in file.mimetype -%}
-                          <audio controls preload="auto">
-                            <source src="{{file_preview_url}}" type="{{file.mimetype}}">
-                          </audio>
-                          {%- elif 'video' in file.mimetype -%}
-                          <video controls>
-                            <source src="{{file_preview_url}}" type="{{file.mimetype}}">
-                          </video>
-                          {%- elif 'text' in file.mimetype -%}
-                          <object data="{{file_preview_url}}" type="{{file.mimetype}}"/>
-                          {%- else -%}
-                          <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
-                                  src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
-                          </iframe>
-                          {%- endif -%}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                <div id="bucket_id" class="hide">{{ record._buckets['deposit'] }}</div>
-                <div id="file_key" class="hide">{{ file.key }}<div>
-                {%- endif -%}
-                {%- endfor -%}
-                </tbody>
-              </table>
-              {%- endif %}
-
-            <div role="navigation">
-              <ul class="nav nav-tabs">
-                <li class="active"><a  href="#versions" data-toggle="tab">{{_('Version')}}</a></li>
-                <li><a href="#stats" data-toggle="tab">{{_('Stats')}}</a></li>
-              </ul>
-            </div>
-            <p class="row"></p>
-            <div class="row">
-              <div class="col-sm-12 tab-content">
-                <div class="tab-pane active" id="versions">
-                  <input type="hidden" value="{{filename}}" id="txt_filename"/>
-                  <input type="hidden" value="{{_('Published')}}" id="txt_published"/>
-                  <input type="hidden" value="{{_('Private')}}" id="txt_private"/>
-                  <input type="hidden" value="{{is_logged_in}}" id="txt_is_logged_in"/>
-                  <table class="table table-striped table-bordered file_version_table" ng-init="showChangeLog('{{deposit}}')">
-                    <thead>
-                      <tr>
-                        <th class="nowrap">{{_('Version')}}</th>
-                        <th class="nowrap">{{_('Date Modified')}}</th>
-                        <th class="nowrap">{{_('Object File Name')}}</th>
-                        <th><span class="nowrap">{{_('File ')}}</span><span class="nowrap">{{_('Size')}}</span></th>
-                        <th>{{_('File Hash Value')}}</th>
-                        <th class="nowrap">{{_('Contributor Name')}}</th>
-                        <th><span class="nowrap">{{_('Published/')}}</span><span class="nowrap">{{_('Private')}}</span>
-                        </th>
-                      </tr>
-                      </thead>
-                      <tbody id="bodyModal">
-                      </tbody>
-                    </table>
+              </td>
+            </tr>
+            <!-- demo -->
+            {%- if record | check_permission -%}
+            {%- if 'pdf' in file.mimetype -%}
+            <tr>
+              <td colspan="2">
+                <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
+                  <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>剽窃チェック</a>
+              </td>
+            </tr>
+            {%- endif -%}
+            {%- endif -%}
+            <!-- demo -->
+            {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
+            <tr>
+              <td colspan="2">
+                <div class="panel panel-default" id="preview_de">
+                  <div class="panel-heading">
+                    <a class="panel-toggle" data-toggle="collapse" href="#preview_{{loop.index}}"
+                        aria-expanded="false">
+                      {{_('Preview')}}
+                      <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
+                      <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
+                    </a>
                   </div>
-                  <div class="tab-pane" id="stats">
-                    <div class="row">
-                      <div class="col-sm-2">
-                        <!-- period dropdown -->
-                        <select id="file_period" class="btn btn-default
-                        btn-sm" onchange="period_change(this)">
-                            <option value="total">total</option>
-                        </select>
-                      </div>
-                      <div class="col-sm-3">
-                        <p class="file-stats-data">
-                          <i class="fa fa-download" aria-hidden="true"></i>
-                          {{_('Downloads')}}</p>
-                      </div>
-                      <div class="col-sm-2" id="file_download_num">
-                          <p class="file-stats-data">0</p>
-                      </div>
-                      <div class="col-sm-3">
-                        <p class="file-stats-data">
-                          <i class="fa fa-play-circle" aria-hidden="true"></i>
-                          {{_('Plays')}}</p>
-                      </div>
-                      <div class="col-sm-2" id="file_preview_num">
-                        <p class="file-stats-data">0</p>
-                      </div>
-                    </div>
-                    <div class="row" id="toggle-stats">
-                      <div class="col-sm-2"></div>
-                      <div class="col-sm-2 col-sm-offset-4">
-                        <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false"
-                           aria-controls="collapse-stats">
-                          {{_('See details')}}
-                        </a>
-                      </div>
-                    </div>
-                    <div class="collapse" id="collapse-stats">
-                      <table class="table stats-table">
-                        <thead>
-                        <tr>
-                          <th></th>
-                          <th><i class="fa fa-download" aria-hidden="true"></i></th>
-                          <th><i class="fa fa-play-circle" aria-hidden="true"></i></th>
-                        </tr>
-                        </thead>
-                        <tbody id="file_country">
-                        </tbody>
-                      </table>
+                  <div id="preview_{{loop.index}}" class="collapse">
+                    <div class="embed-responsive embed-responsive-16by9">
+                      <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
+                              src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
+                      </iframe>
                     </div>
                   </div>
                 </div>
+              </td>
+            </tr>
+            {%- endif -%}
+            {%- if 'preview' in file.displaytype -%}
+            {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview', pid_value=pid.pid_value,
+            filename=file.key) %}
+            <tr>
+              <td colspan="2">
+                <div class="panel panel-default" id="preview">
+                  <div class="panel-heading">
+                    <a class="panel-toggle" data-toggle="collapse" href="#preview_{{loop.index}}"
+                        aria-expanded="false">
+                      {{_('Preview')}}
+                      <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
+                      <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
+                    </a>
+                  </div>
+                  <div id="preview_{{loop.index}}" class="collapse">
+                    <div class="embed-responsive embed-responsive-16by9">
+                      {%- if 'audio' in file.mimetype -%}
+                      <audio controls preload="auto">
+                        <source src="{{file_preview_url}}" type="{{file.mimetype}}">
+                      </audio>
+                      {%- elif 'video' in file.mimetype -%}
+                      <video controls>
+                        <source src="{{file_preview_url}}" type="{{file.mimetype}}">
+                      </video>
+                      {%- elif 'text' in file.mimetype -%}
+                      <object data="{{file_preview_url}}" type="{{file.mimetype}}"/>
+                      {%- else -%}
+                      <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
+                              src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
+                      </iframe>
+                      {%- endif -%}
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <div id="bucket_id" class="hide">{{ record._buckets['deposit'] }}</div>
+            <div id="file_key" class="hide">{{ file.key }}<div>
+            {%- endif -%}
+            {%- endfor -%}
+            </tbody>
+          </table>
+          {%- endif %}
+
+        <div role="navigation">
+          <ul class="nav nav-tabs">
+            <li class="active"><a  href="#versions" data-toggle="tab">{{_('Version')}}</a></li>
+            <li><a href="#stats" data-toggle="tab">{{_('Stats')}}</a></li>
+          </ul>
+        </div>
+        <p class="row"></p>
+        <div class="row">
+          <div class="col-sm-12 tab-content">
+            <div class="tab-pane active" id="versions">
+              <input type="hidden" value="{{filename}}" id="txt_filename"/>
+              <input type="hidden" value="{{_('Published')}}" id="txt_published"/>
+              <input type="hidden" value="{{_('Private')}}" id="txt_private"/>
+              <input type="hidden" value="{{is_logged_in}}" id="txt_is_logged_in"/>
+              <table class="table table-striped table-bordered file_version_table" ng-init="showChangeLog('{{deposit}}')">
+                <thead>
+                  <tr>
+                    <th class="nowrap">{{_('Version')}}</th>
+                    <th class="nowrap">{{_('Date Modified')}}</th>
+                    <th class="nowrap">{{_('Object File Name')}}</th>
+                    <th><span class="nowrap">{{_('File ')}}</span><span class="nowrap">{{_('Size')}}</span></th>
+                    <th>{{_('File Hash Value')}}</th>
+                    <th class="nowrap">{{_('Contributor Name')}}</th>
+                    <th><span class="nowrap">{{_('Published/')}}</span><span class="nowrap">{{_('Private')}}</span>
+                    </th>
+                  </tr>
+                  </thead>
+                  <tbody id="bodyModal">
+                  </tbody>
+                </table>
               </div>
-              {%- endblock %}
+              <div class="tab-pane" id="stats">
+                <div class="row">
+                  <div class="col-sm-2">
+                    <!-- period dropdown -->
+                    <select id="file_period" class="btn btn-default
+                    btn-sm" onchange="period_change(this)">
+                        <option value="total">total</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-3">
+                    <p class="file-stats-data">
+                      <i class="fa fa-download" aria-hidden="true"></i>
+                      {{_('Downloads')}}</p>
+                  </div>
+                  <div class="col-sm-2" id="file_download_num">
+                      <p class="file-stats-data">0</p>
+                  </div>
+                  <div class="col-sm-3">
+                    <p class="file-stats-data">
+                      <i class="fa fa-play-circle" aria-hidden="true"></i>
+                      {{_('Plays')}}</p>
+                  </div>
+                  <div class="col-sm-2" id="file_preview_num">
+                    <p class="file-stats-data">0</p>
+                  </div>
+                </div>
+                <div class="row" id="toggle-stats">
+                  <div class="col-sm-2"></div>
+                  <div class="col-sm-2 col-sm-offset-4">
+                    <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false"
+                        aria-controls="collapse-stats">
+                      {{_('See details')}}
+                    </a>
+                  </div>
+                </div>
+                <div class="collapse" id="collapse-stats">
+                  <table class="table stats-table">
+                    <thead>
+                    <tr>
+                      <th></th>
+                      <th><i class="fa fa-download" aria-hidden="true"></i></th>
+                      <th><i class="fa fa-play-circle" aria-hidden="true"></i></th>
+                    </tr>
+                    </thead>
+                    <tbody id="file_country">
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
+          {%- endblock %}
         </div>
       </div>
     </div>
