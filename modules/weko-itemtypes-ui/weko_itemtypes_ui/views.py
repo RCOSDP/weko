@@ -335,6 +335,8 @@ def mapping_register():
     return jsonify(msg=_('Success'))
 
 
+@blueprint.route('/delete', methods=['POST'])
+@blueprint.route('/delete/', methods=['POST'])
 @blueprint.route('/delete/<int:item_type_id>', methods=['POST'])
 @login_required
 @item_type_permission.require(http_exception=403)
@@ -350,7 +352,9 @@ def delete_itemtype(item_type_id=0):
                     name=data.get('table_row_map').get('name'),
                     schema=data.get('table_row_map').get('schema'),
                     form=data.get('table_row_map').get('form'),
-                    render=data)
+                    render=data,
+                    deleted_flg=1
+                )
                 Mapping.create(item_type_id=record.model.id,
                                mapping=data.get('table_row_map').get('mapping'))
                 db.session.commit()
