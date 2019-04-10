@@ -1002,6 +1002,9 @@
       $("#item_type_delete_confirmation").modal("hide");
       send('/itemtypes/delete/' + $('#item-type-lists').val(), {},
         function(data){
+          if (data.code == 0) {
+            window.location.href = "/itemtypes/register";
+          }
           alert(data.msg);
         },
         function(errmsg){

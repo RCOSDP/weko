@@ -362,10 +362,10 @@ def delete_itemtype(item_type_id=0):
                 db.session.rollback()
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
-                return jsonify(msg=_('Delete Fail.'))
+                return jsonify(code=-1,msg=_('Delete item type fail.'))
 
             current_app.logger.debug(
                 'Itemtype delete: {}'.format(item_type_id))
-            return jsonify(msg=_('Success'))
+            return jsonify(code=0,msg=_('Delete item type successfully.'))
 
-    return jsonify(msg=_('Error'))
+    return jsonify(code=-1,msg=_('An error has occurred.'))
