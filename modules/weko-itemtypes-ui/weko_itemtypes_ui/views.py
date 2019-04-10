@@ -360,7 +360,9 @@ def delete_itemtype(item_type_id=0):
                 db.session.commit()
             except BaseException:
                 db.session.rollback()
-                return jsonify(msg=_('Fail'))
+                current_app.logger.error('Unexpected error: ',
+                                         sys.exc_info()[0])
+                return jsonify(msg=_('Delete Fail.'))
 
             current_app.logger.debug(
                 'Itemtype delete: {}'.format(item_type_id))

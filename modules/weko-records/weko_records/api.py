@@ -247,7 +247,7 @@ class ItemTypes(RecordBase):
 
     @classmethod
     def update(cls, id_=0, name=None, schema=None, form=None, render=None,
-               tag=1):
+               tag=1, deleted_flg=0):
         r"""Update an item type instance and store it in the database.
 
         :param id_: Identifier of item type.
