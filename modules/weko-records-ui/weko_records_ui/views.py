@@ -424,12 +424,11 @@ def set_pdfcoverpage_header():
 @blueprint.app_template_filter('citation')
 def citation(record, pid, style=None, ln=None):
     """Render citation for record according to style and language."""
-    locale = "en-US" # ln or current_i18n.language
-    style = "abi-technik" # style or 'science'
+    locale = ln or "en-US" # ln or current_i18n.language
+    style = style or "aapg-bulletin" # style or 'science'
     try:
         result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
         return result
-        # return 'Family name, given names. (2018). DWD European Weather [Data set]. Zenodo. http://doi.org/10.5281/zenodo.2604860'
     except Exception:
         current_app.logger.exception(
             'Citation formatting for record {0} failed.'

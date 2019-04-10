@@ -43,6 +43,15 @@ def _get_itemdata(obj, key):
 
     return None
 
+def _get_itemdata_2(obj, key):
+    metadata = obj
+    for item in metadata:
+        itemdata = metadata.get(item, {})
+        if (type(itemdata)) is dict and itemdata.get('attribute_name') == key:
+            return itemdata.get('attribute_value_mlt')
+
+    return None
+
 
 def _get_creator_by_lang(textdata, lang):
     creator_name = []
@@ -57,15 +66,21 @@ def _get_creator_by_lang(textdata, lang):
 
 def get_names_from_obj(obj):
     creator_name = []
-    itemdatas = {}
-    for item in obj:
-        itemdata = obj.get(item, {})
-        if (type(itemdata)) is dict and itemdata.get('attribute_name') == 'Creator':
-            itemdatas = itemdata.get('attribute_value_mlt')
+    itemdatas = _get_itemdata_2(obj, 'Creator')
+    if itemdatas is None:
+        return None
 
     for itemdata in itemdatas:
         textdata = [itemdata[val] for val in sorted(itemdata)]
-        creator_name.append(_get_creator_by_lang(textdata, 'en'))
+        creator_data = _get_creator_by_lang(textdata, 'en')
+        if len(creator_data) > 0:
+            creator_name.append(creator_data)
+
+    for itemdata in itemdatas:
+        textdata = [itemdata[val] for val in sorted(itemdata)]
+        creator_data = _get_creator_by_lang(textdata, 'ja')
+        if len(creator_data) > 0:
+            creator_name.append(creator_data)
 
     return creator_name[0]
 
@@ -79,18 +94,15 @@ class CreatorSchema(Schema):
 
     def get_family_name(self, obj):
         """Get family name."""
-        family_name = get_names_from_obj(obj)[1]
-        return family_name if family_name else 'family'
+        return get_names_from_obj(obj)[1] if get_names_from_obj(obj) else ''
 
     def get_given_name(self, obj):
         """Get given name."""
-        given_name = get_names_from_obj(obj)[2]
-        return given_name if given_name else 'given'
+        return get_names_from_obj(obj)[2] if get_names_from_obj(obj) else ''
 
     def get_name(self, obj):
         """Get name."""
-        _name = get_names_from_obj(obj)[0]
-        return _name if _name else 'name'
+        return get_names_from_obj(obj)[0] if get_names_from_obj(obj) else ''
 
 
 class RecordSchemaCSLJSON(Schema):
@@ -100,16 +112,16 @@ class RecordSchemaCSLJSON(Schema):
     type = fields.Str(attribute='metadata.item_type_id')
     title = fields.Str(attribute='metadata.item_title')
     abstract = fields.Method('get_description')
-    # author = fields.List(fields.Nested(CreatorSchema), attribute='metadata')
+    author = fields.List(fields.Nested(CreatorSchema), attribute='metadata')
 
     issued = fields.Method('get_issue_date')
     language = fields.Method('get_language')
     version = fields.Method('get_version')
-    note = fields.Str('This data is not map with zenodo')
+    note = fields.Str('')
 
     DOI = fields.Method('get_doi')
-    ISBN = fields.Str('This data is not map with zenodo')
-    ISSN = fields.Str('This data is not map with zenodo')
+    ISBN = fields.Str('')
+    ISSN = fields.Str('')
 
     container_title = fields.Method('get_container_title')
     page = fields.Method('get_pages')
@@ -117,7 +129,7 @@ class RecordSchemaCSLJSON(Schema):
     issue = fields.Method('get_issue')
 
     publisher = fields.Method('get_publisher')
-    publisher_place = fields.Str('This data is not map with zenodo')
+    publisher_place = fields.Str('')
 
     def get_description(self, obj):
         """Get description."""
@@ -133,33 +145,11 @@ class RecordSchemaCSLJSON(Schema):
 
         return description[0]
 
-    def get_creator(self, obj):
-        """Get creator."""
-        creator_name = []
-        itemdatas = _get_itemdata(obj, 'Creator')
-        if itemdatas is None:
-            return 'Not creator data'
-
-        for itemdata in itemdatas:
-            textdata = [itemdata[val] for val in sorted(itemdata)]
-            creator_name.append(_get_creator_by_lang(textdata, 'en'))
-
-        return creator_name[0]
-
     def get_issue_date(self, obj):
         """Get issue date."""
-        issue_date = []
-        itemdatas = _get_itemdata(obj, 'Date')
-        if itemdatas is None:
-            return 'Not issue date data'
-
-        for itemdata in itemdatas:
-            textdata = [itemdata[val] for val in sorted(itemdata)]
-            datedata = from_isodate(textdata[0])
-            issue_date.append(
-                {'date-parts': [[datedata.year, datedata.month, datedata.day]]} if datedata else missing)
-
-        return issue_date[0]
+        metadata = obj['metadata']['pubdate']['attribute_value']
+        datedata = from_isodate(metadata)
+        return {'date-parts': [[datedata.year, datedata.month, datedata.day]]} if datedata else missing
 
     def get_language(self, obj):
         """Get language."""
