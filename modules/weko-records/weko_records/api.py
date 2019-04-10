@@ -353,7 +353,8 @@ class ItemTypes(RecordBase):
         :returns: A list of :class:`ItemTypes` instances.
         """
         with db.session.no_autoflush:
-            return ItemTypeName.query.order_by(ItemTypeName.id).all()
+            query = ItemTypeName.query.filter_by(deleted_flg=0)
+            return query.order_by(ItemTypeName.id).all()
 
     @classmethod
     def get_all(cls, with_deleted=False):
