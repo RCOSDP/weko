@@ -21,18 +21,18 @@
 """WEKO3 module docstring."""
 
 import csv
-from datetime import datetime
 import hashlib
 import json
 import os
 import sys
 import zipfile
+from datetime import datetime
+from io import BytesIO, StringIO
 
 from flask import abort, current_app, flash, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
-from io import BytesIO, StringIO
 
 from .permissions import admin_permission_factory
 from .utils import allowed_file
@@ -279,7 +279,7 @@ class ReportView(BaseView):
             resp = make_response()
             resp.data = zip_stream.getvalue()
             resp.headers['Content-Type'] = 'application/x-zip-compressed'
-            resp.headers['Content-Disposition'] = 'attachment; filename=' + zip_name +'.zip'
+            resp.headers['Content-Disposition'] = 'attachment; filename=' + zip_name + '.zip'
         except Exception:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
             abort(500)
@@ -299,7 +299,7 @@ class ReportView(BaseView):
             writer = csv.writer(tsv_output, delimiter='\t',
                                 lineterminator="\n")
             writer.writerows([[header_row], [_('Aggregation Monh'), year + '-' + month],
-                            [''], [header_row]])
+                                            [''], [header_row]])
 
             cols = [_('File Name'), _('Registered Index Name'),
                     _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
@@ -316,7 +316,7 @@ class ReportView(BaseView):
             self.write_report_tsv_rows(writer, raw_stats['open_access'])
         except Exception:
             current_app.logger.error('Unexpected error: ',
-                                    sys.exc_info()[0])
+                                     sys.exc_info()[0])
             abort(500)
         return tsv_output
 
@@ -330,7 +330,7 @@ class ReportView(BaseView):
                                 record['admin'], record['reg']])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
-                                        sys.exc_info()[0])
+                                         sys.exc_info()[0])
                 abort(500)
 
     def make_tsv_file_name(self, file_type, year, month):
@@ -338,7 +338,6 @@ class ReportView(BaseView):
         file_type = 'FileDownload' if file_type == 'file_download' \
             else 'FilePreview'
         return 'LogReport_' + file_type + year + '-' + month + '.tsv'
-
 
 
 class LanguageSettingView(BaseView):
@@ -399,4 +398,3 @@ __all__ = (
     'language_adminview',
     'web_api_account_adminview'
 )
-
