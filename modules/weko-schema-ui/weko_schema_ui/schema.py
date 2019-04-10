@@ -455,8 +455,6 @@ class SchemaTree:
             return vlst
 
         vlst = []
-        current_app.logger.debug(
-            '_record: {0}'.format(json.dumps(self._record)))
         for k, v in self._record.items():
             if isinstance(v, dict):
                 # Dict
@@ -479,8 +477,6 @@ class SchemaTree:
                     if isinstance(atr_vm, list) and isinstance(mpdic, dict):
                         for lst in atr_vm:
                             vlst.extend(get_mapping_value(mpdic, lst, k))
-        current_app.logger.debug(
-            '__get_value_list: {0}'.format(json.dumps(vlst)))
         return vlst
 
     def create_xml(self):
@@ -609,8 +605,6 @@ class SchemaTree:
         root.attrib['{{{pre}}}schemaLocation'.format(pre=xsi)] = self._location
 
         # Create sub element
-        current_app.logger.debug(
-            'node_tree: {0}'.format(json.dumps(node_tree)))
         for lst in node_tree:
             for k, v in lst.items():
                 k = get_prefix(k)
