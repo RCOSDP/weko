@@ -15,3 +15,6 @@ WEKO_SITEMAP_DEFAULT_VALUE = 'foobar'
 
 WEKO_SITEMAP_BASE_TEMPLATE = 'weko_sitemap/base.html'
 """Default base template for the demo page."""
+
+WEKO_SITEMAP_ADMIN_TEMPLATE = 'weko_sitemap/sitemap.html'
+"""Sitemap templates."""
