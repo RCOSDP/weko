@@ -20,11 +20,16 @@
 
 """WEKO3 module docstring."""
 
+import csv
 import hashlib
+import json
 import os
 import sys
+import zipfile
+from datetime import datetime
+from io import BytesIO, StringIO
 
-from flask import abort, current_app, flash, jsonify, request
+from flask import abort, current_app, flash, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -239,10 +244,100 @@ class ReportView(BaseView):
 
             return self.render(
                 current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
-                result=result)
+                result=result,
+                now=datetime.utcnow())
         except Exception:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
+
+    @expose('/stats_file_tsv', methods=['POST'])
+    def get_file_stats_tsv(self):
+        """Get file download/preview stats report."""
+        stats_json = json.loads(request.form.get('report'))
+        file_type = request.form.get('type')
+        year = request.form.get('year')
+        month = request.form.get('month').zfill(2)
+
+        # File Format: logReport_File[Download, Preview]_YYYY-MM.tsv
+        tsv_files = []
+        for stats_type, stats in stats_json.items():
+            tsv_files.append({
+                'file_name': self.make_tsv_file_name(stats_type, year, month),
+                'stream': self.make_stats_tsv(stats, stats_type, year, month)})
+
+        zip_name = 'logReport_' + year + '-' + month
+        zip_stream = BytesIO()
+
+        try:
+            # Dynamically create zip from StringIO data into BytesIO
+            report_zip = zipfile.ZipFile(zip_stream, 'w')
+            for tsv_file in tsv_files:
+                report_zip.writestr(tsv_file['file_name'],
+                                    tsv_file['stream'].getvalue())
+            report_zip.close()
+
+            resp = make_response()
+            resp.data = zip_stream.getvalue()
+            resp.headers['Content-Type'] = 'application/x-zip-compressed'
+            resp.headers['Content-Disposition'] = 'attachment; filename=' + zip_name + '.zip'
+        except Exception:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            abort(500)
+        return resp
+
+    def make_stats_tsv(self, raw_stats, file_type, year, month):
+        """Make TSV report file for downloads and previews."""
+        if file_type == 'FileDownload':
+            header_row = _('No. Of File Downloads')
+            sub_header_row = _('Open-Access No. Of File Downloads')
+        else:
+            header_row = _('No. Of File Previews')
+            sub_header_row = _('Open-Access No. Of File Previews')
+
+        tsv_output = StringIO()
+        try:
+            writer = csv.writer(tsv_output, delimiter='\t',
+                                lineterminator="\n")
+            writer.writerows([[header_row], [_('Aggregation Monh'), year + '-' + month],
+                                            [''], [header_row]])
+
+            cols = [_('File Name'), _('Registered Index Name'),
+                    _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
+                    _('Logged In User'), _('Site License'), _('Admin'),
+                    _('Registrar')]
+
+            # All stats
+            writer.writerow(cols)
+            self.write_report_tsv_rows(writer, raw_stats['all'])
+
+            # Open access stats
+            writer.writerows([[''], [sub_header_row]])
+            writer.writerow(cols)
+            self.write_report_tsv_rows(writer, raw_stats['open_access'])
+        except Exception:
+            current_app.logger.error('Unexpected error: ',
+                                     sys.exc_info()[0])
+            abort(500)
+        return tsv_output
+
+    def write_report_tsv_rows(self, writer, records):
+        """Write tsv rows for stats."""
+        for record in records:
+            try:
+                writer.writerow([record['file_key'], record['index_list'],
+                                record['total'], record['no_login'],
+                                record['login'], record['site_license'],
+                                record['admin'], record['reg']])
+            except Exception:
+                current_app.logger.error('Unexpected error: ',
+                                         sys.exc_info()[0])
+                abort(500)
+
+    def make_tsv_file_name(self, file_type, year, month):
+        """Make tsv filenames."""
+        file_type = 'FileDownload' if file_type == 'file_download' \
+            else 'FilePreview'
+        return 'LogReport_' + file_type + year + '-' + month + '.tsv'
 
 
 class LanguageSettingView(BaseView):
