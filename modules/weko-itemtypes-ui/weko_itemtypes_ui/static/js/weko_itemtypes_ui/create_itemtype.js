@@ -991,10 +991,30 @@
     $('#btn_delete_item').on('click', function(){
       var selected_item_type = $("#item-type-lists :selected");
       var is_harvesting_type = selected_item_type.attr("class") === "harvesting_type";
-      if (!is_harvesting_type) {
+      if (is_harvesting_type) {
         alert($("#msg_for_harvesting").val());
       } else {
         $("#item_type_delete_confirmation").modal();
       }
     });
+
+    $('#item_type_delete_continue').on('click', function(){
+      send('/itemtypes/delete/' + $('#item-type-lists').val());
+    });
+
+    function send(url){
+      $.ajax({
+        method: 'POST',
+        url: url,
+        async: true,
+        contentType: 'application/json',
+        dataType: 'json',
+        success: function(data,textStatus){
+          alert(data.msg);
+        },
+        error: function(textStatus,errorThrown){
+          alert(JSON.stringify(textStatus));
+        }
+      });
+    }
 });

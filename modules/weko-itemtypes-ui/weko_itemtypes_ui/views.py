@@ -22,8 +22,8 @@
 
 import sys
 
-from flask import Blueprint, Flask, abort, current_app, flash, json, jsonify, \
-    make_response, redirect, render_template, request, url_for
+from flask import Blueprint, Flask, abort, current_app, flash, json, \
+    jsonify, make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
@@ -333,3 +333,33 @@ def mapping_register():
         db.session.rollback()
         return jsonify(msg=_('Fail'))
     return jsonify(msg=_('Success'))
+
+
+@blueprint.route('/delete/<int:item_type_id>', methods=['POST'])
+@login_required
+@item_type_permission.require(http_exception=403)
+def delete_itemtype(item_type_id=0):
+    """Delete an item type."""
+    if item_type_id > 0:
+        result = ItemTypes.get_by_id(id_=item_type_id)
+        if result is not None:
+            data = result.render
+            try:
+                record = ItemTypes.update(
+                    id_=item_type_id,
+                    name=data.get('table_row_map').get('name'),
+                    schema=data.get('table_row_map').get('schema'),
+                    form=data.get('table_row_map').get('form'),
+                    render=data)
+                Mapping.create(item_type_id=record.model.id,
+                               mapping=data.get('table_row_map').get('mapping'))
+                db.session.commit()
+            except BaseException:
+                db.session.rollback()
+                return jsonify(msg=_('Fail'))
+
+            current_app.logger.debug(
+                'Itemtype delete: {}'.format(item_type_id))
+            return jsonify(msg=_('Success'))
+
+    return jsonify(msg=_('Error'))

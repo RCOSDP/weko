@@ -59,9 +59,13 @@
               </select>
             </div>
             <div class="pull-right">
+              {%- set delete_button_class = 'disabled' -%}
+              {%- if id -%}
+              {%- set delete_button_class = '' -%}
+              {%- endif -%}
               <a role="button" class="btn btn-default" href="{{ url_for('weko_itemtypes_ui.mapping_index') }}">{{ _('Mapping') }}</a>
               <a role="button" class="btn btn-default" href="{{ url_for('weko_itemtypes_ui.custom_property') }}">{{ _('New Property') }}</a>
-              <a role="button" class="btn btn-danger" href="javascript:;" id="btn_delete_item">{{ _('Delete') }}</a>
+              <a role="button" class="btn btn-danger {{delete_button_class}}" href="javascript:;" id="btn_delete_item">{{ _('Delete') }}</a>
               <div id="item_type_delete_confirmation" class="modal fade" tabindex="-1"
                    role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
@@ -74,7 +78,7 @@
                     </div>
                     <div class="modal-body" style="overflow-x: auto;">
                       <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
-                      <span>{{_('Are you sure you want to delete this item type?')}}</span>
+                      <span style="margin: 0 10px">{{_('Are you sure you want to delete this item type?')}}</span>
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-primary" id="item_type_delete_continue">{{_('Continue')}} </button>
