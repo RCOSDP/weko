@@ -1,0 +1,244 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+<div role="navigation">
+  <ul class="nav nav-tabs">
+    {%- block item_management_tabs %}
+      {% from "weko_theme/macros/item_management_tabs_selector.html" import tabs_selector %}
+      {{ tabs_selector('bulk_update') }}
+    {%- endblock item_management_tabs%}
+  </ul>
+</div>
+
+<div id="item_management_bulk_update" class="hide">item_management_bulk_update</div>
+<div class="panel-body">
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <span class="panel-title">
+        {{_('Fields For Update')}}
+      </span>
+    </div>
+    <div id="field-panel" class="panel-body">
+      <div class="row field-row-default" hidden>
+        <div class="col-md-2">
+          <select class="form-control" name="field_sel">
+            <option value="unselected" selected></option>
+            {%- for field in fields if fields %}
+            <option value="{{field.id}}">{{field.name}}</option>
+            {%- endfor %}
+          </select>
+        </div>
+        <div class="col-md-9">
+          <!-- Licence -->
+          <div class="field-content licence-select" hidden>
+            <select class="form-control" name="licence_sel">
+              <option value="unselected" selected></option>
+              {%- for licence in licences if licences %}
+              <option value="{{licence.id}}">{{licence.name}}</option>
+              {%- endfor %}
+            </select>
+            <!-- Licence Description -->
+            <div class="field-content licence-des" hidden>
+              <br>
+              <textarea class="form-control" rows="3" name="licence_des" value=""></textarea>
+            </div>
+          </div>
+          <!-- Access Type -->
+          <div class="field-content access-type-select" hidden>
+            <label class="radio-inline col-md-2">
+              <input type="radio" name="access_type" value="open_access" checked>{{_('Open Access')}}
+            </label>
+            <label class="radio-inline col-md-4">
+              <input type="radio" name="access_type" value="open_date">{{_('Open Access Date')}}
+              <input type="date" class="col-md-offset-1" name="access_date" value="" disabled>
+            </label>
+            <label class="radio-inline col-md-3">
+              <input type="radio" name="access_type" value="open_login">{{_('Login User Only')}}
+            </label>
+          </div>
+        </div>
+        <div class="col-md-1">
+          <a class="del-field" href='#'><span class='glyphicon glyphicon-remove'></span></a>
+        </div>
+      </div>
+      <br id="add-field-row">
+      <div class="row">
+        <div class="col-md-2">
+          <a id="add-field-link" href="#">{{_('Add Update Field')}}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading clearfix">
+      <span class="panel-title">
+        {{_('Search')}}
+      </span>
+    </div>
+    <div class="panel-body">
+      <div class="col-sm-12 col-md-12 col-lg-12">
+        {% include "weko_theme/body_search.html" %}
+      </div><br><br>
+    </div>
+  </div>
+  <div id="invenio-search">
+    <invenio-search
+     {%- if index_id %}
+       search-endpoint="{{ config.WEKO_SEARCH_UI_SEARCH_INDEX_API }}"
+     {%- else %}
+       search-endpoint="{{ config.SEARCH_UI_SEARCH_API }}"
+     {%- endif %}
+     search-extra-params='{% if disply_setting %}{{disply_setting|tojson}}{% endif %}'
+     search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
+     search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default('application/json')}}"}'
+    >
+    {%- block search_index_results %}
+    <invenio-search-results
+     template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_JSTEMPLATE_INDEX) }}">
+    </invenio-search-results>
+    {%- endblock search_index_results %}
+
+    <div class="panel panel-default">
+      <div class="panel-heading clearfix">
+        <span class="panel-title">{{_('Item list')}}</span>
+        {%- block search_count %}
+        <div class="pull-right">
+          <invenio-search-count
+           template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_COUNT) }}">
+          </invenio-search-count>
+        </div>
+        {%- endblock search_count %}
+      </div>
+      <div class="panel-body">
+        <div id="index_item_list">
+          <div class="form-inline flow-root">
+            <select class="form-control hide" id="goExportORPrint">
+              <option value="check_Export">{{_('Export Checked Items')}}</option>
+              <option value="view_Export">{{_('Export All Displayed Items')}}</option>
+              <option value="all_Export">{{_('Export All Items Of This Index')}}</option>
+              <option value="check_print">{{_('Print Checked Items')}}</option>
+              <option value="view_print">{{_('Print All Displayed Items')}}</option>
+              <option value="all_print">{{_('Print All Items Of This Index')}}</option>
+            </select>
+            <button type="button" class="btn btn-primary hide">{{_('Execution')}}</button>
+            <div class="pull-right">
+              <div class="form-group hide">
+                <label for="sort_item">{{_('Display order')}}</label>
+                <select class="form-control" id="sort_item">
+                  <option value="1">{{_('Title(Ascending)')}}</option>
+                  <option value="2">{{_('Title(Descending)')}}</option>
+                  <option value="3">{{_('Registrant(Ascending)')}}</option>
+                  <option value="4">{{_('Registrant(Descending)')}}</option>
+                  <option value="5">{{_('Item Types(Asending)')}}</option>
+                  <option value="6">{{_('Item Types(Descending)')}}</option>
+                  <option value="7" selected="selected">{{_('ID(Ascending)')}}</option>
+                  <option value="8">{{_('ID(Descending)')}}</option>
+                  <option value="9">{{_('Modified Date and Time(Ascending)')}}</option>
+                  <option value="10">{{_('Modified Date and Time(Descending)')}}</option>
+                  <option value="11">{{_('Created Date and Time(Ascending)')}}</option>
+                  <option value="12">{{_('Created Date and Time(Descending)')}}</option>
+                  <option value="13">{{_('Review Date and Time(Ascending)')}}</option>
+                  <option value="14">{{_('Review Date and Time(Descending)')}}</option>
+                  <option value="15">{{_('Published Year(Ascending)')}}</option>
+                  <option value="16">{{_('Published Year(Descending)')}}</option>
+                  <option value="17">{{_('Custom(Ascending)')}}</option>
+                  <option value="18">{{_('Custom(Descending)')}}</option>
+                </select>
+              </div>
+              {%- block search_sort %}
+                {%- set sort_options = config.get('RECORDS_REST_SORT_OPTIONS', {}).get(config.SEARCH_UI_SEARCH_INDEX) %}
+                {%- if sort_options %}
+                <div class="form-group">
+                  {%- block search_sort_select scoped %}
+                  {{_('Display order')}}:
+                  <invenio-search-select-box
+                     sort-key="sort"
+                     available-options='{{ sort_options|format_sortoptions|safe }}'
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SELECT_BOX) }}"
+                    >
+                  </invenio-search-select-box>
+                  {%- endblock search_sort_select %}
+                  {%- block search_sort_order scoped %}
+                  <invenio-search-sort-order
+                   sort-key="sort"
+                   template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SORT_ORDER) }}"
+                  >
+                  </invenio-search-sort-order>
+                  {%- endblock search_sort_order %}
+                </div>
+                {%- endif %}
+              {%- endblock search_sort %}
+              <div class="form-group">
+                <label for="page_count">{{_('The number of display')}}</label>
+                <select class="form-control" id="page_count">
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="75">75</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="panel-group m-top-5">
+            <div class="panel panel-default">
+              <div class="panel-body">
+                <div class="row">
+                  {%- block search_item_result %}
+                    <div class="col-xs-12 col-md-12">
+                      <a id="select-all" href="#">{{_('Select All')}}</a>
+                      {%- block search_error %}
+                      <invenio-search-error
+                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
+                       message="{{ _('Search failed.') }}">
+                      </invenio-search-error>
+                      {%- endblock search_error %}
+                      {%- block search_loading %}
+                      <invenio-search-loading
+                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
+                       message="{{ _('Loading...') }}">
+                      </invenio-search-loading>
+                      {%- endblock search_loading %}
+                      {%- block search_results %}
+                      <invenio-search-results
+                       template="{{ url_for('static', filename=config.WEKO_SEARCH_UI_BULK_UPDATE_JSTEMPLATE_RESULTS) }}">
+                      </invenio-search-results>
+                      {%- endblock search_results %}
+                    </div>
+                  {%- endblock search_item_result %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="text-center">
+          {%- block search_pagination_top %}
+          <invenio-search-pagination
+           template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_PAGINATION) }}">
+          </invenio-search-pagination>
+          {%- endblock search_pagination_top %}
+        </div>
+      </div>
+    </div>
+    </invenio-search>
+  </div><br>
+  <div class="col-sm-12 col-md-12 text-center">
+    <a id="submit-btn" class="btn btn-primary btn-md">{{ _('Bulk Update') }}</a>
+  </div>
+</div>
+

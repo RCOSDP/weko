@@ -99,8 +99,9 @@ js = NpmBundle(
     'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
     'node_modules/angular/angular.js',
     'js/weko_records_ui/app.js',
-    'js/weko_records_ui/detail.js',
     'js/weko_records_ui/csl.js',
+    'js/weko_records_ui/detail.js',
+    'js/weko_records_ui/bulk_update.js',
     filters='jsmin',
     output="gen/weko_records_ui.%(version)s.js",
     npm={

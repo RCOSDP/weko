@@ -26,6 +26,12 @@ WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
 WEKO_WORKFLOW_POP_PAGE = 'weko_workflow/admin/pop_page.html'
 """Default pop page template for the flow detail page."""
 
+WEKO_WORKFLOW_OAPOLICY_SEARCH = 'oa_policy_{keyword}'
+"""OA Policy cache."""
+
+WEKO_WORKFLOW_OAPOLICY_CACHE_TTL = 24 * 60 * 60
+""" cache default timeout 1 day"""
+
 WEKO_WORKFLOW_ACTION_ENDPOINTS = {
     'item_login': {
         'endpoint': 'weko_items_ui.index',
@@ -33,10 +39,35 @@ WEKO_WORKFLOW_ACTION_ENDPOINTS = {
     }
 }
 
-IDENTIFIER_GRANT_LIST = [(0, 'Not Grant'),
-                         (1, 'JaLC DOI'),
-                         (2, 'JaLC CrossRef DOI'),
-                         (3, 'JaLC DataCite DOI'),
-                         (4, 'CNRI')
-                        ]
+IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
+                         (1, 'JaLC DOI', 'http://doi.org'),
+                         (2, 'JaLC CrossRef DOI', 'http://doi.org'),
+                         (3, 'JaLC DataCite DOI', 'http://doi.org'),
+                         (4, 'CNRI', 'http://hdl.handle.net')
+                         ]
 """Options list for Identifier Grant action."""
+
+IDENTIFIER_GRANT_SUFFIX_METHOD = 0
+"""
+    Suffix input method for Identifier Grant action
+
+    :case 0: Automatic serial number
+    :case 1: Semi-automatic input
+    :case 2: Free input
+"""
+
+IDENTIFIER_ITEMSMETADATA_FORM = {
+    'identifier': {
+        'value': '',
+        'properties': {
+            'identifierType': ''
+        }
+    },
+    'identifierRegistration': {
+        "value": '',
+        "properties": {
+            "identifierType": ''
+        }
+    }
+}
+"""ItemsMetadata format for Identifier Grant action."""

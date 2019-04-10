@@ -65,6 +65,7 @@ def test_view(app):
 
 
 def test_set_lifetime(app):
+    """Test set lifetime."""
     valid_time = (15, 30, 45, 60, 180, 360, 720, 1440)
     set_time = random.choice(valid_time)
     with app.test_request_context():

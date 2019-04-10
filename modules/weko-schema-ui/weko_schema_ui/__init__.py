@@ -20,7 +20,7 @@
 
 """Module of weko-schema."""
 
-from .ext import WekoSchemaUI, WekoSchemaREST
+from .ext import WekoSchemaREST, WekoSchemaUI
 from .version import __version__
 
 __all__ = ('__version__', 'WekoSchemaUI', 'WekoSchemaREST')

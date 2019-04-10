@@ -20,11 +20,16 @@
 
 """WEKO3 module docstring."""
 
+import csv
 import hashlib
+import json
 import os
 import sys
+import zipfile
+from datetime import datetime
+from io import BytesIO, StringIO
 
-from flask import abort, current_app, flash, jsonify, request
+from flask import abort, current_app, flash, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -66,27 +71,31 @@ class StyleSettingView(BaseView):
             from weko_theme.views import blueprint as theme_bp
 
             # Header
-            f_path_header_wysiwyg = os.path.join(theme_bp.root_path,
-                                                 theme_bp.template_folder,
-                                                 current_app.config['THEME_HEADER_WYSIWYG_TEMPLATE'])
+            f_path_header_wysiwyg = os.path.join(
+                theme_bp.root_path,
+                theme_bp.template_folder,
+                current_app.config['THEME_HEADER_WYSIWYG_TEMPLATE'])
             header_array_wysiwyg = self.get_contents(f_path_header_wysiwyg)
 
-            f_path_header_editor = os.path.join(theme_bp.root_path,
-                                                theme_bp.template_folder,
-                                                current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
+            f_path_header_editor = os.path.join(
+                theme_bp.root_path,
+                theme_bp.template_folder,
+                current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
 
             if self.cmp_files(f_path_header_wysiwyg, f_path_header_editor):
                 header_array_wysiwyg = wysiwyg_editor_default
 
             # Footer
-            f_path_footer_wysiwyg = os.path.join(theme_bp.root_path,
-                                                 theme_bp.template_folder,
-                                                 current_app.config['THEME_FOOTER_WYSIWYG_TEMPLATE'])
+            f_path_footer_wysiwyg = os.path.join(
+                theme_bp.root_path,
+                theme_bp.template_folder,
+                current_app.config['THEME_FOOTER_WYSIWYG_TEMPLATE'])
             footer_array_wysiwyg = self.get_contents(f_path_footer_wysiwyg)
 
-            f_path_footer_editor = os.path.join(theme_bp.root_path,
-                                                theme_bp.template_folder,
-                                                current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
+            f_path_footer_editor = os.path.join(
+                theme_bp.root_path,
+                theme_bp.template_folder,
+                current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
 
             if self.cmp_files(f_path_footer_wysiwyg, f_path_footer_editor):
                 footer_array_wysiwyg = wysiwyg_editor_default
@@ -137,7 +146,6 @@ class StyleSettingView(BaseView):
     @expose('/upload_editor', methods=['POST'])
     def upload_editor(self):
         """Upload header/footer settings from wysiwyg editor."""
-
         try:
             from html import unescape
             from weko_theme.views import blueprint as theme_bp
@@ -149,9 +157,8 @@ class StyleSettingView(BaseView):
 
             if 'footer' == temp:
                 if 'True' == str(data.get('isEmpty')):
-                    read_path = os.path.join(folder_path,
-                                             current_app.config[
-                                                 'THEME_FOOTER_EDITOR_TEMPLATE'])
+                    read_path = os.path.join(
+                        folder_path, current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
                     wysiwyg_html = self.get_contents(read_path)
 
                 write_path = os.path.join(folder_path,
@@ -159,9 +166,8 @@ class StyleSettingView(BaseView):
                                               'THEME_FOOTER_WYSIWYG_TEMPLATE'])
             elif 'header' == temp:
                 if 'True' == str(data.get('isEmpty')):
-                    read_path = os.path.join(folder_path,
-                                             current_app.config[
-                                                 'THEME_HEADER_EDITOR_TEMPLATE'])
+                    read_path = os.path.join(
+                        folder_path, current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
                     wysiwyg_html = self.get_contents(read_path)
 
                 write_path = os.path.join(folder_path,
@@ -179,7 +185,6 @@ class StyleSettingView(BaseView):
 
     def get_contents(self, f_path):
         """Get the contents of the file."""
-
         array = []
         try:
             with open(f_path, 'r', encoding='utf-8') as fp:
@@ -192,7 +197,6 @@ class StyleSettingView(BaseView):
 
     def cmp_files(self, f_path1, f_path2):
         """Compare the contents of the file."""
-
         checksum1 = ''
         checksum2 = ''
         try:
@@ -211,44 +215,130 @@ class ReportView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
         try:
-            aggs_results = None
-            cur_user_id = current_user.get_id()
-            if cur_user_id:
-                aggs_query = {
-                    "query": {
-                        "match": {
-                            "weko_creator_id": cur_user_id
-                        }
-                    },
-                    "aggs": {
-                        "aggs_term": {
-                            "terms": {
-                                "field": "publish_status",
-                                "order": {"_count": "desc"}
-                            }
+            aggs_query = {
+                "size": 0,
+                "aggs": {
+                    "aggs_term": {
+                        "terms": {
+                            "field": "publish_status",
+                            "order": {"_count": "desc"}
                         }
                     }
                 }
+            }
 
-                from invenio_stats.utils import get_aggregations
-                aggs_results = get_aggregations('weko', aggs_query)
+            from invenio_stats.utils import get_aggregations
+            aggs_results = get_aggregations('weko', aggs_query)
 
             total = 0
             result = {}
-            if aggs_results:
+            if aggs_results and 'aggs_term' in aggs_results:
                 for bucket in aggs_results['aggs_term']['buckets']:
-                    bkt = {'open': bucket['doc_count']} if bucket['key'] == '0' \
-                        else {'private': bucket['doc_count']}
+                    bkt = {
+                        'open': bucket['doc_count']} if bucket['key'] == '0' else {
+                        'private': bucket['doc_count']}
                     result.update(bkt)
                     total = total + bucket['doc_count']
 
             result.update({'total': total})
 
-            return self.render(current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
-                               result=result)
+            return self.render(
+                current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
+                result=result,
+                now=datetime.utcnow())
         except Exception:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return abort(400)
+
+    @expose('/stats_file_tsv', methods=['POST'])
+    def get_file_stats_tsv(self):
+        """Get file download/preview stats report."""
+        stats_json = json.loads(request.form.get('report'))
+        file_type = request.form.get('type')
+        year = request.form.get('year')
+        month = request.form.get('month').zfill(2)
+
+        # File Format: logReport_File[Download, Preview]_YYYY-MM.tsv
+        tsv_files = []
+        for stats_type, stats in stats_json.items():
+            tsv_files.append({
+                'file_name': self.make_tsv_file_name(stats_type, year, month),
+                'stream': self.make_stats_tsv(stats, stats_type, year, month)})
+
+        zip_name = 'logReport_' + year + '-' + month
+        zip_stream = BytesIO()
+
+        try:
+            # Dynamically create zip from StringIO data into BytesIO
+            report_zip = zipfile.ZipFile(zip_stream, 'w')
+            for tsv_file in tsv_files:
+                report_zip.writestr(tsv_file['file_name'],
+                                    tsv_file['stream'].getvalue())
+            report_zip.close()
+
+            resp = make_response()
+            resp.data = zip_stream.getvalue()
+            resp.headers['Content-Type'] = 'application/x-zip-compressed'
+            resp.headers['Content-Disposition'] = 'attachment; filename=' + zip_name + '.zip'
+        except Exception:
+            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+            abort(500)
+        return resp
+
+    def make_stats_tsv(self, raw_stats, file_type, year, month):
+        """Make TSV report file for downloads and previews."""
+        if file_type == 'FileDownload':
+            header_row = _('No. Of File Downloads')
+            sub_header_row = _('Open-Access No. Of File Downloads')
+        else:
+            header_row = _('No. Of File Previews')
+            sub_header_row = _('Open-Access No. Of File Previews')
+
+        tsv_output = StringIO()
+        try:
+            writer = csv.writer(tsv_output, delimiter='\t',
+                                lineterminator="\n")
+            writer.writerows([[header_row], [_('Aggregation Monh'), year + '-' + month],
+                                            [''], [header_row]])
+
+            cols = [_('File Name'), _('Registered Index Name'),
+                    _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
+                    _('Logged In User'), _('Site License'), _('Admin'),
+                    _('Registrar')]
+
+            # All stats
+            writer.writerow(cols)
+            self.write_report_tsv_rows(writer, raw_stats['all'])
+
+            # Open access stats
+            writer.writerows([[''], [sub_header_row]])
+            writer.writerow(cols)
+            self.write_report_tsv_rows(writer, raw_stats['open_access'])
+        except Exception:
+            current_app.logger.error('Unexpected error: ',
+                                     sys.exc_info()[0])
+            abort(500)
+        return tsv_output
+
+    def write_report_tsv_rows(self, writer, records):
+        """Write tsv rows for stats."""
+        for record in records:
+            try:
+                writer.writerow([record['file_key'], record['index_list'],
+                                record['total'], record['no_login'],
+                                record['login'], record['site_license'],
+                                record['admin'], record['reg']])
+            except Exception:
+                current_app.logger.error('Unexpected error: ',
+                                         sys.exc_info()[0])
+                abort(500)
+
+    def make_tsv_file_name(self, file_type, year, month):
+        """Make tsv filenames."""
+        file_type = 'FileDownload' if file_type == 'file_download' \
+            else 'FilePreview'
+        return 'LogReport_' + file_type + year + '-' + month + '.tsv'
+
 
 class LanguageSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -256,6 +346,15 @@ class LanguageSettingView(BaseView):
         return self.render(
             current_app.config["WEKO_ADMIN_LANG_SETTINGS"]
         )
+
+
+class WebApiAccount(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_WEB_API_ACCOUNT"]
+        )
+
 
 style_adminview = {
     'view_class': StyleSettingView,
@@ -284,8 +383,18 @@ language_adminview = {
     }
 }
 
+web_api_account_adminview = {
+    'view_class': WebApiAccount,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('WebAPI Account'),
+        'endpoint': 'webapiaccount'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
-    'language_adminview'
+    'language_adminview',
+    'web_api_account_adminview'
 )

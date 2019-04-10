@@ -157,7 +157,7 @@ class ItemTypeNames(RecordBase):
 
     @classmethod
     def update(cls, obj):
-
+        """Update method."""
         def commit(olst, flg):
             with db.session.begin_nested():
                 for lst in olst:
@@ -1332,14 +1332,14 @@ class SiteLicense(RecordBase):
 
     @classmethod
     def update(cls, obj):
-
+        """Update method."""
         def get_addr(lst, id_):
             if lst and isinstance(lst, list):
                 sld = []
                 for j in range(len(lst)):
                     sl = SiteLicenseIpAddress(
                         organization_id=id_,
-                        organization_no=j+1,
+                        organization_no=j + 1,
                         start_ip_address='.'.join(
                             lst[j].get('start_ip_address')),
                         finish_ip_address='.'.join(
@@ -1355,12 +1355,14 @@ class SiteLicense(RecordBase):
             sif = []
             for i in range(len(site_license)):
                 lst = site_license[i]
-                slif = SiteLicenseInfo(organization_id=i+1,
-                                       organization_name=lst.get(
-                                           'organization_name'),
-                                       mail_address=lst.get('mail_address'),
-                                       domain_name=lst.get('domain_name'),
-                                       addresses=get_addr(lst.get('addresses'), i))
+                slif = SiteLicenseInfo(
+                    organization_id=i + 1,
+                    organization_name=lst.get('organization_name'),
+                    mail_address=lst.get('mail_address'),
+                    domain_name=lst.get('domain_name'),
+                    addresses=get_addr(
+                        lst.get('addresses'),
+                        i))
                 sif.append(slif)
 
             # delete all rows first

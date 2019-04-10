@@ -28,6 +28,12 @@ require([
       getJournalsTimer = setTimeout(function(){ getJournals(); }, 1000);
     });
 
+    // After paste
+    $('#search-key').on('paste', function() {
+      clearTimeout(getJournalsTimer);
+      getJournalsTimer = setTimeout(function(){ getJournals(); }, 1000);
+    });
+
     function getJournals() {
       var keyword = $('#search-key').val();
       if(keyword && $.trim(keyword).length >= 1){

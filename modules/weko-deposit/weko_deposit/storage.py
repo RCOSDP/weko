@@ -30,7 +30,7 @@ from invenio_files_rest.storage.pyfs import PyFSFileStorage
 
 
 class WekoFileStorage(PyFSFileStorage):
-    """"""
+    """Weko file storage."""
 
     def _init_hash(self):
         """Initialize message digest object.
@@ -41,7 +41,7 @@ class WekoFileStorage(PyFSFileStorage):
         return 'sha256', hashlib.sha256()
 
     def upload_file(self, fjson):
-        """"""
+        """Upload file."""
         if fjson is None or len(fjson) == 0:
             return
 

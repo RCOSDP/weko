@@ -32,9 +32,10 @@ class WekoSchema(RecordBase):
 
     @classmethod
     def create(cls, uuid, sname, fdata, xsd, schema, ns=None, isvalid=True,
-            target_namespace=''):
+               target_namespace=''):
         """
-        create a schema record stored in db
+        Create.
+
         :param uuid:
         :param sname:
         :param fdata:
@@ -44,6 +45,7 @@ class WekoSchema(RecordBase):
         :param isvalid:
         :param target_namespace:
         :return:
+
         """
         with db.session.begin_nested():
             record = cls(fdata)
@@ -164,8 +166,7 @@ class WekoSchema(RecordBase):
 
     @classmethod
     def delete_by_id(self, pid):
-        """aaa"""
-
+        """Aaa."""
         with db.session.begin_nested():
             obj = OAIServerSchema.query.filter_by(id=pid).one()
         db.session.delete(obj)

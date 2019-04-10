@@ -143,6 +143,7 @@ def create_blueprint(app, endpoints):
 
 class IndexActionResource(ContentNegotiatedMethodView):
     """Index create update delete view."""
+
     view_name = '{0}_index_action'
 
     def __init__(self, ctx, record_serializers=None,
@@ -170,9 +171,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
     @need_record_permission('read_permission_factory')
     def get(self, index_id):
         """Get a tree index record."""
-        #print(index_id)
-        #return make_response(jsonify({'index' : index_id}), 200)
-
+        # print(index_id)
+        # return make_response(jsonify({'index' : index_id}), 200)
         try:
             index = self.record_class.get_index_with_role(index_id)
             have_children = Index.have_children(index_id)
@@ -196,7 +196,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
         status = 201
         msg = 'Index created successfully.'
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)
 
     @need_record_permission('update_permission_factory')
     def put(self, index_id, **kwargs):
@@ -209,12 +210,12 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
         status = 200
         msg = 'Index updated successfully.'
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)
 
     @need_record_permission('delete_permission_factory')
     def delete(self, index_id, **kwargs):
         """Delete a index."""
-
         if not index_id or index_id <= 0:
             raise IndexNotFoundRESTError()
 
@@ -233,11 +234,13 @@ class IndexActionResource(ContentNegotiatedMethodView):
 
         status = 200
         msg = 'Index deleted successfully.'
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)
 
 
 class IndexTreeActionResource(ContentNegotiatedMethodView):
     """Tree get move action view."""
+
     view_name = '{0}_tree_action'
 
     def __init__(self, ctx, record_serializers=None,
@@ -277,7 +280,8 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
             if pid:
                 if comm_id:
                     comm = Community.get(comm_id)
-                    tree = self.record_class.get_contribute_tree(pid, int(comm.root_node_id))
+                    tree = self.record_class.get_contribute_tree(
+                        pid, int(comm.root_node_id))
                 else:
                     tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
@@ -287,10 +291,10 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     tree = self.record_class.get_more_browsing_tree(
                         more_ids=more_ids)
 
-            elif action and 'browsing' in action and not comm_id is None:
+            elif action and 'browsing' in action and comm_id is not None:
                 comm = Community.get(comm_id)
 
-                if not comm is None:
+                if comm is not None:
                     if more_id_list is None:
                         tree = self.record_class.get_browsing_tree(
                             int(comm.root_node_id))
@@ -316,4 +320,5 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
 
         status = 201
         msg = 'Index moved successfully.'
-        return make_response(jsonify({'status': status, 'message': msg}), status)
+        return make_response(
+            jsonify({'status': status, 'message': msg}), status)

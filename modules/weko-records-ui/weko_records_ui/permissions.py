@@ -33,10 +33,14 @@ from .ipaddr import check_site_license_permission
 action_detail_page_access = action_factory('detail-page-access')
 detail_page_permission = Permission(action_detail_page_access)
 
-action_download_original_pdf_access = action_factory('download-original-pdf-access')
-download_original_pdf_permission = Permission(action_download_original_pdf_access)
+action_download_original_pdf_access = action_factory(
+    'download-original-pdf-access')
+download_original_pdf_permission = Permission(
+    action_download_original_pdf_access)
+
 
 def page_permission_factory(record, *args, **kwargs):
+    """Page permission factory."""
     def can(self):
         is_ok = True
         # item publish status check
@@ -58,6 +62,7 @@ def page_permission_factory(record, *args, **kwargs):
 
 
 def file_permission_factory(record, *args, **kwargs):
+    """File permission factory."""
     def can(self):
         fjson = kwargs.get('fjson')
         return check_file_download_permission(record, fjson)
@@ -66,13 +71,13 @@ def file_permission_factory(record, *args, **kwargs):
 
 
 def check_file_download_permission(record, fjson):
-
+    """Check file download."""
     def site_license_check():
         # site license permission check
         obj = ItemTypes.get_by_id(record.get('item_type_id'))
         if obj.item_type_name.has_site_license:
-            return check_site_license_permission() | check_user_group_permission(
-                    fjson.get('groups'))
+            return check_site_license_permission(
+            ) | check_user_group_permission(fjson.get('groups'))
         return False
 
     if fjson:
@@ -95,7 +100,7 @@ def check_file_download_permission(record, fjson):
                     adt = fjson.get('accessdate')
                     pdt = dt.strptime(adt, '%Y-%m-%d')
                     is_can = True if dt.today() >= pdt else False
-                except:
+                except BaseException:
                     is_can = False
 
                 if not is_can:
@@ -118,12 +123,13 @@ def check_file_download_permission(record, fjson):
             elif 'open_no' in acsrole:
                 # site license permission check
                 is_can = site_license_check()
-        except:
+        except BaseException:
             abort(500)
         return is_can
 
 
 def check_original_pdf_download_permission(record):
+    """Check original pdf."""
     is_ok = True
     # item publish status check
     is_pub = check_publish_status(record)
@@ -195,7 +201,10 @@ def check_created_id(record):
                 user_id = current_user.get_id() \
                     if current_user and current_user.is_authenticated else None
                 created_id = record.get('_deposit', {}).get('created_by')
+                shared_id = record.get('weko_shared_id')
                 if user_id and created_id and user_id == str(created_id):
+                    is_himself = True
+                elif user_id and shared_id and user_id == str(shared_id):
                     is_himself = True
             elif lst.name == users[3]:
                 is_himself = False

@@ -32,22 +32,26 @@ from .api import WekoDeposit
 
 logger = get_task_logger(__name__)
 
+
 @shared_task(ignore_result=True)
 def delete_items_by_id(p_path):
     """
-    Delete item Index on ES and update item json column to None
+    Delete item Index on ES and update item json column to None.
+
     :param p_path:
+
     """
     current_app.logger.debug('index delete task is running.')
     try:
-        result = db.session.query(RecordMetadata). \
-            filter(RecordMetadata.json.op('->>')('path').contains(p_path)).yield_per(1000)
+        result = db.session.query(RecordMetadata). filter(
+            RecordMetadata.json.op('->>')('path').contains(p_path)).yield_per(1000)
         with db.session.begin_nested():
             for r in result:
                 try:
                     WekoDeposit(r.json, r).delete()
                 except TransportError:
-                    current_app.logger.exception('Could not deleted index {0}.'.format(result))
+                    current_app.logger.exception(
+                        'Could not deleted index {0}.'.format(result))
         db.session.commit()
     except SQLAlchemyError as e:
         db.session.rollback()
@@ -59,10 +63,11 @@ def delete_items_by_id(p_path):
 
 @shared_task(ignore_result=True)
 def update_items_by_id(p_path, target):
+    """Update item by id."""
     current_app.logger.debug('index update task is running.')
     try:
-        result = db.session.query(RecordMetadata). \
-            filter(RecordMetadata.json.op('->>')('path').contains(p_path)).yield_per(1000)
+        result = db.session.query(RecordMetadata). filter(
+            RecordMetadata.json.op('->>')('path').contains(p_path)).yield_per(1000)
         with db.session.begin_nested():
             for r in result:
                 obj = WekoDeposit(r.json, r)
@@ -82,7 +87,8 @@ def update_items_by_id(p_path, target):
                 try:
                     obj.indexer.update_path(obj)
                 except TransportError:
-                    current_app.logger.exception('Could not updated index {0}.'.format(result))
+                    current_app.logger.exception(
+                        'Could not updated index {0}.'.format(result))
         db.session.commit()
     except SQLAlchemyError as e:
         db.session.rollback()
