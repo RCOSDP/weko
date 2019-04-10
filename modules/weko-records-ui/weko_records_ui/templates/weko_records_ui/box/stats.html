@@ -1,0 +1,37 @@
+<div class="well stats">
+  <div class="row">
+    <div class="col-sm-6 pull-left">
+      <dt>{{_('Stats')}}</dt>
+    </div>
+    <select id="record_view_period" class="btn btn-default btn-sm"
+        onchange="period_change(this)">
+        <option value="total">total</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <!--<div class="total-views">-->
+    <div class="col-sm-3"><i class="fa fa-eye" aria-hidden="true"></i></div>
+    <div id="record_view_num" class="col-sm-3"><span id="views-num">0</span></div>
+    <div class="col-sm-3"><span id="views-txt">views</span></div>
+    <div class="col-sm-3"></div>
+    <!--</div>-->
+  </div>
+  <div class="row">
+    <div class="col-sm-6 col-sm-offset-3">
+      <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false" aria-controls="collapse-stats"
+         id="views-details">{{_('See details')}}</a></div>
+  </div>
+  <div class="row collapse" id="collapse-stats">
+    <table class="table stats-table">
+        <thead>
+            <tr>
+                <th></th>
+                <th>{{_('Views')}}</th>
+            </tr>
+        </thead>
+        <tbody id="record_view_country">
+        </tbody>
+    </table>
+  </div>
+</div>

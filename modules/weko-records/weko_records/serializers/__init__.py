@@ -20,6 +20,10 @@
 
 """Record serialization."""
 
+from invenio_records_rest.serializers.json import JSONSerializer
+from invenio_records_rest.serializers.response import record_responsify, \
+    search_responsify
+from invenio_records_rest.serializers.schemas.json import RecordSchemaJSONV1
 from pkg_resources import resource_filename
 
 from .json import WekoJSONSerializer
@@ -27,12 +31,9 @@ from .schemas.csl import RecordSchemaCSLJSON
 from invenio_records_rest.serializers.citeproc import CiteprocSerializer
 
 from .depositschema import DepositSchemaV1
-from invenio_records_rest.serializers.response import record_responsify, search_responsify
-from invenio_records_rest.serializers.schemas.json import RecordSchemaJSONV1
-from invenio_records_rest.serializers.json import JSONSerializer
-from .searchserializer import SearchSerializer
-from .opensearchserializer import OpenSearchSerializer
 from .opensearchresponse import oepnsearch_responsify
+from .opensearchserializer import OpenSearchSerializer
+from .searchserializer import SearchSerializer
 
 deposit_json_v1 = JSONSerializer(DepositSchemaV1, replace_refs=True)
 #: JSON record serializer for individual records.

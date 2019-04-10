@@ -79,6 +79,11 @@ class UserProfile(db.Model):
         """Get username."""
         return self._displayname
 
+    @hybrid_property
+    def get_username(self):
+        """Get username."""
+        return self._username
+
     @username.setter
     def username(self, username):
         """Set username.

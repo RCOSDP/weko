@@ -44,11 +44,28 @@ WEKO_ADMIN_REPORT_TEMPLATE = 'weko_admin/admin/report.html'
 WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
 """Language templates."""
 
+WEKO_ADMIN_WEB_API_ACCOUNT = 'weko_admin/admin/web_api_account.html'
+"""Web Api Account templates."""
+
 WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = 'weko_admin/search_management.html'
 """Site-license templates."""
 
 LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
 
+WEKO_ADMIN_CROSSREF_API_URL = 'https://doi.crossref.org/'
+""" URL of CrossRef API """
+
+WEKO_ADMIN_ENDPOINT = 'openurl'
+""" Endpoint to concate URL of CrossRef API """
+
+WEKO_ADMIN_TEST_DOI = '&id=doi:10.1047/0003-066X.59.1.29'
+""" DOI for check Certificate valid or not """
+
+WEKO_ADMIN_FORMAT = '&format=json'
+""" Format of CrossRef Certificate """
+
+WEKO_ADMIN_VALIDATION_MESSAGE = 'The login you supplied is not recognized'
+""" Validate message of certificate """
 
 # Search management json
 

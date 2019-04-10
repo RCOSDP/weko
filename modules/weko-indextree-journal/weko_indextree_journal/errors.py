@@ -24,6 +24,7 @@
 
 """Journal errors."""
 from invenio_rest.errors import RESTException
+
 # from flask_babelex import gettext as _
 
 FAILED_MSG = ''
@@ -34,11 +35,13 @@ class JournalBaseRESTError(RESTException):
 
     code = 400
 
+
 class JournalInvalidDataRESTError(RESTException):
     """Invalid request body."""
 
     code = 400
     description = 'Could not load data.'
+
 
 class JournalDeletedRESTError(RESTException):
     """Invalid request body."""
@@ -55,15 +58,21 @@ class JournalNotFoundRESTError(RESTException):
 
 
 class JournalUpdatedRESTError(RESTException):
+    """Invalid request body."""
+
     code = 400
     description = 'Could not update data.'
 
 
 class JournalAddedRESTError(RESTException):
+    """Invalid request body."""
+
     code = 400
     description = 'Could not add data.'
 
 
 class JournalMovedRESTError(RESTException):
+    """Invalid request body."""
+
     code = 400
     description = 'Could not move data.'

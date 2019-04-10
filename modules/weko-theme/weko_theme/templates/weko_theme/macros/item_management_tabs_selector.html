@@ -1,0 +1,25 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{% macro tabs_selector(tab_value='custom_sort') %}
+    <li id="tab_display" role="presentation" {% if tab_value=='custom_sort' %}class="active activity_li"{% endif %}><a href="{{url_for('weko_search_ui.custom_sort')}}">{{ _('Custom Sort') }}</a></li>
+    <li role="presentation" {% if tab_value=='bulk_update' %}class="active activity_li"{% endif %}><a href="{{url_for('weko_records_ui.bulk_update')}}">{{ _('Bulk Update') }}</a></li>
+    <li role="presentation" {% if tab_value=='bulk_delete' %}class="active activity_li"{% endif %}><a href="{{url_for('weko_search_ui.bulk_delete')}}">{{ _('Bulk Delete') }}</a></li>
+{% endmacro %}

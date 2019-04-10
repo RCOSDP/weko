@@ -144,9 +144,8 @@ def create_blueprint(app, endpoints):
 
 
 class IndexSearchResource(ContentNegotiatedMethodView):
-    """
-     Index aggs Seach API
-    """
+    """Index aggs Seach API."""
+
     view_name = '{0}_index'
 
     def __init__(self, ctx, search_serializers=None,
@@ -176,7 +175,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         :returns: the search result containing hits and aggregations as
         returned by invenio-search.
         """
-
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
 
@@ -243,8 +241,13 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                             m = 1
                         break
                 if m == 0:
-                    nd = {'doc_count': 0, 'key': p.path, 'name': p.name if lang == "ja" else p.name_en,
-                          'date_range': {'pub_cnt': 0, 'un_pub_cnt': 0}}
+                    nd = {
+                        'doc_count': 0,
+                        'key': p.path,
+                        'name': p.name if lang == "ja" else p.name_en,
+                        'date_range': {
+                            'pub_cnt': 0,
+                            'un_pub_cnt': 0}}
                     nlst.append(nd)
             agp.clear()
             # process index tree image info
@@ -253,9 +256,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 index_id = index_id if '/' not in index_id \
                     else index_id.split('/').pop()
                 index_info = Indexes.get_index(index_id=index_id)
-                if index_info.display_format == '2' \
-                    and len(index_info.image_name) > 0:
+                # update by weko_dev17 at 2019/04/04
+                if len(index_info.image_name) > 0:
                     nlst[0]['img'] = index_info.image_name
+                nlst[0]['display_format'] = index_info.display_format
             agp.append(nlst)
         return self.make_response(
             pid_fetcher=self.pid_fetcher,

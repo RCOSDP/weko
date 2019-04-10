@@ -104,7 +104,7 @@ class SessionLifetime(db.Model):
 
 
 class SearchManagement(db.Model):
-    """Search setting model"""
+    """Search setting model."""
 
     __tablename__ = 'search_management'
 
@@ -172,13 +172,15 @@ class SearchManagement(db.Model):
 
     @classmethod
     def create(cls, data):
-        """Create data"""
+        """Create data."""
         try:
             dataObj = SearchManagement()
             with db.session.begin_nested():
                 dataObj.default_dis_num = data.get('dlt_dis_num_selected')
-                dataObj.default_dis_sort_index = data.get('dlt_index_sort_selected')
-                dataObj.default_dis_sort_keyword = data.get('dlt_keyword_sort_selected')
+                dataObj.default_dis_sort_index = data.get(
+                    'dlt_index_sort_selected')
+                dataObj.default_dis_sort_keyword = data.get(
+                    'dlt_keyword_sort_selected')
                 dataObj.sort_setting = data.get('sort_options')
                 dataObj.search_conditions = data.get('detail_condition')
                 dataObj.search_setting_all = data
@@ -192,7 +194,7 @@ class SearchManagement(db.Model):
 
     @classmethod
     def get(cls):
-        """Get setting"""
+        """Get setting."""
         id = db.session.query(func.max(SearchManagement.id)).first()[0]
         if id is None:
             return None
@@ -200,13 +202,15 @@ class SearchManagement(db.Model):
 
     @classmethod
     def update(cls, id, data):
-        """Update setting"""
+        """Update setting."""
         try:
             with db.session.begin_nested():
                 setting_data = cls.query.filter_by(id=id).one()
                 setting_data.default_dis_num = data.get('dlt_dis_num_selected')
-                setting_data.default_dis_sort_index = data.get('dlt_index_sort_selected')
-                setting_data.default_dis_sort_keyword = data.get('dlt_keyword_sort_selected')
+                setting_data.default_dis_sort_index = data.get(
+                    'dlt_index_sort_selected')
+                setting_data.default_dis_sort_keyword = data.get(
+                    'dlt_keyword_sort_selected')
                 setting_data.sort_setting = data.get('sort_options')
                 setting_data.search_conditions = data.get('detail_condition')
                 setting_data.search_setting_all = data
@@ -220,8 +224,8 @@ class SearchManagement(db.Model):
 
 
 class AdminLangSettings(db.Model):
-    """
-    System Language Display Setting
+    """System Language Display Setting.
+
     Stored target language and registered language
     """
 
@@ -240,6 +244,7 @@ class AdminLangSettings(db.Model):
 
     @classmethod
     def parse_result(cls, in_result):
+        """Parse results."""
         obj = {}
         for k in in_result:
             record = dict()
@@ -263,20 +268,17 @@ class AdminLangSettings(db.Model):
 
     @classmethod
     def load_lang(cls):
-        """
-        Get language list
+        """Get language list.
+
         :return: A list of language
         """
-
         lang_list = cls.query.all()
 
         return cls.parse_result(lang_list)
 
     @classmethod
     def create(cls, lang_code, lang_name, is_registered, sequence, is_active):
-        """
-        Create language
-        """
+        """Create language."""
         try:
             dataObj = AdminLangSettings()
             with db.session.begin_nested():
@@ -296,8 +298,8 @@ class AdminLangSettings(db.Model):
     @classmethod
     def update_lang(cls, lang_code=None, lang_name=None, is_registered=None,
                     sequence=None, is_active=None):
-        """
-        Save list language into database
+        """Save list language into database.
+
         :param lang_code: input language code
         :param lang_name: input language name
         :param is_registered: input boolean is language registered
@@ -324,24 +326,24 @@ class AdminLangSettings(db.Model):
 
     @classmethod
     def get_lang_code(cls):
-        """
-        Get language code
+        """Get language code.
+
         :return: the language code
         """
         return cls.lang_code
 
     @classmethod
     def get_lang_name(cls):
-        """
-        Get language full name
+        """Get language full name.
+
         :return: language full name
         """
         return cls.lang_name
 
     @classmethod
     def get_registered_language(cls):
-        """
-        Get registered languages
+        """Get registered languages.
+
         :return: All language have registered
         """
         result = cls.query.filter_by(is_registered=True)
@@ -350,8 +352,8 @@ class AdminLangSettings(db.Model):
 
     @classmethod
     def get_active_language(cls):
-        """
-        Get active languages
+        """Get active languages.
+
         :return: All languages have activated
         """
         result = cls.query.filter_by(is_active=True).order_by(
@@ -359,6 +361,148 @@ class AdminLangSettings(db.Model):
         return cls.parse_result(result)
 
 
+class ApiCertificate(db.Model):
+    """Database for API Certificate."""
+
+    __tablename__ = 'api_certificate'
+
+    api_code = db.Column(db.String(3), primary_key=True, nullable=False,
+                         unique=True)
+
+    api_name = db.Column(db.String(25), nullable=False, unique=True)
+
+    cert_data = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
+    @classmethod
+    def select_all(cls):
+        """Get all information about certificates in database.
+
+        :return: list of pair (api short name, api full name, certificate data)
+        """
+        query_result = cls.query.all()
+        result = []
+        for record in query_result:
+            data = dict()
+            data['api_code'] = record.api_code
+            data['api_name'] = record.api_name
+            data['cert_data'] = record.cert_data
+            result.append(data)
+        return result
+
+    @classmethod
+    def select_by_api_code(cls, api_code):
+        """Get certificate value by certificate type.
+
+        :param api_code: input api short name
+        :return: certificate data corresponding with api code
+        """
+        query_result = cls.query.filter_by(api_code=api_code).one_or_none()
+        data = {}
+        if query_result is not None:
+            data['api_code'] = query_result.api_code
+            data['api_name'] = query_result.api_name
+            data['cert_data'] = query_result.cert_data
+
+            return data
+        else:
+            return None
+
+    @classmethod
+    def update_cert_data(cls, api_code, cert_data):
+        """Update certification data.
+
+        Overwrite if certificate existed,
+        otherwise insert new certificate into database.
+
+        :param api_code: input api short name
+        :param cert_data: input certificate value
+        :return: true if success, otherwise false
+        """
+        query_result = cls.query.filter_by(api_code=api_code).one_or_none()
+        # Update in case certificate already existed in database
+        if query_result is None:
+            return False
+        else:
+            try:
+                with db.session.begin_nested():
+                    query_result.cert_data = cert_data
+                    db.session.merge(query_result)
+                db.session.commit()
+                return True
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
+                return False
+
+    @classmethod
+    def insert_new_api_cert(cls, api_code, api_name, cert_data=None):
+        """Insert new certificate.
+
+        :param api_code: input api code
+        :param api_name: input api name
+        :param cert_data: input certificate value with json format
+        :return: True if success, otherwise False
+        """
+        try:
+            dataObj = ApiCertificate()
+            with db.session.begin_nested():
+                if api_code is not None:
+                    dataObj.api_code = api_code
+                    dataObj.api_name = api_name
+                if cert_data is not None:
+                    dataObj.cert_data = cert_data
+                db.session.add(dataObj)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            return False
+
+    @classmethod
+    def update_api_cert(cls, api_code, api_name, cert_data):
+        """Update API certification.
+
+        Overwrite if certificate existed,
+        otherwise insert new certificate into database.
+
+        :param api_code: input api code
+        :param api_name: input api name
+        :param cert_data: input certificate value
+        :return: true if success, otherwise false
+        """
+        # Get current api data
+        query_result = cls.query.filter_by(api_code=api_code).one_or_none()
+
+        if query_result is None:
+            return False
+        else:
+            try:
+                with db.session.begin_nested():
+                    query_result.api_name = api_name
+                    query_result.cert_data = cert_data
+                    db.session.merge(query_result)
+                db.session.commit()
+                return True
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
+                return False
+
+
 __all__ = ([
-    'SearchManagement', 'AdminLangSettings'
+    'SearchManagement', 'AdminLangSettings', 'ApiCertificate'
 ])

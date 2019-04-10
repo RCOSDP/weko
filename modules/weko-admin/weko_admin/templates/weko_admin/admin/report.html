@@ -1,57 +1,158 @@
 {# -*- coding: utf-8 -*-
-#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
+  #
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+
+
 {%- extends admin_base_template %}
 
-{%- block body %}
-  <style>
-    .content-font {
-      font-size: 16px;
-    }
-  </style>
-  <div class="row">
-    <div class="col-md-3 text-center">
-      <h4>{{_('Number of items registered')}}</h4></div>
-  </div><br>
+{%- block head %}
+  {{ super() }}
+{%- endblock head%}
 
-  <div class="row content-font">
-    <div class="row">
-      <div class="col-md-3 text-right">
-        {{_('Total number of items registered:')}}
-        &nbsp;&nbsp;&nbsp;
-        {{ result.total if result.total else 0  }}
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-3 text-right">
-        {{_('Number of open items registered:')}}
-        &nbsp;&nbsp;&nbsp;
-        {{ result.open if result.open else 0 }}
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-3 text-right">
-        {{_('Number of private items registered:')}}
-        &nbsp;&nbsp;&nbsp;
-        {{ result.private if result.private else 0 }}
-      </div>
-    </div>
+{%- block javascript %}
+  {{ super() }}
+  <!-- <script src="{{ url_for('static', filename='js/weko_admin/stats_report.js') }}"></script> -->
+  {%- assets "weko_admin_stats_report_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+<style>
+  .content-font {
+    font-size: 16px;
+  }
+</style>
+
+<!-- Number of items registered -->
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('Number of items registered')}}</h4>
   </div>
+</div>
+
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <label>{{_('Total number of items registered:')}}</label>
+    &nbsp;&nbsp;&nbsp;
+    {{ result.total if result.total else 0 }}
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <label>{{_('Number of open items registered:')}}</label>
+    &nbsp;&nbsp;&nbsp;
+    {{ result.open if result.open else 0 }}
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <label>{{_('Number of private items registered:')}}</label>
+    &nbsp;&nbsp;&nbsp;
+    {{ result.private if result.private else 0 }}
+  </div>
+</div>
+<hr>
+
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('File Preview Report')}}</h4>
+  </div>
+</div>
+
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-4">
+    <label>{{_('Aggregation month')}}</label>
+  </div>
+</div>
+
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <form method="POST" name="report_file_form" id="report_file_form"
+    action={{url_for('report.get_file_stats_tsv')}}>
+    <p class="col-md-1 text-right">{{_('Type')}}</p>
+    <div class="col-md-2">
+      <select class="form-control" id="report_type_select" name="type">
+        <option value="all" selected>{{_('All')}}</option>
+        <option value="file_download">{{ _("File Downloads") }}</option>
+        <option value="file_preview">{{ _("File Previews") }}</option>
+      </select>
+    </div>
+
+    <p class="col-md-1 text-right">{{_('Year')}}</p>
+    <div class="col-md-1">
+      <select class="form-control" id="report_year_select" name="year">
+        <option selected>{{_('Year')}}</option>
+        {% for x in range(5) %}
+          {% set year = now.year - x %}
+          <option value="{{ year }}">{{ year }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <p class="col-md-1 text-right">{{_('Month')}}</p>
+    <div class="col-md-1">
+      <select class="form-control" id="report_month_select" name="month">
+        <option selected>{{_('Month')}}</option>
+        <option value="1">{{_('01')}}</option>
+        <option value="2">{{_('02')}}</option>
+        <option value="3">{{_('03')}}</option>
+        <option value="4">{{_('04')}}</option>
+        <option value="5">{{_('05')}}</option>
+        <option value="6">{{_('06')}}</option>
+        <option value="7">{{_('07')}}</option>
+        <option value="8">{{_('08')}}</option>
+        <option value="9">{{_('09')}}</option>
+        <option value="10">{{_('10')}}</option>
+        <option value="11">{{_('11')}}</option>
+        <option value="12">{{_('12')}}</option>
+      </select>
+    </div>
+    <input type="hidden" id="report_file_input" name="report" value="{}" />
+  </form>
+  <div class="col-md-2">
+    <button id="downloadReport" class="btn btn-primary">{{_('Download')}}</button>
+  </div>
+</div>
+<hr>
+
+<div class="modal fade" tabindex="-1" role="dialog" id="error_modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">{{_('Error')}}</h4>
+      </div>
+      <div class="modal-body">
+        <p class="text-center">{{_('Could not download file.')}}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">{{_('Close')}}</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 {%- endblock body %}
+

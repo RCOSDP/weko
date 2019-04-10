@@ -89,6 +89,9 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_items_ui',
         ],
+        'invenio_base.api_blueprints': [
+            'weko_items_ui = weko_items_ui.views:blueprint_api',
+        ],
         'invenio_assets.bundles': [
             'weko_items_ui_indextree_css = '
             'weko_items_ui.bundles:indextree_style',

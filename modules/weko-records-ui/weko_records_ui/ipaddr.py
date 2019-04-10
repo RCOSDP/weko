@@ -23,12 +23,13 @@
 import ipaddress
 
 from flask import current_app, request
+from flask_security import current_user
 from weko_records.api import SiteLicense
 
 
 def check_site_license_permission():
-    """
-    Check Site License Permission
+    """Check Site License Permission.
+
     :return: True or False
     """
     http_f = 'HTTP_X_FORWARDED_FOR'
@@ -47,18 +48,18 @@ def check_site_license_permission():
             addresses = lst.get('addresses')
             for adr in addresses:
                 if match_ip_addr(adr, ip_addr):
+                    current_user.site_license_flag = True
                     return True
     return False
 
 
 def match_ip_addr(addr, ip_addr):
-    """
-    Check Ip Address Range
+    """Check Ip Address Range.
+
     :param addr:
     :param ip_addr:
     :return: True or False
     """
-
     s_ddr = addr.get('start_ip_address')
     f_ddr = addr.get('finish_ip_address')
     ipaddress.ip_address(s_ddr)

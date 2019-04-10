@@ -25,6 +25,7 @@ import unicodedata
 
 from flask import abort, current_app, render_template, request
 from flask_login import current_user
+from invenio_files_rest import signals
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_files_rest.proxies import current_permission_factory
 from invenio_files_rest.views import ObjectResource, check_permission, \
@@ -40,7 +41,6 @@ from .models import PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
     file_permission_factory
-from .views import ObjectResourceWeko
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -73,13 +73,12 @@ def weko_view_method(pid, record, template=None, **kwargs):
 
 
 def prepare_response(pid_value, fd=True):
-    """
-     prepare response data and header
+    """Prepare response data and header.
+
     :param pid_value:
     :param fd:
     :return:
     """
-
     fn = request.view_args.get("filename")
 
     flst = FilesMetadata.get_records(pid_value)
@@ -150,7 +149,12 @@ def file_preview_ui(pid, record, _record_file_factory=None, **kwargs):
         instance.
     :param record: The record metadata.
     """
-    return file_ui(pid, record, _record_file_factory, is_preview=True, **kwargs)
+    return file_ui(
+        pid,
+        record,
+        _record_file_factory,
+        is_preview=True,
+        **kwargs)
 
 
 def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
@@ -174,11 +178,22 @@ def file_download_ui(pid, record, _record_file_factory=None, **kwargs):
         instance.
     :param record: The record metadata.
     """
-    return file_ui(pid, record, _record_file_factory, is_preview=False, **kwargs)
+    return file_ui(
+        pid,
+        record,
+        _record_file_factory,
+        is_preview=False,
+        **kwargs)
 
 
-def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
-    """
+def file_ui(
+        pid,
+        record,
+        _record_file_factory=None,
+        is_preview=False,
+        **kwargs):
+    """File Ui.
+
     :param is_preview: Determine the type of event. True: file-preview, False: file-download
     :param _record_file_factory:
     :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
@@ -207,11 +222,12 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
     user = UserProfile.get_by_userid(current_user.get_id())
     lang = 'en'     # Defautl language for PDF coverpage
 
-    if user == None:
+    if user is None:
         lang = 'en'
     else:
         lang = user.language
 
+    add_signals_info(record, obj)
     """ Send file without its pdf cover page """
 
     try:
@@ -224,12 +240,13 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
             record)
 
         # if not pdf or cover page disabled: Download directly
-        # if pdf and cover page enabled and has original in query param: check permission (user roles)
+        # if pdf and cover page enabled and has original in query param: check
+        # permission (user roles)
         if is_pdf is False \
                 or pdfcoverpage_set_rec is None or pdfcoverpage_set_rec.avail == 'disable' \
-                or coverpage_state == False \
+                or coverpage_state is False \
                 or (is_original and can_download_original_pdf):
-            return ObjectResourceWeko.send_object(
+            return ObjectResource.send_object(
                 obj.bucket, obj,
                 expected_chksum=fileobj.get('checksum'),
                 logger_data={
@@ -238,10 +255,10 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
                     'pid_value': pid.pid_value,
                 },
                 as_attachment=not is_preview,
-                cache_timeout=-1
+                is_preview=is_preview
             )
     except AttributeError:
-        return ObjectResourceWeko.send_object(
+        return ObjectResource.send_object(
             obj.bucket, obj,
             expected_chksum=fileobj.get('checksum'),
             logger_data={
@@ -250,13 +267,51 @@ def file_ui(pid, record, _record_file_factory=None, is_preview=False, **kwargs):
                 'pid_value': pid.pid_value,
             },
             as_attachment=not is_preview,
-            cache_timeout=-1
+            is_preview=is_preview
         )
 
-    """ Send file with its pdf cover page """
-    object_version_record = ObjectVersion.query.filter_by(
-        bucket_id=obj.bucket_id).first()
+    # Send file with its pdf cover page
     file_instance_record = FileInstance.query.filter_by(
-        id=object_version_record.file_id).first()
+        id=obj.file_id).first()
     obj_file_uri = file_instance_record.uri
+
+    # return obj_file_uri
+    signals.file_downloaded.send(current_app._get_current_object(), obj=obj)
     return make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang)
+
+
+def add_signals_info(record, obj):
+    """Add event signals info.
+
+    Add user role, site license flag, item index list.
+
+    :param record: the record metadate.
+    :param obj: send object.
+    """
+    # Add user role info to send_obj
+    userrole = 'guest'
+    if hasattr(current_user, 'id'):
+        if len(current_user.roles) == 0:
+            userrole = 'user'
+        elif len(current_user.roles) == 1:
+            userrole = current_user.roles[0].name
+        else:
+            max_power_role_id = 999
+            for r in current_user.roles:
+                if max_power_role_id > r.id:
+                    max_power_role_id = r.id
+                    userrole = r.name
+    obj.userrole = userrole
+
+    # Add site license flag to send_obj
+    if hasattr(current_user, 'site_license_flag'):
+        obj.site_license_flag = True
+    else:
+        obj.site_license_flag = False
+
+    # Add index list info to send_obj
+    index_list = ''
+    if len(record.navi) > 0:
+        for index in record.navi:
+            index_list += index[3] + '|'
+    obj.index_list = index_list[:len(index_list) - 1]

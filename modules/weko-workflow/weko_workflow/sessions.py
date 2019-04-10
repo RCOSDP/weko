@@ -30,8 +30,8 @@ from .api import WorkActivity
 
 
 def upt_activity_item(app, item_id):
-    """
-    Connect to the item_created signal.
+    """Connect to the item_created signal.
+
     :param app:
     :param item_id:
     :return:
