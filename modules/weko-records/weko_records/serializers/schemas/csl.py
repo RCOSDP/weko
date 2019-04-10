@@ -38,40 +38,78 @@ def _get_itemdata(obj, key):
     metadata = obj['metadata']
     for item in metadata:
         itemdata = metadata.get(item, {})
-        if (type(itemdata)) is dict and itemdata.get('attribute_name') == 'Description':
+        if (type(itemdata)) is dict and itemdata.get('attribute_name') == key:
             return itemdata.get('attribute_value_mlt')
 
     return None
 
 
 def _get_creator_by_lang(textdata, lang):
-    creator_name = ["", "", "", ""]
+    creator_name = []
     for text in textdata:
         for value in sorted(text[0]):
             if text[0][value] == lang:
                 creator_name.append([text[0][index]
                                      for index in sorted(text[0])].pop(0))
 
-    return (('{} {} {} ({})').format(creator_name[1], creator_name[2], creator_name[0], creator_name[3]))
+    return creator_name
+
+
+def get_names_from_obj(obj):
+    creator_name = []
+    itemdatas = {}
+    for item in obj:
+        itemdata = obj.get(item, {})
+        if (type(itemdata)) is dict and itemdata.get('attribute_name') == 'Creator':
+            itemdatas = itemdata.get('attribute_value_mlt')
+
+    for itemdata in itemdatas:
+        textdata = [itemdata[val] for val in sorted(itemdata)]
+        creator_name.append(_get_creator_by_lang(textdata, 'en'))
+
+    return creator_name[0]
+
+
+class CreatorSchema(Schema):
+    """Schema for an creator."""
+
+    family = fields.Method('get_family_name')
+    given = fields.Method('get_given_name')
+    name = fields.Method('get_name')
+
+    def get_family_name(self, obj):
+        """Get family name."""
+        family_name = get_names_from_obj(obj)[1]
+        return family_name if family_name else 'family'
+
+    def get_given_name(self, obj):
+        """Get given name."""
+        given_name = get_names_from_obj(obj)[2]
+        return given_name if given_name else 'given'
+
+    def get_name(self, obj):
+        """Get name."""
+        _name = get_names_from_obj(obj)[0]
+        return _name if _name else 'name'
 
 
 class RecordSchemaCSLJSON(Schema):
     """Schema for records in CSL-JSON."""
 
-    id = fields.Str(attribute='_deposit.id')
+    id = fields.Str(attribute='pid.pid_value')
     type = fields.Str(attribute='metadata.item_type_id')
     title = fields.Str(attribute='metadata.item_title')
     abstract = fields.Method('get_description')
-    author = fields.Method('get_creator')
+    # author = fields.List(fields.Nested(CreatorSchema), attribute='metadata')
 
     issued = fields.Method('get_issue_date')
     language = fields.Method('get_language')
     version = fields.Method('get_version')
-    note = fields.Str(attribute='metadata.item_title')  #fields.Str('This data is not map with zenodo')
+    note = fields.Str('This data is not map with zenodo')
 
     DOI = fields.Method('get_doi')
-    ISBN = fields.Str(attribute='metadata.item_title')  #fields.Str('This data is not map with zenodo')
-    ISSN = fields.Str(attribute='metadata.item_title')  #fields.Str('This data is not map with zenodo')
+    ISBN = fields.Str('This data is not map with zenodo')
+    ISSN = fields.Str('This data is not map with zenodo')
 
     container_title = fields.Method('get_container_title')
     page = fields.Method('get_pages')
@@ -79,14 +117,14 @@ class RecordSchemaCSLJSON(Schema):
     issue = fields.Method('get_issue')
 
     publisher = fields.Method('get_publisher')
-    publisher_place = fields.Str(attribute='metadata.item_title')  #fields.Str('This data is not map with zenodo')
+    publisher_place = fields.Str('This data is not map with zenodo')
 
     def get_description(self, obj):
         """Get description."""
         description = []
         itemdatas = _get_itemdata(obj, 'Description')
         if itemdatas is None:
-            return 'No description'
+            return 'Not description data'
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
@@ -100,7 +138,7 @@ class RecordSchemaCSLJSON(Schema):
         creator_name = []
         itemdatas = _get_itemdata(obj, 'Creator')
         if itemdatas is None:
-            return 'No creator data'
+            return 'Not creator data'
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
@@ -113,11 +151,13 @@ class RecordSchemaCSLJSON(Schema):
         issue_date = []
         itemdatas = _get_itemdata(obj, 'Date')
         if itemdatas is None:
-            return 'No issued date'
+            return 'Not issue date data'
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
-            issue_date.append(('{} ({})').format(textdata[0], textdata[1]))
+            datedata = from_isodate(textdata[0])
+            issue_date.append(
+                {'date-parts': [[datedata.year, datedata.month, datedata.day]]} if datedata else missing)
 
         return issue_date[0]
 
@@ -126,7 +166,7 @@ class RecordSchemaCSLJSON(Schema):
         language = []
         itemdatas = _get_itemdata(obj, 'Language')
         if itemdatas is None:
-            return 'No language data'
+            return 'Not language data'
 
         for itemdata in itemdatas:
             language.append(itemdata.popitem()[1])
@@ -138,7 +178,7 @@ class RecordSchemaCSLJSON(Schema):
         version = []
         itemdatas = _get_itemdata(obj, 'Version')
         if itemdatas is None:
-            return 'No version data'
+            return 'Not version data'
 
         for itemdata in itemdatas:
             version.append(itemdata.popitem()[1])
@@ -150,7 +190,7 @@ class RecordSchemaCSLJSON(Schema):
         doi = []
         itemdatas = _get_itemdata(obj, 'Identifier Registration')
         if itemdatas is None:
-            return 'No doi data'
+            return 'Not DOI data'
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
@@ -161,9 +201,9 @@ class RecordSchemaCSLJSON(Schema):
     def get_container_title(self, obj):
         """Get alternative title."""
         alternative_title = []
-        itemdatas = _get_itemdata(obj, 'Identifier Registration')
+        itemdatas = _get_itemdata(obj, 'Alternative Title')
         if itemdatas is None:
-            return 'No alternative title'
+            return 'Not alternative title data'
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
@@ -177,7 +217,7 @@ class RecordSchemaCSLJSON(Schema):
         pages = []
         itemdatas = _get_itemdata(obj, 'Number of Pages')
         if itemdatas is None:
-            return 'No number of pages data'
+            return 'Not alternative title data'
 
         for itemdata in itemdatas:
             pages.append(itemdata.popitem()[1])
@@ -189,7 +229,7 @@ class RecordSchemaCSLJSON(Schema):
         volume = []
         itemdatas = _get_itemdata(obj, 'Volume Number')
         if itemdatas is None:
-            return 'No volume number'
+            return 'Not volume data'
 
         for itemdata in itemdatas:
             volume.append(itemdata.popitem()[1])
@@ -201,7 +241,7 @@ class RecordSchemaCSLJSON(Schema):
         issue = []
         itemdatas = _get_itemdata(obj, 'Issue Number')
         if itemdatas is None:
-            return 'No issuse number'
+            return 'Not issue number data'
 
         for itemdata in itemdatas:
             issue.append(itemdata.popitem()[1])
@@ -217,7 +257,6 @@ class RecordSchemaCSLJSON(Schema):
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
-            publisher.append(
-                ('{} ({})').format(textdata[0], textdata[1]))
+            publisher.append(('{} ({})').format(textdata[0], textdata[1]))
 
         return publisher[0]

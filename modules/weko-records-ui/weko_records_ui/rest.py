@@ -26,7 +26,7 @@ import shutil
 import uuid
 import zipfile
 
-from flask import Blueprint, abort, current_app, jsonify, request
+from flask import Blueprint, abort, current_app, jsonify, request, make_response
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_pidstore import current_pidstore
@@ -44,6 +44,8 @@ from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 from sqlalchemy.exc import SQLAlchemyError
 from weko_records.serializers import citeproc_v1
+from weko_deposit.api import WekoRecord
+
 
 def create_error_handlers(blueprint):
     """Create error handlers on blueprint."""
@@ -110,9 +112,6 @@ def create_blueprint(endpoints):
             methods=['GET'],
         )
 
-    print("create_blueprint") 
-    print(blueprint)
-
     return blueprint
 
 
@@ -138,35 +137,17 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
     # @need_record_permission('read_permission_factory')
     def get(self, pid_value, **kwargs):
         """Render citation for record according to style and language."""
-        
-        style = request.values.get('style', 1) # style or 'science'
+
+        style = request.values.get('style', 1)  # style or 'science'
         locale = request.values.get('locale', 2)
         try:
-            print("style")
-            print(style)
-            print("locale")
-            print(locale)
-            print('pid_value')
-            print(pid_value)
-
             pid = PersistentIdentifier.get('depid', pid_value)
-            print(pid)
-
             record = Record.get_record(pid.object_uuid)
-            print(record)
+            # current_app.logger.debug(record)
 
             result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
-            return result
-            # return 'Family name, given names. (2018). DWD European Weather [Data set]. Zenodo. http://doi.org/10.5281/zenodo.2604860'
+            return make_response(jsonify(result), 200)
         except Exception:
             current_app.logger.exception(
                 'Citation formatting for record {0} failed.'.format(str(record.id)))
-            return None
-
-    def print_trackback(self):
-        try:
-            import traceback
-            for line in traceback.format_stack():
-                print(line.strip())
-        except Exception:
-            print("warning")
+            return make_response(jsonify("Not found"), 404)
