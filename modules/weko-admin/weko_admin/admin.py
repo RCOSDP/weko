@@ -276,6 +276,14 @@ chunk_adminview = {
     }
 }
 
+class ChunkDesign(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_CHUNK_DESIGN"]
+        )
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -312,10 +320,21 @@ web_api_account_adminview = {
     }
 }
 
+
+chunk_design_adminview = {
+    'view_class': ChunkDesign,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Chunk Design'),
+        'endpoint': 'chunkdesign'
+    }
+}
+
 __all__ = (
     'chunk_adminview',
     'style_adminview',
     'report_adminview',
     'language_adminview',
-    'web_api_account_adminview'
+    'web_api_account_adminview',
+    'chunk_design_adminview'
 )
