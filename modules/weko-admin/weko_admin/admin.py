@@ -252,6 +252,13 @@ class LanguageSettingView(BaseView):
             current_app.config["WEKO_ADMIN_LANG_SETTINGS"]
         )
 
+class ChunkSettingView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_CHUNK_SETTINGS"]
+        )
+
 
 class WebApiAccount(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -260,6 +267,14 @@ class WebApiAccount(BaseView):
             current_app.config["WEKO_ADMIN_WEB_API_ACCOUNT"]
         )
 
+chunk_adminview = {
+    'view_class': ChunkSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Chunk'),
+        'endpoint': 'chunksetting'
+    }
+}
 
 class ChunkDesign(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -316,6 +331,7 @@ chunk_design_adminview = {
 }
 
 __all__ = (
+    'chunk_adminview',
     'style_adminview',
     'report_adminview',
     'language_adminview',
