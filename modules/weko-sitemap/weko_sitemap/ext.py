@@ -34,7 +34,9 @@ class WekoSitemap(object):
         app.extensions['weko-sitemap'] = self
 
         app.config['SITEMAP_INCLUDE_RULES_WITHOUT_PARAMS'] = True
-        app.config['SITEMAP_BLUEPRINT_URL_PREFIX'] = '/weko-sitemap/'
+        app.config['SITEMAP_BLUEPRINT_URL_PREFIX'] = '/weko/sitemaps'
+        app.config['SITEMAP_ENDPOINT_URL'] = '/'
+        #app.config['SERVER_NAME'] = 'testname'
         ext = Sitemap(app=app)
 
     def init_config(self, app):

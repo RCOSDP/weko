@@ -77,6 +77,9 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_sitemap',
         ],
+        'invenio_admin.views': [
+            'weko_sitemap_sitemap = weko_sitemap.admin:sitemap_adminview',
+        ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
