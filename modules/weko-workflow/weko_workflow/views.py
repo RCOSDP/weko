@@ -46,7 +46,7 @@ from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     IDENTIFIER_ITEMSMETADATA_FORM
 from .models import ActionStatusPolicy, ActivityStatusPolicy
-from .romeo import search_romeo_jtitles, search_romeo_issn
+from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import get_community_id_by_index
 
 blueprint = Blueprint(
@@ -633,10 +633,10 @@ def get_journal(method, value):
         result = search_romeo_jtitles(value, 'exact')
 
     if result['romeoapi'] and int(result['romeoapi']['header']['numhits']) > 1:
-        if type(result['romeoapi']['journals']['journal']) == type([]):
+        if isinstance(result['romeoapi']['journals']['journal'], list):
             result['romeoapi']['journals']['journal'] = \
                 result['romeoapi']['journals']['journal'][0]
-        if type(result['romeoapi']['publishers']['publisher']) == type([]):
+        if isinstance(result['romeoapi']['publishers']['publisher'], list):
             result['romeoapi']['publishers']['publisher'] = \
                 result['romeoapi']['publishers']['publisher'][0]
 

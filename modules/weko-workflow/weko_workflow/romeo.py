@@ -67,7 +67,7 @@ def search_romeo_issn(query):
 
     response_body = response.text
     dict_result = xmltodict.parse(response_body, encoding='utf-8') \
-                    if response.text else {}
+        if response.text else {}
     return dict_result
 
 
