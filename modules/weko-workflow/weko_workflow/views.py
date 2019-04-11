@@ -46,7 +46,7 @@ from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
     IDENTIFIER_ITEMSMETADATA_FORM
 from .models import ActionStatusPolicy, ActivityStatusPolicy
-from .romeo import search_romeo_jtitles
+from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import get_community_id_by_index
 
 blueprint = Blueprint(
@@ -620,17 +620,24 @@ def get_journals():
     return jsonify(multiple_result)
 
 
-@blueprint.route('/journal', methods=['GET'])
-def get_journal():
+@blueprint.route('/journal/<string:method>/<string:value>', methods=['GET'])
+def get_journal(method, value):
     """Get journal."""
-    title = request.values.get('title')
-    if not title:
+    if not method or not value:
         return jsonify({})
 
-    title = title.split(" / ")[0]
-    result = search_romeo_jtitles(title, 'exact')
+    if method == 'issn':
+        result = search_romeo_issn(value)
+    else:
+        value = value.split(" / ")[0]
+        result = search_romeo_jtitles(value, 'exact')
+
     if result['romeoapi'] and int(result['romeoapi']['header']['numhits']) > 1:
-        result['romeoapi']['journals']['journal'] = \
-            result['romeoapi']['journals']['journal'][0]
+        if isinstance(result['romeoapi']['journals']['journal'], list):
+            result['romeoapi']['journals']['journal'] = \
+                result['romeoapi']['journals']['journal'][0]
+        if isinstance(result['romeoapi']['publishers']['publisher'], list):
+            result['romeoapi']['publishers']['publisher'] = \
+                result['romeoapi']['publishers']['publisher'][0]
 
     return jsonify(result)
