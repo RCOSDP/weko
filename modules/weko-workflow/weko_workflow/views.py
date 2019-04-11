@@ -633,7 +633,11 @@ def get_journal(method, value):
         result = search_romeo_jtitles(value, 'exact')
 
     if result['romeoapi'] and int(result['romeoapi']['header']['numhits']) > 1:
-        result['romeoapi']['journals']['journal'] = \
-            result['romeoapi']['journals']['journal'][0]
+        if type(result['romeoapi']['journals']['journal']) == type([]):
+            result['romeoapi']['journals']['journal'] = \
+                result['romeoapi']['journals']['journal'][0]
+        if type(result['romeoapi']['publishers']['publisher']) == type([]):
+            result['romeoapi']['publishers']['publisher'] = \
+                result['romeoapi']['publishers']['publisher'][0]
 
     return jsonify(result)
