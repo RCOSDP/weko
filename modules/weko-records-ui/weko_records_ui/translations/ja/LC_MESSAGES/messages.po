@@ -238,7 +238,7 @@ msgstr "更新日時"
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:201
 msgid "Object File Name"
-msgstr "オブジェクトファイル名"
+msgstr "ファイル容量"
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
 #, fuzzy
@@ -391,3 +391,5 @@ msgstr "バージョン"
 #~ msgid "Control number"
 #~ msgstr "管理番号"
 
+msgid "Show"
+msgstr "表示"
