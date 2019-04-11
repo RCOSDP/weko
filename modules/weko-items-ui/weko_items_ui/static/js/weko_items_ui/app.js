@@ -279,6 +279,8 @@ function handleSharePermission(value) {
       $scope.filemeta_key = '';
       $scope.filemeta_form_idx = -1;
       $scope.is_item_owner = false;
+      $scope.itemTitle = "";
+      $scope.itemTitleID = "";
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_key.length > 0) {
           return $scope.filemeta_key;
@@ -644,6 +646,8 @@ function handleSharePermission(value) {
                         {
                           this.setValueToField(this.dictValue(sub_id, '@value'), this.getAutoFillValue(this.dictValue(sub_resultId, '@value')));
                           this.setValueToField(this.dictValue(sub_id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'xml:lang')));
+                          $scope.itemTitle = this.getAutoFillValue(this.dictValue(sub_resultId, '@value'));
+                          $scope.itemTitleID = this.dictValue(sub_id, '@value');
                           break;
                         }
                         else
@@ -659,6 +663,8 @@ function handleSharePermission(value) {
                     if (resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                      $scope.itemTitle = this.getAutoFillValue(this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                      $scope.itemTitleID = this.dictValue(id, '@value');
                     } else {
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
@@ -1107,6 +1113,7 @@ function handleSharePermission(value) {
       }
 
       $scope.updateDataJson = async function () {
+        $rootScope.recordsVM.invenioRecordsModel['title'] = ($scope.itemTitleID) ? $('#'+$scope.itemTitleID).val() : $scope.itemTitle;
         let next_frame = $('#next-frame').val();
         if ($scope.is_item_owner) {
           if (!this.registerUserPermission()) {
