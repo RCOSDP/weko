@@ -22,6 +22,7 @@
 
 import datetime
 import os
+import numpy
 
 
 from celery import shared_task
