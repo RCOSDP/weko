@@ -213,8 +213,11 @@ def mapping_index(ItemTypeID=0):
                 current_app.config['WEKO_ITEMTYPES_UI_ERROR_TEMPLATE']
             )
         item_type = ItemTypes.get_by_id(ItemTypeID)
+        for list1 in lists:
+            print(list1)
         if item_type is None:
-            return redirect(url_for('.mapping_index', ItemTypeID=lists[0].id))
+            return redirect(url_for('.mapping_index', 
+                                    ItemTypeID=lists[0].item_type[0].id))
         itemtype_list = []
         itemtype_prop = item_type.schema.get('properties')
         for key, prop in itemtype_prop.items():
