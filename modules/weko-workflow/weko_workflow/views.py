@@ -486,7 +486,7 @@ def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
     tempdata = IDENTIFIER_ITEMSMETADATA_FORM
 
     jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
-    if not jalcdoi_link:
+    if jalcdoi_link is not None:
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
         tempdata['identifier']['value'] = jalcdoi_link
         tempdata['identifier']['properties']['identifierType'] = 'DOI'
@@ -498,7 +498,7 @@ def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
         res['pidstore_identifier'].append(tempdata)
 
     jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
-    if not jalcdoi_cr_link:
+    if jalcdoi_cr_link is not None:
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
         tempdata['identifier']['value'] = jalcdoi_cr_link
         tempdata['identifierRegistration']['value'] = \
@@ -509,7 +509,7 @@ def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
         res['pidstore_identifier'].append(tempdata)
 
     jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
-    if not jalcdoi_dc_link:
+    if jalcdoi_dc_link is not None:
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
         tempdata['identifier']['value'] = jalcdoi_dc_link
         tempdata['identifierRegistration']['value'] = \
@@ -520,7 +520,7 @@ def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
         res['pidstore_identifier'].append(tempdata)
 
     jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
-    if not jalcdoi_crni_link:
+    if jalcdoi_crni_link is not None:
         tempdata['identifier']['value'] = jalcdoi_crni_link
         tempdata['identifier']['properties']['identifierType'] = 'HDL'
         del tempdata['identifierRegistration']
@@ -607,7 +607,7 @@ def get_journals():
             object_pairs_hook=OrderedDict)
 
     else:
-        multiple_result = search_romeo_jtitles(key, 'contains') if key else {}
+        multiple_result = search_romeo_jtitles(key, 'starts') if key else {}
         try:
             datastore.put(
                 cache_key,

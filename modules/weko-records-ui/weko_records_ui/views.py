@@ -26,6 +26,7 @@ import six
 import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
+from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_db import db
 from invenio_files_rest.views import ObjectResource, check_permission, \
@@ -365,6 +366,14 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     can_download_original = check_original_pdf_download_permission(record) \
         and pdfcoverpage_set_rec is not None and pdfcoverpage_set_rec.avail != 'disable'
 
+    # Get item meta data
+    meta = ItemsMetadata.get_record(pid.object_uuid)
+    record['permalink_uri'] = None
+    if meta is not None:
+        pidstore_identifier = meta.get('pidstore_identifier')
+        if pidstore_identifier is None:
+            record['permalink_uri'] = request.url
+
     return render_template(
         template,
         pid=pid,
@@ -468,7 +477,7 @@ def set_pdfcoverpage_header():
                                     header_display_position
                                     )
 
-        flash({{_('PDF cover page settings have been updated.')}},
+        flash(_('PDF cover page settings have been updated.'),
               category='success')
         return redirect('/admin/pdfcoverpage')
 
