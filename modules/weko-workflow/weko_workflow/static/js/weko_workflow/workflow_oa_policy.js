@@ -51,11 +51,20 @@ require([
 
               var options = '';
               if(parseInt(data.romeoapi.header.numhits) == 1) {
-                options = '<option value="' + journals.jtitle + '"/>';
+                if (journals.issn) {
+                  options = '<option value="' + journals.jtitle + '">' + journals.issn + '</option>';
+                } else {
+                  options = '<option value="' + journals.jtitle + '"/>';
+                }
                 journalNames[journals.jtitle] = journals.issn;
               }else {
                 $.each(journals, function(index, journal) {
-                  var html = '<option value="' + journal.jtitle + '"/>';
+                  var html = '';
+                  if (journal.issn) {
+                    html = '<option value="' + journal.jtitle + '">' + journal.issn + '</option>';
+                  } else {
+                    html = '<option value="' + journal.jtitle + '"/>';
+                  }
                   options = options + html;
 
                   journalNames[journal.jtitle] = journal.issn;
@@ -93,7 +102,12 @@ require([
           getJournalUrl = '/workflow/journal/issn/' + issn;    
         } else {
           issn = ''
-          getJournalUrl = '/workflow/journal/title/' + title;
+          var titleList = title.split('/')
+          if (titleList.length > 1) {
+            getJournalUrl = '/workflow/journal/title/' + titleList[1];
+          } else {
+            getJournalUrl = '/workflow/journal/title/' + title;
+          }
         }
 
         $.ajax({
