@@ -47,10 +47,10 @@ WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
 WEKO_INDEXTREE_JOURNAL_UPDATED = True
 """For index tree cache."""
 
-WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE = "schemas/jsonschema.json"
+WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE = "schemas/jsonschema1.json"
 
-WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API = "/indextree/journal/jsonschema"
+WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API = "/indextree/journal/jsonschema1"
 
-WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE = "schemas/schemaform.json"
+WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE = "schemas/schemaform1.json"
 
-WEKO_INDEXTREE_JOURNAL_FORM_JSON_API = "/indextree/journal/schemaform"
+WEKO_INDEXTREE_JOURNAL_FORM_JSON_API = "/indextree/journal/schemaform1"

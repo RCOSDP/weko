@@ -206,7 +206,7 @@ class Journals(object):
         """
         try:
             current_app.logger.info('[{0}] [{1} {2}] START'.format(0, 'Get Journal By Index ID ', index_id))
-            obj = db.session.query(Journals).filter_by(index_id=index_id).one_or_none()
+            obj = db.session.query(Journal).filter_by(index_id=index_id).one_or_none()
             current_app.logger.info('[{0}] [{1} {2}] END'.format(0, 'Get Journal By Index ID ', index_id))
 
             if obj is None:
