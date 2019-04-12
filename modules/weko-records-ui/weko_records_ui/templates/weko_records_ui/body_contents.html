@@ -358,3 +358,15 @@
 <script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}">
 </script>
 {%- endblock javascript %}
+
+{% block css %}
+<style>
+#invenio-csl span.twitter-typeahead .tt-menu {
+  overflow-y: scroll;
+  max-height: 200px;
+}
+#invenio-csl span.twitter-typeahead .tt-suggestion {
+  white-space: normal;
+}
+</style>
+{% endblock %}

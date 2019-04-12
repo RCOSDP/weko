@@ -42,6 +42,7 @@ class WekoJSONSerializer(JSONSerializer):
     Adds or removes files from depending on access rights and provides a
     context to the request serializer.
     """
+
     def preprocess_record(self, pid, record, links_factory=None):
         """Include files for single record retrievals."""
         result = super(WekoJSONSerializer, self).preprocess_record(
@@ -102,4 +103,4 @@ class WekoJSONSerializer(JSONSerializer):
         """Serialize a single record for the exporter."""
         return json.dumps(
             self.transform_search_hit(pid, record)
-        ).encode('utf8')  + b'\n'
+        ).encode('utf8') + b'\n'

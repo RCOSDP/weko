@@ -28,6 +28,7 @@ from __future__ import absolute_import, print_function
 
 from invenio_pidstore.fetchers import FetchedPID
 
+
 def weko_record_fetcher(dummy_record_uuid, data):
     """Fetch a record's identifiers."""
     return FetchedPID(
@@ -35,6 +36,7 @@ def weko_record_fetcher(dummy_record_uuid, data):
         pid_type='recid',
         pid_value=str(data['recid']),
     )
+
 
 def weko_doi_fetcher(dummy_record_uuid, data):
     """Fetch a record's DOI."""

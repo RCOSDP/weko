@@ -17,10 +17,14 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
+
+"""CSL Docstring."""
+
 import json
 from datetime import datetime
 from os.path import dirname, join
 from jsonref import JsonRef
+
 
 class ObjectType(object):
     """Class to load object types data."""

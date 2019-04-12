@@ -74,8 +74,6 @@ WEKO_OPENSEARCH_SYSTEM_DESCRIPTION = 'WEKO - NII Scholarly and Academic Informat
 WEKO_OPENSEARCH_IMAGE_URL = 'static/favicon.ico'
 
 RECORDS_REST_ENDPOINTS = copy.deepcopy(RECORDS_REST_ENDPOINTS)
-print("[Log]: Before RECORDS_REST_ENDPOINTS")
-print(RECORDS_REST_ENDPOINTS)
 RECORDS_REST_ENDPOINTS['recid']['search_factory_imp'] = \
     'weko_search_ui.query.es_search_factory'
 RECORDS_REST_ENDPOINTS['recid']['search_serializers'] = {
@@ -95,10 +93,6 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
     'application/json': ('weko_records.serializers:opensearch_v1_search'),
 }
 
-# register cites serializers.
-# RECORDS_REST_ENDPOINTS['recid']['list_route'] = '/records/'
-# RECORDS_REST_ENDPOINTS['recid']['item_route'] = '/records/<pid(depid,record_class="weko_deposit.api:WekoDeposit"):pid_value>',
-
 RECORDS_REST_ENDPOINTS['recid']['record_class']='weko_records.api:WekoRecord'
 RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
     'application/vnd.citationstyles.csl+json': ('weko_records.serializers:csl_v1_response'),
@@ -106,10 +100,6 @@ RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
 }
 
 # RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all  
-print("[Log]: =============================")
-print("[Log]: After RECORDS_REST_ENDPOINTS")
-print(RECORDS_REST_ENDPOINTS)
-print("[Log]: =============================")
 
 INDEXER_DEFAULT_INDEX = 'weko'
 INDEXER_DEFAULT_DOCTYPE = 'item'
