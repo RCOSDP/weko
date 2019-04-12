@@ -36,15 +36,15 @@ js_dependencies = NpmBundle(
     },
 )
 
-js = NpmBundle(
-    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
-    'node_modules/angular/angular.js',
-    'js/weko_records_ui/detail.js',
+js = Bundle(
+    # 'node_modules/angular/angular.js',
+    # 'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
+    'js/weko_records_ui/detail.js',  # Not being used
     'js/weko_records_ui/app.js',
     'js/weko_records_ui/bulk_update.js',
-    filters='jsmin',
+    # filters='jsmin',
     output="gen/weko_records_ui.%(version)s.js",
-    npm={
-        'angular-ui-bootstrap': '~0.13.2',
-    },
+    # npm={
+    #    'angular-ui-bootstrap': '~0.13.2',
+    # },
 )
