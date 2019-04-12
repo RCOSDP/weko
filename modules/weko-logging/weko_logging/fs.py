@@ -71,11 +71,14 @@ class WekoLoggingFS(WekoLoggingBase):
                     'LOGGING_FS_LOGFILE', app.config['WEKO_LOGGING_FS_LOGFILE'].format(
                         instance_path=app.instance_path, sys_prefix=sys.prefix,))
             else:
+                app.config['WEKO_LOGGING_FS_LOGFILE'] = './weko-logging20190412.log'
+                """
                 app.config['WEKO_LOGGING_FS_LOGFILE'] = \
                     app.config['WEKO_LOGGING_FS_LOGFILE'].format(
                         instance_path=app.instance_path,
                         sys_prefix=sys.prefix,
                 )
+                """
 
     def install_handler(self, app):
         """
