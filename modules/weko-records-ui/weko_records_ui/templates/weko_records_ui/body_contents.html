@@ -25,8 +25,9 @@
     <pre class="hide">{{record|tojson}}</pre>
     <div class="panel_bread" id="panel_bread">
       {%- if record.navi -%}
-        <div class="row col-sm-9 col-md-9 col-left">
-          <h3 class="panel-title" style="display: inline;">{{_('Index')}}</h3>
+        <div class="row col-sm-12 col-md-12 col-left">
+          <h3 class="panel-title" style="display: inline;">{{_('Index')}}
+          </h3>
           {%- for nav in record.navi -%}
           <ol class="breadcrumb" style="display: inline; padding-left: 0.25em; padding-right: 0.25em;">
             {%- set name = nav.name.split('/') -%}
@@ -43,10 +44,10 @@
           {{ '|'  }}
           {%- endif %}
           {%- endfor %}
+          {%- if record.permalink_uri -%}
+          <span class="col-right" style="display: inline;">Permalink : {{ record.permalink_uri }}</span>
+          {%- endif -%}
       </div>
-      {%- endif -%}
-      {%- if record.permalink_uri -%}
-      <span class="pull-right">Permalink : {{ record.permalink_uri }}</span>
       {%- endif -%}
     </div>
   </div>
