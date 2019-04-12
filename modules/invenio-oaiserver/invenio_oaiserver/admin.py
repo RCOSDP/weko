@@ -67,10 +67,10 @@ class IdentifyModelView(ModelView):
         'repositoryName',
         'earliestDatastamp')
     column_labels = dict(
-        outPutSetting=_('outPutSet'),
+        outPutSetting=_('Output Set'),
         emails=_('Emails'),
-        repositoryName=_('RepositoryName'),
-        earliestDatastamp=_('EarliestDatastamp'),
+        repositoryName=_('Repository Name'),
+        earliestDatastamp=_('Earliest Datastamp'),
     )
     form_columns = (
         'outPutSetting',
