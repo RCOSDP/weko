@@ -22,15 +22,48 @@
 
 {%- block css %}
 {{ super() }}
+<link rel="stylesheet" href="http://gridstackjs.com/dist/gridstack.css" />
 {%- endblock css %}
 
 {%- block javascript %}
 {{ super() }}
-<script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.5.0/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.2.0/knockout-min.js"></script>
+
+<script type="text/javascript" src='http://gridstackjs.com/dist/gridstack.js'crossorigin="anonymous"></script>
+<script type="text/javascript" src='http://gridstackjs.com/dist/gridstack.jQueryUI.js'crossorigin="anonymous"></script>
+
+<script type="text/javascript" src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+<script type="text/javascript" src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+
+<style type="text/css">
+    .grid-stack-item-content {
+        color: #2c3e50;
+        text-align: center;
+        vertical-align: middle;
+        background-color: #EDE9E3;
+        box-shadow: 4px 4px 5px #7D7D7D;
+    }
+
+    #chunkList>.grid-stack-item[data-gs-width="2"] {
+        width: 100%;
+    }
+    #chunkList>.grid-stack-item[data-gs-width="1"] {
+        width: 50%;
+    }
+
+    .grid-stack-item-content span {
+        display: inline-block;
+        vertical-align: middle;
+        line-height: normal;
+    }
+</style>
+
 <script type="text/babel">
-class Repository extends React.Component {
+  class Repository extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -44,13 +77,17 @@ class Repository extends React.Component {
     }
 
     componentDidMount() {
-        fetch("/api/autofill/select_options")
+        fetch("/api/admin/load_repository")
             .then(res => res.json())
             .then(
                 (result) => {
-                    let options = result.options.map((option) => {
+                    if(result.error){
+                      alter(result.error);
+                      return;
+                    }
+                    let options = result.repositories.map((option) => {
                         return (
-                            <option key={option.value} value={option.value}>{option.text}</option>
+                            <option key={option.id} value={option.id}>{option.title}</option>
                         )
                     });
                     this.setState({
@@ -80,7 +117,7 @@ class Repository extends React.Component {
                 <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
                 <div class="controls col-xs-5">
                     <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
-                        <option value="0">Please selected the input type</option>
+                        <option value="0">Please selected the Repository</option>
                         {this.state.selectOptions}
                     </select>
                 </div>
@@ -95,11 +132,9 @@ class ChunkList extends React.Component {
         super(props);
         this.style = {
             "border": "1px solid #eee",
-            "min-height": "200px",
-            "height": "80%",
-            "padding": "5px",
-            "overflow": "scroll",
-            "overflow-x": "hidden",
+            "min-height": "300px",
+           // "overflow": "scroll",
+           // "overflow-x": "hidden",
             "margin-right": "0px"
         };
     }
@@ -108,8 +143,7 @@ class ChunkList extends React.Component {
         return (
             <div>
                 <label className="control-label row">Chunk List</label>
-                <div className="controls row" style={this.style}>
-
+                <div className="row grid-stack" style={this.style} id="chunkList">
                 </div>
             </div>
         )
@@ -122,8 +156,7 @@ class PreviewChunk extends React.Component {
         this.style = {
             "border": "1px solid #eee",
             "min-height": "200px",
-            "height": "80%",
-            "padding": "15px"
+            "height": "80%"
         };
     }
 
@@ -131,7 +164,7 @@ class PreviewChunk extends React.Component {
         return (
             <div>
                 <label className="control-label row">Preview</label>
-                <div className="controls row" style={this.style}>
+                <div className="row grid-stack" style={this.style} id="gridPreview">
 
                 </div>
             </div>
@@ -152,8 +185,8 @@ class ButtonLayout extends React.Component {
     render() {
         return (
             <div className="form-group col-xs-10">
-                <button className="btn btn-primary" style={this.style}>Save</button>
-                <button className="form-group btn btn-danger">Cancel</button>
+                <button id="save-grid" className="btn btn-primary" style={this.style}>Save</button>
+                <button id="clear-grid" className="form-group btn btn-danger">Cancel</button>
             </div>
         )
     }
@@ -182,7 +215,7 @@ class MainLayout extends React.Component {
                 <div className="row">
                     <Repository getRepositoryId={this.getRepositoryId} />
                 </div>
-                <div className="row">
+                <div className="row container-fluid">
                     <div className="form-group col-xs-2">
                         <ChunkList />
                     </div>
@@ -202,6 +235,179 @@ ReactDOM.render(
     <MainLayout />,
     document.getElementById('root')
 )
+
+
+$(function () {
+    var options1 = {
+        width: 2,
+        float: false,
+        animate: true,
+        ddPlugin: false,
+        removable: '.trash',
+        removeTimeout: 100,
+        acceptWidgets: '.grid-stack-item',
+        draggable: {
+            helper: "clone",
+            revert: true,
+            zIndex: 100,
+            refreshPositions: true,
+            
+        }
+    
+    };
+
+    var options2 = {
+        width: 12,
+        float: true,
+        animate: true,
+        removable: '.trash',
+        removeTimeout: 100,
+        acceptWidgets: '.grid-stack-item'
+    };
+
+    $('#chunkList').gridstack(options1);
+
+    $('#gridPreview').gridstack(_.defaults({
+        float: true
+    }, options2));
+
+    var items1 = [{
+            x: 0,
+            y: 0,
+            width: 2,
+            height: 1,
+            id: "id1",
+            name: "&lt;This is test drag and drop1&gt;"
+        },
+        {
+            x: 0,
+            y: 1,
+            width: 2,
+            height: 1,
+            id: "id2",
+            name: "&lt;This is test drag and drop2&gt;"
+        },
+        {
+            x: 0,
+            y: 3,
+            width: 2,
+            height: 1,
+            id: "id3",
+            name: "&lt;This is test drag and drop3&gt;"
+        }
+    ];
+
+
+    var chunkList = $('#chunkList').data('gridstack');
+    _.each(items1, function (node) {
+        chunkList.addWidget($('<div data-chunk-name="' + node.name + '" data-chunk-id="' + node.id + '"><div class="grid-stack-item-content"><span>' + node.name + '</span></div><div/>'),
+            node.x, node.y, node.width, node.height);
+    }, this);
+
+
+
+    $("#chunkList > .grid-stack-item").draggable({
+        helper: "clone",
+        revert: "invalid"
+    });
+    $("#chunkList, grid-stack-item-content").disableSelection();
+
+    loadPreview;
+});
+
+
+
+var loadPreview = new function () {
+    this.serializedData = [{
+            x: 0,
+            y: 0,
+            width: 8,
+            height: 1,
+            id: "id1",
+            name: "&lt;Free Description&gt;"
+        },
+        {
+            x: 0,
+            y: 1,
+            width: 8,
+            height: 4,
+            id: "id2",
+            name: "&lt;Main Contents&gt;"
+        },
+        {
+            x: 8,
+            y: 0,
+            width: 2,
+            height: 1,
+            id: "id3",
+            name: "&lt;New arrivals&gt;"
+        },
+        {
+            x: 8,
+            y: 1,
+            width: 2,
+            height: 2,
+            id: "id4",
+            name: "&lt;Notice&gt;"
+        },
+        {
+            x: 8,
+            y: 3,
+            width: 2,
+            height: 2,
+            id: "id5",
+            name: "&lt;Access counter&gt;"
+        }
+    ];
+    if (sessionStorage.getItem('chunk_data')) {
+        let data = sessionStorage.getItem('chunk_data');
+        console.log(data);
+    }
+
+    this.grid = $('#gridPreview').data('gridstack');
+
+    this.loadGrid = function () {
+        this.grid.removeAll();
+        var items = GridStackUI.Utils.sort(this.serializedData);
+        _.each(items, function (node) {
+            this.grid.addWidget($('<div data-chunk-name="' + node.name + '" data-chunk-id="' + node.id + '"><div class="grid-stack-item-content"><span>' + node.name + '</span></div><div/>'),
+                node.x, node.y, node.width, node.height);
+        }, this);
+        return false;
+    }.bind(this);
+
+    this.saveGrid = function () {
+        this.serializedData = _.map($('.grid-stack > .grid-stack-item:visible'), function (el) {
+            el = $(el);
+            var node = el.data('_gridstack_node');
+            let name = el.data("chunkName");
+            let id = el.data("chunkId");
+            return {
+                x: node.x,
+                y: node.y,
+                width: node.width,
+                height: node.height,
+                name: name,
+                id: id
+            };
+        }, this);
+        let save_data = JSON.stringify(this.serializedData, null, '    ');
+        sessionStorage.setItem('chunk_data', save_data);
+        console.log(save_data);
+        return false;
+    }.bind(this);
+
+    this.clearGrid = function () {
+        this.grid.removeAll();
+        return false;
+    }.bind(this);
+
+    $('#save-grid').click(this.saveGrid);
+    $('#load-grid').click(this.loadGrid);
+    $('#clear-grid').click(this.clearGrid);
+
+    this.loadGrid();
+}
 </script>
 {%- endblock javascript %}
 
