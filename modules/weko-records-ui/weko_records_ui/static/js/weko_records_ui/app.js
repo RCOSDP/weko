@@ -110,6 +110,7 @@ angular.module('myApp', ['ui.bootstrap'])
         let txt_show = $('#txt_show').val();
         let txt_hide = $('#txt_hide').val();
         let is_logged_in = $('#txt_is_logged_in').val();
+        let can_update_version = $('#txt_can_update_version').val();
 
         // Remove the versions which does not match the current file
         for (let index = 0; index < contents.length; index++) {
@@ -129,7 +130,7 @@ angular.module('myApp', ['ui.bootstrap'])
 
             // const isPublished = ele.pubPri === 'Published' ? 1 : 0;
             const nameRadio = `radio_${index}`;
-            let radio = index == 0 || is_logged_in == 'False' ? "" : `
+            let radio = index == 0 || can_update_version == 'False' ? "" : `
             <div id="version_radios_${index}" class="radio">
                 <label style="margin-left: 5px">
                   <input type="radio" name="${nameRadio}" value="1" ${ele.is_show ? " checked " : ""} onchange="versionPrivacyChanged(\'${bucket_id}\', \'${key}\', \'${version_id}\', ${index}, this)">${txt_show}

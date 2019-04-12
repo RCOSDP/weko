@@ -374,6 +374,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         if pidstore_identifier is None:
             record['permalink_uri'] = request.url
 
+    from invenio_files_rest.permissions import has_update_version_role
+    can_update_version = has_update_version_role(current_user)
+
     return render_template(
         template,
         pid=pid,
@@ -381,6 +384,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         filename=filename,
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
+        can_update_version=can_update_version,
         community_id=community_id,
         width=width,
         detail_condition=detail_condition,
@@ -489,21 +493,26 @@ def set_pdfcoverpage_header():
 def file_version_update():
     """Bulk delete items and index trees."""
 
-    #
-    bucket_id = request.values.get('bucket_id')
-    key = request.values.get('key')
-    version_id = request.values.get('version_id')
-    is_show = request.values.get('is_show')
-    if bucket_id is not None and key is not None and version_id is not None:
-        from invenio_files_rest.models import ObjectVersion
-        object_version = ObjectVersion.get(bucket=bucket_id, key=key, version_id=version_id)
-        if object_version is not None:
-            # Do update the path on record
-            object_version.is_show = True if is_show == '1' else False
-            db.session.commit()
+    # Only allow authorised users to update object version
+    from invenio_files_rest.permissions import has_update_version_role
+    if has_update_version_role(current_user):
 
-            return jsonify({'status': 1})
+        bucket_id = request.values.get('bucket_id')
+        key = request.values.get('key')
+        version_id = request.values.get('version_id')
+        is_show = request.values.get('is_show')
+        if bucket_id is not None and key is not None and version_id is not None:
+            from invenio_files_rest.models import ObjectVersion
+            object_version = ObjectVersion.get(bucket=bucket_id, key=key, version_id=version_id)
+            if object_version is not None:
+                # Do update the path on record
+                object_version.is_show = True if is_show == '1' else False
+                db.session.commit()
+
+                return jsonify({'status': 1})
+            else:
+                return jsonify({'status': 0, 'msg': 'Version not found'})
         else:
-            return jsonify({'status': 0, 'msg': 'Version not found'})
+            return jsonify({'status': 0, 'msg': 'Invalid data'})
     else:
-        return jsonify({'status': 0, 'msg': 'Invalid data'})
+        return jsonify({'status': 0, 'msg': 'Insufficient permission'})
