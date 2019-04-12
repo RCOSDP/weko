@@ -48,7 +48,7 @@ class Journal(db.Model, Timestamp):
     id = db.Column(db.BigInteger, primary_key=True, unique=True)
     """Identifier of the index."""
 
-    index_id_journal = db.Column(
+    index_id = db.Column(
         db.BigInteger,
         db.ForeignKey(
             Index.id,
