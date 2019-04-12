@@ -71,7 +71,7 @@ def _get_names_from_obj(obj):
     creator_name = []
     itemdatas = _get_itemdata(obj, 'Creator')
     if itemdatas is None:
-        return 'No creator data'
+        return None
 
     for itemdata in itemdatas:
         textdata = [itemdata[val] for val in sorted(itemdata)]
@@ -85,7 +85,10 @@ def _get_names_from_obj(obj):
         if len(creator_data) > 0:
             creator_name.append(creator_data)
 
-    return creator_name[0]
+    if len(creator_name):
+        return creator_name[0]
+    else:
+        return None
 
 
 class CreatorSchema(Schema):
@@ -97,20 +100,22 @@ class CreatorSchema(Schema):
 
     def get_family_name(self, obj):
         """Get family name."""
-        name = get_names_from_obj(obj)[1]
-        return name if name else missing
+        if _get_names_from_obj(obj) is not None:
+            return _get_names_from_obj(obj)[1]
+        else:
+            return missing
 
     def get_given_name(self, obj):
         """Get given name."""
-        if get_names_from_obj(obj) is not None:
-            return get_names_from_obj(obj)[2]
+        if _get_names_from_obj(obj) is not None:
+            return _get_names_from_obj(obj)[2]
         else:
             return missing
 
     def get_suffix_name(self, obj):
         """Get suffix name."""
-        if get_names_from_obj(obj) is not None:
-            return get_names_from_obj(obj)[0]
+        if _get_names_from_obj(obj) is None:
+            return _get_names_from_obj(obj)[0]
         else:
             return missing
 
@@ -279,7 +284,10 @@ class RecordSchemaCSLJSON(Schema):
             if isbn is not None:
                 isbn_data.append(isbn[0])
 
-        return isbn_data[0]
+        if len(isbn_data):
+            return isbn_data[0]
+        else:
+            return missing
 
     def get_issn(self, obj):
         """Get ISSN."""
@@ -294,7 +302,10 @@ class RecordSchemaCSLJSON(Schema):
             if issn is not None:
                 issn_data.append(issn[0])
 
-        return issn_data[0]
+        if len(issn_data):
+            return issn_data[0]
+        else:
+            return missing
 
     def get_publisher_place(self, obj):
         """Get alternative title."""
