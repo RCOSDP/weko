@@ -63,6 +63,8 @@ def export_journal_task(p_path):
             db_processing_status = Journal_export_processing()
             db_processing_status.status = False
 
+        db_processing_status.status = True
+
         if db_processing_status.status:
             current_app.logger.error('[{0}] Execution failed due to multiple execution errors'.format(3))
             return {}
