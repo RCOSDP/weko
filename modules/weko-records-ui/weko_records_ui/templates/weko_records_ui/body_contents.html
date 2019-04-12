@@ -45,7 +45,7 @@
           {%- endif %}
           {%- endfor %}
           {%- if record.permalink_uri -%}
-          <span class="col-right" style="display: inline;">Permalink : {{ record.permalink_uri }}</span>
+          <span class="pull-right" style="display: inline;">Permalink : {{ record.permalink_uri }}</span>
           {%- endif -%}
       </div>
       {%- endif -%}
@@ -364,10 +364,13 @@
 <style>
 #invenio-csl span.twitter-typeahead .tt-menu {
   overflow-y: scroll;
-  max-height: 200px;
+  max-height: 250px;
 }
 #invenio-csl span.twitter-typeahead .tt-suggestion {
   white-space: normal;
+}
+#invenio-csl span.twitter-typeahead .empty-results {
+  max-width: 250px;
 }
 </style>
 {% endblock %}
