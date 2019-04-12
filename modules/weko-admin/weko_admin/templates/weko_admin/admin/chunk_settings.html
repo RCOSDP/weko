@@ -22,75 +22,6 @@
   
   {%- block css %}
   {{ super() }}
-  <style>
-    * {
-	box-sizing: border-box;
-	font-family: "Arial";
-}
-.wrapper-dropdown {
-    position: relative;
-    width: 200px;
-    background: #FFF;
-    color: #2e2e2e;
-    outline: none;
-    cursor: pointer;
-}
-.wrapper-dropdown > span {
-	width: 100%;
-	display: block;
-	border: 1px solid #ababab;
-	padding: 5px;
-}
-.wrapper-dropdown > span > span {
-  padding: 0 12px;
-  margin-right: 5px;
-}
-.wrapper-dropdown > span:after {
-    content: "";
-    width: 0;
-    height: 0;
-    position: absolute;
-    right: 16px;
-    top: calc(50% + 4px);
-    margin-top: -6px;
-	  border-width: 6px 6px 0 6px;
-    border-style: solid;
-	  border-color: #2e2e2e transparent;
-}
-
-.wrapper-dropdown .dropdown {
-    position: absolute;
-	  z-index: 10;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #fff;
-    font-weight: normal;
-	  list-style-type: none;
-	  padding-left: 0;
-	  margin: 0;
-	  border: 1px solid #ababab;
-	  border-top: 0;
-}
-
-.wrapper-dropdown .dropdown li {
-    display: block;
-    text-decoration: none;
-    color: #2e2e2e;
-	  padding: 5px;
-	  cursor: pointer;
-}
-
-.wrapper-dropdown .dropdown li > span {
-  padding: 0 12px;
-  margin-right: 5px;
-}
-
-.wrapper-dropdown .dropdown li:hover {
-    background: #eee;
-	  cursor: pointer;
-}
-  </style>
   {%- endblock css %}
   
   {%- block javascript %}
@@ -99,7 +30,7 @@
   <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
   <script type="text/babel">
-  class Repository extends React.Component {
+  class Component_Select_Field extends React.Component {
       constructor(props) {
           super(props);
           this.state = {
@@ -113,7 +44,7 @@
       }
   
       componentDidMount() {
-          fetch("/api/autofill/select_options")
+          fetch(this.props.url_request)
               .then(res => res.json())
               .then(
                   (result) => {
@@ -146,7 +77,7 @@
       render() {
           return (
               <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
+                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
                   <div class="controls col-xs-5">
                       <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
                           <option value="0">Please selected the input type</option>
@@ -156,75 +87,11 @@
               </div>
           )
       }
-  
-  }
-  
-  class ChunkType extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-              repositoryId: '0',
-              selectOptions: []
-          };
-          this.styleRed = {
-              color: 'red',
-          };
-          this.handleChange = this.handleChange.bind(this);
-      }
-  
-      componentDidMount() {
-          fetch("/api/autofill/select_options")
-              .then(res => res.json())
-              .then(
-                  (result) => {
-                      let options = result.options.map((option) => {
-                          return (
-                              <option key={option.value} value={option.value}>{option.text}</option>
-                          )
-                      });
-                      this.setState({
-                          selectOptions: options
-                      });
-                  },
-  
-                  (error) => {
-                      this.setState({
-                          isLoaded: true,
-                          error
-                      });
-                  }
-              )
-  
-      }
-  
-      handleChange(event) {
-          this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
-          event.preventDefault();
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Type<span style={this.styleRed}>*</span></label>
-                  <div class="controls col-xs-5">
-                      <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
-                          <option value="0">Please selected the input type</option>
-                          {this.state.selectOptions}
-                      </select>
-                  </div>
-              </div>
-          )
-      }  
   }
 
-  class ChunkLabel extends React.Component {
+  class Component_Textbox_Field extends React.Component {
       constructor(props) {
           super(props);
-          this.state = {
-              repositoryId: '0',
-              selectOptions: []
-          };
           this.styleRed = {
               color: 'red',
           };
@@ -240,7 +107,7 @@
       render() {
           return (
               <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-1">Label<span style={this.styleRed}>*</span></label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
                 <div class="controls col-xs-5">
                   <input type="text" name="name" onChange={this.handleChange} className="form-control"/>
                 </div>
@@ -249,39 +116,31 @@
       }  
   }
 
-  class ChunkLabelColor extends React.Component {
+  class Component_Select_Color_Filed extends React.Component {
       constructor(props) {
           super(props);
           this.state = {
               repositoryId: '0',
               selectOptions: []
           };
+          this.colors = [
+            {'key': 'Red', 'value' : 'FF0000'},
+            {'key':'Green', 'value':'00CC33'},
+            {'key': 'Blue', 'value':'0099FF'}
+          ];
           this.handleChange = this.handleChange.bind(this);
       }
   
       componentDidMount() {
-          fetch("/api/autofill/select_options")
-              .then(res => res.json())
-              .then(
-                  (result) => {
-                      let options = result.options.map((option) => {
+                      let options = this.colors.map((color) => {
                           return (
-                              <option key={option.value} value={option.value}>{option.text}</option>
+                              <option key={color.key} value={color.value}>{color.value}</option>
                           )
                       });
+                      console.log(options);
                       this.setState({
                           selectOptions: options
                       });
-                  },
-  
-                  (error) => {
-                      this.setState({
-                          isLoaded: true,
-                          error
-                      });
-                  }
-              )
-  
       }
   
       handleChange(event) {
@@ -293,10 +152,9 @@
       render() {
           return (
               <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Label Color</label>
+                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
                   <div class="controls col-xs-2">
                       <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
-                          <option value="0">Pink</option>
                           {this.state.selectOptions}
                       </select>
                   </div>
@@ -305,16 +163,9 @@
       } 
   }
 
-  class ChunkFrameBorder extends React.Component {
+  class Component_Checkbox_Field extends React.Component {
       constructor(props) {
           super(props);
-          this.state = {
-              repositoryId: '0',
-              selectOptions: []
-          };
-          this.styleContainer = {
-              width: '30%' ,
-          };
           this.handleChange = this.handleChange.bind(this);
       }
   
@@ -327,7 +178,7 @@
       render() {
           return (
               <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Frame Border</label>
+                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
                   <div class="controls col-xs-1">
                       <input type="checkbox" name="FrameBorder" value="" checked/>
                   </div>
@@ -336,175 +187,7 @@
       } 
   }
 
-  class ChunkFrameBorderColor extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-              repositoryId: '0',
-              selectOptions: []
-          };
-          this.handleChange = this.handleChange.bind(this);
-      }
-  
-      componentDidMount() {
-          fetch("/api/autofill/select_options")
-              .then(res => res.json())
-              .then(
-                  (result) => {
-                      let options = result.options.map((option) => {
-                          return (
-                              <option key={option.value} value={option.value}>{option.text}</option>
-                          )
-                      });
-                      this.setState({
-                          selectOptions: options
-                      });
-                  },
-  
-                  (error) => {
-                      this.setState({
-                          isLoaded: true,
-                          error
-                      });
-                  }
-              )
-  
-      }
-  
-      handleChange(event) {
-          this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
-          event.preventDefault();
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Frame Border Color</label>
-                  <div class="controls col-xs-2">
-                      <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
-                          <option value="0">Pink</option>
-                          {this.state.selectOptions}
-                      </select>
-                  </div>
-              </div>
-          )
-      } 
-  }
-
-  class ChunkTextColor extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-              repositoryId: '0',
-              selectOptions: []
-          };
-          this.handleChange = this.handleChange.bind(this);
-      }
-  
-      componentDidMount() {
-          fetch("/api/autofill/select_options")
-              .then(res => res.json())
-              .then(
-                  (result) => {
-                      let options = result.options.map((option) => {
-                          return (
-                              <option key={option.value} value={option.value}>{option.text}</option>
-                          )
-                      });
-                      this.setState({
-                          selectOptions: options
-                      });
-                  },
-  
-                  (error) => {
-                      this.setState({
-                          isLoaded: true,
-                          error
-                      });
-                  }
-              )
-  
-      }
-  
-      handleChange(event) {
-          this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
-          event.preventDefault();
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Text Color</label>
-                  <div class="controls col-xs-2">
-                      <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
-                          <option value="0">Pink</option>
-                          {this.state.selectOptions}
-                      </select>
-                  </div>
-              </div>
-          )
-      } 
-  }
-
-  class ChunkBackgroundColor extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-              repositoryId: '0',
-              selectOptions: []
-          };
-          this.handleChange = this.handleChange.bind(this);
-      }
-  
-      componentDidMount() {
-          fetch("/api/autofill/select_options")
-              .then(res => res.json())
-              .then(
-                  (result) => {
-                      let options = result.options.map((option) => {
-                          return (
-                              <option key={option.value} value={option.value}>{option.text}</option>
-                          )
-                      });
-                      this.setState({
-                          selectOptions: options
-                      });
-                  },
-  
-                  (error) => {
-                      this.setState({
-                          isLoaded: true,
-                          error
-                      });
-                  }
-              )
-  
-      }
-  
-      handleChange(event) {
-          this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
-          event.preventDefault();
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Background Color</label>
-                  <div class="controls col-xs-2">
-                      <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
-                          <option value="0">Pink</option>
-                          {this.state.selectOptions}
-                      </select>
-                  </div>
-              </div>
-          )
-      } 
-  }
-
-  class ChunkBrowsingPrivilege extends React.Component {
+  class Component_Field_Contain_Select_Mutiple extends React.Component {
       constructor(props) {
           super(props);
           this.state = {
@@ -512,7 +195,7 @@
               selectOptions: []
           };
           this.styleContainer={
-            border: '1px solid black',
+            border: '1px solid #ccc',
             height: '200px',
             padding :'15px 5px 5px 10px',
           }
@@ -544,7 +227,7 @@
       }
   
       componentDidMount() {
-          fetch("/api/autofill/select_options")
+          fetch(this.props.url_request)
               .then(res => res.json())
               .then(
                   (result) => {
@@ -577,7 +260,7 @@
       render() {
           return (
               <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Browsing Privilege</label>
+                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
                   <div class="controls col-xs-5">
                       <fieldset className="form-group" style={this.styleContainer}>
                       <label>Role </label><br/>
@@ -604,153 +287,21 @@
           )
       } 
   }
-
-  class ChunkEditPrivilege extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-              repositoryId: '0',
-              selectOptions: []
-          };
-          this.styleContainer={
-            border: '1px solid black',
-            height: '200px',
-            padding :'15px 5px 5px 10px',
-          }
-          this.styleElement={
-            padding: "0",
-          }
-          this.styleSelectLeft={
-            padding: "0",
-            width: "90%",
-            height: "100px",
-            float: "left",
-          }
-          this.styleSelectRight={
-            padding: "0",
-            width: "90%",
-            height: "100px",
-            float: "right",
-          }
-          this.styleButtonContainer = {
-            display: 'flex',
-            flexDirection : 'column',
-            justifyContent: 'center', 
-            height: "100px",
-          }
-          this.styleButtonElement={
-            margin: "2px",
-          }
-          this.handleChange = this.handleChange.bind(this);
-      }
   
-      componentDidMount() {
-          fetch("/api/autofill/select_options")
-              .then(res => res.json())
-              .then(
-                  (result) => {
-                      let options = result.options.map((option) => {
-                          return (
-                              <option key={option.value} value={option.value}>{option.text}</option>
-                          )
-                      });
-                      this.setState({
-                          selectOptions: options
-                      });
-                  },
-  
-                  (error) => {
-                      this.setState({
-                          isLoaded: true,
-                          error
-                      });
-                  }
-              )
-  
-      }
-  
-      handleChange(event) {
-          this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
-          event.preventDefault();
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Edit Privilege</label>
-                  <div class="controls col-xs-5">
-                      <fieldset className="form-group" style={this.styleContainer}>
-                      <label>Role </label><br/>
-                      <div className="col-xs-5" style={this.styleElement}>
-                        <label >Authorized</label><br/>
-                        <select multiple style={this.styleSelectLeft}>
-                        </select>
-                      </div>
-                      <div className="col-xs-1" style={this.styleElement}>
-                        <br/>
-                        <div className="buttons" style={this.styleButtonContainer}>
-                          <input type="button" value="&rarr;" style={this.styleButtonElement}/>
-                          <input type="button" value="&larr;" style={this.styleButtonElement}/>
-                        </div>
-                      </div>
-                      <div className="col-xs-5" style={this.styleElement}>
-                        <label >Unauthorized</label><br/>
-                        <select multiple style={this.styleSelectRight}>
-                        </select>
-                      </div>
-                      </fieldset>
-                  </div>
-              </div>
-          )
-      } 
-  }
-
-  class ChunkEnable extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-              repositoryId: '0',
-              selectOptions: []
-          };
-          this.styleContainer = {
-              width: '30%' ,
-          };
-          this.handleChange = this.handleChange.bind(this);
-      }
-  
-      handleChange(event) {
-          this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
-          event.preventDefault();
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-1">Enable</label>
-                  <div class="controls col-xs-1">
-                      <input type="checkbox" name="FrameBorder" value="" checked/>
-                  </div>
-              </div>
-          )
-      } 
-  }
-  
-  class ButtonLayout extends React.Component {
+  class Component_Button_Layout extends React.Component {
     constructor(props) {
         super(props);
         this.style = {
-            "margin-right": "10px",
+            marginLeft: "10px",
         };
     }
     render() {
         return (
             <div className="form-group col-xs-10">
-                <div className="col-xs-1"> </div>
-                <div className="col-xs-9">
-                  <button className="btn btn-primary" style={this.style}>Save</button>
-                  <button className="form-group btn btn-danger">Cancel</button>
+                <div className="col-xs-2"> </div>
+                <div className="col-xs-5">
+                  <button className="btn btn-primary">Save</button>
+                  <button className="form-group btn btn-danger" style={this.style}>Cancel</button>
                 </div>
             </div>
         )
@@ -778,40 +329,40 @@
           return (
               <div>
                   <div className="row">
-                      <Repository getRepositoryId={this.getRepositoryId} />
+                      <Component_Select_Field getRepositoryId={this.getRepositoryId} name="Repository" url_request="/api/autofill/select_options" />
                   </div>
                   <div className="row">
-                      <ChunkType getRepositoryId={this.getRepositoryId} />
+                      <Component_Select_Field getRepositoryId={this.getRepositoryId} name="Type" url_request="/api/autofill/select_options"/>
                   </div>
                   <div className="row">
-                      <ChunkLabel />
+                      <Component_Textbox_Field getRepositoryId={this.getRepositoryId} name="Label" url_request="/api/autofill/select_options"/>
                   </div>
                   <div className="row">
-                    <ChunkLabelColor getRepositoryId={this.getRepositoryId} />
+                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Label Color" />
                   </div>
                   <div className="row">
-                    <ChunkFrameBorder />
+                    <Component_Checkbox_Field name="Frame Border" />
                   </div>
                   <div className="row">
-                    <ChunkFrameBorderColor getRepositoryId={this.getRepositoryId} />
+                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Frame Border Color" />
                   </div>
                   <div className="row">
-                    <ChunkTextColor getRepositoryId={this.getRepositoryId} />
+                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Text Color" />
                   </div>
                   <div className="row">
-                    <ChunkBackgroundColor getRepositoryId={this.getRepositoryId} />
+                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Background Color" />
                   </div>
                   <div className="row">
-                    <ChunkBrowsingPrivilege getRepositoryId={this.getRepositoryId} />
+                    <Component_Field_Contain_Select_Mutiple getRepositoryId={this.getRepositoryId} name="Browsing Privilege" url_request="/api/autofill/select_options"/>
                   </div>
                   <div className="row">
-                    <ChunkEditPrivilege getRepositoryId={this.getRepositoryId} />
+                    <Component_Field_Contain_Select_Mutiple getRepositoryId={this.getRepositoryId} name="Edit Privilege" url_request="/api/autofill/select_options"/>
                   </div>
                   <div className="row">
-                    <ChunkEnable getRepositoryId={this.getRepositoryId} />
+                    <Component_Checkbox_Field name="Enable" />
                   </div>
                   <div className="row">
-                    <ButtonLayout />
+                    <Component_Button_Layout />
                 </div>
               </div>
           )
