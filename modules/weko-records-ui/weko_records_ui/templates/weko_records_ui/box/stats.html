@@ -17,12 +17,11 @@
     <div class="col-sm-3"></div>
     <!--</div>-->
   </div>
-  <div class="row">
+  <div class="row" ng-init="statsCollapse = false">
     <div class="col-sm-6 col-sm-offset-3">
-      <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false" aria-controls="collapse-stats"
-         id="views-details">{{_('See details')}}</a></div>
+      <a id="views-details" ng-click="statsCollapse = !statsCollapse">{{_('See details')}}</a></div>
   </div>
-  <div class="row collapse" id="collapse-stats">
+  <div class="row ng-hidden" id="collapse-stats" ng-show="statsCollapse">
     <table class="table stats-table">
         <thead>
             <tr>
