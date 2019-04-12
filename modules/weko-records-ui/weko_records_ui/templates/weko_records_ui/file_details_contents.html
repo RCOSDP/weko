@@ -23,7 +23,7 @@
 {%- set record_url = url_for('invenio_records_ui.recid', pid_value=pid.pid_value) %}
 
 <div class="panel-group">
-  <div class="panel panel-default" ng-app="myApp" ng-controller="ItemController">
+  <div class="panel panel-default" ng-controller="ItemController">
     <div class="panel-heading clearfix">
       <h3 class="panel-title">{{_('Item')}}</h3>
     </div>
@@ -108,16 +108,15 @@
                 {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
                 <tr>
                   <td colspan="2">
-                    <div class="panel panel-default" id="preview_de">
+                    <div class="panel panel-default" id="preview_de" ng-init="collapsed{{loop.index}} = false">
                       <div class="panel-heading">
-                        <a class="panel-toggle" data-toggle="collapse" href="#preview_{{loop.index}}"
-                           aria-expanded="false">
+                        <a id="preview_{{loop.index}}" class="panel-toggle" ng-click="collapsed{{loop.index}} = !collapsed{{loop.index}}">
                           {{_('Preview')}}
-                          <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
-                          <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
+                          <span class="pull-right" ng-hide="collapsed{{loop.index}}"><i class="fa fa-chevron-right"></i></span>
+                          <span class="pull-right ng-hide" ng-show="collapsed{{loop.index}}"><i class="fa fa-chevron-down"></i></span>
                         </a>
                       </div>
-                      <div id="preview_{{loop.index}}" class="collapse">
+                      <div class="ng-hide" id="preview_{{loop.index}}" ng-show="collapsed{{loop.index}}">
                         <div class="embed-responsive embed-responsive-16by9">
                           <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
                                   src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
@@ -133,16 +132,15 @@
                 filename=file.key) %}
                 <tr>
                   <td colspan="2">
-                    <div class="panel panel-default" id="preview">
+                    <div class="panel panel-default" id="preview" ng-init="collapsed{{loop.index}} = false">
                       <div class="panel-heading">
-                        <a class="panel-toggle" data-toggle="collapse" href="#preview_{{loop.index}}"
-                           aria-expanded="false">
+                        <a id="preview_{{loop.index}}" class="panel-toggle" ng-click="collapsed{{loop.index}} = !collapsed{{loop.index}}">
                           {{_('Preview')}}
-                          <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
-                          <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
+                          <span class="pull-right" ng-hide="collapsed{{loop.index}}"><i class="fa fa-chevron-right"></i></span>
+                          <span class="pull-right ng-hide" ng-show="collapsed{{loop.index}}"><i class="fa fa-chevron-down"></i></span>
                         </a>
                       </div>
-                      <div id="preview_{{loop.index}}" class="collapse">
+                      <div class="ng-hide" id="preview_{{loop.index}}" ng-show="collapsed{{loop.index}}">
                         <div class="embed-responsive embed-responsive-16by9">
                           {%- if 'audio' in file.mimetype -%}
                           <audio controls preload="auto">
@@ -229,16 +227,15 @@
                         <p class="file-stats-data">0</p>
                       </div>
                     </div>
-                    <div class="row" id="toggle-stats">
+                    <div class="row" id="toggle-stats" ng-init="statsCollapse = false">
                       <div class="col-sm-2"></div>
                       <div class="col-sm-2 col-sm-offset-4">
-                        <a data-toggle="collapse" href="#collapse-stats" aria-expanded="false"
-                           aria-controls="collapse-stats">
+                        <a ng-click="statsCollapse = !statsCollapse">
                           {{_('See details')}}
                         </a>
                       </div>
                     </div>
-                    <div class="collapse" id="collapse-stats">
+                    <div class="ng-hidden" id="collapse-stats" ng-show="statsCollapse">
                       <table class="table stats-table">
                         <thead>
                         <tr>
