@@ -559,7 +559,6 @@ class WekoDeposit(Deposit):
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
-        print(jrc)
         return dc
 
     @classmethod
@@ -630,7 +629,6 @@ class WekoRecord(Record):
         """Return an instance of record PID."""
         pid = self.record_fetcher(self.id, self)
         obj = PersistentIdentifier.get(pid.pid_type, pid.pid_value)
-        print(obj.__dict__)
         return obj
 
     @property

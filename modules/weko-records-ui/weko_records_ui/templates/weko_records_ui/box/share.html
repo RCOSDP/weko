@@ -1,3 +1,24 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
 <div class="well">
 <h4>{{_('Share')}}</h4>
   <!-- AddThis Button BEGIN -->
@@ -11,7 +32,29 @@
   <div class="atclear"></div></div>
   <!-- AddThis Button END -->
   <h4>Cite as</h4>
-  <div id="invenio-csl" class="ng-scope">
-Under construction.  
-</div>
+  <div id='invenio-csl'>
+    {% set citation_result = record|citation(pid, style='aapg-bulletin') %}
+    <invenio-csl
+      {%- if citation_result %}
+        ng-init="vm.citationResult = '{{citation_result}}'"
+      {%- else %}
+        ng-init="vm.error = '{{_('Your record could not be processed by the citation formatter')}}'"
+      {%- endif %}
+    >
+      <invenio-csl-citeproc
+       endpoint="{{ config.CSL_RECORDS_API_ENDPOINT ~ pid.pid_value }}"
+       template="{{ url_for('static', filename=config.CSL_JSTEMPLATE_CITEPROC) }}"></invenio-csl-citeproc>
+      <invenio-csl-error
+       template="{{ url_for('static', filename=config.CSL_JSTEMPLATE_ERROR) }}"></invenio-csl-error>
+      <invenio-csl-loading
+       template="{{ url_for('static', filename=config.CSL_JSTEMPLATE_LOADING) }}"></invenio-csl-loading>
+      <invenio-csl-typeahead
+       lazy="true"
+       placeholder="Start typing a citation style..."
+       remote="{{ config.CSL_STYLES_API_ENDPOINT }}"
+       template="{{ url_for('static', filename=config.CSL_JSTEMPLATE_TYPEAHEAD) }}"
+       item-template="{{ url_for('static', filename=config.CSL_JSTEMPLATE_LIST_ITEM) }}">
+      </invenio-csl-typeahead>
+    </invenio-csl>
+  </div>
 </div>

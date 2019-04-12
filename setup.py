@@ -126,10 +126,14 @@ setup_requires = [
 
 install_requires = [
     'Flask>=0.11.1',
+    'citeproc-py-styles>=0.1.1',
+    'citeproc-py>=0.4.0',
+    'datacite>=1.0.1',
     'invenio-base>=1.0.0a14,<1.1.0',
     'invenio-celery>=1.0.0b2,<1.1.0',
     'invenio-config>=1.0.0b2,<1.1.0',
     'invenio-i18n>=1.0.0b3,<1.1.0',
+    'invenio-csl-rest>=1.0.0a1',
     'fpdf>=1.7.2',
     'Pillow>=5.4.1'
 ]

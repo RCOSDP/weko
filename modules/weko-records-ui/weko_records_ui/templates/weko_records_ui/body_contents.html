@@ -25,8 +25,9 @@
     <pre class="hide">{{record|tojson}}</pre>
     <div class="panel_bread" id="panel_bread">
       {%- if record.navi -%}
-        <div class="row col-sm-9 col-md-9 col-left">
-          <h3 class="panel-title" style="display: inline;">{{_('Index')}}</h3>
+        <div class="row col-sm-12 col-md-12 col-left">
+          <h3 class="panel-title" style="display: inline;">{{_('Index')}}
+          </h3>
           {%- for nav in record.navi -%}
           <ol class="breadcrumb" style="display: inline; padding-left: 0.25em; padding-right: 0.25em;">
             {%- set name = nav.name.split('/') -%}
@@ -43,10 +44,10 @@
           {{ '|'  }}
           {%- endif %}
           {%- endfor %}
+          {%- if record.permalink_uri -%}
+          <span class="pull-right" style="display: inline;">Permalink : {{ record.permalink_uri }}</span>
+          {%- endif -%}
       </div>
-      {%- endif -%}
-      {%- if record.permalink_uri -%}
-      <span class="pull-right">Permalink : {{ record.permalink_uri }}</span>
       {%- endif -%}
     </div>
   </div>
@@ -349,15 +350,35 @@
         </div>
       </div>
       <div class="col-sm-3 col-md-3 col-right">
-<!-- start demo block -->
-{%- include "weko_records_ui/box/stats.html" %}
-{%- include "weko_records_ui/box/meta.html" %}
-{%- include "weko_records_ui/box/versions.html" %}
-{%- include "weko_records_ui/box/share.html" %}
-{%- include "weko_records_ui/box/export.html" %}
-<!-- end demo block -->
+      <!-- start demo block -->
+      {%- include "weko_records_ui/box/stats.html" %}
+      {%- include "weko_records_ui/box/meta.html" %}
+      {%- include "weko_records_ui/box/versions.html" %}
+      {%- include "weko_records_ui/box/share.html" %}
+      {%- include "weko_records_ui/box/export.html" %}
+      <!-- end demo block -->
       </div>
     </div>
   </div>
 </div>
 </div>
+
+{%- block javascript %}
+<script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}">
+</script>
+{%- endblock javascript %}
+
+{% block css %}
+<style>
+#invenio-csl span.twitter-typeahead .tt-menu {
+  overflow-y: scroll;
+  max-height: 250px;
+}
+#invenio-csl span.twitter-typeahead .tt-suggestion {
+  white-space: normal;
+}
+#invenio-csl span.twitter-typeahead .empty-results {
+  max-width: 250px;
+}
+</style>
+{% endblock %}
