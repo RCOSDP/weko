@@ -20,31 +20,17 @@
 
 """Blueprint for schema rest."""
 
-import json
-import os.path
-import shutil
-import uuid
-import zipfile
-
-from flask import Blueprint, abort, current_app, jsonify, request, make_response
-from invenio_db import db
-from invenio_files_rest.storage import PyFSFileStorage
-from invenio_pidstore import current_pidstore
-from invenio_pidstore.models import PersistentIdentifier
+from flask import Blueprint, current_app, jsonify, make_response, request
 from invenio_pidstore.errors import PIDInvalidAction
-from invenio_records import Record
-from invenio_records_rest.errors import InvalidDataRESTError, \
-    UnsupportedMediaRESTError
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
-from invenio_records_rest.serializers import record_responsify
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
-from sqlalchemy.exc import SQLAlchemyError
-from weko_records.serializers import citeproc_v1
 from weko_deposit.api import WekoRecord
+from weko_records.serializers import citeproc_v1
 
 
 def create_error_handlers(blueprint):
@@ -130,24 +116,21 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
         for key, value in ctx.items():
             setattr(self, key, value)
 
-        #self.pid_minter = current_pidstore.minters[self.pid_minter]
-        #self.pid_fetcher = current_pidstore.minters[self.pid_fetcher]
-
     # @pass_record
     # @need_record_permission('read_permission_factory')
     def get(self, pid_value, **kwargs):
         """Render citation for record according to style and language."""
-
         style = request.values.get('style', 1)  # style or 'science'
         locale = request.values.get('locale', 2)
         try:
             pid = PersistentIdentifier.get('depid', pid_value)
-            record = Record.get_record(pid.object_uuid)
-            # current_app.logger.debug(record)
+            record = WekoRecord.get_record(pid.object_uuid)
 
-            result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
+            result = citeproc_v1.serialize(pid, record, style=style,
+                                           locale=locale)
             return make_response(jsonify(result), 200)
         except Exception:
             current_app.logger.exception(
-                'Citation formatting for record {0} failed.'.format(str(record.id)))
+                'Citation formatting for record {0} failed.'.format(
+                    str(record.id)))
             return make_response(jsonify("Not found"), 404)

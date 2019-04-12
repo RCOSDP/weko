@@ -26,27 +26,14 @@
 
 from __future__ import absolute_import, print_function
 
-import re
-
 from invenio_formatter.filters.datetime import from_isodate
 from marshmallow import Schema, fields, missing
 
-from weko_records.serializers.csl import ObjectType
-
 
 def _get_itemdata(obj, key):
-    metadata = obj['metadata']
-    for item in metadata:
-        itemdata = metadata.get(item, {})
-        if (type(itemdata)) is dict and itemdata.get('attribute_name') == key:
-            return itemdata.get('attribute_value_mlt')
-
-    return None
-
-def _get_itemdata_2(obj, key):
-    metadata = obj
-    for item in metadata:
-        itemdata = metadata.get(item, {})
+    """Get data from 'attribute_value_mlt' phase."""
+    for item in obj:
+        itemdata = obj.get(item, {})
         if (type(itemdata)) is dict and itemdata.get('attribute_name') == key:
             return itemdata.get('attribute_value_mlt')
 
@@ -54,6 +41,7 @@ def _get_itemdata_2(obj, key):
 
 
 def _get_creator_by_lang(textdata, lang):
+    """Get creator name by lang."""
     creator_name = []
     for text in textdata:
         for value in sorted(text[0]):
@@ -64,21 +52,36 @@ def _get_creator_by_lang(textdata, lang):
     return creator_name
 
 
-def get_names_from_obj(obj):
+def _get_relation_by_type(textdata, inputtype):
+    """Get realtion name by type."""
+    result = None
+    for text in textdata:
+        if type(text) is list:
+            for relation in text:
+                for subitem in relation:
+                    if relation[subitem] == inputtype:
+                        result = relation
+    if result is not None:
+        result = [result[index] for index in sorted(result)]
+    return result
+
+
+def _get_names_from_obj(obj):
+    """Parsing data from 'Creator' data."""
     creator_name = []
-    itemdatas = _get_itemdata_2(obj, 'Creator')
+    itemdatas = _get_itemdata(obj, 'Creator')
     if itemdatas is None:
-        return None
+        return 'No creator data'
 
     for itemdata in itemdatas:
         textdata = [itemdata[val] for val in sorted(itemdata)]
-        creator_data = _get_creator_by_lang(textdata, 'en')
+        creator_data = _get_creator_by_lang(textdata, 'ja')
         if len(creator_data) > 0:
             creator_name.append(creator_data)
 
     for itemdata in itemdatas:
         textdata = [itemdata[val] for val in sorted(itemdata)]
-        creator_data = _get_creator_by_lang(textdata, 'ja')
+        creator_data = _get_creator_by_lang(textdata, 'en')
         if len(creator_data) > 0:
             creator_name.append(creator_data)
 
@@ -90,19 +93,26 @@ class CreatorSchema(Schema):
 
     family = fields.Method('get_family_name')
     given = fields.Method('get_given_name')
-    name = fields.Method('get_name')
+    suffix = fields.Method('get_suffix_name')
 
     def get_family_name(self, obj):
         """Get family name."""
-        return get_names_from_obj(obj)[1] if get_names_from_obj(obj) else ''
+        name = get_names_from_obj(obj)[1]
+        return name if name else missing
 
     def get_given_name(self, obj):
         """Get given name."""
-        return get_names_from_obj(obj)[2] if get_names_from_obj(obj) else ''
+        if get_names_from_obj(obj) is not None:
+            return get_names_from_obj(obj)[2]
+        else:
+            return missing
 
-    def get_name(self, obj):
-        """Get name."""
-        return get_names_from_obj(obj)[0] if get_names_from_obj(obj) else ''
+    def get_suffix_name(self, obj):
+        """Get suffix name."""
+        if get_names_from_obj(obj) is not None:
+            return get_names_from_obj(obj)[0]
+        else:
+            return missing
 
 
 class RecordSchemaCSLJSON(Schema):
@@ -120,8 +130,8 @@ class RecordSchemaCSLJSON(Schema):
     note = fields.Str('')
 
     DOI = fields.Method('get_doi')
-    ISBN = fields.Str('')
-    ISSN = fields.Str('')
+    ISBN = fields.Method('get_isbn')
+    ISSN = fields.Method('get_issn')
 
     container_title = fields.Method('get_container_title')
     page = fields.Method('get_pages')
@@ -134,29 +144,34 @@ class RecordSchemaCSLJSON(Schema):
     def get_description(self, obj):
         """Get description."""
         description = []
-        itemdatas = _get_itemdata(obj, 'Description')
+        itemdatas = _get_itemdata(obj['metadata'], 'Description')
         if itemdatas is None:
-            return 'Not description data'
+            return missing
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
             description.append(
-                (('{} ({})-Type:{}').format(textdata[0], textdata[1], textdata[2])))
+                '{} ({})-Type:{}'.format(textdata[0], textdata[1],
+                                         textdata[2]))
 
         return description[0]
 
     def get_issue_date(self, obj):
         """Get issue date."""
         metadata = obj['metadata']['pubdate']['attribute_value']
-        datedata = from_isodate(metadata)
-        return {'date-parts': [[datedata.year, datedata.month, datedata.day]]} if datedata else missing
+        if metadata is None:
+            return missing
+        else:
+            datedata = from_isodate(metadata)
+            return {'date-parts': [[datedata.year, datedata.month,
+                                    datedata.day]]} if datedata else missing
 
     def get_language(self, obj):
         """Get language."""
         language = []
-        itemdatas = _get_itemdata(obj, 'Language')
+        itemdatas = _get_itemdata(obj['metadata'], 'Language')
         if itemdatas is None:
-            return 'Not language data'
+            return missing
 
         for itemdata in itemdatas:
             language.append(itemdata.popitem()[1])
@@ -166,9 +181,9 @@ class RecordSchemaCSLJSON(Schema):
     def get_version(self, obj):
         """Get version."""
         version = []
-        itemdatas = _get_itemdata(obj, 'Version')
+        itemdatas = _get_itemdata(obj['metadata'], 'Version')
         if itemdatas is None:
-            return 'Not version data'
+            return missing
 
         for itemdata in itemdatas:
             version.append(itemdata.popitem()[1])
@@ -178,36 +193,36 @@ class RecordSchemaCSLJSON(Schema):
     def get_doi(self, obj):
         """Get DOI."""
         doi = []
-        itemdatas = _get_itemdata(obj, 'Identifier Registration')
+        itemdatas = _get_itemdata(obj['metadata'], 'Identifier Registration')
         if itemdatas is None:
-            return 'Not DOI data'
+            return missing
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
-            doi.append(('{} ({})').format(textdata[0], textdata[1]))
+            doi.append('{} ({})'.format(textdata[0], textdata[1]))
 
         return doi[0]
 
     def get_container_title(self, obj):
         """Get alternative title."""
         alternative_title = []
-        itemdatas = _get_itemdata(obj, 'Alternative Title')
+        itemdatas = _get_itemdata(obj['metadata'], 'Alternative Title')
         if itemdatas is None:
-            return 'Not alternative title data'
+            return missing
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
             alternative_title.append(
-                ('{} ({})').format(textdata[0], textdata[1]))
+                '{} ({})'.format(textdata[0], textdata[1]))
 
         return alternative_title[0]
 
     def get_pages(self, obj):
         """Get number of pages."""
         pages = []
-        itemdatas = _get_itemdata(obj, 'Number of Pages')
+        itemdatas = _get_itemdata(obj['metadata'], 'Number of Pages')
         if itemdatas is None:
-            return 'Not alternative title data'
+            return missing
 
         for itemdata in itemdatas:
             pages.append(itemdata.popitem()[1])
@@ -217,9 +232,9 @@ class RecordSchemaCSLJSON(Schema):
     def get_volume(self, obj):
         """Get volume."""
         volume = []
-        itemdatas = _get_itemdata(obj, 'Volume Number')
+        itemdatas = _get_itemdata(obj['metadata'], 'Volume Number')
         if itemdatas is None:
-            return 'Not volume data'
+            return missing
 
         for itemdata in itemdatas:
             volume.append(itemdata.popitem()[1])
@@ -229,9 +244,9 @@ class RecordSchemaCSLJSON(Schema):
     def get_issue(self, obj):
         """Get issue number."""
         issue = []
-        itemdatas = _get_itemdata(obj, 'Issue Number')
+        itemdatas = _get_itemdata(obj['metadata'], 'Issue Number')
         if itemdatas is None:
-            return 'Not issue number data'
+            return missing
 
         for itemdata in itemdatas:
             issue.append(itemdata.popitem()[1])
@@ -241,12 +256,56 @@ class RecordSchemaCSLJSON(Schema):
     def get_publisher(self, obj):
         """Get publisher."""
         publisher = []
-        itemdatas = _get_itemdata(obj, 'Publisher')
+        itemdatas = _get_itemdata(obj['metadata'], 'Publisher')
         if itemdatas is None:
-            return 'No publisher data'
+            return missing
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
-            publisher.append(('{} ({})').format(textdata[0], textdata[1]))
+            publisher.append('{} ({})'.format(textdata[0], textdata[1]))
 
         return publisher[0]
+
+    def get_isbn(self, obj):
+        """Get ISBN."""
+        isbn_data = []
+        itemdatas = _get_itemdata(obj['metadata'], 'Relation')
+        if itemdatas is None:
+            return missing
+
+        for itemdata in itemdatas:
+            textdata = [itemdata[val] for val in sorted(itemdata)]
+            isbn = _get_relation_by_type(textdata, 'ISBN')
+            if isbn is not None:
+                isbn_data.append(isbn[0])
+
+        return isbn_data[0]
+
+    def get_issn(self, obj):
+        """Get ISSN."""
+        issn_data = []
+        itemdatas = _get_itemdata(obj['metadata'], 'Relation')
+        if itemdatas is None:
+            return missing
+
+        for itemdata in itemdatas:
+            textdata = [itemdata[val] for val in sorted(itemdata)]
+            issn = _get_relation_by_type(textdata, 'ISSN（非推奨）')
+            if issn is not None:
+                issn_data.append(issn[0])
+
+        return issn_data[0]
+
+    def get_publisher_place(self, obj):
+        """Get alternative title."""
+        publisher_place = []
+        itemdatas = _get_itemdata(obj['metadata'], 'Geo Location')
+        if itemdatas is None:
+            return missing
+
+        for itemdata in itemdatas:
+            textdata = [itemdata[val] for val in sorted(itemdata)]
+            if textdata[2]:
+                publisher_place.append(textdata[2])
+
+        return publisher_place[0]

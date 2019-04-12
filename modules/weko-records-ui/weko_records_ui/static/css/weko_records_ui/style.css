@@ -14,6 +14,11 @@
   word-break: break-all;
 }
 
+#invenio-csl span.twitter-typeahead .tt-menu {
+  overflow-y: scroll;
+  max-height: 200px;
+}
+
 .dropdown button {
   background: #fff;
   color: black;
