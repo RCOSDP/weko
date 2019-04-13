@@ -264,3 +264,20 @@ ${INVENIO_WEB_INSTANCE} users create \
 # sphinxdoc-set-web-api-account-combobox-begin
 ${INVENIO_WEB_INSTANCE} cert insert crf CrossRef
 # sphinxdoc-set-web-api-account-combobox-end
+
+#### sphinxdoc-create-chunk_type-data-begin
+${INVENIO_WEB_INSTANCE} chunk_type create \
+        "Free description" "Free description"
+
+${INVENIO_WEB_INSTANCE} chunk_type create \
+        "Access counter" "Access counter"
+
+${INVENIO_WEB_INSTANCE} chunk_type create \
+        "Notice" "Notice"
+
+${INVENIO_WEB_INSTANCE} chunk_type create \
+        "New arivals" "New arivals"
+
+${INVENIO_WEB_INSTANCE} chunk_type create \
+        "Main contents" "Main contents"
+### sphinxdoc-create-chunk_type-data-end

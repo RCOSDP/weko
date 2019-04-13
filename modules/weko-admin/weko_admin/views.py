@@ -39,7 +39,7 @@ from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_response_json, get_search_setting, \
     get_selected_language, save_api_certification, update_admin_lang_setting, \
-    validate_certification, get_repository_list
+    validate_certification, get_repository_list, get_chunk_type_list
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -376,3 +376,11 @@ def save_chunk_layout_setting():
     result = dict()
 
     return jsonify(result)
+
+@blueprint_api.route('/load_chunk_type', methods=['GET'])
+@login_required
+def load_chunk_type():
+    """Get Chunk Type List."""
+    from .utils import get_chunk_type_list
+    results = get_chunk_type_list()
+    return jsonify(results)

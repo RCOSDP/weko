@@ -30,6 +30,8 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
 from sqlalchemy_utils.types import JSONType
 
+from weko_index_tree.models import Index
+from invenio_communities.models import Community
 
 class SessionLifetime(db.Model):
     """Session Lifetime model.
@@ -502,7 +504,125 @@ class ApiCertificate(db.Model):
                 db.session.rollback()
                 return False
 
+class ChunkType(db.Model):
+    """Database for ChuckType."""
+
+    __tablename__ = 'chunk_type'
+
+    type_id = db.Column(db.String(100), primary_key=True, nullable=False)
+
+    type_name = db.Column(db.String(100), nullable=False)
+
+    @classmethod
+    def create(cls, data):
+        """Create data."""
+        try:
+            dataObj = ChunkType()
+            with db.session.begin_nested():
+                dataObj.type_id = data.get('type_id')
+                dataObj.type_name = data.get('type_name')
+                db.session.add(dataObj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    @classmethod
+    def get(cls, id):
+        """Get setting."""
+        return cls.query.filter_by(type_id=id).one_or_none()
+
+    @classmethod
+    def get_all_chunk_types(cls):
+        """
+        Get all chunk_type in chunk_type table.
+
+        :return: List of chunk_type object.
+        """
+        chunk_types = db.session.query(ChunkType).all()
+
+        if chunk_types is None:
+            return None
+
+        return chunk_types
+
+class ChunkItem(db.Model):
+    """Database for ChuckItem."""
+
+    # from weko_index_tree.models import Index
+    # from invenio_communities.models import Community
+
+    __tablename__ = 'chunk_items'
+
+    repository_id = db.Column(db.String(100), db.ForeignKey(Community.id),
+                            nullable=False, primary_key=True)
+
+    chunk_type = db.Column(db.String(100), db.ForeignKey(ChunkType.type_id),
+                            nullable=False, primary_key=True)
+
+    label_color = db.Column(db.String(7), default="")
+
+    has_frame_border = db.Column(db.Boolean(name='frame_border'), default=True)
+
+    frame_border_color = db.Column(db.String(7), default="")
+
+    text_color = db.Column(db.String(7), default="")
+
+    background_color = db.Column(db.String(7), default="")
+
+    # browsing_privilege = db.Column(db.JASON())
+    browsing_role = db.Column(db.Text, nullable=True)
+
+    # edit_privilege = db.Column(db.JASON())
+    edit_role = db.Column(db.Text, nullable=True)
+
+    is_enabled = db.Column(db.Boolean(name='enable'), default=True)
+
+    #
+    # Relations
+    #
+
+    comunity = db.relationship(Community, backref=db.backref(
+        'types'))
+    """Comunity relaionship."""
+
+    chunktype = db.relationship(ChunkType, backref=db.backref(
+        'repositories', cascade='all, delete-orphan'))
+    """ChunkType relationship."""
+
+    @classmethod
+    def update(cls, type_id, **data):
+        """
+        Update the index detail info.
+
+        :param index_id: Identifier of the index.
+        :param detail: new index info for update.
+        :return: Updated index info
+        """
+        try:
+            with db.session.begin_nested():
+                style = cls.get(community_id)
+                if not style:
+                    return
+
+                for k, v in data.items():
+                    if "width" in k or "height" in k:
+                        setattr(style, k, v)
+                db.session.merge(style)
+            db.session.commit()
+            return style
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return
+
 
 __all__ = ([
-    'SearchManagement', 'AdminLangSettings', 'ApiCertificate'
+    'AdminLangSettings',
+    'ApiCertificate',
+    'ChunkType',
+    'ChunkItem',
+    'SearchManagement',
 ])
