@@ -26,7 +26,8 @@ from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, SearchManagement
+from .models import AdminLangSettings, ApiCertificate, SearchManagement, \
+                    ChunkType
 
 
 def get_response_json(result_list, n_lst):
@@ -325,5 +326,34 @@ def update_chunk_layout_setting(data):
         "result": '',
         "error": ''
     }
+
+    return result
+
+
+def create_chunk_type(chunk_type):
+    from .models import ChunkType
+    new_chunk_type = ChunkType.create(data={"type_id":chunk_type,"name":chunk_type})
+
+    result = {
+        "result": 'new_chunk_type',
+        "error": ''
+    }
+
+    return result
+
+def get_chunk_type_list():
+    """Get all Chunk types.
+
+    :param: None
+    :return: options json
+    """
+    chunk_types = ChunkType.get_all_chunk_types()
+    options = []
+    for chunk_type in chunk_types:
+        option = {}
+        option["text"] = chunk_type.name
+        option["value"] = chunk_type.type_id
+        options.append(option)
+    result = {"options": options}
 
     return result
