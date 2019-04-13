@@ -22,7 +22,8 @@
 import click
 from flask.cli import with_appcontext
 
-from .models import AdminLangSettings, ApiCertificate, SessionLifetime
+from .models import AdminLangSettings, ApiCertificate, SessionLifetime, \
+                        ChunkType
 
 
 @click.group()
@@ -104,3 +105,20 @@ def update_api_certification(api_code, api_name, cert_data):
         click.secho('update cert success')
     else:
         click.secho('update cert failed')
+
+@click.group()
+def chunk_type():
+    """Chunk Type commands."""
+
+
+@chunk_type.command('create')
+@click.argument('type_id')
+@click.argument('type_name')
+@with_appcontext
+def insert_chunk_type_to_db(type_id, type_name):
+    """Ex: fd Free description."""
+    try:
+        ChunkType.create(data={"type_id":type_id, "type_name":type_name})
+        click.secho('insert chunk type success')
+    except Exception as e:
+        click.secho(str(e))
