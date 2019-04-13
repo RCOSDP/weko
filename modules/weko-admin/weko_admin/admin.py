@@ -31,7 +31,6 @@ from flask_login import current_user
 
 from .permissions import admin_permission_factory
 from .utils import allowed_file
-from . import config
 
 
 class StyleSettingView(BaseView):
@@ -253,51 +252,12 @@ class LanguageSettingView(BaseView):
             current_app.config["WEKO_ADMIN_LANG_SETTINGS"]
         )
 
-
-class ChunkSettingView(BaseView):
-    create_template = config.WEKO_ADMIN_CHUNK_SETTINGS
-    edit_template = config.WEKO_ADMIN_CHUNK_SETTINGS
-
-    form_create_rules = [
-                         'Repository',
-                         'Type',
-                         'Label',
-                         'Label_Color',
-                         'Frame_Border',
-                         'Frame_Border_Color',
-                         'Text_Color',
-                         'Background_Color',
-                         'Browsing_Privilege',
-                         'Edit_Privilege',
-                         ]
-    column_labels = dict(Repository=_('Repository'), Type=_('Type'),
-                         Label=_('Label'),
-                         Label_Color=_('Label Color'),
-                         Frame_Border=_('Frame Border'),
-                         Frame_Border_Color=_('Semi-automatic Suffix'),
-                         Text_Color=_('Text Color'),
-                         Background_Color=_('Background Color'),
-                         Browsing_Privilege=_('Browsing Privilege'),
-                         Edit_Privilege=_('Edit Privilege')
-                         )
-
-
 class WebApiAccount(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         return self.render(
             current_app.config["WEKO_ADMIN_WEB_API_ACCOUNT"]
         )
-
-
-
-
-chunk_adminview = dict(
-    modelview=ChunkSettingView,
-    model=Identifier,
-    category=_('Setting'),
-    name=_('chunksetting'),
-)
 
 
 class ChunkDesign(BaseView):
@@ -307,6 +267,23 @@ class ChunkDesign(BaseView):
             current_app.config["WEKO_ADMIN_CHUNK_DESIGN"]
         )
 
+
+class ChunkSettingView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_CHUNK_SETTINGS"]
+        )
+
+
+chunk_adminview = {
+    'view_class': ChunkSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Chunk'),
+        'endpoint': 'chunksetting'
+    }
+}
 
 style_adminview = {
     'view_class': StyleSettingView,
