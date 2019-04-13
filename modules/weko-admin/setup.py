@@ -94,6 +94,7 @@ setup(
             'lifetime = weko_admin.cli:lifetime',
             'language = weko_admin.cli:language',
             'cert = weko_admin.cli:cert',
+            'chunk_type = weko_admin.cli:chunk_type',
         ],
         'invenio_base.apps': [
             'weko_admin = weko_admin:WekoAdmin',
