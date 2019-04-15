@@ -619,10 +619,110 @@ class ChunkItem(db.Model):
         return
 
 
+class WidgetDesignSetting(db.Model):
+    """Database for admin WidgetDesignSetting."""
+
+    __tablename__ = 'widget_design_setting'
+
+    repository_id = db.Column(db.String(100), primary_key=True, nullable=False,
+                              unique=True)
+
+    settings = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
+    @classmethod
+    def select_all(cls):
+        """Get all information about widget setting in database.
+
+        :return: Widget setting list.
+        """
+        query_result = cls.query.all()
+        result = []
+        for record in query_result:
+            data = dict()
+            data['repository_id'] = record.repository_id
+            data['settings'] = record.settings
+            result.append(data)
+        return result
+
+    @classmethod
+    def select_by_repository_id(cls, repository_id):
+        """Get widget setting value by repository id.
+
+        :param repository_id: Identifier of the repository
+        :return: Widget setting
+        """
+        query_result = cls.query.filter_by(repository_id=repository_id).one_or_none()
+        data = {}
+        if query_result is not None:
+            data['repository_id'] = query_result.repository_id
+            data['settings'] = query_result.settings
+
+        return data
+
+    @classmethod
+    def update(cls, repository_id, settings):
+        """Update widget setting.
+
+        :param repository_id: Identifier of the repository
+        :param settings: The setting data
+        :return: True if success, otherwise False
+        """
+        query_result = cls.query.filter_by(repository_id=repository_id).one_or_none()
+        if query_result is None:
+            return False
+        else:
+            try:
+                with db.session.begin_nested():
+                    query_result.settings = settings
+                    db.session.merge(query_result)
+                db.session.commit()
+                return True
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
+                return False
+
+    @classmethod
+    def create(cls, repository_id, settings=None):
+        """Insert new widget setting.
+
+        :param repository_id: Identifier of the repository
+        :param settings: The setting data
+        :return: True if success, otherwise False
+        """
+        try:
+            widget_setting = WidgetDesignSetting()
+            with db.session.begin_nested():
+                if repository_id is not None:
+                    widget_setting.repository_id = repository_id
+                    widget_setting.settings = settings
+                db.session.add(widget_setting)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            return False
+
+
 __all__ = ([
     'AdminLangSettings',
     'ApiCertificate',
     'ChunkType',
     'ChunkItem',
     'SearchManagement',
+    'WidgetDesignSetting'
 ])
