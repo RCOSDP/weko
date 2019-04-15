@@ -26,18 +26,35 @@
 {%- block css %}
   {{ super() }}
   {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+
+<style>
+#invenio-csl span.twitter-typeahead .tt-menu {
+  overflow-y: scroll;
+  max-height: 250px;
+}
+#invenio-csl span.twitter-typeahead .tt-suggestion {
+  white-space: normal;
+}
+#invenio-csl span.twitter-typeahead .empty-results {
+  max-width: 250px;
+}
+</style>
+
 {%- endblock css %}
 
 {%- block javascript %}
-  {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {{ super() }}  
+<!--   {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL
+    }}"></script>{% endassets %} -->
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+
+  {{ super() }}
   {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  
-  <script src="/static/node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js"></script>
-  <script src="/static/node_modules/angular/angular.js"></script>
 
+  <script src="/static/node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js"></script>
+
+  <!-- <script src="/static/node_modules/angular/angular.js"></script> -->
   <script src="/static/node_modules/angular-loading-bar/build/loading-bar.js"></script>
   <script src="/static/node_modules/typeahead.js/dist/bloodhound.js"></script>
   <script src="/static/node_modules/typeahead.js/dist/typeahead.bundle.js"></script>
@@ -98,8 +115,9 @@
     <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
       {% include "weko_theme/body_index.html" %}
     </div>
-    <div id="detail-item" class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}} m-top-20">
+    <div class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}} m-top-20">
       {% include "weko_records_ui/body_contents.html" %}
     </div>
   </div>
 {%- endblock page_body_main %}
+
