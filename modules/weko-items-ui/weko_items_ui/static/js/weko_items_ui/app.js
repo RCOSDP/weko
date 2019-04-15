@@ -489,6 +489,16 @@ function handleSharePermission(value) {
         this.setItemMetadataFromApi(param);
       }
 
+      $scope.clearAllField = function() {
+        for (var property in $scope.depositionForm) {
+          if ($scope.depositionForm.hasOwnProperty(property)) {
+            if (property.indexOf("item") != -1) {
+              this.setValueToField(property, "");
+            }
+          }
+        }
+      }
+
       $scope.setItemMetadataFromApi = function (param) {
         $.ajax({
           url: '/api/autofill/get_items_autofill_data',
@@ -510,6 +520,8 @@ function handleSharePermission(value) {
               if (!result) {
                 this.setAutoFillErrorMessage($("#autofill_error_doi").val());
               } else {
+                // Reset all fields
+                this.clearAllField();
                 // Reset error message
                 this.resetAutoFillErrorMessage();
 
