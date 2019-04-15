@@ -84,7 +84,6 @@ js_bootstrap_switch = NpmBundle(
 )
 
 js_dependecies = NpmBundle(
-    # js_dependencies_jquery,
     js_angular_bootstrap,
     js_almond,
     js_angular_loading_bar,
@@ -96,16 +95,9 @@ js_dependecies = NpmBundle(
 )
 
 js = Bundle(
-    # 'node_modules/angular/angular.js',
-    # 'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
-    'js/weko_records_ui/detail.js',  # Not being used
     'js/weko_records_ui/app.js',
     'js/weko_records_ui/csl.js',
     'js/weko_records_ui/detail.js',
     'js/weko_records_ui/bulk_update.js',
-    # filters='jsmin',
     output="gen/weko_records_ui.%(version)s.js",
-    # npm={
-    #    'angular-ui-bootstrap': '~0.13.2',
-    # },
 )

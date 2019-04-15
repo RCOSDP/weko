@@ -61,7 +61,7 @@
   </div>
   <div class="panel-body">
     <div class="row">
-      <div class="col-sm-9 col-md-9 col-left">
+      <div id="detail-item" class="col-sm-9 col-md-9 col-left">
         <div id="record_id" class="hide">{{ record.id }}</div>
         {%- block record_author %}
           {%- set files = record.files -%}
@@ -362,11 +362,6 @@
   </div>
 </div>
 </div>
-
-{%- block javascript %}
-<script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}">
-</script>
-{%- endblock javascript %}
 
 {% block css %}
 <style>
