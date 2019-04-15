@@ -27,7 +27,7 @@ from invenio_i18n.views import set_lang
 
 from . import config
 from .models import AdminLangSettings, ApiCertificate, SearchManagement, \
-                    ChunkType
+                    ChunkType, WidgetDesignSetting
 
 
 def get_response_json(result_list, n_lst):
@@ -303,30 +303,106 @@ def get_repository_list():
     return result
 
 
-def get_chunk_list():
+def get_widget_list():
     result = {
-        "chunk-list": [],
+        "widget-list": [
+            {
+                "widgetId": "id1",
+                "widgetLabel": "Widget 1"
+            },
+            {
+                "widgetId": "id2",
+                "widgetLabel": "Widget 2"
+            },
+            {
+                "widgetId": "id3",
+                "widgetLabel": "Widget 3"
+            },
+            {
+                "widgetId": "id4",
+                "widgetLabel": "Widget 4"
+            }
+        ],
         "error": ""
     }
 
     return result
 
 
-def get_chunk_layout_setting(repository_id):
+def get_widget_design_setting(repository_id):
     result = {
-        "chunk-layout-settings": [],
+        "widget-settings": [
+        ],
         "error": ""
     }
+    try:
+        widget_setting = WidgetDesignSetting.select_by_repository_id(repository_id)
+        if widget_setting:
+            result["widget-settings"] = widget_setting.get('settings')
+        else:
+            result["widget-settings"] = [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "width": 8,
+                    "height": 1,
+                    "id": "id1",
+                    "name": "Free Description"
+                },
+                {
+                    "x": 0,
+                    "y": 1,
+                    "width": 8,
+                    "height": 4,
+                    "id": "id2",
+                    "name": "Main Contents"
+                },
+                {
+                    "x": 8,
+                    "y": 0,
+                    "width": 2,
+                    "height": 1,
+                    "id": "id3",
+                    "name": "New arrivals"
+                },
+                {
+                    "x": 8,
+                    "y": 1,
+                    "width": 2,
+                    "height": 2,
+                    "id": "id4",
+                    "name": "Notice"
+                },
+                {
+                    "x": 8,
+                    "y": 3,
+                    "width": 2,
+                    "height": 2,
+                    "id": "id5",
+                    "name": "Access counter"
+                }
+            ]
+    except Exception as e:
+        result['error'] = str(e)
 
     return result
 
 
 def update_chunk_layout_setting(data):
     result = {
-        "result": '',
+        "result": False,
         "error": ''
     }
-
+    repository_id = data.get('repository_id')
+    setting_data = data.get('settings')
+    try:
+        if repository_id:
+            if WidgetDesignSetting.select_by_repository_id(repository_id):
+                result["result"] = WidgetDesignSetting.update(repository_id, setting_data)
+            else:
+                result["result"] = WidgetDesignSetting.create(repository_id, setting_data)
+    except Exception as e:
+        result['error'] = str(e)
     return result
 
 
