@@ -949,7 +949,7 @@ class ItemsMetadata(RecordBase):
             query = ItemMetadata.query.filter_by(item_type_id=item_type_id)
             if not with_deleted:
                 query = query.filter(ItemMetadata.json != None)  # noqa
-            return query.order_by(desc(ItemMetadata.id)).all()
+            return query.all()
 
     def patch(self, patch):
         """Patch record metadata.
