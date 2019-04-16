@@ -27,7 +27,7 @@ from invenio_i18n.views import set_lang
 
 from . import config
 from .models import AdminLangSettings, ApiCertificate, SearchManagement, \
-                    ChunkType, WidgetDesignSetting
+                    WidgetType, WidgetDesignSetting
 
 
 def get_response_json(result_list, n_lst):
@@ -388,7 +388,7 @@ def get_widget_design_setting(repository_id):
     return result
 
 
-def update_chunk_layout_setting(data):
+def update_widget_layout_setting(data):
     result = {
         "result": False,
         "error": ''
@@ -406,24 +406,24 @@ def update_chunk_layout_setting(data):
     return result
 
 
-def get_chunk_type_list():
-    """Get all Chunk types.
+def get_widget_type_list():
+    """Get all Widget types.
 
     :param: None
     :return: options json
     """
-    chunk_types = ChunkType.get_all_chunk_types()
+    widget_types = WidgetType.get_all_widget_types()
     options = []
-    for chunk_type in chunk_types:
+    for widget_type in widget_types:
         option = {}
-        option["text"] = chunk_type.type_name
-        option["value"] = chunk_type.type_id
+        option["text"] = widget_type.type_name
+        option["value"] = widget_type.type_id
         options.append(option)
     result = {"options": options}
 
     return result
 
-def update_chunk_item_setting(data):
+def update_widget_item_setting(data):
     result = {
         "result": '',
         "error": ''
