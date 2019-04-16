@@ -937,6 +937,20 @@ class ItemsMetadata(RecordBase):
 
             return [cls(obj.json, model=obj) for obj in query.all()]
 
+    @classmethod
+    def get_by_item_type_id(cls, item_type_id, with_deleted=False):
+        """Retrieve multiple records by item types identifier.
+
+        :param item_type_id: Identifier of item type.
+        :param with_deleted: If `True` then it includes deleted records.
+        :returns: A list of :class:`Record` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemMetadata.query.filter_by(item_type_id=item_type_id)
+            if not with_deleted:
+                query = query.filter(ItemMetadata.json != None)  # noqa
+            return query.order_by(desc(ItemMetadata.id)).all()
+
     def patch(self, patch):
         """Patch record metadata.
 
