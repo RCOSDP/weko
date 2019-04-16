@@ -216,7 +216,7 @@ def mapping_index(ItemTypeID=0):
         for list1 in lists:
             print(list1)
         if item_type is None:
-            return redirect(url_for('.mapping_index', 
+            return redirect(url_for('.mapping_index',
                                     ItemTypeID=lists[0].item_type[0].id))
         itemtype_list = []
         itemtype_prop = item_type.schema.get('properties')
