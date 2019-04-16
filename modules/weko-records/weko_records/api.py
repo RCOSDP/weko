@@ -346,6 +346,20 @@ class ItemTypes(RecordBase):
             return query.order_by(desc(ItemType.tag)).all()
 
     @classmethod
+    def get_records_by_name_id(cls, name_id, with_deleted=False):
+        """Retrieve multiple item types by name identifier.
+
+        :param name_id: Name identifier of item type.
+        :param with_deleted: If `True` then it includes deleted item types.
+        :returns: A list of :class:`ItemTypes` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemType.query.filter_by(name_id=name_id)
+            if not with_deleted:
+                query = query.filter(ItemType.schema != None)  # noqa
+            return [cls(obj.schema, model=obj) for obj in query.all()]
+
+    @classmethod
     def get_latest(cls, with_deleted=False):
         """Retrieve the latest item types.
 
