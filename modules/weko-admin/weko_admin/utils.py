@@ -330,17 +330,6 @@ def update_chunk_layout_setting(data):
     return result
 
 
-def create_chunk_type(chunk_type):
-    from .models import ChunkType
-    new_chunk_type = ChunkType.create(data={"type_id":chunk_type,"name":chunk_type})
-
-    result = {
-        "result": 'new_chunk_type',
-        "error": ''
-    }
-
-    return result
-
 def get_chunk_type_list():
     """Get all Chunk types.
 
@@ -351,9 +340,17 @@ def get_chunk_type_list():
     options = []
     for chunk_type in chunk_types:
         option = {}
-        option["text"] = chunk_type.name
+        option["text"] = chunk_type.type_name
         option["value"] = chunk_type.type_id
         options.append(option)
     result = {"options": options}
+
+    return result
+
+def update_chunk_item_setting(data):
+    result = {
+        "result": '',
+        "error": ''
+    }
 
     return result
