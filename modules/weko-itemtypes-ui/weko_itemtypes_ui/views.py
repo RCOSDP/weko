@@ -63,7 +63,7 @@ def index(item_type_id=0):
     # count metaData by item_type_id
     for item in lists:
         metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id=item_type_id)
-        item.cnt_belonging_item = len(metaDataRecords)
+        item.belonging_item_flg = len(metaDataRecords) > 0
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE'],
         lists=lists,
