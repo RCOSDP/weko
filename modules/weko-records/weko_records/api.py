@@ -309,7 +309,7 @@ class ItemTypes(RecordBase):
 
         :param ids: List of item type IDs.
         :param with_deleted: If `True` then it includes deleted item types.
-        :returns: A list of :class:`ItemTypes` instances.F
+        :returns: A list of :class:`ItemTypes` instances.
         """
         with db.session.no_autoflush:
             query = ItemType.query.filter(ItemType.id.in_(ids))
@@ -355,7 +355,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.filter_by(ItemType.schema != None)
+                query = query.join(ItemType).filter(ItemType.schema != None)
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod
