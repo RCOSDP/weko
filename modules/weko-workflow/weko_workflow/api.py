@@ -414,6 +414,8 @@ class ActionStatus(object):
 
 class WorkActivity(object):
     """Operated on the Activity."""
+    import threading
+    lock = threading.Lock()
 
     def init_activity(self, activity, community_id=None):
         """Create new activity.
@@ -437,9 +439,38 @@ class WorkActivity(object):
                         asc(_FlowAction.action_order)).all()
                     if flow_actions and len(flow_actions) >= 2:
                         next_action_id = flow_actions[1].action_id
+
+            # Lock thread to check the id of existing activities until the new activity is created
+            self.lock.acquire()
+
+            # A-YYYYMMDD-NNNNN (NNNNN starts from 00001)
+            datetime_str = datetime.utcnow().strftime("%Y%m%d")
+
+            # Get the list of activities of day
+            activities = self.get_activity_list(community_id)
+            activities = [activity for activity in activities
+                          if activity.activity_id.startswith('A-{}'.format(datetime_str))]
+
+            # If there are existing activities, parsing the last segment to get the next number
+            if len(activities) > 0:
+                # Get the largest number of the current day
+                number = 0
+                for a in activities:
+                    parts = a.activity_id.split('-')
+                    # In the format A-YYYYMMDD-NNNNN, the len of parts should be 2
+                    if len(parts) > 1:
+                        n = int(parts[-1])
+                        if n > number:
+                            # Found
+                            number = n
+                # Define activity Id of day
+                activity_id = 'A-{}-{inc:05d}'.format(datetime_str, inc=number + 1)
+            else:
+                # The default activity Id of the current day
+                activity_id = 'A-{}-00001'.format(datetime_str)
+
             db_activity = _Activity(
-                activity_id='A' + str(
-                    datetime.utcnow().timestamp()).split('.')[0],
+                activity_id=activity_id,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
                 action_id=next_action_id,
@@ -475,9 +506,17 @@ class WorkActivity(object):
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
+
+            # Release the lock
+            self.lock.release()
+
             return None
         else:
             db.session.commit()
+
+            # Release the lock
+            self.lock.release()
+
             return db_activity
 
     def upt_activity_action(self, activity_id, action_id):
