@@ -39,7 +39,7 @@ from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_response_json, get_search_setting, \
     get_selected_language, save_api_certification, update_admin_lang_setting, \
-    validate_certification, get_repository_list, get_chunk_type_list
+    validate_certification, get_repository_list, get_widget_list, get_widget_design_setting, update_chunk_layout_setting
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -352,30 +352,61 @@ def save_api_cert_data():
 
 @blueprint_api.route('/load_repository', methods=['GET'])
 def load_repository():
+    """Get Repository list, to display on the combobox on UI.
+
+        :return: Example
+        {
+           'repositories': [
+            {
+                'id': 'repository id',
+                'title': 'repository title'
+            }
+           ],
+            'error': ''
+        }
+    """
     result = get_repository_list()
     return jsonify(result)
 
 
-@blueprint_api.route('/load_chunk_list', methods=['GET'])
-def load_chunk_list():
-    result = dict()
+@blueprint_api.route('/load_widget_list', methods=['GET'])
+def load_widget_list():
+    """Get Widget list, to display on the Widget List panel on UI.
 
+            :return: Example
+            "widget-list": [
+                {
+                    "widgetId": "widget id",
+                    "widgetLabel": "Widget label"
+                }
+            ],
+            "error": ""
+    """
+    result = get_widget_list()
     return jsonify(result)
 
 
-@blueprint_api.route('/load_chunk_layout_setting/<string:repository_id>',
+@blueprint_api.route('/load_widget_design_setting/<string:repository_id>',
                      methods=['GET'])
-def load_chunk_layout_setting(repository_id):
-    result = dict()
+def load_widget_design_setting(repository_id):
+    result = get_widget_design_setting(repository_id)
 
     return jsonify(result)
 
 
-@blueprint_api.route('/save_chunk_layout_setting', methods=['POST'])
-def save_chunk_layout_setting():
+@blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
+def save_widget_layout_setting():
     result = dict()
 
+    if request.headers['Content-Type'] != 'application/json':
+        result['error'] = _('Header Error')
+        return jsonify(result)
+
+    data = request.get_json()
+    result = update_chunk_layout_setting(data)
+
     return jsonify(result)
+
 
 @blueprint_api.route('/load_chunk_type', methods=['GET'])
 @login_required
