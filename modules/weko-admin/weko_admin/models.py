@@ -504,10 +504,10 @@ class ApiCertificate(db.Model):
                 db.session.rollback()
                 return False
 
-class ChunkType(db.Model):
-    """Database for ChuckType."""
+class WidgetType(db.Model):
+    """Database for WidgetType."""
 
-    __tablename__ = 'chunk_type'
+    __tablename__ = 'widget_type'
 
     type_id = db.Column(db.String(100), primary_key=True, nullable=False)
 
@@ -517,7 +517,7 @@ class ChunkType(db.Model):
     def create(cls, data):
         """Create data."""
         try:
-            dataObj = ChunkType()
+            dataObj = WidgetType()
             with db.session.begin_nested():
                 dataObj.type_id = data.get('type_id')
                 dataObj.type_name = data.get('type_name')
@@ -535,31 +535,31 @@ class ChunkType(db.Model):
         return cls.query.filter_by(type_id=id).one_or_none()
 
     @classmethod
-    def get_all_chunk_types(cls):
+    def get_all_widget_types(cls):
         """
-        Get all chunk_type in chunk_type table.
+        Get all widget_type in widget_type table.
 
-        :return: List of chunk_type object.
+        :return: List of widget_type object.
         """
-        chunk_types = db.session.query(ChunkType).all()
+        widget_types = db.session.query(WidgetType).all()
 
-        if chunk_types is None:
+        if widget_types is None:
             return None
 
-        return chunk_types
+        return widget_types
 
-class ChunkItem(db.Model):
-    """Database for ChuckItem."""
+class WidgetItem(db.Model):
+    """Database for WidgetItem."""
 
     # from weko_index_tree.models import Index
     # from invenio_communities.models import Community
 
-    __tablename__ = 'chunk_items'
+    __tablename__ = 'widget_items'
 
     repository_id = db.Column(db.String(100), db.ForeignKey(Community.id),
                             nullable=False, primary_key=True)
 
-    chunk_type = db.Column(db.String(100), db.ForeignKey(ChunkType.type_id),
+    widget_type = db.Column(db.String(100), db.ForeignKey(WidgetType.type_id),
                             nullable=False, primary_key=True)
 
     label_color = db.Column(db.String(7), default="")
@@ -588,9 +588,9 @@ class ChunkItem(db.Model):
         'types'))
     """Comunity relaionship."""
 
-    chunktype = db.relationship(ChunkType, backref=db.backref(
+    widgettype = db.relationship(WidgetType, backref=db.backref(
         'repositories', cascade='all, delete-orphan'))
-    """ChunkType relationship."""
+    """WidgetType relationship."""
 
     @classmethod
     def update(cls, type_id, **data):
@@ -721,8 +721,8 @@ class WidgetDesignSetting(db.Model):
 __all__ = ([
     'AdminLangSettings',
     'ApiCertificate',
-    'ChunkType',
-    'ChunkItem',
+    'WidgetType',
+    'WidgetItem',
     'SearchManagement',
     'WidgetDesignSetting'
 ])
