@@ -28,7 +28,7 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from weko_records.api import ItemMetadata, ItemTypeProps, ItemTypes, Mapping
+from weko_records.api import ItemsMetadata, ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
 
 from .permissions import item_type_permission
@@ -60,9 +60,10 @@ def index(item_type_id=0):
     :param item_type_id: Item type i. Default 0.
     """
     lists = ItemTypes.get_latest()
-    # check
-    metaDataRecords = ItemMetadata.get_by_item_type_id(item_type_id)
-    list['cnt_belonging_item'] = metaDataRecords.length
+    # count metaData by item_type_id
+    for item in lists:
+        metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id=item_type_id)
+        item.cnt_belonging_item = len(metaDataRecords)
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE'],
         lists=lists,
