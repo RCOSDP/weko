@@ -345,17 +345,24 @@ def delete_itemtype(item_type_id=0):
     if item_type_id > 0:
         record = ItemTypes.get_record(id_=item_type_id)
         if record is not None:
-            try:
-                record.delete()
-                db.session.commit()
-            except BaseException:
-                db.session.rollback()
-                current_app.logger.error('Unexpected error: ',
-                                         sys.exc_info()[0])
-                return jsonify(code=-1,msg=_('Delete item type fail.'))
+            # Check harvesting_type
+            if record.model.harvesting_type:
+                return jsonify(code=-1, msg=_('Cannot delete Item Type for Harvesting.'))
+            # Get all versions
+            all_records = ItemTypes.get_records_by_name_id(
+                name_id=record.model.name_id)
+            for k in all_records:
+                try:
+                    k.delete()
+                    db.session.commit()
+                except BaseException:
+                    db.session.rollback()
+                    current_app.logger.error('Unexpected error: ',
+                                             sys.exc_info()[0])
+                    return jsonify(code=-1, msg=_('Delete item type fail.'))
 
             current_app.logger.debug(
                 'Itemtype delete: {}'.format(item_type_id))
-            return jsonify(code=0,msg=_('Delete item type successfully.'))
+            return jsonify(code=0, msg=_('Delete item type successfully.'))
 
-    return jsonify(code=-1,msg=_('An error has occurred.'))
+    return jsonify(code=-1, msg=_('An error has occurred.'))
