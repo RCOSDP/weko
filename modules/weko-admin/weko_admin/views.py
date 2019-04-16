@@ -34,6 +34,7 @@ from invenio_admin.proxies import current_admin
 from sqlalchemy.orm import session
 from weko_records.api import ItemTypes, SiteLicense
 from werkzeug.local import LocalProxy
+from .api import WidgetItems
 
 from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
@@ -427,3 +428,9 @@ def save_widget_item():
     result = update_admin_widget_item_setting(data)
 
     return jsonify(msg=result)
+
+@blueprint_api.route('/get_account_role', methods=['GET'])
+@login_required
+def get_account_role():
+    role = WidgetItems().get_account_role()
+    return jsonify(role)
