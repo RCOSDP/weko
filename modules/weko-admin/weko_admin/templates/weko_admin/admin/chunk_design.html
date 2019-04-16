@@ -28,7 +28,7 @@
 {%- block javascript %}
 {{ super() }}
 <script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.5.0/lodash.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.2.0/knockout-min.js"></script>
 
@@ -48,14 +48,24 @@
         box-shadow: 4px 4px 5px #7D7D7D;
     }
 
-    #chunkList>.grid-stack-item[data-gs-width="2"] {
+    #widgetList>.grid-stack-item[data-gs-width="2"] {
         width: 100%;
     }
-    #chunkList>.grid-stack-item[data-gs-width="1"] {
+    #widgetList>.grid-stack-item[data-gs-width="1"] {
         width: 50%;
     }
 
     .grid-stack-item-content span {
+        display: inline-block;
+        vertical-align: middle;
+        line-height: normal;
+        margin: auto;
+    }
+    .widget-label{
+        display: block !important;
+        line-height: normal;
+    }
+    .add-new-widget{
         display: inline-block;
         vertical-align: middle;
         line-height: normal;
@@ -101,11 +111,34 @@
                         error
                     });
                 }
-            )
+            );
 
     }
 
     handleChange(event) {
+
+        let url = "/api/admin/load_widget_design_setting/" + event.target.value;
+        fetch(url)
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    if(result.error){
+                      console.log(result.error);
+                      return;
+                    }
+                    let widgetList = result['widget-settings'];
+                    loadWidgetPreview(widgetList);
+                },
+
+                (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                }
+            );
+
+
         this.setState({ repositoryId: event.target.value });
         this.props.getRepositoryId(event.target.value);
         event.preventDefault();
@@ -116,7 +149,7 @@
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
                 <div class="controls col-xs-5">
-                    <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
+                    <select id="repository-id" value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
                         <option value="0">Please selected the Repository</option>
                         {this.state.selectOptions}
                     </select>
@@ -127,30 +160,52 @@
 
 }
 
-class ChunkList extends React.Component {
+class WidgetList extends React.Component {
     constructor(props) {
         super(props);
         this.style = {
             "border": "1px solid #eee",
             "min-height": "300px",
-           // "overflow": "scroll",
-           // "overflow-x": "hidden",
+           "overflow": "scroll",
+           "overflow-x": "hidden",
             "margin-right": "0px"
         };
+    }
+
+    componentDidMount() {
+        fetch("/api/admin/load_widget_list")
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    if(result.error){
+                      console.log(result.error);
+                      return;
+                    }
+                    let widgetList = result['widget-list'];
+                    loadWidgetList(widgetList);
+                },
+
+                (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                }
+            );
     }
 
     render() {
         return (
             <div>
-                <label className="control-label row">Chunk List</label>
-                <div className="row grid-stack" style={this.style} id="chunkList">
+                <label className="control-label row">widget List</label>
+                <div className="row grid-stack" style={this.style} id="widgetList">
                 </div>
             </div>
         )
     }
 }
 
-class PreviewChunk extends React.Component {
+class Previewwidget extends React.Component {
     constructor(props) {
         super(props);
         this.style = {
@@ -159,6 +214,29 @@ class PreviewChunk extends React.Component {
             "height": "80%"
         };
     }
+
+    componentDidMount() {
+        fetch("/api/admin/load_widget_design_setting/abc")
+            .then(res => res.json())
+            .then(
+                (result) => {
+                    if(result.error){
+                      console.log(result.error);
+                      return;
+                    }
+                    let widgetList = result['widget-settings'];
+                    loadWidgetPreview(widgetList);
+                },
+
+                (error) => {
+                    this.setState({
+                        isLoaded: true,
+                        error
+                    });
+                }
+            );
+    }
+
 
     render() {
         return (
@@ -217,10 +295,10 @@ class MainLayout extends React.Component {
                 </div>
                 <div className="row container-fluid">
                     <div className="form-group col-xs-2">
-                        <ChunkList />
+                        <WidgetList />
                     </div>
                     <div className="form-group col-xs-10">
-                        <PreviewChunk repositoryId={this.state.repositoryId} />
+                        <Previewwidget repositoryId={this.state.repositoryId} />
                     </div>
                 </div>
                 <div className="row">
@@ -238,7 +316,149 @@ ReactDOM.render(
 
 
 $(function () {
-    var options1 = {
+    $("grid-stack-item-content").disableSelection();
+    loadPreview;
+
+});
+
+
+
+var loadPreview = new function () {
+    var options2 = {
+        width: 12,
+        float: true,
+        animate: true,
+        removable: '.trash',
+        removeTimeout: 100,
+        acceptWidgets: '.grid-stack-item'
+    };
+
+
+
+    $('#gridPreview').gridstack(_.defaults({
+        float: true
+    }, options2));
+
+    this.serializedData = [
+    ];
+
+    this.grid = $('#gridPreview').data('gridstack');
+
+    this.loadGrid = function (widgetListItems) {
+        console.log("loadGrid");
+        this.grid.removeAll();
+        var items = GridStackUI.Utils.sort(widgetListItems);
+        _.each(items, function (node) {
+            this.grid.addWidget($('<div data-name="' + node.name + '" data-id="' + node.id + '"><div class="grid-stack-item-content"><span>&lt;' + node.name + '&gt;</span></div><div/>'),
+                node.x, node.y, node.width, node.height);
+        }, this);
+        return false;
+    }.bind(this);
+
+    this.saveGrid = function () {
+        this.serializedData = _.map($('.grid-stack > .grid-stack-item:visible'), function (el) {
+            el = $(el);
+            var node = el.data('_gridstack_node');
+            let name = el.data("name");
+            let id = el.data("id");
+            if(!id){
+                return;
+            }
+            return {
+                x: node.x,
+                y: node.y,
+                width: node.width,
+                height: node.height,
+                name: name,
+                id: id
+            };
+        }, this);
+        var filtered = this.serializedData.filter(function (el) {
+            return el != null;
+        });
+        console.log(filtered);
+        // let saveData = filtered;
+        let saveData = JSON.stringify(filtered, null, '    ');
+
+        if(saveData){
+            let postData = {
+                'repository_id': $("#repository-id").val(),
+                'settings': saveData
+            };
+            $.ajax({
+                url: "/api/admin/save_widget_layout_setting",
+                type: 'POST',
+                headers: {
+                'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(postData),
+                dataType: 'json',
+                success: function (data, status) {
+                    let err_msg = data.error;
+                    if (err_msg) {
+                        alert(err_msg);
+                    } else if (!data.results) {
+                        alert(' Please check again.');
+                    } else {
+                        alert('Widget design setting has been saved successfully.');
+                    }
+                },
+                error: function (error) {
+                    alert(error);
+                }
+            });
+            sessionStorage.setItem('widget_data', postData);
+            console.log(postData);
+        } else {
+            return;
+        }
+
+
+        return false;
+    }.bind(this);
+
+    this.clearGrid = function () {
+        this.grid.removeAll();
+        return false;
+    }.bind(this);
+
+    this.addNewWidget = function (node) {
+
+                    this.grid.addWidget($('<div data-name="'+node.name+'" data-id="'+node.id+'" data-gs-auto-position="true"><div class="grid-stack-item-content">&lt;'+ node.name+'&gt;</div<div/>'),
+                        node.x, node.y, node.width, node.height);
+                    return false;
+                }.bind(this);
+
+    $('#save-grid').click(this.saveGrid);
+    $('#load-grid').click(this.loadGrid);
+    $('#clear-grid').click(this.clearGrid);
+
+}
+
+function addWidget(){
+    $('.add-new-widget').each(function () {
+    var $this = $(this);
+    $this.on("click", function () {
+        let widgetName = $(this).data('widgetName');
+        let widgetId = $(this).data('widgetId');
+        console.log(widgetName);
+        console.log(widgetName);
+        let node = {
+                                x: 0,
+                                y: 0,
+                                width: 2,
+                                height: 1,
+                                auto_position: true,
+                                name: widgetName,
+                                id: widgetId
+                            };
+        loadPreview.addNewWidget(node);
+    });
+});
+}
+
+ function loadWidgetList(widgetListItems){
+    var options = {
         width: 2,
         float: false,
         animate: true,
@@ -251,162 +471,27 @@ $(function () {
             revert: true,
             zIndex: 100,
             refreshPositions: true,
-            
+
         }
-    
+
     };
-
-    var options2 = {
-        width: 12,
-        float: true,
-        animate: true,
-        removable: '.trash',
-        removeTimeout: 100,
-        acceptWidgets: '.grid-stack-item'
-    };
-
-    $('#chunkList').gridstack(options1);
-
-    $('#gridPreview').gridstack(_.defaults({
-        float: true
-    }, options2));
-
-    var items1 = [{
-            x: 0,
-            y: 0,
-            width: 2,
-            height: 1,
-            id: "id1",
-            name: "&lt;This is test drag and drop1&gt;"
-        },
-        {
-            x: 0,
-            y: 1,
-            width: 2,
-            height: 1,
-            id: "id2",
-            name: "&lt;This is test drag and drop2&gt;"
-        },
-        {
-            x: 0,
-            y: 3,
-            width: 2,
-            height: 1,
-            id: "id3",
-            name: "&lt;This is test drag and drop3&gt;"
-        }
-    ];
-
-
-    var chunkList = $('#chunkList').data('gridstack');
-    _.each(items1, function (node) {
-        chunkList.addWidget($('<div data-chunk-name="' + node.name + '" data-chunk-id="' + node.id + '"><div class="grid-stack-item-content"><span>' + node.name + '</span></div><div/>'),
-            node.x, node.y, node.width, node.height);
+    $('#widgetList').gridstack(options);
+    var widgetList = $('#widgetList').data('gridstack');
+    let x = 0;
+    let y = 0;
+    _.each(widgetListItems, function (widget) {
+        widgetList.addWidget($('<div ><div class="grid-stack-item-content"><span class="widget-label">&lt;' + widget.widgetLabel
+        + '&gt;</span> <a data-widget-name="' + widget.widgetLabel + '" data-widget-id="' + widget.widgetId + '" class="btn btn-default add-new-widget" href="#">Add Widget</a></div><div/>'),
+            x, y, 2, 1);
+            x++;
+            y++;
     }, this);
 
+    addWidget();
+}
 
-
-    $("#chunkList > .grid-stack-item").draggable({
-        helper: "clone",
-        revert: "invalid"
-    });
-    $("#chunkList, grid-stack-item-content").disableSelection();
-
-    loadPreview;
-});
-
-
-
-var loadPreview = new function () {
-    this.serializedData = [{
-            x: 0,
-            y: 0,
-            width: 8,
-            height: 1,
-            id: "id1",
-            name: "&lt;Free Description&gt;"
-        },
-        {
-            x: 0,
-            y: 1,
-            width: 8,
-            height: 4,
-            id: "id2",
-            name: "&lt;Main Contents&gt;"
-        },
-        {
-            x: 8,
-            y: 0,
-            width: 2,
-            height: 1,
-            id: "id3",
-            name: "&lt;New arrivals&gt;"
-        },
-        {
-            x: 8,
-            y: 1,
-            width: 2,
-            height: 2,
-            id: "id4",
-            name: "&lt;Notice&gt;"
-        },
-        {
-            x: 8,
-            y: 3,
-            width: 2,
-            height: 2,
-            id: "id5",
-            name: "&lt;Access counter&gt;"
-        }
-    ];
-    if (sessionStorage.getItem('chunk_data')) {
-        let data = sessionStorage.getItem('chunk_data');
-        console.log(data);
-    }
-
-    this.grid = $('#gridPreview').data('gridstack');
-
-    this.loadGrid = function () {
-        this.grid.removeAll();
-        var items = GridStackUI.Utils.sort(this.serializedData);
-        _.each(items, function (node) {
-            this.grid.addWidget($('<div data-chunk-name="' + node.name + '" data-chunk-id="' + node.id + '"><div class="grid-stack-item-content"><span>' + node.name + '</span></div><div/>'),
-                node.x, node.y, node.width, node.height);
-        }, this);
-        return false;
-    }.bind(this);
-
-    this.saveGrid = function () {
-        this.serializedData = _.map($('.grid-stack > .grid-stack-item:visible'), function (el) {
-            el = $(el);
-            var node = el.data('_gridstack_node');
-            let name = el.data("chunkName");
-            let id = el.data("chunkId");
-            return {
-                x: node.x,
-                y: node.y,
-                width: node.width,
-                height: node.height,
-                name: name,
-                id: id
-            };
-        }, this);
-        let save_data = JSON.stringify(this.serializedData, null, '    ');
-        sessionStorage.setItem('chunk_data', save_data);
-        console.log(save_data);
-        return false;
-    }.bind(this);
-
-    this.clearGrid = function () {
-        this.grid.removeAll();
-        return false;
-    }.bind(this);
-
-    $('#save-grid').click(this.saveGrid);
-    $('#load-grid').click(this.loadGrid);
-    $('#clear-grid').click(this.clearGrid);
-
-    this.loadGrid();
+function loadWidgetPreview(widgetListItems){
+    loadPreview.loadGrid(widgetListItems);
 }
 </script>
 {%- endblock javascript %}
