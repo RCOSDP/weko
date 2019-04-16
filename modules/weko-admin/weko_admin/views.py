@@ -415,3 +415,15 @@ def load_chunk_type():
     from .utils import get_chunk_type_list
     results = get_chunk_type_list()
     return jsonify(results)
+
+@blueprint_api.route('/save_chunk_item', methods=['GET'])
+@login_required
+def save_chunk_item():
+    """Save Language List."""
+    if request.headers['Content-Type'] != 'application/json':
+        current_app.logger.debug(request.headers['Content-Type'])
+        return jsonify(msg='Header Error')
+    data = request.get_json()
+    result = update_admin_chunk_item_setting(data)
+
+    return jsonify(msg=result)
