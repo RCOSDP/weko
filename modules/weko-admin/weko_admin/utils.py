@@ -20,6 +20,7 @@
 
 """Utilities for convert response json."""
 import requests
+import json
 from flask import session
 from flask_babelex import lazy_gettext as _
 from invenio_i18n.ext import current_i18n
@@ -336,50 +337,20 @@ def get_widget_design_setting(repository_id):
         "error": ""
     }
     try:
-        widget_setting = WidgetDesignSetting.select_by_repository_id(repository_id)
+        widget_setting = WidgetDesignSetting.select_by_repository_id(
+            repository_id)
         if widget_setting:
-            result["widget-settings"] = widget_setting.get('settings')
+            settings = widget_setting.get('settings')
+            result["widget-settings"] = json.loads(settings)
         else:
             result["widget-settings"] = [
                 {
                     "x": 0,
                     "y": 0,
                     "width": 8,
-                    "height": 1,
-                    "id": "id1",
-                    "name": "Free Description"
-                },
-                {
-                    "x": 0,
-                    "y": 1,
-                    "width": 8,
                     "height": 4,
-                    "id": "id2",
+                    "id": "widget_main_content",
                     "name": "Main Contents"
-                },
-                {
-                    "x": 8,
-                    "y": 0,
-                    "width": 2,
-                    "height": 1,
-                    "id": "id3",
-                    "name": "New arrivals"
-                },
-                {
-                    "x": 8,
-                    "y": 1,
-                    "width": 2,
-                    "height": 2,
-                    "id": "id4",
-                    "name": "Notice"
-                },
-                {
-                    "x": 8,
-                    "y": 3,
-                    "width": 2,
-                    "height": 2,
-                    "id": "id5",
-                    "name": "Access counter"
                 }
             ]
     except Exception as e:
