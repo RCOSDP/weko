@@ -24,16 +24,16 @@ from invenio_accounts.models import Role
 from invenio_db import db
 
 
-from .models import ChunkItem
+from .models import WidgetItem
 
-class ChunkItems(object):
-    """Define API for ChunkItems creation and update."""
+class WidgetItems(object):
+    """Define API for WidgetItems creation and update."""
 
     # @classmethod
     # def create(cls, data):
     #     """Create data."""
     #     try:
-    #         dataObj = ChunkItem()
+    #         dataObj = WidgetItem()
     #         with db.session.begin_nested():
     #             dataObj.default_dis_num = data.get('dlt_dis_num_selected')
     #             dataObj.default_dis_sort_index = data.get(
@@ -51,33 +51,33 @@ class ChunkItems(object):
     #         raise
     #     return cls
     @classmethod
-    def create(cls, pid=None, chunk_items=None):
-        """Create the chunk_items. Delete all chunk_items before creation.
+    def create(cls, pid=None, widget_items=None):
+        """Create the widget_items. Delete all widget_items before creation.
 
-        :param pid: parent chunk item id.
-        :param chunk_items: the chunk item information.
-        :returns: The :class:`chunk item` instance lists or None.
+        :param pid: parent widget item id.
+        :param widget_items: the widget item information.
+        :returns: The :class:`widget item` instance lists or None.
         """
-        def _add_chunk_item(data):
+        def _add_widget_item(data):
             with db.session.begin_nested():
-                chunk_item = ChunkItem(**data)
-                db.session.add(chunk_item)
+                widget_item = WidgetItem(**data)
+                db.session.add(widget_item)
             db.session.commit()
 
-        if not isinstance(chunk_items, dict):
+        if not isinstance(widget_items, dict):
             return
 
         data = dict()
         is_ok = True
         try:
-            data["repository"] = chunk_items.get('repository')
-            data["chunk_type"] = chunk_items.get('chunk_type')
-            data["label_color"] = chunk_items.get('label_color')
+            data["repository"] = widget_items.get('repository')
+            data["widget_type"] = widget_items.get('widget_type')
+            data["label_color"] = widget_items.get('label_color')
             data["frame_border"] = True
             # data["frame_border"] = data["frame_border"]
-            data["frame_border_color"] = chunk_items.get('frame_border_color')
-            data["text_color"] = chunk_items.get('text_color')
-            data["background_color"] = chunk_items.get('background_color')
+            data["frame_border_color"] = widget_items.get('frame_border_color')
+            data["text_color"] = widget_items.get('text_color')
+            data["background_color"] = widget_items.get('background_color')
             role = cls.get_account_role()
             data["browsing_role"] = \
                 ",".join(list(map(lambda x: str(x['id']), role)))
@@ -86,7 +86,7 @@ class ChunkItems(object):
             data["enable"] = True
 
 
-            _add_chunk_item(data)
+            _add_widget_item(data)
         # except IntegrityError as ie:
         #     if 'uix_position' in ''.join(ie.args):
         #         try:

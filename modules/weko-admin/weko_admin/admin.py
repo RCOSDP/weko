@@ -37,7 +37,7 @@ from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 from .permissions import admin_permission_factory
 from .utils import allowed_file
-from .models import ChunkItem
+from .models import WidgetItem
 from . import config
 
 
@@ -276,7 +276,7 @@ class WidgetDesign(BaseView):
         )
 
 
-class ChunkSettingView(ModelView):
+class WidgetSettingView(ModelView):
     """Pidstore Identifier admin view."""
 
     can_create = True
@@ -288,7 +288,7 @@ class ChunkSettingView(ModelView):
 
     column_list = (
         'repository_id',
-        'chunk_type',
+        'widget_type',
         'label_color',
         'has_frame_border',
         'frame_border_color',
@@ -300,11 +300,11 @@ class ChunkSettingView(ModelView):
     )
 
     column_searchable_list = (
-        'repository_id', 'chunk_type', 'label_color', 'has_frame_border')
+        'repository_id', 'widget_type', 'label_color', 'has_frame_border')
 
     column_details_list = (
         'repository_id',
-        'chunk_type',
+        'widget_type',
         'label_color',
         'has_frame_border',
         'frame_border_color',
@@ -318,7 +318,7 @@ class ChunkSettingView(ModelView):
 
     form_create_rules = [
         'repository_id',
-        'chunk_type',
+        'widget_type',
         'label_color',
         'has_frame_border',
         'frame_border_color',
@@ -333,7 +333,7 @@ class ChunkSettingView(ModelView):
     form_edit_rules = form_create_rules
 
     column_labels = dict(repository_id=_('Repository'),
-                         chunk_type=_('Chunk Type'),
+                         widget_type=_('Widget Type'),
                          label_color=_('Label color'),
                          has_frame_border=_('Has frame'),
                          frame_border_color=_('Frame border Color'),
@@ -441,7 +441,7 @@ class ChunkSettingView(ModelView):
         :param obj: input object
         """
         return self._use_append_repository(
-            super(ChunkSettingView, self).create_form()
+            super(WidgetSettingView, self).create_form()
         )
 
     def edit_form(self, obj):
@@ -453,7 +453,7 @@ class ChunkSettingView(ModelView):
         :param obj: input object
         """
         return self._use_append_repository(
-            super(ChunkSettingView, self).edit_form(obj)
+            super(WidgetSettingView, self).edit_form(obj)
         )
 
     def _use_append_repository(self, form):
@@ -473,9 +473,9 @@ class ChunkSettingView(ModelView):
         return query_data
 
 
-chunk_adminview = dict(
-    modelview=ChunkSettingView,
-    model=ChunkItem,
+widget_adminview = dict(
+    modelview=WidgetSettingView,
+    model=WidgetItem,
     category=_('Setting'),
     name=_('Widget Setting'),
 )
@@ -528,7 +528,7 @@ widget_design_adminview = {
 }
 
 __all__ = (
-    'chunk_adminview',
+    'widget_adminview',
     'style_adminview',
     'report_adminview',
     'language_adminview',

@@ -39,7 +39,7 @@ from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_response_json, get_search_setting, \
     get_selected_language, save_api_certification, update_admin_lang_setting, \
-    validate_certification, get_repository_list, get_widget_list, get_widget_design_setting, update_chunk_layout_setting
+    validate_certification, get_repository_list, get_widget_list, get_widget_design_setting, update_widget_layout_setting
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -403,27 +403,27 @@ def save_widget_layout_setting():
         return jsonify(result)
 
     data = request.get_json()
-    result = update_chunk_layout_setting(data)
+    result = update_widget_layout_setting(data)
 
     return jsonify(result)
 
 
-@blueprint_api.route('/load_chunk_type', methods=['GET'])
+@blueprint_api.route('/load_widget_type', methods=['GET'])
 @login_required
-def load_chunk_type():
-    """Get Chunk Type List."""
-    from .utils import get_chunk_type_list
-    results = get_chunk_type_list()
+def load_widget_type():
+    """Get Widget Type List."""
+    from .utils import get_widget_type_list
+    results = get_widget_type_list()
     return jsonify(results)
 
-@blueprint_api.route('/save_chunk_item', methods=['GET'])
+@blueprint_api.route('/save_widget_item', methods=['GET'])
 @login_required
-def save_chunk_item():
+def save_widget_item():
     """Save Language List."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
-    result = update_admin_chunk_item_setting(data)
+    result = update_admin_widget_item_setting(data)
 
     return jsonify(msg=result)
