@@ -22,7 +22,7 @@
 
 from copy import deepcopy
 
-from flask import current_app, flash
+from flask import current_app
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_records.api import Record
@@ -32,7 +32,7 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     before_record_insert, before_record_revert, before_record_update
 from jsonpatch import apply_patch
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import asc, desc
+from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
 
 from .models import FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, \
@@ -369,7 +369,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(ItemType.schema != None)
+                query = query.join(ItemType).filter(ItemType.schema is not None)
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod

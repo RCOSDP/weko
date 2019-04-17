@@ -22,8 +22,8 @@
 
 import sys
 
-from flask import Blueprint, Flask, abort, current_app, flash, json, \
-    jsonify, make_response, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, json, jsonify, \
+    redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
@@ -62,7 +62,8 @@ def index(item_type_id=0):
     lists = ItemTypes.get_latest()
     # count metaData by item_type_id
     for item in lists:
-        metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id=item.item_type[0].id)
+        metaDataRecords = ItemsMetadata.get_by_item_type_id(
+            item_type_id=item.item_type[0].id)
         item.belonging_item_flg = len(metaDataRecords) > 0
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE'],
