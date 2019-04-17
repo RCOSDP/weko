@@ -12,12 +12,12 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 
-from .utils import get_repository_list, get_widget_list, get_widget_design_setting, \
-					update_widget_layout_setting
+from .utils import get_repository_list, get_widget_design_setting, \
+    get_widget_list, update_widget_design_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -62,8 +62,8 @@ def load_repository():
     return jsonify(result)
 
 
-@blueprint_api.route('/load_widget_list', methods=['GET'])
-def load_widget_list():
+@blueprint_api.route('/load_widget_list/<string:repository_id>', methods=['GET'])
+def load_widget_list(repository_id):
     """Get Widget list, to display on the Widget List panel on UI.
 
             :return: Example
@@ -75,7 +75,7 @@ def load_widget_list():
             ],
             "error": ""
     """
-    result = get_widget_list()
+    result = get_widget_list(repository_id)
     return jsonify(result)
 
 
@@ -96,7 +96,7 @@ def save_widget_layout_setting():
         return jsonify(result)
 
     data = request.get_json()
-    result = update_widget_layout_setting(data)
+    result = update_widget_design_setting(data)
 
     return jsonify(result)
 

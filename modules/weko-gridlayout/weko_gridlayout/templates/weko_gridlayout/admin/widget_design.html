@@ -22,477 +22,480 @@
 
 {%- block css %}
 {{ super() }}
-<link rel="stylesheet" href="http://gridstackjs.com/dist/gridstack.css" />
+{% assets "weko_gridlayout_widget_design_css" %}<link rel="stylesheet" href="{{ ASSET_URL }}" />{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
 {{ super() }}
-<script type="text/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-<!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script> -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.5.0/lodash.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.2.0/knockout-min.js"></script>
-
-<script type="text/javascript" src='http://gridstackjs.com/dist/gridstack.js'crossorigin="anonymous"></script>
-<script type="text/javascript" src='http://gridstackjs.com/dist/gridstack.jQueryUI.js'crossorigin="anonymous"></script>
+ {% assets "weko_gridlayout_widget_design_js_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
 
 <script type="text/javascript" src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
 <script type="text/javascript" src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
 
-<style type="text/css">
-    .grid-stack-item-content {
-        color: #2c3e50;
-        text-align: center;
-        vertical-align: middle;
-        background-color: #EDE9E3;
-        box-shadow: 4px 4px 5px #7D7D7D;
-    }
-
-    #widgetList>.grid-stack-item[data-gs-width="2"] {
-        width: 100%;
-    }
-    #widgetList>.grid-stack-item[data-gs-width="1"] {
-        width: 50%;
-    }
-
-    .grid-stack-item-content span {
-        display: inline-block;
-        vertical-align: middle;
-        line-height: normal;
-        margin: auto;
-    }
-    .widget-label{
-        display: block !important;
-        line-height: normal;
-    }
-    .add-new-widget{
-        display: inline-block;
-        vertical-align: middle;
-        line-height: normal;
-    }
-</style>
-
 <script type="text/babel">
-  class Repository extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            repositoryId: '0',
-            selectOptions: []
-        };
-        this.styleRed = {
-            color: 'red',
-        };
-        this.handleChange = this.handleChange.bind(this);
-    }
-
-    componentDidMount() {
-        fetch("/api/admin/load_repository")
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if(result.error){
-                      alter(result.error);
-                      return;
-                    }
-                    let options = result.repositories.map((option) => {
-                        return (
-                            <option key={option.id} value={option.id}>{option.title}</option>
-                        )
-                    });
-                    this.setState({
-                        selectOptions: options
-                    });
-                },
-
-                (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
-                }
-            );
-
-    }
-
-    handleChange(event) {
-
-        let url = "/api/admin/load_widget_design_setting/" + event.target.value;
-        fetch(url)
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if(result.error){
-                      console.log(result.error);
-                      return;
-                    }
-                    let widgetList = result['widget-settings'];
-                    loadWidgetPreview(widgetList);
-                },
-
-                (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
-                }
-            );
-
-
-        this.setState({ repositoryId: event.target.value });
-        this.props.getRepositoryId(event.target.value);
-        event.preventDefault();
-    }
-
-    render() {
-        return (
-            <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
-                <div class="controls col-xs-5">
-                    <select id="repository-id" value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
-                        <option value="0">Please selected the Repository</option>
-                        {this.state.selectOptions}
-                    </select>
-                </div>
-            </div>
-        )
-    }
-
-}
-
-class WidgetList extends React.Component {
-    constructor(props) {
-        super(props);
-        this.style = {
-            "border": "1px solid #eee",
-            "min-height": "300px",
-           "overflow": "scroll",
-           "overflow-x": "hidden",
-            "margin-right": "0px"
-        };
-    }
-
-    componentDidMount() {
-        fetch("/api/admin/load_widget_list")
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if(result.error){
-                      console.log(result.error);
-                      return;
-                    }
-                    let widgetList = result['widget-list'];
-                    loadWidgetList(widgetList);
-                },
-
-                (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
-                }
-            );
-    }
-
-    render() {
-        return (
-            <div>
-                <label className="control-label row">widget List</label>
-                <div className="row grid-stack" style={this.style} id="widgetList">
-                </div>
-            </div>
-        )
-    }
-}
-
-class Previewwidget extends React.Component {
-    constructor(props) {
-        super(props);
-        this.style = {
-            "border": "1px solid #eee",
-            "min-height": "200px",
-            "height": "80%"
-        };
-    }
-
-    componentDidMount() {
-        fetch("/api/admin/load_widget_design_setting/abc")
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if(result.error){
-                      console.log(result.error);
-                      return;
-                    }
-                    let widgetList = result['widget-settings'];
-                    loadWidgetPreview(widgetList);
-                },
-
-                (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
-                }
-            );
-    }
-
-
-    render() {
-        return (
-            <div>
-                <label className="control-label row">Preview</label>
-                <div className="row grid-stack" style={this.style} id="gridPreview">
-
-                </div>
-            </div>
-        )
-    }
-
-}
-
-class ButtonLayout extends React.Component {
-    constructor(props) {
-        super(props);
-        this.style = {
-            "margin-right": "10px",
-            "margin-left": "-15px"
-
-        };
-    }
-    render() {
-        return (
-            <div className="form-group col-xs-10">
-                <button id="save-grid" className="btn btn-primary" style={this.style}>Save</button>
-                <button id="clear-grid" className="form-group btn btn-danger">Cancel</button>
-            </div>
-        )
-    }
-}
-
-class MainLayout extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            repositoryId: '',
-        };
-        this.style = {
-            "width": ""
+    class Repository extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                repositoryId: '0_default',
+                selectOptions: []
+            };
+            this.styleRed = {
+                color: 'red',
+            };
+            this.handleChange = this.handleChange.bind(this);
         }
-        this.getRepositoryId = this.getRepositoryId.bind(this);
-    }
 
-    getRepositoryId(repositoryId) {
-        console.log(repositoryId);
-        this.setState({ repositoryId: repositoryId });
-    }
+        componentDidMount() {
+            fetch("/api/admin/load_repository")
+                .then(res => res.json())
+                .then(
+                    (result) => {
+                        if (result.error) {
+                            alter(result.error);
+                            return;
+                        }
+                        let options = result.repositories.map((option) => {
+                            return (
+                                <option key={option.id} value={option.id}>{option.title}</option>
+                            )
+                        });
+                        this.setState({
+                            selectOptions: options
+                        });
+                    },
 
-    render() {
-        return (
-            <div>
-                <div className="row">
-                    <Repository getRepositoryId={this.getRepositoryId} />
-                </div>
-                <div className="row container-fluid">
-                    <div className="form-group col-xs-2">
-                        <WidgetList />
+                    (error) => {
+                        console.log(error);
+                    }
+                );
+
+        }
+
+        handleChange(event) {
+            let url = "/api/admin/load_widget_design_setting/" + event.target.value;
+            fetch(url)
+                .then(res => res.json())
+                .then(
+                    (result) => {
+                        if (result.error) {
+                            console.log(result.error);
+                            return;
+                        }
+                        let widgetList = result['widget-settings'];
+                        loadWidgetPreview(widgetList);
+                    },
+                    (error) => {
+                        console.log(error);
+                    }
+                );
+
+
+            this.setState({ repositoryId: event.target.value });
+            this.props.callbackMainLayout(event.target.value);
+            event.preventDefault();
+        }
+
+        render() {
+            return (
+                <div className="form-group row">
+                    <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
+                    <div class="controls col-xs-5">
+                        <select id="repository-id" value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
+                            <option value="0">Please selected the Repository</option>
+                            {this.state.selectOptions}
+                        </select>
                     </div>
-                    <div className="form-group col-xs-10">
-                        <Previewwidget repositoryId={this.state.repositoryId} />
+                </div>
+            )
+        }
+
+    }
+
+    class WidgetList extends React.Component {
+        constructor(props) {
+            super(props);
+            this.style = {
+                "border": "1px solid #eee",
+                "min-height": "300px",
+                "overflow": "scroll",
+                "overflow-x": "hidden",
+                "margin-right": "0px"
+            };
+        }
+
+        componentDidMount() {
+            fetch("/api/admin/load_widget_list/0_default")
+                .then(res => res.json())
+                .then(
+                    (result) => {
+                        if (result.error) {
+                            console.log(result.error);
+                            return;
+                        }
+                        let widgetList = result['widget-list'];
+                        loadWidgetList(widgetList);
+                    },
+
+                    (error) => {
+                        console.log(error);
+                    }
+                );
+        }
+
+        reloadWidgetListPanel(repositoryId){
+            let url = "/api/admin/load_widget_list/" + repositoryId;
+            fetch(url)
+                .then(res => res.json())
+                .then(
+                    (result) => {
+                        if (result.error) {
+                            console.log(result.error);
+                            return;
+                        }
+                        let widgetList = result['widget-list'];
+                        loadWidgetList(widgetList);
+                    },
+
+                    (error) => {
+                        console.log(error);
+                    }
+                );
+        }
+
+        componentWillReceiveProps(props){
+            const { repositoryId } = this.props;
+            console.log("componentWillReceiveProps1: " + repositoryId);
+            console.log("componentWillReceiveProps2: " + props.repositoryId);
+            if (props.repositoryId !== repositoryId) {
+                this.reloadWidgetListPanel(props.repositoryId);
+            }
+        }
+
+        render() {
+            return (
+                <div>
+                    <label className="control-label row">Widget List</label>
+                    <div className="row grid-stack" style={this.style} id="widgetList">
                     </div>
                 </div>
-                <div className="row">
-                    <ButtonLayout />
-                </div>
-            </div>
-        )
+            )
+        }
     }
-}
 
-ReactDOM.render(
-    <MainLayout />,
-    document.getElementById('root')
-)
+    class PreviewWidget extends React.Component {
+        constructor(props) {
+            super(props);
+            this.style = {
+                "border": "1px solid #eee",
+                "min-height": "200px",
+                "height": "80%"
+            };
+        }
+
+        componentDidMount() {
+            fetch("/api/admin/load_widget_design_setting/0")
+                .then(res => res.json())
+                .then(
+                    (result) => {
+                        if (result.error) {
+                            console.log(result.error);
+                            return;
+                        }
+                        let widgetList = result['widget-settings'];
+                        loadWidgetPreview(widgetList);
+                    },
+
+                    (error) => {
+                        console.log(error);
+                    }
+                );
+        }
 
 
-$(function () {
-    $("grid-stack-item-content").disableSelection();
-    loadPreview;
+        render() {
+            return (
+                <div>
+                    <label className="control-label row">Preview</label>
+                    <div className="row grid-stack" style={this.style} id="gridPreview">
+                    </div>
+                </div>
+            )
+        }
 
-});
+    }
+
+    class ButtonLayout extends React.Component {
+        constructor(props) {
+            super(props);
+            this.style = {
+                "margin-right": "10px",
+                "margin-left": "-15px"
+
+            };
+            this.handleSave = this.handleSave.bind(this);
+        }
+
+        handleSave(){
+            loadPreview.saveGrid();
+        }
+
+        handleCancel(){
+            loadPreview.clearGrid();
+        }
+
+        render() {
+            return (
+                <div className="form-group col-xs-10">
+                    <button id="save-grid" className="btn btn-primary" style={this.style} onClick={this.handleSave}>Save</button>
+                    <button id="clear-grid" className="form-group btn btn-danger" onClick={this.handleCancel}>Cancel</button>
+                </div>
+            )
+        }
+    }
+
+    class MainLayout extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                repositoryId: ""
+            };
+            this.props.repositoryId = "";
+        }
+
+        callbackMainLayout(repositoryId){
+            this.setState({ repositoryId: repositoryId });
+        }
+
+        render() {
+            return (
+                <div>
+                    <div className="row">
+                        <Repository callbackMainLayout={this.callbackMainLayout.bind(this)}/>
+                    </div>
+                    <div className="row">
+                        <div className="form-group col-xs-2">
+                            <WidgetList repositoryId = {this.state.repositoryId}/>
+                        </div>
+                        <div className="form-group col-xs-10">
+                            <PreviewWidget />
+                        </div>
+                    </div>
+                    <div className="row">
+                        <ButtonLayout />
+                    </div>
+                </div>
+            )
+        }
+    }
 
 
 
-var loadPreview = new function () {
-    var options2 = {
-        width: 12,
-        float: true,
-        animate: true,
-        removable: '.trash',
-        removeTimeout: 100,
-        acceptWidgets: '.grid-stack-item'
-    };
+    /**
+     *
+     */
+    var loadPreview = new function () {
+        this.init = function(){
+            var options = {
+                width: 12,
+                float: true,
+                animate: true,
+                removeTimeout: 100,
+                acceptWidgets: '.grid-stack-item'
+            };
 
+            $('#gridPreview').gridstack(_.defaults({
+                float: true
+            }, options));
 
+            this.serializedData = [
+            ];
 
-    $('#gridPreview').gridstack(_.defaults({
-        float: true
-    }, options2));
+            this.grid = $('#gridPreview').data('gridstack');
+        }
 
-    this.serializedData = [
-    ];
+        this.loadGrid = function (widgetListItems) {
+            this.grid.removeAll();
+            var items = GridStackUI.Utils.sort(widgetListItems);
+            _.each(items, function (node) {
+                this.grid.addWidget($('<div data-name="' + node.name + '" data-id="' + node.id + '">'
+                    + '<div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
+                    + '<div class="grid-stack-item-content"><span>&lt;' + node.name + '&gt;</span></div><div/>'),
+                    node.x, node.y, node.width, node.height);
+            }, this);
+            return false;
+        }.bind(this);
 
-    this.grid = $('#gridPreview').data('gridstack');
+        this.saveGrid = function () {
+            this.serializedData = _.map($('.grid-stack > .grid-stack-item:visible'), function (el) {
+                el = $(el);
+                var node = el.data('_gridstack_node');
+                let name = el.data("name");
+                let id = el.data("id");
+                if (!id) {
+                    return;
+                }
+                return {
+                    x: node.x,
+                    y: node.y,
+                    width: node.width,
+                    height: node.height,
+                    name: name,
+                    id: id
+                };
+            }, this);
+            var filtered = this.serializedData.filter(function (el) {
+                return el != null;
+            });
+            let saveData = JSON.stringify(filtered);
 
-    this.loadGrid = function (widgetListItems) {
-        console.log("loadGrid");
-        this.grid.removeAll();
-        var items = GridStackUI.Utils.sort(widgetListItems);
-        _.each(items, function (node) {
-            this.grid.addWidget($('<div data-name="' + node.name + '" data-id="' + node.id + '"><div class="grid-stack-item-content"><span>&lt;' + node.name + '&gt;</span></div><div/>'),
-                node.x, node.y, node.width, node.height);
-        }, this);
-        return false;
-    }.bind(this);
-
-    this.saveGrid = function () {
-        this.serializedData = _.map($('.grid-stack > .grid-stack-item:visible'), function (el) {
-            el = $(el);
-            var node = el.data('_gridstack_node');
-            let name = el.data("name");
-            let id = el.data("id");
-            if(!id){
+            if (saveData) {
+                let postData = {
+                    'repository_id': $("#repository-id").val(),
+                    'settings': saveData
+                };
+                $.ajax({
+                    url: "/api/admin/save_widget_layout_setting",
+                    type: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify(postData),
+                    dataType: 'json',
+                    success: function (data, status) {
+                        let err_msg = data.error;
+                        if (err_msg) {
+                            alert(err_msg);
+                        } else if (!data.result) {
+                            alert(' Please check again.');
+                        } else {
+                            alert('Widget design has been saved successfully.');
+                        }
+                    },
+                    error: function (error) {
+                        console.log(error);
+                    }
+                });
+                sessionStorage.setItem('widget_data', postData);
+            } else {
                 return;
             }
-            return {
-                x: node.x,
-                y: node.y,
-                width: node.width,
-                height: node.height,
-                name: name,
-                id: id
-            };
-        }, this);
-        var filtered = this.serializedData.filter(function (el) {
-            return el != null;
-        });
-        console.log(filtered);
-        // let saveData = filtered;
-        let saveData = JSON.stringify(filtered, null, '    ');
 
-        if(saveData){
-            let postData = {
-                'repository_id': $("#repository-id").val(),
-                'settings': saveData
-            };
-            $.ajax({
-                url: "/api/admin/save_widget_layout_setting",
-                type: 'POST',
-                headers: {
-                'Content-Type': 'application/json'
-                },
-                data: JSON.stringify(postData),
-                dataType: 'json',
-                success: function (data, status) {
-                    let err_msg = data.error;
-                    if (err_msg) {
-                        alert(err_msg);
-                    } else if (!data.results) {
-                        alert(' Please check again.');
-                    } else {
-                        alert('Widget design setting has been saved successfully.');
-                    }
-                },
-                error: function (error) {
-                    alert(error);
-                }
+            return false;
+        }.bind(this);
+
+        this.clearGrid = function () {
+            this.grid.removeAll();
+            return false;
+        }.bind(this);
+
+        this.addNewWidget = function (node) {
+            this.grid.addWidget($('<div data-name="' + node.name + '" data-id="' + node.id + '" data-gs-auto-position="true">'
+                + '<div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
+                + '<div class="grid-stack-item-content">&lt;' + node.name + '&gt;</div<div/>'),
+                node.x, node.y, node.width, node.height);
+            return false;
+        }.bind(this);
+
+        this.deleteWidget = function (item) {
+            this.grid.removeWidget(item);
+            return false;
+        };
+    }
+
+    /**
+     * Add widget
+     */
+    function addWidget() {
+        $('.add-new-widget').each(function () {
+            var $this = $(this);
+            $this.on("click", function () {
+                let widgetName = $(this).data('widgetName');
+                let widgetId = $(this).data('widgetId');
+                let node = {
+                    x: 0,
+                    y: 0,
+                    width: 2,
+                    height: 1,
+                    auto_position: true,
+                    name: widgetName,
+                    id: widgetId
+                };
+                loadPreview.addNewWidget(node);
+                removeWidget();
             });
-            sessionStorage.setItem('widget_data', postData);
-            console.log(postData);
-        } else {
-            return;
-        }
+        });
 
+    }
 
-        return false;
-    }.bind(this);
+    /**
+     * Load Widget list panel
+     * @param {*} widgetListItems
+     */
+    function loadWidgetList(widgetListItems) {
+        var options = {
+            width: 2,
+            float: false,
+            animate: true,
+            ddPlugin: false,
+            removable: '.trash',
+            removeTimeout: 100,
+            acceptWidgets: '.grid-stack-item',
+            draggable: {
+                helper: "clone",
+                revert: true,
+                zIndex: 100,
+                refreshPositions: true,
 
-    this.clearGrid = function () {
-        this.grid.removeAll();
-        return false;
-    }.bind(this);
+            }
 
-    this.addNewWidget = function (node) {
-
-                    this.grid.addWidget($('<div data-name="'+node.name+'" data-id="'+node.id+'" data-gs-auto-position="true"><div class="grid-stack-item-content">&lt;'+ node.name+'&gt;</div<div/>'),
-                        node.x, node.y, node.width, node.height);
-                    return false;
-                }.bind(this);
-
-    $('#save-grid').click(this.saveGrid);
-    $('#load-grid').click(this.loadGrid);
-    $('#clear-grid').click(this.clearGrid);
-
-}
-
-function addWidget(){
-    $('.add-new-widget').each(function () {
-    var $this = $(this);
-    $this.on("click", function () {
-        let widgetName = $(this).data('widgetName');
-        let widgetId = $(this).data('widgetId');
-        console.log(widgetName);
-        console.log(widgetName);
-        let node = {
-                                x: 0,
-                                y: 0,
-                                width: 2,
-                                height: 1,
-                                auto_position: true,
-                                name: widgetName,
-                                id: widgetId
-                            };
-        loadPreview.addNewWidget(node);
-    });
-});
-}
-
- function loadWidgetList(widgetListItems){
-    var options = {
-        width: 2,
-        float: false,
-        animate: true,
-        ddPlugin: false,
-        removable: '.trash',
-        removeTimeout: 100,
-        acceptWidgets: '.grid-stack-item',
-        draggable: {
-            helper: "clone",
-            revert: true,
-            zIndex: 100,
-            refreshPositions: true,
-
-        }
-
-    };
-    $('#widgetList').gridstack(options);
-    var widgetList = $('#widgetList').data('gridstack');
-    let x = 0;
-    let y = 0;
-    _.each(widgetListItems, function (widget) {
-        widgetList.addWidget($('<div ><div class="grid-stack-item-content"><span class="widget-label">&lt;' + widget.widgetLabel
-        + '&gt;</span> <a data-widget-name="' + widget.widgetLabel + '" data-widget-id="' + widget.widgetId + '" class="btn btn-default add-new-widget" href="#">Add Widget</a></div><div/>'),
-            x, y, 2, 1);
+        };
+        $('#widgetList').gridstack(options);
+        var widgetList = $('#widgetList').data('gridstack');
+        widgetList.removeAll();
+        let x = 0;
+        let y = 0;
+        _.each(widgetListItems, function (widget) {
+            widgetList.addWidget($('<div ><div class="grid-stack-item-content"><span class="widget-label">&lt;' + widget.widgetLabel
+                + '&gt;</span> <a data-widget-name="' + widget.widgetLabel + '" data-widget-id="' + widget.widgetId + '" class="btn btn-default add-new-widget" href="#">Add Widget</a></div><div/>'),
+                x, y, 2, 1);
             x++;
             y++;
-    }, this);
+        }, this);
 
-    addWidget();
-}
+        addWidget();
+    }
 
-function loadWidgetPreview(widgetListItems){
-    loadPreview.loadGrid(widgetListItems);
-}
+    /**
+     * Load Preview panel
+     * @param {*} widgetListItems
+     */
+    function loadWidgetPreview(widgetListItems) {
+        loadPreview.init();
+        loadPreview.loadGrid(widgetListItems);
+        removeWidget();
+    }
+
+    /**
+     * Remove widget on Preview panel
+     */
+    function removeWidget() {
+        $('.glyphicon-remove').each(function () {
+            var $this = $(this);
+            $this.on("click", function () {
+                let widget = $this.closest(".grid-stack-item");
+                loadPreview.deleteWidget(widget);
+            });
+        });
+    }
+
+    $(function () {
+        ReactDOM.render(
+            <MainLayout />,
+            document.getElementById('root')
+        );
+    });
 </script>
 {%- endblock javascript %}
 
