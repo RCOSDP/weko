@@ -87,9 +87,9 @@ setup(
         'invenio_db.models': [
             'weko_gridlayout = weko_gridlayout.models',
         ],
-        # 'invenio_base.blueprints': [
-        #     'weko_gridlayout = weko_gridlayout.views:blueprint',
-        # ],
+        'invenio_base.blueprints': [
+            'weko_gridlayout = weko_gridlayout.views:blueprint',
+        ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
