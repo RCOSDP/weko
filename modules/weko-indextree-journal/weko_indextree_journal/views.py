@@ -59,7 +59,8 @@ def index(index_id=0):
 
     json_record = journal
 
-    # Log error for output info of journal, level: ERROR, status code: 101, content: Invalid setting file error
+    """Log error for output info of journal, level: ERROR, status code: 101,
+    content: Invalid setting file error."""
     if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] != "/indextree/journal/jsonschema") \
         or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] == ""
             or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] is None)):
