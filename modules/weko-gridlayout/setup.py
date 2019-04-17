@@ -95,7 +95,7 @@ setup(
         # 'invenio_admin.actions': [],
         'invenio_assets.bundles': [
             'weko_gridlayout_widget_design_js_lib = weko_gridlayout.bundles:widget_design_js_lib',
-            'weko_gridlayout_widget_design_css = weko_admin.bundles:widget_design_css',
+            'weko_gridlayout_widget_design_css = weko_gridlayout.bundles:widget_design_css',
         ],
         # 'invenio_base.api_apps': [],
         # 'invenio_base.blueprints': [],
