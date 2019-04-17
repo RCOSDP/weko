@@ -51,10 +51,9 @@ class WidgetItems(object):
     #         raise
     #     return cls
     @classmethod
-    def create(cls, pid=None, widget_items=None):
+    def create(cls, widget_items=None):
         """Create the widget_items. Delete all widget_items before creation.
 
-        :param pid: parent widget item id.
         :param widget_items: the widget item information.
         :returns: The :class:`widget item` instance lists or None.
         """
@@ -72,6 +71,7 @@ class WidgetItems(object):
         try:
             data["repository"] = widget_items.get('repository')
             data["widget_type"] = widget_items.get('widget_type')
+            data["label"] = widget_items.get('label')
             data["label_color"] = widget_items.get('label_color')
             data["frame_border"] = True
             # data["frame_border"] = data["frame_border"]

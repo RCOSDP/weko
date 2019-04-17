@@ -165,7 +165,7 @@ def get_widget_type_list():
     return result
 
 
-def update_widget_item_setting(data):
+def update_admin_widget_item_setting(data):
     result = {
         "result": '',
         "error": ''
