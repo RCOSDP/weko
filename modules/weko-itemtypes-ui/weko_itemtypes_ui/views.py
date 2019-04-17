@@ -368,7 +368,7 @@ def delete_itemtype(item_type_id=0):
             if all_records and item_type_name:
                 try:
                     # Delete item type name
-                    ItemTypeNames.delete(item_type_name)
+                    item_type_name.delete()
                     # Delete item typea
                     for k in all_records:
                         k.delete()
