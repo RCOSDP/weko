@@ -470,8 +470,17 @@ class WorkActivity(object):
                 # The default activity Id of the current day
                 activity_id = 'A-{}-00001'.format(datetime_str)
 
+            from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+            aid = PersistentIdentifier.create(
+                'actid',
+                str(activity_id),
+                status=PIDStatus.REGISTERED,
+                object_type='act',
+                object_uuid=uuid.uuid4()
+            )
+
             db_activity = _Activity(
-                activity_id=activity_id,
+                activity_id=aid.pid_value,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
                 action_id=next_action_id,
