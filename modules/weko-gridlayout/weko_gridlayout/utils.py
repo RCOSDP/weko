@@ -19,11 +19,16 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
+import json
 
-from . import config
-from .models import WidgetType, WidgetDesignSetting
+from .models import WidgetDesignSetting, WidgetItem, WidgetType
+
 
 def get_repository_list():
+    """Get repository list from Community table.
+
+    :return: Repository list.
+    """
     result = {
         "repositories": [],
         "error": ""
@@ -43,92 +48,87 @@ def get_repository_list():
     return result
 
 
-def get_widget_list():
+def get_widget_list(repository_id):
+    """Get Widget list.
+
+    :param repository_id: Identifier of the repository.
+    :return: Widget list.
+    """
+    test_value = [
+        {
+            "widgetId": "widget_main_content",
+            "widgetLabel": "Main Contents"
+        },
+        {
+            "widgetId": "id1",
+            "widgetLabel": "Widget 1"
+        },
+        {
+            "widgetId": "id2",
+            "widgetLabel": "Widget 2"
+        },
+        {
+            "widgetId": "id3",
+            "widgetLabel": "Widget 3"
+        },
+        {
+            "widgetId": "id4",
+            "widgetLabel": "Widget 4"
+        }
+    ]
     result = {
-        "widget-list": [
-            {
-                "widgetId": "id1",
-                "widgetLabel": "Widget 1"
-            },
-            {
-                "widgetId": "id2",
-                "widgetLabel": "Widget 2"
-            },
-            {
-                "widgetId": "id3",
-                "widgetLabel": "Widget 3"
-            },
-            {
-                "widgetId": "id4",
-                "widgetLabel": "Widget 4"
-            }
-        ],
+        "widget-list": [],
         "error": ""
     }
+    try:
+        widget_item_list = WidgetItem.query.filter_by(
+            repository_id=repository_id).all()
+        if widget_item_list:
+            for widget_item in widget_item_list:
+                data = dict()
+                data["widgetId"] = widget_item.repository_id
+                data["widgetType"] = widget_item.widget_type
+                # TODO: waiting WidgetItem model
+                # data["widgetLabel"] = widget_item.label
+
+        # TODO: add testing value.
+        if not result["widget-list"] and repository_id != "0":
+            result["widget-list"] = test_value
+    except Exception as e:
+        result["error"] = str(e)
 
     return result
 
 
 def get_widget_design_setting(repository_id):
+    """Get Widget design setting by repository id.
+
+    :param repository_id: Identifier of the repository
+    :return: Widget design setting json.
+    """
     result = {
         "widget-settings": [
         ],
         "error": ""
     }
     try:
-        widget_setting = WidgetDesignSetting.select_by_repository_id(repository_id)
+        widget_setting = WidgetDesignSetting.select_by_repository_id(
+            repository_id)
         if widget_setting:
-            result["widget-settings"] = widget_setting.get('settings')
-        else:
-            result["widget-settings"] = [
-                {
-                    "x": 0,
-                    "y": 0,
-                    "width": 8,
-                    "height": 1,
-                    "id": "id1",
-                    "name": "Free Description"
-                },
-                {
-                    "x": 0,
-                    "y": 1,
-                    "width": 8,
-                    "height": 4,
-                    "id": "id2",
-                    "name": "Main Contents"
-                },
-                {
-                    "x": 8,
-                    "y": 0,
-                    "width": 2,
-                    "height": 1,
-                    "id": "id3",
-                    "name": "New arrivals"
-                },
-                {
-                    "x": 8,
-                    "y": 1,
-                    "width": 2,
-                    "height": 2,
-                    "id": "id4",
-                    "name": "Notice"
-                },
-                {
-                    "x": 8,
-                    "y": 3,
-                    "width": 2,
-                    "height": 2,
-                    "id": "id5",
-                    "name": "Access counter"
-                }
-            ]
+            settings = widget_setting.get('settings')
+            if settings:
+                result["widget-settings"] = json.loads(settings)
     except Exception as e:
         result['error'] = str(e)
 
     return result
 
 
-def update_widget_layout_setting(data):
+def update_widget_design_setting(data):
+    """Update Widget layout setting.
+    :param data: json data is submitted from client side.
+    :return: result json.
+    """
     result = {
         "result": False,
         "error": ''
@@ -138,9 +138,11 @@ def update_widget_layout_setting(data):
     try:
         if repository_id:
             if WidgetDesignSetting.select_by_repository_id(repository_id):
-                result["result"] = WidgetDesignSetting.update(repository_id, setting_data)
+                result["result"] = WidgetDesignSetting.update(repository_id,
+                                                              setting_data)
             else:
-                result["result"] = WidgetDesignSetting.create(repository_id, setting_data)
+                result["result"] = WidgetDesignSetting.create(repository_id,
+                                                              setting_data)
     except Exception as e:
         result['error'] = str(e)
     return result
@@ -162,6 +164,7 @@ def get_widget_type_list():
     result = {"options": options}
 
     return result
+
 
 def update_widget_item_setting(data):
     result = {
