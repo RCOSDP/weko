@@ -13,6 +13,7 @@
 -e /code/modules/weko-accounts
 -e /code/modules/weko-admin
 -e /code/modules/weko-logging
+-e /code/modules/weko-gridlayout
 -e /code/modules/weko-groups
 -e /code/modules/weko-search-ui
 -e /code/modules/weko-records

@@ -58,34 +58,45 @@ setup(
     version=version,
     description=__doc__,
     long_description=readme + '\n\n' + history,
-    keywords='invenio TODO',
+    keywords='weko gridlayout',
     license='MIT',
     author='National Institute of Informatics',
     author_email='wekosoftware@nii.ac.jp',
-    url='https://github.com/RCOSDP/weko-gridlayout',
+    url='https://github.com/wekosoftware/weko-gridlayout',
     packages=packages,
     zip_safe=False,
     include_package_data=True,
     platforms='any',
     entry_points={
+        'flask.commands': [
+            'widget_type = weko_gridlayout.cli:widget_type',
+        ],
         'invenio_base.apps': [
             'weko_gridlayout = weko_gridlayout:wekogridlayout',
         ],
-        'invenio_base.blueprints': [
-            'weko_gridlayout = weko_gridlayout.views:blueprint',
+        'invenio_base.api_blueprints': [
+            'weko_gridlayout = weko_gridlayout.views:blueprint_api',
+        ],
+        'invenio_admin.views': [
+            'weko_gridlayout_widget = weko_gridlayout.admin:widget_adminview',
+            'weko_gridlayout_widget_design = weko_gridlayout.admin:widget_design_adminview',
         ],
         'invenio_i18n.translations': [
             'messages = weko_gridlayout',
         ],
+        'invenio_db.models': [
+            'weko_gridlayout = weko_gridlayout.models',
+        ],
+        # 'invenio_base.blueprints': [
+        #     'weko_gridlayout = weko_gridlayout.views:blueprint',
+        # ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
         # 'invenio_assets.bundles': [],
         # 'invenio_base.api_apps': [],
-        # 'invenio_base.api_blueprints': [],
         # 'invenio_base.blueprints': [],
         # 'invenio_celery.tasks': [],
-        # 'invenio_db.models': [],
         # 'invenio_pidstore.minters': [],
         # 'invenio_records.jsonresolver': [],
     },
