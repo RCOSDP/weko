@@ -448,7 +448,7 @@ class WorkActivity(object):
 
             # Get the list of activities of day
             activities = self.get_activity_list(community_id)
-            datetime_prefix = 'A-{}'.format(datetime_str)
+            datetime_prefix = 'A-{}-'.format(datetime_str)
             activities = [activity for activity in activities
                           if activity.activity_id.startswith(datetime_prefix)]
 
@@ -458,8 +458,8 @@ class WorkActivity(object):
                 number = 0
                 for a in activities:
                     parts = a.activity_id.split('-')
-                    # In the format A-YYYYMMDD-NNNNN, the len of parts should be 2
-                    if len(parts) > 1:
+                    # In the format A-YYYYMMDD-NNNNN, the len of parts should be 3
+                    if len(parts) > 2:
                         n = int(parts[-1])
                         if n > number:
                             # Found
