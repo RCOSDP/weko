@@ -27,8 +27,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, SearchManagement, \
-                    WidgetType, WidgetDesignSetting
+from .models import AdminLangSettings, ApiCertificate, SearchManagement
 
 
 def get_response_json(result_list, n_lst):
