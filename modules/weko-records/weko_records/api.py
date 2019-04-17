@@ -195,12 +195,9 @@ class ItemTypeNames(RecordBase):
             query = ItemTypeName.query.filter_by(id=id_)
             if not with_deleted:
                 query = query.filter_by(is_active=True)  # noqa
-            obj = query.one_or_none()
-            if obj is None:
-                return None
-            return cls(obj.name, model=obj)
+            return query.one_or_none()
 
-    def delete(self, force=False):
+    def delete(self, obj, force=False):
         """Delete an item type name.
 
         If `force` is ``False``, the record is soft-deleted: record data will
@@ -221,9 +218,6 @@ class ItemTypeNames(RecordBase):
                from the database, otherwise soft-deletes it.
         :returns: The deleted :class:`ItemTypeName` instance.
         """
-        if self.model is None:
-            raise MissingModelError()
-
         with db.session.begin_nested():
             before_record_delete.send(
                 current_app._get_current_object(),
@@ -231,10 +225,10 @@ class ItemTypeNames(RecordBase):
             )
 
             if force:
-                db.session.delete(self.model)
+                db.session.delete(obj)
             else:
-                self.model.is_active = False
-                db.session.merge(self.model)
+                obj.is_active = False
+                db.session.merge(obj)
 
         after_record_delete.send(
             current_app._get_current_object(),
