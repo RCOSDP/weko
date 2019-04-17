@@ -171,7 +171,9 @@
       constructor(props) {
           super(props);
           this.state = {
-              selectOptions: []
+              selectOptions: [],
+              UnauthorizedOptions: [],
+              unauthorList: []
           };
           this.styleContainer={
             border: '1px solid #ccc',
@@ -203,8 +205,10 @@
             margin: "2px",
           }
           this.handleChange = this.handleChange.bind(this);
+          this.handleMoveRightClick = this.handleMoveRightClick.bind(this);
+          this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
+          this.onSelect = this.onSelect.bind(this);
       }
-  
       componentDidMount() {
           fetch(this.props.url_request)
               .then(res => res.json())
@@ -235,7 +239,99 @@
           this.props.getValueOfField(event.target.value);
           event.preventDefault();
       }
-  
+
+      getListOption(id) {
+        let options = document.getElementById(id).options;
+        let result = [];
+        for (let option in options) {
+            if (options[option].value) {
+                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                result.push(innerhtml);
+            }
+        }
+        return result;
+      }
+
+      isValueExist(item, array) {
+          if (array == undefined) {
+              return true;
+          }
+          if (array.length != 0) {
+            for (let prop in array) {
+                if (array[prop].props.value == item) {
+                    return true;
+                }else {
+                    return false;
+                }
+            }
+          } else {
+              return false;
+          }
+          return true;
+      }
+
+      handleMoveRightClick(event) {
+          let options = document.getElementById("BrowsingAuthorized").options;
+          let selectedOptions = this.getListOption("BrowsingUnauthorized");
+          let nonSelectOptions = [];
+          for (let option in options) {
+              if (options[option].selected) {
+                    let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                    if (!this.isValueExist(options[option].value, selectedOptions) && options[option].value){
+                        selectedOptions.push(innerhtml);
+                    }
+              }else {
+                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                nonSelectOptions.push(innerhtml);
+              }
+          }
+            this.setState({
+                selectOptions: nonSelectOptions,
+                UnauthorizedOptions: selectedOptions
+            });
+      }
+
+      handleMoveLeftClick(event) {
+          let selectedIndex = this.state.unauthorList;
+          let options = this.getListOption("BrowsingUnauthorized");
+          let authorizedOptions = this.getListOption("BrowsingAuthorized");
+          let remainOption = [];
+          for (let option in options) {
+            let registed = false;
+              for (let index in selectedIndex) {
+                  if (options[option].key == selectedIndex[index]) {
+                    let innerhtml = <option key={options[option].props.value} value={options[option].props.value}>{options[option].props.children}</option>;
+                    if (!this.isValueExist(options[option].props.value), authorizedOptions) {
+                        authorizedOptions.push(innerhtml);
+                    }
+                    registed = true;
+                    break;
+                  }
+              }
+              if (!registed) {
+                let innerhtml = <option key={options[option].props.value} value={options[option].props.value}>{options[option].props.children}</option>;
+                remainOption.push(innerhtml);
+              }
+          }
+          this.setState({
+            selectOptions: authorizedOptions,
+            UnauthorizedOptions: remainOption
+          });
+      }
+
+      onSelect(event) {
+        var options = event.target.options;
+        var value = [];
+        for (var i = 0, l = options.length; i < l; i++) {
+            if (options[i].selected) {
+                value.push(options[i].value);
+            }
+        }
+        this.setState({
+            unauthorList: value
+        });
+      }
+
       render() {
           return (
               <div className="form-group row">
@@ -245,20 +341,21 @@
                       <label>Role </label><br/>
                       <div className="col-xs-5" style={this.styleElement}>
                         <label >Authorized</label><br/>
-                        <select multiple style={this.styleSelectLeft}>
+                        <select multiple style={this.styleSelectLeft} id="BrowsingAuthorized">
                             {this.state.selectOptions}
                         </select>
                       </div>
                       <div className="col-xs-1" style={this.styleElement}>
                         <br/>
                         <div className="buttons" style={this.styleButtonContainer}>
-                          <input type="button" value="&rarr;" style={this.styleButtonElement}/>
-                          <input type="button" value="&larr;" style={this.styleButtonElement}/>
+                          <input type="button" value="&rarr;" style={this.styleButtonElement} onClick={this.handleMoveRightClick}/>
+                          <input type="button" value="&larr;" style={this.styleButtonElement} onClick={this.handleMoveLeftClick}/>
                         </div>
                       </div>
                       <div className="col-xs-5" style={this.styleElement}>
                         <label >Unauthorized</label><br/>
-                        <select multiple style={this.styleSelectRight}>
+                        <select multiple value={this.state.unauthorList} style={this.styleSelectRight} onChange={this.onSelect} id="BrowsingUnauthorized">
+                            {this.state.UnauthorizedOptions}
                         </select>
                       </div>
                       </fieldset>
@@ -312,7 +409,7 @@
                       <Component_Select_Field getValueOfField={this.getValueOfField} name="Repository" url_request="/api/autofill/select_options" />
                   </div>
                   <div className="row">
-                      <Component_Select_Field getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_chunk_type"/>
+                      <Component_Select_Field getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type"/>
                   </div>
                   <div className="row">
                       <Component_Textbox_Field getValueOfField={this.getValueOfField} name="Label" url_request="/api/autofill/select_options"/>
