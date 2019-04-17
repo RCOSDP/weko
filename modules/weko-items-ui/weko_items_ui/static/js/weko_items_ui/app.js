@@ -495,6 +495,9 @@ function handleSharePermission(value) {
             if (property.indexOf("item") != -1) {
               this.setValueToField(property, "");
             }
+            if(typeof($scope.depositionForm[property]) == "object" && $scope.depositionForm[property].hasOwnProperty("$dateValue")) {
+              $scope.depositionForm[property].$dateValue = null;
+            }
           }
         }
       }
