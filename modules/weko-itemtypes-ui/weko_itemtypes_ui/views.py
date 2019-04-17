@@ -351,7 +351,7 @@ def delete_itemtype(item_type_id=0):
         if record is not None:
             # Check harvesting_type
             if record.model.harvesting_type:
-                return jsonify(code=-1, msg=_('Cannot delete Item Type for Harvesting.'))
+                return jsonify(code=-1, msg=_('Cannot delete Item type for Harvesting.'))
             # Check whether that item type is already registered to an item or not
             metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id)
             if len(metaDataRecords) > 0:
@@ -368,10 +368,10 @@ def delete_itemtype(item_type_id=0):
                     db.session.rollback()
                     current_app.logger.error('Unexpected error: ',
                                              sys.exc_info()[0])
-                    return jsonify(code=-1, msg=_('Delete item type fail.'))
+                    return jsonify(code=-1, msg=_('Failed to delete Item type.'))
 
             current_app.logger.debug(
                 'Itemtype delete: {}'.format(item_type_id))
-            return jsonify(code=0, msg=_('Delete item type successfully.'))
+            return jsonify(code=0, msg=_('Deleted Item type successfully.'))
 
     return jsonify(code=-1, msg=_('An error has occurred.'))
