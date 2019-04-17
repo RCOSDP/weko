@@ -990,8 +990,8 @@
 
     $('#btn_delete_item').on('click', function(){
       var selected_item_type = $("#item-type-lists :selected");
-      var is_harvesting_type = selected_item_type.attr("class") === "harvesting_type";
-      var is_belonging_item = selected_item_type.attr("class") === "belonging_item";
+      var is_harvesting_type = selected_item_type.hasClass("harvesting_type");
+      var is_belonging_item = selected_item_type.hasClass("belonging_item");
       if (is_harvesting_type) {
         alert($("#msg_for_harvesting").val());
       } else if (is_belonging_item) {
