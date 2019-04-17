@@ -23,11 +23,12 @@
 from flask import current_app
 from flask_login import current_user
 from invenio_db import db
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from weko_index_tree.api import Indexes
-from sqlalchemy.exc import SQLAlchemyError
 
 from .models import Journal
+
+
 class Journals(object):
     """Define API for journal creation and update."""
 
@@ -181,7 +182,8 @@ class Journals(object):
             current_app.logger.info('[{0}] [{1} {2}] END'.format(0, 'Get Journal By ID ', journal_id))
 
             if obj is None:
-                current_app.logger.info('[{0}] Return {1} when get by journal ID {2}.'.format(0, obj, journal_id))
+                current_app.logger.info('[{0}] Return {1} when get by journal ID {2}.'
+                                        .format(0, obj, journal_id))
                 return []
 
             return dict(obj)
