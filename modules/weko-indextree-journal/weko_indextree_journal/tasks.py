@@ -43,7 +43,8 @@ def export_journal_task(p_path):
     """
     Output the file name of KBART2 extended format.
 
-    included last update date to the file "Own institution repository URL" ＋「/weko/kbart/filelist.txt」
+    included last update date to the file "Own institution repository URL"
+    ＋「/weko/kbart/filelist.txt」
     Output journal info with KBART2 extended format by tsv format to
     "Own institution repository URL" ＋
     「/weko/kbart/{Repository name}_Global_AllTitles_{Last update date}.txt
@@ -62,7 +63,9 @@ def export_journal_task(p_path):
             db_processing_status.status = False
 
         if db_processing_status.status:
-            current_app.logger.error('[{0}] Execution failed due to multiple execution errors'.format(3))
+            current_app.logger.error(
+                '[{0}] Execution failed due to multiple execution errors'.format(3)
+            )
             return {}
         db_processing_status.status = True
         db_processing_status.save_export_info(db_processing_status)
@@ -127,7 +130,11 @@ def export_journal_task(p_path):
         header_string = "\t".join(header)
 
         # Get journal data.
-        current_app.logger.info('[{0}] [{1}]'.format(0, 'Celery export_journal_task call api get all journal'))
+        current_app.logger.info(
+            '[{0}] [{1}]'.format(
+                0, 'Celery export_journal_task call api get all journal'
+            )
+        )
         journals = Journals.get_all_journals()
         journals_list = []
         if journals is not None:
@@ -201,8 +208,10 @@ def export_journal_task(p_path):
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
     except Exception as ex:
-        current_app.logger. \
-            error('[{0}] [{1}] End with unknown error. Error:{2}'.format(1, 'Export Journal Task', ex))
+        current_app.logger.error(
+            '[{0}] [{1}] End with unknown error. Error:{2}'.format(
+                1, 'Export Journal Task', ex)
+        )
 
     db_processing_status.status = False
     db_processing_status.save_export_info(db_processing_status)
