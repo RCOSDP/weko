@@ -448,8 +448,9 @@ class WorkActivity(object):
 
             # Get the list of activities of day
             activities = self.get_activity_list(community_id)
+            datetime_prefix = 'A-{}'.format(datetime_str)
             activities = [activity for activity in activities
-                          if activity.activity_id.startswith('A-{}'.format(datetime_str))]
+                          if activity.activity_id.startswith(datetime_prefix)]
 
             # If there are existing activities, parsing the last segment to get the next number
             if len(activities) > 0:
