@@ -88,8 +88,7 @@ def get_widget_list(repository_id):
                 data = dict()
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
-                # TODO: waiting WidgetItem model
-                # data["widgetLabel"] = widget_item.label
+                data["widgetLabel"] = widget_item.label
 
         # TODO: add testing value.
         if not result["widget-list"] and repository_id != "0":

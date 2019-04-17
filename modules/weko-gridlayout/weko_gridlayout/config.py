@@ -7,17 +7,11 @@
 
 """Module of weko-gridlayout."""
 
-# TODO: This is an example file. Remove it if your package does not use any
-# extra configuration variables.
-
-WEKO_GRIDLAYOUT_DEFAULT_VALUE = 'foobar'
-"""Default value for the application."""
-
 WEKO_GRIDLAYOUT_BASE_TEMPLATE = 'weko_gridlayout/base.html'
 """Default base template for the demo page."""
 
-WEKO_ADMIN_WIDGET_SETTINGS = 'weko_gridlayout/admin/widget_settings.html'
+WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS = 'weko_gridlayout/admin/widget_settings.html'
 """Widget templates."""
 
-WEKO_ADMIN_WIDGET_DESIGN = 'weko_gridlayout/admin/widget_design.html'
+WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN = 'weko_gridlayout/admin/widget_design.html'
 """Widget Design templates."""

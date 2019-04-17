@@ -26,6 +26,14 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
+blueprint_api = Blueprint(
+    'weko_gridlayout',
+    __name__,
+    url_prefix='/admin',
+    template_folder='templates',
+    static_folder='static',
+)
+
 
 @blueprint.route("/")
 def index():
@@ -34,14 +42,6 @@ def index():
         "weko_gridlayout/index.html",
         module_name=_('weko-gridlayout'))
 
-
-blueprint_api = Blueprint(
-    'weko_gridlayout',
-    __name__,
-    url_prefix='/admin',
-    template_folder='templates',
-    static_folder='static',
-)
 
 @blueprint_api.route('/load_repository', methods=['GET'])
 def load_repository():
