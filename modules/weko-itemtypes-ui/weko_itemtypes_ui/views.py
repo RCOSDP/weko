@@ -62,7 +62,7 @@ def index(item_type_id=0):
     lists = ItemTypes.get_latest()
     # count metaData by item_type_id
     for item in lists:
-        metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id=item_type_id)
+        metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id=item.item_type[0].id)
         item.belonging_item_flg = len(metaDataRecords) > 0
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE'],
@@ -352,6 +352,11 @@ def delete_itemtype(item_type_id=0):
             # Check harvesting_type
             if record.model.harvesting_type:
                 return jsonify(code=-1, msg=_('Cannot delete Item Type for Harvesting.'))
+            # Check whether that item type is already registered to an item or not
+                metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id)
+            if len(metaDataRecords) > 0:
+                return jsonify(code=-1,
+                               msg=_('Cannot delete because there is belonging item.'))
             # Get all versions
             all_records = ItemTypes.get_records_by_name_id(
                 name_id=record.model.name_id)
