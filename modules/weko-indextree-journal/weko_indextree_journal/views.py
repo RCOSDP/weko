@@ -70,7 +70,7 @@ def index(index_id=0):
             '[{0}] Invalid setting file error'.format(101)
         )
 
-    """Log error for output info of journal, level: ERROR, status code: 101, 
+    """Log error for output info of journal, level: ERROR, status code: 101,
     content: Invalid setting file error."""
     if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] !=
         "/indextree/journal/schemaform") \
