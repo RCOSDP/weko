@@ -22,15 +22,13 @@
 
 import datetime
 import os
+
 import numpy
-
-
 from celery import shared_task
 from flask import Blueprint, current_app
 
 from .api import Journals
 from .models import Journal_export_processing
-
 
 blueprint = Blueprint(
     'weko_index_tree',
