@@ -91,6 +91,8 @@ class WidgetItem(db.Model):
     widget_type = db.Column(db.String(100), db.ForeignKey(WidgetType.type_id),
                             nullable=False, primary_key=True)
 
+    label = db.Column(db.String(100), default="")
+
     label_color = db.Column(db.String(7), default="")
 
     has_frame_border = db.Column(db.Boolean(name='frame_border'), default=True)
