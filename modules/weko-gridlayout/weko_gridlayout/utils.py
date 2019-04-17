@@ -57,23 +57,33 @@ def get_widget_list(repository_id):
     test_value = [
         {
             "widgetId": "widget_main_content",
-            "widgetLabel": "Main Contents"
+            "widgetType": "Main Contents",
+            "widgetLabel": "Main Contents Label"
         },
         {
             "widgetId": "id1",
-            "widgetLabel": "Widget 1"
+            "widgetType": "Notices",
+            "widgetLabel": "Notices Label"
         },
         {
             "widgetId": "id2",
-            "widgetLabel": "Widget 2"
+            "widgetType": "Type",
+            "widgetLabel": "Type Label"
         },
         {
             "widgetId": "id3",
-            "widgetLabel": "Widget 3"
+            "widgetType": "Free Description",
+            "widgetLabel": "Free Description Label"
         },
         {
             "widgetId": "id4",
-            "widgetLabel": "Widget 4"
+            "widgetType": "New arrivals",
+            "widgetLabel": "New arrivals Label"
+        },
+        {
+            "widgetId": "id5",
+            "widgetType": "Access counter",
+            "widgetLabel": "Access counter Label"
         }
     ]
     result = {
@@ -134,14 +144,17 @@ def update_widget_design_setting(data):
     }
     repository_id = data.get('repository_id')
     setting_data = data.get('settings')
+
     try:
-        if repository_id:
+        if repository_id and setting_data:
             if WidgetDesignSetting.select_by_repository_id(repository_id):
                 result["result"] = WidgetDesignSetting.update(repository_id,
                                                               setting_data)
             else:
                 result["result"] = WidgetDesignSetting.create(repository_id,
                                                               setting_data)
+        else:
+            result['error'] = "Fail to save Widget design. Please check again."
     except Exception as e:
         result['error'] = str(e)
     return result
