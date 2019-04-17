@@ -13,18 +13,33 @@ from flask_babelex import gettext as _
 
 from . import config
 
-from flask_sitemap import Sitemap
-
+from flask_sitemap import Sitemap, sitemap_page_needed
+from functools import wraps
+from flask import current_app, url_for, request
+from urllib.parse import urlparse
 
 class WekoSitemap(object):
     """weko-sitemap extension."""
 
+    # TODO: make this into a route, send request here from run button
+    @sitemap_page_needed.connect
+    def create_page(app, page, urlset):
+        urlset = [{'loc': urlparse(request._base_url).hostname + url_for(url[0])} for url in current_app._extensions['sitemap']._routes_without_params()]
+        cache[page] = current_app.extensions['sitemap'].render_page(urlset=urlset)
+
+    def load_page(self, fn):
+        @wraps(fn)
+        def loader(*args, **kwargs):
+            page = kwargs.get('page')
+            # TODO: use the cache here once the route above is set up
+            # data = cache.get(page)
+            # return data if data else fn(*args, **kwargs)
+            urlset = [{'loc': urlparse(request.base_url).hostname + url_for(url[0])} for url in current_app.extensions['sitemap']._routes_without_params()]
+            return current_app.extensions['sitemap'].render_page(urlset=urlset)
+        return loader
+
     def __init__(self, app=None):
         """Extension initialization."""
-        # TODO: This is an example of translation string with comment. Please
-        # remove it.
-        # NOTE: This is a note to a translator.
-        _('A translation string')
         if app:
             self.init_app(app)
 
@@ -36,6 +51,7 @@ class WekoSitemap(object):
         app.config['SITEMAP_INCLUDE_RULES_WITHOUT_PARAMS'] = True
         app.config['SITEMAP_BLUEPRINT_URL_PREFIX'] = '/weko/sitemaps'
         app.config['SITEMAP_ENDPOINT_URL'] = '/'
+        app.config['SITEMAP_VIEW_DECORATORS'] = [self.load_page]
         #app.config['SERVER_NAME'] = 'testname'
         ext = Sitemap(app=app)
 
