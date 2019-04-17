@@ -337,7 +337,9 @@ class Journal_export_processing(db.Model, Timestamp):
     @classmethod
     def get(cls):
         """Get last process of journal info."""
-        return db.session.query(Journal_export_processing).order_by(Journal_export_processing.id.desc()).first()
+        return db.session.query(Journal_export_processing).order_by(
+            Journal_export_processing.id.desc()
+        ).first()
 
 
 def journal_removed_or_inserted(mapper, connection, target):

@@ -182,8 +182,7 @@ class Journals(object):
             current_app.logger.info('[{0}] [{1} {2}] END'.format(0, 'Get Journal By ID ', journal_id))
 
             if obj is None:
-                current_app.logger.info('[{0}] Return {1} when get by journal ID {2}.'
-                                        .format(0, obj, journal_id))
+                current_app.logger.info('[{0}] Return {1} when get by journal ID {2}.'.format(0, obj, journal_id))
                 return []
 
             return dict(obj)
