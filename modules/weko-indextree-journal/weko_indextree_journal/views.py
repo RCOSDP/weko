@@ -61,16 +61,25 @@ def index(index_id=0):
 
     """Log error for output info of journal, level: ERROR, status code: 101,
     content: Invalid setting file error."""
-    if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] != "/indextree/journal/jsonschema") \
+    if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] !=
+        "/indextree/journal/jsonschema") \
         or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] == ""
-            or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] is None)):
-        current_app.logger.error('[{0}] Invalid setting file error'.format(101))
+            or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API']
+                is None)):
+        current_app.logger.error(
+            '[{0}] Invalid setting file error'.format(101)
+        )
 
-    # Log error for output info of journal, level: ERROR, status code: 101, content: Invalid setting file error
-    if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] != "/indextree/journal/schemaform") \
+    """Log error for output info of journal, level: ERROR, status code: 101, 
+    content: Invalid setting file error."""
+    if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] !=
+        "/indextree/journal/schemaform") \
         or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] == ""
-            or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] is None)):
-        current_app.logger.error('[{0}] Invalid setting file error'.format(101))
+            or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API']
+                is None)):
+        current_app.logger.error(
+            '[{0}] Invalid setting file error'.format(101)
+        )
 
     return render_template(
         current_app.config['WEKO_INDEXTREE_JOURNAL_INDEX_TEMPLATE'],
@@ -141,11 +150,16 @@ def get_json_schema():
         json_schema = None
         cur_lang = current_i18n.language
 
-        # Log error for output info of journal, level: ERROR, status code: 101, content: Invalid setting file error
-        if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'] != "schemas/jsonschema.json") \
+        """Log error for output info of journal, level: ERROR, status code: 101, 
+        content: Invalid setting file error"""
+        if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'] !=
+            "schemas/jsonschema.json") \
             or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'] == ""
-                or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'] is None)):
-            current_app.logger.error('[{0}] Invalid setting file error'.format(101))
+                or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE']
+                    is None)):
+            current_app.logger.error(
+                '[{0}] Invalid setting file error'.format(101)
+            )
 
         schema_file = os.path.join(
             os.path.dirname(__file__),
@@ -182,11 +196,16 @@ def get_schema_form():
         schema_form = None
         cur_lang = current_i18n.language
 
-        # Log error for output info of journal, level: ERROR, status code: 101, content: Invalid setting file error
-        if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] != "schemas/schemaform.json") or \
-            (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] == "" or
-             (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] is None)):
-            current_app.logger.error('[{0}] Invalid setting file error'.format(101))
+        """Log error for output info of journal, level: ERROR, status code: 101, 
+        content: Invalid setting file error."""
+        if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] !=
+            "schemas/schemaform.json") or \
+            (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] == ""
+             or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE']
+                 is None)):
+            current_app.logger.error(
+                '[{0}] Invalid setting file error'.format(101)
+            )
 
         form_file = os.path.join(
             os.path.dirname(__file__),
