@@ -70,7 +70,7 @@
   
       handleChange(event) {
           this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
+          this.props.getValueOfField(event.target.value);
           event.preventDefault();
       }
   
@@ -100,7 +100,7 @@
   
       handleChange(event) {
           this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
+          this.props.getValueOfField(event.target.value);
           event.preventDefault();
       }
   
@@ -120,32 +120,14 @@
       constructor(props) {
           super(props);
           this.state = {
-              repositoryId: '0',
-              selectOptions: []
+            color : '#4169E1',
           };
-          this.colors = [
-            {'key': 'Red', 'value' : 'FF0000'},
-            {'key':'Green', 'value':'00CC33'},
-            {'key': 'Blue', 'value':'0099FF'}
-          ];
           this.handleChange = this.handleChange.bind(this);
       }
   
-      componentDidMount() {
-                      let options = this.colors.map((color) => {
-                          return (
-                              <option key={color.key} value={color.value}>{color.value}</option>
-                          )
-                      });
-                      console.log(options);
-                      this.setState({
-                          selectOptions: options
-                      });
-      }
-  
       handleChange(event) {
-          this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
+          this.setState({ color: event.target.value });
+          this.props.getValueOfField(event.target.value);
           event.preventDefault();
       }
   
@@ -153,10 +135,8 @@
           return (
               <div className="form-group row">
                   <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                  <div class="controls col-xs-2">
-                      <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
-                          {this.state.selectOptions}
-                      </select>
+                  <div className="controls col-xs-2">
+                    <input  type="color" name="favcolor" value={this.state.color} onChange={this.handleChange}/>
                   </div>
               </div>
           )
@@ -171,7 +151,7 @@
   
       handleChange(event) {
           this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
+          this.props.getValueOfField(event.target.value);
           event.preventDefault();
       }
   
@@ -191,8 +171,9 @@
       constructor(props) {
           super(props);
           this.state = {
-              repositoryId: '0',
-              selectOptions: []
+              selectOptions: [],
+              UnauthorizedOptions: [],
+              unauthorList: []
           };
           this.styleContainer={
             border: '1px solid #ccc',
@@ -224,16 +205,18 @@
             margin: "2px",
           }
           this.handleChange = this.handleChange.bind(this);
+          this.handleMoveRightClick = this.handleMoveRightClick.bind(this);
+          this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
+          this.onSelect = this.onSelect.bind(this);
       }
-  
       componentDidMount() {
           fetch(this.props.url_request)
               .then(res => res.json())
               .then(
                   (result) => {
-                      let options = result.options.map((option) => {
+                      let options = result.map((option) => {
                           return (
-                              <option key={option.value} value={option.value}>{option.text}</option>
+                              <option key={option.id} value={option.id}>{option.name}</option>
                           )
                       });
                       this.setState({
@@ -253,10 +236,107 @@
   
       handleChange(event) {
           this.setState({ repositoryId: event.target.value });
-          this.props.getRepositoryId(event.target.value);
+          this.props.getValueOfField(event.target.value);
           event.preventDefault();
       }
-  
+
+      getListOption(id) {
+        let options = document.getElementById(id).options;
+        let result = [];
+        for (let option in options) {
+            if (options[option].value) {
+                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                result.push(innerhtml);
+            }
+        }
+        return result;
+      }
+
+      isValueExist(item, array) {
+          if (array == undefined) {
+              return true;
+          }
+          if (array.length != 0) {
+            for (let prop in array) {
+                if (array[prop].props.value == item) {
+                    return true;
+                }else {
+                    return false;
+                }
+            }
+          } else {
+              return false;
+          }
+          return true;
+      }
+
+      handleMoveRightClick(event) {
+          let options = document.getElementById(this.props.authorSelect).options;
+          let selectedOptions = this.getListOption(this.props.unauthorSelect);
+          let nonSelectOptions = [];
+          for (let option in options) {
+              if (options[option].selected) {
+                    let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                    if (!this.isValueExist(options[option].value, selectedOptions) && options[option].value){
+                        selectedOptions.push(innerhtml);
+                    }
+              }else {
+                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                if (options[option].value) {
+                    nonSelectOptions.push(innerhtml);
+                }
+              }
+          }
+            this.setState({
+                selectOptions: nonSelectOptions,
+                UnauthorizedOptions: selectedOptions,
+                unauthorList: []
+            });
+      }
+
+      handleMoveLeftClick(event) {
+          let selectedIndex = this.state.unauthorList;
+          let options = document.getElementById(this.props.unauthorSelect).options;
+          let authorizedOptions = this.getListOption(this.props.authorSelect);
+          let remainOption = [];
+          for (let option in options) {
+            let registed = false;
+              for (let index in selectedIndex) {
+                  if (options[option].value == selectedIndex[index] && options[option].value) {
+                    let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                    if (!this.isValueExist(options[option].value), authorizedOptions) {
+                        authorizedOptions.push(innerhtml);
+                    }
+                    registed = true;
+                    break;
+                  }
+              }
+              if (!registed) {
+                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                if (options[option].value) {
+                    remainOption.push(innerhtml);
+                }
+              }
+          }
+          this.setState({
+            selectOptions: authorizedOptions,
+            UnauthorizedOptions: remainOption
+          });
+      }
+
+      onSelect(event) {
+        var options = event.target.options;
+        var value = [];
+        for (var i = 0, l = options.length; i < l; i++) {
+            if (options[i].selected) {
+                value.push(options[i].value);
+            }
+        }
+        this.setState({
+            unauthorList: value
+        });
+      }
+
       render() {
           return (
               <div className="form-group row">
@@ -266,19 +346,21 @@
                       <label>Role </label><br/>
                       <div className="col-xs-5" style={this.styleElement}>
                         <label >Authorized</label><br/>
-                        <select multiple style={this.styleSelectLeft}>
+                        <select multiple style={this.styleSelectLeft} id={this.props.authorSelect}>
+                            {this.state.selectOptions}
                         </select>
                       </div>
                       <div className="col-xs-1" style={this.styleElement}>
                         <br/>
                         <div className="buttons" style={this.styleButtonContainer}>
-                          <input type="button" value="&rarr;" style={this.styleButtonElement}/>
-                          <input type="button" value="&larr;" style={this.styleButtonElement}/>
+                          <input type="button" value="&rarr;" style={this.styleButtonElement} onClick={this.handleMoveRightClick}/>
+                          <input type="button" value="&larr;" style={this.styleButtonElement} onClick={this.handleMoveLeftClick}/>
                         </div>
                       </div>
                       <div className="col-xs-5" style={this.styleElement}>
                         <label >Unauthorized</label><br/>
-                        <select multiple style={this.styleSelectRight}>
+                        <select multiple value={this.state.unauthorList} style={this.styleSelectRight} onChange={this.onSelect} id={this.props.unauthorSelect}>
+                            {this.state.UnauthorizedOptions}
                         </select>
                       </div>
                       </fieldset>
@@ -317,10 +399,10 @@
           this.style = {
               "width": ""
           }
-          this.getRepositoryId = this.getRepositoryId.bind(this);
+          this.getValueOfField = this.getValueOfField.bind(this);
       }
   
-      getRepositoryId(repositoryId) {
+      getValueOfField(repositoryId) {
           console.log(repositoryId);
           this.setState({ repositoryId: repositoryId });
       }
@@ -329,34 +411,34 @@
           return (
               <div>
                   <div className="row">
-                      <Component_Select_Field getRepositoryId={this.getRepositoryId} name="Repository" url_request="/api/autofill/select_options" />
+                      <Component_Select_Field getValueOfField={this.getValueOfField} name="Repository" url_request="/api/autofill/select_options" />
                   </div>
                   <div className="row">
-                      <Component_Select_Field getRepositoryId={this.getRepositoryId} name="Type" url_request="/api/admin/load_widget_type"/>
+                      <Component_Select_Field getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type"/>
                   </div>
                   <div className="row">
-                      <Component_Textbox_Field getRepositoryId={this.getRepositoryId} name="Label" url_request="/api/autofill/select_options"/>
+                      <Component_Textbox_Field getValueOfField={this.getValueOfField} name="Label" url_request="/api/autofill/select_options"/>
                   </div>
                   <div className="row">
-                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Label Color" />
+                    <Component_Select_Color_Filed getValueOfField={this.getValueOfField} name="Label Color" />
                   </div>
                   <div className="row">
                     <Component_Checkbox_Field name="Frame Border" />
                   </div>
                   <div className="row">
-                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Frame Border Color" />
+                    <Component_Select_Color_Filed getValueOfField={this.getValueOfField} name="Frame Border Color" />
                   </div>
                   <div className="row">
-                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Text Color" />
+                    <Component_Select_Color_Filed getValueOfField={this.getValueOfField} name="Text Color" />
                   </div>
                   <div className="row">
-                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Background Color" />
+                    <Component_Select_Color_Filed getValueOfField={this.getValueOfField} name="Background Color" />
                   </div>
                   <div className="row">
-                    <Component_Field_Contain_Select_Mutiple getRepositoryId={this.getRepositoryId} name="Browsing Privilege" url_request="/api/autofill/select_options"/>
+                    <Component_Field_Contain_Select_Mutiple getValueOfField={this.getValueOfField} name="Browsing Privilege" authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin//get_account_role"/>
                   </div>
                   <div className="row">
-                    <Component_Field_Contain_Select_Mutiple getRepositoryId={this.getRepositoryId} name="Edit Privilege" url_request="/api/autofill/select_options"/>
+                    <Component_Field_Contain_Select_Mutiple getValueOfField={this.getValueOfField} name="Edit Privilege" authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect"  url_request="/api/admin//get_account_role"/>
                   </div>
                   <div className="row">
                     <Component_Checkbox_Field name="Enable" />
