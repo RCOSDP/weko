@@ -61,12 +61,6 @@ class WidgetSettingView(ModelView):
         'repository_id',
         'widget_type',
         'label_color',
-        'has_frame_border',
-        'frame_border_color',
-        'text_color',
-        'background_color',
-        'browsing_role',
-        'edit_role',
         'is_enabled',
     )
 
@@ -92,7 +86,7 @@ class WidgetSettingView(ModelView):
         'widget_type',
         'label_color',
         'has_frame_border',
-        'frame_border_color',
+        'frame_border_color ',
         'text_color',
         'background_color',
         'browsing_role',
@@ -106,11 +100,7 @@ class WidgetSettingView(ModelView):
     column_labels = dict(repository_id=_('Repository'),
                          widget_type=_('Widget Type'),
                          label_color=_('Label color'),
-                         has_frame_border=_('Has frame'),
-                         frame_border_color=_('Frame border Color'),
-                         text_color=_('Text color'),
-                         background_color=_('Background color'),
-                         browsing_role=_('Browsing role'),
+                         is_enabled=_('Enable'),
                          )
 
     # def _validator_halfwidth_input(form, field):
@@ -248,7 +238,7 @@ widget_adminview = dict(
     modelview=WidgetSettingView,
     model=WidgetItem,
     category=_('Setting'),
-    name=_('Widget Setting'),
+    name=_('Widget'),
 )
 
 
