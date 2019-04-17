@@ -283,120 +283,120 @@ def validate_certification(cert_data):
         str(vars(response).get('_content', None))
 
 
-def get_repository_list():
-    result = {
-        "repositories": [],
-        "error": ""
-    }
-    try:
-        from invenio_communities.models import Community
-        communities = Community.query.all()
-        if communities:
-            for community in communities:
-                community_result = dict()
-                community_result['id'] = community.id
-                community_result['title'] = community.title
-                result['repositories'].append(community_result)
-    except Exception as e:
-        result['error'] = str(e)
+# def get_repository_list():
+#     result = {
+#         "repositories": [],
+#         "error": ""
+#     }
+#     try:
+#         from invenio_communities.models import Community
+#         communities = Community.query.all()
+#         if communities:
+#             for community in communities:
+#                 community_result = dict()
+#                 community_result['id'] = community.id
+#                 community_result['title'] = community.title
+#                 result['repositories'].append(community_result)
+#     except Exception as e:
+#         result['error'] = str(e)
 
-    return result
-
-
-def get_widget_list():
-    result = {
-        "widget-list": [
-            {
-                "widgetId": "id1",
-                "widgetLabel": "Widget 1"
-            },
-            {
-                "widgetId": "id2",
-                "widgetLabel": "Widget 2"
-            },
-            {
-                "widgetId": "id3",
-                "widgetLabel": "Widget 3"
-            },
-            {
-                "widgetId": "id4",
-                "widgetLabel": "Widget 4"
-            }
-        ],
-        "error": ""
-    }
-
-    return result
+#     return result
 
 
-def get_widget_design_setting(repository_id):
-    result = {
-        "widget-settings": [
-        ],
-        "error": ""
-    }
-    try:
-        widget_setting = WidgetDesignSetting.select_by_repository_id(
-            repository_id)
-        if widget_setting:
-            settings = widget_setting.get('settings')
-            result["widget-settings"] = json.loads(settings)
-        else:
-            result["widget-settings"] = [
-                {
-                    "x": 0,
-                    "y": 0,
-                    "width": 8,
-                    "height": 4,
-                    "id": "widget_main_content",
-                    "name": "Main Contents"
-                }
-            ]
-    except Exception as e:
-        result['error'] = str(e)
+# def get_widget_list():
+#     result = {
+#         "widget-list": [
+#             {
+#                 "widgetId": "id1",
+#                 "widgetLabel": "Widget 1"
+#             },
+#             {
+#                 "widgetId": "id2",
+#                 "widgetLabel": "Widget 2"
+#             },
+#             {
+#                 "widgetId": "id3",
+#                 "widgetLabel": "Widget 3"
+#             },
+#             {
+#                 "widgetId": "id4",
+#                 "widgetLabel": "Widget 4"
+#             }
+#         ],
+#         "error": ""
+#     }
 
-    return result
+#     return result
 
 
-def update_widget_layout_setting(data):
-    result = {
-        "result": False,
-        "error": ''
-    }
-    repository_id = data.get('repository_id')
-    setting_data = data.get('settings')
-    try:
-        if repository_id:
-            if WidgetDesignSetting.select_by_repository_id(repository_id):
-                result["result"] = WidgetDesignSetting.update(repository_id, setting_data)
-            else:
-                result["result"] = WidgetDesignSetting.create(repository_id, setting_data)
-    except Exception as e:
-        result['error'] = str(e)
-    return result
+# def get_widget_design_setting(repository_id):
+#     result = {
+#         "widget-settings": [
+#         ],
+#         "error": ""
+#     }
+#     try:
+#         widget_setting = WidgetDesignSetting.select_by_repository_id(
+#             repository_id)
+#         if widget_setting:
+#             settings = widget_setting.get('settings')
+#             result["widget-settings"] = json.loads(settings)
+#         else:
+#             result["widget-settings"] = [
+#                 {
+#                     "x": 0,
+#                     "y": 0,
+#                     "width": 8,
+#                     "height": 4,
+#                     "id": "widget_main_content",
+#                     "name": "Main Contents"
+#                 }
+#             ]
+#     except Exception as e:
+#         result['error'] = str(e)
+
+#     return result
 
 
-def get_widget_type_list():
-    """Get all Widget types.
+# def update_widget_layout_setting(data):
+#     result = {
+#         "result": False,
+#         "error": ''
+#     }
+#     repository_id = data.get('repository_id')
+#     setting_data = data.get('settings')
+#     try:
+#         if repository_id:
+#             if WidgetDesignSetting.select_by_repository_id(repository_id):
+#                 result["result"] = WidgetDesignSetting.update(repository_id, setting_data)
+#             else:
+#                 result["result"] = WidgetDesignSetting.create(repository_id, setting_data)
+#     except Exception as e:
+#         result['error'] = str(e)
+#     return result
 
-    :param: None
-    :return: options json
-    """
-    widget_types = WidgetType.get_all_widget_types()
-    options = []
-    for widget_type in widget_types:
-        option = {}
-        option["text"] = widget_type.type_name
-        option["value"] = widget_type.type_id
-        options.append(option)
-    result = {"options": options}
 
-    return result
+# def get_widget_type_list():
+#     """Get all Widget types.
 
-def update_widget_item_setting(data):
-    result = {
-        "result": '',
-        "error": ''
-    }
+#     :param: None
+#     :return: options json
+#     """
+#     widget_types = WidgetType.get_all_widget_types()
+#     options = []
+#     for widget_type in widget_types:
+#         option = {}
+#         option["text"] = widget_type.type_name
+#         option["value"] = widget_type.type_id
+#         options.append(option)
+#     result = {"options": options}
 
-    return result
+#     return result
+
+# def update_widget_item_setting(data):
+#     result = {
+#         "result": '',
+#         "error": ''
+#     }
+
+#     return result
