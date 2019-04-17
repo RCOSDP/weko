@@ -126,26 +126,32 @@ class WidgetItem(db.Model):
     """WidgetType relationship."""
 
     @classmethod
-    def update(cls, type_id, **data):
-        """
-        Update the index detail info.
+    def get(cls, repo_id, type_id):
+        """Get a widget item."""
+        return cls.query.filter_by(repository_id=repo_id, widget_type=type_id).one_or_none()
 
-        :param index_id: Identifier of the index.
-        :param detail: new index info for update.
-        :return: Updated index info
+    @classmethod
+    def update(cls, repo_id, type_id, **data):
+        """
+        Update the widget item detail info.
+
+        :param repo_id: Identifier of the repository.
+        :param type_id: Identifier of the widget type.
+        :param data: new widget item info for update.
+        :return: Updated widget item info
         """
         try:
             with db.session.begin_nested():
-                style = cls.get(community_id)
-                if not style:
+                widget_item = cls.get(repo_id, type_id)
+                if not widget_item:
                     return
 
                 for k, v in data.items():
                     if "width" in k or "height" in k:
-                        setattr(style, k, v)
-                db.session.merge(style)
+                        setattr(widget_item, k, v)
+                db.session.merge(widget_item)
             db.session.commit()
-            return style
+            return widget_item
         except Exception as ex:
             current_app.logger.debug(ex)
             db.session.rollback()
