@@ -173,6 +173,13 @@ class ItemTypeName(db.Model, Timestamp):
 
     __tablename__ = 'item_type_name'
 
+    __table_args__ = (
+        db.Index('uq_item_type_name_name', 'name',
+              unique=True,
+              postgresql_where=db.Column('is_active')
+        ),
+    )
+
     id = db.Column(
         db.Integer(),
         primary_key=True,
@@ -182,14 +189,20 @@ class ItemTypeName(db.Model, Timestamp):
 
     name = db.Column(
         db.Text,
-        nullable=False,
-        unique=True
+        nullable=False
     )
     """Name of item type."""
 
     has_site_license = db.Column(db.Boolean(name='has_site_license'),
                                  default=True, nullable=False)
     """site license identify."""
+
+    is_active = db.Column(
+        db.Boolean(name='active'),
+        nullable=False,
+        default=True
+    )
+    """Status of item type."""
 
 
 class ItemTypeMapping(db.Model, Timestamp):

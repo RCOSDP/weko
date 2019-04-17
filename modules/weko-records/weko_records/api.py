@@ -197,7 +197,7 @@ class ItemTypeNames(RecordBase):
                 query = query.filter_by(is_active=True)  # noqa
             return query.one_or_none()
 
-    def delete(self, obj, force=False):
+    def delete(self, force=False):
         """Delete an item type name.
 
         If `force` is ``False``, the record is soft-deleted: record data will
@@ -225,10 +225,10 @@ class ItemTypeNames(RecordBase):
             )
 
             if force:
-                db.session.delete(obj)
+                db.session.delete(self)
             else:
-                obj.is_active = False
-                db.session.merge(obj)
+                self.is_active = False
+                db.session.merge(self)
 
         after_record_delete.send(
             current_app._get_current_object(),
@@ -330,7 +330,7 @@ class ItemTypes(RecordBase):
                 if name != item_type_name.name:
                     # Check if the new name has been existed
                     result = ItemTypeName.query.filter_by(
-                        name=name).one_or_none()
+                        name=name).filter_by(is_active=True).one_or_none()
                     if result is not None:
                         current_app.logger.debug(
                             'Invalid name: {}'.format(name))
