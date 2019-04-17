@@ -351,86 +351,81 @@ def save_api_cert_data():
     return jsonify(result)
 
 
-@blueprint_api.route('/load_repository', methods=['GET'])
-def load_repository():
-    """Get Repository list, to display on the combobox on UI.
 
-        :return: Example
-        {
-           'repositories': [
-            {
-                'id': 'repository id',
-                'title': 'repository title'
-            }
-           ],
-            'error': ''
-        }
-    """
-    result = get_repository_list()
-    return jsonify(result)
+# @blueprint_api.route('/load_repository', methods=['GET'])
+# def load_repository():
+#     """Get Repository list, to display on the combobox on UI.
 
-
-@blueprint_api.route('/load_widget_list', methods=['GET'])
-def load_widget_list():
-    """Get Widget list, to display on the Widget List panel on UI.
-
-            :return: Example
-            "widget-list": [
-                {
-                    "widgetId": "widget id",
-                    "widgetLabel": "Widget label"
-                }
-            ],
-            "error": ""
-    """
-    result = get_widget_list()
-    return jsonify(result)
+#         :return: Example
+#         {
+#            'repositories': [
+#             {
+#                 'id': 'repository id',
+#                 'title': 'repository title'
+#             }
+#            ],
+#             'error': ''
+#         }
+#     """
+#     result = get_repository_list()
+#     return jsonify(result)
 
 
-@blueprint_api.route('/load_widget_design_setting/<string:repository_id>',
-                     methods=['GET'])
-def load_widget_design_setting(repository_id):
-    result = get_widget_design_setting(repository_id)
+# @blueprint_api.route('/load_widget_list', methods=['GET'])
+# def load_widget_list():
+#     """Get Widget list, to display on the Widget List panel on UI.
 
-    return jsonify(result)
-
-
-@blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
-def save_widget_layout_setting():
-    result = dict()
-
-    if request.headers['Content-Type'] != 'application/json':
-        result['error'] = _('Header Error')
-        return jsonify(result)
-
-    data = request.get_json()
-    result = update_widget_layout_setting(data)
-
-    return jsonify(result)
+#             :return: Example
+#             "widget-list": [
+#                 {
+#                     "widgetId": "widget id",
+#                     "widgetLabel": "Widget label"
+#                 }
+#             ],
+#             "error": ""
+#     """
+#     result = get_widget_list()
+#     return jsonify(result)
 
 
-@blueprint_api.route('/load_widget_type', methods=['GET'])
-@login_required
-def load_widget_type():
-    """Get Widget Type List."""
-    from .utils import get_widget_type_list
-    results = get_widget_type_list()
-    return jsonify(results)
+# @blueprint_api.route('/load_widget_design_setting/<string:repository_id>',
+#                      methods=['GET'])
+# def load_widget_design_setting(repository_id):
+#     result = get_widget_design_setting(repository_id)
 
-@blueprint_api.route('/save_widget_item', methods=['GET'])
-@login_required
-def save_widget_item():
-    """Save Language List."""
-    if request.headers['Content-Type'] != 'application/json':
-        current_app.logger.debug(request.headers['Content-Type'])
-        return jsonify(msg='Header Error')
-    data = request.get_json()
-    result = update_admin_widget_item_setting(data)
+#     return jsonify(result)
 
-    return jsonify(msg=result)
 
-@blueprint_api.route('/get_account_role', methods=['GET'])
-@login_required
-def get_account_role():
-    role = WidgetItems().get_account_role()
-    return jsonify(role)
+# @blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
+# def save_widget_layout_setting():
+#     result = dict()
+
+#     if request.headers['Content-Type'] != 'application/json':
+#         result['error'] = _('Header Error')
+#         return jsonify(result)
+
+#     data = request.get_json()
+#     result = update_widget_layout_setting(data)
+
+#     return jsonify(result)
+
+
+# @blueprint_api.route('/load_widget_type', methods=['GET'])
+# @login_required
+# def load_widget_type():
+#     """Get Widget Type List."""
+#     from .utils import get_widget_type_list
+#     results = get_widget_type_list()
+#     return jsonify(results)
+
+# @blueprint_api.route('/save_widget_item', methods=['GET'])
+# @login_required
+# def save_widget_item():
+#     """Save Language List."""
+#     if request.headers['Content-Type'] != 'application/json':
+#         current_app.logger.debug(request.headers['Content-Type'])
+#         return jsonify(msg='Header Error')
+#     data = request.get_json()
+#     result = update_admin_widget_item_setting(data)
+
+#     return jsonify(msg=result)

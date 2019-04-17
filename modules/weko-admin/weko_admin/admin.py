@@ -37,7 +37,6 @@ from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 from .permissions import admin_permission_factory
 from .utils import allowed_file
-from .models import WidgetItem
 from . import config
 
 
@@ -272,7 +271,7 @@ class WidgetDesign(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         return self.render(
-            current_app.config["WEKO_ADMIN_CHUNK_DESIGN"]
+            current_app.config["WEKO_ADMIN_WIDGET_DESIGN"]
         )
 
 
@@ -283,8 +282,8 @@ class WidgetSettingView(ModelView):
     can_edit = True
     can_delete = False
     can_view_details = True
-    create_template = config.WEKO_ADMIN_CHUNK_SETTINGS
-    edit_template = config.WEKO_ADMIN_CHUNK_SETTINGS
+    create_template = config.WEKO_ADMIN_WIDGET_SETTINGS
+    edit_template = config.WEKO_ADMIN_WIDGET_SETTINGS
 
     column_list = (
         'repository_id',
@@ -463,14 +462,6 @@ class WidgetSettingView(ModelView):
         return query_data
 
 
-widget_adminview = dict(
-    modelview=WidgetSettingView,
-    model=WidgetItem,
-    category=_('Setting'),
-    name=_('Widget'),
-)
-
-
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -508,20 +499,9 @@ web_api_account_adminview = {
 }
 
 
-widget_design_adminview = {
-    'view_class': WidgetDesign,
-    'kwargs': {
-        'category': _('Setting'),
-        'name': _('Widget Design'),
-        'endpoint': 'widgetdesign'
-    }
-}
-
 __all__ = (
-    'widget_adminview',
     'style_adminview',
     'report_adminview',
     'language_adminview',
     'web_api_account_adminview',
-    'widget_design_adminview'
 )

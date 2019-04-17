@@ -15,3 +15,9 @@ WEKO_GRIDLAYOUT_DEFAULT_VALUE = 'foobar'
 
 WEKO_GRIDLAYOUT_BASE_TEMPLATE = 'weko_gridlayout/base.html'
 """Default base template for the demo page."""
+
+WEKO_ADMIN_WIDGET_SETTINGS = 'weko_gridlayout/admin/widget_settings.html'
+"""Widget templates."""
+
+WEKO_ADMIN_WIDGET_DESIGN = 'weko_gridlayout/admin/widget_design.html'
+"""Widget Design templates."""
