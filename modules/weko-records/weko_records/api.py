@@ -883,11 +883,13 @@ class ItemTypeProps(RecordBase):
         """
         with db.session.no_autoflush:
             query = None
+            print('-----------ids----------', ids)
             if len(ids) > 0:
                 query = ItemTypeProperty.query.filter_by(
                     ItemTypeMapping.id.in_(ids))
                 query = query.filter_by(delflg=False)  # noqa
             else:
+                print('--------------Get all record with len(ids) < 0-----')
                 query = ItemTypeProperty.query.filter_by(delflg=False)
 
             return query.all()
