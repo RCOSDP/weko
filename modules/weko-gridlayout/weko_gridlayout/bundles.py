@@ -34,6 +34,5 @@ widget_design_js_lib = Bundle(
 widget_design_css = Bundle(
     'css/weko_gridlayout/gridstack.css',
     'css/weko_gridlayout/styles.css',
-    filters='cssmin',
     output="gen/weko_gridlayout.%(version)s.css",
 )
