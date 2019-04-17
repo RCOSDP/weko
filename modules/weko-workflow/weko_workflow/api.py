@@ -447,7 +447,7 @@ class WorkActivity(object):
             datetime_str = datetime.utcnow().strftime("%Y%m%d")
 
             # Get the list of activities of day
-            activities = self.get_activity_list(community_id)
+            activities = self.get_all_activity_list(community_id)
             datetime_prefix = 'A-{}-'.format(datetime_str)
             activities = [activity for activity in activities
                           if activity.activity_id.startswith(datetime_prefix)]
@@ -819,6 +819,48 @@ class WorkActivity(object):
                                     role.action_role_exclude is False:
                                 activi.type = 'ToDo'
                                 break
+            return activities
+
+    def get_all_activity_list(self, community_id=None):
+        """Get all activity list info.
+
+        :return: List of activities
+        """
+        with db.session.no_autoflush:
+            self_group_ids = [role.id for role in current_user.roles]
+
+            db_flow_action_users = _FlowActionRole.query.filter_by(
+                action_user_exclude=False).all()
+            db_flow_action_ids = [db_flow_action_user.flow_action_id for
+                                  db_flow_action_user in db_flow_action_users]
+            db_flow_action_roles = _FlowActionRole.query.filter_by(
+                action_user_exclude=False).filter(
+                _FlowActionRole.action_role.in_(self_group_ids)).all()
+            db_flow_action_ids.extend(
+                [db_flow_action_role.flow_action_id for
+                 db_flow_action_role in db_flow_action_roles])
+            db_flow_actions = _FlowAction.query.filter(
+                _FlowAction.id.in_(db_flow_action_ids)).all()
+            db_flow_define_flow_ids = [db_flow_action.flow_id for
+                                       db_flow_action in db_flow_actions]
+            db_flow_defines = _Flow.query.filter(
+                _Flow.flow_id.in_(db_flow_define_flow_ids)).all()
+            db_flow_define_ids = [db_flow_define.id for
+                                  db_flow_define in db_flow_defines]
+            db_activitys = _Activity.query.filter_by().all()
+            db_flow_define_ids.extend(
+                [db_activity.flow_id for db_activity in db_activitys])
+            db_flow_define_ids = list(set(db_flow_define_ids))
+            if community_id is not None:
+                activities = _Activity.query.filter(
+                    _Activity.flow_id.in_(db_flow_define_ids),
+                    _Activity.activity_community_id == community_id
+                ).order_by(
+                    asc(_Activity.id)).all()
+            else:
+                activities = _Activity.query.filter(
+                    _Activity.flow_id.in_(db_flow_define_ids)).order_by(
+                    asc(_Activity.id)).all()
             return activities
 
     def get_activity_steps(self, activity_id):
