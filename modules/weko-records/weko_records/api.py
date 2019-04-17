@@ -183,6 +183,65 @@ class ItemTypeNames(RecordBase):
         with db.session.no_autoflush:
             return ItemTypeName.query.filter(ItemTypeName.id.in_(ids)).all()
 
+    @classmethod
+    def get_record(cls, id_, with_deleted=False):
+        """Retrieve the item type name by id.
+
+        :param id_: Identifier of item type name.
+        :param with_deleted: If `True` then it includes deleted item type name.
+        :returns: The :class:`ItemTypeName` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemTypeName.query.filter_by(id=id_)
+            if not with_deleted:
+                query = query.filter_by(is_active=True)  # noqa
+            obj = query.one_or_none()
+            if obj is None:
+                return None
+            return cls(obj.name, model=obj)
+
+    def delete(self, force=False):
+        """Delete an item type name.
+
+        If `force` is ``False``, the record is soft-deleted: record data will
+        be deleted but the record identifier and the history of the record will
+        be kept. This ensures that the same record identifier cannot be used
+        twice, and that you can still retrieve its history. If `force` is
+        ``True``, then the record is completely deleted from the database.
+
+        #. Send a signal :data:`weko_records.signals.before_record_delete`
+           with the current record as parameter.
+
+        #. Delete or soft-delete the current record.
+
+        #. Send a signal :data:`weko_records.signals.after_record_delete`
+           with the current deleted record as parameter.
+
+        :param force: if ``True``, completely deletes the current item type name
+               from the database, otherwise soft-deletes it.
+        :returns: The deleted :class:`ItemTypeName` instance.
+        """
+        if self.model is None:
+            raise MissingModelError()
+
+        with db.session.begin_nested():
+            before_record_delete.send(
+                current_app._get_current_object(),
+                record=self
+            )
+
+            if force:
+                db.session.delete(self.model)
+            else:
+                self.model.is_active = False
+                db.session.merge(self.model)
+
+        after_record_delete.send(
+            current_app._get_current_object(),
+            record=self
+        )
+        return self
+
 
 class ItemTypes(RecordBase):
     """Define API for item type creation and manipulation."""
@@ -369,7 +428,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(ItemType.schema is not None)
+                query = query.join(ItemType).filter(ItemType.schema != None)
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod

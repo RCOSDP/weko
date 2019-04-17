@@ -22,13 +22,14 @@
 
 import sys
 
-from flask import Blueprint, abort, current_app, json, jsonify, redirect, \
-    render_template, request, url_for
+from flask import Blueprint, abort, current_app, json, \
+    jsonify, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from weko_records.api import ItemsMetadata, ItemTypeProps, ItemTypes, Mapping
+from weko_records.api import ItemsMetadata, \
+    ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
 
 from .permissions import item_type_permission
@@ -64,7 +65,7 @@ def index(item_type_id=0):
     for item in lists:
         metaDataRecords = ItemsMetadata.get_by_item_type_id(
             item_type_id=item.item_type[0].id)
-        item.belonging_item_flg = not metaDataRecords
+        item.belonging_item_flg = len(metaDataRecords) > 0
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE'],
         lists=lists,
@@ -356,23 +357,28 @@ def delete_itemtype(item_type_id=0):
                                msg=_('Cannot delete Item type for Harvesting.'))
             # Check that item type is already registered to an item or not
             metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id)
-            if not metaDataRecords > 0:
+            if len(metaDataRecords) > 0:
                 return jsonify(code=-1,
-                        msg=_('Cannot delete because there is belonging item.'))
+                               msg=_('Cannot delete because there is belonging item.'))
             # Get all versions
             all_records = ItemTypes.get_records_by_name_id(
                 name_id=record.model.name_id)
-            if all_records:
-                for k in all_records:
-                    try:
+            # Get item type name
+            item_type_name = ItemTypeNames.get_record(id_=record.model.name_id)
+            if all_records and item_type_name:
+                try:
+                    # Delete item type name
+                    item_type_name.delete()
+                    # Delete item typea
+                    for k in all_records:
                         k.delete()
-                        db.session.commit()
-                    except BaseException:
-                        db.session.rollback()
-                        current_app.logger.error('Unexpected error: ',
-                                                 sys.exc_info()[0])
-                        return jsonify(code=-1,
-                                       msg=_('Failed to delete Item type.'))
+                    db.session.commit()
+                except BaseException:
+                    db.session.rollback()
+                    current_app.logger.error('Unexpected error: ',
+                                             sys.exc_info()[0])
+                    return jsonify(code=-1,
+                                   msg=_('Failed to delete Item type.'))
 
                 current_app.logger.debug(
                     'Itemtype delete: {}'.format(item_type_id))
