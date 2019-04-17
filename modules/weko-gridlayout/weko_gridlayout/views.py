@@ -16,6 +16,7 @@ from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 
+from .api import WidgetItems
 from .utils import get_repository_list, get_widget_design_setting, \
     get_widget_list, update_widget_design_setting
 
@@ -120,3 +121,10 @@ def save_widget_item():
     result = update_admin_widget_item_setting(data)
 
     return jsonify(msg=result)
+
+
+@blueprint_api.route('/get_account_role', methods=['GET'])
+@login_required
+def get_account_role():
+    role = WidgetItems().get_account_role()
+    return jsonify(role)
