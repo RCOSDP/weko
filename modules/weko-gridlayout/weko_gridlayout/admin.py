@@ -43,7 +43,7 @@ class WidgetDesign(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         return self.render(
-            current_app.config["WEKO_ADMIN_WIDGET_DESIGN"]
+            current_app.config["WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN"]
         )
 
 
@@ -54,8 +54,8 @@ class WidgetSettingView(ModelView):
     can_edit = True
     can_delete = False
     can_view_details = True
-    create_template = config.WEKO_ADMIN_WIDGET_SETTINGS
-    edit_template = config.WEKO_ADMIN_WIDGET_SETTINGS
+    create_template = config.WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS
+    edit_template = config.WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS
 
     column_list = (
         'repository_id',
