@@ -1,0 +1,382 @@
+{#
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+  
+  {%- extends admin_base_template %}
+  
+  {%- block css %}
+  {{ super() }}
+  {%- endblock css %}
+  
+  {%- block javascript %}
+  {{ super() }}
+  <script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+  <script type="text/babel">
+  class Component_Select_Field extends React.Component {
+      constructor(props) {
+          super(props);
+          this.state = {
+              repositoryId: '0',
+              selectOptions: []
+          };
+          this.styleRed = {
+              color: 'red',
+          };
+          this.handleChange = this.handleChange.bind(this);
+      }
+  
+      componentDidMount() {
+          fetch(this.props.url_request)
+              .then(res => res.json())
+              .then(
+                  (result) => {
+                      let options = result.options.map((option) => {
+                          return (
+                              <option key={option.value} value={option.value}>{option.text}</option>
+                          )
+                      });
+                      this.setState({
+                          selectOptions: options
+                      });
+                  },
+  
+                  (error) => {
+                      this.setState({
+                          isLoaded: true,
+                          error
+                      });
+                  }
+              )
+  
+      }
+  
+      handleChange(event) {
+          this.setState({ repositoryId: event.target.value });
+          this.props.getRepositoryId(event.target.value);
+          event.preventDefault();
+      }
+  
+      render() {
+          return (
+              <div className="form-group row">
+                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
+                  <div class="controls col-xs-5">
+                      <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
+                          <option value="0">Please selected the input type</option>
+                          {this.state.selectOptions}
+                      </select>
+                  </div>
+              </div>
+          )
+      }
+  }
+
+  class Component_Textbox_Field extends React.Component {
+      constructor(props) {
+          super(props);
+          this.styleRed = {
+              color: 'red',
+          };
+          this.handleChange = this.handleChange.bind(this);
+      }
+  
+      handleChange(event) {
+          this.setState({ repositoryId: event.target.value });
+          this.props.getRepositoryId(event.target.value);
+          event.preventDefault();
+      }
+  
+      render() {
+          return (
+              <div className="form-group row">
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
+                <div class="controls col-xs-5">
+                  <input type="text" name="name" onChange={this.handleChange} className="form-control"/>
+                </div>
+              </div>
+          )
+      }  
+  }
+
+  class Component_Select_Color_Filed extends React.Component {
+      constructor(props) {
+          super(props);
+          this.state = {
+              repositoryId: '0',
+              selectOptions: []
+          };
+          this.colors = [
+            {'key': 'Red', 'value' : 'FF0000'},
+            {'key':'Green', 'value':'00CC33'},
+            {'key': 'Blue', 'value':'0099FF'}
+          ];
+          this.handleChange = this.handleChange.bind(this);
+      }
+  
+      componentDidMount() {
+                      let options = this.colors.map((color) => {
+                          return (
+                              <option key={color.key} value={color.value}>{color.value}</option>
+                          )
+                      });
+                      console.log(options);
+                      this.setState({
+                          selectOptions: options
+                      });
+      }
+  
+      handleChange(event) {
+          this.setState({ repositoryId: event.target.value });
+          this.props.getRepositoryId(event.target.value);
+          event.preventDefault();
+      }
+  
+      render() {
+          return (
+              <div className="form-group row">
+                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                  <div class="controls col-xs-2">
+                      <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
+                          {this.state.selectOptions}
+                      </select>
+                  </div>
+              </div>
+          )
+      } 
+  }
+
+  class Component_Checkbox_Field extends React.Component {
+      constructor(props) {
+          super(props);
+          this.handleChange = this.handleChange.bind(this);
+      }
+  
+      handleChange(event) {
+          this.setState({ repositoryId: event.target.value });
+          this.props.getRepositoryId(event.target.value);
+          event.preventDefault();
+      }
+  
+      render() {
+          return (
+              <div className="form-group row">
+                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                  <div class="controls col-xs-1">
+                      <input type="checkbox" name="FrameBorder" value="" checked/>
+                  </div>
+              </div>
+          )
+      } 
+  }
+
+  class Component_Field_Contain_Select_Mutiple extends React.Component {
+      constructor(props) {
+          super(props);
+          this.state = {
+              repositoryId: '0',
+              selectOptions: []
+          };
+          this.styleContainer={
+            border: '1px solid #ccc',
+            height: '200px',
+            padding :'15px 5px 5px 10px',
+          }
+          this.styleElement={
+            padding: "0",
+          }
+          this.styleSelectLeft={
+            padding: "0",
+            width: "90%",
+            height: "100px",
+            float: "left",
+          }
+          this.styleSelectRight={
+            padding: "0",
+            width: "90%",
+            height: "100px",
+            float: "right",
+          }
+          this.styleButtonContainer = {
+            display: 'flex',
+            flexDirection : 'column',
+            justifyContent: 'center', 
+            height: "100px",
+          }
+          this.styleButtonElement={
+            margin: "2px",
+          }
+          this.handleChange = this.handleChange.bind(this);
+      }
+  
+      componentDidMount() {
+          fetch(this.props.url_request)
+              .then(res => res.json())
+              .then(
+                  (result) => {
+                      let options = result.options.map((option) => {
+                          return (
+                              <option key={option.value} value={option.value}>{option.text}</option>
+                          )
+                      });
+                      this.setState({
+                          selectOptions: options
+                      });
+                  },
+  
+                  (error) => {
+                      this.setState({
+                          isLoaded: true,
+                          error
+                      });
+                  }
+              )
+  
+      }
+  
+      handleChange(event) {
+          this.setState({ repositoryId: event.target.value });
+          this.props.getRepositoryId(event.target.value);
+          event.preventDefault();
+      }
+  
+      render() {
+          return (
+              <div className="form-group row">
+                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                  <div class="controls col-xs-5">
+                      <fieldset className="form-group" style={this.styleContainer}>
+                      <label>Role </label><br/>
+                      <div className="col-xs-5" style={this.styleElement}>
+                        <label >Authorized</label><br/>
+                        <select multiple style={this.styleSelectLeft}>
+                        </select>
+                      </div>
+                      <div className="col-xs-1" style={this.styleElement}>
+                        <br/>
+                        <div className="buttons" style={this.styleButtonContainer}>
+                          <input type="button" value="&rarr;" style={this.styleButtonElement}/>
+                          <input type="button" value="&larr;" style={this.styleButtonElement}/>
+                        </div>
+                      </div>
+                      <div className="col-xs-5" style={this.styleElement}>
+                        <label >Unauthorized</label><br/>
+                        <select multiple style={this.styleSelectRight}>
+                        </select>
+                      </div>
+                      </fieldset>
+                  </div>
+              </div>
+          )
+      } 
+  }
+  
+  class Component_Button_Layout extends React.Component {
+    constructor(props) {
+        super(props);
+        this.style = {
+            marginLeft: "10px",
+        };
+    }
+    render() {
+        return (
+            <div className="form-group col-xs-10">
+                <div className="col-xs-2"> </div>
+                <div className="col-xs-5">
+                  <button className="btn btn-primary">Save</button>
+                  <button className="form-group btn btn-danger" style={this.style}>Cancel</button>
+                </div>
+            </div>
+        )
+    }
+  }
+
+  class MainLayout extends React.Component {
+      constructor(props) {
+          super(props);
+          this.state = {
+              repositoryId: '',
+          };
+          this.style = {
+              "width": ""
+          }
+          this.getRepositoryId = this.getRepositoryId.bind(this);
+      }
+  
+      getRepositoryId(repositoryId) {
+          console.log(repositoryId);
+          this.setState({ repositoryId: repositoryId });
+      }
+  
+      render() {
+          return (
+              <div>
+                  <div className="row">
+                      <Component_Select_Field getRepositoryId={this.getRepositoryId} name="Repository" url_request="/api/autofill/select_options" />
+                  </div>
+                  <div className="row">
+                      <Component_Select_Field getRepositoryId={this.getRepositoryId} name="Type" url_request="/api/admin/load_widget_type"/>
+                  </div>
+                  <div className="row">
+                      <Component_Textbox_Field getRepositoryId={this.getRepositoryId} name="Label" url_request="/api/autofill/select_options"/>
+                  </div>
+                  <div className="row">
+                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Label Color" />
+                  </div>
+                  <div className="row">
+                    <Component_Checkbox_Field name="Frame Border" />
+                  </div>
+                  <div className="row">
+                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Frame Border Color" />
+                  </div>
+                  <div className="row">
+                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Text Color" />
+                  </div>
+                  <div className="row">
+                    <Component_Select_Color_Filed getRepositoryId={this.getRepositoryId} name="Background Color" />
+                  </div>
+                  <div className="row">
+                    <Component_Field_Contain_Select_Mutiple getRepositoryId={this.getRepositoryId} name="Browsing Privilege" url_request="/api/autofill/select_options"/>
+                  </div>
+                  <div className="row">
+                    <Component_Field_Contain_Select_Mutiple getRepositoryId={this.getRepositoryId} name="Edit Privilege" url_request="/api/autofill/select_options"/>
+                  </div>
+                  <div className="row">
+                    <Component_Checkbox_Field name="Enable" />
+                  </div>
+                  <div className="row">
+                    <Component_Button_Layout />
+                </div>
+              </div>
+          )
+      }
+  }
+  
+  ReactDOM.render(
+      <MainLayout />,
+      document.getElementById('root')
+  )
+  </script>
+  {%- endblock javascript %}
+  
+  {%- block body %}
+  <div id="root" class="col-xs-12"></div>
+  {% endblock %}
+  
