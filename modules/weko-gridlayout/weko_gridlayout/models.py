@@ -33,6 +33,7 @@ from sqlalchemy_utils.types import JSONType
 from weko_index_tree.models import Index
 from invenio_communities.models import Community
 
+
 class WidgetType(db.Model):
     """Database for WidgetType."""
 
@@ -76,6 +77,7 @@ class WidgetType(db.Model):
             return None
 
         return widget_types
+
 
 class WidgetItem(db.Model):
     """Database for WidgetItem."""
@@ -155,8 +157,8 @@ class WidgetDesignSetting(db.Model):
 
     __tablename__ = 'widget_design_setting'
 
-    repository_id = db.Column(db.String(100), primary_key=True, nullable=False,
-                              unique=True)
+    repository_id = db.Column(db.String(100), db.ForeignKey(Community.id),
+                              nullable=False, primary_key=True)
 
     settings = db.Column(
         db.JSON().with_variant(
@@ -195,7 +197,8 @@ class WidgetDesignSetting(db.Model):
         :param repository_id: Identifier of the repository
         :return: Widget setting
         """
-        query_result = cls.query.filter_by(repository_id=repository_id).one_or_none()
+        query_result = cls.query.filter_by(
+            repository_id=repository_id).one_or_none()
         data = {}
         if query_result is not None:
             data['repository_id'] = query_result.repository_id
@@ -211,7 +214,8 @@ class WidgetDesignSetting(db.Model):
         :param settings: The setting data
         :return: True if success, otherwise False
         """
-        query_result = cls.query.filter_by(repository_id=repository_id).one_or_none()
+        query_result = cls.query.filter_by(
+            repository_id=repository_id).one_or_none()
         if query_result is None:
             return False
         else:
