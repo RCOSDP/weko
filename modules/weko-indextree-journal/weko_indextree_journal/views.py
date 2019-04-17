@@ -150,13 +150,15 @@ def get_json_schema():
         json_schema = None
         cur_lang = current_i18n.language
 
-        """Log error for output info of journal, level: ERROR, status code: 101, 
+        """Log error for output info of journal, level: ERROR, status code: 101,
         content: Invalid setting file error"""
-        if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'] !=
-            "schemas/jsonschema.json") \
-            or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'] == ""
-                or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE']
-                    is None)):
+        if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE']
+            != "schemas/jsonschema.json")\
+            or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE']
+                == ""
+                or (current_app.config[
+                        'WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'
+                    ] is None)):
             current_app.logger.error(
                 '[{0}] Invalid setting file error'.format(101)
             )
@@ -196,7 +198,7 @@ def get_schema_form():
         schema_form = None
         cur_lang = current_i18n.language
 
-        """Log error for output info of journal, level: ERROR, status code: 101, 
+        """Log error for output info of journal, level: ERROR, status code: 101,
         content: Invalid setting file error."""
         if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] !=
             "schemas/schemaform.json") or \
