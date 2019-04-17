@@ -991,8 +991,11 @@
     $('#btn_delete_item').on('click', function(){
       var selected_item_type = $("#item-type-lists :selected");
       var is_harvesting_type = selected_item_type.attr("class") === "harvesting_type";
+      var is_belonging_item = selected_item_type.attr("class") === "belonging_item";
       if (is_harvesting_type) {
         alert($("#msg_for_harvesting").val());
+      } else if (is_belonging_item) {
+        alert($("#msg_for_belonging_item").val());
       } else {
         $("#item_type_delete_confirmation").modal("show");
       }

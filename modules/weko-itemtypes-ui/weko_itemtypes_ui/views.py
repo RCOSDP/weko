@@ -353,7 +353,7 @@ def delete_itemtype(item_type_id=0):
             if record.model.harvesting_type:
                 return jsonify(code=-1, msg=_('Cannot delete Item Type for Harvesting.'))
             # Check whether that item type is already registered to an item or not
-                metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id)
+            metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id)
             if len(metaDataRecords) > 0:
                 return jsonify(code=-1,
                                msg=_('Cannot delete because there is belonging item.'))
