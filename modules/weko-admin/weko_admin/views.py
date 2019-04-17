@@ -39,7 +39,7 @@ from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_response_json, get_search_setting, \
     get_selected_language, save_api_certification, update_admin_lang_setting, \
-    validate_certification, get_repository_list, get_widget_list, get_widget_design_setting, update_widget_layout_setting
+    validate_certification
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
