@@ -66,8 +66,9 @@ def search_romeo_issn(query):
     )
 
     response_body = response.text
-    dict_result = xmltodict.parse(response_body, encoding='utf-8')
-    return dict_result, jsonify(dict_result)
+    dict_result = xmltodict.parse(response_body, encoding='utf-8') \
+        if response.text else {}
+    return dict_result
 
 
 def search_romeo_jtitle(query):
