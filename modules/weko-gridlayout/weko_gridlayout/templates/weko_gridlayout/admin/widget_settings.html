@@ -48,14 +48,23 @@
               .then(res => res.json())
               .then(
                   (result) => {
-                      let options = result.options.map((option) => {
-                          return (
-                              <option key={option.value} value={option.value}>{option.text}</option>
-                          )
-                      });
-                      this.setState({
-                          selectOptions: options
-                      });
+                      let options = []
+                      if(result.options){
+                        options = result.options.map((option) => {
+                            return (
+                                <option key={option.value} value={option.value}>{option.text}</option>
+                            )
+                        });
+                      } else {
+                        options = result.repositories.map((repository) => {
+                            return (
+                                <option key={repository.id} value={repository.id}>{repository.title}</option>
+                            )
+                        });
+                      }
+                    this.setState({
+                        selectOptions: options
+                    });
                   },
   
                   (error) => {
@@ -407,7 +416,6 @@
                 body: JSON.stringify(this.props.data),
             })
             .then(response =>response.json());
-        }
     }
     render() {
         return (
@@ -487,13 +495,13 @@
           return (
               <div>
                   <div className="row">
-                      <Component_Select_Field getValueOfField={this.getValueOfField} name="Repository" url_request="/api/autofill/select_options" key_binding="repository"/>
+                      <Component_Select_Field getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository"/>
                   </div>
                   <div className="row">
                       <Component_Select_Field getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding = "widget_type"/>
                   </div>
                   <div className="row">
-                      <Component_Textbox_Field getValueOfField={this.getValueOfField} name="Label" url_request="/api/autofill/select_options" key_binding = "label"/>
+                      <Component_Textbox_Field getValueOfField={this.getValueOfField} name="Label" key_binding = "label"/>
                   </div>
                   <div className="row">
                     <Component_Select_Color_Filed getValueOfField={this.getValueOfField} name="Label Color" key_binding = "label_color" />

@@ -118,10 +118,8 @@ def save_widget_item():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
-    result = update_admin_widget_item_setting(data)
-
-    return jsonify(msg=result)
-
+    status = WidgetItems().create(data)
+    return jsonify(status)
 
 @blueprint_api.route('/get_account_role', methods=['GET'])
 @login_required
