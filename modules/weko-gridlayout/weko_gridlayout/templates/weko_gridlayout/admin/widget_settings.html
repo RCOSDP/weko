@@ -392,14 +392,23 @@
     }
     SaveCommand(event)
     {
-        return fetch(this.props.url_request,{
-            method: "POST",
-            headers:{
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(this.props.data),
-        })
-        .then(response =>response.json());
+        console.log(this.props.data);
+        if (!this.props.data.repository) {
+            alert('Repository is required!');
+        } else if (!this.props.data.widget_type) {
+            alert('Type is required!');
+        } else if (!this.props.data.label) {
+            alert('Label is required!');
+        }else {
+            return fetch(this.props.url_request,{
+                method: "POST",
+                headers:{
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(this.props.data),
+            })
+            .then(response =>response.json());
+        }
     }
     render() {
         return (
