@@ -19,25 +19,25 @@ $(document).ready(function () {
                     ddlHtml += '<option value=' + data.period[i] + '>' + data.period[i] + '</option>';
                 }
                 ddl.innerHTML = ddlHtml;
-                // domain
+                // country
                 let tableHtml = '';
-                for (let i in data.domain_list) {
-                    d = data.domain_list[i]
-                    tableHtml += '<tr><td>' + d.domain + '</td><td>' + 
+                for (let i in data.country_list) {
+                    d = data.country_list[i]
+                    tableHtml += '<tr><td>' + d.country + '</td><td>' + 
                         d.download_counts + '</td><td>' + 
                         d.preview_counts + '</td></tr>';
                 }
-                document.getElementById("file_domain").innerHTML = tableHtml;
+                document.getElementById("file_country").innerHTML = tableHtml;
             } else {
                 document.getElementById("file_download_num").innerHTML = 0;
                 document.getElementById("file_preview_num").innerHTML = 0;
-                document.getElementById("file_domain").innerHTML = '';
+                document.getElementById("file_country").innerHTML = '';
             }
         },
         error: function() {
             document.getElementById("file_download_num").innerHTML = 0;
             document.getElementById("file_preview_num").innerHTML = 0;
-            document.getElementById("file_domain").innerHTML = '';
+            document.getElementById("file_country").innerHTML = '';
         }
     });
 });
@@ -57,23 +57,23 @@ function period_change(control) {
                 document.getElementById("file_download_num").innerHTML = data.download_total;
                 document.getElementById("file_preview_num").innerHTML = data.preview_total;
                 let tableHtml = '';
-                for (let i in data.domain_list) {
-                    d = data.domain_list[i]
-                    tableHtml += '<tr><td>' + d.domain + '</td><td>' +
+                for (let i in data.country_list) {
+                    d = data.country_list[i]
+                    tableHtml += '<tr><td>' + d.country + '</td><td>' +
                         d.download_counts + '</td><td>' +
                         d.preview_counts + '</td></tr>';
                 }
-                document.getElementById("file_domain").innerHTML = tableHtml;
+                document.getElementById("file_country").innerHTML = tableHtml;
             } else {
                 document.getElementById("file_download_num").innerHTML = 0;
                 document.getElementById("file_preview_num").innerHTML = 0;
-                document.getElementById("file_domain").innerHTML = '';
+                document.getElementById("file_country").innerHTML = '';
             }
         },
         error: function() {
             document.getElementById("file_download_num").innerHTML = 0;
             document.getElementById("file_preview_num").innerHTML = 0;
-            document.getElementById("file_domain").innerHTML = '';
+            document.getElementById("file_country").innerHTML = '';
         }
     });
 }

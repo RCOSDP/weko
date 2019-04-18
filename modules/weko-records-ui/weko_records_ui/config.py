@@ -19,7 +19,8 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-records-ui."""
-
+import os
+from invenio_records_rest.utils import allow_all
 from .views import blueprint
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
@@ -70,6 +71,32 @@ ITEM_SEARCH_FLG = 'name'
 EMAIL_DISPLAY_FLG = True
 # setting the email of author if display
 
+# CSL Citation Formatter
+# ======================
+#: Styles Endpoint for CSL
+CSL_STYLES_API_ENDPOINT = '/api/csl/styles'
+
+#: Records Endpoint for CSL
+CSL_RECORDS_API_ENDPOINT = '/api/record/cites/'
+
+#: Template dirrectory for CSL
+CSL_JSTEMPLATE_DIR = 'node_modules/invenio-csl-js/dist/templates/'
+
+#: Template for CSL citation result
+CSL_JSTEMPLATE_CITEPROC = 'template/weko_records_ui/invenio_csl/citeproc.html'
+
+#: Template for CSL citation list item
+CSL_JSTEMPLATE_LIST_ITEM = 'template/weko_records_ui/invenio_csl/item.html'
+
+#: Template for CSL error
+CSL_JSTEMPLATE_ERROR = os.path.join(CSL_JSTEMPLATE_DIR, 'error.html')
+
+#: Template for CSL loading
+CSL_JSTEMPLATE_LOADING = os.path.join(CSL_JSTEMPLATE_DIR, 'loading.html')
+
+#: Template for CSL typeahead
+CSL_JSTEMPLATE_TYPEAHEAD = os.path.join(CSL_JSTEMPLATE_DIR, 'typeahead.html')
+
 RECORDS_UI_ENDPOINTS = dict(
     recid=dict(
         pid_type='recid',
@@ -79,6 +106,11 @@ RECORDS_UI_ENDPOINTS = dict(
         record_class='weko_deposit.api:WekoRecord',
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
+        # read_permission_factory_imp=allow_all,
+        # record_serializers={
+        #     'text/x-bibliography': ('weko_records.serializers',
+        #         ':citeproc_v1_response'),
+        # }
     ),
     recid_export=dict(
         pid_type='recid',
@@ -160,6 +192,22 @@ RECORDS_UI_EXPORT_FORMATS = {
             order=5,
         ),
     }
+}
+
+WEKO_RECORDS_UI_CITES_REST_ENDPOINTS = {
+    'depid': {
+        'pid_type': 'depid',
+        'pid_minter': 'deposit',
+        'pid_fetcher': 'deposit',
+        'record_class': 'weko_deposit.api:WekoRecord',
+        'record_serializers': {
+            'text/x-bibliography': ('weko_records.serializers',
+                                    ':citeproc_v1_response'),
+        },
+        'cites_route': '/record/cites/<int:pid_value>',
+        'default_media_type': 'application/json',
+        'max_result_window': 10000,
+    },
 }
 
 OAISERVER_METADATA_FORMATS = {
