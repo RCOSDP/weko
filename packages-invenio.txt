@@ -19,6 +19,7 @@ invenio-marc21==1.0.0a5
 invenio-oaiserver==1.0.0a14
 invenio-oauth2server==1.0.0b2
 invenio-oauthclient==1.0.0b3
+invenio-pidrelations==1.0.0a4
 invenio-pidstore==1.0.0
 invenio-previewer==1.0.0a11
 invenio-query-parser==0.6.0
@@ -32,3 +33,5 @@ invenio-search==1.0.0b4
 invenio-search-ui==1.0.0a9
 invenio-stats==1.0.0a10
 invenio-theme==1.0.0b4
+invenio-csl-rest==1.0.0a1
+flask-sitemap==0.1.0

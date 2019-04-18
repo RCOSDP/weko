@@ -117,6 +117,7 @@ setup(
         'invenio_assets.bundles': [
             'weko_admin_js = weko_admin.bundles:js',
             'weko_admin_search_js = weko_admin.bundles:search_management_js',
+            'weko_admin_stats_report_js = weko_admin.bundles:stats_report_js',
             'weko_admin_css = weko_admin.bundles:css',
         ],
         'invenio_db.models': [

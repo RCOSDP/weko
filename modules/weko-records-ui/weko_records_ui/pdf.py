@@ -451,7 +451,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         try:
             existing_pages.decrypt('')
         except BaseException:  # Errors such as NotImplementedError
-            return ObjectResourceWeko.send_object(
+            return ObjectResource.send_object(
                 obj.bucket, obj,
                 expected_chksum=fileobj.get('checksum'),
                 logger_data={
