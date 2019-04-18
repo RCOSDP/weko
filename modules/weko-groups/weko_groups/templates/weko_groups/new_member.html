@@ -43,7 +43,7 @@
     {{ render_field(field, show_description=True) }}
   {%- endfor %}
  <div class="btn-toolbar">
-    <a href="{{ url_for('.members', group_id=group.id) }}" class="btn btn-default">
+    <a href="{{ url_for('.members', group_id=group.id) }}" class="btn btn-info"  style="width: 100px; height: 40px;font-size:15px">
       <i class="fa fa-times"></i> {{ _('Cancel') }}
     </a>
     <button type="submit" class="btn btn-primary">

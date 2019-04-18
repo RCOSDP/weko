@@ -66,8 +66,12 @@
         {%- endif -%}
         <div class="row text-center">
           <p></p>
-          <a data-toggle="modal" href="#bulk_delete_confirmation"
-             class="btn btn-primary btn-md {{delete_button_class}}">{{ _('Bulk Delete') }}</a>
+         <!-- <a data-toggle="modal" href="#bulk_delete_confirmation"
+             class="btn btn-primary btn-md {{delete_button_class}}">{{ _('Delete') }}</a>-->
+            <a data-toggle="modal" href="#bulk_delete_confirmation"
+             class="btn btn-danger" style="width: 120px; height: 40px;font-size: 15px;">
+                <span class="glyphicon glyphicon-trash"></span>
+                   {{ _('Delete') }}</a>
         </div>
         <div id="bulk_delete_confirmation" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="deleteHeader"
              aria-hidden="true">

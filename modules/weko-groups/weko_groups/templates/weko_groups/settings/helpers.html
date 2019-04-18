@@ -34,10 +34,10 @@
                 <small class="text-muted" style="padding-right: 10px;">(updated {{last_sync}})</small>
             {%- endif %}
             {%- if btn_href %}
-            <a class="pull-right btn btn-xs {{btn_class}}" href="{{btn_href}}">{% if btn_icon %}<i class="{{btn_icon}}"></i> {% endif %}{{btn}}</a>
+            <a class="pull-right btn btn-xs {{btn_class}}" href="{{btn_href}}"  style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">{% if btn_icon %}<i class="{{btn_icon}}"></i> {% endif %}{{btn}}</a>
             {%- else %}
             {%- if btn_name %}
-            <button name="{{btn_name}}" class="btn btn-xs {{btn_class}}">{% if btn_icon %}<i class="{{btn_icon}}"></i> {% endif %}{{btn}}</button>
+            <button name="{{btn_name}}" class="btn btn-xs {{btn_class}}" style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">{% if btn_icon %}<i class="{{btn_icon}}"></i> {% endif %}{{btn}}</button>
             {%- endif %}
             {%- endif %}
             </div>
@@ -45,10 +45,10 @@
             {%- if btn2 and btn_href2 -%}
             <div class="pull-right" style="margin-left: 5px;">
             {%- if btn_href2 %}
-            <a class="pull-right btn btn-xs {{btn_class2}}" href="{{btn_href2}}">{% if btn_icon2 %}<i class="{{btn_icon2}}"></i> {% endif %}{{btn2}}</a>
+            <a class="pull-right btn btn-xs {{btn_class2}}" href="{{btn_href2}}" style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">{% if btn_icon2 %}<i class="{{btn_icon2}}"></i> {% endif %}{{btn2}}</a>
             {%- else %}
             {%- if btn_name2 %}
-            <button name="{{btn_name2}}" class="btn btn-xs {{btn_class2}}">{% if btn_icon2 %}<i class="{{btn_icon2}}"></i> {% endif %}{{btn2}}</button>
+            <button name="{{btn_name2}}" class="btn btn-xs {{btn_class2}}" style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">{% if btn_icon2 %}<i class="{{btn_icon2}}"></i> {% endif %}{{btn2}}</button>
             {%- endif %}
             {%- endif %}
             </div>
