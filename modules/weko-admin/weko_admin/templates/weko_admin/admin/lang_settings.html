@@ -22,6 +22,7 @@
 
 {% block css %}
 {{ super() }}
+{% assets "weko_theme_css_bootstrap" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}<!-- New -->
 <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
 {% endblock %}
@@ -62,8 +63,9 @@
                 </span>
               </span>
               <br>
-              <button id="btn_commit_lg" class="btn btn-primary">
-                {{_('Save')}}
+              <button id="btn_commit_lg" class="btn btn-primary" style="width: 120px; height: 40px;font-size: 15px;">
+                  <span class="glyphicon glyphicon-download-alt"></span>
+                  {{_('Save')}}
               </button>
             </div>
           </div>

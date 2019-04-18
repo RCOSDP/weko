@@ -50,14 +50,15 @@
   <hr>
   <div class="btn-toolbar">
     {%- if group -%}
-    <a class="btn btn-danger" data-toggle="modal" data-target="#delete-group-modal">
-      <i class="fa fa-trash-o"></i> {{ _('Delete') }}
+    <a class="btn btn-danger" data-toggle="modal" data-target="#delete-group-modal" style="width: 120px; height: 40px;font-size: 15px;">
+      <span class="glyphicon glyphicon-trash"></span>
+          {{ _('Delete') }}
     </a>
     {%- endif %}
-    <button type="submit" class="btn btn-primary pull-right">
-      <i class="fa fa-check"></i> {{ _('Update') if group else _('Create') }}
+    <button type="submit" class="btn btn-primary pull-right" style="width: 120px; height: 40px;font-size: 15px;">
+      <i class="fa fa-edit"></i> {{ _('Update') if group else _('Create') }}
     </button>
-    <a href="{{ url_for('.index') }}" class="btn btn-default pull-right">
+    <a href="{{ url_for('.index') }}" class="btn btn-info pull-right" style="width: 100px; height: 40px;font-size:15px">
       <i class="fa fa-times"></i> {{ _('Cancel') }}
     </a>
   </div>
@@ -79,12 +80,13 @@
         <p>{{ _("This action cannot be undone. Are you sure you want to proceed?") }}</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default pull-left" data-dismiss="modal">
+        <button type="button" class="btn btn-info pull-left" data-dismiss="modal" style="width: 100px; height: 40px;font-size:15px">
           <i class="fa fa-times"></i> {{ _("Cancel") }}
         </button>
         <form action="{{ url_for('.delete', group_id=group.id) }}" method="post">
-          <button class="btn btn-danger">
-            <i class="fa fa-trash-o"></i> {{ _("Delete") }}
+          <button class="btn btn-danger" style="width: 120px; height: 40px;font-size: 15px;">
+            <span class="glyphicon glyphicon-trash"></span>
+                  {{ _("Delete") }}
           </button>
         </form>
       </div>
