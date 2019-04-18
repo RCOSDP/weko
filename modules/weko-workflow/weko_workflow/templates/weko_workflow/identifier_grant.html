@@ -64,8 +64,17 @@
 </div>
 <div class="m-top-20">
   <ul class="list-inline text-right" style="margin-bottom: 0;">
-    <li><button type="button" class="btn btn-default" id="btn-draft">{{_('Save')}}</button></li>
-    <li style="padding-right: 0;"><button type="button" class="btn btn-default" id="btn-finish">{{_('Next')}}</button>
+    <li> 
+       <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
+             <span class="glyphicon glyphicon-download-alt"></span>
+                {{_('Save')}}
+        </button>
+   </li>
+    <li style="padding-right: 0;">
+         <button type="button" class="btn btn-info" id="btn-finish" style="width: 80px; height: 40px;font-size: 15px;">
+              {{_('Next')}}
+              <span class="glyphicon glyphicon-chevron-right"></span>
+         </button>
     </li>
   </ul>
 </div>

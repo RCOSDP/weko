@@ -33,31 +33,33 @@
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios1" value="1" checked>
-      {{_("allow shibboleth user")}}
+      {{_("Allow shibboleth user")}}
     </label>
   </div>
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios0" value="0">
-      {{_("deny shibboleth user")}}
+      {{_("Deny shibboleth user")}}
     </label>
   </div>
 {%- else %}
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios1" value="1">
-      {{_("allow shibboleth user")}}
+      {{_("Allow shibboleth user")}}
     </label>
   </div>
   <div class="radio">
     <label>
       <input type="radio" name="shibbolethRadios" id="shibbolethRadios0" value="0" checked>
-      {{_("deny shibboleth user")}}
+      {{_("Deny shibboleth user")}}
     </label>
   </div>
 {%- endif %}
 <div class="form-actions">
-  <button type="submit" name="submit" value="shib_form" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Update') }}</button>
+  <button type="submit" name="submit" value="shib_form" class="btn btn-primary" style="width: 120px; height: 40px;font-size: 15px;">
+       <i class="fa fa-edit"></i> 
+          {{ _('Update') }}</button>
 </div>
 </form>
 {%- endblock body %}

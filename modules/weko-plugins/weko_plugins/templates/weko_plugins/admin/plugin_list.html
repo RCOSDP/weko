@@ -29,15 +29,29 @@
         <li class="list-group-item">
           <h4 class="list-group-item-heading">{{ plugin.name }}</h4>
           <p class="list-group-item-text">{{ plugin.description }}</p>
-          <div class="form-inline col-sm-offset-8">
-            <a class="btn btn-primary" href="{{ url_for('pluginsetting.detail', plugin=plugin.identifier) }}">{{_('Detail')}}</a>
-            <a class="btn btn-success" href="{{ url_for('pluginsetting.setting', plugin=plugin.identifier) }}">{{_('Setting')}}</a>
+          <div class="form-inline col-sm-offset-4">
+            <a class="btn btn-primary" href="{{ url_for('pluginsetting.detail', plugin=plugin.identifier) }}" style="width: 120px; height: 40px;font-size:15px;margin: 5px;">
+                <span class="glyphicon glyphicon-info-sign"></span> 
+                       {{_('Detail')}}
+            </a>
+            <a class="btn btn-success" href="{{ url_for('pluginsetting.setting', plugin=plugin.identifier) }}" style="width: 120px; height: 40px;font-size: 15px;margin: 5px;">
+                  <i class="fa fa-cogs"> </i>
+                      {{_('Setting')}}
+             </a>
             {%- if plugin.enabled %}
-              <a class="btn btn-warning" href="{{ url_for('pluginsetting.disable', plugin=plugin.identifier) }}">{{_('Disable')}}</a>
+              <a class="btn btn-warning" href="{{ url_for('pluginsetting.disable', plugin=plugin.identifier) }}" style="width: 120px; height: 40px;font-size: 15px;margin: 5px;">
+                   <i class="fa fa-bell-slash"> </i>
+                      {{_('Disable')}}
+              </a>
             {%- else %}
-              <a class="btn btn-info" href="{{ url_for('pluginsetting.enable', plugin=plugin.identifier) }}">{{_('Enable')}}</a>
+              <a class="btn btn-info" href="{{ url_for('pluginsetting.enable', plugin=plugin.identifier) }}" style="width: 120px; height: 40px;font-size:15px;margin: 5px;">
+                     <span class="glyphicon glyphicon-hand-right"></span>
+                       {{_('Enable')}}
+              </a>
             {%- endif %}
-            <a class="btn btn-danger" href="{{ url_for('pluginsetting.delete', plugin=plugin.identifier) }}">{{_('Delete')}}</a>
+            <a class="btn btn-danger" href="{{ url_for('pluginsetting.delete', plugin=plugin.identifier) }}" style="width: 120px; height: 40px;font-size: 15px;margin: 5px;">
+                 <span class="glyphicon glyphicon-trash"></span>
+                     {{_('Delete')}}</a>
           </div>
         </li>
       {% endfor %}
