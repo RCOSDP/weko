@@ -23,21 +23,14 @@
 import hashlib
 import os
 import sys
-import unicodedata
-from datetime import datetime
 
 from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
-from flask_admin.contrib.sqla import ModelView
-from flask_admin.contrib.sqla.fields import QuerySelectField
-from flask_admin.form import rules
 from flask_babelex import gettext as _
 from flask_login import current_user
-from wtforms.fields import StringField
-from wtforms.validators import ValidationError
+
 from .permissions import admin_permission_factory
 from .utils import allowed_file
-from . import config
 
 
 class StyleSettingView(BaseView):
@@ -259,6 +252,7 @@ class LanguageSettingView(BaseView):
             current_app.config["WEKO_ADMIN_LANG_SETTINGS"]
         )
 
+
 class WebApiAccount(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
@@ -303,10 +297,9 @@ web_api_account_adminview = {
     }
 }
 
-
 __all__ = (
     'style_adminview',
     'report_adminview',
     'language_adminview',
-    'web_api_account_adminview',
+    'web_api_account_adminview'
 )

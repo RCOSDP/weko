@@ -41,17 +41,11 @@ WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
 WEKO_ADMIN_REPORT_TEMPLATE = 'weko_admin/admin/report.html'
 """Report template."""
 
-# WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
-# """Language templates."""
-
-# WEKO_ADMIN_WIDGET_SETTINGS = 'weko_admin/admin/widget_settings.html'
-# """Widget templates."""
+WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
+"""Language templates."""
 
 WEKO_ADMIN_WEB_API_ACCOUNT = 'weko_admin/admin/web_api_account.html'
 """Web Api Account templates."""
-
-WEKO_ADMIN_WIDGET_DESIGN = 'weko_admin/admin/widget_design.html'
-"""Widget Design templates."""
 
 WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = 'weko_admin/search_management.html'
 """Site-license templates."""
