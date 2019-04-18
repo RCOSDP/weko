@@ -24,7 +24,7 @@ import traceback
 from datetime import datetime
 
 import redis
-from flask import abort, current_app, flash, g, json, has_request_context
+from flask import abort, current_app, flash, g, has_request_context, json
 from flask_login import current_user
 from flask_security import current_user
 from invenio_db import db
@@ -328,9 +328,9 @@ class WekoDeposit(Deposit):
                 displayname = user._displayname
             if '_deposit' in data:
                 data['_deposit']['owners_ext'] = {
-                    'username' : username,
-                    'displayname' : displayname,
-                    'email' : current_user.email
+                    'username': username,
+                    'displayname': displayname,
+                    'email': current_user.email
                 }
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
@@ -504,7 +504,8 @@ class WekoDeposit(Deposit):
                 self.indexer.delete_file_index(klst, self.pid.object_uuid)
 
     def convert_item_metadata(self, index_obj, data=None):
-        """
+        """Convert Item Metadat.
+
         1. Convert Item Metadata
         2. Inject index tree id to dict
         3. Set Publish Status
@@ -526,7 +527,7 @@ class WekoDeposit(Deposit):
                 data_str = datastore.get(cache_key)
                 datastore.delete(cache_key)
                 data = json.loads(data_str.decode('utf-8'))
-        except:
+        except BaseException:
             abort(500, 'Failed to register item')
         # Get index path
         index_lst = index_obj.get('index', [])
