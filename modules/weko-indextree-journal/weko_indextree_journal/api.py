@@ -23,7 +23,7 @@
 from flask import current_app
 from flask_login import current_user
 from invenio_db import db
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from weko_index_tree.api import Indexes
 
 from .models import Journal
@@ -176,13 +176,41 @@ class Journals(object):
         :param journal_id: Identifier of the journal.
         :return: A journal object.
         """
-        obj = db.session.query(Journal).\
-            filter_by(id=journal_id).one_or_none()
+        try:
+            current_app.logger.info('[{0}] [{1} {2}] START'.format(
+                0, 'Get Journal By ID ', journal_id)
+            )
+            obj = db.session.query(Journal).filter_by(
+                id=journal_id).one_or_none()
+            current_app.logger.info('[{0}] [{1} {2}] END'.format(
+                0, 'Get Journal By ID ', journal_id)
+            )
 
-        if obj is None:
-            return []
+            if obj is None:
+                current_app.logger.info(
+                    '[{0}] Return {1} when get by journal ID {2}.'.format(
+                        0, obj, journal_id)
+                )
+                return []
 
-        return dict(obj)
+            return dict(obj)
+        except SQLAlchemyError as e:
+            current_app.logger.error(
+                '[{0}] Data acquisition error (DB error). Error: {1}'.format(
+                    100, e
+                )
+            )
+            current_app.logger.error(
+                '[{0}] [{1} {2}] End with error.'.format(
+                    100, 'Get Journal By ID ', journal_id
+                )
+            )
+            db.session.rollback()
+        except Exception as ex:
+            current_app.logger. \
+                error('[{0}] End with unknown error. Error:{1}'.format(1, ex))
+            db.session.rollback()
+            return None
 
     @classmethod
     def get_journal_by_index_id(cls, index_id):
@@ -192,13 +220,39 @@ class Journals(object):
         :param index_id: Identifier of the journal.
         :return: A journal object.
         """
-        obj = db.session.query(Journal).\
-            filter_by(index_id=index_id).one_or_none()
+        try:
+            current_app.logger.info('[{0}] [{1} {2}] START'.format(
+                0, 'Get Journal By Index ID ', index_id))
+            obj = db.session.query(Journal).filter_by(index_id=index_id)\
+                .one_or_none()
+            current_app.logger.info('[{0}] [{1} {2}] END'.format(
+                0, 'Get Journal By Index ID ', index_id))
 
-        if obj is None:
-            return {}
+            if obj is None:
+                current_app.logger.info(
+                    '[{0}] Return {1} when get by index ID {2}.'.format(
+                        0, obj, index_id
+                    )
+                )
+                return {}
 
-        return dict(obj)
+            return dict(obj)
+        except SQLAlchemyError as e:
+            current_app.logger.error(
+                '[{0}] Data acquisition error (DB error). Error: {1}'.format(
+                    100, e)
+            )
+            current_app.logger.error(
+                '[{0}] [{1} {2}] End with error.'.format(
+                    100, 'Get Journal By Index ID ', index_id
+                )
+            )
+            db.session.rollback()
+        except Exception as ex:
+            current_app.logger. \
+                error('[{0}] End with unknown error. Error:{1}'.format(1, ex))
+            db.session.rollback()
+            return None
 
     @classmethod
     def get_all_journals(cls):
@@ -207,9 +261,37 @@ class Journals(object):
 
         :return: List of journal object.
         """
-        journals = db.session.query(Journal).all()
+        try:
+            current_app.logger.info('[{0}] [{1}] START'.format(
+                0, 'Get all journal'))
+            journals = db.session.query(Journal).all()
+            current_app.logger.info('[{0}] [{1}] END'.format(
+                0, 'Get all journal'))
 
-        if journals is None:
+            if journals is None:
+                current_app.logger.info(
+                    '[{0}] Return {1} when get all journal.'.format(0, journals)
+                )
+                return None
+
+            return journals
+        except SQLAlchemyError as e:
+            current_app.logger.error(
+                '[{0}] Data acquisition error (DB error). Error: {1}'.format(
+                    100, e
+                )
+            )
+            current_app.logger.error(
+                '[{0}] [{1}] End with error.'.format(
+                    100, 'Get all journal'
+                )
+            )
+            db.session.rollback()
+        except Exception as ex:
+            current_app.logger.error(
+                '[{0}] End with unknown error. Error:{1}'.format(
+                    1, ex
+                )
+            )
+            db.session.rollback()
             return None
-
-        return journals

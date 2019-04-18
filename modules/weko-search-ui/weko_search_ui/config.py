@@ -24,6 +24,7 @@ import copy
 
 from invenio_records_rest.config import RECORDS_REST_ENDPOINTS
 from invenio_records_rest.facets import terms_filter
+from invenio_records_rest.utils import allow_all
 from invenio_search import RecordsSearch
 
 WEKO_SEARCH_UI_SEARCH_INDEX_API = '/api/index/'
@@ -89,9 +90,16 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_factory_imp'] = \
     'weko_search_ui.query.opensearch_factory'
 RECORDS_REST_ENDPOINTS['opensearch']['list_route'] = '/opensearch/search'
 RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
-    'application/json': ('weko_records.serializers'
-                         ':opensearch_v1_search'),
+    'application/json': ('weko_records.serializers:opensearch_v1_search'),
 }
+
+RECORDS_REST_ENDPOINTS['recid']['record_class']='weko_records.api:WekoRecord'
+RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
+    'application/vnd.citationstyles.csl+json': ('weko_records.serializers:csl_v1_response'),
+    'text/x-bibliography': ('weko_records.serializers:citeproc_v1_response')
+}
+
+# RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all  
 
 INDEXER_DEFAULT_INDEX = 'weko'
 INDEXER_DEFAULT_DOCTYPE = 'item'

@@ -94,7 +94,6 @@ setup(
             'lifetime = weko_admin.cli:lifetime',
             'language = weko_admin.cli:language',
             'cert = weko_admin.cli:cert',
-            # 'widget_type = weko_admin.cli:widget_type',
         ],
         'invenio_base.apps': [
             'weko_admin = weko_admin:WekoAdmin',
@@ -106,9 +105,7 @@ setup(
             'weko_admin_style = weko_admin.admin:style_adminview',
             'weko_admin_report = weko_admin.admin:report_adminview',
             'weko_admin_language = weko_admin.admin:language_adminview',
-            # 'weko_admin_widget = weko_admin.admin:widget_adminview',
             'weko_admin_web_api_account = weko_admin.admin:web_api_account_adminview',
-            # 'weko_admin_widget_design = weko_admin.admin:widget_design_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -120,6 +117,7 @@ setup(
         'invenio_assets.bundles': [
             'weko_admin_js = weko_admin.bundles:js',
             'weko_admin_search_js = weko_admin.bundles:search_management_js',
+            'weko_admin_stats_report_js = weko_admin.bundles:stats_report_js',
             'weko_admin_css = weko_admin.bundles:css',
         ],
         'invenio_db.models': [

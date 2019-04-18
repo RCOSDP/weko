@@ -67,3 +67,51 @@ ng\:form {
   background-color: $input-bg-transparent;
   border-color: $input-bg-transparent;
 }
+
+// For ngStrap modal animation
+.modal-backdrop.am-fade {
+  opacity: .5;
+  transition: opacity .15s linear;
+  &.ng-enter {
+    opacity: 0;
+    &.ng-enter-active {
+      opacity: .5;
+    }
+  }
+  &.ng-leave {
+    opacity: .5;
+    &.ng-leave-active {
+      opacity: 0;
+    }
+  }
+}
+
+// Loader Spinner - Use for all page loading
+.loader {
+  display: flex;
+  height: 60vh;
+  justify-content: center;
+  align-items: center;
+  margin-right: 35%;
+}
+
+.spinner-wheel {
+  height: 25vh;
+  width: 25vh;
+  border: 3px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 174, 239, 0.8);
+  border-radius: 100%;
+  animation: rotation 1.5s infinite linear 0.25s;
+  opacity: 0;
+}
+
+@keyframes rotation {
+  from {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(359deg);
+  }
+}
