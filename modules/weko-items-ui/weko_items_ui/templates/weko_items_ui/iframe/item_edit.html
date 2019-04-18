@@ -210,8 +210,16 @@
               <div class="row">
                 <div class="col-sm-9">
                   <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="saveDataJson('{{item_save_uri}}');" style="width: 120px; height: 40px;font-size: 15px">{{_('Save')}}</button></li>
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson()" style="width: 80px; height: 40px;font-size: 15px;">{{_('Next')}}</button></li>
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
+                            class="btn btn-primary"
+                            ng-click="saveDataJson('{{item_save_uri}}');"
+                           style="width: 120px; height: 40px;font-size: 15px;">
+                            <span class="glyphicon glyphicon-download-alt"></span>
+                            {{_('Save')}}
+                        </button></li>
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-info" ng-click="updateDataJson()" style="width: 80px; height: 40px;font-size: 15px;">{{_('Next')}}
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                    </button></li>
                     {%- if pid %}
                     <li>
                            <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')" style="width: 120px; height: 40px;font-size: 15px;">
