@@ -18,7 +18,7 @@ from flask_login import current_user, login_required
 
 from .api import WidgetItems
 from .utils import get_repository_list, get_widget_design_setting, \
-    get_widget_list, update_widget_design_setting
+    get_widget_list, update_admin_widget_item_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -110,7 +110,7 @@ def load_widget_type():
     results = get_widget_type_list()
     return jsonify(results)
 
-@blueprint_api.route('/save_widget_item', methods=['GET'])
+@blueprint_api.route('/save_widget_item', methods=['POST'])
 @login_required
 def save_widget_item():
     """Save Language List."""
