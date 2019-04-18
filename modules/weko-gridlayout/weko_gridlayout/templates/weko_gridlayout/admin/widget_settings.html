@@ -415,7 +415,15 @@
                   },
                   body: JSON.stringify(this.props.data),
               })
-              .then(response =>response.json())};
+              .then(res => res.json())
+              .then((result) => {
+                if (result.success) {
+                    alert('Save Widget successfully!');
+                }else {
+                    alert('Some errors is occurs!');
+                }
+              });
+          }
       }
       render() {
           return (

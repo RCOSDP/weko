@@ -15,7 +15,7 @@ from flask_login import login_required
 
 from .api import WidgetItems
 from .utils import get_repository_list, get_widget_design_setting, \
-    get_widget_list, update_widget_design_setting
+    get_widget_list, update_admin_widget_item_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -126,8 +126,7 @@ def save_widget_item():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
-    status = WidgetItems().create(data)
-    return jsonify(status)
+    return update_admin_widget_item_setting(data)
 
 
 @blueprint_api.route('/get_account_role', methods=['GET'])

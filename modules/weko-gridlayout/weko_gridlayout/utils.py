@@ -197,9 +197,10 @@ def update_admin_widget_item_setting(data):
         raise WidgetItemAddedRESTError()
 
     status = 201
-    msg = 'Journal created successfully.'
+    msg = 'Widget item created successfully.'
+    success = True
 
     return make_response(
-        jsonify({'status': status, 'message': msg}), status)
-
-    return result
+        jsonify({'status': status,
+                'success': success,
+                'message': msg}), status)
