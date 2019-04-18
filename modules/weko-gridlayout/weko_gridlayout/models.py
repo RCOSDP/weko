@@ -88,7 +88,7 @@ class WidgetItem(db.Model):
     __tablename__ = 'widget_items'
 
     repository_id = db.Column(db.String(100), db.ForeignKey(Community.id),
-                            nullable=False, primary_key=True)
+                              nullable=False, primary_key=True)
 
     widget_type = db.Column(db.String(100), db.ForeignKey(WidgetType.type_id),
                             nullable=False, primary_key=True)
@@ -128,7 +128,8 @@ class WidgetItem(db.Model):
     @classmethod
     def get(cls, repo_id, type_id):
         """Get a widget item."""
-        return cls.query.filter_by(repository_id=repo_id, widget_type=type_id).one_or_none()
+        return cls.query.filter_by(repository_id=repo_id,
+                                     widget_type=type_id).one_or_none()
 
     @classmethod
     def update(cls, repo_id, type_id, **data):

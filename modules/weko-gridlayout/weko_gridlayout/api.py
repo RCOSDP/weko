@@ -110,6 +110,15 @@ class WidgetItems(object):
                 db.session.rollback()
         return is_ok
 
+    @classmethod
+    def get_all_widget_items(cls):
+        """
+        Get all widget items in widget_item table.
+
+        :return: List of widget item objects.
+        """
+        return db.session.query(WidgetItem).all()
+
 
     @classmethod
     def get_account_role(cls):
