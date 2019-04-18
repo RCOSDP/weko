@@ -474,7 +474,10 @@ class WekoDeposit(Deposit):
         Save when register a new item type, Update when edit an item
         type.
         """
-        current_user_id = current_user.get_id()
+        if current_user:
+            current_user_id = current_user.get_id()
+        else:
+            current_user_id = '1'
         if current_user_id:
             dc_owner = self.data.get("owner", None)
             if not dc_owner:

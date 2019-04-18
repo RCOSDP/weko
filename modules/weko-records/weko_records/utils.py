@@ -106,6 +106,9 @@ def json_loader(data, pid):
                 pubdate = v
             jpcoar[k] = item.copy()
 
+    # convert to es jpcoar mapping data
+    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+
     if dc:
         # get the tile name to detail page
         title = data.get("title_ja") or data.get("title_en")
@@ -117,8 +120,6 @@ def json_loader(data, pid):
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
 
-        # convert to es jpcoar mapping data
-        jrc = SchemaTree.get_jpcoar_json(jpcoar)
 
         oai_value = current_app.config.get(
             'OAISERVER_ID_PREFIX', '') + str(pid)
