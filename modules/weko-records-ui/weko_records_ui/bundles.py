@@ -20,9 +20,7 @@
 
 """WEKO3 module docstring."""
 
-from flask_assets import Bundle
 from invenio_assets import NpmBundle
-from invenio_deposit.bundles import js_dependencies_jquery
 
 style = NpmBundle(
     'node_modules/angular-loading-bar/build/loading-bar.css',
@@ -35,51 +33,6 @@ style = NpmBundle(
         'bootstrap-switch': '~3.0.2',
         'font-awesome': '~4.4.0',
         'typeahead.js-bootstrap-css': '~1.2.1',
-    }
-)
-
-js_angular_bootstrap = NpmBundle(
-    'node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js',
-    'node_modules/angular/angular.js',
-    npm={
-        'angular-ui-bootstrap': '~0.13.2',
-    }
-)
-
-js_almond = NpmBundle(
-    'node_modules/almond/almond.js',
-    npm={
-        'almond': '~0.3.1',
-    }
-)
-
-js_angular_loading_bar = NpmBundle(
-    'node_modules/angular-loading-bar/build/loading-bar.js',
-    npm={
-        'angular-loading-bar': '~0.9.0',
-    }
-)
-
-js_typeahead = NpmBundle(
-    'node_modules/typeahead.js/dist/bloodhound.js',
-    'node_modules/typeahead.js/dist/typeahead.bundle.js',
-    'node_modules/typeahead.js/dist/typeahead.jquery.js',
-    npm={
-        'typeahead.js': '~0.11.1'
-    }
-)
-
-js_invenio_csl = NpmBundle(
-    'node_modules/invenio-csl-js/dist/invenio-csl-js.js',
-    npm={
-        'invenio-csl-js': '~0.1.3',
-    }
-)
-
-js_bootstrap_switch = NpmBundle(
-    'node_modules/bootstrap-switch/dist/js/bootstrap-switch.js',
-    npm={
-        'bootstrap-switch': '~3.0.2',
     }
 )
 
