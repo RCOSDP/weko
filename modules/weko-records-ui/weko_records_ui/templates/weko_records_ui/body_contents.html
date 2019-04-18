@@ -289,13 +289,15 @@
                           method="POST">
                       {% if record | check_permission %}
                           {% if '0' in pubs %}
+                           {{_('Published')}}
                           <button class="btn btn-default" type="submit" name="status" value="1">
-                            {{_('Private')}}
-                          </button>  {{_('Publish')}}
+                            {{_('Change to Private')}}
+                          </button>
                           {% else %}
+                          {{_('Private')}}
                           <button class="btn btn-default" type="submit" name="status" value="0">
                             {{_('Publish')}}
-                          </button>  {{_('Private')}}
+                          </button>
                           {% endif %}
                       {% else %}
                           {% if '0' in pubs %}{{_('Publish')}}{% else %}{{_('Private')}}
