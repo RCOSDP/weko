@@ -120,7 +120,6 @@ def json_loader(data, pid):
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
 
-
         oai_value = current_app.config.get(
             'OAISERVER_ID_PREFIX', '') + str(pid)
         is_edit = pid_exists(oai_value, 'oai')
