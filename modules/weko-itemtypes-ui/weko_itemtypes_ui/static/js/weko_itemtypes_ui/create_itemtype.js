@@ -1003,7 +1003,7 @@
 
     $('#item_type_delete_continue').on('click', function(){
       $("#item_type_delete_confirmation").modal("hide");
-      send('/itemtypes/delete/' + $('#item-type-lists').val(), {},
+      send_uri('/itemtypes/delete/' + $('#item-type-lists').val(), {},
         function(data){
           if (data.code == 0) {
             window.location.href = "/itemtypes/register";
@@ -1015,7 +1015,7 @@
       });
     });
 
-    function send(url, data, handleSuccess, handleError){
+    function send_uri(url, data, handleSuccess, handleError){
       $.ajax({
         method: 'POST',
         url: url,
