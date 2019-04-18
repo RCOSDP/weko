@@ -137,7 +137,10 @@ def json_loader(data, pid):
         jrc.update(dict(publish_date=pubdate))
 
         # save items's creator to check permission
-        current_user_id = current_user.get_id()
+        if current_user:
+            current_user_id = current_user.get_id()
+        else:
+            current_user_id = '1'
         if current_user_id:
             # jrc is saved on elastic
             jrc_weko_shared_id = jrc.get("weko_shared_id", None)
