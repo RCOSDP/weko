@@ -55,9 +55,13 @@
       {% else %}
       <div class="hide" id="hide_endpoints"></div>
       {% endif %}
+
       <div id="weko-records">
+        <div id="loader_spinner" class="loader" ng-show="recordsVM.invenioRecordsLoading">
+          <div class="spinner-wheel"></div>
+        </div>
         {%- if need_file %}
-        <invenio-files-uploader
+          <invenio-files-uploader
           method="PUT"
           endpoint="{{ config.DEPOSIT_FILES_API }}"
           {% if pid %}
@@ -82,14 +86,15 @@
             form="{{ schemaform }}"
             record='{{ record | tojson }}'
             schema="{{ jsonschema }}">
-            <invenio-records-loading
+            <!-- No longer needed - Using a manual loader -->
+            <!-- <invenio-records-loading
               template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
-            </invenio-records-loading>
+            </invenio-records-loading> -->
             <invenio-records-alert
               template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/alert.html') }}">
             </invenio-records-alert>
-            <div class="row" ng-hide="false">
-              <div class="col-sm-9" ng-show="true">
+            <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+              <div class="col-sm-9">
                 <ul class="list-inline text-right">
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson()">{{_('Next')}}</button></li>
                     <input type="hidden" id="next-frame" value="iframe_tree">
@@ -100,8 +105,8 @@
               </div>
             </div>
             {%- if need_file %}
-            <div class="row" ng-hide="false">
-              <div class="col-sm-9" ng-show="true">
+            <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+              <div class="col-sm-9">
                 <invenio-files-error
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/error.html') }}">
                 </invenio-files-error>
@@ -114,9 +119,9 @@
               </div>
             </div>
             {%- endif %}
-            <div ng-controller="WekoRecordsCtrl">
-              <div class="row" ng-hide="false">
-                <div class="col-sm-9" ng-show="true">
+            <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+              <div class="row">
+                <div class="col-sm-9">
                 <p class="text-center">
                   <button class="btn btn-primary" ng-click="getItemMetadata()">
                     <span class="glyphicon glyphicon-search"></span>
@@ -134,9 +139,8 @@
               <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
               <!--add by ryuu. end 20180410-->
               <div class="row">
-                <div class="col-sm-9">
-
-                  <div class="panel panel-default">
+                <div class="col-sm-9" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  <div class="panel panel-default" >
                       <div class="panel-heading">
                         <h3 class="panel-title">Contributor</h3>
                       </div>
@@ -150,11 +154,11 @@
                           </div>
                           <div class="form_share_permission">     
                             <div class="row" id="pd_username">
-                              
+
                               <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
                                   <label for="share_username">Username </label>
                               </div>
-                              
+
                               <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
                                   <div class="autocomplete">
                                       <input id="share_username" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
@@ -163,11 +167,11 @@
                               </div>
                             </div>
                             <div class="row">
-                              
+
                               <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
                                   <label for="share_email">Email </label>
                               </div>
-                              
+
                               <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
                                   <div class="autocomplete">
                                       <input id="share_email" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
@@ -176,7 +180,7 @@
                               </div>
                             </div>      
                           </div>             
-                        
+
                       </div>
                   </div>
 
@@ -185,14 +189,16 @@
 
               <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
 
-              <invenio-records-form
-                form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
-                form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
-                template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
-              </invenio-records-form>
-              <div class="row" ng-hide="false">
-                <div class="col-sm-9" ng-show="true">
-                  <ul class="list-inline text-right">
+              <div ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                <invenio-records-form
+                  form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+                  form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
+                  template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
+                </invenio-records-form>
+              </div>
+              <div class="row">
+                <div class="col-sm-9">
+                  <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="saveDataJson('{{item_save_uri}}');">{{_('Save')}}</button></li>
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson()">{{_('Next')}}</button></li>
                     {%- if pid %}
@@ -243,3 +249,4 @@
 </div><!-- /.modal -->
 
 {%- endblock page_body %}
+

@@ -25,6 +25,7 @@ from copy import deepcopy
 from flask import current_app, flash
 from flask_babelex import gettext as _
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
 from invenio_records.errors import MissingModelError
 from invenio_records.signals import after_record_delete, after_record_insert, \
@@ -35,6 +36,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import asc, desc
 from werkzeug.local import LocalProxy
 
+from .fetchers import weko_record_fetcher
 from .models import FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, \
     ItemTypeName, ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress
 
@@ -1417,6 +1419,8 @@ class RevisionsIterator(object):
 class WekoRecord(Record):
     """Weko Record."""
 
+    record_fetcher = staticmethod(weko_record_fetcher)
+
     @classmethod
     def get_record(cls, pid, id_, with_deleted=False):
         """Retrieve the record by id.
@@ -1435,3 +1439,17 @@ class WekoRecord(Record):
                 query = query.filter(FileMetadata.contents != None)  # noqa
 
             return [cls(obj.json, model=obj) for obj in query.all()]
+
+    @property
+    def pid(self):
+        """Return an instance of record PID."""
+        pid = self.record_fetcher(self.id, self)
+        return PersistentIdentifier.get(pid.pid_type, pid.pid_value)
+
+    @property
+    def depid(self):
+        """Return depid of the record."""
+        return PersistentIdentifier.get(
+            pid_type='depid',
+            pid_value=self.get('_deposit', {}).get('id')
+        )

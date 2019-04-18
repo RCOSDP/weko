@@ -184,8 +184,6 @@ def run(repo_dir, cookiecutter_output_dir):
     click.secho('Checking identical files...', fg='green')
     check_identical_files(repo_dir, cookiecutter_output_dir, identical_files)
     click.secho('Please check following files manually:', fg='yellow')
-    for f in manual_diff:
-        print(f)
     click.secho('Checking identical setup.py attributes...', fg='green')
     check_setupy(repo_dir, cookiecutter_output_dir, identical_setuppy_attrs)
 

@@ -451,3 +451,27 @@ def get_keywords_data_load(str):
     except BaseException:
         pass
     return []
+
+
+def is_valid_openaire_type(resource_type, communities):
+    """Check if the OpenAIRE subtype is corresponding with other metadata.
+
+    :param resource_type: Dictionary corresponding to 'resource_type'.
+    :param communities: list of communities identifiers
+    :returns: True if the 'openaire_subtype' (if it exists) is valid w.r.t.
+        the `resource_type.type` and the selected communities, False otherwise.
+    """
+    if 'openaire_subtype' not in resource_type:
+        return True
+    oa_subtype = resource_type['openaire_subtype']
+    prefix = oa_subtype.split(':')[0] if ':' in oa_subtype else ''
+
+    cfg = current_openaire.openaire_communities
+    defined_comms = [c for c in cfg.get(prefix, {}).get('communities', [])]
+    type_ = resource_type['type']
+    subtypes = cfg.get(prefix, {}).get('types', {}).get(type_, [])
+    # Check if the OA subtype is defined in config and at least one of its
+    # corresponding communities is present
+    is_defined = any(t['id'] == oa_subtype for t in subtypes)
+    comms_match = len(set(communities) & set(defined_comms))
+    return is_defined and comms_match
