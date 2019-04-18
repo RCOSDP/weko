@@ -22,6 +22,8 @@
 import json
 
 from .models import WidgetDesignSetting, WidgetItem, WidgetType
+from .api import WidgetItems
+from .errors import WidgetItemInvalidDataRESTError, WidgetItemAddedRESTError
 
 
 def get_repository_list():
@@ -179,9 +181,21 @@ def get_widget_type_list():
 
 
 def update_admin_widget_item_setting(data):
-    result = {
-        "result": '',
-        "error": ''
-    }
+    """Create/update widget item.
+
+    :param: widget item data
+    :return: options json
+    """
+
+    if not data:
+        raise WidgetItemInvalidDataRESTError()
+    if not WidgetItems.create(data):
+        raise WidgetItemAddedRESTError()
+
+    status = 201
+    msg = 'Journal created successfully.'
+
+    return make_response(
+        jsonify({'status': status, 'message': msg}), status)
 
     return result
