@@ -20,18 +20,15 @@
 
 """WEKO3 module docstring."""
 
-from datetime import datetime
-
-from flask import current_app
+from flask import current_app, request
 from flask_admin import BaseView, expose
+from flask_admin.model import helpers
 from flask_admin.contrib.sqla import ModelView
-from flask_admin.contrib.sqla.fields import QuerySelectField
 from flask_babelex import gettext as _
-from flask_login import current_user
 from wtforms.fields import StringField
 
-from . import config
 from .models import WidgetItem
+from . import config
 
 
 class WidgetDesign(BaseView):
@@ -43,18 +40,31 @@ class WidgetDesign(BaseView):
 
 
 class WidgetSettingView(ModelView):
-    """Pidstore Identifier admin view."""
+    """Widget Setting admin view."""
 
     can_create = True
     can_edit = True
     can_delete = False
     can_view_details = True
-    create_template = config.WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS
-    edit_template = config.WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS
+
+    @expose('/new/', methods=('GET', 'POST'))
+    def create_view(self):
+        return self.render(config.WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS)
+
+    @expose('/edit/', methods=('GET', 'POST'))
+    def edit_view(self):
+        """
+            Edit model view
+        """
+
+        id_list = helpers.get_mdict_item_or_list(request.args, 'id')
+
+        return self.render(config.WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS)
 
     column_list = (
         'repository_id',
         'widget_type',
+        'label',
         'label_color',
         'is_enabled',
     )
@@ -65,6 +75,7 @@ class WidgetSettingView(ModelView):
     column_details_list = (
         'repository_id',
         'widget_type',
+        'label',
         'label_color',
         'has_frame_border',
         'frame_border_color',
@@ -76,114 +87,14 @@ class WidgetSettingView(ModelView):
         'repo_selected': StringField('Repository Selector'),
     }
 
-    form_create_rules = [
-        'repository_id',
-        'widget_type',
-        'label_color',
-        'has_frame_border',
-        'frame_border_color ',
-        'text_color',
-        'background_color',
-        'browsing_role',
-        'edit_role',
-        'is_enabled',
-        'repo_selected'
-    ]
-
-    form_edit_rules = form_create_rules
-
     column_labels = dict(repository_id=_('Repository'),
                          widget_type=_('Widget Type'),
+                         label=_('Label'),
                          label_color=_('Label color'),
                          is_enabled=_('Enable'),
                          )
 
-    # def _validator_halfwidth_input(form, field):
-    #     """
-    #     Valid input character set.
-    #
-    #     :param form: Form used to create/update model
-    #     :param field: Template fields contain data need validator
-    #     """
-    #     if field.data is None:
-    #         return
-    #     else:
-    #         try:
-    #             for inchar in field.data:
-    #                 if unicodedata.east_asian_width(inchar) in 'FWA':
-    #                     raise ValidationError(
-    #                         _('Only allow halfwith 1-bytes character in input'))
-    #         except Exception as ex:
-    #             raise ValidationError('{}'.format(ex))
-    #
-    # form_args = {
-    #     'jalc_doi': {
-    #         'validators': [_validator_halfwidth_input]
-    #     },
-    #     'jalc_crossref_doi': {
-    #         'validators': [_validator_halfwidth_input]
-    #     },
-    #     'jalc_datacite_doi': {
-    #         'validators': [_validator_halfwidth_input]
-    #     },
-    #     'cnri': {
-    #         'validators': [_validator_halfwidth_input]
-    #     },
-    #     'suffix': {
-    #         'validators': [_validator_halfwidth_input]
-    #     }
-    # }
-    #
-    # form_widget_args = {
-    #     'jalc_doi': {
-    #         'maxlength': 100,
-    #         'readonly': True,
-    #     },
-    #     'jalc_crossref_doi': {
-    #         'maxlength': 100,
-    #         'readonly': True,
-    #     },
-    #     'jalc_datacite_doi': {
-    #         'maxlength': 100,
-    #         'readonly': True,
-    #     },
-    #     'cnri': {
-    #         'maxlength': 100,
-    #         'readonly': True,
-    #     },
-    #     'suffix': {
-    #         'maxlength': 100,
-    #     }
-    # }
-
-    form_overrides = {
-        'repository_id': QuerySelectField,
-    }
-
-    def on_model_change(self, form, model, is_created):
-        """
-        Perform some actions before a model is created or updated.
-
-        Called from create_model and update_model in the same transaction
-        (if it has any meaning for a store backend).
-        By default does nothing.
-
-        :param form: Form used to create/update model
-        :param model: Model that will be created/updated
-        :param is_created: Will be set to True if model was created
-            and to False if edited
-        """
-        # Update hidden data automation
-        if is_created:
-            model.created_userId = current_user.get_id()
-            model.created_date = datetime.utcnow().replace(microsecond=0)
-        model.updated_userId = current_user.get_id()
-        model.updated_date = datetime.utcnow().replace(microsecond=0)
-        model.repository = str(model.repository.id)
-        pass
-
     def on_form_prefill(self, form, id):
-        form.repo_selected.data = form.repository.data
         pass
 
     def create_form(self, obj=None):
@@ -213,9 +124,6 @@ class WidgetSettingView(ModelView):
         )
 
     def _use_append_repository(self, form):
-        print(form)
-        # form.repository_id.query_factory = self._get_community_list
-        # form.repo_selected.data = 'Root Index'
         return form
 
     def _get_community_list(self):
