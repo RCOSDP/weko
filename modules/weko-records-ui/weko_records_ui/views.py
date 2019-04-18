@@ -20,8 +20,6 @@
 
 """Blueprint for weko-records-ui."""
 
-from datetime import datetime
-
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
@@ -29,23 +27,23 @@ from flask import Blueprint, abort, current_app, flash, jsonify, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_db import db
+from invenio_files_rest.proxies import current_permission_factory
 from invenio_files_rest.views import ObjectResource, check_permission, \
     file_downloaded
 from invenio_oaiserver.response import getrecord
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
-from invenio_stats import current_stats
 from lxml import etree
-from sqlalchemy.exc import IntegrityError
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemsMetadata
+from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
 
 from weko_records_ui.models import InstitutionName
 
-from .models import Identifier, PDFCoverPageSettings
+from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
 
@@ -86,10 +84,6 @@ def publish(pid, record, template=None, **kwargs):
 
     return redirect(url_for('.recid', pid_value=pid.pid_value))
 
-    # resp = make_response(render_template(template,  pid=pid, record=record,))
-    # resp.headers.extend(dict(location=url_for(".recid", pid_value=pid.pid_value)))
-    # return resp
-
 
 def export(pid, record, template=None, **kwargs):
     r"""Record serialization view.
@@ -120,11 +114,6 @@ def export(pid, record, template=None, **kwargs):
         data = serializer.serialize(pid, record)
         if isinstance(data, six.binary_type):
             data = data.decode('utf8')
-
-        # return render_template(
-        #     template, pid=pid, record=record, data=data,
-        #     format_title=fmt['title'],
-        # )
 
         response = make_response(data)
 
@@ -199,8 +188,10 @@ def get_license_icon(type):
         'license_1': 'https://creativecommons.org/licenses/by-sa/4.0/deed.ja',
         'license_2': 'https://creativecommons.org/licenses/by-nd/4.0/deed.ja',
         'license_3': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
-        'license_4': 'https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ja',
-        'license_5': 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja',
+        'license_4': 'https://creativecommons.org/'
+                     'licenses/by-nc-sa/4.0/deed.ja',
+        'license_5': 'https://creativecommons.org/l'
+                     'icenses/by-nc-nd/4.0/deed.ja',
     }
 
     if 'license_free' in type:
@@ -294,16 +285,18 @@ def _get_google_scholar_meta(record):
                 res.append(
                     {'name': 'citation_publication_date', 'data': date.text})
         for relatedIdentifier in mtdata.findall(
-            'jpcoar:relatedIdentifier',
+                'jpcoar:relatedIdentifier',
                 namespaces=mtdata.nsmap):
-            if 'identifierType' in relatedIdentifier.attrib and relatedIdentifier.attrib[
+            if 'identifierType' in relatedIdentifier.attrib and \
+                relatedIdentifier.attrib[
                     'identifierType'] == 'DOI':
                 res.append({'name': 'citation_doi',
                             'data': relatedIdentifier.text})
         for sourceIdentifier in mtdata.findall(
-            'jpcoar:sourceIdentifier',
+                'jpcoar:sourceIdentifier',
                 namespaces=mtdata.nsmap):
-            if 'identifierType' in sourceIdentifier.attrib and sourceIdentifier.attrib[
+            if 'identifierType' in sourceIdentifier.attrib and \
+                sourceIdentifier.attrib[
                     'identifierType'] == 'ISSN':
                 res.append({'name': 'citation_issn',
                             'data': sourceIdentifier.text})
@@ -364,7 +357,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Check if user has the permission to download original pdf file
     # and the cover page setting is set and its value is enable (not disabled)
     can_download_original = check_original_pdf_download_permission(record) \
-        and pdfcoverpage_set_rec is not None and pdfcoverpage_set_rec.avail != 'disable'
+        and pdfcoverpage_set_rec is not None \
+        and pdfcoverpage_set_rec.avail != 'disable'
 
     # Get item meta data
     meta = ItemsMetadata.get_record(pid.object_uuid)
@@ -401,8 +395,10 @@ def bulk_update():
     detail_condition = get_search_detail_keyword('')
     return render_template(
         current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
-        fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
-        licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
+        fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS'][
+            'fields'],
+        licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS'][
+            'licences'],
         management_type='update',
         detail_condition=detail_condition)
 
@@ -454,7 +450,6 @@ def set_pdfcoverpage_header():
 
     @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
     def handle_over_max_file_size(error):
-        print("werkzeug.exceptions.RequestEntityTooLarge")
         return 'result : file size is overed.'
 
     # Save PDF Cover Page Header settings
@@ -516,3 +511,17 @@ def file_version_update():
             return jsonify({'status': 0, 'msg': 'Invalid data'})
     else:
         return jsonify({'status': 0, 'msg': 'Insufficient permission'})
+
+
+@blueprint.app_template_filter('citation')
+def citation(record, pid, style=None, ln=None):
+    """Render citation for record according to style and language."""
+    locale = ln or "en-US"  # ln or current_i18n.language
+    style = style or "aapg-bulletin"  # style or 'science'
+    try:
+        result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
+        return result
+    except Exception:
+        current_app.logger.exception(
+            'Citation formatting for record {0} failed.'.format(str(record.id)))
+        return None
