@@ -24,7 +24,7 @@ import traceback
 from datetime import datetime
 
 import redis
-from flask import abort, current_app, flash, g, json
+from flask import abort, current_app, flash, g, json, has_request_context
 from flask_login import current_user
 from flask_security import current_user
 from invenio_db import db
@@ -126,7 +126,6 @@ class WekoIndexer(RecordIndexer):
         self.get_es_index()
         pst = 'publish_status'
         body = {'doc': {pst: record.get(pst)}}
-        current_app.logger.debug(record)
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
@@ -318,7 +317,6 @@ class WekoDeposit(Deposit):
 
         # save user_name & display name.
         data['_buckets'] = {'deposit': str(bucket.id)}
-
         if current_user and current_user.is_authenticated:
             creator_id = int(current_user.get_id())
             user = UserProfile.get_by_userid(current_user.get_id())
@@ -328,13 +326,12 @@ class WekoDeposit(Deposit):
             if user is not None:
                 username = user._username
                 displayname = user._displayname
-
-            data['_deposit']['owners_ext'] = {
-                'username': username,
-                'displayname': displayname,
-                'email': current_user.email
-            }
-
+            if '_deposit' in data:
+                data['_deposit']['owners_ext'] = {
+                    'username' : username,
+                    'displayname' : displayname,
+                    'email' : current_user.email
+                }
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
@@ -352,11 +349,14 @@ class WekoDeposit(Deposit):
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def update(self, *args, **kwargs):
         """Update only drafts."""
-        dc = self.convert_item_metadata(args[0])
-
+        if len(args) > 1:
+            dc = self.convert_item_metadata(args[0], args[1])
+        else:
+            dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
-        item_created.send(
-            current_app._get_current_object(), item_id=self.pid)
+        if has_request_context():
+            item_created.send(
+                current_app._get_current_object(), item_id=self.pid)
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
@@ -474,7 +474,10 @@ class WekoDeposit(Deposit):
         Save when register a new item type, Update when edit an item
         type.
         """
-        current_user_id = current_user.get_id()
+        if current_user:
+            current_user_id = current_user.get_id()
+        else:
+            current_user_id = '1'
         if current_user_id:
             dc_owner = self.data.get("owner", None)
             if not dc_owner:
@@ -500,10 +503,9 @@ class WekoDeposit(Deposit):
             if klst:
                 self.indexer.delete_file_index(klst, self.pid.object_uuid)
 
-    def convert_item_metadata(self, index_obj):
-        """Convert Item Metadata.
-
-        1. Convert item Metadata.
+    def convert_item_metadata(self, index_obj, data=None):
+        """
+        1. Convert Item Metadata
         2. Inject index tree id to dict
         3. Set Publish Status
         :param index_obj:
@@ -514,18 +516,18 @@ class WekoDeposit(Deposit):
 
         try:
             actions = index_obj.get('actions', 'private')
-            datastore = RedisStore(redis.StrictRedis.from_url(
-                current_app.config['CACHE_REDIS_URL']))
-            cache_key = current_app.config[
-                'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
-                pid_value=self.pid.pid_value)
+            if not data:
+                datastore = RedisStore(redis.StrictRedis.from_url(
+                    current_app.config['CACHE_REDIS_URL']))
+                cache_key = current_app.config[
+                    'WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(
+                    pid_value=self.pid.pid_value)
 
-            data_str = datastore.get(cache_key)
-            datastore.delete(cache_key)
-            data = json.loads(data_str.decode('utf-8'))
-        except BaseException:
+                data_str = datastore.get(cache_key)
+                datastore.delete(cache_key)
+                data = json.loads(data_str.decode('utf-8'))
+        except:
             abort(500, 'Failed to register item')
-
         # Get index path
         index_lst = index_obj.get('index', [])
         plst = Indexes.get_path_list(index_lst)
