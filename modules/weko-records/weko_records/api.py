@@ -174,14 +174,17 @@ class ItemTypeNames(RecordBase):
                     commit(olst, True if 'allow' in k else False)
 
     @classmethod
-    def get_all_by_id(cls, ids):
+    def get_all_by_id(cls, ids, with_deleted=False):
         """Retrieve item types by ids.
 
         :param ids: List of item type IDs.
         :returns: A list of :class:`ItemTypeName` instances.
         """
         with db.session.no_autoflush:
-            return ItemTypeName.query.filter(ItemTypeName.id.in_(ids)).all()
+            query = ItemTypeName.query.filter(ItemTypeName.id.in_(ids))
+            if not with_deleted:
+                query = query.filter_by(is_active=True)
+            return query.all()
 
     @classmethod
     def get_record(cls, id_, with_deleted=False):
