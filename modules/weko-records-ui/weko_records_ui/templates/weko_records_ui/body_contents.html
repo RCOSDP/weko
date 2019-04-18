@@ -233,7 +233,7 @@
                       {%- endfor -%}
                       <br>
                       {%- for nameIdentifier in l['nameIdentifiers'] if nameIdentifier -%}
-                        {%- if nameIdentifier['nameIdentifierScheme'] != "" -%}
+                        {%- if nameIdentifierScheme in nameIdentifier.keys() and nameIdentifier['nameIdentifierScheme'] != "" -%}
                           {%- if nameIdentifier['nameIdentifierURI']|length > 0 -%}
                             {%- set nid = nameIdentifier['nameIdentifierURI'] -%}
                           {%- else -%}

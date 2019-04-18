@@ -44,6 +44,7 @@ def json_loader(data, pid):
     jpcoar = OrderedDict()
     item = dict()
     ar = []
+    pubdate = None
 
     if not isinstance(data, dict) or data.get("$schema") is None:
         return
