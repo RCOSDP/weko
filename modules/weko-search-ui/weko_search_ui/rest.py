@@ -261,6 +261,14 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     nlst[0]['img'] = index_info.image_name
                 nlst[0]['display_format'] = index_info.display_format
             agp.append(nlst)
+            # Register comment
+            try:
+                for hit in rd['hits']['hits']:
+                    _comment = list()
+                    _comment.append(hit['_source']['title'][0])
+                    hit['_source']['_comment'] = _comment
+            except Exception:
+                pass
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,

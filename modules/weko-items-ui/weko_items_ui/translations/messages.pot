@@ -113,11 +113,6 @@ msgstr ""
 msgid "Index_Tree"
 msgstr ""
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:38
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:38
-msgid "Metadata Auto Input"
-msgstr ""
-
 #: weko_items_ui/templates/weko_items_ui/edit.html:104
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:104
 msgid "Automatic metadata input"
