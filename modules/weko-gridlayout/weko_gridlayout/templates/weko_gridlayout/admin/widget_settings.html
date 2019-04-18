@@ -1,22 +1,22 @@
 {#
-  # This file is part of WEKO3.
-  # Copyright (C) 2017 National Institute of Informatics.
-  #
-  # WEKO3 is free software; you can redistribute it
-  # and/or modify it under the terms of the GNU General Public License as
-  # published by the Free Software Foundation; either version 2 of the
-  # License, or (at your option) any later version.
-  #
-  # WEKO3 is distributed in the hope that it will be
-  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  # General Public License for more details.
-  #
-  # You should have received a copy of the GNU General Public License
-  # along with WEKO3; if not, write to the
-  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-  # MA 02111-1307, USA.
-  #}
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
   
   {%- extends admin_base_template %}
   
@@ -30,519 +30,518 @@
   <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
   <script type="text/babel">
-  class Component_Select_Field extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-              repositoryId: '0',
-              selectOptions: []
-          };
-          this.styleRed = {
-              color: 'red',
-          };
-          this.handleChange = this.handleChange.bind(this);
-      }
-  
-      componentDidMount() {
-          fetch(this.props.url_request)
-              .then(res => res.json())
-              .then(
-                  (result) => {
-                      let options = []
-                      if(result.options){
-                        options = result.options.map((option) => {
-                            return (
-                                <option key={option.value} value={option.value}>{option.text}</option>
-                            )
-                        });
-                      } else {
-                        options = result.repositories.map((repository) => {
-                            return (
-                                <option key={repository.id} value={repository.id}>{repository.title}</option>
-                            )
-                        });
-                      }
-                    this.setState({
-                        selectOptions: options
-                    });
-                  },
-  
-                  (error) => {
-                      this.setState({
-                          isLoaded: true,
-                          error
-                      });
-                  }
-              )
-  
-      }
-  
-      handleChange(event) {
-        this.setState({ repositoryId: event.target.value });
-        this.props.getValueOfField(this.props.key_binding,event.target.value);
-        event.preventDefault();
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
-                  <div class="controls col-xs-5">
-                      <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name}>
-                          <option value="0">Please selected the input type</option>
-                          {this.state.selectOptions}
-                      </select>
-                  </div>
-              </div>
-          )
-      }
-  }
-
-  class Component_Textbox_Field extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state={
-              value:''
-          }
-          this.styleRed = {
-              color: 'red',
-          };
-          this.handleChange = this.handleChange.bind(this);
-      }
-  
-      handleChange(event) {
-          this.setState({ value: event.target.value });
-          this.props.getValueOfField(this.props.key_binding,event.target.value);
-          event.preventDefault();
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
-                <div class="controls col-xs-5">
-                  <input name={this.props.name} type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control"/>
-                </div>
-              </div>
-          )
-      }  
-  }
-
-  class Component_Select_Color_Filed extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-            color : '#4169E1',
-          };
-          this.handleChange = this.handleChange.bind(this);
-      }
-  
-      handleChange(event) {
-          this.setState({ color: event.target.value });
-          this.props.getValueOfField(this.props.key_binding,event.target.value);
-          event.preventDefault();
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                  <div className="controls col-xs-2">
-                    <input name={this.props.name} type="color" name="favcolor" value={this.state.color} onChange={this.handleChange}/>
-                  </div>
-              </div>
-          )
-      } 
-  }
-
-  class Component_Checkbox_Field extends React.Component {
-      constructor(props) {
-          super(props);
-          this.handleChange = this.handleChange.bind(this);
-      }
-  
-      handleChange(event) {
-          this.props.getValueOfField(this.props.key_binding,event.target.checked);
-      }
-  
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                  <div class="controls col-xs-1">
-                      <input name={this.props.name} type="checkbox" name="FrameBorder" onChange={this.handleChange} defaultChecked/>
-                  </div>
-              </div>
-          )
-      } 
-  }
-
-  class Component_Field_Contain_Select_Mutiple extends React.Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-              selectOptions: [],
-              UnauthorizedOptions: [],
-              unauthorList: []
-          };
-          this.styleContainer={
-            border: '1px solid #ccc',
-            height: '200px',
-            padding :'15px 5px 5px 10px',
-          }
-          this.styleElement={
-            padding: "0",
-          }
-          this.styleSelectLeft={
-            padding: "0",
-            width: "90%",
-            height: "100px",
-            float: "left",
-          }
-          this.styleSelectRight={
-            padding: "0",
-            width: "90%",
-            height: "100px",
-            float: "right",
-          }
-          this.styleButtonContainer = {
-            display: 'flex',
-            flexDirection : 'column',
-            justifyContent: 'center', 
-            height: "100px",
-          }
-          this.styleButtonElement={
-            margin: "2px",
-          }
-          this.handleChange = this.handleChange.bind(this);
-          this.handleMoveRightClick = this.handleMoveRightClick.bind(this);
-          this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
-          this.onSelect = this.onSelect.bind(this);
-      }
-      componentDidMount() {
-          fetch(this.props.url_request)
-              .then(res => res.json())
-              .then(
-                  (result) => {
-                      let options = result.map((option) => {
-                          return (
-                              <option key={option.id} value={option.id}>{option.name}</option>
-                          )
-                      });
+    class ComponentSelectField extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                repositoryId: '0',
+                selectOptions: []
+            };
+            this.styleRed = {
+                color: 'red',
+            };
+            this.handleChange = this.handleChange.bind(this);
+        }
+    
+        componentDidMount() {
+            fetch(this.props.url_request)
+                .then(res => res.json())
+                .then(
+                    (result) => {
+                        let options = []
+                        if(result.options){
+                          options = result.options.map((option) => {
+                              return (
+                                  <option key={option.value} value={option.value}>{option.text}</option>
+                              )
+                          });
+                        } else {
+                          options = result.repositories.map((repository) => {
+                              return (
+                                  <option key={repository.id} value={repository.id}>{repository.title}</option>
+                              )
+                          });
+                        }
                       this.setState({
                           selectOptions: options
                       });
-                  },
-  
-                  (error) => {
-                      this.setState({
-                          isLoaded: true,
-                          error
-                      });
-                  }
-              )
-  
-      }
-  
-      handleChange(event) {
-          this.setState({ repositoryId: event.target.value });
-          event.preventDefault();
-      }
-
-      getListOption(id) {
-        let options = document.getElementById(id).options;
-        let result = [];
-        for (let option in options) {
-            if (options[option].value) {
-                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                result.push(innerhtml);
-            }
-        }
-        return result;
-      }
-
-      isValueExist(item, array) {
-          if (array == undefined) {
-              return true;
-          }
-          if (array.length != 0) {
-            for (let prop in array) {
-                if (array[prop].props.value == item) {
-                    return true;
-                }else {
-                    return false;
-                }
-            }
-          } else {
-              return false;
-          }
-          return true;
-      }
-
-      handleMoveRightClick(event) {
-          let options = document.getElementById(this.props.authorSelect).options;
-          let selectedOptions = this.getListOption(this.props.unauthorSelect);
-          let nonSelectOptions = [];
-          for (let option in options) {
-              if (options[option].selected) {
-                    let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                    if (!this.isValueExist(options[option].value, selectedOptions) && options[option].value){
-                        selectedOptions.push(innerhtml);
+                    },
+    
+                    (error) => {
+                        this.setState({
+                            isLoaded: true,
+                            error
+                        });
                     }
-              }else {
-                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                if (options[option].value) {
-                    nonSelectOptions.push(innerhtml);
-                }
+                )
+    
+        }
+    
+        handleChange(event) {
+          this.setState({ repositoryId: event.target.value });
+          this.props.getValueOfField(this.props.key_binding,event.target.value);
+          event.preventDefault();
+        }
+    
+        render() {
+            return (
+                <div className="form-group row">
+                    <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
+                    <div class="controls col-xs-5">
+                        <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name}>
+                            <option value="0">Please selected the input type</option>
+                            {this.state.selectOptions}
+                        </select>
+                    </div>
+                </div>
+            )
+        }
+    }
+  
+    class ComponentTextboxField extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state={
+                value:''
+            }
+            this.styleRed = {
+                color: 'red',
+            };
+            this.handleChange = this.handleChange.bind(this);
+        }
+    
+        handleChange(event) {
+            this.setState({ value: event.target.value });
+            this.props.getValueOfField(this.props.key_binding,event.target.value);
+            event.preventDefault();
+        }
+    
+        render() {
+            return (
+                <div className="form-group row">
+                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
+                  <div class="controls col-xs-5">
+                    <input name={this.props.name} type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control"/>
+                  </div>
+                </div>
+            )
+        }  
+    }
+  
+    class ComponentSelectColorFiled extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+              color : '#4169E1',
+            };
+            this.handleChange = this.handleChange.bind(this);
+        }
+    
+        handleChange(event) {
+            this.setState({ color: event.target.value });
+            this.props.getValueOfField(this.props.key_binding,event.target.value);
+            event.preventDefault();
+        }
+    
+        render() {
+            return (
+                <div className="form-group row">
+                    <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                    <div className="controls col-xs-2">
+                      <input name={this.props.name} type="color" name="favcolor" value={this.state.color} onChange={this.handleChange}/>
+                    </div>
+                </div>
+            )
+        } 
+    }
+  
+    class ComponentCheckboxField extends React.Component {
+        constructor(props) {
+            super(props);
+            this.handleChange = this.handleChange.bind(this);
+        }
+    
+        handleChange(event) {
+            this.props.getValueOfField(this.props.key_binding,event.target.checked);
+        }
+    
+        render() {
+            return (
+                <div className="form-group row">
+                    <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                    <div class="controls col-xs-1">
+                        <input name={this.props.name} type="checkbox" name="FrameBorder" onChange={this.handleChange} defaultChecked/>
+                    </div>
+                </div>
+            )
+        } 
+    }
+  
+    class ComponentFieldContainSelectMultiple extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                selectOptions: [],
+                UnauthorizedOptions: [],
+                unauthorList: []
+            };
+            this.styleContainer={
+              border: '1px solid #ccc',
+              height: '200px',
+              padding :'15px 5px 5px 10px',
+            }
+            this.styleElement={
+              padding: "0",
+            }
+            this.styleSelectLeft={
+              padding: "0",
+              width: "90%",
+              height: "100px",
+              float: "left",
+            }
+            this.styleSelectRight={
+              padding: "0",
+              width: "90%",
+              height: "100px",
+              float: "right",
+            }
+            this.styleButtonContainer = {
+              display: 'flex',
+              flexDirection : 'column',
+              justifyContent: 'center', 
+              height: "100px",
+            }
+            this.styleButtonElement={
+              margin: "2px",
+            }
+            this.handleChange = this.handleChange.bind(this);
+            this.handleMoveRightClick = this.handleMoveRightClick.bind(this);
+            this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
+            this.onSelect = this.onSelect.bind(this);
+        }
+        componentDidMount() {
+            fetch(this.props.url_request)
+                .then(res => res.json())
+                .then(
+                    (result) => {
+                        let options = result.map((option) => {
+                            return (
+                                <option key={option.id} value={option.id}>{option.name}</option>
+                            )
+                        });
+                        this.setState({
+                            selectOptions: options
+                        });
+                    },
+    
+                    (error) => {
+                        this.setState({
+                            isLoaded: true,
+                            error
+                        });
+                    }
+                )
+    
+        }
+    
+        handleChange(event) {
+            this.setState({ repositoryId: event.target.value });
+            event.preventDefault();
+        }
+  
+        getListOption(id) {
+          let options = document.getElementById(id).options;
+          let result = [];
+          for (let option in options) {
+              if (options[option].value) {
+                  let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                  result.push(innerhtml);
               }
           }
+          return result;
+        }
+  
+        isValueExist(item, array) {
+            if (array == undefined) {
+                return true;
+            }
+            if (array.length != 0) {
+              for (let prop in array) {
+                  if (array[prop].props.value == item) {
+                      return true;
+                  }else {
+                      return false;
+                  }
+              }
+            } else {
+                return false;
+            }
+            return true;
+        }
+  
+        handleMoveRightClick(event) {
+            let options = document.getElementById(this.props.authorSelect).options;
+            let selectedOptions = this.getListOption(this.props.unauthorSelect);
+            let nonSelectOptions = [];
+            for (let option in options) {
+                if (options[option].selected) {
+                      let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                      if (!this.isValueExist(options[option].value, selectedOptions) && options[option].value){
+                          selectedOptions.push(innerhtml);
+                      }
+                }else {
+                  let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                  if (options[option].value) {
+                      nonSelectOptions.push(innerhtml);
+                  }
+                }
+            }
+              this.setState({
+                  selectOptions: nonSelectOptions,
+                  UnauthorizedOptions: selectedOptions,
+                  unauthorList: []
+              });
+              let data = [];
+              for(let option in nonSelectOptions)
+              {
+                  data.push(nonSelectOptions[option].props.value);
+              }
+            this.props.getValueOfField(this.props.key_binding,data);
+        }
+  
+        handleMoveLeftClick(event) {
+            let selectedIndex = this.state.unauthorList;
+            let options = document.getElementById(this.props.unauthorSelect).options;
+            let authorizedOptions = this.getListOption(this.props.authorSelect);
+            let remainOption = [];
+            for (let option in options) {
+              let registed = false;
+                for (let index in selectedIndex) {
+                    if (options[option].value == selectedIndex[index] && options[option].value) {
+                      let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                      if (!this.isValueExist(options[option].value), authorizedOptions) {
+                          authorizedOptions.push(innerhtml);
+                      }
+                      registed = true;
+                      break;
+                    }
+                }
+                if (!registed) {
+                  let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
+                  if (options[option].value) {
+                      remainOption.push(innerhtml);
+                  }
+                }
+            }
             this.setState({
-                selectOptions: nonSelectOptions,
-                UnauthorizedOptions: selectedOptions,
-                unauthorList: []
+              selectOptions: authorizedOptions,
+              UnauthorizedOptions: remainOption
             });
             let data = [];
-            for(let option in nonSelectOptions)
-            {
-                data.push(nonSelectOptions[option].props.value);
-            }
-          this.props.getValueOfField(this.props.key_binding,data);
-      }
-
-      handleMoveLeftClick(event) {
-          let selectedIndex = this.state.unauthorList;
-          let options = document.getElementById(this.props.unauthorSelect).options;
-          let authorizedOptions = this.getListOption(this.props.authorSelect);
-          let remainOption = [];
-          for (let option in options) {
-            let registed = false;
-              for (let index in selectedIndex) {
-                  if (options[option].value == selectedIndex[index] && options[option].value) {
-                    let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                    if (!this.isValueExist(options[option].value), authorizedOptions) {
-                        authorizedOptions.push(innerhtml);
-                    }
-                    registed = true;
-                    break;
-                  }
+              for(let option in authorizedOptions)
+              {
+                  data.push(authorizedOptions[option].props.value);
               }
-              if (!registed) {
-                let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                if (options[option].value) {
-                    remainOption.push(innerhtml);
-                }
+            this.props.getValueOfField(this.props.key_binding,data);
+        }
+  
+        onSelect(event) {
+          var options = event.target.options;
+          var value = [];
+          for (var i = 0, l = options.length; i < l; i++) {
+              if (options[i].selected) {
+                  value.push(options[i].value);
               }
           }
           this.setState({
-            selectOptions: authorizedOptions,
-            UnauthorizedOptions: remainOption
+              unauthorList: value
           });
-          let data = [];
-            for(let option in authorizedOptions)
-            {
-                data.push(authorizedOptions[option].props.value);
-            }
-          this.props.getValueOfField(this.props.key_binding,data);
-      }
-
-      onSelect(event) {
-        var options = event.target.options;
-        var value = [];
-        for (var i = 0, l = options.length; i < l; i++) {
-            if (options[i].selected) {
-                value.push(options[i].value);
-            }
         }
-        this.setState({
-            unauthorList: value
-        });
-      }
-
-      render() {
-          return (
-              <div className="form-group row">
-                  <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                  <div class="controls col-xs-5">
-                      <fieldset className="form-group" style={this.styleContainer}>
-                      <label>Role </label><br/>
-                      <div className="col-xs-5" style={this.styleElement}>
-                        <label >Authorized</label><br/>
-                        <select name={this.props.name} multiple style={this.styleSelectLeft} id={this.props.authorSelect} name={this.props.authorSelect}>
-                            {this.state.selectOptions}
-                        </select>
-                      </div>
-                      <div className="col-xs-1" style={this.styleElement}>
-                        <br/>
-                        <div className="buttons" style={this.styleButtonContainer}>
-                          <input type="button" value="&rarr;" style={this.styleButtonElement} onClick={this.handleMoveRightClick}/>
-                          <input type="button" value="&larr;" style={this.styleButtonElement} onClick={this.handleMoveLeftClick}/>
-                        </div>
-                      </div>
-                      <div className="col-xs-5" style={this.styleElement}>
-                        <label >Unauthorized</label><br/>
-                        <select multiple value={this.state.unauthorList} style={this.styleSelectRight} onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
-                            {this.state.UnauthorizedOptions}
-                        </select>
-                      </div>
-                      </fieldset>
-                  </div>
-              </div>
-          )
-      } 
-  }
   
-  class Component_Button_Layout extends React.Component {
-    constructor(props) {
-        super(props);
-        this.style = {
-            marginLeft: "10px",
-        };
-        this.SaveCommand = this.SaveCommand.bind(this);
-    }
-    SaveCommand(event)
-    {
-        if (!this.props.data.repository) {
-            alert('Repository is required!');
-        } else if (!this.props.data.widget_type) {
-            alert('Type is required!');
-        } else if (!this.props.data.label) {
-            alert('Label is required!');
-        }else {
-            return fetch(this.props.url_request,{
-                method: "POST",
-                headers:{
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(this.props.data),
-            })
-            .then(response =>response.json());
-    }
-    render() {
-        return (
-            <div className="form-group col-xs-10">
-                <div className="col-xs-2"> </div>
-                <div className="col-xs-5">
-                  <button className="btn btn-primary" onClick={this.SaveCommand}>Save</button>
-                  <button className="form-group btn btn-danger" style={this.style}>Cancel</button>
+        render() {
+            return (
+                <div className="form-group row">
+                    <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                    <div class="controls col-xs-5">
+                        <fieldset className="form-group" style={this.styleContainer}>
+                        <label>Role </label><br/>
+                        <div className="col-xs-5" style={this.styleElement}>
+                          <label >Authorized</label><br/>
+                          <select name={this.props.name} multiple style={this.styleSelectLeft} id={this.props.authorSelect} name={this.props.authorSelect}>
+                              {this.state.selectOptions}
+                          </select>
+                        </div>
+                        <div className="col-xs-1" style={this.styleElement}>
+                          <br/>
+                          <div className="buttons" style={this.styleButtonContainer}>
+                            <input type="button" value="&rarr;" style={this.styleButtonElement} onClick={this.handleMoveRightClick}/>
+                            <input type="button" value="&larr;" style={this.styleButtonElement} onClick={this.handleMoveLeftClick}/>
+                          </div>
+                        </div>
+                        <div className="col-xs-5" style={this.styleElement}>
+                          <label >Unauthorized</label><br/>
+                          <select multiple value={this.state.unauthorList} style={this.styleSelectRight} onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
+                              {this.state.UnauthorizedOptions}
+                          </select>
+                        </div>
+                        </fieldset>
+                    </div>
                 </div>
-            </div>
-        )
+            )
+        } 
     }
-  }
-
-  class MainLayout extends React.Component {
+    
+    class ComponentButtonLayout extends React.Component {
       constructor(props) {
           super(props);
-          this.state = {
-              repository: '',
-              widget_type: '',
-              label:'',
-              label_color: '#4169E1',
-              frame_border: 'True',
-              frame_border_color: '#4169E1',
-              text_color:'#4169E1',
-              background_color: '#4169E1',
-              browsing_role: [1,2,3,4,99],
-              edit_role: [1,2,3,4,99],
-              enable: 'True'
-          };
           this.style = {
-              "width": ""
-          }
-          this.getValueOfField = this.getValueOfField.bind(this);
+              marginLeft: "10px",
+          };
+          this.saveCommand = this.saveCommand.bind(this);
       }
-  
-      getValueOfField(key, value) {
-          switch (key)
-          {
-            case 'repository':
-                this.setState({ repository: value });
-                break;
-            case 'widget_type':
-                this.setState({ widget_type: value });
-                break;
-            case 'label':
-                this.setState({ label: value });
-                break;
-            case 'label_color':
-                this.setState({ label_color: value });
-                break;
-            case 'frame_border':
-                this.setState({ frame_border: value });
-                break;
-            case 'frame_border_color':
-                this.setState({ frame_border_color: value });
-                break;
-            case 'text_color':
-                this.setState({ text_color: value });
-                break;
-            case 'background_color':
-                this.setState({ background_color: value });
-                break;
-            case 'browsing_role':
-                this.setState({ browsing_role: value });
-                break;
-            case 'edit_role':
-                this.setState({ edit_role: value });
-                break;
-            case 'enable':
-                this.enable({ enable: value });
-                break;
-          }
+      saveCommand(event)
+      {
+          if (!this.props.data.repository) {
+              alert('Repository is required!');
+          } else if (!this.props.data.widget_type) {
+              alert('Type is required!');
+          } else if (!this.props.data.label) {
+              alert('Label is required!');
+          }else {
+              return fetch(this.props.url_request,{
+                  method: "POST",
+                  headers:{
+                      "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(this.props.data),
+              })
+              .then(response =>response.json())};
       }
-  
       render() {
           return (
-              <div>
-                  <div className="row">
-                      <Component_Select_Field getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository"/>
+              <div className="form-group col-xs-10">
+                  <div className="col-xs-2"> </div>
+                  <div className="col-xs-5">
+                    <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
+                    <button className="form-group btn btn-danger" style={this.style}>Cancel</button>
                   </div>
-                  <div className="row">
-                      <Component_Select_Field getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding = "widget_type"/>
-                  </div>
-                  <div className="row">
-                      <Component_Textbox_Field getValueOfField={this.getValueOfField} name="Label" key_binding = "label"/>
-                  </div>
-                  <div className="row">
-                    <Component_Select_Color_Filed getValueOfField={this.getValueOfField} name="Label Color" key_binding = "label_color" />
-                  </div>
-                  <div className="row">
-                    <Component_Checkbox_Field name="Frame Border" getValueOfField={this.getValueOfField} key_binding = "frame_border"/>
-                  </div>
-                  <div className="row">
-                    <Component_Select_Color_Filed getValueOfField={this.getValueOfField} name="Frame Border Color" key_binding = "frame_border_color"/>
-                  </div>
-                  <div className="row">
-                    <Component_Select_Color_Filed getValueOfField={this.getValueOfField} name="Text Color" key_binding = "text_color"/>
-                  </div>
-                  <div className="row">
-                    <Component_Select_Color_Filed getValueOfField={this.getValueOfField} name="Background Color" key_binding = "background_color"/>
-                  </div>
-                  <div className="row">
-                    <Component_Field_Contain_Select_Mutiple getValueOfField={this.getValueOfField} name="Browsing Privilege" authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin/get_account_role" key_binding = "browsing_role"/>
-                  </div>
-                  <div className="row">
-                    <Component_Field_Contain_Select_Mutiple getValueOfField={this.getValueOfField} name="Edit Privilege" authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect"  url_request="/api/admin/get_account_role" key_binding = "edit_role"/>
-                  </div>
-                  <div className="row">
-                    <Component_Checkbox_Field name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" />
-                  </div>
-                  <div className="row">
-                    <Component_Button_Layout data={this.state} url_request="/api/admin/save_widget_item"/>
-                </div>
               </div>
           )
       }
-  }
+    }
   
-  ReactDOM.render(
-      <MainLayout />,
-      document.getElementById('root')
-  )
-  </script>
+    class MainLayout extends React.Component {
+        constructor(props) {
+            super(props);
+            this.state = {
+                repository: '',
+                widget_type: '',
+                label:'',
+                label_color: '#4169E1',
+                frame_border: 'True',
+                frame_border_color: '#4169E1',
+                text_color:'#4169E1',
+                background_color: '#4169E1',
+                browsing_role: [1,2,3,4,99],
+                edit_role: [1,2,3,4,99],
+                enable: 'True'
+            };
+            this.style = {
+                "width": ""
+            }
+            this.getValueOfField = this.getValueOfField.bind(this);
+        }
+    
+        getValueOfField(key, value) {
+            switch (key)
+            {
+              case 'repository':
+                  this.setState({ repository: value });
+                  break;
+              case 'widget_type':
+                  this.setState({ widget_type: value });
+                  break;
+              case 'label':
+                  this.setState({ label: value });
+                  break;
+              case 'label_color':
+                  this.setState({ label_color: value });
+                  break;
+              case 'frame_border':
+                  this.setState({ frame_border: value });
+                  break;
+              case 'frame_border_color':
+                  this.setState({ frame_border_color: value });
+                  break;
+              case 'text_color':
+                  this.setState({ text_color: value });
+                  break;
+              case 'background_color':
+                  this.setState({ background_color: value });
+                  break;
+              case 'browsing_role':
+                  this.setState({ browsing_role: value });
+                  break;
+              case 'edit_role':
+                  this.setState({ edit_role: value });
+                  break;
+              case 'enable':
+                  this.enable({ enable: value });
+                  break;
+            }
+        }
+    
+        render() {
+            return (
+                <div>
+                    <div className="row">
+                        <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository"/>
+                    </div>
+                    <div className="row">
+                        <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding = "widget_type"/>
+                    </div>
+                    <div className="row">
+                        <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding = "label"/>
+                    </div>
+                    <div className="row">
+                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Color" key_binding = "label_color" />
+                    </div>
+                    <div className="row">
+                      <ComponentCheckboxField name="Frame Border" getValueOfField={this.getValueOfField} key_binding = "frame_border"/>
+                    </div>
+                    <div className="row">
+                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Frame Border Color" key_binding = "frame_border_color"/>
+                    </div>
+                    <div className="row">
+                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Text Color" key_binding = "text_color"/>
+                    </div>
+                    <div className="row">
+                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding = "background_color"/>
+                    </div>
+                    <div className="row">
+                      <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Browsing Privilege" authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin/get_account_role" key_binding = "browsing_role"/>
+                    </div>
+                    <div className="row">
+                      <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege" authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect"  url_request="/api/admin/get_account_role" key_binding = "edit_role"/>
+                    </div>
+                    <div className="row">
+                      <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" />
+                    </div>
+                    <div className="row">
+                      <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item"/>
+                  </div>
+                </div>
+            )
+        }
+    }
+    
+    ReactDOM.render(
+        <MainLayout />,
+        document.getElementById('root')
+    )
+    </script>
   {%- endblock javascript %}
   
   {%- block body %}
   <div id="root" class="col-xs-12"></div>
   {% endblock %}
-  
