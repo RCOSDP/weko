@@ -18,6 +18,8 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+from flask import current_app
+
 """API for weko-admin."""
 from invenio_accounts.models import Role
 # from invenio_communities.models import Community
@@ -69,11 +71,11 @@ class WidgetItems(object):
         data = dict()
         is_ok = True
         try:
-            data["repository"] = widget_items.get('repository')
+            data["repository_id"] = widget_items.get('repository')
             data["widget_type"] = widget_items.get('widget_type')
             data["label"] = widget_items.get('label')
             data["label_color"] = widget_items.get('label_color')
-            data["frame_border"] = True
+            data["has_frame_border"] = True
             # data["frame_border"] = data["frame_border"]
             data["frame_border_color"] = widget_items.get('frame_border_color')
             data["text_color"] = widget_items.get('text_color')
@@ -83,7 +85,7 @@ class WidgetItems(object):
                 ",".join(list(map(lambda x: str(x['id']), role)))
             data["edit_role"] = data["browsing_role"]
 
-            data["enable"] = True
+            data["is_enabled"] = True
 
 
             _add_widget_item(data)
