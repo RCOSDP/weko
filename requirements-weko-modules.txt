@@ -26,3 +26,4 @@
 -e /code/modules/weko-indextree-journal
 -e /code/modules/weko-bulkupdate
 -e /code/modules/weko-items-autofill
+-e /code/modules/weko-sitemap
