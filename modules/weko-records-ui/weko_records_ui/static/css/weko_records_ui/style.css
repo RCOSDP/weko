@@ -6,6 +6,19 @@
   word-break: break-all;
 }
 
+.twitter-typeahead .tt-suggestion {
+  white-space: normal !important;
+}
+
+#invenio-csl .ng-binding {
+  word-break: break-all;
+}
+
+#invenio-csl span.twitter-typeahead .tt-menu {
+  overflow-y: scroll;
+  max-height: 200px;
+}
+
 .dropdown button {
   background: #fff;
   color: black;

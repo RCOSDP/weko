@@ -3,7 +3,7 @@ require([
   "bootstrap"
 ], function () {
   $(document).ready(function() {
-    var journalNames = [];
+    var journalNames = {};
     var actionJournal = {};
 
     var getJournalsTimer = null;
@@ -46,20 +46,28 @@ require([
           async: true,
           success: function(data, status) {
             if(data.romeoapi && parseInt(data.romeoapi.header.numhits) > 0) {
-              journalNames = [];
+              journalNames = {};
               var journals = data.romeoapi.journals.journal;
 
               var options = '';
               if(parseInt(data.romeoapi.header.numhits) == 1) {
-                options = '<option value="' + journals.jtitle + '">';
-                journalNames.push(journals.jtitle);
-
+                if (journals.issn) {
+                  options = '<option value="' + journals.jtitle + '">' + journals.issn + '</option>';
+                } else {
+                  options = '<option value="' + journals.jtitle + '"/>';
+                }
+                journalNames[journals.jtitle] = journals.issn;
               }else {
                 $.each(journals, function(index, journal) {
-                  var html = '<option value="' + journal.jtitle + '">';
-                  options =options + html;
+                  var html = '';
+                  if (journal.issn) {
+                    html = '<option value="' + journal.jtitle + '">' + journal.issn + '</option>';
+                  } else {
+                    html = '<option value="' + journal.jtitle + '"/>';
+                  }
+                  options = options + html;
 
-                  journalNames.push(journal.jtitle);
+                  journalNames[journal.jtitle] = journal.issn;
                 });
               }
 
@@ -78,18 +86,30 @@ require([
 
     $('#search-key').on('change', function() {
       var key = $(this).val();
-
-      if($.inArray(key, journalNames) !== -1) {
+      if(key in journalNames) {
         $('#journal-info').attr('hidden', 'hidden');
         actionJournal = {};
 
+        $('#temp').text('text10=' + journalNames[key]);
         var title = key;
-        var issn = '';
+        var issn = journalNames[key];
         var href = '';
         var romeo_msg = 'Unknown';
         var paid_msg = 'Unknown';
+        var getJournalUrl = '';
 
-        var getJournalUrl = '/workflow/journal?title=' + title;
+        if (issn) {
+          getJournalUrl = '/workflow/journal/issn/' + issn;    
+        } else {
+          issn = ''
+          var titleList = title.split('/')
+          if (titleList.length > 1) {
+            getJournalUrl = '/workflow/journal/title/' + titleList[1];
+          } else {
+            getJournalUrl = '/workflow/journal/title/' + title;
+          }
+        }
+
         $.ajax({
           method: 'GET',
           url: getJournalUrl,
