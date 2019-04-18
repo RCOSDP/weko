@@ -30,7 +30,6 @@ widget_design_js_lib = Bundle(
     output="gen/weko_gridlayout_lib.%(version)s.js",
 )
 
-
 widget_design_reactjs_lib = Bundle(
     'js/weko_gridlayout/react.production.min.js',
     'js/weko_gridlayout/react-dom.production.min.js',
@@ -39,13 +38,11 @@ widget_design_reactjs_lib = Bundle(
     output="gen/weko_gridlayout_reactjs_lib.%(version)s.js",
 )
 
-
 widget_design_js = Bundle(
     'js/weko_gridlayout/widget.design.js',
     filters='jsmin',
     output="gen/weko_gridlayout_widget_design.%(version)s.js",
 )
-
 
 widget_design_css = Bundle(
     'css/weko_gridlayout/gridstack.css',

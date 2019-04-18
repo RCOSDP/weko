@@ -20,16 +20,10 @@
 
 """Database models for weko-admin."""
 
-from datetime import datetime
-
-from flask import current_app, json
+from flask import current_app
 from invenio_db import db
-# from sqlalchemy import asc
-from sqlalchemy.dialects import mysql, postgresql
-# from sqlalchemy.ext.hybrid import hybrid_property
-# from sqlalchemy.sql import func
+from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.types import JSONType
-
 from weko_index_tree.models import Index
 from invenio_communities.models import Community
 
@@ -82,9 +76,6 @@ class WidgetType(db.Model):
 class WidgetItem(db.Model):
     """Database for WidgetItem."""
 
-    # from weko_index_tree.models import Index
-    # from invenio_communities.models import Community
-
     __tablename__ = 'widget_items'
 
     repository_id = db.Column(db.String(100), db.ForeignKey(Community.id),
@@ -105,10 +96,8 @@ class WidgetItem(db.Model):
 
     background_color = db.Column(db.String(7), default="")
 
-    # browsing_privilege = db.Column(db.JASON())
     browsing_role = db.Column(db.Text, nullable=True)
 
-    # edit_privilege = db.Column(db.JASON())
     edit_role = db.Column(db.Text, nullable=True)
 
     is_enabled = db.Column(db.Boolean(name='enable'), default=True)
@@ -129,7 +118,7 @@ class WidgetItem(db.Model):
     def get(cls, repo_id, type_id):
         """Get a widget item."""
         return cls.query.filter_by(repository_id=repo_id,
-                                     widget_type=type_id).one_or_none()
+                                   widget_type=type_id).one_or_none()
 
     @classmethod
     def update(cls, repo_id, type_id, **data):

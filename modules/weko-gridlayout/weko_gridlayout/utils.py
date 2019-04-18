@@ -21,9 +21,11 @@
 """Utilities for convert response json."""
 import json
 
-from .models import WidgetDesignSetting, WidgetItem, WidgetType
+from flask import jsonify, make_response
+
 from .api import WidgetItems
-from .errors import WidgetItemInvalidDataRESTError, WidgetItemAddedRESTError
+from .errors import WidgetItemAddedRESTError, WidgetItemInvalidDataRESTError
+from .models import WidgetDesignSetting, WidgetItem, WidgetType
 
 
 def get_repository_list():
@@ -94,13 +96,15 @@ def get_widget_list(repository_id):
     }
     try:
         widget_item_list = WidgetItem.query.filter_by(
-            repository_id=repository_id).all()
+            repository_id=repository_id, is_enabled=True
+        ).all()
         if widget_item_list:
             for widget_item in widget_item_list:
                 data = dict()
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
+                result["widget-list"].append(data)
 
         # TODO: add testing value.
         if not result["widget-list"] and repository_id != "0":
@@ -137,6 +141,7 @@ def get_widget_design_setting(repository_id):
 
 def update_widget_design_setting(data):
     """Update Widget layout setting.
+
     :param data: json data is submitted from client side.
     :return: result json.
     """
@@ -171,7 +176,7 @@ def get_widget_type_list():
     widget_types = WidgetType.get_all_widget_types()
     options = []
     for widget_type in widget_types:
-        option = {}
+        option = dict()
         option["text"] = widget_type.type_name
         option["value"] = widget_type.type_id
         options.append(option)
@@ -186,7 +191,6 @@ def update_admin_widget_item_setting(data):
     :param: widget item data
     :return: options json
     """
-
     if not data:
         raise WidgetItemInvalidDataRESTError()
     if not WidgetItems.create(data):

@@ -7,18 +7,15 @@
 
 """Module of weko-gridlayout."""
 
-# TODO: This is an example file. Remove it if you do not need it, including
-# the templates and static folders as well as the test case.
-
 from __future__ import absolute_import, print_function
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
-from flask_login import current_user, login_required
+from flask_login import login_required
 
 from .api import WidgetItems
 from .utils import get_repository_list, get_widget_design_setting, \
-    get_widget_list, update_admin_widget_item_setting
+    get_widget_list, update_widget_design_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -48,7 +45,7 @@ def index():
 def load_repository():
     """Get Repository list, to display on the combobox on UI.
 
-        :return: Example
+    :return: Example
         {
            'repositories': [
             {
@@ -63,11 +60,12 @@ def load_repository():
     return jsonify(result)
 
 
-@blueprint_api.route('/load_widget_list/<string:repository_id>', methods=['GET'])
+@blueprint_api.route('/load_widget_list/<string:repository_id>',
+                     methods=['GET'])
 def load_widget_list(repository_id):
     """Get Widget list, to display on the Widget List panel on UI.
 
-            :return: Example
+    :return: Example
             "widget-list": [
                 {
                     "widgetId": "widget id",
@@ -83,6 +81,11 @@ def load_widget_list(repository_id):
 @blueprint_api.route('/load_widget_design_setting/<string:repository_id>',
                      methods=['GET'])
 def load_widget_design_setting(repository_id):
+    """Load  Widget design setting from DB by repository id.
+
+    :param repository_id:
+    :return:
+    """
     result = get_widget_design_setting(repository_id)
 
     return jsonify(result)
@@ -90,6 +93,10 @@ def load_widget_design_setting(repository_id):
 
 @blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
 def save_widget_layout_setting():
+    """Save Widget design setting into DB.
+
+    :return:
+    """
     result = dict()
 
     if request.headers['Content-Type'] != 'application/json':
@@ -110,6 +117,7 @@ def load_widget_type():
     results = get_widget_type_list()
     return jsonify(results)
 
+
 @blueprint_api.route('/save_widget_item', methods=['POST'])
 @login_required
 def save_widget_item():
@@ -121,8 +129,13 @@ def save_widget_item():
     status = WidgetItems().create(data)
     return jsonify(status)
 
+
 @blueprint_api.route('/get_account_role', methods=['GET'])
 @login_required
 def get_account_role():
+    """Get Account role.
+
+    :return:
+    """
     role = WidgetItems().get_account_role()
     return jsonify(role)

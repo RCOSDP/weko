@@ -20,23 +20,18 @@
 
 """WEKO3 module docstring."""
 
-import hashlib
-import os
-import sys
-import unicodedata
 from datetime import datetime
 
-from flask import abort, current_app, flash, jsonify, request
+from flask import current_app
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
-# from flask_admin.form import rules
 from flask_babelex import gettext as _
 from flask_login import current_user
 from wtforms.fields import StringField
 
-from .models import WidgetItem
 from . import config
+from .models import WidgetItem
 
 
 class WidgetDesign(BaseView):
@@ -240,7 +235,6 @@ widget_adminview = dict(
     category=_('Setting'),
     name=_('Widget'),
 )
-
 
 
 widget_design_adminview = {
