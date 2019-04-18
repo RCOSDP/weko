@@ -217,37 +217,41 @@
 
               {%- if 'approval_request' == cur_step %}
                 <button type="button" class="btn btn-primary" id="btn-approval-req" style="width: 150px; height: 40px;font-size:15px">{{_('Approval Request')}}</button>
-                <button type="button" class="btn btn-primary" id="btn-finish" style="width: 100px; height: 40px;font-size:15px">{{_('Run')}}</button>
+                <button type="button" class="btn btn-info" id="btn-finish"
+                    style="width: 100px; height: 40px;font-size:15px">{{_('Done')}}</button>
               {%- endif %}
               {%- if 'approval' == cur_step %}
                 <button type="button" class="btn btn-primary" id="btn-return" style="width: 120px; height: 40px;font-size:15px">{{_('Return')}}</button>
                 <button type="button" class="btn btn-primary" id="btn-reject" style="width: 120px; height: 40px;font-size:15px">{{_('Reject')}}</button>
-                <button type="button" class="btn btn-primary" id="btn-approval" style="width: 120px; height: 40px;font-size:15px">{{_('Approval')}}</button>
-                <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
-                    :<span class="glyphicon glyphicon-download-alt"></span>
-                        {{_('Save')}}
+                <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;"> 
+                    <span class="glyphicon glyphicon-download-alt"></span>
+                    {{_('Save')}}
                 </button>
+                <button type="button" class="btn btn-info" id="btn-approval" style="width: 120px; height: 40px;font-size:15px">{{_('Approval')}}</button>
               {%- endif %}
               {%- if 'double_check' == cur_step %}
                 <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
                     <span class="glyphicon glyphicon-download-alt"></span>
                         {{_('Save')}}
                 </button>
-                <button type="button" class="btn btn-primary" id="btn-finish" style="width: 150px; height: 40px;font-size:15px">{{_('Run')}}</button>
+                <button type="button" class="btn btn-info" id="btn-finish"
+                    style="width: 150px; height: 40px;font-size:15px">{{_('Done')}}</button>
               {%- endif %}
               {%- if 'oa_policy' == cur_step %}
                 <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
                      <span class="glyphicon glyphicon-download-alt"></span>
                           {{_('Save')}}
                 </button>
-                <button type="button" class="btn btn-primary" id="btn-finish" style="width: 100px; height: 40px;font-size:15px">{{_('Run')}}</button>
+                <button type="button" class="btn btn-info" id="btn-finish"
+                    style="width: 100px; height: 40px;font-size:15px">{{_('Done')}}</button>
               {%- endif %}
               {%- if 'end_action' == cur_step %}
                 <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
                       <span class="glyphicon glyphicon-download-alt"></span>
                         {{_('Save')}}
                 </button>
-                <button type="button" class="btn btn-primary" id="btn-finish" style="width: 100px; height: 40px;font-size:15px">{{_('Run')}}</button>
+                <button type="button" class="btn btn-info" id="btn-finish"
+                    style="width: 100px; height: 40px;font-size:15px">{{_('Done')}}</button>
               {%- endif %}
             {%- endif %}
           </div>
