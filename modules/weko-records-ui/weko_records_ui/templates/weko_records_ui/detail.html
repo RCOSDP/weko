@@ -26,20 +26,6 @@
 {%- block css %}
   {{ super() }}
   {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-
-<style>
-#invenio-csl span.twitter-typeahead .tt-menu {
-  overflow-y: scroll;
-  max-height: 250px;
-}
-#invenio-csl span.twitter-typeahead .tt-suggestion {
-  white-space: normal;
-}
-#invenio-csl span.twitter-typeahead .empty-results {
-  max-width: 250px;
-}
-</style>
-
 {%- endblock css %}
 
 {%- block javascript %}
