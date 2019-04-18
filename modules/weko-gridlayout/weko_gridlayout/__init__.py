@@ -12,4 +12,4 @@ from __future__ import absolute_import, print_function
 from .ext import wekogridlayout
 from .version import __version__
 
-__all__ = ('__version__', 'wekogridlayout')
+__all__ = ('__version__', 'WekogridLayout')
