@@ -121,7 +121,8 @@ def register(item_type_id=0):
                        mapping=data.get('table_row_map').get('mapping'))
         print('Mapping get record ', Mapping.get_record(record.model.id))
         print('Item type record ', ItemTypes.get_record(record.model.id))
-        print('Item type all record ', ItemTypes.get_records())
+
+        print('All record Item type ', ItemTypes.get_records())
         db.session.commit()
     except BaseException:
         db.session.rollback()
