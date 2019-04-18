@@ -113,16 +113,8 @@ def register(item_type_id=0):
                                       'schema'),
                                   form=data.get('table_row_map').get('form'),
                                   render=data)
-        print('Impact feature mapping.create: item_type_mapping')
-        print('Impact feature item_type_id: ', item_type_id)
-        print('-------------------record.model: ', record.model)
-        print('-------------------record.model.id: ', record.model.id)
         Mapping.create(item_type_id=record.model.id,
                        mapping=data.get('table_row_map').get('mapping'))
-        print('Mapping get record ', Mapping.get_record(record.model.id))
-        print('Item type record ', ItemTypes.get_record(record.model.id))
-
-        print('All record Item type ', ItemTypes.get_records([]))
         db.session.commit()
     except BaseException:
         db.session.rollback()
