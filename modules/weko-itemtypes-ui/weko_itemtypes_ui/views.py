@@ -61,11 +61,17 @@ def index(item_type_id=0):
     :param item_type_id: Item type i. Default 0.
     """
     lists = ItemTypes.get_latest()
-    # count metaData by item_type_id
-    for item in lists:
-        metaDataRecords = ItemsMetadata.get_by_item_type_id(
-            item_type_id=item.item_type[0].id)
-        item.belonging_item_flg = len(metaDataRecords) > 0
+    # Check that item type is already registered to an item or not
+    for list in lists:
+        # Get all versions
+        all_records = ItemTypes.get_records_by_name_id(name_id=list.id)
+        list.belonging_item_flg = False
+        for item in all_records:
+            metaDataRecords = ItemsMetadata.get_by_item_type_id(
+                item_type_id=item.id)
+            list.belonging_item_flg = len(metaDataRecords) > 0
+            if list.belonging_item_flg:
+                break
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE'],
         lists=lists,
@@ -363,14 +369,16 @@ def delete_itemtype(item_type_id=0):
             if record.model.harvesting_type:
                 return jsonify(code=-1,
                                msg=_('Cannot delete Item type for Harvesting.'))
-            # Check that item type is already registered to an item or not
-            metaDataRecords = ItemsMetadata.get_by_item_type_id(item_type_id)
-            if len(metaDataRecords) > 0:
-                return jsonify(code=-1,
-                               msg=_('Cannot delete because there is belonging item.'))
             # Get all versions
             all_records = ItemTypes.get_records_by_name_id(
                 name_id=record.model.name_id)
+            # Check that item type is already registered to an item or not
+            for item in all_records:
+                metaDataRecords = ItemsMetadata.get_by_item_type_id(
+                    item_type_id=item.id)
+                if len(metaDataRecords) > 0:
+                    return jsonify(code=-1,
+                                   msg=_('Cannot delete because there is belonging item.'))
             # Get item type name
             item_type_name = ItemTypeNames.get_record(id_=record.model.name_id)
             if all_records and item_type_name:
