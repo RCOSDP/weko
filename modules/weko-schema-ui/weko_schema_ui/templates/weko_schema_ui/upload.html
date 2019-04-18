@@ -69,10 +69,17 @@
                 <div ng-show="true">
                   <ul class="list-inline text-right">
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
-                            class="btn btn-default"
+                            class="btn btn-primary"
                             ng-click="recordsVM.actionHandler(['self',
-                    'POST'])">{{_('Save')}}</button></li>
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">{{_('Delete')}}</button></li>
+                            'POST'])" style="width: 120px; height: 40px;font-size: 15px"><span class="glyphicon glyphicon-download-alt"></span>
+                         {{_('Save')}}
+                        </button></li>
+                    <li>
+                        <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])" style="width: 120px; height: 40px;font-size: 15px;">
+                            <span class="glyphicon glyphicon-trash"></span>
+                               {{_('Delete')}}
+                        </button>
+                   </li>
                   </ul>
                 </div>
               </div>
@@ -94,10 +101,18 @@
                 <div ng-show="true">
                   <ul class="list-inline text-right">
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
-                            class="btn btn-default"
+                            class="btn btn-primary"
                             ng-click="recordsVM.actionHandler(['self',
-                    'POST'])">{{_('Save')}}</button></li>
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">{{_('Delete')}}</button></li>
+                            'POST'])" style="width: 120px; height: 40px;font-size: 15px"><span class="glyphicon glyphicon-download-alt"></span>
+                            {{_('Save')}}
+                        </button>
+                    </li>
+                    <li>
+                        <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'])" style="width: 120px; height: 40px;font-size: 15px;">
+                               <span class="glyphicon glyphicon-trash"></span>
+                                 {{_('Delete')}}
+                        </button>
+                    </li>
                   </ul>
                 </div>
               </div>

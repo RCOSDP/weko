@@ -1,3 +1,4 @@
+
 {# -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
@@ -290,12 +291,12 @@
                       {% if record | check_permission %}
                           {% if '0' in pubs %}
                            {{_('Public')}}
-                          <button class="btn btn-default btn-xs" type="submit" name="status" value="1">
+                          <button class="btn btn-default btn-xs" type="submit" name="status" value="1" style="width: 100px; height: 40px;font-size:15px">
                             {{_('Change to Private')}}
                           </button>
                           {% else %}
                           {{_('Private')}}
-                          <button class="btn btn-default btn-xs" type="submit" name="status" value="0">
+                          <button class="btn btn-default btn-xs" type="submit" name="status" value="0" style="width: 100px; height: 40px;font-size:15px">
                             {{_('Change to Public')}}
                           </button>
                           {% endif %}
@@ -341,8 +342,8 @@
                     <p>{{ _('Are you sure you want to delete this item?') }}</p>
                   </div>
                   <div class="modal-footer">
-                    <button class="btn btn-primary" ng-click="ok()">{{_('OK')}}</button>
-                    <button class="btn btn-warning" ng-click="cancel()">{{_('Cancel')}}</button>
+                    <button class="btn btn-primary" ng-click="ok()" style="width: 70px; height: 40px;font-size:15px">{{_('OK')}}</button>
+                    <button class="btn btn-warning" ng-click="cancel()" style="width: 70px; height: 40px;font-size:15px">{{_('Cancel')}}</button>
                   </div>
                 </div>
               </div>

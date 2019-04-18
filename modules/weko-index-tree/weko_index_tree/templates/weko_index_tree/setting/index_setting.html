@@ -46,13 +46,18 @@
   <div class="form-group">
     <label for="height" class="control-label col-sm-1">{{_('Height (Pixel)')}}</label>
     <div class="controls col-sm-2">
-      <input type="text" class="form-control" id="height" name="height" value={{ height }}>
+      <input type="text" class="form-control" id="height" name="height"
+                                                          value={{ height }}>
     </div>
   </div>
   <div class="form-actions">
-    <div class="col-sm-offset-1 col-sm-10">
-      <button type="submit" id="index_form_submit" name="submit" value="index_form" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Update') }}</button>
-    </div>
+      <!--<div class="col-sm-offset-1 col-sm-10">-->
+      <button type="submit" id="index_form_submit" name="submit"
+          value="index_form" class="btn btn-primary pull-left" style="width: 120px; height: 40px;font-size: 15px;">
+             <i class="fa fa-edit"></i>
+                 {{ _('Update') }}
+      </button>
+      <!--</div>-->
   </div>
 </form>
 {%- endblock body %}

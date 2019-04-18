@@ -59,7 +59,10 @@
                   {[sub_link_item.item_data.metadata.hasOwnProperty('title')?sub_link_item.item_data.metadata.title[0]:sub_link_item.item_data.metadata['dc:title'][0]]}
                 </div>
                 <div class="col-sm-3 col-md-3 col-lg-3 text-center">
-                  <button type="button" class="btn btn-danger" ng-click="del_link($index)">{{_('Delete')}}</button>
+                  <button type="button" class="btn btn-danger" ng-click="del_link($index)" style="width: 120px; height: 40px;font-size: 15px;">
+                        <span class="glyphicon glyphicon-trash"></span>
+                             {{_('Delete')}}
+                  </button>
                 </div>
               </div>
             </div>
@@ -120,9 +123,12 @@
           <textarea class="form-control" rows="5" id="input-comment" placeholder="" ng-model="comment_data">{{temporary_comment if temporary_comment else ''}}</textarea>
         </div>
       </div>
-      <button type="button" class="btn btn-default" ng-click="btn_save()">{{_('Save')}}</button>
-      <button type="button" class="btn btn-default"
-          ng-click="btn_run()">{{_('Done')}}</button>
+      <button type="button" class="btn btn-primary" ng-click="btn_save()" style="width: 120px; height: 40px;font-size: 15px;">
+             <span class="glyphicon glyphicon-download-alt"></span>
+               {{_('Save')}}
+      </button>
+      <button type="button" class="btn btn-primary"
+          ng-click="btn_run()" style="width: 80px; height: 40px;font-size:15px">{{_('Done')}}</button>
       </div >
       </invenio-search>
     </div>
