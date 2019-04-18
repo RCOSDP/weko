@@ -175,9 +175,9 @@ class ItemTypeName(db.Model, Timestamp):
 
     __table_args__ = (
         db.Index('uq_item_type_name_name', 'name',
-              unique=True,
-              postgresql_where=db.Column('is_active')
-        ),
+                 unique=True,
+                 postgresql_where=db.Column('is_active')
+                 ),
     )
 
     id = db.Column(
