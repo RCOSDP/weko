@@ -1,0 +1,52 @@
+{#
+    # This file is part of WEKO3.
+    # Copyright (C) 2017 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+
+{#%- extends "weko_sitemap/base.html" %#}
+{%- extends admin_base_template %}
+
+{#%- block page_body %#}
+<!--
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"
+    integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
+    crossorigin="anonymous"></script>
+-->
+{%- block javascript %}
+<script src="{{ url_for('static', filename='js/weko-sitemap/sitemap.js') }}"></script>
+{%- endblock javascript %}
+
+{%- block body %}
+<div class="row">
+   <div class="col-sm-6 col-md-6 col-md-6">
+        <div class="col-md-9 col-md-offset-3">
+        <h3>{{_('Sitemaps Generate')}}</h3>
+       </div>
+   </div>
+   <div class="col-sm-6 col-md-6 col-md-6">
+      <div class="pull-center">
+          <button type="button" id="btn-run"  class="btn btn-primary">
+        	  <i class="fa fa-gear"></i>{{_('Run')}}
+          </button>
+      </div>
+   </div>
+</div>
+
+{#%- endblock page_body %#}
+{%- endblock body %}
+
