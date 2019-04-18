@@ -18,12 +18,11 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-from flask import current_app
-
 """API for weko-admin."""
 from invenio_accounts.models import Role
 # from invenio_communities.models import Community
 from invenio_db import db
+from flask import current_app, json
 
 
 from .models import WidgetItem
@@ -75,18 +74,15 @@ class WidgetItems(object):
             data["widget_type"] = widget_items.get('widget_type')
             data["label"] = widget_items.get('label')
             data["label_color"] = widget_items.get('label_color')
-            data["has_frame_border"] = True
-            # data["frame_border"] = data["frame_border"]
+            data["has_frame_border"] = widget_items.get('frame_border')
             data["frame_border_color"] = widget_items.get('frame_border_color')
             data["text_color"] = widget_items.get('text_color')
             data["background_color"] = widget_items.get('background_color')
-            role = cls.get_account_role()
-            data["browsing_role"] = \
-                ",".join(list(map(lambda x: str(x['id']), role)))
-            data["edit_role"] = data["browsing_role"]
-
-            data["is_enabled"] = True
-
+            role = widget_items.get('browsing_role')
+            data["browsing_role"] = ",".join(str(e) for e in role)
+            role = widget_items.get('edit_role')
+            data["edit_role"] = ",".join(str(e) for e in role)
+            data["is_enabled"] = widget_items.get('enable')
 
             _add_widget_item(data)
         # except IntegrityError as ie:
