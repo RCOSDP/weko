@@ -392,7 +392,6 @@
     }
     SaveCommand(event)
     {
-        console.log(this.props.data);
         if (!this.props.data.repository) {
             alert('Repository is required!');
         } else if (!this.props.data.widget_type) {
@@ -446,7 +445,6 @@
       }
   
       getValueOfField(key, value) {
-            console.log(key + ":" + value)
           switch (key)
           {
             case 'repository':
