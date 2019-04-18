@@ -114,7 +114,7 @@ class CreatorSchema(Schema):
 
     def get_suffix_name(self, obj):
         """Get suffix name."""
-        if _get_names_from_obj(obj) is None:
+        if _get_names_from_obj(obj) is not None:
             return _get_names_from_obj(obj)[0]
         else:
             return missing
