@@ -35,7 +35,7 @@ ENV INVENIO_REDIS_HOST=redis
 ENV INVENIO_ELASTICSEARCH_HOST=elasticsearch
 ENV INVENIO_RABBITMQ_HOST=rabbitmq
 ENV INVENIO_WORKER_HOST=127.0.0.1
-
+ 
 # Install Weko web node pre-requisites:
 COPY scripts/provision-web.sh /tmp/
 RUN /tmp/provision-web.sh
