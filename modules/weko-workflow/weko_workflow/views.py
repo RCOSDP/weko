@@ -262,6 +262,25 @@ def display_activity(activity_id=0):
         community_id = request.args.get('community')
         ctx = {'community': comm}
         community_id = comm.id
+    if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
+        session['itemlogin_activity'] = activity_detail
+        session['itemlogin_item'] = item
+        session['itemlogin_steps'] = steps
+        session['itemlogin_action_id'] = action_id
+        session['itemlogin_cur_step'] = cur_step
+        session['itemlogin_temporary_comment'] = temporary_comment
+        session['itemlogin_temporary_journal'] = temporary_journal
+        session['itemlogin_temporary_idf_grant'] = temporary_idf_grant
+        session['itemlogin_temporary_idf_grant_suffix'] = temporary_idf_grant_suffix
+        session['itemlogin_idf_grant_data'] = idf_grant_data
+        session['itemlogin_idf_grant_input'] = IDENTIFIER_GRANT_LIST
+        session['itemlogin_idf_grant_method'] = IDENTIFIER_GRANT_SUFFIX_METHOD
+        session['itemlogin_record'] = approval_record
+        session['itemlogin_step_item_login_url'] = step_item_login_url
+        session['itemlogin_histories'] = histories
+        session['itemlogin_res_check'] = res_check
+        session['itemlogin_pid'] = pid
+        session['itemlogin_community_id'] = community_id
     return render_template(
         'weko_workflow/activity_detail.html',
         activity=activity_detail,
