@@ -427,7 +427,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(ItemType.schema != None)
+                query = query.join(ItemType).filter(ItemType.schema is not None)
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod
