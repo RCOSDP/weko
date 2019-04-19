@@ -58,19 +58,6 @@
                 {% endfor %}
               </select>
             </div>
-<<<<<<< HEAD
-            <a type="button" class="btn btn-primary pull-right" href="{{
-                url_for('weko_itemtypes_ui.custom_property') }}" style="width:
-                150px; height: 40px;font-size:15px;margin: 10px;">
-                      <span class="glyphicon glyphicon-hand-right"></span>
-                            {{ _('Property') }}</a>
-
-            <a type="button" class="btn btn-primary pull-right" href="{{
-                url_for('weko_itemtypes_ui.mapping_index') }}" style="width:
-                150px; height: 40px;font-size:15px;margin: 10px;">
-                       <span class="glyphicon glyphicon-hand-right"></span>
-                            {{ _('Mapping') }}</a>
-=======
             <div class="pull-right">
               {%- set delete_button_class = 'disabled' -%}
               {%- if id -%}
@@ -103,7 +90,6 @@
               <input type="hidden" value="{{_('Cannot delete Item type for Harvesting.')}}" id="msg_for_harvesting">
               <input type="hidden" value="{{_('Cannot delete because there is belonging item.')}}" id="msg_for_belonging_item">
             </div>
->>>>>>> feature/sp7-deleteItemType-dev17
           </div>
         </div>
       </div>
