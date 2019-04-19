@@ -18,11 +18,19 @@
     # MA 02111-1307, USA.
     #}
   
-  {%- extends admin_base_template %}
+  {%- extends 'admin/model/edit.html' %}
   
-  {%- block css %}
-  {{ super() }}
-  {%- endblock css %}
+  {% block css %}
+      {{ super() }}
+    {% endblock css%}
+    
+    {% block edit_form %}
+    {% block toggle_from %}
+    {% endblock %}
+    <input id="repository_id" type="hidden" value="{{repository_id}}" />
+    <input id="widget_type" type="hidden" value="{{widget_type}}" />
+    <div id="root" class="col-xs-12"></div>
+    {% endblock %}
   
   {%- block javascript %}
   {{ super() }}
@@ -35,7 +43,7 @@
             super(props);
             this.state = {
                 repositoryId: '0',
-                selectOptions: []
+                selectOptions: [],
             };
             this.styleRed = {
                 color: 'red',
@@ -50,20 +58,21 @@
                     (result) => {
                         let options = []
                         if(result.options){
-                          options = result.options.map((option) => {
-                              return (
-                                  <option key={option.value} value={option.value}>{option.text}</option>
-                              )
+                            options = result.options.map((option) => {
+                                return (
+                                    <option key={option.value} value={option.value}>{option.text}</option>
+                                )
                           });
                         } else {
-                          options = result.repositories.map((repository) => {
-                              return (
-                                  <option key={repository.id} value={repository.id}>{repository.title}</option>
-                              )
+                            options = result.repositories.map((repository) => {
+                                return (
+                                    <option key={repository.id} value={repository.id}>{repository.title}</option>
+                                )
                           });
                         }
                       this.setState({
-                          selectOptions: options
+                          selectOptions: options,
+                          repositoryId: this.props.data_load
                       });
                     },
     
@@ -102,12 +111,19 @@
         constructor(props) {
             super(props);
             this.state={
-                value:''
+                value:'',
             }
             this.styleRed = {
                 color: 'red',
             };
             this.handleChange = this.handleChange.bind(this);
+        }
+
+        componentDidMount()
+        {
+            this.setState({
+                value: this.props.data_load
+            })
         }
     
         handleChange(event) {
@@ -136,6 +152,13 @@
             };
             this.handleChange = this.handleChange.bind(this);
         }
+
+        componentDidMount()
+        {
+            this.setState({
+                color: this.props.data_load
+            })
+        }
     
         handleChange(event) {
             this.setState({ color: event.target.value });
@@ -159,6 +182,9 @@
         constructor(props) {
             super(props);
             this.handleChange = this.handleChange.bind(this);
+            this.state = {
+                is_default_Checked: this.props.data_load,
+            }
         }
     
         handleChange(event) {
@@ -170,7 +196,7 @@
                 <div className="form-group row">
                     <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
                     <div class="controls col-xs-1">
-                        <input name={this.props.name} type="checkbox" name="FrameBorder" onChange={this.handleChange} defaultChecked/>
+                        <input name={this.props.name} type="checkbox" name="FrameBorder" onChange={this.handleChange} defaultChecked = {this.state.is_default_Checked}/>
                     </div>
                 </div>
             )
@@ -224,13 +250,23 @@
                 .then(res => res.json())
                 .then(
                     (result) => {
+                        let unOptions = [];
                         let options = result.map((option) => {
-                            return (
-                                <option key={option.id} value={option.id}>{option.name}</option>
-                            )
+                            let role_array = this.props.data_load.split(',');
+                            if(role_array.includes(option.id.toString()))
+                            {
+                                return (
+                                    <option key={option.id} value={option.id}>{option.name}</option>
+                                )
+                            }
+                            else{
+                                let innerhtml = <option key={option.id} value={option.id}>{option.name}</option> ;
+                                unOptions.push(innerhtml);
+                            }
                         });
                         this.setState({
-                            selectOptions: options
+                            selectOptions: options,
+                            UnauthorizedOptions : unOptions
                         });
                     },
     
@@ -418,9 +454,9 @@
               .then(res => res.json())
               .then((result) => {
                 if (result.success) {
-                    alert(result.message);
+                    alert('Save Widget successfully!');
                 }else {
-                    alert('Error: ' + result.message);
+                    alert('Some errors is occurs!');
                 }
               });
           }
@@ -442,24 +478,24 @@
         constructor(props) {
             super(props);
             this.state = {
-                repository: '',
-                widget_type: '',
-                label:'',
-                label_color: '#4169E1',
-                frame_border: 'True',
-                frame_border_color: '#4169E1',
-                text_color:'#4169E1',
-                background_color: '#4169E1',
-                browsing_role: [1,2,3,4,99],
-                edit_role: [1,2,3,4,99],
-                enable: 'True'
+                repository: this.props.data_load.repository_id,
+                widget_type: this.props.data_load.widget_type,
+                label:this.props.data_load.label,
+                label_color: this.props.data_load.label_color,
+                frame_border: this.props.data_load.has_frame_border,
+                frame_border_color: this.props.data_load.frame_border_color,
+                text_color:this.props.data_load.text_color,
+                background_color: this.props.data_load.background_color,
+                browsing_role: this.props.data_load.browsing_role,
+                edit_role: this.props.data_load.edit_role,
+                enable: this.props.data_load.is_enabled
             };
             this.style = {
                 "width": ""
             }
             this.getValueOfField = this.getValueOfField.bind(this);
         }
-    
+
         getValueOfField(key, value) {
             switch (key)
             {
@@ -500,40 +536,41 @@
         }
     
         render() {
-            return (
+                return (
                 <div>
+                    <br/>
                     <div className="row">
-                        <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository"/>
+                        <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository}/>
                     </div>
                     <div className="row">
-                        <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding = "widget_type"/>
+                        <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding = "widget_type" data_load={this.state.widget_type}/>
                     </div>
                     <div className="row">
-                        <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding = "label"/>
+                        <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding = "label" data_load={this.state.label}/>
                     </div>
                     <div className="row">
-                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Color" key_binding = "label_color" />
+                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Color" key_binding = "label_color" data_load={this.state.label_color}/>
                     </div>
                     <div className="row">
-                      <ComponentCheckboxField name="Frame Border" getValueOfField={this.getValueOfField} key_binding = "frame_border"/>
+                      <ComponentCheckboxField name="Frame Border" getValueOfField={this.getValueOfField} key_binding = "frame_border" data_load={this.state.frame_border}/>
                     </div>
                     <div className="row">
-                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Frame Border Color" key_binding = "frame_border_color"/>
+                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Frame Border Color" key_binding = "frame_border_color" data_load={this.state.frame_border_color}/>
                     </div>
                     <div className="row">
                       <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Text Color" key_binding = "text_color"/>
                     </div>
                     <div className="row">
-                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding = "background_color"/>
+                      <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding = "background_color" data_load={this.state.background_color}/>
                     </div>
                     <div className="row">
-                      <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Browsing Privilege" authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin/get_account_role" key_binding = "browsing_role"/>
+                      <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Browsing Privilege" authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin/get_account_role" key_binding = "browsing_role" data_load={this.state.browsing_role}/>
                     </div>
                     <div className="row">
-                      <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege" authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect"  url_request="/api/admin/get_account_role" key_binding = "edit_role"/>
+                      <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege" authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect"  url_request="/api/admin/get_account_role" key_binding = "edit_role" data_load={this.state.edit_role}/>
                     </div>
                     <div className="row">
-                      <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" />
+                      <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable}/>
                     </div>
                     <div className="row">
                       <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item"/>
@@ -543,13 +580,41 @@
         }
     }
     
-    ReactDOM.render(
-        <MainLayout />,
-        document.getElementById('root')
-    )
+    function getWidgetItemData()
+    {
+        let repository_id = $("#repository_id").val();
+        let widget_type = $("#widget_type").val();
+        let postData = {
+            'param_repository_id' : repository_id,
+            'param_widget_type' : widget_type,
+        }
+        return $.ajax({
+                    async: false,
+                    url: "/api/admin/load_widget_item",
+                    type: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify(postData),
+                    dataType: 'json',
+                    success: function (data, status) {
+                        ReactDOM.render(
+                            <MainLayout data_load={data.data}/>,
+                            document.getElementById('root')
+                        )
+                    },
+                    error: function (error) {
+                        alert(error);
+                    }
+                });
+    }
+
+
+    $(function () {
+       getWidgetItemData(); 
+
+    });
+
     </script>
   {%- endblock javascript %}
   
-  {%- block body %}
-  <div id="root" class="col-xs-12"></div>
-  {% endblock %}
