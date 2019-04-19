@@ -1151,17 +1151,23 @@ function handleSharePermission(value) {
             let pubDateID = data.pubDate;
             if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
               let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
-              if (titleField[0].hasOwnProperty(titleID[1])) {
-                title = titleField[0][titleID[1]];
-                if (titleField[0].hasOwnProperty(titleID[2]) && titleField[0][titleID[2]]) {
-                  lang = titleField[0][titleID[2]]
+              if (typeof(titleFile) == 'array') {
+                titleField = titleField[0];
+              }
+              if (titleField.hasOwnProperty(titleID[1])) {
+                title = titleField[titleID[1]];
+                if (titleField.hasOwnProperty(titleID[2]) && titleField[titleID[2]]) {
+                  lang = titleField[titleID[2]]
                 }
               }
             }
             if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(pubDateID[0])){
               let pubDateField = $rootScope.recordsVM.invenioRecordsModel[pubDateID[0]];
-              if (pubDateField[0].hasOwnProperty(pubDateID[1]) && pubDateField[0][pubDateID[1]]) {
-                pubDate = pubDateField[0][pubDateID[1]];
+              if (typeof(pubDateField) == 'array'){
+                pubDateField = pubDateField[0];
+              }
+              if (pubDateField.hasOwnProperty(pubDateID[1]) && pubDateField[pubDateID[1]]) {
+                pubDate = pubDateField[pubDateID[1]];
               }
             }
             $rootScope.recordsVM.invenioRecordsModel['title'] = title;
@@ -1176,10 +1182,22 @@ function handleSharePermission(value) {
 
       $scope.updateDataJson = async function () {
         this.genTitleAndPubDate();
-        let next_frame = $('#next-frame').val();
-        if ($scope.is_item_owner) {
-          if (!this.registerUserPermission()) {
-            // Do nothing
+        if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
+          alert('Title is required! Please input title');
+        }else {
+          let next_frame = $('#next-frame').val();
+          if ($scope.is_item_owner) {
+            if (!this.registerUserPermission()) {
+              // Do nothing
+            } else {
+              var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
+              var indexOfLink = str.indexOf("authorLink");
+              if (indexOfLink != -1) {
+                str = str.split(',"authorLink":[]').join('');
+              }
+              $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+              $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
+            }
           } else {
             var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
             var indexOfLink = str.indexOf("authorLink");
@@ -1189,14 +1207,6 @@ function handleSharePermission(value) {
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
-        } else {
-          var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
-          var indexOfLink = str.indexOf("authorLink");
-          if (indexOfLink != -1) {
-            str = str.split(',"authorLink":[]').join('');
-          }
-          $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-          $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
