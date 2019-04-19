@@ -49,7 +49,7 @@ class WidgetSettingView(ModelView):
 
     @expose('/new/', methods=('GET', 'POST'))
     def create_view(self):
-        return self.render(config.WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS)
+        return self.render(config.WEKO_GRIDLAYOUT_ADMIN_CREATE_WIDGET_SETTINGS)
 
     @expose('/edit/', methods=('GET', 'POST'))
     def edit_view(self):
@@ -58,8 +58,13 @@ class WidgetSettingView(ModelView):
         """
 
         id_list = helpers.get_mdict_item_or_list(request.args, 'id')
+        id_list_split = id_list.split(',')
+        repository_id = id_list_split[0]
+        widget_type = id_list_split[1]
 
-        return self.render(config.WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS)
+        return self.render(config.WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS,
+                           repository_id=repository_id,
+                           widget_type=widget_type)
 
     column_list = (
         'repository_id',

@@ -216,4 +216,24 @@ def update_admin_widget_item_setting(data):
     return make_response(
         jsonify({'status': status,
                 'success': success,
-                'message': msg}), status)
+                 'message': msg}), status)
+
+
+def get_widget_item(repository_id, widget_type):
+    data = {
+        'error': '',
+        'data': '',
+    }
+    error = ''
+    widget_data = None
+    try:
+        widget_data = WidgetItem.query.filter_by(
+            repository_id=repository_id, widget_type=widget_type
+            ).one_or_none()
+        widget_data = WidgetItems.parse_result(widget_data)
+    except Exception as e:
+        error = str(e)
+
+    data['error'] = error
+    data['data'] = widget_data
+    return data

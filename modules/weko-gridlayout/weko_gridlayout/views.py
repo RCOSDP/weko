@@ -15,7 +15,8 @@ from flask_login import login_required
 
 from .api import WidgetItems
 from .utils import get_repository_list, get_widget_design_setting, \
-    get_widget_list, update_admin_widget_item_setting
+    get_widget_list, update_admin_widget_item_setting, \
+    get_widget_item
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -127,6 +128,22 @@ def save_widget_item():
         return jsonify(msg='Header Error')
     data = request.get_json()
     return update_admin_widget_item_setting(data)
+
+
+@blueprint_api.route('/load_widget_item', methods=['POST'])
+@login_required
+def load_widget_item():
+    """Save Language List."""
+    if request.headers['Content-Type'] != 'application/json':
+        current_app.logger.debug(request.headers['Content-Type'])
+        return jsonify(msg='Header Error')
+    data = request.get_json()
+    print(data)
+    repository_id = data['param_repository_id']
+    widget_type = data['param_widget_type']
+
+    widget_data = get_widget_item(repository_id, widget_type)
+    return jsonify(widget_data)
 
 
 @blueprint_api.route('/get_account_role', methods=['GET'])
