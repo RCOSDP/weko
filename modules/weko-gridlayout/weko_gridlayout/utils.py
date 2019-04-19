@@ -193,11 +193,16 @@ def update_admin_widget_item_setting(data):
     """
     if not data:
         raise WidgetItemInvalidDataRESTError()
-    if not WidgetItems.create(data):
-        raise WidgetItemAddedRESTError()
+    if WidgetItems.is_existed(data):
+        if not WidgetItems.update(data):
+            raise WidgetItemUpdatedRESTError()
+        msg = 'Widget item updated successfully.'
+    else:
+        if not WidgetItems.create(data):
+            raise WidgetItemAddedRESTError()
+        msg = 'Widget item created successfully.'
 
     status = 201
-    msg = 'Widget item created successfully.'
     success = True
 
     return make_response(
