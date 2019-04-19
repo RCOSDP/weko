@@ -80,7 +80,7 @@
             response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
             extra-params='{"headers":{"Content-Type": "application/json"}}'
             form="{{ schemaform }}"
-            record='{{ record | tojson }}'
+            record='{{ records | tojson }}'
             schema="{{ jsonschema }}">
             <invenio-records-loading
               template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
