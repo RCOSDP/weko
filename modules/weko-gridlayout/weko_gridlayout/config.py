@@ -10,8 +10,11 @@
 WEKO_GRIDLAYOUT_BASE_TEMPLATE = 'weko_gridlayout/base.html'
 """Default base template for the demo page."""
 
-WEKO_GRIDLAYOUT_ADMIN_WIDGET_SETTINGS = \
-    'weko_gridlayout/admin/widget_settings.html'
+WEKO_GRIDLAYOUT_ADMIN_CREATE_WIDGET_SETTINGS = \
+    'weko_gridlayout/admin/create_widget_settings.html'
+
+WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS = \
+    'weko_gridlayout/admin/edit_widget_settings.html'
 """Widget templates."""
 
 WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN = \

@@ -170,3 +170,27 @@ class WidgetItems(object):
             return list(map(_get_dict, role)) + [{"id": 99, "name": "Guest"}]
         except SQLAlchemyError:
             return
+
+
+    @classmethod
+    def parse_result(cls, in_result):
+        """
+        parse data to format which can be send to client
+        
+        Arguments:
+            in_result {WidgetItems} -- [data need to be parse]
+        """
+        record = dict()
+        record['repository_id'] = in_result.repository_id
+        record['widget_type'] = in_result.widget_type
+        record['label'] = in_result.label
+        record['label_color'] = in_result.label_color
+        record['has_frame_border'] = in_result.has_frame_border
+        record['frame_border_color'] = in_result.frame_border_color
+        record['text_color'] = in_result.text_color
+        record['background_color'] = in_result.background_color
+        record['browsing_role'] = in_result.browsing_role
+        record['edit_role'] = in_result.edit_role
+        record['is_enabled'] = in_result.is_enabled
+
+        return record
