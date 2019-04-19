@@ -24,15 +24,33 @@
   {{ super() }}
 {%- endblock css %}
 
+{%- block page_header %}
+{%- endblock page_header %}
+
+{%- block page_footer %}
+{%- endblock page_footer %}
+
 {%- block page_body %}
 <div class="container-fluid">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-10">
       <div class="panel panel-warning">
+        {%- if 'no_itemtype' == error_type %}
         <div class="panel-body">
           {{_('You do not even have an itemtype.')}}<br>
           {{_('Go to')}} <a href="{{ url_for('weko_itemtypes_ui.index') }}">{{_('Register Itemtype')}}</a>!
         </div>
+        {%- endif %}
+        {%- if 'item_login_success' == error_type %}
+        <div class="panel-body">
+          {{_('item login success')}}
+        </div>
+        {%- endif %}
+        {%- if 'item_login_error' == error_type %}
+        <div class="panel-body">
+          {{_('item login fail')}}
+        </div>
+        {%- endif %}
       </div>
     </div>
   </div>

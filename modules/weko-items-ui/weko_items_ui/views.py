@@ -188,7 +188,7 @@ def iframe_success():
     :return: The rendered template.
     """
     return render_template('weko_items_ui/iframe/error.html',
-                            error_type='item_login_success')
+                           error_type='item_login_success')
 
 
 @blueprint.route('/iframe/error', methods=['GET'])
@@ -198,7 +198,7 @@ def iframe_error():
     :return: The rendered template.
     """
     return render_template('weko_items_ui/iframe/error.html',
-                            error_type='item_login_error')
+                           error_type='item_login_error')
 
 
 # @blueprint.route("/edit/<int:pid>", methods=['GET'])

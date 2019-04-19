@@ -39,6 +39,7 @@ from weko_deposit.api import WekoRecord
 from weko_index_tree.models import Index
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
+from weko_items_ui.api import item_login
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
@@ -177,6 +178,8 @@ def display_activity(activity_id=0):
             current_app.logger.exception(str(ex))
             item = None
 
+    session['test'] = 'test'
+
     steps = activity.get_activity_steps(activity_id)
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
@@ -243,6 +246,13 @@ def display_activity(activity_id=0):
     step_item_login_url = None
     approval_record = []
     pid = None
+    record = {}
+    need_file = False
+    json_schema = ''
+    schema_form = ''
+    item_save_uri = ''
+    files = []
+    endpoints = {}
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -252,15 +262,19 @@ def display_activity(activity_id=0):
             commond=''
         )
         session['activity_info'] = activity_session
-        step_item_login_url = url_for(
-            'weko_items_ui.iframe_index',
+        step_item_login_url, need_file, record, json_schema, \
+            schema_form, item_save_uri, files, endpoints = item_login(
             item_type_id=workflow_detail.itemtype_id)
-        if item:
+        """step_item_login_url = url_for(
+            'weko_items_ui.iframe_index',
+            item_type_id=workflow_detail.itemtype_id)"""
+        """if item:
+            current_app.logger.debug(item)
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
             step_item_login_url = url_for(
                 'invenio_deposit_ui.iframe_depid',
-                pid_value=pid_identifier.pid_value)
+                pid_value=pid_identifier.pid_value)"""
     # if 'approval' == action_endpoint:
     if item:
         pid_identifier = PersistentIdentifier.get_by_object(
@@ -314,7 +328,15 @@ def display_activity(activity_id=0):
         idf_grant_input=IDENTIFIER_GRANT_LIST,
         idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
         record=approval_record,
+        records=record,
         step_item_login_url=step_item_login_url,
+        need_file=need_file,
+        jsonschema=json_schema,
+        schemaform=schema_form,
+        id=workflow_detail.itemtype_id,
+        item_save_uri=item_save_uri,
+        files=files,
+        endpoints=endpoints,
         histories=histories,
         res_check=res_check,
         pid=pid,
