@@ -443,12 +443,15 @@ class WorkActivity(object):
             # Lock thread to check the id of existing activities until the new activity is created
             self.lock.acquire()
 
+            # Activity Id's format
+            activity_id_format = current_app.config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
+
             # A-YYYYMMDD-NNNNN (NNNNN starts from 00001)
             datetime_str = datetime.utcnow().strftime("%Y%m%d")
 
             # Get the list of activities of day
             activities = self.get_all_activity_list(community_id)
-            datetime_prefix = 'A-{}-'.format(datetime_str)
+            datetime_prefix = activity_id_format.format(datetime_str, '')
             activities = [activity for activity in activities
                           if activity.activity_id.startswith(datetime_prefix)]
 
@@ -465,10 +468,10 @@ class WorkActivity(object):
                             # Found
                             number = n
                 # Define activity Id of day
-                activity_id = 'A-{}-{inc:05d}'.format(datetime_str, inc=number + 1)
+                activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=number + 1))
             else:
                 # The default activity Id of the current day
-                activity_id = 'A-{}-00001'.format(datetime_str)
+                activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=1))
 
             from invenio_pidstore.models import PersistentIdentifier, PIDStatus
             aid = PersistentIdentifier.create(
