@@ -188,7 +188,25 @@ def iframe_success():
     :return: The rendered template.
     """
     return render_template('weko_items_ui/iframe/error.html',
-                           error_type='item_login_success')
+                            error_type='item_login_success',
+                            activity=session['itemlogin_activity'],
+                            item=session['itemlogin_item'],
+                            steps=session['itemlogin_steps'],
+                            action_id=session['itemlogin_action_id'],
+                            cur_step=session['itemlogin_cur_step'],
+                            temporary_comment=session['itemlogin_temporary_comment'],
+                            temporary_journal=session['itemlogin_temporary_journal'],
+                            temporary_idf_grant=session['itemlogin_temporary_idf_grant'],
+                            temporary_idf_grant_suffix=session['itemlogin_temporary_idf_grant_suffix'],
+                            idf_grant_data=session['itemlogin_idf_grant_data'],
+                            idf_grant_input=session['itemlogin_idf_grant_input'],
+                            idf_grant_method=session['itemlogin_idf_grant_method'],
+                            record=session['itemlogin_record'],
+                            step_item_login_url=session['itemlogin_step_item_login_url'],
+                            histories=session['itemlogin_histories'],
+                            res_check=session['itemlogin_res_check'],
+                            pid=session['itemlogin_pid'],
+                            community_id=session['itemlogin_community_id'])
 
 
 @blueprint.route('/iframe/error', methods=['GET'])
@@ -198,7 +216,25 @@ def iframe_error():
     :return: The rendered template.
     """
     return render_template('weko_items_ui/iframe/error.html',
-                           error_type='item_login_error')
+                            error_type='item_login_error',
+                            activity=session['itemlogin_activity'],
+                            item=session['itemlogin_item'],
+                            steps=session['itemlogin_steps'],
+                            action_id=session['itemlogin_action_id'],
+                            cur_step=session['itemlogin_cur_step'],
+                            temporary_comment=session['itemlogin_temporary_comment'],
+                            temporary_journal=session['itemlogin_temporary_journal'],
+                            temporary_idf_grant=session['itemlogin_temporary_idf_grant'],
+                            temporary_idf_grant_suffix=session['itemlogin_temporary_idf_grant_suffix'],
+                            idf_grant_data=session['itemlogin_idf_grant_data'],
+                            idf_grant_input=session['itemlogin_idf_grant_input'],
+                            idf_grant_method=session['itemlogin_idf_grant_method'],
+                            record=session['itemlogin_record'],
+                            step_item_login_url=session['itemlogin_step_item_login_url'],
+                            histories=session['itemlogin_histories'],
+                            res_check=session['itemlogin_res_check'],
+                            pid=session['itemlogin_pid'],
+                            community_id=session['itemlogin_community_id'])
 
 
 # @blueprint.route("/edit/<int:pid>", methods=['GET'])
