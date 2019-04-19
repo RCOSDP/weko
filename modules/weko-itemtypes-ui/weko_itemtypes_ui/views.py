@@ -22,13 +22,14 @@
 
 import sys
 
-from flask import Blueprint, Flask, abort, current_app, flash, json, jsonify, \
-    make_response, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, json, jsonify, redirect, \
+    render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from weko_records.api import ItemTypeProps, ItemTypes, Mapping
+from weko_records.api import ItemsMetadata, ItemTypeNames, ItemTypeProps, \
+    ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
 
 from .permissions import item_type_permission
@@ -60,6 +61,17 @@ def index(item_type_id=0):
     :param item_type_id: Item type i. Default 0.
     """
     lists = ItemTypes.get_latest()
+    # Check that item type is already registered to an item or not
+    for list in lists:
+        # Get all versions
+        all_records = ItemTypes.get_records_by_name_id(name_id=list.id)
+        list.belonging_item_flg = False
+        for item in all_records:
+            metaDataRecords = ItemsMetadata.get_by_item_type_id(
+                item_type_id=item.id)
+            list.belonging_item_flg = len(metaDataRecords) > 0
+            if list.belonging_item_flg:
+                break
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE'],
         lists=lists,
@@ -336,3 +348,51 @@ def mapping_register():
         db.session.rollback()
         return jsonify(msg=_('Fail'))
     return jsonify(msg=_('Success'))
+
+
+@blueprint.route('/delete', methods=['POST'])
+@blueprint.route('/delete/', methods=['POST'])
+@blueprint.route('/delete/<int:item_type_id>', methods=['POST'])
+@login_required
+@item_type_permission.require(http_exception=403)
+def delete_itemtype(item_type_id=0):
+    """Soft-delete an item type."""
+    if item_type_id > 0:
+        record = ItemTypes.get_record(id_=item_type_id)
+        if record is not None:
+            # Check harvesting_type
+            if record.model.harvesting_type:
+                return jsonify(code=-1,
+                               msg=_('Cannot delete Item type for Harvesting.'))
+            # Get all versions
+            all_records = ItemTypes.get_records_by_name_id(
+                name_id=record.model.name_id)
+            # Check that item type is already registered to an item or not
+            for item in all_records:
+                metaDataRecords = ItemsMetadata.get_by_item_type_id(
+                    item_type_id=item.id)
+                if len(metaDataRecords) > 0:
+                    return jsonify(code=-1,
+                                   msg=_('Cannot delete because there is belonging item.'))
+            # Get item type name
+            item_type_name = ItemTypeNames.get_record(id_=record.model.name_id)
+            if all_records and item_type_name:
+                try:
+                    # Delete item type name
+                    ItemTypeNames.delete(item_type_name)
+                    # Delete item typea
+                    for k in all_records:
+                        k.delete()
+                    db.session.commit()
+                except BaseException:
+                    db.session.rollback()
+                    current_app.logger.error('Unexpected error: ',
+                                             sys.exc_info()[0])
+                    return jsonify(code=-1,
+                                   msg=_('Failed to delete Item type.'))
+
+                current_app.logger.debug(
+                    'Itemtype delete: {}'.format(item_type_id))
+                return jsonify(code=0, msg=_('Deleted Item type successfully.'))
+
+    return jsonify(code=-1, msg=_('An error has occurred.'))
