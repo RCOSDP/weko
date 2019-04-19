@@ -20,6 +20,9 @@
 
 """Configuration for weko-items-ui."""
 
+WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
+"""Default base template for the demo page."""
+
 WEKO_ITEMS_UI_BASE_TEMPLATE = 'weko_items_ui/base.html'
 """Default base template for the item page."""
 

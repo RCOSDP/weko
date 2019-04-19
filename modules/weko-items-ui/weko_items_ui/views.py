@@ -368,7 +368,25 @@ def iframe_items_index(pid_value=0):
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 pid_value=pid_value,
-                action=action)
+                action=action,
+                activity=session['itemlogin_activity'],
+                item=session['itemlogin_item'],
+                steps=session['itemlogin_steps'],
+                action_id=session['itemlogin_action_id'],
+                cur_step=session['itemlogin_cur_step'],
+                temporary_comment=session['itemlogin_temporary_comment'],
+                temporary_journal=session['itemlogin_temporary_journal'],
+                temporary_idf_grant=session['itemlogin_temporary_idf_grant'],
+                temporary_idf_grant_suffix=session['itemlogin_temporary_idf_grant_suffix'],
+                idf_grant_data=session['itemlogin_idf_grant_data'],
+                idf_grant_input=session['itemlogin_idf_grant_input'],
+                idf_grant_method=session['itemlogin_idf_grant_method'],
+                record=session['itemlogin_record'],
+                step_item_login_url=session['itemlogin_step_item_login_url'],
+                histories=session['itemlogin_histories'],
+                res_check=session['itemlogin_res_check'],
+                pid=session['itemlogin_pid'],
+                community_id=session['itemlogin_community_id'])
 
         if request.headers['Content-Type'] != 'application/json':
             flash(_('invalide request'), 'error')
