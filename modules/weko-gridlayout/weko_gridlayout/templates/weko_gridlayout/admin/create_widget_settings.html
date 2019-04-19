@@ -18,11 +18,17 @@
     # MA 02111-1307, USA.
     #}
   
-  {%- extends admin_base_template %}
-  
-  {%- block css %}
-  {{ super() }}
-  {%- endblock css %}
+    {% extends 'admin/model/create.html' %}
+    
+    {% block css %}
+      {{ super() }}
+    {% endblock css%}
+    
+    {% block create_form %}
+    {% block toggle_from %}
+    {% endblock %}
+    <div id="root" class="col-xs-12"></div>
+    {% endblock %}
   
   {%- block javascript %}
   {{ super() }}
@@ -418,9 +424,9 @@
               .then(res => res.json())
               .then((result) => {
                 if (result.success) {
-                    alert(result.message);
+                    alert('Save Widget successfully!');
                 }else {
-                    alert('Error: ' + result.message);
+                    alert('Some errors is occurs!');
                 }
               });
           }
@@ -502,6 +508,7 @@
         render() {
             return (
                 <div>
+                    <br/>
                     <div className="row">
                         <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository"/>
                     </div>
@@ -550,6 +557,3 @@
     </script>
   {%- endblock javascript %}
   
-  {%- block body %}
-  <div id="root" class="col-xs-12"></div>
-  {% endblock %}
