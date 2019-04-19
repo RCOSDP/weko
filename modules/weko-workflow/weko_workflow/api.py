@@ -467,8 +467,11 @@ class WorkActivity(object):
                         if n > number:
                             # Found
                             number = n
+                number = number + 1
+                if number > 99999:
+                    raise IndexError('The number is out of range (maximum is 99999, current is {}'.format(number))
                 # Define activity Id of day
-                activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=number + 1))
+                activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=number))
             else:
                 # The default activity Id of the current day
                 activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=1))
@@ -515,6 +518,14 @@ class WorkActivity(object):
                         action_status=ActionStatusPolicy.ACTION_DONE,
                     )
                     db.session.add(db_activity_action)
+
+        except IndexError as ex:
+            current_app.logger.exception(str(ex))
+
+            # Release the lock
+            self.lock.release()
+
+            return None
 
         except Exception as ex:
             db.session.rollback()
