@@ -24,7 +24,7 @@ import json
 from flask import jsonify, make_response
 
 from .api import WidgetItems
-from .errors import WidgetItemAddedRESTError, WidgetItemInvalidDataRESTError
+# from .errors import WidgetItemAddedRESTError, WidgetItemInvalidDataRESTError
 from .models import WidgetDesignSetting, WidgetItem, WidgetType
 
 
@@ -191,19 +191,27 @@ def update_admin_widget_item_setting(data):
     :param: widget item data
     :return: options json
     """
-    if not data:
-        raise WidgetItemInvalidDataRESTError()
-    if WidgetItems.is_existed(data):
-        if not WidgetItems.update(data):
-            raise WidgetItemUpdatedRESTError()
-        msg = 'Widget item updated successfully.'
-    else:
-        if not WidgetItems.create(data):
-            raise WidgetItemAddedRESTError()
-        msg = 'Widget item created successfully.'
-
     status = 201
     success = True
+
+    if not data:
+        # raise WidgetItemInvalidDataRESTError()
+        success = False
+        msg = 'Invalid data.'
+    if WidgetItems.is_existed(data):
+        if not WidgetItems.update(data):
+            # raise WidgetItemUpdatedRESTError()
+            success = False
+            msg = 'Update widget item fail.'
+        else:
+            msg = 'Widget item updated successfully.'
+    else:
+        if not WidgetItems.create(data):
+            # raise WidgetItemAddedRESTError()
+            success = False
+            msg = 'Create widget item fail.'
+        else:
+            msg = 'Widget item created successfully.'
 
     return make_response(
         jsonify({'status': status,
