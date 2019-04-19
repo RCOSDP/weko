@@ -756,3 +756,42 @@ def convert_html_escape(text):
         pass
 
     return text
+
+
+def get_title_pubdate_path(item_type_id):
+    result = {
+        'title': '',
+        'pubDate': ''
+    }
+    item_type_mapping = Mapping.get_record(item_type_id)
+    title = list()
+    pubDate = list()
+    for k, v in item_type_mapping.items():
+        jpcoar = v.get("jpcoar_mapping")
+        if isinstance(jpcoar, dict):
+            if 'title' in jpcoar.keys():
+                try:
+                    if (str(k).index('item') is not None):
+                        title.append(k)
+                        titleValue = jpcoar['title']
+                        print(titleValue)
+                        if '@value' in titleValue.keys():
+                            title.append(titleValue['@value'])
+                        if '@attributes' in titleValue.keys():
+                            title_lang = titleValue['@attributes']
+                            if 'xml:lang' in title_lang.keys():
+                                title.append(title_lang['xml:lang'])
+                except Exception:
+                    pass
+            elif 'date' in jpcoar.keys():
+                try:
+                    if (str(k).index('item') is not None):
+                        pubDate.append(k)
+                        titleValue = jpcoar['date']
+                        if '@value' in titleValue.keys():
+                            pubDate.append(titleValue['@value'])
+                except Exception:
+                    pass
+    result['title'] = title
+    result['pubDate'] = pubDate
+    return result

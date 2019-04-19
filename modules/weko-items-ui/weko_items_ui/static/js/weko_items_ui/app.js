@@ -279,8 +279,6 @@ function handleSharePermission(value) {
       $scope.filemeta_key = '';
       $scope.filemeta_form_idx = -1;
       $scope.is_item_owner = false;
-      $scope.itemTitle = "";
-      $scope.itemTitleID = "";
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_key.length > 0) {
           return $scope.filemeta_key;
@@ -661,8 +659,6 @@ function handleSharePermission(value) {
                         {
                           this.setValueToField(this.dictValue(sub_id, '@value'), this.getAutoFillValue(this.dictValue(sub_resultId, '@value')));
                           this.setValueToField(this.dictValue(sub_id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'xml:lang')));
-                          $scope.itemTitle = this.getAutoFillValue(this.dictValue(sub_resultId, '@value'));
-                          $scope.itemTitleID = this.dictValue(sub_id, '@value');
                           break;
                         }
                         else
@@ -678,8 +674,6 @@ function handleSharePermission(value) {
                     if (resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                      $scope.itemTitle = this.getAutoFillValue(this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                      $scope.itemTitleID = this.dictValue(id, '@value');
                     } else {
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
@@ -1127,8 +1121,61 @@ function handleSharePermission(value) {
         return result;
       }
 
+      $scope.defaultDate = function() {
+        let currentDate = new Date(),
+        month = '' + (currentDate.getMonth() + 1),
+        day = '' + currentDate.getDate(),
+        year = currentDate.getFullYear();
+
+        if (month.length < 2) {
+          month = '0' + month;
+        }
+        if (day.length < 2) {
+          day = '0' + day;
+        }
+        return [year, month, day].join('-');
+      }
+
+      $scope.genTitleAndPubDate = function() {
+        let itemTypeId = $("#autofill_item_type_id").val();
+        let get_url = '/api/autofill/get_title_pubdate_id/'+itemTypeId;
+        $.ajax({
+          url: get_url,
+          method: 'GET',
+          async: false,
+          success: (data, status) => {
+            let title = "";
+            let lang = "en";
+            let pubDate = this.defaultDate();
+            let titleID = data.title;
+            let pubDateID = data.pubDate;
+            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
+              let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
+              if (titleField[0].hasOwnProperty(titleID[1])) {
+                title = titleField[0][titleID[1]];
+                if (titleField[0].hasOwnProperty(titleID[2]) && titleField[0][titleID[2]]) {
+                  lang = titleField[0][titleID[2]]
+                }
+              }
+            }
+            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(pubDateID[0])){
+              let pubDateField = $rootScope.recordsVM.invenioRecordsModel[pubDateID[0]];
+              if (pubDateField[0].hasOwnProperty(pubDateID[1]) && pubDateField[0][pubDateID[1]]) {
+                pubDate = pubDateField[0][pubDateID[1]];
+              }
+            }
+            $rootScope.recordsVM.invenioRecordsModel['title'] = title;
+            $rootScope.recordsVM.invenioRecordsModel['pubdate'] = pubDate;
+            $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+          },
+          error: function(data, status) {
+            alert('Cannot connect to server!');
+          }
+        });
+      }
+
       $scope.updateDataJson = async function () {
-        $rootScope.recordsVM.invenioRecordsModel['title'] = ($scope.itemTitleID) ? $('#'+$scope.itemTitleID).val() : $scope.itemTitle;
+        this.genTitleAndPubDate();
         let next_frame = $('#next-frame').val();
         if ($scope.is_item_owner) {
           if (!this.registerUserPermission()) {
