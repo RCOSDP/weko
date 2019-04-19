@@ -140,13 +140,31 @@ def iframe_index(item_type_id=0):
         return render_template(
             'weko_items_ui/iframe/item_edit.html',
             need_file=need_file,
-            record=record,
+            records=record,
             jsonschema=json_schema,
             schemaform=schema_form,
             id=item_type_id,
             item_save_uri=url_for('.iframe_save_model'),
             files=files,
-            endpoints=endpoints
+            endpoints=endpoints,
+            activity=session['itemlogin_activity'],
+            item=session['itemlogin_item'],
+            steps=session['itemlogin_steps'],
+            action_id=session['itemlogin_action_id'],
+            cur_step=session['itemlogin_cur_step'],
+            temporary_comment=session['itemlogin_temporary_comment'],
+            temporary_journal=session['itemlogin_temporary_journal'],
+            temporary_idf_grant=session['itemlogin_temporary_idf_grant'],
+            temporary_idf_grant_suffix=session['itemlogin_temporary_idf_grant_suffix'],
+            idf_grant_data=session['itemlogin_idf_grant_data'],
+            idf_grant_input=session['itemlogin_idf_grant_input'],
+            idf_grant_method=session['itemlogin_idf_grant_method'],
+            record=session['itemlogin_record'],
+            step_item_login_url=session['itemlogin_step_item_login_url'],
+            histories=session['itemlogin_histories'],
+            res_check=session['itemlogin_res_check'],
+            pid=session['itemlogin_pid'],
+            community_id=session['itemlogin_community_id']
         )
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
