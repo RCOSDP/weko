@@ -418,7 +418,7 @@
               .then(res => res.json())
               .then((result) => {
                 if (result.success) {
-                    alert('Save Widget successfully!');
+                    alert(result.message);
                 }else {
                     alert('Some errors is occurs!');
                 }

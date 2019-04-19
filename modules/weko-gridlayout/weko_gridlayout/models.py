@@ -84,7 +84,7 @@ class WidgetItem(db.Model):
     widget_type = db.Column(db.String(100), db.ForeignKey(WidgetType.type_id),
                             nullable=False, primary_key=True)
 
-    label = db.Column(db.String(100), default="")
+    label = db.Column(db.String(100), nullable=False, primary_key=True)
 
     label_color = db.Column(db.String(7), default="")
 
@@ -115,24 +115,26 @@ class WidgetItem(db.Model):
     """WidgetType relationship."""
 
     @classmethod
-    def get(cls, repo_id, type_id):
+    def get(cls, repo_id, type_id, lbl):
         """Get a widget item."""
         return cls.query.filter_by(repository_id=repo_id,
-                                   widget_type=type_id).one_or_none()
+                                   widget_type=type_id,
+                                   label=lbl).one_or_none()
 
     @classmethod
-    def update(cls, repo_id, type_id, **data):
+    def update(cls, repo_id, type_id, lbl, **data):
         """
         Update the widget item detail info.
 
         :param repo_id: Identifier of the repository.
         :param type_id: Identifier of the widget type.
+        :param lbl: label of the widget type.
         :param data: new widget item info for update.
         :return: Updated widget item info
         """
         try:
             with db.session.begin_nested():
-                widget_item = cls.get(repo_id, type_id)
+                widget_item = cls.get(repo_id, type_id, lbl)
                 if not widget_item:
                     return
 

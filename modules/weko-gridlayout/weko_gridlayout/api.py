@@ -52,6 +52,31 @@ class WidgetItems(object):
     #         raise
     #     return cls
     @classmethod
+    def build_object(cls, widget_items=None):
+        if not isinstance(widget_items, dict):
+            return
+        data = dict()
+        try:
+            data["repository_id"] = widget_items.get('repository')
+            data["widget_type"] = widget_items.get('widget_type')
+            data["label"] = widget_items.get('label')
+            data["label_color"] = widget_items.get('label_color')
+            data["has_frame_border"] = widget_items.get('frame_border')
+            data["frame_border_color"] = widget_items.get('frame_border_color')
+            data["text_color"] = widget_items.get('text_color')
+            data["background_color"] = widget_items.get('background_color')
+            role = widget_items.get('browsing_role')
+            data["browsing_role"] = ",".join(str(e) for e in role)
+            role = widget_items.get('edit_role')
+            data["edit_role"] = ",".join(str(e) for e in role)
+            data["is_enabled"] = widget_items.get('enable')
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            return
+        return data
+
+
+    @classmethod
     def create(cls, widget_items=None):
         """Create the widget_items. Delete all widget_items before creation.
 
@@ -67,23 +92,9 @@ class WidgetItems(object):
         if not isinstance(widget_items, dict):
             return
 
-        data = dict()
+        data = cls.build_object(widget_items)
         is_ok = True
         try:
-            data["repository_id"] = widget_items.get('repository')
-            data["widget_type"] = widget_items.get('widget_type')
-            data["label"] = widget_items.get('label')
-            data["label_color"] = widget_items.get('label_color')
-            data["has_frame_border"] = widget_items.get('frame_border')
-            data["frame_border_color"] = widget_items.get('frame_border_color')
-            data["text_color"] = widget_items.get('text_color')
-            data["background_color"] = widget_items.get('background_color')
-            role = widget_items.get('browsing_role')
-            data["browsing_role"] = ",".join(str(e) for e in role)
-            role = widget_items.get('edit_role')
-            data["edit_role"] = ",".join(str(e) for e in role)
-            data["is_enabled"] = widget_items.get('enable')
-
             _add_widget_item(data)
         # except IntegrityError as ie:
         #     if 'uix_position' in ''.join(ie.args):
@@ -109,6 +120,17 @@ class WidgetItems(object):
         return is_ok
 
     @classmethod
+    def update(cls, widget_items):
+        data = cls.build_object(widget_items)
+        if not data:
+            return False
+        widget_item = WidgetItem.update(widget_items.get('repository'),
+                                        widget_items.get('widget_type'),
+                                        widget_items.get('label'),
+                                        **data)
+        return (widget_item is not None)
+
+    @classmethod
     def get_all_widget_items(cls):
         """
         Get all widget items in widget_item table.
@@ -116,6 +138,16 @@ class WidgetItems(object):
         :return: List of widget item objects.
         """
         return db.session.query(WidgetItem).all()
+
+
+    @classmethod
+    def is_existed(cls, widget_items):
+        if not isinstance(widget_items, dict):
+            return False
+        widget_item = WidgetItem.get(widget_items.get('repository'),
+                                        widget_items.get('widget_type'),
+                                        widget_items.get('label'))
+        return (widget_item is not None)
 
 
     @classmethod
