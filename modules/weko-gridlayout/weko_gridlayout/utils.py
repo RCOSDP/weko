@@ -24,7 +24,6 @@ import json
 from flask import jsonify, make_response
 
 from .api import WidgetItems
-# from .errors import WidgetItemAddedRESTError, WidgetItemInvalidDataRESTError
 from .models import WidgetDesignSetting, WidgetItem, WidgetType
 
 

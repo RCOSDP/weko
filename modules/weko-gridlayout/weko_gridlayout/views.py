@@ -15,8 +15,8 @@ from flask_login import login_required
 
 from .api import WidgetItems
 from .utils import get_repository_list, get_widget_design_setting, \
-    get_widget_list, update_admin_widget_item_setting, \
-    get_widget_item
+    get_widget_item, get_widget_list, get_widget_type_list, \
+    update_admin_widget_item_setting, update_widget_design_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -114,7 +114,6 @@ def save_widget_layout_setting():
 @login_required
 def load_widget_type():
     """Get Widget Type List."""
-    from .utils import get_widget_type_list
     results = get_widget_type_list()
     return jsonify(results)
 
