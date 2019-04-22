@@ -20,6 +20,11 @@
 
 {%- extends admin_base_template %}
 
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
 {%- block body %}
 <div class="row">
   <div class="col-sm-offset-2">
@@ -63,18 +68,18 @@
         <div class="form-group">
           <div class="col-sm-offset-3 col-sm-9">
             {%- if flow_id == '0' %}
-            <button type="button" class="btn btn-primary" id="btn-new-flow" style="width: 120px; height: 40px;font-size: 15px">
+            <button type="button" class="btn btn-primary save-button" id="btn-new-flow">
               <span class="glyphicon glyphicon-download-alt"
                   aria-hidden="true"></span>
                   {{_('Save')}}
             </button>
             {%- else %}
-            <button type="button" class="btn btn-primary" id="btn-upt-flow" style="width: 120px; height: 40px;font-size: 15px;">
+            <button type="button" class="btn btn-primary edit-button" id="btn-upt-flow">
               <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
                      {{_('Edit')}}
             </button>
             {% endif %}
-            <button type="button" class="btn btn-danger" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %} style="width: 120px; height: 40px;font-size: 15px;">
+            <button type="button" class="btn btn-danger delete-button" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
               <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
                    {{_('Delete')}}
             </button>
@@ -90,9 +95,10 @@
 <div class="row">
   <div class="col-sm-offset-2 col-sm-8">
     <label>{{_('Action List')}}</label><br>
-    <a href="{{url_for('flowsetting.action')}}" class="btn btn-light hide" id="btn_more_action" style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">
+    <a href="{{url_for('flowsetting.action')}}" class="btn btn-light hide
+        more-big-button" id="btn_more_action">
       <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('More Action')}}</a>
-    <button class="btn btn-primary pull-right" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %} style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">
+    <button class="btn btn-primary pull-right more-big-button" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
       <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
              {{_('More Action')}}
     </button><br/><br/><br/>
@@ -169,9 +175,9 @@
 </div>
 <div class="row">
   <div class="col-sm-offset-2 col-sm-8">
-   <button type="button" class="btn btn-info" id="btn_back" style="width: 80px; height: 40px;font-size: 15px;">
+   <button type="button" class="btn btn-info back-button" id="btn_back">
       <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
-  <button type="button" class="btn btn-primary pull-right" id="btn_submit" data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %} style="width: 150px; height: 40px;font-size: 15px;">
+  <button type="button" class="btn btn-primary pull-right save-flow-button" id="btn_submit" data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
       <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
                 {{_('Save Flow')}}
     </button>

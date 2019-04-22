@@ -95,15 +95,15 @@
       </div>
       <div class="row">
         <div class="col-sm-9 col-md-9">
-          <a ng-hide="!display_flg" class="btn btn-primary btn-sm" ng-click="itemManagementEdit()"  style="width: 120px; height: 40px;font-size: 15px;">
+          <a ng-hide="!display_flg" class="btn btn-primary edit-button" ng-click="itemManagementEdit()">
             <span class="glyphicon glyphicon-edit"></span> 
             {{ _("Edit") }}</a>
         </div>
         <div class="col-sm-3 col-md-3">
-          <a ng-hide="display_flg" class="btn btn-primary" ng-click="itemManagementSave()" style="width: 120px; height: 40px;font-size: 15px;">
+          <a ng-hide="display_flg" class="btn btn-primary save-button" ng-click="itemManagementSave()">
              <span class="glyphicon glyphicon-download-alt"></span>
             {{ _('Save') }}</a>
-          <a ng-hide="display_flg" class="btn btn-info" ng-click="itemManagementCancel()" style="width: 100px; height: 40px;font-size:15px">
+          <a ng-hide="display_flg" class="btn btn-info cancel-button" ng-click="itemManagementCancel()">
             <span class="glyphicon glyphicon-remove"></span>
             {{ _('Cancel') }}</a>
         </div>

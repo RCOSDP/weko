@@ -109,11 +109,11 @@
     </tbody>
     </table>
     {%-if community%}
-      <a class="btn btn-light pull-right" href="{{url_for('weko_workflow.new_activity', community=community.id)}}" style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">
+      <a class="btn btn-light pull-right add-big-button" href="{{url_for('weko_workflow.new_activity', community=community.id)}}">
             <span class="glyphicon glyphicon-plus"></span>
               {{_('New Activity')}}</a>
     {%-else%}
-      <a class="btn btn-light pull-right" href="{{url_for('weko_workflow.new_activity')}}"  style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">
+      <a class="btn btn-light pull-right add-big-button" href="{{url_for('weko_workflow.new_activity')}}">
            <span class="glyphicon glyphicon-plus"></span>
                {{_('New Activity')}}</a>
     {%- endif%}

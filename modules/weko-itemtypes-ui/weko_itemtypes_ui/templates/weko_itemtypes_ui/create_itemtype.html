@@ -58,22 +58,24 @@
                 {% endfor %}
               </select>
             </div>
+
             <div class="pull-right">
               {%- set delete_button_class = 'disabled' -%}
               {%- if id -%}
               {%- set delete_button_class = '' -%}
               {%- endif -%}
-              <a role="button" class="btn btn-primary" href="{{
+              <a role="button" class="btn btn-primary pull-right mapping-button ten-pixel-margin" href="{{
                   url_for('weko_itemtypes_ui.mapping_index') }}">
                   <span class="glyphicon glyphicon-hand-right"></span>
                   {{ _('Mapping') }}
               </a>
-              <a role="button" class="btn btn-primary" href="{{
+              <a role="button" class="btn btn-primary pull-right property-button ten-pixel-margin" href="{{
                   url_for('weko_itemtypes_ui.custom_property') }}">
                   <span class="glyphicon glyphicon-hand-right"></span>
                   {{ _('Property') }}
               </a>
-              <a role="button" class="btn btn-danger {{delete_button_class}}" href="javascript:;" id="btn_delete_item">
+              <a role="button" class="btn btn-danger pull-right delete-button
+                  ten-pixel-margin" href="javascript:;" id="btn_delete_item">
                   <span class="glyphicon glyphicon-trash"></span>
                   {{ _('Delete') }}
               </a>
@@ -101,6 +103,7 @@
               <input type="hidden" value="{{_('Cannot delete Item type for Harvesting.')}}" id="msg_for_harvesting">
               <input type="hidden" value="{{_('Cannot delete because there is belonging item.')}}" id="msg_for_belonging_item">
             </div>
+
           </div>
         </div>
       </div>
@@ -145,17 +148,17 @@
           </tbody>
         </table>
         <div class="col-sm-3 col-md-3 col-lg-3">
-          <button type="button" class="btn btn-light" id="btn_new_itemtype_meta" style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">
+          <button type="button" class="btn btn-light add-big-button" id="btn_new_itemtype_meta">
               <span class="glyphicon glyphicon-plus"></span> 
                    {{_('Add Metadata')}}</button>
         </div>
         <div class="col-sm-3 col-md-3 col-lg-2 pull-right">
-          <button type="button" class="btn btn-primary" id="btn_create_itemtype_schema" style="width: 120px; height: 40px;font-size: 15px">
+          <button type="button" class="btn btn-primary save-button" id="btn_create_itemtype_schema">
               <span class="fa fa-download"></span>
                      {{_('Save')}}</button>
         </div>
         <div class="col-sm-3 col-md-3 col-lg-3 pull-right hide">
-          <button type="button" class="btn btn-primary btn-block" id="btn_previews_itemtype_schema" style="width: 150px; height: 40px;font-size:15px">
+          <button type="button" class="btn btn-primary btn-block preview-button" id="btn_previews_itemtype_schema">
                <span class="glyphicon glyphicon-hand-right"></span>
                      {{_('Preview')}}
           </button>
@@ -217,7 +220,8 @@
         <p>One fine body&hellip;</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info" data-dismiss="modal" style="width: 100px; height: 40px;font-size:15px">
+        <button type="button" class="btn btn-info close-button"
+        data-dismiss="modal">
              <span class="glyphicon glyphicon-remove"></span>
                 {{_('Close')}}
         </button>

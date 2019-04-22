@@ -85,20 +85,20 @@
         <td class="text-center vcenter">{{ group.members_count() }}</td>
         <td class="text-center btn-toolbar vcenter">
           {%- if group.is_member(current_user) %}
-          <button class="btn btn-xs btn-danger pull-right" type="submit" form="leave-form" formaction="{{ url_for('.leave', group_id=group.id) }}" formmethod="POST">
+          <button class="btn btn-xs btn-danger pull-right action-button" type="submit" form="leave-form" formaction="{{ url_for('.leave', group_id=group.id) }}" formmethod="POST">
             <i class="fa fa-fw fa-chain-broken"></i>{{ _("Leave") }}
           </button>
           {%- endif %}
           {%- if group.is_admin(current_user) %}
-          <a class="btn btn-xs btn-default pull-right" href="{{ url_for('.manage',  group_id=group.id) }}">
+          <a class="btn btn-xs btn-default pull-right action-button" href="{{ url_for('.manage',  group_id=group.id) }}">
             <i class="fa fa-fw fa fa-wrench"></i> {{ _("Manage") }}
           </a>
-          <a class="btn btn-xs btn-default pull-right" href="{{ url_for('.new_member', group_id=group.id) }}">
+          <a class="btn btn-xs btn-default pull-right action-button" href="{{ url_for('.new_member', group_id=group.id) }}">
             <i class="fa fa-fw fa fa-plus"></i> {{ _("Invite") }}
           </a>
           {%- endif %}
           {%- if group.can_see_members(current_user) %}
-          <a class="btn btn-xs btn-default pull-right" href="{{ url_for('.members', group_id=group.id) }}">
+          <a class="btn btn-xs btn-default pull-right action-button" href="{{ url_for('.members', group_id=group.id) }}">
             <i class="fa fa-fw fa-users"></i> {{ _("Members") }}
           </a>
           {%- endif %}
