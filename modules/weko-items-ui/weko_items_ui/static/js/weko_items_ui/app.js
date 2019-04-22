@@ -377,6 +377,7 @@ function handleSharePermission(value) {
             // ----
           }
         }
+        $rootScope.recordsVM.invenioRecordsModel['pubdate'] = this.defaultDate();
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
@@ -1146,9 +1147,7 @@ function handleSharePermission(value) {
           success: (data, status) => {
             let title = "";
             let lang = "en";
-            let pubDate = this.defaultDate();
             let titleID = data.title;
-            let pubDateID = data.pubDate;
             if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
               let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
               if (typeof(titleFile) == 'array') {
@@ -1161,18 +1160,11 @@ function handleSharePermission(value) {
                 }
               }
             }
-            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(pubDateID[0])){
-              let pubDateField = $rootScope.recordsVM.invenioRecordsModel[pubDateID[0]];
-              if (typeof(pubDateField) == 'array'){
-                pubDateField = pubDateField[0];
-              }
-              if (pubDateField.hasOwnProperty(pubDateID[1]) && pubDateField[pubDateID[1]]) {
-                pubDate = pubDateField[pubDateID[1]];
-              }
-            }
             $rootScope.recordsVM.invenioRecordsModel['title'] = title;
-            $rootScope.recordsVM.invenioRecordsModel['pubdate'] = pubDate;
             $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+            if ($('input[name=pubdate]').val()) {
+              $rootScope.recordsVM.invenioRecordsModel['pubdate'] = $('input[name=pubdate]').val();
+            }
           },
           error: function(data, status) {
             alert('Cannot connect to server!');
