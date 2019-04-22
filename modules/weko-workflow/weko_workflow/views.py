@@ -435,8 +435,8 @@ def next_action(activity_id='0', action_id=0):
 
     # save pidstore_identifier to ItemsMetadata
     if 'identifier_grant' == action_endpoint:
-        if int(post_json.get('identifier_grant')) > 0:
-            pidstore_identifier_mapping(post_json, activity_id, action_id)
+        if int(idf_grant) > 0:
+            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
@@ -469,7 +469,7 @@ def next_action(activity_id='0', action_id=0):
     return jsonify(code=0, msg=_('success'))
 
 
-def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
+def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     """
     Mapp pidstore identifier data to ItemMetadata.
 
@@ -482,49 +482,54 @@ def pidstore_identifier_mapping(post_json, activity_id='0', action_id=0):
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
 
     # transfer to JPCOAR format
-    res = {'pidstore_identifier': []}
+    res = {'pidstore_identifier': {}}
     tempdata = IDENTIFIER_ITEMSMETADATA_FORM
 
-    jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
-    if jalcdoi_link is not None:
-        jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
-        tempdata['identifier']['value'] = jalcdoi_link
-        tempdata['identifier']['properties']['identifierType'] = 'DOI'
-        tempdata['identifierRegistration']['value'] = \
-            jalcdoi_tail[1] + \
-            jalcdoi_tail[2]
-        tempdata['identifierRegistration']['properties'][
-            'identifierType'] = 'JaLC'
-        res['pidstore_identifier'].append(tempdata)
-
-    jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
-    if jalcdoi_cr_link is not None:
-        jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
-        tempdata['identifier']['value'] = jalcdoi_cr_link
-        tempdata['identifierRegistration']['value'] = \
-            jalcdoi_cr_tail[1] + \
-            jalcdoi_cr_tail[2]
-        tempdata['identifierRegistration']['properties'][
-            'identifierType'] = 'Crossref'
-        res['pidstore_identifier'].append(tempdata)
-
-    jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
-    if jalcdoi_dc_link is not None:
-        jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
-        tempdata['identifier']['value'] = jalcdoi_dc_link
-        tempdata['identifierRegistration']['value'] = \
-            jalcdoi_dc_tail[1] + \
-            jalcdoi_dc_tail[2]
-        tempdata['identifierRegistration']['properties'][
-            'identifierType'] = 'Datacite'
-        res['pidstore_identifier'].append(tempdata)
-
-    jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
-    if jalcdoi_crni_link is not None:
-        tempdata['identifier']['value'] = jalcdoi_crni_link
-        tempdata['identifier']['properties']['identifierType'] = 'HDL'
-        del tempdata['identifierRegistration']
-        res['pidstore_identifier'].append(tempdata)
+    if idf_grant == 1:      #identifier_grant_jalc_doi
+        jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
+        if jalcdoi_link:
+            jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
+            tempdata['identifier']['value'] = jalcdoi_link
+            tempdata['identifier']['properties']['identifierType'] = 'DOI'
+            tempdata['identifierRegistration']['value'] = \
+                jalcdoi_tail[1] + \
+                jalcdoi_tail[2]
+            tempdata['identifierRegistration']['properties'][
+                'identifierType'] = 'JaLC'
+            res['pidstore_identifier'] = tempdata
+    elif idf_grant == 2:      #identifier_grant_jalc_cr
+            jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
+            if jalcdoi_cr_link:
+                jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
+                tempdata['identifier']['value'] = jalcdoi_cr_link
+                tempdata['identifier']['properties']['identifierType'] = 'DOI'
+                tempdata['identifierRegistration']['value'] = \
+                    jalcdoi_cr_tail[1] + \
+                    jalcdoi_cr_tail[2]
+                tempdata['identifierRegistration']['properties'][
+                    'identifierType'] = 'Crossref'
+                res['pidstore_identifier'] = tempdata
+    elif idf_grant == 3:        #identifier_grant_jalc_dc_doi
+        jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
+        if jalcdoi_dc_link:
+            jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
+            tempdata['identifier']['value'] = jalcdoi_dc_link
+            tempdata['identifier']['properties']['identifierType'] = 'DOI'
+            tempdata['identifierRegistration']['value'] = \
+                jalcdoi_dc_tail[1] + \
+                jalcdoi_dc_tail[2]
+            tempdata['identifierRegistration']['properties'][
+                'identifierType'] = 'Datacite'
+            res['pidstore_identifier'] = tempdata
+    elif idf_grant == 4:       #identifier_grant_crni
+        jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
+        if jalcdoi_crni_link:
+            tempdata['identifier']['value'] = jalcdoi_crni_link
+            tempdata['identifier']['properties']['identifierType'] = 'HDL'
+            del tempdata['identifierRegistration']
+            res['pidstore_identifier'] = tempdata
+    else:
+        current_app.logger.error('Can\'t mapping pidstore identifier data!')
 
     try:
         item.update(res)
