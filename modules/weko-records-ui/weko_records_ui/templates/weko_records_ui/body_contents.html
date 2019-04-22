@@ -25,16 +25,16 @@
       <pre class="hide">{{record|tojson}}</pre>
       <div class="panel_bread" id="panel_bread">
         {%- if record.navi -%}
-        <table>
+        <table style="font-size: 110%">
           <col width="50">
           {%- for nav in record.navi -%}
           <tr>
-            <td valign="bottom">
+            <td style="vertical-align:bottom">
               {%- if loop.index == 1 %}
-              <h3 class="panel-title" style="display: inline;">{{_('Index')}}</h3>
+              <h4 style="display: inline;">{{_('Index')}}</h4>
               {%- endif %}
             </td>
-            <td width="1000" valign="bottom">
+            <td width="2048" style="vertical-align:bottom">
               <div class="row col-sm-12">
                 <ol class="breadcrumb"
                   style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
@@ -54,27 +54,23 @@
             </td>
           </tr>
           {%- endfor %}
+          <tr style="height: 15px;"></tr>
+          <tr>
+            <td valign="bottom">
+              <h4 style="display: inline;">{{_('Item')}}</h4>
+            </td>
+            <td width="2048" valign="bottom">
+              <a href="#"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+                <span style="font-size:120%">{{ record.get('item_title', _('No title')) }}</span></a>
+              {%- if record.permalink_uri -%}
+              <span class="pull-right" style="display: inline;">Permalink :
+                {{ record.permalink_uri }}</span>
+              {%- endif -%}
+            </td>
+          </tr>
         </table>
         {%- endif -%}
       </div>
-      <div class="row-line-space" style="margin-top: 10px;"></div>
-      <table>
-        <col width="50">
-        <tr>
-          <td valign="bottom">
-            <h3 class="panel-title" style="display: inline;">{{_('Item')}}</h3>
-          </td>
-          <td width="1000" valign="bottom">
-            <a href="#" style="margin-left: 0.25em;">
-              <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
-              <span style="font-size:120%">{{ record.get('item_title', _('No title')) }}</span></a>
-          </td>
-          {%- if record.permalink_uri -%}
-          <span class="pull-right" style="display: inline;" valign="bottom">Permalink :
-            {{ record.permalink_uri }}</span>
-          {%- endif -%}
-        </tr>
-      </table>
     </div>
     <div class="panel-body" style="padding-top: 10px;">
       <div class="row">

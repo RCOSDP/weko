@@ -24,13 +24,13 @@
 
 <div class="panel-group">
   <div class="panel panel-default" ng-controller="ItemController">
-    <div class="panel-heading clearfix" style="background-color: inherit;">
-      <h3 class="panel-title" style="display: inline;">{{_('Item')}}</h3>
+    <div class="panel-heading clearfix" style="background-color: inherit; font-size: 120%">
+      <h3 style="display: inline;">{{_('Item')}}</h3>
       <a class="forcewrap" href="{{record_url}}" style="margin-left: 0.5em;"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>
         {{ record.get('item_title', _('No title')) }}</a>
       / {{ filename.split('.')[0] }}
     </div>
-    <h3 class="col-sm-12 col-md-12 col-left">{{ filename.split('.')[0] }}</h3>
+    <h2 class="col-sm-12 col-md-12 col-left" style="margin-top: unset;">{{ filename.split('.')[0] }}</h2>
     <div class="panel-body">
       <div class="row">
         <div class="col-sm-12 col-md-12 col-left">
