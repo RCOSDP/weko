@@ -20,15 +20,20 @@
 
 """WEKO3 module docstring."""
 
-from flask import current_app, request
+import json
+
+from flask import current_app, flash, redirect, request
 from flask_admin import BaseView, expose
-from flask_admin.model import helpers
+from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.helpers import get_redirect_target
+from flask_admin.model import helpers
 from flask_babelex import gettext as _
 from wtforms.fields import StringField
 
-from .models import WidgetItem
 from . import config
+from .api import WidgetItems
+from .models import WidgetItem
 
 
 class WidgetDesign(BaseView):
@@ -49,22 +54,35 @@ class WidgetSettingView(ModelView):
 
     @expose('/new/', methods=('GET', 'POST'))
     def create_view(self):
-        return self.render(config.WEKO_GRIDLAYOUT_ADMIN_CREATE_WIDGET_SETTINGS)
+        return_url = get_redirect_target() or self.get_url('.index_view')
+
+        if not self.can_create:
+            return redirect(return_url)
+        return self.render(config.WEKO_GRIDLAYOUT_ADMIN_CREATE_WIDGET_SETTINGS,
+                           return_url=return_url)
 
     @expose('/edit/', methods=('GET', 'POST'))
     def edit_view(self):
         """
             Edit model view
         """
+        return_url = get_redirect_target() or self.get_url('.index_view')
+
+        if not self.can_edit:
+            return redirect(return_url)
 
         id_list = helpers.get_mdict_item_or_list(request.args, 'id')
-        id_list_split = id_list.split(',')
-        repository_id = id_list_split[0]
-        widget_type = id_list_split[1]
+
+        model = self.get_one(id_list)
+
+        if model is None:
+            flash(gettext('Record does not exist.'), 'error')
+            return redirect(return_url)
+        model = WidgetItems.parse_result(model)
 
         return self.render(config.WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS,
-                           repository_id=repository_id,
-                           widget_type=widget_type)
+                           model=json.dumps(model),
+                           return_url=return_url)
 
     column_list = (
         'repository_id',
@@ -148,7 +166,6 @@ widget_adminview = dict(
     category=_('Setting'),
     name=_('Widget'),
 )
-
 
 widget_design_adminview = {
     'view_class': WidgetDesign,

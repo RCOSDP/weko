@@ -72,7 +72,7 @@ setup(
             'widget_type = weko_gridlayout.cli:widget_type',
         ],
         'invenio_base.apps': [
-            'weko_gridlayout = weko_gridlayout:WekogridLayout',
+            'weko_gridlayout = weko_gridlayout:WekoGridLayout',
         ],
         'invenio_base.api_blueprints': [
             'weko_gridlayout = weko_gridlayout.views:blueprint_api',

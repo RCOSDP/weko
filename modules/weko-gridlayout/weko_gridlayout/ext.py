@@ -14,7 +14,7 @@ from flask_babelex import gettext as _
 from . import config
 
 
-class WekogridLayout(object):
+class WekoGridLayout(object):
     """weko-gridlayout extension."""
 
     def __init__(self, app=None):

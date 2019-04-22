@@ -9,7 +9,7 @@
 
 from __future__ import absolute_import, print_function
 
-from .ext import WekogridLayout
+from .ext import WekoGridLayout
 from .version import __version__
 
-__all__ = ('__version__', 'WekogridLayout')
+__all__ = ('__version__', 'WekoGridLayout')

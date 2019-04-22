@@ -27,16 +27,13 @@
     {% block edit_form %}
     {% block toggle_from %}
     {% endblock %}
-    <input id="repository_id" type="hidden" value="{{repository_id}}" />
-    <input id="widget_type" type="hidden" value="{{widget_type}}" />
+    <input id="model_data" type="hidden" data-editdata='{{model}}' value='' />
     <div id="root" class="col-xs-12"></div>
     {% endblock %}
-  
+
   {%- block javascript %}
   {{ super() }}
-  <script src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+  {% assets "weko_gridlayout_widget_design_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
   <script type="text/babel">
     class ComponentSelectField extends React.Component {
         constructor(props) {
@@ -50,7 +47,7 @@
             };
             this.handleChange = this.handleChange.bind(this);
         }
-    
+
         componentDidMount() {
             fetch(this.props.url_request)
                 .then(res => res.json())
@@ -75,7 +72,7 @@
                           repositoryId: this.props.data_load
                       });
                     },
-    
+
                     (error) => {
                         this.setState({
                             isLoaded: true,
@@ -83,15 +80,15 @@
                         });
                     }
                 )
-    
+
         }
-    
+
         handleChange(event) {
           this.setState({ repositoryId: event.target.value });
           this.props.getValueOfField(this.props.key_binding,event.target.value);
           event.preventDefault();
         }
-    
+
         render() {
             return (
                 <div className="form-group row">
@@ -106,7 +103,7 @@
             )
         }
     }
-  
+
     class ComponentTextboxField extends React.Component {
         constructor(props) {
             super(props);
@@ -125,13 +122,13 @@
                 value: this.props.data_load
             })
         }
-    
+
         handleChange(event) {
             this.setState({ value: event.target.value });
             this.props.getValueOfField(this.props.key_binding,event.target.value);
             event.preventDefault();
         }
-    
+
         render() {
             return (
                 <div className="form-group row">
@@ -141,9 +138,9 @@
                   </div>
                 </div>
             )
-        }  
+        }
     }
-  
+
     class ComponentSelectColorFiled extends React.Component {
         constructor(props) {
             super(props);
@@ -159,13 +156,13 @@
                 color: this.props.data_load
             })
         }
-    
+
         handleChange(event) {
             this.setState({ color: event.target.value });
             this.props.getValueOfField(this.props.key_binding,event.target.value);
             event.preventDefault();
         }
-    
+
         render() {
             return (
                 <div className="form-group row">
@@ -175,9 +172,9 @@
                     </div>
                 </div>
             )
-        } 
+        }
     }
-  
+
     class ComponentCheckboxField extends React.Component {
         constructor(props) {
             super(props);
@@ -186,11 +183,11 @@
                 is_default_Checked: this.props.data_load,
             }
         }
-    
+
         handleChange(event) {
             this.props.getValueOfField(this.props.key_binding,event.target.checked);
         }
-    
+
         render() {
             return (
                 <div className="form-group row">
@@ -200,9 +197,9 @@
                     </div>
                 </div>
             )
-        } 
+        }
     }
-  
+
     class ComponentFieldContainSelectMultiple extends React.Component {
         constructor(props) {
             super(props);
@@ -234,7 +231,7 @@
             this.styleButtonContainer = {
               display: 'flex',
               flexDirection : 'column',
-              justifyContent: 'center', 
+              justifyContent: 'center',
               height: "100px",
             }
             this.styleButtonElement={
@@ -269,7 +266,7 @@
                             UnauthorizedOptions : unOptions
                         });
                     },
-    
+
                     (error) => {
                         this.setState({
                             isLoaded: true,
@@ -277,14 +274,14 @@
                         });
                     }
                 )
-    
+
         }
-    
+
         handleChange(event) {
             this.setState({ repositoryId: event.target.value });
             event.preventDefault();
         }
-  
+
         getListOption(id) {
           let options = document.getElementById(id).options;
           let result = [];
@@ -296,7 +293,7 @@
           }
           return result;
         }
-  
+
         isValueExist(item, array) {
             if (array == undefined) {
                 return true;
@@ -314,7 +311,7 @@
             }
             return true;
         }
-  
+
         handleMoveRightClick(event) {
             let options = document.getElementById(this.props.authorSelect).options;
             let selectedOptions = this.getListOption(this.props.unauthorSelect);
@@ -344,7 +341,7 @@
               }
             this.props.getValueOfField(this.props.key_binding,data);
         }
-  
+
         handleMoveLeftClick(event) {
             let selectedIndex = this.state.unauthorList;
             let options = document.getElementById(this.props.unauthorSelect).options;
@@ -380,7 +377,7 @@
               }
             this.props.getValueOfField(this.props.key_binding,data);
         }
-  
+
         onSelect(event) {
           var options = event.target.options;
           var value = [];
@@ -393,7 +390,7 @@
               unauthorList: value
           });
         }
-  
+
         render() {
             return (
                 <div className="form-group row">
@@ -424,9 +421,9 @@
                     </div>
                 </div>
             )
-        } 
+        }
     }
-    
+
     class ComponentButtonLayout extends React.Component {
       constructor(props) {
           super(props);
@@ -473,7 +470,7 @@
           )
       }
     }
-  
+
     class MainLayout extends React.Component {
         constructor(props) {
             super(props);
@@ -534,7 +531,7 @@
                   break;
             }
         }
-    
+
         render() {
                 return (
                 <div>
@@ -579,40 +576,13 @@
             )
         }
     }
-    
-    function getWidgetItemData()
-    {
-        let repository_id = $("#repository_id").val();
-        let widget_type = $("#widget_type").val();
-        let postData = {
-            'param_repository_id' : repository_id,
-            'param_widget_type' : widget_type,
-        }
-        return $.ajax({
-                    async: false,
-                    url: "/api/admin/load_widget_item",
-                    type: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    data: JSON.stringify(postData),
-                    dataType: 'json',
-                    success: function (data, status) {
-                        ReactDOM.render(
-                            <MainLayout data_load={data.data}/>,
-                            document.getElementById('root')
-                        )
-                    },
-                    error: function (error) {
-                        alert(error);
-                    }
-                });
-    }
-
 
     $(function () {
-       getWidgetItemData(); 
-
+       let editData = $("#model_data").data("editdata");
+       ReactDOM.render(
+        <MainLayout data_load={editData}/>,
+        document.getElementById('root')
+    )
     });
 
     </script>
