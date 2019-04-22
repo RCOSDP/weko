@@ -104,8 +104,11 @@
                     </li> -->
                     <input type="hidden" id="next-frame" value="iframe_tree">
                   {%- if pid %}
+
                   <!-- <li>
-                        <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')" style="width: 120px; height: 40px;font-size: 15px;">
+                        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                        ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
+                        class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">
                             <span class="glyphicon glyphicon-trash"></span>
                                 {{_('Delete')}}
                         </button>
@@ -133,8 +136,9 @@
               <div class="row">
                 <div class="col-sm-9">
                 <p class="text-center">
-                  <button class="btn btn-primary"
-                      ng-click="getItemMetadata()"style="width: 250px; height: 40px;font-size:15px">
+                  <button class="btn btn-primary
+                          automatic-metadata-input-button"
+                      ng-click="getItemMetadata()">
                     <span class="glyphicon glyphicon-search"></span>
                     {{_('Automatic Metadata Input')}}
                 </button>
@@ -217,15 +221,26 @@
                                   {{_('Delete')}}</button></li>
                     {%- endif %}
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
-                            class="btn btn-primary"
-                            ng-click="saveDataJson('{{item_save_uri}}');"
-                           style="width: 120px; height: 40px;font-size: 15px;">
+                            class="btn btn-primary save-button"
+                            ng-click="saveDataJson('{{item_save_uri}}');">
                             <span class="glyphicon glyphicon-download-alt"></span>
                             {{_('Save')}}
                         </button></li>
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-info" ng-click="updateDataJson()" style="width: 80px; height: 40px;font-size: 15px;">{{_('Next')}}
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
+                            class="btn btn-info next-button" ng-click="updateDataJson()">{{_('Next')}}
                     <span class="glyphicon glyphicon-chevron-right"></span>
                     </button></li>
+
+                    {%- if pid %}
+                    <li>
+                           <button
+                               ng-disabled="recordsVM.invenioRecordsLoading"
+                               ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
+                               class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
+                              <span class="glyphicon glyphicon-trash"></span>
+                                  {{_('Delete')}}</button></li>
+                    {%- endif %}
+
                   </ul>
                 </div>
               </div>
@@ -245,7 +260,7 @@
         <app-author-search></app-author-search>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info" id="btnModalClose" data-dismiss="modal" style="width: 100px; height: 40px;font-size:15px">
+        <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
              <span class="glyphicon glyphicon-remove"></span>
                  {{_('Close')}}
         </button>
@@ -269,7 +284,7 @@
         <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info" id="meta-search-close" data-dismiss="modal" style="width: 100px; height: 40px;font-size:15px">
+        <button type="button" class="btn btn-info close-button" id="meta-search-close" data-dismiss="modal">
                <span class="glyphicon glyphicon-remove"></span>
                    {{_('Close')}}
         </button>
