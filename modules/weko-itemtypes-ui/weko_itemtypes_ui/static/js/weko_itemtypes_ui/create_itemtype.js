@@ -264,7 +264,7 @@
         if(src_render.hasOwnProperty('meta_list')
             && src_render['meta_list'].hasOwnProperty(row_id)) {
           if(tmp.input_type == src_render['meta_list'][row_id]['input_type']) {
-            if(src_mapping.hasOwnProperty('keywords_en')) {
+            if(src_mapping.hasOwnProperty(row_id)) {
               page_global.table_row_map.mapping[row_id] = src_mapping[row_id];
             } else {
               page_global.table_row_map.mapping[row_id] = mapping_value;
