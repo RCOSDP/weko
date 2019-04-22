@@ -100,6 +100,8 @@ setup(
             'weko_gridlayout.bundles:widget_design_reactjs_lib',
             'weko_gridlayout_widget_design_js = '
             'weko_gridlayout.bundles:widget_design_js',
+            'weko_gridlayout_widget_setting_js = '
+            'weko_gridlayout.bundles:widget_setting_js',
             'weko_gridlayout_widget_design_css = '
             'weko_gridlayout.bundles:widget_design_css',
         ],
