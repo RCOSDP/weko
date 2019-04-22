@@ -78,7 +78,6 @@ def publish(pid, record, template=None, **kwargs):
     record.commit()
     db.session.commit()
 
-    current_app.logger.debug(record)
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
@@ -367,6 +366,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         pidstore_identifier = meta.get('pidstore_identifier')
         if pidstore_identifier is None:
             record['permalink_uri'] = request.url
+        else:
+            record['permalink_uri'] = pidstore_identifier.\
+                        get('identifier').get('value')
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
