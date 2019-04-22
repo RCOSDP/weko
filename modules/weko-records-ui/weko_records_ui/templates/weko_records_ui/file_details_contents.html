@@ -30,6 +30,7 @@
         {{ record.get('item_title', _('No title')) }}</a>
       / {{ filename.split('.')[0] }}
     </div>
+    <h3 class="col-sm-12 col-md-12 col-left">{{ filename.split('.')[0] }}</h3>
     <div class="panel-body">
       <div class="row">
         <div class="col-sm-12 col-md-12 col-left">
@@ -101,7 +102,7 @@
               {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
               <tr>
                 <td colspan="2">
-                  <div class="panel panel-default" id="preview_de" ng-init="collapsed{{loop.index}} = false">>
+                  <div class="panel panel-default" id="preview_de" ng-init="collapsed{{loop.index}} = false">
                     <div class="panel-heading">
                       <a id="preview_{{loop.index}}" class="panel-toggle"
                         ng-click="collapsed{{loop.index}} = !collapsed{{loop.index}}">
