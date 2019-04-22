@@ -44,6 +44,12 @@ widget_design_js = Bundle(
     output="gen/weko_gridlayout_widget_design.%(version)s.js",
 )
 
+widget_setting_js = Bundle(
+    'js/weko_gridlayout/widget.setting.js',
+    filters='jsmin',
+    output="gen/weko_gridlayout_widget_setting.%(version)s.js",
+)
+
 widget_design_css = Bundle(
     'css/weko_gridlayout/gridstack.css',
     'css/weko_gridlayout/styles.css',
