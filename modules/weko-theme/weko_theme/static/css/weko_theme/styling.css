@@ -231,6 +231,10 @@
   margin-right: 10px;
 }
 
+.ten-pixel-top-margin {
+ margin-top: 10px;
+}
+
 .five-pixel-margin {
   margin: 5px;
 }
