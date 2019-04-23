@@ -406,26 +406,30 @@ class ComponentButtonLayout extends React.Component {
   }
   saveCommand(event)
   {
-      if (!this.props.data.repository) {
-          alert('Repository is required!');
-      } else if (!this.props.data.widget_type) {
-          alert('Type is required!');
-      } else if (!this.props.data.label) {
-          alert('Label is required!');
-      }else {
-          return fetch(this.props.url_request,{
-              method: "POST",
-              headers:{
-                  "Content-Type": "application/json",
-              },
-              body: JSON.stringify(this.props.data),
+        let request = {
+            flag_edit : this.props.is_edit,
+            data : this.props.data
+        }
+        if (!this.props.data.repository) {
+            alert('Repository is required!');
+        } else if (!this.props.data.widget_type) {
+            alert('Type is required!');
+        } else if (!this.props.data.label) {
+            alert('Label is required!');
+        }else {
+            return fetch(this.props.url_request,{
+                method: "POST",
+                headers:{
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(request),
           })
           .then(res => res.json())
           .then((result) => {
             if (result.success) {
-                alert('Save Widget successfully!');
+                alert(result.message);
             }else {
-                alert('Some errors is occurs!');
+                alert(result.message);
             }
           });
       }
@@ -436,7 +440,7 @@ class ComponentButtonLayout extends React.Component {
               <div className="col-xs-2"> </div>
               <div className="col-xs-5">
                 <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
-                <button className="form-group btn btn-danger" style={this.style}>Cancel</button>
+                <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
               </div>
           </div>
       )
@@ -459,7 +463,6 @@ class MainLayout extends React.Component {
             edit_role: this.props.data_load.edit_role,
             enable: this.props.data_load.is_enabled
         };
-        console.log(this.state);
         this.style = {
             "width": ""
         }
@@ -528,7 +531,7 @@ class MainLayout extends React.Component {
                   <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Frame Border Color" key_binding = "frame_border_color" data_load={this.state.frame_border_color}/>
                 </div>
                 <div className="row">
-                  <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Text Color" key_binding = "text_color"/>
+                  <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Text Color" key_binding = "text_color" data_load={this.state.text_color}/>
                 </div>
                 <div className="row">
                   <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding = "background_color" data_load={this.state.background_color}/>
@@ -543,7 +546,7 @@ class MainLayout extends React.Component {
                   <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable}/>
                 </div>
                 <div className="row">
-                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item"/>
+                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url}/>
               </div>
             </div>
         )
@@ -560,7 +563,7 @@ $(function () {
     else
     {
         editData = {
-            repository: '',
+            repository_id: '',
             widget_type: '',
             label:'',
             label_color: '#4169E1',
@@ -573,8 +576,9 @@ $(function () {
             is_enabled: true
         }
     }
+    let returnURL = $("#return_url").val();
     ReactDOM.render(
-    <MainLayout data_load={editData} is_edit = {isEdit}/>,
+    <MainLayout data_load={editData} is_edit = {isEdit} return_url = {returnURL}/>,
     document.getElementById('root')
 )
 });
