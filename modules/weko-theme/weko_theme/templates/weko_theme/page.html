@@ -21,20 +21,24 @@
 
 {%- block body_title_right %}
 {%-if not community_id %}
-<button type="button" id="btn_edit_start" class="btn btn-primary">
-  <i class="fa fa-gear"></i>
-  {{_('Edit')}}
+
+<button type="button" id="btn_edit_start" class="btn btn-primary action-button">
+  <i class="fa fa-bars"></i>
+  {{_('Menu')}}
 </button>
+
+
 {%- else%}
 {%- endif%}
 {%- endblock body_title_right %}
 
 {%- block body_center %}
-  <ul class="nav nav-tabs">
+<ul class="nav nav-tabs">
   {%- block page_body_tabs %}
     {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
   {%- endblock page_body_tabs%}
-  </ul>
+ </ul>
+
   <div class="row">
     <div class="col-sm-12 col-md-12">
       <div id="myTabContent" class="tab-content">

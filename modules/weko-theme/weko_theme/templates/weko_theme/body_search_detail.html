@@ -4,21 +4,25 @@
     <div class="row">
       <div class="form-group col-sm-3">
         <label for="title">{{_('Title')}}</label>
-        <input type="text" class="form-control" id="title" name="title" placeholder="">
+        <input type="text" class="form-control" id="title" name="title"
+        placeholder="Title">
       </div>
       <div class="form-group col-sm-3">
         <label for="creator">{{_('Author Name')}}</label>
-        <input type="text" class="form-control" id="creator" name="creator" placeholder="">
+        <input type="text" class="form-control" id="creator" name="creator"
+        placeholder="Author Name">
       </div>
       <!--キーワードまで-->
       <div class="form-group col-sm-3">
         <label for="subject">{{_('Subject')}}</label>
-        <input type="text" class="form-control" id="subject" name="subject" placeholder="">
+        <input type="text" class="form-control" id="subject" name="subject"
+        placeholder="Subject">
       </div>
       <!--地域-->
       <div class="form-group col-sm-3">
         <label for="spatial">{{_('Region')}}</label>
-        <input type="text" class="form-control" id="spatial" name="spatial" placeholder="">
+        <input type="text" class="form-control" id="spatial" name="spatial"
+        placeholder="Region">
       </div>
     </div>
     <div class="row" id="subject_scheme">
@@ -81,17 +85,20 @@
       <!--抄録・内容記述-->
       <div class="form-group col-sm-3">
         <label for="des">{{_('Description')}}</label>
-        <input type="text" class="form-control" id="des" name="des" placeholder="">
+        <input type="text" class="form-control" id="des" name="des"
+        placeholder="Description">
       </div>
       <!--公開者-->
       <div class="form-group col-sm-3">
         <label for="publisher">{{_('Publisher')}}</label>
-        <input type="text" class="form-control" id="publisher" name="publisher" placeholder="">
+        <input type="text" class="form-control" id="publisher" name="publisher"
+        placeholder="Publisher">
       </div>
       <!--寄与者-->
       <div class="form-group col-sm-3">
         <label for="cname">{{_('Contributors')}}</label>
-        <input type="text" class="form-control" id="cname" name="cname" placeholder="">
+        <input type="text" class="form-control" id="cname" name="cname"
+        placeholder="Contributors">
       </div>
       <!--コンテンツ作成日-->
       <div class="form-group col-sm-3">
@@ -158,16 +165,19 @@
       <!--フォーマット-->
       <div class="form-group col-sm-3">
         <label for="format">{{_('Format')}}</label>
-        <input type="text" class="form-control" id="format" name="format" placeholder="">
+        <input type="text" class="form-control" id="format" name="format"
+        placeholder="Format">
       </div>
       <div class="form-group col-sm-3">
         <label for="id">ID</label>
-        <input type="text" class="form-control" id="id" name="id" placeholder="">
+        <input type="text" class="form-control" id="id" name="id"
+        placeholder="ID">
       </div>
       <!--雑誌名-->
       <div class="form-group col-sm-3">
-        <label for="srctitle">{{_('Journal title')}}</label>
-        <input type="text" class="form-control" id="srctitle" name="srctitle" placeholder="">
+        <label for="srctitle">{{_('Journal Title')}}</label>
+        <input type="text" class="form-control" id="srctitle" name="srctitle"
+        placeholder="Journal Title">
       </div>
     </div>
     <!--ID-->
@@ -373,7 +383,8 @@
       <!--時代-->
       <div class="form-group col-sm-3">
         <label for="temporal">{{_('Period')}}</label>
-        <input type="text" class="form-control" id="temporal" name="temporal" placeholder="">
+        <input type="text" class="form-control" id="temporal" name="temporal"
+        placeholder="Period">
       </div>
       <!--学位授与年月日-->
       <div class="form-group col-sm-3">
@@ -399,27 +410,32 @@
       <!--学位授与番号-->
       <div class="form-group col-sm-3">
         <label for="dissno">{{_('Academic degree number')}}</label>
-        <input type="text" class="form-control" id="dissno" name="dissno" placeholder="">
+        <input type="text" class="form-control" id="dissno" name="dissno"
+        placeholder="Academic degree number">
       </div>
     </div>
     <div class="row">
       <!--学位名-->
       <div class="form-group col-sm-3">
         <label for="degreename">{{_('Degree name')}}</label>
-        <input type="text" class="form-control" id="degreename" name="degreename" placeholder="">
+        <input type="text" class="form-control" id="degreename"
+        name="degreename" placeholder="Degree name">
       </div>
       <!--学位授与機関-->
       <div class="form-group col-sm-3">
         <label for="dgname">{{_('Institution for academic degree')}}</label>
-        <input type="text" class="form-control" id="dgname" name="dgname" placeholder="">
+        <input type="text" class="form-control" id="dgname" name="dgname"
+        placeholder="Institution for academic degree">
       </div>
       <div class="form-group col-sm-3">
-        <label for="wid">{{_('Author id')}}</label>
-        <input type="text" class="form-control" id="wid" name="wid" placeholder="">
+        <label for="wid">{{_('Author ID')}}</label>
+        <input type="text" class="form-control" id="wid" name="wid"
+        placeholder="Author ID">
       </div>
       <div class="form-group col-sm-3">
         <label for="iid">{{_('Index')}}</label>
-        <input type="text" class="form-control" id="iid" name="iid" placeholder="">
+        <input type="text" class="form-control" id="iid" name="iid"
+        placeholder="Index">
       </div>
     </div>
     <!--権利-->
@@ -457,10 +473,16 @@
     </div>
     <div class="row">
       <div class="col-sm-3">
-        <button id="detail-search-btn" type="submit" class="btn btn-primary btn-block">{{_('DetailSearch')}}</button>
+        <button id="detail-search-btn" type="submit" class="btn btn-primary detail-search-button">
+             <span class="glyphicon glyphicon-search"></span>
+                   {{_('Detail Search')}}
+       </button>
       </div>
       <div class="col-sm-3">
-        <button id="clear-search-btn" type="button" class="btn btn-secondary btn-block">{{_('Clear')}}</button>
+        <button id="clear-search-btn" type="button" class="btn btn-info" style="width: 100px; height: 40px;font-size:15px">
+                 <span class="glyphicon glyphicon-remove"></span>
+                        {{_('Clear')}}
+        </button>
       </div>
     </div>
   </div>

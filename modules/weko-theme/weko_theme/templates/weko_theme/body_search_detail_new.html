@@ -18,7 +18,10 @@ USA. #}
                   </label>
                   <div class="col-sm-10">
                     <!--input_type is text sta-->
-                    <input ng-if="sub_data.key_value.inputType=='text'" type="text" class="form-control" id="sele_[[$index]]" ng-model="sub_data.key_value.inputVal" placeholder="">
+                    <input ng-if="sub_data.key_value.inputType=='text'"
+                    type="text" class="form-control" id="sele_[[$index]]"
+                    ng-model="sub_data.key_value.inputVal"
+                    placeholder="{{_('Enter Input Value')}}">
                     <!--input_type is text end-->
                     <!--input_type is sele sta-->
                     <select ng-if="sub_data.key_value.inputType=='selectbox'" id="sele_[[$index]]" ng-model="sub_data.key_value.inputVal" class="form-control">
@@ -76,21 +79,29 @@ USA. #}
             </div>
         </div>
         <br>
-        <div class="row">
-            <div class="col-sm-10">
-            </div>
-            <div class="col-sm-2">
-                <button id="add-condition-btn" type="button" class="btn btn-primary btn-block" ng-click="add_search_key()" ng-disabled="condition_data.length==detail_search_key.length">{{_('Add Search Condition')}}</button>
+     <div class="row">
+       <div class="col-sm-10"></div> 
+       <div class="col-sm-2">
+                <button id="add-condition-btn" type="button" class="btn btn-light add-search-button" ng-click="add_search_key()" ng-disabled="condition_data.length==detail_search_key.length">
+                     <span class="glyphicon glyphicon-plus"></span>
+                       {{_('Add Search Condition')}}
+                </button>
             </div>
         </div>
       <br>
         <div class="row">
-            <div class="col-sm-3">
-                <button id="detail-search-btn" type="submit" class="btn btn-primary btn-block" ng-click="detail_search()">{{_('DetailSearch')}}</button>
+            <div class="col-sm-1">
+                <button id="detail-search-btn" type="submit" class="btn btn-primary search-button" ng-click="detail_search()">
+                       <span class="glyphicon glyphicon-search"></span>
+                            {{_('Search')}}
+                </button>
             </div>
-            <div class="col-sm-3">
-                <button id="clear-search-btn" type="button" class="btn btn-secondary btn-block" ng-click="detail_search_clear()">{{_('Clear')}}</button>
+            <div class="col-sm-1">
+                <button id="clear-search-btn" type="button" class="btn btn-info clear-button" ng-click="detail_search_clear()">
+                     <span class="glyphicon glyphicon-remove"></span>
+                          {{_('Clear')}}
+                </button>
             </div>
-        </div>
+    </div>
     </div>
 </div>

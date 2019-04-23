@@ -19,7 +19,10 @@
 #}
 
 {%- extends admin_base_template %}
-
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
 {%- block body %}
 <div class="container">
   <div class="row">
@@ -50,16 +53,25 @@
         <tr>
           <td colspan="6">
             <div>
-              <button class="btn btn-primary" id="btn_apply_{{action.id}}">{{_('Apply')}}</button>
-              <button class="btn btn-default" id="btn_unusable_{{action.id}}">{{_('Unusable')}}</button>
-              <button class="btn btn-default" id="btn_update_{{action.id}}">{{_('Update')}}</button>
+              <button class="btn btn-primary action-button" id="btn_apply_{{action.id}}">
+                        <span class="glyphicon glyphicon-hand-right"></span>
+                              {{_('Apply')}}
+              </button>
+              <button class="btn btn-primary action-button" id="btn_unusable_{{action.id}}">
+                        <span class="glyphicon glyphicon-hand-right"></span>
+                              {{_('Unusable')}}
+              </button>
+              <button class="btn btn-default update-button" id="btn_update_{{action.id}}" style="width: 120px; height: 40px;font-size: 15px;">
+                        <span class="glyphicon glyphicon-edit"></span>                             
+                              {{_('Update')}}
+              </button>
             </div>
           </td>
         </tr>
       {%- endfor %}
       </tbody>
     </table>
-    <button type="button" class="btn btn-primary pull-right" id="btn_back">
+    <button type="button" class="btn btn-info pull-right back-button" id="btn_back">
         <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
     </div>
   </div>

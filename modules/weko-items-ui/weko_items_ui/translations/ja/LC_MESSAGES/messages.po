@@ -119,11 +119,6 @@ msgstr "保存"
 msgid "Index_Tree"
 msgstr "インデックスツリー"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:38
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:38
-msgid "Metadata Auto Input"
-msgstr "メータデータ自動入力"
-
 #: weko_items_ui/templates/weko_items_ui/edit.html:104
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:104
 msgid "Automatic metadata input"

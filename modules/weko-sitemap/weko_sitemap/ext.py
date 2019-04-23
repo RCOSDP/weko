@@ -26,7 +26,9 @@ class WekoSitemap(object):
     @sitemap_page_needed.connect
     def create_page(app, page, urlset):
         """Create sitemap page."""
-        urlset = [{'loc': urlparse(request._base_url).hostname + url_for(url[0])}
+        baseurl = urlparse(request.base_url).scheme + \
+            '://' + urlparse(request.base_url).netloc
+        urlset = [{'loc': baseurl + url_for(url[0])}
                   for url in current_app._extensions['sitemap']._routes_without_params()]
         cache[page] = current_app.extensions['sitemap'].render_page(
             urlset=urlset)
@@ -39,7 +41,9 @@ class WekoSitemap(object):
             # TODO: use the cache here once the route above is set up
             # data = cache.get(page)
             # return data if data else fn(*args, **kwargs)
-            urlset = [{'loc': urlparse(request.base_url).hostname + url_for(url[0])}
+            baseurl = urlparse(request.base_url).scheme + \
+                '://' + urlparse(request.base_url).netloc
+            urlset = [{'loc': baseurl + url_for(url[0])}
                       for url in current_app.extensions['sitemap']._routes_without_params()]
             return current_app.extensions['sitemap'].render_page(urlset=urlset)
         return loader

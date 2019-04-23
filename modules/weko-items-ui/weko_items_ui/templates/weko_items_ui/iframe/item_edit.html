@@ -96,10 +96,23 @@
             <div class="row" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
               <div class="col-sm-9">
                 <ul class="list-inline text-right">
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson()">{{_('Next')}}</button></li>
+                    <!-- <li>
+                         <button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-info" ng-click="updateDataJson()" style="width: 80px; height: 40px;font-size: 15px;">
+                                {{_('Next')}}
+                             <span class="glyphicon glyphicon-chevron-right"></span>
+                        </button>
+                    </li> -->
                     <input type="hidden" id="next-frame" value="iframe_tree">
                   {%- if pid %}
-                  <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">{{_('Delete')}}</button></li>
+
+                  <!-- <li>
+                        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                        ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
+                        class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">
+                            <span class="glyphicon glyphicon-trash"></span>
+                                {{_('Delete')}}
+                        </button>
+                  </li> -->
                   {%- endif %}
                 </ul>
               </div>
@@ -123,9 +136,11 @@
               <div class="row">
                 <div class="col-sm-9">
                 <p class="text-center">
-                  <button class="btn btn-primary" ng-click="getItemMetadata()">
+                  <button class="btn btn-primary
+                          automatic-metadata-input-button"
+                      ng-click="getItemMetadata()">
                     <span class="glyphicon glyphicon-search"></span>
-                    {{_('Automatic metadata input')}}
+                    {{_('Automatic Metadata Input')}}
                 </button>
                 </p>
                 </div>
@@ -199,11 +214,33 @@
               <div class="row">
                 <div class="col-sm-9">
                   <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="saveDataJson('{{item_save_uri}}');">{{_('Save')}}</button></li>
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-default" ng-click="updateDataJson()">{{_('Next')}}</button></li>
                     {%- if pid %}
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">{{_('Delete')}}</button></li>
+                    <li>
+                           <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')" style="width: 120px; height: 40px;font-size: 15px;">
+                              <span class="glyphicon glyphicon-trash"></span>
+                                  {{_('Delete')}}</button></li>
                     {%- endif %}
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
+                            class="btn btn-primary save-button"
+                            ng-click="saveDataJson('{{item_save_uri}}');">
+                            <span class="glyphicon glyphicon-download-alt"></span>
+                            {{_('Save')}}
+                        </button></li>
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
+                            class="btn btn-info next-button" ng-click="updateDataJson()">{{_('Next')}}
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                    </button></li>
+
+                    {%- if pid %}
+                    <li>
+                           <button
+                               ng-disabled="recordsVM.invenioRecordsLoading"
+                               ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
+                               class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
+                              <span class="glyphicon glyphicon-trash"></span>
+                                  {{_('Delete')}}</button></li>
+                    {%- endif %}
+
                   </ul>
                 </div>
               </div>
@@ -217,19 +254,22 @@
   </div>
 </div>
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
-  <div class="modal-dialog modelWidth" role="document">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-body">
         <app-author-search></app-author-search>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">{{_('Close')}}</button>
+        <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
+             <span class="glyphicon glyphicon-remove"></span>
+                 {{_('Close')}}
+        </button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 <div class="modal fade" tabindex="-1" role="dialog" id="meta-search">
-  <div class="modal-dialog modelWidth" role="document">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-body">
         <div id="meta-search-body"></div>
@@ -237,16 +277,20 @@
         <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID.')}}">
         <input type="hidden" id="autofill_error_input_value" name="autofill_item_type_id" value="{{_('Please input value.')}}">
         <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id" value="{{_('Specified ID does not exist.')}}">
-        <input type="hidden" id="autofill_header_name" name="autofill_header_name" value="{{_('Metadata Auto Input')}}">
-        <input type="hidden" id="autofill_select_meta" name="autofill_select_meta" value="{{_('Automatic metadata input')}}">
+        <input type="hidden" id="autofill_header_name"
+        name="autofill_header_name" value="{{_('Automatic metadata input')}}">
+        <input type="hidden" id="autofill_select_meta"
+        name="autofill_select_meta">
         <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">{{_('Close')}}</button>
+        <button type="button" class="btn btn-info close-button" id="meta-search-close" data-dismiss="modal">
+               <span class="glyphicon glyphicon-remove"></span>
+                   {{_('Close')}}
+        </button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
 
 {%- endblock page_body %}
-

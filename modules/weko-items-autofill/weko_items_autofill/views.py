@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from weko_admin.utils import get_current_api_certification
 
 from .permissions import auto_fill_permission
 from .utils import get_cinii_data, get_crossref_data, get_item_id, \
@@ -67,7 +68,8 @@ def get_items_autofill_data():
     try:
         result['items'] = get_item_id(item_type_id)
         if api_type == 'CrossRef':
-            pid = current_app.config['WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID']
+            pid_response = get_current_api_certification('crf')
+            pid = pid_response['cert_data']
             api_response = get_crossref_data(pid, search_data)
             result['result'] = parse_crossref_json_response(api_response,
                                                             result['items'])
