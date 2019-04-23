@@ -734,7 +734,7 @@ class WorkActivity(object):
                     item = ItemMetadata.query.filter_by(
                         id=activi.item_id).one_or_none()
                     if item:
-                        activi.ItemName = item.json.get('title_ja')
+                        activi.ItemName = item.json.get('title')
                     else:
                         activi.ItemName = ''
                 activi.StatusDesc = ActionStatusPolicy.describe(
