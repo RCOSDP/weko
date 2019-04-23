@@ -48,8 +48,8 @@
                 {% endfor %}
               </select>
             </div>
-            <a type="button" class="btn btn-info pull-right" href="{{
-                url_for('weko_itemtypes_ui.index') }}" style="width: 80px; height: 40px;font-size: 15px;">
+            <a type="button" class="btn btn-info pull-right back-button" href="{{
+                url_for('weko_itemtypes_ui.index') }}">
                    <span class="glyphicon glyphicon-chevron-left"></span>
                        {{ _('Back') }}
             </a>
@@ -70,7 +70,7 @@
         </div>
         <div class="form-group">
           <div class="col-sm-offset-2 col-sm-12 col-md-12 col-lg-10">
-            <button id="mapping-submit" class="btn btn-light" style="background-color: #32CD32; border-color: #808000;color: white; width: 120px; height: 40px;font-size: 15px;">
+            <button id="mapping-submit" class="btn btn-light send-button">
                <span class="glyphicon glyphicon-send"></span> 
                     {{_('Send')}}</button>
           </div>
@@ -93,7 +93,7 @@
         <p>One fine body&hellip;</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info" data-dismiss="modal" style="width: 100px; height: 40px;font-size:15px">
+        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
                <span class="glyphicon glyphicon-remove"></span>
                     {{_('Close')}}
         </button>
