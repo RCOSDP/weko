@@ -659,6 +659,8 @@ function handleSharePermission(value) {
                         {
                           this.setValueToField(this.dictValue(sub_id, '@value'), this.getAutoFillValue(this.dictValue(sub_resultId, '@value')));
                           this.setValueToField(this.dictValue(sub_id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'xml:lang')));
+                          $rootScope.recordsVM.invenioRecordsModel['title'] = this.getAutoFillValue(this.dictValue(sub_resultId, '@value'));
+                          $rootScope.recordsVM.invenioRecordsModel['lang'] = this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'xml:lang'));
                           break;
                         }
                         else
@@ -674,8 +676,11 @@ function handleSharePermission(value) {
                     if (resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                      $rootScope.recordsVM.invenioRecordsModel['title'] = this.getAutoFillValue(this.dictValue(resultId, '@value'));
+                      $rootScope.recordsVM.invenioRecordsModel['lang'] = this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang'));
                     } else {
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                      $rootScope.recordsVM.invenioRecordsModel['title'] = this.getAutoFillValue(this.dictValue(resultId, '@value'));
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
                     }
                   }
@@ -1136,6 +1141,10 @@ function handleSharePermission(value) {
               let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
               if (typeof(titleFile) == 'array') {
                 titleField = titleField[0];
+              } else {
+                if (titleField[0].hasOwnProperty(titleID[1])){
+                  titleField = titleField[0];
+                }
               }
               if (titleField.hasOwnProperty(titleID[1])) {
                 title = titleField[titleID[1]];
@@ -1144,8 +1153,15 @@ function handleSharePermission(value) {
                 }
               }
             }
-            $rootScope.recordsVM.invenioRecordsModel['title'] = title;
-            $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+            if (!$rootScope.recordsVM.invenioRecordsModel['title']){
+              $rootScope.recordsVM.invenioRecordsModel['title'] = title;
+              $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+            }else {
+              if (title != "") {
+                $rootScope.recordsVM.invenioRecordsModel['title'] = title;
+                $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+              }
+            }
           },
           error: function(data, status) {
             alert('Cannot connect to server!');
