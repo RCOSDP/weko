@@ -22,35 +22,14 @@
 from invenio_accounts.models import Role
 # from invenio_communities.models import Community
 from invenio_db import db
-from flask import current_app, json
-
-
+from flas
+import current_app, json
 from .models import WidgetItem
+
 
 class WidgetItems(object):
     """Define API for WidgetItems creation and update."""
 
-    # @classmethod
-    # def create(cls, data):
-    #     """Create data."""
-    #     try:
-    #         dataObj = WidgetItem()
-    #         with db.session.begin_nested():
-    #             dataObj.default_dis_num = data.get('dlt_dis_num_selected')
-    #             dataObj.default_dis_sort_index = data.get(
-    #                 'dlt_index_sort_selected')
-    #             dataObj.default_dis_sort_keyword = data.get(
-    #                 'dlt_keyword_sort_selected')
-    #             dataObj.sort_setting = data.get('sort_options')
-    #             dataObj.search_conditions = data.get('detail_condition')
-    #             dataObj.search_setting_all = data
-    #             db.session.add(dataObj)
-    #         db.session.commit()
-    #     except BaseException as ex:
-    #         db.session.rollback()
-    #         current_app.logger.debug(ex)
-    #         raise
-    #     return cls
     @classmethod
     def build_object(cls, widget_items=None):
         if not isinstance(widget_items, dict):
@@ -80,7 +59,6 @@ class WidgetItems(object):
             current_app.logger.debug(ex)
             return
         return data
-
 
     @classmethod
     def create(cls, widget_items=None):
@@ -145,16 +123,14 @@ class WidgetItems(object):
         """
         return db.session.query(WidgetItem).all()
 
-
     @classmethod
     def is_existed(cls, widget_items):
         if not isinstance(widget_items, dict):
             return False
         widget_item = WidgetItem.get(widget_items.get('repository'),
-                                        widget_items.get('widget_type'),
-                                        widget_items.get('label'))
+                                     widget_items.get('widget_type'),
+                                     widget_items.get('label'))
         return (widget_item is not None)
-
 
     @classmethod
     def get_account_role(cls):
@@ -177,12 +153,10 @@ class WidgetItems(object):
         except SQLAlchemyError:
             return
 
-
     @classmethod
     def parse_result(cls, in_result):
         """
         parse data to format which can be send to client
-        
         Arguments:
             in_result {WidgetItems} -- [data need to be parse]
         """
