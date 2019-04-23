@@ -59,11 +59,10 @@
             <td valign="bottom">
               <h4 style="display: inline;">{{_('Item')}}</h4>
             </td>
-            <td width="2048" valign="bottom">
-              <a href="#"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>
-                <span style="font-size:120%">{{ record.get('item_title', _('No title')) }}</span></a>
+            <td valign="bottom">
+              <h3 style="display: inline;"><a href='#' style="margin-left: 0.2em;">{{ record.get('item_title', _('No title')) }}</a></h3>
               {%- if record.permalink_uri -%}
-              <span class="pull-right" style="display: inline;">Permalink :
+              <span class="pull-right">Permalink :
                 {{ record.permalink_uri }}</span>
               {%- endif -%}
             </td>
