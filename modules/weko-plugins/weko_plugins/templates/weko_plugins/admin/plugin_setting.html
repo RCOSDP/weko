@@ -20,6 +20,12 @@
 
 {%- extends admin_base_template %}
 
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+
 {%- block body %}
 <div class="container">
   <div class="row">
@@ -29,12 +35,20 @@
           {% from "weko_plugins/macros/display_plugin.html" import setting_info %}
           {{ setting_info(plugin) }}
           <div class=" media form-inline pull-right">
-            <button class="btn btn-success" href="#">{{_('Sending')}}</button>
-            <button class="btn btn-info" href="#" id="btn_reset">{{_('Reset')}}</button>
+            <button class="btn btn-light send-button" href="#">
+                  <span class="glyphicon glyphicon-send"></span> 
+                        {{_('Send')}}</button>
+            <button class="btn btn-primary action-button" href="#" id="btn_reset">
+                  <span class="glyphicon glyphicon-hand-right"></span>
+                     {{_('Reset')}}
+            </button>
           </div>
         </div>
         <div class="panel-footer">
-          <a class="btn btn-default" href="{{ url_for('pluginsetting.index')}}">{{_('Back')}}</a>
+          <a class="btn btn-info back-button" href="{{ url_for('pluginsetting.index')}}">
+                <span class="glyphicon glyphicon-chevron-left"></span>
+                    {{_('Back')}}
+          </a>
         </div>
       </div>
     </div>

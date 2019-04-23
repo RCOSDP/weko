@@ -279,6 +279,8 @@ function handleSharePermission(value) {
       $scope.filemeta_key = '';
       $scope.filemeta_form_idx = -1;
       $scope.is_item_owner = false;
+      $scope.itemTitle = "";
+      $scope.itemTitleID = "";
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_key.length > 0) {
           return $scope.filemeta_key;
@@ -408,7 +410,10 @@ function handleSharePermission(value) {
       $scope.setValueToField = function (id, value) {
         if (!id) {
           return;
+        } else if (!$scope.depositionForm[id]) {
+          return;
         }
+
         if (!value) {
           // Reset current value
           $scope.depositionForm[id].$setViewValue("");
@@ -484,6 +489,19 @@ function handleSharePermission(value) {
         this.setItemMetadataFromApi(param);
       }
 
+      $scope.clearAllField = function() {
+        for (var property in $scope.depositionForm) {
+          if ($scope.depositionForm.hasOwnProperty(property)) {
+            if (property.indexOf("item") != -1) {
+              this.setValueToField(property, "");
+            }
+            if(typeof($scope.depositionForm[property]) == "object" && $scope.depositionForm[property].hasOwnProperty("$dateValue")) {
+              $scope.depositionForm[property].$dateValue = null;
+            }
+          }
+        }
+      }
+
       $scope.setItemMetadataFromApi = function (param) {
         $.ajax({
           url: '/api/autofill/get_items_autofill_data',
@@ -505,6 +523,8 @@ function handleSharePermission(value) {
               if (!result) {
                 this.setAutoFillErrorMessage($("#autofill_error_doi").val());
               } else {
+                // Reset all fields
+                this.clearAllField();
                 // Reset error message
                 this.resetAutoFillErrorMessage();
 
@@ -641,6 +661,8 @@ function handleSharePermission(value) {
                         {
                           this.setValueToField(this.dictValue(sub_id, '@value'), this.getAutoFillValue(this.dictValue(sub_resultId, '@value')));
                           this.setValueToField(this.dictValue(sub_id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'xml:lang')));
+                          $scope.itemTitle = this.getAutoFillValue(this.dictValue(sub_resultId, '@value'));
+                          $scope.itemTitleID = this.dictValue(sub_id, '@value');
                           break;
                         }
                         else
@@ -656,6 +678,8 @@ function handleSharePermission(value) {
                     if (resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                      $scope.itemTitle = this.getAutoFillValue(this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                      $scope.itemTitleID = this.dictValue(id, '@value');
                     } else {
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
@@ -769,6 +793,9 @@ function handleSharePermission(value) {
       }
 
       $scope.setItemMetadataCreator = function (items, result) {
+        if (!items.hasOwnProperty('creator')) {
+          return;
+        }
         if (items.creator.hasOwnProperty('affiliation')) {
           if (items.creator.affiliation.hasOwnProperty('affiliationName')) {
             let id = items.creator.affiliation.affiliationName;
@@ -1101,6 +1128,7 @@ function handleSharePermission(value) {
       }
 
       $scope.updateDataJson = async function () {
+        $rootScope.recordsVM.invenioRecordsModel['title'] = ($scope.itemTitleID) ? $('#'+$scope.itemTitleID).val() : $scope.itemTitle;
         let next_frame = $('#next-frame').val();
         if ($scope.is_item_owner) {
           if (!this.registerUserPermission()) {

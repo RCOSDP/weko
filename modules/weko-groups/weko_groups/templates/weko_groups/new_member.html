@@ -43,10 +43,11 @@
     {{ render_field(field, show_description=True) }}
   {%- endfor %}
  <div class="btn-toolbar">
-    <a href="{{ url_for('.members', group_id=group.id) }}" class="btn btn-default">
+    <a href="{{ url_for('.members', group_id=group.id) }}" class="btn btn-info
+        cancel-button">
       <i class="fa fa-times"></i> {{ _('Cancel') }}
     </a>
-    <button type="submit" class="btn btn-primary">
+    <button type="submit" class="btn btn-primary action-button">
       <i class="fa fa-check"></i> {{ _('Invite') }}
     </button>
   </div>

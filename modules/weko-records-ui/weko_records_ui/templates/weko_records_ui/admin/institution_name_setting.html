@@ -20,7 +20,10 @@
 #}
 
 {%- extends admin_base_template %}
-
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {% endblock %}
 {% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
 
 {% set panel_title = _("Life Time") %}
@@ -43,10 +46,14 @@
       <label>{{_("Institution Name")}}</label>
     </div>
     <div class="col-xs-2">
-      <input type="text" class="form-control" name="institution_name" id="institution_name" value={{institution_name}}>
+      <input type="text" class="form-control" name="institution_name"
+      id="institution_name" placeholder="Institution Name"  value={{institution_name}}>
     </div>
   </div>
-      <button type="submit" name="submit" value="institution_name_form" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Update') }}</button>
+      <button type="submit" name="submit" value="institution_name_form"
+          class="btn btn-primary update-button">
+             <i class="fa fa-edit"></i>
+                 {{ _('Update') }}</button>
     </div>
   </div>
 </form>
