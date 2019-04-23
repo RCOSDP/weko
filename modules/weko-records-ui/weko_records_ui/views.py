@@ -499,7 +499,8 @@ def file_version_update():
         is_show = request.values.get('is_show')
         if bucket_id is not None and key is not None and version_id is not None:
             from invenio_files_rest.models import ObjectVersion
-            object_version = ObjectVersion.get(bucket=bucket_id, key=key, version_id=version_id)
+            object_version = ObjectVersion.get(bucket=bucket_id, key=key,
+                                               version_id=version_id)
             if object_version is not None:
                 # Do update the path on record
                 object_version.is_show = True if is_show == '1' else False
