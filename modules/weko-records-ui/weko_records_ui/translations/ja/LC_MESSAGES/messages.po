@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-03-20 15:56+0900\n"
+"POT-Creation-Date: 2019-04-23 16:23+0900\n"
 "PO-Revision-Date: 2018-01-22 15:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,194 +19,346 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_records_ui/admin.py:60
+#: weko_records_ui/admin.py:73
 msgid "Author flag was updated."
 msgstr ""
 
-#: weko_records_ui/admin.py:114 weko_records_ui/admin.py:123
-#: weko_records_ui/admin.py:132
+#: weko_records_ui/admin.py:137 weko_records_ui/admin.py:146
+#: weko_records_ui/admin.py:155 weko_records_ui/admin.py:353
 msgid "Setting"
 msgstr "設定"
 
-#: weko_records_ui/admin.py:115
+#: weko_records_ui/admin.py:138
 msgid "Others"
-msgstr ""
+msgstr "その他"
 
-#: weko_records_ui/admin.py:124
-#, fuzzy
+#: weko_records_ui/admin.py:147
 msgid "Items"
 msgstr "アイテム"
 
-#: weko_records_ui/admin.py:133
-#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:97
+#: weko_records_ui/admin.py:156
+#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:98
 msgid "PDF Cover Page"
 msgstr "PDFカバーページ"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:25
+#: weko_records_ui/admin.py:196
+msgid "Prefix"
+msgstr ""
+
+#: weko_records_ui/admin.py:202
+msgid "Suffix"
+msgstr ""
+
+#: weko_records_ui/admin.py:204
+msgid "Enable/Disable"
+msgstr ""
+
+#: weko_records_ui/admin.py:214
+msgid "Repository"
+msgstr ""
+
+#: weko_records_ui/admin.py:214
+msgid "JaLC DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:215
+msgid "JaLC CrossRef DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:216
+msgid "JaLC DataCite DOI"
+msgstr ""
+
+#: weko_records_ui/admin.py:217
+msgid "CNRI"
+msgstr ""
+
+#: weko_records_ui/admin.py:218
+msgid "Semi-automatic Suffix"
+msgstr ""
+
+#: weko_records_ui/admin.py:235
+msgid "Only allow halfwith 1-bytes character in input"
+msgstr ""
+
+#: weko_records_ui/admin.py:354
+msgid "Identifier"
+msgstr ""
+
+#: weko_records_ui/views.py:479
+msgid "PDF cover page settings have been updated."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:30
 msgid "Index"
 msgstr "インデックス"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:50
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:27
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:58
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:28
 msgid "Item"
 msgstr "アイテム"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:56
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:34
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:61
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:30
 msgid "No title"
 msgstr "タイトルなし"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:70
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:74
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:48
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:50
 msgid "Name"
 msgstr "名前"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:70
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:50
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:74
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:48
 msgid "File"
 msgstr "ファイル"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:71
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:51
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:75
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:49
 msgid "License"
 msgstr "ライセンス"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:83
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:87
 msgid "Detail"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:112
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:115
 msgid "Restricted Access"
 msgstr "アクセス制限"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:121
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:89
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:124
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:72
 msgid "Original"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:145
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:169
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:135
+msgid "Plagiarism Check"
+msgstr "剽窃チェック"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:148
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:172
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:34
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:61
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:113
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:138
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:109
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:134
 msgid "Preview"
 msgstr "プレビュー"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:205
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:208
 msgid "item type"
 msgstr "アイテムタイプ"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:265
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:268
 msgid "Link"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:275
-msgid "Publish Status"
-msgstr "公開ステータス"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:291
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:296
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:299
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:182
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:205
-msgid "Private"
-msgstr "非公開"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:292
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:295
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:299
-msgid "Publish"
-msgstr "公開"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:320
-msgid "Back"
-msgstr "戻る"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:323
-msgid "Edit"
-msgstr "編集"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:328
-msgid "Delete"
-msgstr "削除"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:332
-msgid "Are you sure you want to delete this item?"
-msgstr ""
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:335
-msgid "No title"
-msgstr "タイトルなし"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:69
-#: weko_records_ui/templates/weko_records_ui/box/preview.html:48
-msgid "Name"
-msgstr "名前"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:69
-msgid "File"
-msgstr "ファイル"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:70
-msgid "License"
-msgstr "ライセンス"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:108
-msgid "Original"
-msgstr ""
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:129
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:153
-#: weko_records_ui/templates/weko_records_ui/box/preview.html:34
-#: weko_records_ui/templates/weko_records_ui/box/preview.html:61
-msgid "Preview"
-msgstr "プレビュー"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:188
-msgid "item type"
-msgstr "アイテムタイプ"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:248
-msgid "Link"
-msgstr "リンク"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:258
-msgid "Publish Status"
-msgstr "公開ステータス"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:274
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:279
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:282
-msgid "Private"
-msgstr "非公開"
-
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:275
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:278
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:282
+msgid "Publish Status"
+msgstr "公開ステータス"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:293
+msgid "Public"
+msgstr "公開"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:296
+msgid "Change to Private"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:299
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:305
+msgid "Private"
+msgstr "非公開"
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:301
+msgid "Change to Public"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:305
 msgid "Publish"
 msgstr "公開"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:303
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:325
 msgid "Back"
 msgstr "戻る"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:306
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:329
 msgid "Edit"
 msgstr "編集"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:311
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:334
 msgid "Delete"
 msgstr "削除"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:315
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:341
+msgid "Confirm"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:344
 msgid "Are you sure you want to delete this item?"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:318
-msgid "Ok"
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:347
+msgid "OK"
 msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:348
+msgid "Cancel"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:34
+msgid "Fields For Update"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:65
+msgid "Open Access"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:68
+msgid "Open Access Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:72
+msgid "Login User Only"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:83
+msgid "Add Field"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:91
+msgid "Search"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:119
+msgid "Item list"
+msgstr "アイテム一覧"
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:132
+msgid "Export Checked Items"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:133
+msgid "Export All Displayed Items"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:134
+msgid "Export All Items Of This Index"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:135
+msgid "Print Checked Items"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:136
+msgid "Print All Displayed Items"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:137
+msgid "Print All Items Of This Index"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:139
+msgid "Execution"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:142
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:169
+msgid "Display order"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:144
+msgid "Title(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:145
+msgid "Title(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:146
+msgid "Registrant(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:147
+msgid "Registrant(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:148
+msgid "Item Types(Asending)"
+msgstr "アイテムタイプ(昇順)"
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:149
+msgid "Item Types(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:150
+msgid "ID(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:151
+msgid "ID(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:152
+msgid "Modified Date and Time(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:153
+msgid "Modified Date and Time(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:154
+msgid "Created Date and Time(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:155
+msgid "Created Date and Time(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:156
+msgid "Review Date and Time(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:157
+msgid "Review Date and Time(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:158
+msgid "Published Year(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:159
+msgid "Published Year(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:160
+msgid "Custom(Ascending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:161
+msgid "Custom(Descending)"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:188
+msgid "The number of display"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:204
+msgid "Select All"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:208
+msgid "Search failed."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:214
+msgid "Loading..."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:56
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:88
+#: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:243
+msgid "Update"
+msgstr "アップデート"
 
 #: weko_records_ui/templates/weko_records_ui/box/export.html:25
 #: weko_records_ui/templates/weko_records_ui/export_well.html:24
@@ -218,111 +370,103 @@ msgstr ""
 msgid "Export"
 msgstr "エクスポート"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:173
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:199
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:96
+msgid "Plagarism Check"
+msgstr "剽窃チェック"
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:172
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:189
 msgid "Version"
 msgstr "バージョン"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:174
+#: weko_records_ui/templates/weko_records_ui/box/stats.html:4
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:173
 msgid "Stats"
 msgstr "統計"
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:181
-#, fuzzy
-msgid "Published"
-msgstr "公開"
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:195
+msgid "Show"
+msgstr "表示"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:182
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:195
+msgid "Hide"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:190
 msgid "Date Modified"
 msgstr "更新日時"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:201
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:191
 msgid "Object File Name"
 msgstr "オブジェクトファイル名"
 
-#: weko_records_ui/templates/weko_records_ui/box/preview.html:49
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
-msgid "Size"
-msgstr "容量"
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:192
+msgid "File Size"
+msgstr "ファイル容量"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:203
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:193
 msgid "File Hash Value"
 msgstr "ファイルハッシュ値"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:204
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:194
 msgid "Contributor Name"
 msgstr "登録ユーザ名"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:205
-#, fuzzy
-msgid "Published/"
-msgstr "公開"
-
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:220
-msgid "Period"
-msgstr "期間"
-
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:233
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:264
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:215
 msgid "Downloads"
 msgstr "ダウンロード数"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:241
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:265
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:223
 msgid "Plays"
 msgstr "再生数"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
+#: weko_records_ui/templates/weko_records_ui/box/stats.html:22
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:233
 msgid "See details"
 msgstr "詳細を見る"
 
-#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:26
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:29
 msgid "Life Time"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:43
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:46
 msgid "Institution Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:49
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:81
-msgid "Update"
-msgstr "アップデート"
-
-
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:29
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:34
 msgid "Search Author"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:35
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:44
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:40
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:49
 msgid "Search by Author Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:39
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:48
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:44
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:53
 msgid "Search by Author ID"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:55
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:61
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:70
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:60
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:66
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:75
 msgid "Display Email"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:65
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:74
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:70
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:79
 msgid "Hide Email"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:136
+#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:137
 msgid "Header Settings"
 msgstr "ヘッダー設定"
 
-#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:238
+#: weko_records_ui/templates/weko_records_ui/admin/pdfcoverpage.html:241
 msgid " Update"
 msgstr "アップデート"
-
 
 #: weko_records_ui/templates/weko_records_ui/box/meta.html:42
 msgid "Publication date"
@@ -334,7 +478,7 @@ msgstr "スキーマ"
 
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:49
 msgid "Size"
-msgstr ""
+msgstr "容量"
 
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:58
 msgid ""
@@ -346,26 +490,17 @@ msgstr ""
 msgid "Download"
 msgstr "ダウンロード"
 
-#: weko_records_ui/templates/weko_records_ui/box/share.html:2
+#: weko_records_ui/templates/weko_records_ui/box/share.html:23
 msgid "Share"
 msgstr "シェア"
 
-#: weko_records_ui/templates/weko_records_ui/box/stats.html:4
-msgid "Stats"
-msgstr "統計"
+#: weko_records_ui/templates/weko_records_ui/box/share.html:41
+msgid "Your record could not be processed by the citation formatter"
+msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/box/stats.html:10
-msgid "Period"
-msgstr "期間"
-
-#: weko_records_ui/templates/weko_records_ui/box/stats.html:31
-msgid "See details"
-msgstr "詳細を見る"
-
-#: weko_records_ui/templates/weko_records_ui/box/stats.html:38
-#, fuzzy
+#: weko_records_ui/templates/weko_records_ui/box/stats.html:29
 msgid "Views"
-msgstr "プレビュー"
+msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/box/versions.html:2
 msgid "Versions"
@@ -386,8 +521,15 @@ msgstr "バージョン"
 #~ msgid "Control number"
 #~ msgstr "管理番号"
 
-msgid "Show"
-msgstr "表示"
+#~ msgid "Ok"
+#~ msgstr ""
 
-msgid "File Size"
-msgstr "ファイル容量"
+#~ msgid "Published"
+#~ msgstr "公開"
+
+#~ msgid "Published/"
+#~ msgstr "公開"
+
+#~ msgid "Period"
+#~ msgstr "期間"
+
