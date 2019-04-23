@@ -72,7 +72,6 @@ def get_widget_list(repository_id):
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
                 result["widget-list"].append(data)
-
     except Exception as e:
         result["error"] = str(e)
 
@@ -158,19 +157,24 @@ def update_admin_widget_item_setting(data):
     status = 201
     success = True
 
-    if not data:
+    flag = data.get('flag_edit')
+    data_result = data.get('data')
+    if not data_result:
         # raise WidgetItemInvalidDataRESTError()
         success = False
         msg = 'Invalid data.'
-    if WidgetItems.is_existed(data):
-        if not WidgetItems.update(data):
-            # raise WidgetItemUpdatedRESTError()
-            success = False
-            msg = 'Update widget item fail.'
+    if flag:
+        if WidgetItems.is_existed(data_result):
+            if not WidgetItems.update(data_result):
+                # raise WidgetItemUpdatedRESTError()
+                success = False
+                msg = 'Update widget item fail.'
+            else:
+                msg = 'Widget item updated successfully.'
         else:
-            msg = 'Widget item updated successfully.'
+            msg = 'Fail to udpate. Can not find Widget item to edit'
     else:
-        if not WidgetItems.create(data):
+        if not WidgetItems.create(data_result):
             # raise WidgetItemAddedRESTError()
             success = False
             msg = 'Create widget item fail.'
