@@ -22,8 +22,7 @@
 from invenio_accounts.models import Role
 # from invenio_communities.models import Community
 from invenio_db import db
-from flas
-import current_app, json
+from flask import current_app, json
 from .models import WidgetItem
 
 
@@ -80,20 +79,6 @@ class WidgetItems(object):
         is_ok = True
         try:
             _add_widget_item(data)
-        # except IntegrityError as ie:
-        #     if 'uix_position' in ''.join(ie.args):
-        #         try:
-        #             pid_info = cls.get_index(pid, with_count=True)
-        #             data["position"] = 0 if not pid_info else \
-        #                 (pid_info.position_max + 1
-        #                  if pid_info.position_max is not None else 0)
-        #             _add_index(data)
-        #         except SQLAlchemyError as ex:
-        #             is_ok = False
-        #             current_app.logger.debug(ex)
-        #     else:
-        #         is_ok = False
-        #         current_app.logger.debug(ie)
         except Exception as ex:
             is_ok = False
             current_app.logger.debug(ex)
@@ -104,13 +89,13 @@ class WidgetItems(object):
         return is_ok
 
     @classmethod
-    def update(cls, widget_items):
+    def update(cls, widget_items, widget_id):
         data = cls.build_object(widget_items)
         if not data:
             return False
-        widget_item = WidgetItem.update(widget_items.get('repository'),
-                                        widget_items.get('widget_type'),
-                                        widget_items.get('label'),
+        widget_item = WidgetItem.update(widget_id.get('repository'),
+                                        widget_id.get('widget_type'),
+                                        widget_id.get('label'),
                                         **data)
         return (widget_item is not None)
 

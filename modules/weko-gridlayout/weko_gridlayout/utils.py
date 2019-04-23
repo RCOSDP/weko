@@ -159,13 +159,14 @@ def update_admin_widget_item_setting(data):
 
     flag = data.get('flag_edit')
     data_result = data.get('data')
+    data_id = data.get('data_id')
     if not data_result:
         # raise WidgetItemInvalidDataRESTError()
         success = False
         msg = 'Invalid data.'
     if flag:
-        if WidgetItems.is_existed(data_result):
-            if not WidgetItems.update(data_result):
+        if WidgetItems.is_existed(data_id):
+            if not WidgetItems.update(data_result, data_id):
                 # raise WidgetItemUpdatedRESTError()
                 success = False
                 msg = 'Update widget item fail.'

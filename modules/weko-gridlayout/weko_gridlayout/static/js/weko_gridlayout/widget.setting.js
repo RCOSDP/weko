@@ -57,7 +57,7 @@ class ComponentSelectField extends React.Component {
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
                 <div class="controls col-xs-5">
-                    <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name} disabled = {this.props.is_edit}>
+                    <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name}>
                         <option value="0">Please selected the input type</option>
                         {this.state.selectOptions}
                     </select>
@@ -97,7 +97,7 @@ class ComponentTextboxField extends React.Component {
             <div className="form-group row">
               <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
               <div class="controls col-xs-5">
-                <input name={this.props.name} type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control" disabled = {this.props.is_edit}/>
+                <input name={this.props.name} type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control"/>
               </div>
             </div>
         )
@@ -408,7 +408,8 @@ class ComponentButtonLayout extends React.Component {
   {
         let request = {
             flag_edit : this.props.is_edit,
-            data : this.props.data
+            data : this.props.data,
+            data_id: this.props.data_id
         }
         if (!this.props.data.repository) {
             alert('Repository is required!');
@@ -503,7 +504,7 @@ class MainLayout extends React.Component {
               this.setState({ edit_role: value });
               break;
           case 'enable':
-              this.enable({ enable: value });
+              this.setState({ enable: value });
               break;
         }
     }
@@ -513,13 +514,13 @@ class MainLayout extends React.Component {
             <div>
                 <br/>
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository} is_edit = {this.props.is_edit}/>
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository}/>
                 </div>
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding = "widget_type" data_load={this.state.widget_type} is_edit = {this.props.is_edit}/>
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding = "widget_type" data_load={this.state.widget_type}/>
                 </div>
                 <div className="row">
-                    <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding = "label" data_load={this.state.label} is_edit = {this.props.is_edit}/>
+                    <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding = "label" data_load={this.state.label}/>
                 </div>
                 <div className="row">
                   <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Color" key_binding = "label_color" data_load={this.state.label_color}/>
@@ -546,7 +547,7 @@ class MainLayout extends React.Component {
                   <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable}/>
                 </div>
                 <div className="row">
-                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url}/>
+                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id}/>
               </div>
             </div>
         )
@@ -556,9 +557,15 @@ class MainLayout extends React.Component {
 $(function () {
     let editData = $("#model_data").data("editdata");
     let isEdit = false;
+    let data_id ;
     if (editData)
     {
         isEdit = true;
+        data_id = {
+            repository: editData.repository_id,
+            widget_type: editData.widget_type,
+            label: editData.label
+        }
     }
     else
     {
@@ -578,7 +585,7 @@ $(function () {
     }
     let returnURL = $("#return_url").val();
     ReactDOM.render(
-    <MainLayout data_load={editData} is_edit = {isEdit} return_url = {returnURL}/>,
+    <MainLayout data_load={editData} is_edit = {isEdit} return_url = {returnURL} data_id={data_id}/>,
     document.getElementById('root')
 )
 });

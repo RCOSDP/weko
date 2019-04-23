@@ -139,8 +139,7 @@ class WidgetItem(db.Model):
                     return
 
                 for k, v in data.items():
-                    if "width" in k or "height" in k:
-                        setattr(widget_item, k, v)
+                    setattr(widget_item, k, v)
                 db.session.merge(widget_item)
             db.session.commit()
             return widget_item
