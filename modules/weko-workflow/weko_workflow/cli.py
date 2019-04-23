@@ -124,36 +124,12 @@ def init_workflow_tables(tables):
             action_lastdate=datetime.date(2018, 5, 15)
         ))
         db_action.append(dict(
-            action_name='Duplicate Check',
-            action_desc='Confirm duplicate registration of items.',
-            action_version='1.0.0',
-            action_endpoint='double_check',
-            action_makedate=datetime.date(2018, 5, 15),
-            action_lastdate=datetime.date(2018, 5, 15)
-        ))
-        db_action.append(dict(
             action_name='Item Registration',
-            action_desc='Plug-in for registering items.',
+            action_desc='Registering items.',
             action_version='1.0.1',
             action_endpoint='item_login',
             action_makedate=datetime.date(2018, 5, 22),
             action_lastdate=datetime.date(2018, 5, 22)
-        ))
-        db_action.append(dict(
-            action_name='Content Upload',
-            action_desc='Action for uploading item content.',
-            action_version='1.2.1',
-            action_endpoint='file_upload',
-            action_makedate=datetime.date(2018, 4, 22),
-            action_lastdate=datetime.date(2018, 4, 22)
-        ))
-        db_action.append(dict(
-            action_name='Approval Request',
-            action_desc='Establish an approver for items and get approval.',
-            action_version='1.1.1',
-            action_endpoint='approval_request',
-            action_makedate=datetime.date(2018, 6, 11),
-            action_lastdate=datetime.date(2018, 6, 11)
         ))
         db_action.append(dict(
             action_name='Approval',
@@ -162,14 +138,6 @@ def init_workflow_tables(tables):
             action_endpoint='approval',
             action_makedate=datetime.date(2018, 2, 11),
             action_lastdate=datetime.date(2018, 2, 11)
-        ))
-        db_action.append(dict(
-            action_name='Via Review',
-            action_desc='Supports via review for items.',
-            action_version='1.1.2',
-            action_endpoint='review_action',
-            action_makedate=datetime.date(2018, 6, 8),
-            action_lastdate=datetime.date(2018, 6, 8)
         ))
         #
         db_action.append(dict(
