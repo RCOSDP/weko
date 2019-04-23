@@ -57,38 +57,6 @@ def get_widget_list(repository_id):
     :param repository_id: Identifier of the repository.
     :return: Widget list.
     """
-    test_value = [
-        {
-            "widgetId": "widget_main_content",
-            "widgetType": "Main Contents",
-            "widgetLabel": "Main Contents Label"
-        },
-        {
-            "widgetId": "id1",
-            "widgetType": "Notices",
-            "widgetLabel": "Notices Label"
-        },
-        {
-            "widgetId": "id2",
-            "widgetType": "Type",
-            "widgetLabel": "Type Label"
-        },
-        {
-            "widgetId": "id3",
-            "widgetType": "Free Description",
-            "widgetLabel": "Free Description Label"
-        },
-        {
-            "widgetId": "id4",
-            "widgetType": "New arrivals",
-            "widgetLabel": "New arrivals Label"
-        },
-        {
-            "widgetId": "id5",
-            "widgetType": "Access counter",
-            "widgetLabel": "Access counter Label"
-        }
-    ]
     result = {
         "widget-list": [],
         "error": ""
@@ -105,9 +73,6 @@ def get_widget_list(repository_id):
                 data["widgetLabel"] = widget_item.label
                 result["widget-list"].append(data)
 
-        # TODO: add testing value.
-        if not result["widget-list"] and repository_id != "0":
-            result["widget-list"] = test_value
     except Exception as e:
         result["error"] = str(e)
 
