@@ -377,7 +377,6 @@ function handleSharePermission(value) {
             // ----
           }
         }
-        $rootScope.recordsVM.invenioRecordsModel['pubdate'] = this.defaultDate();
       }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
@@ -1122,21 +1121,6 @@ function handleSharePermission(value) {
         return result;
       }
 
-      $scope.defaultDate = function() {
-        let currentDate = new Date(),
-        month = '' + (currentDate.getMonth() + 1),
-        day = '' + currentDate.getDate(),
-        year = currentDate.getFullYear();
-
-        if (month.length < 2) {
-          month = '0' + month;
-        }
-        if (day.length < 2) {
-          day = '0' + day;
-        }
-        return [year, month, day].join('-');
-      }
-
       $scope.genTitleAndPubDate = function() {
         let itemTypeId = $("#autofill_item_type_id").val();
         let get_url = '/api/autofill/get_title_pubdate_id/'+itemTypeId;
@@ -1162,9 +1146,6 @@ function handleSharePermission(value) {
             }
             $rootScope.recordsVM.invenioRecordsModel['title'] = title;
             $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
-            if ($('input[name=pubdate]').val()) {
-              $rootScope.recordsVM.invenioRecordsModel['pubdate'] = $('input[name=pubdate]').val();
-            }
           },
           error: function(data, status) {
             alert('Cannot connect to server!');
@@ -1176,7 +1157,10 @@ function handleSharePermission(value) {
         this.genTitleAndPubDate();
         if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
           alert('Title is required! Please input title');
-        }else {
+        }else if (!$rootScope.recordsVM.invenioRecordsModel['pubdate']){
+          alert('PubDate is required! Please input pubDate');
+        }
+        else {
           let next_frame = $('#next-frame').val();
           if ($scope.is_item_owner) {
             if (!this.registerUserPermission()) {
