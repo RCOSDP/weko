@@ -71,9 +71,9 @@
       <tr>
         <th>{{_('No.')}}</th>
         <th>{{_('WorkFlow')}}</th>
-        <th>{{_('Begin')}}</th>
-        <th>{{_('ItemType')}}</th>
+        <th>{{_('Item Type')}}</th>
         <th>{{_('Flow')}}</th>
+        <th></th>
         <th class="hide">{{_('Next Flow')}}</th>
       </tr>
     </thead>
@@ -82,20 +82,30 @@
       <tr>
         <th scope="row">{{loop.index}}</th>
         <td>{{workflow.flows_name}}</td>
-        {%-if community%}
-        <td><a href="#" class="btn btn-primary btn-begin" id="btn-begin-{{workflow.id}}" data-workflow-id="{{workflow.id}}" data-community="{{community.id}}">{{_('Begin')}}</a></td>
-        {%- else%}
-        <td><a href="#" class="btn btn-primary btn-begin" id="btn-begin-{{workflow.id}}" data-workflow-id="{{workflow.id}}" data-community="">{{_('Begin')}}</a></td>
-        {%- endif%}
         <td><span id="item_type_{{workflow.id}}" data-itemtype-id="{{workflow.itemtype_id}}">{{_(workflow.itemtype.item_type_name.name)}}</span></td>
         <td><span id="flow_{{workflow.id}}" data-flow-id="{{workflow.flow_id}}">{{_(workflow.flow_define.flow_name)}}</span></td>
+        {%-if community%}
+        <td class="text-center"><a href="#" class="btn btn-primary btn-begin align-middle"
+                id="btn-begin-{{workflow.id}}"
+                data-workflow-id="{{workflow.id}}"
+        data-community="{{community.id}}">{{_('New')}}</a></td>
+        {%- else%}
+        <td class="text-center"><a href="#" class="btn btn-light btn-begin add-button"
+                id="btn-begin-{{workflow.id}}"
+                data-workflow-id="{{workflow.id}}" data-community="">
+                <span class="glyphicon glyphicon-plus"></span>
+                {{_('New')}}</a></td>
+        {%- endif%}
         <td class="hide"> </td>
       </tr>
     {%- endfor %}
     </tbody>
   </table>
   <div class="hide" id="post_uri">{{url_for('weko_workflow.init_activity')}}</div>
-  <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
+       <a class="btn btn-info pull-lef back-button" href="{{url_for('weko_workflow.index')}}">
+           <span class="glyphicon glyphicon-chevron-left"></span>
+             {{_('Back')}}
+       </a>
   </div>
 </div>
 {%- endblock page_body_main %}

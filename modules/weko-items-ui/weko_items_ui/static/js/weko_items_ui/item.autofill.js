@@ -1,7 +1,7 @@
 class ModalHeader extends React.Component {
     render() {
         return (
-            <div className="text-right">
+            <div className="text-left">
                 <h3>{this.props.headerName}</h3>
             </div>
         )
@@ -61,6 +61,7 @@ class SearchMetaForm extends React.Component {
         return (
             <div>
                 <ModalHeader headerName={this.props.headerName} />
+                <br></br>
                 <form onSubmit={this.handleSubmit}>
                     <div className="form-inline">
                         <label className="input-group-text" for="autofill_id_type">

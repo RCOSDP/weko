@@ -52,14 +52,58 @@
             <div class="input-group">
               <label class="sr-only" for="item-type-lists"></label>
               <select class="form-control" id="item-type-lists">
-                <option  value=""></option>
+                <option value=""></option>
                 {% for list in lists %}
-                <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.harvesting_type %} class="harvesting_type" {% else %} class="normal_type" {% endif %} {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+                <option value="{{ list.item_type.0.id }}" class="{% if list.item_type.0.harvesting_type %}harvesting_type {% else %}normal_type {% endif %}{% if list.belonging_item_flg %}belonging_item{% endif %}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
                 {% endfor %}
               </select>
             </div>
-            <a type="button" class="btn btn-default pull-right" href="{{ url_for('weko_itemtypes_ui.custom_property') }}">{{ _('New Property') }}</a>
-            <a type="button" class="btn btn-default pull-right" href="{{ url_for('weko_itemtypes_ui.mapping_index') }}">{{ _('Mapping') }}</a>
+
+            <div class="pull-right">
+              {%- set delete_button_class = 'disabled' -%}
+              {%- if id -%}
+              {%- set delete_button_class = '' -%}
+              {%- endif -%}
+              <a role="button" class="btn btn-primary pull-right mapping-button ten-pixel-margin" href="{{
+                  url_for('weko_itemtypes_ui.mapping_index') }}">
+                  <span class="glyphicon glyphicon-hand-right"></span>
+                  {{ _('Mapping') }}
+              </a>
+              <a role="button" class="btn btn-primary pull-right property-button ten-pixel-margin" href="{{
+                  url_for('weko_itemtypes_ui.custom_property') }}">
+                  <span class="glyphicon glyphicon-hand-right"></span>
+                  {{ _('Property') }}
+              </a>
+              <a role="button" class="btn btn-danger pull-right delete-button
+                  ten-pixel-margin" href="javascript:;" id="btn_delete_item">
+                  <span class="glyphicon glyphicon-trash"></span>
+                  {{ _('Delete') }}
+              </a>
+              <div id="item_type_delete_confirmation" class="modal fade" tabindex="-1"
+                   role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                      </button>
+                      <h4 class="modal-title" id="deleteHeader">WEKO</h4>
+                    </div>
+                    <div class="modal-body" style="overflow-x: auto;">
+                      <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
+                      <span style="margin: 0 10px">{{_('Are you sure you want to delete this Item type?')}}</span>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-primary" id="item_type_delete_continue">{{_('Continue')}} </button>
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">{{_('Cancel')}}</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" value="{{_('Cannot delete Item type for Harvesting.')}}" id="msg_for_harvesting">
+              <input type="hidden" value="{{_('Cannot delete because there is belonging item.')}}" id="msg_for_belonging_item">
+            </div>
+
           </div>
         </div>
       </div>
@@ -74,8 +118,9 @@
         </div>
         <form class="form-inline">
           <div class="form-group mr-5">
-            <label for="itemtype_name">{{_('Item Types')}}:</label>
-            <input type="text" class="form-control" id="itemtype_name" placeholder="{{_('input new itemtype name')}}" value="">＊
+            <label for="itemtype_name">{{_('Item Type')}}:</label>
+            <input type="text" class="form-control" id="itemtype_name"
+            placeholder="{{_('Input Type Name')}}" value="">＊
           </div>
           <label class="radio-inline">
             <input type="radio" name="radio_versionup" class="radio_versionup" id="upt_version" value="upt">{{_('Version Upgrade')}}
@@ -100,166 +145,23 @@
             </tr>
           </thead>
           <tbody id="tbody_itemtype">
-            <tr>
-              <td>{{_('Title')}}</td>
-              <td>{{_('Text')}}</td>
-              <td>
-                <fieldset disabled>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_0" value="required" checked>{{_('Required')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_1" value="multiple">{{_('Multiple')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_2" value="showlist" checked>{{_('List Display')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_3" value="crtf" checked>{{_('Specify Newline')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_4" value="hidden">{{_('Hide')}}</label>
-                </div>
-                </fieldset>
-              </td>
-              <td>　</td>
-              <td>　</td>
-            </tr>
-            <tr>
-              <td>{{_('Title(English)')}}</td>
-              <td>{{_('Text')}}</td>
-              <td>
-                <fieldset disabled>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_0" value="required" checked>{{_('Required')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_1" value="multiple">{{_('Multiple')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_2" value="showlist" checked>{{_('List Display')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_3" value="crtf" checked>{{_('Specify Newline')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_title_en_4" value="hidden">{{_('Hide')}}</label>
-                </div>
-                </fieldset>
-              </td>
-              <td>　</td>
-              <td>　</td>
-            </tr>
-            <tr>
-              <td>{{_('Language')}}</td>
-              <td>{{_('Text')}}</td>
-              <td>
-                <fieldset disabled>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_0" value="required" checked>{{_('Required')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_1" value="multiple">{{_('Multiple')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_2" value="showlist">{{_('List Display')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_3" value="crtf">{{_('Specify Newline')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_lang_4" value="hidden">{{_('Hide')}}</label>
-                </div>
-                </fieldset>
-              </td>
-              <td>　</td>
-              <td>　</td>
-            </tr>
-            <tr>
-              <td>{{_('Publish Date')}}</td>
-              <td>{{_('Date')}}</td>
-              <td>
-                <fieldset disabled>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_0" value="required" checked>{{_('Required')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_1" value="multiple">{{_('Multiple')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_2" value="showlist">{{_('List Display')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_3" value="crtf">{{_('Specify Newline')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_pubdate_4" value="hidden">{{_('Hide')}}</label>
-                </div>
-                </fieldset>
-              </td>
-              <td>　</td>
-              <td>　</td>
-            </tr>
-            <tr>
-              <td>{{_('Keyword')}}</td>
-              <td>{{_('Text')}}</td>
-              <td>
-                <fieldset disabled>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_0" value="required">{{_('Required')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_1" value="multiple">{{_('Multiple')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_2" value="showlist">{{_('List Display')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_3" value="crtf">{{_('Specify Newline')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_4" value="hidden">{{_('Hide')}}</label>
-                </div>
-                </fieldset>
-              </td>
-              <td>　</td>
-              <td>　</td>
-            </tr>
-            <tr>
-              <td>{{_('Keyword(English)')}}</td>
-              <td>{{_('Text')}}</td>
-              <td>
-                <fieldset disabled>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_0" value="required">{{_('Required')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_1" value="multiple">{{_('Multiple')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_2" value="showlist">{{_('List Display')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_3" value="crtf">{{_('Specify Newline')}}</label>
-                </div>
-                <div class="checkbox">
-                  <label><input type="checkbox" id="chk_keyword_en_4" value="hidden">{{_('Hide')}}</label>
-                </div>
-                </fieldset>
-              </td>
-              <td>　</td>
-              <td>　</td>
-            </tr>
           </tbody>
         </table>
         <div class="col-sm-3 col-md-3 col-lg-3">
-          <button type="button" class="btn btn-default btn-block" id="btn_new_itemtype_meta">{{_('Add Metadata')}}</button>
+          <button type="button" class="btn btn-light add-big-button" id="btn_new_itemtype_meta">
+              <span class="glyphicon glyphicon-plus"></span> 
+                   {{_('Add Metadata')}}</button>
         </div>
-        <div class="col-sm-3 col-md-3 col-lg-3 pull-right">
-          <button type="button" class="btn btn-default btn-block" id="btn_create_itemtype_schema">{{_('Sending')}}</button>
+        <div class="col-sm-3 col-md-3 col-lg-2 pull-right">
+          <button type="button" class="btn btn-primary save-button" id="btn_create_itemtype_schema">
+              <span class="fa fa-download"></span>
+                     {{_('Save')}}</button>
         </div>
         <div class="col-sm-3 col-md-3 col-lg-3 pull-right hide">
-          <button type="button" class="btn btn-default btn-block" id="btn_previews_itemtype_schema">{{_('Preview')}}</button>
+          <button type="button" class="btn btn-primary btn-block preview-button" id="btn_previews_itemtype_schema">
+               <span class="glyphicon glyphicon-hand-right"></span>
+                     {{_('Preview')}}
+          </button>
         </div>
       </div>
       <div class="panel panel-default hide">
@@ -318,7 +220,11 @@
         <p>One fine body&hellip;</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">{{_('Close')}}</button>
+        <button type="button" class="btn btn-info close-button"
+        data-dismiss="modal">
+             <span class="glyphicon glyphicon-remove"></span>
+                {{_('Close')}}
+        </button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

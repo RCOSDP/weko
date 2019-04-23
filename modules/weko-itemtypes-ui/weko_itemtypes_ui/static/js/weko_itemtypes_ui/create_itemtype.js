@@ -75,6 +75,7 @@
       }
       $('#itemtype_name_warning').addClass('hide');
       create_itemtype_schema();
+      console.log('aaaaaaaaaaaaaa');
       send(url_update_schema, page_global);
     });
 
@@ -226,53 +227,6 @@
         } else {
           page_global.table_row_map.mapping['filemeta'] = mapping_value;
         }
-      }
-
-      // タイトルなどを追加する
-      page_global.table_row_map.schema.properties["title_ja"] = {type:"string",title:"タイトル",format:"text"}
-      page_global.table_row_map.schema.properties["title_en"] = {type:"string",title:"タイトル(英)",format:"text"}
-      page_global.table_row_map.form.push({type:"fieldset",title:"タイトル",title_i18n:{ja:"タイトル",en:"Title"},items:[{type:"text",key:"title_ja",title:"タイトル",title_i18n:{ja:"タイトル",en:"Title"},required:true},{type:"text",key:"title_en",title:"タイトル(英)",title_i18n:{ja:"タイトル(英)",en:"Title(English)"},required:true}]});
-      page_global.table_row_map.schema.properties["lang"] = {type:"string",title:"言語",format:"select",enum:["en","ja"]}
-      page_global.table_row_map.form.push({key:"lang",type:"select",title:"言語",title_i18n:{ja:"言語",en:"Language"},required: true,titleMap:{"en":"英語","ja":"日本語"}});
-      page_global.table_row_map.schema.properties["pubdate"] = {type:"string",title:"公開日",format:"datetime"}
-      page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
-      page_global.table_row_map.schema.properties["keywords"] = {type:"string",title:"キーワード",format:"text"}
-      page_global.table_row_map.schema.properties["keywords_en"] = {type:"string",title:"キーワード(英)",format:"text"}
-      page_global.table_row_map.form.push({type:"fieldset",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},items:[{type:"text",key:"keywords",title:"キーワード",title_i18n:{ja:"キーワード",en:"keywords"},required:true},{type:"text",key:"keywords_en",title:"キーワード(英)",title_i18n:{ja:"キーワード(英)",en:"keywords(English)"},required:true}]});
-      page_global.table_row_map.schema.required.push("title_ja");
-      page_global.table_row_map.schema.required.push("title_en");
-      page_global.table_row_map.schema.required.push("lang");
-      page_global.table_row_map.schema.required.push("pubdate");
-
-      if(src_mapping.hasOwnProperty('title_ja')) {
-        page_global.table_row_map.mapping['title_ja'] = src_mapping['title_ja'];
-      } else {
-        page_global.table_row_map.mapping['title_ja'] = mapping_value;
-      }
-      if(src_mapping.hasOwnProperty('title_en')) {
-        page_global.table_row_map.mapping['title_en'] = src_mapping['title_en'];
-      } else {
-        page_global.table_row_map.mapping['title_en'] = mapping_value;
-      }
-      if(src_mapping.hasOwnProperty('lang')) {
-        page_global.table_row_map.mapping['lang'] = src_mapping['lang'];
-      } else {
-        page_global.table_row_map.mapping['lang'] = mapping_value;
-      }
-      if(src_mapping.hasOwnProperty('pubdate')) {
-        page_global.table_row_map.mapping['pubdate'] = src_mapping['pubdate'];
-      } else {
-        page_global.table_row_map.mapping['pubdate'] = mapping_value;
-      }
-      if(src_mapping.hasOwnProperty('keywords')) {
-        page_global.table_row_map.mapping['keywords'] = src_mapping['keywords'];
-      } else {
-        page_global.table_row_map.mapping['keywords'] = mapping_value;
-      }
-      if(src_mapping.hasOwnProperty('keywords_en')) {
-        page_global.table_row_map.mapping['keywords_en'] = src_mapping['keywords_en'];
-      } else {
-        page_global.table_row_map.mapping['keywords_en'] = mapping_value;
       }
 
       // テーブルの行をトラバースし、マップに追加する
@@ -550,116 +504,6 @@
 
         page_global.meta_list[row_id] = tmp;
       });
-      //////add by ryuu. 0313 start
-      //タイトル
-      var tmp_title_ja = {}
-        tmp_title_ja.title = "タイトル";
-        //add by ryuu. start
-        tmp_title_ja.title_i18n ={}
-        tmp_title_ja.title_i18n.ja = "タイトル";
-        tmp_title_ja.title_i18n.en = "Title";
-        //add by ryuu. end
-        tmp_title_ja.input_type = "text";
-        tmp_title_ja.input_value = "";
-        tmp_title_ja.option = {}
-        tmp_title_ja.option.required = $('#chk_title_0').is(':checked')?true:false;
-        tmp_title_ja.option.multiple = $('#chk_title_1').is(':checked')?true:false;
-        tmp_title_ja.option.hidden = $('#chk_title_4').is(':checked')?true:false;
-        tmp_title_ja.option.showlist = tmp_title_ja.option.hidden?false:($('#chk_title_2').is(':checked')?true:false);
-        tmp_title_ja.option.crtf = tmp_title_ja.option.hidden?false:($('#chk_title_3').is(':checked')?true:false);
-        //タイトル(英)
-        var tmp_title_en = {}
-        tmp_title_en.title = "タイトル(英)";
-        //add by ryuu. start
-        tmp_title_en.title_i18n ={}
-        tmp_title_en.title_i18n.ja = "タイトル(英)";
-        tmp_title_en.title_i18n.en = "Title(English)";
-        //add by ryuu. end
-        tmp_title_en.input_type = "text";
-        tmp_title_en.input_value = "";
-        tmp_title_en.option = {}
-        tmp_title_en.option.required = $('#chk_title_en_0').is(':checked')?true:false;
-        tmp_title_en.option.multiple = $('#chk_title_en_1').is(':checked')?true:false;
-        tmp_title_en.option.hidden = $('#chk_title_en_4').is(':checked')?true:false;
-        tmp_title_en.option.showlist = tmp_title_en.option.hidden?false:($('#chk_title_en_2').is(':checked')?true:false);
-        tmp_title_en.option.crtf = tmp_title_en.option.hidden?false:($('#chk_title_en_3').is(':checked')?true:false);
-
-        //言語
-        var tmp_lang = {}
-        tmp_lang.title = "言語";
-        //add by ryuu. start
-        tmp_lang.title_i18n ={}
-        tmp_lang.title_i18n.ja = "言語";
-        tmp_lang.title_i18n.en = "Language";
-        //add by ryuu. end
-        tmp_lang.input_type = "text";
-        tmp_lang.input_value = "";
-        tmp_lang.option = {}
-        tmp_lang.option.required = $('#chk_lang_0').is(':checked')?true:false;
-        tmp_lang.option.multiple = $('#chk_lang_1').is(':checked')?true:false;
-        tmp_lang.option.hidden = $('#chk_lang_4').is(':checked')?true:false;
-        tmp_lang.option.showlist = tmp_lang.option.hidden?false:($('#chk_lang_2').is(':checked')?true:false);
-        tmp_lang.option.crtf = tmp_lang.option.hidden?false:($('#chk_lang_3').is(':checked')?true:false);
-
-        //公開日
-        var tmp_pubdate = {}
-        tmp_pubdate.title = "公開日";
-        //add by ryuu. start
-        tmp_pubdate.title_i18n ={}
-        tmp_pubdate.title_i18n.ja = "公開日";
-        tmp_pubdate.title_i18n.en = "PubDate";
-        //add by ryuu. end
-        tmp_pubdate.input_type = "datetime";
-        tmp_pubdate.input_value = "";
-        tmp_pubdate.option = {}
-        tmp_pubdate.option.required = $('#chk_pubdate_0').is(':checked')?true:false;
-        tmp_pubdate.option.multiple = $('#chk_pubdate_1').is(':checked')?true:false;
-        tmp_pubdate.option.hidden = $('#chk_pubdate_4').is(':checked')?true:false;
-        tmp_pubdate.option.showlist = tmp_pubdate.option.hidden?false:($('#chk_pubdate_2').is(':checked')?true:false);
-        tmp_pubdate.option.crtf = tmp_pubdate.option.hidden?false:($('#chk_pubdate_3').is(':checked')?true:false);
-
-        //キーワード
-        var tmp_keywords_ja = {}
-        tmp_keywords_ja.title = "キーワード";
-        //add by ryuu. start
-        tmp_keywords_ja.title_i18n ={}
-        tmp_keywords_ja.title_i18n.ja = "キーワード";
-        tmp_keywords_ja.title_i18n.en = "keywords";
-        //add by ryuu. end
-        tmp_keywords_ja.input_type = "text";
-        tmp_keywords_ja.input_value = "";
-        tmp_keywords_ja.option = {}
-        tmp_keywords_ja.option.required = $('#chk_keyword_0').is(':checked')?true:false;
-        tmp_keywords_ja.option.multiple = $('#chk_keyword_1').is(':checked')?true:false;
-        tmp_keywords_ja.option.hidden = $('#chk_keyword_4').is(':checked')?true:false;
-        tmp_keywords_ja.option.showlist = tmp_keywords_ja.option.hidden?false:($('#chk_keyword_2').is(':checked')?true:false);
-        tmp_keywords_ja.option.crtf = tmp_keywords_ja.option.hidden?false:($('#chk_keyword_3').is(':checked')?true:false);
-
-        //キーワード(英)
-        var tmp_keywords_en = {}
-        tmp_keywords_en.title = "キーワード(英)";
-        //add by ryuu. start
-        tmp_keywords_en.title_i18n ={}
-        tmp_keywords_en.title_i18n.ja = "キーワード(英)";
-        tmp_keywords_en.title_i18n.en = "keywords(English)";
-        //add by ryuu. end
-        tmp_keywords_en.input_type = "text";
-        tmp_keywords_en.input_value = "";
-        tmp_keywords_en.option = {}
-        tmp_keywords_en.option.required = $('#chk_keyword_en_0').is(':checked')?true:false;
-        tmp_keywords_en.option.multiple = $('#chk_keyword_en_1').is(':checked')?true:false;
-        tmp_keywords_en.option.hidden = $('#chk_keyword_en_4').is(':checked')?true:false;
-        tmp_keywords_en.option.showlist = tmp_keywords_en.option.hidden?false:($('#chk_keyword_en_2').is(':checked')?true:false);
-        tmp_keywords_en.option.crtf = tmp_keywords_en.option.hidden?false:($('#chk_keyword_en_3').is(':checked')?true:false);
-        //設定
-        page_global.meta_fix["title_ja"] = tmp_title_ja;
-        page_global.meta_fix["title_en"] = tmp_title_en;
-        page_global.meta_fix["lang"] = tmp_lang;
-        page_global.meta_fix["pubdate"] = tmp_pubdate;
-        page_global.meta_fix["keywords"] = tmp_keywords_ja;
-        page_global.meta_fix["keywords_en"] = tmp_keywords_en;
-
-      //////add by ryuu. 0313 end
     }
 
     // add new meta table row
@@ -986,5 +830,49 @@
         $('input[type=radio][name=item_type][value=normal]').click()
     } else if ($("#item-type-lists option:selected").hasClass('harvesting_type')) {
         $('input[type=radio][name=item_type][value=harvesting]').click()
+    }
+
+    $('#btn_delete_item').on('click', function(){
+      var selected_item_type = $("#item-type-lists :selected");
+      var is_harvesting_type = selected_item_type.hasClass("harvesting_type");
+      var is_belonging_item = selected_item_type.hasClass("belonging_item");
+      if (is_harvesting_type) {
+        alert($("#msg_for_harvesting").val());
+      } else if (is_belonging_item) {
+        alert($("#msg_for_belonging_item").val());
+      } else {
+        $("#item_type_delete_confirmation").modal("show");
+      }
+    });
+
+    $('#item_type_delete_continue').on('click', function(){
+      $("#item_type_delete_confirmation").modal("hide");
+      send_uri('/itemtypes/delete/' + $('#item-type-lists').val(), {},
+        function(data){
+          if (data.code == 0) {
+            window.location.href = "/itemtypes/register";
+          }
+          alert(data.msg);
+        },
+        function(errmsg){
+          alert(JSON.stringify(errmsg));
+      });
+    });
+
+    function send_uri(url, data, handleSuccess, handleError){
+      $.ajax({
+        method: 'POST',
+        url: url,
+        async: true,
+        contentType: 'application/json',
+        dataType: 'json',
+        data: JSON.stringify(data),
+        success: function(data,textStatus){
+          handleSuccess(data);
+        },
+        error: function(textStatus,errorThrown){
+          handleError(textStatus);
+        }
+      });
     }
 });

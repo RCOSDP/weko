@@ -170,10 +170,6 @@ msgstr ""
 msgid "Object File Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
-msgid "File "
-msgstr ""
-
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:49
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
 msgid "Size"

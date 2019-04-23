@@ -20,6 +20,11 @@
 #}
 {%- extends admin_base_template %}
 
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
 {% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
 
 {% set panel_title = _("Life Time") %}
@@ -46,9 +51,13 @@
       {% endif %}
   </div>
   <div class="form-actions">
-    <div class="col-sm-offset-1 col-sm-10">
-      <button type="submit" id="index_form_submit" name="submit" value="index_link_form" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Update') }}</button>
-    </div>
+  <!--<div class="col-sm-offset-1 col-sm-10">-->
+      <button type="submit" id="index_form_submit" name="submit"
+          value="index_link_form" class="btn btn-primary update-button">
+            <i class="fa fa-edit"></i> 
+               {{ _('Update') }}
+      </button>
+      <!--</div>-->
   </div>
 </form>
 {%- endblock body %}

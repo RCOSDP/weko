@@ -44,6 +44,7 @@ def json_loader(data, pid):
     jpcoar = OrderedDict()
     item = dict()
     ar = []
+    pubdate = None
 
     if not isinstance(data, dict) or data.get("$schema") is None:
         return
@@ -106,6 +107,9 @@ def json_loader(data, pid):
                 pubdate = v
             jpcoar[k] = item.copy()
 
+    # convert to es jpcoar mapping data
+    jrc = SchemaTree.get_jpcoar_json(jpcoar)
+
     if dc:
         # get the tile name to detail page
         title = data.get("title_ja") or data.get("title_en")
@@ -116,9 +120,6 @@ def json_loader(data, pid):
         dc.update(dict(item_title=title))
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
-
-        # convert to es jpcoar mapping data
-        jrc = SchemaTree.get_jpcoar_json(jpcoar)
 
         oai_value = current_app.config.get(
             'OAISERVER_ID_PREFIX', '') + str(pid)
@@ -137,7 +138,10 @@ def json_loader(data, pid):
         jrc.update(dict(publish_date=pubdate))
 
         # save items's creator to check permission
-        current_user_id = current_user.get_id()
+        if current_user:
+            current_user_id = current_user.get_id()
+        else:
+            current_user_id = '1'
         if current_user_id:
             # jrc is saved on elastic
             jrc_weko_shared_id = jrc.get("weko_shared_id", None)

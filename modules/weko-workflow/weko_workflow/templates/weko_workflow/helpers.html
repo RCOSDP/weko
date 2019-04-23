@@ -53,12 +53,14 @@ Render input/select fields for each identifier link
     {%- elif method == 1 %}
     <label for="idf_grant_input_{{ id }}">
       <span name="idf_grant_link_{{ id }}">{{ link + '/' + prefix + '/' + suffix }}</span>
-      <input type="text" name="idf_grant_input_{{ id }}" value="{{ temporary_idf_grant_suffix[id - 1] }}">
+      <input type="text" name="idf_grant_input_{{ id }}" value="{{
+      temporary_idf_grant_suffix[id - 1] }}" placeholder="{{_('Input Field')}}">
     </label>
     {%- else %}
     <label for="idf_grant_input_{{ id }}">
       <span name="idf_grant_link_{{ id }}">{{ link + '/' + prefix + '/' }}</span>
-      <input type="text" name="idf_grant_input_{{ id }}" value="{{ temporary_idf_grant_suffix[id - 1] }}">
+      <input type="text" name="idf_grant_input_{{ id }}" value="{{
+      temporary_idf_grant_suffix[id - 1] }}" placeholder="{{_('Input Field')}}">
     </label>
     {%- endif %}
   </td>

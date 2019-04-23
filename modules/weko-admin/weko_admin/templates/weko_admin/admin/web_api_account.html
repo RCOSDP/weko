@@ -22,6 +22,7 @@
 
 {% block css %}
 {{ super() }}
+{% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
 {% endblock %}
 
@@ -48,7 +49,10 @@
 </div>
 <div class="form-actions row">
   <div class="col-sm-offset-3 col-sm-9">
-    <button id="api_account_save" name="api_account_save" value="index_form" class="btn btn-primary"><i class="fa fa-check"></i> {{ _('Save') }}</button>
+    <button id="api_account_save" name="api_account_save" value="index_form"
+        class="btn btn-primary save-button">
+    <span class="fa fa-download"></span>
+     {{ _('Save') }}</button>
   </div>
 </div>
 

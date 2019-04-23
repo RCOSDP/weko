@@ -22,7 +22,7 @@
 
 from copy import deepcopy
 
-from flask import current_app, flash
+from flask import current_app
 from flask_babelex import gettext as _
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
@@ -33,7 +33,7 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     before_record_insert, before_record_revert, before_record_update
 from jsonpatch import apply_patch
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import asc, desc
+from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
@@ -176,14 +176,70 @@ class ItemTypeNames(RecordBase):
                     commit(olst, True if 'allow' in k else False)
 
     @classmethod
-    def get_all_by_id(cls, ids):
+    def get_all_by_id(cls, ids, with_deleted=False):
         """Retrieve item types by ids.
 
         :param ids: List of item type IDs.
         :returns: A list of :class:`ItemTypeName` instances.
         """
         with db.session.no_autoflush:
-            return ItemTypeName.query.filter(ItemTypeName.id.in_(ids)).all()
+            query = ItemTypeName.query.filter(ItemTypeName.id.in_(ids))
+            if not with_deleted:
+                query = query.filter_by(is_active=True)
+            return query.all()
+
+    @classmethod
+    def get_record(cls, id_, with_deleted=False):
+        """Retrieve the item type name by id.
+
+        :param id_: Identifier of item type name.
+        :param with_deleted: If `True` then it includes deleted item type name.
+        :returns: The :class:`ItemTypeName` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemTypeName.query.filter_by(id=id_)
+            if not with_deleted:
+                query = query.filter_by(is_active=True)  # noqa
+            return query.one_or_none()
+
+    def delete(self, force=False):
+        """Delete an item type name.
+
+        If `force` is ``False``, the record is soft-deleted: record data will
+        be deleted but the record identifier and the history of the record will
+        be kept. This ensures that the same record identifier cannot be used
+        twice, and that you can still retrieve its history. If `force` is
+        ``True``, then the record is completely deleted from the database.
+
+        #. Send a signal :data:`weko_records.signals.before_record_delete`
+           with the current record as parameter.
+
+        #. Delete or soft-delete the current record.
+
+        #. Send a signal :data:`weko_records.signals.after_record_delete`
+           with the current deleted record as parameter.
+
+        :param force: if ``True``, completely deletes the current item type name
+               from the database, otherwise soft-deletes it.
+        :returns: The deleted :class:`ItemTypeName` instance.
+        """
+        with db.session.begin_nested():
+            before_record_delete.send(
+                current_app._get_current_object(),
+                record=self
+            )
+
+            if force:
+                db.session.delete(self)
+            else:
+                self.is_active = False
+                db.session.merge(self)
+
+        after_record_delete.send(
+            current_app._get_current_object(),
+            record=self
+        )
+        return self
 
 
 class ItemTypes(RecordBase):
@@ -279,7 +335,7 @@ class ItemTypes(RecordBase):
                 if name != item_type_name.name:
                     # Check if the new name has been existed
                     result = ItemTypeName.query.filter_by(
-                        name=name).one_or_none()
+                        name=name).filter_by(is_active=True).one_or_none()
                     if result is not None:
                         current_app.logger.debug(
                             'Invalid name: {}'.format(name))
@@ -348,6 +404,20 @@ class ItemTypes(RecordBase):
             return query.order_by(desc(ItemType.tag)).all()
 
     @classmethod
+    def get_records_by_name_id(cls, name_id, with_deleted=False):
+        """Retrieve multiple item types by name identifier.
+
+        :param name_id: Name identifier of item type.
+        :param with_deleted: If `True` then it includes deleted item types.
+        :returns: A list of :class:`ItemTypes` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemType.query.filter_by(name_id=name_id)
+            if not with_deleted:
+                query = query.filter(ItemType.schema != None)  # noqa
+            return [cls(obj.schema, model=obj) for obj in query.all()]
+
+    @classmethod
     def get_latest(cls, with_deleted=False):
         """Retrieve the latest item types.
 
@@ -355,7 +425,10 @@ class ItemTypes(RecordBase):
         :returns: A list of :class:`ItemTypes` instances.
         """
         with db.session.no_autoflush:
-            return ItemTypeName.query.order_by(ItemTypeName.id).all()
+            query = ItemTypeName.query
+            if not with_deleted:
+                query = query.join(ItemType).filter(ItemType.schema is not None)
+            return query.order_by(ItemTypeName.id).all()
 
     @classmethod
     def get_all(cls, with_deleted=False):
@@ -460,7 +533,7 @@ class ItemTypes(RecordBase):
             if force:
                 db.session.delete(self.model)
             else:
-                self.model.json = None
+                self.model.schema = None
                 db.session.merge(self.model)
 
         after_record_delete.send(
@@ -921,6 +994,20 @@ class ItemsMetadata(RecordBase):
                 query = query.filter(ItemMetadata.json != None)  # noqa
 
             return [cls(obj.json, model=obj) for obj in query.all()]
+
+    @classmethod
+    def get_by_item_type_id(cls, item_type_id, with_deleted=False):
+        """Retrieve multiple records by item types identifier.
+
+        :param item_type_id: Identifier of item type.
+        :param with_deleted: If `True` then it includes deleted records.
+        :returns: A list of :class:`Record` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemMetadata.query.filter_by(item_type_id=item_type_id)
+            if not with_deleted:
+                query = query.filter(ItemMetadata.json != None)  # noqa
+            return query.all()
 
     def patch(self, patch):
         """Patch record metadata.
