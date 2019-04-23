@@ -88,7 +88,6 @@ class WidgetSettingView(ModelView):
         'repository_id',
         'widget_type',
         'label',
-        'label_color',
         'is_enabled',
     )
 
@@ -113,7 +112,6 @@ class WidgetSettingView(ModelView):
     column_labels = dict(repository_id=_('Repository'),
                          widget_type=_('Widget Type'),
                          label=_('Label'),
-                         label_color=_('Label color'),
                          is_enabled=_('Enable'),
                          )
 
