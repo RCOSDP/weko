@@ -264,7 +264,7 @@
         if(src_render.hasOwnProperty('meta_list')
             && src_render['meta_list'].hasOwnProperty(row_id)) {
           if(tmp.input_type == src_render['meta_list'][row_id]['input_type']) {
-            if(src_mapping.hasOwnProperty('keywords_en')) {
+            if(src_mapping.hasOwnProperty(row_id)) {
               page_global.table_row_map.mapping[row_id] = src_mapping[row_id];
             } else {
               page_global.table_row_map.mapping[row_id] = mapping_value;
@@ -863,49 +863,5 @@
         $('input[type=radio][name=item_type][value=normal]').click()
     } else if ($("#item-type-lists option:selected").hasClass('harvesting_type')) {
         $('input[type=radio][name=item_type][value=harvesting]').click()
-    }
-
-    $('#btn_delete_item').on('click', function(){
-      var selected_item_type = $("#item-type-lists :selected");
-      var is_harvesting_type = selected_item_type.hasClass("harvesting_type");
-      var is_belonging_item = selected_item_type.hasClass("belonging_item");
-      if (is_harvesting_type) {
-        alert($("#msg_for_harvesting").val());
-      } else if (is_belonging_item) {
-        alert($("#msg_for_belonging_item").val());
-      } else {
-        $("#item_type_delete_confirmation").modal("show");
-      }
-    });
-
-    $('#item_type_delete_continue').on('click', function(){
-      $("#item_type_delete_confirmation").modal("hide");
-      send_uri('/itemtypes/delete/' + $('#item-type-lists').val(), {},
-        function(data){
-          if (data.code == 0) {
-            window.location.href = "/itemtypes/register";
-          }
-          alert(data.msg);
-        },
-        function(errmsg){
-          alert(JSON.stringify(errmsg));
-      });
-    });
-
-    function send_uri(url, data, handleSuccess, handleError){
-      $.ajax({
-        method: 'POST',
-        url: url,
-        async: true,
-        contentType: 'application/json',
-        dataType: 'json',
-        data: JSON.stringify(data),
-        success: function(data,textStatus){
-          handleSuccess(data);
-        },
-        error: function(textStatus,errorThrown){
-          handleError(textStatus);
-        }
-      });
     }
 });
