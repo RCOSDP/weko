@@ -23,6 +23,7 @@
 
 {%- block css %}
 {{ super() }}
+{% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -70,7 +71,7 @@
                 </div>
                 <div class="form-group">
                   <label class="col-sm-4 control-label">{{_('Activity')}}</label>
-                  <div class="col-sm-8">
+                  <div class="col-sm-8" id="activity_id">
                     <p class="form-control-static">{{activity.activity_id}}</p>
                   </div>
                 </div>
