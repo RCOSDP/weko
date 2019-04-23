@@ -185,4 +185,3 @@ def update_admin_widget_item_setting(data):
         jsonify({'status': status,
                 'success': success,
                  'message': msg}), status)
-
