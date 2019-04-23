@@ -1121,21 +1121,6 @@ function handleSharePermission(value) {
         return result;
       }
 
-      $scope.defaultDate = function() {
-        let currentDate = new Date(),
-        month = '' + (currentDate.getMonth() + 1),
-        day = '' + currentDate.getDate(),
-        year = currentDate.getFullYear();
-
-        if (month.length < 2) {
-          month = '0' + month;
-        }
-        if (day.length < 2) {
-          day = '0' + day;
-        }
-        return [year, month, day].join('-');
-      }
-
       $scope.genTitleAndPubDate = function() {
         let itemTypeId = $("#autofill_item_type_id").val();
         let get_url = '/api/autofill/get_title_pubdate_id/'+itemTypeId;
@@ -1146,9 +1131,7 @@ function handleSharePermission(value) {
           success: (data, status) => {
             let title = "";
             let lang = "en";
-            let pubDate = this.defaultDate();
             let titleID = data.title;
-            let pubDateID = data.pubDate;
             if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
               let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
               if (typeof(titleFile) == 'array') {
@@ -1161,17 +1144,7 @@ function handleSharePermission(value) {
                 }
               }
             }
-            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(pubDateID[0])){
-              let pubDateField = $rootScope.recordsVM.invenioRecordsModel[pubDateID[0]];
-              if (typeof(pubDateField) == 'array'){
-                pubDateField = pubDateField[0];
-              }
-              if (pubDateField.hasOwnProperty(pubDateID[1]) && pubDateField[pubDateID[1]]) {
-                pubDate = pubDateField[pubDateID[1]];
-              }
-            }
             $rootScope.recordsVM.invenioRecordsModel['title'] = title;
-            $rootScope.recordsVM.invenioRecordsModel['pubdate'] = pubDate;
             $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
           },
           error: function(data, status) {
@@ -1184,7 +1157,10 @@ function handleSharePermission(value) {
         this.genTitleAndPubDate();
         if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
           alert('Title is required! Please input title');
-        }else {
+        }else if (!$rootScope.recordsVM.invenioRecordsModel['pubdate']){
+          alert('PubDate is required! Please input pubDate');
+        }
+        else {
           let next_frame = $('#next-frame').val();
           if ($scope.is_item_owner) {
             if (!this.registerUserPermission()) {

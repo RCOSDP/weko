@@ -266,6 +266,8 @@ def asssign_data_crossref_issued_field(field, data):
             list_date = data.get('date')
             for date in list_date:
                 if date.get('date'):
+                    if('@value' not in date['date'].keys()):
+                        continue
                     try_assign_data(date,
                                     convert_datetime_format(field.get
                                                             ('date-parts')),

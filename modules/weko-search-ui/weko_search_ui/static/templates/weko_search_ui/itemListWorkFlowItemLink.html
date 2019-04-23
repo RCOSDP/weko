@@ -13,7 +13,8 @@
         <td>{{ record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0] }}</td>
         <td>{{ record.metadata.hasOwnProperty('itemtype')?record.metadata.itemtype:record.metadata['dc:itemtype'] }}</td>
         <td  class="text-center">
-          <button type="button" id="btn_edit_start" class="btn btn-light" ng-click="add_link(record,$index)" style="background-color:#008000;border-color: #9ACD32; color: white;width: 100px; height: 40px;font-size: 15px;">
+          <button type="button" id="btn_edit_start" class="btn btn-light
+              add-button" ng-click="add_link(record,$index)">
             <span class="glyphicon glyphicon-plus"></span>
                    {{_('Add')}}
           </button>

@@ -20,6 +20,11 @@
 
 {%- extends admin_base_template %}
 
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
 {%- block body %}
 <div class="row">
   <div class="col-sm-offset-2 col-sm-8">
@@ -83,19 +88,17 @@
       <div class="form-group">
         <div class="col-sm-offset-2">
           <div class="col-sm-offset-2 col-sm-6">
-           <button type="button" class="btn btn-info" id="btn_back"
-               style="width: 80px; height: 40px;font-size: 15px;">
+            <button type="button" class="btn btn-info back-button" id="btn_back">
               <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
-            <button type="button" class="btn btn-primary pull-right" style="width: 120px;
-                height: 40px;font-size: 15px" id="btn_create">
+            <button type="button" class="btn btn-primary pull-right save-button" id="btn_create">
               <!--<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>-->
               <span class="fa fa-download"></span>
               {{_('Save')}}
             </button>
             {%- if workflow %}
-            <button type="button" class="btn btn-danger pull-right"
-                id="btn_delete" style="width: 120px; height: 40px;font-size:
-                15px;margin-right: 5px;">
+            <button type="button" class="btn btn-danger pull-right
+                                  delete-button five-pixel-right-margin"
+                id="btn_delete">
               <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
                     {{_('Delete')}}
             </button>

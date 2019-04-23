@@ -69,7 +69,7 @@
          <!-- <a data-toggle="modal" href="#bulk_delete_confirmation"
              class="btn btn-primary btn-md {{delete_button_class}}">{{ _('Delete') }}</a>-->
             <a data-toggle="modal" href="#bulk_delete_confirmation"
-             class="btn btn-danger" style="width: 120px; height: 40px;font-size: 15px;">
+             class="btn btn-danger pull-right ten-pixel-margin delete-button">
                 <span class="glyphicon glyphicon-trash"></span>
                    {{ _('Delete') }}</a>
         </div>
@@ -88,9 +88,9 @@
                 {{_('Are you sure you want to delete it?')}}
               </div>
               <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="bulk_delete_confirmation_continue">{{_('Continue')}}
+                <button type="button" class="btn btn-primary action-button" id="bulk_delete_confirmation_continue">{{_('Continue')}}
                 </button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">{{_('Cancel')}}</button>
+                <button type="button" class="btn btn-secondary cancel-button" data-dismiss="modal">{{_('Cancel')}}</button>
               </div>
             </div>
           </div>
