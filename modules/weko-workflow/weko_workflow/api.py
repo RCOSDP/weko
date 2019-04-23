@@ -414,8 +414,6 @@ class ActionStatus(object):
 
 class WorkActivity(object):
     """Operated on the Activity."""
-    import threading
-    lock = threading.Lock()
 
     def init_activity(self, activity, community_id=None):
         """Create new activity.
@@ -423,6 +421,7 @@ class WorkActivity(object):
         :param activity:
         :return:
         """
+        utc_now = datetime.utcnow()
         try:
             action_id = 0
             next_action_id = 0
@@ -440,53 +439,10 @@ class WorkActivity(object):
                     if flow_actions and len(flow_actions) >= 2:
                         next_action_id = flow_actions[1].action_id
 
-            # Lock thread to check the id of existing activities until the new activity is created
-            self.lock.acquire()
-
-            # Activity Id's format
-            activity_id_format = current_app.config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
-
-            # A-YYYYMMDD-NNNNN (NNNNN starts from 00001)
-            datetime_str = datetime.utcnow().strftime("%Y%m%d")
-
-            # Get the list of activities of day
-            activities = self.get_all_activity_list(community_id)
-            datetime_prefix = activity_id_format.format(datetime_str, '')
-            activities = [activity for activity in activities
-                          if activity.activity_id.startswith(datetime_prefix)]
-
-            # If there are existing activities, parsing the last segment to get the next number
-            if len(activities) > 0:
-                # Get the largest number of the current day
-                number = 0
-                for a in activities:
-                    parts = a.activity_id.split('-')
-                    # In the format A-YYYYMMDD-NNNNN, the len of parts should be 3
-                    if len(parts) > 2:
-                        n = int(parts[-1])
-                        if n > number:
-                            # Found
-                            number = n
-                number = number + 1
-                if number > 99999:
-                    raise IndexError('The number is out of range (maximum is 99999, current is {}'.format(number))
-                # Define activity Id of day
-                activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=number))
-            else:
-                # The default activity Id of the current day
-                activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=1))
-
-            from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-            aid = PersistentIdentifier.create(
-                'actid',
-                str(activity_id),
-                status=PIDStatus.REGISTERED,
-                object_type='act',
-                object_uuid=uuid.uuid4()
-            )
-
             db_activity = _Activity(
-                activity_id=aid.pid_value,
+                # Dummy activity ID, the real one will be updated after this activity is created
+                activity_id='A' + str(
+                    datetime.utcnow().timestamp()).split('.')[0],
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
                 action_id=next_action_id,
@@ -497,51 +453,94 @@ class WorkActivity(object):
                 activity_start=datetime.utcnow(),
                 activity_community_id=community_id
             )
-            db_history = ActivityHistory(
-                activity_id=db_activity.activity_id,
-                action_id=action_id,
-                action_version=action.action_version,
-                action_status=ActionStatusPolicy.ACTION_DONE,
-                action_user=current_user.get_id(),
-                action_date=db_activity.activity_start,
-                action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT
-            )
-
-            with db.session.begin_nested():
-                db.session.add(db_activity)
-                db.session.add(db_history)
-
-                for flow_action in flow_actions:
-                    db_activity_action = ActivityAction(
-                        activity_id=db_activity.activity_id,
-                        action_id=flow_action.action_id,
-                        action_status=ActionStatusPolicy.ACTION_DONE,
-                    )
-                    db.session.add(db_activity_action)
-
-        except IndexError as ex:
-            current_app.logger.exception(str(ex))
-
-            # Release the lock
-            self.lock.release()
-
-            return None
+            db.session.add(db_activity)
 
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
 
-            # Release the lock
-            self.lock.release()
-
             return None
         else:
             db.session.commit()
 
-            # Release the lock
-            self.lock.release()
+            try:
+                # Calculate activity_id based on id
+                current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
+                from datetime import timedelta
+                next_date_start = (utc_now + timedelta(1)).strftime("%Y-%m-%d 00:00:00")
 
-            return db_activity
+                from sqlalchemy import func
+                min_id = db.session.query(func.min(_Activity.id)).filter(
+                    _Activity.created >= '{}'.format(current_date_start),
+                    _Activity.created < '{}'.format(next_date_start),
+                ).scalar()
+
+                if min_id:
+                    # Calculate aid
+                    number = db_activity.id - min_id + 1
+                    if number > 99999:
+                        raise IndexError('The number is out of range (maximum is 99999, current is {}'.format(number))
+                else:
+                    # The default activity Id of the current day
+                    number = 1
+
+                # Activity Id's format
+                activity_id_format = current_app.config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
+
+                # A-YYYYMMDD-NNNNN (NNNNN starts from 00001)
+                datetime_str = utc_now.strftime("%Y%m%d")
+
+                # Define activity Id of day
+                activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=number))
+
+                # Update the activity with calculated activity_id
+                from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+                aid = PersistentIdentifier.create(
+                    'actid',
+                    str(activity_id),
+                    status=PIDStatus.REGISTERED,
+                    object_type='act',
+                    object_uuid=uuid.uuid4()
+                )
+                db_activity.activity_id = aid.pid_value
+
+                # Add history and flow_action
+                db_history = ActivityHistory(
+                    activity_id=db_activity.activity_id,
+                    action_id=action_id,
+                    action_version=action.action_version,
+                    action_status=ActionStatusPolicy.ACTION_DONE,
+                    action_user=current_user.get_id(),
+                    action_date=db_activity.activity_start,
+                    action_comment=ActionCommentPolicy.BEGIN_ACTION_COMMENT
+                )
+
+                with db.session.begin_nested():
+                    db.session.add(db_history)
+
+                    for flow_action in flow_actions:
+                        db_activity_action = ActivityAction(
+                            activity_id=db_activity.activity_id,
+                            action_id=flow_action.action_id,
+                            action_status=ActionStatusPolicy.ACTION_DONE,
+                        )
+                        db.session.add(db_activity_action)
+
+            except IndexError as ex:
+                current_app.logger.exception(str(ex))
+
+                return None
+
+            except Exception as ex:
+                db.session.rollback()
+                current_app.logger.exception(str(ex))
+
+                return None
+
+            else:
+                db.session.commit()
+
+                return db_activity
 
     def upt_activity_action(self, activity_id, action_id):
         """Update activity info.
