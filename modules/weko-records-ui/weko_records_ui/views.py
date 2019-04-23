@@ -487,7 +487,6 @@ def set_pdfcoverpage_header():
 @login_required
 def file_version_update():
     """Bulk delete items and index trees."""
-
     # Only allow authorised users to update object version
     from invenio_files_rest.permissions import has_update_version_role
     if has_update_version_role(current_user):

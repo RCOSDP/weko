@@ -51,7 +51,6 @@ def weko_deposit_minter(record_uuid, data):
             'status': 'draft',
         },
     })
-
     return depid
 
 

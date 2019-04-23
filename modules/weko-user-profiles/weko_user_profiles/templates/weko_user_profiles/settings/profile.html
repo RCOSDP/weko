@@ -18,6 +18,10 @@
 # MA 02111-1307, USA.
 #}
 {%- extends config.USERPROFILES_SETTINGS_TEMPLATE %}
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {% endblock %}
 
 {% from "weko_user_profiles/settings/_macros.html" import render_field, form_errors %}
 
@@ -44,13 +48,12 @@
 {%- endif %}
 {%- endfor %}
 <div class="form-actions">
-  <a href="." class="btn btn-info" style="width: 100px; height: 40px;font-size:15px">
+  <a href="." class="btn btn-info cancel-button">
            <i class="fa fa-times"></i>
                   {{ _('Cancel') }}
   </a>
   <button type="submit" name="submit" value="profile" class="btn btn-primary
-                                                      pull-right"
-      style="width: 150px; height: 40px;font-size: 15px;">
+                                                      pull-right update-profile-button">
         <i class="fa fa-edit"></i>
               {{_('Update Profile')}}
   </button>
