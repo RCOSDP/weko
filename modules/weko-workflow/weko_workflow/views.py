@@ -253,6 +253,7 @@ def display_activity(activity_id=0):
     item_save_uri = ''
     files = []
     endpoints = {}
+    links = None
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -268,11 +269,11 @@ def display_activity(activity_id=0):
         """step_item_login_url = url_for(
             'weko_items_ui.iframe_index',
             item_type_id=workflow_detail.itemtype_id)"""
-        """if item:
-            current_app.logger.debug(item)
+        if item:
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
-            step_item_login_url = url_for(
+            record=item
+            """step_item_login_url = url_for(
                 'invenio_deposit_ui.iframe_depid',
                 pid_value=pid_identifier.pid_value)"""
     # if 'approval' == action_endpoint:
@@ -283,6 +284,8 @@ def display_activity(activity_id=0):
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
         pid, approval_record = resolver.resolve(pid_identifier.pid_value)
+        from weko_deposit.links import base_factory
+        links = base_factory(pid)
 
     res_check = check_authority_action(activity_id, action_id)
 
@@ -337,6 +340,7 @@ def display_activity(activity_id=0):
         item_save_uri=item_save_uri,
         files=files,
         endpoints=endpoints,
+        links=links,
         histories=histories,
         res_check=res_check,
         pid=pid,
