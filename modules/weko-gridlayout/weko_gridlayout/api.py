@@ -66,9 +66,15 @@ class WidgetItems(object):
             data["text_color"] = widget_items.get('text_color')
             data["background_color"] = widget_items.get('background_color')
             role = widget_items.get('browsing_role')
-            data["browsing_role"] = ",".join(str(e) for e in role)
+            if type(role) is list:
+                data["browsing_role"] = ",".join(str(e) for e in role)
+            else:
+                data["browsing_role"] = role
             role = widget_items.get('edit_role')
-            data["edit_role"] = ",".join(str(e) for e in role)
+            if type(role) is list:
+                data["edit_role"] = ",".join(str(e) for e in role)
+            else:
+                data["edit_role"] = role
             data["is_enabled"] = widget_items.get('enable')
         except Exception as ex:
             current_app.logger.debug(ex)
