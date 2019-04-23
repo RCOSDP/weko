@@ -109,9 +109,13 @@
     </tbody>
     </table>
     {%-if community%}
-      <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.new_activity', community=community.id)}}">{{_('New Activity')}}</a>
+      <a class="btn btn-light pull-right add-big-button" href="{{url_for('weko_workflow.new_activity', community=community.id)}}">
+            <span class="glyphicon glyphicon-plus"></span>
+              {{_('New Activity')}}</a>
     {%-else%}
-      <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.new_activity')}}">{{_('New Activity')}}</a>
+      <a class="btn btn-light pull-right add-big-button" href="{{url_for('weko_workflow.new_activity')}}">
+           <span class="glyphicon glyphicon-plus"></span>
+               {{_('New Activity')}}</a>
     {%- endif%}
 
   </div>

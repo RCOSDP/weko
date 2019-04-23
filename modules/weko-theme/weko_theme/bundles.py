@@ -62,6 +62,12 @@ css = Bundle(
 )
 """Default CSS bundle ."""
 
+css_buttons = Bundle(
+    'css/weko_theme/styling.css',
+    output='gen/weko_theme_buttons.%(version)s.css',
+)
+""" Button Styling CSS File. """
+
 js_treeview = Bundle(
     'js/weko_theme/inline.bundle.js',
     'js/weko_theme/polyfills.bundle.js',

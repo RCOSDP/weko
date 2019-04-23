@@ -19,6 +19,10 @@
 #}
 
 {%- extends admin_base_template %}
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
 
 {%- block body %}
 <div class="container">
@@ -72,18 +76,34 @@
               <p><a href="{{plugin.website}}"><u>{{ plugin.website }}</u></a></p>
             </div>
           </div>
-          <div class="form-inline col-sm-offset-9">
-            <a class="btn btn-success" href="{{ url_for('pluginsetting.setting', plugin=plugin.identifier) }}">{{_('Setting')}}</a>
+          <div class="form-inline col-sm-offset-6">
+            <a class="btn btn-success action-button five-pixel-margin" href="{{ url_for('pluginsetting.setting', plugin=plugin.identifier) }}">
+                  <i class="fa fa-cogs"> </i>
+                        {{_('Setting')}}
+            </a>
             {%- if plugin.enabled %}
-              <a class="btn btn-warning" href="{{ url_for('pluginsetting.disable', plugin=plugin.identifier, href='detail') }}">{{_('Disable')}}</a>
+              <a class="btn btn-warning action-button five-pixel-margin" href="{{ url_for('pluginsetting.disable', plugin=plugin.identifier, href='detail') }}">
+                     <i class="fa fa-bell-slash"> </i>
+                           {{_('Disable')}}
+              </a>
             {%- else %}
-              <a class="btn btn-info" href="{{ url_for('pluginsetting.enable', plugin=plugin.identifier, href='detail') }}">{{_('Enable')}}</a>
+              <a class="btn btn-info action-button five-pixel-margin" href="{{ url_for('pluginsetting.enable',
+                  plugin=plugin.identifier, href='detail') }}">
+                    <span class="glyphicon glyphicon-hand-right"></span>    
+                        {{_('Enable')}}
+              </a>
             {%- endif %}
-            <a class="btn btn-danger" href="{{ url_for('pluginsetting.delete', plugin=plugin.identifier) }}">{{_('Delete')}}</a>
+            <a class="btn btn-danger delete-button five-pixel-margin" href="{{ url_for('pluginsetting.delete', plugin=plugin.identifier) }}">
+                   <span class="glyphicon glyphicon-trash"></span>
+                     {{_('Delete')}}
+            </a>
           </div>
         </div>
         <div class="panel-footer">
-          <a class="btn btn-default" href="{{ url_for('pluginsetting.index')}}">{{_('Back')}}</a>
+          <a class="btn btn-info back-button" href="{{ url_for('pluginsetting.index')}}">
+                <span class="glyphicon glyphicon-chevron-left"></span>
+                      {{_('Back')}}
+          </a>
         </div>
       </div>
     </div>

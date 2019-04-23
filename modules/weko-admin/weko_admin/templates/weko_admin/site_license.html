@@ -57,7 +57,8 @@
                   </th>
                   <td class="width_50">
                     <input type="text" class="form-control" size="50" name="organization_name"
-                           ng-model="ipDetail.organization_name">
+                                                                      ng-model="ipDetail.organization_name"
+                                                                      placeholder="{{_('Organization name')}}">
                   </td>
                   <td rowspan="4" class="width_15 btnMiddle">
                     <button type="button" class="btn btn-default" ng-click="moveSiteLicenseUp($index)" ><span class="glyphicon glyphicon-arrow-up"></span>
@@ -67,8 +68,9 @@
                     </button>
                   </td>
                   <td rowspan="4" class="width_15 btnMiddle">
-                    <button type="button" class="btn btn-default" ng-click="deleteSiteLicense(ipIndex)"><span class="glyphicon glyphicon-remove"></span>
-                      {{_('Delete')}}
+                    <button type="button" class="btn btn-danger delete-button" ng-click="deleteSiteLicense(ipIndex)">
+                         <span class="glyphicon glyphicon-trash"></span>
+                               {{_('Delete')}}
                     </button>
                   </td>
                 </tr>
@@ -78,7 +80,8 @@
                   </th>
                   <td>
                     <textarea class="form-control" rows="3" cols="52" name="mail_address"
-                              ng-model="ipDetail.mail_address"></textarea>
+                                                                      ng-model="ipDetail.mail_address"
+                                                                      placeholder="{{_('Email Address')}}"></textarea>
                   </td>
                 </tr>
                 <tr>
@@ -86,7 +89,9 @@
                     {{_('Domain Name')}}
                   </th>
                   <td>
-                    <input type="text" class="form-control" size="50" ng-model="ipDetail.domain_name">
+                    <input type="text" class="form-control" size="50"
+                                                            ng-model="ipDetail.domain_name"
+                                                            placeholder="{{_('Domain Name')}}">
                   </td>
                 </tr>
                 <tr>
@@ -96,22 +101,48 @@
                   </th>
                   <td>
                     <div class="form-group" ng-repeat="ipAddressRangeDetail in ipDetail.addresses" ng-init="rangeIndex = $index">
-                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.start_ip_address[0]" ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[0],$parent.$index)" size="1" maxlength="3"> .
-                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.start_ip_address[1]" ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[1],$parent.$index)" size="1" maxlength="3"> .
-                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.start_ip_address[2]" ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[2],$parent.$index)" size="1" maxlength="3"> .
-                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.start_ip_address[3]" ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[3],$parent.$index)" size="1" maxlength="3"> -
-                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.finish_ip_address[0]" ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[0],$parent.$index)" size="1" maxlength="3"> .
-                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.finish_ip_address[1]" ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[1],$parent.$index)" size="1" maxlength="3"> .
-                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.finish_ip_address[2]" ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[2],$parent.$index)" size="1" maxlength="3"> .
-                      <input type="text" class="form-control input-sm" ng-model="ipAddressRangeDetail.finish_ip_address[3]" ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[3],$parent.$index)" size="1" maxlength="3">
+                      <input type="text" class="form-control input-sm"
+                      ng-model="ipAddressRangeDetail.start_ip_address[0]"
+                      ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[0],$parent.$index)"
+                      size="1" maxlength="3" placeholder="0"> .
+                      <input type="text" class="form-control input-sm"
+                      ng-model="ipAddressRangeDetail.start_ip_address[1]"
+                      ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[1],$parent.$index)"
+                      size="1" maxlength="3" placeholder="0"> .
+                      <input type="text" class="form-control input-sm"
+                      ng-model="ipAddressRangeDetail.start_ip_address[2]"
+                      ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[2],$parent.$index)"
+                      size="1" maxlength="3" placeholder="0"> .
+                      <input type="text" class="form-control input-sm"
+                      ng-model="ipAddressRangeDetail.start_ip_address[3]"
+                      ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[3],$parent.$index)"
+                      size="1" maxlength="3" placeholder="0"> -
+                      <input type="text" class="form-control input-sm"
+                      ng-model="ipAddressRangeDetail.finish_ip_address[0]"
+                      ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[0],$parent.$index)"
+                      size="1" maxlength="3" placeholder="0"> .
+                      <input type="text" class="form-control input-sm"
+                      ng-model="ipAddressRangeDetail.finish_ip_address[1]"
+                      ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[1],$parent.$index)"
+                      size="1" maxlength="3" placeholder="0"> .
+                      <input type="text" class="form-control input-sm"
+                      ng-model="ipAddressRangeDetail.finish_ip_address[2]"
+                      ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[2],$parent.$index)"
+                      size="1" maxlength="3" placeholder="0"> .
+                      <input type="text" class="form-control input-sm"
+                      ng-model="ipAddressRangeDetail.finish_ip_address[3]"
+                      ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[3],$parent.$index)"
+                      size="1" maxlength="3" placeholder="0">
                       <p></p>
                     </div>
                     <span id="span_[[$index]]" style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipCheckFlg">{{_('Please input a correct number')}}</span>
                     <span style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipRangeCheck">{{_('The range of ipAddress is not correct')}}</span>
                     <p></p>
                     <div class="form-group">
-                      <button type="button" class="btn btn-default" ng-click="addNewRowRange(ipIndex)"><span class="glyphicon glyphicon-plus"></span>
-                        {{_('More Input Row')}}
+                      <button type="button" class="btn btn-primary"
+                          ng-click="addNewRowRange(ipIndex)" style="width: 200px; height: 40px;font-size:15px">
+                         <span class="glyphicon glyphicon-plus"></span>
+                              {{_('More Input Row')}}
                       </button>
                     </div>
                   </td>
@@ -119,7 +150,8 @@
               </table>
             </div>
             <div class="form-group">
-              <button type="button" class="btn btn-default" ng-click="addNewRowSiteLicense()">
+              <button type="button" class="btn btn-primary"
+                  ng-click="addNewRowSiteLicense()" style="width: 200px; height: 40px;font-size:15px">
                 <span class="glyphicon glyphicon-plus"></span>
                 {{_('More Input Row')}}
               </button>
@@ -170,8 +202,9 @@
       </table>
     </form>
     <div class="form-group">
-      <button type="button" class="btn btn-default" ng-click="commitData()">
-        <span class="glyphicon glyphicon-save"></span>{{_('Save')}}
+      <button type="button" class="btn btn-primary pull-right save-button" ng-click="commitData()">
+        <span class="glyphicon glyphicon-download-alt"></span>
+        {{_('Save')}}
       </button>
     </div>
   </div>

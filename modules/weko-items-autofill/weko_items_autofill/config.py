@@ -20,9 +20,6 @@ WEKO_ITEMS_AUTOFILL_CROSSREF_API_URL = 'https://doi.crossref.org'
 
 WEKO_ITEMS_AUTOFILL_CiNii_API_URL = 'https://ci.nii.ac.jp'
 
-WEKO_ITEMS_AUTOFILL_CROSSREF_API_PID = ''
-"""Crossref API PID"""
-
 WEKO_ITEMS_AUTOFILL_DEFAULT_LANGUAGE = 'en'
 """Crossref default language"""
 

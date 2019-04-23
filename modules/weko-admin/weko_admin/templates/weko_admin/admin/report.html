@@ -22,14 +22,17 @@
 
 {%- extends admin_base_template %}
 
-{%- block head %}
+{%- block css %}
   {{ super() }}
-{%- endblock head%}
+ {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
   <!-- <script src="{{ url_for('static', filename='js/weko_admin/stats_report.js') }}"></script> -->
-  {%- assets "weko_admin_stats_report_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- assets "weko_admin_stats_report_js" %}<script src="{{ ASSET_URL
+  }}"></script>{% endassets %}
+
 {%- endblock javascript %}
 
 {%- block body %}
@@ -132,7 +135,9 @@
     <input type="hidden" id="report_file_input" name="report" value="{}" />
   </form>
   <div class="col-md-2">
-    <button id="downloadReport" class="btn btn-primary">{{_('Download')}}</button>
+    <button id="downloadReport" class="btn btn-primary action-big-button">
+          <span class="glyphicon glyphicon-download-alt"></span>
+                {{_('Download')}}</button>
   </div>
 </div>
 <hr>
@@ -148,7 +153,10 @@
         <p class="text-center">{{_('Could not download file.')}}</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">{{_('Close')}}</button>
+        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
+              <span class="glyphicon glyphicon-remove"></span>
+                 {{_('Close')}}
+        </button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
