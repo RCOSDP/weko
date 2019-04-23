@@ -25,6 +25,7 @@
     {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {{ super() }}
     <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
+    <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
   {%- endblock css %}
   
   {%- block javascript %}

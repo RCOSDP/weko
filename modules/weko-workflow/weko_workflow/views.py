@@ -86,25 +86,67 @@ def iframe_success():
 
     :return: The rendered template.
     """
+
+    # get session value
+    history = WorkActivityHistory()
+    histories = history.get_activity_history_list(session['itemlogin_id'])
+    activity = session['itemlogin_activity']
+    item = session['itemlogin_item']
+    steps = session['itemlogin_steps']
+    action_id = session['itemlogin_action_id']
+    cur_step = session['itemlogin_cur_step']
+    temporary_comment = session['itemlogin_temporary_comment']
+    temporary_journal = session['itemlogin_temporary_journal']
+    temporary_idf_grant = session['itemlogin_temporary_idf_grant']
+    temporary_idf_grant_suffix = session['itemlogin_temporary_idf_grant_suffix']
+    idf_grant_data = session['itemlogin_idf_grant_data']
+    idf_grant_input = session['itemlogin_idf_grant_input']
+    idf_grant_method = session['itemlogin_idf_grant_method']
+    record = session['itemlogin_record']
+    step_item_login_url = session['itemlogin_step_item_login_url']
+    res_check = session['itemlogin_res_check']
+    pid = session['itemlogin_pid']
+    community_id = session['itemlogin_community_id']
+
+    # delete session value
+    del session['itemlogin_id']
+    del session['itemlogin_activity']
+    del session['itemlogin_item']
+    del session['itemlogin_steps']
+    del session['itemlogin_action_id']
+    del session['itemlogin_cur_step']
+    del session['itemlogin_temporary_comment']
+    del session['itemlogin_temporary_journal']
+    del session['itemlogin_temporary_idf_grant']
+    del session['itemlogin_temporary_idf_grant_suffix']
+    del session['itemlogin_idf_grant_data']
+    del session['itemlogin_idf_grant_input']
+    del session['itemlogin_idf_grant_method']
+    del session['itemlogin_record']
+    del session['itemlogin_step_item_login_url']
+    del session['itemlogin_res_check']
+    del session['itemlogin_pid']
+    del session['itemlogin_community_id']
+
     return render_template('weko_workflow/item_login_success.html',
-                            activity=session['itemlogin_activity'],
-                            item=session['itemlogin_item'],
-                            steps=session['itemlogin_steps'],
-                            action_id=session['itemlogin_action_id'],
-                            cur_step=session['itemlogin_cur_step'],
-                            temporary_comment=session['itemlogin_temporary_comment'],
-                            temporary_journal=session['itemlogin_temporary_journal'],
-                            temporary_idf_grant=session['itemlogin_temporary_idf_grant'],
-                            temporary_idf_grant_suffix=session['itemlogin_temporary_idf_grant_suffix'],
-                            idf_grant_data=session['itemlogin_idf_grant_data'],
-                            idf_grant_input=session['itemlogin_idf_grant_input'],
-                            idf_grant_method=session['itemlogin_idf_grant_method'],
-                            record=session['itemlogin_record'],
-                            step_item_login_url=session['itemlogin_step_item_login_url'],
-                            histories=session['itemlogin_histories'],
-                            res_check=session['itemlogin_res_check'],
-                            pid=session['itemlogin_pid'],
-                            community_id=session['itemlogin_community_id'])
+                            activity=activity,
+                            item=item,
+                            steps=steps,
+                            action_id=action_id,
+                            cur_step=cur_step,
+                            temporary_comment=temporary_comment,
+                            temporary_journal=temporary_journal,
+                            temporary_idf_grant=temporary_idf_grant,
+                            temporary_idf_grant_suffix=temporary_idf_grant_suffix,
+                            idf_grant_data=idf_grant_data,
+                            idf_grant_input=idf_grant_input,
+                            idf_grant_method=idf_grant_method,
+                            record=record,
+                            step_item_login_url=step_item_login_url,
+                            histories=histories,
+                            res_check=res_check,
+                            pid=pid,
+                            community_id=community_id)
 
 
 @blueprint.route('/activity/new', methods=['GET'])
@@ -177,8 +219,6 @@ def display_activity(activity_id=0):
         except NoResultFound as ex:
             current_app.logger.exception(str(ex))
             item = None
-
-    session['test'] = 'test'
 
     steps = activity.get_activity_steps(activity_id)
     history = WorkActivityHistory()
@@ -298,6 +338,7 @@ def display_activity(activity_id=0):
         ctx = {'community': comm}
         community_id = comm.id
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
+        session['itemlogin_id'] = activity_id
         session['itemlogin_activity'] = activity_detail
         session['itemlogin_item'] = item
         session['itemlogin_steps'] = steps
@@ -316,6 +357,7 @@ def display_activity(activity_id=0):
         session['itemlogin_res_check'] = res_check
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
+
     return render_template(
         'weko_workflow/activity_detail.html',
         activity=activity_detail,
