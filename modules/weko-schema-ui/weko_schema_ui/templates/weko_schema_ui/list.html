@@ -43,7 +43,7 @@
     <div class="row">
       <div class="body col-sm-12 col-md-9">
         <h4 class="title">{{ _('OAI Schema') }}</h4>
-        <a class="btn btn-light pull-right" href="{{ url_for('weko_schema_ui.index') }}" style="background-color:#008000;border-color: #9ACD32; color: white;width: 150px; height: 40px;font-size: 15px;">
+        <a class="btn btn-light pull-right add-big-button" href="{{ url_for('weko_schema_ui.index') }}">
           <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           {{_('Add Schema')}}
         </a><br/><br/>
@@ -67,9 +67,9 @@
                 <td class="nowrap">{{ r.root_name }}</td>
                 <td class="forcewrap">
                   <span class="pull-left">
-                          <a class="btn btn-primary" href="{{url_for('weko_itemtypes_ui.mapping_index')}}" style="width: 150px; height: 40px;font-size:15px">
+                          <a class="btn btn-primary mapping-button" href="{{url_for('weko_itemtypes_ui.mapping_index')}}">
                             <i class="fa fa-hand-o-right"></i> {{_("Mapping")}}</a>
-                          <button class="btn btn-danger" name="pid" type="submit" value="{{pid}}" {{r.dis}} style="width: 120px; height: 40px;font-size: 15px;">
+                          <button class="btn btn-danger delete-button" name="pid" type="submit" value="{{pid}}" {{r.dis}}>
                                <span class="glyphicon glyphicon-trash"></span>
                                      {{_("Delete")}}</a>
                           </button>

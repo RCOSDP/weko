@@ -12,6 +12,7 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from weko_admin.utils import get_current_api_certification
 
 from .permissions import auto_fill_permission
 from .utils import get_cinii_data, get_crossref_data, get_item_id, \
