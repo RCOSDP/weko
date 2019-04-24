@@ -1139,9 +1139,8 @@ function handleSharePermission(value) {
             let titleID = data.title;
             if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
               let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
-              if (typeof(titleFile) == 'array') {
+              if (typeof(titleField) == 'array') {
                 titleField = titleField[0];
-              } else {
                 if (titleField[0].hasOwnProperty(titleID[1])){
                   titleField = titleField[0];
                 }
