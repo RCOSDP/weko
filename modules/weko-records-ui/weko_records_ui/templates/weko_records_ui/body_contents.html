@@ -29,12 +29,12 @@
           <col width="50">
           {%- for nav in record.navi -%}
           <tr>
-            <td style="vertical-align:bottom">
+            <td valign="bottom">
               {%- if loop.index == 1 %}
               <h4 style="display: inline;">{{_('Index')}}</h4>
               {%- endif %}
             </td>
-            <td width="2048" style="vertical-align:bottom">
+            <td width="2048" valign="bottom">
               <div class="row col-sm-12">
                 <ol class="breadcrumb"
                   style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
@@ -62,7 +62,7 @@
             <td valign="bottom">
               <h3 style="display: inline;"><a href='#' style="margin-left: 0.2em;">{{ record.get('item_title', _('No title')) }}</a></h3>
               {%- if record.permalink_uri -%}
-              <span class="pull-right">Permalink :
+              <span class="pull-right" style="display: inline;">Permalink :
                 {{ record.permalink_uri }}</span>
               {%- endif -%}
             </td>
