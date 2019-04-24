@@ -179,8 +179,8 @@ def init_workflow_tables(tables):
             flow_status=FlowStatusPolicy.AVAILABLE,
             flow_user=1
         ))
-        for i, _idx in enumerate([0, 1, 3, 4]):
-            """action.id: [1, 2, 4, 5]"""
+        for i, _idx in enumerate([0, 2, 3, 1]):
+            """action.id: [1, 3, 4, 2]"""
             db_flow_action.append(dict(
                 flow_id=_uuid,
                 action_id=action_list[_idx].id,
@@ -188,40 +188,6 @@ def init_workflow_tables(tables):
                 action_order=(i + 1),
                 action_condition='',
                 action_date=datetime.date(2018, 7, 28)
-            ))
-        _uuid = uuid.uuid4()
-        db_flow.append(dict(
-            flow_id=_uuid,
-            flow_name='Registration Approval Flow',
-            flow_status=FlowStatusPolicy.AVAILABLE,
-            flow_user=1
-        ))
-        for i, _idx in enumerate([1, 3, 4]):
-            """action.id: [2, 4, 5]"""
-            db_flow_action.append(dict(
-                flow_id=_uuid,
-                action_id=action_list[_idx].id,
-                action_version=action_list[_idx].action_version,
-                action_order=(i + 1),
-                action_condition='',
-                action_date=datetime.date(2018, 8, 5)
-            ))
-        _uuid = uuid.uuid4()
-        db_flow.append(dict(
-            flow_id=_uuid,
-            flow_name='Metadata Addition Flow',
-            flow_status=FlowStatusPolicy.AVAILABLE,
-            flow_user=1
-        ))
-        for i, _idx in enumerate([1, 2, 3, 4, 5]):
-            """Action.id: [2, 3, 4, 5, 6]."""
-            db_flow_action.append(dict(
-                flow_id=_uuid,
-                action_id=action_list[_idx].id,
-                action_version=action_list[_idx].action_version,
-                action_order=(i + 1),
-                action_condition='',
-                action_date=datetime.date(2018, 8, 7)
             ))
         return db_flow, db_flow_action
 
@@ -232,21 +198,9 @@ def init_workflow_tables(tables):
         itemtypesname_list = ItemTypes.get_latest()
         db_workflow.append(dict(
             flows_id=uuid.uuid4(),
-            flows_name='Article Registration Flow',
+            flows_name='Registration WorkFlow',
             itemtype_id=itemtypesname_list[0].item_type[0].id,
             flow_id=flow_list[0].id
-        ))
-        db_workflow.append(dict(
-            flows_id=uuid.uuid4(),
-            flows_name='Report Registration Flow',
-            itemtype_id=itemtypesname_list[1].item_type[0].id,
-            flow_id=flow_list[1].id
-        ))
-        db_workflow.append(dict(
-            flows_id=uuid.uuid4(),
-            flows_name='Metadata Addition Flow',
-            itemtype_id=itemtypesname_list[2].item_type[0].id,
-            flow_id=flow_list[2].id
         ))
         return db_workflow
 
