@@ -46,6 +46,7 @@ from weko_records_ui.models import InstitutionName
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
+from .utils import get_item_pidstore_identifier
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -360,15 +361,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         and pdfcoverpage_set_rec.avail != 'disable'
 
     # Get item meta data
-    meta = ItemsMetadata.get_record(pid.object_uuid)
     record['permalink_uri'] = None
-    if meta is not None:
-        pidstore_identifier = meta.get('pidstore_identifier')
-        if pidstore_identifier is None:
-            record['permalink_uri'] = request.url
-        else:
-            record['permalink_uri'] = pidstore_identifier.\
-                        get('identifier').get('value')
+    pidstore_identifier = get_item_pidstore_identifier(pid.object_uuid)
+    if pidstore_identifier is None:
+        record['permalink_uri'] = request.url
+    else:
+        record['permalink_uri'] = pidstore_identifier
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
