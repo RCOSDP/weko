@@ -503,6 +503,79 @@ class ApiCertificate(db.Model):
                 return False
 
 
+class StatisticUnit(db.Model):
+    __tablename__ = 'stats_report_unit'
+
+    unit_id = db.Column(db.String(100), primary_key=True, nullable=False,
+                        unique=True)
+
+    unit_name = db.Column(db.String(255), nullable=False)
+
+    @classmethod
+    def get_all_stats_report_unit(cls):
+        query_result = cls.query.all()
+        result = []
+        for res in query_result:
+            data = dict()
+            data[res.unit_id] = res.unit_name
+            result.append(data)
+        return result
+
+    @classmethod
+    def create(cls, unit_id, unit_name):
+        """Create new unit."""
+        try:
+            dataObj = StatisticUnit()
+            with db.session.begin_nested():
+                dataObj.unit_id = unit_id
+                dataObj.unit_name = unit_name
+                db.session.add(dataObj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
+        return cls
+
+
+class StatisticTarget(db.Model):
+    __tablename__ = 'stats_report_target'
+
+    target_id = db.Column(db.String(100), primary_key=True, nullable=False,
+                          unique=True)
+
+    target_name = db.Column(db.String(255), nullable=False)
+
+    @classmethod
+    def get_all_stats_report_unit(cls):
+        query_result = cls.query.all()
+        result = []
+        for res in query_result:
+            data = dict()
+            data[res.target_id] = res.target_name
+            result.append(data)
+        return result
+
+    @classmethod
+    def create(cls, target_id, target_name):
+        """Create new target."""
+        try:
+            dataObj = StatisticTarget()
+            with db.session.begin_nested():
+                dataObj.target_id = target_id
+                dataObj.target_name = target_name
+                db.session.add(dataObj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
+        return cls
+
+
 __all__ = ([
-    'SearchManagement', 'AdminLangSettings', 'ApiCertificate'
+    'SearchManagement', 'AdminLangSettings', 'ApiCertificate',
+    'StatisticUnit', 'StatisticTarget'
 ])
