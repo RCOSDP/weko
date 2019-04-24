@@ -264,3 +264,16 @@ ${INVENIO_WEB_INSTANCE} users create \
 # sphinxdoc-set-web-api-account-combobox-begin
 ${INVENIO_WEB_INSTANCE} cert insert crf CrossRef
 # sphinxdoc-set-web-api-account-combobox-end
+
+# sphinxdoc-set-report-unit-and-target-begin
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "1" "Day"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "2" "Month"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "3" "Year"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "4" "Host"
+${INVENIO_WEB_INSTANCE} report create_target \
+       "1" "Item registration report"
+# sphinxdoc-set-report-unit-and-target-end
