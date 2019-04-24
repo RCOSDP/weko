@@ -58,7 +58,7 @@ class ComponentSelectField extends React.Component {
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
                 <div class="controls col-xs-5">
                     <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name}>
-                        <option value="0">Please selected the input type</option>
+                        <option value="0">Please select the &nbsp; {this.props.key_binding}</option>
                         {this.state.selectOptions}
                     </select>
                 </div>
@@ -397,25 +397,25 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 }
 
 class ComponentButtonLayout extends React.Component {
-  constructor(props) {
-      super(props);
-      this.style = {
-          marginLeft: "10px",
-      };
-      this.saveCommand = this.saveCommand.bind(this);
-  }
-  saveCommand(event)
-  {
+    constructor(props) {
+        super(props);
+        this.style = {
+            marginLeft: "10px",
+        };
+        this.saveCommand = this.saveCommand.bind(this);
+    }
+    saveCommand(event)
+    {
         let request = {
             flag_edit : this.props.is_edit,
             data : this.props.data,
             data_id: this.props.data_id
         }
-        if (!this.props.data.repository) {
+        if (this.props.data.repository=="0") {
             alert('Repository is required!');
-        } else if (!this.props.data.widget_type) {
+        } else if (this.props.data.widget_type == "0") {
             alert('Type is required!');
-        } else if (!this.props.data.label) {
+        } else if (this.props.data.label ===null || this.props.data.label.match(/^ *$/) !== null) {
             alert('Label is required!');
         }else {
             return fetch(this.props.url_request,{
@@ -424,28 +424,28 @@ class ComponentButtonLayout extends React.Component {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify(request),
-          })
-          .then(res => res.json())
-          .then((result) => {
+            })
+            .then(res => res.json())
+            .then((result) => {
             if (result.success) {
                 alert(result.message);
             }else {
                 alert(result.message);
             }
-          });
-      }
-  }
-  render() {
-      return (
-          <div className="form-group col-xs-10">
-              <div className="col-xs-2"> </div>
-              <div className="col-xs-5">
-                <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
-                <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
-              </div>
-          </div>
-      )
-  }
+            });
+        }
+    }
+    render() {
+        return (
+            <div className="form-group col-xs-10">
+                <div className="col-xs-2"> </div>
+                    <div className="col-xs-5">
+                    <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
+                    <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
+                </div>
+            </div>
+        )
+    }
 }
 
 class MainLayout extends React.Component {
@@ -476,7 +476,7 @@ class MainLayout extends React.Component {
           case 'repository':
               this.setState({ repository: value });
               break;
-          case 'widget_type':
+          case 'type':
               this.setState({ widget_type: value });
               break;
           case 'label':
@@ -517,7 +517,7 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository}/>
                 </div>
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding = "widget_type" data_load={this.state.widget_type}/>
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding = "type" data_load={this.state.widget_type}/>
                 </div>
                 <div className="row">
                     <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding = "label" data_load={this.state.label}/>
