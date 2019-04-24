@@ -229,6 +229,17 @@
         }
       }
 
+      // タイトルなどを追加する
+      page_global.table_row_map.schema.properties["pubdate"] = {type:"string",title:"公開日",format:"datetime"}
+      page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
+      page_global.table_row_map.schema.required.push("pubdate");
+
+      if(src_mapping.hasOwnProperty('pubdate')) {
+        page_global.table_row_map.mapping['pubdate'] = src_mapping['pubdate'];
+      } else {
+        page_global.table_row_map.mapping['pubdate'] = mapping_value;
+      }
+
       // テーブルの行をトラバースし、マップに追加する
       err_input_id = []
       $.each(page_global.table_row, function(idx, row_id){
@@ -253,7 +264,7 @@
         if(src_render.hasOwnProperty('meta_list')
             && src_render['meta_list'].hasOwnProperty(row_id)) {
           if(tmp.input_type == src_render['meta_list'][row_id]['input_type']) {
-            if(src_mapping.hasOwnProperty('keywords_en')) {
+            if(src_mapping.hasOwnProperty(row_id)) {
               page_global.table_row_map.mapping[row_id] = src_mapping[row_id];
             } else {
               page_global.table_row_map.mapping[row_id] = mapping_value;
@@ -504,6 +515,28 @@
 
         page_global.meta_list[row_id] = tmp;
       });
+
+      //////add by ryuu. 0313 start
+        //公開日
+        var tmp_pubdate = {}
+        tmp_pubdate.title = "公開日";
+        //add by ryuu. start
+        tmp_pubdate.title_i18n ={}
+        tmp_pubdate.title_i18n.ja = "公開日";
+        tmp_pubdate.title_i18n.en = "PubDate";
+        //add by ryuu. end
+        tmp_pubdate.input_type = "datetime";
+        tmp_pubdate.input_value = "";
+        tmp_pubdate.option = {}
+        tmp_pubdate.option.required = $('#chk_pubdate_0').is(':checked')?true:false;
+        tmp_pubdate.option.multiple = $('#chk_pubdate_1').is(':checked')?true:false;
+        tmp_pubdate.option.hidden = $('#chk_pubdate_4').is(':checked')?true:false;
+        tmp_pubdate.option.showlist = tmp_pubdate.option.hidden?false:($('#chk_pubdate_2').is(':checked')?true:false);
+        tmp_pubdate.option.crtf = tmp_pubdate.option.hidden?false:($('#chk_pubdate_3').is(':checked')?true:false);
+        //設定
+        page_global.meta_fix["pubdate"] = tmp_pubdate;
+
+      //////add by ryuu. 0313 end
     }
 
     // add new meta table row
@@ -830,49 +863,5 @@
         $('input[type=radio][name=item_type][value=normal]').click()
     } else if ($("#item-type-lists option:selected").hasClass('harvesting_type')) {
         $('input[type=radio][name=item_type][value=harvesting]').click()
-    }
-
-    $('#btn_delete_item').on('click', function(){
-      var selected_item_type = $("#item-type-lists :selected");
-      var is_harvesting_type = selected_item_type.hasClass("harvesting_type");
-      var is_belonging_item = selected_item_type.hasClass("belonging_item");
-      if (is_harvesting_type) {
-        alert($("#msg_for_harvesting").val());
-      } else if (is_belonging_item) {
-        alert($("#msg_for_belonging_item").val());
-      } else {
-        $("#item_type_delete_confirmation").modal("show");
-      }
-    });
-
-    $('#item_type_delete_continue').on('click', function(){
-      $("#item_type_delete_confirmation").modal("hide");
-      send_uri('/itemtypes/delete/' + $('#item-type-lists').val(), {},
-        function(data){
-          if (data.code == 0) {
-            window.location.href = "/itemtypes/register";
-          }
-          alert(data.msg);
-        },
-        function(errmsg){
-          alert(JSON.stringify(errmsg));
-      });
-    });
-
-    function send_uri(url, data, handleSuccess, handleError){
-      $.ajax({
-        method: 'POST',
-        url: url,
-        async: true,
-        contentType: 'application/json',
-        dataType: 'json',
-        data: JSON.stringify(data),
-        success: function(data,textStatus){
-          handleSuccess(data);
-        },
-        error: function(textStatus,errorThrown){
-          handleError(textStatus);
-        }
-      });
     }
 });
