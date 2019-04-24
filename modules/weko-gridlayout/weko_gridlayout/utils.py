@@ -162,27 +162,39 @@ def update_admin_widget_item_setting(data):
     data_id = data.get('data_id')
     if not data_result:
         # raise WidgetItemInvalidDataRESTError()
-        success = False
+        success = True
         msg = 'Invalid data.'
     if flag:
-        if WidgetItems.is_existed(data_id):
-            if not WidgetItems.update(data_result, data_id):
-                # raise WidgetItemUpdatedRESTError()
+        if data_result.get('repository') != data_id.get('repository')\
+                or data_result.get('widget_type') != data_id.get('widget_type')\
+                or data_result.get('label') != data_id.get('label'):
+            if WidgetItems.is_existed(data_result):
                 success = False
-                msg = 'Update widget item fail.'
+                msg = 'Fail to udpate. Data input to update is exist!'
+
+        if success:
+            if WidgetItems.is_existed(data_id):
+                if not WidgetItems.update(data_result, data_id):
+                    # raise WidgetItemUpdatedRESTError()
+                    success = False
+                    msg = 'Update widget item fail.'
+                else:
+                    msg = 'Widget item updated successfully.'
             else:
-                msg = 'Widget item updated successfully.'
-        else:
-            msg = 'Fail to udpate. Can not find Widget item to edit'
+                msg = 'Fail to udpate. Can not find Widget item to edit'
     else:
-        if not WidgetItems.create(data_result):
-            # raise WidgetItemAddedRESTError()
+        if WidgetItems.is_existed(data_result):
             success = False
-            msg = 'Create widget item fail.'
+            msg = 'Fail to create. Data input to create is exist!'
         else:
-            msg = 'Widget item created successfully.'
+            if not WidgetItems.create(data_result):
+                # raise WidgetItemAddedRESTError()
+                success = False
+                msg = 'Create widget item fail.'
+            else:
+                msg = 'Widget item created successfully.'
 
     return make_response(
         jsonify({'status': status,
-                'success': success,
+                 'success': success,
                  'message': msg}), status)
