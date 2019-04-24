@@ -49,7 +49,7 @@ msgid "Index"
 msgstr "インデックス"
 
 #: weko_index_tree/views.py:245
-msgid "Janpanese"
+msgid "Japanese"
 msgstr "日本語"
 
 #: weko_index_tree/views.py:245
@@ -85,5 +85,5 @@ msgid "Move_items_to_parent_Index"
 msgstr "親インデックスへ移動"
 
 #: weko_index_tree/views.py:245
-msgid "Cancle"
+msgid "Cancel"
 msgstr "キャンセル"
