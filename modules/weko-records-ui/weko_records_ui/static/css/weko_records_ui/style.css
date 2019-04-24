@@ -35,3 +35,8 @@
 #views-txt {
   vertical-align: -5px;
 }
+
+#mark-break {
+  margin-left: 0.25em;
+  margin-right: 0.25em;
+}
