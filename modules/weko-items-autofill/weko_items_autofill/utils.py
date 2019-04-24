@@ -266,6 +266,8 @@ def asssign_data_crossref_issued_field(field, data):
             list_date = data.get('date')
             for date in list_date:
                 if date.get('date'):
+                    if('@value' not in date['date'].keys()):
+                        continue
                     try_assign_data(date,
                                     convert_datetime_format(field.get
                                                             ('date-parts')),
@@ -756,3 +758,46 @@ def convert_html_escape(text):
         pass
 
     return text
+
+
+def get_title_pubdate_path(item_type_id):
+    """Get title and pubdate path.
+
+    :param item_type_id:
+    :return: result json.
+    """
+    result = {
+        'title': '',
+        'pubDate': ''
+    }
+    item_type_mapping = Mapping.get_record(item_type_id)
+    title = list()
+    pub_date = list()
+    for k, v in item_type_mapping.items():
+        jpcoar = v.get("jpcoar_mapping")
+        if isinstance(jpcoar, dict):
+            if 'title' in jpcoar.keys():
+                try:
+                    if str(k).index('item') is not None:
+                        title.append(k)
+                        title_value = jpcoar['title']
+                        if '@value' in title_value.keys():
+                            title.append(title_value['@value'])
+                        if '@attributes' in title_value.keys():
+                            title_lang = title_value['@attributes']
+                            if 'xml:lang' in title_lang.keys():
+                                title.append(title_lang['xml:lang'])
+                except Exception:
+                    pass
+            elif 'date' in jpcoar.keys():
+                try:
+                    if str(k).index('item') is not None:
+                        pub_date.append(k)
+                        title_value = jpcoar['date']
+                        if '@value' in title_value.keys():
+                            pub_date.append(title_value['@value'])
+                except Exception:
+                    pass
+    result['title'] = title
+    result['pubDate'] = pub_date
+    return result
