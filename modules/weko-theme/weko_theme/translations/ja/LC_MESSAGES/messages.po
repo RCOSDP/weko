@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 15:55+0900\n"
+"POT-Creation-Date: 2019-04-25 19:02+0900\n"
 "PO-Revision-Date: 2018-04-12 18:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -552,7 +552,7 @@ msgid "ANY"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/body_search_detail.html:485
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:102
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:103
 msgid "Clear"
 msgstr "クリア"
 
@@ -576,15 +576,15 @@ msgstr ""
 msgid "[[sub_radio.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:65
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:66
 msgid "[[sub_attr.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:87
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:88
 msgid "Add Search Condition"
 msgstr "検索条件を追加"
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:96
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:97
 #, fuzzy
 msgid "Search"
 msgstr "詳細検索"
@@ -594,15 +594,9 @@ msgid "Top Page"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/footer_editor.html:27
-#, python-format
-msgid "<p>Powered by <a href=\"%(link)s\">CERN Data Centre & Invenio</a><p>"
-msgstr ""
-
 #: weko_theme/templates/weko_theme/footer_wysiwyg.html:27
 #, python-format
-msgid ""
-"<p>Powered by <a href=\"%(link)s\" style=\"color: #ffffff;\">CERN Data "
-"Centre & Invenio</a><p>"
+msgid "<p>Powered by <a href=\"%(link)s\">CERN Data Centre & Invenio</a><p>"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/header_editor.html:23
@@ -727,4 +721,10 @@ msgstr ""
 
 #~ msgid "Item Registration"
 #~ msgstr "アイテム登録"
+
+#~ msgid ""
+#~ "<p>Powered by <a href=\"%(link)s\" "
+#~ "style=\"color: #ffffff;\">CERN Data Centre &"
+#~ " Invenio</a><p>"
+#~ msgstr ""
 
