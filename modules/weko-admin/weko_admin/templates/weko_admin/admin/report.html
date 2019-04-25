@@ -41,6 +41,48 @@
   
   
   <script type="text/babel">
+
+    class ComponentCombobox extends React.Component
+    {
+      constructor(props)
+      {
+        super(props);
+        this.state = {
+          selections: [],
+        };
+      }
+      componentDidMount() 
+      {
+        let initURL = "/api/admin/get_init_selection";
+        fetch(initURL)
+        .then(res => res.json())
+        .then(
+          (result) => 
+          {
+            console.log(result);
+            let selectionData = result[this.props.id_component];
+            let options = selectionData.map((option) =>{
+              console.log(option.value);
+              return option;
+            });
+          }
+        );
+      }
+      
+      render() {
+        return (
+          <div className="form-group row">
+            <label htmlFor={this.props.id_component} className="control-label col-xs-2 text-right">{this.props.name}</label>
+            <div class="controls col-xs-5">
+              <select id={this.props.id_component}>
+                {this.state.selections}
+              </select>
+            </div>
+          </div>
+        )
+      }
+    }
+
     class ComponentDatePicker extends React.Component
     {
       constructor(props)
@@ -89,6 +131,8 @@
               <h4 style={this.styleTitle}>Custom Report</h4>
               <ComponentDatePicker name = "Start Date" id_component="start_date"/>
               <ComponentDatePicker name = "End Date" id_component="end_date"/>
+              <ComponentCombobox name="Target Report" id_component="target"/>
+              <ComponentCombobox name="Unit" id_component="unit"/>
             </div> 
           </div>
         )
