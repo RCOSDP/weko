@@ -265,6 +265,23 @@ ${INVENIO_WEB_INSTANCE} users create \
 ${INVENIO_WEB_INSTANCE} cert insert crf CrossRef
 # sphinxdoc-set-web-api-account-combobox-end
 
+#### sphinxdoc-create-widget_type-data-begin
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Free description" "Free description"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Access counter" "Access counter"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Notice" "Notice"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "New arivals" "New arivals"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Main contents" "Main contents"
+### sphinxdoc-create-widget_type-data-end
+
 # sphinxdoc-set-report-unit-and-target-begin
 ${INVENIO_WEB_INSTANCE} report create_unit \
        "1" "Day"

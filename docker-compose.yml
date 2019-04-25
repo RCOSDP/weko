@@ -109,6 +109,7 @@ static:
     - /code/modules/weko-accounts/weko_accounts.egg-info
     - /code/modules/weko-admin/weko_admin.egg-info
     - /code/modules/weko-logging/weko_logging.egg-info
+    - /code/modules/weko-gridlayout/weko_gridlayout.egg-info
     - /code/modules/weko-groups/weko_groups.egg-info
     - /code/modules/weko-search-ui/weko_search_ui.egg-info
     - /code/modules/weko-records/weko_records.egg-info

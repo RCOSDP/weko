@@ -1,0 +1,26 @@
+# English translations for weko-indextree-journal.
+# Copyright (C) 2019 National Institute of Informatics
+# This file is distributed under the same license as the
+# weko-indextree-journal project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: weko-indextree-journal 1.0.0.dev20190000\n"
+"Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+"POT-Creation-Date: 2019-04-25 18:38+0900\n"
+"PO-Revision-Date: 2019-04-25 15:54+0900\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.5.1\n"
+
+#. NOTE: This is a note to a translator.
+#: weko_indextree_journal/ext.py:28
+msgid "A translation string"
+msgstr ""
+

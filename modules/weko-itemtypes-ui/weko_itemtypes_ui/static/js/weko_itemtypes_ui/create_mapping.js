@@ -24,8 +24,8 @@
     $("#item-type-lists").change(function (ev) {
       page_global.dst_mapping_name = $(this).val();
       if(page_global.showDiag) {
-        $('.modal-title').text('提示');
-        $('.modal-body').text('編集内容をキャンセルしてもよろしいですか？');
+        $('.modal-title').text('Present');
+        $('.modal-body').text('Would you like to cancel your changes?');
         $('#btn_submit').addClass('hide');
         $('#btn_confirm').removeClass('hide');
         $('#myModal').modal('show');

@@ -25,6 +25,7 @@
   {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
   <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
+  <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
 {%- endblock css %}
 
 {%- block javascript %}
@@ -77,14 +78,14 @@
           <invenio-records
             {%- if pid %}
               initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
-              links='{{links|tojson}}'
-            {%- else %}
+              files='{{files|tojson}}'
+            {% else %}
               initialization="{{ config.DEPOSIT_SEARCH_API }}"
-            {%- endif %}
-            response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
+              files='{{files|tojson}}'
+            {% endif %}
             extra-params='{"headers":{"Content-Type": "application/json"}}'
             form="{{ schemaform }}"
-            record='{{ record | tojson }}'
+            record='{{ records | tojson }}'
             schema="{{ jsonschema }}">
             <!-- No longer needed - Using a manual loader -->
             <!-- <invenio-records-loading
@@ -198,7 +199,6 @@
 
                       </div>
                   </div>
-
                 </div>
               </div>
 
@@ -230,25 +230,14 @@
                             class="btn btn-info next-button" ng-click="updateDataJson()">{{_('Next')}}
                     <span class="glyphicon glyphicon-chevron-right"></span>
                     </button></li>
-
-                    {%- if pid %}
-                    <li>
-                           <button
-                               ng-disabled="recordsVM.invenioRecordsLoading"
-                               ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
-                               class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
-                              <span class="glyphicon glyphicon-trash"></span>
-                                  {{_('Delete')}}</button></li>
-                    {%- endif %}
-
                   </ul>
                 </div>
               </div>
-            </div>
-          </invenio-records>
-        {%- if need_file %}
-        </invenio-files-uploader>
-        {%- endif %}
+            </invenio-records>
+          {%- if need_file %}
+          </invenio-files-uploader>
+          {%- endif %}
+        </div>
       </div>
     </div>
   </div>

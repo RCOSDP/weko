@@ -20,11 +20,17 @@
 
 """Configuration for weko-items-ui."""
 
+WEKO_WORKFLOW_BASE_TEMPLATE = 'weko_workflow/base.html'
+"""Default base template for the demo page."""
+
 WEKO_ITEMS_UI_BASE_TEMPLATE = 'weko_items_ui/base.html'
 """Default base template for the item page."""
 
 WEKO_ITEMS_UI_INDEX_TEMPLATE = 'weko_items_ui/item_index.html'
 """Edit template with file upload for the item page."""
+
+WEKO_ITEMS_UI_ITME_EDIT_TEMPLATE = 'weko_items_ui/iframe/item_edit.html'
+"""Edit template with item login for the item page."""
 
 WEKO_ITEMS_UI_FORM_TEMPLATE = 'weko_items_ui/edit.html'
 """Edit template with file upload for the item page."""
