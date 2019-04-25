@@ -27,6 +27,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.4.0/react-datepicker-cssmodules.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.4.0/react-datepicker.min.css">
  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ <style>
+  .mytable tr th,td {
+   font-weight : normal;
+   height: 40px;
+  }
+  </style>
 {%- endblock css %}
 
 {%- block javascript %}
@@ -41,6 +47,72 @@
   
   
   <script type="text/babel">
+    class ComponentTableResult extends React.Component
+    {
+      constructor(props)
+      {
+        super(props);
+        this.state={
+          rows : []
+        };
+        this.styleTable = {
+          "width" : "100%",
+        }
+      }
+      componentDidMount()
+      {
+        let unit = document.getElementById("unit").value;
+        let rows = [];
+        let cell = [];
+        let data = this.props.data;
+        rows.push(<tr>{cell}</tr>);
+        if(unit == "Host")
+        {
+          cell.push(<td>Host</td>);
+          cell.push(<td>IP Adress</td>);
+          cell.push(<td>Counts</td>);
+          for( var i=0; i< data.length;i++)
+          {
+            cell = [];
+            cell.push(<td>{data[i].col1}</td>);
+            cell.push(<td>{data[i].col2}</td>);
+            cell.push(<td>{data[i].col3}</td>);
+            rows.push(<tr>{cell}</tr>);
+          }
+        }
+        else
+        {
+          cell.push(<td>Period</td>);
+          cell.push(<td>Counts</td>);
+          for( var i=0; i< data.length;i++)
+          {
+            cell = [];
+            cell.push(<td>{data[i].col1}</td>);
+            cell.push(<td>{data[i].col2}</td>);
+            rows.push(<tr>{cell}</tr>);
+          }
+        }
+        this.setState({
+          rows: rows
+        });
+      }
+
+      render(){
+        return(
+          <div style={this.styleContainer} className="form-group row">
+            <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
+            <div class="controls col-xs-5">
+              <br/>
+              <table style={this.styleTable} className = "mytable">
+                <tbody>
+                  {this.state.rows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      }
+    }
 
     class ComponentCombobox extends React.Component
     {
@@ -106,17 +178,17 @@
               unit: unit
             };
             let request_url='/api/stats/get_item_registration_report';
-            fetch(request_url, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(requestParam)
-            })
-            .then(res => res.json())
-            .then((result){
-              // Handle response data
-            });
+            // fetch(request_url, {
+            //   method: "GET",
+            //   headers: {
+            //     "Content-Type": "application/json"
+            //   },
+            //   body: JSON.stringify(requestParam)
+            // })
+            // .then(res => res.json())
+            // .then(result){
+            //   // Handle response data
+            // },
           }
         }
       }
@@ -176,8 +248,6 @@
       {
         super(props);
         this.state = {
-          startDate: '',
-          endDate: '',
           result: []
         };
         this.styleContainer = {
@@ -207,6 +277,7 @@
               <ComponentDatePicker name = "End Date" id_component="end_date"/>
               <ComponentCombobox name="Target Report" id_component="target"/>
               <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit"/>
+              <ComponentTableResult name="Result" data={this.state.result} />
             </div> 
           </div>
         )
