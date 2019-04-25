@@ -1,15 +1,15 @@
 # Translations template for weko-accounts.
-# Copyright (C) 2018 National Institute of Informatics
+# Copyright (C) 2019 National Institute of Informatics
 # This file is distributed under the same license as the weko-accounts
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2019.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:50+0900\n"
+"POT-Creation-Date: 2019-04-23 10:29+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,16 +18,89 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+#: weko_accounts/admin.py:56
+msgid "Shibboleth flag was updated."
+msgstr ""
+
+#: weko_accounts/admin.py:69
+msgid "Setting"
+msgstr ""
+
+#: weko_accounts/admin.py:70
+msgid "Shibboleth"
+msgstr ""
+
 #. NOTE: This is a note to a translator.
 #: weko_accounts/ext.py:41
 msgid "A translation string"
 msgstr ""
 
-#: weko_accounts/views.py:46
+#: weko_accounts/views.py:68
 msgid "WEKO-Accounts"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:29
+msgid "confirm for account"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:44
+msgid "Login (Visitors with a WEKO-ID)"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:47
+msgid "Login (New WEKO users)"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:55
+#: weko_accounts/templates/weko_accounts/login_user.html:52
+#: weko_accounts/templates/weko_accounts/shib_user.html:76
+#, python-format
+msgid "New to %(sitename)s?"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:55
+#: weko_accounts/templates/weko_accounts/login_user.html:52
+#: weko_accounts/templates/weko_accounts/shib_user.html:76
+msgid "Sign Up"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/confirm_user.html:62
+#: weko_accounts/templates/weko_accounts/login_user.html:59
+#: weko_accounts/templates/weko_accounts/shib_user.html:83
+msgid "Forgot password?"
 msgstr ""
 
 #: weko_accounts/templates/weko_accounts/index.html:24
 msgid "Welcome to"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_user.html:29
+msgid "Log in to account"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/login_user.html:38
+msgid "Log In"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/shib_user.html:27
+msgid "test commit shibboleth account"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:25
+msgid "Life Time"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:36
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:49
+msgid "Allow shibboleth user"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:42
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:55
+msgid "Deny shibboleth user"
+msgstr ""
+
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:62
+msgid "Update"
 msgstr ""
 

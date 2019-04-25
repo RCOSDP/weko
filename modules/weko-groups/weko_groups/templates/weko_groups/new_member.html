@@ -20,6 +20,11 @@
 
 {%- extends "weko_groups/settings/base.html" %}
 
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {% endblock %}
+
 {%- import "weko_groups/settings/helpers.html" as helpers with context -%}
 {%- from "weko_groups/_macros.html" import render_field with context %}
 
@@ -47,7 +52,7 @@
         cancel-button">
       <i class="fa fa-times"></i> {{ _('Cancel') }}
     </a>
-    <button type="submit" class="btn btn-primary action-button">
+    <button type="submit" class="btn btn-primary pull-right action-button">
       <i class="fa fa-check"></i> {{ _('Invite') }}
     </button>
   </div>

@@ -116,7 +116,7 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
         }
         var post_data ={"q_id":$rootScope.index_id_q, "sort":custom_sort_list, "es_data":data}
 
-　　   // request api
+        // request api
         $http({
             method: 'POST',
             url: '/item_management/save',

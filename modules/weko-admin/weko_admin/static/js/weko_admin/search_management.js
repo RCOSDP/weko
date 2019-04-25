@@ -109,7 +109,7 @@
     angular.module('searchSettingModule', ['searchManagement.controllers']).config(['$interpolateProvider', function($interpolateProvider) {
       $interpolateProvider.startSymbol('[[');
       $interpolateProvider.endSymbol(']]');
-　　}]);
+    }]);
 
     angular.bootstrap(
       document.getElementById('search_management'), ['searchSettingModule']);

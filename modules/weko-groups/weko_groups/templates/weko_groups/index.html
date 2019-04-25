@@ -39,7 +39,7 @@
     _('Add Groups'),
     with_body=False,
     icon='fa fa-plus fa-fw',
-    btn=_('New group') if groups.items|length > 0 else "", btn_icon='fa fa-plus', btn_href=url_for('.new')
+    btn=_('New Group') if groups.items|length > 0 else "", btn_icon='fa fa-plus', btn_href=url_for('.new')
    ) }}
 {%- endif %}
 <div class="panel-body">
@@ -57,7 +57,7 @@
 {%- if groups.items|length == 0 and not q %}
   {%- if is_admin %}
     {{ emptyprompt(
-      btn=_('New group'), btn_icon='fa fa-fw fa-plus',
+      btn=_('New Group'), btn_icon='fa fa-fw fa-plus',
       btn_href=url_for('.new'),
       heading=_('Go ahead and create new group!')
       ) }}

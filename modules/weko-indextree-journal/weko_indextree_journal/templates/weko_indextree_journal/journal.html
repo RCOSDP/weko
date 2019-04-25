@@ -30,10 +30,10 @@
 {%- endblock javascript %}
 
 <div class="row">
-  <div class="col-sm-3 col-md-3 col-lg-3 m-top-20">
+  <div class="col-sm-3 col-md-3 col-lg-3">
     <app-root-tree-hensyu></app-root-tree-hensyu>
   </div>
-  <div class="col-sm-8 col-md-8 col-lg-8 m-top-20">
+  <div class="col-sm-8 col-md-8 col-lg-8">
     <div class="row">
       <div id="item_management"class="hide">indextree</div>
       <div role="navigation">
@@ -79,12 +79,11 @@
             </invenio-records>
           </div>
         </div>
-        <div class="panel-footer">
-          <button id="index-detail-submit" class="btn btn-primary save-button" (click)="">
-          <span class="fas fa-download"></span>
+     <div class="panel-footer">
+        <button id="index-detail-submit" class="btn btn-primary save-button" (click)="">
+          <span class="fa fa-download"></span>
           {{_('Save')}}</button>
         </div>
-      </div>
     </div>
   </div>
 </div>

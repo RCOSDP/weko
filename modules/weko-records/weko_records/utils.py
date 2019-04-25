@@ -44,7 +44,6 @@ def json_loader(data, pid):
     jpcoar = OrderedDict()
     item = dict()
     ar = []
-    pubdate = None
 
     if not isinstance(data, dict) or data.get("$schema") is None:
         return
@@ -69,8 +68,17 @@ def json_loader(data, pid):
                     continue
 
             item.clear()
-            item["attribute_name"] = ojson["properties"][k]["title"] \
-                if ojson["properties"][k].get("title") is not None else k
+            try:
+                item["attribute_name"] = ojson["properties"][k]["title"] \
+                    if ojson["properties"][k].get("title") is not None else k
+            except Exception:
+                pub_date_setting = {
+                    "type": "string",
+                    "title": "公開日",
+                    "format": "datetime"
+                }
+                ojson["properties"]["pubdate"] = pub_date_setting
+                item["attribute_name"] = '公開日'
             # set a identifier to add a link on detail page when is a creator field
             # creator = mp.get(k, {}).get('jpcoar_mapping', {})
             # creator = creator.get('creator') if isinstance(
@@ -112,7 +120,7 @@ def json_loader(data, pid):
 
     if dc:
         # get the tile name to detail page
-        title = data.get("title_ja") or data.get("title_en")
+        title = data.get("title")
 
         if 'control_number' in dc:
             del dc['control_number']

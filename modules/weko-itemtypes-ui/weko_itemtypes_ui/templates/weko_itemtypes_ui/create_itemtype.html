@@ -42,14 +42,14 @@
 {%- block page_body_main %}
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
-      <div class="panel panel-info">
+      <div class="panel panel-info  gray-color-class">
         <div class="panel-body">
           <div class="form-group mr-5">
           <label class="radio-inline"><input type="radio" name="item_type" value="normal">{{_('Standard Item Type')}}</label>
           <label class="radio-inline"><input type="radio" name="item_type" value="harvesting">{{_('Item Type for Harvesting')}}</label>
           </div>
           <div class="form-inline">
-            <div class="input-group">
+              <div class="input-group">
               <label class="sr-only" for="item-type-lists"></label>
               <select class="form-control" id="item-type-lists">
                 <option value=""></option>
@@ -57,28 +57,28 @@
                 <option value="{{ list.item_type.0.id }}" class="{% if list.item_type.0.harvesting_type %}harvesting_type {% else %}normal_type {% endif %}{% if list.belonging_item_flg %}belonging_item{% endif %}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
                 {% endfor %}
               </select>
-            </div>
+               </div>
 
-            <div class="pull-right">
+            <!-- <div class="pull-right twentyfive-pixel-bottom-margin">-->
               {%- set delete_button_class = 'disabled' -%}
               {%- if id -%}
               {%- set delete_button_class = '' -%}
               {%- endif -%}
-              <a role="button" class="btn btn-primary pull-right mapping-button ten-pixel-margin" href="{{
+              <a role="button" class="btn btn-primary pull-right mapping-button ten-pixel-right-margin" href="{{
                   url_for('weko_itemtypes_ui.mapping_index') }}">
                   <span class="glyphicon glyphicon-hand-right"></span>
                   {{ _('Mapping') }}
               </a>
-              <a role="button" class="btn btn-primary pull-right property-button ten-pixel-margin" href="{{
+              <a role="button" class="btn btn-primary pull-right property-button ten-pixel-right-margin" href="{{
                   url_for('weko_itemtypes_ui.custom_property') }}">
                   <span class="glyphicon glyphicon-hand-right"></span>
                   {{ _('Property') }}
               </a>
-              <a role="button" class="btn btn-danger pull-right delete-button
-                  ten-pixel-margin" href="javascript:;" id="btn_delete_item">
+              <a role="button" class="btn btn-danger pull-right delete-button ten-pixel-right-margin" href="javascript:;" id="btn_delete_item">
                   <span class="glyphicon glyphicon-trash"></span>
                   {{ _('Delete') }}
               </a>
+              
               <div id="item_type_delete_confirmation" class="modal fade" tabindex="-1"
                    role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
@@ -102,7 +102,7 @@
               </div>
               <input type="hidden" value="{{_('Cannot delete Item type for Harvesting.')}}" id="msg_for_harvesting">
               <input type="hidden" value="{{_('Cannot delete because there is belonging item.')}}" id="msg_for_belonging_item">
-            </div>
+              <!-- </div>-->
 
           </div>
         </div>
@@ -120,7 +120,7 @@
           <div class="form-group mr-5">
             <label for="itemtype_name">{{_('Item Type')}}:</label>
             <input type="text" class="form-control" id="itemtype_name"
-            placeholder="{{_('Input Type Name')}}" value="">＊
+            placeholder="{{_('Input Type Name')}}" value="">*
           </div>
           <label class="radio-inline">
             <input type="radio" name="radio_versionup" class="radio_versionup" id="upt_version" value="upt">{{_('Version Upgrade')}}
@@ -132,7 +132,7 @@
       </div>
       <div class="row table-responsive">
         <div class="checkbox media-right hide">
-          <label><input type="checkbox" id="chk_upload_file" value="filemeta">{{_('Do you want to register the content？')}}</label>
+          <label><input type="checkbox" id="chk_upload_file" value="filemeta">{{_('Do you want to register the content?')}}</label>
         </div>
         <table class="table table-striped table-bordered table-hover table-condensed">
           <thead>
@@ -145,6 +145,31 @@
             </tr>
           </thead>
           <tbody id="tbody_itemtype">
+            <tr>
+                <td>{{_('Publish Date')}}</td>
+                <td>{{_('Date')}}</td>
+                <td>
+                  <fieldset disabled>
+                  <div class="checkbox">
+                    <label><input type="checkbox" id="chk_pubdate_0" value="required" checked>{{_('Required')}}</label>
+                  </div>
+                  <div class="checkbox">
+                    <label><input type="checkbox" id="chk_pubdate_1" value="multiple">{{_('Multiple')}}</label>
+                  </div>
+                  <div class="checkbox">
+                    <label><input type="checkbox" id="chk_pubdate_2" value="showlist">{{_('List Display')}}</label>
+                  </div>
+                  <div class="checkbox">
+                    <label><input type="checkbox" id="chk_pubdate_3" value="crtf">{{_('Specify Newline')}}</label>
+                  </div>
+                  <div class="checkbox">
+                    <label><input type="checkbox" id="chk_pubdate_4" value="hidden">{{_('Hide')}}</label>
+                  </div>
+                  </fieldset>
+                </td>
+                <td> </td>
+                <td> </td>
+                </tr>
           </tbody>
         </table>
         <div class="col-sm-3 col-md-3 col-lg-3">

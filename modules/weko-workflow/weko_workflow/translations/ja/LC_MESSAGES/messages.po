@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workflow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-09-28 15:36+0900\n"
+"POT-Creation-Date: 2019-04-25 15:48+0900\n"
 "PO-Revision-Date: 2018-08-06 13:44+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -17,7 +17,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
+"Generated-By: Babel 2.5.1\n"
 
 #: weko_workflow/admin.py:100
 msgid "Update flow successfully."
@@ -28,8 +28,6 @@ msgid "Update flow action successfully"
 msgstr "更新しました。"
 
 #: weko_workflow/admin.py:228 weko_workflow/admin.py:237
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:29
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:33
 msgid "WorkFlow"
 msgstr "ワークフロー"
 
@@ -40,6 +38,10 @@ msgstr "ワークフロー一覧"
 #: weko_workflow/admin.py:238
 msgid "Flow List"
 msgstr "フロー一覧"
+
+#: weko_workflow/api.py:998 weko_workflow/views.py:171
+msgid "End"
+msgstr "終了"
 
 #: weko_workflow/models.py:66
 msgid "action_begin"
@@ -114,8 +116,6 @@ msgid "Created"
 msgstr "作成日"
 
 #: weko_workflow/models.py:224
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:33
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:38
 msgid "Updated"
 msgstr "更新日"
 
@@ -124,13 +124,11 @@ msgid "Deleted"
 msgstr "削除"
 
 #: weko_workflow/models.py:261
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:448
 msgid "Usable"
 msgstr "有効"
 
 #: weko_workflow/models.py:263
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:54
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:40
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:44
 msgid "Unusable"
 msgstr "無効"
 
@@ -142,43 +140,57 @@ msgstr "開始しました"
 msgid "End Action"
 msgstr "終了しました"
 
-#: weko_workflow/models.py:332
+#: weko_workflow/models.py:333
 msgid "Record has be created."
 msgstr "登録した"
 
-#: weko_workflow/models.py:333
+#: weko_workflow/models.py:334
 msgid "Record has be updated."
 msgstr "更新した"
 
-#: weko_workflow/models.py:334
+#: weko_workflow/models.py:335
 msgid "Record has be deleted."
 msgstr "削除した"
 
-#: weko_workflow/models.py:342
+#: weko_workflow/models.py:343
 msgid "Status Policy"
 msgstr "ステータス"
 
-#: weko_workflow/models.py:478
+#: weko_workflow/models.py:479
 msgid "Subscription Policy"
 msgstr "ステータス"
 
-#: weko_workflow/views.py:128
-msgid "End"
-msgstr "終了"
-
-#: weko_workflow/views.py:196 weko_workflow/views.py:198
-#: weko_workflow/views.py:201 weko_workflow/views.py:203
+#: weko_workflow/views.py:301 weko_workflow/views.py:303
+#: weko_workflow/views.py:306 weko_workflow/views.py:308
 msgid "Authorization required"
 msgstr "権限が必要です"
 
-#: weko_workflow/views.py:247 weko_workflow/views.py:252
-#: weko_workflow/views.py:255 weko_workflow/views.py:299
-#: weko_workflow/views.py:352
+#: weko_workflow/views.py:393 weko_workflow/views.py:400
+#: weko_workflow/views.py:404 weko_workflow/views.py:469
+#: weko_workflow/views.py:591
 msgid "success"
 msgstr ""
 
-#: weko_workflow/views.py:273 weko_workflow/views.py:323
+#: weko_workflow/views.py:443 weko_workflow/views.py:562
 msgid "error"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/helpers.html:57
+#: weko_workflow/templates/weko_workflow/helpers.html:63
+msgid "Input Field"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:24
+msgid "Identifier Grant"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:70
+#: weko_workflow/templates/weko_workflow/item_link.html:128
+msgid "Save"
+msgstr "保存"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:75
+msgid "Next"
 msgstr ""
 
 #: weko_workflow/templates/weko_workflow/index.html:29
@@ -186,8 +198,56 @@ msgstr ""
 msgid "Welcome to %(module_name)s"
 msgstr "%(module_name)sへようこそ！"
 
+#: weko_workflow/templates/weko_workflow/item_link.html:7
+msgid "Index Tree"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_link.html:30
+msgid "Designate Index"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_link.html:45
+msgid "Item Link"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_link.html:64
+msgid "Delete"
+msgstr "削除"
+
+#: weko_workflow/templates/weko_workflow/item_link.html:82
+msgid "Search failed."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_link.html:88
+msgid "Loading..."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_link.html:120
+#: weko_workflow/templates/weko_workflow/item_link.html:122
+msgid "Comment"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/item_link.html:132
+msgid "Done"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/oapolicy_search.html:3
+msgid "Journal"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/oapolicy_search.html:16
+msgid "Journal:"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/oapolicy_search.html:32
+msgid "RoMEO:"
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/oapolicy_search.html:40
+msgid "Paid OA:"
+msgstr ""
+
 #: weko_workflow/templates/weko_workflow/permission_required.html:25
-#, fuzzy
 msgid "Permission required"
 msgstr "権限が必要です"
 
@@ -215,211 +275,147 @@ msgstr ""
 msgid "License"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/record_detail.html:63
-#: weko_workflow/templates/weko_workflow/record_detail.html:85
+#: weko_workflow/templates/weko_workflow/record_detail.html:53
+msgid "Plagiarism Check"
+msgstr "剽窃チェック"
+
+#: weko_workflow/templates/weko_workflow/record_detail.html:64
+#: weko_workflow/templates/weko_workflow/record_detail.html:86
 msgid "Preview"
 msgstr ""
 
-#: weko_workflow/templates/weko_workflow/record_detail.html:120
-#, fuzzy
-msgid "item type"
+#: weko_workflow/templates/weko_workflow/record_detail.html:121
+msgid "Item Type"
 msgstr "アイテムタイプ"
 
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:30
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:83
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:30
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:15
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:32
-msgid "No."
-msgstr ""
-
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:31
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:123
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:16
-msgid "Action Name"
-msgstr "アクション"
-
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:32
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:17
-msgid "Action Summary"
-msgstr "概要"
-
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:33
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:128
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:18
-msgid "Action Version"
-msgstr "最新バージョン"
-
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:34
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:127
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:19
-msgid "Action Update"
-msgstr "更新日"
-
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:35
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:20
-msgid "Flow Action Version"
-msgstr "適用バージョン"
-
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:36
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:21
-msgid "Flow Action Update"
-msgstr "適用日"
-
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:53
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:39
-msgid "Apply"
-msgstr "適用"
-
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:55
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:41
-msgid "Update"
-msgstr "更新"
-
-#: weko_workflow/templates/weko_workflow/admin/action_list.html:63
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:194
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:84
-msgid "Back"
-msgstr "戻る"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:29
-msgid "Flow Name"
-msgstr "フロー定義"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:39
-msgid "Flow Update"
-msgstr "更新日"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:45
-msgid "Flow Author"
-msgstr "更新者"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:56
-msgid "Flow Status"
-msgstr "ステータス"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:65
-msgid "Create"
-msgstr "登録"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:68
-msgid "Edit"
-msgstr "編集"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:71
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:80
-msgid "Delete"
-msgstr "削除"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:79
-msgid "Activity List"
-msgstr "アクティビティクエリ一覧"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:84
-msgid "Activity Query"
-msgstr "アクティビティクエリ"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:85
-msgid "Activity Status"
-msgstr "ステータス"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:86
-msgid "Activity Update"
-msgstr "更新日"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:87
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:129
-msgid "Change Order"
-msgstr "順序変更"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:110
-#, fuzzy
-msgid "Save Query"
-msgstr "クエリ追加"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:115
 #: weko_workflow/templates/weko_workflow/admin/pop_page.html:7
 msgid "Action List"
 msgstr "フローアクション一覧"
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:117
-#, fuzzy
-msgid "Save Transition"
-msgstr "アクション遷移"
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:15
+msgid "No."
+msgstr ""
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:121
-msgid "Order"
-msgstr "フロー順序"
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:16
+msgid "Action Name"
+msgstr "アクション"
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:122
-msgid "Action ID"
-msgstr "ID"
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:17
+msgid "Action Summary"
+msgstr "概要"
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:124
-msgid "Action Role"
-msgstr "ロール"
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:18
+msgid "Action Version"
+msgstr "最新バージョン"
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:125
-msgid "Action User"
-msgstr "ユーザ"
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:19
+msgid "Action Update"
+msgstr "更新日"
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:126
-msgid "Action Status"
-msgstr "ステータス"
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:20
+msgid "Flow Action Version"
+msgstr "適用バージョン"
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:151
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:166
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:432
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:444
-msgid "Deny"
-msgstr "対象外"
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:21
+msgid "Flow Action Update"
+msgstr "適用日"
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:186
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:188
-msgid "More Action"
-msgstr "アクション追加"
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:40
+msgid "Apply"
+msgstr "適用"
 
-#: weko_workflow/templates/weko_workflow/admin/flow_detail.html:196
-#, fuzzy
-msgid "Save Flow"
-msgstr "フロー作成"
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:48
+msgid "Update"
+msgstr "更新"
 
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:31
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:41
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:35
-msgid "Flow"
-msgstr "フロー"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:32
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:37
-msgid "Status"
-msgstr "ステータス"
-
-#: weko_workflow/templates/weko_workflow/admin/flow_list.html:48
-msgid "Create Flow"
-msgstr "フロー作成"
-
-#: weko_workflow/templates/weko_workflow/admin/pop_page.html:53
+#: weko_workflow/templates/weko_workflow/admin/pop_page.html:61
 msgid "Close"
 msgstr "閉じる"
 
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:53
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:34
-msgid "ItemType"
-msgstr "アイテムタイプ"
+#~ msgid "Back"
+#~ msgstr "戻る"
 
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:67
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:36
-msgid "Next Flow"
-msgstr "フロースタート端子"
+#~ msgid "Flow Name"
+#~ msgstr "フロー定義"
 
-#: weko_workflow/templates/weko_workflow/admin/workflow_detail.html:77
-#, fuzzy
-msgid "Save WorkFlow"
-msgstr "登録"
+#~ msgid "Flow Update"
+#~ msgstr "更新日"
 
-#: weko_workflow/templates/weko_workflow/admin/workflow_list.html:28
-msgid "Create WorkFlow"
-msgstr "フロー作成"
+#~ msgid "Flow Author"
+#~ msgstr "更新者"
 
+#~ msgid "Flow Status"
+#~ msgstr "ステータス"
+
+#~ msgid "Create"
+#~ msgstr "登録"
+
+#~ msgid "Edit"
+#~ msgstr "編集"
+
+#~ msgid "Activity List"
+#~ msgstr "アクティビティクエリ一覧"
+
+#~ msgid "Activity Query"
+#~ msgstr "アクティビティクエリ"
+
+#~ msgid "Activity Status"
+#~ msgstr "ステータス"
+
+#~ msgid "Activity Update"
+#~ msgstr "更新日"
+
+#~ msgid "Change Order"
+#~ msgstr "順序変更"
+
+#~ msgid "Save Query"
+#~ msgstr "クエリ追加"
+
+#~ msgid "Save Transition"
+#~ msgstr "アクション遷移"
+
+#~ msgid "Order"
+#~ msgstr "フロー順序"
+
+#~ msgid "Action ID"
+#~ msgstr "ID"
+
+#~ msgid "Action Role"
+#~ msgstr "ロール"
+
+#~ msgid "Action User"
+#~ msgstr "ユーザ"
+
+#~ msgid "Action Status"
+#~ msgstr "ステータス"
+
+#~ msgid "Deny"
+#~ msgstr "対象外"
+
+#~ msgid "More Action"
+#~ msgstr "アクション追加"
+
+#~ msgid "Save Flow"
+#~ msgstr "フロー作成"
+
+#~ msgid "Flow"
+#~ msgstr "フロー"
+
+#~ msgid "Status"
+#~ msgstr "ステータス"
+
+#~ msgid "Create Flow"
+#~ msgstr "フロー作成"
+
+#~ msgid "ItemType"
+#~ msgstr "アイテムタイプ"
+
+#~ msgid "Next Flow"
+#~ msgstr "フロースタート端子"
+
+#~ msgid "Save WorkFlow"
+#~ msgstr "登録"
+
+#~ msgid "Create WorkFlow"
+#~ msgstr "フロー作成"
 
