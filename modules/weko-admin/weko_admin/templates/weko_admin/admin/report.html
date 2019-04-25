@@ -24,12 +24,98 @@
 
 {%- block head %}
   {{ super() }}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.4.0/react-datepicker-cssmodules.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.4.0/react-datepicker.min.css">
 {%- endblock head%}
 
 {%- block javascript %}
   {{ super() }}
   <!-- <script src="{{ url_for('static', filename='js/weko_admin/stats_report.js') }}"></script> -->
   {%- assets "weko_admin_stats_report_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script type="text/javascript" src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+  <script type="text/javascript" src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.7.2/prop-types.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.8.0/js/bootstrap-datepicker.min.js"></script>
+  
+  
+  <script type="text/babel">
+    class ComponentDatePicker extends React.Component
+    {
+      constructor(props)
+      {
+        super(props);
+        this.styleContainer={
+        }
+        this.styleLabel = {
+          "display" : "inline",
+        }
+        this.styleDatePicker={
+          "border-radius": "3%",
+          "background-color":"#fff",
+        }
+      }
+
+      render(){
+        return(
+          <div style={this.styleContainer} className="form-group row">
+            <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
+            <div class="controls col-xs-5">
+              <input className="form-control" id={this.props.id_component} style={this.styleDatePicker} type="text" readonly="true"/>
+            </div>
+          </div>
+        )
+      }
+    }
+
+    class MainLayout extends React.Component 
+    {
+      constructor(props)
+      {
+        super(props);
+        this.styleContainer = {
+          "margin-left": "-14px",
+        }
+      }
+
+
+      render() {
+        return (
+          <div class="row content-font">
+            <div className="col-md-1">
+            </div>
+            <div style = {this.styleContainer} className="col-md-11 pull-left">
+              <h4 style={this.styleTitle}>Custom Report</h4>
+              <ComponentDatePicker name = "Start Date" id_component="start_date"/>
+              <ComponentDatePicker name = "End Date" id_component="end_date"/>
+            </div> 
+          </div>
+        )
+    }
+    }
+
+    $(function ()
+    {
+      ReactDOM.render(
+      <MainLayout/>,
+      document.getElementById('root')
+      );
+      initDatepicker();
+    });
+
+    function initDatepicker(){
+      $("#start_date").datepicker({
+          format: "yyyy/mm/dd",
+          todayBtn: "linked",
+          autoclose: true
+      });
+      $("#end_date").datepicker({
+          format: "yyyy/mm/dd",
+          todayBtn: "linked",
+          autoclose: true
+      });
+    }
+  </script>
 {%- endblock javascript %}
 
 {%- block body %}
@@ -79,6 +165,7 @@
     <h4>{{_('File Preview Report')}}</h4>
   </div>
 </div>
+
 
 <div class="row content-font">
   <div class="col-md-2"></div>
@@ -139,6 +226,8 @@
 </div>
 <hr>
 
+<div id="root" class="col-xs-12"></div>
+
 <div class="modal fade" tabindex="-1" role="dialog" id="error_modal">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -158,6 +247,6 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-
 {%- endblock body %}
+
 
