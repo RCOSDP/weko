@@ -515,21 +515,22 @@ class StatisticUnit(db.Model):
     @classmethod
     def get_all_stats_report_unit(cls):
         """Get all stats report unit.
-        
+
         :return: List of unit
         """
         query_result = cls.query.all()
         result = []
         for res in query_result:
             data = dict()
-            data[res.unit_id] = res.unit_name
+            data['id'] = res.unit_id
+            data['data'] = res.unit_name
             result.append(data)
         return result
 
     @classmethod
     def create(cls, unit_id, unit_name):
         """Create new unit.
-        
+
         :param unit_id: The unit ID
         :param unit_name: The unit name
         :return: Unit if create succesfully
@@ -561,21 +562,22 @@ class StatisticTarget(db.Model):
     @classmethod
     def get_all_stats_report_target(cls):
         """Get all stats report target.
-        
+
         :return: List of target
         """
         query_result = cls.query.all()
         result = []
         for res in query_result:
             data = dict()
-            data[res.target_id] = res.target_name
+            data['id'] = res.target_id
+            data['data'] = res.target_name
             result.append(data)
         return result
 
     @classmethod
     def create(cls, target_id, target_name):
         """Create new target.
-        
+
         :param target_id: The target ID
         :param target_name: The target name
         :return: The Target if create succesfully
