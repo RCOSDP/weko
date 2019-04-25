@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workflow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 15:48+0900\n"
+"POT-Creation-Date: 2019-04-25 19:05+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Generated-By: Babel 2.5.1\n"
 
 #: weko_workflow/admin.py:100
-msgid "Update flow successfully."
+msgid "Updated flow successfully."
 msgstr ""
 
 #: weko_workflow/admin.py:138
-msgid "Update flow action successfully"
+msgid "Updated flow action successfully"
 msgstr ""
 
 #: weko_workflow/admin.py:228 weko_workflow/admin.py:237

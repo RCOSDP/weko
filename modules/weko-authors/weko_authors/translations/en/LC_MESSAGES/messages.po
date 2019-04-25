@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-groups 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-01-17 15:19+0900\n"
+"POT-Creation-Date: 2019-04-25 18:29+0900\n"
 "PO-Revision-Date: 2018-01-17 15:20+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -19,109 +19,84 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_authors/views.py:76
+#: weko_authors/views.py:86 weko_authors/views.py:114 weko_authors/views.py:143
 msgid "Header Error"
 msgstr ""
 
-#: weko_authors/views.py:87
+#: weko_authors/views.py:104 weko_authors/views.py:133
+#: weko_authors/views.py:157
 msgid "Success"
 msgstr ""
 
-#: angular i18n add start
-#: app-author-add/src/app/app.component.html:11
-msgid "Author_Add_New_Author"
-msgstr "Author"
+#~ msgid "Author_Add_New_Author"
+#~ msgstr "Author"
 
-#: app-author-add/src/app/app.component.html:21
-msgid "Author_Name"
-msgstr "Name"
+#~ msgid "Author_Name"
+#~ msgstr "Name"
 
-#: app-author-add/src/app/app.component.html:60
-msgid "Author_Display"
-msgstr "Display"
+#~ msgid "Author_Display"
+#~ msgstr "Display"
 
-#: app-author-add/src/app/app.component.html:65
-msgid "Author_Hide"
-msgstr "Hide"
+#~ msgid "Author_Hide"
+#~ msgstr "Hide"
 
-#: app-author-add/src/app/app.component.html:85
-msgid "Author_Add_Author_Item"
-msgstr "Add author item"
+#~ msgid "Author_Add_Author_Item"
+#~ msgstr "Add author item"
 
-#: app-author-add/src/app/app.component.html:101
-msgid "Author_ID"
-msgstr "Author ID"
+#~ msgid "Author_ID"
+#~ msgstr "Author ID"
 
-#: app-author-add/src/app/app.component.html:115
-msgid "Author_Placeholder_authorId"
-msgstr "Author ID"
+#~ msgid "Author_Placeholder_authorId"
+#~ msgstr "Author ID"
 
-#: app-author-add/src/app/app.component.html:122
-msgid "Author_Confirm"
-msgstr "Confirm"
+#~ msgid "Author_Confirm"
+#~ msgstr "Confirm"
 
-#: app-author-add/src/app/app.component.html:158
-msgid "Author_Add_Author_ID"
-msgstr "Add a new ID"
+#~ msgid "Author_Add_Author_ID"
+#~ msgstr "Add a new ID"
 
-#: app-author-add/src/app/app.component.html:173
-msgid "Author_EMail"
-msgstr "E-Mail"
+#~ msgid "Author_EMail"
+#~ msgstr "E-Mail"
 
-#: app-author-add/src/app/app.component.html:198
-msgid "Author_Add_EMail"
-msgstr "Add E-mail"
+#~ msgid "Author_Add_EMail"
+#~ msgstr "Add E-mail"
 
-#: app-author-add/src/app/app.component.html:215
-msgid "Author_Button_Clear"
-msgstr "Clear"
+#~ msgid "Author_Button_Clear"
+#~ msgstr "Clear"
 
-#: app-author-add/src/app/app.component.html:221
-msgid "Author_Button_Save"
-msgstr "Save"
+#~ msgid "Author_Button_Save"
+#~ msgstr "Save"
 
-#: app-author-add/src/app/app.component.js:46
-msgid "Author_familyNmAndNm"
-msgstr "First and Last Name"
+#~ msgid "Author_familyNmAndNm"
+#~ msgstr "First and Last Name"
 
-#: app-author-add/src/app/app.component.js:47
-msgid "Author_fullNm"
-msgstr "Full Name"
+#~ msgid "Author_fullNm"
+#~ msgstr "Full Name"
 
-#: app-author-search start
-#: app-author-search/src/app/app.component.html:11
-msgid "Author_Add_Organization"
-msgstr "Add Organization"
+#~ msgid "Author_Add_Organization"
+#~ msgstr "Add Organization"
 
-#: app-author-search/src/app/app.component.html:17
-msgid "Author_Add_Author"
-msgstr "Add Author"
+#~ msgid "Author_Add_Author"
+#~ msgstr "Add Author"
 
-#: app-author-search/src/app/app.component.html:29
-msgid "Author_Search"
-msgstr "Search"
+#~ msgid "Author_Search"
+#~ msgstr "Search"
 
-#: app-author-search/src/app/app.component.html:68
-msgid "Author_Mail_Address"
-msgstr "Mail Address"
+#~ msgid "Author_Mail_Address"
+#~ msgstr "Mail Address"
 
-#: app-author-search/src/app/app.component.html:102
-msgid "Author_Edit"
-msgstr "Edit"
+#~ msgid "Author_Edit"
+#~ msgstr "Edit"
 
-#: app-author-search/src/app/app.component.html:112
-msgid "Author_Search_No_Result"
-msgstr "Sorry，No results."
+#~ msgid "Author_Search_No_Result"
+#~ msgstr "Sorry，No results."
 
-#: app-author-search/src/app/app.component.html:121
-msgid "Author_Page_Previous"
-msgstr "Previous"
+#~ msgid "Author_Page_Previous"
+#~ msgstr "Previous"
 
-#: app-author-search/src/app/app.component.html:130
-msgid "Author_Page_Next"
-msgstr "Next"
+#~ msgid "Author_Page_Next"
+#~ msgstr "Next"
 
-#: app-author-search/src/app/app.component.html:130
-msgid "Author_On_1_Page"
-msgstr "On 1 Page:"
+#~ msgid "Author_On_1_Page"
+#~ msgstr "On 1 Page:"
 

@@ -371,7 +371,7 @@ def iframe_items_index(pid_value=0):
                 action=action)
 
         if request.headers['Content-Type'] != 'application/json':
-            flash(_('invalide request'), 'error')
+            flash(_('Invalid Request'), 'error')
             return render_template(
                 'weko_items_ui/iframe/item_index.html')
 

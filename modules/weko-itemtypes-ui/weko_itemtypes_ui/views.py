@@ -371,7 +371,7 @@ def delete_itemtype(item_type_id=0):
                     item_type_id=item.id)
                 if len(metaDataRecords) > 0:
                     return jsonify(code=-1,
-                                   msg=_('Cannot delete because there is belonging item.'))
+                                   msg=_('Cannot delete due to child existing item types.'))
             # Get item type name
             item_type_name = ItemTypeNames.get_record(id_=record.model.name_id)
             if all_records and item_type_name:

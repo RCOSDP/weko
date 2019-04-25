@@ -48,8 +48,14 @@
                   </select>
                 </span>
                 <span class="buttons">
-                  <input type="button" id="moveRight" value="→" class="move-right">
-                  <input type="button" id="moveLeft" value="←" class="move-left">
+                 <!-- <input type="button" id="moveRight" value="→" class="move-right">
+                  <input type="button" id="moveLeft" value="←" class="move-left">-->
+                 <button type="button" id="moveRight" class="btn btn-default icon-button">
+                     <i class="fa fa-angle-right"></i> 
+                 </button><br/><br/>
+                 <button type="button" class="btn btn-default icon-button" id="moveLeft">
+                     <i class="fa fa-angle-left"></i>
+                 </button>
                 </span>
                 <span>
                   <label>{{_('Registered language')}}</label>
@@ -57,10 +63,23 @@
                   </select>
                 </span>
                 <span class="buttons">
-                  <input type="button" value="⇈" id="moveTop">
+                 <!-- <input type="button" value="⇈" id="moveTop">
                   <input type="button" value="↑" id="moveUp">
                   <input type="button" value="↓" id="moveDown">
-                  <input type="button" value="⇊" id="moveBottom">
+                  <input type="button" value="⇊" id="moveBottom">-->
+                 <button type="button" id="moveTop" class="btn btn-default icon-button">
+                     <i class="fa fa-angle-double-up"></i>
+                 </button><br/><br/>
+                 <button type="button" id="moveUp" class="btn btn-default icon-button">
+                     <i class="fa fa-angle-up"></i>
+                 </button><br/><br/>
+                 <button type="button" id="moveDown" class="btn btn-default
+                     icon-button">
+                     <i class="fa fa-angle-down"></i> 
+                 </button><br/><br/>
+                 <button type="button" id="moveBottom" class="btn btn-default icon-button">
+                     <i class="fa fa-angle-double-down"></i>
+                 </button><br/><br/>
                 </span>
               </span>
               <br>

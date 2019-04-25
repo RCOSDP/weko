@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 15:49+0900\n"
+"POT-Creation-Date: 2019-04-25 18:53+0900\n"
 "PO-Revision-Date: 2018-01-18 18:48+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -60,14 +60,14 @@ msgstr "失敗"
 msgid "Success"
 msgstr "成功"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:103
 #: weko_itemtypes_ui/views.py:364
 msgid "Cannot delete Item type for Harvesting."
 msgstr "ハーベスト用アイテムは削除できません。"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:104
 #: weko_itemtypes_ui/views.py:374
-msgid "Cannot delete because there is belonging item."
+#, fuzzy
+msgid "Cannot delete due to child existing item types."
 msgstr "所属アイテムが存在するため削除できません。"
 
 #: weko_itemtypes_ui/views.py:390
@@ -127,6 +127,11 @@ msgstr "継続"
 msgid "Cancel"
 msgstr "キャンセル"
 
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:103
+#, fuzzy
+msgid "Cannot delete item type for harvesting."
+msgstr "ハーベスト用アイテムは削除できません。"
+
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:117
 msgid "Item type name is blank."
 msgstr "アイテムタイプ名が空白です。"
@@ -149,7 +154,8 @@ msgid "New Registration"
 msgstr "新規登録"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:135
-msgid "Do you want to register the content？"
+#, fuzzy
+msgid "Do you want to register the content?"
 msgstr "コンテンツ本体を登録しますか？"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:140
