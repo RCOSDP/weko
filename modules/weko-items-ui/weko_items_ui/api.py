@@ -13,15 +13,21 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 
+"""API for item login."""
+
 import os
 
 import redis
-from flask import json, session, url_for, current_app
+from flask import current_app, json, session, url_for
 from flask_login import login_required
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes
 
+from .permissions import item_permission
+
+
 @login_required
+@item_permission.require(http_exception=403)
 def item_login(item_type_id=0):
     """Return information that item register need.
 
@@ -35,6 +41,7 @@ def item_login(item_type_id=0):
     item_save_uri = url_for('weko_items_ui.iframe_save_model')
     files = []
     endpoints = {}
+
     try:
         item_type = ItemTypes.get_by_id(item_type_id)
         if item_type is None:
@@ -63,8 +70,5 @@ def item_login(item_type_id=0):
         template_url = 'weko_items_ui/iframe/error.html'
         current_app.logger.debug(str(e))
 
-    #current_app.logger.debug(template_url, need_file, record, json_schema, \
-    #    schema_form, item_save_uri, files, endpoints)
     return template_url, need_file, record, json_schema, \
         schema_form, item_save_uri, files, endpoints
-

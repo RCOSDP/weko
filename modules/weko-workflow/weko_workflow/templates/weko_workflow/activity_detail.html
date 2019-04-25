@@ -190,12 +190,7 @@
           <div class="panel-body" id="step_page">
             <div class="hide" id="hide-actionId">{{action_id}}</div>
             {%- if 'item_login' == cur_step or 'file_upload' == cur_step %}
-             <div id="item_edit">
-                {% include step_item_login_url %}
-                </div> 
-                {#  <div id='index_tree'>
-                 {% include 'weko_items_ui/iframe/item_index.html' %}
-                </div> #} 
+              {% include step_item_login_url %}
             {%- elif 'item_link' == cur_step %}
               {% include "weko_workflow/item_link.html" %}
             {%- elif 'oa_policy' == cur_step %}
