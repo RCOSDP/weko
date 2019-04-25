@@ -37,6 +37,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoRecord
 from weko_index_tree.models import Index
+from weko_items_ui.api import item_login
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
@@ -85,7 +86,42 @@ def iframe_success():
 
     :return: The rendered template.
     """
-    return render_template('weko_workflow/item_login_success.html')
+    # get session value
+    history = WorkActivityHistory()
+    histories = history.get_activity_history_list(session['itemlogin_id'])
+    activity = session['itemlogin_activity']
+    item = session['itemlogin_item']
+    steps = session['itemlogin_steps']
+    action_id = session['itemlogin_action_id']
+    cur_step = session['itemlogin_cur_step']
+    record = session['itemlogin_record']
+    res_check = session['itemlogin_res_check']
+    pid = session['itemlogin_pid']
+    community_id = session['itemlogin_community_id']
+
+    # delete session value
+    del session['itemlogin_id']
+    del session['itemlogin_activity']
+    del session['itemlogin_item']
+    del session['itemlogin_steps']
+    del session['itemlogin_action_id']
+    del session['itemlogin_cur_step']
+    del session['itemlogin_record']
+    del session['itemlogin_res_check']
+    del session['itemlogin_pid']
+    del session['itemlogin_community_id']
+
+    return render_template('weko_workflow/item_login_success.html',
+                           activity=activity,
+                           item=item,
+                           steps=steps,
+                           action_id=action_id,
+                           cur_step=cur_step,
+                           record=record,
+                           histories=histories,
+                           res_check=res_check,
+                           pid=pid,
+                           community_id=community_id)
 
 
 @blueprint.route('/activity/new', methods=['GET'])
@@ -225,6 +261,14 @@ def display_activity(activity_id=0):
     step_item_login_url = None
     approval_record = []
     pid = None
+    record = {}
+    need_file = False
+    json_schema = ''
+    schema_form = ''
+    item_save_uri = ''
+    files = []
+    endpoints = {}
+    links = None
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,
@@ -234,15 +278,14 @@ def display_activity(activity_id=0):
             commond=''
         )
         session['activity_info'] = activity_session
-        step_item_login_url = url_for(
-            'weko_items_ui.iframe_index',
-            item_type_id=workflow_detail.itemtype_id)
+        # get item edit page info.
+        step_item_login_url, need_file, record, json_schema, \
+            schema_form, item_save_uri, files, endpoints = item_login(
+                item_type_id=workflow_detail.itemtype_id)
         if item:
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
-            step_item_login_url = url_for(
-                'invenio_deposit_ui.iframe_depid',
-                pid_value=pid_identifier.pid_value)
+            record = item
     # if 'approval' == action_endpoint:
     if item:
         pid_identifier = PersistentIdentifier.get_by_object(
@@ -251,6 +294,8 @@ def display_activity(activity_id=0):
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
         pid, approval_record = resolver.resolve(pid_identifier.pid_value)
+        from weko_deposit.links import base_factory
+        links = base_factory(pid)
 
     res_check = check_authority_action(activity_id, action_id)
 
@@ -262,6 +307,20 @@ def display_activity(activity_id=0):
         community_id = request.args.get('community')
         ctx = {'community': comm}
         community_id = comm.id
+    # be use for index tree and comment page.
+    if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
+        session['itemlogin_id'] = activity_id
+        session['itemlogin_activity'] = activity_detail
+        session['itemlogin_item'] = item
+        session['itemlogin_steps'] = steps
+        session['itemlogin_action_id'] = action_id
+        session['itemlogin_cur_step'] = cur_step
+        session['itemlogin_record'] = approval_record
+        session['itemlogin_histories'] = histories
+        session['itemlogin_res_check'] = res_check
+        session['itemlogin_pid'] = pid
+        session['itemlogin_community_id'] = community_id
+
     return render_template(
         'weko_workflow/activity_detail.html',
         activity=activity_detail,
@@ -277,7 +336,17 @@ def display_activity(activity_id=0):
         idf_grant_input=IDENTIFIER_GRANT_LIST,
         idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
         record=approval_record,
+        records=record,
         step_item_login_url=step_item_login_url,
+        need_file=need_file,
+        jsonschema=json_schema,
+        schemaform=schema_form,
+        id=workflow_detail.itemtype_id,
+        item_save_uri=item_save_uri,
+        files=files,
+        endpoints=endpoints,
+        error_type='item_login_error',
+        links=links,
         histories=histories,
         res_check=res_check,
         pid=pid,
