@@ -22,6 +22,7 @@
 
 {%- block css %}
 {{ super() }}
+{% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 <style>
   /* Fixes for IE < 8 */
   @media screen\9 {
@@ -233,8 +234,9 @@
               </div>
             </div>
             </div>
-            <div class="pull-left">
-              <button type="submit" name="pdfcoverpage_form" id="btn_commit_header" class="btn btn-primary" style="width: 120px; height: 40px;font-size: 15px;">
+            <div class="col-sm-offset-9 col-sm-10">
+              <button type="submit" name="pdfcoverpage_form"
+                  id="btn_commit_header" class="btn btn-primary ten-pixel-margin update-button">
                 <i class="fa fa-edit"></i>
                    {{_(' Update')}}
               </button>

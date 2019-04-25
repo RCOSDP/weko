@@ -303,7 +303,7 @@ class WekoFeedGenerator(FeedGenerator):
         # desc = etree.SubElement(channel, 'description')
         # desc.text = self.__rss_description
         for ln in self.__atom_link or []:
-            # It is recommended to include a atom self link in rss documents…
+            # It is recommended to include a atom self link in rss documents
             if ln.get('rel') == 'self':
                 selflink = etree.SubElement(
                     channel, '{http://www.w3.org/2005/Atom}link',

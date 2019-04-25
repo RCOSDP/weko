@@ -90,11 +90,9 @@
                 data-workflow-id="{{workflow.id}}"
         data-community="{{community.id}}">{{_('New')}}</a></td>
         {%- else%}
-        <td class="text-center"><a href="#" class="btn btn-light btn-begin"
+        <td class="text-center"><a href="#" class="btn btn-light btn-begin add-button"
                 id="btn-begin-{{workflow.id}}"
-                data-workflow-id="{{workflow.id}}" data-community=""
-                style="background-color:#008000;border-color: #9ACD32; color:
-                white;width: 100px; height: 40px;font-size: 15px;">
+                data-workflow-id="{{workflow.id}}" data-community="">
                 <span class="glyphicon glyphicon-plus"></span>
                 {{_('New')}}</a></td>
         {%- endif%}
@@ -104,7 +102,7 @@
     </tbody>
   </table>
   <div class="hide" id="post_uri">{{url_for('weko_workflow.init_activity')}}</div>
-       <a class="btn btn-info pull-left" href="{{url_for('weko_workflow.index')}}" style="width: 80px; height: 40px;font-size: 15px;">
+       <a class="btn btn-info pull-lef back-button" href="{{url_for('weko_workflow.index')}}">
            <span class="glyphicon glyphicon-chevron-left"></span>
              {{_('Back')}}
        </a>

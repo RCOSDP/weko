@@ -70,13 +70,13 @@ class Journal(db.Model, Timestamp):
     """
         varchar(20)
         It complies with the format of ISBN or ISSN.
-          ISSN：
-            「^\\d{4}-?\\d{3}[0-9X]$」
-          ISBN：
-            「^\\d{9}[0-9X]$」
-            「^\\d+-\\d+-\\d+-[0-9X]$」
-            「^97[8-9]\\d{9}[0-9X]$」
-            「^97[8-9]-\\d+-\\d+-\\d+-[0-9X]$」
+          ISSN:
+            "^\\d{4}-?\\d{3}[0-9X]$"
+          ISBN:
+            "^\\d{9}[0-9X]$"
+            "^\\d+-\\d+-\\d+-[0-9X]$"
+            "^97[8-9]\\d{9}[0-9X]$"
+            "^97[8-9]-\\d+-\\d+-\\d+-[0-9X]$"
     """
 
     online_identifier = db.Column(db.Text, nullable=True, default='')
@@ -84,13 +84,13 @@ class Journal(db.Model, Timestamp):
     """
         varchar(20)
         It complies with the format of ISBN or ISSN.
-        　ISSN：
-            「^\\d{4}-?\\d{3}[0-9X]$」
-        　ISBN：
-            「^\\d{9}[0-9X]$」
-            「^\\d+-\\d+-\\d+-[0-9X]$」
-            「^97[8-9]\\d{9}[0-9X]$」
-            「^97[8-9]-\\d+-\\d+-\\d+-[0-9X]$」
+          ISSN:
+            "^\\d{4}-?\\d{3}[0-9X]$"
+          ISBN:
+            "^\\d{9}[0-9X]$"
+            "^\\d+-\\d+-\\d+-[0-9X]$"
+            "^97[8-9]\\d{9}[0-9X]$"
+            "^97[8-9]-\\d+-\\d+-\\d+-[0-9X]$"
     """
 
     date_first_issue_online = db.Column(db.Text, nullable=True, default='')
@@ -98,10 +98,10 @@ class Journal(db.Model, Timestamp):
     """
         varchar(10)
         It has one of the following format.
-        　YYYY-MM-DD and current date
-        　YYYY-MM
-        　YYYY
-        YYYY is can be input only from 1700～2030
+        YYYY-MM-DD and current date
+        YYYY-MM
+        YYYY
+        YYYY is can be input only from 1700-2030
     """
 
     num_first_vol_online = db.Column(db.Text, nullable=True, default='')
@@ -116,10 +116,10 @@ class Journal(db.Model, Timestamp):
     """Date of last issue available online of the journal."""
     """ varchar(10)
         It has one of the following format.
-            　YYYY-MM-DD and current date
-            　YYYY-MM
-            　YYYY
-            YYYY is can be input only from 1700～2030
+            YYYY-MM-DD and current date
+            YYYY-MM
+            YYYY
+            YYYY is can be input only from 1700-2030
     """
 
     num_last_vol_online = db.Column(db.Text, nullable=True, default='')
@@ -151,7 +151,7 @@ class Journal(db.Model, Timestamp):
     """
         varchar(255)
         Select one of the following items:
-        　Abstract、Fulltext、Selected Articles
+        Abstract, Fulltext, Selected Articles
     """
 
     coverage_notes = db.Column(db.Text, nullable=True, default='')
@@ -207,12 +207,12 @@ class Journal(db.Model, Timestamp):
     """Access type of the journal."""
     """
         varchar(1)
-        Select 1 of the following items: F、P
+        Select 1 of the following items: F, P
         Initial selection is  "F"
         Describe the following in item name of WEKO
         when registering journal information.
-        　・F：Free（無料・オープンアクセス）
-        　・P：Paid（有料）
+         F:Free
+         P:Paid
     """
 
     language = db.Column(db.Text, nullable=True, default='')
@@ -235,7 +235,7 @@ class Journal(db.Model, Timestamp):
     ncid = db.Column(db.Text, nullable=True, default='')
     """NCID of the journal."""
     """ varchar(10)
-        Allow the followoing formats.  「^[AB][ABN][0-9]{7}[0-9X]$」
+        Allow the followoing formats.  "^[AB][ABN][0-9]{7}[0-9X]$"
     """
 
     ndl_callno = db.Column(db.Text, nullable=True, default='')
@@ -260,7 +260,7 @@ class Journal(db.Model, Timestamp):
     ichushi_code = db.Column(db.Text, nullable=True, default='')
     """Ichushi Code of the journal."""
     """ varchar(6)
-        Allow the following input:「^J[0-9]{5}$」
+        Allow the following input:"^J[0-9]{5}$"
     """
 
     deleted = db.Column(db.Text, nullable=True, default='')

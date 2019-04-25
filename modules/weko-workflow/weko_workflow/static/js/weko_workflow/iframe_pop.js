@@ -21,7 +21,8 @@ require([
           if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             parent.document.location.href=data.data.redirect;
           } else {
-            parent.document.location.reload(true);
+            let redirectUrl = "/workflow/activity/detail/" + $("#activity_id").text().trim();
+            parent.document.location.href=redirectUrl;
           }
         } else {
           parent.alert(data.msg);
@@ -50,7 +51,8 @@ require([
           if(data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             parent.document.location.href=data.data.redirect;
           } else {
-            parent.document.location.reload(true);
+            let redirectUrl = "/workflow/activity/detail/" + $("#activity_id").text().trim();
+            parent.document.location.href=redirectUrl;
           }
         } else {
           parent.alert(data.msg);

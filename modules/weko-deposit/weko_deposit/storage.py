@@ -72,7 +72,7 @@ def make_path(base_uri, path, filename, path_dimensions, split_length):
 
     :param base_uri: The base URI.
     :param path: The relative path.
-    :param path_dimensions: Number of chunks the path should be split into.
+    :param path_dimensions: Number of widgets the path should be split into.
     :param split_length: The length of any chunk.
     :returns: A string representing the full path.
     """

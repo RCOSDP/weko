@@ -20,6 +20,11 @@
 
 {%- extends "weko_groups/settings/base.html" %}
 
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {% endblock %}
+
 {%- import "weko_groups/settings/helpers.html" as helpers with context -%}
 {%- from "weko_groups/_macros.html" import render_field with context %}
 
@@ -43,10 +48,11 @@
     {{ render_field(field, show_description=True) }}
   {%- endfor %}
  <div class="btn-toolbar">
-    <a href="{{ url_for('.members', group_id=group.id) }}" class="btn btn-info"  style="width: 100px; height: 40px;font-size:15px">
+    <a href="{{ url_for('.members', group_id=group.id) }}" class="btn btn-info
+        cancel-button">
       <i class="fa fa-times"></i> {{ _('Cancel') }}
     </a>
-    <button type="submit" class="btn btn-primary">
+    <button type="submit" class="btn btn-primary pull-right action-button">
       <i class="fa fa-check"></i> {{ _('Invite') }}
     </button>
   </div>

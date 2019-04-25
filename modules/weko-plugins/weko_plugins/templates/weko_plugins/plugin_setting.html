@@ -33,11 +33,11 @@
         {% from "weko_plugins/macros/display_plugin.html" import setting_info %}
         {{ setting_info(plugin) }}
         <div class=" media form-inline pull-right">
-          <button class="btn btn-light" href="#" style="background-color: #32CD32; border-color: #808000;color: white; width: 120px; height: 40px;font-size: 15px;">
+          <button class="btn btn-light send-button" href="#">
                  <span class="glyphicon glyphicon-send"></span>
                   {{_('Sending')}}
           </button>
-          <button class="btn btn-primary" href="#" id="btn_reset" style="width: 150px; height: 40px;font-size:15px">
+          <button class="btn btn-primary action-button" href="#" id="btn_reset">
                <span class="glyphicon glyphicon-hand-right"></span>
                   {{_('Reset')}}
           </button>
