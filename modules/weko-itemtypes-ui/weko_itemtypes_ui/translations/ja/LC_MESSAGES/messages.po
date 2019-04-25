@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-23 16:56+0900\n"
+"POT-Creation-Date: 2019-04-25 15:49+0900\n"
 "PO-Revision-Date: 2018-01-18 18:48+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,40 +19,66 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+#: weko_itemtypes_ui/config.py:40
+msgid "Text Field"
+msgstr ""
+
+#: weko_itemtypes_ui/config.py:41
+msgid "Text Area"
+msgstr ""
+
+#: weko_itemtypes_ui/config.py:42
+msgid "Check Box"
+msgstr ""
+
+#: weko_itemtypes_ui/config.py:43
+msgid "Radio Button"
+msgstr ""
+
+#: weko_itemtypes_ui/config.py:44
+msgid "List Box"
+msgstr ""
+
+#: weko_itemtypes_ui/config.py:45
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:150
+#, fuzzy
+msgid "Date"
+msgstr ""
+
 #: weko_itemtypes_ui/views.py:112 weko_itemtypes_ui/views.py:187
-#: weko_itemtypes_ui/views.py:340
+#: weko_itemtypes_ui/views.py:338
 msgid "Header Error"
 msgstr "ヘッダーエラー"
 
 #: weko_itemtypes_ui/views.py:127 weko_itemtypes_ui/views.py:200
-#: weko_itemtypes_ui/views.py:349
+#: weko_itemtypes_ui/views.py:347
 msgid "Fail"
 msgstr "失敗"
 
 #: weko_itemtypes_ui/views.py:129 weko_itemtypes_ui/views.py:201
-#: weko_itemtypes_ui/views.py:350
+#: weko_itemtypes_ui/views.py:348
 msgid "Success"
 msgstr "成功"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:103
-#: weko_itemtypes_ui/views.py:366
+#: weko_itemtypes_ui/views.py:364
 msgid "Cannot delete Item type for Harvesting."
 msgstr "ハーベスト用アイテムは削除できません。"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:104
-#: weko_itemtypes_ui/views.py:376
+#: weko_itemtypes_ui/views.py:374
 msgid "Cannot delete because there is belonging item."
 msgstr "所属アイテムが存在するため削除できません。"
 
-#: weko_itemtypes_ui/views.py:392
+#: weko_itemtypes_ui/views.py:390
 msgid "Failed to delete Item type."
 msgstr "アイテムタイプの削除に失敗しました。"
 
-#: weko_itemtypes_ui/views.py:396
+#: weko_itemtypes_ui/views.py:394
 msgid "Deleted Item type successfully."
 msgstr "アイテムタイプを削除しました。"
 
-#: weko_itemtypes_ui/views.py:398
+#: weko_itemtypes_ui/views.py:396
 msgid "An error has occurred."
 msgstr "エラーが発生しました。"
 
@@ -72,7 +98,7 @@ msgstr "マッピング"
 msgid "Property"
 msgstr "プロパティ"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:80
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:79
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:144
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:118
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:121
@@ -142,30 +168,56 @@ msgstr "オプション"
 msgid "Replacement"
 msgstr "入替"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:153
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:149
+msgid "Publish Date"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:154
+msgid "Required"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:157
+#, fuzzy
+msgid "Multiple"
+msgstr "Form(複数)"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:160
+msgid "List Display"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:163
+msgid "Specify Newline"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:166
+#, fuzzy
+msgid "Hide"
+msgstr "子"
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:178
 msgid "Add Metadata"
 msgstr "メタデータ追加"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:158
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:347
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:369
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:183
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:346
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:368
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:146
 msgid "Save"
 msgstr "保存"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:163
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:188
 msgid "Preview"
 msgstr "プレビュー"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:217
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:360
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:242
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:359
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:161
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:90
 msgid "Result"
 msgstr "結果"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:226
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:373
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:251
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:372
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:169
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:98
 msgid "Close"
@@ -180,7 +232,7 @@ msgid "Schema List"
 msgstr "スキーマリスト"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:62
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:334
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:333
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:59
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_property.html:143
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/mapping.html:54
@@ -235,20 +287,16 @@ msgid "Linking"
 msgstr "連結"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:257
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:312
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:311
 msgid "Link"
 msgstr "連結"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:310
-msgid "連結"
-msgstr ""
-
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:323
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:341
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:322
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:340
 msgid "Create"
 msgstr "作成"
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:366
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:365
 msgid "OK"
 msgstr "OK"
 
@@ -306,4 +354,7 @@ msgstr "送信"
 
 #~ msgid "Associate"
 #~ msgstr "連結"
+
+#~ msgid "連結"
+#~ msgstr ""
 

@@ -277,7 +277,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
 
     # @need_record_permission('create_permission_factory')
     def put(self, **kwargs):
-        """Create a uuid and return a links dict. file upload step is below ②  upload file to server.
+        """Create a uuid and return a links dict. file upload step is below upload file to server.
 
         :returns: Json Response have a links dict.
 

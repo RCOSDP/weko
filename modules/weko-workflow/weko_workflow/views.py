@@ -194,15 +194,15 @@ def display_activity(activity_id=0):
             # valid date pidstore_identifier data
             if idf_grant_data is not None:
                 if not idf_grant_data.jalc_doi:
-                    idf_grant_data.jalc_doi = '«Empty»'
+                    idf_grant_data.jalc_doi = '<Empty>'
                 if not idf_grant_data.jalc_crossref_doi:
-                    idf_grant_data.jalc_crossref_doi = '«Empty»'
+                    idf_grant_data.jalc_crossref_doi = '<Empty>'
                 if not idf_grant_data.jalc_datacite_doi:
-                    idf_grant_data.jalc_datacite_doi = '«Empty»'
+                    idf_grant_data.jalc_datacite_doi = '<Empty>'
                 if not idf_grant_data.cnri:
-                    idf_grant_data.cnri = '«Empty»'
+                    idf_grant_data.cnri = '<Empty>'
                 if not idf_grant_data.suffix:
-                    idf_grant_data.suffix = '«Empty»'
+                    idf_grant_data.suffix = '<Empty>'
 
     temporary_idf_grant = 0
     temporary_idf_grant_suffix = []
