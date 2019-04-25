@@ -231,6 +231,14 @@
   margin-right: 10px;
 }
 
+.ten-pixel-left-margin {
+  margin-left: 10px;
+}
+
+.ten-pixel-top-margin {
+ margin-top: 10px;
+}
+
 .five-pixel-margin {
   margin: 5px;
 }
@@ -243,8 +251,18 @@
   margin-bottom: 10px;
 }
 
+.twentyfive-pixel-bottom-margin {
+  margin-bottom: 25px;
+}
+
 .twentyeight-pixel-right-margin {
   margin-right: 28px;
 }
 
-               
+.detail-lable {
+ text-align: center;
+}
+
+.gray-color-class {
+  border-color: #D3D3D3;
+}

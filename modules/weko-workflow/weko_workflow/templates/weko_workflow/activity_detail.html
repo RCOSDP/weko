@@ -222,13 +222,9 @@
               {%- if 'approval' == cur_step %}
                 <button type="button" class="btn btn-primary action-button" id="btn-return">{{_('Return')}}</button>
                 <button type="button" class="btn btn-primary action-button" id="btn-reject">{{_('Reject')}}</button>
-                <button type="button" class="btn btn-primary action-button" id="btn-approval">{{_('Approval')}}</button>
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
-                    <span class="glyphicon glyphicon-download-alt"></span>
-                        {{_('Save')}}
-
-                </button>
-                <button type="button" class="btn btn-info" id="btn-approval" style="width: 120px; height: 40px;font-size:15px">{{_('Approval')}}</button>
+                    <span class="glyphicon glyphicon-download-alt"></span>{{_('Save')}}</button>
+                <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
               {%- endif %}
               {%- if 'double_check' == cur_step %}
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
