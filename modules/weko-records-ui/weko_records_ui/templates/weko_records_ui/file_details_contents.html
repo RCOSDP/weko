@@ -161,11 +161,11 @@
                       </div>
                     </div>
                   </div>
-                  <div id="bucket_id" class="hide">{{ record._buckets['deposit'] }}</div>
-                  <div id="file_key" class="hide">{{ file.key }}</div>
                 </td>
               </tr>
               {%- endif -%}
+              <div id="bucket_id" class="hide">{{ record._buckets['deposit'] }}</div>
+              <div id="file_key" class="hide">{{ file.key }}</div>
               {%- endfor -%}
               </tbody>
             </table>
@@ -204,57 +204,57 @@
                     <tbody id="bodyModal">
                     </tbody>
                   </table>
-                </div>
-                <div class="tab-pane" id="stats">
-                  <div class="row">
-                    <div class="col-sm-2">
-                      <!-- period dropdown -->
-                      <select id="file_period" class="btn btn-default
-                      btn-sm" onchange="period_change(this)">
-                          <option value="total">total</option>
-                      </select>
-                    </div>
-                    <div class="col-sm-3">
-                      <p class="file-stats-data">
-                        <i class="fa fa-download" aria-hidden="true"></i>
-                        {{_('Downloads')}}</p>
-                    </div>
-                    <div class="col-sm-2" id="file_download_num">
-                        <p class="file-stats-data">0</p>
-                    </div>
-                    <div class="col-sm-3">
-                      <p class="file-stats-data">
-                        <i class="fa fa-play-circle" aria-hidden="true"></i>
-                        {{_('Plays')}}</p>
-                    </div>
-                    <div class="col-sm-2" id="file_preview_num">
+                </div><!--End table-responsive div-->
+              </div><!--End version div-->
+              <div class="tab-pane" id="stats">
+                <div class="row">
+                  <div class="col-sm-2">
+                    <!-- period dropdown -->
+                    <select id="file_period" class="btn btn-default
+                    btn-sm" onchange="period_change(this)">
+                        <option value="total">total</option>
+                    </select>
+                  </div>
+                  <div class="col-sm-3">
+                    <p class="file-stats-data">
+                      <i class="fa fa-download" aria-hidden="true"></i>
+                      {{_('Downloads')}}</p>
+                  </div>
+                  <div class="col-sm-2" id="file_download_num">
                       <p class="file-stats-data">0</p>
-                    </div>
                   </div>
-                  <div class="row" id="toggle-stats" ng-init="statsCollapse = false">
-                    <div class="col-sm-2"></div>
-                    <div class="col-sm-2 col-sm-offset-4">
-                      <a ng-click="statsCollapse = !statsCollapse">
-                        {{_('See details')}}
-                      </a>
-                    </div>
+                  <div class="col-sm-3">
+                    <p class="file-stats-data">
+                      <i class="fa fa-play-circle" aria-hidden="true"></i>
+                      {{_('Plays')}}</p>
                   </div>
-                  <div class="ng-hidden" id="collapse-stats" ng-show="statsCollapse">
-                    <table class="table stats-table">
-                      <thead>
-                      <tr>
-                        <th></th>
-                        <th><i class="fa fa-download" aria-hidden="true"></i></th>
-                        <th><i class="fa fa-play-circle" aria-hidden="true"></i></th>
-                      </tr>
-                      </thead>
-                      <tbody id="file_country">
-                      </tbody>
-                    </table>
+                  <div class="col-sm-2" id="file_preview_num">
+                    <p class="file-stats-data">0</p>
                   </div>
                 </div>
-              </div>
-            </div>
+                <div class="row" id="toggle-stats" ng-init="statsCollapse = false">
+                  <div class="col-sm-2"></div>
+                  <div class="col-sm-2 col-sm-offset-4">
+                    <a ng-click="statsCollapse = !statsCollapse">
+                      {{_('See details')}}
+                    </a>
+                  </div>
+                </div>
+                <div class="ng-hidden" id="collapse-stats" ng-show="statsCollapse">
+                  <table class="table stats-table">
+                    <thead>
+                    <tr>
+                      <th></th>
+                      <th><i class="fa fa-download" aria-hidden="true"></i></th>
+                      <th><i class="fa fa-play-circle" aria-hidden="true"></i></th>
+                    </tr>
+                    </thead>
+                    <tbody id="file_country">
+                    </tbody>
+                  </table>
+                </div><!--End collapse-stats div-->
+              </div><!--End stats div-->
+            </div><!--End tab-content div-->
           </div>
           {%- endblock %}
         </div>
