@@ -39,7 +39,7 @@ from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_response_json, get_search_setting, \
     get_selected_language, save_api_certification, update_admin_lang_setting, \
-    validate_certification
+    validate_certification, get_initial_stats_report
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -346,5 +346,16 @@ def save_api_cert_data():
     else:
         result['error'] = _(
             'Account information is invalid. Please check again.')
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_init_selection', methods=['GET'])
+def get_init_selection():
+    result = dict()
+    try:
+        result = get_initial_stats_report()
+    except Exception as e:
+        result['error'] = str(e)
 
     return jsonify(result)

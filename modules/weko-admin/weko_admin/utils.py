@@ -26,7 +26,8 @@ from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, SearchManagement
+from .models import AdminLangSettings, ApiCertificate, SearchManagement, \
+    StatisticUnit, StatisticTarget
 
 
 def get_response_json(result_list, n_lst):
@@ -280,3 +281,21 @@ def validate_certification(cert_data):
     response = requests.get(create_crossref_url(cert_data))
     return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
         str(vars(response).get('_content', None))
+
+
+def get_initial_stats_report():
+    """Get initial statistic report.
+
+    :return: list unit and list target
+    """
+    result = {
+        'target': '',
+        'unit': ''
+    }
+
+    target = StatisticTarget.get_all_stats_report_target()
+    result['target'] = target
+    unit = StatisticUnit.get_all_stats_report_unit()
+    result['unit'] = unit
+
+    return result
