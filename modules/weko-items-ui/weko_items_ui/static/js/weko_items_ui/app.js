@@ -1114,20 +1114,6 @@ function handleSharePermission(value) {
             console.log($rootScope);
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
-              //$('#index_tree').hidden = true;
-              //document.getElementById("item_edit").innerHTML = 
-              //$('#item_edit').load('/weko_items_ui/iframe/item_index.html');
-              /*$.ajax({
-                  url: '/items/iframe/index/1',
-                  type: 'GET',
-                  contentType: 'application/json; charset=UTF-8',
-                  success: function(data) {
-                      document.getElementById("item_edit").innerHTML = data;
-                  },
-                  error: function(data) {
-                        alert('data');
-                  }
-              });*/
           }
             
         } else {
@@ -1138,7 +1124,6 @@ function handleSharePermission(value) {
           }
           $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
           $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
-            //$('#index_tree').hidden = true;
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
