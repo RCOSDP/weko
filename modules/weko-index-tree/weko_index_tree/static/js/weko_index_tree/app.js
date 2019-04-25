@@ -21,12 +21,12 @@ require([
 
   }
   page_default = {
-    role_name_list : {0:'システム管理者',1:'主担',2:'モデレータ',3:'一般',4:'ゲスト',5:'事務局',6:'管理者'},
+    role_name_list : {0:'System Administrator',1:'Manager',2:'Moderator',3:'General',4:'Guest',5:'Office',6:'Administrator'},
     access_role_name: [0,1,2,3,5,6],
     exclusive_access_role_name: [4],
     acl_role_name: [0,1,2,3,4,5,6],
     exclusive_acl_role_name: [],
-    group_name_list : {9:'非会員'},
+    group_name_list : {9:'Non-Member'},
     access_group_name: [],
     exclusive_access_group_name: [9],
     acl_group_name: [9],

@@ -100,8 +100,8 @@
                   </div>
                 </div>
               </div>
-              <input type="hidden" value="{{_('Cannot delete Item type for Harvesting.')}}" id="msg_for_harvesting">
-              <input type="hidden" value="{{_('Cannot delete because there is belonging item.')}}" id="msg_for_belonging_item">
+              <input type="hidden" value="{{_('Cannot delete item type for harvesting.')}}" id="msg_for_harvesting">
+              <input type="hidden" value="{{_('Cannot delete due to child existing item types.')}}" id="msg_for_belonging_item">
               <!-- </div>-->
 
           </div>
@@ -120,7 +120,7 @@
           <div class="form-group mr-5">
             <label for="itemtype_name">{{_('Item Type')}}:</label>
             <input type="text" class="form-control" id="itemtype_name"
-            placeholder="{{_('Input Type Name')}}" value="">＊
+            placeholder="{{_('Input Type Name')}}" value="">*
           </div>
           <label class="radio-inline">
             <input type="radio" name="radio_versionup" class="radio_versionup" id="upt_version" value="upt">{{_('Version Upgrade')}}
@@ -132,7 +132,7 @@
       </div>
       <div class="row table-responsive">
         <div class="checkbox media-right hide">
-          <label><input type="checkbox" id="chk_upload_file" value="filemeta">{{_('Do you want to register the content？')}}</label>
+          <label><input type="checkbox" id="chk_upload_file" value="filemeta">{{_('Do you want to register the content?')}}</label>
         </div>
         <table class="table table-striped table-bordered table-hover table-condensed">
           <thead>
@@ -167,8 +167,8 @@
                   </div>
                   </fieldset>
                 </td>
-                <td>　</td>
-                <td>　</td>
+                <td> </td>
+                <td> </td>
                 </tr>
           </tbody>
         </table>

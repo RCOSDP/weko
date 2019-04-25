@@ -87,6 +87,6 @@ class NewMemberForm(FlaskForm):
     emails = TextAreaField(
         description=_(
             'Required. Provide list of the emails of the users'
-            ' you wish to be added. Put each email in new line.'),
+            ' you wish to be added. Put each email on new line.'),
         validators=[EmailsValidator()]
     )

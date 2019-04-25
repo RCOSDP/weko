@@ -40,10 +40,11 @@
             <input autofocus="" class="form-control" id="pwd" name="WEKO_ATTR_PWD" placeholder="Password" type="password" value="">
             <i class="fa fa-lock form-control-feedback" aria-hidden="true"></i>
           </div>
-          <button type="submit" class="btn btn-primary btn-lg btn-block"><i class="fa fa-sign-in"></i>{{ _('ログイン (WEKO-IDお持ちの方)') }}</button>
+          <button type="submit" class="btn btn-primary btn-lg btn-block"><i
+                  class="fa fa-sign-in"></i>{{ _('Login (Visitors with a WEKO-ID)') }}</button>
           <h3 align="center">&mdash; OR &mdash;</h3>
           <a type="button" class="btn btn-default btn-lg btn-block" href={{url_for('weko_accounts.shib_auto_login')}}>
-            <i class="fa fa-sign-in"></i>{{ _('ログイン (WEKO初回ログインの方)') }}</a>
+            <i class="fa fa-sign-in"></i>{{ _('Login (New WEKO users)') }}</a>
         </form>
       </div></div>
       {%- endblock form_outer %}

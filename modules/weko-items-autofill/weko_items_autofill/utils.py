@@ -550,7 +550,7 @@ def assign_data_cinii_prism_issn(field, data):
     try:
         try_assign_data(data, field, 'sourceIdentifier', ['@value'])
         if field:
-            try_assign_data(data, 'ISSN（非推奨）', 'sourceIdentifier',
+            try_assign_data(data, 'ISSN', 'sourceIdentifier',
                             ['@attributes', 'identifierType'])
     except Exception:
         pass
