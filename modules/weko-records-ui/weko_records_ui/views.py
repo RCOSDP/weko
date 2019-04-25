@@ -46,6 +46,7 @@ from weko_records_ui.models import InstitutionName
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
+from .utils import get_item_pidstore_identifier
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -78,7 +79,6 @@ def publish(pid, record, template=None, **kwargs):
     record.commit()
     db.session.commit()
 
-    current_app.logger.debug(record)
     indexer = WekoIndexer()
     indexer.update_publish_status(record)
 
@@ -361,12 +361,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         and pdfcoverpage_set_rec.avail != 'disable'
 
     # Get item meta data
-    meta = ItemsMetadata.get_record(pid.object_uuid)
     record['permalink_uri'] = None
-    if meta is not None:
-        pidstore_identifier = meta.get('pidstore_identifier')
-        if pidstore_identifier is None:
-            record['permalink_uri'] = request.url
+    pidstore_identifier = get_item_pidstore_identifier(pid.object_uuid)
+    if pidstore_identifier is None:
+        record['permalink_uri'] = request.url
+    else:
+        record['permalink_uri'] = pidstore_identifier
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
@@ -497,7 +497,8 @@ def file_version_update():
         is_show = request.values.get('is_show')
         if bucket_id is not None and key is not None and version_id is not None:
             from invenio_files_rest.models import ObjectVersion
-            object_version = ObjectVersion.get(bucket=bucket_id, key=key, version_id=version_id)
+            object_version = ObjectVersion.get(bucket=bucket_id, key=key,
+                                               version_id=version_id)
             if object_version is not None:
                 # Do update the path on record
                 object_version.is_show = True if is_show == '1' else False

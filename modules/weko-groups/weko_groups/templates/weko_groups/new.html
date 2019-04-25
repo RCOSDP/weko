@@ -19,6 +19,10 @@
 #}
 
 {%- extends "weko_groups/settings/base.html" %}
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {% endblock %}
 
 {%- import "weko_groups/settings/helpers.html" as helpers with context %}
 {%- from "weko_groups/_macros.html" import render_field with context %}
@@ -39,7 +43,7 @@
   {% if group %}
   Customize existing group.
   {% else %}
-  Go ahead a create your group, to which then you would be able to add new members.
+  Go ahead and create your own group, to which you would be able to add new members.
   {% endif %}
   {%- endblock %}
 </div>
@@ -50,7 +54,7 @@
   <hr>
   <div class="btn-toolbar">
     {%- if group -%}
-    <a class="btn btn-danger delete-button" data-toggle="modal" data-target="#delete-group-modal">
+    <a class="btn btn-danger pull-right delete-button" data-toggle="modal" data-target="#delete-group-modal">
       <span class="glyphicon glyphicon-trash"></span>
           {{ _('Delete') }}
     </a>
@@ -58,7 +62,7 @@
     <button type="submit" class="btn btn-primary pull-right update-button">
       <i class="fa fa-edit"></i> {{ _('Update') if group else _('Create') }}
     </button>
-    <a href="{{ url_for('.index') }}" class="btn btn-info pull-right cancel-button">
+    <a href="{{ url_for('.index') }}" class="btn btn-info pull-left cancel-button">
       <i class="fa fa-times"></i> {{ _('Cancel') }}
     </a>
   </div>

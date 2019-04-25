@@ -57,7 +57,7 @@
 {%- if groups.items|length == 0 and not q %}
   {%- if is_admin %}
     {{ emptyprompt(
-      btn=_('New group'), btn_icon='fa fa-fw fa-plus',
+      btn=_('New Group'), btn_icon='fa fa-fw fa-plus',
       btn_href=url_for('.new'),
       heading=_('Go ahead and create new group!')
       ) }}

@@ -24,12 +24,17 @@
 
 <div class="panel-group">
   <div class="panel panel-default" ng-controller="ItemController">
-    <div class="panel-heading clearfix">
-      <h3 class="panel-title" style="display: inline;">{{_('Item')}}</h3>
-      <a class="forcewrap" href="{{record_url}}" style="margin-left: 0.5em;"><span class="glyphicon glyphicon-file" aria-hidden="true"></span>
-        {{ record.get('item_title', _('No title')) }}</a>
-      / {{ filename.split('.')[0] }}
+    <div class="panel-heading clearfix" style="background-color: inherit; font-size: 120%">
+      <h4 style="display: inline;">
+        {{_('Item')}}
+        <span style="margin-left: 0.25em; margin-right: 0.25em;">{{ '/' }} </span> 
+        <a class="forcewrap" href="{{record_url}}"></span>
+          {{ record.get('item_title', _('No title')) }}</a>
+        <span style="margin-left: 0.25em; margin-right: 0.25em;">{{ '/' }} </span> 
+        {{ filename.split('.')[0] }}
+      </h4>
     </div>
+    <h2 class="col-sm-12 col-md-12 col-left" style="margin-top: unset;">{{ filename.split('.')[0] }}</h2>
     <div class="panel-body">
       <div class="row">
         <div class="col-sm-12 col-md-12 col-left">
@@ -101,7 +106,7 @@
               {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
               <tr>
                 <td colspan="2">
-                  <div class="panel panel-default" id="preview_de" ng-init="collapsed{{loop.index}} = false">>
+                  <div class="panel panel-default" id="preview_de" ng-init="collapsed{{loop.index}} = false">
                     <div class="panel-heading">
                       <a id="preview_{{loop.index}}" class="panel-toggle"
                         ng-click="collapsed{{loop.index}} = !collapsed{{loop.index}}">
