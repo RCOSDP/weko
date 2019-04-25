@@ -381,7 +381,7 @@ def iframe_items_index(pid_value=0):
                 community_id=session['itemlogin_community_id'])
 
         if request.headers['Content-Type'] != 'application/json':
-            flash(_('invalide request'), 'error')
+            flash(_('Invalid Request'), 'error')
             return render_template(
                 'weko_items_ui/iframe/item_index.html')
 

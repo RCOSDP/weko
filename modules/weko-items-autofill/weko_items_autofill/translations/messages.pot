@@ -9,30 +9,30 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-items-autofill 1.0.0.dev20190000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-03-13 13:53+0700\n"
+"POT-Creation-Date: 2019-04-25 18:38+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.6.0\n"
-
-#: weko_items_autofill/views.py:84
-msgid "Select the ID"
-msgstr ""
+"Generated-By: Babel 2.5.1\n"
 
 #. NOTE: This is a note to a translator.
 #: weko_items_autofill/ext.py:25
 msgid "A translation string"
 msgstr ""
 
-#: weko_items_autofill/views.py:42
+#: weko_items_autofill/views.py:43
 msgid "WEKO-Items-Autofill"
 msgstr ""
 
-#: weko_items_autofill/views.py:56
+#: weko_items_autofill/views.py:61
 msgid "Header Error"
+msgstr ""
+
+#: weko_items_autofill/views.py:97
+msgid "Select the ID"
 msgstr ""
 
 #: weko_items_autofill/templates/weko_items_autofill/index.html:12

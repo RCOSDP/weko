@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-items-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 15:57+0900\n"
+"POT-Creation-Date: 2019-04-25 18:43+0900\n"
 "PO-Revision-Date: 2018-01-22 15:20+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja_JP\n"
@@ -19,8 +19,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_items_ui/views.py:324 weko_items_ui/views.py:374
+#: weko_items_ui/views.py:324
 msgid "invalide request"
+msgstr "無効なリクエスト"
+
+#: weko_items_ui/views.py:374
+#, fuzzy
+msgid "Invalid Request"
 msgstr "無効なリクエスト"
 
 #: weko_items_ui/views.py:554
@@ -87,8 +92,8 @@ msgstr "取得"
 
 #: weko_items_ui/templates/weko_items_ui/error.html:33
 #: weko_items_ui/templates/weko_items_ui/iframe/error.html:40
-msgid "You do not even have an itemtype."
-msgstr "アイテムタイプは存在しません"
+msgid "No itemtype to register."
+msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/error.html:34
 #: weko_items_ui/templates/weko_items_ui/iframe/error.html:41
@@ -191,4 +196,7 @@ msgstr "保存"
 
 #~ msgid "Index_Tree"
 #~ msgstr "インデックスツリー"
+
+#~ msgid "You do not even have an itemtype."
+#~ msgstr "アイテムタイプは存在しません"
 

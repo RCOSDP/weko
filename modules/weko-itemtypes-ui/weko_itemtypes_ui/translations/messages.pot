@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-itemtypes-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 15:49+0900\n"
+"POT-Creation-Date: 2019-04-25 18:53+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -58,14 +58,13 @@ msgstr ""
 msgid "Success"
 msgstr ""
 
-#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:103
 #: weko_itemtypes_ui/views.py:364
 msgid "Cannot delete Item type for Harvesting."
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:104
 #: weko_itemtypes_ui/views.py:374
-msgid "Cannot delete because there is belonging item."
+msgid "Cannot delete due to child existing item types."
 msgstr ""
 
 #: weko_itemtypes_ui/views.py:390
@@ -125,6 +124,10 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:103
+msgid "Cannot delete item type for harvesting."
+msgstr ""
+
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:117
 msgid "Item type name is blank."
 msgstr ""
@@ -147,7 +150,7 @@ msgid "New Registration"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:135
-msgid "Do you want to register the content？"
+msgid "Do you want to register the content?"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_itemtype.html:140

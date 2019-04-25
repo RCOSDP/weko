@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-23 10:29+0900\n"
+"POT-Creation-Date: 2019-04-25 18:25+0900\n"
 "PO-Revision-Date: 2018-01-19 13:59+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -87,21 +87,21 @@ msgstr "ログイン"
 msgid "test commit shibboleth account"
 msgstr ""
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:25
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:29
 msgid "Life Time"
 msgstr "有効期限"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:36
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:49
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:40
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:53
 msgid "Allow shibboleth user"
 msgstr "Shibbolethユーザーを許可する"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:42
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:55
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:46
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:59
 msgid "Deny shibboleth user"
 msgstr "Shibbolethユーザーを拒否する"
 
-#: weko_accounts/templates/weko_accounts/setting/shibuser.html:62
+#: weko_accounts/templates/weko_accounts/setting/shibuser.html:68
 msgid "Update"
 msgstr "更新"
 
