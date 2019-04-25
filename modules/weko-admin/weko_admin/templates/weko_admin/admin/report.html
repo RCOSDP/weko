@@ -52,6 +52,9 @@
           displayButton: <button className="hidden"></button>,
           responseData: []
         };
+        this.required = {
+            color: 'red',
+        };
         this.handleClickEvent = this.handleClickEvent.bind(this);
       }
       componentDidMount() 
@@ -87,13 +90,46 @@
       handleClickEvent(event) {
         let startDate = document.getElementById("start_date").value;
         let endDate = document.getElementById("end_date").value;
-        
+        let target = document.getElementById("target").value;
+        let unit = document.getElementById("unit").value;
+
+        if (target == 0) {
+          alert("Target Report is required!");
+        } else if (unit == 0) {
+          alert("Unit is required!");
+        }else {
+          const ITEM_REG_ID = 1;
+          if (target == ITEM_REG_ID) {
+            let requestParam = {
+              start_date: startDate,
+              end_date: endDate,
+              unit: unit
+            };
+            let request_url='/api/stats/get_item_registration_report';
+            fetch(request_url, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(requestParam)
+            })
+            .then(res => res.json())
+            .then((result){
+              // Handle response data
+            });
+          }
+        }
       }
       
       render() {
         return (
           <div className="form-group row">
-            <label htmlFor={this.props.id_component} className="control-label col-xs-2 text-right">{this.props.name}</label>
+            <label htmlFor={this.props.id_component} className="control-label col-xs-2 text-right">
+              {this.props.name}
+              <span style={this.required}>
+                *
+              </span>
+            </label>
             <div class="controls col-xs-5">
               <select className="form-control" id={this.props.id_component}>
                 <option key="0" value="0">Please select the {this.props.id_component}</option>
@@ -150,18 +186,8 @@
         this.getValueOfField = this.getValueOfField.bind(this);
       }
 
-      getValueOfField(key, value) {
+      getValueOfField(value) {
         switch (key) {
-          case 'startDate':
-            this.setState({
-              startDate: value
-            });
-            break;
-          case 'endDate':
-            this.setState({
-              endDate: value
-            });
-            break;
           case 'result':
             this.setState({
               result: value
@@ -180,7 +206,7 @@
               <ComponentDatePicker name = "Start Date" id_component="start_date"/>
               <ComponentDatePicker name = "End Date" id_component="end_date"/>
               <ComponentCombobox name="Target Report" id_component="target"/>
-              <ComponentCombobox name="Unit" data={this.state} getValueOfField={this.getValueOfField} key_binding="result" id_component="unit"/>
+              <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit"/>
             </div> 
           </div>
         )
