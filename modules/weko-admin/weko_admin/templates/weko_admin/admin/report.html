@@ -49,7 +49,10 @@
         super(props);
         this.state = {
           selections: [],
+          displayButton: <button className="hidden"></button>,
+          responseData: []
         };
+        this.handleClickEvent = this.handleClickEvent.bind(this);
       }
       componentDidMount() 
       {
@@ -59,14 +62,32 @@
         .then(
           (result) => 
           {
-            console.log(result);
             let selectionData = result[this.props.id_component];
-            let options = selectionData.map((option) =>{
-              console.log(option.value);
-              return option;
+            let options = selectionData.map((option) => {
+              return (
+                <option key={option.id} value={option.id}>{option.data}</option>
+              );
+            });
+            this.setState({
+              selections: options
             });
           }
         );
+        let buttonHtml;
+        if (this.props.id_component == 'unit') {
+          buttonHtml = <button className="btn btn-primary col-xs-1" onClick={this.handleClickEvent}>Display</button>
+        }else {
+          <button className="hidden"></button>
+        }
+        this.setState({
+          displayButton: buttonHtml
+        });
+      }
+
+      handleClickEvent(event) {
+        let startDate = document.getElementById("start_date").value;
+        let endDate = document.getElementById("end_date").value;
+        
       }
       
       render() {
@@ -74,10 +95,12 @@
           <div className="form-group row">
             <label htmlFor={this.props.id_component} className="control-label col-xs-2 text-right">{this.props.name}</label>
             <div class="controls col-xs-5">
-              <select id={this.props.id_component}>
+              <select className="form-control" id={this.props.id_component}>
+                <option key="0" value="0">Please select the {this.props.id_component}</option>
                 {this.state.selections}
               </select>
             </div>
+            {this.state.displayButton}
           </div>
         )
       }
@@ -104,7 +127,7 @@
           <div style={this.styleContainer} className="form-group row">
             <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
             <div class="controls col-xs-5">
-              <input className="form-control" id={this.props.id_component} style={this.styleDatePicker} type="text" readonly="true"/>
+              <input className="form-control" id={this.props.id_component} style={this.styleDatePicker} readonly="true" type="text"/>
             </div>
           </div>
         )
@@ -116,11 +139,36 @@
       constructor(props)
       {
         super(props);
+        this.state = {
+          startDate: '',
+          endDate: '',
+          result: []
+        };
         this.styleContainer = {
           "margin-left": "-14px",
-        }
+        };
+        this.getValueOfField = this.getValueOfField.bind(this);
       }
 
+      getValueOfField(key, value) {
+        switch (key) {
+          case 'startDate':
+            this.setState({
+              startDate: value
+            });
+            break;
+          case 'endDate':
+            this.setState({
+              endDate: value
+            });
+            break;
+          case 'result':
+            this.setState({
+              result: value
+            });
+            break;
+        }
+      }
 
       render() {
         return (
@@ -132,7 +180,7 @@
               <ComponentDatePicker name = "Start Date" id_component="start_date"/>
               <ComponentDatePicker name = "End Date" id_component="end_date"/>
               <ComponentCombobox name="Target Report" id_component="target"/>
-              <ComponentCombobox name="Unit" id_component="unit"/>
+              <ComponentCombobox name="Unit" data={this.state} getValueOfField={this.getValueOfField} key_binding="result" id_component="unit"/>
             </div> 
           </div>
         )
