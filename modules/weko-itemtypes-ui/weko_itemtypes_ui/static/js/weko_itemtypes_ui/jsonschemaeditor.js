@@ -727,8 +727,13 @@ var SchemaObject = React.createClass({
 						{ className: self.state.editor ? "col-md-6 col-lg-6" : "hide" },
 						React.createElement(
 							'button',
-							{ className: 'btn btn-default navbar-text', onClick: self.add },
-							'\u8FFD\u52A0'
+							{ className: 'btn btn-light pull-right add-button', onClick: self.add },
+                            React.createElement(
+                                'span',
+                                { className: 'glyphicon glyphicon-plus' },
+                                ''
+                            ),
+                            ' Add'
 						)
 					)
 				)
@@ -746,11 +751,16 @@ var SchemaObject = React.createClass({
 						this.expandProp(),
 						React.createElement(
 							'div',
-							{ className: self.state.editor ? "col-md-6 col-lg-6" : "hide" },
+                            { className: self.state.editor ? "col-md-6 col-lg-6" : "hide" },
 							React.createElement(
 								'button',
-								{ className: 'btn btn-default navbar-text', onClick: self.add },
-								'\u8FFD\u52A0'
+                                { className: 'btn btn-light pull-right add-button', onClick: self.add },
+                                React.createElement(
+                                    'span',
+                                    { className: 'glyphicon glyphicon-plus' },
+                                    ''
+                                ),
+                                ' Add'
 							)
 						)
 					)
