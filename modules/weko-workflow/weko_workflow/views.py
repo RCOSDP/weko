@@ -37,9 +37,9 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoRecord
 from weko_index_tree.models import Index
+from weko_items_ui.api import item_login
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
-from weko_items_ui.api import item_login
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
@@ -86,7 +86,6 @@ def iframe_success():
 
     :return: The rendered template.
     """
-
     # get session value
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(session['itemlogin_id'])
@@ -95,15 +94,7 @@ def iframe_success():
     steps = session['itemlogin_steps']
     action_id = session['itemlogin_action_id']
     cur_step = session['itemlogin_cur_step']
-    temporary_comment = session['itemlogin_temporary_comment']
-    temporary_journal = session['itemlogin_temporary_journal']
-    temporary_idf_grant = session['itemlogin_temporary_idf_grant']
-    temporary_idf_grant_suffix = session['itemlogin_temporary_idf_grant_suffix']
-    idf_grant_data = session['itemlogin_idf_grant_data']
-    idf_grant_input = session['itemlogin_idf_grant_input']
-    idf_grant_method = session['itemlogin_idf_grant_method']
     record = session['itemlogin_record']
-    step_item_login_url = session['itemlogin_step_item_login_url']
     res_check = session['itemlogin_res_check']
     pid = session['itemlogin_pid']
     community_id = session['itemlogin_community_id']
@@ -115,38 +106,22 @@ def iframe_success():
     del session['itemlogin_steps']
     del session['itemlogin_action_id']
     del session['itemlogin_cur_step']
-    del session['itemlogin_temporary_comment']
-    del session['itemlogin_temporary_journal']
-    del session['itemlogin_temporary_idf_grant']
-    del session['itemlogin_temporary_idf_grant_suffix']
-    del session['itemlogin_idf_grant_data']
-    del session['itemlogin_idf_grant_input']
-    del session['itemlogin_idf_grant_method']
     del session['itemlogin_record']
-    del session['itemlogin_step_item_login_url']
     del session['itemlogin_res_check']
     del session['itemlogin_pid']
     del session['itemlogin_community_id']
 
     return render_template('weko_workflow/item_login_success.html',
-                            activity=activity,
-                            item=item,
-                            steps=steps,
-                            action_id=action_id,
-                            cur_step=cur_step,
-                            temporary_comment=temporary_comment,
-                            temporary_journal=temporary_journal,
-                            temporary_idf_grant=temporary_idf_grant,
-                            temporary_idf_grant_suffix=temporary_idf_grant_suffix,
-                            idf_grant_data=idf_grant_data,
-                            idf_grant_input=idf_grant_input,
-                            idf_grant_method=idf_grant_method,
-                            record=record,
-                            step_item_login_url=step_item_login_url,
-                            histories=histories,
-                            res_check=res_check,
-                            pid=pid,
-                            community_id=community_id)
+                           activity=activity,
+                           item=item,
+                           steps=steps,
+                           action_id=action_id,
+                           cur_step=cur_step,
+                           record=record,
+                           histories=histories,
+                           res_check=res_check,
+                           pid=pid,
+                           community_id=community_id)
 
 
 @blueprint.route('/activity/new', methods=['GET'])
@@ -303,19 +278,14 @@ def display_activity(activity_id=0):
             commond=''
         )
         session['activity_info'] = activity_session
+        # get item edit page info.
         step_item_login_url, need_file, record, json_schema, \
             schema_form, item_save_uri, files, endpoints = item_login(
-            item_type_id=workflow_detail.itemtype_id)
-        """step_item_login_url = url_for(
-            'weko_items_ui.iframe_index',
-            item_type_id=workflow_detail.itemtype_id)"""
+                item_type_id=workflow_detail.itemtype_id)
         if item:
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
-            record=item
-            """step_item_login_url = url_for(
-                'invenio_deposit_ui.iframe_depid',
-                pid_value=pid_identifier.pid_value)"""
+            record = item
     # if 'approval' == action_endpoint:
     if item:
         pid_identifier = PersistentIdentifier.get_by_object(
@@ -337,6 +307,7 @@ def display_activity(activity_id=0):
         community_id = request.args.get('community')
         ctx = {'community': comm}
         community_id = comm.id
+    # be use for index tree and comment page.
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         session['itemlogin_id'] = activity_id
         session['itemlogin_activity'] = activity_detail
@@ -344,15 +315,7 @@ def display_activity(activity_id=0):
         session['itemlogin_steps'] = steps
         session['itemlogin_action_id'] = action_id
         session['itemlogin_cur_step'] = cur_step
-        session['itemlogin_temporary_comment'] = temporary_comment
-        session['itemlogin_temporary_journal'] = temporary_journal
-        session['itemlogin_temporary_idf_grant'] = temporary_idf_grant
-        session['itemlogin_temporary_idf_grant_suffix'] = temporary_idf_grant_suffix
-        session['itemlogin_idf_grant_data'] = idf_grant_data
-        session['itemlogin_idf_grant_input'] = IDENTIFIER_GRANT_LIST
-        session['itemlogin_idf_grant_method'] = IDENTIFIER_GRANT_SUFFIX_METHOD
         session['itemlogin_record'] = approval_record
-        session['itemlogin_step_item_login_url'] = step_item_login_url
         session['itemlogin_histories'] = histories
         session['itemlogin_res_check'] = res_check
         session['itemlogin_pid'] = pid
@@ -382,6 +345,7 @@ def display_activity(activity_id=0):
         item_save_uri=item_save_uri,
         files=files,
         endpoints=endpoints,
+        error_type='item_login_error',
         links=links,
         histories=histories,
         res_check=res_check,
