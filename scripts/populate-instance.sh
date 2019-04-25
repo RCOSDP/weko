@@ -269,7 +269,7 @@ ${INVENIO_WEB_INSTANCE} cert insert crf CrossRef
 ${INVENIO_WEB_INSTANCE} report create_unit \
        "1" "Day"
 ${INVENIO_WEB_INSTANCE} report create_unit \
-       "2" "Month"
+       "2" "Week"
 ${INVENIO_WEB_INSTANCE} report create_unit \
        "3" "Year"
 ${INVENIO_WEB_INSTANCE} report create_unit \
