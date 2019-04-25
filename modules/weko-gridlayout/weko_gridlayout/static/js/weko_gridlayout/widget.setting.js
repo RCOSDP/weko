@@ -56,7 +56,7 @@ class ComponentSelectField extends React.Component {
         return (
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
-                <div class="controls col-xs-5">
+                <div class="controls col-xs-6">
                     <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name}>
                         <option value="0">Please select the &nbsp; {this.props.key_binding}</option>
                         {this.state.selectOptions}
@@ -88,7 +88,7 @@ class ComponentTextboxField extends React.Component {
 
     handleChange(event) {
         this.setState({ value: event.target.value });
-        this.props.getValueOfField(this.props.key_binding,event.target.value);
+        this.props.getValueOfField(this.props.key_binding,event.target.value.trim());
         event.preventDefault();
     }
 
@@ -96,7 +96,7 @@ class ComponentTextboxField extends React.Component {
         return (
             <div className="form-group row">
               <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
-              <div class="controls col-xs-5">
+              <div class="controls col-xs-6">
                 <input name={this.props.name} type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control"/>
               </div>
             </div>
@@ -172,33 +172,36 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             unauthorList: []
         };
         this.styleContainer={
-          border: '1px solid #ccc',
-          height: '200px',
-          padding :'15px 5px 5px 10px',
+            border: '1px solid #ccc',
+            height: '200px',
+            padding :'15px 5px 5px 10px',
         }
         this.styleElement={
-          padding: "0",
+            padding: "0",
         }
         this.styleSelectLeft={
-          padding: "0",
-          width: "90%",
-          height: "100px",
-          float: "left",
+            padding: "0",
+            width: "90%",
+            height: "100px",
+            float: "left",
         }
         this.styleSelectRight={
-          padding: "0",
-          width: "90%",
-          height: "100px",
-          float: "right",
+            padding: "0",
+            width: "90%",
+            height: "100px",
+            float: "right",
         }
         this.styleButtonContainer = {
-          display: 'flex',
-          flexDirection : 'column',
-          justifyContent: 'center',
-          height: "100px",
+            display: 'flex',
+            flexDirection : 'column',
+            justifyContent: 'center',
+            height: "100px",
         }
         this.styleButtonElement={
           margin: "2px",
+        }
+        this.styleLabelRight={
+            "margin-left":"10%",
         }
         this.handleChange = this.handleChange.bind(this);
         this.handleMoveRightClick = this.handleMoveRightClick.bind(this);
@@ -367,11 +370,11 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         return (
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                <div class="controls col-xs-5">
+                <div class="controls col-xs-6">
                     <fieldset className="form-group" style={this.styleContainer}>
-                    <label>Role </label><br/>
+                    <span>Role</span><br/>
                     <div className="col-xs-5" style={this.styleElement}>
-                      <label >Authorized</label><br/>
+                      <span >Authorized</span><br/>
                       <select name={this.props.name} multiple style={this.styleSelectLeft} id={this.props.authorSelect} name={this.props.authorSelect}>
                           {this.state.selectOptions}
                       </select>
@@ -384,7 +387,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                       </div>
                     </div>
                     <div className="col-xs-5" style={this.styleElement}>
-                      <label >Unauthorized</label><br/>
+                      <span style={this.styleLabelRight}>Unauthorized</span><br/>
                       <select multiple value={this.state.unauthorList} style={this.styleSelectRight} onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
                           {this.state.UnauthorizedOptions}
                       </select>
@@ -411,9 +414,9 @@ class ComponentButtonLayout extends React.Component {
             data : this.props.data,
             data_id: this.props.data_id
         }
-        if (this.props.data.repository=="0") {
+        if (this.props.data.repository=="0" || this.props.data.repository == "") {
             alert('Repository is required!');
-        } else if (this.props.data.widget_type == "0") {
+        } else if (this.props.data.widget_type == "0" || this.props.data.widget_type == "") {
             alert('Type is required!');
         } else if (this.props.data.label ===null || this.props.data.label.match(/^ *$/) !== null) {
             alert('Label is required!');
@@ -437,9 +440,8 @@ class ComponentButtonLayout extends React.Component {
     }
     render() {
         return (
-            <div className="form-group col-xs-10">
-                <div className="col-xs-2"> </div>
-                    <div className="col-xs-5">
+            <div className="form-group row">
+                <div className="col-xs-offset-2 col-xs-5">
                     <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
                     <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
                 </div>
@@ -480,7 +482,7 @@ class MainLayout extends React.Component {
               this.setState({ widget_type: value });
               break;
           case 'label':
-              this.setState({ label: value });
+              this.setState({ label: value});
               break;
           case 'label_color':
               this.setState({ label_color: value });
