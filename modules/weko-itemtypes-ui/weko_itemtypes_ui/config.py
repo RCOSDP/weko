@@ -20,6 +20,8 @@
 
 """Configuration for weko-itemtypes-ui."""
 
+from flask_babelex import lazy_gettext as _
+
 WEKO_ITEMTYPES_UI_BASE_TEMPLATE = 'weko_itemtypes_ui/base.html'
 """Default base template for the item type page."""
 
@@ -35,11 +37,11 @@ WEKO_ITEMTYPES_UI_ERROR_TEMPLATE = 'weko_itemtypes_ui/error.html'
 """Error template for the item type page."""
 
 WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
-    '1': {'name': 'テキスト', 'value': 'text'},
-    '2': {'name': 'テキストエリア', 'value': 'textarea'},
-    '3': {'name': 'チェックボックス', 'value': 'checkboxes'},
-    '4': {'name': '選択式(ラジオ)', 'value': 'radios'},
-    '5': {'name': '選択式(プルダウン)', 'value': 'select'},
-    '6': {'name': '日付', 'value': 'datetime'}
+    '1': {'name': _('Text Field'), 'value': 'text'},
+    '2': {'name': _('Text Area'), 'value': 'textarea'},
+    '3': {'name': _('Check Box'), 'value': 'checkboxes'},
+    '4': {'name': _('Radio Button'), 'value': 'radios'},
+    '5': {'name': _('List Box'), 'value': 'select'},
+    '6': {'name': _('Date'), 'value': 'datetime'}
 }
 """Default properties of the item type."""

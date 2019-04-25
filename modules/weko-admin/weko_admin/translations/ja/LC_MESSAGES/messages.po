@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:51+0900\n"
+"POT-Creation-Date: 2019-04-25 16:01+0900\n"
 "PO-Revision-Date: 2018-01-19 19:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -18,172 +18,534 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+#: weko_admin/admin.py:107
+msgid "deny access"
+msgstr ""
+
+#: weko_admin/admin.py:291
+msgid "No. Of File Downloads"
+msgstr ""
+
+#: weko_admin/admin.py:292
+msgid "Open-Access No. Of File Downloads"
+msgstr ""
+
+#: weko_admin/admin.py:294
+msgid "No. Of File Previews"
+msgstr ""
+
+#: weko_admin/admin.py:295
+msgid "Open-Access No. Of File Previews"
+msgstr ""
+
+#: weko_admin/admin.py:301
+msgid "Aggregation Monh"
+msgstr ""
+
+#: weko_admin/admin.py:304
+msgid "File Name"
+msgstr ""
+
+#: weko_admin/admin.py:304
+msgid "Registered Index Name"
+msgstr ""
+
+#: weko_admin/admin.py:305
+msgid "No. Of Times Downloaded/Viewed"
+msgstr ""
+
+#: weko_admin/admin.py:305
+msgid "Non-Logged In User"
+msgstr ""
+
+#: weko_admin/admin.py:306
+msgid "Logged In User"
+msgstr ""
+
+#: weko_admin/admin.py:306
+msgid "Site License"
+msgstr ""
+
+#: weko_admin/admin.py:306
+msgid "Admin"
+msgstr ""
+
+#: weko_admin/admin.py:307
+msgid "Registrar"
+msgstr ""
+
+#: weko_admin/admin.py:362 weko_admin/admin.py:380 weko_admin/admin.py:389
+msgid "Setting"
+msgstr ""
+
+#: weko_admin/admin.py:363
+msgid "Style"
+msgstr ""
+
+#: weko_admin/admin.py:371
+msgid "Statistics"
+msgstr ""
+
+#: weko_admin/admin.py:372
+msgid "Report"
+msgstr ""
+
+#: weko_admin/admin.py:381
+#, fuzzy
+msgid "Language"
+msgstr "対象言語"
+
+#: weko_admin/admin.py:390
+msgid "WebAPI Account"
+msgstr ""
+
 #: weko_admin/ext.py:42
 msgid "A translation string"
 msgstr "翻訳文字列"
 
-#: weko_admin/views.py:70
+#: weko_admin/utils.py:250
+msgid "Input type is invalid. Please check again."
+msgstr ""
+
+#: weko_admin/utils.py:253 weko_admin/views.py:342 weko_admin/views.py:347
+msgid "Account information is invalid. Please check again."
+msgstr ""
+
+#: weko_admin/views.py:96
 #, python-format
 msgid "%(icon)s Session"
 msgstr "%(icon)s セッション"
 
-#: weko_admin/views.py:75
+#: weko_admin/views.py:102
 msgid "Session"
 msgstr "セッション"
 
-#: weko_admin/views.py:97
+#: weko_admin/views.py:126
 msgid "Session lifetime was updated."
 msgstr "セッションライフタイムは更新されました"
 
-#: weko_admin/views.py:101
+#: weko_admin/views.py:131
 msgid "15 mins"
 msgstr "15分"
 
-#: weko_admin/views.py:102
+#: weko_admin/views.py:132
 msgid "30 mins"
 msgstr "30分"
 
-#: weko_admin/views.py:103
+#: weko_admin/views.py:133
 msgid "45 mins"
 msgstr "45分"
 
-#: weko_admin/views.py:104
+#: weko_admin/views.py:134
 msgid "60 mins"
 msgstr "1時間"
 
-#: weko_admin/views.py:105
+#: weko_admin/views.py:135
 msgid "180 mins"
 msgstr "3時間"
 
-#: weko_admin/views.py:106
+#: weko_admin/views.py:136
 msgid "360 mins"
 msgstr "6時間"
 
-#: weko_admin/views.py:107
+#: weko_admin/views.py:137
 msgid "720 mins"
 msgstr "12時間"
 
-#: weko_admin/views.py:108
+#: weko_admin/views.py:138
 msgid "1440 mins"
 msgstr "1日"
+
+#: weko_admin/views.py:335
+msgid "Header Error"
+msgstr ""
 
 #: weko_admin/templates/weko_admin/index.html:25
 msgid "Welcome to"
 msgstr "ようこそ"
 
-#: weko_admin/templates/weko_admin/settings/lifetime.html:25
-msgid "Life Time"
-msgstr "ライフタイム"
-
-#: weko_admin/templates/weko_admin/settings/lifetime.html:37
-#: weko_admin/templates/weko_admin/settings/lifetime.html:44
-msgid "Set lifetime for"
-msgstr "セッションライフタイム: "
-
-#: weko_admin/templates/weko_admin/settings/lifetime.html:37
-msgid "Current"
-msgstr "現在値"
-
-#: weko_admin/templates/weko_admin/settings/lifetime.html:50
-msgid "Cancel"
-msgstr "キャンセル"
-
-#: weko_admin/templates/weko_admin/settings/lifetime.html:51
-msgid "Update"
-msgstr "アップデート"
-
-msgid "Title_Asc"
-msgstr "タイトル（昇順）"
-
-msgid "Title_Desc"
-msgstr "タイトル（降順）"
-
-msgid "Creator_Asc"
-msgstr "登録者（昇順）"
-
-msgid "Creator_Desc"
-msgstr "登録者（降順）"
-
-msgid "itemType_Desc"
-msgstr "アイテムタイプ（昇順）"
-
-msgid "itemType_Asc"
-msgstr "アイテムタイプ（降順）"
-
-msgid "ID_Asc"
-msgstr "ID（昇順）"
-
-msgid "ID_Desc"
-msgstr "ID（降順）"
-
-msgid "Update_Asc"
-msgstr "更新日時（昇順）"
-
-msgid "Update_Desc"
-msgstr "更新日時（降順）"
-
-msgid "Create_Asc"
-msgstr "作成日時（昇順）"
-
-msgid "Create_Desc"
-msgstr "作成日時（降順）"
-
-msgid "Date_of_Issued_Asc"
-msgstr "出版年（昇順）"
-
-msgid "Date_of_Issued_Desc"
-msgstr "出版年（降順）"
-
-msgid "Custom_Asc"
-msgstr "カスタム（昇順）"
-
-msgid "Custom_Desc"
-msgstr "カスタム（降順）"
-
+#: weko_admin/templates/weko_admin/search_management.html:45
 msgid "Search Results Setting"
 msgstr "検索結果表示設定"
 
+#: weko_admin/templates/weko_admin/search_management.html:56
 msgid "Default Display Number :"
 msgstr "デフォルト表示件数："
 
+#: weko_admin/templates/weko_admin/search_management.html:58
+msgid "[[opt_num.contents]]"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/search_management.html:70
 msgid "Default Display Sort (Index Search) :"
 msgstr "デフォルトソート条件（インデクス検索）："
 
+#: weko_admin/templates/weko_admin/search_management.html:72
+msgid "[[opt_index_sort.contents]]"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/search_management.html:84
 msgid "Default Display Sort (Keywords Search) :"
 msgstr "デフォルトソート条件（キーワード検索）："
 
+#: weko_admin/templates/weko_admin/search_management.html:86
+msgid "[[opt_keyword_sort.contents]]"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/search_management.html:97
 msgid "Please set the sort of search results ."
 msgstr "一覧に表示するソート条件を設定してください"
 
+#: weko_admin/templates/weko_admin/search_management.html:104
+#: weko_admin/templates/weko_admin/site_license.html:173
 msgid "Deny"
 msgstr "表示しない"
 
+#: weko_admin/templates/weko_admin/search_management.html:107
+msgid "[[opt_sort_deny.contents]]"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/search_management.html:124
+#: weko_admin/templates/weko_admin/site_license.html:168
 msgid "Allow"
 msgstr "表示する"
 
+#: weko_admin/templates/weko_admin/search_management.html:127
+msgid "[[opt_sort_allow.contents]]"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/search_management.html:145
 msgid "Detail Search Conditions Setting"
 msgstr "詳細検索条件設定"
 
+#: weko_admin/templates/weko_admin/search_management.html:154
 msgid "Search Item"
 msgstr "項目"
 
+#: weko_admin/templates/weko_admin/search_management.html:159
 msgid "Useable Item"
 msgstr "使用項目"
 
+#: weko_admin/templates/weko_admin/search_management.html:164
 msgid "Condition Name"
 msgstr "検索条件"
 
-msgid "Initial Condition"
-msgstr "初期選択"
-
+#: weko_admin/templates/weko_admin/search_management.html:169
 msgid "JPCOAR Mapping"
 msgstr "JPCOAR マッピング"
 
+#: weko_admin/templates/weko_admin/search_management.html:174
+msgid "Initial Condition"
+msgstr "初期選択"
+
+#: weko_admin/templates/weko_admin/search_management.html:188
+msgid "[[option_condition.contents]]"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:86
+#: weko_admin/templates/weko_admin/admin/block_style.html:128
+#: weko_admin/templates/weko_admin/admin/block_style.html:194
+#: weko_admin/templates/weko_admin/admin/lang_settings.html:71
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:55
+#: weko_admin/templates/weko_admin/search_management.html:215
+#: weko_admin/templates/weko_admin/site_license.html:207
 msgid "Save"
 msgstr "保存"
 
+#: weko_admin/templates/weko_admin/site_license.html:45
+msgid "Site License setting"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:51
+msgid ""
+"Please specify range of IP address which allow users can download "
+"contents without login."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:56
+#: weko_admin/templates/weko_admin/site_license.html:61
+#, fuzzy
+msgid "Organization Name"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:73
+msgid "Delete"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:79
+msgid "E-Mail Address"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:84
+msgid "Email Address"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:89
+#: weko_admin/templates/weko_admin/site_license.html:94
+msgid "Domain Name"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:99
+msgid "IP Address Range"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:100
+msgid "(from - to)"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:138
+msgid "Please input a correct number"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:139
+msgid "The range of ipAddress is not correct"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:145
+#: weko_admin/templates/weko_admin/site_license.html:156
+msgid "More Input Row"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/site_license.html:163
+msgid "Please specify item type to be excluded from the site license"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:90
+msgid "Color Setting"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:96
+msgid "Background1"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:100
+msgid "Background2"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:104
+msgid "Frame Border"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:108
+msgid "Header"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:112
+msgid "Footer"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:132
+#, fuzzy
+msgid "Header Setting"
+msgstr "検索結果表示設定"
+
+#: weko_admin/templates/weko_admin/admin/block_style.html:198
+msgid "Footer Setting"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/lang_settings.html:46
 msgid "Target language"
 msgstr "対象言語"
 
+#: weko_admin/templates/weko_admin/admin/lang_settings.html:55
 msgid "Registered language"
 msgstr "登録言語"
+
+#: weko_admin/templates/weko_admin/admin/report.html:49
+msgid "Number of items registered"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:56
+msgid "Total number of items registered:"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:64
+msgid "Number of open items registered:"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:72
+msgid "Number of private items registered:"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:82
+msgid "File Preview Report"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:89
+msgid "Aggregation month"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:97
+msgid "Type"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:100
+msgid "All"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:101
+msgid "File Downloads"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:102
+msgid "File Previews"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:106
+#: weko_admin/templates/weko_admin/admin/report.html:109
+msgid "Year"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:117
+#: weko_admin/templates/weko_admin/admin/report.html:120
+msgid "Month"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:121
+msgid "01"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:122
+msgid "02"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:123
+msgid "03"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:124
+msgid "04"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:125
+msgid "05"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:126
+msgid "06"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:127
+msgid "07"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:128
+msgid "08"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:129
+msgid "09"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:130
+msgid "10"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:131
+msgid "11"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:132
+msgid "12"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:140
+msgid "Download"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:150
+msgid "Error"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:153
+msgid "Could not download file."
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/report.html:158
+msgid "Close"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:37
+msgid "Input Type"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:40
+msgid "Please selected the input type"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/web_api_account.html:45
+msgid "CrossRef Query Services Account"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/settings/lifetime.html:30
+msgid "Life Time"
+msgstr "ライフタイム"
+
+#: weko_admin/templates/weko_admin/settings/lifetime.html:42
+#: weko_admin/templates/weko_admin/settings/lifetime.html:49
+msgid "Set lifetime for"
+msgstr "セッションライフタイム: "
+
+#: weko_admin/templates/weko_admin/settings/lifetime.html:42
+msgid "Current"
+msgstr "現在値"
+
+#: weko_admin/templates/weko_admin/settings/lifetime.html:55
+msgid "Cancel"
+msgstr "キャンセル"
+
+#: weko_admin/templates/weko_admin/settings/lifetime.html:58
+msgid "Update"
+msgstr "アップデート"
+
+#~ msgid "Title_Asc"
+#~ msgstr "タイトル（昇順）"
+
+#~ msgid "Title_Desc"
+#~ msgstr "タイトル（降順）"
+
+#~ msgid "Creator_Asc"
+#~ msgstr "登録者（昇順）"
+
+#~ msgid "Creator_Desc"
+#~ msgstr "登録者（降順）"
+
+#~ msgid "itemType_Desc"
+#~ msgstr "アイテムタイプ（昇順）"
+
+#~ msgid "itemType_Asc"
+#~ msgstr "アイテムタイプ（降順）"
+
+#~ msgid "ID_Asc"
+#~ msgstr "ID（昇順）"
+
+#~ msgid "ID_Desc"
+#~ msgstr "ID（降順）"
+
+#~ msgid "Update_Asc"
+#~ msgstr "更新日時（昇順）"
+
+#~ msgid "Update_Desc"
+#~ msgstr "更新日時（降順）"
+
+#~ msgid "Create_Asc"
+#~ msgstr "作成日時（昇順）"
+
+#~ msgid "Create_Desc"
+#~ msgstr "作成日時（降順）"
+
+#~ msgid "Date_of_Issued_Asc"
+#~ msgstr "出版年（昇順）"
+
+#~ msgid "Date_of_Issued_Desc"
+#~ msgstr "出版年（降順）"
+
+#~ msgid "Custom_Asc"
+#~ msgstr "カスタム（昇順）"
+
+#~ msgid "Custom_Desc"
+#~ msgstr "カスタム（降順）"
+
+#~ msgid "Organization name"
+#~ msgstr ""
+

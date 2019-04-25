@@ -279,8 +279,6 @@ function handleSharePermission(value) {
       $scope.filemeta_key = '';
       $scope.filemeta_form_idx = -1;
       $scope.is_item_owner = false;
-      $scope.itemTitle = "";
-      $scope.itemTitleID = "";
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_key.length > 0) {
           return $scope.filemeta_key;
@@ -661,8 +659,8 @@ function handleSharePermission(value) {
                         {
                           this.setValueToField(this.dictValue(sub_id, '@value'), this.getAutoFillValue(this.dictValue(sub_resultId, '@value')));
                           this.setValueToField(this.dictValue(sub_id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'xml:lang')));
-                          $scope.itemTitle = this.getAutoFillValue(this.dictValue(sub_resultId, '@value'));
-                          $scope.itemTitleID = this.dictValue(sub_id, '@value');
+                          $rootScope.recordsVM.invenioRecordsModel['title'] = this.getAutoFillValue(this.dictValue(sub_resultId, '@value'));
+                          $rootScope.recordsVM.invenioRecordsModel['lang'] = this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'xml:lang'));
                           break;
                         }
                         else
@@ -678,10 +676,11 @@ function handleSharePermission(value) {
                     if (resultId && resultId['@value']) {
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                      $scope.itemTitle = this.getAutoFillValue(this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                      $scope.itemTitleID = this.dictValue(id, '@value');
+                      $rootScope.recordsVM.invenioRecordsModel['title'] = this.getAutoFillValue(this.dictValue(resultId, '@value'));
+                      $rootScope.recordsVM.invenioRecordsModel['lang'] = this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang'));
                     } else {
                       this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
+                      $rootScope.recordsVM.invenioRecordsModel['title'] = this.getAutoFillValue(this.dictValue(resultId, '@value'));
                       this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
                     }
                   }
@@ -1127,12 +1126,69 @@ function handleSharePermission(value) {
         return result;
       }
 
+      $scope.genTitleAndPubDate = function() {
+        let itemTypeId = $("#autofill_item_type_id").val();
+        let get_url = '/api/autofill/get_title_pubdate_id/'+itemTypeId;
+        $.ajax({
+          url: get_url,
+          method: 'GET',
+          async: false,
+          success: (data, status) => {
+            let title = "";
+            let lang = "en";
+            let titleID = data.title;
+            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
+              let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
+              if (typeof(titleField) == 'array') {
+                titleField = titleField[0];
+                if (titleField[0].hasOwnProperty(titleID[1])){
+                  titleField = titleField[0];
+                }
+              }
+              if (titleField.hasOwnProperty(titleID[1])) {
+                title = titleField[titleID[1]];
+                if (titleField.hasOwnProperty(titleID[2]) && titleField[titleID[2]]) {
+                  lang = titleField[titleID[2]]
+                }
+              }
+            }
+            if (!$rootScope.recordsVM.invenioRecordsModel['title']){
+              $rootScope.recordsVM.invenioRecordsModel['title'] = title;
+              $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+            }else {
+              if (title != "") {
+                $rootScope.recordsVM.invenioRecordsModel['title'] = title;
+                $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+              }
+            }
+          },
+          error: function(data, status) {
+            alert('Cannot connect to server!');
+          }
+        });
+      }
+
       $scope.updateDataJson = async function () {
-        $rootScope.recordsVM.invenioRecordsModel['title'] = ($scope.itemTitleID) ? $('#'+$scope.itemTitleID).val() : $scope.itemTitle;
-        let next_frame = $('#next-frame').val();
-        if ($scope.is_item_owner) {
-          if (!this.registerUserPermission()) {
-            // Do nothing
+        this.genTitleAndPubDate();
+        if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
+          alert('Title is required! Please input title');
+        }else if (!$rootScope.recordsVM.invenioRecordsModel['pubdate']){
+          alert('PubDate is required! Please input pubDate');
+        }
+        else {
+          let next_frame = $('#next-frame').val();
+          if ($scope.is_item_owner) {
+            if (!this.registerUserPermission()) {
+              // Do nothing
+            } else {
+              var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
+              var indexOfLink = str.indexOf("authorLink");
+              if (indexOfLink != -1) {
+                str = str.split(',"authorLink":[]').join('');
+              }
+              $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
+              $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
+            }
           } else {
             var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
             var indexOfLink = str.indexOf("authorLink");
@@ -1142,14 +1198,6 @@ function handleSharePermission(value) {
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
-        } else {
-          var str = JSON.stringify($rootScope.recordsVM.invenioRecordsModel);
-          var indexOfLink = str.indexOf("authorLink");
-          if (indexOfLink != -1) {
-            str = str.split(',"authorLink":[]').join('');
-          }
-          $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
-          $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
