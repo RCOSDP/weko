@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-workflow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-23 16:12+0900\n"
+"POT-Creation-Date: 2019-04-25 15:48+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,7 +38,7 @@ msgstr ""
 msgid "Flow List"
 msgstr ""
 
-#: weko_workflow/api.py:894 weko_workflow/views.py:171
+#: weko_workflow/api.py:998 weko_workflow/views.py:171
 msgid "End"
 msgstr ""
 
@@ -166,11 +166,11 @@ msgstr ""
 
 #: weko_workflow/views.py:393 weko_workflow/views.py:400
 #: weko_workflow/views.py:404 weko_workflow/views.py:469
-#: weko_workflow/views.py:587
+#: weko_workflow/views.py:591
 msgid "success"
 msgstr ""
 
-#: weko_workflow/views.py:443 weko_workflow/views.py:558
+#: weko_workflow/views.py:443 weko_workflow/views.py:562
 msgid "error"
 msgstr ""
 

@@ -298,7 +298,7 @@ class RecordSchemaCSLJSON(Schema):
 
         for itemdata in itemdatas:
             textdata = [itemdata[val] for val in sorted(itemdata)]
-            issn = _get_relation_by_type(textdata, 'ISSN（非推奨）')
+            issn = _get_relation_by_type(textdata, 'ISSN')
             if issn is not None:
                 issn_data.append(issn[0])
 

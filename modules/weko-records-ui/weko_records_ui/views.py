@@ -175,12 +175,12 @@ def get_license_icon(type):
     :return:
     """
     lic_dict = {
-        'license_0': 'Creative Commons : 表示',
-        'license_1': 'Creative Commons : 表示 - 継承',
-        'license_2': 'Creative Commons : 表示 - 改変禁止',
-        'license_3': 'Creative Commons : 表示 - 非営利',
-        'license_4': 'Creative Commons : 表示 - 非営利 - 継承',
-        'license_5': 'Creative Commons : 表示 - 非営利 - 改変禁止',
+        'license_0': _('Creative Commons : Attribution'),
+        'license_1': _('Creative Commons : Attribution - ShareAlike'),
+        'license_2': _('Creative Commons : Attribution - NoDerivatives'),
+        'license_3': _('Creative Commons : Attribution - NonCommercial'),
+        'license_4': _('Creative Commons : Attribution - NonCommercial - ShareAlike'),
+        'license_5': _('Creative Commons : Attribution - NonCommercial - NoDerivatives'),
     }
 
     href_dict = {
@@ -190,8 +190,8 @@ def get_license_icon(type):
         'license_3': 'https://creativecommons.org/licenses/by-nc/4.0/deed.ja',
         'license_4': 'https://creativecommons.org/'
                      'licenses/by-nc-sa/4.0/deed.ja',
-        'license_5': 'https://creativecommons.org/l'
-                     'icenses/by-nc-nd/4.0/deed.ja',
+        'license_5': 'https://creativecommons.org/'
+                     'licenses/by-nc-nd/4.0/deed.ja',
     }
 
     if 'license_free' in type:

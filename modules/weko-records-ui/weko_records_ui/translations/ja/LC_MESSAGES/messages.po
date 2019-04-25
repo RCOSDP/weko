@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-23 16:23+0900\n"
+"POT-Creation-Date: 2019-04-25 15:42+0900\n"
 "PO-Revision-Date: 2018-01-22 15:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -85,123 +85,151 @@ msgstr ""
 msgid "Identifier"
 msgstr ""
 
+#: weko_records_ui/config.py:46
+msgid "write your own license"
+msgstr "自由入力"
+
+#: weko_records_ui/config.py:47 weko_records_ui/views.py:178
+msgid "Creative Commons : Attribution"
+msgstr "Creative Commons : 表示"
+
+#: weko_records_ui/config.py:48 weko_records_ui/views.py:179
+msgid "Creative Commons : Attribution - ShareAlike"
+msgstr "Creative Commons : 表示 - 継承"
+
+#: weko_records_ui/config.py:49 weko_records_ui/views.py:180
+msgid "Creative Commons : Attribution - NoDerivatives"
+msgstr "Creative Commons : 表示 - 改変禁止"
+
+#: weko_records_ui/config.py:50 weko_records_ui/views.py:181
+msgid "Creative Commons : Attribution - NonCommercial"
+msgstr "Creative Commons : 表示 - 非営利"
+
+#: weko_records_ui/config.py:51 weko_records_ui/views.py:182
+msgid "Creative Commons : Attribution - NonCommercial - ShareAlike"
+msgstr "Creative Commons : 表示 - 非営利 - 継承"
+
+#: weko_records_ui/config.py:52 weko_records_ui/views.py:183
+msgid "Creative Commons : Attribution - NonCommercial - NoDerivatives"
+msgstr "Creative Commons : 表示 - 非営利 - 改変禁止"
+
 #: weko_records_ui/views.py:479
 msgid "PDF cover page settings have been updated."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:30
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:34
 msgid "Index"
 msgstr "インデックス"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:58
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:28
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:60
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:29
 msgid "Item"
 msgstr "アイテム"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:61
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:30
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:63
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:32
 msgid "No title"
 msgstr "タイトルなし"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:74
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:85
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:48
 msgid "Name"
 msgstr "名前"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:74
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:48
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:85
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:53
 msgid "File"
 msgstr "ファイル"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:75
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:49
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:86
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:54
 msgid "License"
 msgstr "ライセンス"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:87
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:98
 msgid "Detail"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:115
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:127
 msgid "Restricted Access"
 msgstr "アクセス制限"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:124
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:72
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:136
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:77
 msgid "Original"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:135
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:147
 msgid "Plagiarism Check"
 msgstr "剽窃チェック"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:148
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:172
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:161
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:188
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:34
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:61
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:109
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:134
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:114
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:139
 msgid "Preview"
 msgstr "プレビュー"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:208
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:226
 msgid "item type"
 msgstr "アイテムタイプ"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:268
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:289
 msgid "Link"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:278
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:299
 msgid "Publish Status"
 msgstr "公開ステータス"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:293
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:312
 msgid "Public"
 msgstr "公開"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:296
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:314
 msgid "Change to Private"
-msgstr ""
+msgstr "非公開に変更"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:299
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:305
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:317
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:323
 msgid "Private"
 msgstr "非公開"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:301
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:319
 msgid "Change to Public"
-msgstr ""
+msgstr "公開に変更"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:305
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:323
 msgid "Publish"
 msgstr "公開"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:325
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:343
 msgid "Back"
 msgstr "戻る"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:329
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:347
 msgid "Edit"
 msgstr "編集"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:334
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:352
 msgid "Delete"
 msgstr "削除"
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:341
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:359
 msgid "Confirm"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:344
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:362
 msgid "Are you sure you want to delete this item?"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:347
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:365
 msgid "OK"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:348
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:366
 msgid "Cancel"
 msgstr ""
 
@@ -354,8 +382,8 @@ msgstr ""
 msgid "Loading..."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:56
-#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:88
+#: weko_records_ui/templates/weko_records_ui/admin/institution_name_setting.html:57
+#: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:89
 #: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:243
 msgid "Update"
 msgstr "アップデート"
@@ -370,60 +398,60 @@ msgstr ""
 msgid "Export"
 msgstr "エクスポート"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:96
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:101
 msgid "Plagarism Check"
 msgstr "剽窃チェック"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:172
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:189
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:177
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:194
 msgid "Version"
 msgstr "バージョン"
 
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:4
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:173
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:178
 msgid "Stats"
 msgstr "統計"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:181
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:195
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:186
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
 msgid "Show"
 msgstr "表示"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:182
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:195
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:187
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
 msgid "Hide"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:190
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:195
 msgid "Date Modified"
 msgstr "更新日時"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:191
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:196
 msgid "Object File Name"
 msgstr "オブジェクトファイル名"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:192
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:197
 msgid "File Size"
 msgstr "ファイル容量"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:193
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:198
 msgid "File Hash Value"
 msgstr "ファイルハッシュ値"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:194
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:199
 msgid "Contributor Name"
 msgstr "登録ユーザ名"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:215
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:220
 msgid "Downloads"
 msgstr "ダウンロード数"
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:223
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:228
 msgid "Plays"
 msgstr "再生数"
 
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:22
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:233
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:238
 msgid "See details"
 msgstr "詳細を見る"
 
