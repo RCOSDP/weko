@@ -205,7 +205,7 @@ var SchemaCheckboxes = React.createClass({
 			React.createElement(
 				'div',
 				{ className: 'col-md-10 col-lg-10' },
-				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: '\u9078\u629E\u80A2\u3092\u300C|\u300D\u533A\u5207\u308A\u3067\u5165\u529B\u3057\u3066\u4E0B\u3055\u3044' })
+				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: 'Separate options with the | character ' })
 			)
 		);
 	}
@@ -263,7 +263,7 @@ var SchemaRadios = React.createClass({
 			React.createElement(
 				'div',
 				{ className: 'col-md-10 col-lg-10' },
-				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: '\u9078\u629E\u80A2\u3092\u300C|\u300D\u533A\u5207\u308A\u3067\u5165\u529B\u3057\u3066\u4E0B\u3055\u3044' })
+				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: 'Separate options with the | character ' })
 			)
 		);
 	}
@@ -321,7 +321,7 @@ var SchemaSelect = React.createClass({
 			React.createElement(
 				'div',
 				{ className: 'col-md-10 col-lg-10' },
-				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: '\u9078\u629E\u80A2\u3092\u300C|\u300D\u533A\u5207\u308A\u3067\u5165\u529B\u3057\u3066\u4E0B\u3055\u3044' })
+				React.createElement('input', { type: 'text', name: 'titlemap', className: 'form-control', onChange: self.handleChange, value: self.state.enum, placeholder: 'Separate options with the | character ' })
 			)
 		);
 	}
