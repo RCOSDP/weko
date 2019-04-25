@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-user-profiles 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2018-04-11 19:56+0900\n"
+"POT-Creation-Date: 2019-04-25 19:04+0900\n"
 "PO-Revision-Date: 2018-04-12 10:55+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -214,9 +214,7 @@ msgstr ""
 msgid ""
 "Username must start with a letter, be at least three characters long and "
 "only contain alphanumeric characters, dashes and underscores."
-msgstr ""
-"ユーザーネームは最低3文字であり"
-"英数字、ハイフン、アンダースコアを含む。"
+msgstr "ユーザーネームは最低3文字であり英数字、ハイフン、アンダースコアを含む。"
 
 #. NOTE: Menu item text (icon replaced by a user icon).
 #: weko_user_profiles/views.py:93
@@ -224,7 +222,6 @@ msgstr ""
 msgid "%(icon)s Profile"
 msgstr "%(icon)s プロフィール"
 
-#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:24
 #: weko_user_profiles/views.py:96
 msgid "Profile"
 msgstr "プロフィール"
@@ -240,24 +237,19 @@ msgstr "確認メールを送信しました。"
 msgid ""
 "Profile was updated. We have sent a verification email to %(email)s. "
 "Please check it."
-msgstr ""
-"プロフィールを更新しました。我々は %(email)s に確認メールを送信しました。"
-"どうぞ、それをチェックしてください。"
+msgstr "プロフィールを更新しました。我々は %(email)s に確認メールを送信しました。どうぞ、それをチェックしてください。"
 
 #. NOTE: Flash message after successful update of profile.
 #: weko_user_profiles/views.py:178
 msgid "Profile was updated."
 msgstr "プロフィールを更新しました。"
 
-#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:32
-msgid "You have not yet verified your email address."
-msgstr "あなたはまだあなたのメールアドレスを確認していません。"
+#~ msgid "You have not yet verified your email address."
+#~ msgstr "あなたはまだあなたのメールアドレスを確認していません。"
 
-#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:47
-msgid "Cancel"
-msgstr "キャンセル"
+#~ msgid "Cancel"
+#~ msgstr "キャンセル"
 
-#: weko_user_profiles/templates/weko_user_profiles/settings/profile.html:48
-msgid "Update profile"
-msgstr "プロフィールを更新"
+#~ msgid "Update profile"
+#~ msgstr "プロフィールを更新"
 
