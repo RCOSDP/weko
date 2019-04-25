@@ -1,3 +1,6 @@
+/**
+ * Repository combo box.
+ */
 class Repository extends React.Component {
     constructor(props) {
         super(props);
@@ -38,7 +41,8 @@ class Repository extends React.Component {
     }
 
     handleChange(event) {
-        let url = "/api/admin/load_widget_design_setting/" + event.target.value;
+        let repositoryId = event.target.value;
+        let url = "/api/admin/load_widget_design_setting/" + repositoryId;
         fetch(url)
             .then(res => res.json())
             .then(
@@ -55,9 +59,10 @@ class Repository extends React.Component {
                 }
             );
 
+        disableButton(repositoryId);
 
-        this.setState({ repositoryId: event.target.value });
-        this.props.callbackMainLayout(event.target.value);
+        this.setState({ repositoryId: repositoryId });
+        this.props.callbackMainLayout(repositoryId);
         event.preventDefault();
     }
 
@@ -67,7 +72,7 @@ class Repository extends React.Component {
                 <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
                 <div class="controls col-xs-5">
                     <select id="repository-id" value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
-                        <option value="0">Please selected the Repository</option>
+                        <option value="0">Please select the Repository</option>
                         {this.state.selectOptions}
                     </select>
                 </div>
@@ -77,12 +82,16 @@ class Repository extends React.Component {
 
 }
 
+/**
+ * Widget list panel layout.
+ */
 class WidgetList extends React.Component {
     constructor(props) {
         super(props);
         this.style = {
             "border": "1px solid #eee",
             "min-height": "300px",
+            "max-height": "calc(100vh - 300px)",
             "overflow": "scroll",
             "overflow-x": "hidden",
             "margin-right": "0px"
@@ -121,7 +130,6 @@ class WidgetList extends React.Component {
                     let widgetList = result['widget-list'];
                     loadWidgetList(widgetList);
                 },
-
                 (error) => {
                     console.log(error);
                 }
@@ -146,13 +154,15 @@ class WidgetList extends React.Component {
     }
 }
 
+/**
+ * Preview widget panel layout.
+ */
 class PreviewWidget extends React.Component {
     constructor(props) {
         super(props);
         this.style = {
             "border": "1px solid #eee",
-            "min-height": "200px",
-            "height": "80%"
+            "min-height": "300px",
         };
     }
 
@@ -168,7 +178,6 @@ class PreviewWidget extends React.Component {
                     let widgetList = result['widget-settings'];
                     loadWidgetPreview(widgetList);
                 },
-
                 (error) => {
                     console.log(error);
                 }
@@ -188,6 +197,9 @@ class PreviewWidget extends React.Component {
 
 }
 
+/**
+ * Button layout.
+ */
 class ButtonLayout extends React.Component {
     constructor(props) {
         super(props);
@@ -201,7 +213,7 @@ class ButtonLayout extends React.Component {
     }
 
     handleSave() {
-        loadPreview.saveGrid();
+        PreviewGrid.saveGrid();
     }
 
     handleCancel() {
@@ -217,7 +229,6 @@ class ButtonLayout extends React.Component {
                     let widgetList = result['widget-settings'];
                     loadWidgetPreview(widgetList);
                 },
-
                 (error) => {
                     console.log(error);
                 }
@@ -227,13 +238,16 @@ class ButtonLayout extends React.Component {
     render() {
         return (
             <div className="form-group col-xs-10">
-                <button id="save-grid" className="btn btn-primary" style={this.style} onClick={this.handleSave}>Save</button>
-                <button id="clear-grid" className="form-group btn btn-danger" onClick={this.handleCancel}>Cancel</button>
+                <button id="save-grid" className="btn btn-primary" style={this.style} onClick={this.handleSave} >Save</button>
+                <button id="clear-grid" className="form-group btn btn-danger" onClick={this.handleCancel} >Cancel</button>
             </div>
         )
     }
 }
 
+/**
+ * Main layout.
+ */
 class MainLayout extends React.Component {
     constructor(props) {
         super(props);
@@ -272,9 +286,9 @@ class MainLayout extends React.Component {
 
 
 /**
- *
+ *Preview grid.
  */
-var loadPreview = new function () {
+var PreviewGrid = new function () {
     this.init = function () {
         var options = {
             width: 12,
@@ -299,7 +313,7 @@ var loadPreview = new function () {
         var items = GridStackUI.Utils.sort(widgetListItems);
         _.each(items, function (node) {
             this.grid.addWidget($(
-                '<div data-name="' + node.name + '" data-id="' + node.id + '">'
+                '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '">'
                 + '<div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
                 + '<div class="grid-stack-item-content">'
                 + '<span class="widget-label">&lt;' + node.type + '&gt;</span>'
@@ -334,38 +348,8 @@ var loadPreview = new function () {
         var filtered = this.serializedData.filter(function (el) {
             return el != null;
         });
-        let saveData = JSON.stringify(filtered);
-        if (saveData && Object.keys(filtered).length) {
-            let postData = {
-                'repository_id': $("#repository-id").val(),
-                'settings': saveData
-            };
-            $.ajax({
-                url: "/api/admin/save_widget_layout_setting",
-                type: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify(postData),
-                dataType: 'json',
-                success: function (data, status) {
-                    let err_msg = data.error;
-                    if (err_msg) {
-                        alert(err_msg);
-                    } else if (!data.result) {
-                        alert('Fail to save Widget design. Please check again.');
-                    } else {
-                        alert('Widget design has been saved successfully.');
-                    }
-                },
-                error: function (error) {
-                    console.log(error);
-                }
-            });
-        } else {
-            alert('Please add Widget to Preview panel.');
-            return;
-        }
+
+        saveWidgetDesignSetting(filtered);
 
         return false;
     }.bind(this);
@@ -389,13 +373,16 @@ var loadPreview = new function () {
     }.bind(this);
 
     this.deleteWidget = function (item) {
-        this.grid.removeWidget(item);
+        try {
+            this.grid.removeWidget(item);
+        } catch (err) {
+        }
         return false;
     };
 }
 
 /**
- * Add widget
+ * Add widget from List panel to Preview panel.
  */
 function addWidget() {
     $('.add-new-widget').each(function () {
@@ -414,7 +401,7 @@ function addWidget() {
                 id: widgetId,
                 type: widgetType
             };
-            loadPreview.addNewWidget(node);
+            PreviewGrid.addNewWidget(node);
             removeWidget();
         });
     });
@@ -455,7 +442,6 @@ function loadWidgetList(widgetListItems) {
         x++;
         y++;
     }, this);
-
     addWidget();
 }
 
@@ -464,8 +450,8 @@ function loadWidgetList(widgetListItems) {
  * @param {*} widgetListItems
  */
 function loadWidgetPreview(widgetListItems) {
-    loadPreview.init();
-    loadPreview.loadGrid(widgetListItems);
+    PreviewGrid.init();
+    PreviewGrid.loadGrid(widgetListItems);
     removeWidget();
 }
 
@@ -473,12 +459,9 @@ function loadWidgetPreview(widgetListItems) {
  * Remove widget on Preview panel
  */
 function removeWidget() {
-    $('.glyphicon-remove').each(function () {
-        var $this = $(this);
-        $this.on("click", function () {
-            let widget = $this.closest(".grid-stack-item");
-            loadPreview.deleteWidget(widget);
-        });
+    $('.glyphicon-remove').on("click", function (e) {
+        let widget = $(this).closest(".grid-stack-item");
+        PreviewGrid.deleteWidget(widget);
     });
 }
 
@@ -487,4 +470,71 @@ $(function () {
         <MainLayout />,
         document.getElementById('root')
     );
+    disableButton("0");
 });
+
+/**
+ * Handle disable Save and Cancel button.
+ * @param {*} repositoryId
+ */
+function disableButton(repositoryId) {
+    if (repositoryId == "0") {
+        $("#save-grid").attr("disabled", true);
+        $("#clear-grid").attr("disabled", true);
+    } else {
+        $("#save-grid").attr("disabled", false);
+        $("#clear-grid").attr("disabled", false);
+    }
+}
+
+/**
+ * Save widget design setting.
+ * @param {*} widgetDesignData
+ */
+function saveWidgetDesignSetting(widgetDesignData) {
+    let repositoryId = $("#repository-id").val();
+    if (repositoryId == "0") {
+        alert('Please select the Repository.');
+        return;
+    }
+
+    if (!widgetDesignData) {
+        alert('Please add Widget to Preview panel.');
+        return;
+    }
+
+    let saveData = JSON.stringify(widgetDesignData);
+    if (saveData && Object.keys(widgetDesignData).length) {
+        let postData = {
+            'repository_id': repositoryId,
+            'settings': saveData
+        };
+        $.ajax({
+            url: "/api/admin/save_widget_layout_setting",
+            type: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(postData),
+            dataType: 'json',
+            success: function (data, status) {
+                let err_msg = data.error;
+                if (err_msg) {
+                    alert(err_msg);
+                } else if (!data.result) {
+                    alert('Fail to save Widget design. Please check again.');
+                    return;
+                } else {
+                    alert('Widget design has been saved successfully.');
+                    return;
+                }
+            },
+            error: function (error) {
+                console.log(error);
+            }
+        });
+    } else {
+        alert('Please add Widget to Preview panel.');
+        return;
+    }
+}
