@@ -20,6 +20,11 @@
 #}
 {%- extends admin_base_template %}
 
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
 {%- block body %}
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
@@ -77,10 +82,13 @@
     </div>
   </div>
   <div class="form-actions">
-    <button type="submit" name="submit" value="set_search_author_form" class="btn btn-primary" style="width: 120px; height: 40px;font-size: 15px;">
+   <div class="col-sm-offset-3 col-sm-10">
+    <button type="submit" name="submit" value="set_search_author_form"
+        class="btn btn-primary update-button ten-pixel-margin">
       <i class="fa fa-edit"></i>
          {{ _('Update') }}
     </button>
+   </div>
   </div>
 </form>
 {%- endblock body %}

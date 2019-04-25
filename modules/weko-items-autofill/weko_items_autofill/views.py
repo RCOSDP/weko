@@ -12,11 +12,12 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from weko_admin.utils import get_current_api_certification
 
 from .permissions import auto_fill_permission
 from .utils import get_cinii_data, get_crossref_data, get_item_id, \
-    parse_cinii_json_response, parse_crossref_json_response
-from weko_admin.utils import get_current_api_certification
+    get_title_pubdate_path, parse_cinii_json_response, \
+    parse_crossref_json_response
 
 blueprint = Blueprint(
     "weko_items_autofill",
@@ -98,4 +99,16 @@ def get_selection_option():
     result = {
         'options': options
     }
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_title_pubdate_id/<int:item_type_id>',
+                     methods=['GET'])
+def get_title_pubdate_id(item_type_id=0):
+    """Get title and pubdate id.
+
+    :param item_type_id:
+    :return: result json
+    """
+    result = get_title_pubdate_path(item_type_id)
     return jsonify(result)

@@ -20,7 +20,10 @@
 
 """Configuration for weko-records-ui."""
 import os
+
+from flask_babelex import gettext as _
 from invenio_records_rest.utils import allow_all
+
 from .views import blueprint
 
 WEKO_RECORDS_UI_DETAIL_TEMPLATE = 'weko_records_ui/detail.html'
@@ -40,13 +43,13 @@ WEKO_RECORDS_UI_BULK_UPDATE_FIELDS = {
     'fields': [{'id': '1', 'name': 'Access Type'},
                {'id': '2', 'name': 'Licence'}],
 
-    'licences': [{'id': 'license_free', 'name': '自由入力'},
-                 {'id': 'license_0', 'name': 'Creative Commons : 表示'},
-                 {'id': 'license_1', 'name': 'Creative Commons : 表示 - 継承'},
-                 {'id': 'license_2', 'name': 'Creative Commons : 表示 - 改変禁止'},
-                 {'id': 'license_3', 'name': 'Creative Commons : 表示 - 非営利'},
-                 {'id': 'license_4', 'name': 'Creative Commons : 表示 - 非営利 - 継承'},
-                 {'id': 'license_5', 'name': 'Creative Commons : 表示 - 非営利 - 改変禁止'}]
+    'licences': [{'id': 'license_free', 'name': _('write your own license')},
+                 {'id': 'license_0', 'name': _('Creative Commons : Attribution')},
+                 {'id': 'license_1', 'name': _('Creative Commons : Attribution - ShareAlike')},
+                 {'id': 'license_2', 'name': _('Creative Commons : Attribution - NoDerivatives')},
+                 {'id': 'license_3', 'name': _('Creative Commons : Attribution - NonCommercial')},
+                 {'id': 'license_4', 'name': _('Creative Commons : Attribution - NonCommercial - ShareAlike')},
+                 {'id': 'license_5', 'name': _('Creative Commons : Attribution - NonCommercial - NoDerivatives')}]
 }
 
 ADMIN_SET_ITEM_TEMPLATE = 'weko_records_ui/admin/item_setting.html'
@@ -259,4 +262,3 @@ JPAEXM_TTF_FILEPATH = blueprint.root_path + "/fonts/ipaexm00201/ipaexm.ttf"
 PDF_COVERPAGE_LANG_FILEPATH = blueprint.root_path + "/translations/"
 
 PDF_COVERPAGE_LANG_FILENAME = "/pdf_coverpage.json"
-

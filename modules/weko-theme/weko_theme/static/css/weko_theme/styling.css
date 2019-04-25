@@ -1,0 +1,268 @@
+.back-button {
+  width: 80px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.next-button {
+  width: 80px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.save-button {
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.save-flow-button {
+  width: 150px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.delete-button {
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.detail-search-button {
+  width: 150px;
+  height: 40px;
+  font-size:15px;
+}
+
+.search-button {
+  width: 120px;
+  height: 40px;
+  font-size:15px;
+}
+
+.add-search-button{
+  background-color    :#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 200px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.clear-button {
+  width: 100px;
+  height: 40px;
+  font-size:15px;
+}
+
+.cancel-button {
+  width: 100px;
+  height: 40px;
+  font-size:15px;
+}
+
+.close-button {
+  width: 100px;
+  height: 40px;
+  font-size:15px;
+}
+
+.add-button {
+  background-color:#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 100px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.add-big-button {
+  background-color:#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 150px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.create-button {
+  background-color:#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.create-big-button {
+  background-color:#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 150px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.more-button {
+  background-color:#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.more-big-button {
+  background-color:#008000;
+  border-color: #9ACD32;
+  color: white;
+  width: 150px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.preview-button {
+  width: 150px;
+  height: 40px;
+  font-size:15px;
+}
+
+.done-button {
+  width: 80px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.action-button {
+  width: 120px;
+  height: 40px;
+  font-size:15px;
+}
+
+.action-big-button {
+  width: 150px;
+  height: 40px;
+  font-size:15px
+}
+
+.automatic-metadata-input-button {
+  width: 250px;
+   height: 40px;
+  font-size:15px;
+}
+
+.ok-button {
+  width: 70px;
+  height: 40px;
+  font-size:15px
+}
+
+.edit-button {
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.update-button {
+  width: 130px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.update-profile-button {
+  width: 150px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.send-button{
+  background-color: #32CD32;
+  border-color: #808000;
+  color: white;
+  width: 120px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.sighup-button {
+   width: 130px;
+   height: 40px;
+   font-size: 15px;
+ }
+
+.logout-button {
+  width: 130px;
+  height: 40px;
+  font-size: 15px;
+}
+
+.login-button {
+   width: 130px;
+   height: 40px;
+   font-size: 15px;
+}
+
+.mapping-button {
+  width: 150px;
+  height: 40px;
+  font-size:15px
+}
+.detail-button {
+   width: 120px;
+   height: 40px;
+   font-size:15px;
+}
+
+.property-button {
+  width: 150px;
+  height: 40px;
+  font-size:15px
+}
+
+.ten-pixel-margin {
+ margin: 10px;
+}
+
+.ten-pixel-bottom-margin {
+ margin-bottom: 10px;
+}
+
+.ten-pixel-right-margin {
+  margin-right: 10px;
+}
+
+.ten-pixel-left-margin {
+  margin-left: 10px;
+}
+
+.ten-pixel-top-margin {
+ margin-top: 10px;
+}
+
+.five-pixel-margin {
+  margin: 5px;
+}
+
+.five-pixel-right-margin {
+  margin-right: 5px;
+}
+
+.ten-pixel-bottom-margin {
+  margin-bottom: 10px;
+}
+
+.twentyfive-pixel-bottom-margin {
+  margin-bottom: 25px;
+}
+
+.twentyeight-pixel-right-margin {
+  margin-right: 28px;
+}
+
+.detail-lable {
+ text-align: center;
+}
+
+.gray-color-class {
+  border-color: #D3D3D3;
+}

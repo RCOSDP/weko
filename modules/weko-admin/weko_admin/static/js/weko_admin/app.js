@@ -142,7 +142,7 @@
      angular.module('siteLicenseModule', ['siteLicense.controllers']).config(['$interpolateProvider', function($interpolateProvider) {
       $interpolateProvider.startSymbol('[[');
       $interpolateProvider.endSymbol(']]');
-　　}]);
+    }]);
 
     angular.bootstrap(
       document.getElementById('siteLicense'), ['siteLicenseModule']);

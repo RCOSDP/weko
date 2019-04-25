@@ -58,7 +58,7 @@
                   <td class="width_50">
                     <input type="text" class="form-control" size="50" name="organization_name"
                                                                       ng-model="ipDetail.organization_name"
-                                                                      placeholder="{{_('Organization name')}}">
+                                                                      placeholder="{{_('Organization Name')}}">
                   </td>
                   <td rowspan="4" class="width_15 btnMiddle">
                     <button type="button" class="btn btn-default" ng-click="moveSiteLicenseUp($index)" ><span class="glyphicon glyphicon-arrow-up"></span>
@@ -68,7 +68,7 @@
                     </button>
                   </td>
                   <td rowspan="4" class="width_15 btnMiddle">
-                    <button type="button" class="btn btn-danger" style="width: 120px; height: 40px;font-size: 15px;" ng-click="deleteSiteLicense(ipIndex)">
+                    <button type="button" class="btn btn-danger delete-button" ng-click="deleteSiteLicense(ipIndex)">
                          <span class="glyphicon glyphicon-trash"></span>
                                {{_('Delete')}}
                     </button>
@@ -202,7 +202,7 @@
       </table>
     </form>
     <div class="form-group">
-      <button type="button" class="btn btn-primary pull-right" ng-click="commitData()" style="width: 120px; height: 40px;font-size: 15px;">
+      <button type="button" class="btn btn-primary pull-right save-button" ng-click="commitData()">
         <span class="glyphicon glyphicon-download-alt"></span>
         {{_('Save')}}
       </button>
