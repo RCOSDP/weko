@@ -39,7 +39,7 @@ from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_response_json, get_search_setting, \
     get_selected_language, save_api_certification, update_admin_lang_setting, \
-    validate_certification, get_initial_stats_report
+    validate_certification, get_initial_stats_report, get_unit_stats_report
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -350,11 +350,16 @@ def save_api_cert_data():
     return jsonify(result)
 
 
-@blueprint_api.route('/get_init_selection', methods=['GET'])
-def get_init_selection():
+@blueprint_api.route('/get_init_selection/<string:selection>', methods=['GET'])
+def get_init_selection(selection=""):
     result = dict()
     try:
-        result = get_initial_stats_report()
+        if selection == 'target':
+            result = get_initial_stats_report()
+        elif selection == "":
+            raise ValueError("Request URL is incorrectly")
+        else:
+            result = get_unit_stats_report(selection)
     except Exception as e:
         result['error'] = str(e)
 
