@@ -292,5 +292,5 @@ ${INVENIO_WEB_INSTANCE} report create_unit \
 ${INVENIO_WEB_INSTANCE} report create_unit \
        "4" "Host"
 ${INVENIO_WEB_INSTANCE} report create_target \
-       "1" "Item registration report"
+       "1" "Item registration report" "1,2,3,4"
 # sphinxdoc-set-report-unit-and-target-end

@@ -129,11 +129,12 @@ def save_report_unit(unit_id, unit_name):
 @report.command('create_target')
 @click.argument('target_id')
 @click.argument('target_name')
+@click.argument('target_unit')
 @with_appcontext
-def save_report_target(target_id, target_name):
+def save_report_target(target_id, target_name, target_unit):
     """Add data for Statics report unit."""
     try:
-        StatisticTarget.create(target_id, target_name)
+        StatisticTarget.create(target_id, target_name, target_unit)
         click.secho('insert report target success')
     except Exception as e:
         click.secho(str(e))
