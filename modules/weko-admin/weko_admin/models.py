@@ -559,6 +559,8 @@ class StatisticTarget(db.Model):
 
     target_name = db.Column(db.String(255), nullable=False)
 
+    target_unit = db.Column(db.String(100), nullable=True)
+
     @classmethod
     def get_all_stats_report_target(cls):
         """Get all stats report target.
@@ -571,11 +573,22 @@ class StatisticTarget(db.Model):
             data = dict()
             data['id'] = res.target_id
             data['data'] = res.target_name
+            data['unit'] = res.target_unit
             result.append(data)
         return result
 
     @classmethod
-    def create(cls, target_id, target_name):
+    def get_target_by_id(cls, target_id):
+        """ Get target by ID.
+
+        :param target_id: the target ID
+        :return: the target
+        """
+        query_result = cls.query.filter_by(target_id=target_id).one_or_none()
+        return query_result
+
+    @classmethod
+    def create(cls, target_id, target_name, target_unit):
         """Create new target.
 
         :param target_id: The target ID
@@ -587,6 +600,7 @@ class StatisticTarget(db.Model):
             with db.session.begin_nested():
                 dataObj.target_id = target_id
                 dataObj.target_name = target_name
+                dataObj.target_unit = target_unit
                 db.session.add(dataObj)
             db.session.commit()
         except BaseException as ex:
