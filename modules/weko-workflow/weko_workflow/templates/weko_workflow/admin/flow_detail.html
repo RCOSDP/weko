@@ -160,9 +160,15 @@
               <td class="hide"><span id="td_action_date_{{action.action_id}}">{{action.action_date.date()}}</span></td>
               <td class="hide"><span id="td_action_ver_{{action.action_id}}">{{action.action_version|default(action.action.action_version)}}</span></td>
               <td>
-                <div class="btn-group" role="group" aria-label="入替">
-                  <button type="button" class="btn btn-default sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>↑</button>
-                  <button type="button" class="btn btn-default sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>↓</button>
+                <div class="btn-group" role="group" aria-label="Swap">
+                 <!-- <button type="button" class="btn btn-default sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>↑</button>
+                  <button type="button" class="btn btn-default sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>↓</button>-->
+                 <button type="button" class="btn btn-default icon-button sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>
+                        <i class="fa fa-angle-up"></i>
+                 </button><br/><br/>
+                 <button type="button" class="btn btn-default icon-button sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>
+                        <i class="fa fa-angle-down"></i>
+                 </button>
                 </div>
               </td>
             </tr>
@@ -437,9 +443,13 @@
               +'<td class="hide"><span id="td_action_ver_'+apply_action.id+'">'
                 +apply_action.version+'</span></td>'
               +'<td>'
-                +'<div class="btn-group" role="group" aria-label="入替">'
-                  +'<button type="button" class="btn btn-default sortable sortable_up">↑</button>'
-                  +'<button type="button" class="btn btn-default sortable sortable_down">↓</button>'
+                +'<div class="btn-group" role="group" aria-label="Swap">'
+                  +'<button type="button" class="btn btn-default icon-button sortable sortable_up">'
+                      +'<i class="fa fa-angle-up"></i>'
+                   +'</button><br/><br/>'
+                  +'<button type="button" class="btn btn-default icon-button sortable sortable_down">'
+                      +'<i class="fa fa-angle-down"></i>'
+                  +'</button>'
                 +'</div>'
               +'</td>'
             +'</tr>';
