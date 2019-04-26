@@ -33,7 +33,7 @@ def get_repository_list():
     :return: Repository list.
     """
     result = {
-        "repositories": [],
+        "repositories": [{"id": "Root Index", "title": ""}],
         "error": ""
     }
     try:

@@ -24,11 +24,12 @@ class ComponentSelectField extends React.Component {
                             )
                       });
                     } else {
+                        options =[];
                         options = result.repositories.map((repository) => {
                             return (
-                                <option key={repository.id} value={repository.id}>{repository.title}</option>
+                                <option key={repository.id} value={repository.id}>{repository.id}</option>
                             )
-                      });
+                        });
                     }
                   this.setState({
                       selectOptions: options,
