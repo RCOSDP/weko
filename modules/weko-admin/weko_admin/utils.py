@@ -290,12 +290,35 @@ def get_initial_stats_report():
     """
     result = {
         'target': '',
-        'unit': ''
     }
 
-    target = StatisticTarget.get_all_stats_report_target()
-    result['target'] = target
-    unit = StatisticUnit.get_all_stats_report_unit()
-    result['unit'] = unit
+    targets = StatisticTarget.get_all_stats_report_target()
+    match_target = list()
+    for target in targets:
+        temp_target = dict()
+        temp_target['id'] = target['id']
+        temp_target['data'] = target['data']
+        match_target.append(temp_target)
+    result['target'] = match_target
 
+    return result
+
+
+def get_unit_stats_report(target_id):
+    result = {
+        'unit': '',
+    }
+
+    target = StatisticTarget.get_target_by_id(target_id)
+    target_units = target.target_unit
+    units = StatisticUnit.get_all_stats_report_unit()
+
+    list_unit = list()
+    for unit in units:
+        try:
+            if target_units.index(unit['id']):
+                list_unit.append(unit)
+        except Exception:
+            pass
+    result['unit'] = list_unit
     return result
