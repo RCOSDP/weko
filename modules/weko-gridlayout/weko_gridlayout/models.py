@@ -78,7 +78,7 @@ class WidgetItem(db.Model):
 
     __tablename__ = 'widget_items'
 
-    repository_id = db.Column(db.String(100), db.ForeignKey(Community.id),
+    repository_id = db.Column(db.String(100), 
                               nullable=False, primary_key=True)
 
     widget_type = db.Column(db.String(100), db.ForeignKey(WidgetType.type_id),
@@ -105,10 +105,6 @@ class WidgetItem(db.Model):
     #
     # Relations
     #
-
-    comunity = db.relationship(Community, backref=db.backref(
-        'types'))
-    """Comunity relaionship."""
 
     widgettype = db.relationship(WidgetType, backref=db.backref(
         'repositories', cascade='all, delete-orphan'))
@@ -154,7 +150,7 @@ class WidgetDesignSetting(db.Model):
 
     __tablename__ = 'widget_design_setting'
 
-    repository_id = db.Column(db.String(100), db.ForeignKey(Community.id),
+    repository_id = db.Column(db.String(100),
                               nullable=False, primary_key=True)
 
     settings = db.Column(
