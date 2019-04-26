@@ -316,7 +316,7 @@ def get_unit_stats_report(target_id):
     list_unit = list()
     for unit in units:
         try:
-            if target_units.index(unit['id']):
+            if target_units.index(unit['id']) is not None:
                 list_unit.append(unit)
         except Exception:
             pass

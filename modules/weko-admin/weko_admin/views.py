@@ -352,6 +352,9 @@ def save_api_cert_data():
 
 @blueprint_api.route('/get_init_selection/<string:selection>', methods=['GET'])
 def get_init_selection(selection=""):
+    """Get initial data for unit and target.
+
+    :param selection:"""
     result = dict()
     try:
         if selection == 'target':
@@ -363,4 +366,26 @@ def get_init_selection(selection=""):
     except Exception as e:
         result['error'] = str(e)
 
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_statistic_data/<int:unit>', methods=['GET'])
+def get_statistic_data(unit=1):
+    result = list()
+    for i in range(22, 26):
+        temp_data = dict()
+        if unit == 1:
+            temp_data['col1'] = "2019-04-"+str(i)
+            temp_data['col2'] = i + 50
+        elif unit == 2:
+            temp_data['col1'] = "2019-01-01      -       2019-04-"+str(i)
+            temp_data['col2'] = i + 50
+        elif unit == 3:
+            temp_data['col1'] = "20"+str(i)
+            temp_data['col2'] = i + 50
+        else:
+            temp_data['col1'] = "User "+str(i)
+            temp_data['col2'] = "192.168.1."+str(i)
+            temp_data['col3'] = i + 50
+        result.append(temp_data)
     return jsonify(result)
