@@ -38,7 +38,7 @@
       <div class="panel panel-warning">
         {%- if 'no_itemtype' == error_type %}
         <div class="panel-body">
-          {{_('You do not even have an itemtype.')}}<br>
+          {{_('No itemtype to register.')}}<br>
           {{_('Go to')}} <a href="{{ url_for('weko_itemtypes_ui.index') }}">{{_('Register Itemtype')}}</a>!
         </div>
         {%- endif %}

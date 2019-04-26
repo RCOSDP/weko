@@ -74,11 +74,11 @@ def json_loader(data, pid):
             except Exception:
                 pub_date_setting = {
                     "type": "string",
-                    "title": "公開日",
+                    "title": "Publish Date",
                     "format": "datetime"
                 }
                 ojson["properties"]["pubdate"] = pub_date_setting
-                item["attribute_name"] = '公開日'
+                item["attribute_name"] = 'Publish Date'
             # set a identifier to add a link on detail page when is a creator field
             # creator = mp.get(k, {}).get('jpcoar_mapping', {})
             # creator = creator.get('creator') if isinstance(

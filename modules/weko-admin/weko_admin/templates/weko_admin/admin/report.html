@@ -24,15 +24,303 @@
 
 {%- block css %}
   {{ super() }}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.4.0/react-datepicker-cssmodules.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.4.0/react-datepicker.min.css">
  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
   <!-- <script src="{{ url_for('static', filename='js/weko_admin/stats_report.js') }}"></script> -->
-  {%- assets "weko_admin_stats_report_js" %}<script src="{{ ASSET_URL
-  }}"></script>{% endassets %}
+  {%- assets "weko_admin_stats_report_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script type="text/javascript" src="https://unpkg.com/react@16/umd/react.production.min.js" crossorigin></script>
+  <script type="text/javascript" src="https://unpkg.com/react-dom@16/umd/react-dom.production.min.js" crossorigin></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.38/browser.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.7.2/prop-types.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.8.0/js/bootstrap-datepicker.min.js"></script>
+  
+  
+  <script type="text/babel">
+    class ComponentTableResult extends React.Component
+    {
+      constructor(props)
+      {
+        super(props);
+        let unit = document.getElementById("unit").value;
+        let tableStyle = "";
+        if (unit == "Host")
+        {
+          tableStyle = "mytable3col";
+        }
+        else{
+          tableStyle = "mytable2col";
+        }
 
+        this.state={
+            rows : [],
+            table_type: tableStyle,
+            cols: []
+          };
+        
+      }
+      componentDidMount()
+      {
+        let rows = [];
+        let cell = [];
+        let data = this.props.data;
+        let cols = [];
+        
+        if(this.state.table_type == "mytable3col")
+        {
+          cols. push(<col className="col-md-4" />);
+          cols. push(<col className="col-md-4" />);
+          cols. push(<col className="col-md-4" />);
+          cell.push(<td>Host</td>);
+          cell.push(<td>IP Adress</td>);
+          cell.push(<td>Counts</td>);
+          rows.push(<tr>{cell}</tr>);
+          for( var i=0; i< data.length;i++)
+          {
+            cell = [];
+            cell.push(<td>{data[i].col1}</td>);
+            cell.push(<td>{data[i].col2}</td>);
+            cell.push(<td>{data[i].col3}</td>);
+            rows.push(<tr>{cell}</tr>);
+          }
+        }
+        else
+        {
+          cols. push(<col className="col-md-8" />);
+          cols. push(<col className="col-md-4" />);
+          cell.push(<td>Period</td>);
+          cell.push(<td>Counts</td>);
+          rows.push(<tr>{cell}</tr>);
+          for( var i=0; i< data.length;i++)
+          {
+            cell = [];
+            cell.push(<td>{data[i].col1}</td>);
+            cell.push(<td>{data[i].col2}</td>);
+            rows.push(<tr>{cell}</tr>);
+          }
+        }
+        this.setState({
+          rows: rows,
+          cols: cols
+        });
+      }
+
+      render(){
+        return(
+          <div style={this.styleContainer} className="form-group row">
+            <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
+            <div class="controls col-xs-5">
+              <br/>
+              <table className ="table table-striped">
+                <colgroup>
+                  {this.state.cols}
+                </colgroup>
+                <tbody>
+                  {this.state.rows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )
+      }
+    }
+
+    class ComponentCombobox extends React.Component
+    {
+      constructor(props)
+      {
+        super(props);
+        this.state = {
+          selections: [],
+          displayButton: <button className="hidden"></button>,
+          responseData: []
+        };
+        this.required = {
+            color: 'red',
+        };
+        this.handleClickEvent = this.handleClickEvent.bind(this);
+      }
+      componentDidMount() 
+      {
+        let initURL = "/api/admin/get_init_selection";
+        fetch(initURL)
+        .then(res => res.json())
+        .then(
+          (result) => 
+          {
+            let selectionData = result[this.props.id_component];
+            let options = selectionData.map((option) => {
+              return (
+                <option key={option.id} value={option.id}>{option.data}</option>
+              );
+            });
+            this.setState({
+              selections: options
+            });
+          }
+        );
+        let buttonHtml;
+        if (this.props.id_component == 'unit') {
+          buttonHtml = <button className="btn btn-primary col-xs-1" onClick={this.handleClickEvent}>Display</button>
+        }else {
+          <button className="hidden"></button>
+        }
+        this.setState({
+          displayButton: buttonHtml
+        });
+      }
+
+      handleClickEvent(event) {
+        let startDate = document.getElementById("start_date").value;
+        let endDate = document.getElementById("end_date").value;
+        let target = document.getElementById("target").value;
+        let unit = document.getElementById("unit").value;
+
+        if (target == 0) {
+          alert("Target Report is required!");
+        } else if (unit == 0) {
+          alert("Unit is required!");
+        }else {
+          const ITEM_REG_ID = 1;
+          if (target == ITEM_REG_ID) {
+            let requestParam = {
+              start_date: startDate,
+              end_date: endDate,
+              unit: unit
+            };
+            let request_url='/api/stats/get_item_registration_report';
+            // fetch(request_url, {
+            //   method: "GET",
+            //   headers: {
+            //     "Content-Type": "application/json"
+            //   },
+            //   body: JSON.stringify(requestParam)
+            // })
+            // .then(res => res.json())
+            // .then(result){
+            //   // Handle response data
+            // },
+          }
+        }
+      }
+      
+      render() {
+        return (
+          <div className="form-group row">
+            <label htmlFor={this.props.id_component} className="control-label col-xs-2 text-right">
+              {this.props.name}
+              <span style={this.required}>
+                *
+              </span>
+            </label>
+            <div class="controls col-xs-5">
+              <select className="form-control" id={this.props.id_component}>
+                <option key="0" value="0">Please select the {this.props.id_component}</option>
+                {this.state.selections}
+              </select>
+            </div>
+            {this.state.displayButton}
+          </div>
+        )
+      }
+    }
+
+    class ComponentDatePicker extends React.Component
+    {
+      constructor(props)
+      {
+        super(props);
+        this.styleContainer={
+        }
+        this.styleLabel = {
+          "display" : "inline",
+        }
+        this.styleDatePicker={
+          "border-radius": "3%",
+          "background-color":"#fff",
+        }
+      }
+
+      render(){
+        return(
+          <div style={this.styleContainer} className="form-group row">
+            <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
+            <div class="controls col-xs-5">
+              <input className="form-control" id={this.props.id_component} style={this.styleDatePicker} readonly="true" type="text"/>
+            </div>
+          </div>
+        )
+      }
+    }
+
+    class MainLayout extends React.Component 
+    {
+      constructor(props)
+      {
+        super(props);
+        this.state = {
+          result: []
+        };
+        this.styleContainer = {
+          "margin-left": "-14px",
+        };
+        this.getValueOfField = this.getValueOfField.bind(this);
+      }
+
+      getValueOfField(value) {
+        switch (key) {
+          case 'result':
+            this.setState({
+              result: value
+            });
+            break;
+        }
+      }
+
+      render() {
+        return (
+          <div class="row content-font">
+            <div className="col-md-1">
+            </div>
+            <div style = {this.styleContainer} className="col-md-11 pull-left">
+              <h4 style={this.styleTitle}>Custom Report</h4>
+              <ComponentDatePicker name = "Start Date" id_component="start_date"/>
+              <ComponentDatePicker name = "End Date" id_component="end_date"/>
+              <ComponentCombobox name="Target Report" id_component="target"/>
+              <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit"/>
+              <ComponentTableResult name="Result" data={this.state.result} />
+            </div> 
+          </div>
+        )
+    }
+    }
+
+    $(function ()
+    {
+      ReactDOM.render(
+      <MainLayout/>,
+      document.getElementById('root')
+      );
+      initDatepicker();
+    });
+
+    function initDatepicker(){
+      $("#start_date").datepicker({
+          format: "yyyy/mm/dd",
+          todayBtn: "linked",
+          autoclose: true
+      });
+      $("#end_date").datepicker({
+          format: "yyyy/mm/dd",
+          todayBtn: "linked",
+          autoclose: true
+      });
+    }
+  </script>
 {%- endblock javascript %}
 
 {%- block body %}
@@ -141,6 +429,8 @@
   </div>
 </div>
 <hr>
+
+<div id="root" class="col-xs-12"></div>
 
 <div class="modal fade" tabindex="-1" role="dialog" id="error_modal">
   <div class="modal-dialog" role="document">

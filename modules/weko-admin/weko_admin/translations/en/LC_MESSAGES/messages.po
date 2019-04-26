@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko_admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 16:01+0900\n"
+"POT-Creation-Date: 2019-04-25 18:26+0900\n"
 "PO-Revision-Date: 2018-01-04 16:19+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -246,7 +246,7 @@ msgstr ""
 #: weko_admin/templates/weko_admin/admin/block_style.html:86
 #: weko_admin/templates/weko_admin/admin/block_style.html:128
 #: weko_admin/templates/weko_admin/admin/block_style.html:194
-#: weko_admin/templates/weko_admin/admin/lang_settings.html:71
+#: weko_admin/templates/weko_admin/admin/lang_settings.html:90
 #: weko_admin/templates/weko_admin/admin/web_api_account.html:55
 #: weko_admin/templates/weko_admin/search_management.html:215
 #: weko_admin/templates/weko_admin/site_license.html:207
@@ -348,7 +348,7 @@ msgstr ""
 msgid "Target language"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/lang_settings.html:55
+#: weko_admin/templates/weko_admin/admin/lang_settings.html:61
 msgid "Registered language"
 msgstr ""
 
