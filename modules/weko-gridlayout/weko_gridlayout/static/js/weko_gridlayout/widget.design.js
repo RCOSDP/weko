@@ -25,7 +25,7 @@ class Repository extends React.Component {
                     }
                     let options = result.repositories.map((option) => {
                         return (
-                            <option key={option.id} value={option.id}>{option.title}</option>
+                            <option key={option.id} value={option.id}>{option.id}</option>
                         )
                     });
                     this.setState({
