@@ -27,12 +27,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.4.0/react-datepicker-cssmodules.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/react-datepicker/2.4.0/react-datepicker.min.css">
  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
- <style>
-  .mytable tr th,td {
-   font-weight : normal;
-   height: 40px;
-  }
-  </style>
 {%- endblock css %}
 
 {%- block javascript %}
@@ -52,25 +46,39 @@
       constructor(props)
       {
         super(props);
-        this.state={
-          rows : []
-        };
-        this.styleTable = {
-          "width" : "100%",
+        let unit = document.getElementById("unit").value;
+        let tableStyle = "";
+        if (unit == "Host")
+        {
+          tableStyle = "mytable3col";
         }
+        else{
+          tableStyle = "mytable2col";
+        }
+
+        this.state={
+            rows : [],
+            table_type: tableStyle,
+            cols: []
+          };
+        
       }
       componentDidMount()
       {
-        let unit = document.getElementById("unit").value;
         let rows = [];
         let cell = [];
         let data = this.props.data;
-        rows.push(<tr>{cell}</tr>);
-        if(unit == "Host")
+        let cols = [];
+        
+        if(this.state.table_type == "mytable3col")
         {
+          cols. push(<col className="col-md-4" />);
+          cols. push(<col className="col-md-4" />);
+          cols. push(<col className="col-md-4" />);
           cell.push(<td>Host</td>);
           cell.push(<td>IP Adress</td>);
           cell.push(<td>Counts</td>);
+          rows.push(<tr>{cell}</tr>);
           for( var i=0; i< data.length;i++)
           {
             cell = [];
@@ -82,8 +90,11 @@
         }
         else
         {
+          cols. push(<col className="col-md-8" />);
+          cols. push(<col className="col-md-4" />);
           cell.push(<td>Period</td>);
           cell.push(<td>Counts</td>);
+          rows.push(<tr>{cell}</tr>);
           for( var i=0; i< data.length;i++)
           {
             cell = [];
@@ -93,7 +104,8 @@
           }
         }
         this.setState({
-          rows: rows
+          rows: rows,
+          cols: cols
         });
       }
 
@@ -103,7 +115,10 @@
             <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
             <div class="controls col-xs-5">
               <br/>
-              <table style={this.styleTable} className = "mytable">
+              <table className ="table table-striped">
+                <colgroup>
+                  {this.state.cols}
+                </colgroup>
                 <tbody>
                   {this.state.rows}
                 </tbody>
