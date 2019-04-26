@@ -61,7 +61,12 @@
             rows : [],
             table_type: tableStyle,
             cols: []
-          };
+        };
+
+        this.styleTable = {
+          "background-color" : "white",
+          "border": "none"
+        }
         
       }
       componentDidMount()
@@ -76,32 +81,32 @@
           cols. push(<col className="col-md-4" />);
           cols. push(<col className="col-md-4" />);
           cols. push(<col className="col-md-4" />);
-          cell.push(<td>Host</td>);
-          cell.push(<td>IP Adress</td>);
-          cell.push(<td>Counts</td>);
+          cell.push(<td style={this.styleTable}>Host</td>);
+          cell.push(<td style={this.styleTable}>IP Adress</td>);
+          cell.push(<td style={this.styleTable}>Counts</td>);
           rows.push(<tr>{cell}</tr>);
           for( var i=0; i< data.length;i++)
           {
             cell = [];
-            cell.push(<td>{data[i].col1}</td>);
-            cell.push(<td>{data[i].col2}</td>);
-            cell.push(<td>{data[i].col3}</td>);
-            rows.push(<tr>{cell}</tr>);
+            cell.push(<td style={this.styleTable}>{data[i].col1}</td>);
+            cell.push(<td style={this.styleTable}>{data[i].col2}</td>);
+            cell.push(<td style={this.styleTable}>{data[i].col3}</td>);
+            rows.push(<tr style={this.styleTable}>{cell}</tr>);
           }
         }
         else
         {
           cols. push(<col className="col-md-8" />);
           cols. push(<col className="col-md-4" />);
-          cell.push(<td>Period</td>);
-          cell.push(<td>Counts</td>);
+          cell.push(<td style={this.styleTable}>Period</td>);
+          cell.push(<td style={this.styleTable}>Counts</td>);
           rows.push(<tr>{cell}</tr>);
           for( var i=0; i< data.length;i++)
           {
             cell = [];
-            cell.push(<td>{data[i].col1}</td>);
-            cell.push(<td>{data[i].col2}</td>);
-            rows.push(<tr>{cell}</tr>);
+            cell.push(<td style={this.styleTable}>{data[i].col1}</td>);
+            cell.push(<td style={this.styleTable}>{data[i].col2}</td>);
+            rows.push(<tr >{cell}</tr>);
           }
         }
         this.setState({
@@ -116,7 +121,7 @@
             <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
             <div class="controls col-xs-5">
               <br/>
-              <table className ="table table-striped">
+              <table className ="table table-striped" style={this.styleTable}>
                 <colgroup>
                   {this.state.cols}
                 </colgroup>
@@ -138,32 +143,37 @@
         this.state = {
           selections: [],
           displayButton: <button className="hidden"></button>,
-          responseData: []
+          responseData: [],
+          disabled: true
         };
         this.required = {
             color: 'red',
         };
         this.handleClickEvent = this.handleClickEvent.bind(this);
+        this.handleChangeEvent = this.handleChangeEvent.bind(this);
       }
       componentDidMount() 
       {
-        let initURL = "/api/admin/get_init_selection";
-        fetch(initURL)
-        .then(res => res.json())
-        .then(
-          (result) => 
-          {
-            let selectionData = result[this.props.id_component];
-            let options = selectionData.map((option) => {
-              return (
-                <option key={option.id} value={option.id}>{option.data}</option>
-              );
-            });
-            this.setState({
-              selections: options
-            });
-          }
-        );
+        if (this.props.id_component == 'target') {
+          let initURL = "/api/admin/get_init_selection/target";
+          fetch(initURL)
+          .then(res => res.json())
+          .then(
+            (result) => 
+            {
+              let selectionData = result[this.props.id_component];
+              let options = selectionData.map((option) => {
+                return (
+                  <option key={option.id} value={option.id}>{option.data}</option>
+                );
+              });
+              this.setState({
+                selections: options,
+                disabled: false
+              });
+            }
+          );
+        }
         let buttonHtml;
         if (this.props.id_component == 'unit') {
           buttonHtml = <button className="btn btn-primary col-xs-1" onClick={this.handleClickEvent}>Display</button>
@@ -173,6 +183,45 @@
         this.setState({
           displayButton: buttonHtml
         });
+      }
+
+      componentWillReceiveProps(props) {
+        if (this.props.id_component == 'unit') {
+          console.log("123");
+          this.setState({
+            disabled: this.props.disable
+          });
+          if (!this.props.disable) {
+            let target = document.getElementById("target").value;
+            let initURL = "/api/admin/get_init_selection/"+target;
+            fetch(initURL)
+            .then(res => res.json())
+            .then(
+              (result) => 
+              {
+                let selectionData = result[this.props.id_component];
+                let options = selectionData.map((option) => {
+                  return (
+                    <option key={option.id} value={option.id}>{option.data}</option>
+                  );
+                });
+                this.setState({
+                  selections: options
+                });
+              }
+            );
+          }
+        }
+      }
+
+      handleChangeEvent(event) {
+        if (this.props.id_component == 'target') {
+          if (event.target.value != 0) {
+            this.props.getUnitStatus(true);
+          } else {
+            this.props.getUnitStatus(false);
+          }
+        }
       }
 
       handleClickEvent(event) {
@@ -219,7 +268,7 @@
               </span>
             </label>
             <div class="controls col-xs-5">
-              <select className="form-control" id={this.props.id_component}>
+              <select className="form-control" id={this.props.id_component} disabled={this.state.disabled} onChange={this.handleChangeEvent}>
                 <option key="0" value="0">Please select the {this.props.id_component}</option>
                 {this.state.selections}
               </select>
@@ -264,12 +313,20 @@
       {
         super(props);
         this.state = {
-          result: []
+          result: [],
+          unitStatus: false
         };
         this.styleContainer = {
           "margin-left": "-14px",
         };
         this.getValueOfField = this.getValueOfField.bind(this);
+        this.getUnitStatus = this.getUnitStatus.bind(this);
+      }
+
+      getUnitStatus(value) {
+        this.setState({
+          unitStatus: value
+        });
       }
 
       getValueOfField(value) {
@@ -291,8 +348,8 @@
               <h4 style={this.styleTitle}>Custom Report</h4>
               <ComponentDatePicker name = "Start Date" id_component="start_date"/>
               <ComponentDatePicker name = "End Date" id_component="end_date"/>
-              <ComponentCombobox name="Target Report" id_component="target"/>
-              <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit"/>
+              <ComponentCombobox name="Target Report" id_component="target" getUnitStatus={this.getUnitStatus}/>
+              <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit" disable={this.state.unitStatus}/>
               <ComponentTableResult name="Result" data={this.state.result} />
             </div> 
           </div>
