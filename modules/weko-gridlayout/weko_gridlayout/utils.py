@@ -63,7 +63,7 @@ def get_widget_list(repository_id):
     }
     try:
         widget_item_list = WidgetItem.query.filter_by(
-            repository_id=repository_id, is_enabled=True
+            repository_id=repository_id, is_enabled=True, is_deleted=False
         ).all()
         if widget_item_list:
             for widget_item in widget_item_list:
