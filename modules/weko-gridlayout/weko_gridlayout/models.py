@@ -102,6 +102,8 @@ class WidgetItem(db.Model):
 
     is_enabled = db.Column(db.Boolean(name='enable'), default=True)
 
+    is_deleted = db.Column(db.Boolean(name='delete'), default=False)
+
     #
     # Relations
     #
@@ -137,6 +139,29 @@ class WidgetItem(db.Model):
                 for k, v in data.items():
                     setattr(widget_item, k, v)
                 db.session.merge(widget_item)
+            db.session.commit()
+            return widget_item
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return
+
+    @classmethod
+    def disable(cls, repo_id, type_id, lbl):
+        """Delete the widget item detail info.
+
+        :param repo_id: Identifier of the repository.
+        :param type_id: Identifier of the widget type.
+        :param lbl: label of the widget type.
+        :return: delete widget item info
+        """
+        try:
+            with db.session.begin_nested():
+                widget_item = cls.get(repo_id, type_id, lbl)
+                if not widget_item:
+                    return
+
+                setattr(widget_item, 'is_deleted', 'True')
             db.session.commit()
             return widget_item
         except Exception as ex:

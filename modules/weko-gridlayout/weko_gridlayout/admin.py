@@ -26,9 +26,11 @@ from flask import current_app, flash, redirect, request
 from flask_admin import BaseView, expose
 from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.contrib.sqla.filters import BooleanEqualFilter
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model import helpers
 from flask_babelex import gettext as _
+from flask.ext.admin.contrib.sqla.view import func
 from wtforms.fields import StringField
 
 from . import config
@@ -49,7 +51,7 @@ class WidgetSettingView(ModelView):
 
     can_create = True
     can_edit = True
-    can_delete = False
+    can_delete = True
     can_view_details = True
 
     @expose('/new/', methods=('GET', 'POST'))
@@ -83,6 +85,14 @@ class WidgetSettingView(ModelView):
         return self.render(config.WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS,
                            model=json.dumps(model),
                            return_url=return_url)
+    
+    def get_query(self):
+        return self.session.query(
+            self.model).filter(self.model.is_deleted == 'False')
+
+    def get_count_query(self):
+        return self.session.query(
+            func.count('*')).filter(self.model.is_deleted == 'False')
 
     column_list = (
         'repository_id',
@@ -114,48 +124,6 @@ class WidgetSettingView(ModelView):
                          label=_('Label'),
                          is_enabled=_('Enable'),
                          )
-
-    def on_form_prefill(self, form, id):
-        pass
-
-    def create_form(self, obj=None):
-        """
-        Instantiate model delete form and return it.
-
-        Override to implement custom behavior.
-        The delete form originally used a GET request, so delete_form
-        accepts both GET and POST request for backwards compatibility.
-
-        :param obj: input object
-        """
-        return self._use_append_repository(
-            super(WidgetSettingView, self).create_form()
-        )
-
-    def edit_form(self, obj):
-        """
-        Instantiate model editing form and return it.
-
-        Override to implement custom behavior.
-
-        :param obj: input object
-        """
-        return self._use_append_repository(
-            super(WidgetSettingView, self).edit_form(obj)
-        )
-
-    def _use_append_repository(self, form):
-        return form
-
-    def _get_community_list(self):
-        try:
-            from invenio_communities.models import Community
-            query_data = Community.query.all()
-            query_data.insert(0, Community(id='Root Index'))
-        except Exception as ex:
-            current_app.logger.debug(ex)
-
-        return query_data
 
 
 widget_adminview = dict(

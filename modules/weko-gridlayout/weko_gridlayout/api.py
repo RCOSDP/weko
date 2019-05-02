@@ -100,6 +100,13 @@ class WidgetItems(object):
         return (widget_item is not None)
 
     @classmethod
+    def disable(cls, widget_id):
+        widget_item = WidgetItem.disable(widget_id.get('repository'),
+                                         widget_id.get('widget_type'),
+                                         widget_id.get('label'))
+        return (widget_item is not None)
+
+    @classmethod
     def get_all_widget_items(cls):
         """
         Get all widget items in widget_item table.
