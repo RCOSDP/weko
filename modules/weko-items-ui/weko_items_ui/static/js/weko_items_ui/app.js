@@ -16,6 +16,10 @@ require([
     $("div.modal-backdrop").remove();
   });
 
+  $("#btn_quit").click(function () {
+    $("#action_quit_confirmation").modal("show");
+  });
+
 });
 
 // script for Contributor
@@ -1240,6 +1244,10 @@ function handleSharePermission(value) {
             alert(response);
           }
         );
+      }
+
+      $scope.cancelDataJson = function() {
+        alert("Action Canceled");
       }
     }
     // Inject depedencies
