@@ -407,13 +407,14 @@ class ComponentButtonLayout extends React.Component {
             marginLeft: "10px",
         };
         this.saveCommand = this.saveCommand.bind(this);
+        this.deleteCommand = this.deleteCommand.bind(this);
     }
     saveCommand(event)
     {
         let request = {
             flag_edit : this.props.is_edit,
             data : this.props.data,
-            data_id: this.props.data_id
+            data_id: this.props.data_id,
         }
         if (this.props.data.repository=="0" || this.props.data.repository == "") {
             alert('Repository is required!');
@@ -439,15 +440,56 @@ class ComponentButtonLayout extends React.Component {
             });
         }
     }
+
+    deleteCommand(event)
+    {
+        let request = {
+            data_id: this.props.data_id
+        }
+        if(confirm("Are you sure to delete this widget Item ?"))
+        {
+            return fetch('/api/admin/delete_widget_item',{
+                method: "POST",
+                headers:{
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(request),
+            })
+            .then(res => res.json())
+            .then((result) => {
+            if (result.success) {
+                alert(result.message);
+                window.location = this.props.return_url;
+            }else {
+                alert(result.message);
+            }
+            });
+        }
+    }
+
     render() {
-        return (
-            <div className="form-group row">
-                <div className="col-xs-offset-2 col-xs-5">
-                    <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
-                    <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
+        if(this.props.is_edit)
+        {
+            return (
+                <div className="form-group row">
+                    <div className="col-xs-offset-2 col-xs-5">
+                        <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
+                        <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
+                        <button className="btn" onClick={this.deleteCommand} style={this.style}>Delete</button>
+                    </div>
                 </div>
-            </div>
-        )
+            )
+        }
+        else{
+            return (
+                <div className="form-group row">
+                    <div className="col-xs-offset-2 col-xs-5">
+                        <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
+                        <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
+                    </div>
+                </div>
+            )
+        }
     }
 }
 

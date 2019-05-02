@@ -71,6 +71,15 @@ def get_widget_list(repository_id):
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
+                data["widgetSetting"] = {
+                    "label_color": widget_item.label_color,
+                    "frame_border": widget_item.has_frame_border,
+                    "frame_border_color": widget_item.frame_border_color,
+                    "text_color": widget_item.text_color,
+                    "background_color": widget_item.background_color,
+                    "browsing_role": widget_item.browsing_role,
+                    "edit_role": widget_item.edit_role
+                }
                 result["widget-list"].append(data)
     except Exception as e:
         result["error"] = str(e)
@@ -166,7 +175,7 @@ def update_admin_widget_item_setting(data):
         msg = 'Invalid data.'
     if flag:
         if data_result.get('repository') != data_id.get('repository')\
-                or data_result.get('widget_type') != data_id.get('widget_type')\
+            or data_result.get('widget_type') != data_id.get('widget_type')\
                 or data_result.get('label') != data_id.get('label'):
             if WidgetItems.is_existed(data_result):
                 success = False
@@ -198,3 +207,49 @@ def update_admin_widget_item_setting(data):
         jsonify({'status': status,
                  'success': success,
                  'message': msg}), status)
+
+
+def disable_admin_wdiget_item_setting(widget_id):
+    """Disable widget item.
+
+    :param: widget id
+    :return: options json
+    """
+    status = 201
+    success = True
+    if validate_admin_widget_item_setting(widget_id):
+        success = False
+        msg = '''Delete widget item fail. The widget item is used in
+                widget design'''
+    elif not WidgetItems.disable(widget_id):
+        success = False
+        msg = 'Delete widget item fail'
+    else:
+        msg = 'Widget item delete successfully'
+
+    return make_response(
+        jsonify({'status': status,
+                 'success': success,
+                 'message': msg}), status)
+
+
+def validate_admin_widget_item_setting(widget_id):
+    """Validate widget item.
+
+    :param: widget id
+    :return: true if widget item is used in widget design else return false
+    """
+    try:
+        data = WidgetDesignSetting.select_by_repository_id(
+            widget_id.get('repository'))
+        if data.get('settings'):
+            json_data = json.loads(data.get('settings'))
+            for item in json_data:
+                if item.get('name') == widget_id.get('label') and \
+                   item.get('type') == widget_id.get('widget_type'):
+                    return True
+        return False
+    except Exception as e:
+        print("============================================")
+        print(e)
+        return True
