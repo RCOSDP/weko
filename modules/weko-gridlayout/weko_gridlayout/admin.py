@@ -94,6 +94,29 @@ class WidgetSettingView(ModelView):
         return self.session.query(
             func.count('*')).filter(self.model.is_deleted == 'False')
 
+    def delete_model(self, model):
+        """Delete model.
+
+            :param model:
+                Model to delete
+        """
+        try:
+            widget_item = WidgetItem.disable(model.repository_id,
+                                         model.widget_type,
+                                         model.label)
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                flash(gettext('Failed to delete record. %(error)s', error=str(ex)), 'error')
+                log.exception('Failed to delete record.')
+
+            self.session.rollback()
+
+            return False
+        else:
+            self.after_model_delete(model)
+
+        return True
+
     column_list = (
         'repository_id',
         'widget_type',
