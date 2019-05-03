@@ -403,6 +403,11 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            repository: '',
+            widget_type: '',
+            label: ''
+        }
         this.style = {
             marginLeft: "10px",
         };
@@ -414,8 +419,13 @@ class ComponentButtonLayout extends React.Component {
         let request = {
             flag_edit : this.props.is_edit,
             data : this.props.data,
-            data_id: this.props.data_id,
-        }
+            data_id: '',
+        };
+        if (this.state.repository == '' && this.state.widget_type == '' && this.state.label == '')
+            request.data_id = this.props.data_id;
+        else
+            request.data_id = this.state;
+
         if (this.props.data.repository=="0" || this.props.data.repository == "") {
             alert('Repository is required!');
         } else if (this.props.data.widget_type == "0" || this.props.data.widget_type == "") {
@@ -434,6 +444,11 @@ class ComponentButtonLayout extends React.Component {
             .then((result) => {
             if (result.success) {
                 alert(result.message);
+                this.setState({
+                    repository: this.props.data.repository,
+                    widget_type: this.props.data.widget_type,
+                    label: this.props.data.label
+                })
             }else {
                 alert(result.message);
             }
@@ -592,7 +607,7 @@ class MainLayout extends React.Component {
                   <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable}/>
                 </div>
                 <div className="row">
-                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id}/>
+                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id} />
               </div>
             </div>
         )
@@ -632,5 +647,5 @@ $(function () {
     ReactDOM.render(
     <MainLayout data_load={editData} is_edit = {isEdit} return_url = {returnURL} data_id={data_id}/>,
     document.getElementById('root')
-)
+    )
 });
