@@ -3,9 +3,10 @@ require([
   "bootstrap"
 ], function() {
   $("#btn_quit").click(function () {
+    console.log('#btn_quit');
     $("#action_quit_confirmation").modal("show");
   });
-  $('#btn-cancel').on('click', function(){
+  $('#btn_cancel').on('click', function(){
     console.log('#btn-cancel');
     /*let post_uri = $(".cur_step", parent.document).data('next-uri');
     let post_data = {
