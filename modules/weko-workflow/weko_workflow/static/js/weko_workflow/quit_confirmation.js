@@ -9,6 +9,7 @@ require([
 
   // Handle Continue btn on modal Quit confirmation
   $('#btn_cancel').on('click', function(){
+    $("#action_quit_confirmation").modal("hide");
     let comment = ''
     if ($('#input-comment') && $('#input-comment').val()) {
       comment = $('#input-comment').val();
@@ -21,7 +22,10 @@ require([
     };
     send(post_uri, data,
       function(data){
-        alert(data);
+        if (data.code == 0) {
+          alert(data.msg);
+          //window.location.href = "/itemtypes/register";
+        }
       },
       function(errmsg){
         alert('Error: ' + errmsg);
