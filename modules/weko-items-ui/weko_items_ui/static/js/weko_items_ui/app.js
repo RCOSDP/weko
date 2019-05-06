@@ -1241,10 +1241,6 @@ function handleSharePermission(value) {
           }
         );
       }
-
-      $scope.cancelDataJson = function() {
-        alert("Action Canceled");
-      }
     }
     // Inject depedencies
     WekoRecordsCtrl.$inject = [
