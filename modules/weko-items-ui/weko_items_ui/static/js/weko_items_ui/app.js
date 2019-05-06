@@ -16,10 +16,6 @@ require([
     $("div.modal-backdrop").remove();
   });
 
-  $("#btn_quit").click(function () {
-    $("#action_quit_confirmation").modal("show");
-  });
-
 });
 
 // script for Contributor
