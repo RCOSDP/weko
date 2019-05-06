@@ -190,7 +190,7 @@ def update_admin_widget_item_setting(data):
                     else:
                         msg = 'Widget item updated successfully.'
             else:
-                msg = 'Fail to update. Can not find Widget item to edit'
+                msg = 'Fail to update. Can not find Widget item to edit.'
     else:
         if WidgetItems.is_existed(data_result):
             success = False
@@ -213,7 +213,7 @@ def update_item_in_preview_widget_item(data_id, data_result):
     try:
         data = WidgetDesignSetting.select_by_repository_id(
             data_id.get('repository'))
-        removeList = []
+        remove_list = []
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             for item in json_data:
@@ -222,17 +222,17 @@ def update_item_in_preview_widget_item(data_id, data_result):
                             'widget_type')):
                     if(str(data_id.get('repository')) != str(
                             data_result.get('repository'))):
-                        removeList.append(item)
+                        remove_list.append(item)
                     else:
-                        item['hasFrameBorder'] = data_result.get('frame_border')
-                        item['frameBorderColor'] = data_result.get(
+                        item['frame_border'] = data_result.get('frame_border')
+                        item['frame_border_color'] = data_result.get(
                                 'frame_border_color')
-                        item['background'] = data_result.get('background_color')
+                        item['background_color'] = data_result.get('background_color')
                         item['type'] = data_result.get('widget_type')
                         item['label_color'] = data_result.get('label_color')
                         item['name'] = data_result.get('label')
 
-            for item in removeList:
+            for item in remove_list:
                 json_data.remove(item)
             data = json.dumps(json_data)
             return WidgetDesignSetting.update(
@@ -244,7 +244,7 @@ def update_item_in_preview_widget_item(data_id, data_result):
         return True
 
 
-def disable_admin_wdiget_item_setting(widget_id):
+def delete_admin_widget_item_setting(widget_id):
     """Disable widget item.
 
     :param: widget id
@@ -254,13 +254,13 @@ def disable_admin_wdiget_item_setting(widget_id):
     success = True
     if validate_admin_widget_item_setting(widget_id):
         success = False
-        msg = '''Delete widget item fail. The widget item is used in widget \
-            design'''
-    elif not WidgetItems.disable(widget_id):
+        msg = 'Delete widget item fail. The widget item is used in widget \
+            design.'
+    elif not WidgetItems.delete(widget_id):
         success = False
-        msg = 'Delete widget item fail'
+        msg = 'Delete widget item fail.'
     else:
-        msg = 'Widget item delete successfully'
+        msg = 'Widget item delete successfully.'
 
     return make_response(
         jsonify({'status': status,

@@ -147,7 +147,7 @@ class WidgetItem(db.Model):
         return
 
     @classmethod
-    def disable(cls, repo_id, type_id, lbl):
+    def delete(cls, repo_id, type_id, lbl):
         """Delete the widget item detail info.
 
         :param repo_id: Identifier of the repository.
