@@ -102,6 +102,13 @@ def init_workflow_tables(tables):
             action_scopes='user',
             action_displays='Error'
         ))
+        db_action_status.append(dict(
+            action_status_id=ActionStatusPolicy.ACTION_CANCELED,
+            action_status_name='action_canceled',
+            action_status_desc='Indicates that the action has been canceled.',
+            action_scopes='user',
+            action_displays='Cancel'
+        ))
         return db_action_status
 
     def init_action():

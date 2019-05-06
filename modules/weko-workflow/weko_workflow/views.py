@@ -730,7 +730,7 @@ def cancel_action(activity_id='0', action_id=0):
         activity_id=activity_id,
         action_id=action_id,
         action_version=post_json.get('action_version'),
-        action_status=ActionStatusPolicy.ACTION_SKIPPED,
+        action_status=ActionStatusPolicy.ACTION_CANCELED,
         commond=post_json.get('commond')
     )
 
