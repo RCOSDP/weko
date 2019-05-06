@@ -66,15 +66,26 @@
             let data = props.data;
             let cols = [];
             let unit = document.getElementById("unit").value;
-            const UNIT_HOST = 4;
-            if(unit == UNIT_HOST)
+            const UNIT_HOST = 5;
+            const UNIT_ITEM = 4;
+            console.log(unit);
+            if(unit == UNIT_HOST || unit == UNIT_ITEM)
             {
-              cols. push(<col className="col-md-5" />);
-              cols. push(<col className="col-md-4" />);
-              cols. push(<col className="col-md-3" />);
-              cell.push(<th style={this.styleTable}>Host</th>);
-              cell.push(<th style={this.styleTable}>IP Address</th>);
-              cell.push(<th style={this.styleTable}>Counts</th>);
+              if (unit == UNIT_HOST) {
+                cols. push(<col className="col-md-5" />);
+                cols. push(<col className="col-md-4" />);
+                cols. push(<col className="col-md-3" />);
+                cell.push(<th style={this.styleTable}>Host</th>);
+                cell.push(<th style={this.styleTable}>IP Address</th>);
+                cell.push(<th style={this.styleTable}>Counts</th>);
+              }else {
+                cols. push(<col className="col-md-3" />);
+                cols. push(<col className="col-md-6" />);
+                cols. push(<col className="col-md-3" />);
+                cell.push(<th style={this.styleTable}>Item ID</th>);
+                cell.push(<th style={this.styleTable}>Item Name</th>);
+                cell.push(<th style={this.styleTable}>Counts</th>);
+              }
               rows.push(<tr>{cell}</tr>);
               for( var i=0; i< data.length;i++)
               {
@@ -181,12 +192,13 @@
 
       componentWillReceiveProps(props) {
         const { disable } = this.props;
-        if(disable != props.disable){
+        const { target } = this.props;
+        if (disable != props.disable || target != props.target){
           if (this.props.id_component == 'unit') {
             this.setState({
-              disabled: this.props.disable
+              disabled: !props.disable
             });
-            if (!this.props.disable) {
+            if (props.disable) {
               let target = document.getElementById("target").value;
               let initURL = "/api/admin/get_init_selection/"+target;
               fetch(initURL)
@@ -212,10 +224,11 @@
 
       handleChangeEvent(event) {
         if (this.props.id_component == 'target') {
+          document.getElementById("unit").value = 0;
           if (event.target.value != 0) {
-            this.props.getUnitStatus(true);
+            this.props.getUnitStatus(true, event.target.value);
           } else {
-            this.props.getUnitStatus(false);
+            this.props.getUnitStatus(false, event.target.value);
           }
         }
       }
@@ -232,14 +245,16 @@
           alert("Unit is required!");
         }else {
           const ITEM_REG_ID = 1;
+          const DETAIL_VIEW_ID = 2;
           if (target == ITEM_REG_ID) {
             let requestParam = {
               start_date: startDate,
               end_date: endDate,
               unit: unit
             };
-            let request_url='/api/admin/get_statistic_data/'+unit;
-            fetch(request_url/*, {
+            let request_url='/api/admin/get_statistic_item_regis/'+unit;
+            fetch(request_url/*,
+            TODO: Display to result table {
               method: "GET",
               headers: {
                 "Content-Type": "application/json"
@@ -248,7 +263,26 @@
             }*/)
             .then(res => res.json())
             .then((result) => {
-              console.log(result);
+              this.props.getValueOfField(this.props.key_binding, result);
+              this.props.getTableHidden(false);
+            });
+          }else if (target == DETAIL_VIEW_ID) {
+            let requestParam = {
+              start_date: startDate,
+              end_date: endDate,
+              unit: unit
+            };
+            let request_url='/api/admin/get_statistic_detail_view/'+unit;
+            fetch(request_url/*, {
+              TODO: Display to result table
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(requestParam)
+            }*/)
+            .then(res => res.json())
+            .then((result) => {
               this.props.getValueOfField(this.props.key_binding, result);
               this.props.getTableHidden(false);
             });
@@ -313,7 +347,8 @@
         this.state = {
           result: [],
           unitStatus: false,
-          tableHidden: true
+          tableHidden: true,
+          target: 0
         };
         this.styleContainer = {
           "margin-left": "-14px",
@@ -324,15 +359,15 @@
       }
 
       getTableHidden(value) {
-        console.log("getTableHidden"+value);
         this.setState({
           tableHidden: value
         });
       }
 
-      getUnitStatus(value) {
+      getUnitStatus(value, target) {
         this.setState({
-          unitStatus: value
+          unitStatus: value,
+          target: target
         });
       }
 
@@ -356,7 +391,7 @@
               <ComponentDatePicker name = "Start Date" id_component="start_date"/>
               <ComponentDatePicker name = "End Date" id_component="end_date"/>
               <ComponentCombobox name="Target Report" id_component="target" getUnitStatus={this.getUnitStatus}/>
-              <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit" disable={this.state.unitStatus} getTableHidden={this.getTableHidden}/>
+              <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit" disable={this.state.unitStatus} getTableHidden={this.getTableHidden} target={this.state.target}/>
               <ComponentTableResult name="Result" data={this.state.result} hidden={this.state.tableHidden}/>
             </div> 
           </div>
@@ -453,6 +488,8 @@
         <option value="all" selected>{{_('All')}}</option>
         <option value="file_download">{{ _("File Downloads") }}</option>
         <option value="file_preview">{{ _("File Previews") }}</option>
+        <option value="detail_view">{{ _("Detail Views") }}</option>
+        <option value="file_using_per_user">{{ _("File Using Per User") }}</option>
       </select>
     </div>
 
