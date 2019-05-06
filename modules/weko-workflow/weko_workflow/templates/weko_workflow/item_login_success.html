@@ -30,6 +30,8 @@
 {{ super() }}
 {% assets "workflow_iframe_js" %}
 <script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "workflow_quit_confirmation_js" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
