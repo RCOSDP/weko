@@ -104,24 +104,26 @@ set -o nounset
 
 if [[ "$@" != *"--devel"* ]]; then
 # sphinxdoc-install-invenio-full-begin
-    pip install -r "$scriptpathname/../packages.txt"
-    pip install --no-deps -r "$scriptpathname/../packages-invenio.txt"
-    pip install --no-deps -r "$scriptpathname/../requirements-weko-modules.txt"
+    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r "$scriptpathname/../packages.txt"
+    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --no-deps -r "$scriptpathname/../packages-invenio.txt"
+    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --no-deps -r "$scriptpathname/../requirements-weko-modules.txt"
 # sphinxdoc-install-invenio-full-end
 else
-    pip install -r "$scriptpathname/../requirements-devel.txt"
+    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r "$scriptpathname/../requirements-devel.txt"
 fi
 
 
 # sphinxdoc-customise-instance-begin
 mkdir -p "var/instance/"
-pip install "jinja2-cli>=0.6.0"
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org "jinja2-cli>=0.6.0"
 jinja2 "$scriptpathname/instance.cfg" > "var/instance/${INVENIO_WEB_INSTANCE}.cfg"
 # sphinxdoc-customise-instance-end
 
 # sphinxdoc-run-npm-begin
 ${INVENIO_WEB_INSTANCE} npm
 cdvirtualenv "var/instance/static"
+git config --global url."https://github.com/".insteadOf git@github.com:
+git config --global url."https://".insteadOf git://
 CI=true npm install angular-schema-form@0.8.13
 CI=true npm install
 ## for install ckeditor plugins
@@ -136,8 +138,8 @@ ${INVENIO_WEB_INSTANCE} assets build
 # sphinxdoc-collect-and-build-assets-end
 
 # gunicorn uwsgi - begin
-pip install gunicorn
-pip install meinheld
-pip install uwsgi
-pip install uwsgitop
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org gunicorn
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org meinheld
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org uwsgi
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org uwsgitop
 # gunicorn uwsgi -end

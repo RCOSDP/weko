@@ -2,11 +2,6 @@ require([
   "jquery",
   "bootstrap"
 ], function () {
-  data_global = {
-    post_uri: '',
-    post_data: {}
-  }
-
   // prepare data for sending
   function preparePostData(tmp_save) {
     data_global.post_uri = $('.cur_step').data('next-uri');
@@ -20,6 +15,7 @@ require([
       identifier_grant_jalc_dc_doi_link: $("span[name='idf_grant_link_3']").text() + getVal($("input[name='idf_grant_input_3']")),
       identifier_grant_crni_link: $("span[name='idf_grant_link_4']").text(),
       action_version: $('.cur_step').data('action-version'),
+      commond: '',
       temporary_save: tmp_save
     };
   }

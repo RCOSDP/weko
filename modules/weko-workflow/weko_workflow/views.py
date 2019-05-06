@@ -504,7 +504,7 @@ def next_action(activity_id='0', action_id=0):
 
     # save pidstore_identifier to ItemsMetadata
     if 'identifier_grant' == action_endpoint:
-        if int(idf_grant) > 0:
+        if idf_grant and int(idf_grant) > 0:
             pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
 
     rtn = history.create_activity_history(activity)
@@ -714,3 +714,26 @@ def get_journal(method, value):
                 result['romeoapi']['publishers']['publisher'][0]
 
     return jsonify(result)
+
+@blueprint.route(
+    '/activity/action/<string:activity_id>/<int:action_id>'
+    '/cancel',
+    methods=['POST'])
+@login_required
+@check_authority
+def cancel_action(activity_id='0', action_id=0):
+    """Next action."""
+    post_json = request.get_json()
+    work_activity = WorkActivity()
+
+    activity = dict(
+        activity_id=activity_id,
+        action_id=action_id,
+        action_version=post_json.get('action_version'),
+        action_status=ActionStatusPolicy.ACTION_SKIPPED,
+        commond=post_json.get('commond')
+    )
+
+    work_activity.quit_activity(activity)
+
+    return jsonify(code=0, msg=_('success'))

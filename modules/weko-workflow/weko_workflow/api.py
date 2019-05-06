@@ -231,6 +231,21 @@ class Flow(object):
                 return previous_action
             return None
 
+    def get_last_flow_action(self, flow_id):
+        """Return next action info.
+
+        :param flow_id:
+        :param cur_action_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            flow_actions = _FlowAction.query.filter_by(
+                flow_id=flow_id).order_by(asc(
+                        _FlowAction.action_order)).all()
+            if flow_actions:
+                last_action = flow_actions.pop()
+                return last_action
+        return None
 
 class WorkFlow(object):
     """Operated on the WorkFlow."""
@@ -738,6 +753,59 @@ class WorkActivity(object):
                         action_id=activity.get('action_id'),
                         action_version=activity.get('action_version'),
                         action_status=activity.get('action_status'),
+                        action_user=current_user.get_id(),
+                        action_date=datetime.utcnow(),
+                        action_comment=ActionCommentPolicy.FINALLY_ACTION_COMMENT)
+                    db.session.add(db_history)
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+
+    def quit_activity(self, activity):
+        """Cancel doing activity.
+
+        :param activity:
+        :return:
+        """
+        flow = Flow()
+        work_activity = WorkActivity()
+        activity_detail = work_activity.get_activity_detail(activity.get('activity_id'))
+
+        last_flow_action = flow.get_last_flow_action(
+            activity_detail.flow_define.flow_id)
+
+        if not last_flow_action:
+            current_app.logger.error('Missing last action of Flow!')
+            return None
+
+        try:
+            with db.session.begin_nested():
+                db_activity = _Activity.query.filter_by(
+                    activity_id=activity.get('activity_id')).one_or_none()
+                if db_activity:
+                    db_activity.activity_status = \
+                        ActivityStatusPolicy.ACTIVITY_FINALLY
+                    db_activity.action_id = last_flow_action.action_id
+                    db_activity.action_status = activity.get('action_status')
+                    db_activity.activity_end = datetime.utcnow()
+                    db.session.merge(db_activity)
+
+                    db_history = ActivityHistory(
+                        activity_id=activity.get('activity_id'),
+                        action_id=activity.get('action_id'),
+                        action_version=activity.get('action_version'),
+                        action_status=activity.get('action_status'),
+                        action_user=current_user.get_id(),
+                        action_date=datetime.utcnow(),
+                        action_comment=activity.get('commond'))
+                    db.session.add(db_history)
+
+                    db_history = ActivityHistory(
+                        activity_id=activity.get('activity_id'),
+                        action_id=last_flow_action.action_id,
+                        action_version=last_flow_action.action_version,
+                        action_status=ActionStatusPolicy.ACTION_DONE,
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
                         action_comment=ActionCommentPolicy.FINALLY_ACTION_COMMENT)
