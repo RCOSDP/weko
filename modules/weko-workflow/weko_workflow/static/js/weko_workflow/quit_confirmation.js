@@ -14,5 +14,4 @@ require([
       console.log('root defined');
     }
   });
-  }
 });
