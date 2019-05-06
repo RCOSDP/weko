@@ -26,6 +26,7 @@
   {{ super() }}
   {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -35,6 +36,8 @@
   {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget_lib" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
@@ -56,6 +59,8 @@
 {%- endblock page_footer %}
 
 {% block page_body %}
+<div id="page_body" class="grid-stack">
+<div id="main_contents">
 {%-if not community_id %}
 {{super()}}
 {%- else%}
@@ -68,6 +73,8 @@
 <div class="communities">
 </div>
 {%- endif%}
+</div>
+</div>
 {% endblock page_body %}
 
 {%- block page_body_main %}
