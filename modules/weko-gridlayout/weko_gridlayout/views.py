@@ -17,7 +17,7 @@ from .api import WidgetItems
 from .utils import get_repository_list, get_widget_design_setting, \
     get_widget_list, get_widget_type_list, \
     update_admin_widget_item_setting, update_widget_design_setting,\
-    disable_admin_wdiget_item_setting
+    delete_admin_widget_item_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -138,7 +138,7 @@ def delete_widget_item():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
-    return disable_admin_wdiget_item_setting(data.get('data_id'))
+    return delete_admin_widget_item_setting(data.get('data_id'))
 
 
 @blueprint_api.route('/get_account_role', methods=['GET'])

@@ -101,9 +101,9 @@ class WidgetSettingView(ModelView):
                 Model to delete
         """
         try:
-            widget_item = WidgetItem.disable(model.repository_id,
-                                         model.widget_type,
-                                         model.label)
+            widget_item = WidgetItem.delete(model.repository_id,
+                                            model.widget_type,
+                                            model.label)
         except Exception as ex:
             if not self.handle_view_exception(ex):
                 flash(gettext('Failed to delete record. %(error)s', error=str(ex)), 'error')

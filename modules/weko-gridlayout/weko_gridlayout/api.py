@@ -100,10 +100,10 @@ class WidgetItems(object):
         return (widget_item is not None)
 
     @classmethod
-    def disable(cls, widget_id):
-        widget_item = WidgetItem.disable(widget_id.get('repository'),
-                                         widget_id.get('widget_type'),
-                                         widget_id.get('label'))
+    def delete(cls, widget_id):
+        widget_item = WidgetItem.delete(widget_id.get('repository'),
+                                        widget_id.get('widget_type'),
+                                        widget_id.get('label'))
         return (widget_item is not None)
 
     @classmethod
