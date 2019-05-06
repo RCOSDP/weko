@@ -2,16 +2,47 @@ require([
   "jquery",
   "bootstrap"
 ], function() {
+  // Handle Quit btn on activity screens
   $("#btn_quit").click(function () {
-    console.log('#btn_quit');
     $("#action_quit_confirmation").modal("show");
   });
+
+  // Handle Continue btn on modal Quit confirmation
   $('#btn_cancel').on('click', function(){
-    console.log('#btn-cancel');
-    if ($rootScope === undefined) {
-      console.log('root undefined');
-    } else {
-      console.log('root defined');
+    let comment = ''
+    if ($('#input-comment') && $('#input-comment').val()) {
+      comment = $('#input-comment').val();
     }
+    let post_uri = $('.cur_step').data('cancel-uri');
+    let data = {
+      commond: comment,
+      action_version: $('.cur_step').data('action-version'),
+
+    };
+    send(post_uri, data,
+      function(data){
+        alert(data);
+      },
+      function(errmsg){
+        alert('Error: ' + errmsg);
+      });
   });
+
+  // call API
+  function send(url, data, handleSuccess, handleError){
+    $.ajax({
+      method: 'POST',
+      url: url,
+      async: true,
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify(data),
+      success: function(data,textStatus){
+        handleSuccess(data);
+      },
+      error: function(textStatus,errorThrown){
+        handleError(textStatus);
+      }
+    });
+  }
 });
