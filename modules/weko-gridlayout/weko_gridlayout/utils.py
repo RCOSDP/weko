@@ -230,6 +230,7 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
             item['background_color'] = data_result.get('background_color')
             item['type'] = data_result.get('widget_type')
             item['label_color'] = data_result.get('label_color')
+            item['text_color'] = data_result.get('text_color')
             item['name'] = data_result.get('label')
     data = json.dumps(json_data)
     return data
