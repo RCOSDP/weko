@@ -123,7 +123,6 @@ def update_widget_design_setting(data):
     }
     repository_id = data.get('repository_id')
     setting_data = data.get('settings')
-
     try:
         if repository_id and setting_data:
             if WidgetDesignSetting.select_by_repository_id(repository_id):
@@ -174,23 +173,24 @@ def update_admin_widget_item_setting(data):
         success = True
         msg = 'Invalid data.'
     if flag:
-        if data_result.get('repository') != data_id.get('repository')\
-            or data_result.get('widget_type') != data_id.get('widget_type')\
-                or data_result.get('label') != data_id.get('label'):
-            if WidgetItems.is_existed(data_result):
-                success = False
-                msg = 'Fail to udpate. Data input to update is exist!'
-
         if success:
             if WidgetItems.is_existed(data_id):
-                if not WidgetItems.update(data_result, data_id):
-                    # raise WidgetItemUpdatedRESTError()
-                    success = False
-                    msg = 'Update widget item fail.'
+                if validate_admin_widget_item_setting(data_id):
+                    if not WidgetItems.update(data_result, data_id):
+                        success = False
+                        msg = 'Update widget item fail.'
+                    else:
+                        update_item_in_preview_widget_item(
+                            data_id, data_result)
+                        msg = 'Widget item updated successfully.'
                 else:
-                    msg = 'Widget item updated successfully.'
+                    if not WidgetItems.update(data_result, data_id):
+                        success = False
+                        msg = 'Update widget item fail.'
+                    else:
+                        msg = 'Widget item updated successfully.'
             else:
-                msg = 'Fail to udpate. Can not find Widget item to edit'
+                msg = 'Fail to update. Can not find Widget item to edit'
     else:
         if WidgetItems.is_existed(data_result):
             success = False
@@ -209,6 +209,41 @@ def update_admin_widget_item_setting(data):
                  'message': msg}), status)
 
 
+def update_item_in_preview_widget_item(data_id, data_result):
+    try:
+        data = WidgetDesignSetting.select_by_repository_id(
+            data_id.get('repository'))
+        removeList = []
+        if data.get('settings'):
+            json_data = json.loads(data.get('settings'))
+            for item in json_data:
+                if str(item.get('name')) == str(data_id.get('label')) and\
+                        str(item.get('type')) == str(data_id.get(
+                            'widget_type')):
+                    if(str(data_id.get('repository')) != str(
+                            data_result.get('repository'))):
+                        removeList.append(item)
+                    else:
+                        item['hasFrameBorder'] = data_result.get('frame_border')
+                        item['frameBorderColor'] = data_result.get(
+                                'frame_border_color')
+                        item['background'] = data_result.get('background_color')
+                        item['type'] = data_result.get('widget_type')
+                        item['label_color'] = data_result.get('label_color')
+                        item['name'] = data_result.get('label')
+
+            for item in removeList:
+                json_data.remove(item)
+            data = json.dumps(json_data)
+            return WidgetDesignSetting.update(
+                data_id.get('repository'), data)
+
+        return False
+    except Exception as e:
+        print(e)
+        return True
+
+
 def disable_admin_wdiget_item_setting(widget_id):
     """Disable widget item.
 
@@ -219,8 +254,8 @@ def disable_admin_wdiget_item_setting(widget_id):
     success = True
     if validate_admin_widget_item_setting(widget_id):
         success = False
-        msg = '''Delete widget item fail. The widget item is used in
-                widget design'''
+        msg = '''Delete widget item fail. The widget item is used in widget \
+            design'''
     elif not WidgetItems.disable(widget_id):
         success = False
         msg = 'Delete widget item fail'
@@ -245,11 +280,11 @@ def validate_admin_widget_item_setting(widget_id):
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             for item in json_data:
-                if item.get('name') == widget_id.get('label') and \
-                   item.get('type') == widget_id.get('widget_type'):
+                if str(item.get('name')) == str(widget_id.get('label')) and\
+                        str(item.get('type')) == str(
+                            widget_id.get('widget_type')):
                     return True
         return False
     except Exception as e:
-        print("============================================")
         print(e)
         return True
