@@ -334,6 +334,7 @@ var PreviewGrid = new function () {
             let frameBorderColor = el.data("framebordercolor");
             let background = el.data("background");
             let label_color = el.data("labelcolor");
+            let text_color = el.data("textcolor");
             if (!id) {
                 return;
             } else if(MAIN_CONTENT_TYPE == type){
@@ -351,6 +352,7 @@ var PreviewGrid = new function () {
                 frame_border_color: frameBorderColor,
                 background_color: background,
                 label_color: label_color,
+                text_color: text_color,
             };
         }, this);
         var filtered = this.serializedData.filter(function (el) {
@@ -380,7 +382,7 @@ var PreviewGrid = new function () {
         }
         let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"data-hasFrameBorder="' + node.frame_border + '"'
         + ' data-frameBorderColor="' + node.frame_border_color + '"data-background="' + node.background_color + '"data-labelColor="' + node.label_color + '"'
-        + autoPosition + '>'
+        + ' data-textcolor="' + node.text_color + '"' + autoPosition + '>'
         + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
         + ' <div class="grid-stack-item-content">'
         + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'
@@ -475,6 +477,7 @@ function loadWidgetList(widgetListItems) {
             + '     data-widget-type="' + widget.widgetType + '"data-widget-name="' + widget.widgetLabel + '"'
             + '     data-widget-id="' + widget.widgetId + '" data-widget-labelcolor="'+ widget.widgetSetting.label_color + '"'
             + '     data-widget-backgroundcolor="' + widget.widgetSetting.background_color + '" data-widget-textcolor="' + widget.widgetSetting.text_color + '"'
+            + '     data-widget-textcolor="' + widget.widgetSetting.text_color + '"'
             + '     data-widget-framebordercolor="' + widget.widgetSetting.frame_border_color + '" class="btn btn-default add-new-widget">'
             + ' Add Widget'
             + ' </button>'
