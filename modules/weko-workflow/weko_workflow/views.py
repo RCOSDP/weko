@@ -734,6 +734,10 @@ def cancel_action(activity_id='0', action_id=0):
         commond=post_json.get('commond')
     )
 
+    work_activity.upt_activity_action_status(
+        activity_id=activity_id, action_id=action_id,
+        action_status=ActionStatusPolicy.ACTION_CANCELED)
+
     work_activity.quit_activity(activity)
 
     return jsonify(code=0, msg=_('success'))
