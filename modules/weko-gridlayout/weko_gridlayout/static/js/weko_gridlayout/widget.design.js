@@ -347,9 +347,9 @@ var PreviewGrid = new function () {
                 name: name,
                 id: id,
                 type: type,
-                hasFrameBorder: hasFrameBorder,
-                frameBorderColor: frameBorderColor,
-                background: background,
+                frame_border: hasFrameBorder,
+                frame_border_color: frameBorderColor,
+                background_color: background,
                 label_color: label_color,
             };
         }, this);
@@ -373,13 +373,13 @@ var PreviewGrid = new function () {
         return false;
     }.bind(this);
 
-    this.widgetTemplate = function(node, isAutoPosotion) {
+    this.widgetTemplate = function(node, isAutoPosition) {
         let autoPosition = "";
-        if(isAutoPosotion){
+        if(isAutoPosition){
             autoPosition = 'data-gs-auto-position="true"';
         }
         let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"data-hasFrameBorder="' + node.frame_border + '"'
-        + ' data-frameBorderColor="' + node.frame_border_color + '"data-background="' + node.background + '"data-labelColor="' + node.label_color + '"'
+        + ' data-frameBorderColor="' + node.frame_border_color + '"data-background="' + node.background_color + '"data-labelColor="' + node.label_color + '"'
         + autoPosition + '>'
         + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
         + ' <div class="grid-stack-item-content">'
@@ -429,7 +429,7 @@ function addWidget() {
                 id: widgetId,
                 type:widgetType,
                 frame_border: widgetFrameBorder,
-                background: widgetBackground,
+                background_color: widgetBackground,
                 label_color: widgetLabelColor,
                 text_color: widgetTextColor,
                 frame_border_color: widgetFrameBorderColor,

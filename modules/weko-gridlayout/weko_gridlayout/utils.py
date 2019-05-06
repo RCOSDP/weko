@@ -180,7 +180,7 @@ def update_admin_widget_item_setting(data):
                         success = False
                         msg = 'Update widget item fail.'
                     else:
-                        update_item_in_preview_widget_item(
+                        handle_change_item_in_preview_widget_item(
                             data_id, data_result)
                         msg = 'Widget item updated successfully.'
                 else:
@@ -209,39 +209,50 @@ def update_admin_widget_item_setting(data):
                  'message': msg}), status)
 
 
-def update_item_in_preview_widget_item(data_id, data_result):
+def delete_item_in_preview_widget_item(data_id, json_data):
+    remove_list = []
+    for item in json_data:
+        if str(item.get('name')) == str(data_id.get('label')) and str(
+                item.get('type')) == str(data_id.get('widget_type')):
+            remove_list.append(item)
+    for item in remove_list:
+        json_data.remove(item)
+    data = json.dumps(json_data)
+    return data
+
+
+def update_item_in_preview_widget_item(data_id, data_result, json_data):
+    for item in json_data:
+        if str(item.get('name')) == str(data_id.get('label')) and str(
+                item.get('type')) == str(data_id.get('widget_type')):
+            item['frame_border'] = data_result.get('frame_border')
+            item['frame_border_color'] = data_result.get('frame_border_color')
+            item['background_color'] = data_result.get('background_color')
+            item['type'] = data_result.get('widget_type')
+            item['label_color'] = data_result.get('label_color')
+            item['name'] = data_result.get('label')
+    data = json.dumps(json_data)
+    return data
+
+
+def handle_change_item_in_preview_widget_item(data_id, data_result):
     try:
         data = WidgetDesignSetting.select_by_repository_id(
             data_id.get('repository'))
-        remove_list = []
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
-            for item in json_data:
-                if str(item.get('name')) == str(data_id.get('label')) and\
-                        str(item.get('type')) == str(data_id.get(
-                            'widget_type')):
-                    if(str(data_id.get('repository')) != str(
-                            data_result.get('repository'))):
-                        remove_list.append(item)
-                    else:
-                        item['frame_border'] = data_result.get('frame_border')
-                        item['frame_border_color'] = data_result.get(
-                                'frame_border_color')
-                        item['background_color'] = data_result.get('background_color')
-                        item['type'] = data_result.get('widget_type')
-                        item['label_color'] = data_result.get('label_color')
-                        item['name'] = data_result.get('label')
-
-            for item in remove_list:
-                json_data.remove(item)
-            data = json.dumps(json_data)
-            return WidgetDesignSetting.update(
-                data_id.get('repository'), data)
+            if(str(data_id.get('repository')) != str(data_result.get(
+                    'repository'))):
+                data = delete_item_in_preview_widget_item(data_id, json_data)
+            else:
+                data = update_item_in_preview_widget_item(
+                    data_id, data_result, json_data)
+            return WidgetDesignSetting.update(data_id.get('repository'), data)
 
         return False
     except Exception as e:
         print(e)
-        return True
+        return False
 
 
 def delete_admin_widget_item_setting(widget_id):
