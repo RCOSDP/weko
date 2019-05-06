@@ -195,10 +195,12 @@
                 {% include step_item_login_url %}
               {%- elif 'item_link' == cur_step %}
                 {% include "weko_workflow/item_link.html" %}
+                {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- elif 'oa_policy' == cur_step %}
                 {% include "weko_workflow/oapolicy_search.html" %}
               {%- elif 'identifier_grant' == cur_step %}
                 {%- include 'weko_workflow/identifier_grant.html' %}
+                {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- else %}
                 {%- if 'approval' == cur_step %}
                     {% include 'weko_workflow/record_detail.html' %}
@@ -222,6 +224,10 @@
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
                     <span class="glyphicon glyphicon-download-alt"></span>{{_('Save')}}</button>
                 <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
+                <button class="btn btn-danger pull-right" id="btn_quit">
+                  <i class="fa fa-sign-out"></i>
+                  {{_('Quit')}}</button>
+                {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'double_check' == cur_step %}
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
@@ -238,7 +244,10 @@
                 </button>
 
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
-
+                <button class="btn btn-danger pull-right" id="btn_quit">
+                  <i class="fa fa-sign-out"></i>
+                  {{_('Quit')}}</button>
+                {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'end_action' == cur_step %}
                 <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
