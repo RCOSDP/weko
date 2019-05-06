@@ -214,9 +214,11 @@
               <div class="row">
                 <div class="col-sm-9">
                   <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                    <li>
-                      <button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-primary" id="btn_quit">
-                        <span>{{_('Quit')}}</span>
+                    <li class="pull-left">
+                      <button ng-disabled="recordsVM.invenioRecordsLoading"
+                              class="btn btn-danger" id="btn_quit">
+                        <i class="fa fa-sign-out"></i>
+                        {{_('Quit')}}
                       </button>
                     </li>
                     {%- if pid %}
@@ -238,27 +240,7 @@
                   </ul>
                 </div>
               </div>
-              <div id="action_quit_confirmation" class="modal fade" tabindex="-1"
-                   role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                      </button>
-                      <h4 class="modal-title" id="deleteHeader">WEKO</h4>
-                    </div>
-                    <div class="modal-body" style="overflow-x: auto;">
-                      <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
-                      <span style="margin: 0 10px">{{_('Are you sure you want to quit the activity?')}}</span>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-primary" ng-click="cancelDataJson()">{{_('Continue')}} </button>
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">{{_('Cancel')}}</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {% include "weko_workflow/modal_quit_confirmation.html" %}
             </div>
             </invenio-records>
           {%- if need_file %}
