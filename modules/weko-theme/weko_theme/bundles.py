@@ -68,6 +68,13 @@ css_buttons = Bundle(
 )
 """ Button Styling CSS File. """
 
+css_widget = Bundle(
+    'css/weko_theme/gridstack.min.css',
+    'css/weko_theme/widget.css',
+    output='gen/weko_theme_widget.%(version)s.css',
+)
+"""Widget CSS."""
+
 js_treeview = Bundle(
     'js/weko_theme/inline.bundle.js',
     'js/weko_theme/polyfills.bundle.js',
@@ -91,4 +98,18 @@ js_detail_search = Bundle(
     'js/weko_theme/search_detail.js',
     filters='requirejs',
     output="gen/weko_detail_search.%(version)s.js",
+)
+
+
+js_widget_lib = Bundle(
+    'js/weko_theme/lodash.js',
+    'js/weko_theme/gridstack.js',
+    filters='jsmin',
+    output="gen/widget_lib.%(version)s.js",
+)
+
+widget_js = Bundle(
+    'js/weko_theme/widget.js',
+    filters='jsmin',
+    output="gen/widget.%(version)s.js",
 )
