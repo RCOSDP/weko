@@ -4,6 +4,13 @@ $(document).ready(function () {
     var year = $("#report_year_select").val();
     var month = $("#report_month_select").val();
     var type = $("#report_type_select").val();
+    if(year == 'Year') {
+      alert('Year is required!');
+      return;
+    } else if (month == 'Month') {
+      alert('Month is required!');
+      return;
+    }
     var statsURL = '/api/stats/' + type + '/' + year + '/' + month;
     var statsReports = {}
 
@@ -34,9 +41,7 @@ $(document).ready(function () {
           $('#error_modal').modal('show');
         }
       });
-    }
-
-    else { // Get single report
+    } else { // Get single report
       $.ajax({
         url: statsURL,
         type: 'GET',
