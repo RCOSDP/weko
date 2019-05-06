@@ -1,4 +1,3 @@
---------------------------------------------------------------
 {#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
@@ -20,7 +19,8 @@
 #}
 
 {%- block javascript %}
-  <script src="{{ url_for('static', filename='js/weko_workflow/quit_confirmation.js') }}" type="text/babel"></script>
+  {% assets "workflow_quit_confirmation_js" %}
+  <script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 <div id="action_quit_confirmation" class="modal fade" tabindex="-1"
@@ -38,7 +38,7 @@
         <span style="margin: 0 10px">{{_('Are you sure you want to quit the activity?')}}</span>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" id="btn-cancel"
+        <button type="button" class="btn btn-primary" id="btn_cancel"
                 ng-click="cancelDataJson()">{{_('Continue')}}</button>
         <button type="button" class="btn btn-secondary"
                 data-dismiss="modal">{{_('Cancel')}}</button>
