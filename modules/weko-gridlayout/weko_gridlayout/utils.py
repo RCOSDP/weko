@@ -210,6 +210,15 @@ def update_admin_widget_item_setting(data):
 
 
 def delete_item_in_preview_widget_item(data_id, json_data):
+    """[summary]
+    
+    Arguments:
+        data_id {[type]} -- [description]
+        json_data {[type]} -- [description]
+    
+    Returns:
+        [type] -- [description]
+    """
     remove_list = []
     for item in json_data:
         if str(item.get('name')) == str(data_id.get('label')) and str(
@@ -222,6 +231,16 @@ def delete_item_in_preview_widget_item(data_id, json_data):
 
 
 def update_item_in_preview_widget_item(data_id, data_result, json_data):
+    """[summary]
+    
+    Arguments:
+        data_id {[type]} -- [description]
+        data_result {[type]} -- [description]
+        json_data {[type]} -- [description]
+    
+    Returns:
+        [type] -- [description]
+    """
     for item in json_data:
         if str(item.get('name')) == str(data_id.get('label')) and str(
                 item.get('type')) == str(data_id.get('widget_type')):
@@ -237,6 +256,15 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
 
 
 def handle_change_item_in_preview_widget_item(data_id, data_result):
+    """[summary]
+    
+    Arguments:
+        data_id {[type]} -- [description]
+        data_result {[type]} -- [description]
+    
+    Returns:
+        [type] -- [description]
+    """
     try:
         data = WidgetDesignSetting.select_by_repository_id(
             data_id.get('repository'))
@@ -257,7 +285,7 @@ def handle_change_item_in_preview_widget_item(data_id, data_result):
 
 
 def delete_admin_widget_item_setting(widget_id):
-    """Disable widget item.
+    """Delete widget item.
 
     :param: widget id
     :return: options json
@@ -287,14 +315,20 @@ def validate_admin_widget_item_setting(widget_id):
     :return: true if widget item is used in widget design else return false
     """
     try:
+        if(type(widget_id)) is dict:
+            repository_id =  widget_id.get('repository')
+            widget_type = widget_id.get('widget_type')
+            label = widget_id.get('label')
+        else:
+            repository_id = widget_id.repository_id
+            widget_type = widget_id.widget_type
+            label = widget_id.label
         data = WidgetDesignSetting.select_by_repository_id(
-            widget_id.get('repository'))
+           repository_id)
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             for item in json_data:
-                if str(item.get('name')) == str(widget_id.get('label')) and\
-                        str(item.get('type')) == str(
-                            widget_id.get('widget_type')):
+                if str(item.get('name')) == str(label) and str(item.get('type')) == str(widget_type):
                     return True
         return False
     except Exception as e:
