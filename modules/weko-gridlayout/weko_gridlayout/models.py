@@ -24,8 +24,6 @@ from flask import current_app
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.types import JSONType
-from weko_index_tree.models import Index
-from invenio_communities.models import Community
 
 
 class WidgetType(db.Model):
@@ -41,11 +39,11 @@ class WidgetType(db.Model):
     def create(cls, data):
         """Create data."""
         try:
-            dataObj = WidgetType()
+            data_obj = WidgetType()
             with db.session.begin_nested():
-                dataObj.type_id = data.get('type_id')
-                dataObj.type_name = data.get('type_name')
-                db.session.add(dataObj)
+                data_obj.type_id = data.get('type_id')
+                data_obj.type_name = data.get('type_name')
+                db.session.add(data_obj)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()

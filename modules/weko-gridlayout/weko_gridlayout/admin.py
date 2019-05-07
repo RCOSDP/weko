@@ -23,14 +23,13 @@
 import json
 
 from flask import current_app, flash, redirect, request
+from flask.ext.admin.contrib.sqla.view import func
 from flask_admin import BaseView, expose
 from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
-from flask_admin.contrib.sqla.filters import BooleanEqualFilter
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model import helpers
 from flask_babelex import gettext as _
-from flask.ext.admin.contrib.sqla.view import func
 from wtforms.fields import StringField
 
 from . import config
@@ -67,7 +66,7 @@ class WidgetSettingView(ModelView):
     @expose('/edit/', methods=('GET', 'POST'))
     def edit_view(self):
         """Define Api for edit view.
-        
+
         Returns:
             HTML page -- Html page for edit view
 
@@ -89,7 +88,7 @@ class WidgetSettingView(ModelView):
         return self.render(config.WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS,
                            model=json.dumps(model),
                            return_url=return_url)
-    
+
     def get_query(self):
         return self.session.query(
             self.model).filter(self.model.is_deleted == 'False')
@@ -113,7 +112,8 @@ class WidgetSettingView(ModelView):
                               model.label, self.session)
         except Exception as ex:
             if not self.handle_view_exception(ex):
-                flash(gettext('Failed to delete record. %(error)s', error=str(ex)), 'error')
+                flash(gettext('Failed to delete record. %(error)s',
+                              error=str(ex)), 'error')
                 # log.exception('Failed to delete record.')
 
             self.session.rollback()
@@ -129,7 +129,7 @@ class WidgetSettingView(ModelView):
 
         Arguments:
             model {widget_item} -- [item to be deleted]
-        
+
         Returns:
             [false] -- [it is being used in widget design]
             [true] -- [it isn't being used in widget design]

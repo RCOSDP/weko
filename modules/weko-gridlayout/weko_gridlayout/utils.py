@@ -22,6 +22,7 @@
 import json
 
 from flask import jsonify, make_response
+from invenio_db import db
 
 from .api import WidgetItems
 from .models import WidgetDesignSetting, WidgetItem, WidgetType
@@ -62,9 +63,10 @@ def get_widget_list(repository_id):
         "error": ""
     }
     try:
-        widget_item_list = WidgetItem.query.filter_by(
-            repository_id=repository_id, is_enabled=True, is_deleted=False
-        ).all()
+        with db.session.auto_flush():
+            widget_item_list = WidgetItem.query.filter_by(
+                repository_id=repository_id, is_enabled=True, is_deleted=False
+            ).all()
         if widget_item_list:
             for widget_item in widget_item_list:
                 data = dict()
@@ -180,8 +182,8 @@ def update_admin_widget_item_setting(data):
                         success = False
                         msg = 'Update widget item fail.'
                     else:
-                        handle_change_item_in_preview_widget_item(
-                            data_id, data_result)
+                        handle_change_item_in_preview_widget_item(data_id,
+                                                                  data_result)
                         msg = 'Widget item updated successfully.'
                 else:
                     if not WidgetItems.update(data_result, data_id):
@@ -210,12 +212,12 @@ def update_admin_widget_item_setting(data):
 
 
 def delete_item_in_preview_widget_item(data_id, json_data):
-    """Delete item in preview widget design when it's repository or enable field is edited in widget item.
-    
+    """Delete item in preview widget design.
+
     Arguments:
         data_id {widget_item} -- [id of widget item]
         json_data {dict} -- [data to be updated]
-    
+
     Returns:
         [data] -- [data after updated]
 
@@ -318,8 +320,8 @@ def validate_admin_widget_item_setting(widget_id):
     :return: true if widget item is used in widget design else return false
     """
     try:
-        if(type(widget_id)) is dict:
-            repository_id =  widget_id.get('repository')
+        if (type(widget_id)) is dict:
+            repository_id = widget_id.get('repository')
             widget_type = widget_id.get('widget_type')
             label = widget_id.get('label')
         else:
@@ -327,11 +329,12 @@ def validate_admin_widget_item_setting(widget_id):
             widget_type = widget_id.widget_type
             label = widget_id.label
         data = WidgetDesignSetting.select_by_repository_id(
-           repository_id)
+            repository_id)
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             for item in json_data:
-                if str(item.get('name')) == str(label) and str(item.get('type')) == str(widget_type):
+                if str(item.get('name')) == str(label) and str(
+                        item.get('type')) == str(widget_type):
                     return True
         return False
     except Exception as e:
