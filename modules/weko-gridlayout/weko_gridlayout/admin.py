@@ -36,6 +36,7 @@ from wtforms.fields import StringField
 from . import config
 from .api import WidgetItems
 from .models import WidgetItem
+from .utils import validate_admin_widget_item_setting
 
 
 class WidgetDesign(BaseView):
@@ -101,13 +102,16 @@ class WidgetSettingView(ModelView):
                 Model to delete
         """
         try:
-            widget_item = WidgetItem.delete(model.repository_id,
-                                            model.widget_type,
-                                            model.label)
+            if not self.on_model_delete(model):
+                return False
+            self.session.flush()
+            WidgetItem.delete(model.repository_id,
+                              model.widget_type,
+                              model.label, self.session)
         except Exception as ex:
             if not self.handle_view_exception(ex):
                 flash(gettext('Failed to delete record. %(error)s', error=str(ex)), 'error')
-                log.exception('Failed to delete record.')
+                # log.exception('Failed to delete record.')
 
             self.session.rollback()
 
@@ -115,6 +119,11 @@ class WidgetSettingView(ModelView):
         else:
             self.after_model_delete(model)
 
+        return True
+
+    def on_model_delete(self, model):
+        if validate_admin_widget_item_setting(model):
+            return False
         return True
 
     column_list = (

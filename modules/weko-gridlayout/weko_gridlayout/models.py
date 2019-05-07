@@ -147,7 +147,7 @@ class WidgetItem(db.Model):
         return
 
     @classmethod
-    def delete(cls, repo_id, type_id, lbl):
+    def delete(cls, repo_id, type_id, lbl, session=None):
         """Delete the widget item detail info.
 
         :param repo_id: Identifier of the repository.
@@ -155,18 +155,19 @@ class WidgetItem(db.Model):
         :param lbl: label of the widget type.
         :return: delete widget item info
         """
+        if not session:
+            session = db.session
         try:
-            with db.session.begin_nested():
+            with session.begin_nested():
                 widget_item = cls.get(repo_id, type_id, lbl)
                 if not widget_item:
                     return
-
                 setattr(widget_item, 'is_deleted', 'True')
-            db.session.commit()
+            session.commit()
             return widget_item
         except Exception as ex:
             current_app.logger.debug(ex)
-            db.session.rollback()
+            session.rollback()
         return
 
 
