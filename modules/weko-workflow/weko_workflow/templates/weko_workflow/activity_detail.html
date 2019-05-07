@@ -182,7 +182,7 @@
           </div>
         </div>
       </div>
-      {%- if 'F' != activity.activity_status %}
+      {%- if 'F' != activity.activity_status and 'C' != activity.activity_status %}
         <div class="panel panel-default hide" id="hide-res-check">{{ res_check }}</div>
         <div class="panel panel-default">
           {%- if 0 != res_check %}
