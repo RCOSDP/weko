@@ -299,8 +299,7 @@ def delete_admin_widget_item_setting(widget_id):
     success = True
     if validate_admin_widget_item_setting(widget_id):
         success = False
-        msg = 'Delete widget item fail. The widget item is used in widget \
-            design.'
+        msg = 'Delete widget item fail. The item is used in widget design.'
     elif not WidgetItems.delete(widget_id):
         success = False
         msg = 'Delete widget item fail.'
