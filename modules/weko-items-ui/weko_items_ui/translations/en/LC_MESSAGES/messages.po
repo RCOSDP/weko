@@ -152,7 +152,10 @@ msgid "Save"
 msgstr "Save"
 
 msgid "Quit"
-msgstr "Quit"
+msgstr ""
+
+msgid "Are you sure you want to quit the activity?"
+msgstr ""
 
 #~ msgid "Author_Add_Author"
 #~ msgstr "Add Author"
