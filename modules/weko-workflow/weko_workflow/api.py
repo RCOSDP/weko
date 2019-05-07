@@ -785,7 +785,7 @@ class WorkActivity(object):
                     activity_id=activity.get('activity_id')).one_or_none()
                 if db_activity:
                     db_activity.activity_status = \
-                        ActivityStatusPolicy.ACTIVITY_CANCEL
+                        ActivityStatusPolicy.ACTIVITY_FINALLY
                     db_activity.action_id = activity.get('action_id')
                     db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()

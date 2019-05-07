@@ -200,11 +200,12 @@ def display_activity(activity_id=0):
     histories = history.get_activity_history_list(activity_id)
     workflow = WorkFlow()
     workflow_detail = workflow.get_workflow_by_id(activity_detail.workflow_id)
-    if ActivityStatusPolicy.ACTIVITY_FINALLY != activity_detail.activity_status:
+    if activity_detail.activity_status == ActivityStatusPolicy.ACTIVITY_FINALLY\
+        or activity_detail.activity_status == ActivityStatusPolicy.ACTIVITY_CANCEL:
+        activity_detail.activity_status_str = _('End')
+    else:
         activity_detail.activity_status_str = \
             request.args.get('status', 'ToDo')
-    else:
-        activity_detail.activity_status_str = _('End')
     cur_action = activity_detail.action
     action_endpoint = cur_action.action_endpoint
     action_id = cur_action.id
