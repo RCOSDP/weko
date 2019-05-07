@@ -210,14 +210,15 @@ def update_admin_widget_item_setting(data):
 
 
 def delete_item_in_preview_widget_item(data_id, json_data):
-    """[summary]
+    """Delete item in preview widget design when it's repository or enable field is edited in widget item.
     
     Arguments:
-        data_id {[type]} -- [description]
-        json_data {[type]} -- [description]
+        data_id {widget_item} -- [id of widget item]
+        json_data {dict} -- [data to be updated]
     
     Returns:
-        [type] -- [description]
+        [data] -- [data after updated]
+
     """
     remove_list = []
     for item in json_data:
@@ -231,15 +232,15 @@ def delete_item_in_preview_widget_item(data_id, json_data):
 
 
 def update_item_in_preview_widget_item(data_id, data_result, json_data):
-    """[summary]
-    
+    """Update item in preview widget design when it is edited in widget item.
+
     Arguments:
-        data_id {[type]} -- [description]
-        data_result {[type]} -- [description]
-        json_data {[type]} -- [description]
-    
+        data_id {widget_item} -- [id of widget item]
+        data_result {widget_item} -- [sent]
+        json_data {dict} -- [data to be updated]
     Returns:
-        [type] -- [description]
+        [data] -- [data after updated]
+
     """
     for item in json_data:
         if str(item.get('name')) == str(data_id.get('label')) and str(
@@ -256,14 +257,16 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
 
 
 def handle_change_item_in_preview_widget_item(data_id, data_result):
-    """[summary]
-    
+    """Handle change when edit widget item effect to widget design.
+
     Arguments:
-        data_id {[type]} -- [description]
-        data_result {[type]} -- [description]
-    
+        data_id {widget_item} -- [id of widget item]
+        data_result {widget_item} -- [data is sent by client]
+
     Returns:
-        [type] -- [description]
+        [False] -- [handle failed]
+        [True] -- [handle success]
+
     """
     try:
         data = WidgetDesignSetting.select_by_repository_id(
