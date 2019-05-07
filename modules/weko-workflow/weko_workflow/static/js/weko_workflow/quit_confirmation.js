@@ -22,13 +22,18 @@ require([
     };
     send(post_uri, data,
       function(data){
-        if (data.code == 0) {
+        if (data && data.code == 0) {
+          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+            document.location.href = data.data.redirect;
+          } else {
+            document.location.reload(true);
+          }
+        } else {
           alert(data.msg);
-          //window.location.href = "/itemtypes/register";
         }
       },
       function(errmsg){
-        alert('Error: ' + errmsg);
+        alert('Server error.');
       });
   });
 
