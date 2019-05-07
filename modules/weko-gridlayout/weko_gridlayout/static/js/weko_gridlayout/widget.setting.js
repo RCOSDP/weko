@@ -38,10 +38,7 @@ class ComponentSelectField extends React.Component {
                 },
 
                 (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
+                    console.log(error);
                 }
             )
 
@@ -244,10 +241,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                 },
 
                 (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
+                    console.log(error);
                 }
             )
 
