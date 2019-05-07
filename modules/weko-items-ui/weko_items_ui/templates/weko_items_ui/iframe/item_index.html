@@ -32,6 +32,8 @@
 {{ super() }}
 {% assets "weko_items_ui_js_dependencies" %}
 <script src="{{ ASSET_URL }}"></script>{% endassets %}
+{% assets "workflow_quit_confirmation_js" %}
+<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -192,8 +194,8 @@
               <div class="hide" id="pub_status">{{ action }}</div>
               <div class="hide" id="post_success_url">{{url_for('weko_workflow.iframe_success')}}</div>
               <div class="hide" id="post_error_url">{{url_for('weko_items_ui.iframe_error')}}</div>
-              <div class="hide" id="cancel_url">{{ url_for('weko_workflow.cancel_action', activity_id=activity.activity_id, action_id=action_id) }}</div>
               <app-root-tree></app-root-tree>
+              {% include "weko_workflow/modal_quit_confirmation.html" %}
             </div>
           </div>
         </div>

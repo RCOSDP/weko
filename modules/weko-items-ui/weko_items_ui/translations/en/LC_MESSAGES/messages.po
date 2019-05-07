@@ -193,5 +193,3 @@ msgstr "Save"
 #~ msgid "You do not even have an itemtype."
 #~ msgstr ""
 
-#~ msgid "Quit"
-#~ msgstr "Quit"
