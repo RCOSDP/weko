@@ -192,7 +192,7 @@
               <div class="hide" id="pub_status">{{ action }}</div>
               <div class="hide" id="post_success_url">{{url_for('weko_workflow.iframe_success')}}</div>
               <div class="hide" id="post_error_url">{{url_for('weko_items_ui.iframe_error')}}</div>
-              <div class="hide" id="cancel_url">{{ url_for('weko_workflow.cancel_action', activity_id=step.ActivityId, action_id=step.ActionId) }}</div>
+              <div class="hide" id="cancel_url">{{ url_for('weko_workflow.cancel_action', activity_id=activity.activity_id, action_id=action_id) }}</div>
               <app-root-tree></app-root-tree>
             </div>
           </div>
