@@ -28,6 +28,7 @@
 {%- block javascript %}
   {{ super() }}
   {%- assets "workflow_activity_list_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -54,7 +55,11 @@
 <div class="communities">
 <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
 {{ community_header(community, subtitle='') }}
+  <div id="page_body" class="grid-stack">
+  <div id="main_contents">
 {{super()}}
+  </div>
+  </div>
 {{ community_footer(community, link=False, subtitle='') }}
 </div>
 <div class="communities">
