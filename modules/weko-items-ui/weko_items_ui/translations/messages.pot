@@ -147,3 +147,5 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
+msgid "Quit"
+msgstr "Quit"
