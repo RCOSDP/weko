@@ -66,8 +66,11 @@ class WidgetSettingView(ModelView):
 
     @expose('/edit/', methods=('GET', 'POST'))
     def edit_view(self):
-        """
-            Edit model view
+        """Define Api for edit view.
+        
+        Returns:
+            HTML page -- Html page for edit view
+
         """
         return_url = get_redirect_target() or self.get_url('.index_view')
 
@@ -98,8 +101,8 @@ class WidgetSettingView(ModelView):
     def delete_model(self, model):
         """Delete model.
 
-            :param model:
-                Model to delete
+        :param model:
+            Model to delete
         """
         try:
             if not self.on_model_delete(model):
@@ -122,6 +125,16 @@ class WidgetSettingView(ModelView):
         return True
 
     def on_model_delete(self, model):
+        """Define action before delete model.
+
+        Arguments:
+            model {widget_item} -- [item to be deleted]
+        
+        Returns:
+            [false] -- [it is being used in widget design]
+            [true] -- [it isn't being used in widget design]
+
+        """
         if validate_admin_widget_item_setting(model):
             return False
         return True
