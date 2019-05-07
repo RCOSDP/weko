@@ -785,7 +785,7 @@ class WorkActivity(object):
                     activity_id=activity.get('activity_id')).one_or_none()
                 if db_activity:
                     db_activity.activity_status = \
-                        ActivityStatusPolicy.ACTIVITY_FINALLY
+                        ActivityStatusPolicy.ACTIVITY_CANCEL
                     db_activity.action_id = activity.get('action_id')
                     db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()
@@ -876,7 +876,7 @@ class WorkActivity(object):
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
                 if ActivityStatusPolicy.ACTIVITY_FINALLY == \
-                        activi.activity_status:
+                        activi.activity_status or ActivityStatusPolicy.ACTIVITY_CANCEL == activi.activity_status:
                     activi.type = 'All'
                     continue
                 activi.type = 'ToDo'
