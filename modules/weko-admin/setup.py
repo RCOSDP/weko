@@ -120,6 +120,10 @@ setup(
             'weko_admin_search_js = weko_admin.bundles:search_management_js',
             'weko_admin_stats_report_js = weko_admin.bundles:stats_report_js',
             'weko_admin_css = weko_admin.bundles:css',
+            'weko_admin_custom_report = '
+            'weko_admin.bundles:custom_report_js',
+            'weko_report_reactjs_lib = '
+            'weko_admin.bundles:report_reactjs_lib'
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

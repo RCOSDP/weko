@@ -39,7 +39,7 @@ from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_response_json, get_search_setting, \
     get_selected_language, save_api_certification, update_admin_lang_setting, \
-    validate_certification, get_initial_stats_report
+    validate_certification, get_initial_stats_report, get_unit_stats_report
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -350,12 +350,68 @@ def save_api_cert_data():
     return jsonify(result)
 
 
-@blueprint_api.route('/get_init_selection', methods=['GET'])
-def get_init_selection():
+@blueprint_api.route('/get_init_selection/<string:selection>', methods=['GET'])
+def get_init_selection(selection=""):
+    """Get initial data for unit and target.
+
+    :param selection:"""
     result = dict()
     try:
-        result = get_initial_stats_report()
+        if selection == 'target':
+            result = get_initial_stats_report()
+        elif selection == "":
+            raise ValueError("Request URL is incorrectly")
+        else:
+            result = get_unit_stats_report(selection)
     except Exception as e:
         result['error'] = str(e)
 
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_statistic_item_regis/<int:unit>', methods=['GET'])
+def get_statistic_item_regis(unit=1):
+    result = list()
+    for i in range(22, 26):
+        temp_data = dict()
+        if unit == 1:
+            temp_data['col1'] = "2019-04-"+str(i)
+            temp_data['col2'] = i + 50
+        elif unit == 2:
+            temp_data['col1'] = "2019-01-01      -       2019-04-"+str(i)
+            temp_data['col2'] = i + 50
+        elif unit == 3:
+            temp_data['col1'] = "20"+str(i)
+            temp_data['col2'] = i + 50
+        else:
+            temp_data['col1'] = "User "+str(i)
+            temp_data['col2'] = "192.168.1."+str(i)
+            temp_data['col3'] = i + 50
+        result.append(temp_data)
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_statistic_detail_view/<int:unit>', methods=['GET'])
+def get_statistic_detail_view(unit=1):
+    result = list()
+    for i in range(22, 26):
+        temp_data = dict()
+        if unit == 1:
+            temp_data['col1'] = "2019-05-"+str(i)
+            temp_data['col2'] = i + 100
+        elif unit == 2:
+            temp_data['col1'] = "2019-01-01      -       2019-04-"+str(i)
+            temp_data['col2'] = i + 100
+        elif unit == 3:
+            temp_data['col1'] = "20"+str(i)
+            temp_data['col2'] = i + 100
+        elif unit == 4:
+            temp_data['col1'] = "100"+str(i)
+            temp_data['col2'] = "Test Item "+str(i)
+            temp_data['col3'] = i + 100
+        else:
+            temp_data['col1'] = "User "+str(i)
+            temp_data['col2'] = "192.168.1."+str(i)
+            temp_data['col3'] = i + 100
+        result.append(temp_data)
     return jsonify(result)
