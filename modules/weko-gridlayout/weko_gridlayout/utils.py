@@ -242,8 +242,8 @@ def handle_change_item_in_preview_widget_item(data_id, data_result):
             data_id.get('repository'))
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
-            if(str(data_id.get('repository')) != str(data_result.get(
-                    'repository'))):
+            if str(data_id.get('repository')) != str(data_result.get(
+                    'repository')) or data_result.get('enable') is False:
                 data = delete_item_in_preview_widget_item(data_id, json_data)
             else:
                 data = update_item_in_preview_widget_item(
