@@ -109,6 +109,7 @@ js_widget_lib = Bundle(
 )
 
 widget_js = Bundle(
+    js_widget_lib,
     'js/weko_theme/widget.js',
     filters='jsmin',
     output="gen/widget.%(version)s.js",
