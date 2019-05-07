@@ -87,41 +87,44 @@ def iframe_success():
     :return: The rendered template.
     """
     # get session value
-    history = WorkActivityHistory()
-    histories = history.get_activity_history_list(session['itemlogin_id'])
-    activity = session['itemlogin_activity']
-    item = session['itemlogin_item']
-    steps = session['itemlogin_steps']
-    action_id = session['itemlogin_action_id']
-    cur_step = session['itemlogin_cur_step']
-    record = session['itemlogin_record']
-    res_check = session['itemlogin_res_check']
-    pid = session['itemlogin_pid']
-    community_id = session['itemlogin_community_id']
+    try:
+        history = WorkActivityHistory()
+        histories = history.get_activity_history_list(session['itemlogin_id'])
+        activity = session['itemlogin_activity']
+        item = session['itemlogin_item']
+        steps = session['itemlogin_steps']
+        action_id = session['itemlogin_action_id']
+        cur_step = session['itemlogin_cur_step']
+        record = session['itemlogin_record']
+        res_check = session['itemlogin_res_check']
+        pid = session['itemlogin_pid']
+        community_id = session['itemlogin_community_id']
 
-    # delete session value
-    del session['itemlogin_id']
-    del session['itemlogin_activity']
-    del session['itemlogin_item']
-    del session['itemlogin_steps']
-    del session['itemlogin_action_id']
-    del session['itemlogin_cur_step']
-    del session['itemlogin_record']
-    del session['itemlogin_res_check']
-    del session['itemlogin_pid']
-    del session['itemlogin_community_id']
+        # delete session value
+        del session['itemlogin_id']
+        del session['itemlogin_activity']
+        del session['itemlogin_item']
+        del session['itemlogin_steps']
+        del session['itemlogin_action_id']
+        del session['itemlogin_cur_step']
+        del session['itemlogin_record']
+        del session['itemlogin_res_check']
+        del session['itemlogin_pid']
+        del session['itemlogin_community_id']
 
-    return render_template('weko_workflow/item_login_success.html',
-                           activity=activity,
-                           item=item,
-                           steps=steps,
-                           action_id=action_id,
-                           cur_step=cur_step,
-                           record=record,
-                           histories=histories,
-                           res_check=res_check,
-                           pid=pid,
-                           community_id=community_id)
+        return render_template('weko_workflow/item_login_success.html',
+                            activity=activity,
+                            item=item,
+                            steps=steps,
+                            action_id=action_id,
+                            cur_step=cur_step,
+                            record=record,
+                            histories=histories,
+                            res_check=res_check,
+                            pid=pid,
+                            community_id=community_id)
+    except Exception as ex:
+        current_app.logger.exception(str(ex))
 
 
 @blueprint.route('/activity/new', methods=['GET'])
@@ -741,4 +744,7 @@ def cancel_action(activity_id='0', action_id=0):
 
     work_activity.quit_activity(activity)
 
-    return jsonify(code=0, msg=_('success'))
+    return jsonify(code=0, msg=_('success'),
+                   data={'redirect': url_for(
+                       'weko_workflow.display_activity',
+                       activity_id=activity_id)})
