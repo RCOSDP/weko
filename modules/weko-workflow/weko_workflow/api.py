@@ -786,7 +786,7 @@ class WorkActivity(object):
                 if db_activity:
                     db_activity.activity_status = \
                         ActivityStatusPolicy.ACTIVITY_CANCEL
-                    db_activity.action_id = last_flow_action.action_id
+                    db_activity.action_id = activity.get('action_id')
                     db_activity.action_status = activity.get('action_status')
                     db_activity.activity_end = datetime.utcnow()
                     db.session.merge(db_activity)
@@ -867,14 +867,12 @@ class WorkActivity(object):
                         activi.ItemName = item.json.get('title')
                     else:
                         activi.ItemName = ''
-                
                 if activi.activity_status == ActivityStatusPolicy.ACTIVITY_FINALLY:
                     activi.StatusDesc = ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_DONE)
                 elif activi.activity_status == ActivityStatusPolicy.ACTIVITY_CANCEL:
                     activi.StatusDesc = ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_CANCELED)
                 else:
                     activi.StatusDesc = ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_DOING)
-
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
                 if ActivityStatusPolicy.ACTIVITY_FINALLY == \
