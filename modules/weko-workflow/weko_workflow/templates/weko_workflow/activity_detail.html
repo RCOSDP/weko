@@ -94,7 +94,7 @@
                 <div class="form-group">
                   <label class="col-sm-4 control-label">{{_('Status')}}</label>
                   <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.activity_status_str}}</p>
+                    <p class="form-control-static">{{ activity.activity_status_str }}</p>
                   </div>
                 </div>
               </div>
@@ -161,14 +161,29 @@
               <div class="row">
                 <div class="col-sm-9">
                   <ul class="list-group">
-                    <li class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
+                    <li class="list-group-item break-word 
+                      {% if activity.activity_status_str != 'End' and cur_step == step.ActionEndpoint %}
+                        style_li
+                      {% elif activity.activity_status_str == 'End' and step.ActionName == 'End' %}
+                        style_li
+                      {% endif %}">
                       <span class="action-name {% if cur_step == step.ActionEndpoint %} cur_step style_a {% endif %}"
                         data-action-version="{{ step.ActionVersion }}"
                         data-cancel-uri="{{ url_for('weko_workflow.cancel_action', activity_id=step.ActivityId, action_id=step.ActionId) }}"
                         data-next-uri="{{ url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId) }}">{{ step.ActionName }}</span></li>
-                    <li class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
+                    <li class="list-group-item break-word 
+                      {% if activity.activity_status_str != 'End' and cur_step == step.ActionEndpoint %}
+                        style_li
+                      {% elif activity.activity_status_str == 'End' and step.ActionName == 'End' %}
+                        style_li
+                      {% endif %}">
                       <span class="action-name {% if cur_step == step.ActionEndpoint %} style_a {% endif %}">{{ step.Author }}</span></li>
-                    <li class="list-group-item {% if cur_step == step.ActionEndpoint %} style_li style_a {% endif %}">{{_( step.Status )}}</li>
+                    <li class="list-group-item
+                    {% if activity.activity_status_str != 'End' and cur_step == step.ActionEndpoint %}
+                      style_li
+                    {% elif activity.activity_status_str == 'End' and step.ActionName == 'End' %}
+                      style_li
+                    {% endif %}">{{_( step.Status )}}</li>
                   </ul>
                 </div>
                 {%- if 'end_action' != step.ActionEndpoint %}
