@@ -30,7 +30,6 @@
   {{ super() }}
   {% include config.THEME_JAVASCRIPT_TEMPLATE %}
   {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 
   {%- if 'item_link' == cur_step %}
     {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -42,9 +41,10 @@
   {%- elif 'oa_policy' == cur_step %}
     {% assets "workflow_oa_policy_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- else %}
+  {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- endif %}
   {% assets "workflow_quit_confirmation_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -296,10 +296,6 @@
     {%- else %}
       <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
         <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</a>
-    {%- endif %}
-    {%- if 'F' != activity.activity_status %}
-    <button type="button" class="btn btn-danger delete-button pull-right" id="btn-cancel">
-      <span class="glyphicon glyphicon-ban-circle"></span> {{_('Quit')}}</button>
     {%- endif %}
   </div>
 </div>
