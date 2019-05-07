@@ -220,39 +220,4 @@ require([
   $('#lnk_item_detail').on('click', function () {
     $('#myModal').modal('show');
   });
-
-  $('#btn-cancel').on('click', function () {
-    let comment = ''
-    if ($('#input-comment') && $('#input-comment').val()) {
-      comment = $('#input-comment').val();
-    }
-    let post_uri = $('.cur_step').data('cancel-uri');
-    let post_data = {
-      commond: comment,
-      action_version: $('.cur_step').data('action-version'),
-      temporary_save: 0,
-    };
-    $.ajax({
-      url: post_uri,
-      method: 'POST',
-      async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (data, status) {
-        console.log('Success!');
-        if (0 == data.code) {
-          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href = data.data.redirect;
-          } else {
-            document.location.reload(true);
-          }
-        } else {
-          alert(data.msg);
-        }
-      },
-      error: function (jqXHE, status) {
-        alert('Server error');
-      }
-    });
-  });
 })
