@@ -126,4 +126,3 @@ static:
     - /code/modules/weko-sitemap/weko_sitemap.egg-info
     - .:/code
   user: invenio
-  
