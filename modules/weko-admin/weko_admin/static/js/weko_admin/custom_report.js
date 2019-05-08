@@ -64,7 +64,6 @@ class ComponentTableResult extends React.Component {
             }*/)
           .then(res => res.json())
           .then((result) => {
-            console.log(result);
             this.displayData(result.data);
           });
       } else if (target == DETAIL_VIEW_ID) {
@@ -315,10 +314,10 @@ class ComponentCombobox extends React.Component {
               }
             );
         }else {
-          this.setState({
-            disabled: !props.disable
-          });
-        }
+        this.setState({
+          disabled: !props.disable
+        });
+      }
       }
     }
   }
@@ -397,7 +396,7 @@ class ComponentCombobox extends React.Component {
 
   render() {
     return (
-      <div className="form-group row">
+      <div className="form-group row margin_0">
         <label htmlFor={this.props.id_component} className="control-label col-xs-2 text-right">
           {this.props.name}
           <span style={this.required}>
@@ -432,7 +431,7 @@ class ComponentDatePicker extends React.Component {
 
   render() {
     return (
-      <div style={this.styleContainer} className="form-group row">
+      <div style={this.styleContainer} className="form-group row margin_0">
         <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
         <div class="controls col-xs-5">
           <input className="form-control" id={this.props.id_component} style={this.styleDatePicker} readonly="true" type="text" />
@@ -451,9 +450,6 @@ class MainLayout extends React.Component {
       tableHidden: true,
       target: 0,
       numPage: 0
-    };
-    this.styleContainer = {
-      "margin-left": "-14px",
     };
     this.getValueOfField = this.getValueOfField.bind(this);
     this.getUnitStatus = this.getUnitStatus.bind(this);
@@ -492,18 +488,20 @@ class MainLayout extends React.Component {
 
   render() {
     return (
-      <div class="row content-font">
-        <div className="col-md-1">
-        </div>
-        <div style={this.styleContainer} className="col-md-11 pull-left">
-          <h4 style={this.styleTitle}>Custom Report</h4>
-          <ComponentDatePicker name="Start Date" id_component="start_date" />
-          <ComponentDatePicker name="End Date" id_component="end_date" />
-          <ComponentCombobox name="Target Report" getValueOfField={this.getValueOfField} getTableHidden={this.getTableHidden} 
-            id_component="target" getUnitStatus={this.getUnitStatus} />
-          <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit" 
-            disable={this.state.unitStatus} getTableHidden={this.getTableHidden} target={this.state.target} getNumPage={this.getNumPage}/>
-          <ComponentTableResult name="Result" data={this.state.result} hidden={this.state.tableHidden} numPage={this.state.numPage}/>
+      <div>
+        <div class="row content-font">
+          <div className="col-md-1">
+          </div>
+          <div className="col-md-11 pull-left">
+            <h4>Custom Report</h4>
+            <ComponentDatePicker name="Start Date" id_component="start_date" />
+            <ComponentDatePicker name="End Date" id_component="end_date" />
+            <ComponentCombobox name="Target Report" getValueOfField={this.getValueOfField} getTableHidden={this.getTableHidden} 
+              id_component="target" getUnitStatus={this.getUnitStatus} />
+            <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit" 
+              disable={this.state.unitStatus} getTableHidden={this.getTableHidden} target={this.state.target} getNumPage={this.getNumPage}/>
+            <ComponentTableResult name="Result" data={this.state.result} hidden={this.state.tableHidden} numPage={this.state.numPage}/>
+          </div>
         </div>
       </div>
     )
