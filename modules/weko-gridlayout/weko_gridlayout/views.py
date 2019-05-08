@@ -138,7 +138,7 @@ def save_widget_item():
 @blueprint_api.route('/delete_widget_item', methods=['POST'])
 @login_required
 def delete_widget_item():
-    """Save Language List."""
+    """Delete Language List."""
     if request.headers['Content-Type'] != 'application/json':
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
