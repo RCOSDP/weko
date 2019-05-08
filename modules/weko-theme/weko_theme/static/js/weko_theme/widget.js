@@ -1,12 +1,13 @@
-$(function () {
+(function () {
   getWidgetDesignSetting();
-});
+}());
 
 let PageBodyGrid = function () {
   this.init = function () {
     let options = {
       width: 12,
       float: true,
+      verticalMargin: 4,
       acceptWidgets: '.grid-stack-item'
     };
     let widget = $('#page_body');
@@ -44,15 +45,6 @@ let PageBodyGrid = function () {
   this.widgetTemplate = function (node) {
     let background = "";
     let labelStyle = "";
-    /**
-    if (node.label_color) {
-      labelStyle = "color: " + node.label_color + ";";
-    }
-
-    if(node.background){
-      background += "background-color: " + node.background + ";";
-    }
-    **/
 
     let template =
       '<div class="grid-stack-item">' +
