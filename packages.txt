@@ -44,7 +44,7 @@ Flask-Menu==0.6.0
 Flask-OAuthlib==0.9.4
 Flask-Principal==0.4.0
 Flask-Security==3.0.0
-flask-shell-ipython==0.3.0
+flask-shell-ipython==0.4.1
 Flask-SQLAlchemy==2.3.2
 flask-talisman==0.4.0
 Flask-WTF==0.14.2
