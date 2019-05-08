@@ -230,11 +230,16 @@
                             class="btn btn-info next-button" ng-click="updateDataJson()">{{_('Next')}}
                     <span class="glyphicon glyphicon-chevron-right"></span>
                     </button></li>
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
+                  </ul>
+                </div>
+                <div class="col-sm-3" style="padding-right: 0;">
+                  <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <li>
+                      <button ng-disabled="recordsVM.invenioRecordsLoading"
                               class="btn btn-danger done-button" id="btn_quit">
                         <i class="fa fa-sign-out"></i>
-                        {{_('Quit')}}
-                      </button></li>
+                        {{_('Quit')}}</button>
+                    </li>
                   </ul>
                 </div>
               </div>
