@@ -425,8 +425,10 @@ class WekoDeposit(Deposit):
                     for content in self.jrc['content']:
                         if content.get('file'):
                             del content['file']
+
+        # fix schema url
         record = RecordMetadata.query.get(self.pid.object_uuid)
-        if record and record.json:
+        if record and record.json and '$schema' in record.json:
             record.json.update({'$schema': '/items/jsonschema/'
                                 + record.json['item_type_id']})
             flag_modified(record, 'json')
