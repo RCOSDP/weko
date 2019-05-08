@@ -39,7 +39,8 @@ def get_repository_list():
     }
     try:
         from invenio_communities.models import Community
-        communities = Community.query.all()
+        with db.session.no_autoflush:
+            communities = Community.query.all()
         if communities:
             for community in communities:
                 community_result = dict()
@@ -63,7 +64,7 @@ def get_widget_list(repository_id):
         "error": ""
     }
     try:
-        with db.session.auto_flush():
+        with db.session.no_autoflush:
             widget_item_list = WidgetItem.query.filter_by(
                 repository_id=repository_id, is_enabled=True, is_deleted=False
             ).all()
@@ -166,6 +167,7 @@ def update_admin_widget_item_setting(data):
     """
     status = 201
     success = True
+    msg = ""
 
     flag = data.get('flag_edit')
     data_result = data.get('data')
