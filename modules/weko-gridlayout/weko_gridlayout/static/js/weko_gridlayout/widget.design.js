@@ -242,8 +242,14 @@ class ButtonLayout extends React.Component {
     render() {
         return (
             <div className="form-group col-xs-10">
-                <button id="save-grid" className="btn btn-primary" style={this.style} onClick={this.handleSave} >Save</button>
-                <button id="clear-grid" className="form-group btn btn-danger" onClick={this.handleCancel} >Cancel</button>
+                <button id="save-grid" className="btn btn-primary save-button" style={this.style} onClick={this.handleSave}>
+                    <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                    &nbsp;Save
+                </button>
+                <button id="clear-grid" className="form-group btn btn-info cancel-button" onClick={this.handleCancel} >
+                    <span className="glyphicon glyphicon-remove"  aria-hidden="true"></span>
+                    Cancel
+                </button>
             </div>
         )
     }

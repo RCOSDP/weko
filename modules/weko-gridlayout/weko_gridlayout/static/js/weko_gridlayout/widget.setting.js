@@ -482,9 +482,18 @@ class ComponentButtonLayout extends React.Component {
             return (
                 <div className="form-group row">
                     <div className="col-xs-offset-2 col-xs-5">
-                        <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
-                        <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
-                        <button className="btn" onClick={this.deleteCommand} style={this.style}>Delete</button>
+                        <button className="btn btn-primary save-button" onClick={this.saveCommand}>
+                            <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                            &nbsp;Save
+                        </button>
+                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button" style={this.style}>
+                            <span className="glyphicon glyphicon-remove"  aria-hidden="true"></span>
+                            &nbsp;Cancel
+                        </a>
+                        <button className="btn btn-danger delete-button" onClick={this.deleteCommand} style={this.style}>
+                            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                            &nbsp;Delete
+                        </button>
                     </div>
                 </div>
             )
@@ -493,8 +502,14 @@ class ComponentButtonLayout extends React.Component {
             return (
                 <div className="form-group row">
                     <div className="col-xs-offset-2 col-xs-5">
-                        <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
-                        <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
+                        <button className="btn btn-primary save-button" onClick={this.saveCommand}>
+                            <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                            &nbsp;Save
+                        </button>
+                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button" style={this.style}>
+                            <span className="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                            &nbsp;Cancel
+                        </a>
                     </div>
                 </div>
             )
