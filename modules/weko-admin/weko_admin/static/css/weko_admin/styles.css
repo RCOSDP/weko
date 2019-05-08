@@ -29,3 +29,7 @@
 .page > li:disabled {
   cursor: pointer;
 }
+.margin_0{
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+}
