@@ -38,10 +38,11 @@
     {% assets "workflow_item_link_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- elif 'identifier_grant' == cur_step %}
     {% assets "workflow_identifier_grant_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {%- elif 'oa_policy' == cur_step %}
-    {% assets "workflow_oa_policy_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- else %}
-  {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {%- if 'oa_policy' == cur_step %}
+      {% assets "workflow_oa_policy_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {%- endif %}
   {%- endif %}
   {% assets "workflow_quit_confirmation_js" %}
   <script src="{{ ASSET_URL }}"></script>{% endassets %}
