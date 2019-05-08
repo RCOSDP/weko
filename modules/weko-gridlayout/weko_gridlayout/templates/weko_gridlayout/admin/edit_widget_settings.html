@@ -21,8 +21,9 @@
   {%- extends 'admin/model/edit.html' %}
   
   {% block css %}
-      {{ super() }}
-    {% endblock css%}
+    {{ super() }}
+    {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% endblock css%}
     
     {% block edit_form %}
     {% block toggle_from %}
