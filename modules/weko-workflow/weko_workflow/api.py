@@ -514,8 +514,8 @@ class WorkActivity(object):
                     '{inc:05d}'.format(inc=number))
 
                 # Update the activity with calculated activity_id
-                from invenio_pidstore.models import PersistentIdentifier,
-                PIDStatus
+                from invenio_pidstore.models import PersistentIdentifier, \
+                    PIDStatus
                 aid = PersistentIdentifier.create(
                     'actid',
                     str(activity_id),
@@ -878,23 +878,23 @@ class WorkActivity(object):
                         activi.ItemName = item.json.get('title')
                     else:
                         activi.ItemName = ''
-                if activi.activity_status ==
-                ActivityStatusPolicy.ACTIVITY_FINALLY:
-                    activi.StatusDesc = ActionStatusPolicy.\
-                        describe(ActionStatusPolicy.ACTION_DONE)
-                elif activi.activity_status ==
-                ActivityStatusPolicy.ACTIVITY_CANCEL:
-                    activi.StatusDesc = ActionStatusPolicy.\
-                        describe(ActionStatusPolicy.ACTION_CANCELED)
+                if activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_FINALLY:
+                    activi.StatusDesc = ActionStatusPolicy.describe(
+                        ActionStatusPolicy.ACTION_DONE)
+                elif activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_CANCEL:
+                    activi.StatusDesc = ActionStatusPolicy.describe(
+                        ActionStatusPolicy.ACTION_CANCELED)
                 else:
-                    activi.StatusDesc = ActionStatusPolicy.\
-                        describe(ActionStatusPolicy.ACTION_DOING)
+                    activi.StatusDesc = ActionStatusPolicy.describe(
+                        ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
-                if activi.activity_status ==
-                ActivityStatusPolicy.ACTIVITY_FINALLY or
-                activi.activity_status ==
-                ActivityStatusPolicy.ACTIVITY_CANCEL:
+                if activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_FINALLY or \
+                    activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_CANCEL:
                     activi.type = 'All'
                     continue
                 activi.type = 'ToDo'
