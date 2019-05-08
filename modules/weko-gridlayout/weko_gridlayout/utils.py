@@ -68,7 +68,7 @@ def get_widget_list(repository_id):
             widget_item_list = WidgetItem.query.filter_by(
                 repository_id=repository_id, is_enabled=True, is_deleted=False
             ).all()
-        if widget_item_list:
+        if type(widget_item_list) is list:
             for widget_item in widget_item_list:
                 data = dict()
                 data["widgetId"] = widget_item.repository_id
@@ -149,11 +149,12 @@ def get_widget_type_list():
     """
     widget_types = WidgetType.get_all_widget_types()
     options = []
-    for widget_type in widget_types:
-        option = dict()
-        option["text"] = widget_type.type_name
-        option["value"] = widget_type.type_id
-        options.append(option)
+    if type(widget_types) is list:
+        for widget_type in widget_types:
+            option = dict()
+            option["text"] = widget_type.type_name
+            option["value"] = widget_type.type_id
+            options.append(option)
     result = {"options": options}
 
     return result
@@ -173,7 +174,6 @@ def update_admin_widget_item_setting(data):
     data_result = data.get('data')
     data_id = data.get('data_id')
     if not data_result:
-        # raise WidgetItemInvalidDataRESTError()
         success = True
         msg = 'Invalid data.'
     if flag:
@@ -201,7 +201,6 @@ def update_admin_widget_item_setting(data):
             msg = 'Fail to create. Data input to create is exist!'
         else:
             if not WidgetItems.create(data_result):
-                # raise WidgetItemAddedRESTError()
                 success = False
                 msg = 'Create widget item fail.'
             else:
@@ -225,10 +224,11 @@ def delete_item_in_preview_widget_item(data_id, json_data):
 
     """
     remove_list = []
-    for item in json_data:
-        if str(item.get('name')) == str(data_id.get('label')) and str(
-                item.get('type')) == str(data_id.get('widget_type')):
-            remove_list.append(item)
+    if type(json_data) is list:
+        for item in json_data:
+            if str(item.get('name')) == str(data_id.get('label')) and str(
+                    item.get('type')) == str(data_id.get('widget_type')):
+                remove_list.append(item)
     for item in remove_list:
         json_data.remove(item)
     data = json.dumps(json_data)
@@ -246,16 +246,17 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
         [data] -- [data after updated]
 
     """
-    for item in json_data:
-        if str(item.get('name')) == str(data_id.get('label')) and str(
-                item.get('type')) == str(data_id.get('widget_type')):
-            item['frame_border'] = data_result.get('frame_border')
-            item['frame_border_color'] = data_result.get('frame_border_color')
-            item['background_color'] = data_result.get('background_color')
-            item['type'] = data_result.get('widget_type')
-            item['label_color'] = data_result.get('label_color')
-            item['text_color'] = data_result.get('text_color')
-            item['name'] = data_result.get('label')
+    if type(json_data) is list:
+        for item in json_data:
+            if str(item.get('name')) == str(data_id.get('label')) and str(
+                    item.get('type')) == str(data_id.get('widget_type')):
+                item['frame_border'] = data_result.get('frame_border')
+                item['frame_border_color'] = data_result.get('frame_border_color')
+                item['background_color'] = data_result.get('background_color')
+                item['type'] = data_result.get('widget_type')
+                item['label_color'] = data_result.get('label_color')
+                item['text_color'] = data_result.get('text_color')
+                item['name'] = data_result.get('label')
     data = json.dumps(json_data)
     return data
 
