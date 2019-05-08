@@ -32,6 +32,7 @@ class WidgetItemInvalidDataRESTError(RESTException):
     code = 400
     description = 'Could not load data.'
 
+
 class WidgetItemAddedRESTError(RESTException):
     """Invalid request body."""
 

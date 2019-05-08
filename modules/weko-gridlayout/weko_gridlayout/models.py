@@ -52,9 +52,9 @@ class WidgetType(db.Model):
         return cls
 
     @classmethod
-    def get(cls, id):
+    def get(cls, widget_type_id):
         """Get setting."""
-        return cls.query.filter_by(type_id=id).one_or_none()
+        return cls.query.filter_by(type_id=widget_type_id).one_or_none()
 
     @classmethod
     def get_all_widget_types(cls):
@@ -151,6 +151,7 @@ class WidgetItem(db.Model):
         :param repo_id: Identifier of the repository.
         :param type_id: Identifier of the widget type.
         :param lbl: label of the widget type.
+        :param session: DB session.
         :return: delete widget item info
         """
         if not session:
