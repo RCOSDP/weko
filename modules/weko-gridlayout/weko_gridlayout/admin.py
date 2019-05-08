@@ -105,7 +105,11 @@ class WidgetSettingView(ModelView):
         """
         try:
             if not self.on_model_delete(model):
-                flash(_("Cannot delete widget (Repository:%(repo)s, Widget Type:%(type)s, Label: %(label)s) because it's setting in Widget Design.", repo=model.repository_id, type=model.widget_type, label=model.label), 'error')
+                flash(_("Cannot delete widget (Repository:%(repo)s, "
+                        "Widget Type:%(type)s, Label: %(label)s) "
+                        "because it's setting in Widget Design.",
+                        repo=model.repository_id, type=model.widget_type,
+                        label=model.label), 'error')
                 return False
             self.session.flush()
             WidgetItem.delete(model.repository_id,
@@ -114,9 +118,8 @@ class WidgetSettingView(ModelView):
         except Exception as ex:
             if not self.handle_view_exception(ex):
                 flash(_('Failed to delete record. %(error)s',
-                              error=str(ex)), 'error')
+                        error=str(ex)), 'error')
                 current_app.logger.error('Failed to delete record: ', ex)
-                # log.exception('Failed to delete record.')
 
             self.session.rollback()
 
