@@ -23,3 +23,6 @@
 .height_70{
    height:70% !important;
 }
+.page > li > a{
+  cursor: pointer !important;
+}

@@ -54,6 +54,18 @@ stats_report_js = Bundle(
     output="gen/weko_admin_ui_stats_report.%(version)s.js",
 )
 
+date_picker_css = Bundle(
+    'css/weko_admin/react-datepicker.min.css',
+    'css/weko_admin/react-datepicker-cssmodules.min.css',
+    output="gen/weko_admin_date_picker.%(version)s.css",
+)
+
+date_picker_js = Bundle(
+    'js/weko_admin/bootstrap-datepicker.min.js',
+    'js/weko_admin/prop-types.min.js',
+    output="gen/weko_admin_date_picker.%(version)s.js",
+)
+
 css = Bundle(
     'css/weko_admin/styles.css',
     output="gen/weko_admin_ui.%(version)s.css",
