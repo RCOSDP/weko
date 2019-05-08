@@ -36,6 +36,7 @@ blueprint_api = Blueprint(
 
 
 @blueprint.route("/")
+@login_required
 def index():
     """Render a basic view."""
     return render_template(
@@ -44,6 +45,7 @@ def index():
 
 
 @blueprint_api.route('/load_repository', methods=['GET'])
+@login_required
 def load_repository():
     """Get Repository list, to display on the combobox on UI.
 
@@ -64,6 +66,7 @@ def load_repository():
 
 @blueprint_api.route('/load_widget_list/<string:repository_id>',
                      methods=['GET'])
+@login_required
 def load_widget_list(repository_id):
     """Get Widget list, to display on the Widget List panel on UI.
 
@@ -82,6 +85,7 @@ def load_widget_list(repository_id):
 
 @blueprint_api.route('/load_widget_design_setting/<string:repository_id>',
                      methods=['GET'])
+@login_required
 def load_widget_design_setting(repository_id):
     """Load  Widget design setting from DB by repository id.
 
@@ -94,6 +98,7 @@ def load_widget_design_setting(repository_id):
 
 
 @blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
+@login_required
 def save_widget_layout_setting():
     """Save Widget design setting into DB.
 
