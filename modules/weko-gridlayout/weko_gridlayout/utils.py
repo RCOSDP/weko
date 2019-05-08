@@ -302,7 +302,7 @@ def delete_admin_widget_item_setting(widget_id):
     success = True
     if validate_admin_widget_item_setting(widget_id):
         success = False
-        msg = 'Delete widget item fail. The item is used in widget design.'
+        msg = "Cannot delete this widget because it's setting in Widget Design."
     elif not WidgetItems.delete(widget_id):
         success = False
         msg = 'Delete widget item fail.'
