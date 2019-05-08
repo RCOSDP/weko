@@ -1,14 +1,14 @@
 require([
   "jquery",
   "bootstrap"
-], function() {
+], function () {
   // Handle Quit btn on activity screens
   $("#btn_quit").click(function () {
     $("#action_quit_confirmation").modal("show");
   });
 
   // Handle Continue btn on modal Quit confirmation
-  $('#btn_cancel').on('click', function(){
+  $('#btn_cancel').on('click', function () {
     $("#action_quit_confirmation").modal("hide");
     let comment = ''
     if ($('#input-comment') && $('#input-comment').val()) {
@@ -21,7 +21,7 @@ require([
 
     };
     send(post_uri, data,
-      function(data){
+      function (data) {
         if (data && data.code == 0) {
           if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
             document.location.href = data.data.redirect;
@@ -32,13 +32,13 @@ require([
           alert(data.msg);
         }
       },
-      function(errmsg){
+      function (errmsg) {
         alert('Server error.');
       });
   });
 
   // call API
-  function send(url, data, handleSuccess, handleError){
+  function send(url, data, handleSuccess, handleError) {
     $.ajax({
       method: 'POST',
       url: url,
@@ -46,10 +46,10 @@ require([
       contentType: 'application/json',
       dataType: 'json',
       data: JSON.stringify(data),
-      success: function(data,textStatus){
+      success: function (data, textStatus) {
         handleSuccess(data);
       },
-      error: function(textStatus,errorThrown){
+      error: function (textStatus, errorThrown) {
         handleError(textStatus);
       }
     });
