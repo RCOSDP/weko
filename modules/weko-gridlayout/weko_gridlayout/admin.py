@@ -114,6 +114,7 @@ class WidgetSettingView(ModelView):
             if not self.handle_view_exception(ex):
                 flash(gettext('Failed to delete record. %(error)s',
                               error=str(ex)), 'error')
+                current_app.logger.error('Failed to delete record: ', ex)
                 # log.exception('Failed to delete record.')
 
             self.session.rollback()
