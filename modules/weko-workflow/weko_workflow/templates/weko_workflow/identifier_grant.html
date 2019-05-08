@@ -64,12 +64,6 @@
 </div>
 <div class="m-top-20">
   <ul class="list-inline text-right" style="margin-bottom: 0;">
-    <li class="pull-left">
-      <button ng-disabled="recordsVM.invenioRecordsLoading"
-              class="btn btn-danger done-button" id="btn_quit">
-        <i class="fa fa-sign-out"></i>
-        {{_('Quit')}}</button>
-    </li>
     <li> 
        <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
              <span class="glyphicon glyphicon-download-alt"></span>
@@ -82,5 +76,11 @@
               <span class="glyphicon glyphicon-chevron-right"></span>
          </button>
     </li>
+    <li class="pull-right">
+        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                class="btn btn-danger done-button" id="btn_quit">
+          <i class="fa fa-sign-out"></i>
+          {{_('Quit')}}</button>
+      </li>
   </ul>
 </div>
