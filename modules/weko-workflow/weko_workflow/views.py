@@ -750,9 +750,9 @@ def cancel_action(activity_id='0', action_id=0):
         work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=action_id,
             action_status=ActionStatusPolicy.ACTION_DOING)
-        return jsonify(code=-1, msg=_('error'))
+        return jsonify(code=-1, msg=_('Error! Can\'t process quit activity!'))
 
-    return jsonify(code=0, msg=_('success'),
+    return jsonify(code=0, msg=_('Success'),
                    data={'redirect': url_for(
                        'weko_workflow.display_activity',
                        activity_id=activity_id)})
