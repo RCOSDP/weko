@@ -201,11 +201,12 @@ class WidgetDesignSetting(db.Model):
         """
         query_result = cls.query.all()
         result = []
-        for record in query_result:
-            data = dict()
-            data['repository_id'] = record.repository_id
-            data['settings'] = record.settings
-            result.append(data)
+        if query_result:
+            for record in query_result:
+                data = dict()
+                data['repository_id'] = record.repository_id
+                data['settings'] = record.settings
+                result.append(data)
         return result
 
     @classmethod
