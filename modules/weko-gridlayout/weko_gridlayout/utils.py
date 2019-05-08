@@ -21,7 +21,7 @@
 """Utilities for convert response json."""
 import json
 
-from flask import jsonify, make_response
+from flask import current_app, jsonify, make_response
 from invenio_db import db
 
 from .api import WidgetItems
@@ -251,7 +251,8 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
             if str(item.get('name')) == str(data_id.get('label')) and str(
                     item.get('type')) == str(data_id.get('widget_type')):
                 item['frame_border'] = data_result.get('frame_border')
-                item['frame_border_color'] = data_result.get('frame_border_color')
+                item['frame_border_color'] = data_result.get(
+                    'frame_border_color')
                 item['background_color'] = data_result.get('background_color')
                 item['type'] = data_result.get('widget_type')
                 item['label_color'] = data_result.get('label_color')
@@ -302,7 +303,8 @@ def delete_admin_widget_item_setting(widget_id):
     success = True
     if validate_admin_widget_item_setting(widget_id):
         success = False
-        msg = "Cannot delete this widget because it's setting in Widget Design."
+        msg = "Cannot delete this widget because " \
+              "it's setting in Widget Design."
     elif not WidgetItems.delete(widget_id):
         success = False
         msg = 'Delete widget item fail.'
@@ -340,5 +342,5 @@ def validate_admin_widget_item_setting(widget_id):
                     return True
         return False
     except Exception as e:
-        print(e)
+        current_app.logger.error('Failed to delete record: ', e)
         return True
