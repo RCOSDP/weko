@@ -64,21 +64,24 @@ def init_workflow_tables(tables):
             dict(
                 action_status_id=ActionStatusPolicy.ACTION_NOT_DONE,
                 action_status_name='action_not_done',
-                action_status_desc='Indicates that the flow is suspended and no subsequent action is performed.',
+                action_status_desc='Indicates that the flow is suspended and\
+                    no subsequent action is performed.',
                 action_scopes='user',
                 action_displays='Suspend'))
         db_action_status.append(
             dict(
                 action_status_id=ActionStatusPolicy.ACTION_RETRY,
                 action_status_name='action_retry',
-                action_status_desc='Indicates that redo the workflow.(from start action)',
+                action_status_desc='Indicates that redo the workflow.\
+                    (from start action)',
                 action_scopes='user',
                 action_displays='Redo'))
         db_action_status.append(
             dict(
                 action_status_id=ActionStatusPolicy.ACTION_DOING,
                 action_status_name='action_doing',
-                action_status_desc='Indicates that the action is not completed.(There are following actions)',
+                action_status_desc='Indicates that the action is not \
+                    completed.(There are following actions)',
                 action_scopes='user',
                 action_displays='Doing'))
         db_action_status.append(dict(
