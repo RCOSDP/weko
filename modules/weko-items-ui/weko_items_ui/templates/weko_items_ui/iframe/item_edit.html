@@ -214,28 +214,27 @@
               <div class="row">
                 <div class="col-sm-9">
                   <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                    <li class="pull-left">
-                      <button ng-disabled="recordsVM.invenioRecordsLoading"
-                              class="btn btn-danger done-button" id="btn_quit">
-                        <i class="fa fa-sign-out"></i>
-                        {{_('Quit')}}</button>
-                    </li>
                     {%- if pid %}
-                    <li>
-                           <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')" style="width: 120px; height: 40px;font-size: 15px;">
-                              <span class="glyphicon glyphicon-trash"></span>
-                                  {{_('Delete')}}</button></li>
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')" style="width: 120px; height: 40px;font-size: 15px;">
+                          <span class="glyphicon glyphicon-trash"></span>
+                          {{_('Delete')}}
+                        </button></li>
                     {%- endif %}
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
                             class="btn btn-primary save-button"
                             ng-click="saveDataJson('{{item_save_uri}}');">
-                            <span class="glyphicon glyphicon-download-alt"></span>
-                            {{_('Save')}}
+                          <span class="glyphicon glyphicon-download-alt"></span>
+                          {{_('Save')}}
                         </button></li>
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
                             class="btn btn-info next-button" ng-click="updateDataJson()">{{_('Next')}}
                     <span class="glyphicon glyphicon-chevron-right"></span>
                     </button></li>
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
+                              class="btn btn-danger done-button" id="btn_quit">
+                        <i class="fa fa-sign-out"></i>
+                        {{_('Quit')}}
+                      </button></li>
                   </ul>
                 </div>
               </div>
