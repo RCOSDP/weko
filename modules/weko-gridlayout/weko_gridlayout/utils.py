@@ -342,5 +342,5 @@ def validate_admin_widget_item_setting(widget_id):
                     return True
         return False
     except Exception as e:
-        current_app.logger.error('Failed to delete record: ', e)
+        current_app.logger.error('Failed to validate record: ', e)
         return True
