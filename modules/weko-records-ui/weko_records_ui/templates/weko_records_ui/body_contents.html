@@ -343,7 +343,7 @@
             <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</a>
           {% if record | check_permission %}
           {% if record.show_edit_btn_flg %}
-          <a class="btn btn-primary edit-button" id="btn_edit" href="#" data-pid-value="{{ pid.pid_value }}" {%- if community_id %}data-community="{{community_id}}"{% endif %} style="width: 120px; height: 40px;font-size: 15px;">
+          <a class="btn btn-primary edit-button" id="btn_edit" href="#" data-pid-value="{{ pid.pid_value }}" {%- if community_id %}data-community="{{community_id}}"{% endif %}>
             <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Edit')}}</a>
           {% endif %}
           <a class="btn btn-danger delete-button" id="btn_delete"
