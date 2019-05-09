@@ -40,6 +40,8 @@ from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemsMetadata
 from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
+from weko_workflow.api import WorkActivity
+from weko_workflow.models import ActionStatusPolicy
 
 from weko_records_ui.models import InstitutionName
 
@@ -370,6 +372,16 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
+
+    # check condition to show Edit button
+    record['show_edit_btn_flg'] = True
+    workflow_action_stt = WorkActivity.get_workflow_activity_status_by_item_id(
+        pid.pid_value)
+    # not show button when has stt is Begin or Doing
+    if workflow_action_stt is not None and \
+        (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
+         workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
+        record['show_edit_btn_flg'] = False
 
     return render_template(
         template,

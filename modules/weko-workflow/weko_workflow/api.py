@@ -1129,6 +1129,26 @@ class WorkActivity(object):
             current_app.logger.exception(str(ex))
             return None
 
+    def get_workflow_activity_status_by_item_id(self, item_id):
+        """Get workflow activity status by item ID.
+
+        :param item_id:
+        """
+        try:
+            with db.session.no_autoflush:
+                activity = _Activity.query.filter_by(
+                    item_id=item_id).one_or_none()
+                action_stus = activity.action_status
+                return action_stus
+        except NoResultFound as ex:
+            current_app.logger.exception(str(ex))
+            return None
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return None
+
+
 class WorkActivityHistory(object):
     """Operated on the Activity."""
 
