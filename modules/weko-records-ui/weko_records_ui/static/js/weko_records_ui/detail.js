@@ -34,6 +34,33 @@ require([
     };
   });
 
+  $('a#btn_edit').on('click', function () {
+      let post_uri = "/api/items/prepare_edit_item";
+      let pid_val = $(this).data('pid-value');
+      let community = $(this).data('community');
+      let post_data = {
+          pid_value: pid_val
+      };
+      if(community){
+        post_uri = post_uri+"?community="+ community;
+      }
+      $.ajax({
+          url: post_uri,
+          method: 'POST',
+          async: true,
+          contentType: 'application/json',
+          data: JSON.stringify(post_data),
+          success: function (res, status) {
+              if (0 == res.code) {
+                  let uri = res.data.redirect.replace('api/', '')
+                  document.location.href = uri;
+              } else {
+                  alert(res.msg);
+              }
+          },
+          error: function (jqXHE, status) {}
+      });
+  });
   angular.element(document).ready(function() {
     angular.bootstrap(document.getElementById("invenio-csl"), [
         'invenioCsl',

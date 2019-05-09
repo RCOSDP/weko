@@ -342,8 +342,7 @@
           <a class="btn btn-info back-button" id="btn_back" href="#">
             <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</a>
           {% if record | check_permission %}
-          <a class="btn btn-primary edit-button" id="btn_edit" href="{{
-          '/item/edit/'+pid.pid_value }}">
+          <a class="btn btn-primary edit-button" id="btn_edit" href="#" data-pid-value="{{ pid.pid_value }}" {%- if community_id %}data-community="{{community_id}}"{% endif %} style="width: 120px; height: 40px;font-size: 15px;">
             <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>{{_('Edit')}}</a>
           <a class="btn btn-danger delete-button" id="btn_delete"
              ng-click="openConfirm('',
