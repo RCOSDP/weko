@@ -190,7 +190,7 @@ class ComponentTableResult extends React.Component {
     this.setState({
       rows: rows,
       cols: cols,
-      componentClass: "form-group row"
+      componentClass: "form-group row margin_0"
     });
   }
 
