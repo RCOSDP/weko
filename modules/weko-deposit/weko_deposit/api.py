@@ -318,7 +318,6 @@ class WekoDeposit(Deposit):
         data['_buckets'] = {'deposit': str(bucket.id)}
 
         # save user_name & display name.
-        data['_buckets'] = {'deposit': str(bucket.id)}
         if current_user and current_user.is_authenticated:
             creator_id = int(current_user.get_id())
             user = UserProfile.get_by_userid(current_user.get_id())
