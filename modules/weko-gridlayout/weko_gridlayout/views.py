@@ -85,7 +85,6 @@ def load_widget_list(repository_id):
 
 @blueprint_api.route('/load_widget_design_setting/<string:repository_id>',
                      methods=['GET'])
-@login_required
 def load_widget_design_setting(repository_id):
     """Load  Widget design setting from DB by repository id.
 
