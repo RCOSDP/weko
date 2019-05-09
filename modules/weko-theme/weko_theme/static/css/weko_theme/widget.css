@@ -1,0 +1,15 @@
+.grid-stack-item {
+  overflow: auto;
+}
+
+.widget{
+  border-radius: 0px !important;
+  left: 15px !important;
+  right: 15px !important;
+  margin-top: 5px !important;
+}
+
+.widget-header {
+  border-top-right-radius: 0px !important;
+  border-top-left-radius: 0px !important;
+}

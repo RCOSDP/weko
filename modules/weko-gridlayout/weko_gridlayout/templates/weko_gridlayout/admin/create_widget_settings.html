@@ -21,7 +21,8 @@
 {% extends 'admin/model/create.html' %}
 
 {% block css %}
-{{ super() }}
+    {{ super() }}
+    {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% endblock css%}
 
 {% block create_form %}
