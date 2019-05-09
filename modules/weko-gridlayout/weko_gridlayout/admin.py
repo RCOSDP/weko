@@ -23,7 +23,7 @@
 import json
 
 from flask import current_app, flash, redirect, request
-from flask.ext.admin.contrib.sqla.view import func
+from flask_admin.contrib.sqla.view import func
 from flask_admin import BaseView, expose
 from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
