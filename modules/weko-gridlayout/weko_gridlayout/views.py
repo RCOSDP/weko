@@ -14,10 +14,9 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .api import WidgetItems
-from .utils import get_repository_list, get_widget_design_setting, \
-    get_widget_list, get_widget_type_list, \
-    update_admin_widget_item_setting, update_widget_design_setting,\
-    delete_admin_widget_item_setting
+from .utils import delete_admin_widget_item_setting, get_repository_list, \
+    get_widget_design_setting, get_widget_list, get_widget_type_list, \
+    update_admin_widget_item_setting, update_widget_design_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
