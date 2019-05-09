@@ -76,7 +76,7 @@ class WidgetItem(db.Model):
 
     __tablename__ = 'widget_items'
 
-    repository_id = db.Column(db.String(100), 
+    repository_id = db.Column(db.String(100),
                               nullable=False, primary_key=True)
 
     widget_type = db.Column(db.String(100), db.ForeignKey(WidgetType.type_id),
