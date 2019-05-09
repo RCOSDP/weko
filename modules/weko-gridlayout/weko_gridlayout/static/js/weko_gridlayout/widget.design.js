@@ -1,3 +1,7 @@
+const MAIN_CONTENT_TYPE = "Main contents";
+const MAIN_CONTENT_BUTTON_ID = "main_content_id";
+let isHasMainContent = false;
+
 /**
  * Repository combo box.
  */
@@ -25,7 +29,7 @@ class Repository extends React.Component {
                     }
                     let options = result.repositories.map((option) => {
                         return (
-                            <option key={option.id} value={option.id}>{option.title}</option>
+                            <option key={option.id} value={option.id}>{option.id}</option>
                         )
                     });
                     this.setState({
@@ -59,7 +63,7 @@ class Repository extends React.Component {
                 }
             );
 
-        disableButton(repositoryId);
+        disableButton();
 
         this.setState({ repositoryId: repositoryId });
         this.props.callbackMainLayout(repositoryId);
@@ -238,8 +242,14 @@ class ButtonLayout extends React.Component {
     render() {
         return (
             <div className="form-group col-xs-10">
-                <button id="save-grid" className="btn btn-primary" style={this.style} onClick={this.handleSave} >Save</button>
-                <button id="clear-grid" className="form-group btn btn-danger" onClick={this.handleCancel} >Cancel</button>
+                <button id="save-grid" className="btn btn-primary save-button" style={this.style} onClick={this.handleSave}>
+                    <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                    &nbsp;Save
+                </button>
+                <button id="clear-grid" className="form-group btn btn-info cancel-button" onClick={this.handleCancel} >
+                    <span className="glyphicon glyphicon-remove"  aria-hidden="true"></span>
+                    Cancel
+                </button>
             </div>
         )
     }
@@ -293,17 +303,13 @@ var PreviewGrid = new function () {
         var options = {
             width: 12,
             float: true,
-            animate: true,
             removeTimeout: 100,
             acceptWidgets: '.grid-stack-item'
         };
 
-        $('#gridPreview').gridstack(_.defaults({
-            float: true
-        }, options));
+        $('#gridPreview').gridstack(_.defaults(options));
 
-        this.serializedData = [
-        ];
+        this.serializedData = [];
 
         this.grid = $('#gridPreview').data('gridstack');
     }
@@ -311,15 +317,13 @@ var PreviewGrid = new function () {
     this.loadGrid = function (widgetListItems) {
         this.grid.removeAll();
         var items = GridStackUI.Utils.sort(widgetListItems);
+        isHasMainContent = false;
         _.each(items, function (node) {
-            this.grid.addWidget($(
-                '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '">'
-                + '<div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
-                + '<div class="grid-stack-item-content">'
-                + '<span class="widget-label">&lt;' + node.type + '&gt;</span>'
-                + '<span class="widget-label">' + node.name + '</span>'
-                + '</div>'
-                + '<div/>'),
+            if(MAIN_CONTENT_TYPE == node.type){
+                isHasMainContent = true;
+                disableMainContentButton(true);
+            }
+            this.grid.addWidget($(this.widgetTemplate(node, false)),
                 node.x, node.y, node.width, node.height);
         }, this);
         return false;
@@ -332,8 +336,15 @@ var PreviewGrid = new function () {
             let name = el.data("name");
             let id = el.data("id");
             let type = el.data("type");
+            let hasFrameBorder = el.data("hasframeborder");
+            let frameBorderColor = el.data("framebordercolor");
+            let background = el.data("background");
+            let label_color = el.data("labelcolor");
+            let text_color = el.data("textcolor");
             if (!id) {
                 return;
+            } else if(MAIN_CONTENT_TYPE == type){
+                isHasMainContent = true;
             }
             return {
                 x: node.x,
@@ -342,7 +353,12 @@ var PreviewGrid = new function () {
                 height: node.height,
                 name: name,
                 id: id,
-                type: type
+                type: type,
+                frame_border: hasFrameBorder,
+                frame_border_color: frameBorderColor,
+                background_color: background,
+                label_color: label_color,
+                text_color: text_color,
             };
         }, this);
         var filtered = this.serializedData.filter(function (el) {
@@ -360,16 +376,26 @@ var PreviewGrid = new function () {
     }.bind(this);
 
     this.addNewWidget = function (node) {
-        this.grid.addWidget($(
-            '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '" data-gs-auto-position="true">'
-            + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
-            + ' <div class="grid-stack-item-content">'
-            + '<span class="widget-label">&lt;' + node.type + '&gt;</span>'
-            + '<span class="widget-label">' + node.name + '</span>'
-            + '  </div>'
-            + '<div/>'),
+        this.grid.addWidget($(this.widgetTemplate(node, true)),
             node.x, node.y, node.width, node.height);
         return false;
+    }.bind(this);
+
+    this.widgetTemplate = function(node, isAutoPosition) {
+        let autoPosition = "";
+        if(isAutoPosition){
+            autoPosition = 'data-gs-auto-position="true"';
+        }
+        let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"data-hasFrameBorder="' + node.frame_border + '"'
+        + ' data-frameBorderColor="' + node.frame_border_color + '"data-background="' + node.background_color + '"data-labelColor="' + node.label_color + '"'
+        + ' data-textcolor="' + node.text_color + '"' + autoPosition + '>'
+        + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
+        + ' <div class="grid-stack-item-content">'
+        + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'
+        + '     <span class="widget-label">' + node.name + '</span>'
+        + ' </div>'
+        + '<div/>';
+        return template;
     }.bind(this);
 
     this.deleteWidget = function (item) {
@@ -391,6 +417,16 @@ function addWidget() {
             let widgetName = $(this).data('widgetName');
             let widgetId = $(this).data('widgetId');
             let widgetType = $(this).data('widgetType');
+            let widgetFrameBorder = $(this).data('widgetFrameborder');
+            let widgetBackground = $(this).data('widgetBackgroundcolor');
+            let widgetLabelColor = $(this).data('widgetLabelcolor');
+            let widgetTextColor = $(this).data('widgetTextcolor');
+            let widgetFrameBorderColor = $(this).data('widgetFramebordercolor');
+            if(MAIN_CONTENT_TYPE == widgetType && isHasMainContent){
+                alert("Main Content has been existed in Preview panel.");
+                disableMainContentButton(true);
+                return false;
+            }
             let node = {
                 x: 0,
                 y: 0,
@@ -399,9 +435,18 @@ function addWidget() {
                 auto_position: true,
                 name: widgetName,
                 id: widgetId,
-                type: widgetType
+                type:widgetType,
+                frame_border: widgetFrameBorder,
+                background_color: widgetBackground,
+                label_color: widgetLabelColor,
+                text_color: widgetTextColor,
+                frame_border_color: widgetFrameBorderColor,
             };
             PreviewGrid.addNewWidget(node);
+            if(MAIN_CONTENT_TYPE == widgetType){
+                isHasMainContent = true;
+                disableMainContentButton(true);
+            }
             removeWidget();
         });
     });
@@ -415,14 +460,9 @@ function addWidget() {
 function loadWidgetList(widgetListItems) {
     var options = {
         width: 2,
-        float: false,
-        animate: true,
         ddPlugin: false,
-        removable: '.trash',
-        removeTimeout: 100,
         cellHeight: 80,
         acceptWidgets: '.grid-stack-item'
-
     };
     $('#widgetList').gridstack(options);
     var widgetList = $('#widgetList').data('gridstack');
@@ -430,12 +470,23 @@ function loadWidgetList(widgetListItems) {
     let x = 0;
     let y = 0;
     _.each(widgetListItems, function (widget) {
+        let buttonId = "";
+        if(MAIN_CONTENT_TYPE ==  widget.widgetType) {
+            buttonId = 'id="' + MAIN_CONTENT_BUTTON_ID + '"';
+        }
         widgetList.addWidget($(
             '<div>'
             + '<div class="grid-stack-item-content">'
-            + '<span class="widget-label">&lt;' + widget.widgetType + '&gt;</span>'
-            + '<span class="widget-label">' + widget.widgetLabel + '</span>'
-            + '<a data-widget-type="' + widget.widgetType + '"data-widget-name="' + widget.widgetLabel + '" data-widget-id="' + widget.widgetId + '" class="btn btn-default add-new-widget" href="#">Add Widget</a>'
+            + ' <span class="widget-label" >&lt;' + widget.widgetType + '&gt;</span>'
+            + ' <span class="widget-label">' + widget.widgetLabel + '</span>'
+            + ' <button ' + buttonId + ' data-widget-frameborder="' + widget.widgetSetting.frame_border + '"'
+            + '     data-widget-type="' + widget.widgetType + '"data-widget-name="' + widget.widgetLabel + '"'
+            + '     data-widget-id="' + widget.widgetId + '" data-widget-labelcolor="'+ widget.widgetSetting.label_color + '"'
+            + '     data-widget-backgroundcolor="' + widget.widgetSetting.background_color + '" data-widget-textcolor="' + widget.widgetSetting.text_color + '"'
+            + '     data-widget-textcolor="' + widget.widgetSetting.text_color + '"'
+            + '     data-widget-framebordercolor="' + widget.widgetSetting.frame_border_color + '" class="btn btn-default add-new-widget">'
+            + ' Add Widget'
+            + ' </button>'
             + '</div>'
             + '<div/>'),
             x, y, 2, 1);
@@ -461,7 +512,13 @@ function loadWidgetPreview(widgetListItems) {
 function removeWidget() {
     $('.glyphicon-remove').on("click", function (e) {
         let widget = $(this).closest(".grid-stack-item");
+        let widgetType = widget.data('type');
         PreviewGrid.deleteWidget(widget);
+        if(MAIN_CONTENT_TYPE == widgetType){
+            isHasMainContent = false;
+            disableMainContentButton(false);
+        }
+        return false;
     });
 }
 
@@ -470,20 +527,32 @@ $(function () {
         <MainLayout />,
         document.getElementById('root')
     );
-    disableButton("0");
+    disableButton();
 });
 
 /**
  * Handle disable Save and Cancel button.
  * @param {*} repositoryId
  */
-function disableButton(repositoryId) {
+function disableButton() {
+    let repositoryId = $("#repository-id").val();
+    if(!repositoryId) {
+        repositoryId = "0";
+    }
     if (repositoryId == "0") {
-        $("#save-grid").attr("disabled", true);
-        $("#clear-grid").attr("disabled", true);
+        $("#save-grid").attr('disabled','disabled');
+        $("#clear-grid").attr('disabled','disabled');
     } else {
-        $("#save-grid").attr("disabled", false);
-        $("#clear-grid").attr("disabled", false);
+        $("#save-grid").removeAttr('disabled');
+        $("#clear-grid").removeAttr('disabled');
+    }
+}
+
+function disableMainContentButton(isDisable){
+    if(isDisable){
+        $("#" + MAIN_CONTENT_BUTTON_ID).attr('disabled','disabled');
+    } else {
+        $("#" + MAIN_CONTENT_BUTTON_ID).removeAttr('disabled');
     }
 }
 
@@ -495,12 +564,13 @@ function saveWidgetDesignSetting(widgetDesignData) {
     let repositoryId = $("#repository-id").val();
     if (repositoryId == "0") {
         alert('Please select the Repository.');
-        return;
-    }
-
-    if (!widgetDesignData) {
+        return false;
+    } else if (!widgetDesignData) {
         alert('Please add Widget to Preview panel.');
-        return;
+        return false;
+    } else if(!isHasMainContent){
+        alert('Please add Main Content to Preview panel.');
+        return false;
     }
 
     let saveData = JSON.stringify(widgetDesignData);

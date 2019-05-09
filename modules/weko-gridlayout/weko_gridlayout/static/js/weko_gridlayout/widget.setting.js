@@ -24,11 +24,12 @@ class ComponentSelectField extends React.Component {
                             )
                       });
                     } else {
+                        options =[];
                         options = result.repositories.map((repository) => {
                             return (
-                                <option key={repository.id} value={repository.id}>{repository.title}</option>
+                                <option key={repository.id} value={repository.id}>{repository.id}</option>
                             )
-                      });
+                        });
                     }
                   this.setState({
                       selectOptions: options,
@@ -37,10 +38,7 @@ class ComponentSelectField extends React.Component {
                 },
 
                 (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
+                    console.log(error);
                 }
             )
 
@@ -243,10 +241,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                 },
 
                 (error) => {
-                    this.setState({
-                        isLoaded: true,
-                        error
-                    });
+                    console.log(error);
                 }
             )
 
@@ -402,18 +397,29 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+            repository: '',
+            widget_type: '',
+            label: ''
+        }
         this.style = {
             marginLeft: "10px",
         };
         this.saveCommand = this.saveCommand.bind(this);
+        this.deleteCommand = this.deleteCommand.bind(this);
     }
     saveCommand(event)
     {
         let request = {
             flag_edit : this.props.is_edit,
             data : this.props.data,
-            data_id: this.props.data_id
-        }
+            data_id: '',
+        };
+        if (this.state.repository == '' && this.state.widget_type == '' && this.state.label == '')
+            request.data_id = this.props.data_id;
+        else
+            request.data_id = this.state;
+
         if (this.props.data.repository=="0" || this.props.data.repository == "") {
             alert('Repository is required!');
         } else if (this.props.data.widget_type == "0" || this.props.data.widget_type == "") {
@@ -432,21 +438,82 @@ class ComponentButtonLayout extends React.Component {
             .then((result) => {
             if (result.success) {
                 alert(result.message);
+                this.setState({
+                    repository: this.props.data.repository,
+                    widget_type: this.props.data.widget_type,
+                    label: this.props.data.label
+                })
             }else {
                 alert(result.message);
             }
             });
         }
     }
+
+    deleteCommand(event)
+    {
+        let request = {
+            data_id: this.props.data_id
+        }
+        if(confirm("Are you sure to delete this widget Item ?"))
+        {
+            return fetch('/api/admin/delete_widget_item',{
+                method: "POST",
+                headers:{
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(request),
+            })
+            .then(res => res.json())
+            .then((result) => {
+            if (result.success) {
+                alert(result.message);
+                window.location = this.props.return_url;
+            }else {
+                alert(result.message);
+            }
+            });
+        }
+    }
+
     render() {
-        return (
-            <div className="form-group row">
-                <div className="col-xs-offset-2 col-xs-5">
-                    <button className="btn btn-primary" onClick={this.saveCommand}>Save</button>
-                    <a href = {this.props.return_url} className="form-group btn btn-danger" style={this.style}>Cancel</a>
+        if(this.props.is_edit)
+        {
+            return (
+                <div className="form-group row">
+                    <div className="col-xs-offset-2 col-xs-5">
+                        <button className="btn btn-primary save-button" onClick={this.saveCommand}>
+                            <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                            &nbsp;Save
+                        </button>
+                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button" style={this.style}>
+                            <span className="glyphicon glyphicon-remove"  aria-hidden="true"></span>
+                            &nbsp;Cancel
+                        </a>
+                        <button className="btn btn-danger delete-button" onClick={this.deleteCommand} style={this.style}>
+                            <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                            &nbsp;Delete
+                        </button>
+                    </div>
                 </div>
-            </div>
-        )
+            )
+        }
+        else{
+            return (
+                <div className="form-group row">
+                    <div className="col-xs-offset-2 col-xs-5">
+                        <button className="btn btn-primary save-button" onClick={this.saveCommand}>
+                            <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                            &nbsp;Save
+                        </button>
+                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button" style={this.style}>
+                            <span className="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                            &nbsp;Cancel
+                        </a>
+                    </div>
+                </div>
+            )
+        }
     }
 }
 
@@ -549,7 +616,7 @@ class MainLayout extends React.Component {
                   <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable}/>
                 </div>
                 <div className="row">
-                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id}/>
+                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id} />
               </div>
             </div>
         )
@@ -589,5 +656,5 @@ $(function () {
     ReactDOM.render(
     <MainLayout data_load={editData} is_edit = {isEdit} return_url = {returnURL} data_id={data_id}/>,
     document.getElementById('root')
-)
+    )
 });

@@ -19,10 +19,11 @@
 # MA 02111-1307, USA.
 
 """API for weko-admin."""
+from flask import current_app
 from invenio_accounts.models import Role
-# from invenio_communities.models import Community
 from invenio_db import db
-from flask import current_app, json
+from sqlalchemy.exc import SQLAlchemyError
+
 from .models import WidgetItem
 
 
@@ -66,9 +67,9 @@ class WidgetItems(object):
         :param widget_items: the widget item information.
         :returns: The :class:`widget item` instance lists or None.
         """
-        def _add_widget_item(data):
+        def _add_widget_item(widget_setting):
             with db.session.begin_nested():
-                widget_item = WidgetItem(**data)
+                widget_item = WidgetItem(**widget_setting)
                 db.session.add(widget_item)
             db.session.commit()
 
@@ -93,11 +94,16 @@ class WidgetItems(object):
         data = cls.build_object(widget_items)
         if not data:
             return False
-        widget_item = WidgetItem.update(widget_id.get('repository'),
-                                        widget_id.get('widget_type'),
-                                        widget_id.get('label'),
-                                        **data)
-        return (widget_item is not None)
+        WidgetItem.update(widget_id.get('repository'),
+                          widget_id.get('widget_type'), widget_id.get('label'),
+                          **data)
+        return True
+
+    @classmethod
+    def delete(cls, widget_id):
+        WidgetItem.delete(widget_id.get('repository'),
+                          widget_id.get('widget_type'), widget_id.get('label'))
+        return True
 
     @classmethod
     def get_all_widget_items(cls):
@@ -115,7 +121,7 @@ class WidgetItems(object):
         widget_item = WidgetItem.get(widget_items.get('repository'),
                                      widget_items.get('widget_type'),
                                      widget_items.get('label'))
-        return (widget_item is not None)
+        return widget_item is not None
 
     @classmethod
     def get_account_role(cls):
