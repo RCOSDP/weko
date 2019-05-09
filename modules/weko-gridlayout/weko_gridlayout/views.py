@@ -16,7 +16,8 @@ from flask_login import login_required
 from .api import WidgetItems
 from .utils import get_repository_list, get_widget_design_setting, \
     get_widget_list, get_widget_type_list, \
-    update_admin_widget_item_setting, update_widget_design_setting
+    update_admin_widget_item_setting, update_widget_design_setting,\
+    delete_admin_widget_item_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -35,6 +36,7 @@ blueprint_api = Blueprint(
 
 
 @blueprint.route("/")
+@login_required
 def index():
     """Render a basic view."""
     return render_template(
@@ -43,6 +45,7 @@ def index():
 
 
 @blueprint_api.route('/load_repository', methods=['GET'])
+@login_required
 def load_repository():
     """Get Repository list, to display on the combobox on UI.
 
@@ -63,6 +66,7 @@ def load_repository():
 
 @blueprint_api.route('/load_widget_list/<string:repository_id>',
                      methods=['GET'])
+@login_required
 def load_widget_list(repository_id):
     """Get Widget list, to display on the Widget List panel on UI.
 
@@ -93,6 +97,7 @@ def load_widget_design_setting(repository_id):
 
 
 @blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
+@login_required
 def save_widget_layout_setting():
     """Save Widget design setting into DB.
 
@@ -127,6 +132,17 @@ def save_widget_item():
         return jsonify(msg='Header Error')
     data = request.get_json()
     return update_admin_widget_item_setting(data)
+
+
+@blueprint_api.route('/delete_widget_item', methods=['POST'])
+@login_required
+def delete_widget_item():
+    """Delete Language List."""
+    if request.headers['Content-Type'] != 'application/json':
+        current_app.logger.debug(request.headers['Content-Type'])
+        return jsonify(msg='Header Error')
+    data = request.get_json()
+    return delete_admin_widget_item_setting(data.get('data_id'))
 
 
 @blueprint_api.route('/get_account_role', methods=['GET'])

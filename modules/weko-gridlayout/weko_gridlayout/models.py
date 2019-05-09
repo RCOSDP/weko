@@ -24,8 +24,6 @@ from flask import current_app
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.types import JSONType
-from weko_index_tree.models import Index
-from invenio_communities.models import Community
 
 
 class WidgetType(db.Model):
@@ -41,11 +39,11 @@ class WidgetType(db.Model):
     def create(cls, data):
         """Create data."""
         try:
-            dataObj = WidgetType()
+            data_obj = WidgetType()
             with db.session.begin_nested():
-                dataObj.type_id = data.get('type_id')
-                dataObj.type_name = data.get('type_name')
-                db.session.add(dataObj)
+                data_obj.type_id = data.get('type_id')
+                data_obj.type_name = data.get('type_name')
+                db.session.add(data_obj)
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -54,9 +52,9 @@ class WidgetType(db.Model):
         return cls
 
     @classmethod
-    def get(cls, id):
+    def get(cls, widget_type_id):
         """Get setting."""
-        return cls.query.filter_by(type_id=id).one_or_none()
+        return cls.query.filter_by(type_id=widget_type_id).one_or_none()
 
     @classmethod
     def get_all_widget_types(cls):
@@ -78,7 +76,7 @@ class WidgetItem(db.Model):
 
     __tablename__ = 'widget_items'
 
-    repository_id = db.Column(db.String(100), db.ForeignKey(Community.id),
+    repository_id = db.Column(db.String(100), 
                               nullable=False, primary_key=True)
 
     widget_type = db.Column(db.String(100), db.ForeignKey(WidgetType.type_id),
@@ -102,13 +100,11 @@ class WidgetItem(db.Model):
 
     is_enabled = db.Column(db.Boolean(name='enable'), default=True)
 
+    is_deleted = db.Column(db.Boolean(name='delete'), default=False)
+
     #
     # Relations
     #
-
-    comunity = db.relationship(Community, backref=db.backref(
-        'types'))
-    """Comunity relaionship."""
 
     widgettype = db.relationship(WidgetType, backref=db.backref(
         'repositories', cascade='all, delete-orphan'))
@@ -148,13 +144,38 @@ class WidgetItem(db.Model):
             db.session.rollback()
         return
 
+    @classmethod
+    def delete(cls, repo_id, type_id, lbl, session=None):
+        """Delete the widget item detail info.
+
+        :param repo_id: Identifier of the repository.
+        :param type_id: Identifier of the widget type.
+        :param lbl: label of the widget type.
+        :param session: DB session.
+        :return: delete widget item info
+        """
+        if not session:
+            session = db.session
+        try:
+            with session.begin_nested():
+                widget_item = cls.get(repo_id, type_id, lbl)
+                if not widget_item:
+                    return
+                setattr(widget_item, 'is_deleted', 'True')
+            session.commit()
+            return widget_item
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            session.rollback()
+        return
+
 
 class WidgetDesignSetting(db.Model):
     """Database for admin WidgetDesignSetting."""
 
     __tablename__ = 'widget_design_setting'
 
-    repository_id = db.Column(db.String(100), db.ForeignKey(Community.id),
+    repository_id = db.Column(db.String(100),
                               nullable=False, primary_key=True)
 
     settings = db.Column(
@@ -180,11 +201,12 @@ class WidgetDesignSetting(db.Model):
         """
         query_result = cls.query.all()
         result = []
-        for record in query_result:
-            data = dict()
-            data['repository_id'] = record.repository_id
-            data['settings'] = record.settings
-            result.append(data)
+        if query_result:
+            for record in query_result:
+                data = dict()
+                data['repository_id'] = record.repository_id
+                data['settings'] = record.settings
+                result.append(data)
         return result
 
     @classmethod
