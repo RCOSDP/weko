@@ -33,10 +33,12 @@ from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
 from simplekv.memory.redisstore import RedisStore
+from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
 from weko_records.utils import get_all_items, get_options_and_order_list, \
@@ -423,6 +425,14 @@ class WekoDeposit(Deposit):
                     for content in self.jrc['content']:
                         if content.get('file'):
                             del content['file']
+
+        # fix schema url
+        record = RecordMetadata.query.get(self.pid.object_uuid)
+        if record and record.json and '$schema' in record.json:
+            record.json.update({'$schema': '/items/jsonschema/'
+                                + record.json['item_type_id']})
+            flag_modified(record, 'json')
+            db.session.merge(record)
 
     def get_content_files(self):
         """Get content file metadata."""
