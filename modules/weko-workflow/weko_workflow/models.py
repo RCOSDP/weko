@@ -748,24 +748,6 @@ class ActivityAction(db.Model, TimestampMixin):
     action_comment = db.Column(db.Text, nullable=True)
     """action comment."""
 
-    action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
-    """action identifier grant."""
-
-    action_identifier_grant_jalc_doi_manual = db.Column(db.String(100),
-                                                        nullable=True,
-                                                        default="")
-    """action jalc doi input."""
-
-    action_identifier_grant_jalc_cr_doi_manual = db.Column(db.String(100),
-                                                           nullable=True,
-                                                           default="")
-    """action jalc crossref doi input."""
-
-    action_identifier_grant_jalc_dc_doi_manual = db.Column(db.String(100),
-                                                           nullable=True,
-                                                           default="")
-    """action jalc datacite doi input."""
-
 
 class ActivityHistory(db.Model, TimestampMixin):
     """Define ActivityHistory."""
@@ -803,24 +785,6 @@ class ActivityHistory(db.Model, TimestampMixin):
     action_comment = db.Column(db.Text, nullable=True)
     """action comment."""
 
-    action_identifier_grant = db.Column(db.Integer, nullable=True, default=0)
-    """action identifier grant."""
-
-    action_identifier_grant_jalc_doi_manual = db.Column(db.String(100),
-                                                        nullable=True,
-                                                        default="")
-    """action jalc doi input."""
-
-    action_identifier_grant_jalc_cr_doi_manual = db.Column(db.String(100),
-                                                           nullable=True,
-                                                           default="")
-    """action jalc crossref doi input."""
-
-    action_identifier_grant_jalc_dc_doi_manual = db.Column(db.String(100),
-                                                           nullable=True,
-                                                           default="")
-    """action jalc datacite doi input."""
-
     user = db.relationship(User, backref=db.backref(
         'activity_history'))
     """User relaionship."""
@@ -837,11 +801,11 @@ class ActionJournal(db.Model, TimestampMixin):
 
     activity_id = db.Column(
         db.String(24), nullable=False, unique=False, index=True)
-    """activity id of Activity Action."""
+    """Activity id of Activity Action."""
 
     action_id = db.Column(
         db.Integer(), db.ForeignKey(Action.id), nullable=True, unique=False)
-    """action id."""
+    """Action id."""
 
     action_journal = db.Column(
         db.JSON().with_variant(
@@ -858,3 +822,39 @@ class ActionJournal(db.Model, TimestampMixin):
         nullable=True
     )
     """Action journal info."""
+
+
+class ActionIdentifier(db.Model, TimestampMixin):
+    """Define action identifier info."""
+
+    __tablename__ = 'workflow_action_identifier'
+
+    id = db.Column(db.Integer(), nullable=False,
+                   primary_key=True, autoincrement=True)
+    """Activity_Action identifier."""
+
+    activity_id = db.Column(
+        db.String(24), nullable=False, unique=False, index=True)
+    """Activity id of Activity Action."""
+
+    action_id = db.Column(
+        db.Integer(), db.ForeignKey(Action.id), nullable=True, unique=False)
+    """Action id."""
+
+    action_identifier_select = db.Column(db.Integer, nullable=True, default=0)
+    """Action identifier grant."""
+
+    action_identifier_jalc_doi = db.Column(db.String(100),
+                                           nullable=True,
+                                           default="")
+    """Action identifier grant jalc doi input."""
+
+    action_identifier_jalc_cr_doi = db.Column(db.String(100),
+                                              nullable=True,
+                                              default="")
+    """Action identifier grant jalc crossref doi input."""
+
+    action_identifier_jalc_dc_doi = db.Column(db.String(100),
+                                              nullable=True,
+                                              default="")
+    """Action identifier grant jalc datacite doi input."""

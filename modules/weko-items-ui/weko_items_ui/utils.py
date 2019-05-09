@@ -24,6 +24,7 @@ from flask_login import current_user
 from invenio_db import db
 from sqlalchemy import MetaData, Table
 from weko_user_profiles import UserProfile
+from weko_workflow.models import Action as _Action
 
 
 def get_list_username():
@@ -268,3 +269,16 @@ def get_current_user():
     """
     current_id = current_user.get_id()
     return current_id
+def get_actionid(endpoint):
+    """
+    Get action_id by action_endpoint.
+    parameter:
+    return: action_id
+    """
+    with db.session.no_autoflush:
+        action = _Action.query.filter_by(
+            action_endpoint=endpoint).one_or_none()
+        if action:
+            return action.id
+        else:
+            return None
