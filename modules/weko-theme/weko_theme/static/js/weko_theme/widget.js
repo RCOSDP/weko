@@ -8,6 +8,7 @@ let PageBodyGrid = function () {
       width: 12,
       float: true,
       verticalMargin: 4,
+      cellHeight: 100,
       acceptWidgets: '.grid-stack-item'
     };
     let widget = $('#page_body');
