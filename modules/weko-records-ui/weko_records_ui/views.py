@@ -375,8 +375,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     # check condition to show Edit button
     record['show_edit_btn_flg'] = True
-    workflow_action_stt = WorkActivity.get_workflow_activity_status_by_item_id(
-        pid.pid_value)
+    workactivity = WorkActivity()
+    item_id=pid.object_uuid
+    workflow_action_stt = workactivity.get_workflow_activity_status_by_item_id(
+        item_id=item_id)
     # not show button when has stt is Begin or Doing
     if workflow_action_stt is not None and \
         (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
