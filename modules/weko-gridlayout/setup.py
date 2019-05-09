@@ -79,7 +79,8 @@ setup(
         ],
         'invenio_admin.views': [
             'weko_gridlayout_widget = weko_gridlayout.admin:widget_adminview',
-            'weko_gridlayout_widget_design = weko_gridlayout.admin:widget_design_adminview',
+            'weko_gridlayout_widget_design = '
+            'weko_gridlayout.admin:widget_design_adminview',
         ],
         'invenio_i18n.translations': [
             'messages = weko_gridlayout',

@@ -23,13 +23,13 @@
 import json
 
 from flask import current_app, flash, redirect, request
-from flask.ext.admin.contrib.sqla.view import func
 from flask_admin import BaseView, expose
 from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model import helpers
 from flask_babelex import gettext as _
+from sqlalchemy import func
 from wtforms.fields import StringField
 
 from . import config
