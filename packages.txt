@@ -89,7 +89,7 @@ parso==0.1.0
 passlib==1.7.1
 pexpect==4.3.0
 pickleshare==0.7.4
-pluggy==0.5.2
+pluggy==0.11.0
 poyo==0.4.1
 prompt-toolkit==1.0.15
 psycopg2==2.7.3.2
