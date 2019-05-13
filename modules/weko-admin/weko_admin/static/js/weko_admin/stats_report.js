@@ -18,7 +18,7 @@ $(document).ready(function () {
     if (type == 'all') { // Get both reports
       let options = ['file_download',
         'file_preview',
-        'detail_view',
+        'record_view',
         'file_using_per_user'];
       $.ajax({
         url: '/api/stats/' + options[0] + '/' + year + '/' + month,
