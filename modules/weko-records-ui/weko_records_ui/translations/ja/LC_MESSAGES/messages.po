@@ -213,6 +213,10 @@ msgstr "戻る"
 msgid "Edit"
 msgstr "編集"
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:349
+msgid "The workflow is being edited."
+msgstr "ワークフローが編集中です。"
+
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:352
 msgid "Delete"
 msgstr "削除"
