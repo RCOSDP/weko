@@ -66,6 +66,10 @@ require([
     $('[role="alert"]').show();
   });
 
+  $('button#btn_close_alert').on('click', function () {
+    $('[role="alert"]').hide();
+  });
+
   angular.element(document).ready(function () {
     angular.bootstrap(document.getElementById("invenio-csl"), [
       'invenioCsl',
