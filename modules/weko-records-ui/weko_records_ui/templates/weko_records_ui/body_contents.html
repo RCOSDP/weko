@@ -342,7 +342,7 @@
             <a class="btn btn-info back-button" id="btn_back" href="#">
               <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span> {{_('Back')}}</a>
             {% if record | check_permission %}
-            {%- if not record.show_edit_btn_flg %}
+            {%- if record.show_edit_btn_flg %}
               <a class="btn btn-primary edit-button" href="#a" id="btn_edit"
                 data-pid-value="{{ pid.pid_value }}" 
                 {%- if community_id %}data-community="{{community_id}}"{% endif %}>
