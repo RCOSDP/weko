@@ -5,9 +5,6 @@ class ComponentSelectField extends React.Component {
             repositoryId: '0',
             selectOptions: [],
         };
-        this.styleRed = {
-            color: 'red',
-        };
         this.handleChange = this.handleChange.bind(this);
     }
 
@@ -53,7 +50,7 @@ class ComponentSelectField extends React.Component {
     render() {
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
                 <div class="controls col-xs-6">
                     <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name}>
                         <option value="0">Please select the &nbsp; {this.props.key_binding}</option>
@@ -71,9 +68,6 @@ class ComponentTextboxField extends React.Component {
         this.state={
             value:'',
         }
-        this.styleRed = {
-            color: 'red',
-        };
         this.handleChange = this.handleChange.bind(this);
     }
 
@@ -93,7 +87,7 @@ class ComponentTextboxField extends React.Component {
     render() {
         return (
             <div className="form-group row">
-              <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
+              <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
               <div class="controls col-xs-6">
                 <input name={this.props.name} type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control"/>
               </div>
@@ -169,38 +163,6 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             UnauthorizedOptions: [],
             unauthorList: []
         };
-        this.styleContainer={
-            border: '1px solid #ccc',
-            height: '200px',
-            padding :'15px 5px 5px 10px',
-        }
-        this.styleElement={
-            padding: "0",
-        }
-        this.styleSelectLeft={
-            padding: "0",
-            width: "90%",
-            height: "100px",
-            float: "left",
-        }
-        this.styleSelectRight={
-            padding: "0",
-            width: "90%",
-            height: "100px",
-            float: "right",
-        }
-        this.styleButtonContainer = {
-            display: 'flex',
-            flexDirection : 'column',
-            justifyContent: 'center',
-            height: "100px",
-        }
-        this.styleButtonElement={
-          margin: "2px",
-        }
-        this.styleLabelRight={
-            "margin-left":"10%",
-        }
         this.handleChange = this.handleChange.bind(this);
         this.handleMoveRightClick = this.handleMoveRightClick.bind(this);
         this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
@@ -366,24 +328,24 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
                 <div class="controls col-xs-6">
-                    <fieldset className="form-group" style={this.styleContainer}>
+                    <fieldset className="form-group style-container" >
                     <span>Role</span><br/>
-                    <div className="col-xs-5" style={this.styleElement}>
+                    <div className="col-xs-5 style-element" >
                       <span >Authorized</span><br/>
-                      <select name={this.props.name} multiple style={this.styleSelectLeft} id={this.props.authorSelect} name={this.props.authorSelect}>
+                      <select name={this.props.name} multiple className="style-select-left" id={this.props.authorSelect} name={this.props.authorSelect}>
                           {this.state.selectOptions}
                       </select>
                     </div>
-                    <div className="col-xs-1" style={this.styleElement}>
+                    <div className="col-xs-1 style-element">
                       <br/>
-                      <div className="buttons" style={this.styleButtonContainer}>
-                        <input type="button" value="&rarr;" style={this.styleButtonElement} onClick={this.handleMoveRightClick}/>
-                        <input type="button" value="&larr;" style={this.styleButtonElement} onClick={this.handleMoveLeftClick}/>
+                      <div className="buttons style-button-container">
+                        <input type="button" value="&rarr;" className="style-button-element" onClick={this.handleMoveRightClick}/>
+                        <input type="button" value="&larr;" className="style-button-element" onClick={this.handleMoveLeftClick}/>
                       </div>
                     </div>
-                    <div className="col-xs-5" style={this.styleElement}>
-                      <span style={this.styleLabelRight}>Unauthorized</span><br/>
-                      <select multiple value={this.state.unauthorList} style={this.styleSelectRight} onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
+                    <div className="col-xs-5 style-element">
+                      <span className="style-label-right">Unauthorized</span><br/>
+                      <select multiple value={this.state.unauthorList} className="style-select-right" onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
                           {this.state.UnauthorizedOptions}
                       </select>
                     </div>
@@ -394,6 +356,64 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 }
 
+class ComponentFieldEditor extends React.Component {
+    constructor (props) {
+        super(props)
+        this.state = { 
+            editorHtml: this.props.data_load,
+            modules: {
+                toolbar: [
+                  [{ 'font': [] }, {size: []}],
+                  ['bold', 'italic', 'underline', 'strike'],
+                  [{'color': ["#000000", "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff", "#ffffff", "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff", "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff", "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2", "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466", 'custom-color']}, {'background': ["#000000", "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff", "#ffffff", "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff", "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff", "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2", "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466", 'custom-color']}],
+                  [{ 'script': 'sub'}, { 'script': 'super' }],
+                  [{ 'header': '1'}, {'header': '2'}, 'blockquote', 'code-block'],
+                  [{'list': 'ordered'}, {'list': 'bullet'}, 
+                   {'indent': '-1'}, {'indent': '+1'}],
+                  ['direction', 'align'],
+                  ['link', 'image', 'video', 'formula'],
+                  ['clean']
+                ],
+                clipboard: {
+                  // toggle to add extra line breaks when pasting HTML:
+                  matchVisual: false,
+                }
+            },
+            formats: [
+                'font', 'size',
+                'bold', 'italic', 'underline', 'strike', 'color', 'background',
+                'script', 'script', 'header', 'blockquote', 'code-block',
+                'list', 'bullet', 'indent', 'direction', 'align',
+                'link', 'image', 'video','formula', 'clean'
+            ]
+        };
+      this.handleChange = this.handleChange.bind(this)
+    }
+
+    handleChange (html) {
+        this.setState({ editorHtml: html });
+        this.props.getValueOfField(this.props.key_binding,html);
+    }
+
+    render () {
+      return (
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+            <div class="controls col-xs-6 my-editor">
+                <ReactQuill 
+                    onChange={this.handleChange}
+                    value={this.state.editorHtml}
+                    modules={this.state.modules}
+                    formats={this.state.formats}
+                    bounds={'.app'}
+                    placeholder={this.props.placeholder}
+                />
+            </div>
+        </div>
+       )
+    }
+  }
+
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
@@ -402,9 +422,6 @@ class ComponentButtonLayout extends React.Component {
             widget_type: '',
             label: ''
         }
-        this.style = {
-            marginLeft: "10px",
-        };
         this.saveCommand = this.saveCommand.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
     }
@@ -486,11 +503,11 @@ class ComponentButtonLayout extends React.Component {
                             <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
                             &nbsp;Save
                         </button>
-                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button" style={this.style}>
+                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button style-my-button">
                             <span className="glyphicon glyphicon-remove"  aria-hidden="true"></span>
                             &nbsp;Cancel
                         </a>
-                        <button className="btn btn-danger delete-button" onClick={this.deleteCommand} style={this.style}>
+                        <button className="btn btn-danger delete-button style-my-button" onClick={this.deleteCommand}>
                             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
                             &nbsp;Delete
                         </button>
@@ -502,11 +519,11 @@ class ComponentButtonLayout extends React.Component {
             return (
                 <div className="form-group row">
                     <div className="col-xs-offset-2 col-xs-5">
-                        <button className="btn btn-primary save-button" onClick={this.saveCommand}>
+                        <button className="btn btn-primary save-button " onClick={this.saveCommand}>
                             <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
                             &nbsp;Save
                         </button>
-                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button" style={this.style}>
+                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button style-my-button">
                             <span className="glyphicon glyphicon-remove" aria-hidden="true"></span>
                             &nbsp;Cancel
                         </a>
@@ -531,50 +548,51 @@ class MainLayout extends React.Component {
             background_color: this.props.data_load.background_color,
             browsing_role: this.props.data_load.browsing_role,
             edit_role: this.props.data_load.edit_role,
-            enable: this.props.data_load.is_enabled
+            enable: this.props.data_load.is_enabled,
+            description: this.props.data_load.description
         };
-        this.style = {
-            "width": ""
-        }
         this.getValueOfField = this.getValueOfField.bind(this);
     }
 
     getValueOfField(key, value) {
         switch (key)
         {
-          case 'repository':
-              this.setState({ repository: value });
-              break;
-          case 'type':
-              this.setState({ widget_type: value });
-              break;
-          case 'label':
-              this.setState({ label: value});
-              break;
-          case 'label_color':
-              this.setState({ label_color: value });
-              break;
-          case 'frame_border':
-              this.setState({ frame_border: value });
-              break;
-          case 'frame_border_color':
-              this.setState({ frame_border_color: value });
-              break;
-          case 'text_color':
-              this.setState({ text_color: value });
-              break;
-          case 'background_color':
-              this.setState({ background_color: value });
-              break;
-          case 'browsing_role':
-              this.setState({ browsing_role: value });
-              break;
-          case 'edit_role':
-              this.setState({ edit_role: value });
-              break;
-          case 'enable':
-              this.setState({ enable: value });
-              break;
+            case 'repository':
+                this.setState({ repository: value });
+                break;
+            case 'type':
+                this.setState({ widget_type: value });
+                break;
+            case 'label':
+                this.setState({ label: value});
+                break;
+            case 'label_color':
+                this.setState({ label_color: value });
+                break;
+            case 'frame_border':
+                this.setState({ frame_border: value });
+                break;
+            case 'frame_border_color':
+                this.setState({ frame_border_color: value });
+                break;
+            case 'text_color':
+                this.setState({ text_color: value });
+                break;
+            case 'background_color':
+                this.setState({ background_color: value });
+                break;
+            case 'browsing_role':
+                this.setState({ browsing_role: value });
+                break;
+            case 'edit_role':
+                this.setState({ edit_role: value });
+                break;
+            case 'enable':
+                this.setState({ enable: value });
+                break;
+            case 'description':
+                this.setState({ description: value });
+                break;
         }
     }
 
@@ -616,8 +634,11 @@ class MainLayout extends React.Component {
                   <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable}/>
                 </div>
                 <div className="row">
+                  <ComponentFieldEditor name="Free description" getValueOfField={this.getValueOfField} key_binding = "description" data_load={this.state.description}/>
+                </div>
+                <div className="row">
                   <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id} />
-              </div>
+                </div>
             </div>
         )
     }
@@ -649,7 +670,8 @@ $(function () {
             background_color: '#4169E1',
             browsing_role: [1,2,3,4,99],
             edit_role: [1,2,3,4,99],
-            is_enabled: true
+            is_enabled: true,
+            description: ''
         }
     }
     let returnURL = $("#return_url").val();

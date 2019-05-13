@@ -100,6 +100,8 @@ class WidgetItem(db.Model):
 
     is_enabled = db.Column(db.Boolean(name='enable'), default=True)
 
+    description = db.Column(db.Text, nullable=True)
+
     is_deleted = db.Column(db.Boolean(name='delete'), default=False)
 
     #

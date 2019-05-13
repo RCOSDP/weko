@@ -60,6 +60,7 @@ class WidgetItems(object):
             else:
                 data["edit_role"] = role
             data["is_enabled"] = widget_items.get('enable')
+            data["description"] = widget_items.get('description')
         except Exception as ex:
             current_app.logger.debug(ex)
             return
@@ -184,5 +185,6 @@ class WidgetItems(object):
         record['browsing_role'] = in_result.browsing_role
         record['edit_role'] = in_result.edit_role
         record['is_enabled'] = in_result.is_enabled
+        record['description']= in_result.description
 
         return record
