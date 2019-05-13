@@ -342,11 +342,11 @@
           <a class="btn btn-info back-button" id="btn_back" href="#">
             <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</a>
           {% if record | check_permission %}
-          <a class="btn btn-primary edit-button" id="btn_edit" href="#"
+          <a class="btn btn-primary edit-button"
             data-pid-value="{{ pid.pid_value }}" 
             {%- if community_id %}data-community="{{community_id}}"{% endif %}
             {%- if not record.show_edit_btn_flg %}
-              diabled id="btn_edit_disabled" data-toggle="tooltip" title="{{_('The workflow is being edited.')}}"
+              disabled id="btn_edit_disabled" data-toggle="tooltip" data-placement="bottom" title="{{_('The workflow is being edited.')}}"
             {%- else %}
               href="#" id="btn_edit"
             {%- endif %}>
