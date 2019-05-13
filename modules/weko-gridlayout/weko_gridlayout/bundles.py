@@ -55,3 +55,8 @@ widget_design_css = Bundle(
     'css/weko_gridlayout/styles.css',
     output="gen/weko_gridlayout.%(version)s.css",
 )
+
+widget_setting_css = Bundle(
+    'css/weko_gridlayout/widget.item.css',
+    output="gen/weko_gridlayout_widget_setting.%(version)s.css",
+)
