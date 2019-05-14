@@ -352,7 +352,7 @@ class ReportView(BaseView):
                     item_metadata_json = ItemsMetadata.\
                         get_record(record['record_id'])
                     writer.writerow([item_metadata_json['title'], None,
-                                     record['total'], None])
+                                     record['total'], 0])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
@@ -367,8 +367,8 @@ class ReportView(BaseView):
         elif file_type == 'detail_view':
             file_type = 'DetailView_'
         else:
-            file_type = 'FileUsingPerUser'
-        return 'LogReport_' + file_type + year + '-' + month + '.tsv'
+            file_type = 'FileUsingPerUser_'
+        return 'logReport_' + file_type + year + '-' + month + '.tsv'
 
 
 class LanguageSettingView(BaseView):
