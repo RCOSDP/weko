@@ -221,6 +221,10 @@ msgstr ""
 msgid "Confirm"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:349
+msgid "The workflow is being edited."
+msgstr ""
+
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:362
 msgid "Are you sure you want to delete this item?"
 msgstr ""
