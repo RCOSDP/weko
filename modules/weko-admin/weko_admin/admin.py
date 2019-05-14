@@ -324,7 +324,7 @@ class ReportView(BaseView):
                         _('File playing count')]
             # All stats
             writer.writerow(cols)
-            self.write_report_tsv_rows(writer, raw_stats['all'])
+            self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
 
             # Open access stats
             if sub_header_row is not None:
@@ -337,14 +337,19 @@ class ReportView(BaseView):
             abort(500)
         return tsv_output
 
-    def write_report_tsv_rows(self, writer, records):
+    def write_report_tsv_rows(self, writer, records, file_type=None):
         """Write tsv rows for stats."""
         for record in records:
             try:
-                writer.writerow([record['file_key'], record['index_list'],
-                                record['total'], record['no_login'],
-                                record['login'], record['site_license'],
-                                record['admin'], record['reg']])
+                if file_type is None or \
+                    file_type == 'file_download' or file_type == 'file_preview':
+                    writer.writerow([record['file_key'], record['index_list'],
+                                    record['total'], record['no_login'],
+                                    record['login'], record['site_license'],
+                                    record['admin'], record['reg']])
+                elif file_type == 'detail_view':
+                    writer.writerow([record['record_id'], None,
+                                     record['total'], None])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])

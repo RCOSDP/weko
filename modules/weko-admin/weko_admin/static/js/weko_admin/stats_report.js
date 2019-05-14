@@ -14,7 +14,7 @@ $(document).ready(function () {
     let uriByType = {
         file_download:'file_download',
         file_preview:'file_preview',
-        record_view:'report/record/record_view',
+        detail_view:'report/record/record_view',
         file_using_per_user:'file_using_per_user'};
     var statsURL = '/api/stats/' + uriByType[type] + '/' + year + '/' + month;
     var statsReports = {};
@@ -23,7 +23,7 @@ $(document).ready(function () {
     if (type == 'all') { // Get both reports
       let options = ['file_download',
         'file_preview',
-        'record_view',
+        'detail_view',
         'file_using_per_user'];
       $.ajax({
         url: '/api/stats/' + options[0] + '/' + year + '/' + month,
