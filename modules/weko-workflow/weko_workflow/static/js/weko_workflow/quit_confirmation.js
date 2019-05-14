@@ -5,6 +5,7 @@ require([
   // Handle Quit btn on activity screens
   $("#btn_quit").click(function () {
     $("#action_quit_confirmation").modal("show");
+    $("#btn_quit").attr("disabled", true);
   });
 
   // Handle Continue btn on modal Quit confirmation
@@ -18,7 +19,6 @@ require([
     let data = {
       commond: comment,
       action_version: $('.cur_step').data('action-version'),
-
     };
     send(post_uri, data,
       function (data) {
@@ -30,6 +30,7 @@ require([
           }
         } else {
           alert(data.msg);
+          $("#btn_quit").attr("disabled", false);
         }
       },
       function (errmsg) {
