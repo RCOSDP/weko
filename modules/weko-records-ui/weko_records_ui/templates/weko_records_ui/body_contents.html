@@ -344,12 +344,12 @@
             {% if record | check_permission %}
             {%- if record.show_edit_btn_flg %}
               <a class="btn btn-primary edit-button" href="#a" id="btn_edit"
-                data-pid-value="{{ pid.pid_value }}" 
+                data-pid-value="{{ pid.pid_value }}"
                 {%- if community_id %}data-community="{{community_id}}"{% endif %}>
                 <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
             {%- else %}
               <a class="btn btn-primary edit-button" href="#a" id="btn_edit_disabled"
-                data-pid-value="{{ pid.pid_value }}" 
+                data-pid-value="{{ pid.pid_value }}"
                 {%- if community_id %}data-community="{{community_id}}"{% endif %}>
                 <span class="glyphicon glyphicon-edit" aria-hidden="true"></span> {{_('Edit')}}</a>
             {%- endif %}
@@ -359,7 +359,7 @@
               '{{url_for('weko_items_ui.index')}}')">
               <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
             <div class="row">
-              <div class="alert alert-danger alert-dismissible text-middle col-md-4 col-md-offset-4 collapse" role="alert">
+              <div class="alert alert-danger alert-dismissible text-middle col-md-10 col-md-offset-1 collapse" role="alert">
                 <button type="button" class="close" id="btn_close_alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 {{_('The workflow is being edited.')}}
               </div>
