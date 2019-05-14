@@ -121,7 +121,8 @@ def update_widget_design_setting(data):
         json_data = json.loads(setting_data)
         if type(json_data) is list:
             for item in json_data:
-                widget_item = WidgetItem.get(item.get('id'), item.get('type'), item.get('name'))
+                widget_item = WidgetItem.get(item.get('id'), item.get('type'),
+                                             item.get('name'))
                 item['frame_border'] = widget_item.has_frame_border
                 item['frame_border_color'] = widget_item.frame_border_color
                 item['background_color'] = widget_item.background_color
