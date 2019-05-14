@@ -40,7 +40,7 @@ COPY public.index (created, updated, id, parent, "position", index_name, index_n
 2019-05-14 07:49:11.804901	2019-05-14 07:50:10.59232	1557820151636	0	5	生命環境系 (Faculty of Life and Environmental Sciences)	Faculty of Life and Environmental Sciences		New Index	f		f	5	t	1		t	\N	t	f	f	1,2,3,4,99	f	1,2,3,4,99	f		f		f	1	{}
 2019-05-14 07:50:15.866266	2019-05-14 07:50:34.173188	1557820215685	0	6	人間系 (Faculty of Human Sciences)	Faculty of Human Sciences		New Index	f		f	5	t	1		t	\N	t	f	f	1,2,3,4,99	f	1,2,3,4,99	f		f		f	1	{}
 2019-05-14 07:50:17.137674	2019-05-14 07:50:58.405093	1557820216972	0	7	体育系 (Faculty of Health and Sport Sciences)	Faculty of Health and Sport Sciences		New Index	f		f	5	t	1		t	\N	t	f	f	1,2,3,4,99	f	1,2,3,4,99	f		f		f	1	{}
-2019-05-14 07:50:17.982404	2019-05-14 07:51:15.607163	1557820217812	0	8	芸術系 (Faculty of Art and Design)	Faculty of Art and Design)		New Index	f		f	5	t	1		t	\N	t	f	f	1,2,3,4,99	f	1,2,3,4,99	f		f		f	1	{}
+2019-05-14 07:50:17.982404	2019-05-14 07:51:15.607163	1557820217812	0	8	芸術系 (Faculty of Art and Design)	Faculty of Art and Design		New Index	f		f	5	t	1		t	\N	t	f	f	1,2,3,4,99	f	1,2,3,4,99	f		f		f	1	{}
 2019-05-14 07:52:46.404317	2019-05-14 07:53:03.224176	1557820366232	0	9	医学医療系 (Faculty of Medicine)	Faculty of Medicine		New Index	f		f	5	t	1		t	\N	t	f	f	1,2,3,4,99	f	1,2,3,4,99	f		f		f	1	{}
 2019-05-14 07:52:47.770204	2019-05-14 07:53:21.214801	1557820367608	0	10	図書館情報メディア系 (Faculty of Library, Information and Media Science)	Faculty of Library, Information and Media Science		New Index	f		f	5	t	1		t	\N	t	f	f	1,2,3,4,99	f	1,2,3,4,99	f		f		f	1	{}
 2019-05-14 07:41:33.055032	2019-05-14 07:54:10.573466	1557819692844	0	0	コンテンツタイプ (Contents Type)	Contents Type		New Index	f		f	5	t	1		t	\N	t	f	f	1,2,3,4,99	f	1,2,3,4,99	f		f		f	1	{}
