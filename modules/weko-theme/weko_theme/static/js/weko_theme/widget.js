@@ -1,5 +1,6 @@
 (function () {
   getWidgetDesignSetting();
+  window.lodash = _.noConflict();
 }());
 
 let PageBodyGrid = function () {
@@ -12,7 +13,7 @@ let PageBodyGrid = function () {
       acceptWidgets: '.grid-stack-item'
     };
     let widget = $('#page_body');
-    widget.gridstack(_.defaults(options));
+    widget.gridstack(options);
     this.grid = widget.data('gridstack');
   };
 
