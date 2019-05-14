@@ -63,7 +63,7 @@ require([
   });
 
   $('a#btn_edit_disabled').on('click', function () {
-    $('[role="alert"]').show();
+    $('[role="alert"]').css('display','inline-block');
   });
 
   $('button#btn_close_alert').on('click', function () {

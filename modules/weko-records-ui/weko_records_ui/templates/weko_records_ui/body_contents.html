@@ -359,10 +359,10 @@
               '{{url_for('weko_items_ui.index')}}')">
               <span class="glyphicon glyphicon-trash" aria-hidden="true"></span> {{_('Delete')}}</a>
             <div class="row">
-              <div class="alert alert-danger alert-dismissible text-middle col-md-10 col-md-offset-1 collapse" role="alert">
+              <p class="alert alert-danger alert-dismissible text-middle collapse" role="alert" style="min-width: 330px;">
                 <button type="button" class="close" id="btn_close_alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 {{_('The workflow is being edited.')}}
-              </div>
+              </p>
             </div>
             <script type="text/ng-template" id="confirm-modal.html">
               <div class="modal" tabindex="-1" role="dialog">
