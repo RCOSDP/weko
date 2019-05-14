@@ -29,11 +29,13 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model import helpers
 from flask_babelex import gettext as _
+from sqlalchemy import func
 from wtforms.fields import StringField
 
 from . import config
 from .api import WidgetItems
 from .models import WidgetItem
+from .utils import validate_admin_widget_item_setting
 
 
 class WidgetDesign(BaseView):
@@ -49,7 +51,7 @@ class WidgetSettingView(ModelView):
 
     can_create = True
     can_edit = True
-    can_delete = False
+    can_delete = True
     can_view_details = True
 
     @expose('/new/', methods=('GET', 'POST'))
@@ -63,8 +65,11 @@ class WidgetSettingView(ModelView):
 
     @expose('/edit/', methods=('GET', 'POST'))
     def edit_view(self):
-        """
-            Edit model view
+        """Define Api for edit view.
+
+        Returns:
+            HTML page -- Html page for edit view
+
         """
         return_url = get_redirect_target() or self.get_url('.index_view')
 
@@ -83,6 +88,61 @@ class WidgetSettingView(ModelView):
         return self.render(config.WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS,
                            model=json.dumps(model),
                            return_url=return_url)
+
+    def get_query(self):
+        return self.session.query(
+            self.model).filter(self.model.is_deleted == 'False')
+
+    def get_count_query(self):
+        return self.session.query(
+            func.count('*')).filter(self.model.is_deleted == 'False')
+
+    def delete_model(self, model):
+        """Delete model.
+
+        :param model:
+            Model to delete
+        """
+        try:
+            if not self.on_model_delete(model):
+                flash(_("Cannot delete widget (Repository:%(repo)s, "
+                        "Widget Type:%(type)s, Label: %(label)s) "
+                        "because it's setting in Widget Design.",
+                        repo=model.repository_id, type=model.widget_type,
+                        label=model.label), 'error')
+                return False
+            self.session.flush()
+            WidgetItem.delete(model.repository_id,
+                              model.widget_type,
+                              model.label, self.session)
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                flash(_('Failed to delete record. %(error)s',
+                        error=str(ex)), 'error')
+                current_app.logger.error('Failed to delete record: ', ex)
+
+            self.session.rollback()
+
+            return False
+        else:
+            self.after_model_delete(model)
+
+        return True
+
+    def on_model_delete(self, model):
+        """Define action before delete model.
+
+        Arguments:
+            model {widget_item} -- [item to be deleted]
+
+        Returns:
+            [false] -- [it is being used in widget design]
+            [true] -- [it isn't being used in widget design]
+
+        """
+        if validate_admin_widget_item_setting(model):
+            return False
+        return True
 
     column_list = (
         'repository_id',
@@ -114,48 +174,6 @@ class WidgetSettingView(ModelView):
                          label=_('Label'),
                          is_enabled=_('Enable'),
                          )
-
-    def on_form_prefill(self, form, id):
-        pass
-
-    def create_form(self, obj=None):
-        """
-        Instantiate model delete form and return it.
-
-        Override to implement custom behavior.
-        The delete form originally used a GET request, so delete_form
-        accepts both GET and POST request for backwards compatibility.
-
-        :param obj: input object
-        """
-        return self._use_append_repository(
-            super(WidgetSettingView, self).create_form()
-        )
-
-    def edit_form(self, obj):
-        """
-        Instantiate model editing form and return it.
-
-        Override to implement custom behavior.
-
-        :param obj: input object
-        """
-        return self._use_append_repository(
-            super(WidgetSettingView, self).edit_form(obj)
-        )
-
-    def _use_append_repository(self, form):
-        return form
-
-    def _get_community_list(self):
-        try:
-            from invenio_communities.models import Community
-            query_data = Community.query.all()
-            query_data.insert(0, Community(id='Root Index'))
-        except Exception as ex:
-            current_app.logger.debug(ex)
-
-        return query_data
 
 
 widget_adminview = dict(

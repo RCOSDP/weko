@@ -23,6 +23,7 @@
 {%- block css %}
 {{ super() }}
 {% assets "weko_gridlayout_widget_design_css" %}<link rel="stylesheet" href="{{ ASSET_URL }}" />{% endassets %}
+{% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
