@@ -223,7 +223,7 @@ setup_nginx_centos7 () {
     fi
     # sphinxdoc-install-web-nginx-centos7-end
 }
-
+ 
 cleanup_web_ubuntu14 () {
     # sphinxdoc-install-web-cleanup-ubuntu14-begin
     $sudo apt-get -y autoremove && $sudo apt-get -y clean

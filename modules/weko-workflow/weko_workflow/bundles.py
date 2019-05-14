@@ -58,6 +58,12 @@ js_identifier_grant = Bundle(
     output="gen/workflow_identifier_grant.%(version)s.js"
 )
 
+js_quit_confirmation = Bundle(
+    'js/weko_workflow/quit_confirmation.js',
+    filters='requirejs',
+    output="gen/workflow_quit_confirmation.%(version)s.js"
+)
+
 css_workflow = Bundle(
     'css/weko_workflow/style.css',
     output="gen/workflow_workflow.css"

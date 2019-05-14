@@ -1,50 +1,51 @@
 {#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-#}
+ # This file is part of WEKO3.
+ # Copyright (C) 2017 National Institute of Informatics.
+ #
+ # WEKO3 is free software; you can redistribute it
+ # and/or modify it under the terms of the GNU General Public License as
+ # published by the Free Software Foundation; either version 2 of the
+ # License, or (at your option) any later version.
+ #
+ # WEKO3 is distributed in the hope that it will be
+ # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ # General Public License for more details.
+ #
+ # You should have received a copy of the GNU General Public License
+ # along with WEKO3; if not, write to the
+ # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+ # MA 02111-1307, USA.
+ #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
 {%- from "invenio_communities/macros.html" import community_header, community_footer %}
 
 {%- block css %}
-{{ super() }}
-{% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  {% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
-{{ super() }}
-{% include config.THEME_JAVASCRIPT_TEMPLATE %}
-{% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% include config.THEME_JAVASCRIPT_TEMPLATE %}
+  {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 
-{%- if 'item_link' == cur_step %}
-{% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "workflow_item_link_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- elif 'identifier_grant' == cur_step %}
-  {% assets "workflow_identifier_grant_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{%- else %}
-  {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {%- if 'oa_policy' == cur_step %}
-    {% assets "workflow_oa_policy_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- if 'item_link' == cur_step %}
+    {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {% assets "workflow_item_link_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- elif 'identifier_grant' == cur_step %}
+    {% assets "workflow_identifier_grant_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {%- else %}
+    {% assets "workflow_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {%- if 'oa_policy' == cur_step %}
+      {% assets "workflow_oa_policy_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+    {%- endif %}
   {%- endif %}
-{%- endif %}
-{% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "workflow_quit_confirmation_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -53,24 +54,25 @@
 {%- endblock page_body_tabs %}
 
 {%- block page_header %}
-{%-if not community %}
-{{ super() }}
-{%- endif%}
+  {%-if not community %}
+  {{ super() }}
+  {%- endif%}
 {%- endblock page_header %}
 
 {%- block page_footer %}
-{%-if not community%}
-{{ super() }}
-{%- endif%}
+  {%-if not community%}
+  {{ super() }}
+  {%- endif%}
 {%- endblock page_footer %}
 
 {%- block page_body_main %}
 <div class="row">
   {%-if community%}
-  <div id="community_id" class="hide">{{community.id}}</div>
+    <div id="community_id" class="hide">{{community.id}}</div>
   {%-else %}
-  <div id="community_id" class="hide"></div>
+    <div id="community_id" class="hide"></div>
   {%-endif %}
+  
   <div class="col-sm-12">
     <div id="workFlow" class="panel-group">
       <div class="panel panel-default">
@@ -93,7 +95,7 @@
                 <div class="form-group">
                   <label class="col-sm-4 control-label">{{_('Status')}}</label>
                   <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.activity_status_str}}</p>
+                    <p class="form-control-static">{{ activity.activity_status_str }}</p>
                   </div>
                 </div>
               </div>
@@ -160,13 +162,14 @@
               <div class="row">
                 <div class="col-sm-9">
                   <ul class="list-group">
-                    <li class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
-                      <span class="action-name {% if cur_step == step.ActionEndpoint %} cur_step style_a {% endif %}"
-                         data-action-version="{{step.ActionVersion}}"
-                         data-next-uri="{{url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId)}}">{{step.ActionName}}</span></li>
-                    <li class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
-                      <span class="action-name {% if cur_step == step.ActionEndpoint %} style_a {% endif %}">{{step.Author}}</span></li>
-                    <li class="list-group-item {% if cur_step == step.ActionEndpoint %} style_li style_a {% endif %}">{{_(step.Status)}}</li>
+                    <li class="list-group-item break-word {{ style_including('style_li', step) }}">
+                      <span class="action-name {{ style_including('cur_step', step) }} {{ style_including('style_a', step) }}"
+                        data-action-version="{{ step.ActionVersion }}"
+                        data-cancel-uri="{{ url_for('weko_workflow.cancel_action', activity_id=step.ActivityId, action_id=step.ActionId) }}"
+                        data-next-uri="{{ url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId) }}">{{ step.ActionName }}</span></li>
+                    <li class="list-group-item break-word {{ style_including('style_li', step) }} ">
+                      <span class="action-name {{ style_including('style_a', step) }}">{{ step.Author }}</span></li>
+                    <li class="list-group-item {{ style_including('style_li', step) }} {{ style_including('style_a', step) }}">{{_( step.Status )}}</li>
                   </ul>
                 </div>
                 {%- if 'end_action' != step.ActionEndpoint %}
@@ -180,127 +183,121 @@
           </div>
         </div>
       </div>
-      {%- if 'F' != activity.activity_status %}
-      <div class="panel panel-default hide" id="hide-res-check">{{res_check}}</div>
-      <div class="panel panel-default">
-        {%- if 0 != res_check %}
-          <div class="panel-body" id="step_page_permission">
-            {% include 'weko_workflow/permission_required.html' %}
-          </div>
-        {%- else %}
-          <div class="panel-body" id="step_page">
-            <div class="hide" id="hide-actionId">{{action_id}}</div>
+      {%- if 'F' != activity.activity_status and 'C' != activity.activity_status %}
+        <div class="panel panel-default hide" id="hide-res-check">{{ res_check }}</div>
+        <div class="panel panel-default">
+          {%- if 0 != res_check %}
+            <div class="panel-body" id="step_page_permission">
+              {% include 'weko_workflow/permission_required.html' %}
+            </div>
+          {%- else %}
+            <div class="panel-body" id="step_page">
+              <div class="hide" id="hide-actionId">{{action_id}}</div>
               {%- if 'item_login' == cur_step or 'file_upload' == cur_step %}
                 {% include step_item_login_url %}
               {%- elif 'item_link' == cur_step %}
                 {% include "weko_workflow/item_link.html" %}
+                {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- elif 'oa_policy' == cur_step %}
                 {% include "weko_workflow/oapolicy_search.html" %}
               {%- elif 'identifier_grant' == cur_step %}
                 {%- include 'weko_workflow/identifier_grant.html' %}
+                {% include "weko_workflow/modal_quit_confirmation.html" %}
+              {%- elif 'approval' == cur_step %}
+                {% include 'weko_workflow/record_detail.html' %}
               {%- else %}
-                {%- if 'approval' == cur_step %}
-                    {% include 'weko_workflow/record_detail.html' %}
-                {%- endif %}
-              <div class="form-group">
-                <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
-                <div class="input-group">
-                  <div class="input-group-addon">{{_('Comment')}}</div>
-                  <textarea class="form-control" rows="5" id="input-comment" placeholder="">{{temporary_comment if temporary_comment else ''}}</textarea>
+                <div class="form-group">
+                  <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
+                  <div class="input-group">
+                    <div class="input-group-addon">{{_('Comment')}}</div>
+                    <textarea class="form-control" rows="5" id="input-comment" placeholder="">{{temporary_comment if temporary_comment else ''}}</textarea>
+                  </div>
                 </div>
-              </div>
               {% endif %}
 
               {%- if 'approval_request' == cur_step %}
                 <button type="button" class="btn btn-primary action-big-button" id="btn-approval-req">{{_('Approval Request')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
-              {%- endif %}
-              {%- if 'approval' == cur_step %}
+              {%- elif 'approval' == cur_step %}
                 <button type="button" class="btn btn-primary action-button" id="btn-return">{{_('Return')}}</button>
                 <button type="button" class="btn btn-primary action-button" id="btn-reject">{{_('Reject')}}</button>
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
-                    <span class="glyphicon glyphicon-download-alt"></span>{{_('Save')}}</button>
+                  <span class="glyphicon glyphicon-download-alt"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
+                <button class="btn btn-danger done-button pull-right" id="btn_quit">
+                  <i class="fa fa-sign-out"></i>
+                  {{_('Quit')}}</button>
+                {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'double_check' == cur_step %}
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
-                    <span class="glyphicon glyphicon-download-alt"></span>
-                        {{_('Save')}}
-                </button>
-
+                  <span class="glyphicon glyphicon-download-alt"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
-              {%- endif %}
-              {%- if 'oa_policy' == cur_step %}
+              {%- elif 'oa_policy' == cur_step %}
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
-                     <span class="glyphicon glyphicon-download-alt"></span>
-                          {{_('Save')}}
-                </button>
-
+                  <span class="glyphicon glyphicon-download-alt"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
-
+                <button class="btn btn-danger done-button pull-right" id="btn_quit">
+                  <i class="fa fa-sign-out"></i>
+                  {{_('Quit')}}</button>
+                {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- endif %}
               {%- if 'end_action' == cur_step %}
                 <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
-                      <span class="glyphicon glyphicon-download-alt"></span>
-                        {{_('Save')}}
-                </button>
-
+                      <span class="glyphicon glyphicon-download-alt"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
-
               {%- endif %}
-            {%- endif %}
-          </div>
-        {%- endif %}
-      </div>
+            </div>
+          {%- endif %}
+        </div>
+      {%- endif %}
+      {%- block history_panel %}
       <div class="panel panel-default">
         <span class="indent">{{_('History')}}</span>
         <div class="panel-body">
           <table class="table table-bordered table-striped">
-          <thead>
-          <tr>
-            <th>{{_('Action')}}</th>
-            <th>{{_('Updated')}}</th>
-            <th>{{_('Updater')}}</th>
-            <th>{{_('Result')}}</th>
-            <th>{{_('Comment')}}</th>
-          </tr>
-          </thead>
-          <tbody>
-          {%- if histories %}
-          {%- for history in histories %}
-          <tr>
-            <td>{{history.ActionName[0]}}</td>
-            <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
-            <td>{{history.user.email}}</td>
-            <td>{{_(history.StatusDesc)}}</td>
-            <td>{{history.CommentDesc}}</td>
-          </tr>
-          {% endfor %}
-          {% else %}
-          <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-          </tr>
-          {% endif %}
-          </tbody>
-        </table>
+            <thead>
+              <tr>
+                <th>{{_('Action')}}</th>
+                <th>{{_('Updated')}}</th>
+                <th>{{_('Updater')}}</th>
+                <th>{{_('Result')}}</th>
+                <th>{{_('Comment')}}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {%- if histories %}
+              {%- for history in histories %}
+                <tr>
+                  <td>{{history.ActionName[0]}}</td>
+                  <td>{{history.action_date.strftime('%Y-%m-%d %H:%M')}}</td>
+                  <td>{{history.user.email}}</td>
+                  <td>{{_(history.StatusDesc)}}</td>
+                  <td>{{history.CommentDesc}}</td>
+                </tr>
+              {% endfor %}
+              {% else %}
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
         </div>
       </div>
+      {%- endblock history_panel %}
     </div>
-    {%-if community%}
-    <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index',community=community.id)}}">
-          <span class="glyphicon glyphicon-chevron-left"></span>
-               {{_('Back')}}
-    </a>
-    {%-else%}
-    <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
-           <span class="glyphicon glyphicon-chevron-left"></span>
-               {{_('Back')}}
-    </a>
-    {%-endif%}
+    {%- if community %}
+      <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index',community=community.id)}}">
+        <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</a>
+    {%- else %}
+      <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
+        <span class="glyphicon glyphicon-chevron-left"></span> {{_('Back')}}</a>
+    {%- endif %}
   </div>
 </div>
 {%- endblock page_body_main %}
@@ -338,3 +335,11 @@
 </div>
 {%- endif%}
 {%- endblock page_body %}
+
+{% macro style_including(inStyle, step) -%}
+  {% if activity.activity_status_str != 'End' and cur_step == step.ActionEndpoint %}
+    {{ inStyle }}
+  {% elif activity.activity_status_str == 'End' and step.ActionName == 'End' %}
+    {{ inStyle }}
+  {% endif %}
+{%- endmacro %}

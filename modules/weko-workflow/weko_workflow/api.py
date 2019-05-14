@@ -32,15 +32,13 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy,\
-    ActionIdentifier
 from .models import Activity as _Activity
-from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
-from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
+from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy, \
+    ActivityAction, ActivityHistory, ActivityStatusPolicy, FlowStatusPolicy
 
 
 class Flow(object):
@@ -231,6 +229,21 @@ class Flow(object):
                     action_order=previous_action_order).all()
                 return previous_action
             return None
+
+    def get_last_flow_action(self, flow_id):
+        """Return last action info.
+
+        :param flow_id: registered id of flow
+        :return: flow action or None when error
+        """
+        with db.session.no_autoflush:
+            flow_actions = _FlowAction.query.filter_by(
+                flow_id=flow_id).order_by(asc(
+                        _FlowAction.action_order)).all()
+            if flow_actions:
+                last_action = flow_actions.pop()
+                return last_action
+        return None
 
 
 class WorkFlow(object):
@@ -443,7 +456,8 @@ class WorkActivity(object):
                         next_action_id = flow_actions[1].action_id
 
             db_activity = _Activity(
-                # Dummy activity ID, the real one will be updated after this activity is created
+                # Dummy activity ID, the real one will be updated
+                #   after this activity is created
                 activity_id='A' + str(
                     datetime.utcnow().timestamp()).split('.')[0],
                 item_id=item_id,
@@ -471,7 +485,8 @@ class WorkActivity(object):
                 # Calculate activity_id based on id
                 current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
                 from datetime import timedelta
-                next_date_start = (utc_now + timedelta(1)).strftime("%Y-%m-%d 00:00:00")
+                next_date_start = (utc_now + timedelta(1)).\
+                    strftime("%Y-%m-%d 00:00:00")
 
                 from sqlalchemy import func
                 min_id = db.session.query(func.min(_Activity.id)).filter(
@@ -483,22 +498,27 @@ class WorkActivity(object):
                     # Calculate aid
                     number = db_activity.id - min_id + 1
                     if number > 99999:
-                        raise IndexError('The number is out of range (maximum is 99999, current is {}'.format(number))
+                        raise IndexError('The number is out of range \
+                            (maximum is 99999, current is {}'.format(number))
                 else:
                     # The default activity Id of the current day
                     number = 1
 
                 # Activity Id's format
-                activity_id_format = current_app.config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
+                activity_id_format = current_app.\
+                    config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
 
                 # A-YYYYMMDD-NNNNN (NNNNN starts from 00001)
                 datetime_str = utc_now.strftime("%Y%m%d")
 
                 # Define activity Id of day
-                activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=number))
+                activity_id = activity_id_format.format(
+                    datetime_str,
+                    '{inc:05d}'.format(inc=number))
 
                 # Update the activity with calculated activity_id
-                from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+                from invenio_pidstore.models import PersistentIdentifier, \
+                    PIDStatus
                 aid = PersistentIdentifier.create(
                     'actid',
                     str(activity_id),
@@ -546,7 +566,7 @@ class WorkActivity(object):
 
                 return db_activity
 
-    def upt_activity_action(self, activity_id, action_id):
+    def upt_activity_action(self, activity_id, action_id, action_status):
         """Update activity info.
 
         :param activity_id:
@@ -557,7 +577,7 @@ class WorkActivity(object):
             activity = _Activity.query.filter_by(
                 activity_id=activity_id).one_or_none()
             activity.action_id = action_id
-            activity.action_status = ActionStatusPolicy.ACTION_DOING
+            activity.action_status = action_status
             db.session.merge(activity)
         db.session.commit()
 
@@ -782,12 +802,70 @@ class WorkActivity(object):
                         action_status=activity.get('action_status'),
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
-                        action_comment=ActionCommentPolicy.FINALLY_ACTION_COMMENT)
+                        action_comment=ActionCommentPolicy.
+                        FINALLY_ACTION_COMMENT)
                     db.session.add(db_history)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
+
+    def quit_activity(self, activity):
+        """Cancel doing activity.
+
+        :param activity:
+        :return:
+        """
+        flow = Flow()
+        work_activity = WorkActivity()
+        activity_detail = work_activity.get_activity_detail(
+            activity.get('activity_id'))
+
+        last_flow_action = flow.get_last_flow_action(
+            activity_detail.flow_define.flow_id)
+
+        if not last_flow_action:
+            current_app.logger.error('Can\'t get last action of flow!')
+            return None
+
+        try:
+            with db.session.begin_nested():
+                db_activity = _Activity.query.filter_by(
+                    activity_id=activity.get('activity_id')).one_or_none()
+                if db_activity:
+                    db_activity.action_id = activity.get('action_id')
+                    db_activity.action_status = activity.get('action_status')
+                    db_activity.activity_status = \
+                        ActivityStatusPolicy.ACTIVITY_CANCEL
+                    db_activity.activity_end = datetime.utcnow()
+                    db.session.merge(db_activity)
+
+                    db_history = ActivityHistory(
+                        activity_id=activity.get('activity_id'),
+                        action_id=activity.get('action_id'),
+                        action_version=activity.get('action_version'),
+                        action_status=activity.get('action_status'),
+                        action_user=current_user.get_id(),
+                        action_date=datetime.utcnow(),
+                        action_comment=activity.get('commond'))
+                    db.session.add(db_history)
+
+                    db_history = ActivityHistory(
+                        activity_id=activity.get('activity_id'),
+                        action_id=last_flow_action.action_id,
+                        action_version=last_flow_action.action_version,
+                        action_status=ActionStatusPolicy.ACTION_DONE,
+                        action_user=current_user.get_id(),
+                        action_date=datetime.utcnow(),
+                        action_comment=ActionCommentPolicy.
+                        FINALLY_ACTION_COMMENT)
+                    db.session.add(db_history)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return None
 
     def get_activity_list(self, community_id=None):
         """Get activity list info.
@@ -841,16 +919,23 @@ class WorkActivity(object):
                         activi.ItemName = item.json.get('title')
                     else:
                         activi.ItemName = ''
-                activi.StatusDesc = ActionStatusPolicy.describe(
-                    ActionStatusPolicy.ACTION_DONE) \
-                    if ActivityStatusPolicy.ACTIVITY_FINALLY == \
-                    activi.activity_status \
-                    else ActionStatusPolicy.describe(
-                    ActionStatusPolicy.ACTION_DOING)
+                if activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_FINALLY:
+                    activi.StatusDesc = ActionStatusPolicy.describe(
+                        ActionStatusPolicy.ACTION_DONE)
+                elif activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_CANCEL:
+                    activi.StatusDesc = ActionStatusPolicy.describe(
+                        ActionStatusPolicy.ACTION_CANCELED)
+                else:
+                    activi.StatusDesc = ActionStatusPolicy.describe(
+                        ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
-                if ActivityStatusPolicy.ACTIVITY_FINALLY == \
-                        activi.activity_status:
+                if activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_FINALLY or \
+                    activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_CANCEL:
                     activi.type = 'All'
                     continue
                 activi.type = 'ToDo'
@@ -947,9 +1032,11 @@ class WorkActivity(object):
                         'ActionVersion': flow_action.action_version,
                         'ActionEndpoint': flow_action.action.action_endpoint,
                         'Author': history_dict[flow_action.action_id].get(
-                            'Updater') if flow_action.action_id in history_dict else '',
+                            'Updater')
+                        if flow_action.action_id in history_dict else '',
                         'Status': history_dict[flow_action.action_id].get(
-                            'Result') if flow_action.action_id in history_dict else ' '
+                            'Result')
+                        if flow_action.action_id in history_dict else ' '
                     })
 
         return steps
