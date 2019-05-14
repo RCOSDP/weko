@@ -276,7 +276,7 @@ ${INVENIO_WEB_INSTANCE} widget_type create \
         "Notice" "Notice"
 
 ${INVENIO_WEB_INSTANCE} widget_type create \
-        "New arivals" "New arivals"
+        "New arrivals" "New arrivals"
 
 ${INVENIO_WEB_INSTANCE} widget_type create \
         "Main contents" "Main contents"
