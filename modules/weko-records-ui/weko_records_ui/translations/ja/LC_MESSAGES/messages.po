@@ -213,6 +213,10 @@ msgstr "戻る"
 msgid "Edit"
 msgstr "編集"
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:349
+msgid "The workflow is being edited."
+msgstr "ワークフローが編集中です。"
+
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:352
 msgid "Delete"
 msgstr "削除"
@@ -533,31 +537,3 @@ msgstr ""
 #: weko_records_ui/templates/weko_records_ui/box/versions.html:2
 msgid "Versions"
 msgstr "バージョン"
-
-#~ msgid "Size"
-#~ msgstr "サイズ"
-
-#~ msgid "Download"
-#~ msgstr "ダウンロード"
-
-#~ msgid "Privating"
-#~ msgstr "非公開"
-
-#~ msgid "Publishing"
-#~ msgstr "公開"
-
-#~ msgid "Control number"
-#~ msgstr "管理番号"
-
-#~ msgid "Ok"
-#~ msgstr ""
-
-#~ msgid "Published"
-#~ msgstr "公開"
-
-#~ msgid "Published/"
-#~ msgstr "公開"
-
-#~ msgid "Period"
-#~ msgstr "期間"
-

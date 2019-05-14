@@ -12,11 +12,11 @@ require([
     data_global.post_uri = $('.cur_step').data('next-uri');
     data_global.post_data = {
       identifier_grant: $("input[name='identifier_grant']:checked").val(),
-      identifier_grant_jalc_doi_suffix: $("input[name='idf_grant_input_1']").val(),
+      identifier_grant_jalc_doi_suffix: getVal($("input[name='idf_grant_input_1']")),
       identifier_grant_jalc_doi_link: $("span[name='idf_grant_link_1']").text() + getVal($("input[name='idf_grant_input_1']")),
-      identifier_grant_jalc_cr_doi_suffix: $("input[name='idf_grant_input_2']").val(),
+      identifier_grant_jalc_cr_doi_suffix: getVal($("input[name='idf_grant_input_2']")),
       identifier_grant_jalc_cr_doi_link: $("span[name='idf_grant_link_2']").text() + getVal($("input[name='idf_grant_input_2']")),
-      identifier_grant_jalc_dc_doi_suffix: $("input[name='idf_grant_input_3']").val(),
+      identifier_grant_jalc_dc_doi_suffix: getVal($("input[name='idf_grant_input_3']")),
       identifier_grant_jalc_dc_doi_link: $("span[name='idf_grant_link_3']").text() + getVal($("input[name='idf_grant_input_3']")),
       identifier_grant_crni_link: $("span[name='idf_grant_link_4']").text(),
       action_version: $('.cur_step').data('action-version'),

@@ -32,7 +32,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy
+from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy,\
+    ActionIdentifier
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
@@ -415,10 +416,12 @@ class ActionStatus(object):
 class WorkActivity(object):
     """Operated on the Activity."""
 
-    def init_activity(self, activity, community_id=None):
+    def init_activity(self, activity, community_id=None, item_id=None):
         """Create new activity.
 
         :param activity:
+        :param community_id:
+        :param item_id:
         :return:
         """
         utc_now = datetime.utcnow()
@@ -443,6 +446,7 @@ class WorkActivity(object):
                 # Dummy activity ID, the real one will be updated after this activity is created
                 activity_id='A' + str(
                     datetime.utcnow().timestamp()).split('.')[0],
+                item_id=item_id,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
                 action_id=next_action_id,
@@ -619,7 +623,7 @@ class WorkActivity(object):
         with db.session.begin_nested():
             action_journal = ActionJournal.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id, ).one_or_none()
+                action_id=action_id).one_or_none()
             if action_journal:
                 action_journal.action_journal = journal
                 db.session.merge(action_journal)
@@ -630,6 +634,46 @@ class WorkActivity(object):
                     action_journal=journal,
                 )
                 db.session.add(new_action_journal)
+        db.session.commit()
+    def create_or_update_action_identifier(self, activity_id,
+                                           action_id, identifier):
+        """Create or update action identifier grant info.
+        :param activity_id:
+        :param action_id:
+        :param identifier:
+        :return:
+        """
+        with db.session.begin_nested():
+            action_identifier = ActionIdentifier.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id).one_or_none()
+            if action_identifier:
+                action_identifier.action_identifier_select = identifier.get(
+                    'action_identifier_select')
+                action_identifier.action_identifier_jalc_doi =\
+                    identifier.get(
+                        'action_identifier_jalc_doi')
+                action_identifier.action_identifier_jalc_cr_doi =\
+                    identifier.get(
+                        'action_identifier_jalc_cr_doi')
+                action_identifier.action_identifier_jalc_dc_doi =\
+                    identifier.get(
+                        'action_identifier_jalc_dc_doi')
+                db.session.merge(action_identifier)
+            else:
+                new_action_identifier = ActionIdentifier(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    action_identifier_select=identifier.get(
+                        'action_identifier_select'),
+                    action_identifier_jalc_doi=identifier.get(
+                        'action_identifier_jalc_doi'),
+                    action_identifier_jalc_cr_doi=identifier.get(
+                        'action_identifier_jalc_cr_doi'),
+                    action_identifier_jalc_dc_doi=identifier.get(
+                        'action_identifier_jalc_dc_doi')
+                )
+                db.session.add(new_action_identifier)
 
         db.session.commit()
 
@@ -646,6 +690,32 @@ class WorkActivity(object):
                 action_id=action_id, ).one_or_none()
             return action_journal
 
+    def get_action_identifier_grant(self, activity_id, action_id):
+        """Get action idnetifier grant info.
+        :param activity_id:
+        :param action_id:
+        :return:
+        """
+        identifier = {'action_identifier_select': '',
+                      'action_identifier_jalc_doi': '',
+                      'action_identifier_jalc_cr_doi': '',
+                      'action_identifier_jalc_dc_doi': ''}
+        with db.session.no_autoflush:
+            action_identifier = ActionIdentifier.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id).one_or_none()
+            if action_identifier:
+                identifier['action_identifier_select'] =\
+                    action_identifier.action_identifier_select
+                identifier['action_identifier_jalc_doi'] =\
+                    action_identifier.action_identifier_jalc_doi
+                identifier['action_identifier_jalc_cr_doi'] =\
+                    action_identifier.action_identifier_jalc_cr_doi
+                identifier['action_identifier_jalc_dc_doi'] =\
+                    action_identifier.action_identifier_jalc_dc_doi
+            else:
+                identifier = action_identifier
+        return identifier
     def get_activity_action_status(self, activity_id, action_id):
         """Get activity action status."""
         with db.session.no_autoflush:
@@ -656,35 +726,7 @@ class WorkActivity(object):
 
     # add by ryuu end
 
-    def upt_activity_action_id_grant(self, activity_id, action_id,
-                                     identifier_grant,
-                                     identifier_grant_jalc_doi_suffix,
-                                     identifier_grant_jalc_cr_doi_suffix,
-                                     identifier_grant_jalc_dc_doi_suffix):
-        """Update activity info.
 
-        :param activity_id:
-        :param action_id:
-        :param identifier_grant:
-        :param identifier_grant_jalc_doi_suffix:
-        :param identifier_grant_jalc_cr_doi_suffix:
-        :param identifier_grant_jalc_dc_doi_suffix:
-        :return:
-        """
-        with db.session.begin_nested():
-            activity_action = ActivityAction.query.filter_by(
-                activity_id=activity_id,
-                action_id=action_id, ).one_or_none()
-            if activity_action:
-                activity_action.action_identifier_grant = identifier_grant
-                activity_action.action_identifier_grant_jalc_doi_manual = \
-                    identifier_grant_jalc_doi_suffix
-                activity_action.action_identifier_grant_jalc_cr_doi_manual = \
-                    identifier_grant_jalc_cr_doi_suffix
-                activity_action.action_identifier_grant_jalc_dc_doi_manual = \
-                    identifier_grant_jalc_dc_doi_suffix
-                db.session.merge(activity_action)
-        db.session.commit()
 
     def upt_activity_item(self, activity, item_id):
         """Update activity info for item id.
@@ -1050,6 +1092,62 @@ class WorkActivity(object):
             temporary_comment, approval_record, step_item_login_url, histories,\
             res_check, pid, community_id, ctx
 
+    def upt_activity_detail(self, item_id):
+        """Update activity info for item id.
+        :param item_id:
+        :return:
+        """
+        try:
+            with db.session.no_autoflush:
+                action = _Action.query.filter_by(
+                    action_endpoint='end_action').one_or_none()
+                db_activity = _Activity.query.filter_by(
+                    item_id=item_id).one_or_none()
+                db_activity.item_id = None
+                db_activity.action_id = action.id
+                db_activity.action_status = ActionStatusPolicy.ACTION_SKIPPED
+                db_activity.activity_status = ActivityStatusPolicy.ACTIVITY_FINALLY,
+            with db.session.begin_nested():
+                db_history = ActivityHistory(
+                    activity_id=db_activity.activity_id,
+                    action_id=action.id,
+                    action_version=action.action_version,
+                    action_status=ActionStatusPolicy.ACTION_DONE,
+                    action_user=current_user.get_id(),
+                    action_date=db_activity.activity_start,
+                    action_comment=ActionCommentPolicy.FINALLY_ACTION_COMMENT
+                )
+                db.session.merge(db_activity)
+                db.session.add(db_history)
+            db.session.commit()
+            return db_activity
+        except NoResultFound as ex:
+            current_app.logger.exception(str(ex))
+            return None
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return None
+
+    def get_workflow_activity_status_by_item_id(self, item_id):
+        """Get workflow activity status by item ID.
+
+        :param item_id:
+        """
+        try:
+            with db.session.no_autoflush:
+                activity = _Activity.query.filter_by(
+                    item_id=item_id).one_or_none()
+                action_stus = activity.action_status
+                return action_stus
+        except NoResultFound as ex:
+            current_app.logger.exception(str(ex))
+            return None
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return None
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity."""
@@ -1068,13 +1166,6 @@ class WorkActivityHistory(object):
             action_user=current_user.get_id(),
             action_date=datetime.utcnow(),
             action_comment=activity.get('commond'),
-            action_identifier_grant=activity.get('identifier_grant', 0),
-            action_identifier_grant_jalc_doi_manual=activity.get(
-                'identifier_grant_jalc_doi_suffix', ""),
-            action_identifier_grant_jalc_cr_doi_manual=activity.get(
-                'identifier_grant_jalc_cr_doi_suffix', ""),
-            action_identifier_grant_jalc_dc_doi_manual=activity.get(
-                'identifier_grant_jalc_dc_doi_suffix', "")
         )
         new_history = False
         activity = WorkActivity()
