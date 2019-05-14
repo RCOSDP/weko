@@ -36,6 +36,7 @@ from flask_login import current_user
 
 from .permissions import admin_permission_factory
 from .utils import allowed_file
+from weko_records.api import ItemsMetadata
 
 
 class StyleSettingView(BaseView):
@@ -348,7 +349,9 @@ class ReportView(BaseView):
                                     record['login'], record['site_license'],
                                     record['admin'], record['reg']])
                 elif file_type == 'detail_view':
-                    writer.writerow([record['record_id'], None,
+                    item_metadata_json = ItemsMetadata.\
+                        get_record(record['record_id'])
+                    writer.writerow([item_metadata_json['title'], None,
                                      record['total'], None])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
@@ -362,7 +365,7 @@ class ReportView(BaseView):
         elif file_type == 'file_preview':
             file_type = 'FilePreview'
         elif file_type == 'detail_view':
-            file_type = 'DetailView'
+            file_type = 'DetailView_'
         else:
             file_type = 'FileUsingPerUser'
         return 'LogReport_' + file_type + year + '-' + month + '.tsv'
