@@ -74,15 +74,6 @@ def get_widget_list(repository_id):
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
-                data["widgetSetting"] = {
-                    "label_color": widget_item.label_color,
-                    "frame_border": widget_item.has_frame_border,
-                    "frame_border_color": widget_item.frame_border_color,
-                    "text_color": widget_item.text_color,
-                    "background_color": widget_item.background_color,
-                    "browsing_role": widget_item.browsing_role,
-                    "edit_role": widget_item.edit_role
-                }
                 result["widget-list"].append(data)
     except Exception as e:
         result["error"] = str(e)
@@ -127,6 +118,17 @@ def update_widget_design_setting(data):
     repository_id = data.get('repository_id')
     setting_data = data.get('settings')
     try:
+        json_data = json.loads(setting_data)
+        if type(json_data) is list:
+            for item in json_data:
+                widget_item = WidgetItem.get(item.get('id'), item.get('type'), item.get('name'))
+                item['frame_border'] = widget_item.has_frame_border
+                item['frame_border_color'] = widget_item.frame_border_color
+                item['background_color'] = widget_item.background_color
+                item['label_color'] = widget_item.label_color
+                item['text_color'] = widget_item.text_color
+                item['description'] = widget_item.description
+        setting_data = json.dumps(json_data)
         if repository_id and setting_data:
             if WidgetDesignSetting.select_by_repository_id(repository_id):
                 result["result"] = WidgetDesignSetting.update(repository_id,
@@ -258,6 +260,7 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
                 item['label_color'] = data_result.get('label_color')
                 item['text_color'] = data_result.get('text_color')
                 item['name'] = data_result.get('label')
+                item['description'] = data_result.get('description')
     data = json.dumps(json_data)
     return data
 
