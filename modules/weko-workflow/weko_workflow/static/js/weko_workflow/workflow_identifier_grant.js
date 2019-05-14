@@ -20,6 +20,7 @@ require([
       identifier_grant_jalc_dc_doi_link: $("span[name='idf_grant_link_3']").text() + getVal($("input[name='idf_grant_input_3']")),
       identifier_grant_crni_link: $("span[name='idf_grant_link_4']").text(),
       action_version: $('.cur_step').data('action-version'),
+      commond: '',
       temporary_save: tmp_save
     };
   }
