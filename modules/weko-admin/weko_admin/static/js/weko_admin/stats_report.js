@@ -11,7 +11,12 @@ $(document).ready(function () {
       alert('Month is required!');
       return;
     }
-    var statsURL = '/api/stats/' + type + '/' + year + '/' + month;
+    let uriByType = {
+        file_download:'file_download',
+        file_preview:'file_preview',
+        record_view:'report/record/record_view',
+        file_using_per_user:'file_using_per_user'};
+    var statsURL = '/api/stats/' + uriByType[type] + '/' + year + '/' + month;
     var statsReports = {};
     var ajaxReturn = [0,0,0,0];
 
@@ -47,7 +52,7 @@ $(document).ready(function () {
         }
       });
       $.ajax({
-        url: '/api/stats/' + options[2] + '/' + year + '/' + month,
+        url: '/api/stats/' + uriByType[options[2]] + '/' + year + '/' + month,
         type: 'GET',
         async: false,
         contentType: 'application/json',
