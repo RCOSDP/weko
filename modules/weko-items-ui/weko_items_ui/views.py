@@ -695,10 +695,12 @@ def prepare_edit_item():
             user_id = str(get_current_user())
             is_admin = get_user_roles()
             activity = WorkActivity()
+            pid_object = PersistentIdentifier.get('recid', pid_value)
 
             # check item is being editied
+            item_id=pid_object.object_uuid
             workflow_action_stt = activity.get_workflow_activity_status_by_item_id(
-                item_id=pid_value)
+                item_id=item_id)
             # show error when has stt is Begin or Doing
             if workflow_action_stt is not None and \
                 (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
@@ -717,10 +719,10 @@ def prepare_edit_item():
             item_type = ItemTypes.get_by_id(item_type_id)
             if item_type is None:
                 return jsonify(code=-1, msg=_('This itemtype not found.'))
-            
-            pidObj = PersistentIdentifier.get('recid', pid_value)
+
             upt_current_activity = activity.upt_activity_detail(
-                item_id=pidObj.object_uuid)
+                item_id=pid_object.object_uuid)
+
             if upt_current_activity is not None:
                 post_activity['workflow_id'] = upt_current_activity.workflow_id
                 post_activity['flow_id'] = upt_current_activity.flow_id
@@ -728,7 +730,7 @@ def prepare_edit_item():
                 getargs = request.args
                 community = getargs.get('community', None)
                 rtn = activity.init_activity(
-                    post_activity, community, pidObj.object_uuid)
+                    post_activity, community, pid_object.object_uuid)
                 if rtn:
                     oa_policy_actionid = get_actionid('oa_policy')
                     identifier_actionid = get_actionid('identifier_grant')
