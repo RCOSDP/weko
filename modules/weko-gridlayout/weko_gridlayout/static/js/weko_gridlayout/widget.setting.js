@@ -123,7 +123,7 @@ class ComponentSelectColorFiled extends React.Component {
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
                 <div className="controls col-xs-2">
-                  <input name={this.props.name} type="color" name="favcolor" value={this.state.color} onChange={this.handleChange}/>
+                  <input name={this.props.name} type="color" className="style-select-color" name="favcolor" value={this.state.color} onChange={this.handleChange}/>
                 </div>
             </div>
         )
@@ -327,7 +327,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         return (
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                <div class="controls col-xs-6">
+                <div class="controls col-xs-9">
                     <fieldset className="form-group style-container" >
                     <span>Role</span><br/>
                     <div className="col-xs-5 style-element" >
@@ -336,15 +336,17 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                           {this.state.selectOptions}
                       </select>
                     </div>
-                    <div className="col-xs-1 style-element">
-                      <br/>
-                      <div className="buttons style-button-container">
-                        <input type="button" value="&rarr;" className="style-button-element" onClick={this.handleMoveRightClick}/>
-                        <input type="button" value="&larr;" className="style-button-element" onClick={this.handleMoveLeftClick}/>
-                      </div>
+                    <div className="col-xs-2">
+                        <br/>
+                        <div className="style-center-align">
+                            <div className="buttons style-button-container">
+                                <input type="button" value="&rarr;" className="style-button-element" onClick={this.handleMoveRightClick}/>
+                                <input type="button" value="&larr;" className="style-button-element" onClick={this.handleMoveLeftClick}/>
+                             </div>
+                        </div>
                     </div>
-                    <div className="col-xs-5 style-element">
-                      <span className="style-label-right">Unauthorized</span><br/>
+                    <div className="col-xs-5 style-element style-element-right">
+                      <span>Unauthorized</span><br/>
                       <select multiple value={this.state.unauthorList} className="style-select-right" onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
                           {this.state.UnauthorizedOptions}
                       </select>
@@ -399,7 +401,7 @@ class ComponentFieldEditor extends React.Component {
       return (
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-            <div class="controls col-xs-6 my-editor">
+            <div class="controls col-xs-9 my-editor">
                 <ReactQuill 
                     onChange={this.handleChange}
                     value={this.state.editorHtml}
