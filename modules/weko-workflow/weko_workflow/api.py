@@ -38,7 +38,8 @@ from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
 from .models import WorkFlow as _WorkFlow
 from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy, \
-    ActivityAction, ActivityHistory, ActivityStatusPolicy, FlowStatusPolicy
+    ActivityAction, ActivityHistory, ActivityStatusPolicy, FlowStatusPolicy, \
+    ActionIdentifier
 
 
 class Flow(object):
