@@ -54,5 +54,9 @@ require([
         handleError(textStatus);
       }
     });
-  }
+  };
+
+  $("#btn_dissmiss").click(function () {
+    $("#btn_quit").attr("disabled", false);
+  });
 });
