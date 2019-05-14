@@ -45,14 +45,17 @@ let PageBodyGrid = function () {
   }.bind(this);
 
   this.widgetTemplate = function (node) {
-    let background = "";
-    let labelStyle = "";
+    console.log('=============Node==============', node)
+    let labelColor = "";
+    let frameBorder = false;
+    let frameBorderColor = "";
+    let backgroundColor = "";
 
     let template =
       '<div class="grid-stack-item">' +
-      ' <div class="grid-stack-item-content panel panel-default widget" style="' + background + '">' +
+      ' <div class="grid-stack-item-content panel panel-default widget" style="' + backgroundColor + '">' +
       '   <div class="panel-heading widget-header"><strong>' + node.type + '</strong></div>' +
-      '   <div class="panel-body" style="' + labelStyle + '">' + node.name + '</div>' +
+      '   <div class="panel-body" style="' + labelColor + '">' + node.name + '</div>' +
       ' </div>' +
       '</div>';
     return template;
