@@ -37,6 +37,7 @@ from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
 from weko_workflow.api import GetCommunity, WorkActivity
+from weko_workflow.models import ActionStatusPolicy
 
 from .permissions import item_permission
 from .utils import get_current_user, get_list_email, get_list_username, \
@@ -693,6 +694,18 @@ def prepare_edit_item():
             shared_id = str(record.get('weko_shared_id'))
             user_id = str(get_current_user())
             is_admin = get_user_roles()
+            activity = WorkActivity()
+
+            # check item is being editied
+            workflow_action_stt = activity.get_workflow_activity_status_by_item_id(
+                item_id=pid_value)
+            # show error when has stt is Begin or Doing
+            if workflow_action_stt is not None and \
+                (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
+                workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
+                return jsonify(code=-13,
+                               msg=_('The workflow is being edited. '))
+
             if user_id != owner and not is_admin[0] and user_id != shared_id:
                 return jsonify(code=-1,
                                msg=_('You are not allowed to edit this item.'))
@@ -704,7 +717,7 @@ def prepare_edit_item():
             item_type = ItemTypes.get_by_id(item_type_id)
             if item_type is None:
                 return jsonify(code=-1, msg=_('This itemtype not found.'))
-            activity = WorkActivity()
+            
             pidObj = PersistentIdentifier.get('recid', pid_value)
             upt_current_activity = activity.upt_activity_detail(
                 item_id=pidObj.object_uuid)
