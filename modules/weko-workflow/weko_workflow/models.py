@@ -61,6 +61,9 @@ class ActionStatusPolicy(object):
     ACTION_ERROR = 'E'
     """The action status of error."""
 
+    ACTION_CANCELED = 'C'
+    """The action status of canceled."""
+
     descriptions = dict([
         (ACTION_BEGIN,
          _('action_begin')),
@@ -78,6 +81,8 @@ class ActionStatusPolicy(object):
          _('action_skipped')),
         (ACTION_ERROR,
          _('action_error')),
+        (ACTION_CANCELED,
+         _('action_canceled')),
     ])
     """Policies descriptions."""
 
@@ -101,7 +106,8 @@ class ActionStatusPolicy(object):
         return policy in [cls.ACTION_BEGIN, cls.ACTION_DONE,
                           cls.ACTION_DOING, cls.ACTION_THROWN_OUT,
                           cls.ACTION_NOT_DONE, cls.ACTION_RETRY,
-                          cls.ACTION_SKIPPED, cls.ACTION_ERROR]
+                          cls.ACTION_SKIPPED, cls.ACTION_ERROR,
+                          cls.ACTION_CANCELED]
 
 
 class ActivityStatusPolicy(object):
@@ -380,6 +386,8 @@ class ActionStatus(db.Model, TimestampMixin):
          ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_SKIPPED)),
         (ActionStatusPolicy.ACTION_ERROR,
          ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_ERROR)),
+        (ActionStatusPolicy.ACTION_CANCELED,
+         ActionStatusPolicy.describe(ActionStatusPolicy.ACTION_CANCELED)),
     ]
     """Subscription policy choices."""
 

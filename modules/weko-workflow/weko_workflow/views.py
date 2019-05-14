@@ -26,8 +26,8 @@ from collections import OrderedDict
 from functools import wraps
 
 import redis
-from flask import Blueprint, abort, current_app, flash, jsonify, \
-    render_template, request, session, url_for
+from flask import Blueprint, current_app, jsonify, render_template, request, \
+    session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -201,11 +201,14 @@ def display_activity(activity_id=0):
     histories = history.get_activity_history_list(activity_id)
     workflow = WorkFlow()
     workflow_detail = workflow.get_workflow_by_id(activity_detail.workflow_id)
-    if ActivityStatusPolicy.ACTIVITY_FINALLY != activity_detail.activity_status:
+    if activity_detail.activity_status == \
+            ActivityStatusPolicy.ACTIVITY_FINALLY \
+            or activity_detail.activity_status == \
+            ActivityStatusPolicy.ACTIVITY_CANCEL:
+        activity_detail.activity_status_str = _('End')
+    else:
         activity_detail.activity_status_str = \
             request.args.get('status', 'ToDo')
-    else:
-        activity_detail.activity_status_str = _('End')
     cur_action = activity_detail.action
     action_endpoint = cur_action.action_endpoint
     action_id = cur_action.id
@@ -516,7 +519,7 @@ def next_action(activity_id='0', action_id=0):
 
     # save pidstore_identifier to ItemsMetadata
     if 'identifier_grant' == action_endpoint:
-        if int(idf_grant) > 0:
+        if idf_grant and int(idf_grant) > 0:
             pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
 
     rtn = history.create_activity_history(activity)
@@ -546,7 +549,8 @@ def next_action(activity_id='0', action_id=0):
         else:
             next_action_id = next_flow_action[0].action_id
             work_activity.upt_activity_action(
-                activity_id=activity_id, action_id=next_action_id)
+                activity_id=activity_id, action_id=next_action_id,
+                action_status=ActionStatusPolicy.ACTION_DOING)
     return jsonify(code=0, msg=_('success'))
 
 
@@ -566,7 +570,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     res = {'pidstore_identifier': {}}
     tempdata = IDENTIFIER_ITEMSMETADATA_FORM
 
-    if idf_grant == 1:      # identifier_grant_jalc_doi
+    if idf_grant == 1:  # identifier_grant_jalc_doi
         jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
         if jalcdoi_link:
             jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
@@ -578,7 +582,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifierRegistration']['properties'][
                 'identifierType'] = 'JaLC'
             res['pidstore_identifier'] = tempdata
-    elif idf_grant == 2:    # identifier_grant_jalc_cr
+    elif idf_grant == 2:  # identifier_grant_jalc_cr
         jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
         if jalcdoi_cr_link:
             jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
@@ -590,7 +594,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifierRegistration']['properties'][
                 'identifierType'] = 'Crossref'
             res['pidstore_identifier'] = tempdata
-    elif idf_grant == 3:    # identifier_grant_jalc_dc_doi
+    elif idf_grant == 3:  # identifier_grant_jalc_dc_doi
         jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
         if jalcdoi_dc_link:
             jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
@@ -602,7 +606,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifierRegistration']['properties'][
                 'identifierType'] = 'Datacite'
             res['pidstore_identifier'] = tempdata
-    elif idf_grant == 4:    # identifier_grant_crni
+    elif idf_grant == 4:  # identifier_grant_crni
         jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
         if jalcdoi_crni_link:
             tempdata['identifier']['value'] = jalcdoi_crni_link
@@ -668,7 +672,8 @@ def previous_action(activity_id='0', action_id=0, req=0):
             activity_id=activity_id, action_id=previous_action_id,
             action_status=ActionStatusPolicy.ACTION_DOING)
         work_activity.upt_activity_action(
-            activity_id=activity_id, action_id=previous_action_id)
+            activity_id=activity_id, action_id=previous_action_id,
+            action_status=ActionStatusPolicy.ACTION_DOING)
     return jsonify(code=0, msg=_('success'))
 
 
@@ -726,3 +731,40 @@ def get_journal(method, value):
                 result['romeoapi']['publishers']['publisher'][0]
 
     return jsonify(result)
+
+
+@blueprint.route(
+    '/activity/action/<string:activity_id>/<int:action_id>'
+    '/cancel',
+    methods=['POST'])
+@login_required
+@check_authority
+def cancel_action(activity_id='0', action_id=0):
+    """Next action."""
+    post_json = request.get_json()
+    work_activity = WorkActivity()
+    rtn = None
+
+    activity = dict(
+        activity_id=activity_id,
+        action_id=action_id,
+        action_version=post_json.get('action_version'),
+        action_status=ActionStatusPolicy.ACTION_CANCELED,
+        commond=post_json.get('commond'))
+
+    work_activity.upt_activity_action_status(
+        activity_id=activity_id, action_id=action_id,
+        action_status=ActionStatusPolicy.ACTION_CANCELED)
+
+    rtn = work_activity.quit_activity(activity)
+
+    if rtn is None:
+        work_activity.upt_activity_action_status(
+            activity_id=activity_id, action_id=action_id,
+            action_status=ActionStatusPolicy.ACTION_DOING)
+        return jsonify(code=-1, msg=_('Error! Can\'t process quit activity!'))
+
+    return jsonify(code=0, msg=_('success'),
+                   data={'redirect': url_for(
+                       'weko_workflow.display_activity',
+                       activity_id=activity_id)})
