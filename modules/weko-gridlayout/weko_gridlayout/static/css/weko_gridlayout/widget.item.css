@@ -1,0 +1,59 @@
+.style-container {
+    border: 1px solid #ccc;
+    height: 200px;
+    padding :15px 5px 5px 10px;
+}
+
+.style-element {
+    padding: 0;
+}
+
+.style-select-left {
+    padding: 0;
+    width: 90%;
+    height: 100px !important;
+    float: left;
+}
+
+.style-select-right {
+    padding: 0;
+    width: 90%;
+    height: 100px !important;
+    float: right;
+}
+
+.style-button-container {
+    display: flex;
+    flex-direction : column;
+    justify-content: center;
+    height: 100px;
+}
+
+.style-button-element {
+    margin: 2px;
+}
+
+.style-label-right {
+    margin-left: 10%;
+}
+
+.style-red {
+    color: red;
+}
+
+.style-my-button {
+    margin-left: 10px;
+}
+  
+.my-editor .ql-snow.ql-toolbar {
+    display: block;
+    background: #eaecec;
+    border-top-left-radius: 0.5em;
+    border-top-right-radius: 0.5em;
+  }
+  
+  
+.my-editor .ql-editor {
+    min-height: 18em;
+}
+  
