@@ -181,9 +181,7 @@ class ComponentTableResult extends React.Component {
       cell.push(<th style={this.styleTable}>Period</th>);
       cell.push(<th style={this.styleTable}>Counts</th>);
       rows.push(<tr>{cell}</tr>);
-      console.log('data: ', data)
       for (var i = 0; i < data.length; i++) {
-        console.log('data: ' + i + ", ", data[i])
         cell = [];
         cell.push(<td style={this.styleTable}>{data[i].start_date} - {data[i].end_date}</td>);
         cell.push(<td style={this.styleTable}>{data[i].count}</td>);
@@ -369,8 +367,6 @@ class ComponentCombobox extends React.Component {
             }*/)
           .then(res => res.json())
           .then((result) => {
-            console.log('1' + result)
-            console.log('2' + result.data)
             this.props.getValueOfField(this.props.key_binding, result);
             this.props.getNumPage(result.num_page);
             this.props.getTableHidden(false);
