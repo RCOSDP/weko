@@ -152,17 +152,13 @@ class WidgetSettingView(ModelView):
     )
 
     column_searchable_list = (
-        'repository_id', 'widget_type', 'label_color', 'has_frame_border')
+        'repository_id', 'widget_type', 'settings')
 
     column_details_list = (
         'repository_id',
         'widget_type',
         'label',
-        'label_color',
-        'has_frame_border',
-        'frame_border_color',
-        'text_color',
-        'background_color',
+        'settings',
         'browsing_role',)
 
     form_extra_fields = {

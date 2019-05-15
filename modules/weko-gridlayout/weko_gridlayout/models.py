@@ -84,23 +84,38 @@ class WidgetItem(db.Model):
 
     label = db.Column(db.String(100), nullable=False, primary_key=True)
 
-    label_color = db.Column(db.String(7), default="")
+    settings = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
 
-    has_frame_border = db.Column(db.Boolean(name='frame_border'), default=True)
+    # label_color = db.Column(db.String(7), default="")
 
-    frame_border_color = db.Column(db.String(7), default="")
+    # has_frame_border = db.Column(db.Boolean(name='frame_border'), default=True)
 
-    text_color = db.Column(db.String(7), default="")
+    # frame_border_color = db.Column(db.String(7), default="")
 
-    background_color = db.Column(db.String(7), default="")
+    # text_color = db.Column(db.String(7), default="")
+
+    # background_color = db.Column(db.String(7), default="")
+
+    # description = db.Column(db.Text, nullable=True)
 
     browsing_role = db.Column(db.Text, nullable=True)
 
     edit_role = db.Column(db.Text, nullable=True)
 
     is_enabled = db.Column(db.Boolean(name='enable'), default=True)
-
-    description = db.Column(db.Text, nullable=True)
 
     is_deleted = db.Column(db.Boolean(name='delete'), default=False)
 

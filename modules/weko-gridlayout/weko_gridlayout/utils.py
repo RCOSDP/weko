@@ -123,12 +123,8 @@ def update_widget_design_setting(data):
             for item in json_data:
                 widget_item = WidgetItem.get(item.get('id'), item.get('type'),
                                              item.get('name'))
-                item['frame_border'] = widget_item.has_frame_border
-                item['frame_border_color'] = widget_item.frame_border_color
-                item['background_color'] = widget_item.background_color
-                item['label_color'] = widget_item.label_color
-                item['text_color'] = widget_item.text_color
-                item['description'] = widget_item.description
+                widget_setting = json.loads(widget_item.settings)
+                item.update(widget_setting)
         setting_data = json.dumps(json_data)
         if repository_id and setting_data:
             if WidgetDesignSetting.select_by_repository_id(repository_id):
@@ -257,11 +253,14 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
                 item['frame_border_color'] = data_result.get(
                     'frame_border_color')
                 item['background_color'] = data_result.get('background_color')
-                item['type'] = data_result.get('widget_type')
                 item['label_color'] = data_result.get('label_color')
                 item['text_color'] = data_result.get('text_color')
                 item['name'] = data_result.get('label')
-                item['description'] = data_result.get('description')
+                item['type'] = data_result.get('widget_type')
+                if str(item.get('type')) == "Free description":
+                    item['description'] = data_result.get('description')
+                else:
+                    item.pop('description', None)
     data = json.dumps(json_data)
     return data
 
