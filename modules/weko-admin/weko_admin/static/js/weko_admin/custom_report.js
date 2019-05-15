@@ -53,7 +53,7 @@ class ComponentTableResult extends React.Component {
           end_date: endDate,
           unit: unit
         };
-        let request_url = '/api/admin/get_statistic_item_regis/' + unit + '/' + selectedPage;
+        let request_url = '/api/stats/get_item_registration_report/' + startDate + '/' + endDate + '/' + unit; // + '/' + selectedPage;
         fetch(request_url/*,
             TODO: Display to result table {
               method: "GET",
@@ -182,8 +182,8 @@ class ComponentTableResult extends React.Component {
       rows.push(<tr>{cell}</tr>);
       for (var i = 0; i < data.length; i++) {
         cell = [];
-        cell.push(<td style={this.styleTable}>{data[i].col1}</td>);
-        cell.push(<td style={this.styleTable}>{data[i].col2}</td>);
+        cell.push(<td style={this.styleTable}>{data[i].start_date} - {data[i].end_date}</td>);
+        cell.push(<td style={this.styleTable}>{data[i].count}</td>);
         rows.push(<tr >{cell}</tr>);
       }
     }
