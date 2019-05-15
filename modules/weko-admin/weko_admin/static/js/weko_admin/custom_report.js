@@ -369,6 +369,8 @@ class ComponentCombobox extends React.Component {
             }*/)
           .then(res => res.json())
           .then((result) => {
+            console.log('1' + result)
+            console.log('2' + result.data)
             this.props.getValueOfField(this.props.key_binding, result.data);
             this.props.getNumPage(result.num_page);
             this.props.getTableHidden(false);
