@@ -46,46 +46,47 @@ class ComponentTableResult extends React.Component {
     let unit = document.getElementById("unit").value;
 
     const ITEM_REG_ID = 1;
-      const DETAIL_VIEW_ID = 2;
-      if (target == ITEM_REG_ID) {
-        let requestParam = {
-          start_date: startDate,
-          end_date: endDate,
-          unit: unit
-        };
-        let request_url = '/api/stats/get_item_registration_report/' + startDate + '/' + endDate + '/' + unit; // + '/' + selectedPage;
-        fetch(request_url/*,
-            TODO: Display to result table {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(requestParam)
-            }*/)
-          .then(res => res.json())
-          .then((result) => {
-            this.displayData(result.data);
-          });
-      } else if (target == DETAIL_VIEW_ID) {
-        let requestParam = {
-          start_date: startDate,
-          end_date: endDate,
-          unit: unit
-        };
-        let request_url = '/api/admin/get_statistic_detail_view/' + unit + '/' + selectedPage;
-        fetch(request_url/*, {
-              TODO: Display to result table
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(requestParam)
-            }*/)
-          .then(res => res.json())
-          .then((result) => {
-            this.displayData(result.data);
-          });
-      }
+    const DETAIL_VIEW_ID = 2;
+    console.log('target: ' + target)
+    if (target == ITEM_REG_ID) {
+      let requestParam = {
+        start_date: startDate,
+        end_date: endDate,
+        unit: unit
+      };
+      let request_url = '/api/stats/get_item_registration_report/' + startDate + '/' + endDate + '/' + unit; // + '/' + selectedPage;
+      fetch(request_url/*,
+          TODO: Display to result table {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestParam)
+          }*/)
+        .then(res => res.json())
+        .then((result) => {
+          this.displayData(result.data);
+        });
+    } else if (target == DETAIL_VIEW_ID) {
+      let requestParam = {
+        start_date: startDate,
+        end_date: endDate,
+        unit: unit
+      };
+      let request_url = '/api/admin/get_statistic_detail_view/' + unit + '/' + selectedPage;
+      fetch(request_url/*, {
+            TODO: Display to result table
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestParam)
+          }*/)
+        .then(res => res.json())
+        .then((result) => {
+          this.displayData(result.data);
+        });
+    }
   }
 
   initPageButton(selectedPage) {
