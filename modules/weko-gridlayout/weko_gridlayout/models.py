@@ -99,18 +99,6 @@ class WidgetItem(db.Model):
         nullable=True
     )
 
-    # label_color = db.Column(db.String(7), default="")
-
-    # has_frame_border = db.Column(db.Boolean(name='frame_border'), default=True)
-
-    # frame_border_color = db.Column(db.String(7), default="")
-
-    # text_color = db.Column(db.String(7), default="")
-
-    # background_color = db.Column(db.String(7), default="")
-
-    # description = db.Column(db.Text, nullable=True)
-
     browsing_role = db.Column(db.Text, nullable=True)
 
     edit_role = db.Column(db.Text, nullable=True)
