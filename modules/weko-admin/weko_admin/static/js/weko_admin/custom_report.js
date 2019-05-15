@@ -47,7 +47,6 @@ class ComponentTableResult extends React.Component {
 
     const ITEM_REG_ID = 1;
     const DETAIL_VIEW_ID = 2;
-    console.log('target: ' + target)
     if (target == ITEM_REG_ID) {
       let requestParam = {
         start_date: startDate,
@@ -355,7 +354,7 @@ class ComponentCombobox extends React.Component {
           end_date: endDate,
           unit: unit
         };
-        let request_url = '/api/admin/get_statistic_item_regis/' + unit + '/1';
+      let request_url = '/api/stats/get_item_registration_report/' + startDate + '/' + endDate + '/' + unit; // + '/' + selectedPage;
         fetch(request_url/*,
             TODO: Display to result table {
               method: "GET",
