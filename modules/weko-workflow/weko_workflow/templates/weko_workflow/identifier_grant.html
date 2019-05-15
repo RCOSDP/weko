@@ -76,5 +76,11 @@
               <span class="glyphicon glyphicon-chevron-right"></span>
          </button>
     </li>
+    <li class="pull-right">
+        <button ng-disabled="recordsVM.invenioRecordsLoading"
+                class="btn btn-danger done-button" id="btn_quit">
+          <i class="fa fa-sign-out"></i>
+          {{_('Quit')}}</button>
+      </li>
   </ul>
 </div>
