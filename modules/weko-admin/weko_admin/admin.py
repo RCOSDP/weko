@@ -352,7 +352,8 @@ class ReportView(BaseView):
                     item_metadata_json = ItemsMetadata.\
                         get_record(record['record_id'])
                     writer.writerow([item_metadata_json['title'], None,
-                                     record['total'], 0])
+                                     record['total_all'],
+                                     record['total_not_login']])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])

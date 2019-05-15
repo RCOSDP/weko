@@ -367,8 +367,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record['permalink_uri'] = request.url
     else:
         record['permalink_uri'] = pidstore_identifier
-    # get id of current user
-    record['userid'] = current_user.get_id()
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
