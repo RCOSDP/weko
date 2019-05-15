@@ -25,6 +25,7 @@ from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError
 
 from .models import WidgetItem
+import json
 
 
 class WidgetItems(object):
@@ -44,11 +45,15 @@ class WidgetItems(object):
             data["repository_id"] = widget_items.get('repository')
             data["widget_type"] = widget_items.get('widget_type')
             data["label"] = widget_items.get('label')
-            data["label_color"] = widget_items.get('label_color')
-            data["has_frame_border"] = widget_items.get('frame_border')
-            data["frame_border_color"] = widget_items.get('frame_border_color')
-            data["text_color"] = widget_items.get('text_color')
-            data["background_color"] = widget_items.get('background_color')
+            data_setting = dict()
+            data_setting["label_color"] = widget_items.get('label_color')
+            data_setting["has_frame_border"] = widget_items.get('frame_border')
+            data_setting["frame_border_color"] = widget_items.get('frame_border_color')
+            data_setting["text_color"] = widget_items.get('text_color')
+            data_setting["background_color"] = widget_items.get('background_color')
+            if str(data.get("widget_type")) == "Free description":
+                data_setting["description"] = widget_items.get('description')
+            data["settings"] = json.dumps(data_setting)
             role = widget_items.get('browsing_role')
             if type(role) is list:
                 data["browsing_role"] = ",".join(str(e) for e in role)
@@ -60,7 +65,6 @@ class WidgetItems(object):
             else:
                 data["edit_role"] = role
             data["is_enabled"] = widget_items.get('enable')
-            data["description"] = widget_items.get('description')
         except Exception as ex:
             current_app.logger.debug(ex)
             return
@@ -74,6 +78,7 @@ class WidgetItems(object):
         :returns: The :class:`widget item` instance lists or None.
         """
         def _add_widget_item(widget_setting):
+            print(widget_setting)
             with db.session.begin_nested():
                 widget_item = WidgetItem(**widget_setting)
                 db.session.add(widget_item)
@@ -177,14 +182,16 @@ class WidgetItems(object):
         record['repository_id'] = in_result.repository_id
         record['widget_type'] = in_result.widget_type
         record['label'] = in_result.label
-        record['label_color'] = in_result.label_color
-        record['has_frame_border'] = in_result.has_frame_border
-        record['frame_border_color'] = in_result.frame_border_color
-        record['text_color'] = in_result.text_color
-        record['background_color'] = in_result.background_color
+        record_setting = json.loads(in_result.settings)
+        record['label_color'] = record_setting.get('label_color')
+        record['has_frame_border'] = record_setting.get('has_frame_border')
+        record['frame_border_color'] = record_setting.get('frame_border_color')
+        record['text_color'] = record_setting.get('text_color')
+        record['background_color'] = record_setting.get('background_color')
+        if str(record['widget_type']) == "Free description":
+            record['description']= record_setting.get('description')
         record['browsing_role'] = in_result.browsing_role
         record['edit_role'] = in_result.edit_role
         record['is_enabled'] = in_result.is_enabled
-        record['description']= in_result.description
 
         return record
