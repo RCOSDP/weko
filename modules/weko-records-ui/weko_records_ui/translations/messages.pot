@@ -232,6 +232,10 @@ msgstr ""
 msgid "Cancel"
 msgstr ""
 
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:349
+msgid "The workflow is being edited."
+msgstr ""
+
 #: weko_records_ui/templates/weko_records_ui/bulk_update_display.html:34
 msgid "Fields For Update"
 msgstr ""

@@ -149,6 +149,12 @@ msgstr ""
 msgid "Save"
 msgstr "保存"
 
+msgid "Quit"
+msgstr "強制終了"
+
+msgid "Are you sure you want to quit the activity?"
+msgstr "このアクティビティを強制終了してもよろしいでしょうか。"
+
 #~ msgid "Item Test Data"
 #~ msgstr "アイテムテストデータ"
 
@@ -199,4 +205,3 @@ msgstr "保存"
 
 #~ msgid "You do not even have an itemtype."
 #~ msgstr "アイテムタイプは存在しません"
-

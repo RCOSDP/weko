@@ -32,14 +32,14 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
-from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
-from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
+from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy, \
+    ActivityAction, ActivityHistory, ActivityStatusPolicy, FlowStatusPolicy, \
+    ActionIdentifier
 
 
 class Flow(object):
@@ -231,6 +231,21 @@ class Flow(object):
                 return previous_action
             return None
 
+    def get_last_flow_action(self, flow_id):
+        """Return last action info.
+
+        :param flow_id: registered id of flow
+        :return: flow action or None when error
+        """
+        with db.session.no_autoflush:
+            flow_actions = _FlowAction.query.filter_by(
+                flow_id=flow_id).order_by(asc(
+                        _FlowAction.action_order)).all()
+            if flow_actions:
+                last_action = flow_actions.pop()
+                return last_action
+        return None
+
 
 class WorkFlow(object):
     """Operated on the WorkFlow."""
@@ -415,10 +430,12 @@ class ActionStatus(object):
 class WorkActivity(object):
     """Operated on the Activity."""
 
-    def init_activity(self, activity, community_id=None):
+    def init_activity(self, activity, community_id=None, item_id=None):
         """Create new activity.
 
         :param activity:
+        :param community_id:
+        :param item_id:
         :return:
         """
         utc_now = datetime.utcnow()
@@ -440,9 +457,11 @@ class WorkActivity(object):
                         next_action_id = flow_actions[1].action_id
 
             db_activity = _Activity(
-                # Dummy activity ID, the real one will be updated after this activity is created
+                # Dummy activity ID, the real one will be updated
+                #   after this activity is created
                 activity_id='A' + str(
                     datetime.utcnow().timestamp()).split('.')[0],
+                item_id=item_id,
                 workflow_id=activity.get('workflow_id'),
                 flow_id=activity.get('flow_id'),
                 action_id=next_action_id,
@@ -467,7 +486,8 @@ class WorkActivity(object):
                 # Calculate activity_id based on id
                 current_date_start = utc_now.strftime("%Y-%m-%d 00:00:00")
                 from datetime import timedelta
-                next_date_start = (utc_now + timedelta(1)).strftime("%Y-%m-%d 00:00:00")
+                next_date_start = (utc_now + timedelta(1)).\
+                    strftime("%Y-%m-%d 00:00:00")
 
                 from sqlalchemy import func
                 min_id = db.session.query(func.min(_Activity.id)).filter(
@@ -479,22 +499,27 @@ class WorkActivity(object):
                     # Calculate aid
                     number = db_activity.id - min_id + 1
                     if number > 99999:
-                        raise IndexError('The number is out of range (maximum is 99999, current is {}'.format(number))
+                        raise IndexError('The number is out of range \
+                            (maximum is 99999, current is {}'.format(number))
                 else:
                     # The default activity Id of the current day
                     number = 1
 
                 # Activity Id's format
-                activity_id_format = current_app.config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
+                activity_id_format = current_app.\
+                    config['WEKO_WORKFLOW_ACTIVITY_ID_FORMAT']
 
                 # A-YYYYMMDD-NNNNN (NNNNN starts from 00001)
                 datetime_str = utc_now.strftime("%Y%m%d")
 
                 # Define activity Id of day
-                activity_id = activity_id_format.format(datetime_str, '{inc:05d}'.format(inc=number))
+                activity_id = activity_id_format.format(
+                    datetime_str,
+                    '{inc:05d}'.format(inc=number))
 
                 # Update the activity with calculated activity_id
-                from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+                from invenio_pidstore.models import PersistentIdentifier, \
+                    PIDStatus
                 aid = PersistentIdentifier.create(
                     'actid',
                     str(activity_id),
@@ -542,7 +567,7 @@ class WorkActivity(object):
 
                 return db_activity
 
-    def upt_activity_action(self, activity_id, action_id):
+    def upt_activity_action(self, activity_id, action_id, action_status):
         """Update activity info.
 
         :param activity_id:
@@ -553,7 +578,7 @@ class WorkActivity(object):
             activity = _Activity.query.filter_by(
                 activity_id=activity_id).one_or_none()
             activity.action_id = action_id
-            activity.action_status = ActionStatusPolicy.ACTION_DOING
+            activity.action_status = action_status
             db.session.merge(activity)
         db.session.commit()
 
@@ -619,7 +644,7 @@ class WorkActivity(object):
         with db.session.begin_nested():
             action_journal = ActionJournal.query.filter_by(
                 activity_id=activity_id,
-                action_id=action_id, ).one_or_none()
+                action_id=action_id).one_or_none()
             if action_journal:
                 action_journal.action_journal = journal
                 db.session.merge(action_journal)
@@ -630,6 +655,46 @@ class WorkActivity(object):
                     action_journal=journal,
                 )
                 db.session.add(new_action_journal)
+        db.session.commit()
+    def create_or_update_action_identifier(self, activity_id,
+                                           action_id, identifier):
+        """Create or update action identifier grant info.
+        :param activity_id:
+        :param action_id:
+        :param identifier:
+        :return:
+        """
+        with db.session.begin_nested():
+            action_identifier = ActionIdentifier.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id).one_or_none()
+            if action_identifier:
+                action_identifier.action_identifier_select = identifier.get(
+                    'action_identifier_select')
+                action_identifier.action_identifier_jalc_doi =\
+                    identifier.get(
+                        'action_identifier_jalc_doi')
+                action_identifier.action_identifier_jalc_cr_doi =\
+                    identifier.get(
+                        'action_identifier_jalc_cr_doi')
+                action_identifier.action_identifier_jalc_dc_doi =\
+                    identifier.get(
+                        'action_identifier_jalc_dc_doi')
+                db.session.merge(action_identifier)
+            else:
+                new_action_identifier = ActionIdentifier(
+                    activity_id=activity_id,
+                    action_id=action_id,
+                    action_identifier_select=identifier.get(
+                        'action_identifier_select'),
+                    action_identifier_jalc_doi=identifier.get(
+                        'action_identifier_jalc_doi'),
+                    action_identifier_jalc_cr_doi=identifier.get(
+                        'action_identifier_jalc_cr_doi'),
+                    action_identifier_jalc_dc_doi=identifier.get(
+                        'action_identifier_jalc_dc_doi')
+                )
+                db.session.add(new_action_identifier)
 
         db.session.commit()
 
@@ -646,6 +711,32 @@ class WorkActivity(object):
                 action_id=action_id, ).one_or_none()
             return action_journal
 
+    def get_action_identifier_grant(self, activity_id, action_id):
+        """Get action idnetifier grant info.
+        :param activity_id:
+        :param action_id:
+        :return:
+        """
+        identifier = {'action_identifier_select': '',
+                      'action_identifier_jalc_doi': '',
+                      'action_identifier_jalc_cr_doi': '',
+                      'action_identifier_jalc_dc_doi': ''}
+        with db.session.no_autoflush:
+            action_identifier = ActionIdentifier.query.filter_by(
+                activity_id=activity_id,
+                action_id=action_id).one_or_none()
+            if action_identifier:
+                identifier['action_identifier_select'] =\
+                    action_identifier.action_identifier_select
+                identifier['action_identifier_jalc_doi'] =\
+                    action_identifier.action_identifier_jalc_doi
+                identifier['action_identifier_jalc_cr_doi'] =\
+                    action_identifier.action_identifier_jalc_cr_doi
+                identifier['action_identifier_jalc_dc_doi'] =\
+                    action_identifier.action_identifier_jalc_dc_doi
+            else:
+                identifier = action_identifier
+        return identifier
     def get_activity_action_status(self, activity_id, action_id):
         """Get activity action status."""
         with db.session.no_autoflush:
@@ -656,35 +747,7 @@ class WorkActivity(object):
 
     # add by ryuu end
 
-    def upt_activity_action_id_grant(self, activity_id, action_id,
-                                     identifier_grant,
-                                     identifier_grant_jalc_doi_suffix,
-                                     identifier_grant_jalc_cr_doi_suffix,
-                                     identifier_grant_jalc_dc_doi_suffix):
-        """Update activity info.
 
-        :param activity_id:
-        :param action_id:
-        :param identifier_grant:
-        :param identifier_grant_jalc_doi_suffix:
-        :param identifier_grant_jalc_cr_doi_suffix:
-        :param identifier_grant_jalc_dc_doi_suffix:
-        :return:
-        """
-        with db.session.begin_nested():
-            activity_action = ActivityAction.query.filter_by(
-                activity_id=activity_id,
-                action_id=action_id, ).one_or_none()
-            if activity_action:
-                activity_action.action_identifier_grant = identifier_grant
-                activity_action.action_identifier_grant_jalc_doi_manual = \
-                    identifier_grant_jalc_doi_suffix
-                activity_action.action_identifier_grant_jalc_cr_doi_manual = \
-                    identifier_grant_jalc_cr_doi_suffix
-                activity_action.action_identifier_grant_jalc_dc_doi_manual = \
-                    identifier_grant_jalc_dc_doi_suffix
-                db.session.merge(activity_action)
-        db.session.commit()
 
     def upt_activity_item(self, activity, item_id):
         """Update activity info for item id.
@@ -740,12 +803,70 @@ class WorkActivity(object):
                         action_status=activity.get('action_status'),
                         action_user=current_user.get_id(),
                         action_date=datetime.utcnow(),
-                        action_comment=ActionCommentPolicy.FINALLY_ACTION_COMMENT)
+                        action_comment=ActionCommentPolicy.
+                        FINALLY_ACTION_COMMENT)
                     db.session.add(db_history)
             db.session.commit()
         except Exception as ex:
             db.session.rollback()
             current_app.logger.exception(str(ex))
+
+    def quit_activity(self, activity):
+        """Cancel doing activity.
+
+        :param activity:
+        :return:
+        """
+        flow = Flow()
+        work_activity = WorkActivity()
+        activity_detail = work_activity.get_activity_detail(
+            activity.get('activity_id'))
+
+        last_flow_action = flow.get_last_flow_action(
+            activity_detail.flow_define.flow_id)
+
+        if not last_flow_action:
+            current_app.logger.error('Can\'t get last action of flow!')
+            return None
+
+        try:
+            with db.session.begin_nested():
+                db_activity = _Activity.query.filter_by(
+                    activity_id=activity.get('activity_id')).one_or_none()
+                if db_activity:
+                    db_activity.action_id = activity.get('action_id')
+                    db_activity.action_status = activity.get('action_status')
+                    db_activity.activity_status = \
+                        ActivityStatusPolicy.ACTIVITY_CANCEL
+                    db_activity.activity_end = datetime.utcnow()
+                    db.session.merge(db_activity)
+
+                    db_history = ActivityHistory(
+                        activity_id=activity.get('activity_id'),
+                        action_id=activity.get('action_id'),
+                        action_version=activity.get('action_version'),
+                        action_status=activity.get('action_status'),
+                        action_user=current_user.get_id(),
+                        action_date=datetime.utcnow(),
+                        action_comment=activity.get('commond'))
+                    db.session.add(db_history)
+
+                    db_history = ActivityHistory(
+                        activity_id=activity.get('activity_id'),
+                        action_id=last_flow_action.action_id,
+                        action_version=last_flow_action.action_version,
+                        action_status=ActionStatusPolicy.ACTION_DONE,
+                        action_user=current_user.get_id(),
+                        action_date=datetime.utcnow(),
+                        action_comment=ActionCommentPolicy.
+                        FINALLY_ACTION_COMMENT)
+                    db.session.add(db_history)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return None
 
     def get_activity_list(self, community_id=None):
         """Get activity list info.
@@ -799,16 +920,23 @@ class WorkActivity(object):
                         activi.ItemName = item.json.get('title')
                     else:
                         activi.ItemName = ''
-                activi.StatusDesc = ActionStatusPolicy.describe(
-                    ActionStatusPolicy.ACTION_DONE) \
-                    if ActivityStatusPolicy.ACTIVITY_FINALLY == \
-                    activi.activity_status \
-                    else ActionStatusPolicy.describe(
-                    ActionStatusPolicy.ACTION_DOING)
+                if activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_FINALLY:
+                    activi.StatusDesc = ActionStatusPolicy.describe(
+                        ActionStatusPolicy.ACTION_DONE)
+                elif activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_CANCEL:
+                    activi.StatusDesc = ActionStatusPolicy.describe(
+                        ActionStatusPolicy.ACTION_CANCELED)
+                else:
+                    activi.StatusDesc = ActionStatusPolicy.describe(
+                        ActionStatusPolicy.ACTION_DOING)
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
-                if ActivityStatusPolicy.ACTIVITY_FINALLY == \
-                        activi.activity_status:
+                if activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_FINALLY or \
+                    activi.activity_status == \
+                    ActivityStatusPolicy.ACTIVITY_CANCEL:
                     activi.type = 'All'
                     continue
                 activi.type = 'ToDo'
@@ -905,9 +1033,11 @@ class WorkActivity(object):
                         'ActionVersion': flow_action.action_version,
                         'ActionEndpoint': flow_action.action.action_endpoint,
                         'Author': history_dict[flow_action.action_id].get(
-                            'Updater') if flow_action.action_id in history_dict else '',
+                            'Updater')
+                        if flow_action.action_id in history_dict else '',
                         'Status': history_dict[flow_action.action_id].get(
-                            'Result') if flow_action.action_id in history_dict else ' '
+                            'Result')
+                        if flow_action.action_id in history_dict else ' '
                     })
 
         return steps
@@ -1050,6 +1180,62 @@ class WorkActivity(object):
             temporary_comment, approval_record, step_item_login_url, histories,\
             res_check, pid, community_id, ctx
 
+    def upt_activity_detail(self, item_id):
+        """Update activity info for item id.
+        :param item_id:
+        :return:
+        """
+        try:
+            with db.session.no_autoflush:
+                action = _Action.query.filter_by(
+                    action_endpoint='end_action').one_or_none()
+                db_activity = _Activity.query.filter_by(
+                    item_id=item_id).one_or_none()
+                db_activity.item_id = None
+                db_activity.action_id = action.id
+                db_activity.action_status = ActionStatusPolicy.ACTION_SKIPPED
+                db_activity.activity_status = ActivityStatusPolicy.ACTIVITY_FINALLY,
+            with db.session.begin_nested():
+                db_history = ActivityHistory(
+                    activity_id=db_activity.activity_id,
+                    action_id=action.id,
+                    action_version=action.action_version,
+                    action_status=ActionStatusPolicy.ACTION_DONE,
+                    action_user=current_user.get_id(),
+                    action_date=db_activity.activity_start,
+                    action_comment=ActionCommentPolicy.FINALLY_ACTION_COMMENT
+                )
+                db.session.merge(db_activity)
+                db.session.add(db_history)
+            db.session.commit()
+            return db_activity
+        except NoResultFound as ex:
+            current_app.logger.exception(str(ex))
+            return None
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return None
+
+    def get_workflow_activity_status_by_item_id(self, item_id):
+        """Get workflow activity status by item ID.
+
+        :param item_id:
+        """
+        try:
+            with db.session.no_autoflush:
+                activity = _Activity.query.filter_by(
+                    item_id=item_id).one_or_none()
+                action_stus = activity.action_status
+                return action_stus
+        except NoResultFound as ex:
+            current_app.logger.exception(str(ex))
+            return None
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+            return None
+
 
 class WorkActivityHistory(object):
     """Operated on the Activity."""
@@ -1068,13 +1254,6 @@ class WorkActivityHistory(object):
             action_user=current_user.get_id(),
             action_date=datetime.utcnow(),
             action_comment=activity.get('commond'),
-            action_identifier_grant=activity.get('identifier_grant', 0),
-            action_identifier_grant_jalc_doi_manual=activity.get(
-                'identifier_grant_jalc_doi_suffix', ""),
-            action_identifier_grant_jalc_cr_doi_manual=activity.get(
-                'identifier_grant_jalc_cr_doi_suffix', ""),
-            action_identifier_grant_jalc_dc_doi_manual=activity.get(
-                'identifier_grant_jalc_dc_doi_suffix', "")
         )
         new_history = False
         activity = WorkActivity()
