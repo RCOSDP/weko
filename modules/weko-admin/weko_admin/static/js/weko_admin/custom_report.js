@@ -181,7 +181,9 @@ class ComponentTableResult extends React.Component {
       cell.push(<th style={this.styleTable}>Period</th>);
       cell.push(<th style={this.styleTable}>Counts</th>);
       rows.push(<tr>{cell}</tr>);
+      console.log('data: ', data)
       for (var i = 0; i < data.length; i++) {
+        console.log('data: ' + i + ", ", data[i])
         cell = [];
         cell.push(<td style={this.styleTable}>{data[i].start_date} - {data[i].end_date}</td>);
         cell.push(<td style={this.styleTable}>{data[i].count}</td>);
