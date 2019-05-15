@@ -414,7 +414,42 @@ class ComponentFieldEditor extends React.Component {
         </div>
        )
     }
-  }
+}
+
+class ExtendComponent extends React.Component {
+    constructor(props) {
+        super(props);
+        this. state = {
+            type : this.props.type
+        };
+    }
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.type !== this.state.type) {
+          this.setState({ type: nextProps.type });
+          this.render();
+        }
+    }
+    
+    render()
+    {
+        if(this.state.type == "Free description")
+        {
+            return(
+                <div>
+                    <ComponentFieldEditor name="Free description" getValueOfField={this.props.getValueOfField} key_binding = "description" data_load={this.props.data_load}/>
+                </div>
+            )
+        }
+        else
+        {
+            return(
+                <div>
+                </div>
+            )
+        }
+    }
+}
+
 
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
@@ -636,7 +671,7 @@ class MainLayout extends React.Component {
                   <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable}/>
                 </div>
                 <div className="row">
-                  <ComponentFieldEditor name="Free description" getValueOfField={this.getValueOfField} key_binding = "description" data_load={this.state.description}/>
+                  <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding = "description" data_load={this.state.description}/>
                 </div>
                 <div className="row">
                   <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id} />
