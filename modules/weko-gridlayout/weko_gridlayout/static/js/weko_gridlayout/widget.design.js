@@ -46,7 +46,7 @@ class Repository extends React.Component {
 
     handleChange(event) {
         let repositoryId = event.target.value;
-        let url = "/api/admin/load_widget_design_setting/" + repositoryId;
+        let url = "/api/admin/load_widget_list_design_setting/" + repositoryId;
         fetch(url)
             .then(res => res.json())
             .then(
@@ -55,8 +55,9 @@ class Repository extends React.Component {
                         console.log(result.error);
                         return;
                     }
-                    let widgetList = result['widget-settings'];
-                    loadWidgetPreview(widgetList);
+                    let widgetPreview = result['widget-preview'];
+                    let data = widgetPreview['data'];
+                    loadWidgetPreview(data);
                 },
                 (error) => {
                     console.log(error);
@@ -103,7 +104,7 @@ class WidgetList extends React.Component {
     }
 
     componentDidMount() {
-        fetch("/api/admin/load_widget_list/0")
+        fetch("/api/admin/load_widget_list_design_setting/0")
             .then(res => res.json())
             .then(
                 (result) => {
@@ -112,7 +113,8 @@ class WidgetList extends React.Component {
                         return;
                     }
                     let widgetList = result['widget-list'];
-                    loadWidgetList(widgetList);
+                    let data = widgetList["data"];
+                    loadWidgetList(data);
                 },
 
                 (error) => {
@@ -122,7 +124,7 @@ class WidgetList extends React.Component {
     }
 
     reloadWidgetListPanel(repositoryId) {
-        let url = "/api/admin/load_widget_list/" + repositoryId;
+        let url = "/api/admin/load_widget_list_design_setting/" + repositoryId;
         fetch(url)
             .then(res => res.json())
             .then(
@@ -132,7 +134,8 @@ class WidgetList extends React.Component {
                         return;
                     }
                     let widgetList = result['widget-list'];
-                    loadWidgetList(widgetList);
+                    let data = widgetList["data"];
+                    loadWidgetList(data);
                 },
                 (error) => {
                     console.log(error);
@@ -171,7 +174,7 @@ class PreviewWidget extends React.Component {
     }
 
     componentDidMount() {
-        fetch("/api/admin/load_widget_design_setting/0")
+        fetch("/api/admin/load_widget_list_design_setting/0")
             .then(res => res.json())
             .then(
                 (result) => {
@@ -179,8 +182,9 @@ class PreviewWidget extends React.Component {
                         console.log(result.error);
                         return;
                     }
-                    let widgetList = result['widget-settings'];
-                    loadWidgetPreview(widgetList);
+                    let widgetPreview = result['widget-preview'];
+                    let data = widgetPreview['data'];
+                    loadWidgetPreview(data);
                 },
                 (error) => {
                     console.log(error);
@@ -230,7 +234,7 @@ class ButtonLayout extends React.Component {
                         console.log(result.error);
                         return;
                     }
-                    let widgetList = result['widget-settings'];
+                    let widgetList = result['widget-preview'].get('widget-preview');
                     loadWidgetPreview(widgetList);
                 },
                 (error) => {

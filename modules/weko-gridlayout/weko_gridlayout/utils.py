@@ -20,7 +20,7 @@
 
 """Utilities for convert response json."""
 import json
-
+import datetime
 from flask import current_app, jsonify, make_response
 from invenio_db import db
 
@@ -60,7 +60,7 @@ def get_widget_list(repository_id):
     :return: Widget list.
     """
     result = {
-        "widget-list": [],
+        "data": [],
         "error": ""
     }
     try:
@@ -74,10 +74,43 @@ def get_widget_list(repository_id):
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
-                result["widget-list"].append(data)
+                result["data"].append(data)
     except Exception as e:
         result["error"] = str(e)
 
+    return result
+
+
+def get_widget_preview(repository_id):
+    """Get Widget preview by repository id.
+    
+    :param repository_id: Identifier of the repository
+    :return: Widget preview json.
+    """
+    result = {
+        "data": [],
+        "error": ""
+    }
+    try:
+        widget_setting = WidgetDesignSetting.select_by_repository_id(
+            repository_id)
+        if widget_setting:
+            settings = widget_setting.get('settings')
+            if settings:
+                settings=json.loads(settings)
+                for item in settings:
+                    widget_preview = dict()
+                    widget_preview["x"] = item.get("x")
+                    widget_preview["y"] = item.get("y")
+                    widget_preview["width"] = item.get("width")
+                    widget_preview["height"] = item.get("height")
+                    widget_preview["width"] = item.get("width")
+                    widget_preview["id"] = item.get("id")
+                    widget_preview["type"] = item.get("type")
+                    widget_preview["name"] = item.get("name")
+                    result["data"].append(widget_preview)
+    except Exception as e:
+        result['error'] = str(e)
     return result
 
 
@@ -101,7 +134,6 @@ def get_widget_design_setting(repository_id):
                 result["widget-settings"] = json.loads(settings)
     except Exception as e:
         result['error'] = str(e)
-
     return result
 
 
