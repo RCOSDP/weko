@@ -27,15 +27,16 @@ from datetime import datetime
 from functools import wraps
 from io import BytesIO
 from itertools import islice, zip_longest
-from sqlalchemy import cast, Integer
 from urllib.parse import urlparse
 
-from flask import Blueprint, current_app, render_template, request, url_for, Response
+from flask import Blueprint, Response, current_app, render_template, request, \
+    url_for
 from flask_sitemap import Sitemap, sitemap_page_needed
-from invenio_db import db
 from invenio_cache import current_cache
+from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
+from sqlalchemy import Integer, cast
 
 from . import config
 

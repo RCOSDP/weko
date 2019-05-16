@@ -20,12 +20,13 @@
 
 """Task for updating sitemap cache."""
 
+from datetime import datetime
+from itertools import islice, zip_longest
+
 from celery import shared_task, task
 from celery.utils.log import get_task_logger
-from datetime import datetime
 from flask import current_app
 from flask_sitemap import sitemap_page_needed
-from itertools import islice, zip_longest
 
 from . import config
 
