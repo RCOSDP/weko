@@ -37,6 +37,7 @@ from flask_login import current_user
 from .permissions import admin_permission_factory
 from .utils import allowed_file
 from weko_records.api import ItemsMetadata
+from weko_items_ui.utils import get_user_information
 
 
 class StyleSettingView(BaseView):
@@ -354,6 +355,16 @@ class ReportView(BaseView):
                     writer.writerow([
                         item_metadata_json['title'], record['index_names'],
                         record['total_all'], record['total_not_login']])
+                elif file_type == 'file_using_per_user':
+                    user_email = ''
+                    user_name = 'Guest'
+                    if record['cur_user_id'] != '0':
+                        user_info = get_user_information(record['cur_user_id'])
+                        user_email = user_info['email']
+                        user_name = user_info['username']
+                    writer.writerow([
+                        user_email, user_name,
+                        record['total_download'], record['total_preview']])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
