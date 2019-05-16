@@ -8,16 +8,15 @@
 """Module of weko-gridlayout."""
 from __future__ import absolute_import, print_function
 
-import datetime
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .api import WidgetItems
 from .utils import delete_admin_widget_item_setting, get_repository_list, \
-    get_widget_design_setting, get_widget_list, get_widget_type_list, \
-    update_admin_widget_item_setting, update_widget_design_setting, \
-    get_widget_preview
+    get_widget_design_setting, get_widget_list, get_widget_preview, \
+    get_widget_type_list, update_admin_widget_item_setting, \
+    update_widget_design_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -81,8 +80,8 @@ def load_widget_list_design_setting(repository_id):
     """
     result = {
         "widget-list": [],
-        "widget-preview":[],
-        "error":""
+        "widget-preview": [],
+        "error": ""
     }
     result["widget-list"] = get_widget_list(repository_id)
     result["widget-preview"] = get_widget_preview(repository_id)
