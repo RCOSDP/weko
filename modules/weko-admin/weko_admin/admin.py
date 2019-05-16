@@ -341,6 +341,9 @@ class ReportView(BaseView):
 
     def write_report_tsv_rows(self, writer, records, file_type=None):
         """Write tsv rows for stats."""
+        if isinstance(records, dict):
+            records = list(records.values())
+
         for record in records:
             try:
                 if file_type is None or \
