@@ -40,9 +40,9 @@ from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.models import ActionStatusPolicy
 
 from .permissions import item_permission
-from .utils import get_current_user, get_list_email, get_list_username, \
-    get_user_info_by_email, get_user_info_by_username, get_user_information, \
-    get_user_permission, validate_user, get_actionid
+from .utils import get_actionid, get_current_user, get_list_email, \
+    get_list_username, get_user_info_by_email, get_user_info_by_username, \
+    get_user_information, get_user_permission, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -666,10 +666,13 @@ def get_current_login_user_id():
         result['error'] = str(e)
 
     return jsonify(result)
+
+
 @blueprint_api.route('/prepare_edit_item', methods=['POST'])
 @login_required
 def prepare_edit_item():
     """Prepare_edit_item.
+
     Host the api which provide 2 service:
         Create new activity for editing flow
         Check permission: check if user is owner/admin/shared user
@@ -698,13 +701,13 @@ def prepare_edit_item():
             pid_object = PersistentIdentifier.get('recid', pid_value)
 
             # check item is being editied
-            item_id=pid_object.object_uuid
+            item_id = pid_object.object_uuid
             workflow_action_stt = activity.get_workflow_activity_status_by_item_id(
                 item_id=item_id)
             # show error when has stt is Begin or Doing
             if workflow_action_stt is not None and \
                 (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
-                workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
+                 workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
                 return jsonify(code=-13,
                                msg=_('The workflow is being edited. '))
 
