@@ -65,7 +65,7 @@ $(document).ready(function () {
         }
       });
       $.ajax({
-        url: '/api/stats/' + options[3] + '/' + year + '/' + month,
+        url: '/api/stats/' + uriByType[options[3]] + '/' + year + '/' + month,
         type: 'GET',
         async: false,
         contentType: 'application/json',
