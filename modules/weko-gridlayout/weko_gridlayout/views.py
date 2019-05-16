@@ -6,9 +6,9 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 """Module of weko-gridlayout."""
-
 from __future__ import absolute_import, print_function
 
+import datetime
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -16,7 +16,8 @@ from flask_login import login_required
 from .api import WidgetItems
 from .utils import delete_admin_widget_item_setting, get_repository_list, \
     get_widget_design_setting, get_widget_list, get_widget_type_list, \
-    update_admin_widget_item_setting, update_widget_design_setting
+    update_admin_widget_item_setting, update_widget_design_setting, \
+    get_widget_preview
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -63,10 +64,10 @@ def load_repository():
     return jsonify(result)
 
 
-@blueprint_api.route('/load_widget_list/<string:repository_id>',
+@blueprint_api.route('/load_widget_list_design_setting/<string:repository_id>',
                      methods=['GET'])
 @login_required
-def load_widget_list(repository_id):
+def load_widget_list_design_setting(repository_id):
     """Get Widget list, to display on the Widget List panel on UI.
 
     :return: Example
@@ -78,7 +79,15 @@ def load_widget_list(repository_id):
             ],
             "error": ""
     """
-    result = get_widget_list(repository_id)
+    result = {
+        "widget-list": [],
+        "widget-preview":[],
+        "error":""
+    }
+    result["widget-list"] = get_widget_list(repository_id)
+    result["widget-preview"] = get_widget_preview(repository_id)
+    result["error"] = result["widget-list"].get("error") or result[
+        "widget-preview"].get("error")
     return jsonify(result)
 
 
@@ -91,7 +100,6 @@ def load_widget_design_setting(repository_id):
     :return:
     """
     result = get_widget_design_setting(repository_id)
-
     return jsonify(result)
 
 
