@@ -32,14 +32,15 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
+from .models import ActionCommentPolicy, ActionIdentifier, ActionJournal, \
+    ActionStatusPolicy
 from .models import Activity as _Activity
+from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
 from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
+from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
-from .models import ActionCommentPolicy, ActionJournal, ActionStatusPolicy, \
-    ActivityAction, ActivityHistory, ActivityStatusPolicy, FlowStatusPolicy, \
-    ActionIdentifier
 
 
 class Flow(object):
@@ -240,7 +241,7 @@ class Flow(object):
         with db.session.no_autoflush:
             flow_actions = _FlowAction.query.filter_by(
                 flow_id=flow_id).order_by(asc(
-                        _FlowAction.action_order)).all()
+                    _FlowAction.action_order)).all()
             if flow_actions:
                 last_action = flow_actions.pop()
                 return last_action
@@ -582,7 +583,6 @@ class WorkActivity(object):
             db.session.merge(activity)
         db.session.commit()
 
-    # add by ryuu sta
     def upt_activity_action_status(
             self,
             activity_id,
@@ -656,9 +656,11 @@ class WorkActivity(object):
                 )
                 db.session.add(new_action_journal)
         db.session.commit()
+
     def create_or_update_action_identifier(self, activity_id,
                                            action_id, identifier):
         """Create or update action identifier grant info.
+
         :param activity_id:
         :param action_id:
         :param identifier:
@@ -713,6 +715,7 @@ class WorkActivity(object):
 
     def get_action_identifier_grant(self, activity_id, action_id):
         """Get action idnetifier grant info.
+
         :param activity_id:
         :param action_id:
         :return:
@@ -737,6 +740,7 @@ class WorkActivity(object):
             else:
                 identifier = action_identifier
         return identifier
+
     def get_activity_action_status(self, activity_id, action_id):
         """Get activity action status."""
         with db.session.no_autoflush:
@@ -744,10 +748,6 @@ class WorkActivity(object):
                 activity_id=activity_id, action_id=action_id).one()
             action_stus = activity_ac.action_status
             return action_stus
-
-    # add by ryuu end
-
-
 
     def upt_activity_item(self, activity, item_id):
         """Update activity info for item id.
@@ -921,11 +921,11 @@ class WorkActivity(object):
                     else:
                         activi.ItemName = ''
                 if activi.activity_status == \
-                    ActivityStatusPolicy.ACTIVITY_FINALLY:
+                        ActivityStatusPolicy.ACTIVITY_FINALLY:
                     activi.StatusDesc = ActionStatusPolicy.describe(
                         ActionStatusPolicy.ACTION_DONE)
                 elif activi.activity_status == \
-                    ActivityStatusPolicy.ACTIVITY_CANCEL:
+                        ActivityStatusPolicy.ACTIVITY_CANCEL:
                     activi.StatusDesc = ActionStatusPolicy.describe(
                         ActionStatusPolicy.ACTION_CANCELED)
                 else:
@@ -934,9 +934,9 @@ class WorkActivity(object):
                 activi.User = User.query.filter_by(
                     id=activi.activity_update_user).first()
                 if activi.activity_status == \
-                    ActivityStatusPolicy.ACTIVITY_FINALLY or \
-                    activi.activity_status == \
-                    ActivityStatusPolicy.ACTIVITY_CANCEL:
+                        ActivityStatusPolicy.ACTIVITY_FINALLY or \
+                        activi.activity_status == \
+                        ActivityStatusPolicy.ACTIVITY_CANCEL:
                     activi.type = 'All'
                     continue
                 activi.type = 'ToDo'
@@ -1182,6 +1182,7 @@ class WorkActivity(object):
 
     def upt_activity_detail(self, item_id):
         """Update activity info for item id.
+
         :param item_id:
         :return:
         """
