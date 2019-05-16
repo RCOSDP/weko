@@ -65,7 +65,7 @@ class ComponentTableResult extends React.Component {
           }*/)
         .then(res => res.json())
         .then((result) => {
-          this.displayData(result.data);
+          this.displayData(result);
         });
     } else if (target == DETAIL_VIEW_ID) {
       let requestParam = {
@@ -158,6 +158,14 @@ class ComponentTableResult extends React.Component {
         cell.push(<th style={this.styleTable}>Host</th>);
         cell.push(<th style={this.styleTable}>IP Address</th>);
         cell.push(<th style={this.styleTable}>Counts</th>);
+        rows.push(<tr>{cell}</tr>);
+        for (var i = 0; i < data.length; i++) {
+          cell = [];
+          cell.push(<td style={this.styleTable}>{data[i].domain}</td>);
+          cell.push(<td style={this.styleTable}>{data[i].ip}</td>);
+          cell.push(<td style={this.styleTable}>{data[i].count}</td>);
+          rows.push(<tr style={this.styleTable}>{cell}</tr>);
+        }
       } else {
         cols.push(<col className="col-md-3" />);
         cols.push(<col className="col-md-6" />);
@@ -165,14 +173,14 @@ class ComponentTableResult extends React.Component {
         cell.push(<th style={this.styleTable}>Item ID</th>);
         cell.push(<th style={this.styleTable}>Item Name</th>);
         cell.push(<th style={this.styleTable}>Counts</th>);
-      }
-      rows.push(<tr>{cell}</tr>);
-      for (var i = 0; i < data.length; i++) {
-        cell = [];
-        cell.push(<td style={this.styleTable}>{data[i].col1}</td>);
-        cell.push(<td style={this.styleTable}>{data[i].col2}</td>);
-        cell.push(<td style={this.styleTable}>{data[i].col3}</td>);
-        rows.push(<tr style={this.styleTable}>{cell}</tr>);
+        rows.push(<tr>{cell}</tr>);
+        for (var i = 0; i < data.length; i++) {
+          cell = [];
+          cell.push(<td style={this.styleTable}>{data[i].col1}</td>);
+          cell.push(<td style={this.styleTable}>{data[i].col2}</td>);
+          cell.push(<td style={this.styleTable}>{data[i].col3}</td>);
+          rows.push(<tr style={this.styleTable}>{cell}</tr>);
+        }
       }
     }
     else {
