@@ -15,7 +15,7 @@ $(document).ready(function () {
         file_download:'file_download',
         file_preview:'file_preview',
         detail_view:'report/record/record_view',
-        file_using_per_user:'file_using_per_user'};
+        file_using_per_user:'report/file/file_using_per_user'};
     var statsURL = '/api/stats/' + uriByType[type] + '/' + year + '/' + month;
     var statsReports = {};
     var ajaxReturn = [0,0,0,0];
