@@ -49,11 +49,16 @@ let PageBodyGrid = function () {
     let labelColor = node.label_color;
     let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
     let backgroundColor = node.background_color;
+    let description = "";
+    if ("Free description" == node.type) {
+      description = node.description
+    }
 
     let template =
       '<div class="grid-stack-item">' +
       ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
       '   <div class="panel-heading widget-header" style="color: ' + labelColor + ';"><strong>' + node.type + '</strong></div>' +
+      '   <div class="panel-body">' + description + '</div>' +
       ' </div>' +
       '</div>';
     return template;
