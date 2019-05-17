@@ -17,7 +17,8 @@ from weko_admin.utils import get_current_api_certification
 from .permissions import auto_fill_permission
 from .utils import get_cinii_data, get_crossref_data, get_item_id, \
     get_title_pubdate_path, parse_cinii_json_response, \
-    parse_crossref_json_response
+    parse_crossref_json_response, get_cinii_record_data, \
+    get_crossref_record_data
 
 blueprint = Blueprint(
     "weko_items_autofill",
@@ -111,4 +112,42 @@ def get_title_pubdate_id(item_type_id=0):
     :return: result json
     """
     result = get_title_pubdate_path(item_type_id)
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_auto_fill_record_data', methods=['POST'])
+def get_auto_fill_record_data():
+    """ Get Invenio record model
+
+    :return: record model as json
+    """
+    result = {
+        'result': '',
+        'items': '',
+        'error': ''
+    }
+    if request.headers['Content-Type'] != 'application/json':
+        result['error'] = _('Header Error')
+        return jsonify(result)
+
+    data = request.get_json()
+    api_type = data.get('api_type', '')
+    search_data = data.get('search_data', '')
+    item_type_id = data.get('item_type_id', '')
+
+    try:
+        # result['items'] = get_item_id(item_type_id)
+        if api_type == 'CrossRef':
+            pid_response = get_current_api_certification('crf')
+            pid = pid_response['cert_data']
+            api_response = get_crossref_record_data(pid, search_data, item_type_id, result['items'])
+            result['result'] = api_response
+        elif api_type == 'CiNii':
+            api_response = get_cinii_record_data(search_data, item_type_id, result['items'])
+            result['result'] = api_response
+        else:
+            result['error'] = api_type + ' is NOT support autofill feature.'
+    except Exception as e:
+        result['error'] = str(e)
+
     return jsonify(result)
