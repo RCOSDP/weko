@@ -484,7 +484,7 @@ function handleSharePermission(value) {
           search_data: $.trim(value),
           item_type_id: itemTypeId
         }
-        this.setItemMetadataFromApi(param);
+        this.setRecordDataFromApi(param);
       }
 
       $scope.clearAllField = function() {
@@ -498,6 +498,226 @@ function handleSharePermission(value) {
             }
           }
         }
+      }
+
+      $scope.setRecordDataFromApi = function(param) {
+        $.ajax({
+          url: '/api/autofill/get_items_autofill_data',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: "POST",
+          data: JSON.stringify(param),
+          dataType: "json",
+          success: (data, status) => {
+            if (data.error) {
+              this.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
+            } else {
+              this.setRecordDataCallBack(data);
+            }
+          },
+          error: (data, status) => {
+            this.setAutoFillErrorMessage("Cannot connect to server!");
+          }
+        });
+      }
+
+      $scope.setRecordDataCallBack = function(data) {
+        data =
+        [
+          {
+            "item_1551265553273":
+              {
+                "subitem_1551256248092": 5
+              },
+            "key": "numPages"
+          },
+          {
+            "item_1551264418667": [
+              {
+                "subitem_1551257245638": [
+                  {
+                    "subitem_1551257276108": "\u56fd\u7acb\u60c5\u5831\u5b66\u7814\u7a76\u6240",
+                    "subitem_1551257279831": "ja"
+                  }
+                ]
+              }
+            ],
+            "key": "contributor"
+          },
+          {
+            "item_1551264308487": [
+              {
+                "subitem_1551255647225": "System design and data modeling of CiNii articles(&lt;Special feature&gt;Database design and construction)",
+                "subitem_1551255648112": "en"
+              },
+              {
+                "subitem_1551255647225": "Zannaghazi CiNii articles(&lt;Special feature&gt;Database design and construction)",
+                "subitem_1551255648112": "en"
+              }
+            ],
+            "key": "title"
+          },
+          {
+            "item_1551265227803": [
+              {
+                "subitem_1551256465077": [
+                  {
+                    "subitem_1551256478339": "10.18919/jkg.62.11_473",
+                    "subitem_1551256629524": "DOI"
+                  }
+                ]
+              }
+            ],
+            "key": "relation"
+          },
+          {
+            "item_1551264974654": [
+              {
+                "subitem_1551255753471": "null",
+                "subitem_1551255775519": "null"
+              }
+            ],
+            "key": "date"
+          },
+          {
+            "item_1551265569218":
+              {
+                "subitem_1551256198917": 473
+              },
+            "key": "pageStart"
+          },
+          {
+            "item_1551264917614": [
+              {
+                "subitem_1551255702686": "Information Science and Technology Association, Japan",
+                "subitem_1551255710277": "en"
+              }
+            ],
+            "key": "publisher"
+          },
+          {
+            "item_1551264326373": [
+              {
+                "subitem_1551255720400": "System design and data modeling of CiNii articles(&lt;Special feature&gt;Database design and construction)",
+                "subitem_1551255721061": "en"
+              }
+            ],
+            "key": "alternative"
+          },
+          {
+            "item_1551265438256": 
+            [
+              {
+                "subitem_1551256349044": "The Journal of Information Science and Technology Association",
+                "subitem_1551256350188": "en"
+              }
+            ],
+            "key": "sourceTitle"
+          },
+          {
+            "item_1551265603279":
+              {
+                "subitem_1551256185532": 477
+              },
+            "key": "pageEnd"
+          },
+          {
+            "item_1551264340087": [
+              {
+                "subitem_1551255898956": [
+                  {
+                    "subitem_1551255905565": "\u5927\u5411 \u4e00\u8f1d",
+                    "subitem_1551255907416": "ja"
+                  },
+                  {
+                    "subitem_1551255905565": "Zannaghazi",
+                    "subitem_1551255907416": "en"
+                  }
+                ]
+              }
+            ],
+            "key": "creator"
+          },
+          {
+            "item_1551265409089": [
+              {
+                "subitem_1551256405981": "AN10005857",
+                "subitem_1551256409644": "NCID"
+              },
+              {
+                "subitem_1551256405981": "Zannaghazi",
+                "subitem_1551256409644": "NCID"
+              }
+            ],
+            "key": "sourceIdentifier"
+          },
+          {
+            "item_1551265520160":
+            {
+              "subitem_1551256294723": "11"
+            },
+            "key": "issue"
+          },
+          {
+            "item_1551264822581":
+              [
+                {
+                  "subitem_1551257315453": "disambiguation",
+                  "subitem_1551257323812": "en",
+                  "subitem_1551257329877": "Other",
+                  "subitem_1551257343002": "https://ci.nii.ac.jp/keyword/disambiguation"
+                }
+              ],
+            "key": "subject"
+          },
+          {
+            "item_1551264846237": [
+              {
+                "subitem_1551255577890": "In order to process large amount of access at low cost, it is necessary to design the system considering important functions to be provided. In CiNii Articles, we have achieved the performance requirements by using search engine and simple DBMS. We also provide reliable information service by the bibliographic ID management system.",
+                "subitem_1551255592625": "en",
+                "subitem_1551255637472": "Abstract"
+              }
+            ],
+            "key": "description"
+          },
+          {
+            "item_1551265463411": 
+            {
+                "subitem_1551256328147": "62"
+            },
+            "key": "volume"
+          }
+        ];
+
+        const THREE_FLOOR_ITEM = [
+          "creator",
+          "relation",
+          "contributor"
+        ]
+        for (let item in data) {
+          let dataCell = data[item];
+          if (THREE_FLOOR_ITEM.includes(dataCell['key'])){
+            let keys = Object.keys(dataCell)
+            keys.forEach(function(key) {
+              if (key != 'key') {
+                listSubData = dataCell[key];
+                listSubData.forEach(function(subData) {
+                  let subKey = Object.keys(subData)[0];
+                  $rootScope.recordsVM.invenioRecordsModel[key][0][subKey] = subData[subKey];
+                });
+              }
+            });
+          }else {
+            let keys = Object.keys(dataCell)
+            keys.forEach(function(key) {
+              if (key != 'key') {
+                $rootScope.recordsVM.invenioRecordsModel[key] = dataCell[key];
+              }
+            });
+          }
+        }
+        $('#meta-search').modal('toggle');
       }
 
       $scope.setItemMetadataFromApi = function (param) {
@@ -1144,6 +1364,9 @@ function handleSharePermission(value) {
                 if (titleField[0].hasOwnProperty(titleID[1])){
                   titleField = titleField[0];
                 }
+              }
+              if(titleField && titleField[0]){
+                titleField = titleField[0];
               }
               if (titleField.hasOwnProperty(titleID[1])) {
                 title = titleField[titleID[1]];
