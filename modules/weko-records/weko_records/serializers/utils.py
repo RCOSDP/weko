@@ -22,6 +22,9 @@
 
 import copy
 
+from invenio_db import db
+from weko_records.models import ItemTypeProperty
+
 
 def get_mapping(item_type_mapping, mapping_type):
     """Format itemtype mapping data.
@@ -104,3 +107,17 @@ def get_metadata_from_map(item_data, item_id):
                                             item_id))
 
     return item_value
+
+
+def get_attribute_schema(schema_id):
+    """Get schema of item type property.
+
+    :param schema_id:
+    :return: schema in json
+    """
+    with db.session.no_autoflush:
+        schema = ItemTypeProperty.query.filter_by(
+            id=schema_id).one_or_none()
+        if schema:
+            return schema.schema
+    return None

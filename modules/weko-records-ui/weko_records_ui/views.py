@@ -373,18 +373,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
 
-    # check condition to show Edit button
-    record['show_edit_btn_flg'] = True
-    workactivity = WorkActivity()
-    item_id=pid.object_uuid
-    workflow_action_stt = workactivity.get_workflow_activity_status_by_item_id(
-        item_id=item_id)
-    # not show button when has stt is Begin or Doing
-    if workflow_action_stt is not None and \
-        (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
-         workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
-        record['show_edit_btn_flg'] = False
-
     return render_template(
         template,
         pid=pid,
@@ -533,8 +521,8 @@ def citation(record, pid, style=None, ln=None):
     locale = ln or "en-US"  # ln or current_i18n.language
     style = style or "aapg-bulletin"  # style or 'science'
     try:
-        result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
-        return result
+        _record = WekoRecord.get_record(pid.object_uuid)
+        return citeproc_v1.serialize(pid, _record, style=style, locale=locale)
     except Exception:
         current_app.logger.exception(
             'Citation formatting for record {0} failed.'.format(str(record.id)))

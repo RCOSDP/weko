@@ -737,6 +737,7 @@ class WorkActivity(object):
             else:
                 identifier = action_identifier
         return identifier
+
     def get_activity_action_status(self, activity_id, action_id):
         """Get activity action status."""
         with db.session.no_autoflush:
@@ -744,10 +745,6 @@ class WorkActivity(object):
                 activity_id=activity_id, action_id=action_id).one()
             action_stus = activity_ac.action_status
             return action_stus
-
-    # add by ryuu end
-
-
 
     def upt_activity_item(self, activity, item_id):
         """Update activity info for item id.

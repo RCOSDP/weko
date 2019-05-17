@@ -5,12 +5,12 @@ require([
   // Handle Quit btn on activity screens
   $("#btn_quit").click(function () {
     $("#action_quit_confirmation").modal("show");
-    $("#btn_quit").attr("disabled", true);
   });
 
   // Handle Continue btn on modal Quit confirmation
   $('#btn_cancel').on('click', function () {
     $("#action_quit_confirmation").modal("hide");
+    $("#btn_quit").attr("disabled", true);
     let comment = ''
     if ($('#input-comment') && $('#input-comment').val()) {
       comment = $('#input-comment').val();
@@ -55,8 +55,4 @@ require([
       }
     });
   };
-
-  $("#btn_dissmiss").click(function () {
-    $("#btn_quit").attr("disabled", false);
-  });
 });

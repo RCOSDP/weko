@@ -26,8 +26,13 @@
 
 from __future__ import absolute_import, print_function
 
+import json
+
 from invenio_formatter.filters.datetime import from_isodate
 from marshmallow import Schema, fields, missing
+
+from weko_records.serializers.utils import get_attribute_schema
+import weko_records.config as config
 
 
 def _get_itemdata(obj, key):
@@ -35,60 +40,35 @@ def _get_itemdata(obj, key):
     for item in obj:
         itemdata = obj.get(item, {})
         if (type(itemdata)) is dict and itemdata.get('attribute_name') == key:
-            return itemdata.get('attribute_value_mlt')
-
+            value = itemdata.get('attribute_value_mlt')
+            if value:
+                return value
     return None
 
 
-def _get_creator_by_lang(textdata, lang):
-    """Get creator name by lang."""
-    creator_name = []
-    for text in textdata:
-        for value in sorted(text[0]):
-            if text[0][value] == lang:
-                creator_name.append([text[0][index]
-                                     for index in sorted(text[0])].pop(0))
-
-    return creator_name
+def _get_mapping_data(inschema, indata, inText):
+    for key, value in inschema.get('properties').items():
+        if value.get('title') == inText:
+            return value, indata.get(key)
+    return None
 
 
-def _get_relation_by_type(textdata, inputtype):
-    """Get realtion name by type."""
-    result = None
-    for text in textdata:
-        if type(text) is list:
-            for relation in text:
-                for subitem in relation:
-                    if relation[subitem] == inputtype:
-                        result = relation
-    if result is not None:
-        result = [result[index] for index in sorted(result)]
-    return result
-
-
-def _get_names_from_obj(obj):
-    """Parsing data from 'Creator' data."""
-    creator_name = []
+def _get_creator_name(obj, inName):
     itemdatas = _get_itemdata(obj, 'Creator')
+    schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_CREATOR)
+    name = None
     if itemdatas is None:
-        return None
+        return ''
 
     for itemdata in itemdatas:
-        textdata = [itemdata[val] for val in sorted(itemdata)]
-        creator_data = _get_creator_by_lang(textdata, 'ja')
-        if len(creator_data) > 0:
-            creator_name.append(creator_data)
+        value, name_data = _get_mapping_data(schema, itemdata, inName)
+        if name_data:
+            _, name = _get_mapping_data(value.get('items'), name_data[0],
+                                        inName)
 
-    for itemdata in itemdatas:
-        textdata = [itemdata[val] for val in sorted(itemdata)]
-        creator_data = _get_creator_by_lang(textdata, 'en')
-        if len(creator_data) > 0:
-            creator_name.append(creator_data)
-
-    if len(creator_name):
-        return creator_name[0]
-    else:
-        return None
+    if name:
+        return name
+    return '<道の>'
 
 
 class CreatorSchema(Schema):
@@ -100,24 +80,15 @@ class CreatorSchema(Schema):
 
     def get_family_name(self, obj):
         """Get family name."""
-        if _get_names_from_obj(obj) is not None:
-            return _get_names_from_obj(obj)[1]
-        else:
-            return missing
+        return _get_creator_name(obj, "Family Name")
 
     def get_given_name(self, obj):
         """Get given name."""
-        if _get_names_from_obj(obj) is not None:
-            return _get_names_from_obj(obj)[2]
-        else:
-            return missing
+        return _get_creator_name(obj, "Creator Name")
 
     def get_suffix_name(self, obj):
         """Get suffix name."""
-        if _get_names_from_obj(obj) is not None:
-            return _get_names_from_obj(obj)[0]
-        else:
-            return missing
+        return _get_creator_name(obj, "Given Name")
 
 
 class RecordSchemaCSLJSON(Schema):
@@ -132,34 +103,29 @@ class RecordSchemaCSLJSON(Schema):
     issued = fields.Method('get_issue_date')
     language = fields.Method('get_language')
     version = fields.Method('get_version')
-    note = fields.Str('')
 
     DOI = fields.Method('get_doi')
-    ISBN = fields.Method('get_isbn')
-    ISSN = fields.Method('get_issn')
 
     container_title = fields.Method('get_container_title')
     page = fields.Method('get_pages')
     volume = fields.Method('get_volume')
     issue = fields.Method('get_issue')
 
-    publisher = fields.Method('get_publisher')
-    publisher_place = fields.Str('')
+    publisher = fields.Method('get_publishers')
 
     def get_description(self, obj):
         """Get description."""
-        description = []
         itemdatas = _get_itemdata(obj['metadata'], 'Description')
+        schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_DESCRIP)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            textdata = [itemdata[val] for val in sorted(itemdata)]
-            description.append(
-                '{} ({})-Type:{}'.format(textdata[0], textdata[1],
-                                         textdata[2]))
+            _, description = _get_mapping_data(schema, itemdata, "Description")
 
-        return description[0]
+        if description:
+            return description
+        return missing
 
     def get_issue_date(self, obj):
         """Get issue date."""
@@ -175,148 +141,118 @@ class RecordSchemaCSLJSON(Schema):
         """Get language."""
         language = []
         itemdatas = _get_itemdata(obj['metadata'], 'Language')
+        schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_LANGUAG)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            language.append(itemdata.popitem()[1])
+            _, language = _get_mapping_data(schema, itemdata, "Language")
 
-        return language[0]
+        if language:
+            return language
+        return missing
 
     def get_version(self, obj):
         """Get version."""
-        version = []
         itemdatas = _get_itemdata(obj['metadata'], 'Version')
+        schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_VERSION)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            version.append(itemdata.popitem()[1])
+            _, version = _get_mapping_data(schema, itemdata, "Version")
 
-        return version[0]
+        if version:
+            return version
+        return missing
 
     def get_doi(self, obj):
         """Get DOI."""
-        doi = []
         itemdatas = _get_itemdata(obj['metadata'], 'Identifier Registration')
+        schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_DOI)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            textdata = [itemdata[val] for val in sorted(itemdata)]
-            doi.append('{} ({})'.format(textdata[0], textdata[1]))
+            _, doi = _get_mapping_data(
+                schema, itemdata, "Identifier Registration")
+            _, doi_type = _get_mapping_data(
+                schema, itemdata, "Identifier Registration Type")
 
-        return doi[0]
+        if doi:
+            return '{} ({})'.format(doi, doi_type)
+        return missing
 
     def get_container_title(self, obj):
         """Get alternative title."""
         alternative_title = []
         itemdatas = _get_itemdata(obj['metadata'], 'Alternative Title')
+        schema = get_attribute_schema(69)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            textdata = [itemdata[val] for val in sorted(itemdata)]
-            alternative_title.append(
-                '{} ({})'.format(textdata[0], textdata[1]))
+            _, data = _get_mapping_data(schema, itemdata, "Alternative Title")
+            alternative_title.append(config.WEKO_ITEMPROPS_SCHEMAID_ALTITLE)
 
-        return alternative_title[0]
+        if len(alternative_title):
+            return alternative_title[0]
+        return missing
 
     def get_pages(self, obj):
         """Get number of pages."""
-        pages = []
         itemdatas = _get_itemdata(obj['metadata'], 'Number of Pages')
+        schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_PAGES)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            pages.append(itemdata.popitem()[1])
+            _, pages = _get_mapping_data(schema, itemdata, "Number of Pages")
 
-        return pages[0]
+        if pages:
+            return pages
+        return missing
 
     def get_volume(self, obj):
         """Get volume."""
-        volume = []
-        itemdatas = _get_itemdata(obj['metadata'], 'Volume Number')
+        itemdatas = _get_itemdata(obj['metadata'], "Volume Number")
+        schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_VOLUME)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            volume.append(itemdata.popitem()[1])
+            _, volume = _get_mapping_data(schema, itemdata, "Volume Number")
 
-        return volume[0]
+        if volume:
+            return volume
+        return missing
 
     def get_issue(self, obj):
         """Get issue number."""
-        issue = []
-        itemdatas = _get_itemdata(obj['metadata'], 'Issue Number')
+        itemdatas = _get_itemdata(obj['metadata'], "Issue Number")
+        schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_ISSUENO)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            issue.append(itemdata.popitem()[1])
+            _, issue = _get_mapping_data(schema, itemdata, "Issue Number")
 
-        return issue[0]
+        if issue:
+            return issue
+        return missing
 
-    def get_publisher(self, obj):
+    def get_publishers(self, obj):
         """Get publisher."""
         publisher = []
-        itemdatas = _get_itemdata(obj['metadata'], 'Publisher')
+        itemdatas = _get_itemdata(obj['metadata'], "Publisher")
+        schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_PUBLISH)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            textdata = [itemdata[val] for val in sorted(itemdata)]
-            publisher.append('{} ({})'.format(textdata[0], textdata[1]))
+            _, data = _get_mapping_data(schema, itemdata, "Publisher")
+            publisher.append(data)
 
-        return publisher[0]
-
-    def get_isbn(self, obj):
-        """Get ISBN."""
-        isbn_data = []
-        itemdatas = _get_itemdata(obj['metadata'], 'Relation')
-        if itemdatas is None:
-            return missing
-
-        for itemdata in itemdatas:
-            textdata = [itemdata[val] for val in sorted(itemdata)]
-            isbn = _get_relation_by_type(textdata, 'ISBN')
-            if isbn is not None:
-                isbn_data.append(isbn[0])
-
-        if len(isbn_data):
-            return isbn_data[0]
-        else:
-            return missing
-
-    def get_issn(self, obj):
-        """Get ISSN."""
-        issn_data = []
-        itemdatas = _get_itemdata(obj['metadata'], 'Relation')
-        if itemdatas is None:
-            return missing
-
-        for itemdata in itemdatas:
-            textdata = [itemdata[val] for val in sorted(itemdata)]
-            issn = _get_relation_by_type(textdata, 'ISSN')
-            if issn is not None:
-                issn_data.append(issn[0])
-
-        if len(issn_data):
-            return issn_data[0]
-        else:
-            return missing
-
-    def get_publisher_place(self, obj):
-        """Get alternative title."""
-        publisher_place = []
-        itemdatas = _get_itemdata(obj['metadata'], 'Geo Location')
-        if itemdatas is None:
-            return missing
-
-        for itemdata in itemdatas:
-            textdata = [itemdata[val] for val in sorted(itemdata)]
-            if textdata[2]:
-                publisher_place.append(textdata[2])
-
-        return publisher_place[0]
+        if len(publisher):
+            return publisher[0]
+        return missing
