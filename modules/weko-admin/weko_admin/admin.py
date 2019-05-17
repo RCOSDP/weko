@@ -361,8 +361,9 @@ class ReportView(BaseView):
                 elif file_type == 'file_using_per_user':
                     user_email = ''
                     user_name = 'Guest'
-                    if record['cur_user_id'] != '0':
-                        user_info = get_user_information(record['cur_user_id'])
+                    user_id = int(record['cur_user_id'])
+                    if user_id > 0:
+                        user_info = get_user_information(user_id)
                         user_email = user_info['email']
                         user_name = user_info['username']
                     writer.writerow([
