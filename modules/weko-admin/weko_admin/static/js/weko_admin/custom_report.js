@@ -54,7 +54,7 @@ class ComponentTableResult extends React.Component {
         unit: unit
       };
       let unitText = document.getElementById("unit").options[unit].text
-      let request_url = '/api/stats/1/get_item_registration_report/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
+      let request_url = '/api/stats/1/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
       fetch(request_url/*,
           TODO: Display to result table {
             method: "GET",
@@ -73,7 +73,7 @@ class ComponentTableResult extends React.Component {
         end_date: endDate,
         unit: unit
       };
-      let request_url = '/api/stats/2/get_item_registration_report/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
+      let request_url = '/api/stats/2/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
       fetch(request_url/*, {
             TODO: Display to result table
             method: "GET",
@@ -364,7 +364,7 @@ class ComponentCombobox extends React.Component {
           unit: unit
         };
         let unitText = document.getElementById("unit").options[unit].text
-        let request_url = '/api/stats/1/get_item_registration_report/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
+        let request_url = '/api/stats/1/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
         fetch(request_url/*,
             TODO: Display to result table {
               method: "GET",
@@ -385,7 +385,7 @@ class ComponentCombobox extends React.Component {
           end_date: endDate,
           unit: unit
         };
-        let request_url = '/api/stats/2/get_item_registration_report/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText;
+        let request_url = '/api/stats/2/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText;
         fetch(request_url/*, {
               TODO: Display to result table
               method: "GET",
