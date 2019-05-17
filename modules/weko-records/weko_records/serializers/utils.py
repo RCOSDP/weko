@@ -23,7 +23,7 @@
 import copy
 
 from invenio_db import db
-from weko_records.models import ItemTypeProperty
+from weko_records.models import ItemTypeProperty, ItemType, ItemTypeName
 
 
 def get_mapping(item_type_mapping, mapping_type):
@@ -120,4 +120,21 @@ def get_attribute_schema(schema_id):
             id=schema_id).one_or_none()
         if schema:
             return schema.schema
+    return None
+
+
+def get_item_type_name(item_type_id):
+    """Get item type name.
+
+    :param item type id:
+    :return: name in string
+    """
+    with db.session.no_autoflush:
+        name_id = ItemType.query.filter_by(
+            id=item_type_id).one_or_none()
+        if name_id:
+            type_name = ItemTypeName.query.filter_by(
+                id=name_id.name_id).one_or_none()
+            if type_name:
+                return type_name.name
     return None

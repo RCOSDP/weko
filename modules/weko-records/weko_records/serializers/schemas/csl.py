@@ -31,8 +31,8 @@ import json
 from invenio_formatter.filters.datetime import from_isodate
 from marshmallow import Schema, fields, missing
 
-from weko_records.serializers.utils import get_attribute_schema
-import weko_records.config as config
+from weko_records.serializers.utils import get_attribute_schema, \
+    get_item_type_name
 
 
 def _get_itemdata(obj, key):
@@ -47,6 +47,7 @@ def _get_itemdata(obj, key):
 
 
 def _get_mapping_data(inschema, indata, inText):
+    """Get mapping by item type."""
     for key, value in inschema.get('properties').items():
         if value.get('title') == inText:
             return value, indata.get(key)
@@ -54,11 +55,12 @@ def _get_mapping_data(inschema, indata, inText):
 
 
 def _get_creator_name(obj, inName):
+    """Parsing creator data for multiple item type."""
     itemdatas = _get_itemdata(obj, 'Creator')
     schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_CREATOR)
     name = None
     if itemdatas is None:
-        return ''
+        return None
 
     for itemdata in itemdatas:
         value, name_data = _get_mapping_data(schema, itemdata, inName)
@@ -68,7 +70,20 @@ def _get_creator_name(obj, inName):
 
     if name:
         return name
-    return '<道の>'
+    return None
+
+def _get_creator_name_basefilesview(obj, inName):
+    """Parsing creator data for basefilesview item type."""
+    itemdatas = _get_itemdata(obj, '作成者')
+    if itemdatas is None:
+        return None
+
+    for itemdata in itemdatas:
+        family_name = itemdata.get(inName  + 's')
+        if family_name:
+            return family_name[0].get(inName)
+        else:
+            return None
 
 
 class CreatorSchema(Schema):
@@ -80,22 +95,43 @@ class CreatorSchema(Schema):
 
     def get_family_name(self, obj):
         """Get family name."""
-        return _get_creator_name(obj, "Family Name")
+        item_type = get_item_type_name(obj.get('item_type_id'))
+        if item_type == 'BaseFilesView':
+            family_name = _get_creator_name_basefilesview(obj, 'familyName')
+        else:
+            family_name = _get_creator_name(obj, "Family Name")
+
+        if family_name:
+            return family_name
 
     def get_given_name(self, obj):
         """Get given name."""
-        return _get_creator_name(obj, "Creator Name")
+        item_type = get_item_type_name(obj.get('item_type_id'))
+        if item_type == 'BaseFilesView':
+            given_name = _get_creator_name_basefilesview(obj, 'givenName')
+        else:
+            given_name = _get_creator_name(obj, "Creator Name")
+
+        if given_name:
+            return given_name
 
     def get_suffix_name(self, obj):
         """Get suffix name."""
-        return _get_creator_name(obj, "Given Name")
+        item_type = get_item_type_name(obj.get('item_type_id'))
+        if item_type == 'BaseFilesView':
+            suffix_name = _get_creator_name_basefilesview(obj, 'creatorName')
+        else:
+            suffix_name = _get_creator_name(obj, "Given Name")
+
+        if suffix_name:
+            return suffix_name
 
 
 class RecordSchemaCSLJSON(Schema):
     """Schema for records in CSL-JSON."""
 
     id = fields.Str(attribute='pid.pid_value')
-    type = fields.Str(attribute='metadata.item_type_id')
+    type = fields.Method('get_itemtype_name')
     title = fields.Str(attribute='metadata.item_title')
     abstract = fields.Method('get_description')
     author = fields.List(fields.Nested(CreatorSchema), attribute='metadata')
@@ -112,6 +148,14 @@ class RecordSchemaCSLJSON(Schema):
     issue = fields.Method('get_issue')
 
     publisher = fields.Method('get_publishers')
+
+    def get_itemtype_name(self, obj):
+        """Get description."""
+        item_type = get_item_type_name(obj['metadata'].get('item_type_id'))
+
+        if item_type:
+            return item_type
+        return missing
 
     def get_description(self, obj):
         """Get description."""
