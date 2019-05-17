@@ -57,8 +57,8 @@ let PageBodyGrid = function () {
     let template =
       '<div class="grid-stack-item">' +
       ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + '; overflow-y: hidden !important;">' +
-      '   <div class="panel-heading widget-header" style="color: ' + labelColor + ';"><strong>' + node.name + '</strong></div>' +
-      '   <div class="panel-body" style="overflow-y: auto;height: 90%;">' + description + '</div>' +
+      '   <div class="panel-heading widget-header" style="color: ' + labelColor + ';height: 6%;"><strong>' + node.name + '</strong></div>' +
+      '   <div class="panel-body" style="overflow-y: auto;height: 94%;">' + description + '</div>' +
       ' </div>' +
       '</div>';
     return template;
