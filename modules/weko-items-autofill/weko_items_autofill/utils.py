@@ -25,7 +25,7 @@ from functools import wraps
 
 from flask import current_app
 from invenio_cache import current_cache
-from weko_records.api import Mapping
+from weko_records.api import Mapping, ItemTypes
 
 from .api import CiNiiURL, CrossRefOpenURL
 
@@ -800,4 +800,539 @@ def get_title_pubdate_path(item_type_id):
                     pass
     result['title'] = title
     result['pubDate'] = pub_date
+    return result
+
+
+# @cached_api_json(timeout=50, key_prefix="crossref_data")
+def get_crossref_record_data(pid, doi, id, items):
+    """
+        TODO: Implement for API
+    """
+    api = CrossRefOpenURL(pid, doi).get_data()
+    result = get_crossref_data_by_key(api, 'all')
+    return result
+
+
+# @cached_api_json(timeout=50, key_prefix="cinii_data")
+def get_cinii_record_data(naid, id, items):
+    """
+        TODO: Impelement for API
+    """
+    api = CiNiiURL(naid).get_data()
+    result = get_cinii_data_by_key(api, 'all')
+    return result
+
+
+def get_basic_cinii_data(data):
+    """ Get basic data template from CiNii
+
+        Basic value format:
+        {
+            '@value': value,
+            '@language': language
+        }
+
+        :param: data: CiNii data
+        :return: list converted data
+    """
+    result = list()
+    default_language = 'ja'
+    for item in data:
+        new_data = dict()
+        new_data['@value'] = item.get('@value')
+        if item.get('@language'):
+            new_data['@language'] = item.get('@language')
+        else:
+            new_data['@language'] = default_language
+        result.append(new_data)
+    return result
+
+
+def pack_single_value_as_dict(data):
+    """ Pack value as dictionary
+
+    Based on return format
+    {
+        '@value': value
+    }
+
+    :param: data: data need to pack
+    :return: dictionary contain packed data
+    """
+    new_data = dict()
+    new_data['@value'] = data
+    return new_data
+
+
+def pack_data_with_multiple_type_cinii(data1, type1, data2, type2):
+    """ Map CiNii multi data with type
+    
+    Arguments:
+        data1
+        type1
+        data2
+        type2
+    
+    Returns:
+        packed data
+    """
+    result = list()
+    if data1:
+        new_data = dict()
+        new_data['@value'] = data1
+        new_data['@type'] = type1
+        result.append(new_data)
+    if data2:
+        new_data = dict()
+        new_data['@value'] = data2
+        new_data['@type'] = type2
+        result.append(new_data)
+    return result
+
+
+def get_cinii_creator_data(data):
+    """ Get creator data from CiNii
+
+    Get creator name and form it as format:
+    {
+        '@value': name,
+        '@language': language
+    }
+
+    :param: data: creator data
+    :return: list of creator name
+    """
+    result = list()
+    default_language = 'ja'
+    for item in data:
+        new_data = dict()
+        new_data['@value'] = item[0].get('@value')
+        if item[0].get('@language'):
+            new_data['@language'] = item[0].get('@language')
+        else:
+            new_data['@language'] = default_language
+        result.append(new_data)
+    return result
+
+
+def get_cinii_contributor_data(data):
+    """ Get contributor data from CiNii
+
+    Get contributor name and form it as format:
+    {
+        '@value': name,
+        '@language': language
+    }
+
+    :param: data: marker data
+    :return:packed data
+    """
+    result = list()
+    default_language = 'ja'
+    for item in data:
+        new_data = dict()
+        organization = item['con:organization'][0]
+        new_data['@value'] = organization['foaf:name'][0].get('@value')
+        if organization['foaf:name'][0].get('@language'):
+            language = organization['foaf:name'][0].get('@language')
+            new_data['@language'] = language
+        else:
+            new_data['@language'] = default_language
+        result.append(new_data)
+    return result
+
+
+def get_cinii_description_data(data):
+    """ Get description data from CiNii
+
+    Get description and form it as format:
+    {
+        '@value': description,
+        '@language': language,
+        '@type': type of description
+    }
+
+    :param: description data
+    :return: packed data
+    """
+    result = list()
+    default_language = 'ja'
+    for item in data:
+        new_data = dict()
+        new_data['@value'] = item.get('@value')
+        new_data['@type'] = 'Abstract'
+        if item.get('@language'):
+            new_data['@language'] = item.get('@language')
+        else:
+            new_data['@language'] = default_language
+        result.append(new_data)
+    return result
+
+
+def get_cinii_subject_data(data):
+    """ Get subject data from CiNii
+
+    Get subject and form it as format:
+    {
+        '@value': title,
+        '2language': language,
+        '@scheme': scheme of subject
+        '@URI': source of subject
+    }
+
+    :param: data: subject data
+    :return: packed data
+    """
+    result = list()
+    default_language = 'ja'
+    for sub in data:
+        new_data = dict()
+        new_data['@scheme'] = 'Other'
+        new_data['@URI'] = sub.get('@id')
+        title = sub.get('dc:title')
+        if title[0] is not None:
+            new_data['@value'] = title[0].get('@value')
+            if title[0].get('@language'):
+                new_data['@language'] = title[0].get('@language')
+            else:
+                new_data['@language'] = default_language
+        result.append(new_data)
+    return result
+
+
+def get_cinii_page_data(data):
+    """ Get start page and end page data
+
+    Get page info and pack it:
+    {
+        '@value': number
+    }
+
+    :param: data: No of page
+    :return: packed data
+    """
+    try:
+        result = int(data)
+        return pack_single_value_as_dict(result)
+    except Exception:
+        return pack_single_value_as_dict(None)
+
+
+def get_cinii_numpage(data):
+    """ Get number of page
+
+    If CiNii have pageRange, get number of page
+    If not, number of page equals distance between start and end page
+
+    :param: data: CiNii data
+    :return: number of page is packed
+    """
+    if data.get('prism:pageRange'):
+        return get_cinii_page_data(data.get('prism:pageRange'))
+    else:
+        try:
+            end = int(data.get('prism:endingPage'))
+            start = int(data.get('prism:startingPage'))
+            numPages = end - start + 1
+            return pack_single_value_as_dict(numPages)
+        except Exception:
+            return pack_single_value_as_dict(None)
+
+
+def get_cinii_date_data(data):
+    """ Get publication date
+
+    Get publication date from CiNii data
+    format:
+    {
+        '@value': date
+        '@type': type of date
+    }
+
+    :param: data: date
+    :return: date and date type is packed
+    """
+    result = dict()
+    if len(data.split('-')) != 3:
+        result['@value'] = None
+        result['@type'] = None
+    else:
+        result['@value'] = data
+        result['@type'] = 'Issued'
+    return result
+
+
+def get_cinii_data_by_key(api, keyword):
+    """ Get data from CiNii based on keyword
+
+    :param: api: CiNii data
+    :param: keyword: keyword for search
+    :return: data for keyword
+    """
+    data = api['response'].get('@graph')
+    data = data[0]
+    result = dict()
+    if keyword == 'title':
+        result[keyword] = get_basic_cinii_data(data.get('dc:title'))
+    elif keyword == 'alternative':
+        result[keyword] = get_basic_cinii_data(data.get('dc:title'))
+    elif keyword == 'creator':
+        result[keyword] = get_cinii_creator_data(data.get('dc:creator'))
+    elif keyword == 'contributor':
+        result[keyword] = get_cinii_contributor_data(data.get('foaf:maker'))
+    elif keyword == 'description':
+        result[keyword] = get_cinii_description_data(
+            data.get('dc:description')
+            )
+    elif keyword == 'subject':
+        result[keyword] = get_cinii_subject_data(data.get('foaf:topic'))
+    elif keyword == 'sourceTitle':
+        result[keyword] = get_basic_cinii_data(
+            data.get('prism:publicationName')
+            )
+    elif keyword == 'volume':
+        result[keyword] = pack_single_value_as_dict(data.get('prism:volume'))
+    elif keyword == 'issue':
+        result[keyword] = pack_single_value_as_dict(data.get('prism:number'))
+    elif keyword == 'pageStart':
+        result[keyword] = get_cinii_page_data(data.get('prism:startingPage'))
+    elif keyword == 'pageEnd':
+        result[keyword] = get_cinii_page_data(data.get('prism:endingPage'))
+    elif keyword == 'numPages':
+        result[keyword] = get_cinii_numpage(data)
+    elif keyword == 'date':
+        result[keyword] = get_cinii_date_data(data.get('prism:publicationDate'))
+    elif keyword == 'publisher':
+        result[keyword] = get_basic_cinii_data(data.get('dc:publisher'))
+    elif keyword == 'sourceIdentifier':
+        result[keyword] = pack_data_with_multiple_type_cinii(
+            data.get('prism:issn'),
+            'ISSN（非推奨）',
+            data.get('cinii:ncid'),
+            'NCID'
+        )
+    elif keyword == 'relation':
+        result[keyword] = pack_data_with_multiple_type_cinii(
+            data.get('cinii:naid'),
+            'NAID',
+            data.get('prism:doi'),
+            'DOI'
+        )
+    elif keyword == 'all':
+        CINII_REQUIRED_ITEM = [
+            "title",
+            "alternative",
+            "creator",
+            "contributor",
+            "description",
+            "subject",
+            "sourceTitle",
+            "volume",
+            "issue",
+            "pageStart",
+            "pageEnd",
+            "numPages",
+            "date",
+            "publisher",
+            "sourceIdentifier",
+            "relation"
+        ]
+        for key in CINII_REQUIRED_ITEM:
+            result[key] = get_cinii_data_by_key(api, key).get(key)
+    return result
+
+
+def get_crossref_title_data(data):
+    """ Get title data from CrossRef
+
+    Arguments:
+        data -- title data
+
+    Returns:
+        Packed title data
+    """
+    result = list()
+    default_language = 'en'
+    if isinstance(data, list):
+        for title in data:
+            new_data = dict()
+            new_data['@value'] = title
+            new_data['@language'] = default_language
+            result.append(new_data)
+    else:
+        new_data = dict()
+        new_data['@value'] = data
+        new_data['@language'] = default_language
+        result.append(new_data)
+    return result
+
+
+def get_crossref_creator_data(data):
+    """ Get creator name from CrossRef data
+
+    Arguments:
+        data -- CrossRef data
+    """
+    result = list()
+    default_language = 'en'
+    for creator in data:
+        family_name = creator.get('family')
+        given_name = creator.get('given')
+        full_name = ''
+        if given_name and family_name:
+            full_name = family_name + given_name
+        elif given_name:
+            full_name = given_name
+        elif family_name:
+            full_name = family_name
+        new_data = dict()
+        new_data['@value'] = full_name
+        new_data['@language'] = default_language
+        result.append(new_data)
+    return result
+
+
+def get_crossref_numpage_data(data):
+    """ Get number of page from CrossRef data
+
+    Arguments:
+        data -- page data
+
+    Returns:
+        Number of page is calculated and packed
+    """
+    numpages = data.split('-')
+    if len(numpages) == 1:
+        DEFAULT_PAGE_NUMBER = 1
+        return pack_single_value_as_dict(DEFAULT_PAGE_NUMBER)
+    else:
+        try:
+            num_page = int(numpages[1]) - int(numpages[0])
+            return pack_single_value_as_dict(num_page)
+        except Exception:
+            return pack_single_value_as_dict(None)
+
+
+def get_start_and_end_page(data, index):
+    """ Get start data and end date from CrossRef data
+
+    Arguments:
+        data -- page data
+        index -- Index in page array. 0 for start and 1 for end
+
+    Returns:
+        Start/End date is packed
+    """
+    numpages = data.split('-')
+    if len(numpages) == 1:
+        try:
+            start_page = int(data)
+            new_data = dict()
+            new_data['@value'] = start_page
+            return new_data
+        except Exception:
+            new_data = dict()
+            new_data['@value'] = None
+            return new_data
+    else:
+        try:
+            new_data = dict()
+            new_data['@value'] = int(numpages[index])
+            return new_data
+        except Exception:
+            new_data = dict()
+            new_data['@value'] = None
+            return new_data
+
+
+def get_crossref_issue_date(data):
+    """ Get crossref issued date
+
+    Arguments:
+        data -- issued data
+
+    Returns:
+        Issued date is packed
+    """
+    date = data.get('date-parts')
+    if isinstance(date, list) and len(date) == 3:
+        datetime = '-'.join(date)
+        return pack_single_value_as_dict(datetime)
+    else:
+        return pack_single_value_as_dict(None)
+
+
+def get_crossref_publisher_data(data):
+    """ Get publisher information
+
+    Arguments:
+        data -- created data
+
+    Returns:
+        Publisher packed data
+    """
+    new_data = dict()
+    default_language = 'en'
+    new_data['@value'] = data
+    new_data['@language'] = default_language
+    return new_data
+
+
+def get_crossref_relation_data(data):
+    result = list()
+    if data is None:
+        return pack_single_value_as_dict(None)
+    for isbn in data:
+        new_data = dict()
+        new_data['@value'] = isbn
+        new_data['@type'] = 'ISBN'
+        result.append(new_data)
+    return result
+
+
+def get_crossref_data_by_key(api, keyword):
+    """ Get CrossRef data based on keyword
+
+    Arguments:
+        api: CrossRef data
+        keyword: search keyword
+
+    Returns:
+        CrossRef data for keyword
+    """
+    if api['error'] or api['response'] is None:
+        return None
+
+    data = api['response']
+    result = dict()
+
+    created = data.get('created')
+    if created is None:
+        return None
+    page = data.get('page')
+
+    if keyword == 'title':
+        result[keyword] = get_crossref_title_data(created.get('title'))
+    elif keyword == 'language':
+        result[keyword] = pack_single_value_as_dict('eng')
+    elif keyword == 'creator':
+        result[keyword] = get_crossref_creator_data(data.get('author'))
+    elif keyword == 'numPages':
+        result[keyword] = get_crossref_numpage_data(page)
+    elif keyword == 'pageStart':
+        result[keyword] = get_start_and_end_page(page, 0)
+    elif keyword == 'pageEnd':
+        result[keyword] = get_start_and_end_page(page, 1)
+    elif keyword == 'date':
+        result[keyword] = get_crossref_issue_date(data.get('issued'))
+    elif keyword == 'publisher':
+        result[keyword] = get_crossref_publisher_data(created.get('publisher'))
+    elif keyword == 'relation':
+        result[keyword] = get_crossref_relation_data(created.get('ISBN'))
+    elif keyword == 'all':
+        CROSSREF_REQUIRE_ITEM = ["title", "language", "creator", "numPages",
+                                 "pageStart", "pageEnd", "date",
+                                 "publisher", "relation"]
+        for key in CROSSREF_REQUIRE_ITEM:
+            result[key] = get_crossref_data_by_key(api, key).get(key)
     return result
