@@ -33,6 +33,7 @@ from marshmallow import Schema, fields, missing
 
 from weko_records.serializers.utils import get_attribute_schema, \
     get_item_type_name
+import weko_records.config
 
 
 def _get_itemdata(obj, key):
@@ -73,7 +74,7 @@ def _get_creator_name(obj, inName):
     return None
 
 def _get_creator_name_basefilesview(obj, inName):
-    """Parsing creator data for basefilesview item type."""
+    """Parsing creator data for multiple item type."""
     itemdatas = _get_itemdata(obj, '作成者')
     if itemdatas is None:
         return None
