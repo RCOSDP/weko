@@ -45,48 +45,25 @@ class ComponentTableResult extends React.Component {
     let target = document.getElementById("target").value;
     let unit = document.getElementById("unit").value;
 
-    const ITEM_REG_ID = 1;
-    const DETAIL_VIEW_ID = 2;
-    if (target == ITEM_REG_ID) {
-      let requestParam = {
-        start_date: startDate,
-        end_date: endDate,
-        unit: unit
-      };
-      let unitText = document.getElementById("unit").options[unit].text
-      let request_url = '/api/stats/1/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
-      fetch(request_url/*,
-          TODO: Display to result table {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(requestParam)
-          }*/)
-        .then(res => res.json())
-        .then((result) => {
-          this.displayData(result);
-        });
-    } else if (target == DETAIL_VIEW_ID) {
-      let requestParam = {
-        start_date: startDate,
-        end_date: endDate,
-        unit: unit
-      };
-      let request_url = '/api/stats/2/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
-      fetch(request_url/*, {
-            TODO: Display to result table
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(requestParam)
-          }*/)
-        .then(res => res.json())
-        .then((result) => {
-          this.displayData(result.data);
-        });
-    }
+    let requestParam = {
+      start_date: startDate,
+      end_date: endDate,
+      unit: unit
+    };
+    let unitText = document.getElementById("unit").options[unit].text
+    let request_url = '/api/stats/' + target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
+    fetch(request_url/*,
+        TODO: Display to result table {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(requestParam)
+        }*/)
+      .then(res => res.json())
+      .then((result) => {
+        this.displayData(result);
+      });
   }
 
   initPageButton(selectedPage) {
@@ -355,52 +332,27 @@ class ComponentCombobox extends React.Component {
     } else if (unit == 0) {
       alert("Unit is required!");
     } else {
-      const ITEM_REG_ID = 1;
-      const DETAIL_VIEW_ID = 2;
-      if (target == ITEM_REG_ID) {
-        let requestParam = {
-          start_date: startDate,
-          end_date: endDate,
-          unit: unit
-        };
-        let unitText = document.getElementById("unit").options[unit].text
-        let request_url = '/api/stats/1/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
-        fetch(request_url/*,
-            TODO: Display to result table {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(requestParam)
-            }*/)
-          .then(res => res.json())
-          .then((result) => {
-            this.props.getValueOfField(this.props.key_binding, result);
-            this.props.getNumPage(result.num_page);
-            this.props.getTableHidden(false);
-          });
-      } else if (target == DETAIL_VIEW_ID) {
-        let requestParam = {
-          start_date: startDate,
-          end_date: endDate,
-          unit: unit
-        };
-        let request_url = '/api/stats/2/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText;
-        fetch(request_url/*, {
-              TODO: Display to result table
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(requestParam)
-            }*/)
-          .then(res => res.json())
-          .then((result) => {
-            this.props.getValueOfField(this.props.key_binding, result.data);
-            this.props.getNumPage(result.num_page);
-            this.props.getTableHidden(false);
-          });
-      }
+      let requestParam = {
+        start_date: startDate,
+        end_date: endDate,
+        unit: unit
+      };
+      let unitText = document.getElementById("unit").options[unit].text;
+      let request_url = '/api/stats/'+ target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
+      fetch(request_url/*,
+          TODO: Display to result table {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(requestParam)
+          }*/)
+        .then(res => res.json())
+        .then((result) => {
+          this.props.getValueOfField(this.props.key_binding, result);
+          this.props.getNumPage(result.num_page);
+          this.props.getTableHidden(false);
+        });
     }
   }
 
