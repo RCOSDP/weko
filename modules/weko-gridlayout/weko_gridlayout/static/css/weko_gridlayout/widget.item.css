@@ -5,6 +5,9 @@
     width: 100%;
 }
 
+.sub-text-box {
+    width : 60%;
+}
 .style-center-align {
     display: flex;
     justify-content: center;
