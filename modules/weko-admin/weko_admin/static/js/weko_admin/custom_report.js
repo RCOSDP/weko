@@ -51,7 +51,6 @@ class ComponentTableResult extends React.Component {
       end_date: endDate,
       unit: unit
     };
-    let unitText = document.getElementById("unit").options[unit].text
     let request_url = '/api/stats/' + target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
     fetch(request_url/*,
         TODO: Display to result table {
@@ -339,7 +338,6 @@ class ComponentCombobox extends React.Component {
         end_date: endDate,
         unit: unit
       };
-      let unitText = document.getElementById("unit").options[unit].text;
       let request_url = '/api/stats/'+ target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
       fetch(request_url/*,
           TODO: Display to result table {
