@@ -133,6 +133,10 @@
   font-size: 15px;
 }
 
+button#btn_quit.done-button {
+  width: auto;
+}
+
 .action-button {
   width: 120px;
   height: 40px;
