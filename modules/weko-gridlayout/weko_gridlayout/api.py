@@ -51,8 +51,15 @@ class WidgetItems(object):
             data_setting["frame_border_color"] = widget_items.get('frame_border_color')
             data_setting["text_color"] = widget_items.get('text_color')
             data_setting["background_color"] = widget_items.get('background_color')
+            settings = widget_items.get('settings')
             if str(data.get("widget_type")) == "Free description":
-                data_setting["description"] = widget_items.get('description')
+                data_setting["description"] = settings.get('description')
+            elif str(data.get("widget_type")) == "Notice":
+                data_setting["description"] = settings.get('description')
+                if settings.get('more_description'):
+                    data_setting["read_more"] = settings.get('read_more')
+                    data_setting["more_description"] = settings.get('more_description')
+                    data_setting["hide_the_rest"] = settings.get('hide_the_rest')
             data["settings"] = json.dumps(data_setting)
             role = widget_items.get('browsing_role')
             if type(role) is list:
@@ -179,6 +186,7 @@ class WidgetItems(object):
             in_result {WidgetItems} -- [data need to be parse]
         """
         record = dict()
+        settings = dict()
         record['repository_id'] = in_result.repository_id
         record['widget_type'] = in_result.widget_type
         record['label'] = in_result.label
@@ -189,7 +197,13 @@ class WidgetItems(object):
         record['text_color'] = record_setting.get('text_color')
         record['background_color'] = record_setting.get('background_color')
         if str(record['widget_type']) == "Free description":
-            record['description']= record_setting.get('description')
+            settings['description'] = record_setting.get('description')
+        elif str(record['widget_type']) == "Notice":
+            settings['description'] = record_setting.get('description')
+            settings['read_more'] = record_setting.get('read_more')
+            settings['more_description'] = record_setting.get('more_description')
+            settings['hide_the_rest'] = record_setting.get('hide_the_rest')
+        record['settings'] = settings
         record['browsing_role'] = in_result.browsing_role
         record['edit_role'] = in_result.edit_role
         record['is_enabled'] = in_result.is_enabled

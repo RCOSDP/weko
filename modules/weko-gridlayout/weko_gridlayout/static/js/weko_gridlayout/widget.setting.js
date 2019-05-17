@@ -148,7 +148,7 @@ class ComponentCheckboxField extends React.Component {
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
                 <div class="controls col-xs-1">
-                    <input name={this.props.name} type="checkbox" name="FrameBorder" onChange={this.handleChange} defaultChecked = {this.state.is_default_Checked}/>
+                    <input name={this.props.name} type="checkbox" onChange={this.handleChange} defaultChecked = {this.state.is_default_Checked}/>
                 </div>
             </div>
         )
@@ -394,7 +394,7 @@ class ComponentFieldEditor extends React.Component {
 
     handleChange (html) {
         this.setState({ editorHtml: html });
-        this.props.getValueOfField(this.props.key_binding,html);
+        this.props.handleChange(this.props.key_binding,html);
     }
 
     render () {
@@ -404,7 +404,7 @@ class ComponentFieldEditor extends React.Component {
             <div class="controls col-xs-9 my-editor">
                 <ReactQuill 
                     onChange={this.handleChange}
-                    value={this.state.editorHtml}
+                    value={this.state.editorHtml || ''}
                     modules={this.state.modules}
                     formats={this.state.formats}
                     bounds={'.app'}
@@ -419,15 +419,93 @@ class ComponentFieldEditor extends React.Component {
 class ExtendComponent extends React.Component {
     constructor(props) {
         super(props);
-        this. state = {
-            type : this.props.type
-        };
+        if(this.props.type == "Notice")
+        {
+            if(this.props.data_load.more_description)
+            {
+                this.state={
+                    type: this.props.type,
+                    settings:this.props.data_load,
+                    write_more: true,
+                };
+            }
+            else
+            {
+                this.state={
+                    type: this.props.type,
+                    settings:this.props.data_load,
+                    write_more: false,
+                };
+            }
+        }
+        else
+        {
+            this.state={
+                type: this.props.type,
+                settings:this.props.data_load,
+            }
+        }
+        this.handleChange = this.handleChange.bind(this);
+        this.handleChangeCheckBox = this.handleChangeCheckBox.bind(this);
+        this.handleChangeHideTheRest =  this.handleChangeHideTheRest.bind(this);
+        this.handleChangeReadMore = this.handleChangeReadMore.bind(this);
     }
     componentWillReceiveProps(nextProps) {
         if (nextProps.type !== this.state.type) {
           this.setState({ type: nextProps.type });
+          this.setState({settings: {}})
+          this.setState({write_more: false})
           this.render();
         }
+    }
+
+    handleChange (field,value) {
+        let data = this.state.settings;
+        switch(field)
+        {
+            case "description":
+                data["description"] = value;
+                break;
+            case "read_more":
+                data["read_more"] = value;
+                break;
+            case "more_description":
+                data["more_description"] = value;
+                break;
+            case "hide_the_rest":
+                data["hide_the_rest"] = value;
+                break;
+        }
+        this.setState({
+            settings:data
+        })
+        this.props.getValueOfField(this.props.key_binding,data);
+    }
+
+    handleChangeCheckBox (event)
+    {
+        let data=this.state.settings;
+        data.more_description = '';
+        data.read_more = '';
+        data.hide_the_rest = '';
+        this.setState({
+            write_more: event.target.checked,
+            settings:data,
+        })
+        this.props.getValueOfField(this.props.key_binding,data);
+        this.render();
+    }
+
+    handleChangeHideTheRest(event)
+    {
+        this.setState({ hide_the_rest: event.target.value });
+        this.handleChange("hide_the_rest",event.target.value);
+    }
+
+    handleChangeReadMore(event)
+    {
+        this.setState({ read_more: event.target.value });
+        this.handleChange("read_more",event.target.value);
     }
     
     render()
@@ -436,9 +514,70 @@ class ExtendComponent extends React.Component {
         {
             return(
                 <div>
-                    <ComponentFieldEditor name="Free description" getValueOfField={this.props.getValueOfField} key_binding = "description" data_load={this.props.data_load}/>
+                    <ComponentFieldEditor handleChange = {this.handleChange} name="Free description" key_binding = "description" data_load={this.state.settings.description}/>
                 </div>
             )
+        }
+        else if(this.state.type == "Notice")
+        {
+            if(this.state.write_more == false)
+            {
+                return(
+                    <div>
+                        <div>
+                            <ComponentFieldEditor handleChange = {this.handleChange.bind(this)} name="Notice description" key_binding = "description" data_load={this.state.settings.description}/>
+                        </div>
+                        <div className="row">
+                            <label className="control-label col-xs-2 text-right"></label>
+                            <div class="controls col-xs-10">
+                                <input name="write_more" type="checkbox" onChange={this.handleChangeCheckBox} defaultChecked = {this.state.settings.write_more}/>
+                                <span>&nbsp;Write more</span>
+                            </div>
+                        </div>
+                        <div>
+                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.props.getValueOfField} key_binding = "rss_feed" data_load={this.state.enable} />
+                        </div>
+                    </div>
+                )
+            }
+            else
+            {
+                return(
+                    <div>
+                        <div>
+                            <ComponentFieldEditor handleChange = {this.handleChange.bind(this)} name="Notice description" key_binding = "description" data_load={this.state.settings.description}/>
+                        </div>
+                        <div className="row">
+                            <label className="control-label col-xs-2 text-right"></label>
+                            <div class="controls col-xs-10">
+                                <div>
+                                    <input name="write_more" type="checkbox" onChange={this.handleChangeCheckBox} defaultChecked = {this.state.write_more}/>
+                                    <span>&nbsp;Write more</span>
+                                </div>
+                                <div className="sub-text-box">
+                                    <input type="text" name="read_more" value={this.state.read_more} onChange={this.handleChangeReadMore} className="form-control" placeholder="Read more" value={this.state.settings.read_more} />
+                                </div>
+                                <br/>
+                            </div>
+                        </div>
+                        <div>
+                            <ComponentFieldEditor handleChange = {this.handleChange.bind(this)} name="" key_binding = "more_description" data_load={this.state.settings.more_description}/>
+                        </div>
+                        <div className="row">
+                            <label className="control-label col-xs-2 text-right"></label>
+                            <div class="controls col-xs-10">
+                                <div className="sub-text-box">
+                                    <input type="text" name="hide_the_rest" value={this.state.hide_the_rest} onChange={this.handleChangeHideTheRest} className="form-control" placeholder="Hide the rest" value={this.state.settings.hide_the_rest} />
+                                </div>
+                                <br/>
+                            </div>
+                        </div>
+                        <div >
+                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.props.getValueOfField} key_binding = "rss_feed" data_load={this.state.enable} />
+                        </div>
+                    </div>
+                )
+            }
         }
         else
         {
@@ -586,7 +725,8 @@ class MainLayout extends React.Component {
             browsing_role: this.props.data_load.browsing_role,
             edit_role: this.props.data_load.edit_role,
             enable: this.props.data_load.is_enabled,
-            description: this.props.data_load.description
+            settings: this.props.data_load.settings,
+            rss_feed: this.props.data_load.rss_feed
         };
         this.getValueOfField = this.getValueOfField.bind(this);
     }
@@ -627,8 +767,11 @@ class MainLayout extends React.Component {
             case 'enable':
                 this.setState({ enable: value });
                 break;
-            case 'description':
-                this.setState({ description: value });
+            case 'settings':
+                this.setState({ settings: value });
+                break;
+            case 'rss_feed':
+                this.setState({ rss_feed: value });
                 break;
         }
     }
@@ -668,10 +811,10 @@ class MainLayout extends React.Component {
                   <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege" authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect"  url_request="/api/admin/get_account_role" key_binding = "edit_role" data_load={this.state.edit_role} is_edit = {this.props.is_edit}/>
                 </div>
                 <div className="row">
-                  <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable}/>
+                  <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable} />
                 </div>
                 <div className="row">
-                  <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding = "description" data_load={this.state.description}/>
+                  <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding = "settings" data_load={this.state.settings}/>
                 </div>
                 <div className="row">
                   <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id} />
@@ -708,7 +851,8 @@ $(function () {
             browsing_role: [1,2,3,4,99],
             edit_role: [1,2,3,4,99],
             is_enabled: true,
-            description: ''
+            settings: {},
+            rss_feed: false
         }
     }
     let returnURL = $("#return_url").val();
