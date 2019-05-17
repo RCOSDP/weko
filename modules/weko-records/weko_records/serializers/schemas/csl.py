@@ -33,7 +33,7 @@ from marshmallow import Schema, fields, missing
 
 from weko_records.serializers.utils import get_attribute_schema, \
     get_item_type_name
-import weko_records.config
+import weko_records.config as config
 
 
 def _get_itemdata(obj, key):
