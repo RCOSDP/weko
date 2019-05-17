@@ -44,6 +44,7 @@ class ComponentTableResult extends React.Component {
     let endDate = document.getElementById("end_date").value;
     let target = document.getElementById("target").value;
     let unit = document.getElementById("unit").value;
+    let unitText = document.getElementById("unit").options[document.getElementById("unit").selectedIndex].text
 
     const ITEM_REG_ID = 1;
     const DETAIL_VIEW_ID = 2;
@@ -53,7 +54,6 @@ class ComponentTableResult extends React.Component {
         end_date: endDate,
         unit: unit
       };
-      let unitText = document.getElementById("unit").options[unit].text
       let request_url = '/api/stats/1/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
       fetch(request_url/*,
           TODO: Display to result table {
@@ -349,6 +349,7 @@ class ComponentCombobox extends React.Component {
     let endDate = document.getElementById("end_date").value;
     let target = document.getElementById("target").value;
     let unit = document.getElementById("unit").value;
+    let unitText = document.getElementById("unit").options[document.getElementById("unit").selectedIndex].text
     this.props.getTableHidden(true);
     if (target == 0) {
       alert("Target Report is required!");
@@ -363,7 +364,6 @@ class ComponentCombobox extends React.Component {
           end_date: endDate,
           unit: unit
         };
-        let unitText = document.getElementById("unit").options[unit].text
         let request_url = '/api/stats/1/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
         fetch(request_url/*,
             TODO: Display to result table {
