@@ -151,6 +151,12 @@ msgstr ""
 msgid "Save"
 msgstr "Save"
 
+msgid "Quit"
+msgstr ""
+
+msgid "Are you sure you want to quit the activity?"
+msgstr ""
+
 #~ msgid "Author_Add_Author"
 #~ msgstr "Add Author"
 
@@ -192,4 +198,3 @@ msgstr "Save"
 
 #~ msgid "You do not even have an itemtype."
 #~ msgstr ""
-
