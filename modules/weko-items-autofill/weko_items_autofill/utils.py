@@ -928,15 +928,15 @@ def build_record_model(item_autofill_key, api_data):
             build_record(data, value, child_data, sub_child_data)
         if model:
             model["key"] = key
-            if child_key:
+            if sub_child_data:
                 if multi_data:
-                    child_data.append(multi_data)
+                    child_data = multi_data
                 elif sub_child_data:
                     child_data.append(sub_child_data)
                 model[parent_key].append({child_key: child_data})
             else:
                 if multi_data:
-                    model[parent_key].append(multi_data)
+                    model[parent_key] = multi_data
                 elif child_data:
                     model[parent_key].append(child_data)
             record_model.append(model)
