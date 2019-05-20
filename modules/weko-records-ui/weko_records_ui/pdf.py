@@ -154,9 +154,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         pdf.set_y(55)
 
     # Title settings
-    title = item_metadata_json['title_' + lang_user]
-    if title is None:
-        title = item_metadata_json['title_en']
+    title = item_metadata_json['title']
     pdf.set_font('IPAexm', '', 20)
     pdf.multi_cell(w1 + w2, title_h, title, 0, 'L', False)
     pdf.ln(h='15')
