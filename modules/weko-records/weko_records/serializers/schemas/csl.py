@@ -32,7 +32,7 @@ from invenio_formatter.filters.datetime import from_isodate
 from marshmallow import Schema, fields, missing
 
 from weko_records.serializers.utils import get_attribute_schema, \
-    get_item_type_name
+    get_item_type_name, get_item_type_name_id
 import weko_records.config as config
 
 
@@ -96,8 +96,8 @@ class CreatorSchema(Schema):
 
     def get_family_name(self, obj):
         """Get family name."""
-        item_type = get_item_type_name(obj.get('item_type_id'))
-        if item_type == 'BaseFilesView':
+        item_type = get_item_type_name_id(obj.get('item_type_id'))
+        if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
             family_name = _get_creator_name_basefilesview(obj, 'familyName')
         else:
             family_name = _get_creator_name(obj, "Family Name")
@@ -107,8 +107,8 @@ class CreatorSchema(Schema):
 
     def get_given_name(self, obj):
         """Get given name."""
-        item_type = get_item_type_name(obj.get('item_type_id'))
-        if item_type == 'BaseFilesView':
+        item_type = get_item_type_name_id(obj.get('item_type_id'))
+        if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
             given_name = _get_creator_name_basefilesview(obj, 'givenName')
         else:
             given_name = _get_creator_name(obj, "Creator Name")
@@ -118,8 +118,8 @@ class CreatorSchema(Schema):
 
     def get_suffix_name(self, obj):
         """Get suffix name."""
-        item_type = get_item_type_name(obj.get('item_type_id'))
-        if item_type == 'BaseFilesView':
+        item_type = get_item_type_name_id(obj.get('item_type_id'))
+        if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
             suffix_name = _get_creator_name_basefilesview(obj, 'creatorName')
         else:
             suffix_name = _get_creator_name(obj, "Given Name")

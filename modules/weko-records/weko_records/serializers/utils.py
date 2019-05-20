@@ -123,6 +123,20 @@ def get_attribute_schema(schema_id):
     return None
 
 
+def get_item_type_name_id(item_type_id):
+    """Get item type name id.
+
+    :param item type id:
+    :return: item name id
+    """
+    with db.session.no_autoflush:
+        item_name_id = ItemType.query.filter_by(
+            id=item_type_id).one_or_none()
+        if item_name_id:
+            return item_name_id.name_id
+    return None
+
+
 def get_item_type_name(item_type_id):
     """Get item type name.
 
@@ -130,11 +144,10 @@ def get_item_type_name(item_type_id):
     :return: name in string
     """
     with db.session.no_autoflush:
-        name_id = ItemType.query.filter_by(
-            id=item_type_id).one_or_none()
+        name_id = get_item_type_name_id(item_type_id)
         if name_id:
             type_name = ItemTypeName.query.filter_by(
-                id=name_id.name_id).one_or_none()
+                id=name_id).one_or_none()
             if type_name:
                 return type_name.name
     return None

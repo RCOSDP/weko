@@ -514,7 +514,6 @@ def file_version_update():
     else:
         return jsonify({'status': 0, 'msg': 'Insufficient permission'})
 
-import json
 @blueprint.app_template_filter('citation')
 def citation(record, pid, style=None, ln=None):
     """Render citation for record according to style and language."""
