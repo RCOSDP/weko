@@ -134,7 +134,7 @@ class ComponentCheckboxField extends React.Component {
         super(props);
         this.handleChange = this.handleChange.bind(this);
         this.state = {
-            is_default_Checked: this.props.data_load,
+            is_default_Checked: this.props.data_load || false,
         }
     }
 
@@ -283,7 +283,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             for (let index in selectedIndex) {
                 if (options[option].value == selectedIndex[index] && options[option].value) {
                   let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                  if (!this.isValueExist(options[option].value, authorizedOptions) {
+                  if (!this.isValueExist(options[option].value, authorizedOptions)) {
                       authorizedOptions.push(innerhtml);
                   }
                   registed = true;
@@ -474,6 +474,8 @@ class ExtendComponent extends React.Component {
             case "hide_the_rest":
                 data["hide_the_rest"] = value;
                 break;
+            case "rss_feed":
+                data["rss_feed"] = value;
         }
         this.setState({
             settings:data
@@ -524,7 +526,7 @@ class ExtendComponent extends React.Component {
                 return(
                     <div>
                         <div>
-                            <ComponentFieldEditor handleChange = {this.handleChange.bind(this)} name="Notice description" key_binding = "description" data_load={this.state.settings.description}/>
+                            <ComponentFieldEditor handleChange = {this.handleChange} name="Notice description" key_binding = "description" data_load={this.state.settings.description}/>
                         </div>
                         <div className="row">
                             <label className="control-label col-xs-2 text-right"></label>
@@ -534,7 +536,7 @@ class ExtendComponent extends React.Component {
                             </div>
                         </div>
                         <div>
-                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.props.getValueOfField} key_binding = "rss_feed" data_load={this.state.enable} />
+                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.handleChange} key_binding = "rss_feed" data_load={this.state.settings.rss_feed} />
                         </div>
                     </div>
                 )
@@ -544,7 +546,7 @@ class ExtendComponent extends React.Component {
                 return(
                     <div>
                         <div>
-                            <ComponentFieldEditor handleChange = {this.handleChange.bind(this)} name="Notice description" key_binding = "description" data_load={this.state.settings.description}/>
+                            <ComponentFieldEditor handleChange = {this.handleChange} name="Notice description" key_binding = "description" data_load={this.state.settings.description}/>
                         </div>
                         <div className="row">
                             <label className="control-label col-xs-2 text-right"></label>
@@ -560,7 +562,7 @@ class ExtendComponent extends React.Component {
                             </div>
                         </div>
                         <div>
-                            <ComponentFieldEditor handleChange = {this.handleChange.bind(this)} name="" key_binding = "more_description" data_load={this.state.settings.more_description}/>
+                            <ComponentFieldEditor handleChange = {this.handleChange} name="" key_binding = "more_description" data_load={this.state.settings.more_description}/>
                         </div>
                         <div className="row">
                             <label className="control-label col-xs-2 text-right"></label>
@@ -572,7 +574,7 @@ class ExtendComponent extends React.Component {
                             </div>
                         </div>
                         <div >
-                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.props.getValueOfField} key_binding = "rss_feed" data_load={this.state.enable} />
+                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.handleChange} key_binding = "rss_feed" data_load={this.state.settings.rss_feed} />
                         </div>
                     </div>
                 )
@@ -816,7 +818,7 @@ class MainLayout extends React.Component {
                   <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding = "settings" data_load={this.state.settings}/>
                 </div>
                 <div className="row">
-                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id} />
+                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id={this.props.data_id} />
                 </div>
             </div>
         )
@@ -851,7 +853,6 @@ $(function () {
             edit_role: [1,2,3,4,99],
             is_enabled: true,
             settings: {},
-            rss_feed: false
         }
     }
     let returnURL = $("#return_url").val();
