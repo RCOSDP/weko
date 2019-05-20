@@ -51,7 +51,7 @@ let PageBodyGrid = function () {
     let backgroundColor = node.background_color;
     let description = "";
     let heightDescription = "";
-    if ((node.type == "Free description") or (node.type == "Notice")) {
+    if (node.type == "Notice") {
       description = node.description
       heightDescription = "6%";
     }
