@@ -535,6 +535,7 @@ class ExtendComponent extends React.Component {
                                 <span>&nbsp;Write more</span>
                             </div>
                         </div>
+                        <br/>
                         <div>
                             <ComponentCheckboxField name="RSS feed" getValueOfField={this.handleChange} key_binding = "rss_feed" data_load={this.state.settings.rss_feed} />
                         </div>
@@ -555,6 +556,7 @@ class ExtendComponent extends React.Component {
                                     <input name="write_more" type="checkbox" onChange={this.handleChangeCheckBox} defaultChecked = {this.state.write_more}/>
                                     <span>&nbsp;Write more</span>
                                 </div>
+                                <br/>
                                 <div className="sub-text-box">
                                     <input type="text" name="read_more" value={this.state.read_more} onChange={this.handleChangeReadMore} className="form-control" placeholder="Read more" value={this.state.settings.read_more} />
                                 </div>
