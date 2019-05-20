@@ -168,11 +168,11 @@ class ComponentTableResult extends React.Component {
       rows.push(<tr>{cell}</tr>);
       for (var i = 0; i < data.length; i++) {
         cell = [];
-        let year = ''
+        let year = '';
         if (data[i].year) {
-          year = data[i].year
+          year = data[i].year;
         } else {
-          year.push({data[i].start_date}{" - "}{data[i].end_date})
+          year.push({data[i].start_date}{" - "}{data[i].end_date});
         }
         cell.push(<td style={this.styleTable}>{year}</td>);
         cell.push(<td style={this.styleTable}>{data[i].count}</td>);
