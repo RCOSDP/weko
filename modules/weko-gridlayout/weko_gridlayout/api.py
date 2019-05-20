@@ -60,6 +60,7 @@ class WidgetItems(object):
                     data_setting["read_more"] = settings.get('read_more')
                     data_setting["more_description"] = settings.get('more_description')
                     data_setting["hide_the_rest"] = settings.get('hide_the_rest')
+                    data_setting["rss_feed"] = settings.get('rss_feed')
             data["settings"] = json.dumps(data_setting)
             role = widget_items.get('browsing_role')
             if type(role) is list:
@@ -203,6 +204,7 @@ class WidgetItems(object):
             settings['read_more'] = record_setting.get('read_more')
             settings['more_description'] = record_setting.get('more_description')
             settings['hide_the_rest'] = record_setting.get('hide_the_rest')
+            settings['rss_feed'] = record_setting.get('rss_feed')
         record['settings'] = settings
         record['browsing_role'] = in_result.browsing_role
         record['edit_role'] = in_result.edit_role
