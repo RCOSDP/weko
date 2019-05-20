@@ -154,9 +154,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         pdf.set_y(55)
 
     # Title settings
-    title = item_metadata_json['title_' + lang_user]
-    if title is None:
-        title = item_metadata_json['title_en']
+    title = item_metadata_json['title']
     pdf.set_font('IPAexm', '', 20)
     pdf.multi_cell(w1 + w2, title_h, title, 0, 'L', False)
     pdf.ln(h='15')
@@ -164,6 +162,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     # Metadata
     fg = WekoFeedGenerator()
     fe = fg.add_entry()
+
 
     _file = 'file.URI.@value'
     _file_item_id = None
@@ -183,6 +182,9 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     publisher_item_id = None
     publisher_lang_id = None
     publisher_text_id = None
+
+    keyword_attr_lang = 'subject.@attributes.xml:lang'
+    keyword_attr_value = 'subject.@value'
 
     for item in item_types:
         item_id = item.id
@@ -229,12 +231,22 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         pubdate = None
     try:
-        keywords_ja = item_metadata_json.get('keywords')
+        keyword_item_id = item_map[keyword_attr_lang].split('.')[0]
+        keyword_item_lang = item_map[keyword_attr_lang].split('.')[1]
+        keyword_item_value = item_map[keyword_attr_value].split('.')[1]
+        keyword_base = item_metadata_json.get(keyword_item_id)
+        keyword_lang = keyword_base.get(keyword_item_lang)
+        if keyword_lang == 'ja':
+            keywords_ja = keyword_base.get(keyword_item_value)
+            keywords_en = None
+        elif keyword_lang == 'en':
+            keywords_en = keyword_base.get(keyword_item_value)
+            keywords_ja = None
+        else:
+            keywords_ja = None
+            keywords_en = None
     except (KeyError, IndexError):
         keywords_ja = None
-    try:
-        keywords_en = item_metadata_json.get('keywords_en')
-    except (KeyError, IndexError):
         keywords_en = None
     try:
         # creator_mail = item_metadata_json['item_1538028816158']['creatorMails'][0].get('creatorMail')
