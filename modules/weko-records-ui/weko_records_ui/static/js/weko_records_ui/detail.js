@@ -55,15 +55,15 @@ require([
           let uri = res.data.redirect.replace('api/', '')
           document.location.href = uri;
         } else {
-          alert(res.msg);
+          if (res.code = -13) {
+            $('[role="alert"]').css('display','inline-block');
+          } else {
+            alert(res.msg);
+          }
         }
       },
       error: function (jqXHE, status) { }
     });
-  });
-
-  $('a#btn_edit_disabled').on('click', function () {
-    $('[role="alert"]').css('display','inline-block');
   });
 
   $('button#btn_close_alert').on('click', function () {

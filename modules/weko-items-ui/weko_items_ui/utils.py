@@ -269,9 +269,12 @@ def get_current_user():
     """
     current_id = current_user.get_id()
     return current_id
+
+
 def get_actionid(endpoint):
     """
     Get action_id by action_endpoint.
+
     parameter:
     return: action_id
     """
