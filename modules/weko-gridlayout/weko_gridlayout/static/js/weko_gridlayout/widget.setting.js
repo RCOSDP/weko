@@ -21,7 +21,6 @@ class ComponentSelectField extends React.Component {
                             )
                       });
                     } else {
-                        options =[];
                         options = result.repositories.map((repository) => {
                             return (
                                 <option key={repository.id} value={repository.id}>{repository.id}</option>
@@ -284,7 +283,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             for (let index in selectedIndex) {
                 if (options[option].value == selectedIndex[index] && options[option].value) {
                   let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                  if (!this.isValueExist(options[option].value), authorizedOptions) {
+                  if (!this.isValueExist(options[option].value, authorizedOptions) {
                       authorizedOptions.push(innerhtml);
                   }
                   registed = true;

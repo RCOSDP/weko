@@ -83,7 +83,7 @@ def get_widget_list(repository_id):
 
 def get_widget_preview(repository_id):
     """Get Widget preview by repository id.
-    
+
     :param repository_id: Identifier of the repository
     :return: Widget preview json.
     """
@@ -97,7 +97,7 @@ def get_widget_preview(repository_id):
         if widget_setting:
             settings = widget_setting.get('settings')
             if settings:
-                settings=json.loads(settings)
+                settings = json.loads(settings)
                 for item in settings:
                     widget_preview = dict()
                     widget_preview["x"] = item.get("x")
