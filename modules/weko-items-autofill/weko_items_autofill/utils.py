@@ -41,7 +41,6 @@ def cached_api_json(timeout=50, key_prefix="cached_api_json"):
     :param key_prefix: prefix key
     :return:
     """
-
     def caching(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
@@ -174,8 +173,10 @@ def get_crossref_record_data(pid, doi, item_type_id):
     :return:
     """
     result = dict()
-    api = CrossRefOpenURL(pid, doi).get_data()
-    api_data = get_crossref_data_by_key(api, 'all')
+    api_response = CrossRefOpenURL(pid, doi).get_data()
+    if api_response["error"]:
+        return result
+    api_data = get_crossref_data_by_key(api_response, 'all')
     with db.session.no_autoflush:
         items = ItemTypes.get_by_id(item_type_id)
     if items is None:
@@ -196,8 +197,10 @@ def get_cinii_record_data(naid, item_type_id):
     :return:
     """
     result = dict()
-    api = CiNiiURL(naid).get_data()
-    api_data = get_cinii_data_by_key(api, 'all')
+    api_response = CiNiiURL(naid).get_data()
+    if api_response["error"]:
+        return result
+    api_data = get_cinii_data_by_key(api_response, 'all')
     items = ItemTypes.get_by_id(item_type_id)
     if items is None:
         return result
@@ -399,7 +402,7 @@ def get_cinii_page_data(data):
     """
     try:
         result = int(data)
-        return pack_single_value_as_dict(result)
+        return pack_single_value_as_dict(str(result))
     except Exception:
         return pack_single_value_as_dict(None)
 
@@ -420,7 +423,7 @@ def get_cinii_numpage(data):
             end = int(data.get('prism:endingPage'))
             start = int(data.get('prism:startingPage'))
             num_pages = end - start + 1
-            return pack_single_value_as_dict(num_pages)
+            return pack_single_value_as_dict(str(num_pages))
         except Exception:
             return pack_single_value_as_dict(None)
 
@@ -456,38 +459,41 @@ def get_cinii_data_by_key(api, keyword):
     :return: data for keyword
     """
     data = api['response'].get('@graph')
-    data = data[0]
     result = dict()
-    if keyword == 'title' or keyword == 'alternative':
+    if not data or data:
+        result
+    data = data[0]
+    if (keyword == 'title' or keyword == 'alternative') \
+            and data.get('dc:title'):
         result[keyword] = get_basic_cinii_data(data.get('dc:title'))
-    elif keyword == 'creator':
+    elif keyword == 'creator' and data.get('dc:creator'):
         result[keyword] = get_cinii_creator_data(data.get('dc:creator'))
-    elif keyword == 'contributor':
+    elif keyword == 'contributor' and data.get('foaf:maker'):
         result[keyword] = get_cinii_contributor_data(data.get('foaf:maker'))
-    elif keyword == 'description':
+    elif keyword == 'description' and data.get('dc:description'):
         result[keyword] = get_cinii_description_data(
             data.get('dc:description')
         )
-    elif keyword == 'subject':
+    elif keyword == 'subject' and data.get('foaf:topic'):
         result[keyword] = get_cinii_subject_data(data.get('foaf:topic'))
-    elif keyword == 'sourceTitle':
+    elif keyword == 'sourceTitle' and data.get('prism:publicationName'):
         result[keyword] = get_basic_cinii_data(
             data.get('prism:publicationName')
         )
-    elif keyword == 'volume':
+    elif keyword == 'volume' and data.get('prism:volume'):
         result[keyword] = pack_single_value_as_dict(data.get('prism:volume'))
-    elif keyword == 'issue':
+    elif keyword == 'issue' and data.get('prism:number'):
         result[keyword] = pack_single_value_as_dict(data.get('prism:number'))
-    elif keyword == 'pageStart':
+    elif keyword == 'pageStart' and data.get('prism:startingPage'):
         result[keyword] = get_cinii_page_data(data.get('prism:startingPage'))
-    elif keyword == 'pageEnd':
+    elif keyword == 'pageEnd' and data.get('prism:endingPage'):
         result[keyword] = get_cinii_page_data(data.get('prism:endingPage'))
     elif keyword == 'numPages':
         result[keyword] = get_cinii_numpage(data)
-    elif keyword == 'date':
+    elif keyword == 'date' and data.get('prism:publicationDate'):
         result[keyword] = get_cinii_date_data(
             data.get('prism:publicationDate'))
-    elif keyword == 'publisher':
+    elif keyword == 'publisher' and data.get('dc:publisher'):
         result[keyword] = get_basic_cinii_data(data.get('dc:publisher'))
     elif keyword == 'sourceIdentifier':
         result[keyword] = pack_data_with_multiple_type_cinii(
@@ -505,7 +511,7 @@ def get_cinii_data_by_key(api, keyword):
         )
     elif keyword == 'all':
         for key in current_app.config[
-            'WEKO_ITEMS_AUTOFILL_CROSSREF_REQUIRED_ITEM']:
+                'WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM']:
             result[key] = get_cinii_data_by_key(api, key).get(key)
     return result
 
@@ -571,14 +577,14 @@ def get_crossref_numpage_data(data):
         Number of page is calculated and packed
 
     """
-    numpages = data.split('-')
-    if len(numpages) == 1:
-        DEFAULT_PAGE_NUMBER = 1
-        return pack_single_value_as_dict(DEFAULT_PAGE_NUMBER)
+    num_pages = data.split('-')
+    if len(num_pages) == 1:
+        return pack_single_value_as_dict(
+            current_app.config['WEKO_ITEMS_AUTOFILL_DEFAULT_PAGE_NUMBER'])
     else:
         try:
-            num_page = int(numpages[1]) - int(numpages[0])
-            return pack_single_value_as_dict(num_page)
+            num_page = int(num_pages[1]) - int(num_pages[0])
+            return pack_single_value_as_dict(str(num_page))
         except Exception:
             return pack_single_value_as_dict(None)
 
@@ -594,12 +600,12 @@ def get_start_and_end_page(data, index):
         Start/End date is packed
 
     """
-    numpages = data.split('-')
-    if len(numpages) == 1:
+    num_pages = data.split('-')
+    if len(num_pages) == 1:
         try:
             start_page = int(data)
             new_data = dict()
-            new_data['@value'] = start_page
+            new_data['@value'] = str(start_page)
             return new_data
         except Exception:
             new_data = dict()
@@ -608,7 +614,8 @@ def get_start_and_end_page(data, index):
     else:
         try:
             new_data = dict()
-            new_data['@value'] = int(numpages[index])
+            end_page = int(num_pages[index])
+            new_data['@value'] = str(end_page)
             return new_data
         except Exception:
             new_data = dict()
@@ -710,7 +717,7 @@ def get_crossref_data_by_key(api, keyword):
         result[keyword] = get_crossref_relation_data(created.get('ISBN'))
     elif keyword == 'all':
         for key in current_app.config[
-            'WEKO_ITEMS_AUTOFILL_CROSSREF_REQUIRED_ITEM']:
+                'WEKO_ITEMS_AUTOFILL_CROSSREF_REQUIRED_ITEM']:
             result[key] = get_crossref_data_by_key(api, key).get(key)
     return result
 
@@ -738,7 +745,7 @@ def get_crossref_autofill_item(item_id):
     jpcoar_item = get_item_id(item_id)
     crossref_req_item = dict()
     for key in current_app.config[
-        'WEKO_ITEMS_AUTOFILL_CROSSREF_REQUIRED_ITEM']:
+            'WEKO_ITEMS_AUTOFILL_CROSSREF_REQUIRED_ITEM']:
         if jpcoar_item.get(key) is not None:
             crossref_req_item[key] = jpcoar_item.get(key)
     return crossref_req_item
@@ -784,7 +791,7 @@ def get_autofill_key_tree(schema_form, item):
                 for date in val:
                     date_object = date.get("date")
                     if date_object.get("@value") and \
-                        date_object.get("@attributes"):
+                            date_object.get("@attributes"):
                         key_data = get_key_value(
                             schema_form, date_object,
                             date.get("model_id"))
@@ -874,7 +881,7 @@ def get_autofill_key_path(schema_form, parent_key, child_key):
                         for item_data_child in item_data_child_list:
                             if child_key in item_data_child.get("key"):
                                 key_result = item_data_child.get("key")
-        result['key'] = key_result.replace("[]", "")
+        result['key'] = key_result
     except Exception as e:
         result['key'] = None
         result['error'] = str(e)
@@ -902,17 +909,20 @@ def build_record_model(item_autofill_key, api_data):
         multi_data = list()
         parent_key = ""
         child_key = ""
+        is_list = False
         if value.get("@value"):
             key_list = value.get("@value").split(".")
             if key_list:
-                parent_key = key_list[0]
+                if "[]" in key_list[0]:
+                    is_list = True
+                parent_key = key_list[0].replace("[]", "")
                 if not isinstance(model.get(parent_key), list):
                     model[parent_key] = list()
                 if len(key_list) == 2:
                     child_data = dict()
                 elif len(key_list) == 3:
                     child_data = list()
-                    child_key = key_list[1]
+                    child_key = key_list[1].replace("[]", "")
         else:
             continue
 
@@ -936,9 +946,15 @@ def build_record_model(item_autofill_key, api_data):
                 model[parent_key].append({child_key: child_data})
             else:
                 if multi_data:
-                    model[parent_key] = multi_data
+                    if is_list:
+                        model[parent_key] = multi_data
+                    else:
+                        model[parent_key] = multi_data[0]
                 elif child_data:
-                    model[parent_key].append(child_data)
+                    if is_list:
+                        model[parent_key].append(child_data)
+                    else:
+                        model[parent_key] = child_data
             record_model.append(model)
 
     return record_model
@@ -953,15 +969,15 @@ def build_record(data, value, child_data, sub_child_data):
     :param sub_child_data: Sub child data
     """
     for k, v in data.items():
-        if not value.get(k):
+        if not value.get(k) or not v:
             continue
         if isinstance(child_data, dict):
             child_key_list = value.get(k).split(".")
             if child_key_list and len(child_key_list) == 2:
-                sub_key = child_key_list[1]
+                sub_key = child_key_list[1].replace("[]", "")
                 child_data[sub_key] = v
         elif isinstance(child_data, list):
             child_key_list = value.get(k).split(".")
             if child_key_list and len(child_key_list) == 3:
-                sub_key = child_key_list[2]
+                sub_key = child_key_list[2].replace("[]", "")
                 sub_child_data[sub_key] = v

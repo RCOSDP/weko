@@ -72,3 +72,6 @@ WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM = [
     "relation"
 ]
 """CiNii required item"""
+
+WEKO_ITEMS_AUTOFILL_DEFAULT_PAGE_NUMBER = 1
+"""Default page number"""
