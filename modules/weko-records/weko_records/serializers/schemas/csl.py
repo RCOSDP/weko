@@ -73,7 +73,7 @@ def _get_creator_name(obj, inName):
         return name
     return None
 
-def _get_creator_name_basefilesview(obj, inName):
+def _get_creator_name_ex_it(obj, inName):
     """Parsing creator data for multiple item type."""
     itemdatas = _get_itemdata(obj, '作成者')
     if itemdatas is None:
@@ -98,7 +98,7 @@ class CreatorSchema(Schema):
         """Get family name."""
         item_type = get_item_type_name_id(obj.get('item_type_id'))
         if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
-            family_name = _get_creator_name_basefilesview(obj, 'familyName')
+            family_name = _get_creator_name_ex_it(obj, 'familyName')
         else:
             family_name = _get_creator_name(obj, "Family Name")
 
@@ -109,9 +109,9 @@ class CreatorSchema(Schema):
         """Get given name."""
         item_type = get_item_type_name_id(obj.get('item_type_id'))
         if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
-            given_name = _get_creator_name_basefilesview(obj, 'givenName')
+            given_name = _get_creator_name_ex_it(obj, 'givenName')
         else:
-            given_name = _get_creator_name(obj, "Creator Name")
+            given_name = _get_creator_name(obj, "Given Name")
 
         if given_name:
             return given_name
@@ -120,9 +120,9 @@ class CreatorSchema(Schema):
         """Get suffix name."""
         item_type = get_item_type_name_id(obj.get('item_type_id'))
         if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
-            suffix_name = _get_creator_name_basefilesview(obj, 'creatorName')
+            suffix_name = _get_creator_name_ex_it(obj, 'creatorName')
         else:
-            suffix_name = _get_creator_name(obj, "Given Name")
+            suffix_name = _get_creator_name(obj, "Creator Name")
 
         if suffix_name:
             return suffix_name
