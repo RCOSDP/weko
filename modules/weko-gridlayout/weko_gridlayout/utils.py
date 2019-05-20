@@ -289,8 +289,19 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
                 item['text_color'] = data_result.get('text_color')
                 item['name'] = data_result.get('label')
                 item['type'] = data_result.get('widget_type')
+                settings = data_result.get('settings')
                 if str(item.get('type')) == "Free description":
-                    item['description'] = data_result.get('description')
+                    item['description'] = settings.get('description')
+                elif str(item.get('type')) == "Notice":
+                    item['description'] = settings.get('description')
+                    if settings.get('more_description'):
+                        item['read_more'] = settings.get('read_more')
+                        item['hide_the_rest'] = settings.get('hide_the_rest')
+                        item['more_description'] = settings.get('more_description')
+                    else:
+                        item.pop('read_more', None)
+                        item.pop('hide_the_rest', None)
+                        item.pop('more_description', None)
                 else:
                     item.pop('description', None)
     data = json.dumps(json_data)
