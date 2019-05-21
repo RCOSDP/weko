@@ -455,15 +455,33 @@ function handleSharePermission(value) {
       }
 
       $scope.clearAllField = function() {
-        for (var property in $scope.depositionForm) {
-          if ($scope.depositionForm.hasOwnProperty(property)) {
-            if (property.indexOf("item") != -1) {
-              this.setValueToField(property, "");
-            }
-            if(typeof($scope.depositionForm[property]) == "object" && $scope.depositionForm[property].hasOwnProperty("$dateValue")) {
-              $scope.depositionForm[property].$dateValue = null;
+        for (let item in $rootScope.recordsVM.invenioRecordsModel) {
+          this.clearAllFieldCallBack($rootScope.recordsVM.invenioRecordsModel[item])
+        }
+      }
+
+      $scope.clearAllFieldCallBack = function(item) {
+        if ($.isEmptyObject(item)) {
+          return "";
+        }
+        if (Array.isArray(item)) {
+          let subItem = item[0];
+          let result = [];
+          result.push(this.clearAllFieldCallBack(subItem));
+        } else {
+          for (let subItem in item) {
+            if ($.isEmptyObject(item[subItem])) {
+              // Do nothing
+            } else if (Array.isArray(item[subItem])) {
+              let childItem = item[subItem][0];
+              let result = [];
+              result.push(this.clearAllFieldCallBack(childItem))
+              item[subItem] = result;
+            } else {
+              item[subItem] = "";
             }
           }
+          return item;
         }
       }
 
