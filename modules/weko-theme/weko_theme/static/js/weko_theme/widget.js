@@ -55,7 +55,7 @@ let PageBodyGrid = function () {
 
     if (node.type == "Free description" || node.type == "Notice") {
       description = node.description;
-      heightHeading = (node.height * 1/3) * 100%;
+      heightHeading = (node.height * 1/3) * 100;
       heightDescription = 100 - heightHeading;
     }
 
