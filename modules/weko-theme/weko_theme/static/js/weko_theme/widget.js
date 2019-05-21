@@ -50,20 +50,16 @@ let PageBodyGrid = function () {
     let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
     let backgroundColor = node.background_color;
     let description = "";
-//    let heightHeading = "";
-//    let heightDescription = "";
 
     if (node.type == "Free description" || node.type == "Notice") {
       description = node.description;
-//      heightHeading = ((1/node.height) * 100).toFixed(2);
-//      heightDescription = 100 - heightHeading;
     }
 
     let template =
       '<div class="grid-stack-item">' +
       ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
-      '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';"><strong>' + node.name + '</strong></div>' +
-      '     <div class="panel-body ql-editor">' + description + '</div>' +
+      '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';position: inherit;width: 100%;top: 0;"><strong>' + node.name + '</strong></div>' +
+      '     <div class="panel-body ql-editor" style="padding-top: 30px;">' + description + '</div>' +
       '   </div>' +
       '</div>';
     return template;
