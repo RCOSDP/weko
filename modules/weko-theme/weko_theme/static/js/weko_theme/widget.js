@@ -50,21 +50,21 @@ let PageBodyGrid = function () {
     let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
     let backgroundColor = node.background_color;
     let description = "";
-    let heightHeading = "";
-    let heightDescription = "";
-    console.log('=============Node Height==============', node.height)
+//    let heightHeading = "";
+//    let heightDescription = "";
+
     if (node.type == "Free description" || node.type == "Notice") {
       description = node.description;
-      heightHeading = ((1/node.height) * 100).toFixed(2);
-      heightDescription = 100 - heightHeading;
+//      heightHeading = ((1/node.height) * 100).toFixed(2);
+//      heightDescription = 100 - heightHeading;
     }
 
     let template =
       '<div class="grid-stack-item">' +
-      ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + '; overflow-y: hidden !important;">' +
-      '   <div style="height: 100%;" data-gs-height="'+ node.height +'">' +
-      '     <div class="panel-heading widget-header" style="color: ' + labelColor + '; height: '+ heightHeading + '%;"><strong>' + node.name + '</strong></div>' +
-      '     <div class="panel-body ql-editor" style="overflow-y: auto;height: '+ heightDescription + '%;">' + description + '</div>' +
+      ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
+      '   <div>' +
+      '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';"><strong>' + node.name + '</strong></div>' +
+      '     <div class="panel-body ql-editor">' + description + '</div>' +
       '   </div>' +
       ' </div>' +
       '</div>';
