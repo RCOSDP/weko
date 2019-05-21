@@ -455,6 +455,7 @@ function handleSharePermission(value) {
       }
 
       $scope.clearAllField = function() {
+        $rootScope.recordsVM.invenioRecordsModel["pubdate"] = "";
         for (let item in $rootScope.recordsVM.invenioRecordsModel) {
           this.clearAllFieldCallBack($rootScope.recordsVM.invenioRecordsModel[item])
         }
