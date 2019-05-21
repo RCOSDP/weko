@@ -144,6 +144,7 @@ def search():
             = workFlowActivity.get_activity_index_search(activity_id=activity_id)
         return render_template(
             'weko_workflow/activity_detail.html',
+            render_widgets=True,
             activity=activity_detail,
             item=item,
             steps=steps,
@@ -171,6 +172,7 @@ def search():
                 journal_info = get_journal_info(cur_index_id)
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
+            render_widgets=True,
             index_id=cur_index_id,
             community_id=community_id,
             sort_option=sort_options,

@@ -49,24 +49,22 @@
 {%- endblock page_footer %}
 
 {% block page_body %}
-{%-if not community %}
-{{super()}}
-{%- else%}
-<div class="communities">
-<div id="community-id" name="community-id" hidden>{{ community.id }}</div>
-{{ community_header(community, subtitle='') }}
-  <div id="page_body" class="grid-stack">
-  <div id="main_contents">
-{{super()}}
-  </div>
-  </div>
-{{ community_footer(community, link=False, subtitle='') }}
-</div>
-<div class="communities">
-</div>
-{%- endif%}
+  {%-if not community %}
+    {{ super() }}
+  {%- else%}
+    <div class="communities">
+      <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
+      {{ community_header(community, subtitle='') }}
+      <div id="page_body" class="grid-stack">
+        <div id="main_contents">
+        {{ super() }}
+        </div>
+      </div>
+      {{ community_footer(community, link=False, subtitle='') }}
+    </div>
+    <div class="communities"></div>
+  {%- endif%}
 {% endblock page_body %}
-
 
 {%- block page_body_main %}
 <div class="row">

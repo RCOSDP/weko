@@ -89,6 +89,7 @@ def index(item_type_id=0):
             need_file = True
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
+            render_widgets=True,
             need_file=need_file,
             record={},
             jsonschema=json_schema,
@@ -321,13 +322,15 @@ def items_index(pid_value=0):
         if request.method == 'GET':
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
+                render_widgets=True,
                 pid_value=pid_value,
                 action=action)
 
         if request.headers['Content-Type'] != 'application/json':
             flash(_('invalide request'), 'error')
             return render_template(
-                current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'])
+                current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
+                render_widgets=True)
 
         data = request.get_json()
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -371,6 +374,7 @@ def iframe_items_index(pid_value=0):
         if request.method == 'GET':
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
+                render_widgets=True,
                 pid_value=pid_value,
                 action=action,
                 activity=session['itemlogin_activity'],
@@ -387,7 +391,8 @@ def iframe_items_index(pid_value=0):
         if request.headers['Content-Type'] != 'application/json':
             flash(_('Invalid Request'), 'error')
             return render_template(
-                'weko_items_ui/iframe/item_index.html')
+                'weko_items_ui/iframe/item_index.html',
+                render_widgets=True)
 
         data = request.get_json()
         sessionstore = RedisStore(redis.StrictRedis.from_url(

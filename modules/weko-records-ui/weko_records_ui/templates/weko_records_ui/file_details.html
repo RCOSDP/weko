@@ -22,6 +22,7 @@
 {% extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
 
 {%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{% set render_widgets = True %}
 
 {%- block css %}
   {{ super() }}
