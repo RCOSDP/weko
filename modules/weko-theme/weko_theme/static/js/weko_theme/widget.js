@@ -60,8 +60,10 @@ let PageBodyGrid = function () {
     let template =
       '<div class="grid-stack-item">' +
       ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + '; overflow-y: hidden !important;">' +
-      '   <div class="panel-heading widget-header" style="color: ' + labelColor + ';"><strong>' + node.name + '</strong></div>' +
-      '   <div class="panel-body ql-editor" style="overflow-y: auto;height: '+ heightDescription + ';">' + description + '</div>' +
+      '   <div style="height: 100%;">' +
+      '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';"><strong>' + node.name + '</strong></div>' +
+      '     <div class="panel-body ql-editor" style="overflow-y: auto;height: '+ heightDescription + ';">' + description + '</div>' +
+      '   </div>' +
       ' </div>' +
       '</div>';
     return template;
