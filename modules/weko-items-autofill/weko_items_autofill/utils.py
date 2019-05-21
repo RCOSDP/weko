@@ -499,7 +499,7 @@ def get_cinii_data_by_key(api, keyword):
     elif keyword == 'sourceIdentifier':
         result[keyword] = pack_data_with_multiple_type_cinii(
             data.get('prism:issn'),
-            'ISSN（非推奨）',
+            'ISSN',
             data.get('cinii:ncid'),
             'NCID'
         )
