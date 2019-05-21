@@ -52,11 +52,11 @@ let PageBodyGrid = function () {
     let description = "";
     let heightHeading = "";
     let heightDescription = "";
-
+    console.log('=============Node Height==============', node.height)
     if (node.type == "Free description" || node.type == "Notice") {
       description = node.description;
-      heightHeading = (node.height * 1/3) * 100;
-      heightDescription = 100 - heightHeading;
+      heightHeading = (node.height * 1/3) * 10;
+      heightDescription = 10 - heightHeading;
     }
 
     let template =
