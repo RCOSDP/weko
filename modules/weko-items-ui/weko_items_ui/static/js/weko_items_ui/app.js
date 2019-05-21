@@ -468,29 +468,32 @@ function handleSharePermission(value) {
       }
 
       $scope.setRecordDataFromApi = function(param) {
-        $.ajax({
+        let request = {
           url: '/api/autofill/get_auto_fill_record_data',
           headers: {
             'Content-Type': 'application/json'
           },
           method: "POST",
           data: JSON.stringify(param),
-          dataType: "json",
-          async: false,
-          success: (data, status) => {
+          dataType: "json"
+        };
+
+        InvenioRecordsAPI.request(request).then(
+          function success(response) {
+            let data = response.data;
             if (data.error) {
-              this.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
+              $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
             } else if (!$.isEmptyObject(data.result)) {
-              this.clearAllField();
-              this.setRecordDataCallBack(data);
+              $scope.clearAllField();
+              $scope.setRecordDataCallBack(data);
             } else {
-              this.setAutoFillErrorMessage($("#autofill_error_doi").val());
+              $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
           },
-          error: (data, status) => {
-            this.setAutoFillErrorMessage("Cannot connect to server!");
+          function error(response) {
+             $scope.setAutoFillErrorMessage("Cannot connect to server!");
           }
-        });
+        );
       }
 
       $scope.setRecordDataCallBack = function(data) {
