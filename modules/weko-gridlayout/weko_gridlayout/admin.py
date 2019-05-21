@@ -129,6 +129,37 @@ class WidgetSettingView(ModelView):
                 self.column_type_formatters_detail,
             )
 
+    @expose('/details/')
+    def details_view(self):
+        """
+            Details model view
+        """
+        return_url = get_redirect_target() or self.get_url('.index_view')
+
+        if not self.can_view_details:
+            return redirect(return_url)
+
+        id = helpers.get_mdict_item_or_list(request.args, 'id')
+        if id is None:
+            return redirect(return_url)
+
+        model = self.get_one(id)
+
+        if model is None:
+            flash(gettext('Record does not exist.'), 'error')
+            return redirect(return_url)
+
+        if self.details_modal and request.args.get('modal'):
+            template = self.details_modal_template
+        else:
+            template = self.details_template
+
+        return self.render(template,
+                           model=model,
+                           details_columns=self._details_columns,
+                           get_value=self.get_detail_value,
+                           return_url=return_url)
+
     def get_query(self):
         return self.session.query(
             self.model).filter(self.model.is_deleted == 'False')
