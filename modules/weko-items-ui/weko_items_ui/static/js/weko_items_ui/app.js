@@ -467,12 +467,11 @@ function handleSharePermission(value) {
         }
         if (Array.isArray(item)) {
           let subItem = item[0];
-          let result = [];
-          result.push(this.clearAllFieldCallBack(subItem));
+          this.clearAllFieldCallBack(subItem)
         } else {
           for (let subItem in item) {
             if ($.isEmptyObject(item[subItem])) {
-              // Do nothing
+              continue;
             } else if (Array.isArray(item[subItem])) {
               let childItem = item[subItem][0];
               let result = [];
@@ -516,12 +515,13 @@ function handleSharePermission(value) {
       }
 
       $scope.setRecordDataCallBack = function(data) {
-
         const THREE_FLOOR_ITEM = [
           "creator",
           "relation",
           "contributor"
         ];
+        const CREATOR_NAMES = "creatorNames";
+
         data.result.forEach(function(item){
           if (THREE_FLOOR_ITEM.includes(item.key)){
             let keys = Object.keys(item);
@@ -533,7 +533,7 @@ function handleSharePermission(value) {
                       listSubData.forEach(function(subData) {
                         let subKey = Object.keys(subData)[0];
                         if (!$.isEmptyObject(subData[subKey])){
-                          if (subData.hasOwnProperty('creatorNames')) {
+                          if (subData.hasOwnProperty(CREATOR_NAMES)) {
                             $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey][0]['creatorName'] = subData.creatorNames;
                           }else{
                             $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey] = subData[subKey];
@@ -541,9 +541,9 @@ function handleSharePermission(value) {
                         }
                       });
                     } else if (typeof listSubData === 'object') {
-                      if (listSubData.hasOwnProperty('creatorNames') &&
-                           $rootScope.recordsVM.invenioRecordsModel[itemKey].hasOwnProperty("creatorNames")) {
-                        $rootScope.recordsVM.invenioRecordsModel[itemKey]['creatorNames'][0]['creatorName'] = listSubData.creatorNames;
+                      if (listSubData.hasOwnProperty(CREATOR_NAMES) &&
+                           $rootScope.recordsVM.invenioRecordsModel[itemKey].hasOwnProperty(CREATOR_NAMES)) {
+                        $rootScope.recordsVM.invenioRecordsModel[itemKey][CREATOR_NAMES][0]['creatorName'] = listSubData.creatorNames;
                       }
                     }
                   }
