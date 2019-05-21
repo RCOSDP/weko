@@ -1145,6 +1145,9 @@ function handleSharePermission(value) {
                   titleField = titleField[0];
                 }
               }
+              if (titleField && titleField[0]) {
+                titleField = titleField[0];
+              }
               if (titleField.hasOwnProperty(titleID[1])) {
                 title = titleField[titleID[1]];
                 if (titleField.hasOwnProperty(titleID[2]) && titleField[titleID[2]]) {
