@@ -198,7 +198,8 @@ def get_cinii_record_data(naid, item_type_id):
     """
     result = dict()
     api_response = CiNiiURL(naid).get_data()
-    if api_response["error"]:
+    if api_response["error"]\
+            or not isinstance(api_response['response'], dict):
         return result
     api_data = get_cinii_data_by_key(api_response, 'all')
     items = ItemTypes.get_by_id(item_type_id)
