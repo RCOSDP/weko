@@ -271,6 +271,12 @@ function handleSharePermission(value) {
 }
 
 (function (angular) {
+  function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }
   // Bootstrap it!
   angular.element(document).ready(function () {
     angular.module('wekoRecords.controllers', []);
@@ -1234,7 +1240,7 @@ function handleSharePermission(value) {
         };
         InvenioRecordsAPI.request(request).then(
           function success(response) {
-            alert(response.data.msg);
+            addAlert(response.data.msg);
           },
           function error(response) {
             alert(response);

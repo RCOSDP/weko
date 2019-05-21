@@ -22,6 +22,13 @@ $(document).ready(function () {
   });
 });
 
+function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }
+
 var save = function () {
   let api_code = $.trim($('#input_type').val());
   let cert_data = $.trim($('#cross_ref_account').val());
@@ -51,7 +58,7 @@ var save = function () {
       } else if (!data.results) {
         alert('Account information is invalid. Please check again.');
       } else {
-        alert('Account info has been saved successfully.');
+        addAlert('Account info has been saved successfully.');
       }
     },
     error: function (error) {

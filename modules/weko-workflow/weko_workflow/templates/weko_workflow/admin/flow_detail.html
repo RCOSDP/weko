@@ -27,6 +27,7 @@
 
 {%- block body %}
 <div class="row">
+ <div id="alerts"></div>
   <div class="col-sm-offset-2">
     <div class="col-sm-4">
       <div class="form-horizontal">
@@ -303,6 +304,14 @@
       Object.assign(apply_action, {user_deny: $(this).is(':checked')});
       localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     });
+    
+    function addAlert(message) {
+        $('#alerts').append(
+            '<div class="alert alert-light" id="alert-style">' +
+            '<button type="button" class="close" data-dismiss="alert">' +
+            '&times;</button>' + message + '</div>');
+         }
+
     $('#btn_submit').on('click', function(){
       $.ajax({
         url: $(this).data('uri'),
@@ -312,7 +321,7 @@
         data: localStorage.getItem('apply_action_list'),
         success: function(data, status) {
           uptOrderInfo(false);
-          alert(data.msg);
+          addAlert(data.msg);
         },
         error: function(jqXHR, status) {
           alert('update failed');

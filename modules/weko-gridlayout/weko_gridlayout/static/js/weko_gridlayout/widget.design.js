@@ -73,7 +73,8 @@ class Repository extends React.Component {
     render() {
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
+              <div id="alerts"></div>  
+              <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
                 <div class="controls col-xs-5">
                     <select id="repository-id" value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
                         <option value="0">Please select the Repository</option>
@@ -556,6 +557,13 @@ function disableMainContentButton(isDisable){
     }
 }
 
+function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }
+
 /**
  * Save widget design setting.
  * @param {*} widgetDesignData
@@ -595,7 +603,7 @@ function saveWidgetDesignSetting(widgetDesignData) {
                     alert('Fail to save Widget design. Please check again.');
                     return;
                 } else {
-                    alert('Widget design has been saved successfully.');
+                    addAlert('Widget design has been saved successfully.');
                     return;
                 }
             },

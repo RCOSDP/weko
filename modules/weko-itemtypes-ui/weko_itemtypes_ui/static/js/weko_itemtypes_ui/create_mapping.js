@@ -21,6 +21,13 @@
     page_global.src_mapping_name = $('#item-type-lists').val();
     page_global.dst_mapping_name = $('#item-type-lists').val();
 
+    function addAlert(message) {
+        $('#alerts').append(
+            '<div class="alert alert-light" id="alert-style">' +
+            '<button type="button" class="close" data-dismiss="alert">' +
+            '&times;</button>' + message + '</div>');
+         }
+
     $("#item-type-lists").change(function (ev) {
       page_global.dst_mapping_name = $(this).val();
       if(page_global.showDiag) {
@@ -684,8 +691,9 @@
         data: JSON.stringify(data),
         success: function(data,textStatus){
           page_global.showDiag = false;
-          $('.modal-body').text(data.msg);
-          $('#myModal').modal('show');
+          addAlert(data.msg);
+          //$('.modal-body').text(data.msg);
+          //$('#myModal').modal('show');
         },
         error: function(textStatus,errorThrown){
           $('.modal-body').text('Error: ' + JSON.stringify(textStatus));
