@@ -55,8 +55,8 @@ let PageBodyGrid = function () {
     console.log('=============Node Height==============', node.height)
     if (node.type == "Free description" || node.type == "Notice") {
       description = node.description;
-      heightHeading = (node.height * 1/3) * 10;
-      heightDescription = 10 - heightHeading;
+      heightHeading = (node.height/3) * 100).toFixed(2);
+      heightDescription = 100 - heightHeading;
     }
 
     let template =
