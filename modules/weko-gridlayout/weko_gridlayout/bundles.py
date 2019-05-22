@@ -67,16 +67,16 @@ katex_min_css = Bundle(
 )
 
 katex_min_js = Bundle(
-    'css/weko_gridlayout/katex.min.js',
+    'js/weko_gridlayout/katex.min.js',
     output="gen/weko_gridlayout_katex_min.%(version)s.js",
 )
 
 prop_types_js = Bundle(
-    'css/weko_gridlayout/prop.types.js',
+    'js/weko_gridlayout/prop.types.js',
     output="gen/weko_gridlayout_prop_types.%(version)s.js",
 )
 
 react_quill_js = Bundle(
-    'css/weko_gridlayout/react.quill.js',
+    'js/weko_gridlayout/react.quill.js',
     output="gen/weko_gridlayout_react_quill.%(version)s.js",
 )
