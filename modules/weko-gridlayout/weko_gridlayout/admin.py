@@ -219,7 +219,7 @@ class WidgetSettingView(ModelView):
     )
 
     column_searchable_list = (
-        'repository_id', 'widget_type', 'settings')
+        'repository_id', 'widget_type', 'label', 'is_enabled')
 
     column_details_list = (
         'repository_id',
