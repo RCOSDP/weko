@@ -45,6 +45,8 @@ let PageBodyGrid = function () {
   }.bind(this);
 
   this.widgetTemplate = function (node) {
+
+    console.log('================NODE==============', node);
     let labelColor = node.label_color;
     let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
     let backgroundColor = node.background_color;
@@ -61,20 +63,16 @@ let PageBodyGrid = function () {
     '<div class="grid-stack-item">' +
     '	<div class="container-fluid" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
     '		<div class="row">' +
-    '			<div class="col-sm-12 col-md-12 col-md-12">' +
     '				<div class="panel panel-default">' +
     '					<div class="panel-heading widget-header" style="color: ' + labelColor + ';">' +
     '						<strong>' + node.name + '</strong>' +
     '					</div>' +
     '				</div>' +
-    '			</div>' +
     '		</div>' +
     '		<div class="row">' +
-    '			<div class="col-sm-12 col-md-12 col-md-12">' +
     '				<div class="panel panel-default">' +
     '					<div class="panel-body ql-editor">' + description + '</div>' +
     '				</div>' +
-    '			</div>' +
     '		</div>' +
     '	</div>' +
     '</div>';
