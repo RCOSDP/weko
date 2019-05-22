@@ -45,7 +45,6 @@ let PageBodyGrid = function () {
   }.bind(this);
 
   this.widgetTemplate = function (node) {
-    console.log('=============Node==============', node)
     let labelColor = node.label_color;
     let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
     let backgroundColor = node.background_color;
@@ -65,7 +64,7 @@ let PageBodyGrid = function () {
       '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
       '     </div>' +
       '     <div class="panel-body ql-editor" style="padding-top: 30px;">' + description + '</div>' +
-      '   </div>' +
+      ' </div>' +
       '</div>';
     return template;
   };
