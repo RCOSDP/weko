@@ -428,8 +428,7 @@ class WekoDeposit(Deposit):
         # fix schema url
         record = RecordMetadata.query.get(self.pid.object_uuid)
         if record and record.json and '$schema' in record.json:
-            record.json.update({'$schema': '/items/jsonschema/'
-                                + record.json['item_type_id']})
+            record.json.pop('$schema')
             flag_modified(record, 'json')
             db.session.merge(record)
 

@@ -129,6 +129,7 @@ static:
 
 # Monitoring
 flower:
+  restart: "always"
   image: mher/flower
   command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
   ports:

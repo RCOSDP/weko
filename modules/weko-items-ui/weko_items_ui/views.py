@@ -29,16 +29,20 @@ from flask import Blueprint, abort, current_app, flash, json, jsonify, \
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_i18n.ext import current_i18n
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
+from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
+from weko_workflow.api import GetCommunity, WorkActivity
+from weko_workflow.models import ActionStatusPolicy
 
 from .permissions import item_permission
-from .utils import get_current_user, get_list_email, get_list_username, \
-    get_user_info_by_email, get_user_info_by_username, get_user_information, \
-    get_user_permission, validate_user
+from .utils import get_actionid, get_current_user, get_list_email, \
+    get_list_username, get_user_info_by_email, get_user_info_by_username, \
+    get_user_information, get_user_permission, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -433,6 +437,25 @@ def default_view_method(pid, record, template=None):
             url_for('.index', item_type_id=lists[0].item_type[0].id))
     json_schema = '/items/jsonschema/{}'.format(item_type_id)
     schema_form = '/items/schemaform/{}'.format(item_type_id)
+    sessionstore = RedisStore(redis.StrictRedis.from_url(
+        'redis://{host}:{port}/1'.format(
+            host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
+            port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
+    files = to_files_js(record)
+    record = record.item_metadata
+    endpoints = {}
+    activity_session = session['activity_info']
+    activity_id = activity_session.get('activity_id', None)
+    if activity_id and sessionstore.redis.exists(
+            'activity_item_' + activity_id):
+        item_str = sessionstore.get('activity_item_' + activity_id)
+        item_json = json.loads(item_str)
+        if 'metainfo' in item_json:
+            record = item_json.get('metainfo')
+        if 'files' in item_json:
+            files = item_json.get('files')
+        if 'endpoints' in item_json:
+            endpoints = item_json.get('endpoints')
     need_file = False
     # if 'filemeta' in json.dumps(item_type.schema):
     if 'filename' in json.dumps(item_type.schema):
@@ -440,14 +463,16 @@ def default_view_method(pid, record, template=None):
     return render_template(
         template,
         need_file=need_file,
-        record=record.item_metadata,
+        record=record,
         jsonschema=json_schema,
         schemaform=schema_form,
         lists=lists,
         links=to_links_js(pid),
         id=item_type_id,
-        files=to_files_js(record),
-        pid=pid
+        files=files,
+        pid=pid,
+        item_save_uri=url_for('weko_items_ui.iframe_save_model'),
+        endpoints=endpoints
     )
 
 
@@ -467,25 +492,26 @@ def to_links_js(pid):
 def to_files_js(record):
     """List files in a deposit."""
     res = []
-
-    for f in record.files:
-        res.append({
-            'key': f.key,
-            'version_id': f.version_id,
-            'checksum': f.file.checksum,
-            'size': f.file.size,
-            'completed': True,
-            'progress': 100,
-            'links': {
-                'self': (
-                    current_app.config['DEPOSIT_FILES_API'] +
-                    u'/{bucket}/{key}?versionId={version_id}'.format(
-                        bucket=f.bucket_id,
-                        key=f.key,
-                        version_id=f.version_id,
-                    )),
-            }
-        })
+    files = record.files
+    if files is not None:
+        for f in files:
+            res.append({
+                'key': f.key,
+                'version_id': f.version_id,
+                'checksum': f.file.checksum,
+                'size': f.file.size,
+                'completed': True,
+                'progress': 100,
+                'links': {
+                    'self': (
+                        current_app.config['DEPOSIT_FILES_API'] +
+                        u'/{bucket}/{key}?versionId={version_id}'.format(
+                            bucket=f.bucket_id,
+                            key=f.key,
+                            version_id=f.version_id,
+                        )),
+                }
+            })
 
     return res
 
@@ -640,3 +666,101 @@ def get_current_login_user_id():
         result['error'] = str(e)
 
     return jsonify(result)
+
+
+@blueprint_api.route('/prepare_edit_item', methods=['POST'])
+@login_required
+def prepare_edit_item():
+    """Prepare_edit_item.
+
+    Host the api which provide 2 service:
+        Create new activity for editing flow
+        Check permission: check if user is owner/admin/shared user
+    request:
+        header: Content type must be json
+        data:
+            pid_value: pid_value
+    return: The result json:
+        code: status code,
+        msg: meassage result,
+        data: url redirect
+    """
+    if request.headers['Content-Type'] != 'application/json':
+        """Check header of request"""
+        return jsonify(code=-1, msg=_('Header Error'))
+    post_activity = request.get_json()
+    pid_value = post_activity.get('pid_value')
+    if pid_value:
+        try:
+            record = WekoRecord.get_record_by_pid(pid_value)
+            owner = str(record.get('owner'))
+            shared_id = str(record.get('weko_shared_id'))
+            user_id = str(get_current_user())
+            is_admin = get_user_roles()
+            activity = WorkActivity()
+            pid_object = PersistentIdentifier.get('recid', pid_value)
+
+            # check item is being editied
+            item_id = pid_object.object_uuid
+            workflow_action_stt = activity.get_workflow_activity_status_by_item_id(
+                item_id=item_id)
+            # show error when has stt is Begin or Doing
+            if workflow_action_stt is not None and \
+                (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
+                 workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
+                return jsonify(code=-13,
+                               msg=_('The workflow is being edited. '))
+
+            if user_id != owner and not is_admin[0] and user_id != shared_id:
+                return jsonify(code=-1,
+                               msg=_('You are not allowed to edit this item.'))
+            lists = ItemTypes.get_latest()
+            if not lists:
+                return jsonify(code=-1,
+                               msg=_('You do not even have an itemtype.'))
+            item_type_id = record.get('item_type_id')
+            item_type = ItemTypes.get_by_id(item_type_id)
+            if item_type is None:
+                return jsonify(code=-1, msg=_('This itemtype not found.'))
+
+            upt_current_activity = activity.upt_activity_detail(
+                item_id=pid_object.object_uuid)
+
+            if upt_current_activity is not None:
+                post_activity['workflow_id'] = upt_current_activity.workflow_id
+                post_activity['flow_id'] = upt_current_activity.flow_id
+                post_activity['itemtype_id'] = item_type_id
+                getargs = request.args
+                community = getargs.get('community', None)
+                rtn = activity.init_activity(
+                    post_activity, community, pid_object.object_uuid)
+                if rtn:
+                    oa_policy_actionid = get_actionid('oa_policy')
+                    identifier_actionid = get_actionid('identifier_grant')
+                    journal = activity.get_action_journal(
+                        upt_current_activity.activity_id, oa_policy_actionid)
+                    if journal:
+                        activity.create_or_update_action_journal(
+                            rtn.activity_id,
+                            oa_policy_actionid,
+                            journal.action_journal)
+                    identifier = activity.get_action_identifier_grant(
+                        upt_current_activity.activity_id, identifier_actionid)
+                    if identifier:
+                        activity.create_or_update_action_identifier(
+                            rtn.activity_id,
+                            identifier_actionid,
+                            identifier)
+                    if community:
+                        comm = GetCommunity.get_community_by_id(community)
+                        url_redirect = url_for('weko_workflow.display_activity',
+                                               activity_id=rtn.activity_id,
+                                               community=comm.id)
+                    else:
+                        url_redirect = url_for('weko_workflow.display_activity',
+                                               activity_id=rtn.activity_id)
+                    return jsonify(code=0, msg='success',
+                                   data={'redirect': url_redirect})
+        except Exception as e:
+            current_app.logger.error('Unexpected error: ', str(e))
+    return jsonify(code=-1, msg=_('An error has occurred.'))

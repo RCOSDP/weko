@@ -26,6 +26,11 @@
 {% endblock %}
 
 {%- block body %}
+
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
+<div id="alerts"></div>
+
 <div class="row">
   <div class="col-sm-offset-2 col-sm-8">
     <div class="form-horizontal">
@@ -116,6 +121,14 @@
 {% block tail %}
 <script>
   $(document).ready(function() {
+
+  function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         } 
+
     $('#btn_back').on('click', function(){
       window.history.back();
     });
@@ -151,9 +164,13 @@
         success: function(data, status) {
           if(0 == data.code) {
             document.location.href=data.data.redirect;
+            addAlert("Workflow created successfully.");
           }
         },
         error: function(jqXHE, status) {
+            var modalcontent =  "Something went wrong.";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         }
       });
     });
