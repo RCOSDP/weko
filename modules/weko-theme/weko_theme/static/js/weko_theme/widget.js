@@ -107,15 +107,17 @@ function getWidgetDesignSetting() {
         let widgetList = data['widget-settings'];
         if (Array.isArray(widgetList) && widgetList.length) {
           $("#main_contents").addClass("grid-stack-item");
+
           let pageBodyGrid = new PageBodyGrid();
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
+
+          $(".spoiler-btn").on('click', function(event){
+            console.log('=========Spoiler==========');
+            e.preventDefault();
+            $(this).parent().children('.spoiler-body').collapse('toggle');
+          });
         }
-        $(document).on('click', '.spoiler-btn', function (e) {
-          console.log('=========Spoiler==========');
-          e.preventDefault();
-          $(this).parent().children('.spoiler-body').collapse('toggle');
-        });
       }
       $("div#page_body").each(function() {
         $(this).css("display", "block");
