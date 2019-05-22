@@ -61,6 +61,7 @@ def get_selection_option():
 
 @blueprint_api.route('/get_title_pubdate_id/<int:item_type_id>',
                      methods=['GET'])
+@login_required
 def get_title_pubdate_id(item_type_id=0):
     """Get title and pubdate id.
 
@@ -72,6 +73,7 @@ def get_title_pubdate_id(item_type_id=0):
 
 
 @blueprint_api.route('/get_auto_fill_record_data', methods=['POST'])
+@login_required
 def get_auto_fill_record_data():
     """Get auto fill record data.
 
