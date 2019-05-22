@@ -46,48 +46,43 @@ let PageBodyGrid = function () {
 
   this.widgetTemplate = function (node) {
 
-    console.log('================NODE==============', node);
+    console.log('=============Node==============', node)
     let labelColor = node.label_color;
     let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
     let backgroundColor = node.background_color;
     let description = "";
     let leftStyle = 0;
     let paddingHeading = "";
-    if (node.type == "Free description" || node.type == "Notice") {
+    let overFlowBody = "";
+    let noticeDescription = "";
+    if (node.type == "Free description") {
       description = node.description;
       leftStyle = "initial";
       paddingHeading = "inherit";
+      overFlowBody = "scroll";
     }
 
-    let template1 =
-    '<div class="grid-stack-item">' +
-    '	<div class="container-fluid" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
-    '		<div class="row">' +
-    '				<div class="panel panel-default">' +
-    '					<div class="panel-heading widget-header" style="color: ' + labelColor + ';">' +
-    '						<strong>' + node.name + '</strong>' +
-    '					</div>' +
-    '				</div>' +
-    '		</div>' +
-    '		<div class="row">' +
-    '				<div class="panel panel-default">' +
-    '					<div class="panel-body ql-editor">' + description + '</div>' +
-    '				</div>' +
-    '		</div>' +
-    '	</div>' +
-    '</div>';
+    if (node.type == "Notice") {
+      description = node.description + '</br>' +
+      '<div class="spoiler-btn">' + node.read_more + '</div>' + '</br>' +
+      '<div class="spoiler-body collapse">'
+      node.more_description + '</div></br>' +
+      '<a class="spoiler-btn">'+ node.hide_the_rest + '</a>';
+      leftStyle = "initial";
+      paddingHeading = "inherit";
+      overFlowBody = "scroll";
+    }
 
     let template =
       '<div class="grid-stack-item">' +
       ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
       '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';position: inherit;width: 100%;top: 0;right: inherit; left: ' + leftStyle + ';">' +
-      '       <strong>' + node.name + '</strong>' +
+      '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
       '     </div>' +
-      '     <div class="panel-body ql-editor">' + description + '</div>' +
-      ' </div>' +
+      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' + description + '</div>' +
+      '   </div>' +
       '</div>';
-
-    return template1;
+    return template;
   };
 
 };
@@ -110,9 +105,16 @@ function getWidgetDesignSetting() {
         let widgetList = data['widget-settings'];
         if (Array.isArray(widgetList) && widgetList.length) {
           $("#main_contents").addClass("grid-stack-item");
+
           let pageBodyGrid = new PageBodyGrid();
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
+
+          $(".spoiler-btn").on('click', function(event){
+            console.log('=========Spoiler==========');
+            e.preventDefault();
+            $(this).parent().children('.spoiler-body').collapse('toggle');
+          });
         }
       }
       toggleWidgetUI();
