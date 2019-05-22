@@ -395,6 +395,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 }
 
 class ComponentButtonLayout extends React.Component {
+
     constructor(props) {
         super(props);
         this.state = {
@@ -407,9 +408,17 @@ class ComponentButtonLayout extends React.Component {
         };
         this.saveCommand = this.saveCommand.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
-    }
+    } 
+
     saveCommand(event)
     {
+        function addAlert(message) {
+        $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }
+         
         let request = {
             flag_edit : this.props.is_edit,
             data : this.props.data,
@@ -421,11 +430,20 @@ class ComponentButtonLayout extends React.Component {
             request.data_id = this.state;
 
         if (this.props.data.repository=="0" || this.props.data.repository == "") {
-            alert('Repository is required!');
+           // alert('Repository is required!');
+            var modalcontent =  "Repository is required!";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         } else if (this.props.data.widget_type == "0" || this.props.data.widget_type == "") {
-            alert('Type is required!');
+            //alert('Type is required!');
+            var modalcontent =  "Type is required.";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         } else if (this.props.data.label ===null || this.props.data.label.match(/^ *$/) !== null) {
-            alert('Label is required!');
+            //alert('Label is required!');
+            var modalcontent =  "Lable is required!";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         }else {
             return fetch(this.props.url_request,{
                 method: "POST",
@@ -437,14 +455,17 @@ class ComponentButtonLayout extends React.Component {
             .then(res => res.json())
             .then((result) => {
             if (result.success) {
-                alert(result.message);
+                addAlert(result.message);
                 this.setState({
                     repository: this.props.data.repository,
                     widget_type: this.props.data.widget_type,
                     label: this.props.data.label
                 })
             }else {
-                alert(result.message);
+                //alert(result.message);
+                var modalcontent = result.message;
+                $("#inputModal").html(modalcontent);
+                $("#allModal").modal("show");
             }
             });
         }
@@ -452,6 +473,13 @@ class ComponentButtonLayout extends React.Component {
 
     deleteCommand(event)
     {
+        function addAlert(message) {
+                $('#alerts').append(
+                    '<div class="alert alert-light" id="alert-style">' +
+                        '<button type="button" class="close" data-dismiss="alert">' +
+                        '&times;</button>' + message + '</div>');
+                     }
+                 
         let request = {
             data_id: this.props.data_id
         }
@@ -467,10 +495,13 @@ class ComponentButtonLayout extends React.Component {
             .then(res => res.json())
             .then((result) => {
             if (result.success) {
-                alert(result.message);
+                addAlert(result.message);
                 window.location = this.props.return_url;
             }else {
-                alert(result.message);
+                //alert(result.message);
+                var modalcontent = result.message;
+                $("#inputModal").html(modalcontent);
+                $("#allModal").modal("show");
             }
             });
         }
