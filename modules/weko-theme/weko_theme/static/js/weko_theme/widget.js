@@ -112,8 +112,9 @@ function getWidgetDesignSetting() {
           pageBodyGrid.loadGrid(widgetList);
         }
         $(document).on('click', '.spoiler-btn', function (e) {
-          e.preventDefault()
-          $(this).parent().children('.spoiler-body').collapse('toggle')
+          console.log('=========Spoiler==========');
+          e.preventDefault();
+          $(this).parent().children('.spoiler-body').collapse('toggle');
         });
       }
       $("div#page_body").each(function() {
