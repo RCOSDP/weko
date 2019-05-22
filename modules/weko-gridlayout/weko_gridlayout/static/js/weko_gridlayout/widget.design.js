@@ -558,7 +558,7 @@ function disableMainContentButton(isDisable){
 }
 
 function addAlert(message) {
-    $('#alerts').append(
+   $('#alerts').append(
         '<div class="alert alert-light" id="alert-style">' +
         '<button type="button" class="close" data-dismiss="alert">' +
         '&times;</button>' + message + '</div>');
@@ -572,12 +572,21 @@ function saveWidgetDesignSetting(widgetDesignData) {
     let repositoryId = $("#repository-id").val();
     if (repositoryId == "0") {
         alert('Please select the Repository.');
+        //var modalcontent =  "Please select the Repository.";
+        //$("#inputModal").html(modalcontent);
+        //$("#allModal").modal("show");
         return false;
     } else if (!widgetDesignData) {
         alert('Please add Widget to Preview panel.');
+        //var modalcontent =  "Please add Widget to Preview panel";
+        //$("#inputModal").html(modalcontent);
+        //$("#allModal").modal("show");
         return false;
     } else if(!isHasMainContent){
         alert('Please add Main Content to Preview panel.');
+        //var modalcontent =  "Please add Main Content to Preview panel.";
+        //$("#inputModal").html(modalcontent);
+        //$("#allModal").modal("show");
         return false;
     }
 
@@ -599,8 +608,14 @@ function saveWidgetDesignSetting(widgetDesignData) {
                 let err_msg = data.error;
                 if (err_msg) {
                     alert(err_msg);
+                    //var modalcontent = err_msg;
+                    //$("#inputModal").html(modalcontent);
+                    //$("#allModal").modal("show");
                 } else if (!data.result) {
                     alert('Fail to save Widget design. Please check again.');
+                    //var modalcontent = "Fail to save Widget design. Please check again.";
+                    //$("#inputModal").html(modalcontent);
+                    //$("#allModal").modal("show");
                     return;
                 } else {
                     addAlert('Widget design has been saved successfully.');
@@ -613,6 +628,9 @@ function saveWidgetDesignSetting(widgetDesignData) {
         });
     } else {
         alert('Please add Widget to Preview panel.');
+        //var modalcontent =  "Please add Widget to Preview panel.";
+        //$("#inputModal").html(modalcontent);
+        //$("#allModal").modal("show");
         return;
     }
 }
