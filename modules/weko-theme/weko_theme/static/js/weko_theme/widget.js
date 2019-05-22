@@ -63,7 +63,11 @@ let PageBodyGrid = function () {
     }
 
     if (node.type == "Notice") {
-      description = node.description + "</br>" + node.read_more + "</br>" + node.more_description + "</br>" + node.hide_the_rest;
+      description = node.description + '</br>' +
+      '<a class="spoiler-btn">' + node.read_more + '</a>' + '</br>' +
+      '<div class="spoiler-body collapse">'
+      node.more_description + '</div></br>' +
+      '<a class="spoiler-btn">'+ node.hide_the_rest + '</a>';
       leftStyle = "initial";
       paddingHeading = "inherit";
       overFlowBody = "scroll";
@@ -107,6 +111,10 @@ function getWidgetDesignSetting() {
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
         }
+        $(".spoiler-btn").on('click', '.spoiler-btn', function (e) {
+          e.preventDefault()
+          $(this).parent().children('.spoiler-body').collapse('toggle')
+        });
       }
       $("div#page_body").each(function() {
         $(this).css("display", "block");
