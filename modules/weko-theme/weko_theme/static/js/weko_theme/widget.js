@@ -63,7 +63,7 @@ let PageBodyGrid = function () {
     }
 
     if (node.type == "Notice") {
-      description = node.description + "</br>" + node.read_more + "</br>" + node.more_description;
+      description = node.description + "</br>" + node.read_more + "</br>" + node.more_description + "</br>" + node.hide_the_rest;
       leftStyle = "initial";
       paddingHeading = "inherit";
       overFlowBody = "scroll";
