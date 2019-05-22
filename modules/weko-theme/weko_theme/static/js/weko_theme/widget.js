@@ -98,9 +98,7 @@ function getWidgetDesignSetting() {
     success: function (data) {
       if (data.error) {
         alert(error);
-        $("div#page_body").each(function() {
-          $(this).css("display", "block");
-        });
+        toggleWidgetUI();
         return;
       } else {
         let widgetList = data['widget-settings'];
@@ -111,9 +109,15 @@ function getWidgetDesignSetting() {
           pageBodyGrid.loadGrid(widgetList);
         }
       }
-      $("div#page_body").each(function() {
-        $(this).css("display", "block");
-      });
+      toggleWidgetUI();
     }
+  });
+}
+
+function toggleWidgetUI() {
+  $("div#page_body").each(function() {
+    $(this).css("display", "block");
+    $('footer#footer').css("display", "block");
+    $('footer-fix#footer').remove();
   });
 }
