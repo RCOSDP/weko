@@ -571,22 +571,22 @@ function addAlert(message) {
 function saveWidgetDesignSetting(widgetDesignData) {
     let repositoryId = $("#repository-id").val();
     if (repositoryId == "0") {
-        alert('Please select the Repository.');
-        //var modalcontent =  "Please select the Repository.";
-        //$("#inputModal").html(modalcontent);
-        //$("#allModal").modal("show");
+        //alert('Please select the Repository.');
+        var modalcontent =  "Please select the Repository.";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
         return false;
     } else if (!widgetDesignData) {
-        alert('Please add Widget to Preview panel.');
-        //var modalcontent =  "Please add Widget to Preview panel";
-        //$("#inputModal").html(modalcontent);
-        //$("#allModal").modal("show");
+        //alert('Please add Widget to Preview panel.');
+        var modalcontent =  "Please add Widget to Preview panel";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
         return false;
     } else if(!isHasMainContent){
-        alert('Please add Main Content to Preview panel.');
-        //var modalcontent =  "Please add Main Content to Preview panel.";
-        //$("#inputModal").html(modalcontent);
-        //$("#allModal").modal("show");
+        //alert('Please add Main Content to Preview panel.');
+        var modalcontent =  "Please add Main Content to Preview panel.";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
         return false;
     }
 
@@ -607,15 +607,15 @@ function saveWidgetDesignSetting(widgetDesignData) {
             success: function (data, status) {
                 let err_msg = data.error;
                 if (err_msg) {
-                    alert(err_msg);
-                    //var modalcontent = err_msg;
-                    //$("#inputModal").html(modalcontent);
-                    //$("#allModal").modal("show");
+                    //alert(err_msg);
+                    var modalcontent = err_msg;
+                    $("#inputModal").html(modalcontent);
+                    $("#allModal").modal("show");
                 } else if (!data.result) {
-                    alert('Fail to save Widget design. Please check again.');
-                    //var modalcontent = "Fail to save Widget design. Please check again.";
-                    //$("#inputModal").html(modalcontent);
-                    //$("#allModal").modal("show");
+                    //alert('Fail to save Widget design. Please check again.');
+                    var modalcontent = "Fail to save Widget design. Please check again.";
+                    $("#inputModal").html(modalcontent);
+                    $("#allModal").modal("show");
                     return;
                 } else {
                     addAlert('Widget design has been saved successfully.');
@@ -627,10 +627,10 @@ function saveWidgetDesignSetting(widgetDesignData) {
             }
         });
     } else {
-        alert('Please add Widget to Preview panel.');
-        //var modalcontent =  "Please add Widget to Preview panel.";
-        //$("#inputModal").html(modalcontent);
-        //$("#allModal").modal("show");
+        //alert('Please add Widget to Preview panel.');
+        var modalcontent =  "Please add Widget to Preview panel.";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
         return;
     }
 }
