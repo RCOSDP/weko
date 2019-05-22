@@ -44,7 +44,9 @@ def cached_api_json(timeout=50, key_prefix="cached_api_json"):
     def caching(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            key = key_prefix + args[len(args) - 1]
+            key = key_prefix
+            for value in args:
+                key += str(value)
             cache_fun = current_cache.cached(
                 timeout=timeout,
                 key_prefix=key,
@@ -163,7 +165,7 @@ def get_title_pubdate_path(item_type_id):
     return result
 
 
-# @cached_api_json(timeout=50, key_prefix="crossref_data")
+@cached_api_json(timeout=50, key_prefix="crossref_data")
 def get_crossref_record_data(pid, doi, item_type_id):
     """Get record data base on CrossRef API.
 
@@ -188,7 +190,7 @@ def get_crossref_record_data(pid, doi, item_type_id):
     return result
 
 
-# @cached_api_json(timeout=50, key_prefix="cinii_data")
+@cached_api_json(timeout=50, key_prefix="cinii_data")
 def get_cinii_record_data(naid, item_type_id):
     """Get record data base on CiNii API.
 
@@ -499,7 +501,7 @@ def get_cinii_data_by_key(api, keyword):
     elif keyword == 'sourceIdentifier':
         result[keyword] = pack_data_with_multiple_type_cinii(
             data.get('prism:issn'),
-            'ISSN（非推奨）',
+            'ISSN',
             data.get('cinii:ncid'),
             'NCID'
         )
@@ -976,9 +978,9 @@ def build_record(data, value, child_data, sub_child_data):
             child_key_list = value.get(k).split(".")
             if child_key_list and len(child_key_list) == 2:
                 sub_key = child_key_list[1].replace("[]", "")
-                child_data[sub_key] = v
+                child_data[sub_key] = convert_html_escape(v)
         elif isinstance(child_data, list):
             child_key_list = value.get(k).split(".")
             if child_key_list and len(child_key_list) == 3:
                 sub_key = child_key_list[2].replace("[]", "")
-                sub_child_data[sub_key] = v
+                sub_child_data[sub_key] = convert_html_escape(v)

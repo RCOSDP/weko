@@ -521,8 +521,8 @@ def citation(record, pid, style=None, ln=None):
     locale = ln or "en-US"  # ln or current_i18n.language
     style = style or "aapg-bulletin"  # style or 'science'
     try:
-        result = citeproc_v1.serialize(pid, record, style=style, locale=locale)
-        return result
+        _record = WekoRecord.get_record(pid.object_uuid)
+        return citeproc_v1.serialize(pid, _record, style=style, locale=locale)
     except Exception:
         current_app.logger.exception(
             'Citation formatting for record {0} failed.'.format(str(record.id)))
