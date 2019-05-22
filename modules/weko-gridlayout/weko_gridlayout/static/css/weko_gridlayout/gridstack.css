@@ -385,7 +385,3 @@
 .grid-stack.grid-stack-one-column-mode > .grid-stack-item > .ui-resizable-handle {
   display: none;
 }
-
-.grid-collapse {
-  display: none;
-}
