@@ -297,13 +297,14 @@ def get_cinii_creator_data(data):
     result = list()
     default_language = 'ja'
     for item in data:
-        new_data = dict()
-        new_data['@value'] = item[0].get('@value')
-        if item[0].get('@language'):
-            new_data['@language'] = item[0].get('@language')
-        else:
-            new_data['@language'] = default_language
-        result.append(new_data)
+        for i in range(0, len(item)):
+            new_data = dict()
+            new_data['@value'] = item[i].get('@value')
+            if item[i].get('@language'):
+                new_data['@language'] = item[i].get('@language')
+            else:
+                new_data['@language'] = default_language
+            result.append(new_data)
     return result
 
 
@@ -322,19 +323,20 @@ def get_cinii_contributor_data(data):
     result = list()
     default_language = 'ja'
     for item in data:
-        new_data = dict()
         if item.get('con:organization') is None:
             continue
         organization = item['con:organization'][0]
         if organization.get('foaf:name') is None:
             continue
-        new_data['@value'] = organization['foaf:name'][0].get('@value')
-        if organization['foaf:name'][0].get('@language'):
-            language = organization['foaf:name'][0].get('@language')
-            new_data['@language'] = language
-        else:
-            new_data['@language'] = default_language
-        result.append(new_data)
+        for i in range(0, len(organization.get('foaf:name'))):
+            new_data = dict()
+            new_data['@value'] = organization['foaf:name'][i].get('@value')
+            if organization['foaf:name'][i].get('@language'):
+                language = organization['foaf:name'][i].get('@language')
+                new_data['@language'] = language
+            else:
+                new_data['@language'] = default_language
+            result.append(new_data)
     return result
 
 
