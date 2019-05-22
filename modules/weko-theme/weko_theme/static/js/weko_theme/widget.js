@@ -98,7 +98,11 @@ function getWidgetDesignSetting() {
     success: function (data) {
       if (data.error) {
         alert(error);
-        toggleWidgetUI();
+        $("div#page_body").each(function() {
+          $(this).css("display", "block");
+          $('footer#footer').css("display", "block");
+          $('footer-fix#footer').remove();
+        });
         return;
       } else {
         let widgetList = data['widget-settings'];
@@ -115,15 +119,11 @@ function getWidgetDesignSetting() {
           });
         }
       }
-      toggleWidgetUI();
+      $("div#page_body").each(function() {
+        $(this).css("display", "block");
+        $('footer#footer').css("display", "block");
+        $('footer-fix#footer').remove();
+      });
     }
-  });
-}
-
-function toggleWidgetUI() {
-  $("div#page_body").each(function() {
-    $(this).css("display", "block");
-    $('footer#footer').css("display", "block");
-    $('footer-fix#footer').remove();
   });
 }
