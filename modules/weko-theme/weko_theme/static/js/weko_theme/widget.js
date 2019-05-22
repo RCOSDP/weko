@@ -59,25 +59,6 @@ let PageBodyGrid = function () {
       paddingHeading = "inherit";
     }
 
-    let template1 =
-    '<div class="grid-stack-item">' +
-    '	<div class="grid-stack-item-content" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
-    '		<div class="row" style="margin: 0; padding: 0;">' +
-    '				<div class="panel panel-default">' +
-    '					<div class="panel-heading widget-header" style="color: ' + labelColor + ';">' +
-    '						<strong>' + node.name + '</strong>' +
-    '					</div>' +
-    '				</div>' +
-    '		</div>' +
-    '		<div class="row" style="margin: 0; padding: 0;">' +
-    '				<div class="panel panel-default">' +
-    '					<div class="panel-body ql-editor">' + description + '</div>' +
-    '				</div>' +
-    '		</div>' +
-    '	</div>' +
-    '</div>';
-    
-
     let template =
       '<div class="grid-stack-item">' +
       ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
@@ -88,7 +69,7 @@ let PageBodyGrid = function () {
       ' </div>' +
       '</div>';
 
-    return template1;
+    return template;
   };
 
 };
