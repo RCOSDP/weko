@@ -81,6 +81,7 @@ let PageBodyGrid = function () {
       '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' + description + '</div>' +
       '   </div>' +
       '</div>';
+
     return template;
   };
 
@@ -100,8 +101,6 @@ function getWidgetDesignSetting() {
         alert(error);
         $("div#page_body").each(function() {
           $(this).css("display", "block");
-          $('footer#footer').css("display", "block");
-          $('footer-fix#footer').remove();
         });
         return;
       } else {
@@ -121,8 +120,6 @@ function getWidgetDesignSetting() {
       }
       $("div#page_body").each(function() {
         $(this).css("display", "block");
-        $('footer#footer').css("display", "block");
-        $('footer-fix#footer').remove();
       });
     }
   });
