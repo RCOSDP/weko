@@ -76,6 +76,7 @@ let PageBodyGrid = function () {
     '		</div>' +
     '	</div>' +
     '</div>';
+    
 
     let template =
       '<div class="grid-stack-item">' +
