@@ -323,7 +323,11 @@ def get_cinii_contributor_data(data):
     default_language = 'ja'
     for item in data:
         new_data = dict()
+        if item.get('con:organization') is None:
+            continue
         organization = item['con:organization'][0]
+        if organization.get('foaf:name') is None:
+            continue
         new_data['@value'] = organization['foaf:name'][0].get('@value')
         if organization['foaf:name'][0].get('@language'):
             language = organization['foaf:name'][0].get('@language')
@@ -558,7 +562,7 @@ def get_crossref_creator_data(data):
         given_name = creator.get('given')
         full_name = ''
         if given_name and family_name:
-            full_name = family_name + given_name
+            full_name = family_name + " " + given_name
         elif given_name:
             full_name = given_name
         elif family_name:
