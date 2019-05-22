@@ -53,10 +53,12 @@ let PageBodyGrid = function () {
     let description = "";
     let leftStyle = 0;
     let paddingHeading = "";
+    let overFlowBody = "";
     if (node.type == "Free description" || node.type == "Notice") {
       description = node.description;
       leftStyle = "initial";
       paddingHeading = "inherit";
+      overFlowBody = "scroll";
     }
 
     let template =
@@ -65,7 +67,7 @@ let PageBodyGrid = function () {
       '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';position: inherit;width: 100%;top: 0;right: inherit; left: ' + leftStyle + ';">' +
       '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
       '     </div>' +
-      '     <div class="panel-body ql-editor" style="padding-top: 30px;">' + description + '</div>' +
+      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow: ' + overFlowBody + ';">' + description + '</div>' +
       '   </div>' +
       '</div>';
     return template;
