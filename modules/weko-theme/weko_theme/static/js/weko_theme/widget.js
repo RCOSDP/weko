@@ -61,15 +61,15 @@ let PageBodyGrid = function () {
 
     let template1 =
     '<div class="grid-stack-item">' +
-    '	<div class="container-fluid" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
-    '		<div class="row">' +
+    '	<div class="grid-stack-item-content" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
+    '		<div class="row" style="margin: 0; padding: 0;">' +
     '				<div class="panel panel-default">' +
     '					<div class="panel-heading widget-header" style="color: ' + labelColor + ';">' +
     '						<strong>' + node.name + '</strong>' +
     '					</div>' +
     '				</div>' +
     '		</div>' +
-    '		<div class="row">' +
+    '		<div class="row" style="margin: 0; padding: 0;">' +
     '				<div class="panel panel-default">' +
     '					<div class="panel-body ql-editor">' + description + '</div>' +
     '				</div>' +
