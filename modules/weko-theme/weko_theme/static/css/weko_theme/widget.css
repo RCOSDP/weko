@@ -13,15 +13,3 @@
   border-top-right-radius: 0px !important;
   border-top-left-radius: 0px !important;
 }
-
-.spoiler-btn {
-  padding: 2px 6px;
-  cursor: pointer !important;
-}
-
-.widget-footer {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-}
