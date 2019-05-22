@@ -19,7 +19,7 @@
  #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{%- from "invenio_communities/macros.html" import community_header %}
 
 {%- block css %}
   {{ super() }}
@@ -307,8 +307,8 @@
     <div class="communities">
     <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
     {{ community_header(community, subtitle='') }}
-      <div id="page_body_details" class="grid-stack">
-      <div id="main_contents">
+      <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
+        <div id="main_contents">
   {%- endif%}
   {{ super() }}
 <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
@@ -329,7 +329,8 @@
 {%-if community %}
   </div>
   </div>
-{{ community_footer(community, link=False, subtitle='') }}
+  {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+  {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
 </div>
 <div class="communities">
 </div>

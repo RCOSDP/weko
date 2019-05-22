@@ -88,8 +88,10 @@ def index():
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         render_widgets=True,
-        community_id=community_id, detail_condition=detail_condition,
-        width=width, height=height, index_link_list=index_link_list,
+        community_id=community_id, 
+        detail_condition=detail_condition,
+        width=width, height=height, 
+        index_link_list=index_link_list,
         index_link_enabled=index_link_enabled, **ctx)
 
 
