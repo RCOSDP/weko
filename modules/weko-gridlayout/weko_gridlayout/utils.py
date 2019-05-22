@@ -20,7 +20,7 @@
 
 """Utilities for convert response json."""
 import json
-import datetime
+
 from flask import current_app, jsonify, make_response
 from invenio_db import db
 
@@ -266,6 +266,50 @@ def delete_item_in_preview_widget_item(data_id, json_data):
     return data
 
 
+def update_general_item(item, data_result):
+    """Update general feild item.
+
+    :param item: item need to be update
+    :param data_result: result
+    """
+    item['frame_border'] = data_result.get('frame_border')
+    item['frame_border_color'] = data_result.get(
+        'frame_border_color')
+    item['background_color'] = data_result.get('background_color')
+    item['label_color'] = data_result.get('label_color')
+    item['text_color'] = data_result.get('text_color')
+    item['name'] = data_result.get('label')
+    item['type'] = data_result.get('widget_type')
+
+
+def update_free_description_type(item, data_settings):
+    """Update item type Free description.
+
+    :param item: item need to be update
+    :param data_settings: data settings
+    :return:
+    """
+    item['description'] = data_settings.get('description')
+
+
+def update_notice_type(item, data_settings):
+    """Update item type Notice.
+
+    :param item: item need to be update
+    :param data_settings: data settings
+    :return:
+    """
+    item['description'] = data_settings.get('description')
+    if data_settings.get('more_description'):
+        item['read_more'] = data_settings.get('read_more')
+        item['hide_the_rest'] = data_settings.get('hide_the_rest')
+        item['more_description'] = data_settings.get('more_description')
+    else:
+        item.pop('read_more', None)
+        item.pop('hide_the_rest', None)
+        item.pop('more_description', None)
+
+
 def update_item_in_preview_widget_item(data_id, data_result, json_data):
     """Update item in preview widget design when it is edited in widget item.
 
@@ -281,27 +325,12 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
         for item in json_data:
             if str(item.get('name')) == str(data_id.get('label')) and str(
                     item.get('type')) == str(data_id.get('widget_type')):
-                item['frame_border'] = data_result.get('frame_border')
-                item['frame_border_color'] = data_result.get(
-                    'frame_border_color')
-                item['background_color'] = data_result.get('background_color')
-                item['label_color'] = data_result.get('label_color')
-                item['text_color'] = data_result.get('text_color')
-                item['name'] = data_result.get('label')
-                item['type'] = data_result.get('widget_type')
+                update_general_item(item, data_result)
                 settings = data_result.get('settings')
                 if str(item.get('type')) == "Free description":
-                    item['description'] = settings.get('description')
+                    update_free_description_type(item, settings)
                 elif str(item.get('type')) == "Notice":
-                    item['description'] = settings.get('description')
-                    if settings.get('more_description'):
-                        item['read_more'] = settings.get('read_more')
-                        item['hide_the_rest'] = settings.get('hide_the_rest')
-                        item['more_description'] = settings.get('more_description')
-                    else:
-                        item.pop('read_more', None)
-                        item.pop('hide_the_rest', None)
-                        item.pop('more_description', None)
+                    update_notice_type(item, settings)
                 else:
                     item.pop('description', None)
     data = json.dumps(json_data)

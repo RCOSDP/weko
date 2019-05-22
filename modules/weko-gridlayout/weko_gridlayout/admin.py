@@ -21,20 +21,19 @@
 """WEKO3 module docstring."""
 
 import json
+from collections import namedtuple
 
 from flask import current_app, flash, redirect, request
 from flask_admin import BaseView, expose
+from flask_admin._backwards import ObsoleteAttr
 from flask_admin.babel import gettext
 from flask_admin.contrib.sqla import ModelView
-from flask_admin.model import typefmt
 from flask_admin.helpers import get_redirect_target
-from flask_admin.model import helpers
+from flask_admin.model import helpers, typefmt
 from flask_babelex import gettext as _
+from jinja2 import contextfunction
 from sqlalchemy import func
 from wtforms.fields import StringField
-from jinja2 import contextfunction
-from flask_admin._backwards import ObsoleteAttr
-from collections import namedtuple
 
 from . import config
 from .api import WidgetItems
@@ -57,10 +56,9 @@ class WidgetSettingView(ModelView):
     can_edit = True
     can_delete = True
     can_view_details = True
-    column_formatters_detail = ObsoleteAttr('column_formatters', 'list_formatters', dict())
-    column_type_formatters_detail = dict(typefmt.EXPORT_FORMATTERS )
-
-
+    column_formatters_detail = ObsoleteAttr('column_formatters',
+                                            'list_formatters', dict())
+    column_type_formatters_detail = dict(typefmt.EXPORT_FORMATTERS)
 
     @expose('/new/', methods=('GET', 'POST'))
     def create_view(self):
@@ -99,20 +97,20 @@ class WidgetSettingView(ModelView):
 
     @contextfunction
     def get_detail_value(self, context, model, name):
-        """
-            Returns the value to be displayed in the detail view
+        """Returns the value to be displayed in the detail view.
 
-            :param context:
-                :py:class:`jinja2.runtime.Context`
-            :param model:
-                Model instance
-            :param name:
-                Field name
+        :param context:
+            :py:class:`jinja2.runtime.Context`
+            :param model: Model instance
+            :param name: Field name
         """
         data_settings = model.settings
         data_settings = json.loads(data_settings)
-        data_settings_model = namedtuple("Settings", data_settings.keys())(*data_settings.values())
-        if name == "label_color" or name == "has_frame_border" or name == "frame_border_color" or name == "text_color" or name == "background_color":
+        data_settings_model = namedtuple("Settings", data_settings.keys())(
+            *data_settings.values())
+        if name == "label_color" or name == "has_frame_border" \
+            or name == "frame_border_color" or name == "text_color" \
+            or name == "background_color":
             return super()._get_list_value(
                 context,
                 data_settings_model,
@@ -131,9 +129,7 @@ class WidgetSettingView(ModelView):
 
     @expose('/details/')
     def details_view(self):
-        """
-            Details model view
-        """
+        """Details model view."""
         return_url = get_redirect_target() or self.get_url('.index_view')
 
         if not self.can_view_details:
