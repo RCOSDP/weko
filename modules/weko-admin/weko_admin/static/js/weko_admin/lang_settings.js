@@ -109,7 +109,15 @@ $(document).ready(function () {
     moveBottom.prop('disabled', true);
   }
 
-  $('#btn_commit_lg').on('click', function () {
+  function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }  
+
+ $('#btn_commit_lg').on('click', function () {
+        
     const children = $('#leftSelect').children();
     const selectedChildren = $('#rightSelect').children();
     const map = {};
@@ -133,7 +141,8 @@ $(document).ready(function () {
       contentType: 'application/json',
       data: JSON.stringify(results),
       success: function (data) {
-        alert('Update languages action successfully');
+          var success_message = 'Update languages action successfully';
+          addAlert(success_message);
       },
       error: function (error) {
         console.log(error);

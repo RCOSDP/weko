@@ -291,3 +291,10 @@ button#btn_quit.done-button {
  right: -2em;
  top:.2em;
 }
+
+#alert-style {
+ background-color: #00a65a;
+ border-color: #008d4c;
+ border-radius: 3px;
+ color: white;
+}

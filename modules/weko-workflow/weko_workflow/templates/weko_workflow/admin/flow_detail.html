@@ -26,7 +26,10 @@
 {% endblock %}
 
 {%- block body %}
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
 <div class="row">
+ <div id="alerts"></div>
   <div class="col-sm-offset-2">
     <div class="col-sm-4">
       <div class="form-horizontal">
@@ -74,9 +77,9 @@
                   {{_('Save')}}
             </button>
             {%- else %}
-            <button type="button" class="btn btn-primary edit-button" id="btn-upt-flow">
+            <button type="button" class="btn btn-primary update-button" id="btn-upt-flow">
               <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-                     {{_('Edit')}}
+                     {{_('Update')}}
             </button>
             {% endif %}
             <button type="button" class="btn btn-danger delete-button" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
@@ -161,8 +164,6 @@
               <td class="hide"><span id="td_action_ver_{{action.action_id}}">{{action.action_version|default(action.action.action_version)}}</span></td>
               <td>
                 <div class="btn-group" role="group" aria-label="Swap">
-                 <!-- <button type="button" class="btn btn-default sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>↑</button>
-                  <button type="button" class="btn btn-default sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>↓</button>-->
                  <button type="button" class="btn btn-default icon-button sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>
                         <i class="fa fa-angle-up"></i>
                  </button><br/><br/>
@@ -183,9 +184,9 @@
   <div class="col-sm-offset-2 col-sm-8">
    <button type="button" class="btn btn-info back-button" id="btn_back">
       <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
-  <button type="button" class="btn btn-primary pull-right save-flow-button" id="btn_submit" data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
+  <button type="button" class="btn btn-primary pull-right save-button" id="btn_submit" data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
       <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
-                {{_('Save Flow')}}
+                {{_('Save')}}
     </button>
   </div>
 </div>
@@ -303,6 +304,14 @@
       Object.assign(apply_action, {user_deny: $(this).is(':checked')});
       localStorage.setItem('apply_action_list', JSON.stringify(apply_action_list));
     });
+    
+    function addAlert(message) {
+        $('#alerts').append(
+            '<div class="alert alert-light" id="alert-style">' +
+            '<button type="button" class="close" data-dismiss="alert">' +
+            '&times;</button>' + message + '</div>');
+         }
+
     $('#btn_submit').on('click', function(){
       $.ajax({
         url: $(this).data('uri'),
@@ -312,10 +321,13 @@
         data: localStorage.getItem('apply_action_list'),
         success: function(data, status) {
           uptOrderInfo(false);
-          alert(data.msg);
+          addAlert(data.msg);
         },
         error: function(jqXHR, status) {
-          alert('update failed');
+          //alert('update failed');
+            var modalcontent = "Update failed";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         }
       });
     });
@@ -338,7 +350,10 @@
           }
         },
         error: function(jqXHR, status) {
-          alert('create failed');
+          //alert('create failed');
+          var modalcontent =  "Create failed";
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
         }
       });
     });
@@ -356,10 +371,16 @@
         contentType: 'application/json',
         data: JSON.stringify({'flow_name': flow_name}),
         success: function(data, status) {
-          alert(data.msg);
+          //alert(data.msg);
+            var modalcontent = data.msg;
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         },
         error: function(jqXHR, status) {
-          alert('update failed');
+          //alert('update failed');
+            var modalcontent =  "Update Failed";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         }
       });
     });

@@ -33,6 +33,9 @@
 {%- block body %}
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
+<div id="alerts"></div>
 <form class="form-horizontal" method="POST" name="index_link_form" action={{url_for('indexlink.index')}}>
   <div class="form-group">
       <label for="indexlink" class="control-label col-sm-1"></label>
@@ -63,13 +66,26 @@
 {%- endblock body %}
 {% block tail %}
 <script>
-  $(document).ready(function() {
+  function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }
+ 
+ $(document).ready(function() {
     $('#index_form_submit').on('click', function(){
       let height = $('#height').val();
       if(height != null && height != '' && (isNaN(height) || height <= 0)) {
-        alert("Invalid height of indextree panel.");
+        //alert("Invalid height of indextree panel.");
+        var modalcontent =  "Invalid height of indextree panel.";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
         return false;
-      }
+      } else{
+         addAlert("Successfully Updated.");
+          }
+
     });
   })
 </script>
