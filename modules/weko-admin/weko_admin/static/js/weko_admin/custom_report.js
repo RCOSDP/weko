@@ -51,7 +51,7 @@ class ComponentTableResult extends React.Component {
       end_date: endDate,
       unit: unit
     };
-    let request_url = '/api/stats/' + target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
+    let request_url = '/api/stats/' + target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText + '?p=' + selectedPage;
     fetch(request_url/*,
         TODO: Display to result table {
           method: "GET",
@@ -249,6 +249,7 @@ class ComponentCombobox extends React.Component {
     };
     this.handleClickEvent = this.handleClickEvent.bind(this);
     this.handleChangeEvent = this.handleChangeEvent.bind(this);
+    this.checkValidDate = this.checkValidDate.bind(this);
   }
   componentDidMount() {
     if (this.props.id_component == 'target') {
@@ -327,6 +328,41 @@ class ComponentCombobox extends React.Component {
     }
   }
 
+  checkValidDate(start_date, end_date) {
+    const IS_NOT_VALID = -1;
+    const START_DATE_IS_GREATER = 0;
+    const VALID = 1;
+    if (!start_date && !end_date) {
+      return VALID;
+    } else if (!start_date) {
+      let endDate = Date.parse(end_date);
+      if (isNaN(end_date) && !isNaN(endDate)) {
+        return VALID;
+      } else {
+        return IS_NOT_VALID;
+      }
+    } else if (!end_date) {
+      let startDate = Date.parse(start_date);
+      if (isNaN(start_date) && !isNaN(startDate)) {
+        return VALID;
+      } else {
+        return IS_NOT_VALID;
+      }
+    } else {
+      let startDate = Date.parse(start_date);
+      let endDate = Date.parse(end_date);
+      if (isNaN(end_date) && !isNaN(endDate) && isNaN(start_date) && !isNaN(startDate)) {
+        if (endDate > startDate) {
+          return VALID;
+        } else {
+          return START_DATE_IS_GREATER;
+        }
+      } else {
+        return IS_NOT_VALID;
+      }
+    }
+  }
+
   handleClickEvent(event) {
     let startDate = document.getElementById("start_date").value;
     let endDate = document.getElementById("end_date").value;
@@ -338,13 +374,17 @@ class ComponentCombobox extends React.Component {
       alert("Target Report is required!");
     } else if (unit == 0) {
       alert("Unit is required!");
+    } else if (this.checkValidDate(startDate, endDate) == -1) {
+      alert('Date is not valid!')
+    } else if (this.checkValidDate(startDate, endDate) == 0) {
+      alert('Start date is greater than End date!')
     } else {
       let requestParam = {
         start_date: startDate,
         end_date: endDate,
         unit: unit
       };
-      let request_url = '/api/stats/'+ target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText; // + '/' + selectedPage;
+      let request_url = '/api/stats/'+ target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText + '?p=' + selectedPage;
       fetch(request_url/*,
           TODO: Display to result table {
             method: "GET",
@@ -386,6 +426,10 @@ class ComponentCombobox extends React.Component {
 class ComponentDatePicker extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      defaultClass: "controls col-xs-5",
+      errorMessageClass: "hidden"
+    }
     this.styleContainer = {
     }
     this.styleLabel = {
@@ -395,14 +439,47 @@ class ComponentDatePicker extends React.Component {
       "border-radius": "3%",
       "background-color": "#fff",
     }
+    
+    this.handleChangeEvent = this.handleChangeEvent.bind(this)
+  }
+
+  handleChangeEvent(event) {
+    let dateData = document.getElementById(this.props.id_component).value;
+    let date = Date.parse(dateData);
+    let dateElement = dateData.split('/');
+    if (!dateData) {
+      this.setState({
+        defaultClass: "controls col-xs-5",
+        errorMessageClass: "hidden"
+      });
+    }
+    else if (dateElement.length == 3 && dateElement[0] && dateElement[1] && dateElement[2]) {
+      if (isNaN(dateData) && !isNaN(date)) {
+        this.setState({
+          defaultClass: "controls col-xs-5",
+          errorMessageClass: "hidden"
+        });
+      }else {
+        this.setState({
+          defaultClass: "controls col-xs-5 has-error",
+          errorMessageClass: ""
+        });
+      }
+    } else {
+      this.setState({
+        defaultClass: "controls col-xs-5 has-error",
+        errorMessageClass: ""
+      });
+    }
   }
 
   render() {
     return (
       <div style={this.styleContainer} className="form-group row margin_0">
         <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
-        <div class="controls col-xs-5">
-          <input className="form-control" id={this.props.id_component} style={this.styleDatePicker} readonly="true" type="text" />
+        <div class={this.state.defaultClass}>
+          <input className="form-control" onChange={this.handleChangeEvent} name={this.props.component_name} id={this.props.id_component} style={this.styleDatePicker} type="text" />
+          <div id='error_message' style={{color: 'red'}} className={this.state.errorMessageClass}>Format is incorrect!</div>
         </div>
       </div>
     )
@@ -462,8 +539,8 @@ class MainLayout extends React.Component {
           </div>
           <div className="col-md-11 pull-left">
             <h4>Custom Report</h4>
-            <ComponentDatePicker name="Start Date" id_component="start_date" />
-            <ComponentDatePicker name="End Date" id_component="end_date" />
+            <ComponentDatePicker component_name='start_date' name="Start Date" id_component="start_date" />
+            <ComponentDatePicker component_name='end_date' name="End Date" id_component="end_date" />
             <ComponentCombobox name="Target Report" getValueOfField={this.getValueOfField} getTableHidden={this.getTableHidden} 
               id_component="target" getUnitStatus={this.getUnitStatus} />
             <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit" 
@@ -488,11 +565,13 @@ function initDatepicker() {
   $("#start_date").datepicker({
     format: "yyyy/mm/dd",
     todayBtn: "linked",
-    autoclose: true
+    autoclose: true,
+    forceParse: false
   });
   $("#end_date").datepicker({
     format: "yyyy/mm/dd",
     todayBtn: "linked",
-    autoclose: true
+    autoclose: true,
+    forceParse: false
   });
 }
