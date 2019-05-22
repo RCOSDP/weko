@@ -395,6 +395,14 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 }
 
 class ComponentButtonLayout extends React.Component {
+    
+    //function addAlert(message) {
+    //  $('#alerts').append(
+    //      '<div class="alert alert-light" id="alert-style">' +
+    //      '<button type="button" class="close" data-dismiss="alert">' +
+    //      '&times;</button>' + message + '</div>');
+    //   }
+
     constructor(props) {
         super(props);
         this.state = {
