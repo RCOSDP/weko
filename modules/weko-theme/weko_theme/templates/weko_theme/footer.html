@@ -22,10 +22,11 @@
   <link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
   <link href="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" rel="stylesheet">
   <link href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/monokai-sublime.min.css" rel="stylesheet">
+  {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% endblock %}
 
 {%- if render_widgets %}
-  <footer-fix id="footer" style="position: absolute; left: 0;  bottom: 0;  width: 100%;">
+  <footer-fix id="footer" class="widget-footer">
     {% include "weko_theme/footer_wysiwyg.html" %}
   </footer-fix>
 {%- endif %}
