@@ -62,7 +62,7 @@ class ComponentTableResult extends React.Component {
         }*/)
       .then(res => res.json())
       .then((result) => {
-        this.displayData(result);
+        this.displayData(result.data);
       });
   }
 
@@ -384,7 +384,7 @@ class ComponentCombobox extends React.Component {
         end_date: endDate,
         unit: unit
       };
-      let request_url = '/api/stats/'+ target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText + '?p=' + selectedPage;
+      let request_url = '/api/stats/'+ target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText + '?p=1';
       fetch(request_url/*,
           TODO: Display to result table {
             method: "GET",
@@ -395,7 +395,7 @@ class ComponentCombobox extends React.Component {
           }*/)
         .then(res => res.json())
         .then((result) => {
-          this.props.getValueOfField(this.props.key_binding, result);
+          this.props.getValueOfField(this.props.key_binding, result.data);
           this.props.getNumPage(result.num_page);
           this.props.getTableHidden(false);
         });
