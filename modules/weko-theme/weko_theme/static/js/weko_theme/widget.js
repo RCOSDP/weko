@@ -59,6 +59,7 @@ let PageBodyGrid = function () {
       description = node.description;
       leftStyle = "initial";
       paddingHeading = "inherit";
+      overFlowBody = "scroll";
     }
 
     if (node.type == "Notice") {
@@ -69,6 +70,7 @@ let PageBodyGrid = function () {
       '<a class="spoiler-btn">'+ node.hide_the_rest + '</a>';
       leftStyle = "initial";
       paddingHeading = "inherit";
+      overFlowBody = "scroll";
     }
 
     let template =
