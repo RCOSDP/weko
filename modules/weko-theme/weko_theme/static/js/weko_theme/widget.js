@@ -53,23 +53,21 @@ let PageBodyGrid = function () {
     let description = "";
     let leftStyle = 0;
     let paddingHeading = "";
-    let overFlowBody = "";
     let noticeDescription = "";
     if (node.type == "Free description") {
       description = node.description;
       leftStyle = "initial";
       paddingHeading = "inherit";
-      overFlowBody = "scroll";
     }
 
     if (node.type == "Notice") {
       description = node.description + '</br>' +
       '<div class="spoiler-btn">' + node.read_more + '</div>' + '</br>' +
-      ' <div class="spoiler-body collapse">' + node.more_description + '</div></br>' +
-      '<div class="spoiler-btn">'+ node.hide_the_rest + '</div>';
+      '<div class="spoiler-body collapse">'
+      node.more_description + '</div></br>' +
+      '<a class="spoiler-btn">'+ node.hide_the_rest + '</a>';
       leftStyle = "initial";
       paddingHeading = "inherit";
-      overFlowBody = "scroll";
     }
 
     let template =
@@ -78,10 +76,9 @@ let PageBodyGrid = function () {
       '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';position: inherit;width: 100%;top: 0;right: inherit; left: ' + leftStyle + ';">' +
       '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
       '     </div>' +
-      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' + description + '</div>' +
+      '     <div class="panel-body ql-editor" style="padding-top: 30px;">' + description + '</div>' +
       '   </div>' +
       '</div>';
-
     return template;
   };
 
@@ -99,9 +96,7 @@ function getWidgetDesignSetting() {
     success: function (data) {
       if (data.error) {
         alert(error);
-        $("div#page_body").each(function() {
-          $(this).css("display", "block");
-        });
+        toggleWidgetUI();
         return;
       } else {
         let widgetList = data['widget-settings'];
@@ -118,9 +113,15 @@ function getWidgetDesignSetting() {
           });
         }
       }
-      $("div#page_body").each(function() {
-        $(this).css("display", "block");
-      });
+      toggleWidgetUI();
     }
+  });
+}
+
+function toggleWidgetUI() {
+  $("div#page_body").each(function() {
+    $(this).css("display", "block");
+    $('footer#footer').css("display", "block");
+    $('footer-fix#footer').remove();
   });
 }
