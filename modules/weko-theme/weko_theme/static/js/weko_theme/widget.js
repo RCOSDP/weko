@@ -57,16 +57,39 @@ let PageBodyGrid = function () {
       paddingHeading = "inherit";
     }
 
+    let template1 =
+    '<div class="grid-stack-item">' +
+    '	<div class="container-fluid" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
+    '		<div class="row">' +
+    '			<div class="col-sm-12 col-md-12 col-md-12">' +
+    '				<div class="panel panel-default">' +
+    '					<div class="panel-heading widget-header" style="color: ' + labelColor + ';">' +
+    '						<strong>' + node.name + '</strong>' +
+    '					</div>' +
+    '				</div>' +
+    '			</div>' +
+    '		</div>' +
+    '		<div class="row">' +
+    '			<div class="col-sm-12 col-md-12 col-md-12">' +
+    '				<div class="panel panel-default">' +
+    '					<div class="panel-body ql-editor">' + description + '</div>' +
+    '				</div>' +
+    '			</div>' +
+    '		</div>' +
+    '	</div>' +
+    '</div>';
+
     let template =
       '<div class="grid-stack-item">' +
       ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
       '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';position: inherit;width: 100%;top: 0;right: inherit; left: ' + leftStyle + ';">' +
-      '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
+      '       <strong>' + node.name + '</strong>' +
       '     </div>' +
-      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: scroll;">' + description + '</div>' +
+      '     <div class="panel-body ql-editor">' + description + '</div>' +
       ' </div>' +
       '</div>';
-    return template;
+
+    return template1;
   };
 
 };
