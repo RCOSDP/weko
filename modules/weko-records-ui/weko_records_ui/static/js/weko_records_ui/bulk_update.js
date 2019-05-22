@@ -47,7 +47,10 @@ require([
       });
       // Check fields
       if(fields.length !== uniqueFields.length) {
-        alert('Field already exists.');
+        //alert('Field already exists.');
+        var modalcontent =  "Field already exists.";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
         $(this).val('unselected');
         contents.each(function(i, elem) {
           $(elem).attr('hidden', 'hidden');
@@ -129,7 +132,10 @@ require([
         }
       });
       if (pids === '') {
-        alert('Please select items to update.');
+        //alert('Please select items to update.');
+        var modalcontent =  "Please select items to update.";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
         return;
       }
 
@@ -218,7 +224,10 @@ require([
             alert(msg);
 
           } else {
-            alert('All selected items have been updated successfully.');
+            //alert('All selected items have been updated successfully.');
+            var modalcontent =  "All selected items have been updated successfully.";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
           }
         },
         error: function(status, error){
@@ -253,11 +262,17 @@ require([
               location.reload();
             }, 1000)
           } else {
-            alert(data.msg)
+            //alert(data.msg)
+            var modalcontent = data.msg;
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
           }
         },
         error: function(status, error){
-          alert(error);
+          //alert(error);
+            var modalcontent = error;
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         }
       });
     });
