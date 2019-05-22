@@ -63,7 +63,7 @@ let PageBodyGrid = function () {
       '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';position: inherit;width: 100%;top: 0;right: inherit; left: ' + leftStyle + ';">' +
       '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
       '     </div>' +
-      '     <div class="panel-body ql-editor" style="padding-top: 30px;">' + description + '</div>' +
+      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: scroll;">' + description + '</div>' +
       ' </div>' +
       '</div>';
     return template;
