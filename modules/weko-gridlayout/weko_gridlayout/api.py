@@ -116,11 +116,11 @@ class WidgetItems(object):
         try:
             data_setting = dict()
             if str(widget_items.get("widget_type")) == "Free description":
-                cls.build_free_description_type(data, widget_items,
+                cls.build_free_description_type(widget_items,
                                                 data_setting)
             elif str(widget_items.get("widget_type")) == "Notice":
                 cls.build_notice_type(widget_items, data_setting)
-            cls.build_general_object(widget_items, data_setting)
+            cls.build_general_object(data, widget_items, data_setting)
         except Exception as ex:
             current_app.logger.debug(ex)
             return
