@@ -27,7 +27,6 @@ from flask_login import login_required
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_records.models import ItemMetadata
-from weko_gridlayout.utils import get_widget_design_setting
 
 
 from .models import Authors

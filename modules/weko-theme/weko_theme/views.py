@@ -29,7 +29,7 @@ from invenio_i18n.ext import current_i18n
 from weko_admin.utils import set_default_language
 from weko_index_tree.models import Index, IndexStyle
 from weko_search_ui.api import get_search_detail_keyword
-from weko_gridlayout.utils import get_widget_design_setting
+
 
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
