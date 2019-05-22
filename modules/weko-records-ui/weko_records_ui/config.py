@@ -163,6 +163,7 @@ RECORDS_UI_ENDPOINTS = dict(
         record_class='weko_deposit.api:WekoRecord',
         permission_factory_imp='weko_items_ui.permissions'
                                ':edit_permission_factory',
+        methods=['POST'],
     ),
 )
 
