@@ -71,7 +71,6 @@
     <!--    <link href="{{ url_for('static', filename='css/weko_theme/styling.css') }}" rel="stylesheet">-->
     {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-    {% assets "weko_gridlayout_katex_min_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {%- endblock css %}
     {%- endblock head %}
@@ -104,7 +103,6 @@
     {%- block javascript %}
 {% include config.THEME_JAVASCRIPT_TEMPLATE %}
 {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-    {% assets "weko_gridlayout_katex_min_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
     {%- endblock javascript %}
     {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE %}
     {%- endblock trackingcode %}
