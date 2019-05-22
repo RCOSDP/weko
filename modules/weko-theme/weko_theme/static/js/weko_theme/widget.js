@@ -65,8 +65,10 @@ let PageBodyGrid = function () {
     if (node.type == "Notice") {
       description = node.description + '</br>' +
       '<div class="spoiler-btn">' + node.read_more + '</div>' + '</br>' +
-      ' <div class="spoiler-body collapse">' + node.more_description + '</div></br>' +
-      '<div class="spoiler-btn">'+ node.hide_the_rest + '</div>';
+      '<div class="spoiler-body collapse">' + node.more_description +
+      ' <div class="spoiler-btn">'+ node.hide_the_rest + '</div>' +
+      '</div></br>';
+
       leftStyle = "initial";
       paddingHeading = "inherit";
       overFlowBody = "scroll";
@@ -110,7 +112,6 @@ function getWidgetDesignSetting() {
           pageBodyGrid.loadGrid(widgetList);
 
           $(".spoiler-btn").on('click', function(event){
-            console.log('=========Spoiler==========');
             $(this).parent().children('.spoiler-body').collapse('toggle');
           });
         }
