@@ -19,7 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{%- from "invenio_communities/macros.html" import community_header %}
 
 {%- block css %}
 {{ super() }}
@@ -60,7 +60,8 @@
         {{ super() }}
         </div>
       </div>
-      {{ community_footer(community, link=False, subtitle='') }}
+      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+      {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
     </div>
     <div class="communities"></div>
   {%- endif%}
