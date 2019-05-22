@@ -19,9 +19,11 @@
   cursor: pointer !important;
 }
 
+/*
 .spoiler-btn:hover {
   text-decoration:underline;
 }
+*/
 
 .widget-footer {
   position: absolute;
