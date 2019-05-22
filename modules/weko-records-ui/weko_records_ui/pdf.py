@@ -163,7 +163,6 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     fg = WekoFeedGenerator()
     fe = fg.add_entry()
 
-
     _file = 'file.URI.@value'
     _file_item_id = None
     if _file in item_map:
@@ -292,13 +291,27 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     metadata_list = [
         "{}: {}".format(lang_data["Metadata"]["LANG"], metadata_dict["lang"]),
-        "{}: {}".format(lang_data["Metadata"]["PUBLISHER"], metadata_dict["publisher"]),
-        "{}: {}".format(lang_data["Metadata"]["PUBLICDATE"], metadata_dict["pubdate"]),
-        "{} (Ja): {}".format(lang_data["Metadata"]["KEY"], metadata_dict["keywords_ja"]),
-        "{} (En): {}".format(lang_data["Metadata"]["KEY"], metadata_dict["keywords_en"]),
-        "{}: {}".format(lang_data["Metadata"]["AUTHOR"], metadata_dict["creator_name"]),
-        "{}: {}".format(lang_data["Metadata"]["EMAIL"], metadata_dict["creator_mail"]),
-        "{}: {}".format(lang_data["Metadata"]["AFFILIATED"], metadata_dict["affiliation"])
+        "{}: {}".format(
+            lang_data["Metadata"]["PUBLISHER"],
+            metadata_dict["publisher"]),
+        "{}: {}".format(
+            lang_data["Metadata"]["PUBLICDATE"],
+            metadata_dict["pubdate"]),
+        "{} (Ja): {}".format(
+            lang_data["Metadata"]["KEY"],
+            metadata_dict["keywords_ja"]),
+        "{} (En): {}".format(
+            lang_data["Metadata"]["KEY"],
+            metadata_dict["keywords_en"]),
+        "{}: {}".format(
+            lang_data["Metadata"]["AUTHOR"],
+            metadata_dict["creator_name"]),
+        "{}: {}".format(
+            lang_data["Metadata"]["EMAIL"],
+            metadata_dict["creator_mail"]),
+        "{}: {}".format(
+            lang_data["Metadata"]["AFFILIATED"],
+            metadata_dict["affiliation"])
     ]
 
     metadata = '\n'.join(metadata_list)
@@ -320,7 +333,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     offset = pdf.x + w1
     pdf.multi_cell(w1,
                    meta_h,
-                   lang_data["Title"]["METADATA"] + '\n' * (metadata_lfnum + 1),
+                   lang_data["Title"]["METADATA"] +
+                   '\n' * (metadata_lfnum + 1),
                    1,
                    'C',
                    True)
@@ -342,7 +356,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     top = pdf.y
     pdf.multi_cell(w1,
                    url_oapolicy_h,
-                   lang_data["Title"]["OAPOLICY"] + '\n' * (oa_policy_lfnum + 1),
+                   lang_data["Title"]["OAPOLICY"] +
+                   '\n' * (oa_policy_lfnum + 1),
                    1,
                    'C',
                    True)
