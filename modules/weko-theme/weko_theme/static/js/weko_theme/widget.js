@@ -64,7 +64,7 @@ let PageBodyGrid = function () {
 
     if (node.type == "Notice") {
       description = node.description + '</br>' +
-      '<a class="spoiler-btn">' + node.read_more + '</a>' + '</br>' +
+      '<div class="spoiler-btn">' + node.read_more + '</div>' + '</br>' +
       '<div class="spoiler-body collapse">'
       node.more_description + '</div></br>' +
       '<a class="spoiler-btn">'+ node.hide_the_rest + '</a>';
@@ -79,7 +79,7 @@ let PageBodyGrid = function () {
       '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';position: inherit;width: 100%;top: 0;right: inherit; left: ' + leftStyle + ';">' +
       '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
       '     </div>' +
-      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow: ' + overFlowBody + ';">' + description + '</div>' +
+      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' + description + '</div>' +
       '   </div>' +
       '</div>';
     return template;
@@ -111,7 +111,7 @@ function getWidgetDesignSetting() {
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
         }
-        $(".spoiler-btn").on('click', '.spoiler-btn', function (e) {
+        $(document).on('click', '.spoiler-btn', function (e) {
           e.preventDefault()
           $(this).parent().children('.spoiler-body').collapse('toggle')
         });
