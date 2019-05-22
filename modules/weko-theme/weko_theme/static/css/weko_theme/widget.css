@@ -1,5 +1,5 @@
 .grid-stack-item {
-  overflow: auto;
+  /*overflow: auto;*/
 }
 
 .widget{
@@ -19,11 +19,9 @@
   cursor: pointer !important;
 }
 
-/*
 .spoiler-btn:hover {
   text-decoration:underline;
 }
-*/
 
 .widget-footer {
   position: absolute;
