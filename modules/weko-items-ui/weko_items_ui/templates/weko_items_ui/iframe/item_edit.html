@@ -48,6 +48,9 @@
 {%- endblock page_footer %}
 
 {%- block page_body %}
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
+<div id="alerts"></div>
 <div class="container-fluid">
   <div class="row">
     <div class="col-md-12">
@@ -215,16 +218,16 @@
                 <div class="col-sm-9">
                   <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     {%- if pid %}
-                    <li>
-                           <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')" style="width: 120px; height: 40px;font-size: 15px;">
-                              <span class="glyphicon glyphicon-trash"></span>
-                                  {{_('Delete')}}</button></li>
+                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')" style="width: 120px; height: 40px;font-size: 15px;">
+                          <span class="glyphicon glyphicon-trash"></span>
+                          {{_('Delete')}}
+                        </button></li>
                     {%- endif %}
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
                             class="btn btn-primary save-button"
                             ng-click="saveDataJson('{{item_save_uri}}');">
-                            <span class="glyphicon glyphicon-download-alt"></span>
-                            {{_('Save')}}
+                          <span class="glyphicon glyphicon-download-alt"></span>
+                          {{_('Save')}}
                         </button></li>
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
                             class="btn btn-info next-button" ng-click="updateDataJson()">{{_('Next')}}
@@ -232,7 +235,19 @@
                     </button></li>
                   </ul>
                 </div>
+                <div class="col-sm-3" style="padding-right: 0;">
+                  <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                    <li>
+                      <button ng-disabled="recordsVM.invenioRecordsLoading"
+                              class="btn btn-danger done-button" id="btn_quit">
+                        <i class="fa fa-sign-out"></i>
+                        {{_('Quit')}}</button>
+                    </li>
+                  </ul>
+                </div>
               </div>
+              {% include "weko_workflow/modal_quit_confirmation.html" %}
+            </div>
             </invenio-records>
           {%- if need_file %}
           </invenio-files-uploader>

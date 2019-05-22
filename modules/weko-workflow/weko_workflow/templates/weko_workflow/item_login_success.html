@@ -27,10 +27,10 @@
 {%- endblock css %}
 
 {%- block javascript %}
-{{ super() }}
-{% assets "workflow_iframe_js" %}
-<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "workflow_iframe_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "workflow_quit_confirmation_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -152,6 +152,7 @@
                       class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
                       <span class="action-name {% if cur_step == step.ActionEndpoint %} cur_step style_a {% endif %}"
                         data-action-version="{{step.ActionVersion}}"
+                        data-cancel-uri="{{ url_for('weko_workflow.cancel_action', activity_id=step.ActivityId, action_id=step.ActionId) }}"
                         data-next-uri="{{url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId)}}">{{step.ActionName}}</span>
                     </li>
                     <li
@@ -203,7 +204,11 @@
                       {{_('Save')}}
                     </button>
                     <button type="button" class="btn btn-info done-button" id="btn-finish">{{_('Done')}}</button>
+                    <button class="btn btn-danger done-button pull-right" id="btn_quit">
+                        <i class="fa fa-sign-out"></i>
+                        {{_('Quit')}}</button>
                   </div>
+                  {% include "weko_workflow/modal_quit_confirmation.html" %}
                 </div>
               </div>
             </div>
@@ -276,7 +281,6 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">{{_('Close')}}</button>
->>>>>>> feature/sp7-wei-workflow
         </div>
       </div>
     </div>

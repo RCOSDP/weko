@@ -133,6 +133,10 @@
   font-size: 15px;
 }
 
+button#btn_quit.done-button {
+  width: auto;
+}
+
 .action-button {
   width: 120px;
   height: 40px;
@@ -265,4 +269,32 @@
 
 .gray-color-class {
   border-color: #D3D3D3;
+}
+
+#add-icon {
+ color: white;
+ position: relative;
+ left: -15.5em;
+ top:1.2em;
+}
+
+#delete-icon {
+ color: white;
+ position: relative;
+ right: 9em;
+ top:1.2em;
+}
+
+#delete-icon-two {
+ color: white;
+ position: relative;
+ right: -2em;
+ top:.2em;
+}
+
+#alert-style {
+ background-color: #00a65a;
+ border-color: #008d4c;
+ border-radius: 3px;
+ color: white;
 }

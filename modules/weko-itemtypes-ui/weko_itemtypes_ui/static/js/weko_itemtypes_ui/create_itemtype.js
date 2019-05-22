@@ -9,9 +9,7 @@ require([
     table_row: [],        // 追加した行番号を保存する元々順番()
     table_row_map: {},    // 生成したschemaとformの情報を保存する
     meta_list: {},        // 追加した行の情報を保存する(セットした詳細情報)
-    /////add by ryuu.0313 start
     meta_fix: {},
-    /////add by ryuu.0313 end
     schemaeditor: {       // objectの場合
       schema:{}           //   生成したschemaの情報を保存する
     }
@@ -75,7 +73,6 @@ require([
     }
     $('#itemtype_name_warning').addClass('hide');
     create_itemtype_schema();
-    console.log('aaaaaaaaaaaaaa');
     send(url_update_schema, page_global);
   });
 
@@ -253,7 +250,7 @@ require([
       if(src_render.hasOwnProperty('meta_list')
           && src_render['meta_list'].hasOwnProperty(row_id)) {
         if(tmp.input_type == src_render['meta_list'][row_id]['input_type']) {
-          if(src_mapping.hasOwnProperty('keywords_en')) {
+          if(src_mapping.hasOwnProperty(row_id)) {
             page_global.table_row_map.mapping[row_id] = src_mapping[row_id];
           } else {
             page_global.table_row_map.mapping[row_id] = mapping_value;

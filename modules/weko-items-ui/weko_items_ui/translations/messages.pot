@@ -147,3 +147,8 @@ msgstr ""
 msgid "Save"
 msgstr ""
 
+msgid "Quit"
+msgstr ""
+
+msgid "Are you sure you want to quit the activity?"
+msgstr ""
