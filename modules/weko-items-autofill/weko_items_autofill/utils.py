@@ -174,7 +174,7 @@ def get_crossref_record_data(pid, doi, item_type_id):
     :param item_type_id: The item type ID
     :return:
     """
-    result = dict()
+    result = list()
     api_response = CrossRefOpenURL(pid, doi).get_data()
     if api_response["error"]:
         return result
@@ -198,9 +198,9 @@ def get_cinii_record_data(naid, item_type_id):
     :param item_type_id: The item type ID
     :return:
     """
-    result = dict()
+    result = list()
     api_response = CiNiiURL(naid).get_data()
-    if api_response["error"]\
+    if api_response["error"] \
             or not isinstance(api_response['response'], dict):
         return result
     api_data = get_cinii_data_by_key(api_response, 'all')
@@ -467,11 +467,11 @@ def get_cinii_data_by_key(api, keyword):
     :param: keyword: keyword for search
     :return: data for keyword
     """
-    data = api['response'].get('@graph')
+    data_response = api['response'].get('@graph')
     result = dict()
-    if not data or data:
-        result
-    data = data[0]
+    if data_response is None:
+        return result
+    data = data_response[0]
     if (keyword == 'title' or keyword == 'alternative') \
             and data.get('dc:title'):
         result[keyword] = get_basic_cinii_data(data.get('dc:title'))
@@ -642,12 +642,16 @@ def get_crossref_issue_date(data):
         Issued date is packed
 
     """
+    result = dict()
     date = data.get('date-parts')
     if isinstance(date, list) and len(date) == 3:
-        datetime = '-'.join(date)
-        return pack_single_value_as_dict(datetime)
+        issued_date = '-'.join(str(e) for e in date)
+        result['@value'] = issued_date
+        result['@type'] = "Issued"
     else:
-        return pack_single_value_as_dict(None)
+        result['@value'] = None
+        result['@type'] = None
+    return result
 
 
 def get_crossref_publisher_data(data):
@@ -706,23 +710,23 @@ def get_crossref_data_by_key(api, keyword):
         return None
     page = data.get('page')
 
-    if keyword == 'title':
+    if keyword == 'title' and created.get('title'):
         result[keyword] = get_crossref_title_data(created.get('title'))
     elif keyword == 'language':
         result[keyword] = pack_single_value_as_dict('eng')
-    elif keyword == 'creator':
+    elif keyword == 'creator' and data.get('author'):
         result[keyword] = get_crossref_creator_data(data.get('author'))
-    elif keyword == 'numPages':
+    elif keyword == 'numPages' and page:
         result[keyword] = get_crossref_numpage_data(page)
-    elif keyword == 'pageStart':
+    elif keyword == 'pageStart' and page:
         result[keyword] = get_start_and_end_page(page, 0)
-    elif keyword == 'pageEnd':
+    elif keyword == 'pageEnd' and page:
         result[keyword] = get_start_and_end_page(page, 1)
-    elif keyword == 'date':
+    elif keyword == 'date' and data.get('issued'):
         result[keyword] = get_crossref_issue_date(data.get('issued'))
-    elif keyword == 'publisher':
+    elif keyword == 'publisher' and created.get('publisher'):
         result[keyword] = get_crossref_publisher_data(created.get('publisher'))
-    elif keyword == 'relation':
+    elif keyword == 'relation' and created.get('ISBN'):
         result[keyword] = get_crossref_relation_data(created.get('ISBN'))
     elif keyword == 'all':
         for key in current_app.config[
