@@ -78,11 +78,7 @@ def load_widget_list_design_setting(repository_id):
             ],
             "error": ""
     """
-    result = {
-        "widget-list": [],
-        "widget-preview": [],
-        "error": ""
-    }
+    result = dict()
     result["widget-list"] = get_widget_list(repository_id)
     result["widget-preview"] = get_widget_preview(repository_id)
     result["error"] = result["widget-list"].get("error") or result[
