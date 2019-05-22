@@ -112,7 +112,6 @@ function getWidgetDesignSetting() {
 
           $(".spoiler-btn").on('click', function(event){
             console.log('=========Spoiler==========');
-            e.preventDefault();
             $(this).parent().children('.spoiler-body').collapse('toggle');
           });
         }
