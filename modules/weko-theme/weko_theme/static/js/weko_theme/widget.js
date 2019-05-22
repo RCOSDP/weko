@@ -54,8 +54,16 @@ let PageBodyGrid = function () {
     let leftStyle = 0;
     let paddingHeading = "";
     let overFlowBody = "";
-    if (node.type == "Free description" || node.type == "Notice") {
+    let noticeDescription = "";
+    if (node.type == "Free description") {
       description = node.description;
+      leftStyle = "initial";
+      paddingHeading = "inherit";
+      overFlowBody = "scroll";
+    }
+
+    if (node.type == "Notice") {
+      description = node.description + "</br>" + read_more + "</br>" + node.more_description;
       leftStyle = "initial";
       paddingHeading = "inherit";
       overFlowBody = "scroll";
