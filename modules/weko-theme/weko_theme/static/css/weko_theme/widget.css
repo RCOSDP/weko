@@ -16,14 +16,11 @@
 
 .spoiler-btn {
   color: rgb(11, 0, 128);
-  padding: 2px 6px;
-  cursor: pointer !important;
+  text-decoration:underline;
 }
 
 .spoiler-btn:hover {
-  text-decoration:underline;
   text-decoration-color:rgb(11, 0, 128);
-  padding: 2px 6px;
 	cursor: pointer !important;
 }
 

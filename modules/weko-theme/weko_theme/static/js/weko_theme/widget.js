@@ -69,12 +69,12 @@ let PageBodyGrid = function () {
 
       if( typeof node.more_description != 'undefined' ) {
         moreDescription = node.more_description;
-        templateWriteMoreNotice =
-          '<a class="spoiler-btn collapsed" data-toggle="collapse" href="#collapseExample">' +
+        templateWriteMoreNotice = '</br>' +
+          '<a class="spoiler-btn collapsed" data-toggle="collapse" href="#collapseNotice">' +
           '  <span class="if-collapsed">' + ((node.read_more != "") ? node.read_more: "Read more") + '</span>' +
           '  <span class="if-not-collapsed">' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '</span>' +
           '</a>' +
-          '<div class="collapse" id="collapseExample">' +
+          '<div class="collapse" id="collapseNotice">' +
           '  <div class="well">' + moreDescription + '</div>' +
           '</div>';
       }
