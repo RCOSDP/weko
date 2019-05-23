@@ -360,6 +360,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 class ComponentFieldEditor extends React.Component {
     constructor (props) {
         super(props)
+        this.quillRef = null;
+        this.reactQuillRef = null;
         this.state = { 
             editorHtml: this.props.data_load,
             modules: {
@@ -388,10 +390,34 @@ class ComponentFieldEditor extends React.Component {
                 'link', 'image', 'video','formula', 'clean'
             ]
         };
-      this.handleChange = this.handleChange.bind(this)
+        this.handleChange = this.handleChange.bind(this)
+        this.attachQuillRefs = this.attachQuillRefs.bind(this);
+    }
+
+    componentDidMount () {
+        this.attachQuillRefs()
+    }
+      
+    componentDidUpdate () {
+        this.attachQuillRefs()
+    }
+
+    attachQuillRefs() {
+        // Ensure React-Quill reference is available:
+        if (typeof this.reactQuillRef.getEditor !== 'function') return;
+        // Skip if Quill reference is defined:
+        if (this.quillRef != null) return;
+        
+        const quillRef = this.reactQuillRef.getEditor();
+        if (quillRef != null) this.quillRef = quillRef;
     }
 
     handleChange (html) {
+        let length = this.quillRef.getText().trim().length;
+        if (length == 0)
+        {
+            html = '';
+        }
         this.setState({ editorHtml: html });
         this.props.handleChange(this.props.key_binding,html);
     }
@@ -401,7 +427,8 @@ class ComponentFieldEditor extends React.Component {
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
             <div class="controls col-xs-9 my-editor">
-                <ReactQuill 
+                <ReactQuill
+                    ref={(el) => { this.reactQuillRef = el }} 
                     onChange={this.handleChange}
                     value={this.state.editorHtml || ''}
                     modules={this.state.modules}
