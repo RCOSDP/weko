@@ -54,6 +54,7 @@ let PageBodyGrid = function () {
     let leftStyle = 0;
     let paddingHeading = "";
     let overFlowBody = "";
+    let hideRest = "Hide the rest";
 
     if (node.type == "Free description") {
       description = node.description;
@@ -64,9 +65,10 @@ let PageBodyGrid = function () {
 
     if (node.type == "Notice") {
       description = node.description + '</br>' +
-      '<div class="spoiler-btn">' + node.read_more + '</div>' + '</br>' +
-      '<div class="spoiler-body collapse">' + node.more_description +
-      '<div class="spoiler-btn">' + node.hide_the_rest + '</div></div></br>';
+      '<div class="spoiler-body collapse">' + node.more_description + '</br>' +
+      ' <input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
+      '</div></br>' +
+      '<div class="spoiler-btn">' + ((node.read_more != "") ? node.read_more: "Read more") + '</div>' + '</br>';
       leftStyle = "initial";
       paddingHeading = "inherit";
       overFlowBody = "scroll";
@@ -111,6 +113,7 @@ function getWidgetDesignSetting() {
 
           $(".spoiler-btn").on('click', function(event){
             $(this).parent().children('.spoiler-body').collapse('toggle');
+            //$(this).text();
           });
         }
       }
