@@ -70,10 +70,14 @@ let PageBodyGrid = function () {
       if( typeof node.more_description != 'undefined' ) {
         moreDescription = node.more_description;
         templateWriteMoreNotice =
-        '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
-        '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
-        '<div class="spoiler-btn">' + ((node.read_more != "") ? node.read_more: "Read more") + '</div>' +
-        '<div class="spoiler-body collapse">' + moreDescription + '</div>';
+        '<div class="row-fluid summary">' +
+        '	<div>' +
+        '		<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
+        '		<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
+        '		<a id="details-switch" class="collapsed" data-toggle="collapse" href="#details">' + ((node.read_more != "") ? node.read_more: "Read more")  + '</a>' +
+        '		<div id="details" class="collapse">' + moreDescription + '</div>' +
+        '	</div>' +
+        '</div>';
       }
 
       description = node.description + templateWriteMoreNotice;
@@ -120,8 +124,12 @@ function getWidgetDesignSetting() {
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
 
-          $(".spoiler-btn").on('click', function(event){
-            $(this).parent().children('.spoiler-body').collapse('toggle');
+          $('#details').on('show', function() {
+              $('#details-switch').html($('.hideRest').val())
+          });
+
+          $('#details').on('hide', function() {
+              $('#details-switch.collapsed').html($(".readMore").val())
           });
         }
       }
