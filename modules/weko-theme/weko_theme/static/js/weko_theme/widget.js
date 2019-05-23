@@ -54,7 +54,7 @@ let PageBodyGrid = function () {
     let leftStyle = 0;
     let paddingHeading = "";
     let overFlowBody = "";
-
+    let node.
     if (node.type == "Free description") {
       description = node.description;
       leftStyle = "initial";
@@ -70,10 +70,13 @@ let PageBodyGrid = function () {
       if( typeof node.more_description != 'undefined' ) {
         moreDescription = node.more_description;
         templateWriteMoreNotice =
-        '<div class="spoiler-btn">' + ((node.read_more != "") ? node.read_more: "Read more") + '</div>' +
-        '<div class="spoiler-body collapse">' + moreDescription +
-        ' <input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
-        '</div>';
+          '<a class="btn btn-primary collapsed" data-toggle="collapse" href="#collapseExample">' +
+          '  <span class="if-collapsed">' + ((node.read_more != "") ? node.read_more: "Read more") + '</span>' +
+          '  <span class="if-not-collapsed">' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '</span>' +
+          '</a>' +
+          '<div class="collapse" id="collapseExample">' +
+          '  <div class="well">' + moreDescription + '</div>' +
+          '</div>';
       }
 
       description = node.description + templateWriteMoreNotice;
