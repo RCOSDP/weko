@@ -15,12 +15,13 @@
 }
 
 .spoiler-btn {
-  color: rgb(11, 0, 128);
-  text-decoration:underline;
+  padding: 2px 6px;
+  cursor: pointer !important;
 }
 
 .spoiler-btn:hover {
-  text-decoration-color:rgb(11, 0, 128);
+  text-decoration:underline;
+	padding: 2px 6px;
 	cursor: pointer !important;
 }
 
@@ -29,12 +30,4 @@
   left: 0;
   bottom: 0;
   width: 100%;
-}
-
-[data-toggle="collapseWriteNotice"].collapsed .if-not-collapsed {
-  display: none;
-}
-
-[data-toggle="collapseWriteNotice"]:not(.collapsed) .if-collapsed {
-  display: none;
 }
