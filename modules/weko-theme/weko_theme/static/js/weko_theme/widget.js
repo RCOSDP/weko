@@ -64,11 +64,14 @@ let PageBodyGrid = function () {
     }
 
     if (node.type == "Notice") {
-      description = node.description +
+      let templateNotice =
       '<div class="spoiler-btn">' + ((node.read_more != "") ? node.read_more: "Read more") + '</div>' +
       '<div class="spoiler-body collapse">' + node.more_description +
       ' <input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
       '</div>';
+
+      description = node.description + ( (node.more_description != "") ? templateNotice : "");
+
       leftStyle = "initial";
       paddingHeading = "inherit";
       overFlowBody = "scroll";
