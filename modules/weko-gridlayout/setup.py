@@ -105,6 +105,16 @@ setup(
             'weko_gridlayout.bundles:widget_setting_js',
             'weko_gridlayout_widget_design_css = '
             'weko_gridlayout.bundles:widget_design_css',
+            'weko_gridlayout_widget_setting_css = '
+            'weko_gridlayout.bundles:widget_setting_css',
+            'weko_gridlayout_katex_min_css = '
+            'weko_gridlayout.bundles:katex_min_css',
+            'weko_gridlayout_katex_min_js = '
+            'weko_gridlayout.bundles:katex_min_js',
+            'weko_gridlayout_prop_types_js = '
+            'weko_gridlayout.bundles:prop_types_js',
+            'weko_gridlayout_react_quill_js = '
+            'weko_gridlayout.bundles:react_quill_js',
         ],
         # 'invenio_base.api_apps': [],
         # 'invenio_base.blueprints': [],

@@ -44,3 +44,8 @@ css = Bundle(
     'css/weko_admin/styles.css',
     output="gen/weko_admin_ui.%(version)s.css",
 )
+
+weko_admin_quill_sknow_css = Bundle(
+    'css/weko_admin/quill.snow.css',
+    output="gen/weko_admin_ui_quill.%(version)s.css",
+)
