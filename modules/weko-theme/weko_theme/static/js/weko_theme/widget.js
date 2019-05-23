@@ -63,14 +63,21 @@ let PageBodyGrid = function () {
     }
 
     if (node.type == "Notice") {
-      let templateNotice =
-      '<div class="spoiler-btn">' + ((node.read_more != "") ? node.read_more: "Read more") + '</div>' +
-      '<div class="spoiler-body collapse">' + node.more_description +
-      ' <input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
-      '</div>';
 
-      node.more_description = "";
-      description = node.description + ( (node.more_description != "") ? templateNotice : "");
+      let templateWriteMoreNotice = "";
+      let moreDescription = "";
+
+      if( typeof node.more_description != 'undefined' ) {
+        moreDescription = node.more_description = "";
+        templateWriteMoreNotice =
+        '<div class="spoiler-btn">' + ((node.read_more != "") ? node.read_more: "Read more") + '</div>' +
+        '<div class="spoiler-body collapse">' + moreDescription +
+        ' <input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
+        '</div>';
+      }
+
+      description = node.description + templateWriteMoreNotice;
+
       leftStyle = "initial";
       paddingHeading = "inherit";
       overFlowBody = "scroll";
