@@ -47,11 +47,11 @@ class ComponentTableResult extends React.Component {
     let unitText = document.getElementById("unit").options[document.getElementById("unit").selectedIndex].text
 
     let requestParam = {
-      start_date: startDate || '0',
-      end_date: endDate || '0',
+      start_date: startDate,
+      end_date: endDate,
       unit: unit
     };
-    let request_url = '/api/stats/' + target + '/' + requestParam['start_date'].replace(/\//g, '-') + '/' + requestParam['end_date'].replace(/\//g, '-') + '/' + unitText + '?p=' + selectedPage;
+    let request_url = '/api/stats/' + target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText + '?p=' + selectedPage;
     fetch(request_url/*,
         TODO: Display to result table {
           method: "GET",
@@ -195,6 +195,10 @@ class ComponentTableResult extends React.Component {
         });
       } else {
         this.displayData(props.data);
+        this.setState({
+          selectedPage: 1,
+          paging: []
+        });
         this.initPageButton(1);
       }
     }
@@ -371,28 +375,29 @@ class ComponentCombobox extends React.Component {
     let unitText = document.getElementById("unit").options[document.getElementById("unit").selectedIndex].text
     this.props.getTableHidden(true);
     if (target == 0) {
-      alert("Target Report is required!");
+      var modalcontent = "Target Report is required!";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
     } else if (unit == 0) {
-      alert("Unit is required!");
+      var modalcontent = "Unit is required!";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
     } else if (this.checkValidDate(startDate, endDate) == -1) {
-      alert('Date is not valid!')
+      var modalcontent = "Date is not valid!";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
     } else if (this.checkValidDate(startDate, endDate) == 0) {
-      alert('Start date is greater than End date!')
+      var modalcontent = "Start date is greater than End date!";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
     } else {
       let requestParam = {
-        start_date: startDate || '0',
-        end_date: endDate || '0',
+        start_date: startDate,
+        end_date: endDate,
         unit: unit
       };
-      let request_url = '/api/stats/'+ target + '/' + requestParam['start_date'].replace(/\//g, '-') + '/' + requestParam['end_date'].replace(/\//g, '-') + '/' + unitText + '?p=1';
-      fetch(request_url/*,
-          TODO: Display to result table {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(requestParam)
-          }*/)
+      let request_url = '/api/stats/'+ target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText + '?p=1';
+      fetch(request_url)
         .then(res => res.json())
         .then((result) => {
           this.props.getValueOfField(this.props.key_binding, result.data);
@@ -443,7 +448,7 @@ class ComponentDatePicker extends React.Component {
     this.handleChangeEvent = this.handleChangeEvent.bind(this)
   }
 
-  handleChangeEvent(event) {
+  handleChangeEvent(event) {    
     let dateData = document.getElementById(this.props.id_component).value;
     let date = Date.parse(dateData);
     let dateElement = dateData.split('/');
@@ -477,9 +482,9 @@ class ComponentDatePicker extends React.Component {
     return (
       <div style={this.styleContainer} className="form-group row margin_0">
         <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
-        <div class={this.state.defaultClass}>
+        <div class={this.state.defaultClass} id={this.props.date_picker_id}>
           <input className="form-control" onChange={this.handleChangeEvent} name={this.props.component_name} id={this.props.id_component} style={this.styleDatePicker} type="text" />
-          <div id='error_message' style={{color: 'red'}} className={this.state.errorMessageClass}>Format is incorrect!</div>
+          <div id={this.props.error_id} style={{color: 'red'}} className={this.state.errorMessageClass}>Format is incorrect!</div>
         </div>
       </div>
     )
@@ -539,8 +544,10 @@ class MainLayout extends React.Component {
           </div>
           <div className="col-md-11 pull-left">
             <h4>Custom Report</h4>
-            <ComponentDatePicker component_name='start_date' name="Start Date" id_component="start_date" />
-            <ComponentDatePicker component_name='end_date' name="End Date" id_component="end_date" />
+            <ComponentDatePicker component_name='start_date' name="Start Date" id_component="start_date" date_picker_id="start_date_picker"
+              error_id="start_error" getTableHidden={this.getTableHidden}/>
+            <ComponentDatePicker component_name='end_date' name="End Date" id_component="end_date" date_picker_id="end_date_picker"
+              error_id="end_error" getTableHidden={this.getTableHidden}/>
             <ComponentCombobox name="Target Report" getValueOfField={this.getValueOfField} getTableHidden={this.getTableHidden} 
               id_component="target" getUnitStatus={this.getUnitStatus} />
             <ComponentCombobox name="Unit" getValueOfField={this.getValueOfField} key_binding="result" id_component="unit" 
@@ -570,10 +577,10 @@ function initDatepicker() {
   })
   .on("changeDate", function(e) {
     if (document.getElementById("start_date_picker").classList.contains('has-error')) {
-      document.getElementById("start_date_picker").classList.remove('has-error')
+      document.getElementById("start_date_picker").classList.remove('has-error');
     }
-    if (!document.getElementById("error_message").classList.contains('hidden')) {
-      document.getElementById("error_message").classList.add('hidden')
+    if (!document.getElementById("start_error").classList.contains('hidden')) {
+      document.getElementById("start_error").classList.add('hidden');
     }
   });
   $("#end_date").datepicker({
@@ -584,10 +591,10 @@ function initDatepicker() {
   })
   .on("changeDate", function(e) {
     if (document.getElementById("end_date_picker").classList.contains('has-error')) {
-      document.getElementById("end_date_picker").classList.remove('has-error')
+      document.getElementById("end_date_picker").classList.remove('has-error');
     }
-    if (!document.getElementById("error_message").classList.contains('hidden')) {
-      document.getElementById("error_message").classList.add('hidden')
+    if (!document.getElementById("end_error").classList.contains('hidden')) {
+      document.getElementById("end_error").classList.add('hidden');
     }
   });
 }
