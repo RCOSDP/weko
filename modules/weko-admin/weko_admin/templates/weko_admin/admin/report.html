@@ -39,6 +39,9 @@
 {%- endblock javascript %}
 
 {%- block body %}
+<div id="alerts"></div>
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
 <style>
   .content-font {
     font-size: 16px;
