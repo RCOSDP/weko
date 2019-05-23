@@ -352,7 +352,7 @@ class ComponentCombobox extends React.Component {
       let startDate = Date.parse(start_date);
       let endDate = Date.parse(end_date);
       if (isNaN(end_date) && !isNaN(endDate) && isNaN(start_date) && !isNaN(startDate)) {
-        if (endDate > startDate) {
+        if (endDate >= startDate) {
           return VALID;
         } else {
           return START_DATE_IS_GREATER;
@@ -567,11 +567,27 @@ function initDatepicker() {
     todayBtn: "linked",
     autoclose: true,
     forceParse: false
+  })
+  .on("changeDate", function(e) {
+    if (document.getElementById("start_date_picker").classList.contains('has-error')) {
+      document.getElementById("start_date_picker").classList.remove('has-error')
+    }
+    if (!document.getElementById("error_message").classList.contains('hidden')) {
+      document.getElementById("error_message").classList.add('hidden')
+    }
   });
   $("#end_date").datepicker({
     format: "yyyy/mm/dd",
     todayBtn: "linked",
     autoclose: true,
     forceParse: false
+  })
+  .on("changeDate", function(e) {
+    if (document.getElementById("end_date_picker").classList.contains('has-error')) {
+      document.getElementById("end_date_picker").classList.remove('has-error')
+    }
+    if (!document.getElementById("error_message").classList.contains('hidden')) {
+      document.getElementById("error_message").classList.add('hidden')
+    }
   });
 }
