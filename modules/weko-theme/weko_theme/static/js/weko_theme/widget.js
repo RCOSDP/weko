@@ -70,7 +70,7 @@ let PageBodyGrid = function () {
       ' <input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
       '</div>';
 
-      description = node.description + ( (node.more_description != "") ? templateNotice : "");
+      description = node.description + ( (node.more_description != "") or (node.more_description !== 'undefined') ? templateNotice : "");
 
       leftStyle = "initial";
       paddingHeading = "inherit";
