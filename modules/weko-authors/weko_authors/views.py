@@ -28,7 +28,6 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_records.models import ItemMetadata
 
-
 from .models import Authors
 from .permissions import author_permission
 
