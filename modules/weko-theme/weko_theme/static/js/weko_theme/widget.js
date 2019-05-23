@@ -54,7 +54,7 @@ let PageBodyGrid = function () {
     let leftStyle = 0;
     let paddingHeading = "";
     let overFlowBody = "";
-    
+
     if (node.type == "Free description") {
       description = node.description;
       leftStyle = "initial";
@@ -68,15 +68,12 @@ let PageBodyGrid = function () {
       let moreDescription = "";
 
       if( typeof node.more_description != 'undefined' ) {
-        moreDescription = node.more_description;
-        templateWriteMoreNotice = '</br>' +
-          '<a class="spoiler-btn collapsed" data-toggle="collapse" href="#collapseNotice">' +
-          '  <span class="if-collapsed">' + ((node.read_more != "") ? node.read_more: "Read more") + '</span>' +
-          '  <span class="if-not-collapsed">' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '</span>' +
-          '</a>' +
-          '<div class="collapseWriteNotice" id="collapseNotice">' +
-          '  <div class="well">' + moreDescription + '</div>' +
-          '</div>';
+        moreDescription = node.more_description = "";
+        templateWriteMoreNotice =
+        '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
+        '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
+        '<div class="spoiler-btn">' + ((node.read_more != "") ? node.read_more: "Read more") + '</div>' +
+        '<div class="spoiler-body collapse">' + moreDescription + '</div>';
       }
 
       description = node.description + templateWriteMoreNotice;
@@ -122,6 +119,11 @@ function getWidgetDesignSetting() {
           let pageBodyGrid = new PageBodyGrid();
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
+
+          $(".spoiler-btn").on('click', function(event){
+            $(this).parent().children('.spoiler-body').collapse('toggle');
+            //$(this).text();
+          });
         }
       }
       toggleWidgetUI();
