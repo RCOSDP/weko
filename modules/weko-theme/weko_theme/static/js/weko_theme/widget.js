@@ -70,7 +70,7 @@ let PageBodyGrid = function () {
       if( typeof node.more_description != 'undefined' ) {
         moreDescription = node.more_description;
         templateWriteMoreNotice =
-          '<a class="btn btn-primary collapsed" data-toggle="collapse" href="#collapseExample">' +
+          '<a class="spoiler-btn collapsed" data-toggle="collapse" href="#collapseExample">' +
           '  <span class="if-collapsed">' + ((node.read_more != "") ? node.read_more: "Read more") + '</span>' +
           '  <span class="if-not-collapsed">' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '</span>' +
           '</a>' +
@@ -122,11 +122,6 @@ function getWidgetDesignSetting() {
           let pageBodyGrid = new PageBodyGrid();
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
-
-          $(".spoiler-btn").on('click', function(event){
-            $(this).parent().children('.spoiler-body').collapse('toggle');
-            //$(this).text();
-          });
         }
       }
       toggleWidgetUI();
