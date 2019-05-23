@@ -54,7 +54,6 @@ let PageBodyGrid = function () {
     let leftStyle = 0;
     let paddingHeading = "";
     let overFlowBody = "";
-    let hideRest = "Hide the rest";
 
     if (node.type == "Free description") {
       description = node.description;
@@ -70,8 +69,8 @@ let PageBodyGrid = function () {
       ' <input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
       '</div>';
 
+      node.more_description = "";
       description = node.description + ( (node.more_description != "") || (node.more_description !== 'undefined') ? templateNotice : "");
-
       leftStyle = "initial";
       paddingHeading = "inherit";
       overFlowBody = "scroll";
