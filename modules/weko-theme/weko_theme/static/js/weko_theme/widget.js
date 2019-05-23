@@ -70,7 +70,7 @@ let PageBodyGrid = function () {
       '</div>';
 
       node.more_description = "";
-      description = node.description + ( (node.more_description != "") || (node.more_description !== 'undefined') ? templateNotice : "");
+      description = node.description + ( (node.more_description != "") ? templateNotice : "");
       leftStyle = "initial";
       paddingHeading = "inherit";
       overFlowBody = "scroll";
