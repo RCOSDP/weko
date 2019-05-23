@@ -364,8 +364,8 @@ class ComponentCombobox extends React.Component {
   }
 
   handleClickEvent(event) {
-    let startDate = document.getElementById("start_date").value;
-    let endDate = document.getElementById("end_date").value;
+    let startDate = document.getElementById("start_date").value || '0';
+    let endDate = document.getElementById("end_date").value || '0';
     let target = document.getElementById("target").value;
     let unit = document.getElementById("unit").value;
     let unitText = document.getElementById("unit").options[document.getElementById("unit").selectedIndex].text
