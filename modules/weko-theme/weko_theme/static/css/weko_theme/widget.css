@@ -31,10 +31,10 @@
   width: 100%;
 }
 
-[data-toggle="collapse"].collapsed .if-not-collapsed {
+[data-toggle="collapseWriteNotice"].collapsed .if-not-collapsed {
   display: none;
 }
 
-[data-toggle="collapse"]:not(.collapsed) .if-collapsed {
+[data-toggle="collapseWriteNotice"]:not(.collapsed) .if-collapsed {
   display: none;
 }

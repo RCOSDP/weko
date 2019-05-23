@@ -74,7 +74,7 @@ let PageBodyGrid = function () {
           '  <span class="if-collapsed">' + ((node.read_more != "") ? node.read_more: "Read more") + '</span>' +
           '  <span class="if-not-collapsed">' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '</span>' +
           '</a>' +
-          '<div class="collapse" id="collapseNotice">' +
+          '<div class="collapseWriteNotice" id="collapseNotice">' +
           '  <div class="well">' + moreDescription + '</div>' +
           '</div>';
       }
