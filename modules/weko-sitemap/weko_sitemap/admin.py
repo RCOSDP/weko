@@ -9,14 +9,16 @@
 
 from __future__ import absolute_import, print_function
 
+from datetime import datetime
 from urllib.parse import urlparse
 
 from celery.result import AsyncResult
 from celery.task.control import inspect
 from flask import abort, current_app, jsonify, render_template, request, \
-    url_for
+    session, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
+from flask_login import current_user
 
 
 class SitemapSettingView(BaseView):
@@ -30,9 +32,17 @@ class SitemapSettingView(BaseView):
     @expose('/update_sitemap', methods=['POST'])
     def update_sitemap(self):
         """Start the task to update the sitemap."""
-        from .tasks import update_sitemap
+        from .tasks import update_sitemap, link_success_handler, link_error_handler
         baseurl = urlparse(request.base_url).netloc  # Celery cannot access config
-        task = update_sitemap.delay(baseurl)
+        task = update_sitemap.apply_async(args=(
+                    baseurl, datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
+                    {'ip_address': request.remote_addr,
+                     'user_agent': request.user_agent.string,
+                     'user_id': (
+                        current_user.get_id() if current_user.is_authenticated else None),
+                     'session_id': session.get('sid_s')}),
+                     link=link_success_handler.s(),
+                     link_error=link_error_handler.s())
         # Get all tasks:
         return jsonify({'task_id': task.id, 'loc': url_for('.get_task_status', task_id=task.id)})
 
@@ -45,9 +55,9 @@ class SitemapSettingView(BaseView):
         task_result = AsyncResult(task_id)  # TODO: Change the responses and the logic
         if task_result.state == 'SUCCESS':
             response = {
-                'start_time': task_result.info['start_time'],
-                'end_time': task_result.info['end_time'],
-                'total': task_result.info['total'],
+                'start_time': task_result.info[0]['start_time'],
+                'end_time': task_result.info[0]['end_time'],
+                'total': task_result.info[0]['total'],
                 'state': task_result.state
             }
         else:  # PENDING ERROR or other state
