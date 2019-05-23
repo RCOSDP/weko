@@ -30,7 +30,6 @@ from weko_admin.utils import set_default_language
 from weko_index_tree.models import Index, IndexStyle
 from weko_search_ui.api import get_search_detail_keyword
 
-
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
 
@@ -88,9 +87,9 @@ def index():
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         render_widgets=True,
-        community_id=community_id, 
+        community_id=community_id,
         detail_condition=detail_condition,
-        width=width, height=height, 
+        width=width, height=height,
         index_link_list=index_link_list,
         index_link_enabled=index_link_enabled, **ctx)
 
