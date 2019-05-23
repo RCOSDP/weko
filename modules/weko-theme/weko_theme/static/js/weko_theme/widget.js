@@ -54,7 +54,7 @@ let PageBodyGrid = function () {
     let leftStyle = 0;
     let paddingHeading = "";
     let overFlowBody = "";
-    let node.
+    
     if (node.type == "Free description") {
       description = node.description;
       leftStyle = "initial";
