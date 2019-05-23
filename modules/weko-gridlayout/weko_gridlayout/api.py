@@ -99,7 +99,7 @@ class WidgetItems(object):
                     'more_description')
                 data_object_settings["hide_the_rest"] = settings.get(
                     'hide_the_rest')
-                data_object_settings["rss_feed"] = settings.get('rss_feed')
+            data_object_settings["rss_feed"] = settings.get('rss_feed')
         except Exception as ex:
             current_app.logger.debug(ex)
 
