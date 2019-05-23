@@ -68,7 +68,7 @@ let PageBodyGrid = function () {
       let moreDescription = "";
 
       if( typeof node.more_description != 'undefined' ) {
-        moreDescription = node.more_description = "";
+        moreDescription = node.more_description;
         templateWriteMoreNotice =
         '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
         '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
@@ -122,7 +122,6 @@ function getWidgetDesignSetting() {
 
           $(".spoiler-btn").on('click', function(event){
             $(this).parent().children('.spoiler-body').collapse('toggle');
-            //$(this).text();
           });
         }
       }
