@@ -47,11 +47,11 @@ class ComponentTableResult extends React.Component {
     let unitText = document.getElementById("unit").options[document.getElementById("unit").selectedIndex].text
 
     let requestParam = {
-      start_date: startDate,
-      end_date: endDate,
+      start_date: startDate || '0',
+      end_date: endDate || '0',
       unit: unit
     };
-    let request_url = '/api/stats/' + target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText + '?p=' + selectedPage;
+    let request_url = '/api/stats/' + target + '/' + requestParam['start_date'].replace(/\//g, '-') + '/' + requestParam['end_date'].replace(/\//g, '-') + '/' + unitText + '?p=' + selectedPage;
     fetch(request_url/*,
         TODO: Display to result table {
           method: "GET",
@@ -364,8 +364,8 @@ class ComponentCombobox extends React.Component {
   }
 
   handleClickEvent(event) {
-    let startDate = document.getElementById("start_date").value || '0';
-    let endDate = document.getElementById("end_date").value || '0';
+    let startDate = document.getElementById("start_date").value;
+    let endDate = document.getElementById("end_date").value;
     let target = document.getElementById("target").value;
     let unit = document.getElementById("unit").value;
     let unitText = document.getElementById("unit").options[document.getElementById("unit").selectedIndex].text
@@ -380,11 +380,11 @@ class ComponentCombobox extends React.Component {
       alert('Start date is greater than End date!')
     } else {
       let requestParam = {
-        start_date: startDate,
-        end_date: endDate,
+        start_date: startDate || '0',
+        end_date: endDate || '0',
         unit: unit
       };
-      let request_url = '/api/stats/'+ target + '/' + startDate.replace(/\//g, '-') + '/' + endDate.replace(/\//g, '-') + '/' + unitText + '?p=1';
+      let request_url = '/api/stats/'+ target + '/' + requestParam['start_date'].replace(/\//g, '-') + '/' + requestParam['end_date'].replace(/\//g, '-') + '/' + unitText + '?p=1';
       fetch(request_url/*,
           TODO: Display to result table {
             method: "GET",
