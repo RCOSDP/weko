@@ -45,16 +45,43 @@ let PageBodyGrid = function () {
   }.bind(this);
 
   this.widgetTemplate = function (node) {
-    let background = "";
-    let labelStyle = "";
+
+    console.log('================NODE==============', node);
+    let labelColor = node.label_color;
+    let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
+    let backgroundColor = node.background_color;
+    let description = "";
+    let leftStyle = 0;
+    let paddingHeading = "";
+    let overFlowBody = "";
+
+    if (node.type == "Free description") {
+      description = node.description;
+      leftStyle = "initial";
+      paddingHeading = "inherit";
+      overFlowBody = "scroll";
+    }
+
+    if (node.type == "Notice") {
+      description = node.description + '</br>' +
+      '<div class="spoiler-btn">' + node.read_more + '</div>' + '</br>' +
+      '<div class="spoiler-body collapse">' + node.more_description +
+      '<div class="spoiler-btn">' + node.hide_the_rest + '</div></div></br>';
+      leftStyle = "initial";
+      paddingHeading = "inherit";
+      overFlowBody = "scroll";
+    }
 
     let template =
       '<div class="grid-stack-item">' +
-      ' <div class="grid-stack-item-content panel panel-default widget" style="' + background + '">' +
-      '   <div class="panel-heading widget-header"><strong>' + node.type + '</strong></div>' +
-      '   <div class="panel-body" style="' + labelStyle + '">' + node.name + '</div>' +
-      ' </div>' +
+      ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
+      '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';position: inherit;width: 100%;top: 0;right: inherit; left: ' + leftStyle + ';">' +
+      '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
+      '     </div>' +
+      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' + description + '</div>' +
+      '   </div>' +
       '</div>';
+
     return template;
   };
 
@@ -72,6 +99,7 @@ function getWidgetDesignSetting() {
     success: function (data) {
       if (data.error) {
         alert(error);
+        toggleWidgetUI();
         return;
       } else {
         let widgetList = data['widget-settings'];
@@ -80,9 +108,21 @@ function getWidgetDesignSetting() {
           let pageBodyGrid = new PageBodyGrid();
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
+
+          $(".spoiler-btn").on('click', function(event){
+            $(this).parent().children('.spoiler-body').collapse('toggle');
+          });
         }
       }
-
+      toggleWidgetUI();
     }
+  });
+}
+
+function toggleWidgetUI() {
+  $("div#page_body").each(function() {
+    $(this).css("display", "block");
+    $('footer#footer').css("display", "block");
+    $('footer-fix#footer').remove();
   });
 }

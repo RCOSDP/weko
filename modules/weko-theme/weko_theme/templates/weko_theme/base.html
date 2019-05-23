@@ -71,6 +71,7 @@
     <!--    <link href="{{ url_for('static', filename='css/weko_theme/styling.css') }}" rel="stylesheet">-->
     {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {% assets "weko_theme_css_widget" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+    {% assets "weko_admin_quill_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
     {%- endblock css %}
     {%- endblock head %}
   </head>
@@ -83,20 +84,20 @@
     {%- endblock browserupgrade %}
     {%- block body_inner %}
     {%- block page_header %}
-{% include config.THEME_HEADER_TEMPLATE %}
+      {% include config.THEME_HEADER_TEMPLATE %}
     {%- endblock page_header %}
-{%-if not community_id %}
-<div id="page_body" class="grid-stack">
-  <div id="main_contents">
-{%- endif%}
+    {%- if not community_id %}
+    <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
+      <div id="main_contents">
+    {%- endif%}
     {%- block page_body %}
     {%- endblock page_body %}
-{%-if not community_id %}
-  </div>
-</div>
-{%- endif%}
+    {%- if not community_id %}
+      </div>
+    </div>
+    {%- endif%}
     {%- block page_footer %}
-{% include config.THEME_FOOTER_TEMPLATE %}
+      {% include config.THEME_FOOTER_TEMPLATE %}
     {%- endblock page_footer %}
     {%- endblock body_inner %}
     {%- block javascript %}

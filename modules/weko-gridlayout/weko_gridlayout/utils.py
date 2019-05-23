@@ -60,7 +60,7 @@ def get_widget_list(repository_id):
     :return: Widget list.
     """
     result = {
-        "widget-list": [],
+        "data": [],
         "error": ""
     }
     try:
@@ -74,19 +74,43 @@ def get_widget_list(repository_id):
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
-                data["widgetSetting"] = {
-                    "label_color": widget_item.label_color,
-                    "frame_border": widget_item.has_frame_border,
-                    "frame_border_color": widget_item.frame_border_color,
-                    "text_color": widget_item.text_color,
-                    "background_color": widget_item.background_color,
-                    "browsing_role": widget_item.browsing_role,
-                    "edit_role": widget_item.edit_role
-                }
-                result["widget-list"].append(data)
+                result["data"].append(data)
     except Exception as e:
         result["error"] = str(e)
 
+    return result
+
+
+def get_widget_preview(repository_id):
+    """Get Widget preview by repository id.
+
+    :param repository_id: Identifier of the repository
+    :return: Widget preview json.
+    """
+    result = {
+        "data": [],
+        "error": ""
+    }
+    try:
+        widget_setting = WidgetDesignSetting.select_by_repository_id(
+            repository_id)
+        if widget_setting:
+            settings = widget_setting.get('settings')
+            if settings:
+                settings = json.loads(settings)
+                for item in settings:
+                    widget_preview = dict()
+                    widget_preview["x"] = item.get("x")
+                    widget_preview["y"] = item.get("y")
+                    widget_preview["width"] = item.get("width")
+                    widget_preview["height"] = item.get("height")
+                    widget_preview["width"] = item.get("width")
+                    widget_preview["id"] = item.get("id")
+                    widget_preview["type"] = item.get("type")
+                    widget_preview["name"] = item.get("name")
+                    result["data"].append(widget_preview)
+    except Exception as e:
+        result['error'] = str(e)
     return result
 
 
@@ -110,7 +134,6 @@ def get_widget_design_setting(repository_id):
                 result["widget-settings"] = json.loads(settings)
     except Exception as e:
         result['error'] = str(e)
-
     return result
 
 
@@ -127,6 +150,14 @@ def update_widget_design_setting(data):
     repository_id = data.get('repository_id')
     setting_data = data.get('settings')
     try:
+        json_data = json.loads(setting_data)
+        if type(json_data) is list:
+            for item in json_data:
+                widget_item = WidgetItem.get(item.get('id'), item.get('type'),
+                                             item.get('name'))
+                widget_setting = json.loads(widget_item.settings)
+                item.update(widget_setting)
+        setting_data = json.dumps(json_data)
         if repository_id and setting_data:
             if WidgetDesignSetting.select_by_repository_id(repository_id):
                 result["result"] = WidgetDesignSetting.update(repository_id,
@@ -235,6 +266,50 @@ def delete_item_in_preview_widget_item(data_id, json_data):
     return data
 
 
+def update_general_item(item, data_result):
+    """Update general feild item.
+
+    :param item: item need to be update
+    :param data_result: result
+    """
+    item['frame_border'] = data_result.get('frame_border')
+    item['frame_border_color'] = data_result.get(
+        'frame_border_color')
+    item['background_color'] = data_result.get('background_color')
+    item['label_color'] = data_result.get('label_color')
+    item['text_color'] = data_result.get('text_color')
+    item['name'] = data_result.get('label')
+    item['type'] = data_result.get('widget_type')
+
+
+def update_free_description_type(item, data_settings):
+    """Update item type Free description.
+
+    :param item: item need to be update
+    :param data_settings: data settings
+    :return:
+    """
+    item['description'] = data_settings.get('description')
+
+
+def update_notice_type(item, data_settings):
+    """Update item type Notice.
+
+    :param item: item need to be update
+    :param data_settings: data settings
+    :return:
+    """
+    item['description'] = data_settings.get('description')
+    if data_settings.get('more_description'):
+        item['read_more'] = data_settings.get('read_more')
+        item['hide_the_rest'] = data_settings.get('hide_the_rest')
+        item['more_description'] = data_settings.get('more_description')
+    else:
+        item.pop('read_more', None)
+        item.pop('hide_the_rest', None)
+        item.pop('more_description', None)
+
+
 def update_item_in_preview_widget_item(data_id, data_result, json_data):
     """Update item in preview widget design when it is edited in widget item.
 
@@ -250,14 +325,14 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
         for item in json_data:
             if str(item.get('name')) == str(data_id.get('label')) and str(
                     item.get('type')) == str(data_id.get('widget_type')):
-                item['frame_border'] = data_result.get('frame_border')
-                item['frame_border_color'] = data_result.get(
-                    'frame_border_color')
-                item['background_color'] = data_result.get('background_color')
-                item['type'] = data_result.get('widget_type')
-                item['label_color'] = data_result.get('label_color')
-                item['text_color'] = data_result.get('text_color')
-                item['name'] = data_result.get('label')
+                update_general_item(item, data_result)
+                settings = data_result.get('settings')
+                if str(item.get('type')) == "Free description":
+                    update_free_description_type(item, settings)
+                elif str(item.get('type')) == "Notice":
+                    update_notice_type(item, settings)
+                else:
+                    item.pop('description', None)
     data = json.dumps(json_data)
     return data
 

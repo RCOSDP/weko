@@ -77,6 +77,7 @@ def index():
         activities = activity.get_activity_list()
     return render_template(
         'weko_workflow/activity_list.html',
+        render_widgets=True,
         activities=activities, community_id=community_id, **ctx
     )
 
@@ -113,6 +114,7 @@ def iframe_success():
     del session['itemlogin_community_id']
 
     return render_template('weko_workflow/item_login_success.html',
+                           render_widgets=True,
                            activity=activity,
                            item=item,
                            steps=steps,
@@ -140,6 +142,7 @@ def new_activity():
         community_id = comm.id
     return render_template(
         'weko_workflow/workflow_list.html',
+        render_widgets=True,
         workflows=workflows, community_id=community_id, **ctx
     )
 
@@ -178,6 +181,7 @@ def list_activity():
     activities = activity.get_activity_list()
     return render_template(
         'weko_workflow/activity_list.html',
+        render_widgets=True,
         activities=activities
     )
 
@@ -341,9 +345,9 @@ def display_activity(activity_id=0):
         session['itemlogin_res_check'] = res_check
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
-
     return render_template(
         'weko_workflow/activity_detail.html',
+        render_widgets=True,
         activity=activity_detail,
         item=item,
         steps=steps,

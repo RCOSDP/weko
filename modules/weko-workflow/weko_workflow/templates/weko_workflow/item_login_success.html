@@ -19,7 +19,7 @@
 #}
 
 {%- extends config.WEKO_WORKFLOW_BASE_TEMPLATE %}
-{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{%- from "invenio_communities/macros.html" import community_header %}
 
 {%- block css %}
 {{ super() }}
@@ -264,33 +264,34 @@
   </div>
 </div>
 {%- endblock page_body_main %}
+
 {%- block page_body %}
-{%-if community %}
-<div class="communities">
-  <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
-  {{ community_header(community, subtitle='') }}
-  <div id="page_body" class="grid-stack">
-    <div id="main_contents">
+  {%- if community %}
+    <div class="communities">
+      <div id="community-id" name="community-id" hidden>{{ community.id }}</div>
+      {{ community_header(community, subtitle='') }}
+      <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
+        <div id="main_contents">
   {%- endif%}
-  {{ super() }}
-  <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
-    <div class="modal-dialog modelWidth" role="document">
-      <div class="modal-content">
-        <div class="modal-body">
-          {% include 'weko_workflow/record_detail.html' %}
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">{{_('Close')}}</button>
+    {{ super() }}
+    <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
+      <div class="modal-dialog modelWidth" role="document">
+        <div class="modal-content">
+          <div class="modal-body">
+            {% include 'weko_workflow/record_detail.html' %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">{{_('Close')}}</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  {%-if community %}
+  {%- if community %}
+        </div>
+      </div>
+      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+      {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
     </div>
-  </div>
-  {{ community_footer(community, link=False, subtitle='') }}
-</div>
-<div class="communities">
-</div>
-{%- endif%}
+    <div class="communities"></div>
+  {%- endif%}
 {%- endblock page_body %}
