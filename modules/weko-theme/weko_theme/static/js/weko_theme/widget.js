@@ -71,12 +71,12 @@ let PageBodyGrid = function () {
         moreDescription = node.more_description;
         templateWriteMoreNotice =
         '<div class="row-fluid summary">' +
-        '	<div>' +
-        '		<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
-        '		<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
-        '		<a id="details-switch" class="collapsed" data-toggle="collapse" href="#details">' + ((node.read_more != "") ? node.read_more: "Read more")  + '</a>' +
-        '		<div id="details" class="collapse">' + moreDescription + '</div>' +
-        '	</div>' +
+        '    <div>' +
+        '        <a id="details-switch" class="collapsed" data-toggle="collapse" href="#details">Show details</a>' +
+        '        <div id="details" class="collapse">' +
+        '            More details...' +
+        '        </div>' +
+        '    </div>' +
         '</div>';
       }
 
@@ -125,12 +125,13 @@ function getWidgetDesignSetting() {
           pageBodyGrid.loadGrid(widgetList);
 
           $('#details').on('show', function() {
-              $('#details-switch').html($('.hideRest').val())
-          });
-
+              console.log('=====Show detail======');
+              $('#details-switch').html('Hide details')
+          })
           $('#details').on('hide', function() {
-              $('#details-switch.collapsed').html($(".readMore").val())
-          });
+              console.log('=====Hide detail======');
+              $('#details-switch.collapsed').html('Show details')
+          })
         }
       }
       toggleWidgetUI();
