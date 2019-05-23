@@ -46,7 +46,7 @@ class Repository extends React.Component {
 
     handleChange(event) {
         let repositoryId = event.target.value;
-        let url = "/api/admin/load_widget_design_setting/" + repositoryId;
+        let url = "/api/admin/load_widget_list_design_setting/" + repositoryId;
         fetch(url)
             .then(res => res.json())
             .then(
@@ -55,8 +55,9 @@ class Repository extends React.Component {
                         console.log(result.error);
                         return;
                     }
-                    let widgetList = result['widget-settings'];
-                    loadWidgetPreview(widgetList);
+                    let widgetPreview = result['widget-preview'];
+                    let data = widgetPreview['data'];
+                    loadWidgetPreview(data);
                 },
                 (error) => {
                     console.log(error);
@@ -104,7 +105,7 @@ class WidgetList extends React.Component {
     }
 
     componentDidMount() {
-        fetch("/api/admin/load_widget_list/0")
+        fetch("/api/admin/load_widget_list_design_setting/0")
             .then(res => res.json())
             .then(
                 (result) => {
@@ -113,7 +114,8 @@ class WidgetList extends React.Component {
                         return;
                     }
                     let widgetList = result['widget-list'];
-                    loadWidgetList(widgetList);
+                    let data = widgetList["data"];
+                    loadWidgetList(data);
                 },
 
                 (error) => {
@@ -123,7 +125,7 @@ class WidgetList extends React.Component {
     }
 
     reloadWidgetListPanel(repositoryId) {
-        let url = "/api/admin/load_widget_list/" + repositoryId;
+        let url = "/api/admin/load_widget_list_design_setting/" + repositoryId;
         fetch(url)
             .then(res => res.json())
             .then(
@@ -133,7 +135,8 @@ class WidgetList extends React.Component {
                         return;
                     }
                     let widgetList = result['widget-list'];
-                    loadWidgetList(widgetList);
+                    let data = widgetList["data"];
+                    loadWidgetList(data);
                 },
                 (error) => {
                     console.log(error);
@@ -172,7 +175,7 @@ class PreviewWidget extends React.Component {
     }
 
     componentDidMount() {
-        fetch("/api/admin/load_widget_design_setting/0")
+        fetch("/api/admin/load_widget_list_design_setting/0")
             .then(res => res.json())
             .then(
                 (result) => {
@@ -180,8 +183,9 @@ class PreviewWidget extends React.Component {
                         console.log(result.error);
                         return;
                     }
-                    let widgetList = result['widget-settings'];
-                    loadWidgetPreview(widgetList);
+                    let widgetPreview = result['widget-preview'];
+                    let data = widgetPreview['data'];
+                    loadWidgetPreview(data);
                 },
                 (error) => {
                     console.log(error);
@@ -231,7 +235,7 @@ class ButtonLayout extends React.Component {
                         console.log(result.error);
                         return;
                     }
-                    let widgetList = result['widget-settings'];
+                    let widgetList = result['widget-preview'].get('widget-preview');
                     loadWidgetPreview(widgetList);
                 },
                 (error) => {
@@ -337,11 +341,6 @@ var PreviewGrid = new function () {
             let name = el.data("name");
             let id = el.data("id");
             let type = el.data("type");
-            let hasFrameBorder = el.data("hasframeborder");
-            let frameBorderColor = el.data("framebordercolor");
-            let background = el.data("background");
-            let label_color = el.data("labelcolor");
-            let text_color = el.data("textcolor");
             if (!id) {
                 return;
             } else if(MAIN_CONTENT_TYPE == type){
@@ -355,11 +354,6 @@ var PreviewGrid = new function () {
                 name: name,
                 id: id,
                 type: type,
-                frame_border: hasFrameBorder,
-                frame_border_color: frameBorderColor,
-                background_color: background,
-                label_color: label_color,
-                text_color: text_color,
             };
         }, this);
         var filtered = this.serializedData.filter(function (el) {
@@ -387,9 +381,8 @@ var PreviewGrid = new function () {
         if(isAutoPosition){
             autoPosition = 'data-gs-auto-position="true"';
         }
-        let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"data-hasFrameBorder="' + node.frame_border + '"'
-        + ' data-frameBorderColor="' + node.frame_border_color + '"data-background="' + node.background_color + '"data-labelColor="' + node.label_color + '"'
-        + ' data-textcolor="' + node.text_color + '"' + autoPosition + '>'
+        let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"'
+        + autoPosition + '>'
         + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
         + ' <div class="grid-stack-item-content">'
         + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'
@@ -418,11 +411,6 @@ function addWidget() {
             let widgetName = $(this).data('widgetName');
             let widgetId = $(this).data('widgetId');
             let widgetType = $(this).data('widgetType');
-            let widgetFrameBorder = $(this).data('widgetFrameborder');
-            let widgetBackground = $(this).data('widgetBackgroundcolor');
-            let widgetLabelColor = $(this).data('widgetLabelcolor');
-            let widgetTextColor = $(this).data('widgetTextcolor');
-            let widgetFrameBorderColor = $(this).data('widgetFramebordercolor');
             if(MAIN_CONTENT_TYPE == widgetType && isHasMainContent){
                 alert("Main Content has been existed in Preview panel.");
                 disableMainContentButton(true);
@@ -437,11 +425,6 @@ function addWidget() {
                 name: widgetName,
                 id: widgetId,
                 type:widgetType,
-                frame_border: widgetFrameBorder,
-                background_color: widgetBackground,
-                label_color: widgetLabelColor,
-                text_color: widgetTextColor,
-                frame_border_color: widgetFrameBorderColor,
             };
             PreviewGrid.addNewWidget(node);
             if(MAIN_CONTENT_TYPE == widgetType){
@@ -480,12 +463,9 @@ function loadWidgetList(widgetListItems) {
             + '<div class="grid-stack-item-content">'
             + ' <span class="widget-label" >&lt;' + widget.widgetType + '&gt;</span>'
             + ' <span class="widget-label">' + widget.widgetLabel + '</span>'
-            + ' <button ' + buttonId + ' data-widget-frameborder="' + widget.widgetSetting.frame_border + '"'
-            + '     data-widget-type="' + widget.widgetType + '"data-widget-name="' + widget.widgetLabel + '"'
-            + '     data-widget-id="' + widget.widgetId + '" data-widget-labelcolor="'+ widget.widgetSetting.label_color + '"'
-            + '     data-widget-backgroundcolor="' + widget.widgetSetting.background_color + '" data-widget-textcolor="' + widget.widgetSetting.text_color + '"'
-            + '     data-widget-textcolor="' + widget.widgetSetting.text_color + '"'
-            + '     data-widget-framebordercolor="' + widget.widgetSetting.frame_border_color + '" class="btn btn-default add-new-widget">'
+            + ' <button ' + buttonId + ' data-widget-type="' + widget.widgetType
+            + '" data-widget-name="' + widget.widgetLabel + '" data-widget-id="' + widget.widgetId
+            + '" class="btn btn-default add-new-widget">'
             + ' Add Widget'
             + ' </button>'
             + '</div>'

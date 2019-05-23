@@ -5,9 +5,6 @@ class ComponentSelectField extends React.Component {
             repositoryId: '0',
             selectOptions: [],
         };
-        this.styleRed = {
-            color: 'red',
-        };
         this.handleChange = this.handleChange.bind(this);
     }
 
@@ -24,7 +21,6 @@ class ComponentSelectField extends React.Component {
                             )
                       });
                     } else {
-                        options =[];
                         options = result.repositories.map((repository) => {
                             return (
                                 <option key={repository.id} value={repository.id}>{repository.id}</option>
@@ -53,7 +49,7 @@ class ComponentSelectField extends React.Component {
     render() {
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
                 <div class="controls col-xs-6">
                     <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name}>
                         <option value="0">Please select the &nbsp; {this.props.key_binding}</option>
@@ -71,9 +67,6 @@ class ComponentTextboxField extends React.Component {
         this.state={
             value:'',
         }
-        this.styleRed = {
-            color: 'red',
-        };
         this.handleChange = this.handleChange.bind(this);
     }
 
@@ -93,7 +86,7 @@ class ComponentTextboxField extends React.Component {
     render() {
         return (
             <div className="form-group row">
-              <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span style={this.styleRed}>*</span></label>
+              <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
               <div class="controls col-xs-6">
                 <input name={this.props.name} type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control"/>
               </div>
@@ -129,7 +122,7 @@ class ComponentSelectColorFiled extends React.Component {
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
                 <div className="controls col-xs-2">
-                  <input name={this.props.name} type="color" name="favcolor" value={this.state.color} onChange={this.handleChange}/>
+                  <input name={this.props.name} type="color" className="style-select-color" name="favcolor" value={this.state.color} onChange={this.handleChange}/>
                 </div>
             </div>
         )
@@ -141,7 +134,7 @@ class ComponentCheckboxField extends React.Component {
         super(props);
         this.handleChange = this.handleChange.bind(this);
         this.state = {
-            is_default_Checked: this.props.data_load,
+            is_default_Checked: this.props.data_load || false,
         }
     }
 
@@ -154,7 +147,7 @@ class ComponentCheckboxField extends React.Component {
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
                 <div class="controls col-xs-1">
-                    <input name={this.props.name} type="checkbox" name="FrameBorder" onChange={this.handleChange} defaultChecked = {this.state.is_default_Checked}/>
+                    <input name={this.props.name} type="checkbox" onChange={this.handleChange} defaultChecked = {this.state.is_default_Checked}/>
                 </div>
             </div>
         )
@@ -169,38 +162,6 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             UnauthorizedOptions: [],
             unauthorList: []
         };
-        this.styleContainer={
-            border: '1px solid #ccc',
-            height: '200px',
-            padding :'15px 5px 5px 10px',
-        }
-        this.styleElement={
-            padding: "0",
-        }
-        this.styleSelectLeft={
-            padding: "0",
-            width: "90%",
-            height: "100px",
-            float: "left",
-        }
-        this.styleSelectRight={
-            padding: "0",
-            width: "90%",
-            height: "100px",
-            float: "right",
-        }
-        this.styleButtonContainer = {
-            display: 'flex',
-            flexDirection : 'column',
-            justifyContent: 'center',
-            height: "100px",
-        }
-        this.styleButtonElement={
-          margin: "2px",
-        }
-        this.styleLabelRight={
-            "margin-left":"10%",
-        }
         this.handleChange = this.handleChange.bind(this);
         this.handleMoveRightClick = this.handleMoveRightClick.bind(this);
         this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
@@ -322,7 +283,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             for (let index in selectedIndex) {
                 if (options[option].value == selectedIndex[index] && options[option].value) {
                   let innerhtml = <option key={options[option].value} value={options[option].value}>{options[option].text}</option>;
-                  if (!this.isValueExist(options[option].value), authorizedOptions) {
+                  if (!this.isValueExist(options[option].value, authorizedOptions)) {
                       authorizedOptions.push(innerhtml);
                   }
                   registed = true;
@@ -365,25 +326,27 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         return (
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                <div class="controls col-xs-6">
-                    <fieldset className="form-group" style={this.styleContainer}>
+                <div class="controls col-xs-9">
+                    <fieldset className="form-group style-container" >
                     <span>Role</span><br/>
-                    <div className="col-xs-5" style={this.styleElement}>
+                    <div className="col-xs-5 style-element" >
                       <span >Authorized</span><br/>
-                      <select name={this.props.name} multiple style={this.styleSelectLeft} id={this.props.authorSelect} name={this.props.authorSelect}>
+                      <select name={this.props.name} multiple className="style-select-left" id={this.props.authorSelect} name={this.props.authorSelect}>
                           {this.state.selectOptions}
                       </select>
                     </div>
-                    <div className="col-xs-1" style={this.styleElement}>
-                      <br/>
-                      <div className="buttons" style={this.styleButtonContainer}>
-                        <input type="button" value="&rarr;" style={this.styleButtonElement} onClick={this.handleMoveRightClick}/>
-                        <input type="button" value="&larr;" style={this.styleButtonElement} onClick={this.handleMoveLeftClick}/>
-                      </div>
+                    <div className="col-xs-2">
+                        <br/>
+                        <div className="style-center-align">
+                            <div className="buttons style-button-container">
+                                <input type="button" value="&rarr;" className="style-button-element" onClick={this.handleMoveRightClick}/>
+                                <input type="button" value="&larr;" className="style-button-element" onClick={this.handleMoveLeftClick}/>
+                             </div>
+                        </div>
                     </div>
-                    <div className="col-xs-5" style={this.styleElement}>
-                      <span style={this.styleLabelRight}>Unauthorized</span><br/>
-                      <select multiple value={this.state.unauthorList} style={this.styleSelectRight} onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
+                    <div className="col-xs-5 style-element style-element-right">
+                      <span>Unauthorized</span><br/>
+                      <select multiple value={this.state.unauthorList} className="style-select-right" onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
                           {this.state.UnauthorizedOptions}
                       </select>
                     </div>
@@ -394,6 +357,242 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 }
 
+class ComponentFieldEditor extends React.Component {
+    constructor (props) {
+        super(props)
+        this.state = { 
+            editorHtml: this.props.data_load,
+            modules: {
+                toolbar: [
+                  [{ 'font': [] }, {size: []}],
+                  ['bold', 'italic', 'underline', 'strike'],
+                  [{'color': ["#000000", "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff", "#ffffff", "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff", "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff", "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2", "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466", 'custom-color']}, {'background': ["#000000", "#e60000", "#ff9900", "#ffff00", "#008a00", "#0066cc", "#9933ff", "#ffffff", "#facccc", "#ffebcc", "#ffffcc", "#cce8cc", "#cce0f5", "#ebd6ff", "#bbbbbb", "#f06666", "#ffc266", "#ffff66", "#66b966", "#66a3e0", "#c285ff", "#888888", "#a10000", "#b26b00", "#b2b200", "#006100", "#0047b2", "#6b24b2", "#444444", "#5c0000", "#663d00", "#666600", "#003700", "#002966", "#3d1466", 'custom-color']}],
+                  [{ 'script': 'sub'}, { 'script': 'super' }],
+                  [{ 'header': '1'}, {'header': '2'}, 'blockquote', 'code-block'],
+                  [{'list': 'ordered'}, {'list': 'bullet'}, 
+                   {'indent': '-1'}, {'indent': '+1'}],
+                  ['direction', 'align'],
+                  ['link', 'image', 'video', 'formula'],
+                  ['clean']
+                ],
+                clipboard: {
+                  // toggle to add extra line breaks when pasting HTML:
+                  matchVisual: false,
+                }
+            },
+            formats: [
+                'font', 'size',
+                'bold', 'italic', 'underline', 'strike', 'color', 'background',
+                'script', 'script', 'header', 'blockquote', 'code-block',
+                'list', 'bullet', 'indent', 'direction', 'align',
+                'link', 'image', 'video','formula', 'clean'
+            ]
+        };
+      this.handleChange = this.handleChange.bind(this)
+    }
+
+    handleChange (html) {
+        this.setState({ editorHtml: html });
+        this.props.handleChange(this.props.key_binding,html);
+    }
+
+    render () {
+      return (
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+            <div class="controls col-xs-9 my-editor">
+                <ReactQuill 
+                    onChange={this.handleChange}
+                    value={this.state.editorHtml || ''}
+                    modules={this.state.modules}
+                    formats={this.state.formats}
+                    bounds={'.app'}
+                    placeholder={this.props.placeholder}
+                />
+            </div>
+        </div>
+       )
+    }
+}
+
+class ExtendComponent extends React.Component {
+    constructor(props) {
+        super(props);
+        if(this.props.type == "Notice")
+        {
+            if(this.props.data_load.more_description)
+            {
+                this.state={
+                    type: this.props.type,
+                    settings:this.props.data_load,
+                    write_more: true,
+                };
+            }
+            else
+            {
+                this.state={
+                    type: this.props.type,
+                    settings:this.props.data_load,
+                    write_more: false,
+                };
+            }
+        }
+        else
+        {
+            this.state={
+                type: this.props.type,
+                settings:this.props.data_load,
+            }
+        }
+        this.handleChange = this.handleChange.bind(this);
+        this.handleChangeCheckBox = this.handleChangeCheckBox.bind(this);
+        this.handleChangeHideTheRest =  this.handleChangeHideTheRest.bind(this);
+        this.handleChangeReadMore = this.handleChangeReadMore.bind(this);
+    }
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.type !== this.state.type) {
+          this.setState({ type: nextProps.type });
+          this.setState({settings: {}})
+          this.setState({write_more: false})
+          this.render();
+        }
+    }
+
+    handleChange (field,value) {
+        let data = this.state.settings;
+        switch(field)
+        {
+            case "description":
+                data["description"] = value;
+                break;
+            case "read_more":
+                data["read_more"] = value;
+                break;
+            case "more_description":
+                data["more_description"] = value;
+                break;
+            case "hide_the_rest":
+                data["hide_the_rest"] = value;
+                break;
+            case "rss_feed":
+                data["rss_feed"] = value;
+        }
+        this.setState({
+            settings:data
+        })
+        this.props.getValueOfField(this.props.key_binding,data);
+    }
+
+    handleChangeCheckBox (event)
+    {
+        let data=this.state.settings;
+        data.more_description = '';
+        data.read_more = '';
+        data.hide_the_rest = '';
+        this.setState({
+            write_more: event.target.checked,
+            settings:data,
+        })
+        this.props.getValueOfField(this.props.key_binding,data);
+        this.render();
+    }
+
+    handleChangeHideTheRest(event)
+    {
+        this.setState({ hide_the_rest: event.target.value });
+        this.handleChange("hide_the_rest",event.target.value);
+    }
+
+    handleChangeReadMore(event)
+    {
+        this.setState({ read_more: event.target.value });
+        this.handleChange("read_more",event.target.value);
+    }
+    
+    render()
+    {
+        if(this.state.type == "Free description")
+        {
+            return(
+                <div>
+                    <ComponentFieldEditor handleChange = {this.handleChange} name="Free description" key_binding = "description" data_load={this.state.settings.description}/>
+                </div>
+            )
+        }
+        else if(this.state.type == "Notice")
+        {
+            if(this.state.write_more == false)
+            {
+                return(
+                    <div>
+                        <div>
+                            <ComponentFieldEditor handleChange = {this.handleChange} name="Notice description" key_binding = "description" data_load={this.state.settings.description}/>
+                        </div>
+                        <div className="row">
+                            <label className="control-label col-xs-2 text-right"></label>
+                            <div class="controls col-xs-10">
+                                <input name="write_more" type="checkbox" onChange={this.handleChangeCheckBox} defaultChecked = {this.state.settings.write_more}/>
+                                <span>&nbsp;Write more</span>
+                            </div>
+                        </div>
+                        <br/>
+                        <div>
+                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.handleChange} key_binding = "rss_feed" data_load={this.state.settings.rss_feed} />
+                        </div>
+                    </div>
+                )
+            }
+            else
+            {
+                return(
+                    <div>
+                        <div>
+                            <ComponentFieldEditor handleChange = {this.handleChange} name="Notice description" key_binding = "description" data_load={this.state.settings.description}/>
+                        </div>
+                        <div className="row">
+                            <label className="control-label col-xs-2 text-right"></label>
+                            <div class="controls col-xs-10">
+                                <div>
+                                    <input name="write_more" type="checkbox" onChange={this.handleChangeCheckBox} defaultChecked = {this.state.write_more}/>
+                                    <span>&nbsp;Write more</span>
+                                </div>
+                                <br/>
+                                <div className="sub-text-box">
+                                    <input type="text" name="read_more" value={this.state.read_more} onChange={this.handleChangeReadMore} className="form-control" placeholder="Read more" value={this.state.settings.read_more} />
+                                </div>
+                                <br/>
+                            </div>
+                        </div>
+                        <div>
+                            <ComponentFieldEditor handleChange = {this.handleChange} name="" key_binding = "more_description" data_load={this.state.settings.more_description}/>
+                        </div>
+                        <div className="row">
+                            <label className="control-label col-xs-2 text-right"></label>
+                            <div class="controls col-xs-10">
+                                <div className="sub-text-box">
+                                    <input type="text" name="hide_the_rest" value={this.state.hide_the_rest} onChange={this.handleChangeHideTheRest} className="form-control" placeholder="Hide the rest" value={this.state.settings.hide_the_rest} />
+                                </div>
+                                <br/>
+                            </div>
+                        </div>
+                        <div >
+                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.handleChange} key_binding = "rss_feed" data_load={this.state.settings.rss_feed} />
+                        </div>
+                    </div>
+                )
+            }
+        }
+        else
+        {
+            return(
+                <div>
+                </div>
+            )
+        }
+    }
+}
+
+
 class ComponentButtonLayout extends React.Component {
 
     constructor(props) {
@@ -403,9 +602,6 @@ class ComponentButtonLayout extends React.Component {
             widget_type: '',
             label: ''
         }
-        this.style = {
-            marginLeft: "10px",
-        };
         this.saveCommand = this.saveCommand.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
     } 
@@ -517,11 +713,11 @@ class ComponentButtonLayout extends React.Component {
                             <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
                             &nbsp;Save
                         </button>
-                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button" style={this.style}>
+                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button style-my-button">
                             <span className="glyphicon glyphicon-remove"  aria-hidden="true"></span>
                             &nbsp;Cancel
                         </a>
-                        <button className="btn btn-danger delete-button" onClick={this.deleteCommand} style={this.style}>
+                        <button className="btn btn-danger delete-button style-my-button" onClick={this.deleteCommand}>
                             <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
                             &nbsp;Delete
                         </button>
@@ -533,11 +729,11 @@ class ComponentButtonLayout extends React.Component {
             return (
                 <div className="form-group row">
                     <div className="col-xs-offset-2 col-xs-5">
-                        <button className="btn btn-primary save-button" onClick={this.saveCommand}>
+                        <button className="btn btn-primary save-button " onClick={this.saveCommand}>
                             <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
                             &nbsp;Save
                         </button>
-                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button" style={this.style}>
+                        <a href = {this.props.return_url} className="form-group btn btn-info cancel-button style-my-button">
                             <span className="glyphicon glyphicon-remove" aria-hidden="true"></span>
                             &nbsp;Cancel
                         </a>
@@ -562,50 +758,55 @@ class MainLayout extends React.Component {
             background_color: this.props.data_load.background_color,
             browsing_role: this.props.data_load.browsing_role,
             edit_role: this.props.data_load.edit_role,
-            enable: this.props.data_load.is_enabled
+            enable: this.props.data_load.is_enabled,
+            settings: this.props.data_load.settings,
+            rss_feed: this.props.data_load.rss_feed
         };
-        this.style = {
-            "width": ""
-        }
         this.getValueOfField = this.getValueOfField.bind(this);
     }
 
     getValueOfField(key, value) {
         switch (key)
         {
-          case 'repository':
-              this.setState({ repository: value });
-              break;
-          case 'type':
-              this.setState({ widget_type: value });
-              break;
-          case 'label':
-              this.setState({ label: value});
-              break;
-          case 'label_color':
-              this.setState({ label_color: value });
-              break;
-          case 'frame_border':
-              this.setState({ frame_border: value });
-              break;
-          case 'frame_border_color':
-              this.setState({ frame_border_color: value });
-              break;
-          case 'text_color':
-              this.setState({ text_color: value });
-              break;
-          case 'background_color':
-              this.setState({ background_color: value });
-              break;
-          case 'browsing_role':
-              this.setState({ browsing_role: value });
-              break;
-          case 'edit_role':
-              this.setState({ edit_role: value });
-              break;
-          case 'enable':
-              this.setState({ enable: value });
-              break;
+            case 'repository':
+                this.setState({ repository: value });
+                break;
+            case 'type':
+                this.setState({ widget_type: value });
+                break;
+            case 'label':
+                this.setState({ label: value});
+                break;
+            case 'label_color':
+                this.setState({ label_color: value });
+                break;
+            case 'frame_border':
+                this.setState({ frame_border: value });
+                break;
+            case 'frame_border_color':
+                this.setState({ frame_border_color: value });
+                break;
+            case 'text_color':
+                this.setState({ text_color: value });
+                break;
+            case 'background_color':
+                this.setState({ background_color: value });
+                break;
+            case 'browsing_role':
+                this.setState({ browsing_role: value });
+                break;
+            case 'edit_role':
+                this.setState({ edit_role: value });
+                break;
+            case 'enable':
+                this.setState({ enable: value });
+                break;
+            case 'settings':
+                this.setState({ settings: value });
+                break;
+            case 'rss_feed':
+                this.setState({ rss_feed: value });
+                break;
         }
     }
 
@@ -644,11 +845,14 @@ class MainLayout extends React.Component {
                   <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege" authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect"  url_request="/api/admin/get_account_role" key_binding = "edit_role" data_load={this.state.edit_role} is_edit = {this.props.is_edit}/>
                 </div>
                 <div className="row">
-                  <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable}/>
+                  <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding = "enable" data_load={this.state.enable} />
                 </div>
                 <div className="row">
-                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id= {this.props.data_id} />
-              </div>
+                  <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding = "settings" data_load={this.state.settings}/>
+                </div>
+                <div className="row">
+                  <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit = {this.props.is_edit} return_url = {this.props.return_url} data_id={this.props.data_id} />
+                </div>
             </div>
         )
     }
@@ -680,7 +884,8 @@ $(function () {
             background_color: '#4169E1',
             browsing_role: [1,2,3,4,99],
             edit_role: [1,2,3,4,99],
-            is_enabled: true
+            is_enabled: true,
+            settings: {},
         }
     }
     let returnURL = $("#return_url").val();

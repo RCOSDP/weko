@@ -1,5 +1,4 @@
-{# -*- coding: utf-8 -*-
-#
+{#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -19,11 +18,15 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_RECORDS_UI_DETAIL_TEMPLATE %}
+{%- from "invenio_communities/macros.html" import community_footer %}
 
-{%- set canonical_url = url_for('invenio_records_ui.recid', pid_value=pid.pid_value) %}
-
-{% block record_summary %}
-    <h3 itemprop="name"> {{ format_title }} Export</h3>
-    <pre style="white-space: pre-wrap;">{{data}}</pre>
-{% endblock record_summary %}
+{% macro community_footer_widget(render_widgets, community, link, subtitle) %}
+  {%- if render_widgets %}
+    <footer-fix id="footer" class="widget-footer">
+      {{ community_footer(community, link, subtitle) }}
+    </footer-fix>
+  {%- endif %}
+  <footer id="footer"{%- if render_widgets %}style="display: None;"{%- endif %}>
+  {{ community_footer(community, link, subtitle) }}
+  </footer>
+{% endmacro %}
