@@ -35,6 +35,9 @@ import weko_records.config as config
 from weko_records.serializers.utils import get_attribute_schema, \
     get_item_type_name, get_item_type_name_id
 
+from flask import current_app
+import json
+
 
 def _get_itemdata(obj, key):
     """Get data from 'attribute_value_mlt' phase."""
@@ -57,17 +60,10 @@ def _get_mapping_data(inschema, indata, inText):
 
 def _get_creator_name(obj, inName):
     """Parsing creator data for multiple item type."""
-    itemdatas = _get_itemdata(obj, 'Creator')
     schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_CREATOR)
-    name = None
-    if itemdatas is None:
-        return None
-
-    for itemdata in itemdatas:
-        value, name_data = _get_mapping_data(schema, itemdata, inName)
-        if name_data:
-            _, name = _get_mapping_data(value.get('items'), name_data[0],
-                                        inName)
+    value, name_data = _get_mapping_data(schema, obj, inName)
+    if name_data:
+        _, name = _get_mapping_data(value.get('items'), name_data[0], inName)
 
     if name:
         return name
@@ -97,33 +93,36 @@ class CreatorSchema(Schema):
 
     def get_family_name(self, obj):
         """Get family name."""
-        item_type = get_item_type_name_id(obj.get('item_type_id'))
-        if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
-            family_name = _get_creator_name_ex_it(obj, 'familyName')
-        else:
-            family_name = _get_creator_name(obj, "Family Name")
+        # current_app.logger.debug(obj)
+        # item_type = get_item_type_name_id(obj.get('item_type_id'))
+        # if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
+        #     family_name = _get_creator_name_ex_it(obj, 'familyName')
+        # else:
+        family_name = _get_creator_name(obj, "Family Name")
 
         if family_name:
             return family_name
 
     def get_given_name(self, obj):
         """Get given name."""
-        item_type = get_item_type_name_id(obj.get('item_type_id'))
-        if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
-            given_name = _get_creator_name_ex_it(obj, 'givenName')
-        else:
-            given_name = _get_creator_name(obj, "Given Name")
+        # current_app.logger.debug(obj)
+        # item_type = get_item_type_name_id(obj.get('item_type_id'))
+        # if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
+        #     given_name = _get_creator_name_ex_it(obj, 'givenName')
+        # else:
+        given_name = _get_creator_name(obj, "Given Name")
 
         if given_name:
             return given_name
 
     def get_suffix_name(self, obj):
         """Get suffix name."""
-        item_type = get_item_type_name_id(obj.get('item_type_id'))
-        if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
-            suffix_name = _get_creator_name_ex_it(obj, 'creatorName')
-        else:
-            suffix_name = _get_creator_name(obj, "Creator Name")
+        # current_app.logger.debug(obj)
+        # item_type = get_item_type_name_id(obj.get('item_type_id'))
+        # if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
+        #     suffix_name = _get_creator_name_ex_it(obj, 'creatorName')
+        # else:
+        suffix_name = _get_creator_name(obj, "Creator Name")
 
         if suffix_name:
             return suffix_name
@@ -132,11 +131,13 @@ class CreatorSchema(Schema):
 class RecordSchemaCSLJSON(Schema):
     """Schema for records in CSL-JSON."""
 
+    _attr_creators = 'metadata.item_1551264340087.attribute_value_mlt'
     id = fields.Str(attribute='pid.pid_value')
     type = fields.Method('get_itemtype_name')
     title = fields.Str(attribute='metadata.item_title')
     abstract = fields.Method('get_description')
-    author = fields.List(fields.Nested(CreatorSchema), attribute='metadata')
+    author = fields.List(fields.Nested(CreatorSchema),
+                         attribute=_attr_creators)
 
     issued = fields.Method('get_issue_date')
     language = fields.Method('get_language')
@@ -150,6 +151,17 @@ class RecordSchemaCSLJSON(Schema):
     issue = fields.Method('get_issue')
 
     publisher = fields.Method('get_publishers')
+
+    def get_creators_itemid(self, obj):
+        """Get description."""
+        for item in obj['metadata']:
+            itemdata = obj.get(item, {})
+            if (type(itemdata)) is dict and itemdata.get('attribute_name') == 'Creator':
+                value = itemdata
+
+        if value:
+            return 'metadata.' + value + '.attribute_value_mlt'
+        return missing
 
     def get_itemtype_name(self, obj):
         """Get description."""
