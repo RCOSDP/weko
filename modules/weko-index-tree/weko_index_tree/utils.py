@@ -89,6 +89,7 @@ def get_tree_json(obj, pid=0):
         return dict(emitLoadNextLevel=False,
                     settings=dict(isCollapsedOnInit=False, checked=False))
 
+    pmap = {}
     def set_node(plst):
 
         if isinstance(plst, list):
@@ -106,10 +107,15 @@ def get_tree_json(obj, pid=0):
                         index_obj = ntree.pop(0)
                         if isinstance(index_obj, tuple):
                             cid = str(index_obj.cid)
+                            pid = str(index_obj.pid)
+                            if pid in pmap:
+                                pid = pmap[pid] + '/' + pid
+                            if cid not in pmap:
+                                pmap[cid] = pid
                             name = index_obj.name
                             dc = get_settings()
                             dc.update(dict(position=index_obj.position))
-                            dc.update(dict(id=cid, value=name))
+                            dc.update(dict(id=cid, value=name, parent=pid))
                             for x in attr:
                                 if hasattr(index_obj, x):
                                     dc.update({x: getattr(index_obj, x)})
@@ -268,7 +274,11 @@ def get_index_id_list(indexes, id_list=[]):
                 if index.get('id', '') == 'more':
                     continue
 
-                id_list.append(index.get('id', ''))
+                parent = index.get('parent', '')
+                if parent is not '' and parent is not '0':
+                    id_list.append(parent + '/' + index.get('id', ''))
+                else:
+                    id_list.append(index.get('id', ''))
 
                 children = index.get('children')
                 get_index_id_list(children, id_list)
