@@ -129,7 +129,7 @@ def update_sitemap(baseurl, start_time, user_data):
                  'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                  'execution_time': str(end_time - start_time),
                  'task_name': 'sitemap',
-                 'repository_name': 'weko', # TODO: Grab from config
+                 'repository_name': 'weko',  # TODO: Grab from config
                  'task_id': update_sitemap.request.id,
                  'task_state': 'SUCCESS'},
                 user_data)
