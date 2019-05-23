@@ -400,9 +400,15 @@ class ComponentCombobox extends React.Component {
       fetch(request_url)
         .then(res => res.json())
         .then((result) => {
-          this.props.getValueOfField(this.props.key_binding, result.data);
-          this.props.getNumPage(result.num_page);
-          this.props.getTableHidden(false);
+          if (result.data.length == 0) {
+            var modalcontent = "There is no data!";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+          }else {
+            this.props.getValueOfField(this.props.key_binding, result.data);
+            this.props.getNumPage(result.num_page);
+            this.props.getTableHidden(false);
+          }
         });
     }
   }
