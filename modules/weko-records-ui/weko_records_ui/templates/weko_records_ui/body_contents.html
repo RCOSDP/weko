@@ -305,8 +305,7 @@
                 {% endif %}
                 <td>
                   <div>
-                    <form class="form form-inline" action="{{ url_for('invenio_records_ui.recid_publish',
-                                pid_value=pid.pid_value) }}" method="POST">
+                    <form class="form form-inline" action="{{ url_for('invenio_records_ui.recid_publish', pid_value=pid.pid_value) }}" method="POST">
                       {% if record | check_permission %}
                       {% if '0' in pubs %}
                       {{_('Public')}}

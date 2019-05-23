@@ -20,7 +20,8 @@
 
 {%- extends config.BASE_PAGE_TEMPLATE %}
 
-{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{%- from "invenio_communities/macros.html" import community_header %}
+{% set render_widgets = True %}
 
 {%- block css %}
   {{ super() }}
@@ -45,34 +46,34 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_header %}
-{%-if not community_id %}
-{{ super() }}
-{%- endif%}
+  {%-if not community_id %}
+    {{ super() }}
+  {%- endif%}
 {%- endblock page_header %}
 
 {%- block page_footer %}
-{%-if not community_id%}
-{{ super() }}
-{%- endif%}
+  {%-if not community_id%}
+    {{ super() }}
+  {%- endif%}
 {%- endblock page_footer %}
 
 {% block page_body %}
-{%-if not community_id %}
-{{super()}}
-{%- else%}
-<div class="communities">
-<div id="community-id" name="community-id" hidden>{{ community_id }}</div>
-{{ community_header(community, subtitle='') }}
-  <div id="page_body" class="grid-stack">
-  <div id="main_contents">
-{{super()}}
-  </div>
-  </div>
-{{ community_footer(community, link=False, subtitle='') }}
-</div>
-<div class="communities">
-</div>
-{%- endif%}
+  {%-if not community_id %}
+    {{ super() }}
+  {%- else%}
+    <div class="communities">
+      <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
+      {{ community_header(community, subtitle='') }}
+      <div id="page_body" class="grid-stack collapse">
+        <div id="main_contents">
+          {{ super() }}
+        </div>
+      </div>
+      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+      {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
+    </div>
+  <div class="communities"></div>
+  {%- endif%}
 {% endblock page_body %}
 
 {%- block page_body_main %}
@@ -86,9 +87,5 @@
     <div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}">
       {% include "weko_theme/body_index.html" %}
     </div>
-    <!--<div class="col-sm-9 col-md-9 col-lg-9">-->
-      <!--{% include "weko_theme/body_contents.html" %}-->
-    <!--</div>-->
   </div>
 {%- endblock page_body_main %}
-

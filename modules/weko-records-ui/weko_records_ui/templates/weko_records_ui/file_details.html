@@ -21,7 +21,8 @@
 
 {% extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
 
-{%- from "invenio_communities/macros.html" import community_header, community_footer %}
+{%- from "invenio_communities/macros.html" import community_header %}
+{% set render_widgets = True %}
 
 {%- block css %}
   {{ super() }}
@@ -73,12 +74,13 @@
 <div class="communities">
 <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
 {{ community_header(community, subtitle='') }}
-  <div id="page_body" class="grid-stack">
+  <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
   <div id="main_contents">
 {{super()}}
   </div>
   </div>
-{{ community_footer(community, link=False, subtitle='') }}
+  {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+  {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
 </div>
 <div class="communities">
 </div>

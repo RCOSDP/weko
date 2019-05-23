@@ -55,3 +55,28 @@ widget_design_css = Bundle(
     'css/weko_gridlayout/styles.css',
     output="gen/weko_gridlayout.%(version)s.css",
 )
+
+widget_setting_css = Bundle(
+    'css/weko_gridlayout/widget.item.css',
+    output="gen/weko_gridlayout_widget_setting.%(version)s.css",
+)
+
+katex_min_css = Bundle(
+    'css/weko_gridlayout/katex.min.css',
+    output="gen/weko_gridlayout_katex_min.%(version)s.css",
+)
+
+katex_min_js = Bundle(
+    'js/weko_gridlayout/katex.min.js',
+    output="gen/weko_gridlayout_katex_min.%(version)s.js",
+)
+
+prop_types_js = Bundle(
+    'js/weko_gridlayout/prop.types.js',
+    output="gen/weko_gridlayout_prop_types.%(version)s.js",
+)
+
+react_quill_js = Bundle(
+    'js/weko_gridlayout/react.quill.js',
+    output="gen/weko_gridlayout_react_quill.%(version)s.js",
+)

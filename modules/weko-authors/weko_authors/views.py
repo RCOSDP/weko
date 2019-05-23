@@ -28,6 +28,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_records.models import ItemMetadata
 
+
 from .models import Authors
 from .permissions import author_permission
 
@@ -54,7 +55,8 @@ blueprint_api = Blueprint(
 def index():
     """Render a basic view."""
     return render_template(
-        current_app.config['WEKO_AUTHORS_LIST_TEMPLATE'])
+        current_app.config['WEKO_AUTHORS_LIST_TEMPLATE'],
+        render_widgets=True)
 
 
 @blueprint.route("/add", methods=['GET'])
@@ -63,7 +65,8 @@ def index():
 def add():
     """Render an adding author view."""
     return render_template(
-        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
+        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'],
+        render_widgets=True)
 
 
 # add by ryuu at 20180808 start
@@ -73,7 +76,8 @@ def add():
 def edit():
     """Render an adding author view."""
     return render_template(
-        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'])
+        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'],
+        render_widgets=True,)
 # add by ryuu at 20180808 end
 
 
