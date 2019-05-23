@@ -68,7 +68,7 @@ let PageBodyGrid = function () {
       let moreDescription = "";
 
       if( typeof node.more_description != 'undefined' ) {
-        moreDescription = node.more_description = "";
+        moreDescription = node.more_description;
         templateWriteMoreNotice =
         '<div class="spoiler-btn">' + ((node.read_more != "") ? node.read_more: "Read more") + '</div>' +
         '<div class="spoiler-body collapse">' + moreDescription +
