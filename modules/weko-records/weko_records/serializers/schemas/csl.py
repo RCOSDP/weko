@@ -66,8 +66,6 @@ def _get_creator_name(obj, inName):
     for itemdata in itemdatas:
         value, name_data = _get_mapping_data(schema, itemdata, inName)
         if name_data:
-            if len(name_data) and name_data[0] == '':
-                return None
             _, name = _get_mapping_data(value.get('items'), name_data[0],
                                         inName)
 
@@ -85,8 +83,6 @@ def _get_creator_name_ex_it(obj, inName):
     for itemdata in itemdatas:
         family_name = itemdata.get(inName + 's')
         if family_name:
-            if len(family_name) and family_name[0] == '':
-                return None
             return family_name[0].get(inName)
         else:
             return None
