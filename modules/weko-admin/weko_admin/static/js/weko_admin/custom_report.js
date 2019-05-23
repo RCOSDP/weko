@@ -210,6 +210,7 @@ class ComponentTableResult extends React.Component {
         <label className="control-label col-xs-2 text-right" htmlFor={this.props.id_component} style={this.styleLabel}>{this.props.name}</label>
         <div class="controls col-xs-5">
           <br />
+          <div id="no_data" className="hidden">There is no data.</div>
           <table className="table table-striped" style={this.styleTable}>
             <colgroup>
               {this.state.cols}
@@ -218,7 +219,7 @@ class ComponentTableResult extends React.Component {
               {this.state.rows}
             </tbody>
           </table>
-          <ul className="pagination page">
+          <ul className="pagination page" id="pagination">
             <li className={this.state.pagingClassLeft}>
               <a data-num-page="first" onClick={this.handleClickEvent}>&lt;&lt;</a>
             </li>
@@ -401,14 +402,24 @@ class ComponentCombobox extends React.Component {
         .then(res => res.json())
         .then((result) => {
           if (result.data.length == 0) {
-            var modalcontent = "There is no data!";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+            console.log("asdasd");
+            if (document.getElementById('no_data').classList.contains('hidden')) {
+              document.getElementById('no_data').classList.remove('hidden')
+            }
+            if (!document.getElementById('pagination').classList.contains('hidden')) {
+              document.getElementById('pagination').classList.add('hidden')
+            }
           }else {
-            this.props.getValueOfField(this.props.key_binding, result.data);
-            this.props.getNumPage(result.num_page);
-            this.props.getTableHidden(false);
+            if (!document.getElementById('no_data').classList.contains('hidden')) {
+              document.getElementById('no_data').classList.add('hidden')
+            }
+            if (document.getElementById('pagination').classList.contains('hidden')) {
+              document.getElementById('pagination').classList.remove('hidden')
+            }
           }
+          this.props.getValueOfField(this.props.key_binding, result.data);
+          this.props.getNumPage(result.num_page);
+          this.props.getTableHidden(false);
         });
     }
   }
