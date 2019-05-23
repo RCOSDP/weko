@@ -109,6 +109,10 @@ function getWidgetDesignSetting() {
           let pageBodyGrid = new PageBodyGrid();
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
+
+          $(".spoiler-btn").on('click', function(event){
+            $(this).parent().children('.spoiler-body').collapse('toggle');
+          });
         }
       }
       toggleWidgetUI();
