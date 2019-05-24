@@ -70,14 +70,9 @@ let PageBodyGrid = function () {
       if( typeof node.more_description != 'undefined' ) {
         moreDescription = node.more_description;
         templateWriteMoreNotice =
-        '<div class="row-fluid summary">' +
-        '    <div>' +
-        '        <a id="details-switch" class="collapsed" data-toggle="collapse" href="#details">Show details</a>' +
-        '        <div id="details" class="collapse">' +
-        '            More details...' +
-        '        </div>' +
-        '    </div>' +
-        '</div>';
+          '<div id="myDIV">' +
+          '	This is my DIV element. +
+          '</div>';
       }
 
       description = node.description + templateWriteMoreNotice;
@@ -132,6 +127,9 @@ function getWidgetDesignSetting() {
               console.log('=====Hide detail======');
               $('#details-switch.collapsed').html('Show details')
           })
+
+          myFunction();
+          
         }
       }
       toggleWidgetUI();
@@ -145,4 +143,13 @@ function toggleWidgetUI() {
     $('footer#footer').css("display", "block");
     $('footer-fix#footer').remove();
   });
+}
+
+function myFunction() {
+  var x = document.getElementById("myDIV");
+  if (x.style.display === "none") {
+    x.style.display = "block";
+  } else {
+    x.style.display = "none";
+  }
 }
