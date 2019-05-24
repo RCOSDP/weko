@@ -63,11 +63,10 @@ let PageBodyGrid = function () {
     }
 
     if (node.type == "Notice") {
-      console.log('================NODE NOTICE==============', typeof node.more_description);
-      let templateWriteMoreNotice = "";
       let moreDescription = "";
+      let templateWriteMoreNotice = '<div id="moreDescription">' + moreDescription +'</div>';
 
-      if(node.more_description != null || typeof node.more_description != 'undefined') {
+      if(typeof node.more_description != 'undefined') {
         moreDescription = node.more_description;
         templateWriteMoreNotice = '</br>' +
           '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
