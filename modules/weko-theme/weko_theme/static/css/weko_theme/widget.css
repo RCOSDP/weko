@@ -22,13 +22,6 @@
   text-decoration:underline;
 }
 
-.rectangleNoT {
-  height: 25px;
-  width: 50px;
-  background-color: orange;
-  text-align: center;
-}
-
 .widget-footer {
   position: absolute;
   left: 0;
