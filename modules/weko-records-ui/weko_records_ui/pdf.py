@@ -222,7 +222,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         keyword_item_lang = item_map[keyword_attr_lang].split('.')[1]
         keyword_item_value = item_map[keyword_attr_value].split('.')[1]
         keyword_base = item_metadata_json.get(keyword_item_id)
-        keyword_lang = keyword_base.get(keyword_item_lang)
+        if keyword_base:
+            keyword_lang = keyword_base.get(keyword_item_lang)
         if keyword_lang == 'ja':
             keywords_ja = keyword_base.get(keyword_item_value)
             keywords_en = None
