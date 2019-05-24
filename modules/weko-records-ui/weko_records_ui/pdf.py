@@ -181,6 +181,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     keyword_attr_lang = 'subject.@attributes.xml:lang'
     keyword_attr_value = 'subject.@value'
+    keyword_base = None
+    keyword_lang = None
 
     pdf.set_font('Arial', '', 14)
     pdf.set_font('IPAexg', '', 14)
