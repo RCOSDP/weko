@@ -37,6 +37,7 @@ from weko_records.serializers.utils import get_attribute_schema, \
 
 from flask import current_app
 import json
+import traceback
 
 
 def _get_itemdata(obj, key):
@@ -54,16 +55,24 @@ def _get_mapping_data(inschema, indata, inText):
     """Get mapping by item type."""
     for key, value in inschema.get('properties').items():
         if value.get('title') == inText:
-            return value, indata.get(key)
-    return None
+            # data = indata.get(key)
+            if indata:
+                return value, indata.get(key)
+
+    return None, None
 
 
 def _get_creator_name(obj, inName):
     """Parsing creator data for multiple item type."""
-    schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_CREATOR)
-    value, name_data = _get_mapping_data(schema, obj, inName)
-    if name_data:
-        _, name = _get_mapping_data(value.get('items'), name_data[0], inName)
+    name = None
+    try:
+        schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_CREATOR)
+        value, name_data = _get_mapping_data(schema, obj, inName)
+
+        if name_data:
+            _, name = _get_mapping_data(value.get('items'), name_data[0], inName)
+    except:
+        current_app.logger.debug(traceback.format_exc())
 
     if name:
         return name
@@ -93,7 +102,6 @@ class CreatorSchema(Schema):
 
     def get_family_name(self, obj):
         """Get family name."""
-        # current_app.logger.debug(obj)
         # item_type = get_item_type_name_id(obj.get('item_type_id'))
         # if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
         #     family_name = _get_creator_name_ex_it(obj, 'familyName')
@@ -105,7 +113,6 @@ class CreatorSchema(Schema):
 
     def get_given_name(self, obj):
         """Get given name."""
-        # current_app.logger.debug(obj)
         # item_type = get_item_type_name_id(obj.get('item_type_id'))
         # if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
         #     given_name = _get_creator_name_ex_it(obj, 'givenName')
@@ -117,7 +124,6 @@ class CreatorSchema(Schema):
 
     def get_suffix_name(self, obj):
         """Get suffix name."""
-        # current_app.logger.debug(obj)
         # item_type = get_item_type_name_id(obj.get('item_type_id'))
         # if item_type <= config.WEKO_ITEMTYPE_ID_BASEFILESVIEW:
         #     suffix_name = _get_creator_name_ex_it(obj, 'creatorName')
