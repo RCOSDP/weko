@@ -64,6 +64,7 @@ let PageBodyGrid = function () {
 
     if (node.type == "Notice") {
       let rssFeedTemplate = "";
+      let rssSites = 'http://ir.acc.senshu-u.ac.jp/index.php?action=whatsnew_view_main_rss&page_id=30&block_id=54&display_number=5&_header=0';
       let moreDescription = "";
       let templateWriteMoreNotice = '<div id="moreDescription">' + moreDescription +'</div>';
 
@@ -72,14 +73,13 @@ let PageBodyGrid = function () {
         templateWriteMoreNotice =
           '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
           '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
-          '<a id="writeMoreNotice" class="writeMoreNoT" onclick="handleMoreNoT()">' + ((node.read_more != "") ? node.read_more: "Read more") + '</a>' +
-          '<div id="moreDescription">' + moreDescription +
-          '</div>';
+          '<div id="moreDescription">' + moreDescription + '</div>' +
+          '<a id="writeMoreNotice" class="writeMoreNoT" onclick="handleMoreNoT()">' + ((node.read_more != "") ? node.read_more: "Read more") + '</a>';
       }
-      //      description = node.description + (node.rss_feed ? '<div class="rectangleNoT">RSS</div></br>': rssFeedTemplate) + templateWriteMoreNotice;
+
       description =
           '<div>' +
-          '	<div class="pull-right">' + (node.rss_feed ? '<div class="rectangleNoT">RSS</div></br>': rssFeedTemplate) +
+          '	<div class="pull-right">' + (node.rss_feed ? '<button onclick="location.href = ' + rssSites + ';" class="rectangleNoT">RSS</div></br>': rssFeedTemplate) +
           '	</div>' +
           '	<div>' + node.description + '</div>' +
           '</div>' + templateWriteMoreNotice;
