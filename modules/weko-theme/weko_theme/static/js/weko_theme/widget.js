@@ -64,6 +64,7 @@ let PageBodyGrid = function () {
 
     if (node.type == "Notice") {
       let rssFeedTemplate = "";
+      let rssSites = "http://ir.acc.senshu-u.ac.jp/index.php?action=whatsnew_view_main_rss&amp;page_id=30&amp;block_id=54&amp;display_number=5&amp;_header=0";
       let moreDescription = "";
       let templateWriteMoreNotice = '<div id="moreDescription">' + moreDescription +'</div>';
 
