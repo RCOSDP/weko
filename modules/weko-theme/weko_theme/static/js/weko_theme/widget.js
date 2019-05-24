@@ -69,7 +69,7 @@ let PageBodyGrid = function () {
 
       if(typeof node.more_description != 'undefined') {
         moreDescription = node.more_description;
-        templateWriteMoreNotice =
+        templateWriteMoreNotice = '</br>' +
           '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
           '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
           '<div id="moreDescription">' + moreDescription + '</div>' +
@@ -86,10 +86,10 @@ let PageBodyGrid = function () {
     let template =
       '<div class="grid-stack-item">' +
       ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
-      '     <div class="panel-heading widget-header" style="color: ' + labelColor + ';position: inherit;width: 100%;top: 0;right: inherit; left: ' + leftStyle + ';">' +
+      '     <div class="panel-heading widget-header widget-header-position" style="color: ' + labelColor + ';left: ' + leftStyle + ';">' +
       '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
       '     </div>' +
-      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' + description + '</div>' +
+      '     <div class="panel-body ql-editor pad-top-30" style="overflow-y: ' + overFlowBody + ';">' + description + '</div>' +
       '   </div>' +
       '</div>';
 
