@@ -70,8 +70,9 @@ let PageBodyGrid = function () {
       if( typeof node.more_description != 'undefined' ) {
         moreDescription = node.more_description;
         templateWriteMoreNotice =
+          '<button onclick="myFunction()">Try it</button>' +
           '<div id="myDIV">' +
-          '	This is my DIV element. +
+          '	This is my DIV element.' +
           '</div>';
       }
 
@@ -118,18 +119,7 @@ function getWidgetDesignSetting() {
           let pageBodyGrid = new PageBodyGrid();
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
-
-          $("#details").on('show', function() {
-              console.log('=====Show detail======');
-              $('#details-switch').html('Hide details')
-          })
-          $("#details").on('hide', function() {
-              console.log('=====Hide detail======');
-              $('#details-switch.collapsed').html('Show details')
-          })
-
           myFunction();
-          
         }
       }
       toggleWidgetUI();
