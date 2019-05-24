@@ -79,8 +79,8 @@ let PageBodyGrid = function () {
       //      description = node.description + (node.rss_feed ? '<div class="rectangleNoT">RSS</div></br>': rssFeedTemplate) + templateWriteMoreNotice;
       description =
           '<div class="container-fluid">' +
-          '	<div class="row">' +
-          '		<div class="panel">' +
+          '	<div>' +
+          '		<div>' +
           '			<div class="pull-right">' + (node.rss_feed ? '<div class="rectangleNoT">RSS</div></br>': rssFeedTemplate) +
           '			</div>' +
           '			<div>' + node.description + '</div>' +
