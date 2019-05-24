@@ -69,11 +69,11 @@ let PageBodyGrid = function () {
 
       if( typeof node.more_description != 'undefined' ) {
         moreDescription = node.more_description;
-        templateWriteMoreNotice =
+        templateWriteMoreNotice = '</br>' +
           '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
           '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
-          '<button id="writeMoreNotice" onclick="myFunction()">' + ((node.read_more != "") ? node.read_more: "Read more") + '</button>' +
-          '<div id="myDIV">' + moreDescription +
+          '<a id="writeMoreNotice" onclick="myFunction()">' + ((node.read_more != "") ? node.read_more: "Read more") + '</a>' +
+          '<div id="moreDescription">' + moreDescription +
           '</div>';
       }
 
@@ -137,7 +137,7 @@ function toggleWidgetUI() {
 }
 
 function myFunction() {
-  var x = document.getElementById("myDIV");
+  var x = document.getElementById("moreDescription");
   if (x.style.display === "none") {
     x.style.display = "block";
     $("#writeMoreNotice").text($('.hideRest').val());
