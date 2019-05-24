@@ -72,7 +72,7 @@ let PageBodyGrid = function () {
         templateWriteMoreNotice = '</br>' +
           '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
           '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
-          '<a id="writeMoreNotice" onclick="myFunction()">' + ((node.read_more != "") ? node.read_more: "Read more") + '</a>' +
+          '<a id="writeMoreNotice" class="writeMoreNoT" onclick="handleMoreNoT()">' + ((node.read_more != "") ? node.read_more: "Read more") + '</a>' +
           '<div id="moreDescription">' + moreDescription +
           '</div>';
       }
@@ -120,7 +120,7 @@ function getWidgetDesignSetting() {
           let pageBodyGrid = new PageBodyGrid();
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
-          myFunction();
+          handleMoreNoT();
         }
       }
       toggleWidgetUI();
@@ -136,7 +136,7 @@ function toggleWidgetUI() {
   });
 }
 
-function myFunction() {
+function handleMoreNoT() {
   var x = document.getElementById("moreDescription");
   if (x.style.display === "none") {
     x.style.display = "block";
