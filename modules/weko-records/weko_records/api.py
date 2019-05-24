@@ -1009,6 +1009,19 @@ class ItemsMetadata(RecordBase):
                 query = query.filter(ItemMetadata.json != None)  # noqa
             return query.all()
 
+    
+    @classmethod
+    def get_by_object_id(cls, object_id):
+        """Retrieve ItemMetadata data by item identifier.
+
+        :param object_id: Pidstore Identifier of item.
+        :returns: A :class:`Record` instance.
+        """
+        with db.session.no_autoflush:
+            query = ItemMetadata.query.filter_by(id=object_id)
+
+            return query.one_or_none()
+
     def patch(self, patch):
         """Patch record metadata.
 
