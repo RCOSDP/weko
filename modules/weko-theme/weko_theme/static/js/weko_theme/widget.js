@@ -64,7 +64,7 @@ let PageBodyGrid = function () {
 
     if (node.type == "Notice") {
       let rssFeedTemplate = "";
-      let rssSites = "'http://ir.acc.senshu-u.ac.jp/index.php?action=whatsnew_view_main_rss&page_id=30&block_id=54&display_number=5&_header=0'";
+      let rssSites = "http://ir.acc.senshu-u.ac.jp/index.php?action=whatsnew_view_main_rss&page_id=30&block_id=54&display_number=5&_header=0";
       let moreDescription = "";
       let templateWriteMoreNotice = '<div id="moreDescription">' + moreDescription +'</div>';
 
@@ -79,7 +79,7 @@ let PageBodyGrid = function () {
 
       description =
           '<div>' +
-          '	<div class="pull-right">' + (node.rss_feed ? '<button onclick="location.href = ' + rssSites + ';" class="rectangleNoT">RSS</div></br>': rssFeedTemplate) +
+          '	<div class="pull-right">' + (node.rss_feed ? '<button onclick="location.href = ' + "'" + rssSites + "'" + ';" class="rectangleNoT">RSS</div></br>': rssFeedTemplate) +
           '	</div>' +
           '	<div>' + node.description + '</div>' +
           '</div>' + templateWriteMoreNotice;
