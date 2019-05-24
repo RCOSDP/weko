@@ -63,7 +63,7 @@ let PageBodyGrid = function () {
     }
 
     if (node.type == "Notice") {
-      console.log('================NODE NOTICE==============', node.more_description);
+      console.log('================NODE NOTICE==============', typeof node.more_description);
       let templateWriteMoreNotice = "";
       let moreDescription = "";
 
