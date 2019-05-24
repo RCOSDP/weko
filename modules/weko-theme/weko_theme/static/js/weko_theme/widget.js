@@ -71,8 +71,7 @@ let PageBodyGrid = function () {
         moreDescription = node.more_description;
         templateWriteMoreNotice =
           '<button onclick="myFunction()">Try it</button>' +
-          '<div id="myDIV">' +
-          '	This is my DIV element.' +
+          '<div id="myDIV">' + moreDescription +
           '</div>';
       }
 
