@@ -28,3 +28,14 @@
   bottom: 0;
   width: 100%;
 }
+
+.widget-header-position {
+  position: inherit;
+  width: 100%;
+  top: 0;
+  right: inherit;
+}
+
+.pad-top-30 {
+  padding-top: 30px;
+}
