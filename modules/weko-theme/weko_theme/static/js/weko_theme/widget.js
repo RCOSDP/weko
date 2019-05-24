@@ -124,11 +124,11 @@ function getWidgetDesignSetting() {
           pageBodyGrid.init();
           pageBodyGrid.loadGrid(widgetList);
 
-          $('#details').on('show', function() {
+          $("#details").on('show', function() {
               console.log('=====Show detail======');
               $('#details-switch').html('Hide details')
           })
-          $('#details').on('hide', function() {
+          $("#details").on('hide', function() {
               console.log('=====Hide detail======');
               $('#details-switch.collapsed').html('Show details')
           })
