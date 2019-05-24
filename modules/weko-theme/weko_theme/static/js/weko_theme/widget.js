@@ -76,8 +76,17 @@ let PageBodyGrid = function () {
           '<div id="moreDescription">' + moreDescription +
           '</div>';
       }
-
-      description = node.description + (node.rss_feed ? '<div class="rectangleNoT">RSS</div></br>': rssFeedTemplate) + templateWriteMoreNotice;
+      //      description = node.description + (node.rss_feed ? '<div class="rectangleNoT">RSS</div></br>': rssFeedTemplate) + templateWriteMoreNotice;
+      description =
+        '<div class="container">' +
+        '  <div class="row">' +
+        '    <div class="col-sm-11">' + node.description + '</div>' +
+        '    <div class="col-sm-1">' + (node.rss_feed ? '<div class="rectangleNoT">RSS</div></br>': rssFeedTemplate) + '</div>' +
+        '  </div>' +
+        '  <div class="row">' +
+        '    <div class="col-sm">' + templateWriteMoreNotice + '</div>' +
+        '  </div>' +
+        '</div>';
 
       leftStyle = "initial";
       paddingHeading = "inherit";
