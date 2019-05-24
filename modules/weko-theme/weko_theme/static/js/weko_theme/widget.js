@@ -67,7 +67,7 @@ let PageBodyGrid = function () {
       let templateWriteMoreNotice = "";
       let moreDescription = "";
 
-      if( typeof node.more_description != 'undefined' ) {
+      if(node.more_description != null || typeof node.more_description != 'undefined') {
         moreDescription = node.more_description;
         templateWriteMoreNotice = '</br>' +
           '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
