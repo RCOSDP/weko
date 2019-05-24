@@ -70,7 +70,7 @@ let PageBodyGrid = function () {
       if( typeof node.more_description != 'undefined' ) {
         moreDescription = node.more_description;
         templateWriteMoreNotice =
-          '<button onclick="myFunction()">Try it</button>' +
+          '<button id="writeMoreNotice" onclick="myFunction()">Try it</button>' +
           '<div id="myDIV">' + moreDescription +
           '</div>';
       }
@@ -138,7 +138,9 @@ function myFunction() {
   var x = document.getElementById("myDIV");
   if (x.style.display === "none") {
     x.style.display = "block";
+    $("#writeMoreNotice").innerText = 'Read More';
   } else {
     x.style.display = "none";
+    $("#writeMoreNotice").innerText = 'Hide the rest';
   }
 }
