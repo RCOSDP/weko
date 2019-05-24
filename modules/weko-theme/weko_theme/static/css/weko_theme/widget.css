@@ -14,11 +14,11 @@
   border-top-left-radius: 0px !important;
 }
 
-#writeMoreNotice {
+.writeMoreNoT {
   cursor: pointer !important;
 }
 
-#writeMoreNotice:hover {
+.writeMoreNoT:hover {
   text-decoration:underline;
 }
 
