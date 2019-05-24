@@ -25,17 +25,23 @@
 {%- block css %}
   {{ super() }}
  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+ {% assets "weko_admin_date_picker_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
   <!-- <script src="{{ url_for('static', filename='js/weko_admin/stats_report.js') }}"></script> -->
-  {%- assets "weko_admin_stats_report_js" %}<script src="{{ ASSET_URL
-  }}"></script>{% endassets %}
-
+  {%- assets "weko_admin_stats_report_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_date_picker_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_report_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_custom_report" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block body %}
+<div id="alerts"></div>
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
 <style>
   .content-font {
     font-size: 16px;
@@ -91,56 +97,62 @@
 </div>
 
 <div class="row content-font">
-  <div class="col-md-2"></div>
-  <form method="POST" name="report_file_form" id="report_file_form"
-    action={{url_for('report.get_file_stats_tsv')}}>
-    <p class="col-md-1 text-right">{{_('Type')}}</p>
-    <div class="col-md-2">
-      <select class="form-control" id="report_type_select" name="type">
-        <option value="all" selected>{{_('All')}}</option>
-        <option value="file_download">{{ _("File Downloads") }}</option>
-        <option value="file_preview">{{ _("File Previews") }}</option>
-      </select>
-    </div>
+  <div class="col-md-1"></div>
+  <div class="col-md-11">
+    <form method="POST" name="report_file_form" id="report_file_form"
+      action={{url_for('report.get_file_stats_tsv')}}>
+      <p class="col-xs-2 text-right">{{_('Type')}}</p>
+      <div class="col-xs-2">
+        <select class="form-control" id="report_type_select" name="type">
+          <option value="all" selected>{{_('All')}}</option>
+          <option value="file_download">{{ _("File Downloads") }}</option>
+          <option value="file_preview">{{ _("File Previews") }}</option>
+          <option value="detail_view">{{ _("Item View") }}</option>
+          <option value="file_using_per_user">{{ _("File Using Per User") }}</option>
+        </select>
+      </div>
 
-    <p class="col-md-1 text-right">{{_('Year')}}</p>
-    <div class="col-md-1">
-      <select class="form-control" id="report_year_select" name="year">
-        <option selected>{{_('Year')}}</option>
-        {% for x in range(5) %}
-          {% set year = now.year - x %}
-          <option value="{{ year }}">{{ year }}</option>
-        {% endfor %}
-      </select>
-    </div>
+      <p class="col-xs-1 text-right">{{_('Year')}}</p>
+      <div class="col-xs-1">
+        <select class="form-control" id="report_year_select" name="year">
+          <option selected>{{_('Year')}}</option>
+          {% for x in range(5) %}
+            {% set year = now.year - x %}
+            <option value="{{ year }}">{{ year }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <p class="col-md-1 text-right">{{_('Month')}}</p>
-    <div class="col-md-1">
-      <select class="form-control" id="report_month_select" name="month">
-        <option selected>{{_('Month')}}</option>
-        <option value="1">{{_('01')}}</option>
-        <option value="2">{{_('02')}}</option>
-        <option value="3">{{_('03')}}</option>
-        <option value="4">{{_('04')}}</option>
-        <option value="5">{{_('05')}}</option>
-        <option value="6">{{_('06')}}</option>
-        <option value="7">{{_('07')}}</option>
-        <option value="8">{{_('08')}}</option>
-        <option value="9">{{_('09')}}</option>
-        <option value="10">{{_('10')}}</option>
-        <option value="11">{{_('11')}}</option>
-        <option value="12">{{_('12')}}</option>
-      </select>
+      <p class="col-xs-1 text-right">{{_('Month')}}</p>
+      <div class="col-xs-1">
+        <select class="form-control" id="report_month_select" name="month">
+          <option selected>{{_('Month')}}</option>
+          <option value="1">{{_('01')}}</option>
+          <option value="2">{{_('02')}}</option>
+          <option value="3">{{_('03')}}</option>
+          <option value="4">{{_('04')}}</option>
+          <option value="5">{{_('05')}}</option>
+          <option value="6">{{_('06')}}</option>
+          <option value="7">{{_('07')}}</option>
+          <option value="8">{{_('08')}}</option>
+          <option value="9">{{_('09')}}</option>
+          <option value="10">{{_('10')}}</option>
+          <option value="11">{{_('11')}}</option>
+          <option value="12">{{_('12')}}</option>
+        </select>
+      </div>
+      <input type="hidden" id="report_file_input" name="report" value="{}" />
+    </form>
+    <div class="col-xs-2">
+      <button id="downloadReport" class="btn btn-primary action-big-button">
+            <span class="glyphicon glyphicon-download-alt"></span>
+                  {{_('Download')}}</button>
     </div>
-    <input type="hidden" id="report_file_input" name="report" value="{}" />
-  </form>
-  <div class="col-md-2">
-    <button id="downloadReport" class="btn btn-primary action-big-button">
-          <span class="glyphicon glyphicon-download-alt"></span>
-                {{_('Download')}}</button>
   </div>
 </div>
 <hr>
+
+<div id="root"></div>
 
 <div class="modal fade" tabindex="-1" role="dialog" id="error_modal">
   <div class="modal-dialog" role="document">

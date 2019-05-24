@@ -21,6 +21,7 @@
 """Views for weko-admin."""
 
 import json
+import math
 import sys
 from datetime import timedelta
 
@@ -37,8 +38,9 @@ from werkzeug.local import LocalProxy
 
 from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
-    get_current_api_certification, get_response_json, get_search_setting, \
-    get_selected_language, save_api_certification, update_admin_lang_setting, \
+    get_current_api_certification, get_initial_stats_report, \
+    get_response_json, get_search_setting, get_selected_language, \
+    get_unit_stats_report, save_api_certification, update_admin_lang_setting, \
     validate_certification
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
@@ -348,3 +350,119 @@ def save_api_cert_data():
             'Account information is invalid. Please check again.')
 
     return jsonify(result)
+
+
+@blueprint_api.route('/get_init_selection/<string:selection>', methods=['GET'])
+def get_init_selection(selection=""):
+    """Get initial data for unit and target.
+
+    :param selection:
+    """
+    result = dict()
+    try:
+        if selection == 'target':
+            result = get_initial_stats_report()
+        elif selection == "":
+            raise ValueError("Request URL is incorrectly")
+        else:
+            result = get_unit_stats_report(selection)
+    except Exception as e:
+        result['error'] = str(e)
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_statistic_item_regis/<int:unit>/<int:page>',
+                     methods=['GET'])
+def get_statistic_item_regis(unit=1, page=1):
+    """Get statistic item regis."""
+    response_data = {
+        'data': '',
+        'num_page': 1,
+        'page': 1
+    }
+    result = list()
+    for i in range(1, 30):
+        temp_data = dict()
+        if unit == 1:
+            temp_data['col1'] = "2019-04-" + str(i)
+            temp_data['col2'] = i + 50
+        elif unit == 2:
+            temp_data['col1'] = "2019-01-01 - 2019-04-" + str(i)
+            temp_data['col2'] = i + 50
+        elif unit == 3:
+            temp_data['col1'] = "20" + str(i).zfill(2)
+            temp_data['col2'] = i + 50
+        else:
+            temp_data['col1'] = "User " + str(i)
+            temp_data['col2'] = "192.168.1." + str(i)
+            temp_data['col3'] = i + 50
+        result.append(temp_data)
+    page_result = list()
+    i = 0
+    temp_page_data = list()
+    while i < len(result):
+        if i % 10 == 0 or i == (len(result) - 1):
+            page_result.append(temp_page_data)
+            temp_page_data = list()
+            temp_page_data.append(result[i])
+        else:
+            temp_page_data.append(result[i])
+        i = i + 1
+
+    print("----------====================------------")
+    print(page - 1)
+    print(page_result)
+    response_data['data'] = page_result[page]
+    response_data['num_page'] = math.ceil(len(result) / 10)
+    response_data['page'] = page
+    return jsonify(response_data)
+
+
+@blueprint_api.route('/get_statistic_detail_view/<int:unit>/<int:page>',
+                     methods=['GET'])
+def get_statistic_detail_view(unit=1, page=1):
+    """Get statistic detail view."""
+    response_data = {
+        'data': '',
+        'num_page': 1,
+        'page': 1
+    }
+    result = list()
+    for i in range(1, 30):
+        temp_data = dict()
+        if unit == 1:
+            temp_data['col1'] = "2019-05-" + str(i)
+            temp_data['col2'] = i + 100
+        elif unit == 2:
+            temp_data['col1'] = "2019-01-01 - 2019-04-" + str(i)
+            temp_data['col2'] = i + 100
+        elif unit == 3:
+            temp_data['col1'] = "20" + str(i).zfill(2)
+            temp_data['col2'] = i + 100
+        elif unit == 4:
+            temp_data['col1'] = "100" + str(i)
+            temp_data['col2'] = "Test Item " + str(i)
+            temp_data['col3'] = i + 100
+        else:
+            temp_data['col1'] = "User " + str(i)
+            temp_data['col2'] = "192.168.1." + str(i)
+            temp_data['col3'] = i + 100
+        result.append(temp_data)
+
+    page_result = list()
+    i = 0
+    temp_page_data = list()
+    while i < len(result):
+        if i % 10 == 0 or i == (len(result) - 1):
+            page_result.append(temp_page_data)
+            temp_page_data = list()
+            temp_page_data.append(result[i])
+        else:
+            temp_page_data.append(result[i])
+        i = i + 1
+
+    response_data['data'] = page_result[page]
+    response_data['num_page'] = math.ceil(len(result) / 10)
+    response_data['page'] = page
+    return jsonify(response_data)
