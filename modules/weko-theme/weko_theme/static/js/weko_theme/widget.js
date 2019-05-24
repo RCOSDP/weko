@@ -72,8 +72,8 @@ let PageBodyGrid = function () {
         templateWriteMoreNotice =
           '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
           '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
-          '<div id="moreDescription">' + moreDescription +
           '<a id="writeMoreNotice" class="writeMoreNoT" onclick="handleMoreNoT()">' + ((node.read_more != "") ? node.read_more: "Read more") + '</a>' +
+          '<div id="moreDescription">' + moreDescription +
           '</div>';
       }
 
