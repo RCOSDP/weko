@@ -26,7 +26,8 @@ from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, SearchManagement
+from .models import AdminLangSettings, ApiCertificate, SearchManagement, \
+    StatisticTarget, StatisticUnit
 
 
 def get_response_json(result_list, n_lst):
@@ -280,3 +281,45 @@ def validate_certification(cert_data):
     response = requests.get(create_crossref_url(cert_data))
     return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
         str(vars(response).get('_content', None))
+
+
+def get_initial_stats_report():
+    """Get initial statistic report.
+
+    :return: list unit and list target
+    """
+    result = {
+        'target': '',
+    }
+
+    targets = StatisticTarget.get_all_stats_report_target()
+    match_target = list()
+    for target in targets:
+        temp_target = dict()
+        temp_target['id'] = target['id']
+        temp_target['data'] = target['data']
+        match_target.append(temp_target)
+    result['target'] = match_target
+
+    return result
+
+
+def get_unit_stats_report(target_id):
+    """Get unit statistic report."""
+    result = {
+        'unit': '',
+    }
+
+    target = StatisticTarget.get_target_by_id(target_id)
+    target_units = target.target_unit
+    units = StatisticUnit.get_all_stats_report_unit()
+
+    list_unit = list()
+    for unit in units:
+        try:
+            if target_units.index(unit['id']) is not None:
+                list_unit.append(unit)
+        except Exception:
+            pass
+    result['unit'] = list_unit
+    return result

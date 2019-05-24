@@ -33,6 +33,8 @@ from flask import abort, current_app, flash, jsonify, make_response, request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+from weko_items_ui.utils import get_user_information
+from weko_records.api import ItemsMetadata
 
 from .permissions import admin_permission_factory
 from .utils import allowed_file
@@ -279,7 +281,8 @@ class ReportView(BaseView):
             resp = make_response()
             resp.data = zip_stream.getvalue()
             resp.headers['Content-Type'] = 'application/x-zip-compressed'
-            resp.headers['Content-Disposition'] = 'attachment; filename=' + zip_name + '.zip'
+            resp.headers['Content-Disposition'] = 'attachment; filename=' + \
+                zip_name + '.zip'
         except Exception:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
             abort(500)
@@ -287,47 +290,86 @@ class ReportView(BaseView):
 
     def make_stats_tsv(self, raw_stats, file_type, year, month):
         """Make TSV report file for downloads and previews."""
-        if file_type == 'FileDownload':
+        sub_header_row = None
+        if file_type == 'file_download':
             header_row = _('No. Of File Downloads')
             sub_header_row = _('Open-Access No. Of File Downloads')
-        else:
+        elif file_type == 'file_preview':
             header_row = _('No. Of File Previews')
             sub_header_row = _('Open-Access No. Of File Previews')
+        elif file_type == 'detail_view':
+            header_row = _('Detail screen view count')
+        else:
+            header_row = _('Usage count by user')
 
         tsv_output = StringIO()
         try:
             writer = csv.writer(tsv_output, delimiter='\t',
                                 lineterminator="\n")
-            writer.writerows([[header_row], [_('Aggregation Monh'), year + '-' + month],
-                                            [''], [header_row]])
+            writer.writerows([[header_row], [_('Aggregation Month'), year + '-' + month],
+                              [''], [header_row]])
 
-            cols = [_('File Name'), _('Registered Index Name'),
-                    _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
-                    _('Logged In User'), _('Site License'), _('Admin'),
-                    _('Registrar')]
-
+            cols = []
+            if file_type == 'file_download' or file_type == 'file_preview':
+                cols = [_('File Name'), _('Registered Index Name'),
+                        _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
+                        _('Logged In User'), _('Site License'), _('Admin'),
+                        _('Registrar')]
+            elif file_type == 'detail_view':
+                cols = [_('Title'),
+                        _('Registered index name'),
+                        _('View count'),
+                        _('Not-login user')]
+            elif file_type == 'file_using_per_user':
+                cols = [_('Mail address'),
+                        _('Username'),
+                        _('File download count'),
+                        _('File playing count')]
             # All stats
             writer.writerow(cols)
-            self.write_report_tsv_rows(writer, raw_stats['all'])
+            self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
 
             # Open access stats
-            writer.writerows([[''], [sub_header_row]])
-            writer.writerow(cols)
-            self.write_report_tsv_rows(writer, raw_stats['open_access'])
+            if sub_header_row is not None:
+                writer.writerows([[''], [sub_header_row]])
+                writer.writerow(cols)
+                self.write_report_tsv_rows(writer, raw_stats['open_access'])
         except Exception:
             current_app.logger.error('Unexpected error: ',
                                      sys.exc_info()[0])
             abort(500)
         return tsv_output
 
-    def write_report_tsv_rows(self, writer, records):
+    def write_report_tsv_rows(self, writer, records, file_type=None):
         """Write tsv rows for stats."""
+        if isinstance(records, dict):
+            records = list(records.values())
+
         for record in records:
             try:
-                writer.writerow([record['file_key'], record['index_list'],
-                                record['total'], record['no_login'],
-                                record['login'], record['site_license'],
-                                record['admin'], record['reg']])
+                if file_type is None or \
+                        file_type == 'file_download' or file_type == 'file_preview':
+                    writer.writerow([record['file_key'], record['index_list'],
+                                     record['total'], record['no_login'],
+                                     record['login'], record['site_license'],
+                                     record['admin'], record['reg']])
+                elif file_type == 'detail_view':
+                    item_metadata_json = ItemsMetadata.\
+                        get_record(record['record_id'])
+                    writer.writerow([
+                        item_metadata_json['title'], record['index_names'],
+                        record['total_all'], record['total_not_login']])
+                elif file_type == 'file_using_per_user':
+                    user_email = ''
+                    user_name = 'Guest'
+                    user_id = int(record['cur_user_id'])
+                    if user_id > 0:
+                        user_info = get_user_information(user_id)
+                        user_email = user_info['email']
+                        user_name = user_info['username']
+                    writer.writerow([
+                        user_email, user_name,
+                        record['total_download'], record['total_preview']])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
@@ -335,9 +377,15 @@ class ReportView(BaseView):
 
     def make_tsv_file_name(self, file_type, year, month):
         """Make tsv filenames."""
-        file_type = 'FileDownload' if file_type == 'file_download' \
-            else 'FilePreview'
-        return 'LogReport_' + file_type + year + '-' + month + '.tsv'
+        if file_type == 'file_download':
+            file_type = 'FileDownload'
+        elif file_type == 'file_preview':
+            file_type = 'FilePreview'
+        elif file_type == 'detail_view':
+            file_type = 'DetailView_'
+        else:
+            file_type = 'FileUsingPerUser_'
+        return 'logReport_' + file_type + year + '-' + month + '.tsv'
 
 
 class LanguageSettingView(BaseView):

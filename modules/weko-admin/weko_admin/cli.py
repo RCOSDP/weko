@@ -22,7 +22,8 @@
 import click
 from flask.cli import with_appcontext
 
-from .models import AdminLangSettings, ApiCertificate, SessionLifetime
+from .models import AdminLangSettings, ApiCertificate, SessionLifetime, \
+    StatisticTarget, StatisticUnit
 
 
 @click.group()
@@ -104,3 +105,35 @@ def update_api_certification(api_code, api_name, cert_data):
         click.secho('update cert success')
     else:
         click.secho('update cert failed')
+
+
+@click.group()
+def report():
+    """Report Unit and Target."""
+
+
+@report.command('create_unit')
+@click.argument('unit_id')
+@click.argument('unit_name')
+@with_appcontext
+def save_report_unit(unit_id, unit_name):
+    """Add data for Statics report unit."""
+    try:
+        StatisticUnit.create(unit_id, unit_name)
+        click.secho('insert report unit success')
+    except Exception as e:
+        click.secho(str(e))
+
+
+@report.command('create_target')
+@click.argument('target_id')
+@click.argument('target_name')
+@click.argument('target_unit')
+@with_appcontext
+def save_report_target(target_id, target_name, target_unit):
+    """Add data for Statics report unit."""
+    try:
+        StatisticTarget.create(target_id, target_name, target_unit)
+        click.secho('insert report target success')
+    except Exception as e:
+        click.secho(str(e))
