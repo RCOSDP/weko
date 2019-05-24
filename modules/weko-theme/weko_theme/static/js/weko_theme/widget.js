@@ -63,6 +63,7 @@ let PageBodyGrid = function () {
     }
 
     if (node.type == "Notice") {
+      let rssFeedTemplate = "";
       let moreDescription = "";
       let templateWriteMoreNotice = '<div id="moreDescription">' + moreDescription +'</div>';
 
@@ -76,7 +77,11 @@ let PageBodyGrid = function () {
           '</div>';
       }
 
-      description = node.description + templateWriteMoreNotice;
+      if (node.rss_feed) {
+        rssFeedTemplate = '<div class="rectangleNoT">RSS</div></br>';
+      }
+
+      description = rssFeedTemplate + node.description + templateWriteMoreNotice;
 
       leftStyle = "initial";
       paddingHeading = "inherit";
