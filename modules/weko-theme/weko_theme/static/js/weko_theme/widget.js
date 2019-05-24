@@ -73,11 +73,11 @@ let PageBodyGrid = function () {
           '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
           '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
           '<a id="writeMoreNotice" class="writeMoreNoT" onclick="handleMoreNoT()">' + ((node.read_more != "") ? node.read_more: "Read more") + '</a>' +
-          '<div id="moreDescription">' + moreDescription + (node.rss_feed ? '<div class="rectangleNoT">RSS</div></br>': "") +
+          '<div id="moreDescription">' + moreDescription +
           '</div>';
       }
 
-      description = node.description + templateWriteMoreNotice;
+      description = node.description + (node.rss_feed ? '<div class="rectangleNoT">RSS</div></br>': rssFeedTemplate) + templateWriteMoreNotice;
 
       leftStyle = "initial";
       paddingHeading = "inherit";
