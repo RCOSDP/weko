@@ -94,6 +94,7 @@ setup(
             'lifetime = weko_admin.cli:lifetime',
             'language = weko_admin.cli:language',
             'cert = weko_admin.cli:cert',
+            'report = weko_admin.cli:report'
         ],
         'invenio_base.apps': [
             'weko_admin = weko_admin:WekoAdmin',
@@ -120,6 +121,12 @@ setup(
             'weko_admin_stats_report_js = weko_admin.bundles:stats_report_js',
             'weko_admin_css = weko_admin.bundles:css',
             'weko_admin_quill_css = weko_admin.bundles:weko_admin_quill_sknow_css',
+            'weko_admin_date_picker_js = weko_admin.bundles:date_picker_js',
+            'weko_admin_date_picker_css = weko_admin.bundles:date_picker_css',
+            'weko_admin_custom_report = '
+            'weko_admin.bundles:custom_report_js',
+            'weko_report_reactjs_lib = '
+            'weko_admin.bundles:report_reactjs_lib'
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',

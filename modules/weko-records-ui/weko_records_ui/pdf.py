@@ -38,7 +38,8 @@ from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 from .models import PDFCoverPageSettings
 from .views import blueprint
 
-""" Function counting numbers of full-width character and half-width character differently """
+""" Function counting numbers of full-width character and half-width character\
+        differently """
 
 
 def get_east_asian_width_count(text):
@@ -68,10 +69,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     pidObject = PersistentIdentifier.get('recid', pid.pid_value)
     item_metadata_json = ItemsMetadata.get_record(pidObject.object_uuid)
-    # item_metadata = db.session.query(ItemMetadata).filter_by(json=item_metadata_json).first()
-    item_type = db.session.query(ItemType).filter(
-        ItemType.id == ItemMetadata.item_type_id).first()
-    item_type_id = item_type.id
+    item_type = ItemsMetadata.get_by_object_id(pidObject.object_uuid)
+    item_type_id = item_type.item_type_id
     type_mapping = Mapping.get_record(item_type_id)
     item_map = get_mapping(type_mapping, "jpcoar_mapping")
 
@@ -111,8 +110,9 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     # meta_h = 9  # height of the metadata cell
     # height of the metadata cell
     meta_h = current_app.config['METADATA_HEIGHT']
-    max_letters_num = 51  # number of maximum letters that can be contained in the right column
-    cc_logo_xposition = 160  # x-position where Creative Commons logos are placed
+    max_letters_num = 51    # number of maximum letters that can be contained \
+    # in the right column
+    cc_logo_xposition = 160  # x-position of Creative Commons logos
 
     # Get the header settings
     record = PDFCoverPageSettings.find(1)
@@ -154,9 +154,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
         pdf.set_y(55)
 
     # Title settings
-    title = item_metadata_json['title_' + lang_user]
-    if title is None:
-        title = item_metadata_json['title_en']
+    title = item_metadata_json['title']
     pdf.set_font('IPAexm', '', 20)
     pdf.multi_cell(w1 + w2, title_h, title, 0, 'L', False)
     pdf.ln(h='15')
@@ -175,27 +173,16 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     if _creator in item_map:
         _creator_item_id = item_map[_creator].split('.')[0]
 
-    item_types = db.session.query(ItemType).filter(
-        ItemType.id == ItemMetadata.item_type_id).all()
-
     publisher_attr_lang = 'publisher.@attributes.xml:lang'
     publisher_value = 'publisher.@value'
     publisher_item_id = None
     publisher_lang_id = None
     publisher_text_id = None
 
-    for item in item_types:
-        item_id = item.id
-        type_mapping_ = Mapping.get_record(item_id)
-        temp_map = get_mapping(type_mapping_, "jpcoar_mapping")
-        if publisher_attr_lang in temp_map:
-            publisher_item_id = temp_map[publisher_attr_lang].split('.')[0]
-            publisher_lang_id = temp_map[publisher_attr_lang].split('.')[1]
-        if publisher_attr_lang in temp_map:
-            publisher_item_id = temp_map[publisher_attr_lang].split('.')[0]
-            publisher_lang_id = temp_map[publisher_attr_lang].split('.')[1]
-        if publisher_value in temp_map:
-            publisher_text_id = temp_map[publisher_value].split('.')[1]
+    keyword_attr_lang = 'subject.@attributes.xml:lang'
+    keyword_attr_value = 'subject.@value'
+    keyword_base = None
+    keyword_lang = None
 
     pdf.set_font('Arial', '', 14)
     pdf.set_font('IPAexg', '', 14)
@@ -210,7 +197,9 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         lang = None
     try:
-        # publisher = item_metadata_json[_creator_item_id].get(_creator_item_id)
+        publisher_item_id = item_map[publisher_attr_lang].split('.')[0]
+        publisher_lang_id = item_map[publisher_attr_lang].split('.')[1]
+        publisher_text_id = item_map[publisher_value].split('.')[1]
         publisher = None
         default_publisher = None
         publishers = item_metadata_json[publisher_item_id]
@@ -229,23 +218,33 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         pubdate = None
     try:
-        keywords_ja = item_metadata_json.get('keywords')
+        keyword_item_id = item_map[keyword_attr_lang].split('.')[0]
+        keyword_item_lang = item_map[keyword_attr_lang].split('.')[1]
+        keyword_item_value = item_map[keyword_attr_value].split('.')[1]
+        keyword_base = item_metadata_json.get(keyword_item_id)
+        if keyword_base:
+            keyword_lang = keyword_base.get(keyword_item_lang)
+        if keyword_lang == 'ja':
+            keywords_ja = keyword_base.get(keyword_item_value)
+            keywords_en = None
+        elif keyword_lang == 'en':
+            keywords_en = keyword_base.get(keyword_item_value)
+            keywords_ja = None
+        else:
+            keywords_ja = None
+            keywords_en = None
     except (KeyError, IndexError):
         keywords_ja = None
-    try:
-        keywords_en = item_metadata_json.get('keywords_en')
-    except (KeyError, IndexError):
         keywords_en = None
+    creator_item = item_metadata_json.get(_creator_item_id)
     try:
-        # creator_mail = item_metadata_json['item_1538028816158']['creatorMails'][0].get('creatorMail')
-        creator_mail = item_metadata_json[_creator_item_id]['creatorMails'][0].get(
-            'creatorMail')
+        creator_mail = creator_item['creatorMails'][0].get('creatorMail')
     except (KeyError, IndexError):
         creator_mail = None
     try:
         creator_name = None
         default_creator_name = None
-        for creator_metadata in item_metadata_json[_creator_item_id]['creatorNames']:
+        for creator_metadata in creator_item['creatorNames']:
             if creator_metadata.get('creatorNameLang') == lang_user:
                 creator_name = creator_metadata.get('creatorName')
             if creator_metadata.get('creatorNameLang') == 'en':
@@ -256,8 +255,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     except (KeyError, IndexError):
         creator_name = None
     try:
-        # affiliation = item_metadata_json['item_1538028816158']['affiliation'][0].get('affiliationNames')
-        affiliation = item_metadata_json[_creator_item_id]['affiliation'][0].get(
+        affiliation = creator_item['affiliation'][0].get(
             'affiliationNames')
     except (KeyError, IndexError):
         affiliation = None
@@ -280,13 +278,27 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
     metadata_list = [
         "{}: {}".format(lang_data["Metadata"]["LANG"], metadata_dict["lang"]),
-        "{}: {}".format(lang_data["Metadata"]["PUBLISHER"], metadata_dict["publisher"]),
-        "{}: {}".format(lang_data["Metadata"]["PUBLICDATE"], metadata_dict["pubdate"]),
-        "{} (Ja): {}".format(lang_data["Metadata"]["KEY"], metadata_dict["keywords_ja"]),
-        "{} (En): {}".format(lang_data["Metadata"]["KEY"], metadata_dict["keywords_en"]),
-        "{}: {}".format(lang_data["Metadata"]["AUTHOR"], metadata_dict["creator_name"]),
-        "{}: {}".format(lang_data["Metadata"]["EMAIL"], metadata_dict["creator_mail"]),
-        "{}: {}".format(lang_data["Metadata"]["AFFILIATED"], metadata_dict["affiliation"])
+        "{}: {}".format(
+            lang_data["Metadata"]["PUBLISHER"],
+            metadata_dict["publisher"]),
+        "{}: {}".format(
+            lang_data["Metadata"]["PUBLICDATE"],
+            metadata_dict["pubdate"]),
+        "{} (Ja): {}".format(
+            lang_data["Metadata"]["KEY"],
+            metadata_dict["keywords_ja"]),
+        "{} (En): {}".format(
+            lang_data["Metadata"]["KEY"],
+            metadata_dict["keywords_en"]),
+        "{}: {}".format(
+            lang_data["Metadata"]["AUTHOR"],
+            metadata_dict["creator_name"]),
+        "{}: {}".format(
+            lang_data["Metadata"]["EMAIL"],
+            metadata_dict["creator_mail"]),
+        "{}: {}".format(
+            lang_data["Metadata"]["AFFILIATED"],
+            metadata_dict["affiliation"])
     ]
 
     metadata = '\n'.join(metadata_list)
@@ -308,7 +320,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     offset = pdf.x + w1
     pdf.multi_cell(w1,
                    meta_h,
-                   lang_data["Title"]["METADATA"] + '\n' * (metadata_lfnum + 1),
+                   lang_data["Title"]["METADATA"] +
+                   '\n' * (metadata_lfnum + 1),
                    1,
                    'C',
                    True)
@@ -330,7 +343,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     top = pdf.y
     pdf.multi_cell(w1,
                    url_oapolicy_h,
-                   lang_data["Title"]["OAPOLICY"] + '\n' * (oa_policy_lfnum + 1),
+                   lang_data["Title"]["OAPOLICY"] +
+                   '\n' * (oa_policy_lfnum + 1),
                    1,
                    'C',
                    True)
@@ -407,7 +421,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
             link=lnk)
     elif license == 'license_4':  # Attribution-NonCommercial-ShareAlike
         txt = lang_data["License"]["LICENSE_4"]
-        src = blueprint.root_path + "/static/images/creative_commons/by-nc-sa.png"
+        src = blueprint.root_path + "/static/images/creative_commons/\
+            by-nc-sa.png"
         lnk = "http://creativecommons.org/licenses/by-nc-sa/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)
@@ -421,7 +436,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
             link=lnk)
     elif license == 'license_5':  # Attribution-NonCommercial-NoDerivatives
         txt = lang_data["License"]["LICENSE_5"]
-        src = blueprint.root_path + "/static/images/creative_commons/by-nc-nd.png"
+        src = blueprint.root_path + "/static/images/creative_commons/\
+            by-nc-nd.png"
         lnk = "http://creativecommons.org/licenses/by-nc-nd/4.0/"
         pdf.multi_cell(footer_w, footer_h, txt, 0, 'L', False)
         pdf.ln(h=2)

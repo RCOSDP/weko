@@ -290,7 +290,9 @@ def add_signals_info(record, obj):
     """
     # Add user role info to send_obj
     userrole = 'guest'
+    userid = 0
     if hasattr(current_user, 'id'):
+        userid = current_user.id
         if len(current_user.roles) == 0:
             userrole = 'user'
         elif len(current_user.roles) == 1:
@@ -302,6 +304,7 @@ def add_signals_info(record, obj):
                     max_power_role_id = r.id
                     userrole = r.name
     obj.userrole = userrole
+    obj.userid = userid
 
     # Add site license flag to send_obj
     if hasattr(current_user, 'site_license_flag'):

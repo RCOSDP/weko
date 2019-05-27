@@ -41,6 +41,7 @@
         <div class="panel-body" id="color_setting">
           <div class="row">
             <div class="col-sm-10">
+              <div id="alerts"></div>
               <span class="query-columns">
                 <span>
                   <label>{{_('Target language')}}</label>
@@ -63,10 +64,6 @@
                   </select>
                 </span>
                 <span class="buttons">
-                 <!-- <input type="button" value="⇈" id="moveTop">
-                  <input type="button" value="↑" id="moveUp">
-                  <input type="button" value="↓" id="moveDown">
-                  <input type="button" value="⇊" id="moveBottom">-->
                  <button type="button" id="moveTop" class="btn btn-default icon-button">
                      <i class="fa fa-angle-double-up"></i>
                  </button><br/><br/>
@@ -87,7 +84,7 @@
               <button id="btn_commit_lg" class="btn btn-primary
                   ten-pixel-margin save-button">
                   <span class="glyphicon glyphicon-download-alt"></span>
-                  {{_('Save')}}
+                  {{_('Update')}}
               </button>
             </div>
             </div>

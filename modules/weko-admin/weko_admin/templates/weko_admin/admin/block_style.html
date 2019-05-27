@@ -71,6 +71,7 @@
 
 {%- block body %}
   <div class="row">
+    <div id="alerts"></div>
     <div class="col-sm-12">
       <div class="panel-group">
         <div class="panel panel-default">
@@ -81,9 +82,10 @@
                   <div class="panel panel-info">
                     <div class="panel-heading">
                       <div class="pull-right">
-                        <button type="submit" id="btn_commit_bg" class="btn btn-primary save-button">
-                            <span class="fa fa-download"></span>
-                            {{_('Save')}}
+                        <button type="submit" id="btn_commit_bg" class="btn
+                            btn-primary update-button">
+                            <span class="fa fa-edit"></span>
+                            {{_('Update')}}
                         </button>
                       </div>
                       <div class="panel-title">
@@ -123,9 +125,10 @@
                 <div class="panel panel-info">
                   <div class="panel-heading">
                     <div class="pull-right">
-                      <button type="button" id="btn_commit_header" class="btn btn-primary save-button">
-                        <span class="fa fa-download"></span>
-                        {{_('Save')}}
+                      <button type="button" id="btn_commit_header" class="btn
+                          btn-primary update-button">
+                        <span class="fa fa-edit"></span>
+                        {{_('Update')}}
                       </button>
                     </div>
                     <div class="panel-title">
@@ -189,9 +192,10 @@
                 <div class="panel panel-info">
                   <div class="panel-heading">
                     <div class="pull-right">
-                      <button type="button" id="btn_commit_footer" class="btn btn-primary save-button">
-                        <span class="fa fa-download"></span>
-                        {{_('Save')}}
+                      <button type="button" id="btn_commit_footer" class="btn
+                          btn-primary update-button">
+                        <span class="fa fa-edit"></span>
+                        {{_('Update')}}
                       </button>
                     </div>
                     <div class="panel-title">
@@ -262,8 +266,8 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js"></script>
 <script src="{{ url_for('static', filename='js/weko_admin/quill.min.js') }}"></script>
 
-<script>
-  $(document).ready(function() {
+<script> 
+ $(document).ready(function() {
     var quill_header = new Quill('#editor-container-header', {
       modules: {
         formula: true,
@@ -283,6 +287,17 @@
       placeholder: '',
       theme: 'snow'
     });
+    
+    function addAlert(message) {
+        $('#alerts').append(
+            '<div class="alert alert-light" id="alert-style">' +
+            '<button type="button" class="close" data-dismiss="alert">' +
+            '&times;</button>' + message + '</div>');
+        }
+
+    $('#btn_commit_bg').on('click', function(){
+         addAlert("Update Color Settings.");
+      });
 
     $('#editor-container-header').find('.ql-editor').html($('#header-editor-content').find('.ql-editor').html());
     $('#editor-container-footer').find('.ql-editor').html($('#footer-editor-content').find('.ql-editor').html());
@@ -296,6 +311,7 @@
         contentType: 'application/json; charset=UTF-8',
         data: JSON.stringify({'content': content, 'temp': 'header', 'isEmpty': isEmpty}),
         success: function(data){
+            addAlert("Successfully update header.");    
         }
       });
     });
@@ -309,6 +325,7 @@
         contentType: 'application/json; charset=UTF-8',
         data: JSON.stringify({'content': content, 'temp': 'footer', 'isEmpty': isEmpty}),
         success: function(data){
+            addAlert("Successfully update footer.");
         }
       });
     });

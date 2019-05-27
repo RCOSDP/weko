@@ -447,13 +447,7 @@ class Indexes(object):
     @classmethod
     def get_browsing_tree_paths(cls, pid=0):
         """Get browsing tree paths."""
-        id_list = get_index_id_list(cls.get_browsing_tree(pid), [])
-        paths = []
-        if id_list:
-            for id in id_list:
-                paths.append(Indexes.get_self_path(id).path)
-
-        return paths
+        return get_index_id_list(cls.get_browsing_tree(pid), [])
 
     @classmethod
     def get_contribute_tree(cls, pid, root_node_id=0):

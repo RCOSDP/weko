@@ -32,7 +32,7 @@
 {%- block body %}
 {%- set cur_lifetime = current_lifetime %}
 {%- set lifetime_map = map_lifetime %}
-
+<div id="alerts"></div>
 <div class="panel panel-info">
   <div class="panel-heading">
     <div class="panel-title">
@@ -51,7 +51,7 @@
     </div>
   </div>
   <div class="col-sm-offset-3 col-sm-10">
-      <button type="submit" name="submit" value="institution_name_form"
+      <button id="institution_name_update" type="submit" name="submit" value="institution_name_form"
           class="btn btn-primary ten-pixel-margin update-button">
              <i class="fa fa-edit"></i>
                  {{ _('Update') }}</button>
@@ -62,4 +62,21 @@
   </div>
 </div>
 {%- endblock body %}
+{% block tail %}
+<script>
 
+ function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }
+
+  $(document).ready(function() {
+    $('#institution_name_update').on('click', function(){
+        addAlert("Institution Name successfully updated.");
+    });
+  })
+</script>
+
+{% endblock %}

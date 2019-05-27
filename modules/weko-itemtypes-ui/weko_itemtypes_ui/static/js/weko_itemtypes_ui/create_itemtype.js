@@ -9,9 +9,7 @@ require([
     table_row: [],        // 追加した行番号を保存する元々順番()
     table_row_map: {},    // 生成したschemaとformの情報を保存する
     meta_list: {},        // 追加した行の情報を保存する(セットした詳細情報)
-    /////add by ryuu.0313 start
     meta_fix: {},
-    /////add by ryuu.0313 end
     schemaeditor: {       // objectの場合
       schema:{}           //   生成したschemaの情報を保存する
     }
@@ -75,7 +73,6 @@ require([
     }
     $('#itemtype_name_warning').addClass('hide');
     create_itemtype_schema();
-    console.log('aaaaaaaaaaaaaa');
     send(url_update_schema, page_global);
   });
 
@@ -229,6 +226,16 @@ require([
       }
     }
 
+    page_global.table_row_map.schema.properties["pubdate"] = {type:"string",title:"公開日",format:"datetime"}
+    page_global.table_row_map.form.push({key:"pubdate",type:"template",title:"公開日",title_i18n:{ja:"公開日",en:"PubDate"},required: true,format: "yyyy-MM-dd",templateUrl: "/static/templates/weko_deposit/datepicker.html"});
+    page_global.table_row_map.schema.required.push("pubdate");
+
+    if(src_mapping.hasOwnProperty('pubdate')) {
+      page_global.table_row_map.mapping['pubdate'] = src_mapping['pubdate'];
+    } else {
+      page_global.table_row_map.mapping['pubdate'] = mapping_value;
+    }
+
     // テーブルの行をトラバースし、マップに追加する
     err_input_id = []
     $.each(page_global.table_row, function(idx, row_id){
@@ -253,7 +260,7 @@ require([
       if(src_render.hasOwnProperty('meta_list')
           && src_render['meta_list'].hasOwnProperty(row_id)) {
         if(tmp.input_type == src_render['meta_list'][row_id]['input_type']) {
-          if(src_mapping.hasOwnProperty('keywords_en')) {
+          if(src_mapping.hasOwnProperty(row_id)) {
             page_global.table_row_map.mapping[row_id] = src_mapping[row_id];
           } else {
             page_global.table_row_map.mapping[row_id] = mapping_value;
@@ -504,6 +511,21 @@ require([
 
       page_global.meta_list[row_id] = tmp;
     });
+    //公開日
+    var tmp_pubdate = {}
+    tmp_pubdate.title = "公開日";
+    tmp_pubdate.title_i18n = {}
+    tmp_pubdate.title_i18n.ja = "公開日";
+    tmp_pubdate.title_i18n.en = "PubDate";
+    tmp_pubdate.input_type = "datetime";
+    tmp_pubdate.input_value = "";
+    tmp_pubdate.option = {}
+    tmp_pubdate.option.required = $('#chk_pubdate_0').is(':checked') ? true : false;
+    tmp_pubdate.option.multiple = $('#chk_pubdate_1').is(':checked') ? true : false;
+    tmp_pubdate.option.hidden = $('#chk_pubdate_4').is(':checked') ? true : false;
+    tmp_pubdate.option.showlist = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_2').is(':checked') ? true : false);
+    tmp_pubdate.option.crtf = tmp_pubdate.option.hidden ? false : ($('#chk_pubdate_3').is(':checked') ? true : false);
+    page_global.meta_fix["pubdate"] = tmp_pubdate;
   }
 
   // add new meta table row

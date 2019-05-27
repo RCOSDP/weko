@@ -35,4 +35,7 @@
 
 {%- block body %}
 <div id="root" class="col-xs-12"></div>
+<div id="alerts"></div>
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
 {% endblock %}
