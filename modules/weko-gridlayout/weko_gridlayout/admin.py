@@ -109,8 +109,8 @@ class WidgetSettingView(ModelView):
         data_settings_model = namedtuple("Settings", data_settings.keys())(
             *data_settings.values())
         if name == "label_color" or name == "has_frame_border" \
-            or name == "frame_border_color" or name == "text_color" \
-            or name == "background_color":
+                or name == "frame_border_color" or name == "text_color" \
+                or name == "background_color":
             return super()._get_list_value(
                 context,
                 data_settings_model,

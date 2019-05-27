@@ -39,3 +39,39 @@ WEKO_ITEMS_AUTOFILL_SELECT_OPTION = [
     {'value': 'CiNii', 'text': 'CiNii'}
 ]
 """API select option"""
+
+WEKO_ITEMS_AUTOFILL_CROSSREF_REQUIRED_ITEM = [
+    "title",
+    "language",
+    "creator",
+    "pageStart",
+    "pageEnd",
+    "numPages",
+    "date",
+    "publisher",
+    "relation"
+]
+"""CrossRef required item"""
+
+WEKO_ITEMS_AUTOFILL_CINII_REQUIRED_ITEM = [
+    "title",
+    "alternative",
+    "creator",
+    "contributor",
+    "description",
+    "subject",
+    "sourceTitle",
+    "volume",
+    "issue",
+    "pageStart",
+    "pageEnd",
+    "numPages",
+    "date",
+    "publisher",
+    "sourceIdentifier",
+    "relation"
+]
+"""CiNii required item"""
+
+WEKO_ITEMS_AUTOFILL_DEFAULT_PAGE_NUMBER = 1
+"""Default page number"""

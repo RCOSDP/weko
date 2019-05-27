@@ -30,9 +30,12 @@
     {% block edit_form %}
     {% block toggle_from %}
     {% endblock %}
+    <div id="alerts"></div>
     <input id="model_data" type="hidden" data-editdata='{{model}}' value='' />
     <input id="return_url" type="hidden" value='{{return_url}}' />
     <div id="root" class="col-xs-12"></div>
+    {% from "weko_theme/macros/modal_page.html" import all_modal %}
+    {{ all_modal() }}
     {% endblock %}
 
   {%- block javascript %}

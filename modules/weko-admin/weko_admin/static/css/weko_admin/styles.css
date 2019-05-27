@@ -23,3 +23,13 @@
 .height_70{
    height:70% !important;
 }
+.page > li {
+  cursor: pointer;
+}
+.page > li:disabled {
+  cursor: pointer;
+}
+.margin_0{
+  margin-left: 0px !important;
+  margin-right: 0px !important;
+}

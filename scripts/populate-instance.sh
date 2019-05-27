@@ -281,3 +281,20 @@ ${INVENIO_WEB_INSTANCE} widget_type create \
 ${INVENIO_WEB_INSTANCE} widget_type create \
         "Main contents" "Main contents"
 ### sphinxdoc-create-widget_type-data-end
+
+# sphinxdoc-set-report-unit-and-target-begin
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "1" "Day"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "2" "Week"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "3" "Year"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "4" "Item"
+${INVENIO_WEB_INSTANCE} report create_unit \
+       "5" "Host"
+${INVENIO_WEB_INSTANCE} report create_target \
+       "1" "Item registration report" "1,2,3,5"
+${INVENIO_WEB_INSTANCE} report create_target \
+       "2" "Item detail view report" "1,2,3,4,5"
+# sphinxdoc-set-report-unit-and-target-end

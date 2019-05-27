@@ -45,12 +45,21 @@
         $scope.setDefaultSortKey();
       }
       //
-      $scope.saveData=function(){
+        function addAlert(message) {
+                $('#alerts').append(
+                    '<div class="alert alert-light" id="alert-style">' +
+                    '<button type="button" class="close" data-dismiss="alert">' +
+                    '&times;</button>' + message + '</div>');
+        }
+        
+        $scope.saveData=function(){
         var url = $location.path();
         dbJson = $scope.dataJson;
+       
         $http.post(url, dbJson).then(function successCallback(response) {
-           alert(response.data.message);
-        }, function errorCallback(response) {
+            // alert(response.data.message);
+            addAlert(response.data.message);
+           }, function errorCallback(response) {
            alert(response.data.message);
         });
       }

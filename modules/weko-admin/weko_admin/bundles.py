@@ -29,6 +29,20 @@ js = Bundle(
     output="gen/weko_admin_ui.%(version)s.js",
 )
 
+report_reactjs_lib = Bundle(
+    'js/weko_admin/react.production.min.js',
+    'js/weko_admin/react-dom.production.min.js',
+    'js/weko_admin/browser.min.js',
+    filters='jsmin',
+    output="gen/weko_report_reactjs_lib.%(version)s.js",
+)
+
+custom_report_js = Bundle(
+    'js/weko_admin/custom_report.js',
+    filters='jsmin',
+    output="gen/weko_custom_report.%(version)s.js",
+)
+
 search_management_js = Bundle(
     'js/weko_admin/search_management.js',
     filters='requirejs',
@@ -38,6 +52,18 @@ search_management_js = Bundle(
 stats_report_js = Bundle(
     'js/weko_admin/stats_report.js',
     output="gen/weko_admin_ui_stats_report.%(version)s.js",
+)
+
+date_picker_css = Bundle(
+    'css/weko_admin/react-datepicker.min.css',
+    'css/weko_admin/react-datepicker-cssmodules.min.css',
+    output="gen/weko_admin_date_picker.%(version)s.css",
+)
+
+date_picker_js = Bundle(
+    'js/weko_admin/bootstrap-datepicker.min.js',
+    'js/weko_admin/prop-types.min.js',
+    output="gen/weko_admin_date_picker.%(version)s.js",
 )
 
 css = Bundle(

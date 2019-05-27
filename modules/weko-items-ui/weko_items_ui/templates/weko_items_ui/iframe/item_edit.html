@@ -48,6 +48,9 @@
 {%- endblock page_footer %}
 
 {%- block page_body %}
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
+<div id="alerts"></div>
 <div class="container-fluid">
   <div class="row">
     <div class="col-md-12">

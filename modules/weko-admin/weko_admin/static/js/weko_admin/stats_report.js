@@ -4,42 +4,85 @@ $(document).ready(function () {
     var year = $("#report_year_select").val();
     var month = $("#report_month_select").val();
     var type = $("#report_type_select").val();
-    var statsURL = '/api/stats/' + type + '/' + year + '/' + month;
-    var statsReports = {}
+    if(year == 'Year') {
+      alert('Year is required!');
+      return;
+    } else if (month == 'Month') {
+      alert('Month is required!');
+      return;
+    }
+    let uriByType = {
+        file_download:'file_download',
+        file_preview:'file_preview',
+        detail_view:'report/record/record_view',
+        file_using_per_user:'report/file/file_using_per_user'};
+    var statsURL = '/api/stats/' + uriByType[type] + '/' + year + '/' + month;
+    var statsReports = {};
+    var ajaxReturn = [0,0,0,0];
 
-    if(type == 'all') { // Get both reports
+    if (type == 'all') { // Get both reports
+      let options = ['file_download',
+        'file_preview',
+        'detail_view',
+        'file_using_per_user'];
       $.ajax({
-        url: '/api/stats/file_download/' + year + '/' + month,
+        url: '/api/stats/' + options[0] + '/' + year + '/' + month,
         type: 'GET',
+        async: false,
         contentType: 'application/json',
         success: function (results) {
-          statsReports['file_download'] = results;
-          $.ajax({
-            url: '/api/stats/file_preview/' + year + '/' + month,
-            type: 'GET',
-            contentType: 'application/json',
-            success: function (results) {
-              console.log(results);
-              statsReports['file_preview'] = results;
-              setStatsReportSubmit(statsReports);
-            },
-            error: function (error) {
-              console.log(error);
-              $('#error_modal').modal('show');
-            }
-          });
+          statsReports[options[0]] = results;
         },
         error: function (error) {
           console.log(error);
           $('#error_modal').modal('show');
         }
       });
-    }
-
-    else { // Get single report
+      $.ajax({
+        url: '/api/stats/' + options[1] + '/' + year + '/' + month,
+        type: 'GET',
+        async: false,
+        contentType: 'application/json',
+        success: function (results) {
+          statsReports[options[1]] = results;
+        },
+        error: function (error) {
+          console.log(error);
+          $('#error_modal').modal('show');
+        }
+      });
+      $.ajax({
+        url: '/api/stats/' + uriByType[options[2]] + '/' + year + '/' + month,
+        type: 'GET',
+        async: false,
+        contentType: 'application/json',
+        success: function (results) {
+          statsReports[options[2]] = results;
+        },
+        error: function (error) {
+          console.log(error);
+          $('#error_modal').modal('show');
+        }
+      });
+      $.ajax({
+        url: '/api/stats/' + uriByType[options[3]] + '/' + year + '/' + month,
+        type: 'GET',
+        async: false,
+        contentType: 'application/json',
+        success: function (results) {
+          statsReports[options[3]] = results;
+        },
+        error: function (error) {
+          console.log(error);
+          $('#error_modal').modal('show');
+        }
+      });
+      setStatsReportSubmit(statsReports);
+    } else { // Get single report
       $.ajax({
         url: statsURL,
         type: 'GET',
+        async: false,
         contentType: 'application/json',
         success: function (results) {
           statsReports[type] = results;

@@ -1,4 +1,10 @@
 (function (angular) {
+ function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }
   // Bootstrap it!
   angular.element(document).ready(function() {
     angular.module('siteLicense.controllers', []);
@@ -110,7 +116,7 @@
           var url = $location.path();
           dbJson = $scope.dbJson;
           $http.post(url, dbJson).then(function successCallback(response) {
-             alert(response.data.message);
+             addAlert(response.data.message);
           }, function errorCallback(response) {
              alert(response.data.message);
           });

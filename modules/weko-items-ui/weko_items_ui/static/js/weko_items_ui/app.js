@@ -170,7 +170,10 @@ get_search_data = function (keyword) {
     method: "GET",
     success: function(data, status) {
       if (data.error) {
-        alert("Some errors have occured!\nDetail:" + data.error);
+          //alert("Some errors have occured!\nDetail:" + data.error);
+        var modalcontent = "Some errors have occured!\nDetail:" + data.error;
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
         return null;
       } else {
         if (keyword === 'username') {
@@ -193,7 +196,10 @@ get_search_data = function (keyword) {
       }
     },
     error: function(data, status) {
-      alert("Cannot connect to server!");
+        //alert("Cannot connect to server!");
+        var modalcontent =  "Cannot connect to server!";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
     }
   });
 }
@@ -237,7 +243,10 @@ get_autofill_data = function (keyword, data, mode) {
       }
     },
     error: function(data, status) {
-      alert("Cannot connect to server!");
+        //alert("Cannot connect to server!");
+        var modalcontent =  "Cannot connect to server!";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
     }
   });
 }
@@ -271,6 +280,12 @@ function handleSharePermission(value) {
 }
 
 (function (angular) {
+  function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+         }
   // Bootstrap it!
   angular.element(document).ready(function () {
     angular.module('wekoRecords.controllers', []);
@@ -363,7 +378,10 @@ function handleSharePermission(value) {
                 }
               },
               error: function(data, status) {
-                alert("Cannot connect to server!");
+                  //alert("Cannot connect to server!");
+                  var modalcontent =  "Cannot connect to server!";
+                  $("#inputModal").html(modalcontent);
+                  $("#allModal").modal("show");
               }
             });
           } else {
@@ -424,14 +442,6 @@ function handleSharePermission(value) {
         $scope.depositionForm[id].$commitViewValue();
       }
 
-      $scope.getAutoFillValue = function (data) {
-        if (data) {
-          return data;
-        } else {
-          return "";
-        }
-      }
-
       $scope.setAutoFillErrorMessage = function (message) {
         $("#autofill-error-message").text(message);
         $("#auto-fill-error-div").addClass("alert alert-danger");
@@ -440,31 +450,6 @@ function handleSharePermission(value) {
       $scope.resetAutoFillErrorMessage = function () {
         $("#autofill-error-message").text("");
         $("#auto-fill-error-div").removeClass("alert alert-danger");
-      }
-
-      $scope.dictValue = function (id, sub1 = null, sub2 = null, sub3 = null) {
-        if (!id) {
-          return null;
-        }
-        if (sub1) {
-          if (id.hasOwnProperty(sub1)) {
-            if (!sub2 && !sub3) {
-              return id[sub1];
-            }
-            else if (sub2 && !sub3) {
-              if (id[sub1].hasOwnProperty(sub2)) {
-                return id[sub1][sub2];
-              }
-            } else if (sub2 && sub3) {
-              if (id[sub1].hasOwnProperty(sub2)) {
-                if (id[sub1][sub2].hasOwnProperty(sub3)) {
-                  return id[sub1][sub2][sub3];
-                }
-              }
-            }
-          }
-        }
-        return null;
       }
 
       $scope.setItemMetadata = function () {
@@ -484,430 +469,125 @@ function handleSharePermission(value) {
           search_data: $.trim(value),
           item_type_id: itemTypeId
         }
-        this.setItemMetadataFromApi(param);
+        this.setRecordDataFromApi(param);
       }
 
       $scope.clearAllField = function() {
-        for (var property in $scope.depositionForm) {
-          if ($scope.depositionForm.hasOwnProperty(property)) {
-            if (property.indexOf("item") != -1) {
-              this.setValueToField(property, "");
-            }
-            if(typeof($scope.depositionForm[property]) == "object" && $scope.depositionForm[property].hasOwnProperty("$dateValue")) {
-              $scope.depositionForm[property].$dateValue = null;
-            }
-          }
+        $rootScope.recordsVM.invenioRecordsModel["pubdate"] = "";
+        for (let item in $rootScope.recordsVM.invenioRecordsModel) {
+          this.clearAllFieldCallBack($rootScope.recordsVM.invenioRecordsModel[item])
         }
       }
 
-      $scope.setItemMetadataFromApi = function (param) {
-        $.ajax({
-          url: '/api/autofill/get_items_autofill_data',
+      $scope.clearAllFieldCallBack = function(item) {
+        if ($.isEmptyObject(item)) {
+          return "";
+        }
+        if (Array.isArray(item)) {
+          let subItem = item[0];
+          this.clearAllFieldCallBack(subItem)
+        } else {
+          for (let subItem in item) {
+            if ($.isEmptyObject(item[subItem])) {
+              continue;
+            } else if (Array.isArray(item[subItem])) {
+              let childItem = item[subItem][0];
+              let result = [];
+              result.push(this.clearAllFieldCallBack(childItem))
+              item[subItem] = result;
+            } else {
+              item[subItem] = "";
+            }
+          }
+          return item;
+        }
+      }
+
+      $scope.setRecordDataFromApi = function(param) {
+        let request = {
+          url: '/api/autofill/get_auto_fill_record_data',
           headers: {
             'Content-Type': 'application/json'
           },
           method: "POST",
           data: JSON.stringify(param),
-          dataType: "json",
-          success: (data, status) => {
+          dataType: "json"
+        };
+
+        InvenioRecordsAPI.request(request).then(
+          function success(response) {
+            let data = response.data;
             if (data.error) {
-              this.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
+              $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
+            } else if (!$.isEmptyObject(data.result)) {
+              $scope.clearAllField();
+              $scope.setRecordDataCallBack(data);
             } else {
-              let items = data.items;
-              if (!items) {
-                this.setAutoFillErrorMessage('Some error is occurs!');
-              }
-              let result = data.result;
-              if (!result) {
-                this.setAutoFillErrorMessage($("#autofill_error_doi").val());
-              } else {
-                // Reset all fields
-                this.clearAllField();
-                // Reset error message
-                this.resetAutoFillErrorMessage();
-
-                this.setItemMetadataCreator(items, result);
-
-                if (items.hasOwnProperty('numPages')) {
-                  this.setValueToField(this.dictValue(items.numPages, '@value'), this.getAutoFillValue(this.dictValue(result.numPages, '@value')));
-                }
-
-                if (items.hasOwnProperty('pageStart')) {
-                  this.setValueToField(this.dictValue(items.pageStart, '@value'), this.getAutoFillValue(this.dictValue(result.pageStart, '@value')));
-                }
-
-                if (items.hasOwnProperty('pageEnd')) {
-                  this.setValueToField(this.dictValue(items.pageEnd, '@value'), this.getAutoFillValue(this.dictValue(result.pageEnd, '@value')));
-                }
-
-                if (items.hasOwnProperty('publisher')) {
-                  let id = items.publisher;
-                  let resultId = result.publisher;
-                  if (resultId && resultId['@value']) {
-                    this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-                    this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                  } else {
-                    this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                    this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-                  }
-                }
-
-                this.setItemMetadataRelation(items, result);
-
-                if (items.hasOwnProperty('contributor')) {
-                  let contributor = items.contributor;
-                  let resultId = result.contributor;
-                  if (contributor.hasOwnProperty('contributorName')) {
-                    let id = contributor.contributorName;
-                    let subResultId = resultId.contributorName;
-                    if (subResultId && subResultId['@value']) {
-                      this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(subResultId, '@attributes', 'xml:lang')));
-                      this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(subResultId, '@value')));
-                    } else {
-                      this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-                      this.setValueToField(this.dictValue(id, '@value'), "");
-                    }
-                  }
-                }
-
-                if (items.hasOwnProperty('subject')) {
-                  let subject = items.subject;
-                  let resultId = result.subject;
-                  if (resultId && resultId['@value']) {
-                    this.setValueToField(this.dictValue(subject, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-                    this.setValueToField(this.dictValue(subject, '@attributes', 'subjectScheme'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'subjectScheme')));
-                    this.setValueToField(this.dictValue(subject, '@attributes', 'subjectURI'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'subjectURI')));
-                    this.setValueToField(this.dictValue(subject, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                  } else {
-                    this.setValueToField(this.dictValue(subject, '@attributes', 'xml:lang'), "");
-                    this.setValueToField(this.dictValue(subject, '@value'), "");
-                    this.setValueToField(this.dictValue(subject, '@attributes', 'subjectScheme'), "");
-                    this.setValueToField(this.dictValue(subject, '@attributes', 'subjectURI'), "");
-                  }
-                }
-
-                if (items.hasOwnProperty('description')) {
-                  let description = items.description;
-                  let resultId = result.description;
-                  if (resultId && resultId['@value']) {
-                    this.setValueToField(this.dictValue(description, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-                    this.setValueToField(this.dictValue(description, '@attributes', 'descriptionType'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'descriptionType')));
-                    this.setValueToField(this.dictValue(description, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                  } else {
-                    this.setValueToField(this.dictValue(description, '@attributes', 'xml:lang'), "");
-                    this.setValueToField(this.dictValue(description, '@value'), "");
-                    this.setValueToField(this.dictValue(description, '@attributes', 'descriptionType'), "");
-                  }
-                }
-
-                if (items.hasOwnProperty('sourceTitle')) {
-                  let sourceTitle = items.sourceTitle;
-                  let resultId = result.sourceTitle;
-                  if (resultId && resultId['@value']) {
-                    this.setValueToField(this.dictValue(sourceTitle, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-                    this.setValueToField(this.dictValue(sourceTitle, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                  } else {
-                    this.setValueToField(this.dictValue(sourceTitle, '@attributes', 'xml:lang'), "");
-                    this.setValueToField(this.dictValue(sourceTitle, '@value'), "");
-                  }
-                }
-
-                if (items.hasOwnProperty('volume')) {
-                  let volume = items.volume;
-                  let resultId = result.volume;
-                  if (resultId && resultId['@value']) {
-                    this.setValueToField(this.dictValue(volume, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                  } else {
-                    this.setValueToField(this.dictValue(volume, '@value'), "");
-                  }
-                }
-
-                if (items.hasOwnProperty('issue')) {
-                  let issue = items.issue;
-                  let resultId = result.issue;
-                  if (resultId && resultId['@value']) {
-                    this.setValueToField(this.dictValue(issue, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                  } else {
-                    this.setValueToField(this.dictValue(issue, '@value'), "");
-                  }
-                }
-
-                if (items.hasOwnProperty('sourceIdentifier')) {
-                  let sourceIdentifier = items.sourceIdentifier;
-                  let resultId = result.sourceIdentifier;
-                  if (resultId && resultId['@value']) {
-                    this.setValueToField(this.dictValue(sourceIdentifier, '@attributes', 'identifierType'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'identifierType')));
-                    this.setValueToField(this.dictValue(sourceIdentifier, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                  } else {
-                    this.setValueToField(this.dictValue(sourceIdentifier, '@attributes', 'identifierType'), "");
-                    this.setValueToField(this.dictValue(sourceIdentifier, '@value'), "");
-                  }
-                }
-        
-                if (items.hasOwnProperty('title')) {
-                  let id = items.title;
-                  let resultId = result.title;
-                  if (Array.isArray(id))
-                  {
-                    for(var i = 0 ; i < id.length;i++)
-                    {
-                      if (id[i].hasOwnProperty('title'))
-                      {
-                        let sub_id= id[i].title;
-                        let sub_resultId = resultId[i].title;
-                        if(sub_resultId && sub_resultId['@value'])
-                        {
-                          this.setValueToField(this.dictValue(sub_id, '@value'), this.getAutoFillValue(this.dictValue(sub_resultId, '@value')));
-                          this.setValueToField(this.dictValue(sub_id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'xml:lang')));
-                          $rootScope.recordsVM.invenioRecordsModel['title'] = this.getAutoFillValue(this.dictValue(sub_resultId, '@value'));
-                          $rootScope.recordsVM.invenioRecordsModel['lang'] = this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'xml:lang'));
-                          break;
-                        }
-                        else
-                        {
-                          this.setValueToField(this.dictValue(sub_id, '@value'), "");
-                          this.setValueToField(this.dictValue(sub_id, '@attributes', 'xml:lang'), "");
-                        }
-                      }
-                    }
-                  }
-                  else
-                  {
-                    if (resultId && resultId['@value']) {
-                      this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-                      this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                      $rootScope.recordsVM.invenioRecordsModel['title'] = this.getAutoFillValue(this.dictValue(resultId, '@value'));
-                      $rootScope.recordsVM.invenioRecordsModel['lang'] = this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang'));
-                    } else {
-                      this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                      $rootScope.recordsVM.invenioRecordsModel['title'] = this.getAutoFillValue(this.dictValue(resultId, '@value'));
-                      this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-                    }
-                  }
-                }
-
-                if (items.hasOwnProperty('date'))
-                {
-                  let id = items.date;
-                  let resultId = result.date;
-                  if(Array.isArray(id))
-                  {
-                    for(var i = 0 ; i < id.length;i++)
-                    {
-                      let sub_id= id[i].date;
-                      let sub_resultId = resultId[i].date;
-                      if(sub_resultId && sub_resultId['@value'])
-                      {
-                        this.setValueToField(this.dictValue(sub_id, '@value'), this.getAutoFillValue(this.dictValue(sub_resultId, '@value')));
-                        this.setValueToField(this.dictValue(sub_id, '@attributes', 'dateType'), this.getAutoFillValue(this.dictValue(sub_resultId, '@attributes', 'dateType')));
-                        break;
-                      }
-                      else
-                      {
-                        this.setValueToField(this.dictValue(sub_id, '@value'), "");
-                        this.setValueToField(this.dictValue(sub_id, '@attributes', 'dateType'), "");
-                      }
-                    }
-                  }
-                  else
-                  {
-                    if(resultId && resultId['@value'])
-                      {
-                        this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                        this.setValueToField(this.dictValue(id, '@attributes', 'dateType'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'dateType')));
-                      }
-                      else
-                      {
-                        this.setValueToField(this.dictValue(id, '@value'), "");
-                        this.setValueToField(this.dictValue(id, '@attributes', 'dateType'), "");
-                      }
-                  }
-                }
-
-                if (param.api_type == 'CrossRef') {
-                  this.setItemMetadataCrossRef(items, result);
-                }
-                else if (param.api_type == 'CiNii') {
-                  this.setItemMetadataCiNii(items, result);
-                }
-
-                $('#meta-search').modal('toggle');
-              }
+              $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
             }
           },
-          error: (data, status) => {
-            this.setAutoFillErrorMessage("Cannot connect to server!");
+          function error(response) {
+             $scope.setAutoFillErrorMessage("Cannot connect to server!");
+          }
+        );
+      }
+
+      $scope.setRecordDataCallBack = function(data) {
+        const THREE_FLOOR_ITEM = [
+          "creator",
+          "relation",
+          "contributor"
+        ];
+        const CREATOR_NAMES = "creatorNames";
+
+        data.result.forEach(function(item){
+          if (THREE_FLOOR_ITEM.includes(item.key)){
+            let keys = Object.keys(item);
+            keys.forEach(function(itemKey) {
+              if (itemKey != 'key') {
+                  let listSubData = item[itemKey];
+                  if (!$.isEmptyObject(listSubData)){
+                    if(Array.isArray(listSubData)){
+                      listSubData.forEach(function(subData) {
+                        let subKey = Object.keys(subData)[0];
+                        if (!$.isEmptyObject(subData[subKey])){
+                          if (subData.hasOwnProperty(CREATOR_NAMES)) {
+                            $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey][0]['creatorName'] = subData.creatorNames;
+                          }else{
+                            $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey] = subData[subKey];
+                          }
+                        }
+                      });
+                    } else if (typeof listSubData === 'object') {
+                      if (listSubData.hasOwnProperty(CREATOR_NAMES) &&
+                           $rootScope.recordsVM.invenioRecordsModel[itemKey].hasOwnProperty(CREATOR_NAMES)) {
+                        $rootScope.recordsVM.invenioRecordsModel[itemKey][CREATOR_NAMES][0]['creatorName'] = listSubData.creatorNames;
+                      }
+                    }
+                  }
+              }
+            });
+          }else {
+            let keys = Object.keys(item)
+            keys.forEach(function(itemKey) {
+              if (itemKey != 'key') {
+                let itemData = item[itemKey];
+                if(!$.isEmptyObject(itemData)){
+                    $rootScope.recordsVM.invenioRecordsModel[itemKey] = itemData;
+                }
+              }
+            });
           }
         });
-      }
-
-      $scope.setItemMetadataCrossRef = function (items, result) {
-        if (items.hasOwnProperty('language'))
-                {
-                  let id = items.language;
-                  let resultId = result.language;
-                  if(Array.isArray(id))
-                  {
-                    for(var i = 0 ; i < id.length;i++)
-                    {
-                      let sub_id= id[i].language;
-                      let sub_resultId = resultId[i].language;
-                      if(sub_resultId && sub_resultId['@value'])
-                      {
-                        this.setValueToField(this.dictValue(sub_id, '@value'), this.getAutoFillValue(this.dictValue(sub_resultId, '@value')));
-                      }
-                      else
-                      {
-                        this.setValueToField(this.dictValue(sub_id, '@value'), "");
-                      }
-                    }
-                  }
-                  else
-                  {
-                    if(resultId && resultId['@value'])
-                    {
-                      this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-                    }
-                    else
-                    {
-                      this.setValueToField(this.dictValue(id, '@value'), "");
-                    }
-                  }
-                }
-      }
-
-      $scope.setItemMetadataCiNii = function (items, result) {
-        if (items.hasOwnProperty('alternative')) {
-          let id, resultId;
-          id = items.alternative;
-          resultId = result.alternative;
-          if (this.getAutoFillValue(this.dictValue(resultId, '@value'))) {
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-          } else {
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-            this.setValueToField(this.dictValue(id, '@value'), "");
-          }
-        }
-      }
-
-      $scope.setItemMetadataCreator = function (items, result) {
-        if (!items.hasOwnProperty('creator')) {
-          return;
-        }
-        if (items.creator.hasOwnProperty('affiliation')) {
-          if (items.creator.affiliation.hasOwnProperty('affiliationName')) {
-            let id = items.creator.affiliation.affiliationName;
-            let resultId = result.creator.affiliation.affiliationName;
-            if (resultId && resultId['@value']) {
-              this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-              this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-            } else {
-              this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-              this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-            }
-          }
-
-          if (items.creator.affiliation.hasOwnProperty('nameIdentifier')) {
-            let id = items.creator.affiliation.nameIdentifier;
-            let resultId = result.creator.affiliation.nameIdentifier;
-            this.setValueToField(this.dictValue(id, '@attributes', 'nameIdentifierScheme'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'nameIdentifierScheme')));
-            this.setValueToField(this.dictValue(id, '@attributes', 'nameIdentifierURI'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'nameIdentifierURI')));
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(resultId['@value']));
-          }
-        }
-
-        if (items.creator.hasOwnProperty('creatorAlternative')) {
-          let id = items.creator.creatorAlternative;
-          let resultId = result.creator.creatorAlternative;
-          if (resultId && resultId['@value']) {
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-          } else {
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-          }
-        }
-
-        if (items.creator.hasOwnProperty('creatorName')) {
-          let id = items.creator.creatorName;
-          let resultId = result.creator.creatorName;
-          if (resultId && resultId['@value']) {
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-          } else {
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-          }
-        }
-
-        if (items.creator.hasOwnProperty('familyName')) {
-          let id = items.creator.familyName;
-          let resultId = result.creator.familyName;
-          if (resultId && resultId['@value']) {
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-          } else {
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-          }
-        }
-
-        if (items.creator.hasOwnProperty('givenName')) {
-          let id = items.creator.givenName;
-          let resultId = result.creator.givenName;
-          if (resultId && resultId['@value']) {
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'xml:lang')));
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-          } else {
-            this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-            this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-          }
-        }
-
-        if (items.creator.hasOwnProperty('nameIdentifier')) {
-          let id = items.creator.nameIdentifier;
-          let resultId = result.creator.nameIdentifier;
-          this.setValueToField(this.dictValue(id, '@attributes', 'nameIdentifierScheme'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'nameIdentifierScheme')));
-          this.setValueToField(this.dictValue(id, '@attributes', 'nameIdentifierURI'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'nameIdentifierURI')));
-          this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(resultId, '@value')));
-        }
-      }
-
-      $scope.setItemMetadataRelation = function (items, result) {
-        if (items.hasOwnProperty('relation')) {
-          let relation = items.relation;
-          let resultId = result.relation;
-          this.setValueToField(this.dictValue(relation, '@attributes', 'relationType'), this.getAutoFillValue(this.dictValue(resultId, '@attributes', 'relationType')));
-          if (relation.hasOwnProperty('relatedIdentifier')) {
-            let id = relation.relatedIdentifier;
-            let subresultId = resultId.relatedIdentifier;
-            if (subresultId && subresultId['@value']) {
-              this.setValueToField(this.dictValue(id, '@attributes', 'identifierType'), this.getAutoFillValue(this.dictValue(subresultId, '@attributes', 'identifierType')));
-              this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(subresultId, '@value')));
-            } else {
-              this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(subresultId, '@value')));
-              this.setValueToField(this.dictValue(id, '@attributes', 'identifierType'), "");
-            }
-          }
-
-          if (relation.hasOwnProperty('relatedTitle')) {
-            let id = relation.relatedTitle;
-            let subresultId = resultId.relatedTitle;
-            if (subresultId && subresultId['@value']) {
-              this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), this.getAutoFillValue(this.dictValue(subresultId, '@attributes', 'xml:lang')));
-              this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(subresultId, '@value')));
-            } else {
-              this.setValueToField(this.dictValue(id, '@value'), this.getAutoFillValue(this.dictValue(subresultId, '@value')));
-              this.setValueToField(this.dictValue(id, '@attributes', 'xml:lang'), "");
-            }
-          }
-        }
+        $('#meta-search').modal('toggle');
       }
 
       $scope.searchSource = function(model_id,arrayFlg,form) {
 
-        alert(form.key[1]);
+          // alert(form.key[1]);
+          var modalcontent = form.key[1];
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
 
       }
 
@@ -1096,7 +776,10 @@ function handleSharePermission(value) {
             dataType: "json",
             success: function(data, stauts) {
               if (data.error) {
-                alert('Some errors have occured!\nDetail: ' + data.error);
+                  alert('Some errors have occured!\nDetail: ' + data.error);
+                  //var modalcontent =  "Some errors have occured!\nDetail: " + data.error;
+                  //$("#inputModal").html(modalcontent);
+                  //$("#allModal").modal("show");
               } else {
                 if (data.validation) {
                   userInfo = data.results;
@@ -1106,22 +789,34 @@ function handleSharePermission(value) {
                     userID: userInfo.user_id
                   };
                   if (otherUser.userID == current_login_user) {
-                    alert('You cannot specify yourself in "Other users" setting.');
+                      alert('You cannot specify yourself in "Other users" setting.');
+                      //var modalcontent = "You cannot specify yourself in "Other users" setting.";
+                      //$("#inputModal").html(modalcontent);
+                      //$("#allModal").modal("show");
                   }else {
                     $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = otherUser.userID;
                     result = true;
                   }
                 } else {
-                  alert('Shared user information is not valid\nPlease check it again!');
+                    alert('Shared user information is not valid\nPlease check it again!');
+                    //var modalcontent = "Shared user information is not valid\nPlease check it again!";
+                    //$("#inputModal").html(modalcontent);
+                    //$("#allModal").modal("show");
                 }
               }
             },
             error: function(data, status) {
-              alert('Cannot connect to server!');
+                alert('Cannot connect to server!');
+                //var modalcontent =  "Cannot connect to server!";
+                //$("#inputModal").html(modalcontent);
+                //$("#allModal").modal("show");
             }
           })
         } else {
-          alert('Some errors have occured when edit Contributer');
+            alert('Some errors have occured when edit Contributer');
+            //var modalcontent =  "Some errors have occured when edit Contributer";
+            //$("#inputModal").html(modalcontent);
+            //$("#allModal").modal("show");
         }
         return result;
       }
@@ -1139,11 +834,13 @@ function handleSharePermission(value) {
             let titleID = data.title;
             if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
               let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
-              if (typeof(titleField) == 'array') {
-                titleField = titleField[0];
+              if (Array.isArray(titleField)) {
                 if (titleField[0].hasOwnProperty(titleID[1])){
                   titleField = titleField[0];
                 }
+              }
+              if (titleField && titleField[0]) {
+                titleField = titleField[0];
               }
               if (titleField.hasOwnProperty(titleID[1])) {
                 title = titleField[titleID[1]];
@@ -1163,7 +860,10 @@ function handleSharePermission(value) {
             }
           },
           error: function(data, status) {
-            alert('Cannot connect to server!');
+              //alert('Cannot connect to server!');
+              var modalcontent =  "Cannot connect to server!";
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
           }
         });
       }
@@ -1171,9 +871,15 @@ function handleSharePermission(value) {
       $scope.updateDataJson = async function () {
         this.genTitleAndPubDate();
         if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
-          alert('Title is required! Please input title');
+            //alert('Title is required! Please input title');
+            var modalcontent =  "Title is required! Please input title.";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         }else if (!$rootScope.recordsVM.invenioRecordsModel['pubdate']){
-          alert('PubDate is required! Please input pubDate');
+            //alert('PubDate is required! Please input pubDate');
+            var modalcontent =  "PubDate is required! Please input pubDate.";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
         }
         else {
           let next_frame = $('#next-frame').val();
@@ -1234,10 +940,13 @@ function handleSharePermission(value) {
         };
         InvenioRecordsAPI.request(request).then(
           function success(response) {
-            alert(response.data.msg);
+            addAlert(response.data.msg);
           },
           function error(response) {
-            alert(response);
+              //alert(response);
+              var modalcontent =  response;
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
           }
         );
       }
