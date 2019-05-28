@@ -20,48 +20,52 @@
 {% from "invenio_accounts/_macros.html" import render_field, form_errors %}
 
 {% block modal_confirmation %}
-<div id="action_withdraw_confirmation" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="deleteHeader"
-  aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: 500px;">
+<div id="action_withdraw_confirmation" class="modal fade" tabindex="-1"
+     role="dialog" aria-labelledby="deleteHeader"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document"
+       style="display: table; width: 500px;">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" data-dismiss="modal"
+                aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
         <h4 class="modal-title">WEKO</h4>
       </div>
       <form action={{url_for('weko_accounts.confirm_user')}} method="POST">
-      <div class="modal-body" style="overflow-x: auto;">
-        <table class="table-responsive">
-          <tr>
-            <td><span class="glyphicon glyphicon-question-sign fa-5x"
-                style="vertical-align: middle; margin: 0 10px"></span></td>
-            <td>
-              <span style="vertical-align: middle; margin: 0 10px">{{_('Are you sure to withdraw DOI?')}}</span>
-              {%- block form_outer %}
-              <div class="row navbar-btn" style="vertical-align: middle;  margin: 0 10px">
-                <div class="col-sm-12">
-                 
-                    <input type="hidden" name="csrf_random" value={{ csrf_random }}>
-                    <!-- <div class="form-group form-group-lg has-feedback">
-                        <input autofocus="" class="form-control" id="account" name="WEKO_ATTR_ACCOUNT" placeholder="Email Address" type="text" value={{ email }}>
-                        <i class="fa fa-user form-control-feedback" aria-hidden="true"></i>
-                      </div> -->
-                    <div class="form-group form-group-lg has-feedback" style=" margin-top: 10px">
-                      <input autofocus="" class="form-control" id="pwd" name="WEKO_ATTR_PWD" placeholder="Password"
-                        type="password" value="">
+        <div class="modal-body" style="overflow-x: auto;">
+          <TABLE class="table-responsive">
+            <TR>
+              <TD>
+                <span class="glyphicon glyphicon-question-sign fa-5x modal-info"></span>
+              </TD>
+              <TD>
+                <span class="modal-info">{{_('Are you sure to withdraw DOI?')}}</span>
+                {%- block form_outer %}
+                <div class="row navbar-btn modal-info">
+                  <div class="col-sm-12" style="padding-left: 0px;">
+                    <div class="form-group form-group-lg has-feedback" style="margin-top: 10px">
+                      <input autofocus="" class="form-control" id="pwd"
+                             name="WEKO_ATTR_PWD" placeholder="Password"
+                             type="password" value="">
                       <i class="fa fa-lock form-control-feedback" aria-hidden="true"></i>
                     </div>
+                  </div>
                 </div>
-              </div>
-              {%- endblock form_outer %}</td>
-          </tr>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button type="submit" class="btn btn-primary" id="btn_withdraw">{{_('Continue')}}</button>
-        <button type="button" class="btn btn-default" data-dismiss="modal">{{_('Cancel')}}</button>
-      </div>
+                {%- endblock form_outer %}
+              </TD>
+            </TR>
+          </TABLE>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary" id="btn_withdraw">
+            {{_('Continue')}}
+          </button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">
+            {{_('Cancel')}}
+          </button>
+        </div>
       </form>
     </div>
   </div>

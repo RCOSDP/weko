@@ -6514,6 +6514,12 @@ button.close {
 .modal-footer:after {
   clear: both;
 }
+
+.modal-info {
+  vertical-align: middle;
+  margin: 0 10px;
+}
+
 .center-block {
   display: block;
   margin-left: auto;
