@@ -73,7 +73,11 @@ require([
     send();
   });
 
+  $('#btn_withdraw_confirm').on('click', function () {
+    $('#action_withdraw_confirmation').modal('show');
+  });
+
   $('#lnk_item_detail').on('click', function () {
     $('#myModal').modal('show');
-  })
+  });
 })

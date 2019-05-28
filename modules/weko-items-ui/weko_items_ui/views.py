@@ -740,17 +740,11 @@ def prepare_edit_item():
                 rtn = activity.init_activity(
                     post_activity, community, pid_object.object_uuid)
                 if rtn:
-                    oa_policy_actionid = get_actionid('oa_policy')
+                    # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
                     identifier_actionid = get_actionid('identifier_grant')
-                    journal = activity.get_action_journal(
-                        upt_current_activity.activity_id, oa_policy_actionid)
-                    if journal:
-                        activity.create_or_update_action_journal(
-                            rtn.activity_id,
-                            oa_policy_actionid,
-                            journal.action_journal)
                     identifier = activity.get_action_identifier_grant(
                         upt_current_activity.activity_id, identifier_actionid)
+                    identifier['action_identifier_select'] = -1
                     if identifier:
                         activity.create_or_update_action_identifier(
                             rtn.activity_id,
