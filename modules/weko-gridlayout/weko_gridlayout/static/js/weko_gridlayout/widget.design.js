@@ -235,7 +235,7 @@ class ButtonLayout extends React.Component {
                         console.log(result.error);
                         return;
                     }
-                    let widgetList = result['widget-preview'].get('widget-preview');
+                    let widgetList = result['widget-settings'];
                     loadWidgetPreview(widgetList);
                 },
                 (error) => {

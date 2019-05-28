@@ -79,7 +79,7 @@ class WidgetItems(object):
         try:
             settings = widget_items.get('settings')
             data_object_settings["description"] = settings.get(
-                'description')
+                'description') or ''
         except Exception as ex:
             current_app.logger.debug(ex)
 
@@ -92,7 +92,8 @@ class WidgetItems(object):
         """
         try:
             settings = widget_items.get('settings')
-            data_object_settings["description"] = settings.get('description')
+            data_object_settings["description"] = settings.get(
+                'description') or ''
             if settings.get('more_description'):
                 data_object_settings["read_more"] = settings.get('read_more')
                 data_object_settings["more_description"] = settings.get(
