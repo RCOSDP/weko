@@ -37,6 +37,8 @@ from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
+from invenio_pidrelations.contrib.records import RecordDraft
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
@@ -302,6 +304,18 @@ class WekoDeposit(Deposit):
         """Return the Item metadata."""
         return ItemsMetadata.get_record(self.id).dumps()
 
+    def is_published(self):
+        """Check if deposit is published."""
+        return self['_deposit'].get('pid') is not None
+
+    def publish(self, pid=None, id_=None):
+        """Publish the deposit."""
+        deposit = super(WekoDeposit, self).publish(pid, id_)
+        recid, record = deposit.fetch_published()
+
+        pv = PIDVersioning(child=recid)
+        return deposit
+
     @classmethod
     def create(cls, data, id_=None):
         """Create a deposit.
@@ -336,15 +350,15 @@ class WekoDeposit(Deposit):
         deposit = super(WekoDeposit, cls).create(data, id_=id_)
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
-        # recid = PersistentIdentifier.get(
-        #     'recid', str(data['recid']))
-        # conceptrecid = PersistentIdentifier.get(
-        #     'recid', str(data['conceptrecid']))
-        # depid = PersistentIdentifier.get(
-        #     'depid', str(data['_deposit']['id']))
+        recid = PersistentIdentifier.get('recid', str(data['_deposit']['id']))
+        oai = PersistentIdentifier.get('oai', str(data['_oai']['id']))
+        depid = PersistentIdentifier.get('depid', str(data['_deposit']['id']))
 
-        # PIDVersioning(parent=conceptrecid).insert_draft_child(child=recid)
-        # RecordDraft.link(recid, depid)
+        PIDVersioning(parent=oai).insert_draft_child(child=recid)
+        RecordDraft.link(recid, depid)
+
+        deposit.publish()
+
         return deposit
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
