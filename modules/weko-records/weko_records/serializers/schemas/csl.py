@@ -26,18 +26,15 @@
 
 from __future__ import absolute_import, print_function
 
-import json
+import traceback
 
+from flask import current_app
 from invenio_formatter.filters.datetime import from_isodate
 from marshmallow import Schema, fields, missing
 
 import weko_records.config as config
 from weko_records.serializers.utils import get_attribute_schema, \
-    get_item_type_name, get_item_type_name_id
-
-from flask import current_app
-import json
-import traceback
+    get_item_type_name
 
 
 def _get_itemdata(obj, key):
@@ -51,27 +48,26 @@ def _get_itemdata(obj, key):
     return None
 
 
-def _get_mapping_data(inschema, indata, inText):
+def _get_mapping_data(schema, data, keyword):
     """Get mapping by item type."""
-    for key, value in inschema.get('properties').items():
-        if value.get('title') == inText:
-            # data = indata.get(key)
-            if indata:
-                return value, indata.get(key)
+    for key, value in schema.get('properties').items():
+        if data and value.get('title') == keyword:
+            return value, data.get(key)
 
     return None, None
 
 
-def _get_creator_name(obj, inName):
+def _get_creator_name(obj, name_type):
     """Parsing creator data for multiple item type."""
     name = None
     try:
         schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_CREATOR)
-        value, name_data = _get_mapping_data(schema, obj, inName)
+        value, name_data = _get_mapping_data(schema, obj, name_type)
 
         if name_data:
-            _, name = _get_mapping_data(value.get('items'), name_data[0], inName)
-    except:
+            _, name = _get_mapping_data(value.get('items'), name_data[0],
+                                        name_type)
+    except BaseException:
         current_app.logger.debug(traceback.format_exc())
 
     if name:
@@ -79,16 +75,16 @@ def _get_creator_name(obj, inName):
     return None
 
 
-def _get_creator_name_ex_it(obj, inName):
+def _get_creator_name_ex_it(obj, name_type):
     """Parsing creator data for multiple item type."""
     itemdatas = _get_itemdata(obj, '作成者')
     if itemdatas is None:
         return None
 
     for itemdata in itemdatas:
-        family_name = itemdata.get(inName + 's')
+        family_name = itemdata.get(name_type + 's')
         if family_name:
-            return family_name[0].get(inName)
+            return family_name[0].get(name_type)
         else:
             return None
 
@@ -160,9 +156,11 @@ class RecordSchemaCSLJSON(Schema):
 
     def get_creators_itemid(self, obj):
         """Get description."""
+        value = None
         for item in obj['metadata']:
             itemdata = obj.get(item, {})
-            if (type(itemdata)) is dict and itemdata.get('attribute_name') == 'Creator':
+            if (type(itemdata)) is dict and itemdata.get(
+                    'attribute_name') == 'Creator':
                 value = itemdata
 
         if value:
@@ -179,6 +177,7 @@ class RecordSchemaCSLJSON(Schema):
 
     def get_description(self, obj):
         """Get description."""
+        description = None
         itemdatas = _get_itemdata(obj['metadata'], 'Description')
         schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_DESCRIP)
         if itemdatas is None:
@@ -218,6 +217,7 @@ class RecordSchemaCSLJSON(Schema):
 
     def get_version(self, obj):
         """Get version."""
+        version = None
         itemdatas = _get_itemdata(obj['metadata'], 'Version')
         schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_VERSION)
         if itemdatas is None:
@@ -232,6 +232,8 @@ class RecordSchemaCSLJSON(Schema):
 
     def get_doi(self, obj):
         """Get DOI."""
+        doi = None
+        doi_type = None
         itemdatas = _get_itemdata(obj['metadata'], 'Identifier Registration')
         schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_DOI)
         if itemdatas is None:
@@ -265,20 +267,23 @@ class RecordSchemaCSLJSON(Schema):
 
     def get_pages(self, obj):
         """Get number of pages."""
+        num_of_pages = None
         itemdatas = _get_itemdata(obj['metadata'], 'Number of Pages')
         schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_PAGES)
         if itemdatas is None:
             return missing
 
         for itemdata in itemdatas:
-            _, pages = _get_mapping_data(schema, itemdata, "Number of Pages")
+            _, num_of_pages = _get_mapping_data(schema, itemdata, "Number of "
+                                                               "Pages")
 
-        if pages:
-            return pages
+        if num_of_pages:
+            return num_of_pages
         return missing
 
     def get_volume(self, obj):
         """Get volume."""
+        volume = None
         itemdatas = _get_itemdata(obj['metadata'], "Volume Number")
         schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_VOLUME)
         if itemdatas is None:
@@ -293,6 +298,7 @@ class RecordSchemaCSLJSON(Schema):
 
     def get_issue(self, obj):
         """Get issue number."""
+        issue = None
         itemdatas = _get_itemdata(obj['metadata'], "Issue Number")
         schema = get_attribute_schema(config.WEKO_ITEMPROPS_SCHEMAID_ISSUENO)
         if itemdatas is None:
