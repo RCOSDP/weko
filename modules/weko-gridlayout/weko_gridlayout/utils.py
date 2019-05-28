@@ -66,7 +66,8 @@ def get_widget_list(repository_id):
     try:
         with db.session.no_autoflush:
             widget_item_list = WidgetItem.query.filter_by(
-                repository_id=repository_id, is_enabled=True, is_deleted=False
+                repository_id=str(repository_id), is_enabled=True,
+                is_deleted=False
             ).all()
         if type(widget_item_list) is list:
             for widget_item in widget_item_list:
