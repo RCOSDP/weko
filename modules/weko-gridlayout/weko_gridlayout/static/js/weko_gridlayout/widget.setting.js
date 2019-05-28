@@ -501,8 +501,6 @@ class ExtendComponent extends React.Component {
             case "hide_the_rest":
                 data["hide_the_rest"] = value;
                 break;
-            case "rss_feed":
-                data["rss_feed"] = value;
         }
         this.setState({
             settings:data
@@ -562,10 +560,6 @@ class ExtendComponent extends React.Component {
                                 <span>&nbsp;Write more</span>
                             </div>
                         </div>
-                        <br/>
-                        <div>
-                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.handleChange} key_binding = "rss_feed" data_load={this.state.settings.rss_feed} />
-                        </div>
                     </div>
                 )
             }
@@ -601,9 +595,6 @@ class ExtendComponent extends React.Component {
                                 </div>
                                 <br/>
                             </div>
-                        </div>
-                        <div >
-                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.handleChange} key_binding = "rss_feed" data_load={this.state.settings.rss_feed} />
                         </div>
                     </div>
                 )
@@ -787,7 +778,6 @@ class MainLayout extends React.Component {
             edit_role: this.props.data_load.edit_role,
             enable: this.props.data_load.is_enabled,
             settings: this.props.data_load.settings,
-            rss_feed: this.props.data_load.rss_feed
         };
         this.getValueOfField = this.getValueOfField.bind(this);
     }
@@ -830,9 +820,6 @@ class MainLayout extends React.Component {
                 break;
             case 'settings':
                 this.setState({ settings: value });
-                break;
-            case 'rss_feed':
-                this.setState({ rss_feed: value });
                 break;
         }
     }

@@ -300,7 +300,6 @@ def update_notice_type(item, data_settings):
     :return:
     """
     item['description'] = data_settings.get('description')
-    item['rss_feed'] = data_settings.get('rss_feed')
     if data_settings.get('more_description'):
         item['read_more'] = data_settings.get('read_more')
         item['hide_the_rest'] = data_settings.get('hide_the_rest')
