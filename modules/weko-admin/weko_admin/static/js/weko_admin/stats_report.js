@@ -12,10 +12,11 @@ $(document).ready(function () {
       return;
     }
     let uriByType = {
-        file_download:'file_download',
-        file_preview:'file_preview',
+        file_download:'report/file/file_download',
+        file_preview:'report/file/file_preview',
         detail_view:'report/record/record_view',
-        file_using_per_user:'report/file/file_using_per_user'};
+        file_using_per_user:'report/file/file_using_per_user',
+        top_page_access:'top_page_access'};
     var statsURL = '/api/stats/' + uriByType[type] + '/' + year + '/' + month;
     var statsReports = {};
     var ajaxReturn = [0,0,0,0];
@@ -25,58 +26,9 @@ $(document).ready(function () {
         'file_preview',
         'detail_view',
         'file_using_per_user'];
-      $.ajax({
-        url: '/api/stats/' + options[0] + '/' + year + '/' + month,
-        type: 'GET',
-        async: false,
-        contentType: 'application/json',
-        success: function (results) {
-          statsReports[options[0]] = results;
-        },
-        error: function (error) {
-          console.log(error);
-          $('#error_modal').modal('show');
-        }
-      });
-      $.ajax({
-        url: '/api/stats/' + options[1] + '/' + year + '/' + month,
-        type: 'GET',
-        async: false,
-        contentType: 'application/json',
-        success: function (results) {
-          statsReports[options[1]] = results;
-        },
-        error: function (error) {
-          console.log(error);
-          $('#error_modal').modal('show');
-        }
-      });
-      $.ajax({
-        url: '/api/stats/' + uriByType[options[2]] + '/' + year + '/' + month,
-        type: 'GET',
-        async: false,
-        contentType: 'application/json',
-        success: function (results) {
-          statsReports[options[2]] = results;
-        },
-        error: function (error) {
-          console.log(error);
-          $('#error_modal').modal('show');
-        }
-      });
-      $.ajax({
-        url: '/api/stats/' + uriByType[options[3]] + '/' + year + '/' + month,
-        type: 'GET',
-        async: false,
-        contentType: 'application/json',
-        success: function (results) {
-          statsReports[options[3]] = results;
-        },
-        error: function (error) {
-          console.log(error);
-          $('#error_modal').modal('show');
-        }
-      });
+      for (let item in options) {
+        statsReports[options[item]] = ajaxGetTSV(options[item], year, month);
+      }
       setStatsReportSubmit(statsReports);
     } else { // Get single report
       $.ajax({
@@ -96,6 +48,24 @@ $(document).ready(function () {
     }
   });
 });
+
+function ajaxGetTSV(keyword, year, month) {
+  let result;
+  $.ajax({
+    url: '/api/stats/' + keyword + '/' + year + '/' + month,
+    type: 'GET',
+    async: false,
+    contentType: 'application/json',
+    success: function (results) {
+      result = results;
+    },
+    error: function (error) {
+      console.log(error);
+      $('#error_modal').modal('show');
+    }
+  });
+  return result
+}
 
 function setStatsReportSubmit(statsReports) {
   $('#report_file_input').val(JSON.stringify(statsReports));

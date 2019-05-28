@@ -299,8 +299,10 @@ class ReportView(BaseView):
             sub_header_row = _('Open-Access No. Of File Previews')
         elif file_type == 'detail_view':
             header_row = _('Detail screen view count')
-        else:
+        elif file_type == 'file_using_per_user':
             header_row = _('Usage count by user')
+        elif file_type == 'top_page_access':
+            header_row = _('Number of access by host')
 
         tsv_output = StringIO()
         try:
@@ -325,6 +327,10 @@ class ReportView(BaseView):
                         _('Username'),
                         _('File download count'),
                         _('File playing count')]
+            elif file_type == 'top_page_access':
+                cols = [_('Host'),
+                        _('IP Address'),
+                        _('WEKO top page access count')]
             # All stats
             writer.writerow(cols)
             self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
@@ -370,6 +376,9 @@ class ReportView(BaseView):
                     writer.writerow([
                         user_email, user_name,
                         record['total_download'], record['total_preview']])
+                elif file_type == 'top_page_access':
+                    writer.writerow([record['host'], record['ip'],
+                                     record['count']])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
@@ -383,8 +392,12 @@ class ReportView(BaseView):
             file_type = 'FilePreview'
         elif file_type == 'detail_view':
             file_type = 'DetailView_'
-        else:
+        elif file_type == 'file_using_per_user':
             file_type = 'FileUsingPerUser_'
+        elif file_type == 'top_page_access':
+            file_type = 'HostAccess_'
+        else:
+            file_type = 'Default_'
         return 'logReport_' + file_type + year + '-' + month + '.tsv'
 
 
