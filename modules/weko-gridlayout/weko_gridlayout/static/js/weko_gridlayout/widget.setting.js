@@ -395,50 +395,55 @@ class ComponentFieldEditor extends React.Component {
     }
 
     componentDidMount () {
-        this.attachQuillRefs()
+        this.attachQuillRefs();
     }
       
     componentDidUpdate () {
-        this.attachQuillRefs()
+        this.attachQuillRefs();
     }
 
     attachQuillRefs() {
         // Ensure React-Quill reference is available:
-        if (typeof this.reactQuillRef.getEditor !== 'function') return;
+        if (typeof this.reactQuillRef.getEditor !== 'function') {
+            return false;
+        }
         // Skip if Quill reference is defined:
-        if (this.quillRef != null) return;
-        
+        if (this.quillRef != null) {
+            return false;
+        }
+
         const quillRef = this.reactQuillRef.getEditor();
         if (quillRef != null) this.quillRef = quillRef;
     }
 
-    handleChange (html) {
+    handleChange(html) {
+        if (this.quillRef == null) {
+            return false;
+        }
         let length = this.quillRef.getText().trim().length;
-        if (length == 0)
-        {
+        if (length == 0) {
             html = '';
         }
         this.setState({ editorHtml: html });
-        this.props.handleChange(this.props.key_binding,html);
+        this.props.handleChange(this.props.key_binding, html);
     }
 
     render () {
-      return (
-        <div className="form-group row">
-            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-            <div class="controls col-xs-9 my-editor">
-                <ReactQuill
-                    ref={(el) => { this.reactQuillRef = el }} 
-                    onChange={this.handleChange}
-                    value={this.state.editorHtml || ''}
-                    modules={this.state.modules}
-                    formats={this.state.formats}
-                    bounds={'.app'}
-                    placeholder={this.props.placeholder}
-                />
+        return (
+            <div className="form-group row">
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                <div class="controls col-xs-9 my-editor">
+                    <ReactQuill
+                        ref={(el) => { this.reactQuillRef = el }} 
+                        onChange={this.handleChange}
+                        value={this.state.editorHtml || ''}
+                        modules={this.state.modules}
+                        formats={this.state.formats}
+                        bounds={'.app'}
+                    />
+                </div>
             </div>
-        </div>
-       )
+        )
     }
 }
 
@@ -476,12 +481,16 @@ class ExtendComponent extends React.Component {
         this.handleChangeHideTheRest =  this.handleChangeHideTheRest.bind(this);
         this.handleChangeReadMore = this.handleChangeReadMore.bind(this);
     }
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.type !== this.state.type) {
-          this.setState({ type: nextProps.type });
-          this.setState({settings: {}})
-          this.setState({write_more: false})
-          this.render();
+    static getDerivedStateFromProps(nextProps, prevState){
+        if (nextProps.type !== prevState.type){
+            return { 
+                type: nextProps.type,
+                settings: {},
+                write_more: false};
+        }
+        else
+        {
+            return null;
         }
     }
 
