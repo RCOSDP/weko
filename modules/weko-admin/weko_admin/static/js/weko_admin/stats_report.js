@@ -25,9 +25,10 @@ $(document).ready(function () {
       let options = ['file_download',
         'file_preview',
         'detail_view',
-        'file_using_per_user'];
+        'file_using_per_user',
+        'top_page_access'];
       for (let item in options) {
-        statsReports[options[item]] = ajaxGetTSV(options[item], year, month);
+        statsReports[options[item]] = ajaxGetTSV(uriByType[options[item]], year, month);
       }
       setStatsReportSubmit(statsReports);
     } else { // Get single report
