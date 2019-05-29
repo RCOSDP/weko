@@ -1099,3 +1099,8 @@ class Indexes(object):
                    synchronize_session='fetch')
         for index in Index.query.filter_by(parent=index_id).all():
             cls.set_coverpage_state_resc(index.id, state)
+
+    @classmethod
+    def get_index_count(cls):
+        """Get the total number of indexes."""
+        return Index.query.count()
