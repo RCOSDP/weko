@@ -90,6 +90,7 @@
     <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
       <div id="main_contents">
     {%- endif%}
+    <input type="hidden" id="current_language" value="{{ current_i18n.language }}" />
     {%- block page_body %}
     {%- endblock page_body %}
     {%- if not community_id %}
