@@ -427,7 +427,8 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(ItemType.schema is not None)
+                query = query.join(ItemType).filter(
+                    ItemType.schema is not None)
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod
@@ -1009,7 +1010,6 @@ class ItemsMetadata(RecordBase):
                 query = query.filter(ItemMetadata.json != None)  # noqa
             return query.all()
 
-    
     @classmethod
     def get_by_object_id(cls, object_id):
         """Retrieve ItemMetadata data by item identifier.
