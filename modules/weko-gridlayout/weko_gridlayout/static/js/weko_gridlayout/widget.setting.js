@@ -360,6 +360,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
 class ComponentFieldEditor extends React.Component {
     constructor (props) {
         super(props)
+        this.quillRef = null;
+        this.reactQuillRef = null;
         this.state = { 
             editorHtml: this.props.data_load,
             modules: {
@@ -388,30 +390,60 @@ class ComponentFieldEditor extends React.Component {
                 'link', 'image', 'video','formula', 'clean'
             ]
         };
-      this.handleChange = this.handleChange.bind(this)
+        this.handleChange = this.handleChange.bind(this)
+        this.attachQuillRefs = this.attachQuillRefs.bind(this);
     }
 
-    handleChange (html) {
+    componentDidMount () {
+        this.attachQuillRefs();
+    }
+      
+    componentDidUpdate () {
+        this.attachQuillRefs();
+    }
+
+    attachQuillRefs() {
+        // Ensure React-Quill reference is available:
+        if (typeof this.reactQuillRef.getEditor !== 'function') {
+            return false;
+        }
+        // Skip if Quill reference is defined:
+        if (this.quillRef != null) {
+            return false;
+        }
+
+        const quillRef = this.reactQuillRef.getEditor();
+        if (quillRef != null) this.quillRef = quillRef;
+    }
+
+    handleChange(html) {
+        if (this.quillRef == null) {
+            return false;
+        }
+        let length = this.quillRef.getText().trim().length;
+        if (length == 0) {
+            html = '';
+        }
         this.setState({ editorHtml: html });
-        this.props.handleChange(this.props.key_binding,html);
+        this.props.handleChange(this.props.key_binding, html);
     }
 
     render () {
-      return (
-        <div className="form-group row">
-            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-            <div class="controls col-xs-9 my-editor">
-                <ReactQuill 
-                    onChange={this.handleChange}
-                    value={this.state.editorHtml || ''}
-                    modules={this.state.modules}
-                    formats={this.state.formats}
-                    bounds={'.app'}
-                    placeholder={this.props.placeholder}
-                />
+        return (
+            <div className="form-group row">
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                <div class="controls col-xs-9 my-editor">
+                    <ReactQuill
+                        ref={(el) => { this.reactQuillRef = el }} 
+                        onChange={this.handleChange}
+                        value={this.state.editorHtml || ''}
+                        modules={this.state.modules}
+                        formats={this.state.formats}
+                        bounds={'.app'}
+                    />
+                </div>
             </div>
-        </div>
-       )
+        )
     }
 }
 
@@ -449,12 +481,16 @@ class ExtendComponent extends React.Component {
         this.handleChangeHideTheRest =  this.handleChangeHideTheRest.bind(this);
         this.handleChangeReadMore = this.handleChangeReadMore.bind(this);
     }
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.type !== this.state.type) {
-          this.setState({ type: nextProps.type });
-          this.setState({settings: {}})
-          this.setState({write_more: false})
-          this.render();
+    static getDerivedStateFromProps(nextProps, prevState){
+        if (nextProps.type !== prevState.type){
+            return { 
+                type: nextProps.type,
+                settings: {},
+                write_more: false};
+        }
+        else
+        {
+            return null;
         }
     }
 
@@ -474,8 +510,6 @@ class ExtendComponent extends React.Component {
             case "hide_the_rest":
                 data["hide_the_rest"] = value;
                 break;
-            case "rss_feed":
-                data["rss_feed"] = value;
         }
         this.setState({
             settings:data
@@ -535,10 +569,6 @@ class ExtendComponent extends React.Component {
                                 <span>&nbsp;Write more</span>
                             </div>
                         </div>
-                        <br/>
-                        <div>
-                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.handleChange} key_binding = "rss_feed" data_load={this.state.settings.rss_feed} />
-                        </div>
                     </div>
                 )
             }
@@ -574,9 +604,6 @@ class ExtendComponent extends React.Component {
                                 </div>
                                 <br/>
                             </div>
-                        </div>
-                        <div >
-                            <ComponentCheckboxField name="RSS feed" getValueOfField={this.handleChange} key_binding = "rss_feed" data_load={this.state.settings.rss_feed} />
                         </div>
                     </div>
                 )
@@ -760,7 +787,6 @@ class MainLayout extends React.Component {
             edit_role: this.props.data_load.edit_role,
             enable: this.props.data_load.is_enabled,
             settings: this.props.data_load.settings,
-            rss_feed: this.props.data_load.rss_feed
         };
         this.getValueOfField = this.getValueOfField.bind(this);
     }
@@ -803,9 +829,6 @@ class MainLayout extends React.Component {
                 break;
             case 'settings':
                 this.setState({ settings: value });
-                break;
-            case 'rss_feed':
-                this.setState({ rss_feed: value });
                 break;
         }
     }
