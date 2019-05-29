@@ -178,19 +178,23 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             name_dict = dict(operator="and")
                                             name_dict.update(dict(query=kv))
                                             mut = [
-                                                Q('match', **{name: name_dict})]
+                                                Q('match',
+                                                  **{name: name_dict})]
 
                                             qt = None
                                             if '=*' not in alst[1]:
                                                 name = alst[0] + \
                                                     "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q('term', **{name: val_attr_lst[1]})]
+                                                    Q('term',
+                                                      **{name:
+                                                         val_attr_lst[1]})]
 
                                             mut.extend(qt or [])
                                             qry = Q('bool', must=mut)
                                             shuld.append(
-                                                Q('nested', path=alst[0], query=qry))
+                                                Q('nested', path=alst[0],
+                                                  query=qry))
                         else:
                             attr_key_hit = [
                                 x for x in attr_obj.keys() if v[0] + "." in x]
@@ -198,7 +202,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                 vlst = attr_obj.get(attr_key_hit[0])
                                 if isinstance(vlst, list):
                                     attr_val = [x for x in attr_val_str.split(
-                                        ',') if x.isdecimal() and int(x) < len(vlst)]
+                                        ',') if x.isdecimal()
+                                                and int(x) < len(vlst)]
                                     if attr_val:
                                         shud = []
                                         name = v[0] + ".value"
@@ -207,12 +212,15 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         qm = Q('match', **{name: name_dict})
 
                                         for j in map(
-                                                partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                                partial(lambda m, n:
+                                                        m[int(n)], vlst),
+                                                attr_val):
                                             name = attr_key_hit[0]
                                             qm = Q('term', **{name: j})
                                             shud.append(qm)
 
-                                        shuld.append(Q('nested', path=v[0], query=Q(
+                                        shuld.append(Q('nested', path=v[0],
+                                                       query=Q(
                                             'bool', should=shud, must=[qm])))
 
             return Q('bool', should=shuld) if shuld else None
@@ -247,7 +255,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                             attr_obj = dt.get(attr_key)
                             if isinstance(attr_obj, dict) and attr_val_str:
                                 attr_key_hit = [
-                                    x for x in attr_obj.keys() if path + "." in x]
+                                    x for x in attr_obj.keys()
+                                    if path + "." in x]
                                 if attr_key_hit:
                                     vlst = attr_obj.get(attr_key_hit[0])
                                     if isinstance(vlst, list):
@@ -255,7 +264,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             x for x in attr_val_str.split(',')]
                                         shud = []
                                         for j in map(
-                                                partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                                partial(lambda m, n:
+                                                        m[int(n)], vlst),
+                                                attr_val):
                                             qt = Q(
                                                 'term', **{attr_key_hit[0]: j})
                                             shud.append(qt)
@@ -264,7 +275,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             'range', **{path + ".value": qv})
                                         qry = Q(
                                             'nested', path=path, query=Q(
-                                                'bool', should=shud, must=[qry]))
+                                                'bool', should=shud,
+                                                must=[qry]))
             return qry
 
         kwd = current_app.config['WEKO_SEARCH_KEYWORDS_DICT']
