@@ -238,6 +238,19 @@ def shib_logout():
     return 'logout success'
 
 
+@blueprint.route('/clear/metadata', methods=['POST'])
+def clear_metadata():
+    """Clear meta data.
+    :return:
+    """
+    try:
+        current_app.logger.debug('=================BAO===============')
+        return redirect(session['next'] if 'next' in session else '/')
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return abort(400)
+
+
 def parse_attributes():
     """Parse arguments from environment variables."""
     attrs = {}
