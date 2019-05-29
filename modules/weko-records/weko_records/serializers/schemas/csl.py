@@ -27,17 +27,15 @@
 from __future__ import absolute_import, print_function
 
 import json
+import traceback
 
+from flask import current_app
 from invenio_formatter.filters.datetime import from_isodate
 from marshmallow import Schema, fields, missing
 
 import weko_records.config as config
 from weko_records.serializers.utils import get_attribute_schema, \
     get_item_type_name, get_item_type_name_id
-
-from flask import current_app
-import json
-import traceback
 
 
 def _get_itemdata(obj, key):
@@ -70,8 +68,9 @@ def _get_creator_name(obj, inName):
         value, name_data = _get_mapping_data(schema, obj, inName)
 
         if name_data:
-            _, name = _get_mapping_data(value.get('items'), name_data[0], inName)
-    except:
+            _, name = _get_mapping_data(
+                value.get('items'), name_data[0], inName)
+    except BaseException:
         current_app.logger.debug(traceback.format_exc())
 
     if name:
@@ -162,7 +161,8 @@ class RecordSchemaCSLJSON(Schema):
         """Get description."""
         for item in obj['metadata']:
             itemdata = obj.get(item, {})
-            if (type(itemdata)) is dict and itemdata.get('attribute_name') == 'Creator':
+            if (type(itemdata)) is dict and itemdata.get(
+                    'attribute_name') == 'Creator':
                 value = itemdata
 
         if value:
