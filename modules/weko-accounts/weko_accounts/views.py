@@ -247,22 +247,25 @@ def clear_metadata():
     try:
         # Clear item metadata info
         current_app.logger.debug('=================BAO===============')
-        activity_session = session['activity_info']
-        activity_id = activity_session.get('activity_id', None)
-        activity_obj = WorkActivity()
-        activity_detail = activity_obj.get_activity_detail(activity_id)
-        item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-        current_app.logger.debug('=================CLEAR METADATA activity_session===============', activity_session)
-        current_app.logger.debug('=================CLEAR METADATA activity_id===============', activity_id)
-        current_app.logger.debug('=================CLEAR METADATA activity_obj===============', activity_obj)
-        current_app.logger.debug('=================CLEAR METADATA activity_detail===============', activity_detail)
-        current_app.logger.debug('=================CLEAR METADATA item===============', item)
-        res = {'pidstore_identifier': {}}
-        tempdata = IDENTIFIER_ITEMSMETADATA_FORM
-        res['pidstore_identifier'] = tempdata
-        item.update(res)
-        item.commit()
-        return redirect(session['next'] if 'next' in session else '/')
+        if 'activity_info' in session:
+            activity = session['activity_info']
+            activity_session = session['activity_info']
+            activity_id = activity_session.get('activity_id', None)
+            activity_obj = WorkActivity()
+            activity_detail = activity_obj.get_activity_detail(activity_id)
+            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+            current_app.logger.debug('=================CLEAR METADATA activity_session===============', activity_session)
+            current_app.logger.debug('=================CLEAR METADATA activity_id===============', activity_id)
+            current_app.logger.debug('=================CLEAR METADATA activity_obj===============', activity_obj)
+            current_app.logger.debug('=================CLEAR METADATA activity_detail===============', activity_detail)
+            current_app.logger.debug('=================CLEAR METADATA item===============', item)
+            res = {'pidstore_identifier': {}}
+            tempdata = IDENTIFIER_ITEMSMETADATA_FORM
+            res['pidstore_identifier'] = tempdata
+            item.update(res)
+            item.commit()
+            return redirect(session['next'] if 'next' in session else '/')
+        return redirect('next')
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
