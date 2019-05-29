@@ -485,7 +485,8 @@ def item_path_search_factory(self, search, index_id=None):
                 "path": {
                     "terms": {
                         "field": "path.tree",
-                        "include": "@index|@index/[^/]+"
+                        "include": "@index|@index/[^/]+",
+                        "size": "@count"
                     },
                     "aggs": {
                         "date_range": {
@@ -553,6 +554,10 @@ def item_path_search_factory(self, search, index_id=None):
                     query_q = json.loads(query_q)
             except BaseException:
                 pass
+
+        query_q = json.dumps(query_q).replace("@count",
+                                              str(Indexes.get_index_count()))
+        query_q = json.loads(query_q)
 
         return query_q
 
