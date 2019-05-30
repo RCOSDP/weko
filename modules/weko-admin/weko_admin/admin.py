@@ -297,6 +297,8 @@ class ReportView(BaseView):
         elif file_type == 'file_preview':
             header_row = _('No. Of File Previews')
             sub_header_row = _('Open-Access No. Of File Previews')
+        elif file_type == 'index_access':
+            header_row = _('Detail Views Per Index')
         elif file_type == 'detail_view':
             header_row = _('Detail screen view count')
         else:
@@ -315,6 +317,8 @@ class ReportView(BaseView):
                         _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
                         _('Logged In User'), _('Site License'), _('Admin'),
                         _('Registrar')]
+            elif file_type == 'index_access':
+                cols = [_('Index'), _('No. Of Views')]
             elif file_type == 'detail_view':
                 cols = [_('Title'),
                         _('Registered index name'),
@@ -327,6 +331,10 @@ class ReportView(BaseView):
                         _('File playing count')]
             # All stats
             writer.writerow(cols)
+
+            if file_type == 'index_access':  # Write total for per index views
+                writer.writerow([_('Total Detail Views'), raw_stats['total']])
+
             self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
 
             # Open access stats
@@ -344,7 +352,6 @@ class ReportView(BaseView):
         """Write tsv rows for stats."""
         if isinstance(records, dict):
             records = list(records.values())
-
         for record in records:
             try:
                 if file_type is None or \
@@ -353,6 +360,8 @@ class ReportView(BaseView):
                                      record['total'], record['no_login'],
                                      record['login'], record['site_license'],
                                      record['admin'], record['reg']])
+                elif file_type == 'index_access':
+                    writer.writerow([record['index_name'], record['view_count']])
                 elif file_type == 'detail_view':
                     item_metadata_json = ItemsMetadata.\
                         get_record(record['record_id'])
@@ -383,6 +392,8 @@ class ReportView(BaseView):
             file_type = 'FilePreview'
         elif file_type == 'detail_view':
             file_type = 'DetailView_'
+        elif file_type == 'index_access':
+            file_type = 'IndexAccess_'
         else:
             file_type = 'FileUsingPerUser_'
         return 'logReport_' + file_type + year + '-' + month + '.tsv'
@@ -446,3 +457,4 @@ __all__ = (
     'language_adminview',
     'web_api_account_adminview'
 )
+
