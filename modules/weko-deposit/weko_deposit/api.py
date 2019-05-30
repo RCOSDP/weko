@@ -310,10 +310,13 @@ class WekoDeposit(Deposit):
 
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
+        if self.data is None:
+            self.data=self.get('_deposit', {})
+        if 'control_number' in self:
+            self.pop('control_number')
+        if '$schema' not in self:
+            self['$schema'] = ''
         deposit = super(WekoDeposit, self).publish(pid, id_)
-        recid, record = deposit.fetch_published()
-
-        pv = PIDVersioning(child=recid)
         return deposit
 
     @classmethod
@@ -351,13 +354,10 @@ class WekoDeposit(Deposit):
         RecordsBuckets.create(record=deposit.model, bucket=bucket)
 
         recid = PersistentIdentifier.get('recid', str(data['_deposit']['id']))
-        oai = PersistentIdentifier.get('oai', str(data['_oai']['id']))
         depid = PersistentIdentifier.get('depid', str(data['_deposit']['id']))
 
-        PIDVersioning(parent=oai).insert_draft_child(child=recid)
+        PIDVersioning(parent=recid).insert_draft_child(child=recid)
         RecordDraft.link(recid, depid)
-
-        deposit.publish()
 
         return deposit
 
