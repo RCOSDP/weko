@@ -80,6 +80,8 @@ class WidgetItems(object):
             settings = widget_items.get('settings')
             data_object_settings["description"] = settings.get(
                 'description') or ''
+            data_object_settings["language"] = settings.get(
+                'language') or ''
         except Exception as ex:
             current_app.logger.debug(ex)
 
@@ -94,6 +96,8 @@ class WidgetItems(object):
             settings = widget_items.get('settings')
             data_object_settings["description"] = settings.get(
                 'description') or ''
+            data_object_settings["language"] = settings.get(
+                'language') or ''
             if settings.get('more_description'):
                 data_object_settings["read_more"] = settings.get('read_more')
                 data_object_settings["more_description"] = settings.get(
@@ -256,6 +260,7 @@ class WidgetItems(object):
         """
         settings = dict()
         settings['description'] = record_setting.get('description')
+        settings['language'] = record_setting.get('language')
         record['settings'] = settings
 
     @classmethod
@@ -267,6 +272,7 @@ class WidgetItems(object):
         """
         settings = dict()
         settings['description'] = record_setting.get('description')
+        settings['language'] = record_setting.get('language')
         settings['read_more'] = record_setting.get('read_more')
         settings['more_description'] = record_setting.get('more_description')
         settings['hide_the_rest'] = record_setting.get('hide_the_rest')

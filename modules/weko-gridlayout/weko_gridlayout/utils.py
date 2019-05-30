@@ -291,6 +291,7 @@ def update_free_description_type(item, data_settings):
     :return:
     """
     item['description'] = data_settings.get('description')
+    item['language'] = data_settings.get('language')
 
 
 def update_notice_type(item, data_settings):
@@ -301,6 +302,7 @@ def update_notice_type(item, data_settings):
     :return:
     """
     item['description'] = data_settings.get('description')
+    item['language'] = data_settings.get('language')
     if data_settings.get('more_description'):
         item['read_more'] = data_settings.get('read_more')
         item['hide_the_rest'] = data_settings.get('hide_the_rest')
