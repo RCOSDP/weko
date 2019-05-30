@@ -23,6 +23,8 @@ import json
 
 from flask import current_app, jsonify, make_response
 from invenio_db import db
+from sqlalchemy import asc
+from weko_admin.models import AdminLangSettings
 
 from .api import WidgetItems
 from .models import WidgetDesignSetting, WidgetItem, WidgetType
@@ -53,10 +55,11 @@ def get_repository_list():
     return result
 
 
-def get_widget_list(repository_id):
+def get_widget_list(repository_id, default_language):
     """Get Widget list.
 
     :param repository_id: Identifier of the repository.
+    :param default_language: The language default.
     :return: Widget list.
     """
     result = {
@@ -69,12 +72,23 @@ def get_widget_list(repository_id):
                 repository_id=str(repository_id), is_enabled=True,
                 is_deleted=False
             ).all()
+        lang_code_default = None
+        if default_language:
+            lang_code_default = default_language.get('lang_code')
         if type(widget_item_list) is list:
             for widget_item in widget_item_list:
                 data = dict()
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
+                settings = widget_item.settings
+                settings = json.loads(settings)
+                languages = settings.get("language")
+                if type(languages) is dict and lang_code_default is not None:
+                    data_display = languages[lang_code_default]
+                    data["widgetLabelDisplay"] = data_display.get('label')
+                else:
+                    data["widgetLabelDisplay"] = widget_item.label
                 result["data"].append(data)
     except Exception as e:
         result["error"] = str(e)
@@ -82,10 +96,11 @@ def get_widget_list(repository_id):
     return result
 
 
-def get_widget_preview(repository_id):
+def get_widget_preview(repository_id, default_language):
     """Get Widget preview by repository id.
 
     :param repository_id: Identifier of the repository
+    :param default_language: The language default.
     :return: Widget preview json.
     """
     result = {
@@ -95,6 +110,9 @@ def get_widget_preview(repository_id):
     try:
         widget_setting = WidgetDesignSetting.select_by_repository_id(
             repository_id)
+        lang_code_default = None
+        if default_language:
+            lang_code_default = default_language.get('lang_code')
         if widget_setting:
             settings = widget_setting.get('settings')
             if settings:
@@ -109,6 +127,14 @@ def get_widget_preview(repository_id):
                     widget_preview["id"] = item.get("id")
                     widget_preview["type"] = item.get("type")
                     widget_preview["name"] = item.get("name")
+                    languages = item.get("language")
+                    if type(languages) is dict and lang_code_default\
+                            is not None:
+                        data_display = languages[lang_code_default]
+                        widget_preview["name_display"] = data_display.get(
+                            'label')
+                    else:
+                        widget_preview["name_display"] = item.get("name")
                     result["data"].append(widget_preview)
     except Exception as e:
         result['error'] = str(e)
@@ -422,3 +448,16 @@ def validate_admin_widget_item_setting(widget_id):
     except Exception as e:
         current_app.logger.error('Failed to validate record: ', e)
         return True
+
+
+def get_default_language():
+    """Get default Language.
+
+    :return:
+    """
+    result = AdminLangSettings.query.filter_by(is_registered=True).order_by(
+            asc('admin_lang_settings_sequence'))
+    result = AdminLangSettings.parse_result(result)
+    if type(result) is list:
+        return result[0]
+    return

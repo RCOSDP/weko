@@ -341,6 +341,7 @@ var PreviewGrid = new function () {
             let name = el.data("name");
             let id = el.data("id");
             let type = el.data("type");
+            let nameDisplay = el.data("name_display")
             if (!id) {
                 return;
             } else if(MAIN_CONTENT_TYPE == type){
@@ -354,6 +355,7 @@ var PreviewGrid = new function () {
                 name: name,
                 id: id,
                 type: type,
+                name_display: nameDisplay,
             };
         }, this);
         var filtered = this.serializedData.filter(function (el) {
@@ -386,7 +388,7 @@ var PreviewGrid = new function () {
         + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
         + ' <div class="grid-stack-item-content">'
         + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'
-        + '     <span class="widget-label">' + node.name + '</span>'
+        + '     <span class="widget-label">' + node.name_display + '</span>'
         + ' </div>'
         + '<div/>';
         return template;
@@ -411,6 +413,7 @@ function addWidget() {
             let widgetName = $(this).data('widgetName');
             let widgetId = $(this).data('widgetId');
             let widgetType = $(this).data('widgetType');
+            let widgetNameDisplay = $(this).data('widgetNameDisplay');
             if(MAIN_CONTENT_TYPE == widgetType && isHasMainContent){
                 alert("Main Content has been existed in Preview panel.");
                 disableMainContentButton(true);
@@ -425,6 +428,7 @@ function addWidget() {
                 name: widgetName,
                 id: widgetId,
                 type:widgetType,
+                name_display:  widgetNameDisplay,
             };
             PreviewGrid.addNewWidget(node);
             if(MAIN_CONTENT_TYPE == widgetType){
@@ -462,10 +466,10 @@ function loadWidgetList(widgetListItems) {
             '<div>'
             + '<div class="grid-stack-item-content">'
             + ' <span class="widget-label" >&lt;' + widget.widgetType + '&gt;</span>'
-            + ' <span class="widget-label">' + widget.widgetLabel + '</span>'
+            + ' <span class="widget-label">' + widget.widgetLabelDisplay + '</span>'
             + ' <button ' + buttonId + ' data-widget-type="' + widget.widgetType
             + '" data-widget-name="' + widget.widgetLabel + '" data-widget-id="' + widget.widgetId
-            + '" class="btn btn-default add-new-widget">'
+            + '" data-widget-name-display="' + widget.widgetLabelDisplay + '" class="btn btn-default add-new-widget">'
             + ' Add Widget'
             + ' </button>'
             + '</div>'
