@@ -49,51 +49,37 @@ def get_permission_filter(comm_id=None):
     """Get permission filter."""
     # check permission
     is_perm = search_permission.can()
-    mut = []
     match = Q('match', publish_status='0')
-    # ava = [Q('range', **{'date.value': {'lte': 'now/d'}}),
-    #        Q('term', **{'date.dateType': 'Available'})]
-    # rng = Q('nested', path='date', query=Q('bool', must=ava))
-    ava = Q('range', **{'publish_date': {'lte': 'now/d'}})
-    rng = ava
+    rng = Q('range', **{'publish_date': {'lte': 'now/d'}})
+    term_list = []
     mst = []
+    is_perm_paths = Indexes.get_browsing_tree_paths()
     if comm_id is not None:
-        path_list = Indexes.get_all_path_list(comm_id)
-        match_list = []
-        for p_l in path_list:
-            match_q = Q('match', path=p_l)
-            match_list.append(match_q)
-        mst.append(Q('bool', should=match_list))
-    if not is_perm:
-        mut.append(match)
-        mut.append(rng)
-        mut.append(get_index_filter()[0])
+        self_path = Indexes.get_self_path(comm_id)
+        if self_path.path in is_perm_paths:
+            term_list.append(self_path.path)
+
+        mst.append(match)
+        mst.append(rng)
+        terms = Q('terms', path=term_list)
     else:
+        mst.append(match)
+        mst.append(rng)
+        terms = Q('terms', path=is_perm_paths)
+
+    mut = []
+    if is_perm:
         user_id, result = check_admin_user()
         if result:
             shuld = [Q('match', weko_creator_id=user_id),
                      Q('match', weko_shared_id=user_id)]
-            mut2 = [match, rng]
-            shuld.append(Q('bool', must=mut2))
-            if comm_id is not None:
-                mut.append(Q('bool', should=shuld, must=mst))
-            else:
-                mut.append(Q('bool', should=shuld, must=get_index_filter()))
+            shuld.append(Q('bool', must=mst))
+            mut.append(Q('bool', should=shuld, must=[terms]))
+    else:
+        mut = mst
+        mut.append(terms)
 
     return mut
-
-
-def get_index_filter():
-    """Get Index Filter."""
-    paths = Indexes.get_browsing_tree_paths()
-    mst = []
-    q_list = []
-    for path in paths:
-        match_q = Q('match', path=path)
-        q_list.append(match_q)
-    mst.append(Q('bool', should=q_list))
-
-    return mst
 
 
 def default_search_factory(self, search, query_parser=None, search_type=None):
@@ -192,19 +178,23 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             name_dict = dict(operator="and")
                                             name_dict.update(dict(query=kv))
                                             mut = [
-                                                Q('match', **{name: name_dict})]
+                                                Q('match',
+                                                  **{name: name_dict})]
 
                                             qt = None
                                             if '=*' not in alst[1]:
                                                 name = alst[0] + \
                                                     "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q('term', **{name: val_attr_lst[1]})]
+                                                    Q('term',
+                                                      **{name:
+                                                         val_attr_lst[1]})]
 
                                             mut.extend(qt or [])
                                             qry = Q('bool', must=mut)
                                             shuld.append(
-                                                Q('nested', path=alst[0], query=qry))
+                                                Q('nested', path=alst[0],
+                                                  query=qry))
                         else:
                             attr_key_hit = [
                                 x for x in attr_obj.keys() if v[0] + "." in x]
@@ -212,7 +202,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                 vlst = attr_obj.get(attr_key_hit[0])
                                 if isinstance(vlst, list):
                                     attr_val = [x for x in attr_val_str.split(
-                                        ',') if x.isdecimal() and int(x) < len(vlst)]
+                                        ',') if x.isdecimal()
+                                                and int(x) < len(vlst)]
                                     if attr_val:
                                         shud = []
                                         name = v[0] + ".value"
@@ -221,12 +212,15 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         qm = Q('match', **{name: name_dict})
 
                                         for j in map(
-                                                partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                                partial(lambda m, n:
+                                                        m[int(n)], vlst),
+                                                attr_val):
                                             name = attr_key_hit[0]
                                             qm = Q('term', **{name: j})
                                             shud.append(qm)
 
-                                        shuld.append(Q('nested', path=v[0], query=Q(
+                                        shuld.append(Q('nested', path=v[0],
+                                                       query=Q(
                                             'bool', should=shud, must=[qm])))
 
             return Q('bool', should=shuld) if shuld else None
@@ -261,7 +255,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                             attr_obj = dt.get(attr_key)
                             if isinstance(attr_obj, dict) and attr_val_str:
                                 attr_key_hit = [
-                                    x for x in attr_obj.keys() if path + "." in x]
+                                    x for x in attr_obj.keys()
+                                    if path + "." in x]
                                 if attr_key_hit:
                                     vlst = attr_obj.get(attr_key_hit[0])
                                     if isinstance(vlst, list):
@@ -269,7 +264,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             x for x in attr_val_str.split(',')]
                                         shud = []
                                         for j in map(
-                                                partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                                partial(lambda m, n:
+                                                        m[int(n)], vlst),
+                                                attr_val):
                                             qt = Q(
                                                 'term', **{attr_key_hit[0]: j})
                                             shud.append(qt)
@@ -278,7 +275,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             'range', **{path + ".value": qv})
                                         qry = Q(
                                             'nested', path=path, query=Q(
-                                                'bool', should=shud, must=[qry]))
+                                                'bool', should=shud,
+                                                must=[qry]))
             return qry
 
         kwd = current_app.config['WEKO_SEARCH_KEYWORDS_DICT']
@@ -444,7 +442,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     search._extra.update(src)
 
     try:
-        search = search.query(query_q)
+        search = search.filter(query_q)
     except SyntaxError:
         current_app.logger.debug(
             "Failed parsing query: {0}".format(
@@ -499,7 +497,8 @@ def item_path_search_factory(self, search, index_id=None):
                 "path": {
                     "terms": {
                         "field": "path.tree",
-                        "include": "@index|@index/[^/]+"
+                        "include": "@index|@index/[^/]+",
+                        "size": "@count"
                     },
                     "aggs": {
                         "date_range": {
@@ -538,32 +537,27 @@ def item_path_search_factory(self, search, index_id=None):
                     }
                 }
             },
-            "post_filter": {
-                "term": {
-                    "path": "@index"
-                }
-            }
+            "post_filter": {}
         }
 
         # add item type aggs
         query_q['aggs']['path']['aggs']. \
             update(get_item_type_aggs(search._index[0]))
 
-        mut = get_permission_filter()
+        q = request.values.get('q') if index_id is None else index_id
+        if q:
+            mut = get_permission_filter(q)
+        else:
+            mut = get_permission_filter()
         if mut:
             mut = list(map(lambda x: x.to_dict(), mut))
             post_filter = query_q['post_filter']
             if mut[0].get('bool'):
-                post_filter['bool'] = {'must': [{'term': post_filter.pop(
-                    'term')}, mut[0]['bool']['must'][0]], 'should': mut[0]['bool']['should']}
-                # post_filter['bool'] = {'must': [{'term': post_filter.pop('term')}],
-                #                        'should': mut[0]['bool']['should']}
+                post_filter['bool'] = mut[0]['bool']
             else:
-                mut.append({'term': post_filter.pop('term')})
                 post_filter['bool'] = {'must': mut}
 
         # create search query
-        q = request.values.get('q') if index_id is None else index_id
         if q:
             try:
                 fp = Indexes.get_self_path(q)
@@ -572,6 +566,11 @@ def item_path_search_factory(self, search, index_id=None):
                     query_q = json.loads(query_q)
             except BaseException:
                 pass
+
+        query_q = json.dumps(query_q).replace("@count",
+                                              str(Indexes.get_index_count()))
+        query_q = json.loads(query_q)
+
         return query_q
 
     # create a index search query
