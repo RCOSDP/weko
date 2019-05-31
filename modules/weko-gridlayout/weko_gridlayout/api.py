@@ -44,7 +44,8 @@ class WidgetItems(object):
         try:
             data_object["repository_id"] = widget_items.get('repository')
             data_object["widget_type"] = widget_items.get('widget_type')
-            data_object["label"] = widget_items.get('label')
+            data_object["label"] = widget_items.get("label")
+            data_object["language"] = widget_items.get("language")
             data_object_settings["label_color"] = widget_items.get(
                 'label_color')
             data_object_settings["has_frame_border"] = widget_items.get(
@@ -138,7 +139,6 @@ class WidgetItems(object):
         :returns: The :class:`widget item` instance lists or None.
         """
         def _add_widget_item(widget_setting):
-            print(widget_setting)
             with db.session.begin_nested():
                 widget_item = WidgetItem(**widget_setting)
                 db.session.add(widget_item)
@@ -173,7 +173,7 @@ class WidgetItems(object):
             return False
         WidgetItem.update(widget_id.get('repository'),
                           widget_id.get('widget_type'), widget_id.get('label'),
-                          **data)
+                          widget_id.get('language'), **data)
         return True
 
     @classmethod
@@ -184,7 +184,9 @@ class WidgetItems(object):
         :return:  true
         """
         WidgetItem.delete(widget_id.get('repository'),
-                          widget_id.get('widget_type'), widget_id.get('label'))
+                          widget_id.get('widget_type'),
+                          widget_id.get('label'),
+                          widget_id.get('language'))
         return True
 
     @classmethod
@@ -205,9 +207,11 @@ class WidgetItems(object):
         """
         if not isinstance(widget_items, dict):
             return False
+        print(widget_items)
         widget_item = WidgetItem.get(widget_items.get('repository'),
                                      widget_items.get('widget_type'),
-                                     widget_items.get('label'))
+                                     widget_items.get('label'),
+                                     widget_items.get('language'))
         return widget_item is not None
 
     @classmethod
@@ -242,6 +246,7 @@ class WidgetItems(object):
         record['repository_id'] = in_result.repository_id
         record['widget_type'] = in_result.widget_type
         record['label'] = in_result.label
+        record['language'] = in_result.language
         record['label_color'] = record_setting.get('label_color')
         record['has_frame_border'] = record_setting.get('has_frame_border')
         record['frame_border_color'] = record_setting.get('frame_border_color')
