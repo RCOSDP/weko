@@ -39,7 +39,7 @@
         {%- if idf_grant_data %}
         {%- set item_id = activity.item_id %}
         {%- if record %}
-          {%- set item_id = '%08d' % record['_deposit']['id']|int %}
+          {%- set item_id = '%010d' % record['_deposit']['id']|int %}
         {%- endif %}
         {%- if idf_grant_data["jalc_flag"] %}
         {%- set idf_grant_labels = idf_grant_input[1] %}
