@@ -28,6 +28,7 @@ from weko_admin.models import AdminLangSettings
 
 from .api import WidgetItems
 from .models import WidgetDesignSetting, WidgetItem, WidgetType
+from weko_admin.models import AdminLangSettings as language
 
 
 def get_repository_list():
@@ -461,6 +462,7 @@ def get_default_language():
     if type(result) is list:
         return result[0]
     return
+
 
 def get_system_language():
     """ Get system language for widget setting
