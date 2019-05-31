@@ -214,6 +214,51 @@ class StyleSettingView(BaseView):
 
 class ReportView(BaseView):
 
+    header_rows = {
+        'file_download': _('No. Of File Downloads'),
+        'file_preview': _('No. Of File Previews'),
+        'index_access': _('Detail Views Per Index'),
+        'detail_view': _('Detail Views Count'),
+        'file_using_per_user': _('Usage Count By User'),
+        'search_count': _('Search Keyword Ranking')
+    }
+
+    sub_header_rows = {
+        'file_download': _('Open-Access No. Of File Downloads'),
+        'file_preview': _('Open-Access No. Of File Previews')
+    }
+
+    report_cols = {
+        'file_download': [
+            _('File Name'), _('Registered Index Name'),
+            _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
+            _('Logged In User'), _('Site License'), _('Admin'),
+            _('Registrar')],
+        'file_preview': [
+            _('File Name'), _('Registered Index Name'),
+            _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
+            _('Logged In User'), _('Site License'), _('Admin'),
+            _('Registrar')],
+        'index_access': [_('Index'), _('No. Of Views')],
+        'detail_view': [
+            _('Title'), _('Registered Index Name'), _('View Count'),
+            _('Non-logged-in User')],
+        'file_using_per_user': [_('Mail address'),
+                                _('Username'),
+                                _('File download count'),
+                                _('File playing count')],
+        'search_count': [_('Search Keyword'), _('Number Of Searches')]
+    }
+
+    file_names = {
+        'file_download': _('FileDownload_'),
+        'file_preview': _('FilePreview_'),
+        'index_access': _('IndexAccess_'),
+        'detail_view': _('DetailView_'),
+        'file_using_per_user': _('FileUsingPerUser_'),
+        'search_count': _('SearchCount_')
+    }
+
     @expose('/', methods=['GET'])
     def index(self):
         try:
@@ -263,8 +308,10 @@ class ReportView(BaseView):
         # File Format: logReport_File[Download, Preview]_YYYY-MM.tsv
         tsv_files = []
         for stats_type, stats in stats_json.items():
+            file_name = 'logReport_' + self.file_names.get(stats_type, '_') \
+                        + year + '-' + month + '.tsv'
             tsv_files.append({
-                'file_name': self.make_tsv_file_name(stats_type, year, month),
+                'file_name': file_name,
                 'stream': self.make_stats_tsv(stats, stats_type, year, month)})
 
         zip_name = 'logReport_' + year + '-' + month
@@ -290,20 +337,8 @@ class ReportView(BaseView):
 
     def make_stats_tsv(self, raw_stats, file_type, year, month):
         """Make TSV report file for downloads and previews."""
-        sub_header_row = None
-        if file_type == 'file_download':
-            header_row = _('No. Of File Downloads')
-            sub_header_row = _('Open-Access No. Of File Downloads')
-        elif file_type == 'file_preview':
-            header_row = _('No. Of File Previews')
-            sub_header_row = _('Open-Access No. Of File Previews')
-        elif file_type == 'index_access':
-            header_row = _('Detail Views Per Index')
-        elif file_type == 'detail_view':
-            header_row = _('Detail screen view count')
-        else:
-            header_row = _('Usage count by user')
-
+        header_row = self.header_rows.get(file_type)
+        sub_header_row = self.sub_header_rows.get(file_type)
         tsv_output = StringIO()
         try:
             writer = csv.writer(tsv_output, delimiter='\t',
@@ -311,33 +346,17 @@ class ReportView(BaseView):
             writer.writerows([[header_row], [_('Aggregation Month'), year + '-' + month],
                               [''], [header_row]])
 
-            cols = []
-            if file_type == 'file_download' or file_type == 'file_preview':
-                cols = [_('File Name'), _('Registered Index Name'),
-                        _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
-                        _('Logged In User'), _('Site License'), _('Admin'),
-                        _('Registrar')]
-            elif file_type == 'index_access':
-                cols = [_('Index'), _('No. Of Views')]
-            elif file_type == 'detail_view':
-                cols = [_('Title'),
-                        _('Registered index name'),
-                        _('View count'),
-                        _('Not-login user')]
-            elif file_type == 'file_using_per_user':
-                cols = [_('Mail address'),
-                        _('Username'),
-                        _('File download count'),
-                        _('File playing count')]
-            # All stats
+            cols = self.report_cols.get(file_type, [])
             writer.writerow(cols)
 
-            if file_type == 'index_access':  # Write total for per index views
+            # Special cases:
+            # Write total for per index views
+            if file_type == 'index_access':
                 writer.writerow([_('Total Detail Views'), raw_stats['total']])
 
             self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
 
-            # Open access stats
+            # Write open access stats
             if sub_header_row is not None:
                 writer.writerows([[''], [sub_header_row]])
                 writer.writerow(cols)
@@ -361,7 +380,10 @@ class ReportView(BaseView):
                                      record['login'], record['site_license'],
                                      record['admin'], record['reg']])
                 elif file_type == 'index_access':
-                    writer.writerow([record['index_name'], record['view_count']])
+                    writer.writerow(
+                        [record['index_name'], record['view_count']])
+                elif file_type == 'search_count':
+                    writer.writerow([record['search_key'], record['count']])
                 elif file_type == 'detail_view':
                     item_metadata_json = ItemsMetadata.\
                         get_record(record['record_id'])
@@ -457,4 +479,3 @@ __all__ = (
     'language_adminview',
     'web_api_account_adminview'
 )
-
