@@ -21,10 +21,10 @@
 """Module of weko-workflow utils."""
 
 from flask import current_app
-from invenio_communities.models import Community
-from weko_records.api import ItemsMetadata
 from flask_babelex import gettext as _
+from invenio_communities.models import Community
 from invenio_db import db
+from weko_records.api import ItemsMetadata
 
 from .api import WorkActivity
 from .config import IDENTIFIER_ITEMSMETADATA_FORM
