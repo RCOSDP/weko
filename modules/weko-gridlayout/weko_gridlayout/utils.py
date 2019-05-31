@@ -81,6 +81,7 @@ def get_widget_list(repository_id, default_language):
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
+                data["widgetLanguage"] = widget_item.language
                 settings = widget_item.settings
                 settings = json.loads(settings)
                 languages = settings.get("language")
@@ -127,6 +128,7 @@ def get_widget_preview(repository_id, default_language):
                     widget_preview["id"] = item.get("id")
                     widget_preview["type"] = item.get("type")
                     widget_preview["name"] = item.get("name")
+                    widget_preview["widget_language"] = item.get("widget_language")
                     languages = item.get("language")
                     if type(languages) is dict and lang_code_default\
                             is not None:
@@ -180,8 +182,10 @@ def update_widget_design_setting(data):
         json_data = json.loads(setting_data)
         if type(json_data) is list:
             for item in json_data:
-                widget_item = WidgetItem.get(item.get('id'), item.get('type'),
-                                             item.get('name'))
+                widget_item = WidgetItem.get(item.get('id'),
+                                             item.get('type'),
+                                             item.get('name'),
+                                             item.get('widget_language'))
                 widget_setting = json.loads(widget_item.settings)
                 item.update(widget_setting)
         setting_data = json.dumps(json_data)
@@ -227,7 +231,6 @@ def update_admin_widget_item_setting(data):
     status = 201
     success = True
     msg = ""
-
     flag = data.get('flag_edit')
     data_result = data.get('data')
     data_id = data.get('data_id')
@@ -432,17 +435,20 @@ def validate_admin_widget_item_setting(widget_id):
             repository_id = widget_id.get('repository')
             widget_type = widget_id.get('widget_type')
             label = widget_id.get('label')
+            language = widget_id.get('language')
         else:
             repository_id = widget_id.repository_id
             widget_type = widget_id.widget_type
             label = widget_id.label
+            language = widget_id.language
         data = WidgetDesignSetting.select_by_repository_id(
             repository_id)
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             for item in json_data:
                 if str(item.get('name')) == str(label) and str(
-                        item.get('type')) == str(widget_type):
+                        item.get('type')) == str(widget_type) and str(
+                            item.get('language') == str(language)):
                     return True
         return False
     except Exception as e:

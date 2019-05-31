@@ -84,6 +84,8 @@ class WidgetItem(db.Model):
 
     label = db.Column(db.String(100), nullable=False, primary_key=True)
 
+    language = db.Column(db.String(3), nullable=False, primary_key=True)
+
     settings = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
@@ -116,14 +118,15 @@ class WidgetItem(db.Model):
     """WidgetType relationship."""
 
     @classmethod
-    def get(cls, repo_id, type_id, lbl):
+    def get(cls, repo_id, type_id, lbl, language):
         """Get a widget item."""
         return cls.query.filter_by(repository_id=str(repo_id),
                                    widget_type=str(type_id),
-                                   label=str(lbl)).one_or_none()
+                                   label=str(lbl),
+                                   language=str(language)).one_or_none()
 
     @classmethod
-    def update(cls, repo_id, type_id, lbl, **data):
+    def update(cls, repo_id, type_id, lbl, lang, **data):
         """
         Update the widget item detail info.
 
@@ -135,7 +138,7 @@ class WidgetItem(db.Model):
         """
         try:
             with db.session.begin_nested():
-                widget_item = cls.get(repo_id, type_id, lbl)
+                widget_item = cls.get(repo_id, type_id, lbl, lang)
                 if not widget_item:
                     return
 
@@ -150,7 +153,7 @@ class WidgetItem(db.Model):
         return
 
     @classmethod
-    def delete(cls, repo_id, type_id, lbl, session=None):
+    def delete(cls, repo_id, type_id, lbl, lang, session=None):
         """Delete the widget item detail info.
 
         :param repo_id: Identifier of the repository.
@@ -163,7 +166,7 @@ class WidgetItem(db.Model):
             session = db.session
         try:
             with session.begin_nested():
-                widget_item = cls.get(repo_id, type_id, lbl)
+                widget_item = cls.get(repo_id, type_id, lbl, lang)
                 if not widget_item:
                     return
                 setattr(widget_item, 'is_deleted', 'True')
