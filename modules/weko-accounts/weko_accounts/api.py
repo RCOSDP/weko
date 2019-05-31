@@ -59,7 +59,7 @@ class ShibUser(object):
         """
         shib_user = None
         if self.shib_attr['shib_eppn'] is not None and len(
-            self.shib_attr['shib_eppn']) > 0:
+                self.shib_attr['shib_eppn']) > 0:
             shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
         if shib_user is None:

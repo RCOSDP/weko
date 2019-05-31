@@ -22,13 +22,13 @@
 
 import json
 import os
+import sys
 from collections import OrderedDict
 from functools import wraps
 
 import redis
-import sys
-from flask import Blueprint, current_app, jsonify, render_template, \
-    request, session, url_for
+from flask import Blueprint, current_app, jsonify, render_template, request, \
+    session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -290,8 +290,8 @@ def display_activity(activity_id=0):
         session['activity_info'] = activity_session
         # get item edit page info.
         step_item_login_url, need_file, record, json_schema, \
-        schema_form, item_save_uri, files, endpoints = item_login(
-            item_type_id=workflow_detail.itemtype_id)
+            schema_form, item_save_uri, files, endpoints = item_login(
+                item_type_id=workflow_detail.itemtype_id)
         if item:
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
@@ -380,7 +380,6 @@ def display_activity(activity_id=0):
 
 def check_authority(func):
     """Check Authority."""
-
     @wraps(func)
     def decorated_function(*args, **kwargs):
         work = WorkActivity()
