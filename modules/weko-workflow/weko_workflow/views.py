@@ -26,8 +26,9 @@ from collections import OrderedDict
 from functools import wraps
 
 import redis
-from flask import Blueprint, current_app, jsonify, render_template, request, \
-    session, url_for
+import sys
+from flask import Blueprint, current_app, jsonify, render_template, \
+    request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -36,9 +37,11 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
+from weko_accounts.api import ShibUser
 from weko_deposit.api import WekoRecord
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
+from weko_items_ui.utils import get_actionid
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
@@ -287,8 +290,8 @@ def display_activity(activity_id=0):
         session['activity_info'] = activity_session
         # get item edit page info.
         step_item_login_url, need_file, record, json_schema, \
-            schema_form, item_save_uri, files, endpoints = item_login(
-                item_type_id=workflow_detail.itemtype_id)
+        schema_form, item_save_uri, files, endpoints = item_login(
+            item_type_id=workflow_detail.itemtype_id)
         if item:
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
@@ -514,8 +517,8 @@ def next_action(activity_id='0', action_id=0):
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
         pid, item_record = resolver.resolve(pid_identifier.pid_value)
-        updateItem = UpdateItem()
-        updateItem.set_item_relation(relation_data, item_record)
+        updated_item = UpdateItem()
+        updated_item.set_item_relation(relation_data, item_record)
 
     # save pidstore_identifier to ItemsMetadata
     if 'identifier_grant' == action_endpoint and idf_grant is not None:
@@ -691,10 +694,48 @@ def cancel_action(activity_id='0', action_id=0):
         work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=action_id,
             action_status=ActionStatusPolicy.ACTION_DOING)
-        return jsonify(code=-1, msg=_('Error! Can\'t process quit activity!'))
+        return jsonify(code=-1, msg=_('Error! Cannot process quit activity!'))
 
     return jsonify(code=0,
                    msg=_('success'),
                    data={'redirect': url_for(
                        'weko_workflow.display_activity',
                        activity_id=activity_id)})
+
+
+@blueprint.route('/activity/detail/<string:activity_id>', methods=['POST'])
+def withdraw_confirm(activity_id='0'):
+    """Check weko user info.
+
+    :return:
+    """
+    try:
+        post_json = request.get_json()
+        password = post_json.get('passwd', None)
+        if not password:
+            return jsonify(code=-1, msg=_('Password not provided'))
+        wekouser = ShibUser()
+        if wekouser.check_weko_user(current_user.email, password):
+            activity = WorkActivity()
+            identifier_actionid = get_actionid('identifier_grant')
+            identifier = activity.get_action_identifier_grant(
+                activity_id,
+                identifier_actionid)
+            identifier['action_identifier_select'] = -2
+            if identifier:
+                activity.create_or_update_action_identifier(
+                    activity_id,
+                    identifier_actionid,
+                    identifier)
+            # Clear identifier in ItemMetadata
+            pidstore_identifier_mapping(None, -1, activity_id)
+            return jsonify(code=0,
+                           msg=_('success'),
+                           data={'redirect': url_for(
+                               'weko_workflow.display_activity',
+                               activity_id=activity_id)})
+        else:
+            return jsonify(code=-1, msg=_('Invalid password'))
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return jsonify(code=-1, msg=_('Error! Relogin'))

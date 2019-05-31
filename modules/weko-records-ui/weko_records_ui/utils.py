@@ -41,9 +41,8 @@ def get_item_pidstore_identifier(object_uuid):
             if pidstore_identifier is not None \
                 and action_status.action_status == \
                     ActionStatusPolicy.ACTION_DONE:
-                identifier_value = pidstore_identifier.get('identifier').get(
-                    'value')
-                if identifier_value:
-                    return identifier_value
+                identifier = pidstore_identifier.get('identifier')
+                if identifier:
+                    return identifier.get('value')
 
     return None

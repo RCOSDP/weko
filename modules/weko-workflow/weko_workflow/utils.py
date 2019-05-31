@@ -23,6 +23,8 @@
 from flask import current_app
 from invenio_communities.models import Community
 from weko_records.api import ItemsMetadata
+from flask_babelex import gettext as _
+from invenio_db import db
 
 from .api import WorkActivity
 from .config import IDENTIFIER_ITEMSMETADATA_FORM
@@ -108,10 +110,12 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             del tempdata['identifierRegistration']
             res['pidstore_identifier'] = tempdata
     else:
-        current_app.logger.error('Can\'t mapping pidstore identifier data!')
-        res['pidstore_identifier'] = tempdata
+        current_app.logger.error(_('Identifier datas are empty!'))
     try:
-        item.update(res)
-        item.commit()
+        with db.session.begin_nested():
+            item.update(res)
+            item.commit()
+        db.session.commit()
     except Exception as ex:
         current_app.logger.exception(str(ex))
+        db.session.rollback()

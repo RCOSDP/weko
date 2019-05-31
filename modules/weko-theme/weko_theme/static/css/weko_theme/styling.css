@@ -263,6 +263,10 @@ button#btn_quit.done-button {
   margin-right: 28px;
 }
 
+.ten-pixel-bottom-margin {
+  margin-bottom: 10px;
+}
+
 .detail-lable {
  text-align: center;
 }

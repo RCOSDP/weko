@@ -28,17 +28,14 @@ import json
 import sys
 
 import redis
-from flask import Blueprint, abort, current_app, jsonify, redirect, \
-    render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, redirect, render_template, \
+    request, session, url_for
 from flask_babelex import gettext as _
-from flask_breadcrumbs import register_breadcrumb
-from flask_login import current_user, login_required
-from flask_menu import register_menu
+from flask_login import current_user
 from flask_security import url_for_security
 from invenio_admin.proxies import current_admin
 from simplekv.memory.redisstore import RedisStore
 from werkzeug.local import LocalProxy
-from weko_workflow.config import IDENTIFIER_ITEMSMETADATA_FORM
 
 from . import config
 from .api import ShibUser
@@ -239,38 +236,6 @@ def shib_logout():
     return 'logout success'
 
 
-@blueprint.route('/clear/metadata', methods=['POST'])
-def clear_metadata():
-    """Clear meta data.
-    :return:
-    """
-    try:
-        # Clear item metadata info
-        current_app.logger.debug('=================BAO===============')
-        if 'activity_info' in session:
-            activity = session['activity_info']
-            activity_session = session['activity_info']
-            activity_id = activity_session.get('activity_id', None)
-            activity_obj = WorkActivity()
-            activity_detail = activity_obj.get_activity_detail(activity_id)
-            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-            current_app.logger.debug('=================CLEAR METADATA activity_session===============', activity_session)
-            current_app.logger.debug('=================CLEAR METADATA activity_id===============', activity_id)
-            current_app.logger.debug('=================CLEAR METADATA activity_obj===============', activity_obj)
-            current_app.logger.debug('=================CLEAR METADATA activity_detail===============', activity_detail)
-            current_app.logger.debug('=================CLEAR METADATA item===============', item)
-            res = {'pidstore_identifier': {}}
-            tempdata = IDENTIFIER_ITEMSMETADATA_FORM
-            res['pidstore_identifier'] = tempdata
-            item.update(res)
-            item.commit()
-            return redirect(session['next'] if 'next' in session else '/')
-        return redirect('next')
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return abort(400)
-
-
 def parse_attributes():
     """Parse arguments from environment variables."""
     attrs = {}
@@ -281,7 +246,6 @@ def parse_attributes():
             else request.args.get(header, '')
         current_app.logger.debug('Shib    {0}: {1}'.format(name, value))
         attrs[name] = value
-        if not value or value == '':
-            if required:
-                error = True
+        if (not value or value == '') and required:
+            error = True
     return attrs, error

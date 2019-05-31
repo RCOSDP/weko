@@ -826,7 +826,7 @@ class WorkActivity(object):
             activity_detail.flow_define.flow_id)
 
         if not last_flow_action:
-            current_app.logger.error('Can\'t get last action of flow!')
+            current_app.logger.error('Cannot get last action of flow!')
             return None
 
         try:
