@@ -461,3 +461,21 @@ def get_default_language():
     if type(result) is list:
         return result[0]
     return
+
+def get_system_language():
+    """ Get system language for widget setting
+
+    Returns:
+        result -- dictionary contains language list
+    """
+    result = {
+        'language': [],
+        'error': ''
+    }
+    try:
+        sys_lang = language.load_lang()
+        result['language'] = sys_lang
+    except Exception as e:
+        result['error'] = str(e)
+
+    return result
