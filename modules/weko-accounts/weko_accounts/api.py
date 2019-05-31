@@ -59,7 +59,7 @@ class ShibUser(object):
         """
         shib_user = None
         if self.shib_attr['shib_eppn'] is not None and len(
-                self.shib_attr['shib_eppn']) > 0:
+            self.shib_attr['shib_eppn']) > 0:
             shib_user = ShibbolethUser.query.filter_by(
                 shib_eppn=self.shib_attr['shib_eppn']).one_or_none()
         if shib_user is None:
@@ -89,8 +89,6 @@ class ShibUser(object):
         :return: Boolean
 
         """
-        # if account != self.shib_attr['shib_mail']:
-        #     return False
         weko_user = _datastore.find_user(email=account)
         if weko_user is None:
             return False
@@ -156,7 +154,6 @@ class ShibUser(object):
         session['user_id'] = self.user.id
         session['user_src'] = 'Shib'
         user_logged_in.send(current_app._get_current_object(), user=self.user)
-        pass
 
     @classmethod
     def shib_user_logout(cls):
@@ -168,4 +165,3 @@ class ShibUser(object):
         """
         user_logged_out.send(current_app._get_current_object(),
                              user=current_user)
-        pass

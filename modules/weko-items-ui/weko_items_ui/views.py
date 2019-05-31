@@ -744,7 +744,10 @@ def prepare_edit_item():
                     identifier_actionid = get_actionid('identifier_grant')
                     identifier = activity.get_action_identifier_grant(
                         upt_current_activity.activity_id, identifier_actionid)
-                    identifier['action_identifier_select'] = -1
+                    if identifier['action_identifier_select'] > 0:
+                        identifier['action_identifier_select'] = -1
+                    elif identifier['action_identifier_select'] == -2:
+                        identifier['action_identifier_select'] = -3
                     if identifier:
                         activity.create_or_update_action_identifier(
                             rtn.activity_id,
