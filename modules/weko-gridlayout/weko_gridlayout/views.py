@@ -14,9 +14,9 @@ from flask_login import login_required
 
 from .api import WidgetItems
 from .utils import delete_admin_widget_item_setting, get_repository_list, \
-    get_widget_design_setting, get_widget_list, get_widget_preview, \
-    get_widget_type_list, update_admin_widget_item_setting, \
-    update_widget_design_setting, get_system_language
+    get_system_language, get_widget_design_setting, get_widget_list, \
+    get_widget_preview, get_widget_type_list, \
+    update_admin_widget_item_setting, update_widget_design_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -160,10 +160,11 @@ def get_account_role():
 
 @blueprint_api.route('/get_system_lang', methods=['GET'])
 def get_system_lang():
-    """ Get system language
+    """Get system language.
 
     Returns:
         language -- list
+
     """
     result = get_system_language()
     return jsonify(result)
