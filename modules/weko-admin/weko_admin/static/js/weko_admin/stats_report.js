@@ -17,7 +17,8 @@ $(document).ready(function () {
         index_access:'report/record/record_view_per_index',
         detail_view:'report/record/record_view',
         file_using_per_user:'report/file/file_using_per_user',
-        top_page_access:'top_page_access'};
+        top_page_access:'top_page_access',
+        search_count:'report/search_keywords'};
     var statsURL = '/api/stats/' + uriByType[type] + '/' + year + '/' + month;
     var statsReports = {};
     var ajaxReturn = [0,0,0,0];
@@ -28,7 +29,8 @@ $(document).ready(function () {
         'detail_view',
         'index_access',
         'file_using_per_user',
-        'top_page_access'];
+        'top_page_access',
+        'search_count'];
       for (let item in options) {
         statsReports[options[item]] = ajaxGetTSV(uriByType[options[item]], year, month);
       }
