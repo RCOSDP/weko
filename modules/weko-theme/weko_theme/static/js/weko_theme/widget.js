@@ -1,146 +1,162 @@
-(function () {
-  getWidgetDesignSetting();
-  window.lodash = _.noConflict();
+const mainContentType = "Main contents";
+const freeDescriptionType = "Free description";
+const noticeType = "Notice";
+const hideRestDefaultText = "Hide the rest";
+const readMoreDefaultText = "Read more";
+
+(function() {
+    getWidgetDesignSetting();
+    window.lodash = _.noConflict();
 }());
 
-let PageBodyGrid = function () {
-  this.init = function () {
-    let options = {
-      width: 12,
-      float: true,
-      verticalMargin: 4,
-      cellHeight: 100,
-      acceptWidgets: '.grid-stack-item'
+let PageBodyGrid = function() {
+    this.init = function() {
+        let options = {
+            width: 12,
+            float: true,
+            verticalMargin: 4,
+            cellHeight: 100,
+            acceptWidgets: '.grid-stack-item'
+        };
+        let widget = $('#page_body');
+        widget.gridstack(options);
+        this.grid = widget.data('gridstack');
     };
-    let widget = $('#page_body');
-    widget.gridstack(options);
-    this.grid = widget.data('gridstack');
-  };
 
-  this.addNewWidget = function (node) {
-    this.grid.addWidget($(this.widgetTemplate(node)), node.x, node.y, node.width, node.height);
-    return false;
-  }.bind(this);
-
-  this.updateMainContent = function (node) {
-    let mainContents = $("#main_contents");
-    this.grid.update(mainContents, node.x, node.y, node.width, node.height);
-  };
-
-  this.loadGrid = function (widgetListItems) {
-    let items = GridStackUI.Utils.sort(widgetListItems);
-    items.forEach(function (node) {
-      if ("Main contents" == node.type) {
-        this.updateMainContent(node);
+    this.addNewWidget = function(node, index) {
+        this.grid.addWidget($(this.widgetTemplate(node, index)), node.x, node.y, node.width, node.height);
         return false;
-      }
-    }, this);
+    }.bind(this);
 
-    items.forEach(function (node) {
-      if ("Main contents" != node.type) {
-        this.addNewWidget(node);
-      }
-    }, this);
-    return false;
-  }.bind(this);
+    this.updateMainContent = function(node) {
+        let mainContents = $("#main_contents");
+        this.grid.update(mainContents, node.x, node.y, node.width, node.height);
+    };
 
-  this.widgetTemplate = function (node) {
+    this.loadGrid = function(widgetListItems) {
+        let items = GridStackUI.Utils.sort(widgetListItems);
+        items.forEach(function(node) {
+            if (mainContentType == node.type) {
+                this.updateMainContent(node);
+                return false;
+            }
+        }, this);
 
-    let labelColor = node.label_color;
-    let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
-    let backgroundColor = node.background_color;
-    let description = "";
-    let leftStyle = 0;
-    let paddingHeading = "";
-    let overFlowBody = "";
+        for (var i = 0; i < items.length; i++) {
+            let node = items[i];
+            if (mainContentType != node.type) {
+                this.addNewWidget(node, i);
+            }
+        }
+        return false;
+    }.bind(this);
 
-    if (node.type == "Free description") {
-      description = node.description;
-      leftStyle = "initial";
-      paddingHeading = "inherit";
-      overFlowBody = "scroll";
-    }
+    this.widgetTemplate = function(node, index) {
 
-    if (node.type == "Notice") {
-      let rssFeedTemplate = "";
-      let moreDescription = "";
-      let templateWriteMoreNotice = '<div id="moreDescription">' + moreDescription +'</div>';
+        let labelColor = node.label_color;
+        let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
+        let backgroundColor = node.background_color;
+        let description = "";
+        let leftStyle = 0;
+        let paddingHeading = "";
+        let overFlowBody = "";
 
-      if(typeof node.more_description != 'undefined') {
-        moreDescription = node.more_description;
-        templateWriteMoreNotice = '</br>' +
-          '<input class="readMore" type="hidden" value="' + ((node.read_more != "") ? node.read_more: "Read more")  + '">' +
-          '<input class="hideRest" type="hidden" value="' + ((node.hide_the_rest != "") ? node.hide_the_rest: "Hide the rest")  + '">' +
-          '<div id="moreDescription">' + moreDescription + '</div>' +
-          '<a id="writeMoreNotice" class="writeMoreNoT" onclick="handleMoreNoT()">' + ((node.read_more != "") ? node.read_more: "Read more") + '</a>';
-      }
+        if (node.type == freeDescriptionType) {
+            description = node.description;
+            leftStyle = "initial";
+            paddingHeading = "inherit";
+            overFlowBody = "scroll";
+        }
 
-      description = node.description + templateWriteMoreNotice;
+        if (node.type == noticeType) {
+            let moreDescriptionID = (node.type + "_" + index).trim();
+            let linkID = "writeMoreNotice_" + index;
+            let moreDescription = "";
+            let templateWriteMoreNotice = '<div id="' + moreDescriptionID + '" style="display: none;">' +
+                moreDescription + '</div>';
 
-      leftStyle = "initial";
-      paddingHeading = "inherit";
-      overFlowBody = "scroll";
-    }
+            if (typeof node.more_description != 'undefined') {
+                moreDescription = node.more_description;
+                let hideRest = ((node.hide_the_rest != "") ? node.hide_the_rest : hideRestDefaultText);
+                let readMore = ((node.read_more != "") ? node.read_more : readMoreDefaultText);
+                templateWriteMoreNotice = '</br>' +
+                    '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
+                    '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
+                    linkID + '\',\'' + readMore + '\', \'' + hideRest + '\')">' +
+                    ((node.read_more != "") ? node.read_more : readMoreDefaultText) +
+                    '</a>';
+            }
 
-    let template =
-      '<div class="grid-stack-item">' +
-      ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' + backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
-      '     <div class="panel-heading widget-header widget-header-position" style="color: ' + labelColor + ';left: ' + leftStyle + ';">' +
-      '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
-      '     </div>' +
-      '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' + description + '</div>' +
-      '   </div>' +
-      '</div>';
+            description = node.description + templateWriteMoreNotice;
 
-    return template;
-  };
+            leftStyle = "initial";
+            paddingHeading = "inherit";
+            overFlowBody = "scroll";
+        }
+
+        let template =
+            '<div class="grid-stack-item">' +
+            ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' +
+            backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
+            '     <div class="panel-heading widget-header widget-header-position" style="color: ' + labelColor + ';left: ' +
+            leftStyle + ';">' +
+            '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
+            '     </div>' +
+            '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' +
+            description + '</div>' +
+            '   </div>' +
+            '</div>';
+
+        return template;
+    };
 
 };
 
 function getWidgetDesignSetting() {
-  let community_id = $("#community-id").text();
-  if (!community_id) {
-    community_id = 'Root Index';
-  }
-  let url = '/api/admin/load_widget_design_setting/' + community_id;
-  $.ajax({
-    type: 'GET',
-    url: url,
-    success: function (data) {
-      if (data.error) {
-        alert(error);
-        toggleWidgetUI();
-        return;
-      } else {
-        let widgetList = data['widget-settings'];
-        if (Array.isArray(widgetList) && widgetList.length) {
-          $("#main_contents").addClass("grid-stack-item");
-          let pageBodyGrid = new PageBodyGrid();
-          pageBodyGrid.init();
-          pageBodyGrid.loadGrid(widgetList);
-          handleMoreNoT();
-        }
-      }
-      toggleWidgetUI();
+    let community_id = $("#community-id").text();
+    if (!community_id) {
+        community_id = 'Root Index';
     }
-  });
+    let url = '/api/admin/load_widget_design_setting/' + community_id;
+    $.ajax({
+        type: 'GET',
+        url: url,
+        success: function(data) {
+            if (data.error) {
+                alert(error);
+                toggleWidgetUI();
+                return;
+            } else {
+                let widgetList = data['widget-settings'];
+                if (Array.isArray(widgetList) && widgetList.length) {
+                    $("#main_contents").addClass("grid-stack-item");
+                    let pageBodyGrid = new PageBodyGrid();
+                    pageBodyGrid.init();
+                    pageBodyGrid.loadGrid(widgetList);
+                }
+            }
+            toggleWidgetUI();
+        }
+    });
 }
 
 function toggleWidgetUI() {
-  $("div#page_body").each(function() {
-    $(this).css("display", "block");
-    $('footer#footer').css("display", "block");
-    $('footer-fix#footer').remove();
-  });
+    $("div#page_body").each(function() {
+        $(this).css("display", "block");
+        $('footer#footer').css("display", "block");
+        $('footer-fix#footer').remove();
+    });
 }
 
-function handleMoreNoT() {
-  var x = document.getElementById("moreDescription");
-  if (x.style.display === "none") {
-    x.style.display = "block";
-    $("#writeMoreNotice").text($('.hideRest').val());
-  } else {
-    x.style.display = "none";
-    $("#writeMoreNotice").text($('.readMore').val());
-  }
+function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
+    var moreDes = $("#" + moreDescriptionID);
+    if (moreDes) {
+        if (moreDes.is(":hidden")) {
+            moreDes.show();
+            $("#" + linkID).text(hideRest);
+        } else {
+            moreDes.hide();
+            $("#" + linkID).text(readMore);
+        }
+    }
 }
