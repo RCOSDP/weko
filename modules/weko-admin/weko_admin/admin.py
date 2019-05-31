@@ -244,9 +244,9 @@ class ReportView(BaseView):
             _('Title'), _('Registered Index Name'), _('View Count'),
             _('Non-logged-in User')],
         'file_using_per_user': [_('Mail address'),
-            _('Username'),
-            _('File download count'),
-            _('File playing count')],
+                                _('Username'),
+                                _('File download count'),
+                                _('File playing count')],
         'search_count': [_('Search Keyword'), _('Number Of Searches')]
     }
 
@@ -380,7 +380,8 @@ class ReportView(BaseView):
                                      record['login'], record['site_license'],
                                      record['admin'], record['reg']])
                 elif file_type == 'index_access':
-                    writer.writerow([record['index_name'], record['view_count']])
+                    writer.writerow(
+                        [record['index_name'], record['view_count']])
                 elif file_type == 'search_count':
                     writer.writerow([record['search_key'], record['count']])
                 elif file_type == 'detail_view':
