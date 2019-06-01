@@ -702,8 +702,12 @@ def cancel_action(activity_id='0', action_id=0):
                        activity_id=activity_id)})
 
 
-@blueprint.route('/activity/detail/<string:activity_id>', methods=['POST'])
-def withdraw_confirm(activity_id='0'):
+@blueprint.route('/activity/detail/<string:activity_id>/<int:action_id>'
+    '/withdraw',
+    methods=['POST'])
+@login_required
+@check_authority
+def withdraw_confirm(activity_id='0', action_id='0'):
     """Check weko user info.
 
     :return:
