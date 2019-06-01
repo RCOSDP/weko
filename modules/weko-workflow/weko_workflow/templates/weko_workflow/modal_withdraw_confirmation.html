@@ -32,7 +32,7 @@
         </button>
         <h4 class="modal-title">WEKO</h4>
       </div>
-      <form action={{url_for('weko_workflow.withdraw_confirm', activity_id=activity.activity_id)}} method="POST" name="withdraw_doi_form">
+      <form action={{url_for('weko_workflow.withdraw_confirm', activity_id=activity.activity_id, action_id=action_id)}} method="POST" name="withdraw_doi_form">
         <div class="modal-body" style="overflow-x: auto;">
           <table class="table-responsive">
             <tr>
