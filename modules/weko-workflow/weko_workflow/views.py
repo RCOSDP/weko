@@ -49,7 +49,7 @@ from werkzeug.utils import import_string
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD,\
-    IDENTIFIER_GRANT_WAS_WITHDRAWING
+    IDENTIFIER_GRANT_IS_WITHDRAWING
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import get_community_id_by_index, pidstore_identifier_mapping
@@ -726,7 +726,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
-            identifier['action_identifier_select'] = IDENTIFIER_GRANT_WAS_WITHDRAWING
+            identifier['action_identifier_select'] = IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
                 activity.create_or_update_action_identifier(
                     activity_id,
