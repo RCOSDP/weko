@@ -365,7 +365,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Get item meta data
     record['permalink_uri'] = None
     pidstore_identifier = get_item_pidstore_identifier(pid.object_uuid)
-    if pidstore_identifier is None:
+    current_app.logger.debug(pidstore_identifier)
+    if not pidstore_identifier:
         record['permalink_uri'] = request.url
     else:
         record['permalink_uri'] = pidstore_identifier
