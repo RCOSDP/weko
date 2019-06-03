@@ -36,11 +36,12 @@ from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
+from weko_records_ui.utils import get_item_pidstore_identifier
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.models import ActionStatusPolicy
 
-from .config import IDENTIFIER_GRANT_DOI, IDENTIFIER_GRANT_IS_WITHDRAWING, \
-    IDENTIFIER_GRANT_WITHDRAWN, IDENTIFIER_GRANT_CAN_WITHDRAW
+from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
+    IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
@@ -730,7 +731,8 @@ def prepare_edit_item():
                     identifier_actionid = get_actionid('identifier_grant')
                     identifier = activity.get_action_identifier_grant(
                         upt_current_activity.activity_id, identifier_actionid)
-                    if identifier:
+                    if identifier and get_item_pidstore_identifier(\
+                            pid_object.object_uuid):
                         if identifier.get('action_identifier_select') > \
                                 IDENTIFIER_GRANT_DOI:
                             identifier['action_identifier_select'] = \
