@@ -33,28 +33,18 @@ class WidgetItems(object):
     """Define API for WidgetItems creation and update."""
 
     @classmethod
-    def build_general_object(cls, data_object, widget_items,
-                             data_object_settings):
-        """Build general field of object.
+    def build_general_data(cls, data_object, widget_items):
+        """Build general data of object.
 
         :param data_object: object data
         :param widget_items: widget item
-        :param data_object_settings: object data setting
         """
         try:
             data_object["repository_id"] = widget_items.get('repository')
             data_object["widget_type"] = widget_items.get('widget_type')
             data_object["label"] = widget_items.get("label")
             data_object["language"] = widget_items.get("language")
-            data_object_settings["label_color"] = widget_items.get(
-                'label_color')
-            data_object_settings["has_frame_border"] = widget_items.get(
-                'frame_border')
-            data_object_settings["frame_border_color"] = widget_items.get(
-                'frame_border_color')
-            data_object_settings["text_color"] = widget_items.get('text_color')
-            data_object_settings["background_color"] = widget_items.get(
-                'background_color')
+            
             role = widget_items.get('browsing_role')
             if type(role) is list:
                 data_object["browsing_role"] = ",".join(str(e) for e in role)
@@ -66,47 +56,32 @@ class WidgetItems(object):
             else:
                 data_object["edit_role"] = role
             data_object["is_enabled"] = widget_items.get('enable')
-            data_object['settings'] = json.dumps(data_object_settings)
         except Exception as ex:
             current_app.logger.debug(ex)
+
 
     @classmethod
-    def build_free_description_type(cls, widget_items, data_object_settings):
-        """Build field of object type Free description.
+    def build_settings_data(cls, data_object, widget_items):
+        """Build setting data.
 
-        :param widget_items: widget items
-        :param data_object_settings: data object settings
+        :param setting_data: setting data
         """
-        try:
-            settings = widget_items.get('settings')
-            data_object_settings["description"] = settings.get(
-                'description') or ''
-            data_object_settings["language"] = settings.get(
-                'language') or ''
-        except Exception as ex:
-            current_app.logger.debug(ex)
+        data_object_settings = dict()
+        data_object_settings["label_color"] = widget_items.get(
+            'label_color')
+        data_object_settings["has_frame_border"] = widget_items.get(
+            'frame_border')
+        data_object_settings["frame_border_color"] = widget_items.get(
+            'frame_border_color')
+        data_object_settings["text_color"] = widget_items.get('text_color')
+        data_object_settings["background_color"] = widget_items.get(
+            'background_color')
+        multiLangSettings = widget_items.get(
+            'multiLangSetting')
+        data_object_settings["multiLangSetting"] = widget_items.get(
+            'multiLangSetting')
+        data_object['settings'] = json.dumps(data_object_settings)
 
-    @classmethod
-    def build_notice_type(cls, widget_items, data_object_settings):
-        """Build field of object type Notice.
-
-        :param widget_items: widget items
-        :param data_object_settings: data object settings
-        """
-        try:
-            settings = widget_items.get('settings')
-            data_object_settings["description"] = settings.get(
-                'description') or ''
-            data_object_settings["language"] = settings.get(
-                'language') or ''
-            if settings.get('more_description'):
-                data_object_settings["read_more"] = settings.get('read_more')
-                data_object_settings["more_description"] = settings.get(
-                    'more_description')
-                data_object_settings["hide_the_rest"] = settings.get(
-                    'hide_the_rest')
-        except Exception as ex:
-            current_app.logger.debug(ex)
 
     @classmethod
     def build_object(cls, widget_items=None):
@@ -120,12 +95,8 @@ class WidgetItems(object):
         data = dict()
         try:
             data_setting = dict()
-            if str(widget_items.get("widget_type")) == "Free description":
-                cls.build_free_description_type(widget_items,
-                                                data_setting)
-            elif str(widget_items.get("widget_type")) == "Notice":
-                cls.build_notice_type(widget_items, data_setting)
-            cls.build_general_object(data, widget_items, data_setting)
+            cls.build_general_data(data, widget_items)
+            cls.build_settings_data(data, widget_items)
         except Exception as ex:
             current_app.logger.debug(ex)
             return
@@ -207,7 +178,6 @@ class WidgetItems(object):
         """
         if not isinstance(widget_items, dict):
             return False
-        print(widget_items)
         widget_item = WidgetItem.get(widget_items.get('repository'),
                                      widget_items.get('widget_type'),
                                      widget_items.get('label'),
@@ -235,53 +205,6 @@ class WidgetItems(object):
         except SQLAlchemyError:
             return
 
-    @classmethod
-    def parse_general_data(cls, record, in_result, record_setting):
-        """Parse general data.
-
-        :param record: data after parse
-        :param in_result: data parser
-        :param record_setting: data settings after parse
-        """
-        record['repository_id'] = in_result.repository_id
-        record['widget_type'] = in_result.widget_type
-        record['label'] = in_result.label
-        record['language'] = in_result.language
-        record['label_color'] = record_setting.get('label_color')
-        record['has_frame_border'] = record_setting.get('has_frame_border')
-        record['frame_border_color'] = record_setting.get('frame_border_color')
-        record['text_color'] = record_setting.get('text_color')
-        record['background_color'] = record_setting.get('background_color')
-        record['browsing_role'] = in_result.browsing_role
-        record['edit_role'] = in_result.edit_role
-        record['is_enabled'] = in_result.is_enabled
-
-    @classmethod
-    def parse_free_description(cls, record, record_setting):
-        """Parse data item type Free description.
-
-        :param record: data after parse
-        :param record_setting: data settings after parse
-        """
-        settings = dict()
-        settings['description'] = record_setting.get('description')
-        settings['language'] = record_setting.get('language')
-        record['settings'] = settings
-
-    @classmethod
-    def parse_notice_description(cls, record, record_setting):
-        """Parse data item type Notice.
-
-        :param record: data after parse
-        :param record_setting: data settings after parse
-        """
-        settings = dict()
-        settings['description'] = record_setting.get('description')
-        settings['language'] = record_setting.get('language')
-        settings['read_more'] = record_setting.get('read_more')
-        settings['more_description'] = record_setting.get('more_description')
-        settings['hide_the_rest'] = record_setting.get('hide_the_rest')
-        record['settings'] = settings
 
     @classmethod
     def parse_result(cls, in_result):
@@ -292,9 +215,17 @@ class WidgetItems(object):
         """
         record = dict()
         settings = json.loads(in_result.settings)
-        cls.parse_general_data(record, in_result, settings)
-        if str(record['widget_type']) == "Free description":
-            cls.parse_free_description(record, settings)
-        elif str(record['widget_type']) == "Notice":
-            cls.parse_notice_description(record, settings)
+        record['repository_id'] = in_result.repository_id
+        record['widget_type'] = in_result.widget_type
+        record['label'] = in_result.label
+        record['language'] = in_result.language
+        record['label_color'] = settings.get('label_color')
+        record['has_frame_border'] = settings.get('has_frame_border')
+        record['frame_border_color'] = settings.get('frame_border_color')
+        record['text_color'] = settings.get('text_color')
+        record['background_color'] = settings.get('background_color')
+        record['browsing_role'] = in_result.browsing_role
+        record['edit_role'] = in_result.edit_role
+        record['is_enabled'] = in_result.is_enabled
+        record['multiLangSetting'] = settings.get('multiLangSetting')
         return record
