@@ -55,6 +55,8 @@ class WidgetItems(object):
             data_object_settings["text_color"] = widget_items.get('text_color')
             data_object_settings["background_color"] = widget_items.get(
                 'background_color')
+            data_object_settings["language"] = widget_items.get(
+                'multiLangSetting')
             role = widget_items.get('browsing_role')
             if type(role) is list:
                 data_object["browsing_role"] = ",".join(str(e) for e in role)
@@ -81,8 +83,6 @@ class WidgetItems(object):
             settings = widget_items.get('settings')
             data_object_settings["description"] = settings.get(
                 'description') or ''
-            data_object_settings["language"] = settings.get(
-                'language') or ''
         except Exception as ex:
             current_app.logger.debug(ex)
 
@@ -97,8 +97,6 @@ class WidgetItems(object):
             settings = widget_items.get('settings')
             data_object_settings["description"] = settings.get(
                 'description') or ''
-            data_object_settings["language"] = settings.get(
-                'language') or ''
             if settings.get('more_description'):
                 data_object_settings["read_more"] = settings.get('read_more')
                 data_object_settings["more_description"] = settings.get(
@@ -255,6 +253,7 @@ class WidgetItems(object):
         record['browsing_role'] = in_result.browsing_role
         record['edit_role'] = in_result.edit_role
         record['is_enabled'] = in_result.is_enabled
+        record['multiLangSetting'] = record_setting.get('language')
 
     @classmethod
     def parse_free_description(cls, record, record_setting):
@@ -265,7 +264,6 @@ class WidgetItems(object):
         """
         settings = dict()
         settings['description'] = record_setting.get('description')
-        settings['language'] = record_setting.get('language')
         record['settings'] = settings
 
     @classmethod
@@ -277,7 +275,6 @@ class WidgetItems(object):
         """
         settings = dict()
         settings['description'] = record_setting.get('description')
-        settings['language'] = record_setting.get('language')
         settings['read_more'] = record_setting.get('read_more')
         settings['more_description'] = record_setting.get('more_description')
         settings['hide_the_rest'] = record_setting.get('hide_the_rest')
