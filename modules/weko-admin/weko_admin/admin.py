@@ -34,6 +34,9 @@ from flask import abort, current_app, flash, jsonify, make_response, \
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_accounts.models import Role, User, userrole
+from invenio_db import db
+from sqlalchemy import func
 from weko_items_ui.utils import get_user_information
 from weko_records.api import ItemsMetadata
 
@@ -222,7 +225,8 @@ class ReportView(BaseView):
         'detail_view': _('Detail Views Count'),
         'file_using_per_user': _('Usage Count By User'),
         'search_count': _('Search Keyword Ranking'),
-        'top_page_access': _('Number Of Access By Host')
+        'top_page_access': _('Number Of Access By Host'),
+        'user_roles': _('User Affiliation Information'),
     }
 
     sub_header_rows = {
@@ -250,7 +254,8 @@ class ReportView(BaseView):
                                 _('File download count'),
                                 _('File playing count')],
         'search_count': [_('Search Keyword'), _('Number Of Searches')],
-        'top_page_access': [_('Host'), _('IP Address'), _('WEKO Top Page Access Count')]
+        'top_page_access': [_('Host'), _('IP Address'), _('WEKO Top Page Access Count')],
+        'user_roles': [_('Role'), _('Number Of Users')],
     }
 
     file_names = {
@@ -259,7 +264,8 @@ class ReportView(BaseView):
         'index_access': _('IndexAccess_'),
         'detail_view': _('DetailView_'),
         'file_using_per_user': _('FileUsingPerUser_'),
-        'search_count': _('SearchCount_')
+        'search_count': _('SearchCount_'),
+        'user_roles': _('UserAffiliate_'),
     }
 
     @expose('/', methods=['GET'])
@@ -360,7 +366,7 @@ class ReportView(BaseView):
             self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
 
             # Write open access stats
-            if sub_header_row is not None:
+            if sub_header_row is not None and 'open_access' in raw_stats:
                 writer.writerows([[''], [sub_header_row]])
                 writer.writerow(cols)
                 self.write_report_tsv_rows(writer, raw_stats['open_access'])
@@ -387,6 +393,8 @@ class ReportView(BaseView):
                         [record['index_name'], record['view_count']])
                 elif file_type == 'search_count':
                     writer.writerow([record['search_key'], record['count']])
+                elif file_type == 'user_roles':
+                    writer.writerow([record['role_name'], record['count']])
                 elif file_type == 'detail_view':
                     item_metadata_json = ItemsMetadata.\
                         get_record(record['record_id'])
@@ -412,23 +420,21 @@ class ReportView(BaseView):
                                          sys.exc_info()[0])
                 abort(500)
 
-    def make_tsv_file_name(self, file_type, year, month):
-        """Make tsv filenames."""
-        if file_type == 'file_download':
-            file_type = 'FileDownload'
-        elif file_type == 'file_preview':
-            file_type = 'FilePreview'
-        elif file_type == 'detail_view':
-            file_type = 'DetailView_'
-        elif file_type == 'index_access':
-            file_type = 'IndexAccess_'
-        elif file_type == 'file_using_per_user':
-            file_type = 'FileUsingPerUser_'
-        elif file_type == 'top_page_access':
-            file_type = 'HostAccess_'
-        else:
-            file_type = 'Default_'
-        return 'logReport_' + file_type + year + '-' + month + '.tsv'
+    @expose('/user_report_data', methods=['GET'])
+    def get_user_report_data(self):
+        """Get user report data from db and modify."""
+        role_counts = db.session.query(Role.name, \
+            func.count(userrole.c.role_id)).outerjoin(userrole) \
+            .group_by(Role.id).all()
+        role_counts = [dict(role_name=name, count=count) for name, count in role_counts]
+
+        response = { 'all': role_counts }
+        total_users = sum([x['count'] for x in role_counts])
+
+        # Total registered users
+        response['all'].append({'role_name': _('Registered Users'),
+                                'count': total_users })
+        return jsonify(response)
 
 
 class LanguageSettingView(BaseView):
