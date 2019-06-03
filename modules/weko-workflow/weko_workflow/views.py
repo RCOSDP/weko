@@ -39,6 +39,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from weko_deposit.api import WekoRecord
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
+from weko_items_ui.views import to_files_js
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
@@ -307,6 +308,8 @@ def display_activity(activity_id=0):
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
         pid, approval_record = resolver.resolve(pid_identifier.pid_value)
+
+        files = to_files_js(approval_record)
 
         # get files data after click Save btn
         sessionstore = RedisStore(redis.StrictRedis.from_url(
