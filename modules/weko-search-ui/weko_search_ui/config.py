@@ -133,7 +133,7 @@ RECORDS_REST_SORT_OPTIONS = dict(
         ),
         creator=dict(
             title='Creator',
-            fields=['creator'],
+            fields=['creator.creatorName'],
             default_order='asc',
             order=4,
         ),
@@ -157,7 +157,7 @@ RECORDS_REST_SORT_OPTIONS = dict(
         ),
         publish_date=dict(
             title='Publish date',
-            fields=['date'],
+            fields=['date.value'],
             default_order='asc',
             order=8,
         ),

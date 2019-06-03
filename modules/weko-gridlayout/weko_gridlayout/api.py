@@ -79,7 +79,7 @@ class WidgetItems(object):
         try:
             settings = widget_items.get('settings')
             data_object_settings["description"] = settings.get(
-                'description')
+                'description') or ''
         except Exception as ex:
             current_app.logger.debug(ex)
 
@@ -92,14 +92,14 @@ class WidgetItems(object):
         """
         try:
             settings = widget_items.get('settings')
-            data_object_settings["description"] = settings.get('description')
+            data_object_settings["description"] = settings.get(
+                'description') or ''
             if settings.get('more_description'):
                 data_object_settings["read_more"] = settings.get('read_more')
                 data_object_settings["more_description"] = settings.get(
                     'more_description')
                 data_object_settings["hide_the_rest"] = settings.get(
                     'hide_the_rest')
-                data_object_settings["rss_feed"] = settings.get('rss_feed')
         except Exception as ex:
             current_app.logger.debug(ex)
 
@@ -270,7 +270,6 @@ class WidgetItems(object):
         settings['read_more'] = record_setting.get('read_more')
         settings['more_description'] = record_setting.get('more_description')
         settings['hide_the_rest'] = record_setting.get('hide_the_rest')
-        settings['rss_feed'] = record_setting.get('rss_feed')
         record['settings'] = settings
 
     @classmethod
