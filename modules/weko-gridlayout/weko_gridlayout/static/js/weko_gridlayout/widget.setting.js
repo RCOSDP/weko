@@ -499,25 +499,15 @@ class ExtendComponent extends React.Component {
                 write_more: false
             };
         }
-        else {
-            return null;
-        }
-    }
-
-    componentWillReceiveProps(nextProps) {
-        if (nextProps.type !== this.state.type) {
-            this.setState({ type: nextProps.type });
-            this.setState({ settings: {} })
-            this.setState({ write_more: false })
-        }
         if (nextProps.data_change) {
             let setting = {};
             setting = nextProps.data_load;
-            this.setState({
+            nextProps.getValueOfField("language", false);
+            return {
                 settings: setting
-            })
-            this.props.getValueOfField("language", false);
+            }
         }
+        return null;
     }
 
     handleChange(field, value) {
@@ -871,7 +861,6 @@ class ComponentLanguage extends React.Component {
             let innerHTML;
             if (!registeredLanguage && lang == defaultLanguage) {
                 innerHTML = <option value={lang} selected>{languageNameList[lang]}</option>;
-                isFirstElement = false;
             } else {
                 innerHTML = <option value={lang}>{languageNameList[lang]}</option>;
             }
@@ -1007,13 +996,14 @@ class MainLayout extends React.Component {
                 break;
             case 'language':
                 this.setState({ multiLanguageChange: value });
+                break;
             case 'lang':
                 this.setState({
                     language: value
                 })
         }
     }
-    storeMultiLangSetting(language, newLanguage) {
+    storeMultiLangSetting(lang, newLanguage) {
         var result = true;
         if (this.state.label == '' && $.isEmptyObject(this.state.settings)) {
             result = false;
@@ -1025,6 +1015,9 @@ class MainLayout extends React.Component {
         let storage = this.state.multiLangSetting;
         if ($.isEmptyObject(storage)) {
             setting['isDefault'] = true;
+            this.setState({
+                language: lang
+            })
         } else {
             setting['isDefault'] = false;
         }
@@ -1036,14 +1029,12 @@ class MainLayout extends React.Component {
                 label: currentLabel,
                 settings: currentSetting,
                 multiLanguageChange: true,
-                language: language
             });
         } else {
             this.setState({
                 label: '',
                 settings: {},
                 multiLanguageChange: true,
-                language: language
             });
         }
         this.setState({
@@ -1063,7 +1054,7 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} />
                 </div>
                 <div className="row">
-                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.language} type={this.state.widget_type} />
+                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} />
                 </div>
                 <div className="row">
                     <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding="label" data_load={this.state.label} data_change={this.state.multiLanguageChange} type={this.state.widget_type} />
@@ -1129,6 +1120,7 @@ $(function () {
             edit_role: [1, 2, 3, 4, 99],
             is_enabled: true,
             settings: {},
+            language: ''
         }
     }
     let returnURL = $("#return_url").val();
