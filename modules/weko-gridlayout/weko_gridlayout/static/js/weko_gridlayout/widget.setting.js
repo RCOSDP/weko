@@ -828,6 +828,7 @@ class ComponentLanguage extends React.Component {
                         });
                     }
                     this.displayOptions(langList, registeredLang, langName);
+                    this.props.getValueOfField('lang', langList[0]);
                     this.setState({
                         languageList: langList,
                         registeredLanguage: registeredLang,
