@@ -423,17 +423,18 @@ class ReportView(BaseView):
     @expose('/user_report_data', methods=['GET'])
     def get_user_report_data(self):
         """Get user report data from db and modify."""
-        role_counts = db.session.query(Role.name, \
-            func.count(userrole.c.role_id)).outerjoin(userrole) \
+        role_counts = db.session.query(Role.name,
+                                       func.count(userrole.c.role_id)).outerjoin(userrole) \
             .group_by(Role.id).all()
-        role_counts = [dict(role_name=name, count=count) for name, count in role_counts]
+        role_counts = [dict(role_name=name, count=count)
+                       for name, count in role_counts]
 
-        response = { 'all': role_counts }
+        response = {'all': role_counts}
         total_users = sum([x['count'] for x in role_counts])
 
         # Total registered users
         response['all'].append({'role_name': _('Registered Users'),
-                                'count': total_users })
+                                'count': total_users})
         return jsonify(response)
 
 
