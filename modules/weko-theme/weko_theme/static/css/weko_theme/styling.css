@@ -275,6 +275,12 @@ button#btn_quit.done-button {
   border-color: #D3D3D3;
 }
 
+.withdraw-button{
+  width: 200px;
+  height: 40px;
+  font-size: 15px;
+}
+
 #add-icon {
  color: white;
  position: relative;
