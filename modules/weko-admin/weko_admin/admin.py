@@ -29,7 +29,8 @@ import zipfile
 from datetime import datetime
 from io import BytesIO, StringIO
 
-from flask import abort, current_app, flash, jsonify, make_response, request
+from flask import abort, current_app, flash, jsonify, make_response, redirect, \
+    request
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -244,9 +245,9 @@ class ReportView(BaseView):
             _('Title'), _('Registered Index Name'), _('View Count'),
             _('Non-logged-in User')],
         'file_using_per_user': [_('Mail address'),
-                                _('Username'),
-                                _('File download count'),
-                                _('File playing count')],
+            _('Username'),
+            _('File download count'),
+            _('File playing count')],
         'search_count': [_('Search Keyword'), _('Number Of Searches')]
     }
 
@@ -380,8 +381,7 @@ class ReportView(BaseView):
                                      record['login'], record['site_license'],
                                      record['admin'], record['reg']])
                 elif file_type == 'index_access':
-                    writer.writerow(
-                        [record['index_name'], record['view_count']])
+                    writer.writerow([record['index_name'], record['view_count']])
                 elif file_type == 'search_count':
                     writer.writerow([record['search_key'], record['count']])
                 elif file_type == 'detail_view':
@@ -437,6 +437,20 @@ class WebApiAccount(BaseView):
         )
 
 
+class StatsSettingsView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        if request.method == 'POST':
+            display_setting = request.form.get('record_stats_radio', 'True')
+            current_app.config["WEKO_ADMIN_DISPLAY_FILE_STATS"] = True if \
+                display_setting == 'True' else False
+            flash(_('Successfully Changed Settings.'))
+            redirect('statssettings.index')
+        return self.render(
+            current_app.config["WEKO_ADMIN_STATS_SETTINGS_TEMPLATE"],
+            display_stats=current_app.config["WEKO_ADMIN_DISPLAY_FILE_STATS"]
+        )
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -452,6 +466,15 @@ report_adminview = {
         'category': _('Statistics'),
         'name': _('Report'),
         'endpoint': 'report'
+    }
+}
+
+stats_settings_adminview = {
+    'view_class': StatsSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Stats'),
+        'endpoint': 'statssettings'
     }
 }
 
@@ -477,5 +500,6 @@ __all__ = (
     'style_adminview',
     'report_adminview',
     'language_adminview',
-    'web_api_account_adminview'
+    'web_api_account_adminview',
+    'stats_settings_adminview'
 )
