@@ -127,6 +127,7 @@ class ComponentTableResult extends React.Component {
     let unit = document.getElementById("unit").value;
     const UNIT_HOST = 5;
     const UNIT_ITEM = 4;
+    const UNIT_DAY = 1;
     if (unit == UNIT_HOST || unit == UNIT_ITEM) {
       if (unit == UNIT_HOST) {
         cols.push(<col className="col-md-5" />);
@@ -171,6 +172,8 @@ class ComponentTableResult extends React.Component {
         let year = '';
         if (data[i].year) {
           year = data[i].year;
+        } else if (unit == UNIT_DAY) {
+          year = data[i].start_date;
         } else {
           year = data[i].start_date + " - " + data[i].end_date;
         }
