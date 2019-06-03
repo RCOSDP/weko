@@ -20,3 +20,12 @@ WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS = \
 WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN = \
     'weko_gridlayout/admin/widget_design.html'
 """Widget Design templates."""
+
+WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL = "No Title"
+"""Default widget label"""
+
+WEKO_GRIDLAYOUT_DEFAULT_WIDGET_DESCRIPTION = "No Description"
+"""Default widget description"""
+
+WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE = "en"
+"""Default widget language code"""
