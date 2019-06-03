@@ -372,11 +372,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
-
     return render_template(
         template,
         pid=pid,
         record=record,
+        display_stats=current_app.config['WEKO_ADMIN_DISPLAY_FILE_STATS'],
         filename=filename,
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
