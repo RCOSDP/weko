@@ -503,6 +503,22 @@ class ExtendComponent extends React.Component {
             let setting = {};
             setting = nextProps.data_load;
             nextProps.getValueOfField("language", false);
+            let read_more = document.getElementById("read_more");
+            let hide_the_rest = document.getElementById("hide_the_rest");
+            if (read_more) {
+                if (setting['read_more']) {
+                    read_more.value = setting['read_more'];
+                } else {
+                    read_more.value = '';
+                }
+            }
+            if (hide_the_rest) {
+                if (setting['hide_the_rest']) {
+                    hide_the_rest.value = setting['hide_the_rest'];
+                } else {
+                    hide_the_rest.value = '';
+                }
+            }
             return {
                 settings: setting
             }
@@ -546,12 +562,16 @@ class ExtendComponent extends React.Component {
     }
 
     handleChangeHideTheRest(event) {
-        this.setState({ hide_the_rest: event.target.value });
+        let setting = this.state.settings;
+        setting['hide_the_rest'] = event.target.value;
+        this.setState({ settings: setting });
         this.handleChange("hide_the_rest", event.target.value);
     }
 
     handleChangeReadMore(event) {
-        this.setState({ read_more: event.target.value });
+        let setting = this.state.settings;
+        setting['read_more'] = event.target.value;
+        this.setState({ settings: setting });
         this.handleChange("read_more", event.target.value);
     }
 
@@ -595,7 +615,7 @@ class ExtendComponent extends React.Component {
                                 </div>
                                 <br />
                                 <div className="sub-text-box">
-                                    <input type="text" name="read_more" value={this.state.read_more} onChange={this.handleChangeReadMore} className="form-control" placeholder="Read more" value={this.state.settings.read_more} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                                    <input type="text"  id="read_more" name="read_more" onChange={this.handleChangeReadMore} className="form-control" placeholder="Read more" value={this.state.settings.read_more} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                                 </div>
                                 <br />
                             </div>
@@ -607,7 +627,7 @@ class ExtendComponent extends React.Component {
                             <label className="control-label col-xs-2 text-right"></label>
                             <div class="controls col-xs-10">
                                 <div className="sub-text-box">
-                                    <input type="text" name="hide_the_rest" value={this.state.hide_the_rest} onChange={this.handleChangeHideTheRest} className="form-control" placeholder="Hide the rest" value={this.state.settings.hide_the_rest} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                                    <input type="text" id="hide_the_rest" name="hide_the_rest" onChange={this.handleChangeHideTheRest} className="form-control" placeholder="Hide the rest" value={this.state.settings.hide_the_rest} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                                 </div>
                                 <br />
                             </div>
@@ -672,7 +692,7 @@ class ComponentButtonLayout extends React.Component {
             let langData = multiLangData[object];
             if (langData['isDefault']) {
                 currentLabel = langData['label'];
-                currentDescription = langData['setting'];
+                currentDescription = langData['description'];
                 currentLanguage = object;
                 break;
             }
@@ -681,7 +701,6 @@ class ComponentButtonLayout extends React.Component {
         data['settings'] = currentDescription;
         data['language'] = currentLanguage;
 
-        console.log(data);
         let request = {
             flag_edit: this.props.is_edit,
             data: data,
@@ -999,6 +1018,7 @@ class MainLayout extends React.Component {
                 this.setState({
                     widget_type: value,
                     multiLangSetting: {},
+                    label: ''
                 });
                 break;
             case 'label':
@@ -1047,8 +1067,9 @@ class MainLayout extends React.Component {
         }
         let setting = {
             label: this.state.label,
-            setting: this.state.settings
+            description: this.state.settings
         };
+
         let storage = this.state.multiLangSetting;
         if ($.isEmptyObject(storage)) {
             setting['isDefault'] = true;
@@ -1058,7 +1079,7 @@ class MainLayout extends React.Component {
         storage[lang] = setting;
         if (this.state.multiLangSetting[newLanguage]) {
             let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
-            let currentSetting = this.state.multiLangSetting[newLanguage]['setting'];
+            let currentSetting = this.state.multiLangSetting[newLanguage]['description'];
             this.setState({
                 label: currentLabel,
                 settings: currentSetting,
