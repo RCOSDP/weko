@@ -34,7 +34,7 @@ from marshmallow import Schema, fields, missing
 
 import weko_records.config as config
 from weko_records.serializers.utils import get_attribute_schema, \
-    get_item_type_name
+    get_item_type_name, get_item_type_name_id
 
 
 def _get_itemdata(obj, key):
@@ -274,8 +274,8 @@ class RecordSchemaCSLJSON(Schema):
             return missing
 
         for itemdata in itemdatas:
-            _, num_of_pages = _get_mapping_data(schema, itemdata, "Number of "
-                                                               "Pages")
+            _, num_of_pages = _get_mapping_data(schema, itemdata,
+                                                "Number of Pages")
 
         if num_of_pages:
             return num_of_pages

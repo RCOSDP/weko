@@ -1,3 +1,19 @@
+.scroll {
+  overflow: auto;
+  white-space: nowrap;
+}
+
+// CSS
+.testimonial-group > .row {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.testimonial-group > .row > .col-xs-4 {
+      display: inline-block;
+        float: none;
+    }
+//End
+
 .back-button {
   width: 80px;
   height: 40px;
