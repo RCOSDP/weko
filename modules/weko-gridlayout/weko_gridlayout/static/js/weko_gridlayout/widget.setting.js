@@ -677,7 +677,7 @@ class ComponentButtonLayout extends React.Component {
         if (currentLabel || !$.isEmptyObject(currentDescription)) {
             let currentLangData = {
                 label: currentLabel,
-                setting: currentDescription
+                description: currentDescription
             }
             if($.isEmptyObject(multiLangData)) {
                 currentLangData['isDefault'] = true;
@@ -1002,13 +1002,29 @@ class MainLayout extends React.Component {
             enable: this.props.data_load.is_enabled,
             settings: {},
             language: this.props.data_load.language,
-            multiLangSetting: {},
+            multiLangSetting: this.props.data_load.multiLangSetting,
             multiLanguageChange: false,
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
     }
-
+    componentDidMount() {
+        // For edit option - Convert data
+        let registeredLang = [];
+        let description = {};
+        if (!$.isEmptyObject(this.state.multiLangSetting)) {
+            for (let object in this.state.multiLangSetting) {
+                registeredLang.push(object);
+                if (this.state.multiLangSetting[object]['isDefault']) {
+                    description = this.state.multiLangSetting[object]['description'];
+                }
+            }
+        }
+        this.setState({
+            settings: description,
+            multiLanguageChange: true
+        })
+    }
     getValueOfField(key, value) {
         switch (key) {
             case 'repository':
@@ -1018,7 +1034,8 @@ class MainLayout extends React.Component {
                 this.setState({
                     widget_type: value,
                     multiLangSetting: {},
-                    label: ''
+                    label: '',
+                    settings: {}
                 });
                 break;
             case 'label':
@@ -1176,7 +1193,8 @@ $(function () {
             browsing_role: [1, 2, 3, 4, 99],
             edit_role: [1, 2, 3, 4, 99],
             is_enabled: true,
-            language: ''
+            language: '',
+            multiLangSetting: {}
         }
     }
     let returnURL = $("#return_url").val();
