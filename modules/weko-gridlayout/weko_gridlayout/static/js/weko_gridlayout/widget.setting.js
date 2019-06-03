@@ -646,9 +646,45 @@ class ComponentButtonLayout extends React.Component {
                 '<button type="button" class="close" data-dismiss="alert">' +
                 '&times;</button>' + message + '</div>');
         }
+
+        // Convert data
+        let data = this.props.data;
+        let multiLangData = data['multiLangSetting'];
+        let currentLabel = data['label'];
+        let currentDescription = data['settings'];
+        let currentLanguage = data['language'];
+
+        if (currentLabel || !$.isEmptyObject(currentDescription)) {
+            let currentLangData = {
+                label: currentLabel,
+                setting: currentDescription
+            }
+            if($.isEmptyObject(multiLangData)) {
+                currentLangData['isDefault'] = true;
+            }else {
+                currentLangData['isDefault'] = false;
+            }
+            multiLangData[currentLanguage] = currentLangData;
+        }
+        data['multiLangSetting'] = multiLangData;
+
+        for (let object in multiLangData) {
+            let langData = multiLangData[object];
+            if (langData['isDefault']) {
+                currentLabel = langData['label'];
+                currentDescription = langData['setting'];
+                currentLanguage = object;
+                break;
+            }
+        }
+        data['label'] = currentLabel;
+        data['settings'] = currentDescription;
+        data['language'] = currentLanguage;
+
+        console.log(data);
         let request = {
             flag_edit: this.props.is_edit,
-            data: this.props.data,
+            data: data,
             data_id: '',
         };
         if (this.state.repository == '' && this.state.widget_type == '' && this.state.label == '')
@@ -919,7 +955,7 @@ class ComponentLanguage extends React.Component {
     render() {
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
                 <div class="controls col-xs-6">
                     <select onChange={this.handleChange} className="form-control" id="language">
                         {this.state.options}
@@ -1016,13 +1052,10 @@ class MainLayout extends React.Component {
         let storage = this.state.multiLangSetting;
         if ($.isEmptyObject(storage)) {
             setting['isDefault'] = true;
-            this.setState({
-                language: lang
-            })
         } else {
             setting['isDefault'] = false;
         }
-        storage[language] = setting;
+        storage[lang] = setting;
         if (this.state.multiLangSetting[newLanguage]) {
             let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
             let currentSetting = this.state.multiLangSetting[newLanguage]['setting'];
@@ -1030,12 +1063,14 @@ class MainLayout extends React.Component {
                 label: currentLabel,
                 settings: currentSetting,
                 multiLanguageChange: true,
+                language: newLanguage
             });
         } else {
             this.setState({
                 label: '',
                 settings: {},
                 multiLanguageChange: true,
+                language: newLanguage
             });
         }
         this.setState({
