@@ -498,8 +498,6 @@ def next_action(activity_id='0', action_id=0):
         item = None
         if activity_detail is not None and activity_detail.item_id is not None:
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-            deposit = WekoDeposit.get_record(item.id)
-            deposit.publish()
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
             record_class = import_string('weko_deposit.api:WekoRecord')
@@ -553,6 +551,9 @@ def next_action(activity_id='0', action_id=0):
                 action_version=next_flow_action[0].action_version,
             )
             work_activity.end_activity(activity)
+            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+            deposit = WekoDeposit.get_record(item.id)
+            deposit.publish()
         else:
             next_action_id = next_flow_action[0].action_id
             work_activity.upt_activity_action(
