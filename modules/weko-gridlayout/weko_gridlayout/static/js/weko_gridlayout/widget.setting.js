@@ -1000,7 +1000,7 @@ class MainLayout extends React.Component {
             browsing_role: this.props.data_load.browsing_role,
             edit_role: this.props.data_load.edit_role,
             enable: this.props.data_load.is_enabled,
-            settings: this.props.data_load.settings,
+            settings: {},
             language: this.props.data_load.language,
             multiLangSetting: {},
             multiLanguageChange: false,
@@ -1176,7 +1176,6 @@ $(function () {
             browsing_role: [1, 2, 3, 4, 99],
             edit_role: [1, 2, 3, 4, 99],
             is_enabled: true,
-            settings: {},
             language: ''
         }
     }

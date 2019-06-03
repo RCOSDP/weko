@@ -337,7 +337,7 @@ def delete_item_in_preview_widget_item(data_id, json_data):
 
 
 def update_general_item(item, data_result):
-    """Update general field item.
+    """Update general feild item.
 
     :param item: item need to be update
     :param data_result: result
@@ -350,37 +350,7 @@ def update_general_item(item, data_result):
     item['text_color'] = data_result.get('text_color')
     item['name'] = data_result.get('label')
     item['type'] = data_result.get('widget_type')
-
-
-def update_free_description_type(item, data_settings):
-    """Update item type Free description.
-
-    :param item: item need to be update
-    :param data_settings: data settings
-    :return:
-    """
-    item['description'] = data_settings.get('description')
-    item['language'] = data_settings.get('language')
-
-
-def update_notice_type(item, data_settings):
-    """Update item type Notice.
-
-    :param item: item need to be update
-    :param data_settings: data settings
-    :return:
-    """
-    item['description'] = data_settings.get('description')
-    item['language'] = data_settings.get('language')
-    if data_settings.get('more_description'):
-        item['read_more'] = data_settings.get('read_more')
-        item['hide_the_rest'] = data_settings.get('hide_the_rest')
-        item['more_description'] = data_settings.get('more_description')
-    else:
-        item.pop('read_more', None)
-        item.pop('hide_the_rest', None)
-        item.pop('more_description', None)
-
+    item['multiLangSetting'] = data_result.get('multiLangSetting')
 
 def update_item_in_preview_widget_item(data_id, data_result, json_data):
     """Update item in preview widget design when it is edited in widget item.
