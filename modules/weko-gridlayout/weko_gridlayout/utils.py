@@ -87,10 +87,16 @@ def get_widget_list(repository_id, default_language):
                 data["widgetLanguage"] = widget_item.language
                 settings = widget_item.settings
                 settings = json.loads(settings)
-                languages = settings.get("language")
+                languages = settings.get("multiLangSetting")
                 if type(languages) is dict and lang_code_default is not None:
-                    data_display = languages[lang_code_default]
-                    data["widgetLabelDisplay"] = data_display.get('label')
+                    if languages.get(lang_code_default):
+                        data_display = languages[lang_code_default]
+                        data["widgetLabelDisplay"] = data_display.get('label')
+                    elif languages.get('en'):
+                        data_display = languages['en']
+                        data["widgetLabelDisplay"] = data_display.get('label')
+                    else:
+                        data["widgetLabelDisplay"] = widget_item.label
                 else:
                     data["widgetLabelDisplay"] = widget_item.label
                 result["data"].append(data)
@@ -133,12 +139,19 @@ def get_widget_preview(repository_id, default_language):
                     widget_preview["name"] = item.get("name")
                     widget_preview["widget_language"] = item.get(
                         "widget_language")
-                    languages = item.get("language")
+                    languages = item.get("multiLangSetting")
                     if type(languages) is dict and lang_code_default \
                             is not None:
-                        data_display = languages[lang_code_default]
-                        widget_preview["name_display"] = data_display.get(
-                            'label')
+                        if languages.get(lang_code_default):
+                            data_display = languages.get(lang_code_default)
+                            widget_preview["name_display"] = data_display.get(
+                                'label')
+                        elif languages.get('en'):
+                            data_display = languages.get('en')
+                            widget_preview["name_display"] = data_display.get(
+                                'label')
+                        else:
+                            widget_preview["name_display"] = item.get("name")
                     else:
                         widget_preview["name_display"] = item.get("name")
                     result["data"].append(widget_preview)
@@ -340,7 +353,7 @@ def delete_item_in_preview_widget_item(data_id, json_data):
 
 
 def update_general_item(item, data_result):
-    """Update general feild item.
+    """Update general field item.
 
     :param item: item need to be update
     :param data_result: result
@@ -372,8 +385,6 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
             if str(item.get('name')) == str(data_id.get('label')) and str(
                     item.get('type')) == str(data_id.get('widget_type')):
                 update_general_item(item, data_result)
-                settings = data_result.get('settings')
-                update_general_item(settings)
     data = json.dumps(json_data)
     return data
 
