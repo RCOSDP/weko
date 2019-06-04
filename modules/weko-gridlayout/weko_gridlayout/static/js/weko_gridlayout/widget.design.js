@@ -318,7 +318,6 @@ var PreviewGrid = new function () {
 
     this.widgetTemplate = function(node, isAutoPosition) {
         let autoPosition = "";
-        console.log(node.widget_language);
         if(isAutoPosition){
             autoPosition = 'data-gs-auto-position="true"';
         }

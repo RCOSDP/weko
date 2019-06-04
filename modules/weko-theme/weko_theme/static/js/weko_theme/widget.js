@@ -67,7 +67,7 @@ let PageBodyGrid = function () {
                 '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
                 '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
                 linkID + '\',\'' + readMore + '\', \'' + hideRest + '\')">' +
-                ((languageDescription.read_more != "") ? languageDescription.read_more : readMoreDefaultText) +
+                ((languageDescription.read_more != "") ? languageDescription.read_more : READ_MORE_DEFAULT) +
                 '</a>';
         }
 
