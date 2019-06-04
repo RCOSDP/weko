@@ -309,10 +309,10 @@ def add_signals_info(record, obj):
     obj.userid = userid
 
     # Add site license flag to send_obj
-    if hasattr(current_user, 'site_license_flag'):
-        obj.site_license_flag = True
-    else:
-        obj.site_license_flag = False
+    obj.site_license_flag = True if hasattr(current_user, 'site_licese_flag') \
+        else False
+    obj.site_license_name = current_user.site_license_name \
+        if hasattr(current_user, 'site_license_name') else ''
 
     # Add index list info to send_obj
     index_list = ''

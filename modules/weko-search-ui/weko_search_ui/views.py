@@ -28,6 +28,7 @@ from xml.etree import ElementTree as ET
 from blinker import Namespace
 from flask import Blueprint, abort, current_app, jsonify, make_response, \
     redirect, render_template, request, url_for
+from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
@@ -38,7 +39,7 @@ from weko_deposit.api import WekoIndexer
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
 from weko_indextree_journal.api import Journals
-
+from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
@@ -163,10 +164,18 @@ def search():
             **ctx)
     else:
         journal_info = None
+        check_site_license_permission()
+        send_info = {}
+        send_info['site_license_flag'] = True \
+            if hasattr(current_user, 'site_license_flag') else False
+        send_info['site_license_name'] = current_user.site_license_name \
+            if hasattr(current_user, 'site_license_name') else ''
         if search_type in ('0', '1', '2'):
             searched.send(
                 current_app._get_current_object(),
-                search_args=getArgs)
+                search_args=getArgs,
+                info=send_info
+            )
             if search_type == '2':
                 cur_index_id = request.args.get('q', '0')
                 journal_info = get_journal_info(cur_index_id)
