@@ -492,6 +492,12 @@ class ExtendComponent extends React.Component {
         this.handleChangeReadMore = this.handleChangeReadMore.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
+        if (!prevState.write_more && nextProps.data_load.more_description) {
+            return {
+                write_more: true,
+                settings: nextProps.data_load
+            }
+        }
         if (nextProps.type !== prevState.type) {
             return {
                 type: nextProps.type,
@@ -653,7 +659,8 @@ class ComponentButtonLayout extends React.Component {
         this.state = {
             repository: '',
             widget_type: '',
-            label: ''
+            label: '',
+            language: ''
         }
         this.saveCommand = this.saveCommand.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
@@ -738,7 +745,8 @@ class ComponentButtonLayout extends React.Component {
                         this.setState({
                             repository: this.props.data.repository,
                             widget_type: this.props.data.widget_type,
-                            label: this.props.data.label
+                            label: this.props.data.label,
+                            language: this.props.data.language
                         })
                     } else {
                         //alert(result.message);
@@ -891,19 +899,29 @@ class ComponentLanguage extends React.Component {
                             }
                         });
                     }
-                    langList = this.removeDuplicatedLang(langList, registeredLang);
-                    this.displayOptions(langList, registeredLang, langName, true);
-                    this.props.getValueOfField('lang', langList[0]);
                     let selectedLang = langList[0];
-                    if (this.props.is_edit) {
-                        selectedLang = registeredLang[0];
-                    }
+                    let defaultLang = langList[0];
+                    if(this.props.is_edit) {
+                        langList = this.removeDuplicatedLang(langList, registeredLang);
+
+                        // Load data for edit UI
+                        let loadedData = this.props.loaded_data;
+
+                        for (let item in loadedData) {
+                            if (loadedData[item]['isDefault']) {
+                                selectedLang = item;
+                                defaultLang = item;
+                            }
+                        }
+                     }
+                    this.displayOptions(langList, registeredLang, langName, true, selectedLang);
+                    this.props.getValueOfField('lang', langList[0]);
                     this.setState({
                         languageList: langList,
                         registeredLanguage: registeredLang,
                         languageNameList: langName,
                         selectedLanguage: selectedLang,
-                        defaultLanguage: langList[0]
+                        defaultLanguage: defaultLang
                     });
                 }
             });
@@ -926,7 +944,12 @@ class ComponentLanguage extends React.Component {
         let state = this.state;
         if (registeredLanguage) {
             registeredLanguage.forEach(function (lang) {
-                let innerHTML = <option value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
+                let innerHTML;
+                if (lang == selected) {
+                    innerHTML = <option value={lang} style={{ fontWeight: 'bold' }} selected>{languageNameList[lang]}&nbsp;(Registered)</option>;
+                }else {
+                    innerHTML = <option value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
+                }
                 optionList.push(innerHTML);
             });
         }
@@ -1162,7 +1185,8 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} />
                 </div>
                 <div className="row">
-                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit} storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} />
+                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit}
+                        storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} loaded_data={this.props.data_load.multiLangSetting} />
                 </div>
                 <div className="row">
                     <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding="label" data_load={this.state.label} data_change={this.state.multiLanguageChange} type={this.state.widget_type} />
