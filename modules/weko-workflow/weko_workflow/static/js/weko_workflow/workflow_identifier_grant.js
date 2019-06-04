@@ -7,6 +7,37 @@ require([
     post_data: {}
   }
 
+  // click button Next
+  $('#btn-finish').on('click', function () {
+    preparePostData(0);
+    sendQuitAction();
+  });
+
+  // click button Save
+  $('#btn-draft').on('click', function () {
+    preparePostData(1);
+    sendQuitAction();
+  });
+
+  // click button Continue
+  $('#btn_withdraw_continue').on('click', function () {
+    sendWithdrawAction();
+  });
+
+  // click button Withdraw
+  $('#btn_withdraw').on('click', function () {
+    $('#action_withdraw_confirmation').modal('show');
+  });
+
+  $('#lnk_item_detail').on('click', function () {
+    $('#myModal').modal('show');
+  });
+
+  $('button#btn_close_alert').on('click', function () {
+    $('#pwd').parent().removeClass('has-error');
+    $('#error-info').parent().hide();
+  });
+
   // prepare data for sending
   function preparePostData(tmp_save) {
     data_global.post_uri = $('.cur_step').data('next-uri');
@@ -27,7 +58,6 @@ require([
 
   function getVal(inObject) {
     val = inObject.val();
-
     if (val === undefined) {
       return '';
     } else {
@@ -36,7 +66,7 @@ require([
   }
 
   // send
-  function send() {
+  function sendQuitAction() {
     $.ajax({
       url: data_global.post_uri,
       method: 'POST',
@@ -61,19 +91,32 @@ require([
     });
   }
 
-  // click button Next
-  $('#btn-finish').on('click', function () {
-    preparePostData(0);
-    send();
-  });
-
-  // click button Save
-  $('#btn-draft').on('click', function () {
-    preparePostData(1);
-    send();
-  });
-
-  $('#lnk_item_detail').on('click', function () {
-    $('#myModal').modal('show');
-  })
+  function sendWithdrawAction() {
+    let form = $('form[name$=withdraw_doi_form]');
+    let withdraw_uri = form.attr('action');
+    let post_data = {passwd: $('#pwd').val()};
+    $.ajax({
+      url: withdraw_uri,
+      method: 'POST',
+      async: true,
+      contentType: 'application/json',
+      data: JSON.stringify(post_data),
+      success: function (data, status) {
+        if (0 == data.code) {
+          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
+            document.location.href = data.data.redirect;
+          } else {
+            document.location.reload(true);
+          }
+        } else {
+          $('#pwd').parent().addClass('has-error');
+          $('#error-info').html(data.msg);
+          $('#error-info').parent().show();
+        }
+      },
+      error: function (jqXHE, status) {
+        alert('Server error');
+      }
+    });
+  }
 })

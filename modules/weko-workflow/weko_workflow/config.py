@@ -75,3 +75,6 @@ IDENTIFIER_ITEMSMETADATA_FORM = {
     }
 }
 """ItemsMetadata format for Identifier Grant action."""
+
+IDENTIFIER_GRANT_IS_WITHDRAWING = -2
+"""Identifier grant is withdrawing."""
