@@ -28,7 +28,6 @@ from weko_admin.models import AdminLangSettings
 
 from .api import WidgetItems
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
-    WEKO_GRIDLAYOUT_DEFAULT_WIDGET_DESCRIPTION, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
 from .models import WidgetDesignSetting, WidgetItem, WidgetType
 
@@ -218,10 +217,7 @@ def _get_widget_design_item_base_on_current_language(current_language,
         else:
             widget["multiLangSetting"] = {
                 "label": WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL,
-                "description": {
-                    "description": WEKO_GRIDLAYOUT_DEFAULT_WIDGET_DESCRIPTION,
-                    "more_description": None
-                }
+                "description": {}
             }
     return widget
 
