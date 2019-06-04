@@ -56,8 +56,11 @@ class Repository extends React.Component {
                         return;
                     }
                     let widgetPreview = result['widget-preview'];
+                    let widgetList = result['widget-list'];
                     let data = widgetPreview['data'];
                     loadWidgetPreview(data);
+                    data = widgetList['data'];
+                    loadWidgetList(data);
                 },
                 (error) => {
                     console.log(error);
@@ -104,53 +107,6 @@ class WidgetList extends React.Component {
         };
     }
 
-    componentDidMount() {
-        fetch("/api/admin/load_widget_list_design_setting/0")
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if (result.error) {
-                        console.log(result.error);
-                        return;
-                    }
-                    let widgetList = result['widget-list'];
-                    let data = widgetList["data"];
-                    loadWidgetList(data);
-                },
-
-                (error) => {
-                    console.log(error);
-                }
-            );
-    }
-
-    reloadWidgetListPanel(repositoryId) {
-        let url = "/api/admin/load_widget_list_design_setting/" + repositoryId;
-        fetch(url)
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if (result.error) {
-                        console.log(result.error);
-                        return;
-                    }
-                    let widgetList = result['widget-list'];
-                    let data = widgetList["data"];
-                    loadWidgetList(data);
-                },
-                (error) => {
-                    console.log(error);
-                }
-            );
-    }
-
-    componentWillReceiveProps(props) {
-        const { repositoryId } = this.props;
-        if (props.repositoryId !== repositoryId) {
-            this.reloadWidgetListPanel(props.repositoryId);
-        }
-    }
-
     render() {
         return (
             <div>
@@ -173,26 +129,6 @@ class PreviewWidget extends React.Component {
             "min-height": "300px",
         };
     }
-
-    componentDidMount() {
-        fetch("/api/admin/load_widget_list_design_setting/0")
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if (result.error) {
-                        console.log(result.error);
-                        return;
-                    }
-                    let widgetPreview = result['widget-preview'];
-                    let data = widgetPreview['data'];
-                    loadWidgetPreview(data);
-                },
-                (error) => {
-                    console.log(error);
-                }
-            );
-    }
-
 
     render() {
         return (
