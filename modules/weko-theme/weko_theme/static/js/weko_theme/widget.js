@@ -1,16 +1,16 @@
-const mainContentType = "Main contents";
-const freeDescriptionType = "Free description";
-const noticeType = "Notice";
-const hideRestDefaultText = "Hide the rest";
-const readMoreDefaultText = "Read more";
+const MAIN_CONTENT_TYPE = "Main contents";
+const FREE_DESCRIPTION_TYPE = "Free description";
+const NOTICE_TYPE = "Notice";
+const HIDE_REST_DEFAULT = "Hide the rest";
+const READ_MORE_DEFAULT = "Read more";
 
-(function() {
+(function () {
     getWidgetDesignSetting();
     window.lodash = _.noConflict();
 }());
 
-let PageBodyGrid = function() {
-    this.init = function() {
+let PageBodyGrid = function () {
+    this.init = function () {
         let options = {
             width: 12,
             float: true,
@@ -23,20 +23,20 @@ let PageBodyGrid = function() {
         this.grid = widget.data('gridstack');
     };
 
-    this.addNewWidget = function(node, index) {
+    this.addNewWidget = function (node, index) {
         this.grid.addWidget($(this.widgetTemplate(node, index)), node.x, node.y, node.width, node.height);
         return false;
     }.bind(this);
 
-    this.updateMainContent = function(node) {
+    this.updateMainContent = function (node) {
         let mainContents = $("#main_contents");
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
 
-    this.loadGrid = function(widgetListItems) {
+    this.loadGrid = function (widgetListItems) {
         let items = GridStackUI.Utils.sort(widgetListItems);
-        items.forEach(function(node) {
-            if (mainContentType == node.type) {
+        items.forEach(function (node) {
+            if (MAIN_CONTENT_TYPE == node.type) {
                 this.updateMainContent(node);
                 return false;
             }
@@ -44,51 +44,64 @@ let PageBodyGrid = function() {
 
         for (var i = 0; i < items.length; i++) {
             let node = items[i];
-            if (mainContentType != node.type) {
+            if (MAIN_CONTENT_TYPE != node.type) {
                 this.addNewWidget(node, i);
             }
         }
         return false;
     }.bind(this);
 
-    this.widgetTemplate = function(node, index) {
+    this.buildNoticeType = function (languageDescription, index) {
+        let description = "";
+        let moreDescriptionID = (NOTICE_TYPE + "_" + index).trim();
+        let linkID = "writeMoreNotice_" + index;
+        let moreDescription = "";
+        let templateWriteMoreNotice = '<div id="' + moreDescriptionID + '" style="display: none;">' +
+            moreDescription + '</div>';
 
+        if (languageDescription.more_description) {
+            moreDescription = languageDescription.more_description;
+            let hideRest = (languageDescription.hide_the_rest != "") ? languageDescription.hide_the_rest : HIDE_REST_DEFAULT;
+            let readMore = (languageDescription.read_more != "") ? languageDescription.read_more : READ_MORE_DEFAULT;
+            templateWriteMoreNotice = '</br>' +
+                '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
+                '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
+                linkID + '\',\'' + readMore + '\', \'' + hideRest + '\')">' +
+                ((languageDescription.read_more != "") ? languageDescription.read_more : readMoreDefaultText) +
+                '</a>';
+        }
+
+        if (!$.isEmptyObject(languageDescription)) {
+            description = languageDescription.description + templateWriteMoreNotice;
+        }
+        return description;
+    };
+
+    this.widgetTemplate = function (node, index) {
         let labelColor = node.label_color;
-        let frameBorderColor = ((node.frame_border) ? node.frame_border_color : "");
+        let frameBorderColor = (node.frame_border) ? node.frame_border_color : "";
         let backgroundColor = node.background_color;
         let description = "";
         let leftStyle = 0;
         let paddingHeading = "";
         let overFlowBody = "";
-
-        if (node.type == freeDescriptionType) {
-            description = node.description;
-            leftStyle = "initial";
-            paddingHeading = "inherit";
-            overFlowBody = "scroll";
+        let multiLangSetting = node.multiLangSetting;
+        let languageDescription = "";
+        if (!$.isEmptyObject(multiLangSetting.description)) {
+            languageDescription = multiLangSetting.description;
         }
 
-        if (node.type == noticeType) {
-            let moreDescriptionID = (node.type + "_" + index).trim();
-            let linkID = "writeMoreNotice_" + index;
-            let moreDescription = "";
-            let templateWriteMoreNotice = '<div id="' + moreDescriptionID + '" style="display: none;">' +
-                moreDescription + '</div>';
-
-            if (typeof node.more_description != 'undefined') {
-                moreDescription = node.more_description;
-                let hideRest = ((node.hide_the_rest != "") ? node.hide_the_rest : hideRestDefaultText);
-                let readMore = ((node.read_more != "") ? node.read_more : readMoreDefaultText);
-                templateWriteMoreNotice = '</br>' +
-                    '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
-                    '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
-                    linkID + '\',\'' + readMore + '\', \'' + hideRest + '\')">' +
-                    ((node.read_more != "") ? node.read_more : readMoreDefaultText) +
-                    '</a>';
+        if (node.type == FREE_DESCRIPTION_TYPE) {
+            if (!$.isEmptyObject(languageDescription)){
+                description = languageDescription.description;
             }
+        }
 
-            description = node.description + templateWriteMoreNotice;
+        if (node.type == NOTICE_TYPE) {
+            description = this.buildNoticeType(languageDescription, index);
+        }
 
+        if (node.type == FREE_DESCRIPTION_TYPE || node.type == NOTICE_TYPE) {
             leftStyle = "initial";
             paddingHeading = "inherit";
             overFlowBody = "scroll";
@@ -100,7 +113,7 @@ let PageBodyGrid = function() {
             backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
             '     <div class="panel-heading widget-header widget-header-position" style="color: ' + labelColor + ';left: ' +
             leftStyle + ';">' +
-            '       <strong style="padding: ' + paddingHeading + ';">' + node.name + '</strong>' +
+            '       <strong style="padding: ' + paddingHeading + ';">' + multiLangSetting.label + '</strong>' +
             '     </div>' +
             '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' +
             description + '</div>' +
@@ -114,16 +127,20 @@ let PageBodyGrid = function() {
 
 function getWidgetDesignSetting() {
     let community_id = $("#community-id").text();
+    let current_language = $("#current_language").val();
     if (!community_id) {
         community_id = 'Root Index';
     }
-    let url = '/api/admin/load_widget_design_setting/' + community_id;
+    if (!current_language) {
+        current_language = "en";
+    }
+    let url = '/api/admin/load_widget_design_setting/' + community_id + '/' + current_language;
     $.ajax({
         type: 'GET',
         url: url,
-        success: function(data) {
+        success: function (data) {
             if (data.error) {
-                alert(error);
+                console.log(data.error);
                 toggleWidgetUI();
                 return;
             } else {
@@ -141,7 +158,7 @@ function getWidgetDesignSetting() {
 }
 
 function toggleWidgetUI() {
-    $("div#page_body").each(function() {
+    $("div#page_body").each(function () {
         $(this).css("display", "block");
         $('footer#footer').css("display", "block");
         $('footer-fix#footer').remove();
