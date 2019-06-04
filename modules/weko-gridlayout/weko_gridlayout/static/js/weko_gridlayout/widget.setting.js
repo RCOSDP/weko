@@ -838,8 +838,17 @@ class ComponentLanguage extends React.Component {
         this.initLanguageList = this.initLanguageList.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.displayOptions = this.displayOptions.bind(this);
+        this.removeDuplicatedLang = this.removeDuplicatedLang.bind(this);
     }
-
+    removeDuplicatedLang(langList, registeredLang) {
+        registeredLang.forEach(function(lang) {
+            let index = langList.indexOf(lang);
+            if (index != -1) {
+                langList.splice(index, 1);
+            }
+        });
+        return langList;
+    }
     initLanguageList() {
         let langList = [];
         let langName = {};
@@ -866,7 +875,7 @@ class ComponentLanguage extends React.Component {
                         }
                         langName[lang.lang_code] = lang.lang_name;
                     });
-                    for (let i = systemRegisteredLang.length; i > 0; i--) {
+                    for (let i = systemRegisteredLang.length; i >= 0; i--) {
                         for (let j = 0; j < systemRegisteredLang.length; j++) {
                             if (systemRegisteredLang[j].sequence == i) {
                                 langList.unshift(systemRegisteredLang[j].code);
@@ -882,7 +891,8 @@ class ComponentLanguage extends React.Component {
                             }
                         });
                     }
-                    this.displayOptions(langList, registeredLang, langName);
+                    langList = this.removeDuplicatedLang(langList, registeredLang);
+                    this.displayOptions(langList, registeredLang, langName, true);
                     this.props.getValueOfField('lang', langList[0]);
                     this.setState({
                         languageList: langList,
@@ -898,15 +908,18 @@ class ComponentLanguage extends React.Component {
     componentDidMount() {
         this.initLanguageList();
     }
-
     componentWillReceiveProps(nextProps) {
         if (nextProps.type !== this.props.type) {
             this.initLanguageList();
+            this.setState({
+                registeredLanguage: []
+            });
         }
     }
 
-    displayOptions(languageList, registeredLanguage, languageNameList) {
+    displayOptions(languageList, registeredLanguage, languageNameList, isReset = false, selected = null) {
         let optionList = [];
+        let state = this.state;
         if (registeredLanguage) {
             registeredLanguage.forEach(function (lang) {
                 let innerHTML = <option value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
@@ -915,7 +928,9 @@ class ComponentLanguage extends React.Component {
         }
         languageList.forEach(function (lang) {
             let innerHTML;
-            if (!registeredLanguage && lang == defaultLanguage) {
+            if ($.isEmptyObject(registeredLanguage) && lang == state.defaultLanguage && isReset) {
+                innerHTML = <option value={lang} selected>{languageNameList[lang]}</option>;
+            } else if (lang == selected) {
                 innerHTML = <option value={lang} selected>{languageNameList[lang]}</option>;
             } else {
                 innerHTML = <option value={lang}>{languageNameList[lang]}</option>;
@@ -928,8 +943,7 @@ class ComponentLanguage extends React.Component {
     }
 
     handleChange(event) {
-
-        var language = document.getElementById("language").value;
+        var language = event.target.value;
         if (this.state.selectedLanguage == "0") {
             this.setState({
                 selectedLanguage: language
@@ -944,7 +958,8 @@ class ComponentLanguage extends React.Component {
                     langList.splice(index, 1);
                     registeredLang.push(this.state.selectedLanguage);
                 }
-                this.displayOptions(langList, registeredLang, this.state.languageNameList);
+                this.displayOptions(langList, registeredLang, this.state.languageNameList, false, language);
+
                 this.setState({
                     languageList: langList,
                     registeredLanguage: registeredLang,
