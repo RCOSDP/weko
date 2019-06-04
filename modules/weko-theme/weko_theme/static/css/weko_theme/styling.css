@@ -279,12 +279,22 @@ button#btn_quit.done-button {
   margin-right: 28px;
 }
 
+.ten-pixel-bottom-margin {
+  margin-bottom: 10px;
+}
+
 .detail-lable {
  text-align: center;
 }
 
 .gray-color-class {
   border-color: #D3D3D3;
+}
+
+.withdraw-button{
+  width: 200px;
+  height: 40px;
+  font-size: 15px;
 }
 
 #add-icon {

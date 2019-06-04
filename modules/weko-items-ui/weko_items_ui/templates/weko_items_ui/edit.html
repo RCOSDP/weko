@@ -47,51 +47,39 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
-  {%- if pid %}
-  {%- else %}
-  <div class="row">
-    <div class="col-sm-12 col-md-12 col-lg-10">
-      <div class="form-inline h6">
-        <div class="form-group">
-          <label for="item-type-lists">{{_('Itemtype List')}}</label>
-          <select class="form-control" id="item-type-lists">
-            {% for list in lists %}
-            <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.harvesting_type %} class="harvesting" {% endif %} {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
-            {% endfor %}
-          </select>
+  {%- if not pid %}
+    <div class="row">
+      <div class="col-sm-12 col-md-12 col-lg-10">
+        <div class="form-inline h6">
+          <div class="form-group">
+            <label for="item-type-lists">{{_('Itemtype List')}}</label>
+            <select class="form-control" id="item-type-lists">
+              {% for list in lists %}
+              <option value="{{ list.item_type.0.id }}" {% if list.item_type.0.harvesting_type %} class="harvesting"
+                {% endif %} {% if list.item_type.0.id == id %}selected{% endif %}>
+                {{ list.name }}({{ list.item_type.0.tag }})</option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
       </div>
     </div>
-  </div>
   {%- endif %}
   <div class="row">
     <div class="col-md-12">
       <div id="weko-records">
         {%- if need_file %}
-        <invenio-files-uploader
-          method="PUT"
-          endpoint="{{ config.DEPOSIT_FILES_API }}"
-          {% if pid %}
+        <invenio-files-uploader method="PUT" endpoint="{{ config.DEPOSIT_FILES_API }}" {% if pid %}
+          initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}" files='{{files|tojson}}'
+          {% else %} initialization="{{ config.DEPOSIT_SEARCH_API }}" {% endif %}
+          extra-params='{"headers":{"Content-Type": "application/json"}}'>
+          {%- endif %}
+          <invenio-records {%- if pid %}
             initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
-            files='{{files|tojson}}'
-          {% else %}
-            initialization="{{ config.DEPOSIT_SEARCH_API }}"
-          {% endif %}
-          extra-params='{"headers":{"Content-Type": "application/json"}}'
-        >
-        {%- endif %}
-          <invenio-records
-            {%- if pid %}
-              initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
-              links='{{links|tojson}}'
-            {%- else %}
-              initialization="{{ config.DEPOSIT_SEARCH_API }}"
-            {%- endif %}
+            links='{{links|tojson}}' {%- else %} initialization="{{ config.DEPOSIT_SEARCH_API }}" {%- endif %}
             response-params='{{ config.DEPOSIT_RESPONSE_MESSAGES | tojson }}'
-            extra-params='{"headers":{"Content-Type": "application/json"}}'
-            form="{{ schemaform }}"
-            record='{{ record | tojson }}'
-            schema="{{ jsonschema }}">
+            extra-params='{"headers":{"Content-Type": "application/json"}}' form="{{ schemaform }}"
+            record='{{ record | tojson }}' schema="{{ jsonschema }}">
             <invenio-records-loading
               template="{{ url_for('static', filename='node_modules/invenio-records-js/dist/templates/loading.html') }}">
             </invenio-records-loading>
@@ -102,21 +90,21 @@
               <div class="col-sm-9" ng-show="true">
                 <ul class="list-inline text-right">
                   <li>
-                      <button ng-disabled="recordsVM.invenioRecordsLoading"
-                          class="btn btn-info next-button" ng-click="updateDataJson()">
-                              {{_('Next')}}
-                              <span class="glyphicon glyphicon-chevron-right"></span>
-                      </button>
+                    <button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-info next-button"
+                      ng-click="updateDataJson()">
+                      {{_('Next')}}
+                      <span class="glyphicon glyphicon-chevron-right"></span>
+                    </button>
                   </li>
                   <input type="hidden" id="next-frame" value="r">
                   {%- if pid %}
                   <li>
-                      <button ng-disabled="recordsVM.invenioRecordsLoading"
-                          ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
-                          class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">
-                            <span class="glyphicon glyphicon-trash"></span>
-                              {{_('Delete')}}
-                      </button>
+                    <button ng-disabled="recordsVM.invenioRecordsLoading"
+                      ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger delete-button"
+                      ng-click="recordsVM.actionHandler(['self', 'DELETE'],'ret')">
+                      <span class="glyphicon glyphicon-trash"></span>
+                      {{_('Delete')}}
+                    </button>
                   </li>
                   {%- endif %}
                 </ul>
@@ -132,84 +120,87 @@
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
                 </invenio-files-upload-zone>
                 <invenio-files-list
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
-                ></invenio-files-list>
+                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}">
+                </invenio-files-list>
               </div>
             </div>
             {%- endif %}
             <div ng-controller="WekoRecordsCtrl">
               <div class="row" ng-hide="false">
                 <div class="col-sm-9" ng-show="true">
-                <p class="text-center">
-                  <button class="btn btn-primary automatic-metadata-input-button" ng-click="getItemMetadata()">
-                    <span class="glyphicon glyphicon-search"></span>
-                    {{_('Automatic Metadata Input')}}
-                </button>
-                </p>
+                  <p class="text-center">
+                    <button class="btn btn-primary automatic-metadata-input-button" ng-click="getItemMetadata()">
+                      <span class="glyphicon glyphicon-search"></span>
+                      {{_('Automatic Metadata Input')}}
+                    </button>
+                  </p>
                 </div>
               </div>
               <!--add by ryuu. start 20180410-->
-              <div ng-show="false" type="text" id="btn_id" ></div>
-              <div ng-show="false" type="text" id="author_info" ></div>
-              <div ng-show="false" type="text" id="array_flg" ></div>
-              <div ng-show="false" type="text" id="array_index" ></div>
-              <div ng-show="false" type="text" id="weko_id" ></div>
-              <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button" ng-click="setAuthorInfo()"></button>
+              <div ng-show="false" type="text" id="btn_id"></div>
+              <div ng-show="false" type="text" id="author_info"></div>
+              <div ng-show="false" type="text" id="array_flg"></div>
+              <div ng-show="false" type="text" id="array_index"></div>
+              <div ng-show="false" type="text" id="weko_id"></div>
+              <button ng-show="false" id="btn_setAuthorInfo" class="btn btn-default" type="button"
+                ng-click="setAuthorInfo()"></button>
               <!--add by ryuu. end 20180410-->
               <div class="row hidden" id="contributor-panel">
                 <div class="col-sm-9">
 
                   <div class="panel panel-default">
-                      <div class="panel-heading">
-                        <h3 class="panel-title">Contributor</h3>
+                    <div class="panel-heading">
+                      <h3 class="panel-title">Contributor</h3>
+                    </div>
+                    <div class="panel-body">    
+                      <div class="row" id="radio_form_share">
+                        <div class="radio">
+                          <label>
+                            <input type="radio" name="checkedSharePermiss" id="input" class="input_contributor"
+                              value="this_user" checked="checked" onchange="handleSharePermission(this.value)">This
+                            user</label>
+                          <br><label><input type="radio" onchange="handleSharePermission(this.value)"
+                              name="checkedSharePermiss" id="input" value="other_user" class="other_user_rad">Other
+                            user</label>
+                        </div>
                       </div>
-                      <div class="panel-body">    
-                          <div class="row" id="radio_form_share">
-                            <div class="radio">
-                              <label>
-                               <input type="radio" name="checkedSharePermiss" id="input" class="input_contributor" value="this_user" checked="checked" onchange="handleSharePermission(this.value)">This user</label>
-                               <br><label><input type="radio" onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input" value="other_user" class="other_user_rad">Other user</label>
+                      <div class="form_share_permission">     
+                        <div class="row" id="pd_username">
+
+                          <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
+                            <label for="share_username">Username </label>
+                          </div>
+
+                          <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                            <div class="autocomplete">
+                              <input id="share_username" autocomplete="off" type="text" name="share_username"
+                                placeholder="Username" class="form-control" onclick="get_search_data('username')">
+                              <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"
+                                id="id_spinners_username"></span>
                             </div>
                           </div>
-                          <div class="form_share_permission">     
-                            <div class="row" id="pd_username">
-                              
-                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
-                                  <label for="share_username">Username </label>
-                              </div>
-                              
-                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                                  <div class="autocomplete">
-                                      <input id="share_username" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
-                                      <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_username"></span>
-                                    </div>
-                              </div>
+                        </div>
+                        <div class="row">
+                          <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
+                            <label for="share_email">Email </label>
+                          </div>
+                          <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                            <div class="autocomplete">
+                              <input id="share_email" autocomplete="off" type="text" name="share_email"
+                                placeholder="Email" class="form-control" onclick="get_search_data('email')">
+                              <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"
+                                id="id_spinners_email"></span>
                             </div>
-                            <div class="row">
-                              
-                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
-                                  <label for="share_email">Email </label>
-                              </div>
-                              
-                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                                  <div class="autocomplete">
-                                      <input id="share_email" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
-                                      <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_email"></span>
-                                  </div>
-                              </div>
-                            </div>      
-                          </div>             
-                        
-                      </div>
+                          </div>
+                        </div>      
+                      </div>             
+                    </div>
                   </div>
-
                 </div>
               </div>
-
-              <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
-
-              <invenio-records-form
-                form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
+              <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button"
+                ng-click="setItemMetadata()"></button>
+              <invenio-records-form form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
                 form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                 template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
               </invenio-records-form>
@@ -217,20 +208,20 @@
                 <div class="col-sm-9" ng-show="true">
                   <ul class="list-inline text-right">
                     <li>
-                         <button ng-disabled="recordsVM.invenioRecordsLoading"
-                             class="btn btn-info next-button" ng-click="updateDataJson()">
-                                {{_('Next')}}
-                                <span class="glyphicon glyphicon-chevron-right"></span>
-                         </button>
-                   </li>
+                      <button ng-disabled="recordsVM.invenioRecordsLoading" class="btn btn-info next-button"
+                        ng-click="updateDataJson()">
+                        {{_('Next')}}
+                        <span class="glyphicon glyphicon-chevron-right"></span>
+                      </button>
+                    </li>
                     {%- if pid %}
                     <li>
-                        <button ng-disabled="recordsVM.invenioRecordsLoading"
-                            ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
-                            class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
-                             <span class="glyphicon glyphicon-trash"></span>
-                                {{_('Delete')}}
-                        </button>
+                      <button ng-disabled="recordsVM.invenioRecordsLoading"
+                        ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger delete-button"
+                        ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
+                        <span class="glyphicon glyphicon-trash"></span>
+                        {{_('Delete')}}
+                      </button>
                     </li>
                     {%- endif %}
                   </ul>
@@ -238,52 +229,55 @@
               </div>
             </div>
           </invenio-records>
-        {%- if need_file %}
+          {%- if need_file %}
         </invenio-files-uploader>
         {%- endif %}
       </div>
     </div>
   </div>
-
 {%- endblock page_body_main %}
-{%- block page_body %}
-{{ super() }}
-<div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
-  <div class="modal-dialog modelWidth" role="document">
-    <div class="modal-content">
-      <div class="modal-body">
-        <app-author-search></app-author-search>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
-               <span class="glyphicon glyphicon-remove"></span>
-                    {{_('Close')}}
-        </button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-<div class="modal fade" tabindex="-1" role="dialog" id="meta-search">
-  <div class="modal-dialog modal-lg" style="margin-top: 300px" role="document">
-    <div class="modal-content">
-      <div class="modal-body">
-        <div id="meta-search-body"></div>
-        <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
-        <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID.')}}">
-        <input type="hidden" id="autofill_error_input_value" name="autofill_item_type_id" value="{{_('Please input value.')}}">
-        <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id" value="{{_('Specified ID does not exist.')}}">
-        <input type="hidden" id="autofill_header_name" name="autofill_header_name" value="{{_('Automatic metadata input')}}">
-        <input type="hidden" id="autofill_select_meta" name="autofill_select_meta" value="{{_('Automatic metadata input')}}">
-        <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" id="meta-search-close" data-dismiss="modal">
-            <span class="glyphicon glyphicon-remove"></span>
-               {{_('Close')}}
-        </button>
-      </div>
-    </div><!-- /.modal-content -->
-  </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
 
+{%- block page_body %}
+  {{ super() }}
+  <div ng-controller="AuthorModalCtrl" class="modal fade" tabindex="-1" role="dialog" id="myModal">
+    <div class="modal-dialog modelWidth" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <app-author-search></app-author-search>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
+            <span class="glyphicon glyphicon-remove"></span>
+            {{_('Close')}}
+          </button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+  <div class="modal fade" tabindex="-1" role="dialog" id="meta-search">
+    <div class="modal-dialog modal-lg" style="margin-top: 300px" role="document">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div id="meta-search-body"></div>
+          <input type="hidden" id="autofill_item_type_id" name="autofill_item_type_id" value="{{id}}">
+          <input type="hidden" id="autofill_error_id" name="autofill_item_type_id" value="{{_('Please select the ID.')}}">
+          <input type="hidden" id="autofill_error_input_value" name="autofill_item_type_id"
+            value="{{_('Please input value.')}}">
+          <input type="hidden" id="autofill_error_doi" name="autofill_item_type_id"
+            value="{{_('Specified ID does not exist.')}}">
+          <input type="hidden" id="autofill_header_name" name="autofill_header_name"
+            value="{{_('Automatic metadata input')}}">
+          <input type="hidden" id="autofill_select_meta" name="autofill_select_meta"
+            value="{{_('Automatic metadata input')}}">
+          <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-info close-button" id="meta-search-close" data-dismiss="modal">
+            <span class="glyphicon glyphicon-remove"></span>
+            {{_('Close')}}
+          </button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 {%- endblock page_body %}
