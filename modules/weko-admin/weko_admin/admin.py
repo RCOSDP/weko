@@ -394,7 +394,8 @@ class ReportView(BaseView):
                 elif 'institution_name' in raw_stats:
                     writer.writerows([[_('Institution Name')] + cols])
                     self.write_report_tsv_rows(writer,
-                                               raw_stats['institution_name'])
+                                               raw_stats['institution_name'],
+                                               file_type)
         except Exception:
             current_app.logger.error('Unexpected error: ',
                                      sys.exc_info()[0])
