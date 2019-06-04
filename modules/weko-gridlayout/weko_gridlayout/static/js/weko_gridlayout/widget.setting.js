@@ -894,11 +894,15 @@ class ComponentLanguage extends React.Component {
                     langList = this.removeDuplicatedLang(langList, registeredLang);
                     this.displayOptions(langList, registeredLang, langName, true);
                     this.props.getValueOfField('lang', langList[0]);
+                    let selectedLang = langList[0];
+                    if (this.props.is_edit) {
+                        selectedLang = registeredLang[0];
+                    }
                     this.setState({
                         languageList: langList,
                         registeredLanguage: registeredLang,
                         languageNameList: langName,
-                        selectedLanguage: langList[0],
+                        selectedLanguage: selectedLang,
                         defaultLanguage: langList[0]
                     });
                 }
@@ -1092,10 +1096,19 @@ class MainLayout extends React.Component {
                 })
         }
     }
+
     storeMultiLangSetting(lang, newLanguage) {
         var result = true;
         if (this.state.label == '' && $.isEmptyObject(this.state.settings)) {
             result = false;
+        } else {
+            let noData = true;
+            for (let data in this.state.settings) {
+                if (this.state.settings[data]) {
+                    noData = false;
+                }
+            }
+            result = !noData;
         }
         let setting = {
             label: this.state.label,
@@ -1108,7 +1121,13 @@ class MainLayout extends React.Component {
         } else {
             setting['isDefault'] = false;
         }
-        storage[lang] = setting;
+        if (this.state.label || !$.isEmptyObject(this.state.settings)) {
+            storage[lang] = setting;
+        } else {
+            if (storage[lang]) {
+                delete storage[lang];
+            }
+        }
         if (this.state.multiLangSetting[newLanguage]) {
             let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
             let currentSetting = this.state.multiLangSetting[newLanguage]['description'];
@@ -1143,7 +1162,7 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} />
                 </div>
                 <div className="row">
-                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} />
+                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit} storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} />
                 </div>
                 <div className="row">
                     <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding="label" data_load={this.state.label} data_change={this.state.multiLanguageChange} type={this.state.widget_type} />
