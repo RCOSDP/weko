@@ -708,6 +708,9 @@ class ComponentButtonLayout extends React.Component {
             let keys = Object.keys(multiLangData);
             if (!$.isEmptyObject(keys)) {
                 multiLangData[keys[0]]['isDefault'] = true;
+                currentLabel = multiLangData[keys[0]]['label'];
+                currentDescription = multiLangData[keys[0]]['description'];
+                currentLanguage = keys[0];
             }
         }
 
@@ -1012,7 +1015,7 @@ class ComponentLanguage extends React.Component {
                         registeredLang.splice(index, 1);
                     }
                 }
-                this.displayOptions(langList, registeredLang, this.state.languageNameList);
+                this.displayOptions(langList, registeredLang, this.state.languageNameList, false, language);
                 this.setState({
                     selectedLanguage: language
                 });
