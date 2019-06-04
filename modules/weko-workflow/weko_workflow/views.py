@@ -546,14 +546,15 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
+            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+            deposit = WekoDeposit.get_record(item.id)
+            deposit.update(dict(id=item.id))
+            deposit.publish()
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
             )
             work_activity.end_activity(activity)
-            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-            deposit = WekoDeposit.get_record(item.id)
-            deposit.publish()
         else:
             next_action_id = next_flow_action[0].action_id
             work_activity.upt_activity_action(
