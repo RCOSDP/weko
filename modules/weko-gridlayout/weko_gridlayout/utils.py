@@ -96,9 +96,11 @@ def get_widget_list(repository_id, default_language):
                         data_display = languages['en']
                         data["widgetLabelDisplay"] = data_display.get('label')
                     else:
-                        data["widgetLabelDisplay"] = widget_item.label
+                        data["widgetLabelDisplay"] = \
+                            WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                 else:
-                    data["widgetLabelDisplay"] = widget_item.label
+                    data["widgetLabelDisplay"] = \
+                        WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                 result["data"].append(data)
     except Exception as e:
         result["error"] = str(e)
@@ -151,9 +153,11 @@ def get_widget_preview(repository_id, default_language):
                             widget_preview["name_display"] = data_display.get(
                                 'label')
                         else:
-                            widget_preview["name_display"] = item.get("name")
+                            widget_preview["name_display"] = \
+                                WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                     else:
-                        widget_preview["name_display"] = item.get("name")
+                        widget_preview["name_display"] = \
+                            WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                     result["data"].append(widget_preview)
     except Exception as e:
         result['error'] = str(e)
