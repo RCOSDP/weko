@@ -135,7 +135,7 @@ def get_widget_preview(repository_id, default_language):
                         "widget_language")
                     languages = item.get("language")
                     if type(languages) is dict and lang_code_default \
-                        is not None:
+                            is not None:
                         data_display = languages[lang_code_default]
                         widget_preview["name_display"] = data_display.get(
                             'label')
@@ -186,22 +186,25 @@ def _get_widget_design_item_base_on_current_language(current_language,
     :return:
     """
     widget = widget_item.copy()
-    widget["language"] = dict()
-    languages = widget_item.get("language")
+    widget["multiLangSetting"] = dict()
+    languages = widget_item.get("multiLangSetting")
     if isinstance(languages, dict):
         for key, value in languages.items():
             if key == current_language:
-                widget["language"] = value
+                widget["multiLangSetting"] = value
                 break
-    if not widget["language"]:
+    if not widget["multiLangSetting"]:
         default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
         if isinstance(languages, dict) \
-            and languages.get(default_language_code):
-            widget["language"] = languages.get(default_language_code)
+                and languages.get(default_language_code):
+            widget["multiLangSetting"] = languages.get(default_language_code)
         else:
-            widget["language"] = {
+            widget["multiLangSetting"] = {
                 "label": WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL,
-                "description": WEKO_GRIDLAYOUT_DEFAULT_WIDGET_DESCRIPTION
+                "description": {
+                    "description": WEKO_GRIDLAYOUT_DEFAULT_WIDGET_DESCRIPTION,
+                    "more_description": None
+                }
             }
     return widget
 
@@ -328,7 +331,7 @@ def delete_item_in_preview_widget_item(data_id, json_data):
     if type(json_data) is list:
         for item in json_data:
             if str(item.get('name')) == str(data_id.get('label')) and str(
-                item.get('type')) == str(data_id.get('widget_type')):
+                    item.get('type')) == str(data_id.get('widget_type')):
                 remove_list.append(item)
     for item in remove_list:
         json_data.remove(item)
@@ -352,6 +355,7 @@ def update_general_item(item, data_result):
     item['type'] = data_result.get('widget_type')
     item['multiLangSetting'] = data_result.get('multiLangSetting')
 
+
 def update_item_in_preview_widget_item(data_id, data_result, json_data):
     """Update item in preview widget design when it is edited in widget item.
 
@@ -366,15 +370,10 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
     if type(json_data) is list:
         for item in json_data:
             if str(item.get('name')) == str(data_id.get('label')) and str(
-                item.get('type')) == str(data_id.get('widget_type')):
+                    item.get('type')) == str(data_id.get('widget_type')):
                 update_general_item(item, data_result)
                 settings = data_result.get('settings')
-                if str(item.get('type')) == "Free description":
-                    update_free_description_type(item, settings)
-                elif str(item.get('type')) == "Notice":
-                    update_notice_type(item, settings)
-                else:
-                    item.pop('description', None)
+                update_general_item(settings)
     data = json.dumps(json_data)
     return data
 
@@ -397,7 +396,7 @@ def handle_change_item_in_preview_widget_item(data_id, data_result):
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             if str(data_id.get('repository')) != str(data_result.get(
-                'repository')) or data_result.get('enable') is False:
+                    'repository')) or data_result.get('enable') is False:
                 data = delete_item_in_preview_widget_item(data_id, json_data)
             else:
                 data = update_item_in_preview_widget_item(
@@ -457,8 +456,8 @@ def validate_admin_widget_item_setting(widget_id):
             json_data = json.loads(data.get('settings'))
             for item in json_data:
                 if str(item.get('name')) == str(label) and str(
-                    item.get('type')) == str(widget_type) and str(
-                    item.get('language') == str(language)):
+                        item.get('type')) == str(widget_type) and str(
+                        item.get('language') == str(language)):
                     return True
         return False
     except Exception as e:
