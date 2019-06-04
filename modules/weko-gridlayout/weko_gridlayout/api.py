@@ -44,7 +44,6 @@ class WidgetItems(object):
             data_object["widget_type"] = widget_items.get('widget_type')
             data_object["label"] = widget_items.get("label")
             data_object["language"] = widget_items.get("language")
-            
             role = widget_items.get('browsing_role')
             if type(role) is list:
                 data_object["browsing_role"] = ",".join(str(e) for e in role)
@@ -59,12 +58,12 @@ class WidgetItems(object):
         except Exception as ex:
             current_app.logger.debug(ex)
 
-
     @classmethod
-    def build_settings_data(cls, data_object, widget_items):
+    def build_settings_data(cls, widget_object, widget_items):
         """Build setting data.
 
-        :param setting_data: setting data
+        :param widget_object: Widget data object.
+        :param widget_items: Widget item setting.
         """
         data_object_settings = dict()
         data_object_settings["label_color"] = widget_items.get(
@@ -76,12 +75,9 @@ class WidgetItems(object):
         data_object_settings["text_color"] = widget_items.get('text_color')
         data_object_settings["background_color"] = widget_items.get(
             'background_color')
-        multiLangSettings = widget_items.get(
-            'multiLangSetting')
         data_object_settings["multiLangSetting"] = widget_items.get(
             'multiLangSetting')
-        data_object['settings'] = json.dumps(data_object_settings)
-
+        widget_object['settings'] = json.dumps(data_object_settings)
 
     @classmethod
     def build_object(cls, widget_items=None):
@@ -94,7 +90,6 @@ class WidgetItems(object):
             return
         data = dict()
         try:
-            data_setting = dict()
             cls.build_general_data(data, widget_items)
             cls.build_settings_data(data, widget_items)
         except Exception as ex:
@@ -204,7 +199,6 @@ class WidgetItems(object):
             return list(map(_get_dict, role)) + [{"id": 99, "name": "Guest"}]
         except SQLAlchemyError:
             return
-
 
     @classmethod
     def parse_result(cls, in_result):
