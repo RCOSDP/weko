@@ -315,7 +315,9 @@ class WekoDeposit(Deposit):
         if 'control_number' in self:
             self.pop('control_number')
         if '$schema' not in self:
-            self['$schema'] = ''
+            self['$schema'] = current_app.extensions['invenio-jsonschemas'].\
+                path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
+        self.is_edit = True
         deposit = super(WekoDeposit, self).publish(pid, id_)
         return deposit
 
