@@ -693,17 +693,25 @@ class ComponentButtonLayout extends React.Component {
             }
             multiLangData[currentLanguage] = currentLangData;
         }
-        data['multiLangSetting'] = multiLangData;
-
+        let hasDefault = false;
         for (let object in multiLangData) {
             let langData = multiLangData[object];
             if (langData['isDefault']) {
+                hasDefault = true;
                 currentLabel = langData['label'];
                 currentDescription = langData['description'];
                 currentLanguage = object;
                 break;
             }
         }
+        if(!hasDefault) {
+            let keys = Object.keys(multiLangData);
+            if (!$.isEmptyObject(keys)) {
+                multiLangData[keys[0]]['isDefault'] = true;
+            }
+        }
+
+        data['multiLangSetting'] = multiLangData;
         data['label'] = currentLabel;
         data['settings'] = currentDescription;
         data['language'] = currentLanguage;
@@ -899,14 +907,13 @@ class ComponentLanguage extends React.Component {
                             }
                         });
                     }
+                    langList = this.removeDuplicatedLang(langList, registeredLang);
+
+                    // Load data for edit UI
+                    let loadedData = this.props.loaded_data;
                     let selectedLang = langList[0];
                     let defaultLang = langList[0];
                     if(this.props.is_edit) {
-                        langList = this.removeDuplicatedLang(langList, registeredLang);
-
-                        // Load data for edit UI
-                        let loadedData = this.props.loaded_data;
-
                         for (let item in loadedData) {
                             if (loadedData[item]['isDefault']) {
                                 selectedLang = item;
@@ -1125,13 +1132,15 @@ class MainLayout extends React.Component {
         if (this.state.label == '' && $.isEmptyObject(this.state.settings)) {
             result = false;
         } else {
-            let noData = true;
-            for (let data in this.state.settings) {
-                if (this.state.settings[data]) {
-                    noData = false;
+            if (!this.state.label) {
+                let noData = true;
+                for (let data in this.state.settings) {
+                    if (this.state.settings[data]) {
+                        noData = false;
+                    }
                 }
+                result = !noData;
             }
-            result = !noData;
         }
         let setting = {
             label: this.state.label,
