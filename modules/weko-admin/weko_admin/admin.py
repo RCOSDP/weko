@@ -392,7 +392,7 @@ class ReportView(BaseView):
                     self.write_report_tsv_rows(writer,
                                                raw_stats['open_access'])
                 elif 'institution_name' in raw_stats:
-                    writer.writerows([_('Institution Name')] + cols)
+                    writer.writerows([[_('Institution Name')] + cols])
                     self.write_report_tsv_rows(writer,
                                                raw_stats['institution_name'])
         except Exception:
