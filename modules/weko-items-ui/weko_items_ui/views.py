@@ -501,6 +501,9 @@ def to_files_js(record):
     if files is not None:
         for f in files:
             res.append({
+                'displaytype': f.get('displaytype', ''),
+                'filename': f.get('filename', ''),
+                'mimetype': f.mimetype,
                 'key': f.key,
                 'version_id': f.version_id,
                 'checksum': f.file.checksum,
