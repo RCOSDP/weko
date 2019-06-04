@@ -1211,7 +1211,8 @@ $(function () {
         data_id = {
             repository: editData.repository_id,
             widget_type: editData.widget_type,
-            label: editData.label
+            label: editData.label,
+            language: editData.language
         }
     }
     else {
