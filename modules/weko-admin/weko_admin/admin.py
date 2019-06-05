@@ -444,18 +444,19 @@ class ReportView(BaseView):
                     writer.writerow([record['host'], record['ip'],
                                      record['count']])
                 elif file_type == 'site_access':
-                    if other_info:
-                        writer.writerow([other_info, record['top_view'],
-                                         record['search'],
-                                         record['record_view'],
-                                         record['file_download'],
-                                         record['file_preview']])
-                    else:
-                        writer.writerow([record['name'], record['top_view'],
-                                         record['search'],
-                                         record['record_view'],
-                                         record['file_download'],
-                                         record['file_preview']])
+                    if record:
+                        if other_info:
+                            writer.writerow([other_info, record['top_view'],
+                                             record['search'],
+                                             record['record_view'],
+                                             record['file_download'],
+                                             record['file_preview']])
+                        else:
+                            writer.writerow([record['name'], record['top_view'],
+                                             record['search'],
+                                             record['record_view'],
+                                             record['file_download'],
+                                             record['file_preview']])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
