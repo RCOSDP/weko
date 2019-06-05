@@ -107,6 +107,7 @@ setup(
             'weko_admin_report = weko_admin.admin:report_adminview',
             'weko_admin_language = weko_admin.admin:language_adminview',
             'weko_admin_web_api_account = weko_admin.admin:web_api_account_adminview',
+            'weko_admin_stats_settings = weko_admin.admin:stats_settings_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',

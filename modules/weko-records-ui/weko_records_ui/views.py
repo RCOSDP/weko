@@ -365,18 +365,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Get item meta data
     record['permalink_uri'] = None
     pidstore_identifier = get_item_pidstore_identifier(pid.object_uuid)
-    if pidstore_identifier is None:
+    if not pidstore_identifier:
         record['permalink_uri'] = request.url
     else:
         record['permalink_uri'] = pidstore_identifier
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
-
     return render_template(
         template,
         pid=pid,
         record=record,
+        display_stats=current_app.config['WEKO_ADMIN_DISPLAY_FILE_STATS'],
         filename=filename,
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
