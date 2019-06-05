@@ -277,7 +277,7 @@ var PreviewGrid = new function () {
             let name = el.data("name");
             let id = el.data("id");
             let type = el.data("type");
-            let widgetLanguage = el.data("language")
+            let widget_id = el.data("widget_id")
             let nameDisplay = el.data("name_display")
             if (!id) {
                 return;
@@ -293,7 +293,7 @@ var PreviewGrid = new function () {
                 id: id,
                 type: type,
                 name_display: nameDisplay,
-                widget_language: widgetLanguage,
+                widget_id: widget_id,
             };
         }, this);
         var filtered = this.serializedData.filter(function (el) {
@@ -322,7 +322,7 @@ var PreviewGrid = new function () {
             autoPosition = 'data-gs-auto-position="true"';
         }
         let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"'
-        + '" data-language="' + node.widget_language + '"' + autoPosition + '>'
+        + '" data-widget_id="' + node.widget_id + '"' + autoPosition + '>'
         + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
         + ' <div class="grid-stack-item-content">'
         + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'
@@ -352,7 +352,7 @@ function addWidget() {
             let widgetId = $(this).data('widgetId');
             let widgetType = $(this).data('widgetType');
             let widgetNameDisplay = $(this).data('widgetNameDisplay');
-            let widgetLanguage = $(this).data('widgetLanguage');
+            let id = $(this).data('id');
             if(MAIN_CONTENT_TYPE == widgetType && isHasMainContent){
                 alert("Main Content has been existed in Preview panel.");
                 disableMainContentButton(true);
@@ -368,7 +368,7 @@ function addWidget() {
                 id: widgetId,
                 type:widgetType,
                 name_display: widgetNameDisplay,
-                widget_language: widgetLanguage,
+                widget_id: id,
             };
             PreviewGrid.addNewWidget(node);
             if(MAIN_CONTENT_TYPE == widgetType){
@@ -399,6 +399,7 @@ function loadWidgetList(widgetListItems) {
     let y = 0;
     _.each(widgetListItems, function (widget) {
         let buttonId = "";
+        console.log(widget);
         if(MAIN_CONTENT_TYPE ==  widget.widgetType) {
             buttonId = 'id="' + MAIN_CONTENT_BUTTON_ID + '"';
         }
@@ -409,7 +410,7 @@ function loadWidgetList(widgetListItems) {
             + ' <span class="widget-label">' + widget.widgetLabelDisplay + '</span>'
             + ' <button ' + buttonId + ' data-widget-type="' + widget.widgetType
             + '" data-widget-name="' + widget.widgetLabel + '" data-widget-id="' + widget.widgetId
-            + '" data-widget-name-display="' + widget.widgetLabelDisplay + '" data-widget-language="' + widget.widgetLanguage
+            + '" data-widget-name-display="' + widget.widgetLabelDisplay + '" data-id="' + widget.Id
             +  '" class="btn btn-default add-new-widget">'
             + ' Add Widget'
             + ' </button>'
