@@ -22,6 +22,7 @@
 
 import json
 import os
+import sys
 from collections import OrderedDict
 from functools import wraps
 
@@ -36,9 +37,11 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
+from weko_accounts.api import ShibUser
 from weko_deposit.api import WekoRecord
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
+from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
@@ -46,11 +49,11 @@ from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
-from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    IDENTIFIER_ITEMSMETADATA_FORM
+from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
+    IDENTIFIER_GRANT_SUFFIX_METHOD
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import get_community_id_by_index
+from .utils import get_community_id_by_index, pidstore_identifier_mapping
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -207,8 +210,8 @@ def display_activity(activity_id=0):
     workflow = WorkFlow()
     workflow_detail = workflow.get_workflow_by_id(activity_detail.workflow_id)
     if activity_detail.activity_status == \
-            ActivityStatusPolicy.ACTIVITY_FINALLY \
-            or activity_detail.activity_status == \
+        ActivityStatusPolicy.ACTIVITY_FINALLY \
+        or activity_detail.activity_status == \
             ActivityStatusPolicy.ACTIVITY_CANCEL:
         activity_detail.activity_status_str = _('End')
     else:
@@ -222,39 +225,35 @@ def display_activity(activity_id=0):
 
     # display_activity of Identifier grant
     idf_grant_data = None
-    if 'identifier_grant' == action_endpoint:
-        if item:
-            path = WekoRecord.get_record(item.id).get('path')
-            if len(path) > 1:
-                community_id = 'Root Index'
-            else:
-                index_address = path.pop(-1).split('/')
-                index_id = Index.query.filter_by(id=index_address.pop()).one()
-                community_id = get_community_id_by_index(
-                    index_id.index_name_english)
+    if 'identifier_grant' == action_endpoint and item:
+        path = WekoRecord.get_record(item.id).get('path')
+        if len(path) > 1:
+            community_id = 'Root Index'
+        else:
+            index_address = path.pop(-1).split('/')
+            index_id = Index.query.filter_by(id=index_address.pop()).one()
+            community_id = get_community_id_by_index(
+                index_id.index_name_english)
+        idf_grant_data = Identifier.query.filter_by(
+            repository=community_id).one_or_none()
 
-            idf_grant_data = Identifier.query.filter_by(
-                repository=community_id).one_or_none()
-
-            # valid date pidstore_identifier data
-            if idf_grant_data is not None:
-                if not idf_grant_data.jalc_doi:
-                    idf_grant_data.jalc_doi = '<Empty>'
-                if not idf_grant_data.jalc_crossref_doi:
-                    idf_grant_data.jalc_crossref_doi = '<Empty>'
-                if not idf_grant_data.jalc_datacite_doi:
-                    idf_grant_data.jalc_datacite_doi = '<Empty>'
-                if not idf_grant_data.cnri:
-                    idf_grant_data.cnri = '<Empty>'
-                if not idf_grant_data.suffix:
-                    idf_grant_data.suffix = '<Empty>'
+        # valid date pidstore_identifier data
+        if idf_grant_data is not None:
+            if not idf_grant_data.jalc_doi:
+                idf_grant_data.jalc_doi = '<Empty>'
+            if not idf_grant_data.jalc_crossref_doi:
+                idf_grant_data.jalc_crossref_doi = '<Empty>'
+            if not idf_grant_data.jalc_datacite_doi:
+                idf_grant_data.jalc_datacite_doi = '<Empty>'
+            if not idf_grant_data.cnri:
+                idf_grant_data.cnri = '<Empty>'
+            if not idf_grant_data.suffix:
+                idf_grant_data.suffix = '<Empty>'
 
     temporary_idf_grant = 0
     temporary_idf_grant_suffix = []
-
     temporary_identifier = activity.get_action_identifier_grant(
         activity_id=activity_id, action_id=action_id)
-
     if temporary_identifier:
         temporary_idf_grant = temporary_identifier.get(
             'action_identifier_select')
@@ -521,17 +520,17 @@ def next_action(activity_id='0', action_id=0):
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
         pid, item_record = resolver.resolve(pid_identifier.pid_value)
-        updateItem = UpdateItem()
-        updateItem.set_item_relation(relation_data, item_record)
+        updated_item = UpdateItem()
+        updated_item.set_item_relation(relation_data, item_record)
 
     # save pidstore_identifier to ItemsMetadata
-    if 'identifier_grant' == action_endpoint:
-        if idf_grant and int(idf_grant) > 0:
-            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+    if 'identifier_grant' == action_endpoint and idf_grant is not None:
+        pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
-        return jsonify(code=-1, msg=_('error'))
+        return jsonify(code=-1,
+                       msg=_('error'))
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
     work_activity.upt_activity_action_status(
@@ -561,74 +560,6 @@ def next_action(activity_id='0', action_id=0):
     return jsonify(code=0, msg=_('success'))
 
 
-def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
-    """
-    Mapp pidstore identifier data to ItemMetadata.
-
-    :param post_json: identifier data
-    :param acitivity_id: activity id number
-    :param action_id: action id number
-    """
-    activity_obj = WorkActivity()
-    activity_detail = activity_obj.get_activity_detail(activity_id)
-    item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-
-    # transfer to JPCOAR format
-    res = {'pidstore_identifier': {}}
-    tempdata = IDENTIFIER_ITEMSMETADATA_FORM
-
-    if idf_grant == 1:  # identifier_grant_jalc_doi
-        jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
-        if jalcdoi_link:
-            jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
-            tempdata['identifier']['value'] = jalcdoi_link
-            tempdata['identifier']['properties']['identifierType'] = 'DOI'
-            tempdata['identifierRegistration']['value'] = \
-                jalcdoi_tail[1] + \
-                jalcdoi_tail[2]
-            tempdata['identifierRegistration']['properties'][
-                'identifierType'] = 'JaLC'
-            res['pidstore_identifier'] = tempdata
-    elif idf_grant == 2:  # identifier_grant_jalc_cr
-        jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
-        if jalcdoi_cr_link:
-            jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
-            tempdata['identifier']['value'] = jalcdoi_cr_link
-            tempdata['identifier']['properties']['identifierType'] = 'DOI'
-            tempdata['identifierRegistration']['value'] = \
-                jalcdoi_cr_tail[1] + \
-                jalcdoi_cr_tail[2]
-            tempdata['identifierRegistration']['properties'][
-                'identifierType'] = 'Crossref'
-            res['pidstore_identifier'] = tempdata
-    elif idf_grant == 3:  # identifier_grant_jalc_dc_doi
-        jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
-        if jalcdoi_dc_link:
-            jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
-            tempdata['identifier']['value'] = jalcdoi_dc_link
-            tempdata['identifier']['properties']['identifierType'] = 'DOI'
-            tempdata['identifierRegistration']['value'] = \
-                jalcdoi_dc_tail[1] + \
-                jalcdoi_dc_tail[2]
-            tempdata['identifierRegistration']['properties'][
-                'identifierType'] = 'Datacite'
-            res['pidstore_identifier'] = tempdata
-    elif idf_grant == 4:  # identifier_grant_crni
-        jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
-        if jalcdoi_crni_link:
-            tempdata['identifier']['value'] = jalcdoi_crni_link
-            tempdata['identifier']['properties']['identifierType'] = 'HDL'
-            del tempdata['identifierRegistration']
-            res['pidstore_identifier'] = tempdata
-    else:
-        current_app.logger.error('Can\'t mapping pidstore identifier data!')
-    try:
-        item.update(res)
-        item.commit()
-    except Exception as ex:
-        current_app.logger.exception(str(ex))
-
-
 @blueprint.route(
     '/activity/action/<string:activity_id>/<int:action_id>'
     '/rejectOrReturn/<int:req>',
@@ -648,7 +579,6 @@ def previous_action(activity_id='0', action_id=0, req=0):
     )
     work_activity = WorkActivity()
     history = WorkActivityHistory()
-    action = Action().get_action_detail(action_id)
     rtn = history.create_activity_history(activity)
     if rtn is None:
         return jsonify(code=-1, msg=_('error'))
@@ -691,7 +621,6 @@ def get_journals():
     if not key:
         return jsonify({})
 
-    multiple_result = {}
     datastore = RedisStore(redis.StrictRedis.from_url(
         current_app.config['CACHE_REDIS_URL']))
     cache_key = current_app.config[
@@ -750,7 +679,6 @@ def cancel_action(activity_id='0', action_id=0):
     """Next action."""
     post_json = request.get_json()
     work_activity = WorkActivity()
-    rtn = None
 
     activity = dict(
         activity_id=activity_id,
@@ -769,9 +697,53 @@ def cancel_action(activity_id='0', action_id=0):
         work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=action_id,
             action_status=ActionStatusPolicy.ACTION_DOING)
-        return jsonify(code=-1, msg=_('Error! Can\'t process quit activity!'))
+        return jsonify(code=-1, msg=_('Error! Cannot process quit activity!'))
 
-    return jsonify(code=0, msg=_('success'),
+    return jsonify(code=0,
+                   msg=_('success'),
                    data={'redirect': url_for(
                        'weko_workflow.display_activity',
                        activity_id=activity_id)})
+
+
+@blueprint.route(
+    '/activity/detail/<string:activity_id>/<int:action_id>'
+    '/withdraw',
+    methods=['POST'])
+@login_required
+@check_authority
+def withdraw_confirm(activity_id='0', action_id='0'):
+    """Check weko user info.
+
+    :return:
+    """
+    try:
+        post_json = request.get_json()
+        password = post_json.get('passwd', None)
+        if not password:
+            return jsonify(code=-1, msg=_('Password not provided'))
+        wekouser = ShibUser()
+        if wekouser.check_weko_user(current_user.email, password):
+            activity = WorkActivity()
+            identifier_actionid = get_actionid('identifier_grant')
+            identifier = activity.get_action_identifier_grant(
+                activity_id,
+                identifier_actionid)
+            identifier['action_identifier_select'] = IDENTIFIER_GRANT_IS_WITHDRAWING
+            if identifier:
+                activity.create_or_update_action_identifier(
+                    activity_id,
+                    identifier_actionid,
+                    identifier)
+            # Clear identifier in ItemMetadata
+            pidstore_identifier_mapping(None, -1, activity_id)
+            return jsonify(code=0,
+                           msg=_('success'),
+                           data={'redirect': url_for(
+                               'weko_workflow.display_activity',
+                               activity_id=activity_id)})
+        else:
+            return jsonify(code=-1, msg=_('Invalid password'))
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return jsonify(code=-1, msg=_('Error! Relogin'))

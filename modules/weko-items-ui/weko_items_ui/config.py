@@ -42,3 +42,15 @@ WEKO_ITEMS_UI_UPLOAD_TEMPLATE = 'weko_items_ui/upload.html'
 """Demo template for the item page post test data."""
 
 WEKO_ITEMS_UI_INDEX_URL = '/items/index/{pid_value}'
+
+IDENTIFIER_GRANT_DOI = 0
+"""Identifier grant was select."""
+
+IDENTIFIER_GRANT_CAN_WITHDRAW = -1
+"""Identifier grant can withdraw."""
+
+IDENTIFIER_GRANT_IS_WITHDRAWING = -2
+"""Identifier grant is withdrawing."""
+
+IDENTIFIER_GRANT_WITHDRAWN = -3
+"""Identifier grant was withdrawn."""

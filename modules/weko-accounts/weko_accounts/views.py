@@ -28,12 +28,10 @@ import json
 import sys
 
 import redis
-from flask import Blueprint, abort, current_app, flash, redirect, \
-    render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, redirect, render_template, \
+    request, session, url_for
 from flask_babelex import gettext as _
-from flask_breadcrumbs import register_breadcrumb
-from flask_login import current_user, login_required
-from flask_menu import register_menu
+from flask_login import current_user
 from flask_security import url_for_security
 from invenio_admin.proxies import current_admin
 from simplekv.memory.redisstore import RedisStore
@@ -248,7 +246,6 @@ def parse_attributes():
             else request.args.get(header, '')
         current_app.logger.debug('Shib    {0}: {1}'.format(name, value))
         attrs[name] = value
-        if not value or value == '':
-            if required:
-                error = True
+        if (not value or value == '') and required:
+            error = True
     return attrs, error
