@@ -36,12 +36,11 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoRecord, WekoDeposit
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
-from weko_deposit.api import WekoDeposit
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
