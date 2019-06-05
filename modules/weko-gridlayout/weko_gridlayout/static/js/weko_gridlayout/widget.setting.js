@@ -675,6 +675,7 @@ class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            id: this.props.data_id.id,
             repository: '',
             widget_type: '',
             label: '',
@@ -1082,11 +1083,9 @@ class MainLayout extends React.Component {
     }
     componentDidMount() {
         // For edit option - Convert data
-        let registeredLang = [];
         let description = {};
         if (!$.isEmptyObject(this.state.multiLangSetting)) {
             for (let object in this.state.multiLangSetting) {
-                registeredLang.push(object);
                 if (this.state.multiLangSetting[object]['isDefault']) {
                     description = this.state.multiLangSetting[object]['description'];
                 }
@@ -1265,6 +1264,7 @@ $(function () {
     if (editData) {
         isEdit = true;
         data_id = {
+            id: editData.id,
             repository: editData.repository_id,
             widget_type: editData.widget_type,
             label: editData.label,
