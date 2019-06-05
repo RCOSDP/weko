@@ -227,11 +227,13 @@ class ReportView(BaseView):
         'search_count': _('Search Keyword Ranking'),
         'top_page_access': _('Number Of Access By Host'),
         'user_roles': _('User Affiliation Information'),
+        'site_access': _('Access Count By Site License')
     }
 
     sub_header_rows = {
         'file_download': _('Open-Access No. Of File Downloads'),
-        'file_preview': _('Open-Access No. Of File Previews')
+        'file_preview': _('Open-Access No. Of File Previews'),
+        'site_access': _('Access Number Breakdown By Site License')
     }
 
     report_cols = {
@@ -254,8 +256,13 @@ class ReportView(BaseView):
                                 _('File download count'),
                                 _('File playing count')],
         'search_count': [_('Search Keyword'), _('Number Of Searches')],
-        'top_page_access': [_('Host'), _('IP Address'), _('WEKO Top Page Access Count')],
+        'top_page_access': [_('Host'), _('IP Address'),
+                            _('WEKO Top Page Access Count')],
         'user_roles': [_('Role'), _('Number Of Users')],
+        'site_access': [_('WEKO Top Page Access Count'),
+                        _('Number Of Searches'), _('Number Of Views'),
+                        _('Number Of File download'),
+                        _('Number Of File Regeneration')]
     }
 
     file_names = {
@@ -266,6 +273,7 @@ class ReportView(BaseView):
         'file_using_per_user': _('FileUsingPerUser_'),
         'search_count': _('SearchCount_'),
         'user_roles': _('UserAffiliate_'),
+        'site_access': _('SiteAccess_')
     }
 
     @expose('/', methods=['GET'])
@@ -345,14 +353,15 @@ class ReportView(BaseView):
         return resp
 
     def make_stats_tsv(self, raw_stats, file_type, year, month):
-        """Make TSV report file for downloads and previews."""
+        """Make TSV report file for stats."""
         header_row = self.header_rows.get(file_type)
         sub_header_row = self.sub_header_rows.get(file_type)
         tsv_output = StringIO()
         try:
             writer = csv.writer(tsv_output, delimiter='\t',
                                 lineterminator="\n")
-            writer.writerows([[header_row], [_('Aggregation Month'), year + '-' + month],
+            writer.writerows([[header_row],
+                              [_('Aggregation Month'),year + '-' + month],
                               [''], [header_row]])
 
             cols = self.report_cols.get(file_type, [])
@@ -363,27 +372,46 @@ class ReportView(BaseView):
             if file_type == 'index_access':
                 writer.writerow([_('Total Detail Views'), raw_stats['total']])
 
-            self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
+            if file_type == 'site_access':
+                self.write_report_tsv_rows(writer,
+                                           raw_stats['site_license'],
+                                           file_type,
+                                           _('Site license member'))
+                self.write_report_tsv_rows(writer,
+                                           raw_stats['other'],
+                                           file_type,
+                                           _('Other than site license'))
+            else:
+                self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
 
             # Write open access stats
-            if sub_header_row is not None and 'open_access' in raw_stats:
+            if sub_header_row is not None:
                 writer.writerows([[''], [sub_header_row]])
-                writer.writerow(cols)
-                self.write_report_tsv_rows(writer, raw_stats['open_access'])
+                if 'open_access' in raw_stats:
+                    writer.writerow(cols)
+                    self.write_report_tsv_rows(writer,
+                                               raw_stats['open_access'])
+                elif 'institution_name' in raw_stats:
+                    writer.writerows([[_('Institution Name')] + cols])
+                    self.write_report_tsv_rows(writer,
+                                               raw_stats['institution_name'],
+                                               file_type)
         except Exception:
             current_app.logger.error('Unexpected error: ',
                                      sys.exc_info()[0])
             abort(500)
         return tsv_output
 
-    def write_report_tsv_rows(self, writer, records, file_type=None):
+    def write_report_tsv_rows(self, writer, records,
+                              file_type=None, other_info=None):
         """Write tsv rows for stats."""
         if isinstance(records, dict):
             records = list(records.values())
         for record in records:
             try:
                 if file_type is None or \
-                        file_type == 'file_download' or file_type == 'file_preview':
+                        file_type == 'file_download' or \
+                        file_type == 'file_preview':
                     writer.writerow([record['file_key'], record['index_list'],
                                      record['total'], record['no_login'],
                                      record['login'], record['site_license'],
@@ -415,6 +443,20 @@ class ReportView(BaseView):
                 elif file_type == 'top_page_access':
                     writer.writerow([record['host'], record['ip'],
                                      record['count']])
+                elif file_type == 'site_access':
+                    if record:
+                        if other_info:
+                            writer.writerow([other_info, record['top_view'],
+                                             record['search'],
+                                             record['record_view'],
+                                             record['file_download'],
+                                             record['file_preview']])
+                        else:
+                            writer.writerow([record['name'], record['top_view'],
+                                             record['search'],
+                                             record['record_view'],
+                                             record['file_download'],
+                                             record['file_preview']])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
