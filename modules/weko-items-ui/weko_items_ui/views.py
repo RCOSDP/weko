@@ -28,11 +28,12 @@ from flask import Blueprint, abort, current_app, flash, json, jsonify, \
     redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
+from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoRecord, WekoDeposit
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
@@ -737,8 +738,14 @@ def prepare_edit_item():
                 post_activity['itemtype_id'] = item_type_id
                 getargs = request.args
                 community = getargs.get('community', None)
+
+                # Create a new version of a record.
+                record = WekoDeposit.get_record(item_id)
+                deposit = WekoDeposit(record, record.model)
+                new_record=deposit.newversion(pid_object)
+                db.session.commit()
                 rtn = activity.init_activity(
-                    post_activity, community, pid_object.object_uuid)
+                    post_activity, community, new_record.model.id)
                 if rtn:
                     oa_policy_actionid = get_actionid('oa_policy')
                     identifier_actionid = get_actionid('identifier_grant')

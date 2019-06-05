@@ -32,13 +32,14 @@ from invenio_deposit.api import Deposit, index, preserve
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_indexer.api import RecordIndexer
+from invenio_pidrelations.contrib.records import RecordDraft
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from invenio_records_files.api import FileObject, Record
 from invenio_records_files.models import RecordsBuckets
 from invenio_records_rest.errors import PIDResolveRESTError
-from invenio_pidrelations.contrib.records import RecordDraft
-from invenio_pidrelations.contrib.versioning import PIDVersioning
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
@@ -448,6 +449,68 @@ class WekoDeposit(Deposit):
             flag_modified(record, 'json')
             db.session.merge(record)
 
+    def newversion(self, pid=None):
+        """Create a new version deposit."""
+        if not self.is_published():
+            raise PIDInvalidAction()
+
+        # Check that there is not a newer draft version for this record
+        # and this is the latest version
+        pv = PIDVersioning(child=pid)
+        if (not pv.draft_child and pid == pv.last_child):
+            with db.session.begin_nested():
+
+                # Get copy of the latest record
+                latest_record = WekoDeposit.get_record(
+                    pv.last_child.object_uuid)
+                data = latest_record.dumps()
+
+                owners = data['_deposit']['owners']
+
+                keys_to_remove = (
+                    '_deposit', 'doi', '_oai', '_files', '_buckets', '$schema')
+                for k in keys_to_remove:
+                    data.pop(k, None)
+
+                # NOTE: We call the superclass `create()` method, because we
+                # don't want a new empty bucket, but an unlocked snapshot of
+                # the old record's bucket.
+                deposit = super(WekoDeposit, self).create(data)
+                # Injecting owners is required in case of creating new
+                # version this outside of request context
+                deposit['_deposit']['owners'] = owners
+
+                recid = PersistentIdentifier.get(
+                    'recid', str(data['_deposit']['id']))
+                depid = PersistentIdentifier.get(
+                    'depid', str(data['_deposit']['id']))
+                PIDVersioning(parent=recid).insert_draft_child(child=recid)
+                RecordDraft.link(recid, depid)
+
+                with db.session.begin_nested():
+                    # Create snapshot from the record's bucket and update data
+                    snapshot = latest_record.files.bucket.snapshot(lock=False)
+                    snapshot.locked = False
+                    if 'extra_formats' in latest_record['_buckets']:
+                        extra_formats_snapshot = \
+                            latest_record.extra_formats.bucket.snapshot(
+                                lock=False)
+                deposit['_buckets'] = {'deposit': str(snapshot.id)}
+                RecordsBuckets.create(record=deposit.model, bucket=snapshot)
+                if 'extra_formats' in latest_record['_buckets']:
+                    deposit['_buckets']['extra_formats'] = \
+                        str(extra_formats_snapshot.id)
+                    RecordsBuckets.create(
+                        record=deposit.model, bucket=extra_formats_snapshot)
+                item_metadata = ItemsMetadata.get_record(
+                    pv.last_child.object_uuid).dumps()
+                index = {'index': self.get('path', []), 'actions': 'private'
+                    if self.get('publish_status', '1') == '1' else 'publish'}
+                args = [index, item_metadata]
+                deposit.update(*args)
+                deposit.commit()
+        return deposit
+
     def get_content_files(self):
         """Get content file metadata."""
         contents = []
@@ -487,7 +550,8 @@ class WekoDeposit(Deposit):
         for key in self.data:
             if isinstance(self.data.get(key), list):
                 for item in self.data.get(key):
-                    if 'filename' in item:
+                    if (isinstance(item, dict) or isinstance(item, list)) \
+                            and 'filename' in item:
                         file_data.extend(self.data.get(key))
                         break
         return file_data
