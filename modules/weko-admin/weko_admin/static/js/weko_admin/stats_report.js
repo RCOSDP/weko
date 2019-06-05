@@ -19,7 +19,9 @@ $(document).ready(function () {
         file_using_per_user:'/api/stats/report/file/file_using_per_user',
         top_page_access:'/api/stats/top_page_access',
         search_count:'/api/stats/report/search_keywords',
-        user_roles: '/admin/report/user_report_data'};
+        user_roles: '/admin/report/user_report_data',
+        site_access: '/api/stats/site_access'
+    };
 
     var statsURL = (type == 'user_roles' ? uriByType[type] : uriByType[type] + '/' + year + '/' + month);
     var statsReports = {};
@@ -33,7 +35,8 @@ $(document).ready(function () {
         'file_using_per_user',
         'top_page_access',
         'search_count',
-        'user_roles'];
+        'user_roles',
+        'site_access'];
       for (let item in options) {
         var url = (options[item] == 'user_roles' ? uriByType[options[item]] : uriByType[options[item]] + '/' + year + '/' + month);
         statsReports[options[item]] = ajaxGetTSV(url);
