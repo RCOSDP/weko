@@ -434,12 +434,30 @@ class ComponentFieldEditor extends React.Component {
         if (this.quillRef == null) {
             return false;
         }
-        let length = this.quillRef.getText().trim().length;
-        if (length == 0) {
-            html = '';
+        var contents = this.quillRef.getContents();
+        let isResetHTML = true;
+        if(contents && Array.isArray(contents.ops)){
+            console.log(contents.ops)
+            contents.ops.forEach(function (content) {
+                let data = content['insert'];
+                if (typeof data != "string"){
+                    isResetHTML = false;
+                }
+                else{
+                    if(data.trim() != ""){
+                        isResetHTML = false;
+                    }
+                }
+            })
         }
+        let dataSending= html;
+        if(isResetHTML){
+            dataSending = "";
+        }
+        console.log(this.state.editorHtml)
+        console.log(dataSending);
         this.setState({ editorHtml: html });
-        this.props.handleChange(this.props.key_binding, html);
+        this.props.handleChange(this.props.key_binding, dataSending);
     }
 
     render() {
