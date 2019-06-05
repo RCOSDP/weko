@@ -40,6 +40,7 @@ from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
 from weko_indextree_journal.api import Journals
 from weko_records_ui.ipaddr import check_site_license_permission
+
 from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
