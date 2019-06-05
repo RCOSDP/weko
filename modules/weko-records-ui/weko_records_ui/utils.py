@@ -39,8 +39,10 @@ def get_item_pidstore_identifier(object_uuid):
         if meta is not None:
             pidstore_identifier = meta.get('pidstore_identifier')
             if pidstore_identifier is not None \
-                    and action_status.action_status == \
+                and action_status.action_status == \
                     ActionStatusPolicy.ACTION_DONE:
-                return pidstore_identifier.get('identifier').get('value')
+                identifier = pidstore_identifier.get('identifier')
+                if identifier:
+                    return identifier.get('value')
 
     return None

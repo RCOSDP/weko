@@ -1,0 +1,78 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{% block modal_confirmation %}
+<div id="action_withdraw_confirmation" class="modal modal-md fade" tabindex="-1"
+     role="dialog" aria-labelledby="deleteHeader"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document"
+       style="display: table; width: 500px;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"
+                aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">WEKO</h4>
+      </div>
+      <form action={{url_for('weko_workflow.withdraw_confirm', activity_id=activity.activity_id, action_id=action_id)}} method="POST" name="withdraw_doi_form">
+        <div class="modal-body" style="overflow-x: auto;">
+          <table class="table-responsive">
+            <tr>
+              <td>
+                <span class="glyphicon glyphicon-question-sign fa-5x modal-info"></span>
+              </td>
+              <td>
+              {%- block form_outer %}
+              <span class="modal-info">{{_('Are you sure you want to withdraw DOI?')}}</span>
+              <div class="row navbar-btn modal-info ten-pixel-top-margin">
+                <div class="col-sm-12" style="padding-left: 0px; width: 400px;">
+                  {%- block withdraw_error %}
+                    <div class="alert alert-danger alert-dismissible text-left collapse ten-pixel-bottom-margin" role="alert">
+                      <button type="button" class="close" id="btn_close_alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                      <p id="error-info">{{_('Invalid password')}}</p>
+                    </div>
+                  {%- endblock withdraw_error %}
+                  <div class="form-group form-group-lg has-feedback">
+                    <input autofocus="" class="form-control" id="pwd"
+                            name="WEKO_ATTR_PWD" placeholder="Password"
+                            type="password" value="">
+                    <i class="fa fa-lock form-control-feedback" aria-hidden="true"></i>
+                  </div>
+                </div>
+              </div>
+              {%- endblock form_outer %}
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="btn_withdraw_continue">
+            {{_('Continue')}}
+          </button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">
+            {{_('Cancel')}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock modal_confirmation %}

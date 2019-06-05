@@ -24,6 +24,7 @@
 {%- block css %}
   {{ super() }}
   {% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -72,7 +73,6 @@
   {%-else %}
     <div id="community_id" class="hide"></div>
   {%-endif %}
-  
   <div class="col-sm-12">
     <div id="workFlow" class="panel-group">
       <div class="panel panel-default">
@@ -319,8 +319,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
-                <span class="glyphicon glyphicon-remove"></span>
-                     {{_('Close')}}
+          <span class="glyphicon glyphicon-remove"></span>{{_('Close')}}
         </button>
       </div>
     </div>
