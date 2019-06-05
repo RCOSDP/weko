@@ -318,6 +318,11 @@ def display_activity(activity_id=0):
             item_json = json.loads(item_str.decode('utf-8'))
             if 'files' in item_json:
                 files = item_json.get('files')
+        if not files:
+            deposit = WekoDeposit.get_record(item.id)
+            if deposit is not None:
+                from weko_items_ui.views import to_files_js
+                files = to_files_js(deposit)
 
         from weko_deposit.links import base_factory
         links = base_factory(pid)
