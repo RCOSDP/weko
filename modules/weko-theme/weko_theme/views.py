@@ -91,7 +91,7 @@ def index():
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''
-    top_viewed.send(sender_app=current_app._get_current_object(),
+    top_viewed.send(current_app._get_current_object(),
                     info=send_info)
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
