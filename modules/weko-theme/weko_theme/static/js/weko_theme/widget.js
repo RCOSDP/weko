@@ -61,13 +61,12 @@ let PageBodyGrid = function () {
 
         if (languageDescription.more_description) {
             moreDescription = languageDescription.more_description;
-            let hideRest = (languageDescription.hide_the_rest != "") ? languageDescription.hide_the_rest : HIDE_REST_DEFAULT;
-            let readMore = (languageDescription.read_more != "") ? languageDescription.read_more : READ_MORE_DEFAULT;
+            let hideRest = (languageDescription.hide_the_rest) ? languageDescription.hide_the_rest : HIDE_REST_DEFAULT;
+            let readMore = (languageDescription.read_more) ? languageDescription.read_more : READ_MORE_DEFAULT;
             templateWriteMoreNotice = '</br>' +
                 '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
                 '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
-                linkID + '\',\'' + readMore + '\', \'' + hideRest + '\')">' +
-                ((languageDescription.read_more != "") ? languageDescription.read_more : READ_MORE_DEFAULT) +
+                linkID + '\',\'' + readMore + '\', \'' + hideRest + '\')">' + readMore +
                 '</a>';
         }
 
