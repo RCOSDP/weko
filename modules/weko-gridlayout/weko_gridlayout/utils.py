@@ -83,7 +83,7 @@ def get_widget_list(repository_id, default_language):
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
-                data["widgetLanguage"] = widget_item.language
+                data["Id"] = widget_item.id
                 settings = widget_item.settings
                 settings = json.loads(settings)
                 languages = settings.get("multiLangSetting")
@@ -238,10 +238,7 @@ def update_widget_design_setting(data):
         json_data = json.loads(setting_data)
         if type(json_data) is list:
             for item in json_data:
-                widget_item = WidgetItem.get(item.get('id'),
-                                             item.get('type'),
-                                             item.get('name'),
-                                             item.get('widget_language'))
+                widget_item = WidgetItem.get_by_id(item.get('widget_id'))
                 widget_setting = json.loads(widget_item.settings)
                 item.update(widget_setting)
         setting_data = json.dumps(json_data)
@@ -295,7 +292,7 @@ def update_admin_widget_item_setting(data):
         msg = 'Invalid data.'
     if flag:
         if success:
-            if WidgetItems.is_existed(data_id):
+            if WidgetItems.is_existed(data_result):
                 if validate_admin_widget_item_setting(data_id):
                     if not WidgetItems.update(data_result, data_id):
                         success = False
@@ -382,8 +379,7 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
     """
     if type(json_data) is list:
         for item in json_data:
-            if str(item.get('name')) == str(data_id.get('label')) and str(
-                    item.get('type')) == str(data_id.get('widget_type')):
+            if str(item.get('widget_id')) == str(data_id.get('id')):
                 update_general_item(item, data_result)
     data = json.dumps(json_data)
     return data
@@ -453,22 +449,16 @@ def validate_admin_widget_item_setting(widget_id):
     try:
         if (type(widget_id)) is dict:
             repository_id = widget_id.get('repository')
-            widget_type = widget_id.get('widget_type')
-            label = widget_id.get('label')
-            language = widget_id.get('language')
+            id = widget_id.get('id')
         else:
             repository_id = widget_id.repository_id
-            widget_type = widget_id.widget_type
-            label = widget_id.label
-            language = widget_id.language
+            id = widget.id
         data = WidgetDesignSetting.select_by_repository_id(
             repository_id)
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             for item in json_data:
-                if str(item.get('name')) == str(label) and str(
-                        item.get('type')) == str(widget_type) and str(
-                        item.get('language') == str(language)):
+                if str(item.get('widget_id')) == str(id):
                     return True
         return False
     except Exception as e:

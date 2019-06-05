@@ -104,6 +104,7 @@ class WidgetItems(object):
         :param widget_items: the widget item information.
         :returns: The :class:`widget item` instance lists or None.
         """
+
         def _add_widget_item(widget_setting):
             with db.session.begin_nested():
                 widget_item = WidgetItem(**widget_setting)
@@ -165,6 +166,28 @@ class WidgetItems(object):
         return db.session.query(WidgetItem).all()
 
     @classmethod
+    def validate_exist_multi_language(cls, item, data):
+        """Validate existed data between item and data.
+
+        Arguments:
+            item {WidgetItem} -- Data recieve from client
+            data {WidgetItem} -- Data item in data base
+
+        Returns:
+            true if exist else false
+        """
+        multiLangdata = item.get('multiLangSetting')
+        if multiLangdata is None:
+            return False
+        for k, v in multiLangdata.items():
+            if data.get(k):
+                current_language_data = data.get(k)
+                if v.get('label') == current_language_data.get('label'):
+                    return True
+
+        return False
+
+    @classmethod
     def is_existed(cls, widget_items):
         """Check widget item is existed or not.
 
@@ -173,20 +196,27 @@ class WidgetItems(object):
         """
         if not isinstance(widget_items, dict):
             return False
-        widget_item = WidgetItem.get(widget_items.get('repository'),
-                                     widget_items.get('widget_type'),
-                                     widget_items.get('label'),
-                                     widget_items.get('language'))
-        return widget_item is not None
+        list_widget_items = WidgetItem.get_by_repo_and_type(
+            widget_items.get('repository'),
+            widget_items.get('widget_type'))
+
+        sample_lang_data = widget_items.get('multiLangSetting')
+        if type(list_widget_items) is list:
+            for item in list_widget_items:
+                item = cls.parse_result(item)
+                if cls.validate_exist_multi_language(item, sample_lang_data):
+                    return True
+        return False
 
     @classmethod
     def get_account_role(cls):
         """Get account role."""
+
         def _get_dict(x):
             dt = dict()
             for k, v in x.__dict__.items():
                 if not k.startswith('__') and not k.startswith('_') \
-                        and "description" not in k:
+                    and "description" not in k:
                     if not v:
                         v = ""
                     if isinstance(v, int) or isinstance(v, str):
@@ -209,6 +239,7 @@ class WidgetItems(object):
         """
         record = dict()
         settings = json.loads(in_result.settings)
+        record['id'] = in_result.id
         record['repository_id'] = in_result.repository_id
         record['widget_type'] = in_result.widget_type
         record['label'] = in_result.label
