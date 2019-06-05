@@ -361,7 +361,7 @@ class ReportView(BaseView):
             writer = csv.writer(tsv_output, delimiter='\t',
                                 lineterminator="\n")
             writer.writerows([[header_row],
-                              [_('Aggregation Month'),year + '-' + month],
+                              [_('Aggregation Month'), year + '-' + month],
                               [''], [header_row]])
 
             cols = self.report_cols.get(file_type, [])

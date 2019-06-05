@@ -51,7 +51,7 @@ def check_site_license_permission():
                 if match_ip_addr(adr, ip_addr):
                     current_user.site_license_flag = True
                     current_user.site_license_name = \
-                    lst.get('organization_name')
+                        lst.get('organization_name')
                     return True
     return False
 
