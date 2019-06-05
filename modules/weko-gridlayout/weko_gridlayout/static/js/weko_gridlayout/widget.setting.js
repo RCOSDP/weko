@@ -679,8 +679,7 @@ class ComponentButtonLayout extends React.Component {
         let multiLangData = data['multiLangSetting'];
         let currentLabel = data['label'];
         let currentDescription = data['settings'];
-        let currentLanguage = data['language'];
-
+        let currentLanguage = $("#language")[0].value;
         if (currentLabel || !$.isEmptyObject(currentDescription)) {
             let currentLangData = {
                 label: currentLabel,
@@ -692,7 +691,10 @@ class ComponentButtonLayout extends React.Component {
                 currentLangData['isDefault'] = false;
             }
             multiLangData[currentLanguage] = currentLangData;
+        }else {
+            delete multiLangData[currentLanguage];
         }
+
         let hasDefault = false;
         for (let object in multiLangData) {
             let langData = multiLangData[object];
