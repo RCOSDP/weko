@@ -6514,6 +6514,7 @@ button.close {
 .modal-footer:after {
   clear: both;
 }
+
 .center-block {
   display: block;
   margin-left: auto;

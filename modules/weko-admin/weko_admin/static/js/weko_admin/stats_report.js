@@ -12,14 +12,16 @@ $(document).ready(function () {
       return;
     }
     let uriByType = {
-        file_download:'report/file/file_download',
-        file_preview:'report/file/file_preview',
-        index_access:'report/record/record_view_per_index',
-        detail_view:'report/record/record_view',
-        file_using_per_user:'report/file/file_using_per_user',
-        top_page_access:'top_page_access',
-        search_count:'report/search_keywords'};
-    var statsURL = '/api/stats/' + uriByType[type] + '/' + year + '/' + month;
+        file_download:'/api/stats/report/file/file_download',
+        file_preview:'/api/stats/report/file/file_preview',
+        index_access:'/api/stats/report/record/record_view_per_index',
+        detail_view:'/api/stats/report/record/record_view',
+        file_using_per_user:'/api/stats/report/file/file_using_per_user',
+        top_page_access:'/api/stats/top_page_access',
+        search_count:'/api/stats/report/search_keywords',
+        user_roles: '/admin/report/user_report_data'};
+
+    var statsURL = (type == 'user_roles' ? uriByType[type] : uriByType[type] + '/' + year + '/' + month);
     var statsReports = {};
     var ajaxReturn = [0,0,0,0];
 
@@ -30,9 +32,11 @@ $(document).ready(function () {
         'index_access',
         'file_using_per_user',
         'top_page_access',
-        'search_count'];
+        'search_count',
+        'user_roles'];
       for (let item in options) {
-        statsReports[options[item]] = ajaxGetTSV(uriByType[options[item]], year, month);
+        var url = (options[item] == 'user_roles' ? uriByType[options[item]] : uriByType[options[item]] + '/' + year + '/' + month);
+        statsReports[options[item]] = ajaxGetTSV(url);
       }
       setStatsReportSubmit(statsReports);
     } else { // Get single report
@@ -54,10 +58,10 @@ $(document).ready(function () {
   });
 });
 
-function ajaxGetTSV(keyword, year, month) {
+function ajaxGetTSV(endpoint) {
   let result;
   $.ajax({
-    url: '/api/stats/' + keyword + '/' + year + '/' + month,
+    url: endpoint,
     type: 'GET',
     async: false,
     contentType: 'application/json',
