@@ -613,7 +613,170 @@ class StatisticTarget(db.Model):
         return cls
 
 
+class LogAnalysisRestrictedIpAddress(db.Model):
+    """Represent restricted addresses to be restricted from logging.
+
+    The SiteLicenseIpAddress object contains a ``created`` and  a
+    ``updated`` properties that are automatically updated.
+    """
+
+    __tablename__ = 'loganalysis_restricted_ip_address'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+
+    ip_address = db.Column(
+        db.String(16),
+        nullable=False,
+        unique=True
+    )
+
+    @classmethod
+    def get_all(cls):
+        """Get all Ip Addresses.
+
+        :return:  list.
+        """
+        try:
+            all = cls.query.all()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            all = []
+            raise
+        return all
+
+    @classmethod
+    def update_table(cls, ip_addresses):
+        """Delete all rows and insert new ones."""
+        try:
+            with db.session.begin_nested():
+                all_addresses = [LogAnalysisRestrictedIpAddress(ip_address=i)
+                                 for i in ip_addresses]
+                LogAnalysisRestrictedIpAddress.query.delete()
+                db.session.add_all(all_addresses)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    def __iter__(self):
+        """TODO: __iter__."""
+        for name in dir(LogAnalysisRestrictedIpAddress):
+            if not name.startswith('__') and not name.startswith('_'):
+                value = getattr(self, name)
+                if isinstance(value, str):
+                    yield (name, value)
+
+
+class LogAnalysisRestrictedCrawlerList(db.Model):
+    """Represent restricted users from txt list to be restricted from logging.
+
+    The LogAnalysisRestrictedCrawlerList object contains a ``created`` and  a
+    ``updated`` properties that are automatically updated.
+    """
+
+    __tablename__ = 'loganalysis_restricted_crawler_list'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+
+    list_url = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    is_active = db.Column(
+        db.Boolean(name='activated'),
+        default=True
+    )
+
+    @classmethod
+    def get_all(cls):
+        """Get all crawler lists.
+
+        :return: All crawler lists.
+        """
+        try:
+            all = cls.query.order_by(asc(cls.id)).all()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            all = []
+            raise
+        return all
+
+    @classmethod
+    def get_all_active(cls):
+        """Get all active crawler lists.
+
+        :return: All active crawler lists.
+        """
+        try:
+            all = cls.query.filter(cls.is_active.is_(True)) \
+                .filter(func.length(cls.list_url) > 0).all()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            all = []
+            raise
+        return all
+
+    @classmethod
+    def add_list(cls, crawler_lists):
+        """Add all crawler lists."""
+        for list_url in crawler_lists:
+            try:
+                with db.session.begin_nested():
+                    record = LogAnalysisRestrictedCrawlerList(list_url=list_url)
+                    db.session.add(record)
+                db.session.commit()
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
+                raise
+        return cls
+
+    @classmethod
+    def update_or_insert_list(cls, crawler_list):
+        """Update or insert LogAnalysisRestrictedCrawlerList list."""
+        for data in crawler_list:
+            try:
+                new_list = data.get('list_url', '')
+                id = data.get('id', 0)
+                is_active = data.get('is_active', True)
+                with db.session.begin_nested():
+                    current_record = cls.query.filter_by(id=id).one()
+                    if current_record:
+                        current_record.list_url = new_list
+                        current_record.is_active = is_active
+                        db.session.merge(current_record)
+                    else:
+                        db.session.add(
+                            LogAnalysisRestrictedCrawlerList(list_url=new_list))
+                db.session.commit()
+            except BaseException as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
+                raise
+        return cls
+
+    def __iter__(self):
+        """TODO: __iter__."""
+        for name in dir(LogAnalysisRestrictedCrawlerList):
+            if not name.startswith('__') and not name.startswith('_'):
+                value = getattr(self, name)
+                if isinstance(value, str):
+                    yield (name, value)
+
+
 __all__ = ([
     'SearchManagement', 'AdminLangSettings', 'ApiCertificate',
-    'StatisticUnit', 'StatisticTarget'
+    'StatisticUnit', 'StatisticTarget', 'LogAnalysisRestrictedAddress',
+    'LogAnalysisRestrictedCrawlerList',
 ])

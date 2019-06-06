@@ -24,6 +24,7 @@ import csv
 import hashlib
 import json
 import os
+import re
 import sys
 import zipfile
 from datetime import datetime
@@ -42,7 +43,7 @@ from weko_records.api import ItemsMetadata
 
 from .permissions import admin_permission_factory
 from .utils import allowed_file
-
+from .models import LogAnalysisRestrictedIpAddress, LogAnalysisRestrictedCrawlerList
 
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -465,12 +466,18 @@ class ReportView(BaseView):
     @expose('/user_report_data', methods=['GET'])
     def get_user_report_data(self):
         """Get user report data from db and modify."""
-        role_counts = db.session.query(Role.name,
-                                       func.count(userrole.c.role_id)).outerjoin(userrole) \
-            .group_by(Role.id).all()
+        role_counts = []
+        try:
+            role_counts = db.session.query(Role.name, func.count(userrole.c.role_id)) \
+                .outerjoin(userrole) \
+                .group_by(Role.id).all()
+        except Exception:
+            current_app.logger.error(_('Could not retrieve user report data: '),
+                                     sys.exc_info()[0])
+            abort(500)
+
         role_counts = [dict(role_name=name, count=count)
                        for name, count in role_counts]
-
         response = {'all': role_counts}
         total_users = sum([x['count'] for x in role_counts])
 
@@ -511,6 +518,60 @@ class StatsSettingsView(BaseView):
         )
 
 
+class LogAnalysisSettings(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        if request.method == 'POST':
+            crawler_lists, new_ip_addresses = self.parse_form_data(request.form)
+            try:
+                LogAnalysisRestrictedIpAddress.update_table(new_ip_addresses)
+                LogAnalysisRestrictedCrawlerList.update_or_insert_list(crawler_lists)
+            except Exception:
+                current_app.logger.error(_('Could not save restricted data: '),
+                                         sys.exc_info()[0])
+                flash(_('Could not save data.'))
+
+        # Get most current restricted addresses/user agents
+        try:
+            restricted_ip_addresses = LogAnalysisRestrictedIpAddress.get_all()
+            shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
+            #current_app.logger.info(LogAnalysisRestrictedCrawlerList.get_all_active())
+            if not shared_crawlers:
+                LogAnalysisRestrictedCrawlerList \
+                    .add_list(current_app.config["WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
+                shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
+        except Exception:
+           current_app.logger.error(_('Could not get restricted data: '),
+                                    sys.exc_info()[0])
+           restricted_ip_addresses = []
+           shared_crawlers = []
+
+        return self.render(
+            current_app.config["WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE"],
+            restricted_ip_addresses=restricted_ip_addresses,
+            shared_crawlers=shared_crawlers
+        )
+
+    def parse_form_data(self, raw_data):
+        """Parse the one dimensional form data into mult-dimensional objects."""
+        new_ip_addresses = []
+        seen_ip_addresses = []
+        new_crawler_lists = []
+        for name, value in raw_data.to_dict().items():
+            if(re.match('^shared_crawler_[0-9]+$', name)):
+                is_active = True if raw_data.get(name + '_check') else False
+                new_crawler_lists.append({
+                    'id': raw_data.get(name + '_id', 0),
+                    'list_url': value,
+                    'is_active': is_active,
+                })
+            elif(re.match('^address_list_[0-9]+$', name)):
+                if name not in seen_ip_addresses and ''.join(raw_data.getlist(name)):
+                    seen_ip_addresses.append(name)
+                    new_ip_addresses.append('.'.join(raw_data.getlist(name)))
+        return new_crawler_lists, new_ip_addresses
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -538,6 +599,16 @@ stats_settings_adminview = {
     }
 }
 
+
+log_analysis_settings_adminview = {
+    'view_class': LogAnalysisSettings,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Log Analysis'),
+        'endpoint': 'loganalysissetting'
+    }
+}
+
 language_adminview = {
     'view_class': LanguageSettingView,
     'kwargs': {
@@ -561,5 +632,6 @@ __all__ = (
     'report_adminview',
     'language_adminview',
     'web_api_account_adminview',
-    'stats_settings_adminview'
+    'stats_settings_adminview',
+    'log_analysis_settings_adminview',
 )
