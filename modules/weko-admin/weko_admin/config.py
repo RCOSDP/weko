@@ -82,6 +82,15 @@ WEKO_ADMIN_DEFAULT_CRAWLER_LISTS = [
 ]
 """Default crawler files for restricting IP addresses and user agents."""
 
+WEKO_ADMIN_REPORT_EMAIL_DELIVERY = {
+    'day_of_week': 'Monday', 'month': 12, 'day': 1, 'hour': 12, 'minute': 0
+}
+"""Default report email delivery schedule."""
+
+
+WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}'
+"""Redis cache"""
+
 # Search management json
 
 WEKO_ADMIN_MANAGEMENT_OPTIONS = {
