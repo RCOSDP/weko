@@ -343,7 +343,8 @@ class WekoDeposit(Deposit):
                 relations['version'][0])
 
             # update relation version previous to ES
-            if 'previous' in relations and relations['previous'] is not None:
+            if 'previous' in relations['version'][0] \
+                and relations['version'][0]['previous'] is not None:
                 pid_val_prev = relations['version'][0]['previous']['pid_value']
                 pid_prev = PersistentIdentifier.get('recid', pid_val_prev)
                 relations_prev = serialize_relations(pid_prev)
