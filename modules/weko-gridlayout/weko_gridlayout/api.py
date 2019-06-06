@@ -33,11 +33,12 @@ class WidgetItems(object):
     """Define API for WidgetItems creation and update."""
 
     @classmethod
-    def build_general_data(cls, data_object, widget_items, is_update = False):
+    def build_general_data(cls, data_object, widget_items, is_update=False):
         """Build general data of object.
 
         :param data_object: object data
         :param widget_items: widget item
+        :param is_update: Update flag
         """
         try:
             data_object["repository_id"] = widget_items.get('repository')
@@ -81,17 +82,18 @@ class WidgetItems(object):
         widget_object['settings'] = json.dumps(data_object_settings)
 
     @classmethod
-    def build_object(cls, widget_items=None):
+    def build_object(cls, widget_items=None, is_update=False):
         """Build widget item object.
 
         :param widget_items: Widget Item
+        :param is_update: Update flag
         :return: Widget item object
         """
         if not isinstance(widget_items, dict):
             return
         data = dict()
         try:
-            cls.build_general_data(data, widget_items)
+            cls.build_general_data(data, widget_items, is_update)
             cls.build_settings_data(data, widget_items)
         except Exception as ex:
             current_app.logger.debug(ex)
