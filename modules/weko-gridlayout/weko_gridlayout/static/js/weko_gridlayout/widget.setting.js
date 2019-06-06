@@ -741,9 +741,11 @@ class ComponentButtonLayout extends React.Component {
         }
         this.props.getValueOfField('multiLangData', multiLangData);
         data['multiLangSetting'] = multiLangData;
-        data['label'] = currentLabel;
-        data['settings'] = currentDescription;
-        data['language'] = currentLanguage;
+        if (!this.props.is_edit) {
+            data['label'] = currentLabel;
+            data['settings'] = currentDescription;
+            data['language'] = currentLanguage;
+        }
         let request = {
             flag_edit: this.props.is_edit,
             data: data,
