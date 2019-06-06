@@ -522,14 +522,13 @@ class WekoDeposit(Deposit):
                 PIDVersioning(parent=pv.parent).insert_draft_child(child=recid)
                 RecordDraft.link(recid, depid)
 
-                with db.session.begin_nested():
-                    # Create snapshot from the record's bucket and update data
-                    snapshot = latest_record.files.bucket.snapshot(lock=False)
-                    snapshot.locked = False
-                    if 'extra_formats' in latest_record['_buckets']:
-                        extra_formats_snapshot = \
-                            latest_record.extra_formats.bucket.snapshot(
-                                lock=False)
+                # Create snapshot from the record's bucket and update data
+                snapshot = latest_record.files.bucket.snapshot(lock=False)
+                snapshot.locked = False
+                if 'extra_formats' in latest_record['_buckets']:
+                    extra_formats_snapshot = \
+                        latest_record.extra_formats.bucket.snapshot(
+                            lock=False)
                 deposit['_buckets'] = {'deposit': str(snapshot.id)}
                 RecordsBuckets.create(record=deposit.model, bucket=snapshot)
                 if 'extra_formats' in latest_record['_buckets']:
@@ -542,6 +541,7 @@ class WekoDeposit(Deposit):
                 args = [index, item_metadata]
                 deposit.update(*args)
                 deposit.commit()
+            db.session.commit()
         return deposit
 
     def get_content_files(self):
