@@ -34,6 +34,7 @@ from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidrelations.serializers.utils import serialize_relations
 from invenio_pidstore.errors import PIDInvalidAction
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
@@ -135,6 +136,18 @@ class WekoIndexer(RecordIndexer):
             index=self.es_index,
             doc_type=self.es_doc_type,
             id=str(record.id),
+            body=body
+        )
+
+    def update_relation_version_is_last(self, version):
+        """Update relation version is_last."""
+        self.get_es_index()
+        pst = 'relation_version_is_last'
+        body = {'doc': {pst: version.get('is_last')}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(version.get('id')),
             body=body
         )
 
@@ -320,6 +333,25 @@ class WekoDeposit(Deposit):
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
         self.is_edit = True
         deposit = super(WekoDeposit, self).publish(pid, id_)
+
+        # update relation version current to ES
+        pid = PersistentIdentifier.get('recid', self.data.get('id'))
+        relations = serialize_relations(pid)
+        if relations and 'version' in relations:
+            relations['version'][0]['id'] = pid.object_uuid
+            self.indexer.update_relation_version_is_last(
+                relations['version'][0])
+
+            # update relation version previous to ES
+            if 'previous' in relations and relations['previous'] is not None:
+                pid_val_prev = relations['version'][0]['previous']['pid_value']
+                pid_prev = PersistentIdentifier.get('recid', pid_val_prev)
+                relations_prev = serialize_relations(pid_prev)
+                if relations_prev and 'version' in relations_prev:
+                    relations_prev['version'][0]['id'] = pid_prev.object_uuid
+                    self.indexer.update_relation_version_is_last(
+                        relations['version'][0])
+
         return deposit
 
     @classmethod
@@ -457,13 +489,15 @@ class WekoDeposit(Deposit):
         # Check that there is not a newer draft version for this record
         # and this is the latest version
         pv = PIDVersioning(child=pid)
-        if (not pv.draft_child and pid == pv.last_child):
+        last_pid = pv.last_child
+        if (not pv.draft_child and pid==last_pid):
             with db.session.begin_nested():
 
                 # Get copy of the latest record
                 latest_record = WekoDeposit.get_record(
-                    pv.last_child.object_uuid)
+                    last_pid.object_uuid)
                 data = latest_record.dumps()
+                item_metadata=ItemsMetadata.get_record(last_pid.object_uuid).dumps()
 
                 owners = data['_deposit']['owners']
 
@@ -484,7 +518,7 @@ class WekoDeposit(Deposit):
                     'recid', str(data['_deposit']['id']))
                 depid = PersistentIdentifier.get(
                     'depid', str(data['_deposit']['id']))
-                PIDVersioning(parent=recid).insert_draft_child(child=recid)
+                PIDVersioning(parent=last_pid).insert_draft_child(child=recid)
                 RecordDraft.link(recid, depid)
 
                 with db.session.begin_nested():
@@ -502,8 +536,6 @@ class WekoDeposit(Deposit):
                         str(extra_formats_snapshot.id)
                     RecordsBuckets.create(
                         record=deposit.model, bucket=extra_formats_snapshot)
-                item_metadata = ItemsMetadata.get_record(
-                    pv.last_child.object_uuid).dumps()
                 index = {'index': self.get('path', []), 'actions': 'private'
                     if self.get('publish_status', '1') == '1' else 'publish'}
                 args = [index, item_metadata]
