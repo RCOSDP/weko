@@ -25,18 +25,21 @@ import hashlib
 import json
 import os
 import re
+import redis
 import sys
 import zipfile
 from datetime import datetime
 from io import BytesIO, StringIO
 
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, request
+    redirect, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
+from invenio_cache import current_cache
 from invenio_db import db
+from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_items_ui.utils import get_user_information
 from weko_records.api import ItemsMetadata
@@ -375,7 +378,7 @@ class ReportView(BaseView):
             if file_type == 'index_access':
                 writer.writerow([_('Total Detail Views'), raw_stats['total']])
 
-            if file_type == 'site_access':
+            elif file_type == 'site_access':
                 self.write_report_tsv_rows(writer,
                                            raw_stats['site_license'],
                                            file_type,
@@ -508,15 +511,30 @@ class WebApiAccount(BaseView):
 class StatsSettingsView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
+        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name='display_stats')
+
+        current_display_setting = True # Default
+        if datastore.redis.exists(cache_key):
+            curr_display_setting = datastore.get(cache_key).decode('utf-8')
+            current_app.logger.info('Current: ')
+            current_app.logger.info(current_display_setting)
+            current_display_setting = True if curr_display_setting == 'True' else False
+        else:
+            current_display_setting = True
+
         if request.method == 'POST':
             display_setting = request.form.get('record_stats_radio', 'True')
-            current_app.config["WEKO_ADMIN_DISPLAY_FILE_STATS"] = True if \
-                display_setting == 'True' else False
+            datastore.delete(cache_key)
+            datastore.put(cache_key, display_setting.encode('utf-8'))
             flash(_('Successfully Changed Settings.'))
-            redirect('statssettings.index')
+            return redirect(url_for('statssettings.index'))
+
         return self.render(
             current_app.config["WEKO_ADMIN_STATS_SETTINGS_TEMPLATE"],
-            display_stats=current_app.config["WEKO_ADMIN_DISPLAY_FILE_STATS"]
+            display_stats=current_display_setting
         )
 
 
