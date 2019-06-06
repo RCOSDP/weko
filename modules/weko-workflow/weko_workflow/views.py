@@ -551,7 +551,8 @@ def next_action(activity_id='0', action_id=0):
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-            deposit = WekoDeposit.get_record(item.id)
+            record = WekoDeposit.get_record(item.id)
+            deposit = WekoDeposit(record, record.model)
             deposit.publish()
             activity.update(
                 action_id=next_flow_action[0].action_id,
