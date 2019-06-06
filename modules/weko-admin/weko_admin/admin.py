@@ -24,6 +24,7 @@ import csv
 import hashlib
 import json
 import os
+import re
 import sys
 import zipfile
 from datetime import datetime
@@ -40,6 +41,8 @@ from sqlalchemy import func
 from weko_items_ui.utils import get_user_information
 from weko_records.api import ItemsMetadata
 
+from .models import LogAnalysisRestrictedCrawlerList, \
+    LogAnalysisRestrictedIpAddress
 from .permissions import admin_permission_factory
 from .utils import allowed_file
 
@@ -227,11 +230,13 @@ class ReportView(BaseView):
         'search_count': _('Search Keyword Ranking'),
         'top_page_access': _('Number Of Access By Host'),
         'user_roles': _('User Affiliation Information'),
+        'site_access': _('Access Count By Site License')
     }
 
     sub_header_rows = {
         'file_download': _('Open-Access No. Of File Downloads'),
-        'file_preview': _('Open-Access No. Of File Previews')
+        'file_preview': _('Open-Access No. Of File Previews'),
+        'site_access': _('Access Number Breakdown By Site License')
     }
 
     report_cols = {
@@ -254,8 +259,13 @@ class ReportView(BaseView):
                                 _('File download count'),
                                 _('File playing count')],
         'search_count': [_('Search Keyword'), _('Number Of Searches')],
-        'top_page_access': [_('Host'), _('IP Address'), _('WEKO Top Page Access Count')],
+        'top_page_access': [_('Host'), _('IP Address'),
+                            _('WEKO Top Page Access Count')],
         'user_roles': [_('Role'), _('Number Of Users')],
+        'site_access': [_('WEKO Top Page Access Count'),
+                        _('Number Of Searches'), _('Number Of Views'),
+                        _('Number Of File download'),
+                        _('Number Of File Regeneration')]
     }
 
     file_names = {
@@ -266,6 +276,7 @@ class ReportView(BaseView):
         'file_using_per_user': _('FileUsingPerUser_'),
         'search_count': _('SearchCount_'),
         'user_roles': _('UserAffiliate_'),
+        'site_access': _('SiteAccess_')
     }
 
     @expose('/', methods=['GET'])
@@ -345,14 +356,15 @@ class ReportView(BaseView):
         return resp
 
     def make_stats_tsv(self, raw_stats, file_type, year, month):
-        """Make TSV report file for downloads and previews."""
+        """Make TSV report file for stats."""
         header_row = self.header_rows.get(file_type)
         sub_header_row = self.sub_header_rows.get(file_type)
         tsv_output = StringIO()
         try:
             writer = csv.writer(tsv_output, delimiter='\t',
                                 lineterminator="\n")
-            writer.writerows([[header_row], [_('Aggregation Month'), year + '-' + month],
+            writer.writerows([[header_row],
+                              [_('Aggregation Month'), year + '-' + month],
                               [''], [header_row]])
 
             cols = self.report_cols.get(file_type, [])
@@ -363,27 +375,46 @@ class ReportView(BaseView):
             if file_type == 'index_access':
                 writer.writerow([_('Total Detail Views'), raw_stats['total']])
 
-            self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
+            if file_type == 'site_access':
+                self.write_report_tsv_rows(writer,
+                                           raw_stats['site_license'],
+                                           file_type,
+                                           _('Site license member'))
+                self.write_report_tsv_rows(writer,
+                                           raw_stats['other'],
+                                           file_type,
+                                           _('Other than site license'))
+            else:
+                self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
 
             # Write open access stats
-            if sub_header_row is not None and 'open_access' in raw_stats:
+            if sub_header_row is not None:
                 writer.writerows([[''], [sub_header_row]])
-                writer.writerow(cols)
-                self.write_report_tsv_rows(writer, raw_stats['open_access'])
+                if 'open_access' in raw_stats:
+                    writer.writerow(cols)
+                    self.write_report_tsv_rows(writer,
+                                               raw_stats['open_access'])
+                elif 'institution_name' in raw_stats:
+                    writer.writerows([[_('Institution Name')] + cols])
+                    self.write_report_tsv_rows(writer,
+                                               raw_stats['institution_name'],
+                                               file_type)
         except Exception:
             current_app.logger.error('Unexpected error: ',
                                      sys.exc_info()[0])
             abort(500)
         return tsv_output
 
-    def write_report_tsv_rows(self, writer, records, file_type=None):
+    def write_report_tsv_rows(self, writer, records,
+                              file_type=None, other_info=None):
         """Write tsv rows for stats."""
         if isinstance(records, dict):
             records = list(records.values())
         for record in records:
             try:
                 if file_type is None or \
-                        file_type == 'file_download' or file_type == 'file_preview':
+                        file_type == 'file_download' or \
+                        file_type == 'file_preview':
                     writer.writerow([record['file_key'], record['index_list'],
                                      record['total'], record['no_login'],
                                      record['login'], record['site_license'],
@@ -415,6 +446,20 @@ class ReportView(BaseView):
                 elif file_type == 'top_page_access':
                     writer.writerow([record['host'], record['ip'],
                                      record['count']])
+                elif file_type == 'site_access':
+                    if record:
+                        if other_info:
+                            writer.writerow([other_info, record['top_view'],
+                                             record['search'],
+                                             record['record_view'],
+                                             record['file_download'],
+                                             record['file_preview']])
+                        else:
+                            writer.writerow([record['name'], record['top_view'],
+                                             record['search'],
+                                             record['record_view'],
+                                             record['file_download'],
+                                             record['file_preview']])
             except Exception:
                 current_app.logger.error('Unexpected error: ',
                                          sys.exc_info()[0])
@@ -423,12 +468,18 @@ class ReportView(BaseView):
     @expose('/user_report_data', methods=['GET'])
     def get_user_report_data(self):
         """Get user report data from db and modify."""
-        role_counts = db.session.query(Role.name,
-                                       func.count(userrole.c.role_id)).outerjoin(userrole) \
-            .group_by(Role.id).all()
+        role_counts = []
+        try:
+            role_counts = db.session.query(Role.name, func.count(userrole.c.role_id)) \
+                .outerjoin(userrole) \
+                .group_by(Role.id).all()
+        except Exception:
+            current_app.logger.error(_('Could not retrieve user report data: '),
+                                     sys.exc_info()[0])
+            abort(500)
+
         role_counts = [dict(role_name=name, count=count)
                        for name, count in role_counts]
-
         response = {'all': role_counts}
         total_users = sum([x['count'] for x in role_counts])
 
@@ -469,6 +520,63 @@ class StatsSettingsView(BaseView):
         )
 
 
+class LogAnalysisSettings(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        if request.method == 'POST':
+            crawler_lists, new_ip_addresses = self.parse_form_data(
+                request.form)
+            try:
+                LogAnalysisRestrictedIpAddress.update_table(new_ip_addresses)
+                LogAnalysisRestrictedCrawlerList.update_or_insert_list(
+                    crawler_lists)
+            except Exception:
+                current_app.logger.error(_('Could not save restricted data: '),
+                                         sys.exc_info()[0])
+                flash(_('Could not save data.'))
+
+        # Get most current restricted addresses/user agents
+        try:
+            restricted_ip_addresses = LogAnalysisRestrictedIpAddress.get_all()
+            shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
+            # current_app.logger.info(LogAnalysisRestrictedCrawlerList.get_all_active())
+            if not shared_crawlers:
+                LogAnalysisRestrictedCrawlerList \
+                    .add_list(current_app.config["WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
+                shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
+        except Exception:
+            current_app.logger.error(_('Could not get restricted data: '),
+                                     sys.exc_info()[0])
+            restricted_ip_addresses = []
+            shared_crawlers = []
+
+        return self.render(
+            current_app.config["WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE"],
+            restricted_ip_addresses=restricted_ip_addresses,
+            shared_crawlers=shared_crawlers
+        )
+
+    def parse_form_data(self, raw_data):
+        """Parse the one dimensional form data into mult-dimensional objects."""
+        new_ip_addresses = []
+        seen_ip_addresses = []
+        new_crawler_lists = []
+        for name, value in raw_data.to_dict().items():
+            if(re.match('^shared_crawler_[0-9]+$', name)):
+                is_active = True if raw_data.get(name + '_check') else False
+                new_crawler_lists.append({
+                    'id': raw_data.get(name + '_id', 0),
+                    'list_url': value,
+                    'is_active': is_active,
+                })
+            elif(re.match('^address_list_[0-9]+$', name)):
+                if name not in seen_ip_addresses and ''.join(
+                        raw_data.getlist(name)):
+                    seen_ip_addresses.append(name)
+                    new_ip_addresses.append('.'.join(raw_data.getlist(name)))
+        return new_crawler_lists, new_ip_addresses
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -496,6 +604,16 @@ stats_settings_adminview = {
     }
 }
 
+
+log_analysis_settings_adminview = {
+    'view_class': LogAnalysisSettings,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Log Analysis'),
+        'endpoint': 'loganalysissetting'
+    }
+}
+
 language_adminview = {
     'view_class': LanguageSettingView,
     'kwargs': {
@@ -519,5 +637,6 @@ __all__ = (
     'report_adminview',
     'language_adminview',
     'web_api_account_adminview',
-    'stats_settings_adminview'
+    'stats_settings_adminview',
+    'log_analysis_settings_adminview',
 )

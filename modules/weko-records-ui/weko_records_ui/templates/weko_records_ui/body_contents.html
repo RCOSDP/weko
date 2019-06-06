@@ -88,6 +88,7 @@
               </thead>
               <tbody>
                 {%- for file in files|sort(attribute='key') -%}
+                {%- if file.filename -%}
                 {%- set img = file.mimetype | get_image_src -%}
                 {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                   filename=file.key) %}
@@ -214,6 +215,7 @@
                     </div>
                   </td>
                 </tr>
+                {%- endif -%}
                 {%- endif -%}
                 {%- endif -%}
                 {%- endfor -%}

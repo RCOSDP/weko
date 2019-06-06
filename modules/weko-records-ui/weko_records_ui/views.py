@@ -26,6 +26,7 @@ from flask import Blueprint, abort, current_app, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
+from flask_security import current_user
 from invenio_db import db
 from invenio_files_rest.proxies import current_permission_factory
 from invenio_files_rest.views import ObjectResource, check_permission, \
@@ -45,6 +46,7 @@ from weko_workflow.models import ActionStatusPolicy
 
 from weko_records_ui.models import InstitutionName
 
+from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
@@ -324,10 +326,17 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param \*\*kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    check_site_license_permission()
+    send_info = {}
+    send_info['site_license_flag'] = True \
+        if hasattr(current_user, 'site_license_flag') else False
+    send_info['site_license_name'] = current_user.site_license_name \
+        if hasattr(current_user, 'site_license_name') else ''
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
         record=record,
+        info=send_info
     )
     getargs = request.args
     community_id = ""

@@ -28,6 +28,7 @@ from flask import Blueprint, abort, current_app, flash, json, jsonify, \
     redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
+from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
@@ -36,6 +37,7 @@ from weko_deposit.api import WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
+from weko_records_ui.ipaddr import check_site_license_permission
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.models import ActionStatusPolicy
 
@@ -409,10 +411,17 @@ def default_view_method(pid, record, template=None):
 
     Sends ``record_viewed`` signal and renders template.
     """
+    check_site_license_permission()
+    send_info = {}
+    send_info['site_license_flag'] = True \
+        if hasattr(current_user, 'site_license_flag') else False
+    send_info['site_license_name'] = current_user.site_license_name \
+        if hasattr(current_user, 'site_license_name') else ''
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
         record=record,
+        info=send_info
     )
 
     item_type_id = record.get('item_type_id')
@@ -486,6 +495,9 @@ def to_files_js(record):
     if files is not None:
         for f in files:
             res.append({
+                'displaytype': f.get('displaytype', ''),
+                'filename': f.get('filename', ''),
+                'mimetype': f.mimetype,
                 'key': f.key,
                 'version_id': f.version_id,
                 'checksum': f.file.checksum,
