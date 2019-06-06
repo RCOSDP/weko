@@ -41,9 +41,11 @@ from sqlalchemy import func
 from weko_items_ui.utils import get_user_information
 from weko_records.api import ItemsMetadata
 
+from .models import LogAnalysisRestrictedCrawlerList, \
+    LogAnalysisRestrictedIpAddress
 from .permissions import admin_permission_factory
 from .utils import allowed_file
-from .models import LogAnalysisRestrictedIpAddress, LogAnalysisRestrictedCrawlerList
+
 
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
@@ -522,10 +524,12 @@ class LogAnalysisSettings(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         if request.method == 'POST':
-            crawler_lists, new_ip_addresses = self.parse_form_data(request.form)
+            crawler_lists, new_ip_addresses = self.parse_form_data(
+                request.form)
             try:
                 LogAnalysisRestrictedIpAddress.update_table(new_ip_addresses)
-                LogAnalysisRestrictedCrawlerList.update_or_insert_list(crawler_lists)
+                LogAnalysisRestrictedCrawlerList.update_or_insert_list(
+                    crawler_lists)
             except Exception:
                 current_app.logger.error(_('Could not save restricted data: '),
                                          sys.exc_info()[0])
@@ -535,16 +539,16 @@ class LogAnalysisSettings(BaseView):
         try:
             restricted_ip_addresses = LogAnalysisRestrictedIpAddress.get_all()
             shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
-            #current_app.logger.info(LogAnalysisRestrictedCrawlerList.get_all_active())
+            # current_app.logger.info(LogAnalysisRestrictedCrawlerList.get_all_active())
             if not shared_crawlers:
                 LogAnalysisRestrictedCrawlerList \
                     .add_list(current_app.config["WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
                 shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
         except Exception:
-           current_app.logger.error(_('Could not get restricted data: '),
-                                    sys.exc_info()[0])
-           restricted_ip_addresses = []
-           shared_crawlers = []
+            current_app.logger.error(_('Could not get restricted data: '),
+                                     sys.exc_info()[0])
+            restricted_ip_addresses = []
+            shared_crawlers = []
 
         return self.render(
             current_app.config["WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE"],
@@ -566,7 +570,8 @@ class LogAnalysisSettings(BaseView):
                     'is_active': is_active,
                 })
             elif(re.match('^address_list_[0-9]+$', name)):
-                if name not in seen_ip_addresses and ''.join(raw_data.getlist(name)):
+                if name not in seen_ip_addresses and ''.join(
+                        raw_data.getlist(name)):
                     seen_ip_addresses.append(name)
                     new_ip_addresses.append('.'.join(raw_data.getlist(name)))
         return new_crawler_lists, new_ip_addresses
