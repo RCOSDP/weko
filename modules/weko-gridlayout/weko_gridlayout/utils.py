@@ -130,6 +130,7 @@ def get_widget_preview(repository_id, default_language):
                 settings = json.loads(settings)
                 for item in settings:
                     widget_preview = dict()
+                    widget_preview["widget_id"] = item.get("widget_id")
                     widget_preview["x"] = item.get("x")
                     widget_preview["y"] = item.get("y")
                     widget_preview["width"] = item.get("width")
