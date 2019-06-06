@@ -25,12 +25,12 @@ import hashlib
 import json
 import os
 import re
-import redis
 import sys
 import zipfile
 from datetime import datetime
 from io import BytesIO, StringIO
 
+import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
     redirect, request, url_for
 from flask_admin import BaseView, expose
@@ -516,7 +516,7 @@ class StatsSettingsView(BaseView):
         cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
             format(name='display_stats')
 
-        current_display_setting = True # Default
+        current_display_setting = True  # Default
         if datastore.redis.exists(cache_key):
             curr_display_setting = datastore.get(cache_key).decode('utf-8')
             current_app.logger.info('Current: ')
