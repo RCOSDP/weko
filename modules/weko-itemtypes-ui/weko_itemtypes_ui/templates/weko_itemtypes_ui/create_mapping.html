@@ -22,6 +22,7 @@
 
 {%- block css %}
   {{ super() }}
+  {% assets "weko_mapping_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -41,27 +42,31 @@
     <div class="panel panel-info">
       <div class="panel-body">
         <div class="form-inline">
-          <div class="form-group">
-            <label for="item-type-lists">{{_('Item type List')}}</label>
-            <select class="form-control" id="item-type-lists">
-              {%- for list in lists -%}
-              <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
-              {%- endfor -%}
-            </select>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label for="item-type-lists">{{_('Item type List')}}</label>
+              <select class="form-control" id="item-type-lists">
+                {%- for list in lists -%}
+                <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+                {%- endfor -%}
+              </select>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="jpcoar_lists">{{_('Schema List')}}</label>
-            <select class="form-control" id="jpcoar_lists">
-              {%- for mapping_list_name in jpcoar_prop_lists.keys() -%}
-              <option  value="{{mapping_list_name}}" {% if mapping_name == mapping_list_name %}selected{% endif %}>{{mapping_list_name}}</option>
-              {%- endfor -%}
-            </select>
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label for="jpcoar_lists">{{_('Schema List')}}</label>
+              <select class="form-control" id="jpcoar_lists">
+                {%- for mapping_list_name in jpcoar_prop_lists.keys() -%}
+                <option  value="{{mapping_list_name}}" {% if mapping_name == mapping_list_name %}selected{% endif %}>{{mapping_list_name}}</option>
+                {%- endfor -%}
+              </select>
+            </div>
+           <!-- <a type="button" class="btn btn-info pull-right" href="{{
+                url_for('weko_itemtypes_ui.index') }}" style="width: 80px; height: 40px;font-size: 15px;">
+                 <span class="glyphicon glyphicon-chevron-left"></span>
+                 {{ _('Back') }}
+           </a>-->
           </div>
-         <!-- <a type="button" class="btn btn-info pull-right" href="{{
-              url_for('weko_itemtypes_ui.index') }}" style="width: 80px; height: 40px;font-size: 15px;">
-               <span class="glyphicon glyphicon-chevron-left"></span>
-               {{ _('Back') }}
-         </a>-->
         </div>
       </div>
     </div>
@@ -69,10 +74,10 @@
 </div>
 <div class="row">
   <div class="col-sm-6">
-    <label>{{_('Item Type')}}</label><label>({{_('Parent')}})</label>
+    <label>{{_('Item Type ')}}</label><label>({{_('Parent')}})</label>
   </div>
   <div class="col-sm-6">
-    <label>{{_('JPCOAR')}}</label><label>({{_('Parent')}})</label>
+    <label>{{_('Schema ')}}</label><label>({{_('Parent')}})</label>
   </div>
 </div>
 <div class="pre-scrollable">
@@ -84,7 +89,15 @@
   {%- for (key, name) in itemtype_list -%}
   <tr>
     <td class="col-sm-6">
-      <label>{{name}}</label>
+      <div class="form-inline" >
+        <div class="radio">
+          <label>
+            <input type="radio" name="radio_parent_list" value="{{key}}">
+          </label>
+        </div>
+        <label>{{name}}</label>
+      </div>
+      <!-- <label>{{name}}</label> -->
     </td>
     <td>
       <ul class="list-group" id="{{'ul_'+key}}">
@@ -99,12 +112,12 @@
             <li class="{{'hide list-group-item list_'+jpcoar_prop_key}}">
             {%- endif -%}
               <div class="form-inline">
-                <div class="radio">
+<!--                 <div class="radio">
                   <label>
                     <input type="radio" name="radio_parent_list" value="{{key}}">
                   </label>
                 </div>
-                <select class="form-control" name="parent_list">
+ -->                <select class="form-control" name="parent_list">
                   {%- if keys_count == 1 -%}<option value=""></option>{%- endif -%}
                   {%- for jp_key in jpcoar_prop_list.keys() -%}
                   <option value="{{ jp_key }}" {%- if jp_key == mapping_key -%}selected{%- endif -%}>{{jp_key}}</option>
@@ -212,17 +225,24 @@
   </div>
 </div>
 <hr>
+<!-- ---------- Header for Item Child list ----------  -->
 <div class="row">
-  <div class="col-sm-6">
-    <label id="sub-item-type-lists-label">{{_('Itemtype List')}}</label><label>({{_('Child')}})</label>
-  </div>
-  <div class="col-sm-6">
-    <label id="sub-jpcoar-lists-label">{{_('JPCOAR')}}</label><label>({{_('Child')}})</label>
-    <!-- <button id="sub_mapping-add" class="btn btn-success pull-right">{{_('Add')}}</button>-->
-    <button id="sub_mapping-add" class="btn btn-light pull-right add-button twentyeight-pixel-right-margin">
-       <span class="glyphicon glyphicon-plus"></span>
-           {{_('Add')}}
-    </button>
+  <div class="col-sm-12">
+    <div class="panel header-child-list">
+      <div class="panel-body" style="background: #C6DBF7;">
+        <div class="col-sm-6">
+          <label id="sub-item-type-lists-label">{{_('Itemtype List')}}</label><label>({{_('Child')}})</label>
+        </div>
+        <div class="col-sm-6">
+          <label id="sub-jpcoar-lists-label">{{_('JPCOAR')}}</label><label>({{_('Child')}})</label>
+          <!-- <button id="sub_mapping-add" class="btn btn-success pull-right">{{_('Add')}}</button>-->
+          <button id="sub_mapping-add" class="btn btn-light pull-right add-button twentyeight-pixel-right-margin">
+             <span class="glyphicon glyphicon-plus"></span>
+                 {{_('Add')}}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 <div id="sub_children_lists">
