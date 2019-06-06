@@ -25,9 +25,11 @@ from blinker import Namespace
 from flask import Blueprint, current_app, flash, render_template, request, \
     session
 from flask_login import login_required
+from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from weko_admin.utils import set_default_language
 from weko_index_tree.models import Index, IndexStyle
+from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword
 
 _signals = Namespace()
@@ -83,7 +85,14 @@ def index():
                     (index.id, index.index_link_name_english))
 
     detail_condition = get_search_detail_keyword('')
-    top_viewed.send(current_app._get_current_object())
+    check_site_license_permission()
+    send_info = {}
+    send_info['site_license_flag'] = True \
+        if hasattr(current_user, 'site_license_flag') else False
+    send_info['site_license_name'] = current_user.site_license_name \
+        if hasattr(current_user, 'site_license_name') else ''
+    top_viewed.send(current_app._get_current_object(),
+                    info=send_info)
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         render_widgets=True,

@@ -26,6 +26,7 @@ from flask import Blueprint, abort, current_app, flash, jsonify, \
     make_response, redirect, render_template, request, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
+from flask_security import current_user
 from invenio_db import db
 from invenio_files_rest.proxies import current_permission_factory
 from invenio_files_rest.views import ObjectResource, check_permission, \
@@ -45,6 +46,7 @@ from weko_workflow.models import ActionStatusPolicy
 
 from weko_records_ui.models import InstitutionName
 
+from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
@@ -275,7 +277,7 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata:
+    if len(mtdata):
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
             if found is not None:
@@ -324,10 +326,17 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param \*\*kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    check_site_license_permission()
+    send_info = {}
+    send_info['site_license_flag'] = True \
+        if hasattr(current_user, 'site_license_flag') else False
+    send_info['site_license_name'] = current_user.site_license_name \
+        if hasattr(current_user, 'site_license_name') else ''
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
         record=record,
+        info=send_info
     )
     getargs = request.args
     community_id = ""
@@ -365,18 +374,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Get item meta data
     record['permalink_uri'] = None
     pidstore_identifier = get_item_pidstore_identifier(pid.object_uuid)
-    if pidstore_identifier is None:
+    if not pidstore_identifier:
         record['permalink_uri'] = request.url
     else:
         record['permalink_uri'] = pidstore_identifier
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
-
     return render_template(
         template,
         pid=pid,
         record=record,
+        display_stats=current_app.config['WEKO_ADMIN_DISPLAY_FILE_STATS'],
         filename=filename,
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,

@@ -76,8 +76,10 @@ class WekoFileObject(FileObject):
         """Info."""
         super(WekoFileObject, self).dumps()
         self.data.update(self.obj.file.json)
-        index = self['filename'].rfind('.')
-        self['filename'] = self['filename'][:index]
+        if hasattr(self, 'filename'):
+            # If the record has not been set into an index, then the attr 'filename' will not exist
+            index = self['filename'].rfind('.')
+            self['filename'] = self['filename'][:index]
         return self.data
 
 

@@ -194,7 +194,8 @@ def file_ui(
         **kwargs):
     """File Ui.
 
-    :param is_preview: Determine the type of event. True: file-preview, False: file-download
+    :param is_preview: Determine the type of event.
+           True: file-preview, False: file-download
     :param _record_file_factory:
     :param pid: The :class:`invenio_pidstore.models.PersistentIdentifier`
         instance.
@@ -243,7 +244,8 @@ def file_ui(
         # if pdf and cover page enabled and has original in query param: check
         # permission (user roles)
         if is_pdf is False \
-                or pdfcoverpage_set_rec is None or pdfcoverpage_set_rec.avail == 'disable' \
+                or pdfcoverpage_set_rec is None \
+                or pdfcoverpage_set_rec.avail == 'disable' \
                 or coverpage_state is False \
                 or (is_original and can_download_original_pdf):
             return ObjectResource.send_object(
@@ -307,10 +309,10 @@ def add_signals_info(record, obj):
     obj.userid = userid
 
     # Add site license flag to send_obj
-    if hasattr(current_user, 'site_license_flag'):
-        obj.site_license_flag = True
-    else:
-        obj.site_license_flag = False
+    obj.site_license_flag = True if hasattr(current_user, 'site_licese_flag') \
+        else False
+    obj.site_license_name = current_user.site_license_name \
+        if hasattr(current_user, 'site_license_name') else ''
 
     # Add index list info to send_obj
     index_list = ''
@@ -318,3 +320,7 @@ def add_signals_info(record, obj):
         for index in record.navi:
             index_list += index[3] + '|'
     obj.index_list = index_list[:len(index_list) - 1]
+
+    # Add item info to send_obj
+    obj.item_title = record['item_title']
+    obj.item_id = record['_deposit']['id']

@@ -334,6 +334,22 @@ msgstr "更新"
 msgid "Close"
 msgstr "閉じる"
 
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:77
+msgid "DOI was withdrawn."
+msgstr "DOIが取り下げられました。"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:83
+msgid "Items for which a DOI has been withdrawn can not be granted a DOI."
+msgstr "取り下げたアイテムはDOIを付与できません。"
+
+#: weko_workflow/views.py:716
+msgid "Password not provided"
+msgstr "パスワードが入力されていません。"
+
+#: weko_workflow/views.py:738
+msgid "Invalid password"
+msgstr "パスワードが正しくありません。"
+
 #~ msgid "Back"
 #~ msgstr "戻る"
 

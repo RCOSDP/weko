@@ -41,6 +41,12 @@ WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
 WEKO_ADMIN_REPORT_TEMPLATE = 'weko_admin/admin/report.html'
 """Report template."""
 
+WEKO_ADMIN_STATS_SETTINGS_TEMPLATE = 'weko_admin/admin/stats_settings.html'
+"""Stats Settings template."""
+
+WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE = 'weko_admin/admin/log_analysis_settings.html'
+"""Stats Settings template."""
+
 WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
 """Language templates."""
 
@@ -53,19 +59,28 @@ WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = 'weko_admin/search_management.html'
 LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
 
 WEKO_ADMIN_CROSSREF_API_URL = 'https://doi.crossref.org/'
-""" URL of CrossRef API """
+"""URL of CrossRef API."""
 
 WEKO_ADMIN_ENDPOINT = 'openurl'
-""" Endpoint to concate URL of CrossRef API """
+"""Endpoint to concate URL of CrossRef API."""
 
 WEKO_ADMIN_TEST_DOI = '&id=doi:10.1047/0003-066X.59.1.29'
-""" DOI for check Certificate valid or not """
+"""DOI for check Certificate valid or not."""
 
 WEKO_ADMIN_FORMAT = '&format=json'
-""" Format of CrossRef Certificate """
+"""Format of CrossRef Certificate."""
 
 WEKO_ADMIN_VALIDATION_MESSAGE = 'The login you supplied is not recognized'
-""" Validate message of certificate """
+"""Validate message of certificate."""
+
+WEKO_ADMIN_DISPLAY_FILE_STATS = True
+"""Display record stats or not."""
+
+WEKO_ADMIN_DEFAULT_CRAWLER_LISTS = [
+    'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_ip_blacklist.txt',
+    'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_useragent.txt'
+]
+"""Default crawler files for restricting IP addresses and user agents."""
 
 # Search management json
 
@@ -250,6 +265,3 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
                                                                           ],'default_display':True,  'inputType':'radio_list', 'inputVal':'', 'mappingFlg':False, 'mappingName':''}
     ]
 }
-
-
-
