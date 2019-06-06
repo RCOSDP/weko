@@ -29,9 +29,6 @@
       <div class="row">
         <div class="col-sm-12 col-md-12 col-left">
           {%- block record_author %}
-            {%- if files==[] -%}
-              {%- set files = record.files -%}
-            {%- endif %}
             {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
             {%- if files -%}
             <table class="table table-bordered table-striped">
