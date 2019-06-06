@@ -292,9 +292,11 @@ def update_admin_widget_item_setting(data):
         msg = 'Invalid data.'
     if flag:
         if success:
-            if WidgetItems.is_existed(data_result):
+            if WidgetItems.is_existed(data_result, data_id.get('id')):
+                msg = 'Fail to update. Data input to create is exist!'
+            else:
                 if validate_admin_widget_item_setting(data_id):
-                    if not WidgetItems.update(data_result, data_id):
+                    if not WidgetItems.update_by_id(data_result, data_id):
                         success = False
                         msg = 'Update widget item fail.'
                     else:
@@ -302,15 +304,13 @@ def update_admin_widget_item_setting(data):
                                                                   data_result)
                         msg = 'Widget item updated successfully.'
                 else:
-                    if not WidgetItems.update(data_result, data_id):
+                    if not WidgetItems.update_by_id(data_result, data_id):
                         success = False
                         msg = 'Update widget item fail.'
                     else:
                         msg = 'Widget item updated successfully.'
-            else:
-                msg = 'Fail to update. Can not find Widget item to edit.'
     else:
-        if WidgetItems.is_existed(data_result):
+        if WidgetItems.is_existed(data_result, data_result.get('id')):
             success = False
             msg = 'Fail to create. Data input to create is exist!'
         else:
@@ -449,16 +449,16 @@ def validate_admin_widget_item_setting(widget_id):
     try:
         if (type(widget_id)) is dict:
             repository_id = widget_id.get('repository')
-            id = widget_id.get('id')
+            widget_item_id = widget_id.get('id')
         else:
             repository_id = widget_id.repository_id
-            id = widget.id
+            widget_item_id = widget_id.id
         data = WidgetDesignSetting.select_by_repository_id(
             repository_id)
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             for item in json_data:
-                if str(item.get('widget_id')) == str(id):
+                if str(item.get('widget_id')) == str(widget_item_id):
                     return True
         return False
     except Exception as e:

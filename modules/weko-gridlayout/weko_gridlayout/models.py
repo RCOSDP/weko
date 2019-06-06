@@ -56,7 +56,6 @@ class WidgetType(db.Model):
         """Get setting."""
         return cls.query.filter_by(type_id=str(widget_type_id)).one_or_none()
 
-
     @classmethod
     def get_all_widget_types(cls):
         """
@@ -153,6 +152,31 @@ class WidgetItem(db.Model):
         try:
             with db.session.begin_nested():
                 widget_item = cls.get(repo_id, type_id, lbl, lang)
+                if not widget_item:
+                    return
+
+                for k, v in data.items():
+                    setattr(widget_item, k, v)
+                db.session.merge(widget_item)
+            db.session.commit()
+            return widget_item
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return
+
+    @classmethod
+    def update_by_id(cls, widget_item_id, **data):
+        """Update the widget item detail info.
+
+        :param widget_item_id: Identifier of the widget id.
+        :param data: new widget item info for update.
+        :return: Updated widget item info
+
+        """
+        try:
+            with db.session.begin_nested():
+                widget_item = cls.get_by_id(widget_item_id)
                 if not widget_item:
                     return
 

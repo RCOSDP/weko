@@ -99,12 +99,11 @@ class WidgetItems(object):
 
     @classmethod
     def create(cls, widget_items=None):
-        """Create the widget_items. Delete all widget_items before creation.
+        """Create the widget_items.
 
         :param widget_items: the widget item information.
         :returns: The :class:`widget item` instance lists or None.
         """
-
         def _add_widget_item(widget_setting):
             with db.session.begin_nested():
                 widget_item = WidgetItem(**widget_setting)
@@ -144,6 +143,20 @@ class WidgetItems(object):
         return True
 
     @classmethod
+    def update_by_id(cls, widget_items, widget_id):
+        """Update widget item.
+
+        :param widget_items: Widget items receive from client
+        :param widget_id: id of widget items
+        :return: true if update success else return false
+        """
+        data = cls.build_object(widget_items)
+        if not data:
+            return False
+        WidgetItem.update_by_id(widget_id.get('id'), **data)
+        return True
+
+    @classmethod
     def delete(cls, widget_id):
         """Delete widget_item.
 
@@ -175,11 +188,12 @@ class WidgetItems(object):
 
         Returns:
             true if exist else false
+
         """
-        multiLangdata = item.get('multiLangSetting')
-        if multiLangdata is None:
+        multi_langdata = item.get('multiLangSetting')
+        if multi_langdata is None:
             return False
-        for k, v in multiLangdata.items():
+        for k, v in multi_langdata.items():
             if data.get(k):
                 current_language_data = data.get(k)
                 if v.get('label') == current_language_data.get('label'):
@@ -188,7 +202,7 @@ class WidgetItems(object):
         return False
 
     @classmethod
-    def is_existed(cls, widget_items):
+    def is_existed(cls, widget_items, id):
         """Check widget item is existed or not.
 
         :param widget_items:  Widget item
@@ -204,6 +218,8 @@ class WidgetItems(object):
         if type(list_widget_items) is list:
             for item in list_widget_items:
                 item = cls.parse_result(item)
+                if id == item.get('id'):
+                    continue
                 if cls.validate_exist_multi_language(item, sample_lang_data):
                     return True
         return False
@@ -211,12 +227,11 @@ class WidgetItems(object):
     @classmethod
     def get_account_role(cls):
         """Get account role."""
-
         def _get_dict(x):
             dt = dict()
             for k, v in x.__dict__.items():
                 if not k.startswith('__') and not k.startswith('_') \
-                    and "description" not in k:
+                        and "description" not in k:
                     if not v:
                         v = ""
                     if isinstance(v, int) or isinstance(v, str):
