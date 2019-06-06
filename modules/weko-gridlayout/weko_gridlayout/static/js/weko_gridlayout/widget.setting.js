@@ -671,11 +671,11 @@ class ExtendComponent extends React.Component {
 
 
 class ComponentButtonLayout extends React.Component {
-
     constructor(props) {
         super(props);
+        console.log(this.props);
         this.state = {
-            id: this.props.data_id.id,
+            id: 0,
             repository: '',
             widget_type: '',
             label: '',
@@ -745,10 +745,7 @@ class ComponentButtonLayout extends React.Component {
             data: data,
             data_id: '',
         };
-        if (this.state.repository == '' && this.state.widget_type == '' && this.state.label == '')
-            request.data_id = this.props.data_id;
-        else
-            request.data_id = this.state;
+        request.data_id = this.props.data_id;
 
         if (this.props.data.repository == "0" || this.props.data.repository == "") {
             var modalcontent = "Repository is required!";
