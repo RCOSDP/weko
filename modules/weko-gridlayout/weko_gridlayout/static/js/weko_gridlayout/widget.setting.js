@@ -99,7 +99,7 @@ class ComponentTextboxField extends React.Component {
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
                 <div class="controls col-xs-6">
-                    <input name={this.props.name} type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control" />
+                    <input name={this.props.name} id='label' type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control" />
                 </div>
             </div>
         )
@@ -437,7 +437,6 @@ class ComponentFieldEditor extends React.Component {
         var contents = this.quillRef.getContents();
         let isResetHTML = true;
         if(contents && Array.isArray(contents.ops)){
-            console.log(contents.ops)
             contents.ops.forEach(function (content) {
                 let data = content['insert'];
                 if (typeof data != "string"){
@@ -454,8 +453,6 @@ class ComponentFieldEditor extends React.Component {
         if(isResetHTML){
             dataSending = "";
         }
-        console.log(this.state.editorHtml)
-        console.log(dataSending);
         this.setState({ editorHtml: html });
         this.props.handleChange(this.props.key_binding, dataSending);
     }
@@ -673,7 +670,6 @@ class ExtendComponent extends React.Component {
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
-        console.log(this.props);
         this.state = {
             id: 0,
             repository: '',
@@ -683,6 +679,7 @@ class ComponentButtonLayout extends React.Component {
         }
         this.saveCommand = this.saveCommand.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
+        this.isLabelValid = this.isLabelValid.bind(this);
     }
 
     saveCommand(event) {
@@ -692,14 +689,22 @@ class ComponentButtonLayout extends React.Component {
                 '<button type="button" class="close" data-dismiss="alert">' +
                 '&times;</button>' + message + '</div>');
         }
-
         // Convert data
         let data = this.props.data;
         let multiLangData = data['multiLangSetting'];
         let currentLabel = data['label'];
         let currentDescription = data['settings'];
         let currentLanguage = $("#language")[0].value;
-        if (currentLabel || !$.isEmptyObject(currentDescription)) {
+
+        let noData = true;
+        for (let data in currentDescription) {
+            if (currentDescription[data]) {
+                noData = false;
+                break;
+            }
+        }
+
+        if (currentLabel || !noData) {
             let currentLangData = {
                 label: currentLabel,
                 description: currentDescription
@@ -734,12 +739,11 @@ class ComponentButtonLayout extends React.Component {
                 currentLanguage = keys[0];
             }
         }
-
+        this.props.getValueOfField('multiLangData', multiLangData);
         data['multiLangSetting'] = multiLangData;
         data['label'] = currentLabel;
         data['settings'] = currentDescription;
         data['language'] = currentLanguage;
-
         let request = {
             flag_edit: this.props.is_edit,
             data: data,
@@ -747,15 +751,15 @@ class ComponentButtonLayout extends React.Component {
         };
         request.data_id = this.props.data_id;
 
-        if (this.props.data.repository == "0" || this.props.data.repository == "") {
+        if (data.repository == "0" || data.repository == "") {
             var modalcontent = "Repository is required!";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
-        } else if (this.props.data.widget_type == "0" || this.props.data.widget_type == "") {
+        } else if (data.widget_type == "0" || data.widget_type == "") {
             var modalcontent = "Type is required.";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
-        } else if (this.props.data.label === null || this.props.data.label.match(/^ *$/) !== null) {
+        } else if (!this.isLabelValid(data['multiLangSetting'])) {
             var modalcontent = "Label is required!";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
@@ -772,10 +776,10 @@ class ComponentButtonLayout extends React.Component {
                     if (result.success) {
                         addAlert(result.message);
                         this.setState({
-                            repository: this.props.data.repository,
-                            widget_type: this.props.data.widget_type,
-                            label: this.props.data.label,
-                            language: this.props.data.language
+                            repository: data.repository,
+                            widget_type: data.widget_type,
+                            label: data.label,
+                            language: data.language
                         })
                     } else {
                         //alert(result.message);
@@ -785,6 +789,33 @@ class ComponentButtonLayout extends React.Component {
                     }
                 });
         }
+    }
+
+    isLabelValid(multiLangData) {
+        if ($.isEmptyObject(multiLangData)) {
+            return false;
+        }
+        let isValid = true;
+        for (let data in multiLangData) {
+            let label = multiLangData[data]['label'];
+            let noData = true;
+            if (!$.isEmptyObject(multiLangData[data]['description'])) {
+                let description = multiLangData[data]['description'];
+                for (data in description) {
+                    if (description[data]) {
+                        noData = false;
+                        break;
+                    }
+                }
+            }
+            if (!label) {
+                if (!noData) {
+                    isValid = false;
+                    break;
+                }
+            }
+        }
+        return isValid;
     }
 
     deleteCommand(event) {
@@ -1140,9 +1171,11 @@ class MainLayout extends React.Component {
                 this.setState({ multiLanguageChange: value });
                 break;
             case 'lang':
-                this.setState({
-                    language: value
-                })
+                this.setState({ language: value });
+                break;
+            case 'multiLangData':
+                this.setState({ multiLangSetting: value });
+                break;
         }
     }
 
@@ -1247,7 +1280,7 @@ class MainLayout extends React.Component {
                     <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings} data_change={this.state.multiLanguageChange} />
                 </div>
                 <div className="row">
-                    <ComponentButtonLayout data={this.state} url_request="/api/admin/save_widget_item" is_edit={this.props.is_edit} return_url={this.props.return_url} data_id={this.props.data_id} />
+                    <ComponentButtonLayout data={this.state} getValueOfField={this.getValueOfField} url_request="/api/admin/save_widget_item" is_edit={this.props.is_edit} return_url={this.props.return_url} data_id={this.props.data_id} />
                 </div>
             </div>
         )
