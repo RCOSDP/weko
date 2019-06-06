@@ -33,7 +33,7 @@ class WidgetItems(object):
     """Define API for WidgetItems creation and update."""
 
     @classmethod
-    def build_general_data(cls, data_object, widget_items):
+    def build_general_data(cls, data_object, widget_items, is_update = False):
         """Build general data of object.
 
         :param data_object: object data
@@ -42,7 +42,8 @@ class WidgetItems(object):
         try:
             data_object["repository_id"] = widget_items.get('repository')
             data_object["widget_type"] = widget_items.get('widget_type')
-            data_object["label"] = widget_items.get("label")
+            if not is_update:
+                data_object["label"] = widget_items.get("label")
             data_object["language"] = widget_items.get("language")
             role = widget_items.get('browsing_role')
             if type(role) is list:
@@ -150,7 +151,7 @@ class WidgetItems(object):
         :param widget_id: id of widget items
         :return: true if update success else return false
         """
-        data = cls.build_object(widget_items)
+        data = cls.build_object(widget_items, True)
         if not data:
             return False
         WidgetItem.update_by_id(widget_id.get('id'), **data)
