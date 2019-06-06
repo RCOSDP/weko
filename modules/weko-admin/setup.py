@@ -108,6 +108,7 @@ setup(
             'weko_admin_language = weko_admin.admin:language_adminview',
             'weko_admin_web_api_account = weko_admin.admin:web_api_account_adminview',
             'weko_admin_stats_settings = weko_admin.admin:stats_settings_adminview',
+            'weko_admin_log_analysis = weko_admin.admin:log_analysis_settings_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -127,7 +128,10 @@ setup(
             'weko_admin_custom_report = '
             'weko_admin.bundles:custom_report_js',
             'weko_report_reactjs_lib = '
-            'weko_admin.bundles:report_reactjs_lib'
+            'weko_admin.bundles:report_reactjs_lib',
+            'weko_admin_log_analysis_js = '
+            'weko_admin.bundles:log_analysis_js',
+
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',
