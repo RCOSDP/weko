@@ -797,6 +797,15 @@ class ComponentButtonLayout extends React.Component {
         if ($.isEmptyObject(multiLangData)) {
             return false;
         }
+        let selectedLanguage = $("#language")[0].value;
+        if (!multiLangData[selectedLanguage]) {
+            return false;
+        } else {
+            if (!multiLangData[selectedLanguage]['label']) {
+                return false;
+            }
+        }
+
         let isValid = true;
         for (let data in multiLangData) {
             let label = multiLangData[data]['label'];
