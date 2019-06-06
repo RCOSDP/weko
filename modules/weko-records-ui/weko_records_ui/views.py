@@ -20,6 +20,7 @@
 
 """Blueprint for weko-records-ui."""
 
+import redis
 import six
 import werkzeug
 from flask import Blueprint, abort, current_app, flash, jsonify, \
@@ -27,6 +28,7 @@ from flask import Blueprint, abort, current_app, flash, jsonify, \
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from flask_security import current_user
+from invenio_cache import current_cache
 from invenio_db import db
 from invenio_files_rest.proxies import current_permission_factory
 from invenio_files_rest.views import ObjectResource, check_permission, \
@@ -36,6 +38,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
+from simplekv.memory.redisstore import RedisStore
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemsMetadata
@@ -381,11 +384,22 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     from invenio_files_rest.permissions import has_update_version_role
     can_update_version = has_update_version_role(current_user)
+
+    datastore = RedisStore(redis.StrictRedis.from_url(
+        current_app.config['CACHE_REDIS_URL']))
+    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name='display_stats')
+    if datastore.redis.exists(cache_key):
+        curr_display_setting = datastore.get(cache_key).decode('utf-8')
+        display_stats = True if curr_display_setting == 'True' else False
+    else:
+        display_stats = True
+
     return render_template(
         template,
         pid=pid,
         record=record,
-        display_stats=current_app.config['WEKO_ADMIN_DISPLAY_FILE_STATS'],
+        display_stats=display_stats,
         filename=filename,
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
