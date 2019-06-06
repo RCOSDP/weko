@@ -23,8 +23,12 @@ import json
 
 from flask import current_app, jsonify, make_response
 from invenio_db import db
+from sqlalchemy import asc
+from weko_admin.models import AdminLangSettings
 
 from .api import WidgetItems
+from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
+    WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
 from .models import WidgetDesignSetting, WidgetItem, WidgetType
 
 
@@ -53,10 +57,11 @@ def get_repository_list():
     return result
 
 
-def get_widget_list(repository_id):
+def get_widget_list(repository_id, default_language):
     """Get Widget list.
 
     :param repository_id: Identifier of the repository.
+    :param default_language: The default language.
     :return: Widget list.
     """
     result = {
@@ -69,12 +74,32 @@ def get_widget_list(repository_id):
                 repository_id=str(repository_id), is_enabled=True,
                 is_deleted=False
             ).all()
+        lang_code_default = None
+        if default_language:
+            lang_code_default = default_language.get('lang_code')
         if type(widget_item_list) is list:
             for widget_item in widget_item_list:
                 data = dict()
                 data["widgetId"] = widget_item.repository_id
                 data["widgetType"] = widget_item.widget_type
                 data["widgetLabel"] = widget_item.label
+                data["Id"] = widget_item.id
+                settings = widget_item.settings
+                settings = json.loads(settings)
+                languages = settings.get("multiLangSetting")
+                if type(languages) is dict and lang_code_default is not None:
+                    if languages.get(lang_code_default):
+                        data_display = languages[lang_code_default]
+                        data["widgetLabelDisplay"] = data_display.get('label')
+                    elif languages.get('en'):
+                        data_display = languages['en']
+                        data["widgetLabelDisplay"] = data_display.get('label')
+                    else:
+                        data["widgetLabelDisplay"] = \
+                            WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
+                else:
+                    data["widgetLabelDisplay"] = \
+                        WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                 result["data"].append(data)
     except Exception as e:
         result["error"] = str(e)
@@ -82,10 +107,11 @@ def get_widget_list(repository_id):
     return result
 
 
-def get_widget_preview(repository_id):
+def get_widget_preview(repository_id, default_language):
     """Get Widget preview by repository id.
 
     :param repository_id: Identifier of the repository
+    :param default_language: The default language.
     :return: Widget preview json.
     """
     result = {
@@ -95,12 +121,16 @@ def get_widget_preview(repository_id):
     try:
         widget_setting = WidgetDesignSetting.select_by_repository_id(
             repository_id)
+        lang_code_default = None
+        if default_language:
+            lang_code_default = default_language.get('lang_code')
         if widget_setting:
             settings = widget_setting.get('settings')
             if settings:
                 settings = json.loads(settings)
                 for item in settings:
                     widget_preview = dict()
+                    widget_preview["widget_id"] = item.get("widget_id")
                     widget_preview["x"] = item.get("x")
                     widget_preview["y"] = item.get("y")
                     widget_preview["width"] = item.get("width")
@@ -109,17 +139,38 @@ def get_widget_preview(repository_id):
                     widget_preview["id"] = item.get("id")
                     widget_preview["type"] = item.get("type")
                     widget_preview["name"] = item.get("name")
+                    widget_preview["widget_language"] = item.get(
+                        "widget_language")
+                    languages = item.get("multiLangSetting")
+                    if type(languages) is dict and lang_code_default \
+                            is not None:
+                        if languages.get(lang_code_default):
+                            data_display = languages.get(lang_code_default)
+                            widget_preview["name_display"] = data_display.get(
+                                'label')
+                        elif languages.get('en'):
+                            data_display = languages.get('en')
+                            widget_preview["name_display"] = data_display.get(
+                                'label')
+                        else:
+                            widget_preview["name_display"] = \
+                                WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
+                    else:
+                        widget_preview["name_display"] = \
+                            WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                     result["data"].append(widget_preview)
     except Exception as e:
         result['error'] = str(e)
     return result
 
 
-def get_widget_design_setting(repository_id):
+def get_widget_design_setting(repository_id: str,
+                              current_language: str) -> dict:
     """Get Widget design setting by repository id.
 
-    :param repository_id: Identifier of the repository
-    :return: Widget design setting json.
+    :param repository_id: Identifier of the repository.
+    :param current_language: The default language.
+    :return: Widget design setting.
     """
     result = {
         "widget-settings": [
@@ -132,10 +183,44 @@ def get_widget_design_setting(repository_id):
         if widget_setting:
             settings = widget_setting.get('settings')
             if settings:
-                result["widget-settings"] = json.loads(settings)
+                settings = json.loads(settings)
+                for widget_item in settings:
+                    widget = _get_widget_design_item_base_on_current_language(
+                        current_language,
+                        widget_item)
+                    result["widget-settings"].append(widget)
     except Exception as e:
         result['error'] = str(e)
     return result
+
+
+def _get_widget_design_item_base_on_current_language(current_language,
+                                                     widget_item):
+    """Get widget design item base on current language.
+
+    :param current_language: The current language.
+    :param widget_item: Widget item.
+    :return:
+    """
+    widget = widget_item.copy()
+    widget["multiLangSetting"] = dict()
+    languages = widget_item.get("multiLangSetting")
+    if isinstance(languages, dict):
+        for key, value in languages.items():
+            if key == current_language:
+                widget["multiLangSetting"] = value
+                break
+    if not widget["multiLangSetting"]:
+        default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
+        if isinstance(languages, dict) \
+                and languages.get(default_language_code):
+            widget["multiLangSetting"] = languages.get(default_language_code)
+        else:
+            widget["multiLangSetting"] = {
+                "label": WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL,
+                "description": {}
+            }
+    return widget
 
 
 def update_widget_design_setting(data):
@@ -154,8 +239,7 @@ def update_widget_design_setting(data):
         json_data = json.loads(setting_data)
         if type(json_data) is list:
             for item in json_data:
-                widget_item = WidgetItem.get(item.get('id'), item.get('type'),
-                                             item.get('name'))
+                widget_item = WidgetItem.get_by_id(item.get('widget_id'))
                 widget_setting = json.loads(widget_item.settings)
                 item.update(widget_setting)
         setting_data = json.dumps(json_data)
@@ -201,7 +285,6 @@ def update_admin_widget_item_setting(data):
     status = 201
     success = True
     msg = ""
-
     flag = data.get('flag_edit')
     data_result = data.get('data')
     data_id = data.get('data_id')
@@ -210,9 +293,11 @@ def update_admin_widget_item_setting(data):
         msg = 'Invalid data.'
     if flag:
         if success:
-            if WidgetItems.is_existed(data_id):
+            if WidgetItems.is_existed(data_result, data_id.get('id')):
+                msg = 'Fail to update. Data input to create is exist!'
+            else:
                 if validate_admin_widget_item_setting(data_id):
-                    if not WidgetItems.update(data_result, data_id):
+                    if not WidgetItems.update_by_id(data_result, data_id):
                         success = False
                         msg = 'Update widget item fail.'
                     else:
@@ -220,15 +305,13 @@ def update_admin_widget_item_setting(data):
                                                                   data_result)
                         msg = 'Widget item updated successfully.'
                 else:
-                    if not WidgetItems.update(data_result, data_id):
+                    if not WidgetItems.update_by_id(data_result, data_id):
                         success = False
                         msg = 'Update widget item fail.'
                     else:
                         msg = 'Widget item updated successfully.'
-            else:
-                msg = 'Fail to update. Can not find Widget item to edit.'
     else:
-        if WidgetItems.is_existed(data_result):
+        if WidgetItems.is_existed(data_result, data_result.get('id')):
             success = False
             msg = 'Fail to create. Data input to create is exist!'
         else:
@@ -268,7 +351,7 @@ def delete_item_in_preview_widget_item(data_id, json_data):
 
 
 def update_general_item(item, data_result):
-    """Update general feild item.
+    """Update general field item.
 
     :param item: item need to be update
     :param data_result: result
@@ -281,34 +364,7 @@ def update_general_item(item, data_result):
     item['text_color'] = data_result.get('text_color')
     item['name'] = data_result.get('label')
     item['type'] = data_result.get('widget_type')
-
-
-def update_free_description_type(item, data_settings):
-    """Update item type Free description.
-
-    :param item: item need to be update
-    :param data_settings: data settings
-    :return:
-    """
-    item['description'] = data_settings.get('description')
-
-
-def update_notice_type(item, data_settings):
-    """Update item type Notice.
-
-    :param item: item need to be update
-    :param data_settings: data settings
-    :return:
-    """
-    item['description'] = data_settings.get('description')
-    if data_settings.get('more_description'):
-        item['read_more'] = data_settings.get('read_more')
-        item['hide_the_rest'] = data_settings.get('hide_the_rest')
-        item['more_description'] = data_settings.get('more_description')
-    else:
-        item.pop('read_more', None)
-        item.pop('hide_the_rest', None)
-        item.pop('more_description', None)
+    item['multiLangSetting'] = data_result.get('multiLangSetting')
 
 
 def update_item_in_preview_widget_item(data_id, data_result, json_data):
@@ -324,16 +380,8 @@ def update_item_in_preview_widget_item(data_id, data_result, json_data):
     """
     if type(json_data) is list:
         for item in json_data:
-            if str(item.get('name')) == str(data_id.get('label')) and str(
-                    item.get('type')) == str(data_id.get('widget_type')):
+            if str(item.get('widget_id')) == str(data_id.get('id')):
                 update_general_item(item, data_result)
-                settings = data_result.get('settings')
-                if str(item.get('type')) == "Free description":
-                    update_free_description_type(item, settings)
-                elif str(item.get('type')) == "Notice":
-                    update_notice_type(item, settings)
-                else:
-                    item.pop('description', None)
     data = json.dumps(json_data)
     return data
 
@@ -402,21 +450,51 @@ def validate_admin_widget_item_setting(widget_id):
     try:
         if (type(widget_id)) is dict:
             repository_id = widget_id.get('repository')
-            widget_type = widget_id.get('widget_type')
-            label = widget_id.get('label')
+            widget_item_id = widget_id.get('id')
         else:
             repository_id = widget_id.repository_id
-            widget_type = widget_id.widget_type
-            label = widget_id.label
+            widget_item_id = widget_id.id
         data = WidgetDesignSetting.select_by_repository_id(
             repository_id)
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             for item in json_data:
-                if str(item.get('name')) == str(label) and str(
-                        item.get('type')) == str(widget_type):
+                if str(item.get('widget_id')) == str(widget_item_id):
                     return True
         return False
     except Exception as e:
         current_app.logger.error('Failed to validate record: ', e)
         return True
+
+
+def get_default_language():
+    """Get default Language.
+
+    :return:
+    """
+    result = AdminLangSettings.query.filter_by(is_registered=True).order_by(
+        asc('admin_lang_settings_sequence'))
+    result = AdminLangSettings.parse_result(result)
+    if type(result) is list:
+        return result[0]
+    return
+
+
+def get_system_language():
+    """Get system language for widget setting.
+
+    Returns:
+        result -- dictionary contains language list
+
+    """
+    result = {
+        'language': [],
+        'error': ''
+    }
+    try:
+        sys_lang = AdminLangSettings.load_lang()
+        result['language'] = sys_lang
+    except Exception as e:
+        result['error'] = str(e)
+
+    return result

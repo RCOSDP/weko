@@ -13,10 +13,10 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .api import WidgetItems
-from .utils import delete_admin_widget_item_setting, get_repository_list, \
-    get_widget_design_setting, get_widget_list, get_widget_preview, \
-    get_widget_type_list, update_admin_widget_item_setting, \
-    update_widget_design_setting
+from .utils import delete_admin_widget_item_setting, get_default_language, \
+    get_repository_list, get_system_language, get_widget_design_setting, \
+    get_widget_list, get_widget_preview, get_widget_type_list, \
+    update_admin_widget_item_setting, update_widget_design_setting
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -79,22 +79,24 @@ def load_widget_list_design_setting(repository_id):
             "error": ""
     """
     result = dict()
-    result["widget-list"] = get_widget_list(repository_id)
-    result["widget-preview"] = get_widget_preview(repository_id)
+    lang_default = get_default_language()
+    result["widget-list"] = get_widget_list(repository_id, lang_default)
+    result["widget-preview"] = get_widget_preview(repository_id, lang_default)
     result["error"] = result["widget-list"].get("error") or result[
         "widget-preview"].get("error")
     return jsonify(result)
 
 
-@blueprint_api.route('/load_widget_design_setting/<string:repository_id>',
-                     methods=['GET'])
-def load_widget_design_setting(repository_id):
+@blueprint_api.route('/load_widget_design_setting/<string:repository_id>/'
+                     '<string:current_language>', methods=['GET'])
+def load_widget_design_setting(repository_id: str, current_language: str):
     """Load  Widget design setting from DB by repository id.
 
-    :param repository_id:
+    :param repository_id: Identifier of the repository.
+    :param current_language: The language default
     :return:
     """
-    result = get_widget_design_setting(repository_id)
+    result = get_widget_design_setting(repository_id, current_language)
     return jsonify(result)
 
 
@@ -156,3 +158,15 @@ def get_account_role():
     """
     role = WidgetItems().get_account_role()
     return jsonify(role)
+
+
+@blueprint_api.route('/get_system_lang', methods=['GET'])
+def get_system_lang():
+    """Get system language.
+
+    Returns:
+        language -- list
+
+    """
+    result = get_system_language()
+    return jsonify(result)
