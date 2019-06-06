@@ -44,6 +44,9 @@ WEKO_ADMIN_REPORT_TEMPLATE = 'weko_admin/admin/report.html'
 WEKO_ADMIN_STATS_SETTINGS_TEMPLATE = 'weko_admin/admin/stats_settings.html'
 """Stats Settings template."""
 
+WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE = 'weko_admin/admin/log_analysis_settings.html'
+"""Stats Settings template."""
+
 WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
 """Language templates."""
 
@@ -72,6 +75,12 @@ WEKO_ADMIN_VALIDATION_MESSAGE = 'The login you supplied is not recognized'
 
 WEKO_ADMIN_DISPLAY_FILE_STATS = True
 """Display record stats or not."""
+
+WEKO_ADMIN_DEFAULT_CRAWLER_LISTS = [
+    'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_ip_blacklist.txt',
+    'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_useragent.txt'
+]
+"""Default crawler files for restricting IP addresses and user agents."""
 
 # Search management json
 
