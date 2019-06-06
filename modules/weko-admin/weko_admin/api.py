@@ -22,12 +22,12 @@
 from __future__ import absolute_import, print_function
 
 import requests
-
 from flask import current_app
-from sqlalchemy import text
 from invenio_db import db
+from sqlalchemy import text
 
-from .models import LogAnalysisRestrictedIpAddress, LogAnalysisRestrictedCrawlerList
+from .models import LogAnalysisRestrictedCrawlerList, \
+    LogAnalysisRestrictedIpAddress
 
 
 def is_restricted_user(user_info):
