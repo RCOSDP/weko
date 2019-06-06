@@ -519,7 +519,7 @@ class WekoDeposit(Deposit):
                     'recid', str(data['_deposit']['id']))
                 depid = PersistentIdentifier.get(
                     'depid', str(data['_deposit']['id']))
-                PIDVersioning(parent=last_pid).insert_draft_child(child=recid)
+                PIDVersioning(parent=pv.parent).insert_draft_child(child=recid)
                 RecordDraft.link(recid, depid)
 
                 with db.session.begin_nested():
