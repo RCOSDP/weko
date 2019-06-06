@@ -323,7 +323,6 @@ def display_activity(activity_id=0):
         if not files:
             deposit = WekoDeposit.get_record(item.id)
             if deposit:
-                from weko_items_ui.views import to_files_js
                 files = to_files_js(deposit)
 
         from weko_deposit.links import base_factory
