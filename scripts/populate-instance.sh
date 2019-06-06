@@ -297,4 +297,6 @@ ${INVENIO_WEB_INSTANCE} report create_target \
        "1" "Item registration report" "1,2,3,5"
 ${INVENIO_WEB_INSTANCE} report create_target \
        "2" "Item detail view report" "1,2,3,4,5"
+${INVENIO_WEB_INSTANCE} report create_target \
+       "3" "Contents download report" "1,2,3,4,5"
 # sphinxdoc-set-report-unit-and-target-end

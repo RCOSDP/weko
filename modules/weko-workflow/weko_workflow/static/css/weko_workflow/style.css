@@ -13,3 +13,8 @@
 .style_a{
   color: white;
 }
+
+.modal-info {
+  vertical-align: middle;
+  margin: 0 10px;
+}

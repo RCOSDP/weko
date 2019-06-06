@@ -54,7 +54,7 @@ class WidgetType(db.Model):
     @classmethod
     def get(cls, widget_type_id):
         """Get setting."""
-        return cls.query.filter_by(type_id=widget_type_id).one_or_none()
+        return cls.query.filter_by(type_id=str(widget_type_id)).one_or_none()
 
     @classmethod
     def get_all_widget_types(cls):
@@ -118,9 +118,9 @@ class WidgetItem(db.Model):
     @classmethod
     def get(cls, repo_id, type_id, lbl):
         """Get a widget item."""
-        return cls.query.filter_by(repository_id=repo_id,
-                                   widget_type=type_id,
-                                   label=lbl).one_or_none()
+        return cls.query.filter_by(repository_id=str(repo_id),
+                                   widget_type=str(type_id),
+                                   label=str(lbl)).one_or_none()
 
     @classmethod
     def update(cls, repo_id, type_id, lbl, **data):
@@ -222,7 +222,7 @@ class WidgetDesignSetting(db.Model):
         :return: Widget setting
         """
         query_result = cls.query.filter_by(
-            repository_id=repository_id).one_or_none()
+            repository_id=str(repository_id)).one_or_none()
         data = {}
         if query_result is not None:
             data['repository_id'] = query_result.repository_id
@@ -239,7 +239,7 @@ class WidgetDesignSetting(db.Model):
         :return: True if success, otherwise False
         """
         query_result = cls.query.filter_by(
-            repository_id=repository_id).one_or_none()
+            repository_id=str(repository_id)).one_or_none()
         if query_result is None:
             return False
         else:

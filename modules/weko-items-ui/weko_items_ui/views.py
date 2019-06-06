@@ -28,6 +28,7 @@ from flask import Blueprint, abort, current_app, flash, json, \
     jsonify, redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
+from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
@@ -36,9 +37,12 @@ from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
+from weko_records_ui.ipaddr import check_site_license_permission
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.models import ActionStatusPolicy
 
+from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
+    IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
@@ -205,19 +209,6 @@ def iframe_error():
                            error_type='item_login_error')
 
 
-# @blueprint.route("/edit/<int:pid>", methods=['GET'])
-# @login_required
-# @item_permission.require(http_exception=403)
-# def edit(pid=0):
-#     """Renders an item edit view.
-#
-#     :param pid: PID value. (Default: 0)
-#     :return: The rendered template.
-#     """
-#     current_app.logger.debug(pid)
-#     return "OK"
-
-
 @blueprint.route('/jsonschema/<int:item_type_id>', methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
@@ -241,8 +232,8 @@ def get_json_schema(item_type_id=0):
                 properties = json_schema.get('properties')
                 for key, value in properties.items():
                     if 'validationMessage_i18n' in value:
-                        value['validationMessage'] = value[
-                            'validationMessage_i18n'][cur_lang]
+                        value['validationMessage'] =\
+                            value['validationMessage_i18n'][cur_lang]
             else:
                 result = ItemTypes.get_record(item_type_id)
                 if 'filemeta' in json.dumps(result):
@@ -272,9 +263,6 @@ def get_schema_form(item_type_id=0):
     :return: The json object.
     """
     try:
-        # cur_lang = 'default'
-        # if current_app.config['I18N_SESSION_KEY'] in session:
-        #     cur_lang = session[current_app.config['I18N_SESSION_KEY']]
         cur_lang = current_i18n.language
         result = None
         if item_type_id > 0:
@@ -290,17 +278,15 @@ def get_schema_form(item_type_id=0):
             filemeta_form_group['titleMap'] = group_list
         if 'default' != cur_lang:
             for elem in schema_form:
-                if 'title_i18n' in elem:
-                    if cur_lang in elem['title_i18n']:
-                        if len(elem['title_i18n'][cur_lang]) > 0:
-                            elem['title'] = elem['title_i18n'][cur_lang]
+                if 'title_i18n' in elem and cur_lang in elem['title_i18n']\
+                        and len(elem['title_i18n'][cur_lang]) > 0:
+                    elem['title'] = elem['title_i18n'][cur_lang]
                 if 'items' in elem:
                     for sub_elem in elem['items']:
-                        if 'title_i18n' in sub_elem:
-                            if cur_lang in sub_elem['title_i18n']:
-                                if len(sub_elem['title_i18n'][cur_lang]) > 0:
-                                    sub_elem['title'] = sub_elem['title_i18n'][
-                                        cur_lang]
+                        if 'title_i18n' in sub_elem and cur_lang in \
+                            sub_elem['title_i18n'] and len(
+                                sub_elem['title_i18n'][cur_lang]) > 0:
+                            sub_elem['title'] = sub_elem['title_i18n'][cur_lang]
         return jsonify(schema_form)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
@@ -425,10 +411,17 @@ def default_view_method(pid, record, template=None):
 
     Sends ``record_viewed`` signal and renders template.
     """
+    check_site_license_permission()
+    send_info = {}
+    send_info['site_license_flag'] = True \
+        if hasattr(current_user, 'site_license_flag') else False
+    send_info['site_license_name'] = current_user.site_license_name \
+        if hasattr(current_user, 'site_license_name') else ''
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
         record=record,
+        info=send_info
     )
 
     item_type_id = record.get('item_type_id')
@@ -502,6 +495,9 @@ def to_files_js(record):
     if files is not None:
         for f in files:
             res.append({
+                'displaytype': f.get('displaytype', ''),
+                'filename': f.get('filename', ''),
+                'mimetype': f.mimetype,
                 'key': f.key,
                 'version_id': f.version_id,
                 'checksum': f.file.checksum,
@@ -747,22 +743,24 @@ def prepare_edit_item():
                 rtn = activity.init_activity(
                     post_activity, community, new_record.model.id)
                 if rtn:
-                    oa_policy_actionid = get_actionid('oa_policy')
+                    # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
                     identifier_actionid = get_actionid('identifier_grant')
-                    journal = activity.get_action_journal(
-                        upt_current_activity.activity_id, oa_policy_actionid)
-                    if journal:
-                        activity.create_or_update_action_journal(
-                            rtn.activity_id,
-                            oa_policy_actionid,
-                            journal.action_journal)
                     identifier = activity.get_action_identifier_grant(
                         upt_current_activity.activity_id, identifier_actionid)
                     if identifier:
+                        if identifier.get('action_identifier_select') > \
+                                IDENTIFIER_GRANT_DOI:
+                            identifier['action_identifier_select'] = \
+                                IDENTIFIER_GRANT_CAN_WITHDRAW
+                        elif identifier.get('action_identifier_select') == \
+                                IDENTIFIER_GRANT_IS_WITHDRAWING:
+                            identifier['action_identifier_select'] = \
+                                IDENTIFIER_GRANT_WITHDRAWN
                         activity.create_or_update_action_identifier(
                             rtn.activity_id,
                             identifier_actionid,
                             identifier)
+
                     if community:
                         comm = GetCommunity.get_community_by_id(community)
                         url_redirect = url_for('weko_workflow.display_activity',

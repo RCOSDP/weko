@@ -826,7 +826,7 @@ class WorkActivity(object):
             activity_detail.flow_define.flow_id)
 
         if not last_flow_action:
-            current_app.logger.error('Can\'t get last action of flow!')
+            current_app.logger.error('Cannot get last action of flow!')
             return None
 
         try:
@@ -1195,7 +1195,8 @@ class WorkActivity(object):
                 db_activity.item_id = None
                 db_activity.action_id = action.id
                 db_activity.action_status = ActionStatusPolicy.ACTION_SKIPPED
-                db_activity.activity_status = ActivityStatusPolicy.ACTIVITY_FINALLY,
+                db_activity.activity_status =\
+                    ActivityStatusPolicy.ACTIVITY_FINALLY,
             with db.session.begin_nested():
                 db_history = ActivityHistory(
                     activity_id=db_activity.activity_id,
@@ -1359,16 +1360,16 @@ class UpdateItem(object):
         indexer = WekoIndexer()
         indexer.update_publish_status(record)
 
-    def set_item_relation(self, relationData, record):
+    def set_item_relation(self, relation_data, record):
         """Set relation info of item.
 
-        :param relationData: item relation data
+        :param relation_data: item relation data
         :param record: item info
         """
         from weko_deposit.api import WekoIndexer
 
         indexer = WekoIndexer()
-        indexer.update_relation_info(record, relationData)
+        indexer.update_relation_info(record, relation_data)
 
 
 class GetCommunity(object):
