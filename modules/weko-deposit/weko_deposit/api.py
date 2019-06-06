@@ -19,18 +19,15 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit API."""
-import sys
-import traceback
 from datetime import datetime
 
 import redis
-from flask import abort, current_app, flash, g, has_request_context, json
-from flask_login import current_user
+from flask import abort, current_app, has_request_context, json
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
-from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
-    Part
+from invenio_files_rest.models import Bucket, \
+    MultipartObject, ObjectVersion, Part
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -45,8 +42,8 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
-from weko_records.utils import get_all_items, get_options_and_order_list, \
-    json_loader, set_timestamp
+from weko_records.utils import get_all_items, \
+    get_options_and_order_list, json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
@@ -158,8 +155,8 @@ class WekoIndexer(RecordIndexer):
         relation_type = 'relation_type'
         relation_type_val = []
         for d in relation_info[0]:
-            pid = d.get('item_data').get('links').get('self').split(
-                '/')[len(d.get('item_data').get('links').get('self').split('/')) - 1]
+            pid = d.get('item_data').get('links').get('self').split('/')[len(
+                d.get('item_data').get('links').get('self').split('/')) - 1]
             links = '/records/' + pid
             sub_data = dict(
                 item_links=links,
@@ -297,7 +294,6 @@ class WekoIndexer(RecordIndexer):
                     yield res
 
             self.client.clear_scroll(scroll_id=scroll_id)
-        return None
 
 
 class WekoDeposit(Deposit):
@@ -325,7 +321,7 @@ class WekoDeposit(Deposit):
     def publish(self, pid=None, id_=None):
         """Publish the deposit."""
         if self.data is None:
-            self.data=self.get('_deposit', {})
+            self.data = self.get('_deposit', {})
         if 'control_number' in self:
             self.pop('control_number')
         if '$schema' not in self:
@@ -338,14 +334,14 @@ class WekoDeposit(Deposit):
         pid = PersistentIdentifier.get('recid', self.data.get('id'))
         relations = serialize_relations(pid)
         if relations and 'version' in relations:
-            relations['version'][0]['id'] = pid.object_uuid
+            relations_ver = relations['version'][0]
+            relations_ver['id'] = pid.object_uuid
             self.indexer.update_relation_version_is_last(
-                relations['version'][0])
+                relations_ver)
 
             # update relation version previous to ES
-            if 'previous' in relations['version'][0] \
-                and relations['version'][0]['previous'] is not None:
-                pid_val_prev = relations['version'][0]['previous']['pid_value']
+            if 'previous' in relations_ver and relations_ver['previous']:
+                pid_val_prev = relations_ver['previous']['pid_value']
                 pid_prev = PersistentIdentifier.get('recid', pid_val_prev)
                 relations_prev = serialize_relations(pid_prev)
                 if relations_prev and 'version' in relations_prev:
@@ -372,7 +368,6 @@ class WekoDeposit(Deposit):
 
         # save user_name & display name.
         if current_user and current_user.is_authenticated:
-            creator_id = int(current_user.get_id())
             user = UserProfile.get_by_userid(current_user.get_id())
 
             username = ''
@@ -491,17 +486,15 @@ class WekoDeposit(Deposit):
         # and this is the latest version
         pv = PIDVersioning(child=pid)
         last_pid = pv.last_child
-        if (not pv.draft_child and pid==last_pid):
+        if not pv.draft_child and pid == last_pid:
             with db.session.begin_nested():
-
                 # Get copy of the latest record
-                latest_record = WekoDeposit.get_record(
-                    last_pid.object_uuid)
+                latest_record = WekoDeposit.get_record(last_pid.object_uuid)
                 data = latest_record.dumps()
-                item_metadata=ItemsMetadata.get_record(last_pid.object_uuid).dumps()
+                item_metadata = ItemsMetadata.get_record(
+                    last_pid.object_uuid).dumps()
 
                 owners = data['_deposit']['owners']
-
                 keys_to_remove = (
                     '_deposit', 'doi', '_oai', '_files', '_buckets', '$schema')
                 for k in keys_to_remove:
@@ -534,10 +527,12 @@ class WekoDeposit(Deposit):
                 if 'extra_formats' in latest_record['_buckets']:
                     deposit['_buckets']['extra_formats'] = \
                         str(extra_formats_snapshot.id)
-                    RecordsBuckets.create(
-                        record=deposit.model, bucket=extra_formats_snapshot)
-                index = {'index': self.get('path', []), 'actions': 'private'
-                    if self.get('publish_status', '1') == '1' else 'publish'}
+                    RecordsBuckets.create(record=deposit.model,
+                                          bucket=extra_formats_snapshot)
+                index = {'index': self.get('path', []),
+                         'actions': 'private' if self.get('publish_status',
+                                                          '1') == '1' else
+                                    'publish'}
                 args = [index, item_metadata]
                 deposit.update(*args)
                 deposit.commit()
@@ -713,13 +708,14 @@ class WekoDeposit(Deposit):
             with db.session.begin_nested():
                 for result in self.indexer.get_pid_by_es_scroll(path):
                     db.session.query(p). \
-                        filter(p.object_uuid.in_(result), p.object_type == 'rec'). \
+                        filter(p.object_uuid.in_(result),
+                               p.object_type == 'rec').\
                         update({p.status: 'D', p.updated: dt},
                                synchronize_session=False)
                     result.clear()
             db.session.commit()
             return True
-        except Exception as e:
+        except Exception:
             db.session.rollback()
             return False
 
@@ -743,9 +739,6 @@ class WekoRecord(Record):
     """Extend Record obj for record ui."""
 
     file_cls = WekoFileObject
-
-    # files_iter_cls = WekoFilesIterator
-
     record_fetcher = staticmethod(weko_deposit_fetcher)
 
     @property

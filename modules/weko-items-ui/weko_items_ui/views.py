@@ -24,16 +24,15 @@ import os
 import sys
 
 import redis
-from flask import Blueprint, abort, current_app, flash, json, jsonify, \
-    redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, json, \
+    jsonify, redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
-from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
-from weko_deposit.api import WekoRecord, WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
@@ -165,7 +164,6 @@ def iframe_index(item_type_id=0):
 def iframe_save_model():
     """Renders an item register view.
 
-    :param item_type_id: Item type ID. (Default: 0)
     :return: The rendered template.
     """
     try:
@@ -231,6 +229,7 @@ def get_json_schema(item_type_id=0):
     """
     try:
         result = None
+        json_schema = None
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
@@ -242,7 +241,8 @@ def get_json_schema(item_type_id=0):
                 properties = json_schema.get('properties')
                 for key, value in properties.items():
                     if 'validationMessage_i18n' in value:
-                        value['validationMessage'] = value['validationMessage_i18n'][cur_lang]
+                        value['validationMessage'] = value[
+                            'validationMessage_i18n'][cur_lang]
             else:
                 result = ItemTypes.get_record(item_type_id)
                 if 'filemeta' in json.dumps(result):
@@ -708,8 +708,9 @@ def prepare_edit_item():
 
             # check item is being editied
             item_id = pid_object.object_uuid
-            workflow_action_stt = activity.get_workflow_activity_status_by_item_id(
-                item_id=item_id)
+            workflow_action_stt = \
+                activity.get_workflow_activity_status_by_item_id(
+                    item_id=item_id)
             # show error when has stt is Begin or Doing
             if workflow_action_stt is not None and \
                 (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
@@ -742,7 +743,7 @@ def prepare_edit_item():
                 # Create a new version of a record.
                 record = WekoDeposit.get_record(item_id)
                 deposit = WekoDeposit(record, record.model)
-                new_record=deposit.newversion(pid_object)
+                new_record = deposit.newversion(pid_object)
                 rtn = activity.init_activity(
                     post_activity, community, new_record.model.id)
                 if rtn:
