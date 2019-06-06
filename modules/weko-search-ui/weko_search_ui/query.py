@@ -25,7 +25,7 @@ from datetime import datetime
 from functools import partial
 
 from elasticsearch_dsl.query import Q
-from flask import current_app, flash, request
+from flask import current_app, request
 from flask_security import current_user
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
@@ -52,9 +52,6 @@ def get_permission_filter(comm_id=None):
     mut = []
     match = Q('match', publish_status='0')
     version = Q('match', relation_version_is_last='true')
-    # ava = [Q('range', **{'date.value': {'lte': 'now/d'}}),
-    #        Q('term', **{'date.dateType': 'Available'})]
-    # rng = Q('nested', path='date', query=Q('bool', must=ava))
     ava = Q('range', **{'publish_date': {'lte': 'now/d'}})
     rng = ava
     mst = []
@@ -194,28 +191,33 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             name = alst[0] + ".value"
                                             name_dict = dict(operator="and")
                                             name_dict.update(dict(query=kv))
-                                            mut = [
-                                                Q('match', **{name: name_dict})]
-
+                                            mut = [Q('match',
+                                                     **{name: name_dict})]
                                             qt = None
                                             if '=*' not in alst[1]:
-                                                name = alst[0] + \
-                                                    "." + val_attr_lst[0]
-                                                qt = [
-                                                    Q('term', **{name: val_attr_lst[1]})]
+                                                name = alst[0] + "." + \
+                                                       val_attr_lst[0]
+                                                qt = [Q('term',
+                                                        **{name: val_attr_lst[
+                                                            1]}
+                                                        )]
 
                                             mut.extend(qt or [])
                                             qry = Q('bool', must=mut)
                                             shuld.append(
-                                                Q('nested', path=alst[0], query=qry))
+                                                Q('nested',
+                                                  path=alst[0],
+                                                  query=qry))
                         else:
                             attr_key_hit = [
                                 x for x in attr_obj.keys() if v[0] + "." in x]
                             if attr_key_hit:
                                 vlst = attr_obj.get(attr_key_hit[0])
                                 if isinstance(vlst, list):
-                                    attr_val = [x for x in attr_val_str.split(
-                                        ',') if x.isdecimal() and int(x) < len(vlst)]
+                                    attr_val = [x for x in
+                                                attr_val_str.split(',')
+                                                if x.isdecimal() and
+                                                int(x) < len(vlst)]
                                     if attr_val:
                                         shud = []
                                         name = v[0] + ".value"
@@ -224,13 +226,17 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         qm = Q('match', **{name: name_dict})
 
                                         for j in map(
-                                                partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                                partial(lambda m, n: m[int(
+                                                    n)], vlst), attr_val):
                                             name = attr_key_hit[0]
                                             qm = Q('term', **{name: j})
                                             shud.append(qm)
 
-                                        shuld.append(Q('nested', path=v[0], query=Q(
-                                            'bool', should=shud, must=[qm])))
+                                        shuld.append(Q('nested',
+                                                       path=v[0],
+                                                       query=Q('bool',
+                                                               should=shud,
+                                                               must=[qm])))
 
             return Q('bool', should=shuld) if shuld else None
 
@@ -264,7 +270,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                             attr_obj = dt.get(attr_key)
                             if isinstance(attr_obj, dict) and attr_val_str:
                                 attr_key_hit = [
-                                    x for x in attr_obj.keys() if path + "." in x]
+                                    x for x in attr_obj.keys() if path + "."
+                                    in x]
                                 if attr_key_hit:
                                     vlst = attr_obj.get(attr_key_hit[0])
                                     if isinstance(vlst, list):
@@ -272,16 +279,19 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             x for x in attr_val_str.split(',')]
                                         shud = []
                                         for j in map(
-                                                partial(lambda m, n: m[int(n)], vlst), attr_val):
+                                                partial(lambda m, n: m[int(
+                                                    n)], vlst), attr_val):
                                             qt = Q(
                                                 'term', **{attr_key_hit[0]: j})
                                             shud.append(qt)
 
                                         qry = Q(
                                             'range', **{path + ".value": qv})
-                                        qry = Q(
-                                            'nested', path=path, query=Q(
-                                                'bool', should=shud, must=[qry]))
+                                        qry = Q('nested',
+                                                path=path,
+                                                query=Q('bool',
+                                                        should=shud,
+                                                        must=[qry]))
             return qry
 
         kwd = current_app.config['WEKO_SEARCH_KEYWORDS_DICT']
@@ -442,8 +452,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             query_q = _get_simple_search_query(qs)
 
     src = {'_source': {'excludes': ['content']}}
-    # extr = search._extra.copy()
-    # search.update_from_dict(src)
     search._extra.update(src)
 
     try:
@@ -503,7 +511,7 @@ def item_path_search_factory(self, search, index_id=None):
                     },
                     {
                       "match": {
-                        "relation_version_is_last":"true"
+                        "relation_version_is_last": "true"
                       }
                     }
                   ]
@@ -568,10 +576,12 @@ def item_path_search_factory(self, search, index_id=None):
             mut = list(map(lambda x: x.to_dict(), mut))
             post_filter = query_q['post_filter']
             if mut[0].get('bool'):
-                post_filter['bool'] = {'must': [{'term': post_filter.pop(
-                    'term')}, mut[0]['bool']['must'][0]], 'should': mut[0]['bool']['should']}
-                # post_filter['bool'] = {'must': [{'term': post_filter.pop('term')}],
-                #                        'should': mut[0]['bool']['should']}
+                post_filter['bool'] = {'must': [
+                        {'term': post_filter.pop('term')},
+                        mut[0]['bool']['must'][0]
+                    ],
+                    'should': mut[0]['bool']['should']
+                }
             else:
                 mut.append({'term': post_filter.pop('term')})
                 post_filter['bool'] = {'must': mut}

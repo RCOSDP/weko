@@ -26,8 +26,8 @@ from collections import OrderedDict
 from functools import wraps
 
 import redis
-from flask import Blueprint, current_app, jsonify, render_template, request, \
-    session, url_for
+from flask import Blueprint, current_app, jsonify, \
+    render_template, request, session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -36,17 +36,17 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
-from weko_deposit.api import WekoRecord, WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
 
-from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
-    WorkActivityHistory, WorkFlow
-from .config import IDENTIFIER_GRANT_LIST, IDENTIFIER_GRANT_SUFFIX_METHOD, \
-    IDENTIFIER_ITEMSMETADATA_FORM
+from .api import Action, Flow, GetCommunity, UpdateItem, \
+    WorkActivity, WorkActivityHistory, WorkFlow
+from .config import IDENTIFIER_GRANT_LIST, \
+    IDENTIFIER_GRANT_SUFFIX_METHOD, IDENTIFIER_ITEMSMETADATA_FORM
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import get_community_id_by_index
@@ -221,32 +221,31 @@ def display_activity(activity_id=0):
 
     # display_activity of Identifier grant
     idf_grant_data = None
-    if 'identifier_grant' == action_endpoint:
-        if item:
-            path = WekoRecord.get_record(item.id).get('path')
-            if len(path) > 1:
-                community_id = 'Root Index'
-            else:
-                index_address = path.pop(-1).split('/')
-                index_id = Index.query.filter_by(id=index_address.pop()).one()
-                community_id = get_community_id_by_index(
-                    index_id.index_name_english)
+    if 'identifier_grant' == action_endpoint and item:
+        path = WekoRecord.get_record(item.id).get('path')
+        if len(path) > 1:
+            community_id = 'Root Index'
+        else:
+            index_address = path.pop(-1).split('/')
+            index_id = Index.query.filter_by(id=index_address.pop()).one()
+            community_id = get_community_id_by_index(
+                index_id.index_name_english)
 
-            idf_grant_data = Identifier.query.filter_by(
-                repository=community_id).one_or_none()
+        idf_grant_data = Identifier.query.filter_by(
+            repository=community_id).one_or_none()
 
-            # valid date pidstore_identifier data
-            if idf_grant_data is not None:
-                if not idf_grant_data.jalc_doi:
-                    idf_grant_data.jalc_doi = '<Empty>'
-                if not idf_grant_data.jalc_crossref_doi:
-                    idf_grant_data.jalc_crossref_doi = '<Empty>'
-                if not idf_grant_data.jalc_datacite_doi:
-                    idf_grant_data.jalc_datacite_doi = '<Empty>'
-                if not idf_grant_data.cnri:
-                    idf_grant_data.cnri = '<Empty>'
-                if not idf_grant_data.suffix:
-                    idf_grant_data.suffix = '<Empty>'
+        # valid date pidstore_identifier data
+        if idf_grant_data is not None:
+            if not idf_grant_data.jalc_doi:
+                idf_grant_data.jalc_doi = '<Empty>'
+            if not idf_grant_data.jalc_crossref_doi:
+                idf_grant_data.jalc_crossref_doi = '<Empty>'
+            if not idf_grant_data.jalc_datacite_doi:
+                idf_grant_data.jalc_datacite_doi = '<Empty>'
+            if not idf_grant_data.cnri:
+                idf_grant_data.cnri = '<Empty>'
+            if not idf_grant_data.suffix:
+                idf_grant_data.suffix = '<Empty>'
 
     temporary_idf_grant = 0
     temporary_idf_grant_suffix = []
@@ -313,14 +312,14 @@ def display_activity(activity_id=0):
             'redis://{host}:{port}/1'.format(
                 host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
                 port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-        if sessionstore.redis.exists('activity_item_' + activity_id):
-            item_str = sessionstore.get('activity_item_' + activity_id)
+        if sessionstore.redis.exists('activity_item_' + str(activity_id)):
+            item_str = sessionstore.get('activity_item_' + str(activity_id))
             item_json = json.loads(item_str.decode('utf-8'))
             if 'files' in item_json:
                 files = item_json.get('files')
         if not files:
             deposit = WekoDeposit.get_record(item.id)
-            if deposit is not None:
+            if deposit:
                 from weko_items_ui.views import to_files_js
                 files = to_files_js(deposit)
 
@@ -523,13 +522,13 @@ def next_action(activity_id='0', action_id=0):
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
         pid, item_record = resolver.resolve(pid_identifier.pid_value)
-        updateItem = UpdateItem()
-        updateItem.set_item_relation(relation_data, item_record)
+        update_item = UpdateItem()
+        update_item.set_item_relation(relation_data, item_record)
 
     # save pidstore_identifier to ItemsMetadata
-    if 'identifier_grant' == action_endpoint:
-        if idf_grant and int(idf_grant) > 0:
-            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+    if 'identifier_grant' == action_endpoint and idf_grant and int(idf_grant)\
+            > 0:
+        pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
@@ -572,8 +571,8 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     Mapp pidstore identifier data to ItemMetadata.
 
     :param post_json: identifier data
-    :param acitivity_id: activity id number
-    :param action_id: action id number
+    :param idf_grant: identifier select
+    :param activity_id: currently acitvity_id
     """
     activity_obj = WorkActivity()
     activity_detail = activity_obj.get_activity_detail(activity_id)
@@ -654,7 +653,6 @@ def previous_action(activity_id='0', action_id=0, req=0):
     )
     work_activity = WorkActivity()
     history = WorkActivityHistory()
-    action = Action().get_action_detail(action_id)
     rtn = history.create_activity_history(activity)
     if rtn is None:
         return jsonify(code=-1, msg=_('error'))

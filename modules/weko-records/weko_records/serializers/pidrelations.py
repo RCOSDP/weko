@@ -28,7 +28,6 @@ from __future__ import absolute_import, print_function
 
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
-
 from weko_deposit.api import WekoDeposit
 
 
@@ -64,7 +63,6 @@ def serialize_related_identifiers(pid):
         #         'identifier': rec['doi']
         #     }
         #     related_identifiers.append(ri)
-
         # for p in right:
         #     rec = ZenodoRecord.get_record(p.get_assigned_object())
         #     ri = {
@@ -78,12 +76,12 @@ def serialize_related_identifiers(pid):
         for p in pv.children:
             rec = WekoDeposit.get_record(p.get_assigned_object())
             if 'doi' in rec:
-                ri = {
+                relation_info = {
                     'scheme': 'doi',
                     'relation': 'hasVersion',
                     'identifier': rec['doi']
                 }
-                related_identifiers.append(ri)
+                related_identifiers.append(relation_info)
     return related_identifiers
 
 
