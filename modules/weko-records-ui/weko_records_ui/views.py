@@ -277,7 +277,7 @@ def _get_google_scholar_meta(record):
     et = etree.fromstring(recstr)
     mtdata = et.find('getrecord/record/metadata/', namespaces=et.nsmap)
     res = []
-    if mtdata:
+    if len(mtdata):
         for target in target_map:
             found = mtdata.find(target, namespaces=mtdata.nsmap)
             if found is not None:
