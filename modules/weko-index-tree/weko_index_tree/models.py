@@ -68,6 +68,9 @@ class Index(db.Model, Timestamp):
     index_link_name_english = db.Column(db.Text, nullable=False, default='')
     """English Name of the index link."""
 
+    harvest_spec = db.Column(db.Text, nullable=True, default='')
+    """Harvest Spec."""
+
     index_link_enabled = db.Column(
         db.Boolean(
             name='index_link_enabled'),
