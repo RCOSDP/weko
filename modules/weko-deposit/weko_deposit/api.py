@@ -335,9 +335,9 @@ class WekoDeposit(Deposit):
         relations = serialize_relations(pid)
         if relations and 'version' in relations:
             relations_ver = relations['version'][0]
-            relations_ver['id'] = pid.object_uuid
-            self.indexer.update_relation_version_is_last(
-                relations_ver)
+            relations['version'][0]['id'] = pid.object_uuid
+            self.indexer.update_relation_version_is_last(relations[
+                                                              'version'][0])
 
             # update relation version previous to ES
             if 'previous' in relations_ver and relations_ver['previous']:
