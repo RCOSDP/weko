@@ -1114,15 +1114,18 @@ class MainLayout extends React.Component {
     componentDidMount() {
         // For edit option - Convert data
         let description = {};
+        let labelDefault = '';
         if (!$.isEmptyObject(this.state.multiLangSetting)) {
             for (let object in this.state.multiLangSetting) {
                 if (this.state.multiLangSetting[object]['isDefault']) {
                     description = this.state.multiLangSetting[object]['description'];
+                    labelDefault = this.state.multiLangSetting[object]['label']
                 }
             }
         }
         this.setState({
             settings: description,
+            label: labelDefault,
             multiLanguageChange: true
         })
     }
