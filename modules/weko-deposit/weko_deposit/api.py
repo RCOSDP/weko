@@ -350,7 +350,7 @@ class WekoDeposit(Deposit):
                 if relations_prev and 'version' in relations_prev:
                     relations_prev['version'][0]['id'] = pid_prev.object_uuid
                     self.indexer.update_relation_version_is_last(
-                        relations['version'][0])
+                        relations_prev['version'][0])
 
         return deposit
 
