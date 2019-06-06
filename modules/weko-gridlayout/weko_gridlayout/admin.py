@@ -181,7 +181,9 @@ class WidgetSettingView(ModelView):
             self.session.flush()
             WidgetItem.delete(model.repository_id,
                               model.widget_type,
-                              model.label, self.session)
+                              model.label,
+                              model.language,
+                              self.session)
         except Exception as ex:
             if not self.handle_view_exception(ex):
                 flash(_('Failed to delete record. %(error)s',

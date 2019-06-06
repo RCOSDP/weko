@@ -56,8 +56,11 @@ class Repository extends React.Component {
                         return;
                     }
                     let widgetPreview = result['widget-preview'];
+                    let widgetList = result['widget-list'];
                     let data = widgetPreview['data'];
                     loadWidgetPreview(data);
+                    data = widgetList['data'];
+                    loadWidgetList(data);
                 },
                 (error) => {
                     console.log(error);
@@ -104,53 +107,6 @@ class WidgetList extends React.Component {
         };
     }
 
-    componentDidMount() {
-        fetch("/api/admin/load_widget_list_design_setting/0")
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if (result.error) {
-                        console.log(result.error);
-                        return;
-                    }
-                    let widgetList = result['widget-list'];
-                    let data = widgetList["data"];
-                    loadWidgetList(data);
-                },
-
-                (error) => {
-                    console.log(error);
-                }
-            );
-    }
-
-    reloadWidgetListPanel(repositoryId) {
-        let url = "/api/admin/load_widget_list_design_setting/" + repositoryId;
-        fetch(url)
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if (result.error) {
-                        console.log(result.error);
-                        return;
-                    }
-                    let widgetList = result['widget-list'];
-                    let data = widgetList["data"];
-                    loadWidgetList(data);
-                },
-                (error) => {
-                    console.log(error);
-                }
-            );
-    }
-
-    componentWillReceiveProps(props) {
-        const { repositoryId } = this.props;
-        if (props.repositoryId !== repositoryId) {
-            this.reloadWidgetListPanel(props.repositoryId);
-        }
-    }
-
     render() {
         return (
             <div>
@@ -173,26 +129,6 @@ class PreviewWidget extends React.Component {
             "min-height": "300px",
         };
     }
-
-    componentDidMount() {
-        fetch("/api/admin/load_widget_list_design_setting/0")
-            .then(res => res.json())
-            .then(
-                (result) => {
-                    if (result.error) {
-                        console.log(result.error);
-                        return;
-                    }
-                    let widgetPreview = result['widget-preview'];
-                    let data = widgetPreview['data'];
-                    loadWidgetPreview(data);
-                },
-                (error) => {
-                    console.log(error);
-                }
-            );
-    }
-
 
     render() {
         return (
@@ -341,6 +277,8 @@ var PreviewGrid = new function () {
             let name = el.data("name");
             let id = el.data("id");
             let type = el.data("type");
+            let widget_id = el.data("widget_id")
+            let nameDisplay = el.data("name_display")
             if (!id) {
                 return;
             } else if(MAIN_CONTENT_TYPE == type){
@@ -354,6 +292,8 @@ var PreviewGrid = new function () {
                 name: name,
                 id: id,
                 type: type,
+                name_display: nameDisplay,
+                widget_id: widget_id,
             };
         }, this);
         var filtered = this.serializedData.filter(function (el) {
@@ -382,11 +322,11 @@ var PreviewGrid = new function () {
             autoPosition = 'data-gs-auto-position="true"';
         }
         let template = '<div data-type="' + node.type + '" data-name="' + node.name + '" data-id="' + node.id + '"'
-        + autoPosition + '>'
+        + '" data-widget_id="' + node.widget_id + '"' + autoPosition + '>'
         + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
         + ' <div class="grid-stack-item-content">'
         + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'
-        + '     <span class="widget-label">' + node.name + '</span>'
+        + '     <span class="widget-label">' + node.name_display + '</span>'
         + ' </div>'
         + '<div/>';
         return template;
@@ -411,6 +351,8 @@ function addWidget() {
             let widgetName = $(this).data('widgetName');
             let widgetId = $(this).data('widgetId');
             let widgetType = $(this).data('widgetType');
+            let widgetNameDisplay = $(this).data('widgetNameDisplay');
+            let id = $(this).data('id');
             if(MAIN_CONTENT_TYPE == widgetType && isHasMainContent){
                 alert("Main Content has been existed in Preview panel.");
                 disableMainContentButton(true);
@@ -425,6 +367,8 @@ function addWidget() {
                 name: widgetName,
                 id: widgetId,
                 type:widgetType,
+                name_display: widgetNameDisplay,
+                widget_id: id,
             };
             PreviewGrid.addNewWidget(node);
             if(MAIN_CONTENT_TYPE == widgetType){
@@ -455,6 +399,7 @@ function loadWidgetList(widgetListItems) {
     let y = 0;
     _.each(widgetListItems, function (widget) {
         let buttonId = "";
+        console.log(widget);
         if(MAIN_CONTENT_TYPE ==  widget.widgetType) {
             buttonId = 'id="' + MAIN_CONTENT_BUTTON_ID + '"';
         }
@@ -462,10 +407,11 @@ function loadWidgetList(widgetListItems) {
             '<div>'
             + '<div class="grid-stack-item-content">'
             + ' <span class="widget-label" >&lt;' + widget.widgetType + '&gt;</span>'
-            + ' <span class="widget-label">' + widget.widgetLabel + '</span>'
+            + ' <span class="widget-label">' + widget.widgetLabelDisplay + '</span>'
             + ' <button ' + buttonId + ' data-widget-type="' + widget.widgetType
             + '" data-widget-name="' + widget.widgetLabel + '" data-widget-id="' + widget.widgetId
-            + '" class="btn btn-default add-new-widget">'
+            + '" data-widget-name-display="' + widget.widgetLabelDisplay + '" data-id="' + widget.Id
+            +  '" class="btn btn-default add-new-widget">'
             + ' Add Widget'
             + ' </button>'
             + '</div>'

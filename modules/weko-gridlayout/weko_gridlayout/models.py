@@ -76,13 +76,17 @@ class WidgetItem(db.Model):
 
     __tablename__ = 'widget_items'
 
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+
     repository_id = db.Column(db.String(100),
-                              nullable=False, primary_key=True)
+                              nullable=False)
 
     widget_type = db.Column(db.String(100), db.ForeignKey(WidgetType.type_id),
-                            nullable=False, primary_key=True)
+                            nullable=False)
 
-    label = db.Column(db.String(100), nullable=False, primary_key=True)
+    label = db.Column(db.String(100), nullable=False)
+
+    language = db.Column(db.String(3), nullable=False)
 
     settings = db.Column(
         db.JSON().with_variant(
@@ -116,14 +120,26 @@ class WidgetItem(db.Model):
     """WidgetType relationship."""
 
     @classmethod
-    def get(cls, repo_id, type_id, lbl):
+    def get(cls, repo_id, type_id, lbl, language):
         """Get a widget item."""
         return cls.query.filter_by(repository_id=str(repo_id),
                                    widget_type=str(type_id),
-                                   label=str(lbl)).one_or_none()
+                                   label=str(lbl),
+                                   language=str(language)).one_or_none()
 
     @classmethod
-    def update(cls, repo_id, type_id, lbl, **data):
+    def get_by_repo_and_type(cls, repo_id, type_id):
+        """Get a widget item."""
+        return cls.query.filter_by(repository_id=str(repo_id),
+                                   widget_type=str(type_id)).all()
+
+    @classmethod
+    def get_by_id(cls, widget_id):
+        """Get a widget item."""
+        return cls.query.filter_by(id=str(widget_id)).one_or_none()
+
+    @classmethod
+    def update(cls, repo_id, type_id, lbl, lang, **data):
         """
         Update the widget item detail info.
 
@@ -135,7 +151,7 @@ class WidgetItem(db.Model):
         """
         try:
             with db.session.begin_nested():
-                widget_item = cls.get(repo_id, type_id, lbl)
+                widget_item = cls.get(repo_id, type_id, lbl, lang)
                 if not widget_item:
                     return
 
@@ -150,7 +166,32 @@ class WidgetItem(db.Model):
         return
 
     @classmethod
-    def delete(cls, repo_id, type_id, lbl, session=None):
+    def update_by_id(cls, widget_item_id, **data):
+        """Update the widget item detail info.
+
+        :param widget_item_id: Identifier of the widget id.
+        :param data: new widget item info for update.
+        :return: Updated widget item info
+
+        """
+        try:
+            with db.session.begin_nested():
+                widget_item = cls.get_by_id(widget_item_id)
+                if not widget_item:
+                    return
+
+                for k, v in data.items():
+                    setattr(widget_item, k, v)
+                db.session.merge(widget_item)
+            db.session.commit()
+            return widget_item
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+        return
+
+    @classmethod
+    def delete(cls, repo_id, type_id, lbl, lang, session=None):
         """Delete the widget item detail info.
 
         :param repo_id: Identifier of the repository.
@@ -163,7 +204,7 @@ class WidgetItem(db.Model):
             session = db.session
         try:
             with session.begin_nested():
-                widget_item = cls.get(repo_id, type_id, lbl)
+                widget_item = cls.get(repo_id, type_id, lbl, lang)
                 if not widget_item:
                     return
                 setattr(widget_item, 'is_deleted', 'True')
