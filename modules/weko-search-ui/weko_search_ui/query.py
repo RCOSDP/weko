@@ -51,6 +51,7 @@ def get_permission_filter(comm_id=None):
     is_perm = search_permission.can()
     mut = []
     match = Q('match', publish_status='0')
+    version = Q('match', relation_version_is_last='true')
     # ava = [Q('range', **{'date.value': {'lte': 'now/d'}}),
     #        Q('term', **{'date.dateType': 'Available'})]
     # rng = Q('nested', path='date', query=Q('bool', must=ava))
@@ -65,9 +66,10 @@ def get_permission_filter(comm_id=None):
             match_list.append(match_q)
         mst.append(Q('bool', should=match_list))
     if not is_perm:
-        mut.append(match)
         mut.append(rng)
         mut.append(get_index_filter()[0])
+        base_mut = [match, version]
+        mut.append(Q('bool', must=base_mut))
     else:
         user_id, result = check_admin_user()
         if result:
@@ -79,6 +81,7 @@ def get_permission_filter(comm_id=None):
                 mut.append(Q('bool', should=shuld, must=mst))
             else:
                 mut.append(Q('bool', should=shuld, must=get_index_filter()))
+            mut.append(Q('bool', must=version))
 
     return mut
 
@@ -491,8 +494,19 @@ def item_path_search_factory(self, search, index_id=None):
                 "excludes": ['content']
             },
             "query": {
-                "match": {
-                    "path.tree": "@index"
+                "bool": {
+                  "must": [
+                    {
+                      "match": {
+                        "path.tree": "@index"
+                      }
+                    },
+                    {
+                      "match": {
+                        "relation_version_is_last":"true"
+                      }
+                    }
+                  ]
                 }
             },
             "aggs": {
