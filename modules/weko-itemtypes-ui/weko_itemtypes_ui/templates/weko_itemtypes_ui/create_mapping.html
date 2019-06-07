@@ -216,141 +216,145 @@
 </div>
 <hr>
 <!-- ---------- Header for Item Child list ----------  -->
-<div class="row">
-  <div class="col-sm-12">
-    <div class="panel header-child-list">
-      <div class="panel-body" style="background: #C6DBF7;">
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="header-child-list">
+        <div class="panel-body" style="background: #C6DBF7;">
+          <div class="col-sm-6">
+            <label id="sub-item-type-lists-label">{{_('Itemtype List')}}</label><label>({{_('Child')}})</label>
+          </div>
+          <div class="col-sm-6">
+            <label id="sub-jpcoar-lists-label">{{_('JPCOAR')}}</label><label>({{_('Child')}})</label>
+            <!-- <button id="sub_mapping-add" class="btn btn-success pull-right">{{_('Add')}}</button>-->
+            <button id="sub_mapping-add" class="btn btn-light pull-right add-button twentyeight-pixel-right-margin">
+              <span class="glyphicon glyphicon-plus"></span>
+                  {{_('Add')}}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- End div row-->
+  <div class="container-fluid body-child-list">
+    <div id="sub_children_lists">
+      <div class="row sub_children_list hide"><hr>
+        <div class="col-sm-6 sub_children_itemtype_list">
+          <div class="row sub_child_itemtype_list">
+            <div class="col-sm-8">
+              <div class="form">
+                <div class="form-group">
+                  <select class="form-control" name="sub_itemtype_list">
+                    <option value=""></option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-4 del-col-space">
+              <div class="form-inline sub_itemtype_link hide">
+                <div class="form-group has-error">
+                  <input type="text" class="form-control max-width-64"
+                                    maxlength="1" value="" placeholder="{{_('Input Field')}}">
+                </div>
+                <i class="glyphicon glyphicon-trash" id="delete-icon-two"></i>
+                <input type="button" class="btn btn-danger delete-button five-pixel-margin" style="position:unset;" data-action="del_sub_child" value="{{_('Delete')}}">
+                <!--<div style="position: relative;" style="padding: 50px; background-color: #E5E4E2; display: inline-block;">
+                    <i class="glyphicon glyphicon-trash" style="color: white; position: absolute;left: 2em; top:0.85em"></i>
+                    <input type="button" class="btn btn-danger delete-button five-pixel-margin" data-action="del_sub_child" value="{{_('Delete')}}">
+                </div>-->
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="col-sm-6">
-          <label id="sub-item-type-lists-label">{{_('Itemtype List')}}</label><label>({{_('Child')}})</label>
+          <div class="row">
+            <div class="col-sm-7">
+              <div class="form">
+                <div class="form-group">
+                  <select class="form-control" name="sub_jpcoar_list">
+                    <option value=""></option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-5">
+              <fieldset class="pull-right">
+                <i class="glyphicon glyphicon-trash" id="delete-icon-two"></i>
+
+                <input type="button" class="btn btn-danger delete-button five-pixel-margin" style="position:unset;" data-action="del_child" value="{{_('Delete')}}">
+              </fieldset>
+              <fieldset class="pull-right">
+                <input type="button" class="btn btn-light pull-right action-button five-pixel-margin" data-action="add_child" value="{{_('Linking')}}">
+              </fieldset>
+            <!-- <button class="btn btn-light pull-right action-button" data-action="add_child">
+                    {{_('Link')}}
+            </button> -->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row sub_child_list"><hr>
+        <div class="col-sm-6 sub_children_itemtype_list">
+          <div class="row sub_child_itemtype_list">
+            <div class="col-sm-6">
+              <div class="form">
+                <div class="form-group">
+                  <select class="form-control" name="sub_itemtype_list">
+                    <option value=""></option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-inline sub_itemtype_link hide">
+                <div class="form-group del-col-space">
+                  <input type="text" class="form-control max-width-64"
+                                    maxlength="1" value="" placeholder="{{_('Enter Input Value')}}">
+                </div>
+                <i class="glyphicon glyphicon-trash" id="delete-icon-two"></i>
+
+                <input type="button" class="btn btn-danger pull right delete-button five-pixel-margin" style="position:unset;" data-action="del_sub_child" value="{{_('Delete')}}">
+                <!--<button class="btn btn-danger pull right delete-button five-pixel-margin" data-action="del_sub_child">
+                        <span class="glyphicon glyphicon-trash"></span>
+                              {{_('Delete')}}
+                </button>-->
+              </div>
+            </div>
+          </div>
         </div>
         <div class="col-sm-6">
-          <label id="sub-jpcoar-lists-label">{{_('JPCOAR')}}</label><label>({{_('Child')}})</label>
-          <!-- <button id="sub_mapping-add" class="btn btn-success pull-right">{{_('Add')}}</button>-->
-          <button id="sub_mapping-add" class="btn btn-light pull-right add-button twentyeight-pixel-right-margin">
-             <span class="glyphicon glyphicon-plus"></span>
-                 {{_('Add')}}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="pre-scrollable">
-  <div id="sub_children_lists">
-    <div class="row sub_children_list hide"><hr>
-      <div class="col-sm-6 sub_children_itemtype_list">
-        <div class="row sub_child_itemtype_list">
-          <div class="col-sm-8">
-            <div class="form">
-              <div class="form-group">
-                <select class="form-control" name="sub_itemtype_list">
-                  <option value=""></option>
-                </select>
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="form">
+                <div class="form-group">
+                  <select class="form-control" name="sub_jpcoar_list">
+                    <option value=""></option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="col-sm-4 del-col-space">
-            <div class="form-inline sub_itemtype_link hide">
-              <div class="form-group has-error">
-                <input type="text" class="form-control max-width-64"
-                                   maxlength="1" value="" placeholder="{{_('Input Field')}}">
-              </div>
-               <i class="glyphicon glyphicon-trash" id="delete-icon-two"></i>
-              <input type="button" class="btn btn-danger delete-button five-pixel-margin" style="position:unset;" data-action="del_sub_child" value="{{_('Delete')}}">
-              <!--<div style="position: relative;" style="padding: 50px; background-color: #E5E4E2; display: inline-block;">
-                  <i class="glyphicon glyphicon-trash" style="color: white; position: absolute;left: 2em; top:0.85em"></i>
-                  <input type="button" class="btn btn-danger delete-button five-pixel-margin" data-action="del_sub_child" value="{{_('Delete')}}">            
-              </div>-->
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-6">
-        <div class="row">
-          <div class="col-sm-6">
-            <div class="form">
-              <div class="form-group">
-                <select class="form-control" name="sub_jpcoar_list">
-                  <option value=""></option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-6">
-            <fieldset class="pull-right">
-               <i class="glyphicon glyphicon-trash" id="delete-icon-two"></i>
+            <div class="col-sm-6">
+              <fieldset class="pull-right">
+                <div class="button-container">
+                    <i class="glyphicon glyphicon-trash" id="delete-icon-two"></i>
 
-              <input type="button" class="btn btn-danger delete-button five-pixel-margin" style="position:unset;" data-action="del_child" value="{{_('Delete')}}">
-            </fieldset>
-           <input type="button" class="btn btn-light pull-right action-button" data-action="add_child" value="{{_('Linking')}}">
-           <!-- <button class="btn btn-light pull-right action-button" data-action="add_child">
-                   {{_('Link')}}
-           </button> -->
+                  <input type="button" class="btn btn-danger delete-button twentyeight-pixel-right-margin" style="position:unset;" data-action="del_child" value="{{_('Delete')}}">
+                </div>
+                <!-- <button class="btn btn-danger delete-button twentyeight-pixel-right-margin" data-action="del_child"
+                    style="margin-right:28px;">
+                      <span class="glyphicon glyphicon-trash"></span>
+                          {{_('Delete')}}
+                </button> -->
+              </fieldset>
+            <button class="btn btn-light pull-right add-button twentyeight-pixel-right-margin" data-action="add_child">
+                        {{_('Link')}}
+            </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="row sub_child_list"><hr>
-      <div class="col-sm-6 sub_children_itemtype_list">
-        <div class="row sub_child_itemtype_list">
-          <div class="col-sm-6">
-            <div class="form">
-              <div class="form-group">
-                <select class="form-control" name="sub_itemtype_list">
-                  <option value=""></option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-6">
-            <div class="form-inline sub_itemtype_link hide">
-              <div class="form-group del-col-space">
-                <input type="text" class="form-control max-width-64"
-                                   maxlength="1" value="" placeholder="{{_('Enter Input Value')}}">
-              </div>
-               <i class="glyphicon glyphicon-trash" id="delete-icon-two"></i>
-
-              <input type="button" class="btn btn-danger pull right delete-button five-pixel-margin" style="position:unset;" data-action="del_sub_child" value="{{_('Delete')}}">
-              <!--<button class="btn btn-danger pull right delete-button five-pixel-margin" data-action="del_sub_child">
-                       <span class="glyphicon glyphicon-trash"></span>
-                             {{_('Delete')}}
-              </button>-->
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-6">
-        <div class="row">
-          <div class="col-sm-6">
-            <div class="form">
-              <div class="form-group">
-                <select class="form-control" name="sub_jpcoar_list">
-                  <option value=""></option>
-                </select>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-6">
-            <fieldset class="pull-right">
-              <div class="button-container">
-                   <i class="glyphicon glyphicon-trash" id="delete-icon-two"></i>
-
-                <input type="button" class="btn btn-danger delete-button twentyeight-pixel-right-margin" style="position:unset;" data-action="del_child" value="{{_('Delete')}}">
-              </div>
-              <!-- <button class="btn btn-danger delete-button twentyeight-pixel-right-margin" data-action="del_child"
-                  style="margin-right:28px;">
-                    <span class="glyphicon glyphicon-trash"></span>
-                        {{_('Delete')}}
-              </button> -->
-            </fieldset>
-           <button class="btn btn-light pull-right add-button twentyeight-pixel-right-margin" data-action="add_child">
-                       {{_('Link')}}
-           </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  </div> <!--End div pre-scrollable-->
 </div>
 <!--<div class="row">
   <div class="col-sm-12">
