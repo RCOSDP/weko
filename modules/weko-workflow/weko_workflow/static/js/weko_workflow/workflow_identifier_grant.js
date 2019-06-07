@@ -9,10 +9,9 @@ require([
 
   // click button Next
   $('#btn-finish').on('click', function () {
-    console.log('++++++++++++++++PRESS BUTTON 1');
-    preparePostData(0);
-    console.log('++++++++++++++++PRESS BUTTON 2');
-    sendQuitAction();
+    if(preparePostData(0)){
+      sendQuitAction();
+    }
   });
 
   // click button Save
@@ -42,21 +41,81 @@ require([
 
   // prepare data for sending
   function preparePostData(tmp_save) {
+    let isSuffixFormat = false;
+
     data_global.post_uri = $('.cur_step').data('next-uri');
+
+    let identifier_grant = $("input[name='identifier_grant']:checked").val();
+    let identifier_grant_jalc_doi_suffix = getVal($("input[name='idf_grant_input_1']"));
+    let identifier_grant_jalc_doi_link = $("span[name='idf_grant_link_1']").text() + getVal($("input[name='idf_grant_input_1']"));
+    let identifier_grant_jalc_cr_doi_suffix = getVal($("input[name='idf_grant_input_2']"));
+    let identifier_grant_jalc_cr_doi_link = $("span[name='idf_grant_link_2']").text() + getVal($("input[name='idf_grant_input_2']"));
+    let identifier_grant_jalc_dc_doi_suffix = getVal($("input[name='idf_grant_input_3']"));
+    let identifier_grant_jalc_dc_doi_link = $("span[name='idf_grant_link_3']").text() + getVal($("input[name='idf_grant_input_3']"));
+    let identifier_grant_crni_link = $("span[name='idf_grant_link_4']").text();
+
     data_global.post_data = {
-      identifier_grant: $("input[name='identifier_grant']:checked").val(),
-      identifier_grant_jalc_doi_suffix: getVal($("input[name='idf_grant_input_1']")),
-      identifier_grant_jalc_doi_link: $("span[name='idf_grant_link_1']").text() + getVal($("input[name='idf_grant_input_1']")),
-      identifier_grant_jalc_cr_doi_suffix: getVal($("input[name='idf_grant_input_2']")),
-      identifier_grant_jalc_cr_doi_link: $("span[name='idf_grant_link_2']").text() + getVal($("input[name='idf_grant_input_2']")),
-      identifier_grant_jalc_dc_doi_suffix: getVal($("input[name='idf_grant_input_3']")),
-      identifier_grant_jalc_dc_doi_link: $("span[name='idf_grant_link_3']").text() + getVal($("input[name='idf_grant_input_3']")),
-      identifier_grant_crni_link: $("span[name='idf_grant_link_4']").text(),
+      identifier_grant: identifier_grant,
+      identifier_grant_jalc_doi_suffix: identifier_grant_jalc_doi_suffix,
+      identifier_grant_jalc_doi_link: identifier_grant_jalc_doi_link,
+      identifier_grant_jalc_cr_doi_suffix: identifier_grant_jalc_cr_doi_suffix,
+      identifier_grant_jalc_cr_doi_link: identifier_grant_jalc_cr_doi_link,
+      identifier_grant_jalc_dc_doi_suffix: identifier_grant_jalc_dc_doi_suffix,
+      identifier_grant_jalc_dc_doi_link: identifier_grant_jalc_dc_doi_link,
+      identifier_grant_crni_link: identifier_grant_crni_link,
       action_version: $('.cur_step').data('action-version'),
       commond: '',
       temporary_save: tmp_save
     };
-    console.log('+++++++++++Data_global.post_data', data_global.post_data);
+
+    switch(identifier_grant) {
+      case 0:
+        break;
+      case 1:
+        if(isDOISuffixFormat(postData.identifier_grant_jalc_doi_link, postData.identifier_grant_jalc_doi_suffix)){
+          isSuffixFormat = true;
+        }
+        break;
+      case 2:
+        if(isDOISuffixFormat(postData.identifier_grant_jalc_cr_doi_link, postData.identifier_grant_jalc_cr_doi_suffix)){
+          isSuffixFormat = true;
+        }
+        break;
+      case 3:
+        if(isDOISuffixFormat(postData.identifier_grant_jalc_dc_doi_link, postData.identifier_grant_jalc_dc_doi_suffix)){
+          isSuffixFormat = true;
+        }
+        break;
+      case 4:
+        break;
+      default:
+        return false;
+        break;
+    };
+
+    return isSuffixFormat;
+  }
+
+  function isDOISuffixFormat(doi_link, doi_suffix){
+
+    let checkDOISuffix = true;
+    let regexDOI = /^[_\-.;()\/A-Za-z0-9]+$/gi;
+
+    if(!regexDOI.test(doi_suffix)) {
+      checkDOISuffix = false;
+      alert("REGEX FAILSE");
+    };
+
+    if(doi_suffix.length >= 300) {
+      alert("LENGTH <= 300");
+    };
+//    if(isExistDOI(doi_link)) {
+//    };
+//
+//    if(isWithDrawDOI(doi_link)) {
+//    };
+
+    return checkDOISuffix;
   }
 
   function getVal(inObject) {
