@@ -73,8 +73,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifier']['value'] = jalcdoi_link
             tempdata['identifier']['properties']['identifierType'] = 'DOI'
             tempdata['identifierRegistration']['value'] = \
-                jalcdoi_tail[1] + \
-                jalcdoi_tail[2]
+                jalcdoi_tail[1:]
             tempdata['identifierRegistration']['properties'][
                 'identifierType'] = 'JaLC'
             res['pidstore_identifier'] = tempdata
@@ -85,8 +84,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifier']['value'] = jalcdoi_cr_link
             tempdata['identifier']['properties']['identifierType'] = 'DOI'
             tempdata['identifierRegistration']['value'] = \
-                jalcdoi_cr_tail[1] + \
-                jalcdoi_cr_tail[2]
+                jalcdoi_cr_tail[1:]
             tempdata['identifierRegistration']['properties'][
                 'identifierType'] = 'Crossref'
             res['pidstore_identifier'] = tempdata
@@ -97,8 +95,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifier']['value'] = jalcdoi_dc_link
             tempdata['identifier']['properties']['identifierType'] = 'DOI'
             tempdata['identifierRegistration']['value'] = \
-                jalcdoi_dc_tail[1] + \
-                jalcdoi_dc_tail[2]
+                jalcdoi_dc_tail[1:]
             tempdata['identifierRegistration']['properties'][
                 'identifierType'] = 'Datacite'
             res['pidstore_identifier'] = tempdata

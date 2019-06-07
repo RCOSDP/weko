@@ -9,7 +9,9 @@ require([
 
   // click button Next
   $('#btn-finish').on('click', function () {
+    console.log('++++++++++++++++PRESS BUTTON 1');
     preparePostData(0);
+    console.log('++++++++++++++++PRESS BUTTON 2');
     sendQuitAction();
   });
 
@@ -54,6 +56,7 @@ require([
       commond: '',
       temporary_save: tmp_save
     };
+    console.log('+++++++++++Data_global.post_data', data_global.post_data);
   }
 
   function getVal(inObject) {
