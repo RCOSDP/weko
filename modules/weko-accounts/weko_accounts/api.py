@@ -25,7 +25,7 @@ from datetime import datetime
 from flask import current_app, session
 from flask_login import current_user, user_logged_in, user_logged_out
 from flask_security.utils import hash_password, verify_password
-from invenio_accounts.models import User
+from invenio_accounts.models import User, Role
 from invenio_db import db
 from weko_user_profiles.models import UserProfile
 from werkzeug.local import LocalProxy
@@ -165,3 +165,9 @@ class ShibUser(object):
         """
         user_logged_out.send(current_app._get_current_object(),
                              user=current_user)
+
+
+def get_user_info_by_role_name(role_name):
+    """Get user info by role name."""
+    role = Role.query.filter_by(name=role_name).first()
+    return User.query.filter(User.roles.contains(role)).all()
