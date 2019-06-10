@@ -76,144 +76,205 @@ class WidgetItem(db.Model):
 
     __tablename__ = 'widget_items'
 
-    id = db.Column(db.Integer, primary_key=True, nullable=False)
-
+    widget_id = db.Column(db.Integer,
+                          primary_key=True,
+                          nullable=False)
     repository_id = db.Column(db.String(100),
                               nullable=False)
-
-    widget_type = db.Column(db.String(100), db.ForeignKey(WidgetType.type_id),
+    widget_type = db.Column(db.String(100),
+                            db.ForeignKey(WidgetType.type_id),
                             nullable=False)
-
-    label = db.Column(db.String(100), nullable=False)
-
-    language = db.Column(db.String(3), nullable=False)
-
-    settings = db.Column(
-        db.JSON().with_variant(
-            postgresql.JSONB(none_as_null=True),
-            'postgresql',
-        ).with_variant(
-            JSONType(),
-            'sqlite',
-        ).with_variant(
-            JSONType(),
-            'mysql',
-        ),
-        default=lambda: dict(),
-        nullable=True
-    )
-
-    browsing_role = db.Column(db.Text, nullable=True)
-
-    edit_role = db.Column(db.Text, nullable=True)
-
-    is_enabled = db.Column(db.Boolean(name='enable'), default=True)
-
-    is_deleted = db.Column(db.Boolean(name='delete'), default=False)
+    setting = db.Column(db.JSON().with_variant(
+                                               postgresql.JSONB(
+                                                   none_as_null=True
+                                                   ),
+                                               'postgresql',)
+                                 .with_variant(JSONType(),
+                                               'sqlite',)
+                                 .with_variant(JSONType(),
+                                               'mysql',),
+                        default=lambda: dict(),
+                        nullable=True)
+    browsing_role = db.Column(db.Text,
+                              nullable=True)
+    edit_role = db.Column(db.Text,
+                          nullable=True)
+    is_enabled = db.Column(db.Boolean(name='enable'),
+                           default=True)
+    is_deleted = db.Column(db.Boolean(name='deleted'),
+                           default=False)
 
     #
-    # Relations
+    # Relation
     #
+    widgettype = db.relationship(WidgetType,
+                                 backref=db.backref('repositories',
+                                                    cascade='all, \
+                                                    delete-orphan'))
 
-    widgettype = db.relationship(WidgetType, backref=db.backref(
-        'repositories', cascade='all, delete-orphan'))
-    """WidgetType relationship."""
+    #
+    # Query Operation
+    #
+    @classmethod
+    def get_by_id(cls, id):
+        """ Get a widget item by id."""
+        widget = cls.query.filter_by(widget_id=id).one_or_none()
+        return widget
 
     @classmethod
-    def get(cls, repo_id, type_id, lbl, language):
-        """Get a widget item."""
-        return cls.query.filter_by(repository_id=str(repo_id),
-                                   widget_type=str(type_id),
-                                   label=str(lbl),
-                                   language=str(language)).one_or_none()
+    def update_by_id(cls, id, widget_data):
+        """Update the widget by id
 
-    @classmethod
-    def get_by_repo_and_type(cls, repo_id, type_id):
-        """Get a widget item."""
-        return cls.query.filter_by(repository_id=str(repo_id),
-                                   widget_type=str(type_id)).all()
+        Arguments:
+            id {Integer} -- Id of widget
+            widget_data {Dictionary} -- data
 
-    @classmethod
-    def get_by_id(cls, widget_id):
-        """Get a widget item."""
-        return cls.query.filter_by(id=str(widget_id)).one_or_none()
-
-    @classmethod
-    def update(cls, repo_id, type_id, lbl, lang, **data):
-        """
-        Update the widget item detail info.
-
-        :param repo_id: Identifier of the repository.
-        :param type_id: Identifier of the widget type.
-        :param lbl: label of the widget type.
-        :param data: new widget item info for update.
-        :return: Updated widget item info
+        Returns:
+            widget -- if success
         """
         try:
             with db.session.begin_nested():
-                widget_item = cls.get(repo_id, type_id, lbl, lang)
-                if not widget_item:
+                widget = cls.get_by_id(id)
+                if not widget:
                     return
-
-                for k, v in data.items():
-                    setattr(widget_item, k, v)
-                db.session.merge(widget_item)
+                for k, v in widget_data.items():
+                    setattr(widget, k, v)
+                db.session.merge(widget)
             db.session.commit()
-            return widget_item
-        except Exception as ex:
-            current_app.logger.debug(ex)
+            return widget
+        except Exception as e:
+            current_app.logger.debug(e)
             db.session.rollback()
         return
 
     @classmethod
-    def update_by_id(cls, widget_item_id, **data):
-        """Update the widget item detail info.
+    def delete_by_id(cls, id, session=None):
+        """Delete the widget by id.
 
-        :param widget_item_id: Identifier of the widget id.
-        :param data: new widget item info for update.
-        :return: Updated widget item info
+        Arguments:
+            id {Integer} -- The widget id
 
-        """
-        try:
-            with db.session.begin_nested():
-                widget_item = cls.get_by_id(widget_item_id)
-                if not widget_item:
-                    return
+        Keyword Arguments:
+            session {db.session} -- current session (default: {None})
 
-                for k, v in data.items():
-                    setattr(widget_item, k, v)
-                db.session.merge(widget_item)
-            db.session.commit()
-            return widget_item
-        except Exception as ex:
-            current_app.logger.debug(ex)
-            db.session.rollback()
-        return
-
-    @classmethod
-    def delete(cls, repo_id, type_id, lbl, lang, session=None):
-        """Delete the widget item detail info.
-
-        :param repo_id: Identifier of the repository.
-        :param type_id: Identifier of the widget type.
-        :param lbl: label of the widget type.
-        :param session: DB session.
-        :return: delete widget item info
+        Returns:
+            widget -- If success
         """
         if not session:
             session = db.session
+
         try:
             with session.begin_nested():
-                widget_item = cls.get(repo_id, type_id, lbl, lang)
-                if not widget_item:
+                widget = cls.get_by_id(id)
+                if not widget:
                     return
-                setattr(widget_item, 'is_deleted', 'True')
+                setattr(widget, 'is_deleted', 'True')
             session.commit()
-            return widget_item
-        except Exception as ex:
-            current_app.logger.debug(ex)
+            return widget
+        except Exception as e:
+            current_app.logger.debug(e)
             session.rollback()
         return
+
+
+class WidgetMultiLangData(db.Model):
+    """Database for widget multiple language data."""
+
+    __tablename__ = 'widget_multi_lang_data'
+
+    id = db.Column(db.Integer,
+                   primary_key=True,
+                   nullable=False)
+    widget_id = db.Column(db.Integer,
+                          db.ForeignKey(WidgetItem.widget_id),
+                          nullable=False)
+    lang_code = db.Column(db.String(3),
+                          nullable=False)
+    label = db.Column(db.String(100),
+                      nullable=False)
+    description_data = db.Column(db.JSON().with_variant(
+                                                postgresql.JSONB(
+                                                    none_as_null=True
+                                                ),
+                                                'postgresql',)
+                                          .with_variant(
+                                              JSONType(),
+                                              'sqlite',)
+                                          .with_variant(
+                                              JSONType(),
+                                              'mysql',),
+                                 default=lambda: dict(),
+                                 nullable=True)
+
+    #
+    # Query Operation
+    #
+    @classmethod
+    def get_by_id(cls, id):
+        """Get widget multilanguage data by id.
+
+        Arguments:
+            id {Integer} -- The ID
+
+        Returns:
+            data -- Widget multilanguage data
+        """
+        data = cls.query.filter_by(id=id).one_or_none()
+        return data
+
+    @classmethod
+    def get_by_widget_id(cls, widget_id):
+        """Get list widget multilanguage data by widget ID
+
+        Arguments:
+            widget_id {Integer} -- The widget id
+
+        Returns:
+            data -- List widget multilanguage data
+        """
+        list_data = cls.query.filter_by(widget_id=widget_id).all()
+        return list_data
+
+    @classmethod
+    def update_by_id(cls, id, data):
+        """Update widget multilanguage data by id
+
+        Arguments:
+            id {Integer} -- The id
+            data {WidgetMultiLangData} -- The Widget multilanguage data
+
+        Returns:
+            True -- If deleted
+        """
+        try:
+            with db.session.begin_nested():
+                data = cls.get_by_id(id)
+                if not data:
+                    return
+                for k, v in data.items():
+                    setattr(data, k, v)
+                db.session.merge(data)
+            db.session.commit()
+            return data
+        except Exception as e:
+            current_app.logger.debug(e)
+            db.session.rollback()
+        return
+
+    @classmethod
+    def delete_by_id(cls, id):
+        try:
+            with db.session.begin_nested():
+                data = cls.get_by_id(id)
+                if not data:
+                    return False
+                db.session.delete(data)
+            db.session.commit()
+            return True
+        except Exception as e:
+            current_app.logger.debug(e)
+            db.session.rollback()
+        return False
 
 
 class WidgetDesignSetting(db.Model):
