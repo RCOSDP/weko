@@ -122,6 +122,12 @@ class WidgetItem(db.Model):
         return widget
 
     @classmethod
+    def get_by_repo_and_type(cls, repo_id, type):
+        """ Get a widget item by repo id and type."""
+        widget = cls.query.filter_by(repository_id=repo_id, widget_type=type).all()
+        return widget
+
+    @classmethod
     def update_by_id(cls, id, widget_data):
         """Update the widget by id
 
