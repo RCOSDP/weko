@@ -43,9 +43,6 @@ class WidgetItems(object):
         try:
             data_object["repository_id"] = widget_items.get('repository')
             data_object["widget_type"] = widget_items.get('widget_type')
-            if not is_update:
-                data_object["label"] = widget_items.get("label")
-            data_object["language"] = widget_items.get("language")
             role = widget_items.get('browsing_role')
             if type(role) is list:
                 data_object["browsing_role"] = ",".join(str(e) for e in role)
@@ -77,8 +74,6 @@ class WidgetItems(object):
         data_object_settings["text_color"] = widget_items.get('text_color')
         data_object_settings["background_color"] = widget_items.get(
             'background_color')
-        data_object_settings["multiLangSetting"] = widget_items.get(
-            'multiLangSetting')
         widget_object['settings'] = json.dumps(data_object_settings)
 
     @classmethod
@@ -140,9 +135,7 @@ class WidgetItems(object):
         data = cls.build_object(widget_items)
         if not data:
             return False
-        WidgetItem.update(widget_id.get('repository'),
-                          widget_id.get('widget_type'), widget_id.get('label'),
-                          widget_id.get('language'), **data)
+        WidgetItem.update_by_id(widget_id.get('id'), **data)
         return True
 
     @classmethod
