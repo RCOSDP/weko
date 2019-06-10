@@ -93,7 +93,7 @@ require([
   }
 
   withdraw_form.submit(function(event) {
-    let form = $('form[name$=withdraw_doi_form]');
+    let form = withdraw_form;
     let withdraw_uri = form.attr('action');
     let post_data = {passwd: $('#pwd').val()};
     $.ajax({
