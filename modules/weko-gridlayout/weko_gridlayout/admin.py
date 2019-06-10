@@ -173,15 +173,14 @@ class WidgetSettingView(ModelView):
         try:
             if not self.on_model_delete(model):
                 flash(_("Cannot delete widget (Repository:%(repo)s, "
-                        "Widget Type:%(type)s, Label: %(label)s) "
+                        "Widget Type:%(type)s"
                         "because it's setting in Widget Design.",
-                        repo=model.repository_id, type=model.widget_type,
-                        label=model.label), 'error')
+                        repo=model.repository_id, type=model.widget_type),
+                        'error')
                 return False
             self.session.flush()
             WidgetItem.delete(model.repository_id,
                               model.widget_type,
-                              model.label,
                               model.language,
                               self.session)
         except Exception as ex:
@@ -216,17 +215,15 @@ class WidgetSettingView(ModelView):
     column_list = (
         'repository_id',
         'widget_type',
-        'label',
         'is_enabled',
     )
 
     column_searchable_list = (
-        'repository_id', 'widget_type', 'label', 'is_enabled')
+        'repository_id', 'widget_type', 'is_enabled')
 
     column_details_list = (
         'repository_id',
         'widget_type',
-        'label',
         'label_color',
         'has_frame_border',
         'frame_border_color',
@@ -240,7 +237,6 @@ class WidgetSettingView(ModelView):
 
     column_labels = dict(repository_id=_('Repository'),
                          widget_type=_('Widget Type'),
-                         label=_('Label'),
                          is_enabled=_('Enable'),
                          )
 
