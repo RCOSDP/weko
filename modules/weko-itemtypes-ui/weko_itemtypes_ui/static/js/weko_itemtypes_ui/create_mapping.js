@@ -202,7 +202,6 @@
       if($('div.sub_child_list').length == 1) {
         $('div.sub_child_list').find('fieldset').attr('disabled', true);
       }
-      $('#sub_mapping-create').removeAttr('disabled');
     });
     function reset_sub_children_lists() {
       $('#sub-item-type-lists-label').text('Itemtype');
@@ -212,7 +211,6 @@
       let new_sub_info = $('div.sub_children_list').clone(true);
       new_sub_info.removeClass('sub_children_list hide').addClass('sub_child_list');
       new_sub_info.appendTo('#sub_children_lists');
-      $('#sub_mapping-create').attr('disabled', true);
     }
     function display_parent_prop(jpcoar_key) {
       $('#jpcoar-props-lists').find('.jpcoar-prop-list').remove();
@@ -477,7 +475,7 @@
       new_sub_info.appendTo('#sub_children_lists');
       $('div.sub_child_list').find('fieldset').removeAttr('disabled');
     });
-    $('#sub_mapping-create').on('click', function(ev){
+    $('select[name="sub_itemtype_list"], select[name="sub_jpcoar_list"]').on('change', function(ev){
       if(page_global.mapping_prop == null) {
         mapping_str = $('#hide_mapping_prop').text();
         page_global.mapping_prop = JSON.parse(mapping_str);
