@@ -13,7 +13,7 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .api import WidgetItems
-from .services import WidgetDesignServices
+from .services import WidgetDesignServices, WidgetItemServices
 from .utils import delete_admin_widget_item_setting, get_default_language, \
     get_repository_list, get_system_language, get_widget_design_setting, \
     get_widget_list, get_widget_preview, get_widget_type_list, \
@@ -138,7 +138,7 @@ def save_widget_item():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
-    return update_admin_widget_item_setting(data)
+    return jsonify(WidgetItemServices.save_command(data))
 
 
 @blueprint_api.route('/delete_widget_item', methods=['POST'])
