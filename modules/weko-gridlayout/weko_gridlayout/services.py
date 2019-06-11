@@ -27,13 +27,46 @@ from flask import current_app
 from .config import WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, \
     WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
 from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
-from .utils import update_general_item
+from .utils import update_general_item, build_data, build_multi_lang_data
 
 
 class WidgetItemServices:
     """Services for Widget item setting.
     """
-    def get_by_id(widget_id):
+    @classmethod
+    def save_command(cls, data):
+        result = {
+            'message': '',
+            'success': False
+        }
+        if not data:
+            result['message'] = 'No data saved!'
+            return result
+        repository = data.get('repository')
+        type_id = data.get('widget_type')
+        multi_lang_data = data.get('multiLangSetting')
+
+        for k, v in multi_lang_data.items():
+            if cls.is_exist(repository, type_id, k, v.get('label')):
+                result['message'] = 'Save fail. Data input to create is exist!'
+                return result
+
+        if data.get('flag_edit'):
+            respond = cls.update_by_id(build_data(data.get('data_id')))
+            if respond['error']:
+                result['message'] = respond['error']
+            else:
+                result['success'] = True
+        else:
+            respond = cls.create(build_data(data.get('data_id')))
+            if respond['error']:
+                result['message'] = respond['error']
+            else:
+                result['success'] = True
+        return result
+
+    @classmethod
+    def get_by_id(cls, widget_id):
         result = {
             'widget_data': '',
             'error': ''
@@ -54,7 +87,8 @@ class WidgetItemServices:
         result['widget_data'] = widget_data
         return result
 
-    def create(widget_data):
+    @classmethod
+    def create(cls, widget_data):
         result = {
             'error': ''
         }
@@ -72,13 +106,13 @@ class WidgetItemServices:
         try:
             with session.begin_nested():
                 seq = WidgetItem.create(widget_data, session)
-                for k, v in multi_lang_data.items():
-                    new_lang_data = dict()
-                    new_lang_data['widget_id'] = seq + 1
-                    new_lang_data['lang_code'] = k
-                    new_lang_data['label'] = v.get('label')
-                    new_lang_data['description_data'] = v.get('description')
-                    WidgetMultiLangData.create(new_lang_data, session)
+                print('==== sequence ===')
+                print(seq)
+                list_multi_lang_data = build_multi_lang_data(
+                    seq + 1,
+                    multi_lang_data)
+                for data in list_multi_lang_data:
+                    WidgetMultiLangData.create(data, session)
             session.commit()
         except Exception as e:
             result['error'] = str(e)
@@ -86,7 +120,8 @@ class WidgetItemServices:
             session.rollback()
         return result
 
-    def update_by_id(widget_id, widget_data):
+    @classmethod
+    def update_by_id(cls, widget_id, widget_data):
         result = {
             'error': ''
         }
@@ -104,13 +139,11 @@ class WidgetItemServices:
             with session.begin_nested():
                 WidgetItem.update_by_id(widget_id, widget_data, session)
                 WidgetMultiLangData.delete_by_widget_id(widget_id, session)
-                for k, v in multi_lang_data.items():
-                    new_lang_data = dict()
-                    new_lang_data['widget_id'] = widget_id
-                    new_lang_data['lang_code'] = k
-                    new_lang_data['label'] = v.get('label')
-                    new_lang_data['description_data'] = v.get('description')
-                    WidgetMultiLangData.create(new_lang_data, session)
+                list_multi_lang_data = build_multi_lang_data(
+                    widget_id,
+                    multi_lang_data)
+                for data in list_multi_lang_data:
+                    WidgetMultiLangData.create(data, session)
             session.commit()
         except Exception as e:
             result['error'] = str(e)
@@ -118,7 +151,8 @@ class WidgetItemServices:
             session.rollback()
         return result
 
-    def delete_by_id(widget_id):
+    @classmethod
+    def delete_by_id(cls, widget_id):
         result = {
             'error': ''
         }
@@ -138,7 +172,8 @@ class WidgetItemServices:
             session.rollback()
         return result
 
-    def is_exist(repository_id, type_id, lang_code, label):
+    @classmethod
+    def is_exist(cls, repository_id, type_id, lang_code, label):
         list_id = WidgetItem.get_id_by_repository_and_type(
             repository_id,
             type_id)

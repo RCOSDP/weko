@@ -503,58 +503,46 @@ def get_system_language():
     return result
 
 
-def get_widget_by_id(widget_id):
+def build_data(data):
     result = dict()
-    widget = WidgetItem.get_by_id(widget_id)
+    result['repository_id'] = data.get('repository')
+    result['widget_type'] = data.get('widget_type')
+    result['settings'] = json.dumps(build_data_setting(data))
+    result['is_enabled'] = data.get('enable')
+    result['is_deleted'] = False
+    role = data.get('browsing_role')
+    if isinstance(role, list):
+        result['browsing_role'] = ','.join(str(e) for e in role)
+    else:
+        result['browsing_role'] = role
+    role = data.get('edit_role')
+    if isinstance(role, list):
+        result['edit_role'] = ','.join(str(e) for e in role)
+    else:
+        result['edit_role'] = role
 
-    if not widget:
-        return None
 
-    for k, v in widget.items():
-        result[k] = v
+def build_data_setting(data):
+    result = dict()
+    result['background_color'] = data.get('background_color')
+    result['frame_border'] = data.get('frame_border')
+    result['frame_border_color'] = data.get('frame_border_color')
+    result['label_color'] = data.get('label_color')
+    result['text_color'] = data.get('text_color')
 
-    setting = result.get('settings')
-    multi_lang_data = WidgetMultiLangData.get_by_widget_id(widget_id)
-
-    multi_lang_setting = dict()
-    for langData in multi_lang_data:
-        new_data = {
-            'label': langData.label,
-            'description': langData.description_data
-        }
-        multi_lang_setting[langData.lang_code] = new_data
-    setting['multiLangSetting'] = multi_lang_data
-    result['settings'] = setting
     return result
 
 
-def create_widget(widget_data):
-    if not widget_data:
-        return False
+def build_multi_lang_data(widget_id, multi_lang_json):
+    if not multi_lang_json:
+        return None
 
-    settings = widget_data.get('settings')
-    if not settings:
-        return False
-
-    multi_lang_data = settings.get('multiLangSetting')
-    if 'multiLangSetting' in settings.keys():
-        del settings['multiLangSetting']
-        WidgetItem.create()
-        for k, v in multi_lang_data.items():
-            new_data = dict()
-            new_data['widget_id'] = widget_data.get(widget_id)
-            new_data['lang_code'] = k
-            new_data['label'] = v.get('label')
-            new_data['description_data'] = v.get('description')
-            WidgetMultiLangData.create(new_data)
-
-    else:
-        return False
-
-
-def update_widget(widget_id, widget_data):
-    return None
-
-
-def delete_widget(widget_id):
-    return None
+    result = list()
+    for k, v in multi_lang_json.items():
+        new_lang_data = dict()
+        new_lang_data['widget_id'] = widget_id
+        new_lang_data['lang_code'] = k
+        new_lang_data['label'] = v.get('label')
+        new_lang_data['description_data'] = v.get('description')
+        result.append(new_lang_data)
+    return result
