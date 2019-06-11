@@ -20,14 +20,14 @@
 
 import copy
 import json
-
 from invenio_db import db
 from flask import current_app
 
 from .config import WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, \
     WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
 from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
-from .utils import update_general_item, build_data, build_multi_lang_data
+from .utils import update_general_item, build_data, build_multi_lang_data, \
+    convert_widget_multi_lang_to_dict
 
 
 class WidgetItemServices:
@@ -42,26 +42,30 @@ class WidgetItemServices:
         if not data:
             result['message'] = 'No data saved!'
             return result
-        repository = data.get('repository')
-        type_id = data.get('widget_type')
-        multi_lang_data = data.get('multiLangSetting')
-
+        widget_data = data.get('data')
+        repository = widget_data.get('repository')
+        type_id = widget_data.get('widget_type')
+        multi_lang_data = widget_data.get('multiLangSetting')
         for k, v in multi_lang_data.items():
             if cls.is_exist(repository, type_id, k, v.get('label')):
                 result['message'] = 'Save fail. Data input to create is exist!'
                 return result
 
         if data.get('flag_edit'):
-            respond = cls.update_by_id(build_data(data.get('data_id')))
+            respond = cls.update_by_id(
+                data.get('data_id'),
+                build_data(widget_data))
             if respond['error']:
                 result['message'] = respond['error']
             else:
+                result['message'] = 'Widget item updated successfully.'
                 result['success'] = True
         else:
-            respond = cls.create(build_data(data.get('data_id')))
+            respond = cls.create(build_data(widget_data))
             if respond['error']:
                 result['message'] = respond['error']
             else:
+                result['message'] = 'Widget item saved successfully.'
                 result['success'] = True
         return result
 
@@ -105,16 +109,18 @@ class WidgetItemServices:
         del widget_data['multiLangSetting']
         try:
             with session.begin_nested():
-                seq = WidgetItem.create(widget_data, session)
-                print('==== sequence ===')
-                print(seq)
+                next_id = WidgetItem.get_sequence(session)
+                widget_data['widget_id'] = next_id
+                WidgetItem.create(widget_data, session)
                 list_multi_lang_data = build_multi_lang_data(
-                    seq + 1,
+                    next_id,
                     multi_lang_data)
                 for data in list_multi_lang_data:
                     WidgetMultiLangData.create(data, session)
             session.commit()
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             result['error'] = str(e)
             current_app.logger.debug(e)
             session.rollback()
@@ -184,8 +190,9 @@ class WidgetItemServices:
             multi_lang_data = WidgetMultiLangData.get_by_widget_id(id)
             if multi_lang_data:
                 for data in multi_lang_data:
-                    if (data.get('label') == label and
-                            data.get('lang_code') == lang_code):
+                    dict_data = convert_widget_multi_lang_to_dict(data)
+                    if (dict_data.get('label') == label and
+                            dict_data.get('lang_code') == lang_code):
                         return True
         return False
 
