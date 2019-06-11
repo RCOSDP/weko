@@ -45,7 +45,7 @@ from weko_items_ui.utils import get_user_information
 from weko_records.api import ItemsMetadata
 
 from .models import LogAnalysisRestrictedCrawlerList, \
-    LogAnalysisRestrictedIpAddress
+    LogAnalysisRestrictedIpAddress, RankingSettings
 from .permissions import admin_permission_factory
 from .utils import allowed_file
 
@@ -278,7 +278,7 @@ class ReportView(BaseView):
         'detail_view': _('DetailView_'),
         'file_using_per_user': _('FileUsingPerUser_'),
         'search_count': _('SearchCount_'),
-        'top_page_access':_('HostAccess_'),
+        'top_page_access': _('HostAccess_'),
         'user_roles': _('UserAffiliate_'),
         'site_access': _('SiteAccess_')
     }
@@ -596,6 +596,84 @@ class LogAnalysisSettings(BaseView):
         return new_crawler_lists, new_ip_addresses
 
 
+class RankingSettingsView(BaseView):
+    """Ranking settings view."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        if request.method == 'POST':
+            try:
+                form = request.form.get('submit', None)
+                if form == 'save_ranking_settings':
+                    settings = RankingSettings()
+                    settings.is_show = request.form.get('is_show', False)
+                    new_item_period = int(request.form.get('new_item_period',
+                                                           14))
+                    if new_item_period < 1 or new_item_period > 30:
+                        current_app.logger.debug(new_item_period)
+                        raise
+                    settings.new_item_period = new_item_period
+                    settings.statistical_period = \
+                        request.form.get('statistical_period', 365)
+                    settings.display_rank = \
+                        request.form.get('display_rank', 10)
+                    most_reviewed_items_flag = True \
+                        if request.form.get('most_reviewed_items') else False
+                    most_downloaded_items_flag = True \
+                        if request.form.get('most_downloaded_items') \
+                        else False
+                    created_most_items_user_flag = True \
+                        if request.form.get('created_most_items_user') \
+                        else False
+                    most_searched_keywords_flag = True \
+                        if request.form.get('most_searched_keywords') \
+                        else False
+                    new_items_flag = True \
+                        if request.form.get('new_items') else False
+                    settings.rankings = {
+                        'most_reviewed_items': most_reviewed_items_flag,
+                        'most_downloaded_items': most_downloaded_items_flag,
+                        'created_most_items_user':
+                        created_most_items_user_flag,
+                        'most_searched_keywords': most_searched_keywords_flag,
+                        'new_items': new_items_flag
+                    }
+                    RankingSettings.update(data=settings)
+                    flash(_('Successfully Changed Settings.'))
+                    return redirect(url_for('rankingsettings.index'))
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                flash(_('Failurely Changed Settings.'), 'error')
+                return redirect(url_for('rankingsettings.index'))
+
+        settings = RankingSettings.get()
+        if settings:
+            is_show = settings.is_show
+            new_item_period = settings.new_item_period
+            statistical_period = settings.statistical_period
+            display_rank = settings.display_rank
+            rankings = settings.rankings
+        else:
+            is_show = False
+            new_item_period = 14
+            statistical_period = 365
+            display_rank = 10
+            rankings = {'most_reviewed_items': False,
+                        'most_downloaded_items': False,
+                        'created_most_items_user': False,
+                        'most_searched_keywords': False,
+                        'new_items': False}
+
+        return self.render(
+            current_app.config["WEKO_ADMIN_RANKING_SETTINGS_TEMPLATE"],
+            is_show=is_show,
+            new_item_period=new_item_period,
+            statistical_period=statistical_period,
+            display_rank=display_rank,
+            rankings=rankings
+        )
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -651,6 +729,15 @@ web_api_account_adminview = {
     }
 }
 
+ranking_settings_adminview = {
+    'view_class': RankingSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Ranking'),
+        'endpoint': 'rankingsettings'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -658,4 +745,5 @@ __all__ = (
     'web_api_account_adminview',
     'stats_settings_adminview',
     'log_analysis_settings_adminview',
+    'ranking_settings_adminview'
 )
