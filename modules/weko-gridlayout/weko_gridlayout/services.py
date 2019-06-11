@@ -27,7 +27,8 @@ from .config import WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, \
     WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
 from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import update_general_item, build_data, build_multi_lang_data, \
-    convert_widget_multi_lang_to_dict
+    convert_widget_multi_lang_to_dict, convert_data_to_desgin_pack, \
+    convert_widget_data_to_dict
 
 
 class WidgetItemServices:
@@ -195,6 +196,16 @@ class WidgetItemServices:
                             dict_data.get('lang_code') == lang_code):
                         return True
         return False
+
+    @classmethod
+    def get_widget_data_by_widget_id(cls, widget_id):
+        if not widget_id:
+            return None
+        widget_data = convert_widget_data_to_dict(
+            WidgetItem.get_by_id(widget_id))
+        multi_lang_data = WidgetMultiLangData.get_by_widget_id(widget_id)
+        result = convert_data_to_desgin_pack(widget_data, multi_lang_data)
+        return result
 
 
 class WidgetDesignServices:
