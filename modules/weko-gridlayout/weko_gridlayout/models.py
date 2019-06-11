@@ -23,7 +23,7 @@
 from flask import current_app
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
-from sqlalchemy import Column, Integer, String, Sequence
+from sqlalchemy import Sequence
 from sqlalchemy_utils.types import JSONType
 
 
@@ -78,7 +78,6 @@ class WidgetItem(db.Model):
     __tablename__ = 'widget_items'
 
     widget_id = db.Column(db.Integer,
-                          Sequence('widget_id_seq'),
                           primary_key=True,
                           nullable=False)
     repository_id = db.Column(db.String(100),
@@ -138,13 +137,19 @@ class WidgetItem(db.Model):
         return list_id
 
     @classmethod
+    def get_sequence(cls, session):
+        if not session:
+            session = db.session
+        seq = Sequence('widget_items_widget_id_seq')
+        next_id = session.execute(seq)
+        return next_id
+
+    @classmethod
     def create(cls, widget_data, session):
         if not session:
             return None
-
-        data = cls(widget_data)
+        data = cls(**widget_data)
         session.add(data)
-        return Sequence('widget_id_seq')
 
     @classmethod
     def update_by_id(cls, id, widget_data, session=None):
@@ -194,7 +199,6 @@ class WidgetMultiLangData(db.Model):
                    primary_key=True,
                    nullable=False)
     widget_id = db.Column(db.Integer,
-                          db.ForeignKey(WidgetItem.widget_id),
                           nullable=False)
     lang_code = db.Column(db.String(3),
                           nullable=False)
@@ -234,7 +238,7 @@ class WidgetMultiLangData(db.Model):
     def create(cls, data, session):
         if not data:
             return None
-        obj = cls(data)
+        obj = cls(**data)
         session.add(obj)
         return obj
 
