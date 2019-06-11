@@ -575,3 +575,29 @@ def convert_widget_multi_lang_to_dict(multi_lang_data):
     result['label'] = multi_lang_data.label
     result['description_data'] = description
     return result
+
+
+def convert_data_to_desgin_pack(widget_data, list_multi_lang_data):
+    if not widget_data or not list_multi_lang_data:
+        return None
+    result = dict()
+    result['widget_id'] = widget_data.get('widget_id')
+    result['repository_id'] = widget_data.get('repository_id')
+    result['widget_type'] = widget_data.get('widget_type')
+    result['browsing_role'] = widget_data.get('browsing_role')
+    result['edit_role'] = widget_data.get('edit_role')
+    result['is_enabled'] = widget_data.get('is_enabled')
+    result['is_deleted'] = widget_data.get('is_deleted')
+
+    multi_lang_setting = dict()
+    for data in list_multi_lang_data:
+        new_data = dict()
+        converted_data = convert_widget_multi_lang_to_dict(data)
+        new_data['label'] = converted_data.get('label')
+        new_data['description'] = converted_data.get('description_data')
+        multi_lang_setting[converted_data.get('lang_code')] = new_data
+    settings = widget_data.get('settings')
+    settings['multiLangSetting'] = multi_lang_setting
+    result['settings'] = settings
+
+    return result
