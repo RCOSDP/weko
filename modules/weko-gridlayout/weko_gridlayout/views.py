@@ -13,6 +13,7 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .api import WidgetItems
+from .services import WidgetDesignServices
 from .utils import delete_admin_widget_item_setting, get_default_language, \
     get_repository_list, get_system_language, get_widget_design_setting, \
     get_widget_list, get_widget_preview, get_widget_type_list, \
@@ -59,7 +60,7 @@ def load_repository():
             'error': ''
         }
     """
-    result = get_repository_list()
+    result = WidgetDesignServices.get_repository_list()
     return jsonify(result)
 
 
@@ -80,8 +81,10 @@ def load_widget_list_design_setting(repository_id):
     """
     result = dict()
     lang_default = get_default_language()
-    result["widget-list"] = get_widget_list(repository_id, lang_default)
-    result["widget-preview"] = get_widget_preview(repository_id, lang_default)
+    result["widget-list"] = WidgetDesignServices.get_widget_list(repository_id,
+                                                                 lang_default)
+    result["widget-preview"] = WidgetDesignServices.get_widget_preview(
+        repository_id, lang_default)
     result["error"] = result["widget-list"].get("error") or result[
         "widget-preview"].get("error")
     return jsonify(result)
@@ -114,7 +117,7 @@ def save_widget_layout_setting():
         return jsonify(result)
 
     data = request.get_json()
-    result = update_widget_design_setting(data)
+    result = WidgetDesignServices.update_widget_design_setting(data)
 
     return jsonify(result)
 
