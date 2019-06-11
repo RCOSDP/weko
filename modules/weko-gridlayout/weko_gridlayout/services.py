@@ -22,29 +22,137 @@ import copy
 import json
 
 from invenio_db import db
+from flask import current_app
 
 from .config import WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, \
     WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
-from .models import WidgetDesignSetting, WidgetItem
+from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import update_general_item
 
 
 class WidgetItemServices:
-    """Services for Widget item setting."""
-
-    def create(widget_data):
-        result = dict()
-        if not widget_data:
-            result['error'] = 'Widget data is empty'
+    """Services for Widget item setting.
+    """
+    def get_by_id(widget_id):
+        result = {
+            'widget_data': '',
+            'error': ''
+        }
+        widget_data = WidgetItem.get_by_id(widget_id)
+        multi_lang_data = WidgetMultiLangData.get_by_widget_id(widget_id)
+        if not widget_data or not multi_lang_data:
+            result['error'] = 'No widget found!'
             return result
 
-        # session = db.session
+        lang_data = dict()
+        for data in multi_lang_data:
+            new_data = dict()
+            new_data['label'] = multi_lang_data.get('label')
+            new_data['description'] = multi_lang_data.get('description_data')
+            lang_data[multi_lang_data.get('lang_code')] = new_data
+        widget_data['multiLangSetting'] = lang_data
+        result['widget_data'] = widget_data
+        return result
+
+    def create(widget_data):
+        result = {
+            'error': ''
+        }
+        if not widget_data:
+            result['error'] = 'Widget data is empty!'
+            return result
+
+        session = db.session
         multi_lang_data = copy.deepcopy(widget_data.get('multiLangSetting'))
         if not multi_lang_data:
             result['error'] = 'Multiple language data is empty'
+            return result
 
         del widget_data['multiLangSetting']
-        # with session.begin_nested():
+        try:
+            with session.begin_nested():
+                seq = WidgetItem.create(widget_data, session)
+                for k, v in multi_lang_data.items():
+                    new_lang_data = dict()
+                    new_lang_data['widget_id'] = seq + 1
+                    new_lang_data['lang_code'] = k
+                    new_lang_data['label'] = v.get('label')
+                    new_lang_data['description_data'] = v.get('description')
+                    WidgetMultiLangData.create(new_lang_data, session)
+            session.commit()
+        except Exception as e:
+            result['error'] = str(e)
+            current_app.logger.debug(e)
+            session.rollback()
+        return result
+
+    def update_by_id(widget_id, widget_data):
+        result = {
+            'error': ''
+        }
+        if not widget_data or not widget_id:
+            result['error'] = 'Widget data is empty!'
+            return result
+
+        multi_lang_data = copy.deepcopy(widget_data.get('multiLangSetting'))
+        if not multi_lang_data:
+            result['error'] = 'Multiple language data is empty'
+            return result
+        del widget_data['multiLangSetting']
+        session = db.session
+        try:
+            with session.begin_nested():
+                WidgetItem.update_by_id(widget_id, widget_data, session)
+                WidgetMultiLangData.delete_by_widget_id(widget_id, session)
+                for k, v in multi_lang_data.items():
+                    new_lang_data = dict()
+                    new_lang_data['widget_id'] = widget_id
+                    new_lang_data['lang_code'] = k
+                    new_lang_data['label'] = v.get('label')
+                    new_lang_data['description_data'] = v.get('description')
+                    WidgetMultiLangData.create(new_lang_data, session)
+            session.commit()
+        except Exception as e:
+            result['error'] = str(e)
+            current_app.logger.debug(e)
+            session.rollback()
+        return result
+
+    def delete_by_id(widget_id):
+        result = {
+            'error': ''
+        }
+        if not widget_id:
+            result['error'] = 'No widget id!'
+            return result
+
+        session = db.session
+        try:
+            with session.begin_nested():
+                WidgetItem.delete_by_id(widget_id, session)
+                WidgetMultiLangData.delete_by_widget_id(widget_id, session)
+            session.commit()
+        except Exception as e:
+            result['error'] = str(e)
+            current_app.logger.debug(e)
+            session.rollback()
+        return result
+
+    def is_exist(repository_id, type_id, lang_code, label):
+        list_id = WidgetItem.get_id_by_repository_and_type(
+            repository_id,
+            type_id)
+        if not list_id:
+            return False
+
+        for id in list_id:
+            multi_lang_data = WidgetMultiLangData.get_by_widget_id(id)
+            if multi_lang_data:
+                for data in multi_lang_data:
+                    if (data.get('label') == label and
+                            data.get('lang_code') == lang_code):
+                        return True
+        return False
 
 
 class WidgetDesignServices:
