@@ -86,106 +86,108 @@
   <div class="hide" id="{{'hide_'+key}}">{{value|tojson}}</div>
   {%- endfor -%}
   <table class="table"><tbody>
-  {%- for (key, name) in itemtype_list -%}
-  <tr>
-    <td class="col-sm-6">
-      <div class="form-inline" >
-        <div class="radio">
-          <label>
-            <input type="radio" name="radio_parent_list" value="{{key}}">
-          </label>
-        </div>
+    {%- for (key, name) in itemtype_list -%}
+    <tr>
+      <td class="col-sm-6">
         <label>{{name}}</label>
-      </div>
-      <!-- <label>{{name}}</label> -->
-    </td>
-    <td>
-      <ul class="list-group" id="{{'ul_'+key}}">
-        {%- for jpcoar_prop_key, jpcoar_prop_list in jpcoar_prop_lists.items() -%}
-          {%- if key in hide_mapping_prop and jpcoar_prop_key in hide_mapping_prop.get(key)
-                 and hide_mapping_prop.get(key).get(jpcoar_prop_key) is mapping -%}
-            {%- set keys_count = hide_mapping_prop.get(key).get(jpcoar_prop_key).keys()|length -%}
-            {%- for mapping_key in hide_mapping_prop.get(key).get(jpcoar_prop_key).keys() -%}
-            {%- if jpcoar_prop_key == mapping_name -%}
-            <li class="{{'list-group-item list_'+jpcoar_prop_key}}">
-            {%- else -%}
-            <li class="{{'hide list-group-item list_'+jpcoar_prop_key}}">
-            {%- endif -%}
-              <div class="form-inline">
-                <select class="form-control" name="parent_list">
-                  {%- if keys_count == 1 -%}<option value=""></option>{%- endif -%}
-                  {%- for jp_key in jpcoar_prop_list.keys() -%}
-                  <option value="{{ jp_key }}" {%- if jp_key == mapping_key -%}selected{%- endif -%}>{{jp_key}}</option>
-                  {%- endfor -%}
-                </select>
-                <div class="btn-group pull-right" data-key="{{key}}">
-                  <!--<input type="button" class="btn btn-light add-button
-                      ten-pixel-right-margin ten-pixel-bottom-margin"
-                      data-action="add" value="{{_('Add')}}">-->
-                 
-                  <!--<input type="button" class="btn btn-danger delete-button
-                      ten-pixel-bottom-margin" data-action="del"
-                      value="{{_('Delete')}}" {%- if keys_count ==
-                      1 -%}disabled{%- endif -%}>-->
-                    <!-- INPUT BUTTON -->
-                    
-                       <i class="glyphicon glyphicon-plus" id="add-icon"></i>
-                        <input type="button" class="btn btn-light add-button
+      </td>
+      <td>
+        <ul class="list-group" id="{{'ul_'+key}}">
+          {%- for jpcoar_prop_key, jpcoar_prop_list in jpcoar_prop_lists.items() -%}
+            {%- if key in hide_mapping_prop and jpcoar_prop_key in hide_mapping_prop.get(key)
+                   and hide_mapping_prop.get(key).get(jpcoar_prop_key) is mapping -%}
+              {%- set keys_count = hide_mapping_prop.get(key).get(jpcoar_prop_key).keys()|length -%}
+              {%- for mapping_key in hide_mapping_prop.get(key).get(jpcoar_prop_key).keys() -%}
+              {%- if jpcoar_prop_key == mapping_name -%}
+              <li class="{{'list-group-item list_'+jpcoar_prop_key}}">
+              {%- else -%}
+              <li class="{{'hide list-group-item list_'+jpcoar_prop_key}}">
+              {%- endif -%}
+                <div class="form-inline">
+                  <div class="radio">
+                    <label>
+                      <input type="radio" name="radio_parent_list" value="{{key}}">
+                    </label>
+                  </div>
+                  <select class="form-control" name="parent_list">
+                    {%- if keys_count == 1 -%}<option value=""></option>{%- endif -%}
+                    {%- for jp_key in jpcoar_prop_list.keys() -%}
+                    <option value="{{ jp_key }}" {%- if jp_key == mapping_key -%}selected{%- endif -%}>{{jp_key}}</option>
+                    {%- endfor -%}
+                  </select>
+                  <div class="btn-group pull-right" data-key="{{key}}">
+                    <!--<input type="button" class="btn btn-light add-button
                         ten-pixel-right-margin ten-pixel-bottom-margin"
-                        data-action="add" style="position:unset;" value="{{_('Add')}}">
-                    
-                        <i class="glyphicon glyphicon-trash" id="delete-icon"></i>
-                        <input type="button" class="btn btn-danger
-                        delete-button ten-pixel-bottom-margin"
-                        style="position:unset;" data-action="del" value="{{_('Delete')}}" {%- if keys_count == 1 -%}disabled{%- endif -%}>             
-                        
-                    <!--Button-->
-                </div>
-              </div>
-            </li>
-            {%- endfor -%}
-          {%- else -%}
-            {%- if jpcoar_prop_key == mapping_name -%}
-            <li class="{{'list-group-item list_'+jpcoar_prop_key}}">
-            {%- else -%}
-            <li class="{{'hide list-group-item list_'+jpcoar_prop_key}}">
-            {%- endif -%}
-              <div class="form-inline">
-                <select class="form-control" name="parent_list">
-                  <option value=""></option>
-                  {%- for jp_key in jpcoar_prop_list.keys() -%}
-                  <option value="{{jp_key}}">{{jp_key}}</option>
-                  {%- endfor -%}
-                </select>
-                <div class="btn-group pull-right" data-key="{{key}}">
-                  <!--<input type="button" class="btn btn-light add-button five-pixel-margin" data-action="add" value="{{_('Add')}}">
-                  <input type="button" class="btn btn-danger delete-button
-                  five-pixel-margin" data-action="del" value="{{_('Delete')}}"
-                  disabled>-->
-                  <!-- INPUT BUTTON -->
-                  
-                            <i class="glyphicon glyphicon-plus" id="add-icon"></i>
-                            <input type="button" class="btn btn-light
-                            add-button five-pixel-margin"
-                            style="position:unset;" data-action="add" value="{{_('Add')}}">
-                               
-                            <i class="glyphicon glyphicon-trash" id="delete-icon"></i>
-                            <input type="button" class="btn btn-danger
-                            delete-button five-pixel-margin"
-                                                 style="position:unset;" data-action="del"
-                            value="{{_('Delete')}}"  disabled>
+                        data-action="add" value="{{_('Add')}}">-->
 
-                <!--Button-->
+                    <!--<input type="button" class="btn btn-danger delete-button
+                        ten-pixel-bottom-margin" data-action="del"
+                        value="{{_('Delete')}}" {%- if keys_count ==
+                        1 -%}disabled{%- endif -%}>-->
+                      <!-- INPUT BUTTON -->
+
+                         <i class="glyphicon glyphicon-plus" id="add-icon"></i>
+                          <input type="button" class="btn btn-light add-button
+                          ten-pixel-right-margin ten-pixel-bottom-margin"
+                          data-action="add" style="position:unset;" value="{{_('Add')}}">
+
+                          <i class="glyphicon glyphicon-trash" id="delete-icon"></i>
+                          <input type="button" class="btn btn-danger
+                          delete-button ten-pixel-bottom-margin"
+                          style="position:unset;" data-action="del" value="{{_('Delete')}}" {%- if keys_count == 1 -%}disabled{%- endif -%}>
+
+                      <!--Button-->
+                  </div>
                 </div>
-              </div>
-            </li>
-          {%- endif -%}
-        {%- endfor -%}
-      </ul>
-    </td>
-  </tr>
-  {%- endfor -%}
-  </tbody></table>
+              </li>
+              {%- endfor -%}
+            {%- else -%}
+              {%- if jpcoar_prop_key == mapping_name -%}
+              <li class="{{'list-group-item list_'+jpcoar_prop_key}}">
+              {%- else -%}
+              <li class="{{'hide list-group-item list_'+jpcoar_prop_key}}">
+              {%- endif -%}
+                <div class="form-inline">
+                  <div class="radio">
+                    <label>
+                      <input type="radio" name="radio_parent_list" value="{{key}}">
+                    </label>
+                  </div>
+                  <select class="form-control" name="parent_list">
+                    <option value=""></option>
+                    {%- for jp_key in jpcoar_prop_list.keys() -%}
+                    <option value="{{jp_key}}">{{jp_key}}</option>
+                    {%- endfor -%}
+                  </select>
+                  <div class="btn-group pull-right" data-key="{{key}}">
+                    <!--<input type="button" class="btn btn-light add-button five-pixel-margin" data-action="add" value="{{_('Add')}}">
+                    <input type="button" class="btn btn-danger delete-button
+                    five-pixel-margin" data-action="del" value="{{_('Delete')}}"
+                    disabled>-->
+                    <!-- INPUT BUTTON -->
+
+                              <i class="glyphicon glyphicon-plus" id="add-icon"></i>
+                              <input type="button" class="btn btn-light
+                              add-button five-pixel-margin"
+                              style="position:unset;" data-action="add" value="{{_('Add')}}">
+
+                              <i class="glyphicon glyphicon-trash" id="delete-icon"></i>
+                              <input type="button" class="btn btn-danger
+                              delete-button five-pixel-margin"
+                                                   style="position:unset;" data-action="del"
+                              value="{{_('Delete')}}"  disabled>
+
+                  <!--Button-->
+                  </div>
+                </div>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </td>
+    </tr>
+    {%- endfor -%}
+    </tbody></table>
 </div>
 <div class="row hide">
   <div class="col-sm-6 col-sm-offset-6">

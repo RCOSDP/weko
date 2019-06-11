@@ -190,9 +190,7 @@
       $('tr').removeClass('active');
       $(this).parents('tr').addClass('active');
       item_type_key = $(this).val();
-      jpcoar_key = $(this).parents('.form-inline').parents('.active').find('.list-group')
-                      .find('li.list-group-item').not('.hide').find('select').val();
-
+      jpcoar_key = $(this).parents('.form-inline').find('select').val();
       if(jpcoar_key.length == 0) {
         remove_mapping_parent_item(item_type_key, jpcoar_key);
         reset_sub_children_lists();
