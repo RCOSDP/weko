@@ -26,10 +26,11 @@ from invenio_db import db
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
 
-from .api import WidgetItems
+from .api import WidgetItems, WidgetMultiLangData
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
-from .models import WidgetDesignSetting, WidgetItem, WidgetType
+from .models import WidgetDesignSetting, WidgetItem, WidgetType, \
+    WidgetMultiLangData
 
 
 def get_repository_list():
@@ -143,7 +144,7 @@ def get_widget_preview(repository_id, default_language):
                         "widget_language")
                     languages = item.get("multiLangSetting")
                     if type(languages) is dict and lang_code_default \
-                            is not None:
+                        is not None:
                         if languages.get(lang_code_default):
                             data_display = languages.get(lang_code_default)
                             widget_preview["name_display"] = data_display.get(
@@ -213,7 +214,7 @@ def _get_widget_design_item_base_on_current_language(current_language,
     if not widget["multiLangSetting"]:
         default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
         if isinstance(languages, dict) \
-                and languages.get(default_language_code):
+            and languages.get(default_language_code):
             widget["multiLangSetting"] = languages.get(default_language_code)
         else:
             widget["multiLangSetting"] = {
@@ -315,7 +316,9 @@ def update_admin_widget_item_setting(data):
             success = False
             msg = 'Fail to create. Data input to create is exist!'
         else:
-            if not WidgetItems.create(data_result):
+            if not WidgetItems.create(
+                data_result) and not WidgetMultiLangData.create(
+                data_result.get('multiLangSetting')):
                 success = False
                 msg = 'Create widget item fail.'
             else:
@@ -342,7 +345,7 @@ def delete_item_in_preview_widget_item(data_id, json_data):
     if type(json_data) is list:
         for item in json_data:
             if str(item.get('name')) == str(data_id.get('label')) and str(
-                    item.get('type')) == str(data_id.get('widget_type')):
+                item.get('type')) == str(data_id.get('widget_type')):
                 remove_list.append(item)
     for item in remove_list:
         json_data.remove(item)
@@ -404,7 +407,7 @@ def handle_change_item_in_preview_widget_item(data_id, data_result):
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             if str(data_id.get('repository')) != str(data_result.get(
-                    'repository')) or data_result.get('enable') is False:
+                'repository')) or data_result.get('enable') is False:
                 data = delete_item_in_preview_widget_item(data_id, json_data)
             else:
                 data = update_item_in_preview_widget_item(
@@ -498,3 +501,60 @@ def get_system_language():
         result['error'] = str(e)
 
     return result
+
+
+def get_widget_by_id(widget_id):
+    result = dict()
+    widget = WidgetItem.get_by_id(widget_id)
+
+    if not widget:
+        return None
+
+    for k, v in widget.items():
+        result[k] = v
+
+    setting = result.get('settings')
+    multi_lang_data = WidgetMultiLangData.get_by_widget_id(widget_id)
+
+    multi_lang_setting = dict()
+    for langData in multi_lang_data:
+        new_data = {
+            'label': langData.label,
+            'description': langData.description_data
+        }
+        multi_lang_setting[langData.lang_code] = new_data
+    setting['multiLangSetting'] = multi_lang_data
+    result['settings'] = setting
+    return result
+
+
+def create_widget(widget_data):
+    if not widget_data:
+        return False
+
+    settings = widget_data.get('settings')
+    if not settings:
+        return False
+
+    multi_lang_data = settings.get('multiLangSetting')
+    if 'multiLangSetting' in settings.keys():
+        del settings['multiLangSetting']
+        WidgetItem.create()
+        for k, v in multi_lang_data.items():
+            new_data = dict()
+            new_data['widget_id'] = widget_data.get(widget_id)
+            new_data['lang_code'] = k
+            new_data['label'] = v.get('label')
+            new_data['description_data'] = v.get('description')
+            WidgetMultiLangData.create(new_data)
+
+    else:
+        return False
+
+
+def update_widget(widget_id, widget_data):
+    return None
+
+
+def delete_widget(widget_id):
+    return None
