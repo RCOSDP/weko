@@ -23,6 +23,7 @@
 from flask import current_app
 from invenio_db import db
 from sqlalchemy.dialects import postgresql
+from sqlalchemy import Column, Integer, String, Sequence
 from sqlalchemy_utils.types import JSONType
 
 
@@ -77,6 +78,7 @@ class WidgetItem(db.Model):
     __tablename__ = 'widget_items'
 
     widget_id = db.Column(db.Integer,
+                          Sequence('widget_id_seq'),
                           primary_key=True,
                           nullable=False)
     repository_id = db.Column(db.String(100),
@@ -122,13 +124,30 @@ class WidgetItem(db.Model):
         return widget
 
     @classmethod
-    def get_by_repo_and_type(cls, repo_id, type):
-        """ Get a widget item by repo id and type."""
-        widget = cls.query.filter_by(repository_id=repo_id, widget_type=type).all()
-        return widget
+    def get_id_by_repository_and_type(cls, repository, type):
+        widget_data = cls.query.filter_by(
+            repository_id=repository,
+            widget_type=type
+            ).all()
+        if not widget_data:
+            return None
+
+        list_id = list()
+        for data in widget_data:
+            list_id.append(data.widget_id)
+        return list_id
 
     @classmethod
-    def update_by_id(cls, id, widget_data):
+    def create(cls, widget_data, session):
+        if not session:
+            return None
+
+        data = cls(widget_data)
+        session.add(data)
+        return Sequence('widget_id_seq')
+
+    @classmethod
+    def update_by_id(cls, id, widget_data, session=None):
         """Update the widget by id
 
         Arguments:
@@ -138,49 +157,32 @@ class WidgetItem(db.Model):
         Returns:
             widget -- if success
         """
-        try:
-            with db.session.begin_nested():
-                widget = cls.get_by_id(id)
-                if not widget:
-                    return
-                for k, v in widget_data.items():
-                    setattr(widget, k, v)
-                db.session.merge(widget)
-            db.session.commit()
-            return widget
-        except Exception as e:
-            current_app.logger.debug(e)
-            db.session.rollback()
-        return
+        if not session:
+            session = db.session
+        widget = cls.get_by_id(id)
+        if not widget:
+            return
+        for k, v in widget_data.items():
+            setattr(widget, k, v)
+        session.merge(widget)
+        return widget
 
     @classmethod
-    def delete_by_id(cls, id, session=None):
+    def delete_by_id(cls, id, session):
         """Delete the widget by id.
 
         Arguments:
             id {Integer} -- The widget id
 
-        Keyword Arguments:
-            session {db.session} -- current session (default: {None})
-
         Returns:
             widget -- If success
         """
-        if not session:
-            session = db.session
-
-        try:
-            with session.begin_nested():
-                widget = cls.get_by_id(id)
-                if not widget:
-                    return
-                setattr(widget, 'is_deleted', 'True')
-            session.commit()
-            return widget
-        except Exception as e:
-            current_app.logger.debug(e)
-            session.rollback()
-        return
+        widget = cls.get_by_id(id)
+        if not widget:
+            return
+        setattr(widget, 'is_deleted', 'True')
+        session.merge(widget)
+        return widget
 
 
 class WidgetMultiLangData(db.Model):
@@ -229,6 +231,14 @@ class WidgetMultiLangData(db.Model):
         return data
 
     @classmethod
+    def create(cls, data, session):
+        if not data:
+            return None
+        obj = cls(data)
+        session.add(obj)
+        return obj
+
+    @classmethod
     def get_by_widget_id(cls, widget_id):
         """Get list widget multilanguage data by widget ID
 
@@ -252,35 +262,24 @@ class WidgetMultiLangData(db.Model):
         Returns:
             True -- If deleted
         """
-        try:
-            with db.session.begin_nested():
-                data = cls.get_by_id(id)
-                if not data:
-                    return
-                for k, v in data.items():
-                    setattr(data, k, v)
-                db.session.merge(data)
-            db.session.commit()
-            return data
-        except Exception as e:
-            current_app.logger.debug(e)
-            db.session.rollback()
-        return
+        data = cls.get_by_id(id)
+        if not data:
+            return
+        for k, v in data.items():
+            setattr(data, k, v)
+        db.session.merge(data)
+        return data
 
     @classmethod
-    def delete_by_id(cls, id):
-        try:
-            with db.session.begin_nested():
-                data = cls.get_by_id(id)
-                if not data:
-                    return False
-                db.session.delete(data)
-            db.session.commit()
-            return True
-        except Exception as e:
-            current_app.logger.debug(e)
-            db.session.rollback()
-        return False
+    def delete_by_widget_id(cls, widget_id, session):
+        if not session:
+            session = db.session
+        multi_data = cls.get_by_widget_id(widget_id)
+        if not multi_data:
+            return False
+        for data in multi_data:
+            session.delete(data)
+        return True
 
 
 class WidgetDesignSetting(db.Model):
