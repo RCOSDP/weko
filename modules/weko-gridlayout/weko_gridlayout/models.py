@@ -86,17 +86,17 @@ class WidgetItem(db.Model):
     widget_type = db.Column(db.String(100),
                             db.ForeignKey(WidgetType.type_id),
                             nullable=False)
-    setting = db.Column(db.JSON().with_variant(
+    settings = db.Column(db.JSON().with_variant(
                                                postgresql.JSONB(
                                                    none_as_null=True
                                                    ),
                                                'postgresql',)
-                                 .with_variant(JSONType(),
-                                               'sqlite',)
-                                 .with_variant(JSONType(),
-                                               'mysql',),
-                        default=lambda: dict(),
-                        nullable=True)
+                                  .with_variant(JSONType(),
+                                                'sqlite',)
+                                  .with_variant(JSONType(),
+                                                'mysql',),
+                         default=lambda: dict(),
+                         nullable=True)
     browsing_role = db.Column(db.Text,
                               nullable=True)
     edit_role = db.Column(db.Text,
