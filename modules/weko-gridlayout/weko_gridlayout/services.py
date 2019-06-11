@@ -352,28 +352,27 @@ class WidgetDesignServices:
             if type(widget_item_list) is list:
                 for widget_item in widget_item_list:
                     data = dict()
-                    data["widgetId"] = widget_item.repository_id
-                    data["widgetType"] = widget_item.widget_type
-                    data["widgetLabel"] = widget_item.label
-                    data["Id"] = widget_item.id
-                    settings = widget_item.settings
-                    settings = json.loads(settings)
+                    widget_item_data = WidgetItemServices.get_widget_data_by_widget_id(widget_item.widget_id)
+                    data["widgetId"] = widget_item_data.get('repository_id')
+                    data["widgetType"] = widget_item_data.get('widget_type')
+                    data["Id"] = widget_item_data.get('widget_id')
+                    settings = widget_item_data.get('settings')
                     languages = settings.get("multiLangSetting")
                     if type(languages) is dict and \
                             lang_code_default is not None:
                         if languages.get(lang_code_default):
                             data_display = languages[lang_code_default]
-                            data["widgetLabelDisplay"] = data_display.get(
+                            data["label"] = data_display.get(
                                 'label')
                         elif languages.get('en'):
                             data_display = languages['en']
-                            data["widgetLabelDisplay"] = data_display.get(
+                            data["label"] = data_display.get(
                                 'label')
                         else:
-                            data["widgetLabelDisplay"] = \
+                            data["label"] = \
                                 WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                     else:
-                        data["widgetLabelDisplay"] = \
+                        data["label"] = \
                             WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                     result["data"].append(data)
         except Exception as e:
@@ -414,26 +413,22 @@ class WidgetDesignServices:
                         widget_preview["id"] = item.get("id")
                         widget_preview["type"] = item.get("type")
                         widget_preview["name"] = item.get("name")
-                        widget_preview["widget_language"] = item.get(
-                            "widget_language")
                         languages = item.get("multiLangSetting")
                         if type(languages) is dict and lang_code_default \
                                 is not None:
                             if languages.get(lang_code_default):
                                 data_display = languages.get(lang_code_default)
-                                widget_preview[
-                                    "name_display"] = data_display.get(
+                                widget_preview["name"] = data_display.get(
                                     'label')
                             elif languages.get('en'):
                                 data_display = languages.get('en')
-                                widget_preview[
-                                    "name_display"] = data_display.get(
+                                widget_preview["name"] = data_display.get(
                                     'label')
                             else:
-                                widget_preview["name_display"] = \
+                                widget_preview["name"] = \
                                     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                         else:
-                            widget_preview["name_display"] = \
+                            widget_preview["name"] = \
                                 WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
                         result["data"].append(widget_preview)
         except Exception as e:
@@ -489,8 +484,8 @@ class WidgetDesignServices:
                     break
         if not widget["multiLangSetting"]:
             default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
-            if (isinstance(languages, dict)
-                    and languages.get(default_language_code)):
+            if isinstance(languages, dict) \
+                and languages.get(default_language_code):
                 widget["multiLangSetting"] = languages.get(
                     default_language_code)
             else:
@@ -517,9 +512,8 @@ class WidgetDesignServices:
             json_data = json.loads(setting_data)
             if type(json_data) is list:
                 for item in json_data:
-                    widget_item = WidgetItem.get_by_id(item.get('widget_id'))
-                    widget_setting = json.loads(widget_item.settings)
-                    item.update(widget_setting)
+                    widget_item = WidgetItemServices.get_widget_data_by_widget_id(item.get('widget_id'))
+                    item.update(widget_item.get('settings'))
             setting_data = json.dumps(json_data)
             if repository_id and setting_data:
                 if WidgetDesignSetting.select_by_repository_id(repository_id):
