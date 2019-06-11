@@ -23,7 +23,8 @@ import json
 
 from invenio_db import db
 
-from .config import WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
+from .config import WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, \
+    WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
 from .models import WidgetDesignSetting, WidgetItem
 from .utils import update_general_item
 
@@ -187,6 +188,66 @@ class WidgetDesignServices:
         return result
 
     @classmethod
+    def get_widget_design_setting(cls, repository_id: str,
+                                  current_language: str) -> dict:
+        """Get Widget design setting by repository id.
+
+        :param repository_id: Identifier of the repository.
+        :param current_language: The default language.
+        :return: Widget design setting.
+        """
+        result = {
+            "widget-settings": [
+            ],
+            "error": ""
+        }
+        try:
+            widget_setting = WidgetDesignSetting.select_by_repository_id(
+                repository_id)
+            if widget_setting:
+                settings = widget_setting.get('settings')
+                if settings:
+                    settings = json.loads(settings)
+                    for widget_item in settings:
+                        widget = cls._get_design_base_on_current_language(
+                            current_language,
+                            widget_item)
+                        result["widget-settings"].append(widget)
+        except Exception as e:
+            result['error'] = str(e)
+        return result
+
+    @classmethod
+    def _get_design_base_on_current_language(cls, current_language,
+                                             widget_item):
+        """Get widget design item base on current language.
+
+        :param current_language: The current language.
+        :param widget_item: Widget item.
+        :return:
+        """
+        widget = widget_item.copy()
+        widget["multiLangSetting"] = dict()
+        languages = widget_item.get("multiLangSetting")
+        if isinstance(languages, dict):
+            for key, value in languages.items():
+                if key == current_language:
+                    widget["multiLangSetting"] = value
+                    break
+        if not widget["multiLangSetting"]:
+            default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
+            if isinstance(languages, dict) \
+                and languages.get(default_language_code):
+                widget["multiLangSetting"] = languages.get(
+                    default_language_code)
+            else:
+                widget["multiLangSetting"] = {
+                    "label": WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL,
+                    "description": {}
+                }
+        return widget
+
+    @classmethod
     def update_widget_design_setting(cls, data):
         """Update Widget layout setting.
 
@@ -300,4 +361,5 @@ class WidgetDesignServices:
 
 
 class TopPageServices:
+    """Services for Widget item setting in Top page"""
     pass
