@@ -22,14 +22,14 @@ import copy
 import json
 
 from invenio_db import db
-from .models import WidgetItem, WidgetDesignSetting
+
 from .config import WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
+from .models import WidgetDesignSetting, WidgetItem
 from .utils import update_general_item
 
 
 class WidgetItemServices:
-    """Services for Widget item setting.
-    """
+    """Services for Widget item setting."""
 
     def create(widget_data):
         result = dict()
@@ -47,8 +47,7 @@ class WidgetItemServices:
 
 
 class WidgetDesignServices:
-    """Services for Widget item setting.
-    """
+    """Services for Widget item setting."""
 
     @classmethod
     def get_repository_list(cls):
@@ -210,14 +209,15 @@ class WidgetDesignServices:
             setting_data = json.dumps(json_data)
             if repository_id and setting_data:
                 if WidgetDesignSetting.select_by_repository_id(repository_id):
-                    result["result"] = WidgetDesignSetting.update(repository_id,
-                                                                  setting_data)
+                    result["result"] = WidgetDesignSetting.update(
+                                        repository_id, setting_data)
                 else:
-                    result["result"] = WidgetDesignSetting.create(repository_id,
-                                                                  setting_data)
+                    result["result"] = WidgetDesignSetting.create(
+                                        repository_id, setting_data)
             else:
                 result[
-                    'error'] = "Fail to save Widget design. Please check again."
+                    'error'] = "Fail to save Widget design. " \
+                               "Please check again."
         except Exception as e:
             result['error'] = str(e)
         return result
@@ -284,7 +284,7 @@ class WidgetDesignServices:
             if data.get('settings'):
                 json_data = json.loads(data.get('settings'))
                 if str(data_id.get('repository')) != str(data_result.get(
-                    'repository')) or data_result.get('enable') is False:
+                        'repository')) or data_result.get('enable') is False:
                     data = cls.delete_item_in_preview_widget_item(data_id,
                                                                   json_data)
                 else:
