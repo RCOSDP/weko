@@ -509,6 +509,7 @@ def build_data(data):
     result['widget_type'] = data.get('widget_type')
     result['settings'] = json.dumps(build_data_setting(data))
     result['is_enabled'] = data.get('enable')
+    result['multiLangSetting'] = data.get('multiLangSetting')
     result['is_deleted'] = False
     role = data.get('browsing_role')
     if isinstance(role, list):
@@ -520,6 +521,7 @@ def build_data(data):
         result['edit_role'] = ','.join(str(e) for e in role)
     else:
         result['edit_role'] = role
+    return result
 
 
 def build_data_setting(data):
@@ -543,6 +545,33 @@ def build_multi_lang_data(widget_id, multi_lang_json):
         new_lang_data['widget_id'] = widget_id
         new_lang_data['lang_code'] = k
         new_lang_data['label'] = v.get('label')
-        new_lang_data['description_data'] = v.get('description')
+        new_lang_data['description_data'] = json.dumps(v.get('description'))
         result.append(new_lang_data)
+    return result
+
+
+def convert_widget_data_to_dict(widget_data):
+    result = dict()
+    settings = json.loads(widget_data.settings)
+
+    result['widget_id'] = widget_data.widget_id
+    result['repository_id'] = widget_data.repository_id
+    result['widget_type'] = widget_data.widget_type
+    result['settings'] = settings
+    result['browsing_role'] = widget_data.browsing_role
+    result['edit_role'] = widget_data.edit_role
+    result['is_enabled'] = widget_data.is_enabled
+    result['is_deleted'] = widget_data.is_deleted
+    return result
+
+
+def convert_widget_multi_lang_to_dict(multi_lang_data):
+    result = dict()
+    description = json.loads(multi_lang_data.description_data)
+
+    result['id'] = multi_lang_data.id
+    result['widget_id'] = multi_lang_data.widget_id
+    result['lang_code'] = multi_lang_data.lang_code
+    result['label'] = multi_lang_data.label
+    result['description_data'] = description
     return result
