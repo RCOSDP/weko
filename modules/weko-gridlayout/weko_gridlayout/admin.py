@@ -36,9 +36,10 @@ from sqlalchemy import func
 from wtforms.fields import StringField
 
 from . import config
-from .api import WidgetItems
-from .models import WidgetItem
-from .utils import validate_admin_widget_item_setting
+from .models import WidgetItem, WidgetMultiLangData
+from .utils import validate_admin_widget_item_setting, \
+    convert_widget_data_to_dict, convert_data_to_desgin_pack, \
+    convert_data_to_edit_pack
 
 
 class WidgetDesign(BaseView):
@@ -84,12 +85,17 @@ class WidgetSettingView(ModelView):
 
         id_list = helpers.get_mdict_item_or_list(request.args, 'id')
 
-        model = self.get_one(id_list)
-
+        widget_data = convert_widget_data_to_dict(self.get_one(id_list))
+        multi_lang_data = WidgetMultiLangData.get_by_widget_id(id_list)
+        converted_data = convert_data_to_desgin_pack(
+            widget_data,
+            multi_lang_data)
+        model = convert_data_to_edit_pack(converted_data)
+        print("=== Model ===")
+        print(model)
         if model is None:
             flash(gettext('Record does not exist.'), 'error')
             return redirect(return_url)
-        model = WidgetItems.parse_result(model)
 
         return self.render(config.WEKO_GRIDLAYOUT_ADMIN_EDIT_WIDGET_SETTINGS,
                            model=json.dumps(model),
