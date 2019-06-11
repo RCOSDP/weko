@@ -185,6 +185,7 @@
     }
     $('select[name="parent_list"]').on('change', function(ev){
       $(this).parent().find('input[type="radio"]').trigger('click');
+      saveMappingData();
     });
     $('input[type="radio"]').on('click', function(ev){
       $('tr').removeClass('active');
@@ -476,6 +477,10 @@
       $('div.sub_child_list').find('fieldset').removeAttr('disabled');
     });
     $('select[name="sub_itemtype_list"], select[name="sub_jpcoar_list"]').on('change', function(ev){
+      saveMappingData();
+    });
+
+    function saveMappingData(){
       if(page_global.mapping_prop == null) {
         mapping_str = $('#hide_mapping_prop').text();
         page_global.mapping_prop = JSON.parse(mapping_str);
@@ -599,77 +604,8 @@
           }
         }
       });
-//      // schema parent property info
-//      if($('#jpcoar-props-lists').find('.jpcoar-prop-list').length > 0) {
-//        $('#jpcoar-props-lists').find('.jpcoar-prop-list').each((index, element) => {
-//          let label_txt = $(element).find('label').text();
-//          let p_txt = $(element).find('p').text();
-//          let attr_txt = '';
-//          if($(element).find('input[type="text"]').length > 0) {
-//            attr_txt = $(element).find('input[type="text"]:first').val();
-//          }
-//          if($(element).find('select').length > 0) {
-//            attr_txt = $(element).find('select:first').val();
-//          }
-//          if(attr_txt.length > 0) {
-//            $(element).removeClass('has-error');
-//            if(!page_global.mapping_prop.hasOwnProperty(itemtype_key)) {
-//              page_global.mapping_prop[itemtype_key] = {};
-//              page_global.mapping_prop[itemtype_key][jpcoar_type] = {};
-//              page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = {'@attributes':{}};
-//            }
-//            if(!page_global.mapping_prop[itemtype_key].hasOwnProperty(jpcoar_type)) {
-//              page_global.mapping_prop[itemtype_key][jpcoar_type] = {};
-//              page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = {'@attributes':{}};
-//            }
-//            if(!page_global.mapping_prop[itemtype_key][jpcoar_type].hasOwnProperty(jpcoar_parent_key)) {
-//              page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = {'@attributes':{}};
-//            }
-//            if(typeof page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] == 'object') {
-//              if(!page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key].hasOwnProperty('@attributes')) {
-//                page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'] = {};
-//              }
-//              let cur_obj = page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'];
-//              cur_obj[label_txt] = attr_txt;
-//            } else {
-//              let tmp_str = page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key];
-//              page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = {'@attributes':{}};
-//              let cur_obj = page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'];
-//              cur_obj[label_txt] = attr_txt;
-//              if(tmp_str.length > 0) {
-//                page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@value'] = tmp_str;
-//              }
-//            }
-//          } else {
-//            if(p_txt == 'required') {
-//              page_global.hasError = true;
-//              $(element).addClass('has-error');
-//            } else {
-//              if(page_global.mapping_prop.hasOwnProperty(itemtype_key)) {
-//                if(page_global.mapping_prop[itemtype_key].hasOwnProperty(jpcoar_type)) {
-//                  if(page_global.mapping_prop[itemtype_key][jpcoar_type].hasOwnProperty(jpcoar_parent_key)) {
-//                    if(page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key].hasOwnProperty('@attributes')) {
-//                      if(page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'].hasOwnProperty(label_txt)) {
-//                        delete page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'][label_txt];
-//                        if(Object.keys(page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes']).length == 0) {
-//                          delete page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'];
-//                          if(page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key].hasOwnProperty('@value')) {
-//                            page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@value'];
-//                          } else {
-//                            page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = '';
-//                          }
-//                        }
-//                      }
-//                    }
-//                  }
-//                }
-//              }
-//            }
-//          }
-//        });
-//      }
       $('#preview_mapping').text(JSON.stringify(page_global.mapping_prop, null, 4));
-    });
+    }
 
     $('#mapping-submit').on('click', function(){
       var data = {
