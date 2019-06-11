@@ -33,6 +33,7 @@ from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
@@ -688,12 +689,29 @@ def cancel_action(activity_id='0', action_id=0):
     post_json = request.get_json()
     work_activity = WorkActivity()
 
+    activity_detail = work_activity.get_activity_detail(activity_id)
+    cancel_item_id = activity_detail.item_id
+    cancel_record = WekoDeposit.get_record(cancel_item_id)
+    cancel_deposit = WekoDeposit(cancel_record, cancel_record.model)
+    cancel_deposit.clear()
+    cancel_pid = PersistentIdentifier.get_by_object(
+        pid_type='recid', object_type='rec', object_uuid=cancel_item_id)
+    cancel_pv = PIDVersioning(child=cancel_pid)
+    # Remove draft child
+    previous_pid = cancel_pv.previous
+    previous_pv = PIDVersioning(child=previous_pid)
+    previous_pv.remove_child(cancel_pid)
+    # Update the parent redirect to the current last child.
+    parent_pv = PIDVersioning(child=previous_pv.parent)
+    parent_pv.update_redirect()
+
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,
         action_version=post_json.get('action_version'),
         action_status=ActionStatusPolicy.ACTION_CANCELED,
-        commond=post_json.get('commond'))
+        commond=post_json.get('commond'),
+        item_id=previous_pid.object_uuid)
 
     work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
