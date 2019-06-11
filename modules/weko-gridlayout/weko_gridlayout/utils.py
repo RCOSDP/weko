@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
+import copy
 import json
 
 from flask import current_app, jsonify, make_response
@@ -29,8 +30,8 @@ from weko_admin.models import AdminLangSettings
 from .api import WidgetItems, WidgetMultiLangData
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
-from .models import WidgetDesignSetting, WidgetItem, WidgetType, \
-    WidgetMultiLangData
+from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData, \
+    WidgetType
 
 
 def get_repository_list():
@@ -504,6 +505,15 @@ def get_system_language():
 
 
 def build_data(data):
+    """Build data get from client to dictionary.
+
+    Arguments:
+        data {json} -- Client data
+
+    Returns:
+        dictionary -- server data
+
+    """
     result = dict()
     result['repository_id'] = data.get('repository')
     result['widget_type'] = data.get('widget_type')
@@ -525,6 +535,15 @@ def build_data(data):
 
 
 def build_data_setting(data):
+    """Build setting pack.
+
+    Arguments:
+        data {json} -- client data
+
+    Returns:
+        dictionary -- setting pack
+
+    """
     result = dict()
     result['background_color'] = data.get('background_color')
     result['frame_border'] = data.get('frame_border')
@@ -536,6 +555,16 @@ def build_data_setting(data):
 
 
 def build_multi_lang_data(widget_id, multi_lang_json):
+    """Build multiple language data.
+
+    Arguments:
+        widget_id {sequence} -- id of widget
+        multi_lang_json {json} -- multiple language data as json
+
+    Returns:
+        dictionary -- multiple language data
+
+    """
     if not multi_lang_json:
         return None
 
@@ -551,6 +580,15 @@ def build_multi_lang_data(widget_id, multi_lang_json):
 
 
 def convert_widget_data_to_dict(widget_data):
+    """Convert widget data object to dict.
+
+    Arguments:
+        widget_data {object} -- Object data
+
+    Returns:
+        dictionary -- dictionary data
+
+    """
     result = dict()
     settings = json.loads(widget_data.settings)
 
@@ -566,6 +604,15 @@ def convert_widget_data_to_dict(widget_data):
 
 
 def convert_widget_multi_lang_to_dict(multi_lang_data):
+    """Convert multiple language data object to dict.
+
+    Arguments:
+        multi_lang_data {object} -- object data
+
+    Returns:
+        dictionary -- dictionary data
+
+    """
     result = dict()
     description = json.loads(multi_lang_data.description_data)
 
@@ -578,6 +625,16 @@ def convert_widget_multi_lang_to_dict(multi_lang_data):
 
 
 def convert_data_to_desgin_pack(widget_data, list_multi_lang_data):
+    """Convert loaded data to widget design data pack.
+
+    Arguments:
+        widget_data {dict} -- widget data
+        list_multi_lang_data {list} -- List of multiple language data
+
+    Returns:
+        dictionary -- widget design data pack
+
+    """
     if not widget_data or not list_multi_lang_data:
         return None
     result = dict()
@@ -600,4 +657,34 @@ def convert_data_to_desgin_pack(widget_data, list_multi_lang_data):
     settings['multiLangSetting'] = multi_lang_setting
     result['settings'] = settings
 
+    return result
+
+
+def convert_data_to_edit_pack(data):
+    """Convert loaded data to edit data pack.
+
+    Arguments:
+        data {dict} -- loaded data
+
+    Returns:
+        dictionary -- edit data pack
+
+    """
+    if not data:
+        return None
+    result = dict()
+    settings = copy.deepcopy(data.get('settings'))
+    result['widget_id'] = data.get('widget_id')
+    result['background_color'] = settings.get('background_color')
+    result['browsing_role'] = data.get('browsing_role')
+    result['edit_role'] = data.get('edit_role')
+    result['is_enabled'] = data.get('is_enabled')
+    result['enable'] = data.get('is_enabled')
+    result['frame_border'] = settings.get('frame_border')
+    result['frame_border_color'] = settings.get('frame_border_color')
+    result['label_color'] = settings.get('label_color')
+    result['multiLangSetting'] = settings.get('multiLangSetting')
+    result['repository_id'] = data.get('repository_id')
+    result['text_color'] = settings.get('text_color')
+    result['widget_type'] = data.get('widget_type')
     return result

@@ -18,24 +18,36 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+"""Service for widget modules."""
 import copy
 import json
-from invenio_db import db
-from flask import current_app
 
-from .config import WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL, \
-    WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
+from flask import current_app
+from invenio_db import db
+
+from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
+    WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
 from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
-from .utils import update_general_item, build_data, build_multi_lang_data, \
-    convert_widget_multi_lang_to_dict, convert_data_to_desgin_pack, \
-    convert_widget_data_to_dict
+from .utils import build_data, build_multi_lang_data, \
+    convert_data_to_desgin_pack, convert_data_to_edit_pack, \
+    convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
+    update_general_item
 
 
 class WidgetItemServices:
-    """Services for Widget item setting.
-    """
+    """Services for Widget item setting."""
+
     @classmethod
     def save_command(cls, data):
+        """Handle save command for edit and create.
+
+        Arguments:
+            data {json} -- data to save
+
+        Returns:
+            dict -- saved result
+
+        """
         result = {
             'message': '',
             'success': False
@@ -72,6 +84,15 @@ class WidgetItemServices:
 
     @classmethod
     def get_by_id(cls, widget_id):
+        """Get widget by widget id.
+
+        Arguments:
+            widget_id {sequence} -- The widget id
+
+        Returns:
+            dictionary -- widget data
+
+        """
         result = {
             'widget_data': '',
             'error': ''
@@ -94,6 +115,15 @@ class WidgetItemServices:
 
     @classmethod
     def create(cls, widget_data):
+        """Create new widget.
+
+        Arguments:
+            widget_data {dictionary} -- widget data
+
+        Returns:
+            dict -- error message
+
+        """
         result = {
             'error': ''
         }
@@ -129,6 +159,16 @@ class WidgetItemServices:
 
     @classmethod
     def update_by_id(cls, widget_id, widget_data):
+        """Update widget by id.
+
+        Arguments:
+            widget_id {sequence} -- The widget id
+            widget_data {dict} -- The widget data
+
+        Returns:
+            dict -- error message
+
+        """
         result = {
             'error': ''
         }
@@ -160,6 +200,15 @@ class WidgetItemServices:
 
     @classmethod
     def delete_by_id(cls, widget_id):
+        """Delete widget by id.
+
+        Arguments:
+            widget_id {sequence} -- The widget id
+
+        Returns:
+            dict -- error message
+
+        """
         result = {
             'error': ''
         }
@@ -181,6 +230,18 @@ class WidgetItemServices:
 
     @classmethod
     def is_exist(cls, repository_id, type_id, lang_code, label):
+        """Check widget is exist or not.
+
+        Arguments:
+            repository_id {string} -- The repository id
+            type_id {string} -- The type id
+            lang_code {string} -- The language code
+            label {string} -- The label
+
+        Returns:
+            boolean -- True if widget already exist
+
+        """
         list_id = WidgetItem.get_id_by_repository_and_type(
             repository_id,
             type_id)
@@ -199,12 +260,43 @@ class WidgetItemServices:
 
     @classmethod
     def get_widget_data_by_widget_id(cls, widget_id):
+        """Get widget data for widget design by id.
+
+        Arguments:
+            widget_id {sequence} -- The widget id
+
+        Returns:
+            dict -- The widget data(design format)
+
+        """
         if not widget_id:
             return None
         widget_data = convert_widget_data_to_dict(
             WidgetItem.get_by_id(widget_id))
         multi_lang_data = WidgetMultiLangData.get_by_widget_id(widget_id)
         result = convert_data_to_desgin_pack(widget_data, multi_lang_data)
+        return result
+
+    @classmethod
+    def load_edit_pack(cls, widget_id):
+        """Get widget data for widget edit by id.
+
+        Arguments:
+            widget_id {sequence} -- The widget id
+
+        Returns:
+            dict -- The widget data(edit format)
+
+        """
+        if not widget_id:
+            return None
+        widget_data = convert_widget_data_to_dict(
+            WidgetItem.get_by_id(widget_id))
+        multi_lang_data = WidgetMultiLangData.get_by_widget_id(widget_id)
+        converted_data = convert_data_to_desgin_pack(
+            widget_data,
+            multi_lang_data)
+        result = convert_data_to_edit_pack(converted_data)
         return result
 
 
@@ -397,8 +489,8 @@ class WidgetDesignServices:
                     break
         if not widget["multiLangSetting"]:
             default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
-            if isinstance(languages, dict) \
-                and languages.get(default_language_code):
+            if (isinstance(languages, dict)
+                    and languages.get(default_language_code)):
                 widget["multiLangSetting"] = languages.get(
                     default_language_code)
             else:
