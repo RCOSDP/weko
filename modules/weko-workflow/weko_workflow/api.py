@@ -839,6 +839,7 @@ class WorkActivity(object):
                     db_activity.activity_status = \
                         ActivityStatusPolicy.ACTIVITY_CANCEL
                     db_activity.activity_end = datetime.utcnow()
+                    db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
 
                     db_history = ActivityHistory(

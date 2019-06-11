@@ -740,6 +740,8 @@ def prepare_edit_item():
                 record = WekoDeposit.get_record(item_id)
                 deposit = WekoDeposit(record, record.model)
                 new_record = deposit.newversion(pid_object)
+                if new_record is None:
+                    return jsonify(code=-1, msg=_('An error has occurred.'))
                 rtn = activity.init_activity(
                     post_activity, community, new_record.model.id)
                 if rtn:
