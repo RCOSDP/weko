@@ -278,7 +278,7 @@ class ReportView(BaseView):
         'detail_view': _('DetailView_'),
         'file_using_per_user': _('FileUsingPerUser_'),
         'search_count': _('SearchCount_'),
-        'top_page_access':_('HostAccess_'),
+        'top_page_access': _('HostAccess_'),
         'user_roles': _('UserAffiliate_'),
         'site_access': _('SiteAccess_')
     }
