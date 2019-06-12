@@ -689,21 +689,18 @@ def cancel_action(activity_id='0', action_id=0):
     post_json = request.get_json()
     work_activity = WorkActivity()
 
+    # clear deposit
     activity_detail = work_activity.get_activity_detail(activity_id)
     cancel_item_id = activity_detail.item_id
     cancel_record = WekoDeposit.get_record(cancel_item_id)
     cancel_deposit = WekoDeposit(cancel_record, cancel_record.model)
     cancel_deposit.clear()
+    # Remove draft child
     cancel_pid = PersistentIdentifier.get_by_object(
         pid_type='recid', object_type='rec', object_uuid=cancel_item_id)
     cancel_pv = PIDVersioning(child=cancel_pid)
-    # Remove draft child
     previous_pid = cancel_pv.previous
-    previous_pv = PIDVersioning(child=previous_pid)
-    previous_pv.remove_child(cancel_pid)
-    # Update the parent redirect to the current last child.
-    parent_pv = PIDVersioning(child=previous_pv.parent)
-    parent_pv.update_redirect()
+    cancel_pv.remove_child(cancel_pid)
 
     activity = dict(
         activity_id=activity_id,
