@@ -30,8 +30,7 @@ from weko_admin.models import AdminLangSettings
 from .api import WidgetItems, WidgetMultiLangData
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
-from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData, \
-    WidgetType
+from .models import WidgetDesignSetting, WidgetItem, WidgetType
 
 
 def get_repository_list():
@@ -145,7 +144,7 @@ def get_widget_preview(repository_id, default_language):
                         "widget_language")
                     languages = item.get("multiLangSetting")
                     if type(languages) is dict and lang_code_default \
-                        is not None:
+                            is not None:
                         if languages.get(lang_code_default):
                             data_display = languages.get(lang_code_default)
                             widget_preview["name_display"] = data_display.get(
@@ -215,7 +214,7 @@ def _get_widget_design_item_base_on_current_language(current_language,
     if not widget["multiLangSetting"]:
         default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
         if isinstance(languages, dict) \
-            and languages.get(default_language_code):
+                and languages.get(default_language_code):
             widget["multiLangSetting"] = languages.get(default_language_code)
         else:
             widget["multiLangSetting"] = {
@@ -319,7 +318,7 @@ def update_admin_widget_item_setting(data):
         else:
             if not WidgetItems.create(
                 data_result) and not WidgetMultiLangData.create(
-                data_result.get('multiLangSetting')):
+                    data_result.get('multiLangSetting')):
                 success = False
                 msg = 'Create widget item fail.'
             else:
@@ -346,7 +345,7 @@ def delete_item_in_preview_widget_item(data_id, json_data):
     if type(json_data) is list:
         for item in json_data:
             if str(item.get('name')) == str(data_id.get('label')) and str(
-                item.get('type')) == str(data_id.get('widget_type')):
+                    item.get('type')) == str(data_id.get('widget_type')):
                 remove_list.append(item)
     for item in remove_list:
         json_data.remove(item)
@@ -408,7 +407,7 @@ def handle_change_item_in_preview_widget_item(data_id, data_result):
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             if str(data_id.get('repository')) != str(data_result.get(
-                'repository')) or data_result.get('enable') is False:
+                    'repository')) or data_result.get('enable') is False:
                 data = delete_item_in_preview_widget_item(data_id, json_data)
             else:
                 data = update_item_in_preview_widget_item(
@@ -476,12 +475,26 @@ def get_default_language():
 
     :return:
     """
-    result = AdminLangSettings.query.filter_by(is_registered=True).order_by(
-        asc('admin_lang_settings_sequence'))
-    result = AdminLangSettings.parse_result(result)
+    result = get_register_language()
     if type(result) is list:
         return result[0]
     return
+
+
+def get_unregister_language():
+    """Get unregister Language.
+
+    :return:
+    """
+    result = AdminLangSettings.query.filter_by(is_registered=False)
+    return AdminLangSettings.parse_result(result)
+
+
+def get_register_language():
+    """Get register language."""
+    result = AdminLangSettings.query.filter_by(is_registered=True).order_by(
+        asc('admin_lang_settings_sequence'))
+    return AdminLangSettings.parse_result(result)
 
 
 def get_system_language():
