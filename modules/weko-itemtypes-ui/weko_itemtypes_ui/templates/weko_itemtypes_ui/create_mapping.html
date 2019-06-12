@@ -40,7 +40,7 @@
 <div class="row">
   <div class="col-sm-12">
     <div class="panel panel-info">
-      <div class="panel-body item-type-list-panel">
+      <div class="panel-body item-type-list-header">
         <div class="form-inline">
           <div class="col-sm-6 item-type-list">
             <div class="form-group">
@@ -73,11 +73,13 @@
   </div>
 </div>
 <div class="row">
-  <div class="col-sm-6 item-type-parent">
-    <label>{{_('Item Type ')}}</label><label>({{_('Parent')}})</label>
-  </div>
-  <div class="col-sm-6">
-    <label>{{_('Schema ')}}</label><label>({{_('Parent')}})</label>
+  <div class="col-sm-12">
+    <div class="col-sm-6 item-type-list-header">
+      <label>{{_('Item Type ')}}</label><label>({{_('Parent')}})</label>
+    </div>
+    <div class="col-sm-6 item-type-schema-header">
+      <label>{{_('Schema ')}}</label><label>({{_('Parent')}})</label>
+    </div>
   </div>
 </div>
 <div class="pre-scrollable">
@@ -218,12 +220,12 @@
 </div>
 <hr>
 <!-- ---------- Header for Item Child list ----------  -->
-<div class="container-fluid">
+<div>
   <div class="row">
     <div class="col-sm-12">
       <div class="header-child-list">
-        <div class="panel-body">
-          <div class="col-sm-6">
+        <div class="panel-body item-type-list-header">
+          <div class="col-sm-6 item-type-list">
             <label id="sub-item-type-lists-label">{{_('Itemtype List')}}</label><label>({{_('Child')}})</label>
           </div>
           <div class="col-sm-6">
