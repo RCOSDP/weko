@@ -59,8 +59,11 @@ class WidgetItemServices:
         repository = widget_data.get('repository')
         type_id = widget_data.get('widget_type')
         multi_lang_data = widget_data.get('multiLangSetting')
+        current_id = None
+        if data.get('data_id'):
+            current_id = data.get('data_id')
         for k, v in multi_lang_data.items():
-            if cls.is_exist(repository, type_id, k, v.get('label')):
+            if cls.is_exist(repository, type_id, k, v.get('label'), current_id):
                 result['message'] = 'Save fail. Data input to create is exist!'
                 return result
 
@@ -229,7 +232,7 @@ class WidgetItemServices:
         return result
 
     @classmethod
-    def is_exist(cls, repository_id, type_id, lang_code, label):
+    def is_exist(cls, repository_id, type_id, lang_code, label, current_id):
         """Check widget is exist or not.
 
         Arguments:
@@ -248,6 +251,8 @@ class WidgetItemServices:
         if not list_id:
             return False
 
+        if current_id and current_id in list_id:
+            list_id.remove(current_id)
         for id in list_id:
             multi_lang_data = WidgetMultiLangData.get_by_widget_id(id)
             if multi_lang_data:
