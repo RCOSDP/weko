@@ -671,11 +671,7 @@ class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            id: 0,
-            repository: '',
-            widget_type: '',
-            label: '',
-            language: ''
+            widget_id: '',
         }
         this.saveCommand = this.saveCommand.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
@@ -709,43 +705,14 @@ class ComponentButtonLayout extends React.Component {
                 label: currentLabel,
                 description: currentDescription
             }
-            if($.isEmptyObject(multiLangData)) {
-                currentLangData['isDefault'] = true;
-            }else {
-                currentLangData['isDefault'] = false;
-            }
             multiLangData[currentLanguage] = currentLangData;
         }else {
             delete multiLangData[currentLanguage];
         }
 
-        let hasDefault = false;
-        for (let object in multiLangData) {
-            let langData = multiLangData[object];
-            if (langData['isDefault']) {
-                hasDefault = true;
-                currentLabel = langData['label'];
-                currentDescription = langData['description'];
-                currentLanguage = object;
-                break;
-            }
-        }
-        if(!hasDefault) {
-            let keys = Object.keys(multiLangData);
-            if (!$.isEmptyObject(keys)) {
-                multiLangData[keys[0]]['isDefault'] = true;
-                currentLabel = multiLangData[keys[0]]['label'];
-                currentDescription = multiLangData[keys[0]]['description'];
-                currentLanguage = keys[0];
-            }
-        }
         this.props.getValueOfField('multiLangData', multiLangData);
         data['multiLangSetting'] = multiLangData;
-        if (!this.props.is_edit) {
-            data['label'] = currentLabel;
-            data['settings'] = currentDescription;
-            data['language'] = currentLanguage;
-        }
+
         let request = {
             flag_edit: this.props.is_edit,
             data: data,
@@ -778,10 +745,7 @@ class ComponentButtonLayout extends React.Component {
                     if (result.success) {
                         addAlert(result.message);
                         this.setState({
-                            repository: data.repository,
-                            widget_type: data.widget_type,
-                            label: data.label,
-                            language: data.language
+                            widget_id: this.props.data_id
                         })
                     } else {
                         //alert(result.message);
@@ -973,17 +937,16 @@ class ComponentLanguage extends React.Component {
                     langList = this.removeDuplicatedLang(langList, registeredLang);
 
                     // Load data for edit UI
-                    let loadedData = this.props.loaded_data;
-                    let selectedLang = langList[0];
-                    let defaultLang = langList[0];
-                    if(this.props.is_edit) {
-                        for (let item in loadedData) {
-                            if (loadedData[item]['isDefault']) {
-                                selectedLang = item;
-                                defaultLang = item;
-                            }
-                        }
-                     }
+                    let selectedLang;
+                    let defaultLang;
+                    if ($.isEmptyObject(registeredLang)) {
+                        selectedLang = langList[0];
+                        defaultLang = langList[0];
+                    } else {
+                        selectedLang = registeredLang[0];
+                        defaultLang = registeredLang[0];
+                        this.props.initEditData(selectedLang);
+                    }
                     this.displayOptions(langList, registeredLang, langName, true, selectedLang);
                     this.props.getValueOfField('lang', langList[0]);
                     this.setState({
@@ -1103,7 +1066,7 @@ class MainLayout extends React.Component {
         this.state = {
             repository: this.props.data_load.repository_id,
             widget_type: this.props.data_load.widget_type,
-            label: this.props.data_load.label,
+            label: '',
             label_color: this.props.data_load.label_color,
             frame_border: this.props.data_load.has_frame_border,
             frame_border_color: this.props.data_load.frame_border_color,
@@ -1119,25 +1082,9 @@ class MainLayout extends React.Component {
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
+        this.initEditData = this.initEditData.bind(this);
     }
-    componentDidMount() {
-        // For edit option - Convert data
-        let description = {};
-        let labelDefault = '';
-        if (!$.isEmptyObject(this.state.multiLangSetting)) {
-            for (let object in this.state.multiLangSetting) {
-                if (this.state.multiLangSetting[object]['isDefault']) {
-                    description = this.state.multiLangSetting[object]['description'];
-                    labelDefault = this.state.multiLangSetting[object]['label']
-                }
-            }
-        }
-        this.setState({
-            settings: description,
-            label: labelDefault,
-            multiLanguageChange: true
-        })
-    }
+
     getValueOfField(key, value) {
         switch (key) {
             case 'repository':
@@ -1193,6 +1140,21 @@ class MainLayout extends React.Component {
         }
     }
 
+    initEditData(selectedLang) {
+        if (!selectedLang) {
+            return;
+        }
+        let multiLangData = this.state.multiLangSetting[selectedLang];
+        if (multiLangData) {
+            this.setState({
+                multiLanguageChange: true,
+                label: multiLangData['label'],
+                settings: multiLangData['description']
+            });
+        }
+
+    }
+
     storeMultiLangSetting(lang, newLanguage) {
         var result = true;
         if (this.state.label == '' && $.isEmptyObject(this.state.settings)) {
@@ -1214,11 +1176,6 @@ class MainLayout extends React.Component {
         };
 
         let storage = this.state.multiLangSetting;
-        if ($.isEmptyObject(storage)) {
-            setting['isDefault'] = true;
-        } else {
-            setting['isDefault'] = false;
-        }
         if (this.state.label || !$.isEmptyObject(this.state.settings)) {
             storage[lang] = setting;
         } else {
@@ -1260,7 +1217,7 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} />
                 </div>
                 <div className="row">
-                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit}
+                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit} initEditData={this.initEditData}
                         storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} loaded_data={this.props.data_load.multiLangSetting} />
                 </div>
                 <div className="row">
@@ -1307,13 +1264,7 @@ $(function () {
     let data_id;
     if (editData) {
         isEdit = true;
-        data_id = {
-            id: editData.id,
-            repository: editData.repository_id,
-            widget_type: editData.widget_type,
-            label: editData.label,
-            language: editData.language
-        }
+        data_id = editData['widget_id'];
     }
     else {
         editData = {
