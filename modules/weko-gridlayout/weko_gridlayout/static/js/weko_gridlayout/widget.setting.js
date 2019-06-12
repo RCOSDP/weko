@@ -670,9 +670,6 @@ class ExtendComponent extends React.Component {
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            widget_id: '',
-        }
         this.saveCommand = this.saveCommand.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
         this.isLabelValid = this.isLabelValid.bind(this);
@@ -744,9 +741,6 @@ class ComponentButtonLayout extends React.Component {
                 .then((result) => {
                     if (result.success) {
                         addAlert(result.message);
-                        this.setState({
-                            widget_id: this.props.data_id
-                        })
                     } else {
                         //alert(result.message);
                         var modalcontent = result.message;
