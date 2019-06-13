@@ -229,23 +229,42 @@ class WidgetItemServices:
 
         """
         result = {
-            'error': ''
+            'message': ''
         }
         if not widget_id:
-            result['error'] = 'No widget id!'
+            result['message'] = 'Could not found widget item in data base.'
             return result
 
+        if WidgetDesignServices.validate_admin_widget_item_setting(widget_id):
+            result['message'] = "Cannot delete this widget because " \
+                               "it's setting in Widget Design."
+            return result
         session = db.session
         try:
             with session.begin_nested():
                 WidgetItem.delete_by_id(widget_id, session)
                 WidgetMultiLangData.delete_by_widget_id(widget_id, session)
             session.commit()
+            result['message'] = 'Widget item has deleted successfully.'
         except Exception as e:
-            result['error'] = str(e)
+            result['message'] = str(e)
             current_app.logger.debug(e)
             session.rollback()
         return result
+
+    @classmethod
+    def delete_multi_item_by_id(cls, widget_id, session):
+        """Delete widget by id.
+
+        Arguments:
+            widget_id {sequence} -- The widget id
+
+        Returns:
+            dict -- error message
+
+        """
+        WidgetItem.delete_by_id(widget_id, session)
+        WidgetMultiLangData.delete_by_widget_id(widget_id, session)
 
     @classmethod
     def is_exist(cls, repository_id, type_id, lang_code, label, current_id):
@@ -261,16 +280,17 @@ class WidgetItemServices:
             boolean -- True if widget already exist
 
         """
-        list_id = WidgetItem.get_id_by_repository_and_type(
-            repository_id,
-            type_id)
+        list_id = WidgetItem.query.filter_by(
+                repository_id=str(repository_id), widget_type=str(type_id),
+                is_deleted=False
+            ).all()
         if not list_id:
             return False
 
         if current_id and current_id in list_id:
             list_id.remove(current_id)
         for id in list_id:
-            multi_lang_data = WidgetMultiLangData.get_by_widget_id(id)
+            multi_lang_data = WidgetMultiLangData.query.filter_by(widget_id = id.widget_id, is_deleted=False).all()
             if multi_lang_data:
                 for data in multi_lang_data:
                     dict_data = convert_widget_multi_lang_to_dict(data)
