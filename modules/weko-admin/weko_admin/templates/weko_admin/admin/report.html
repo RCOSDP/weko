@@ -39,7 +39,6 @@
 {%- endblock javascript %}
 
 {%- block body %}
-<div id="alerts"></div>
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
 <style>
@@ -206,13 +205,12 @@
         {% endif %}
       </div>
     {% endfor %}
-
     <div id="newEmail" class="form-group" id="emailAdd"></div>
     </div>
     <div class="col-md-3"></div>
     <div class="form-actions col-md-8">
         <div class="col-md-2">
-          <a id="addEmail" type="submit" class="btn btn-light add-big-button">
+          <a id="addEmail" class="btn btn-light add-big-button">
               <span class="glyphicon glyphicon-plus"></span>
                   {{_('Email Address')}}
           </a>
@@ -226,7 +224,6 @@
         </div>
     </div>
   </form>
-
 
 <!-- Scheduled Mail Delivery -->
 {% from "weko_admin/partials/email_schedule.html" import email_schedule_form %}
