@@ -96,6 +96,9 @@ setup(
             'cert = weko_admin.cli:cert',
             'report = weko_admin.cli:report'
         ],
+        'invenio_celery.tasks': [
+            'weko_admin = weko_admin.tasks',
+        ],
         'invenio_base.apps': [
             'weko_admin = weko_admin:WekoAdmin',
         ],

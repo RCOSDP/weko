@@ -59,6 +59,19 @@ $(document).ready(function () {
       });
     }
   });
+
+  // Confirm Schedule Change
+  $('#confirm_schedule_button').on('click', function () {
+    $('#email_sched_form').submit();
+  });
+
+  $('#addEmail').on('click', function () {
+        $(moreEmail());
+   });
+
+  $('#saveEmail').on('click', function () {
+      $('#email_form').submit();
+  });
 });
 
 function ajaxGetTSV(endpoint) {
@@ -83,4 +96,37 @@ function setStatsReportSubmit(statsReports) {
   $('#report_file_input').val(JSON.stringify(statsReports));
   $('#report_file_form').submit();
   $('#report_file_input').val('');
+}
+
+function addAlert(message) {
+    $('#alerts').append(
+        '<div class="alert alert-light" id="alert-style">' +
+        '<button type="button" class="close" data-dismiss="alert">' +
+        '&times;</button>' + message + '</div>');
+}
+
+function moreEmail(){
+  $('#newEmail').append(
+       '<div id="emailID">'
+       +'<div class="col-md-5 col-md-offset-3" id="emailAdd">'
+       +'<input type="email" class="form-control inputEmail" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"'
+       +' name="inputEmail" id="inputEmail"'
+       +'placeholder="Enter email address." value="" required/></br>'
+       +'</div>'
+       +'<div class="col-md-1">'
+       +'<a class="btn-default remove-button" onclick="$(\'#emailID\').remove();"  id="remove_button">'
+       +'<span class="glyphicon glyphicon-remove"></span>'
+       +'</a>'
+       +'</div>'
+       +'</div>'
+  );
+}
+
+function IsEmpty(){
+  if(document.form['email_form'].inputEmail.value === "")
+  {
+    alert("empty");
+    return false;
+  }
+    return true;
 }
