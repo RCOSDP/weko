@@ -25,18 +25,17 @@ from datetime import datetime
 
 from celery import shared_task, task
 from celery.utils.log import get_task_logger
-from flask import current_app, url_for, render_template
+from flask import current_app, render_template, url_for
 from flask_babelex import gettext as _
 from flask_mail import Attachment
 from invenio_mail.api import send_mail
-from invenio_stats.utils import QueryFileReportsHelper, \
-    QuerySearchReportHelper, QueryCommonReportsHelper, \
-    QueryRecordViewPerIndexReportHelper, QueryRecordViewReportHelper
+from invenio_stats.utils import QueryCommonReportsHelper, \
+    QueryFileReportsHelper, QueryRecordViewPerIndexReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 
 from . import config
-from .utils import get_user_report_data, package_reports, get_redis_cache
 from .models import StatisticsEmail
-
+from .utils import get_redis_cache, get_user_report_data, package_reports
 
 logger = get_task_logger(__name__)
 

@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
@@ -31,7 +30,7 @@ from datetime import datetime
 
 import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, request, url_for, render_template
+    redirect, render_template, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -43,8 +42,9 @@ from simplekv.memory.redisstore import RedisStore
 from .models import LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import allowed_file, package_reports, reset_redis_cache, \
-    get_redis_cache, get_user_report_data as get_user_report
+from .utils import allowed_file, get_redis_cache
+from .utils import get_user_report_data as get_user_report
+from .utils import package_reports, reset_redis_cache
 
 
 class StyleSettingView(BaseView):
@@ -364,11 +364,15 @@ class ReportView(BaseView):
         """Save Email Address."""
         inputEmail = request.form.getlist('inputEmail')
         StatisticsEmail.delete_all_row()
+        alert_msg = 'Successfully saved email addresses.'
         for input in inputEmail:
             if input:
                 match = re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
                 if match:
                     StatisticsEmail.insert_email_address(input)
+                else:
+                    alert_msg = 'Please check email input fields.'
+        flash(_(alert_msg))
         return redirect(url_for("report.index"))
 
 
