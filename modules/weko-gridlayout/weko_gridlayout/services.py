@@ -24,6 +24,9 @@ import json
 
 from flask import current_app
 from invenio_db import db
+from invenio_records.models import RecordMetadata
+from sqlalchemy.dialects import postgresql
+from sqlalchemy import cast
 
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
@@ -80,13 +83,14 @@ class WidgetItemServices:
 
         if data.get('flag_edit'):
             old_repo = cls.get_repo_by_id(current_id)
-            if str(old_repo) != str(widget_data.get('repository')):
-                if WidgetDesignServices.validate_admin_widget_item_setting(
-                    data.get('data_id')):
-                    result['message'] = "Cannot update repository of this widget because " \
-                                        "it's setting in Widget Design."
-                    result['success'] = False
-                    return result
+            if (str(old_repo) != str(widget_data.get('repository')) and
+                WidgetDesignServices.validate_admin_widget_item_setting(
+                    data.get('data_id'))):
+                result['message'] = "Cannot update repository " \
+                                 "of this widget because " \
+                                 "it's setting in Widget Design."
+                result['success'] = False
+                return result
 
             respond = cls.update_by_id(
                 data.get('data_id'),
@@ -680,5 +684,46 @@ class WidgetDesignServices:
 
 
 class WidgetDataLoaderServices:
-    """Services for load data to page"""
-    pass
+    """Services for load data to page."""
+
+    @classmethod
+    def get_new_arrivals_data(cls, list_dates, number_result, rss_status):
+        """Get new arrivals data from DB.
+
+        Returns:
+            dictionary -- new arrivals data
+
+        """
+        result = {
+            'data': '',
+            'error': ''
+        }
+        if not list_dates or number_result == 0:
+            return None
+        try:
+            data = list()
+            for date in list_dates:
+                records = db.session.query(RecordMetadata).filter(
+                    RecordMetadata.json['pubdate']['attribute_value'] == cast(
+                        date,
+                        postgresql.JSONB),
+                    RecordMetadata.json['publish_status'] == cast(
+                        "1",
+                        postgresql.JSONB)
+                ).all()
+                for record in records:
+                    record_data = record.json
+                    new_data = dict()
+                    new_data['name'] = record_data['item_title']
+                    new_data['url'] = '/records/' + \
+                        record_data['control_number']
+                    new_data['rss'] = dict()
+                    data.append(new_data)
+            result['data'] = data
+        except Exception as e:
+            result['error'] = str(e)
+        return result
+
+    @classmethod
+    def get_arrivals_rss(cls):
+        pass
