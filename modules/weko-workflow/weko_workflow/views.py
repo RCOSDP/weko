@@ -53,7 +53,7 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import get_community_id_by_index, pidstore_identifier_mapping
+from .utils import get_community_id_by_index, pidstore_identifier_mapping, find_doi
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -747,3 +747,22 @@ def withdraw_confirm(activity_id='0', action_id='0'):
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error! Relogin'))
+    
+@blueprint.route('/findDOI', methods=['POST'])
+@login_required
+def check_existed_doi():
+    """Next action."""
+    doi_link = request.get_json()
+    isExistDOI = False
+    data = {}
+    data['isExistDOI'] = isExistDOI
+    data['code'] = 1
+    data['msg'] = 'error'
+    if doi_link is not None:
+        isExistDOI = find_doi(doi_link)
+        data['isExistDOI'] = isExistDOI
+        data['code'] = 0
+        data['msg'] = 'success'
+        return jsonify(data)
+    return jsonify(data)
+    

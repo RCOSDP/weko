@@ -25,6 +25,7 @@ from flask_babelex import gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
 from weko_records.api import ItemsMetadata
+from weko_records.models import ItemMetadata
 
 from .api import WorkActivity
 from .config import IDENTIFIER_ITEMSMETADATA_FORM
@@ -116,3 +117,21 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     except Exception as ex:
         current_app.logger.exception(str(ex))
         db.session.rollback()
+
+        
+def find_doi(doi_link):
+    """
+    Get doi has been register by another item.
+
+    :param: doi_link
+    :return: True/False
+    """
+    itemMetadatas = ItemMetadata.query.all()
+    isExistDoi = False
+    link_doi = doi_link['doi_link']
+    for itemMetadata in itemMetadatas:
+        pidstoreIdentifier = itemMetadata.json.get('pidstore_identifier')
+        if pidstoreIdentifier:
+            if str(pidstoreIdentifier['identifier']['value']) == link_doi:
+                isExistDoi = True
+    return isExistDoi
