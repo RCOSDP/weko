@@ -38,6 +38,16 @@ class WidgetItemServices:
     """Services for Widget item setting."""
 
     @classmethod
+    def get_repo_by_id(cls, widget_id):
+        """Get repository of widget item by widget id.
+
+        Arguments:
+            widget_id {int} -- id of widget item
+        """
+        widget_item = WidgetItem.get_by_id(widget_id)
+        return widget_item.repository_id
+
+    @classmethod
     def save_command(cls, data):
         """Handle save command for edit and create.
 
@@ -63,7 +73,8 @@ class WidgetItemServices:
         if data.get('data_id'):
             current_id = data.get('data_id')
         for k, v in multi_lang_data.items():
-            if cls.is_exist(repository, type_id, k, v.get('label'), current_id):
+            if cls.is_exist(repository, type_id, k, v.get('label'),
+                            current_id):
                 result['message'] = 'Save fail. Data input to create is exist!'
                 return result
 
@@ -71,6 +82,11 @@ class WidgetItemServices:
             respond = cls.update_by_id(
                 data.get('data_id'),
                 build_data(widget_data))
+
+            if WidgetDesignServices.validate_admin_widget_item_setting(
+                    data.get('data_id')):
+                WidgetDesignServices.handle_change_item_in_preview_widget_item(
+                    data.get('data_id'), widget_data)
             if respond['error']:
                 result['message'] = respond['error']
             else:
@@ -357,14 +373,16 @@ class WidgetDesignServices:
             if type(widget_item_list) is list:
                 for widget_item in widget_item_list:
                     data = dict()
-                    widget_item_data = WidgetItemServices.get_widget_data_by_widget_id(widget_item.widget_id)
+                    widget_item_data = \
+                        WidgetItemServices.get_widget_data_by_widget_id(
+                            widget_item.widget_id)
                     data["widgetId"] = widget_item_data.get('repository_id')
                     data["widgetType"] = widget_item_data.get('widget_type')
                     data["Id"] = widget_item_data.get('widget_id')
                     settings = widget_item_data.get('settings')
                     languages = settings.get("multiLangSetting")
-                    if type(languages) is dict and \
-                            lang_code_default is not None:
+                    if (type(languages) is dict and
+                            lang_code_default is not None):
                         if languages.get(lang_code_default):
                             data_display = languages[lang_code_default]
                             data["label"] = data_display.get(
@@ -489,8 +507,8 @@ class WidgetDesignServices:
                     break
         if not widget["multiLangSetting"]:
             default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
-            if isinstance(languages, dict) \
-                and languages.get(default_language_code):
+            if (isinstance(languages, dict) and
+                    languages.get(default_language_code)):
                 widget["multiLangSetting"] = languages.get(
                     default_language_code)
             else:
@@ -517,16 +535,18 @@ class WidgetDesignServices:
             json_data = json.loads(setting_data)
             if type(json_data) is list:
                 for item in json_data:
-                    widget_item = WidgetItemServices.get_widget_data_by_widget_id(item.get('widget_id'))
+                    widget_item = \
+                        WidgetItemServices.get_widget_data_by_widget_id(
+                            item.get('widget_id'))
                     item.update(widget_item.get('settings'))
             setting_data = json.dumps(json_data)
             if repository_id and setting_data:
                 if WidgetDesignSetting.select_by_repository_id(repository_id):
                     result["result"] = WidgetDesignSetting.update(
-                                        repository_id, setting_data)
+                        repository_id, setting_data)
                 else:
                     result["result"] = WidgetDesignSetting.create(
-                                        repository_id, setting_data)
+                        repository_id, setting_data)
             else:
                 result[
                     'error'] = "Fail to save Widget design. " \
@@ -559,27 +579,27 @@ class WidgetDesignServices:
         return data
 
     @classmethod
-    def update_item_in_preview_widget_item(cls, data_id, data_result,
+    def update_item_in_preview_widget_item(cls, widget_id, data_result,
                                            json_data):
         """Update item in preview widget when it is edited in widget item.
 
         Arguments:
-            data_id {widget_item} -- [id of widget item]
-            data_result {widget_item} -- [sent]
-            json_data {dict} -- [data to be updated]
+            widget_id {int} -- [widget id of widget item]
+            data_result {widget_item} -- data receive from client
+            json_data {dict} -- data to be updated
         Returns:
             [data] -- [data after updated]
 
         """
         if type(json_data) is list:
             for item in json_data:
-                if str(item.get('widget_id')) == str(data_id.get('id')):
+                if str(item.get('widget_id')) == str(widget_id):
                     update_general_item(item, data_result)
         data = json.dumps(json_data)
         return data
 
     @classmethod
-    def handle_change_item_in_preview_widget_item(cls, data_id, data_result):
+    def handle_change_item_in_preview_widget_item(cls, widget_id, data_result):
         """Handle change when edit widget item effect to widget design.
 
         Arguments:
@@ -592,18 +612,13 @@ class WidgetDesignServices:
 
         """
         try:
-            data = WidgetDesignSetting.select_by_repository_id(
-                data_id.get('repository'))
+            repo_id = WidgetItemServices.get_repo_by_id(widget_id)
+            data = WidgetDesignSetting.select_by_repository_id(repo_id)
             if data.get('settings'):
                 json_data = json.loads(data.get('settings'))
-                if str(data_id.get('repository')) != str(data_result.get(
-                        'repository')) or data_result.get('enable') is False:
-                    data = cls.delete_item_in_preview_widget_item(data_id,
-                                                                  json_data)
-                else:
-                    data = cls.update_item_in_preview_widget_item(
-                        data_id, data_result, json_data)
-                return WidgetDesignSetting.update(data_id.get('repository'),
+                data = cls.update_item_in_preview_widget_item(
+                    widget_id, data_result, json_data)
+                return WidgetDesignSetting.update(repo_id,
                                                   data)
 
             return False
@@ -611,7 +626,25 @@ class WidgetDesignServices:
             print(e)
             return False
 
+    @classmethod
+    def validate_admin_widget_item_setting(cls, widget_id):
+        """Validate widget item.
 
-class TopPageServices:
-    """Services for Widget item setting in Top page"""
-    pass
+        :param: widget id
+        :return: true if widget item is used in widget design else return false
+        """
+        try:
+            if widget_id:
+                widget_item_id = widget_id
+                repo_id = WidgetItemServices.get_repo_by_id(widget_id)
+                data = WidgetDesignSetting.select_by_repository_id(
+                    repo_id)
+                if data.get('settings'):
+                    json_data = json.loads(data.get('settings'))
+                    for item in json_data:
+                        if str(item.get('widget_id')) == str(widget_item_id):
+                            return True
+            return False
+        except Exception as e:
+            current_app.logger.error('Failed to validate record: ', e)
+            return True
