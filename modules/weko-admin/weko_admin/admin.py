@@ -305,8 +305,8 @@ class ReportView(BaseView):
                     attached_file=zip_name)
                 subject = zip_date + _(' Log report.')
                 attachments = [Attachment(zip_name,
-                               'application/x-zip-compressed',
-                               zip_stream.getvalue())]
+                                          'application/x-zip-compressed',
+                                          zip_stream.getvalue())]
                 send_mail(subject, recepients, html=html_body,
                           attachments=attachments)
                 flash(_('Successfully sent the reports to the recepients.'))
@@ -367,7 +367,8 @@ class ReportView(BaseView):
         alert_msg = 'Successfully saved email addresses.'
         for input in inputEmail:
             if input:
-                match = re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
+                match = re.match(
+                    r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
                 if match:
                     StatisticsEmail.insert_email_address(input)
                 else:

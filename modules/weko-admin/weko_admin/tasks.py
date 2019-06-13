@@ -84,8 +84,8 @@ def send_all_reports(report_type=None, year=None, month=None):
 
         recepients = StatisticsEmail.get_all_emails()
         attachments = [Attachment(zip_name,
-                       'application/x-zip-compressed',
-                       zip_stream.getvalue())]
+                                  'application/x-zip-compressed',
+                                  zip_stream.getvalue())]
         html_body = render_template(
             current_app.config['WEKO_ADMIN_REPORT_EMAIL_TEMPLATE'],
             report_date=zip_date,
