@@ -85,37 +85,32 @@ let PageBodyGrid = function () {
         // Convert to display-able number
         let initNum = Number(initNumber);
         let result = Number(dummyData);
-        if (initNum != NaN) {
-            result = dummyData + initNumber
+        if (Number.isNaN(initNum)) {
+            result = dummyData + initNumber;
         }
         return '<div style="text-align: center; font-size: 20px; font-weight: bold; margin: auto; width: 50%;">'+result+'</div>';
     }
 
-    this.buildNewArrivals = function() {
-        let dummyDataList = [
-            {
-                url: '#',
-                name: 'Book A'
-            },
-            {
-                url: '#',
-                name: 'Book B'
-            },
-            {
-                url: '#',
-                name: 'Book C'
-            },
-            {
-                url: '#',
-                name: 'Book D'
+    this.buildNewArrivals = function(request_data, id) {
+        $.ajax({
+            method: 'POST',
+            url: '/api/admin/get_new_arrivals',
+            headers: {
+                'Content-Type': 'application/json'
+              },
+            data: JSON.stringify(request_data),
+            dataType: 'json',
+            success: function(response) {
+                let result = response['data'];
+                let host = window.location.origin;
+                let innerHTML = '';
+                for (let data in result) {
+                    innerHTML += '<li><a href="' + host + result[data]['url'] + '">' + result[data]['name'] +'</a></li>';
+                }
+                innerHTML = '<div class="no-li-style">' + innerHTML + '</div>';
+                $("#"+id).append(innerHTML)
             }
-        ]
-
-        let result = '';
-        for (let data in dummyDataList) {
-            result += '<li><a href="' + dummyDataList[data].url + '">' + dummyDataList[data].name +'</a></li>'
-        }
-        return result;
+        })
     }
 
     this.widgetTemplate = function (node, index) {
@@ -128,7 +123,7 @@ let PageBodyGrid = function () {
         let leftStyle = "left: initial; ";
         let paddingHeading = "padding: inherit; ";
         let overFlowBody = "overflow-y: scroll; ";
-
+        let id = '';
         // Handle css style
         if (node.background_color) {
             backgroundColor = "background-color: " + node.background_color + "; ";
@@ -155,7 +150,18 @@ let PageBodyGrid = function () {
         } else if (node.type == ACCESS_COUNTER) {
             content = this.buildAccessCounter(5);
         } else if (node.type == NEW_ARRIVALS) {
-            content = this.buildNewArrivals();
+            let innerID = 'new_arrivals'+ '_' + index;
+            id = 'id="' + innerID + '"';
+            let fake_data = {
+                'list_dates':
+                [
+                    "2019-06-13",
+                    "2019-06-12"
+                ],
+                'number_result': '3',
+                'rss_status': true
+            }
+            this.buildNewArrivals(fake_data, innerID);
         }
 
         let template =
@@ -165,7 +171,7 @@ let PageBodyGrid = function () {
             '     <div class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + '">' +
             '       <strong style="' + paddingHeading + '">' + multiLangSetting.label + '</strong>' +
             '     </div>' +
-            '     <div class="panel-body ql-editor pad-top-30" style="' + overFlowBody + '">' +
+            '     <div class="panel-body ql-editor pad-top-30"' + id +' style="' + overFlowBody + '">' +
             content + '</div>' +
             '   </div>' +
             '</div>';
