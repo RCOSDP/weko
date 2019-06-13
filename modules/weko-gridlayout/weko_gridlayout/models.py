@@ -118,7 +118,7 @@ class WidgetItem(db.Model):
     #
     @classmethod
     def get_by_id(cls, id):
-        """ Get a widget item by id."""
+        """Get a widget item by id."""
         widget = cls.query.filter_by(widget_id=id).one_or_none()
         return widget
 
@@ -218,6 +218,9 @@ class WidgetMultiLangData(db.Model):
                                  default=lambda: dict(),
                                  nullable=True)
 
+    is_deleted = db.Column(db.Boolean(name='deleted'),
+                           default=False)
+
     #
     # Query Operation
     #
@@ -244,7 +247,7 @@ class WidgetMultiLangData(db.Model):
 
     @classmethod
     def get_by_widget_id(cls, widget_id):
-        """Get list widget multilanguage data by widget ID
+        """Get list widget multilanguage data by widget ID.
 
         Arguments:
             widget_id {Integer} -- The widget id
@@ -257,7 +260,7 @@ class WidgetMultiLangData(db.Model):
 
     @classmethod
     def update_by_id(cls, id, data):
-        """Update widget multilanguage data by id
+        """Update widget multilanguage data by id.
 
         Arguments:
             id {Integer} -- The id
@@ -276,13 +279,19 @@ class WidgetMultiLangData(db.Model):
 
     @classmethod
     def delete_by_widget_id(cls, widget_id, session):
+        """Delete widget by id.
+
+        :param widget_id: id of widget
+        :param session: session of delete
+        :return:
+        """
         if not session:
             session = db.session
         multi_data = cls.get_by_widget_id(widget_id)
         if not multi_data:
             return False
         for data in multi_data:
-            session.delete(data)
+            setattr(data, 'is_deleted', 'True')
         return True
 
 
