@@ -22,12 +22,13 @@
 from datetime import datetime
 
 import redis
-from flask import abort, current_app, has_request_context, json
+import uuid
+from flask import abort, current_app, has_request_context, json, session
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
-from invenio_files_rest.models import Bucket, \
-    MultipartObject, ObjectVersion, Part
+from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
+    Part
 from invenio_indexer.api import RecordIndexer
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidrelations.contrib.versioning import PIDVersioning
@@ -43,8 +44,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
-from weko_records.utils import get_all_items, \
-    get_options_and_order_list, json_loader, set_timestamp
+from weko_records.utils import get_all_items, get_options_and_order_list, \
+    json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
 
 from .pidstore import weko_deposit_fetcher, weko_deposit_minter
@@ -394,8 +395,17 @@ class WekoDeposit(Deposit):
 
         recid = PersistentIdentifier.get('recid', str(data['_deposit']['id']))
         depid = PersistentIdentifier.get('depid', str(data['_deposit']['id']))
+        pid_value=int(recid.pid_value)
+        pid_value+=1
+        p_depid = PersistentIdentifier.create(
+            'depid',
+            str(pid_value),
+            object_type='rec',
+            object_uuid=uuid.uuid4(),
+            status=PIDStatus.REGISTERED
+        )
 
-        PIDVersioning(parent=recid).insert_draft_child(child=recid)
+        PIDVersioning(parent=p_depid).insert_draft_child(child=recid)
         RecordDraft.link(recid, depid)
 
         return deposit
@@ -543,6 +553,8 @@ class WekoDeposit(Deposit):
                                           bucket=extra_formats_snapshot)
                 index = {'index': self.get('path', []), 'actions': 'private'
                          if self.get('publish_status', '1') == '1' else 'publish'}
+                if 'activity_info' in session:
+                    del session['activity_info']
                 args = [index, item_metadata]
                 deposit.update(*args)
                 deposit.commit()
