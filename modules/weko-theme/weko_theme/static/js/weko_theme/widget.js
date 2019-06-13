@@ -3,6 +3,8 @@ const FREE_DESCRIPTION_TYPE = "Free description";
 const NOTICE_TYPE = "Notice";
 const HIDE_REST_DEFAULT = "Hide the rest";
 const READ_MORE_DEFAULT = "Read more";
+const NEW_ARRIVALS = "New arrivals";
+const ACCESS_COUNTER = "Access counter";
 
 (function () {
     getWidgetDesignSetting();
@@ -76,46 +78,95 @@ let PageBodyGrid = function () {
         return description;
     };
 
+    this.buildAccessCounter = function(initNumber) {
+        // TODO: Get access count from API
+        let dummyData = 123456789;
+
+        // Convert to display-able number
+        let initNum = Number(initNumber);
+        let result = Number(dummyData);
+        if (initNum != NaN) {
+            result = dummyData + initNumber
+        }
+        return '<div style="text-align: center; font-size: 20px; font-weight: bold; margin: auto; width: 50%;">'+result+'</div>';
+    }
+
+    this.buildNewArrivals = function() {
+        let dummyDataList = [
+            {
+                url: '#',
+                name: 'Book A'
+            },
+            {
+                url: '#',
+                name: 'Book B'
+            },
+            {
+                url: '#',
+                name: 'Book C'
+            },
+            {
+                url: '#',
+                name: 'Book D'
+            }
+        ]
+
+        let result = '';
+        for (let data in dummyDataList) {
+            result += '<li><a href="' + dummyDataList[data].url + '">' + dummyDataList[data].name +'</a></li>'
+        }
+        return result;
+    }
+
     this.widgetTemplate = function (node, index) {
-        let labelColor = node.label_color;
-        let frameBorderColor = (node.frame_border) ? node.frame_border_color : "";
-        let backgroundColor = node.background_color;
-        let description = "";
-        let leftStyle = 0;
-        let paddingHeading = "";
-        let overFlowBody = "";
+        let labelColor = "";
+        let frameBorderColor = "";
+        let backgroundColor = "";
+        let content = "";
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
+        let leftStyle = "left: initial; ";
+        let paddingHeading = "padding: inherit; ";
+        let overFlowBody = "overflow-y: scroll; ";
+
+        // Handle css style
+        if (node.background_color) {
+            backgroundColor = "background-color: " + node.background_color + "; ";
+        }
+
+        if(node.frame_border && node.frame_border_color) {
+            frameBorderColor = "border-color: " + node.frame_border_color + "; ";
+        }
+
+        if (node.label_color) {
+            labelColor = "color: " + node.label_color + "; ";
+        }
+
         if (!$.isEmptyObject(multiLangSetting.description)) {
             languageDescription = multiLangSetting.description;
         }
 
         if (node.type == FREE_DESCRIPTION_TYPE) {
             if (!$.isEmptyObject(languageDescription)){
-                description = languageDescription.description;
+                content = languageDescription.description;
             }
-        }
-
-        if (node.type == NOTICE_TYPE) {
-            description = this.buildNoticeType(languageDescription, index);
-        }
-
-        if (node.type == FREE_DESCRIPTION_TYPE || node.type == NOTICE_TYPE) {
-            leftStyle = "initial";
-            paddingHeading = "inherit";
-            overFlowBody = "scroll";
+        } else if (node.type == NOTICE_TYPE) {
+            content = this.buildNoticeType(languageDescription, index);
+        } else if (node.type == ACCESS_COUNTER) {
+            content = this.buildAccessCounter(5);
+        } else if (node.type == NEW_ARRIVALS) {
+            content = this.buildNewArrivals();
         }
 
         let template =
             '<div class="grid-stack-item">' +
-            ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' +
-            backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
-            '     <div class="panel-heading widget-header widget-header-position" style="color: ' + labelColor + ';left: ' +
-            leftStyle + ';">' +
-            '       <strong style="padding: ' + paddingHeading + ';">' + multiLangSetting.label + '</strong>' +
+            ' <div class="grid-stack-item-content panel panel-default widget" style="' +
+            backgroundColor + frameBorderColor + '">' +
+            '     <div class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + '">' +
+            '       <strong style="' + paddingHeading + '">' + multiLangSetting.label + '</strong>' +
             '     </div>' +
-            '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' +
-            description + '</div>' +
+            '     <div class="panel-body ql-editor pad-top-30" style="' + overFlowBody + '">' +
+            content + '</div>' +
             '   </div>' +
             '</div>';
 
