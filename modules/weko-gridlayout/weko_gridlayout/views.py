@@ -13,11 +13,10 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .api import WidgetItems
-from .services import WidgetDesignServices, WidgetItemServices
-from .utils import delete_admin_widget_item_setting, get_default_language, \
-    get_repository_list, get_system_language, get_widget_design_setting, \
-    get_widget_list, get_widget_preview, get_widget_type_list, \
-    update_admin_widget_item_setting, update_widget_design_setting
+from .services import WidgetDataLoaderServices, WidgetDesignServices, \
+    WidgetItemServices
+from .utils import get_default_language, get_system_language, \
+    get_widget_design_setting, get_widget_type_list
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -173,3 +172,18 @@ def get_system_lang():
     """
     result = get_system_language()
     return jsonify(result)
+
+
+@blueprint_api.route('/get_new_arrivals', methods=['POST'])
+def get_new_arrivals_data():
+    """Get new arrivals data.
+
+    Returns:
+        json -- new arrivals data
+
+    """
+    data = request.get_json()
+    return jsonify(WidgetDataLoaderServices.get_new_arrivals_data(
+        data.get('list_dates'),
+        data.get('number_result'),
+        data.get('rss_status')))

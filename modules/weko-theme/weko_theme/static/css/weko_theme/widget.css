@@ -39,3 +39,7 @@
 .pad-top-30 {
   padding-top: 30px !important;
 }
+
+.no-li-style {
+  list-style-type: none;
+}
