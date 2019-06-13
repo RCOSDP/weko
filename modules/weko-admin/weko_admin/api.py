@@ -45,6 +45,7 @@ def is_restricted_user(user_info):
         current_app.logger.error('Could not check for restricted users: ')
         current_app.logger.error(e)
         return False
+    restricted_ip = False if restricted_ip is None else True
     return (restricted_ip or is_crawler)
 
 
