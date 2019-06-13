@@ -79,6 +79,15 @@ class WidgetItemServices:
                 return result
 
         if data.get('flag_edit'):
+            old_repo = cls.get_repo_by_id(current_id)
+            if str(old_repo) != str(widget_data.get('repository')):
+                if WidgetDesignServices.validate_admin_widget_item_setting(
+                    data.get('data_id')):
+                    result['message'] = "Cannot update repository of this widget because " \
+                                        "it's setting in Widget Design."
+                    result['success'] = False
+                    return result
+
             respond = cls.update_by_id(
                 data.get('data_id'),
                 build_data(widget_data))
