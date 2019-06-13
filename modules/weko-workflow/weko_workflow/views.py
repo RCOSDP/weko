@@ -27,8 +27,8 @@ from collections import OrderedDict
 from functools import wraps
 
 import redis
-from flask import Blueprint, current_app, jsonify, \
-    render_template, request, session, url_for
+from flask import Blueprint, current_app, jsonify, render_template, request, \
+    session, url_for
 from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
@@ -39,7 +39,7 @@ from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
 from weko_accounts.api import ShibUser
-from weko_deposit.api import WekoRecord, WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
@@ -752,7 +752,8 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
-            identifier['action_identifier_select'] = IDENTIFIER_GRANT_IS_WITHDRAWING
+            identifier['action_identifier_select'] = \
+                IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
                 activity.create_or_update_action_identifier(
                     activity_id,
