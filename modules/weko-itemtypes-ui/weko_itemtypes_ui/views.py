@@ -230,7 +230,12 @@ def mapping_index(ItemTypeID=0):
                                     ItemTypeID=lists[0].item_type[0].id))
         itemtype_list = []
         itemtype_prop = item_type.schema.get('properties')
-        for key, prop in itemtype_prop.items():
+        table_rows = ['pubdate']
+        render_table_row = item_type.render.get('table_row')
+        if type(render_table_row) is list:
+            table_rows.extend(render_table_row)
+        for key in table_rows:
+            prop = itemtype_prop.get(key)
             cur_lang = current_i18n.language
             schema_form = item_type.form
             elemStr = ''
