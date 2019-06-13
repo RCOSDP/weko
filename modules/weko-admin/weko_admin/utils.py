@@ -356,7 +356,7 @@ def get_user_report_data():
 
     # Total registered users
     results['all'].append({'role_name': _('Registered Users'),
-                            'count': total_users})
+                          'count': total_users})
     return results
 
 
@@ -408,13 +408,13 @@ def make_stats_tsv(raw_stats, file_type, year, month):
 
     elif file_type == 'site_access':
         write_report_tsv_rows(writer,
-                                   raw_stats['site_license'],
-                                   file_type,
-                                   _('Site license member'))
+                              raw_stats['site_license'],
+                              file_type,
+                              _('Site license member'))
         write_report_tsv_rows(writer,
-                                   raw_stats['other'],
-                                   file_type,
-                                   _('Other than site license'))
+                              raw_stats['other'],
+                              file_type,
+                              _('Other than site license'))
     else:
         write_report_tsv_rows(writer, raw_stats['all'], file_type)
 
@@ -423,13 +423,12 @@ def make_stats_tsv(raw_stats, file_type, year, month):
         writer.writerows([[''], [sub_header_row]])
         if 'open_access' in raw_stats:
             writer.writerow(cols)
-            write_report_tsv_rows(writer,
-                                       raw_stats['open_access'])
+            write_report_tsv_rows(writer, raw_stats['open_access'])
         elif 'institution_name' in raw_stats:
             writer.writerows([[_('Institution Name')] + cols])
             write_report_tsv_rows(writer,
-                                       raw_stats['institution_name'],
-                                       file_type)
+                                  raw_stats['institution_name'],
+                                  file_type)
     return tsv_output
 
 

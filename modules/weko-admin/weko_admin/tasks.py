@@ -85,8 +85,8 @@ def send_all_reports(report_type=None, year=None, month=None):
 
         recepients = StatisticsEmail.get_all_emails()
         attachments = [Attachment(zip_name,
-                           'application/x-zip-compressed',
-                           zip_stream.getvalue())]
+                       'application/x-zip-compressed',
+                       zip_stream.getvalue())]
         html_body = render_template(
             current_app.config['WEKO_ADMIN_REPORT_EMAIL_TEMPLATE'],
             report_date=zip_date,
@@ -124,7 +124,7 @@ def _due_to_run(schedule):
         return False
     now = datetime.now()
     return (schedule['frequency'] == 'daily') or \
-        (schedule['frequency'] == 'weekly' and  \
-            int(schedule['details']) == now.weekday()) or \
-        (schedule['frequency'] == 'monthly' and \
-            int(schedule['details']) == now.day)
+        (schedule['frequency'] == 'weekly' and
+         int(schedule['details']) == now.weekday()) or \
+        (schedule['frequency'] == 'monthly' and
+         int(schedule['details']) == now.day)

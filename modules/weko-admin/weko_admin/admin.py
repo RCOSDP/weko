@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
@@ -220,6 +221,7 @@ class StyleSettingView(BaseView):
 
 class ReportView(BaseView):
     """Report view."""
+
     @expose('/', methods=['GET'])
     def index(self):
         try:
@@ -303,8 +305,8 @@ class ReportView(BaseView):
                     attached_file=zip_name)
                 subject = zip_date + _(' Log report.')
                 attachments = [Attachment(zip_name,
-                                   'application/x-zip-compressed',
-                                   zip_stream.getvalue())]
+                               'application/x-zip-compressed',
+                               zip_stream.getvalue())]
                 send_mail(subject, recepients, html=html_body,
                           attachments=attachments)
                 flash(_('Successfully sent the reports to the recepients.'))
@@ -319,7 +321,6 @@ class ReportView(BaseView):
             current_app.logger.error('Unexpected error: ', e)
             flash(_('Unexpected Error'))
         return redirect(url_for('report.index'))
-            # abort(500)
 
     @expose('/user_report_data', methods=['GET'])
     def get_user_report_data(self):
@@ -358,9 +359,9 @@ class ReportView(BaseView):
             flash(_('Could Not Save Changes.'))
         return redirect(url_for('report.index'))
 
-    @expose('/get_email_address',methods=['POST'])
+    @expose('/get_email_address', methods=['POST'])
     def get_email_address(self):
-        """Save Email Address"""
+        """Save Email Address."""
         inputEmail = request.form.getlist('inputEmail')
         StatisticsEmail.delete_all_row()
         for input in inputEmail:

@@ -776,7 +776,7 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
 
 
 class StatisticsEmail(db.Model):
-    """ Save Email Address."""
+    """Save Email Address."""
 
     __tablename__ = 'stats_email_address'
 
@@ -785,13 +785,7 @@ class StatisticsEmail(db.Model):
 
     @classmethod
     def insert_email_address(cls, email_address):
-        """ Insert Email Address.
-
-        :param id
-        :param email_address
-        :return: True if successfully save the email address otherwise
-        False."""
-
+        """Insert Email Address."""
         try:
             dataObj = StatisticsEmail()
             with db.session.begin_nested():
@@ -812,9 +806,7 @@ class StatisticsEmail(db.Model):
 
     @classmethod
     def get_all(cls):
-        """Get all email address.
-        :return: email_address
-        """
+        """Get all email address."""
         try:
             all = cls.query.all()
         except Exception as ex:
@@ -827,11 +819,12 @@ class StatisticsEmail(db.Model):
     def delete_all_row(cls):
         """Delete all."""
         try:
-           delete_all = StatisticsEmail.query.delete()
+            delete_all = StatisticsEmail.query.delete()
         except Exception as ex:
-             current_app.logger.debug(ex)
-             raise
+            current_app.logger.debug(ex)
+            raise
         return delete_all
+
 
 __all__ = ([
     'SearchManagement', 'AdminLangSettings', 'ApiCertificate',
