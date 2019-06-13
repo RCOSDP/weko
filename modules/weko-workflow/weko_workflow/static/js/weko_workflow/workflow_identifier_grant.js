@@ -41,7 +41,7 @@ require([
 
   // prepare data for sending
   function preparePostData(tmp_save) {
-    let isSuffixFormat = false;
+    let isSuffixFormat = true;
 
     data_global.post_uri = $('.cur_step').data('next-uri');
 
@@ -69,53 +69,48 @@ require([
     };
 
     switch(identifier_grant) {
-      case 0:
+      case "0":
         break;
-      case 1:
-        if(isDOISuffixFormat(postData.identifier_grant_jalc_doi_link, postData.identifier_grant_jalc_doi_suffix)){
-          isSuffixFormat = true;
-        }
+      case "1":
+        isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_doi_link, identifier_grant_jalc_doi_suffix);
         break;
-      case 2:
-        if(isDOISuffixFormat(postData.identifier_grant_jalc_cr_doi_link, postData.identifier_grant_jalc_cr_doi_suffix)){
-          isSuffixFormat = true;
-        }
+      case "2":
+        isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_cr_doi_suffix);
         break;
-      case 3:
-        if(isDOISuffixFormat(postData.identifier_grant_jalc_dc_doi_link, postData.identifier_grant_jalc_dc_doi_suffix)){
-          isSuffixFormat = true;
-        }
+      case "3":
+        isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix);
         break;
-      case 4:
+      case "4":
         break;
       default:
-        return false;
         break;
     };
-
+    
     return isSuffixFormat;
   }
 
   function isDOISuffixFormat(doi_link, doi_suffix){
-
-    let checkDOISuffix = true;
+  
     let regexDOI = /^[_\-.;()\/A-Za-z0-9]+$/gi;
-
+    
     if(!regexDOI.test(doi_suffix)) {
-      checkDOISuffix = false;
-      alert("REGEX FAILSE");
+        alert("It's able to input only haft-width alphanumeric or half-width symbol _-.;()/");
+        return false;
     };
 
-    if(doi_suffix.length >= 300) {
-      alert("LENGTH <= 300");
+    if(doi_link.length >= 300) {
+        alert("Input value exceeds 300 characters");
+        return false;
     };
-//    if(isExistDOI(doi_link)) {
-//    };
-//
+    
+    if(isExistDOI(doi_link)) {
+        alert("This DOI has been used already for another item. Please input another DOI");
+        return false;
+    };
+
 //    if(isWithDrawDOI(doi_link)) {
 //    };
-
-    return checkDOISuffix;
+    return true;
   }
 
   function getVal(inObject) {
@@ -152,7 +147,38 @@ require([
       }
     });
   }
-
+  
+  function isExistDOI(doi_link){
+    debugger;
+    let getUrl = '/workflow/findDOI';
+    let data = {'doi_link': doi_link};
+    let isExistDOI = false;
+    $.ajax({
+        type: 'POST',
+        url: getUrl,
+        contentType: 'application/json; charset=UTF-8',
+        async: false,
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: function (data, status) {
+        debugger;
+        if (0 == data.code) {
+            isExistDOI = data.isExistDOI;
+        } else {
+            alert('Server error');
+            $('#pwd').parent().addClass('has-error');
+            $('#error-info').html(data.msg);
+            $('#error-info').parent().show();
+        }
+      },
+      error: function (jqXHE, status) {
+        alert('Server error');
+      }
+    });
+    
+    return isExistDOI;
+  }
+  
   function sendWithdrawAction() {
     let form = $('form[name$=withdraw_doi_form]');
     let withdraw_uri = form.attr('action');
