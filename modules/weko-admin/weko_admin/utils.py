@@ -20,10 +20,22 @@
 
 """Utilities for convert response json."""
 import requests
-from flask import session
+import csv
+import redis
+import sys
+import zipfile
+
+from flask import current_app, session
 from flask_babelex import lazy_gettext as _
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
+
+from invenio_db import db
+from sqlalchemy import func
+from weko_records.api import ItemsMetadata
+from io import BytesIO, StringIO
+from invenio_accounts.models import Role, User, userrole
+from simplekv.memory.redisstore import RedisStore
 
 from . import config
 from .models import AdminLangSettings, ApiCertificate, SearchManagement, \
@@ -323,3 +335,179 @@ def get_unit_stats_report(target_id):
             pass
     result['unit'] = list_unit
     return result
+
+
+def get_user_report_data():
+    """Get user report data from db and modify."""
+    role_counts = []
+    try:
+        role_counts = db.session.query(Role.name, func.count(userrole.c.role_id)) \
+            .outerjoin(userrole) \
+            .group_by(Role.id).all()
+    except Exception as e:
+        current_app.logger.error('Could not retrieve user report data: ')
+        current_app.logger.error(e)
+        return {}
+
+    role_counts = [dict(role_name=name, count=count)
+                   for name, count in role_counts]
+    results = {'all': role_counts}
+    total_users = sum([x['count'] for x in role_counts])
+
+    # Total registered users
+    results['all'].append({'role_name': _('Registered Users'),
+                            'count': total_users})
+    return results
+
+
+def package_reports(all_stats, year, month):
+    """Package the .tsv files into one zip file."""
+    tsv_files = []
+    zip_stream = BytesIO()
+    year = str(year)
+    month = str(month)
+    try:  # TODO: Make this into one loop, no need for two
+        for stats_type, stats in all_stats.items():
+            file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(stats_type, '_')
+            file_name = 'logReport_' + file_name + year + '-' + month + '.tsv'
+            tsv_files.append({
+                'file_name': file_name,
+                'stream': make_stats_tsv(stats, stats_type, year, month)})
+
+        # Dynamically create zip from StringIO data into BytesIO
+        report_zip = zipfile.ZipFile(zip_stream, 'w')
+        for tsv_file in tsv_files:
+            report_zip.writestr(tsv_file['file_name'],
+                                tsv_file['stream'].getvalue())
+        report_zip.close()
+    except Exception as e:
+        current_app.logger.error('Unexpected error: ', e)
+        raise
+    return zip_stream
+
+
+def make_stats_tsv(raw_stats, file_type, year, month):
+    """Make TSV report file for stats."""
+    header_row = current_app.config['WEKO_ADMIN_REPORT_HEADERS'].get(file_type)
+    sub_header_row = current_app.config['WEKO_ADMIN_REPORT_SUB_HEADERS'].get(file_type)
+    tsv_output = StringIO()
+
+    writer = csv.writer(tsv_output, delimiter='\t',
+                        lineterminator="\n")
+    writer.writerows([[header_row],
+                      [_('Aggregation Month'), year + '-' + month],
+                      [''], [header_row]])
+
+    cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
+    writer.writerow(cols)
+
+    # Special cases:
+    # Write total for per index views
+    if file_type == 'index_access':
+        writer.writerow([_('Total Detail Views'), raw_stats['total']])
+
+    elif file_type == 'site_access':
+        write_report_tsv_rows(writer,
+                                   raw_stats['site_license'],
+                                   file_type,
+                                   _('Site license member'))
+        write_report_tsv_rows(writer,
+                                   raw_stats['other'],
+                                   file_type,
+                                   _('Other than site license'))
+    else:
+        write_report_tsv_rows(writer, raw_stats['all'], file_type)
+
+    # Write open access stats
+    if sub_header_row is not None:
+        writer.writerows([[''], [sub_header_row]])
+        if 'open_access' in raw_stats:
+            writer.writerow(cols)
+            write_report_tsv_rows(writer,
+                                       raw_stats['open_access'])
+        elif 'institution_name' in raw_stats:
+            writer.writerows([[_('Institution Name')] + cols])
+            write_report_tsv_rows(writer,
+                                       raw_stats['institution_name'],
+                                       file_type)
+    return tsv_output
+
+
+def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
+    """Write tsv rows for stats."""
+    from weko_items_ui.utils import get_user_information
+    if isinstance(records, dict):
+        records = list(records.values())
+    for record in records:
+        if file_type is None or \
+                file_type == 'file_download' or \
+                file_type == 'file_preview':
+            writer.writerow([record['file_key'], record['index_list'],
+                             record['total'], record['no_login'],
+                             record['login'], record['site_license'],
+                             record['admin'], record['reg']])
+        elif file_type == 'index_access':
+            writer.writerow(
+                [record['index_name'], record['view_count']])
+        elif file_type == 'search_count':
+            writer.writerow([record['search_key'], record['count']])
+        elif file_type == 'user_roles':
+            writer.writerow([record['role_name'], record['count']])
+        elif file_type == 'detail_view':
+            item_metadata_json = ItemsMetadata.\
+                get_record(record['record_id'])
+            writer.writerow([
+                item_metadata_json['title'], record['index_names'],
+                record['total_all'], record['total_not_login']])
+        elif file_type == 'file_using_per_user':
+            user_email = ''
+            user_name = 'Guest'
+            user_id = int(record['cur_user_id'])
+            if user_id > 0:
+                user_info = get_user_information(user_id)
+                user_email = user_info['email']
+                user_name = user_info['username']
+            writer.writerow([
+                user_email, user_name,
+                record['total_download'], record['total_preview']])
+        elif file_type == 'top_page_access':
+            writer.writerow([record['host'], record['ip'],
+                             record['count']])
+        elif file_type == 'site_access':
+            if record:
+                if other_info:
+                    writer.writerow([other_info, record['top_view'],
+                                     record['search'],
+                                     record['record_view'],
+                                     record['file_download'],
+                                     record['file_preview']])
+                else:
+                    writer.writerow([record['name'], record['top_view'],
+                                     record['search'],
+                                     record['record_view'],
+                                     record['file_download'],
+                                     record['file_preview']])
+
+
+def reset_redis_cache(cache_key, value):
+    """Delete and then reset a cache value to Redis."""
+    try:
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
+        datastore.delete(cache_key)
+        datastore.put(cache_key, value.encode('utf-8'))
+    except Exception as e:
+        current_app.logger.error('Could not reset redis value', e)
+        raise
+
+
+def get_redis_cache(cache_key):
+    """Check and then retrieve the value of a Redis cache key."""
+    try:
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
+        if datastore.redis.exists(cache_key):
+            return datastore.get(cache_key).decode('utf-8')
+    except Exception as e:
+        current_app.logger.error('Could get value for ' + cache_key, e)
+    return None
