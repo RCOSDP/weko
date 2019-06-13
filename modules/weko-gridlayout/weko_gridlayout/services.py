@@ -648,3 +648,8 @@ class WidgetDesignServices:
         except Exception as e:
             current_app.logger.error('Failed to validate record: ', e)
             return True
+
+
+class WidgetDataLoaderServices:
+    """Services for load data to page"""
+    pass
