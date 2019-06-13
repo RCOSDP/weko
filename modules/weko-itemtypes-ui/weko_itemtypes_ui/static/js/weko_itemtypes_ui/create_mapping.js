@@ -115,6 +115,7 @@
         let parent_li = $(this).parents('.sub_child_list');
         itemtype_key = $('input[type="radio"]:checked').val();
         mapping_key = parent_li.find('select[name="sub_jpcoar_list"]').val();
+        enableSelectOption(mapping_key);
         if(remove_mapping_child_item(itemtype_key, mapping_key)) {
           $(this).parents('.sub_child_list').remove();
           $('#preview_mapping').text(JSON.stringify(page_global.mapping_prop, null, 4));
@@ -470,14 +471,29 @@
       }
       if(page_global.sub_jpcoar_list.length > 0) {
           new_sub_info.find('select[name="sub_jpcoar_list"]').empty();
+          let currentSubList = getCurrentSubJPCOARList();
+          let isSelected = false;
           page_global.sub_jpcoar_list.forEach(function(element){
-            new_sub_info.find('select[name="sub_jpcoar_list"]').append('<option value="'+element+'">'+element+'</option>');
+            let isDisabled = false;
+            let selected = "";
+            currentSubList.forEach(function(selectedValue){
+              if (element == selectedValue) {
+                isDisabled = true;
+                return;
+              }
+            });
+            if (!isSelected && !isDisabled){
+              selected = "selected";
+              isSelected = true;
+            }
+            new_sub_info.find('select[name="sub_jpcoar_list"]').append('<option ' + selected + ' value="'+element+'">'+element+'</option>');
           });
         }
       new_sub_info.removeClass('sub_children_list hide').addClass('sub_child_list');
       new_sub_info.appendTo('#sub_children_lists');
       $('div.sub_child_list').find('fieldset').removeAttr('disabled');
       saveMappingData();
+      disableSubSelectOption();
     });
     $('select[name="sub_itemtype_list"], select[name="sub_jpcoar_list"]').on('change', function(ev){
       saveMappingData();
@@ -652,4 +668,60 @@
         }
       });
     }
+    var previous;
+    $('select[name="sub_jpcoar_list"]').on('focus', function () {
+      // Store the current value on focus and on change
+      previous = this.value;
+    }).on('change', function (ev) {
+      enableSelectOption(previous);
+      disableSelectOption(this.value);
+      $('option:selected', this).prop("disabled", false);
+      previous = this.value;
+    });
+
+    function disableSelectOption(value) {
+      $('select[name="sub_jpcoar_list"] option').each(function () {
+        if (this.value == value) {
+          $(this).prop("disabled", true);
+        }
+      });
+    }
+
+    function enableSelectOption(value) {
+      $('select[name="sub_jpcoar_list"] option').each(function () {
+        if (this.value == value) {
+          $(this).prop("disabled", false);
+        }
+      });
+    }
+
+    function getCurrentSubJPCOARList() {
+      let currentList = [];
+      $('select[name="sub_jpcoar_list"]').each(function () {
+        if (!currentList.includes(this.value)) {
+          currentList.push(this.value);
+        }
+      });
+      return currentList;
+    }
+
+    function disableSubSelectOption() {
+      let currentSubList = getCurrentSubJPCOARList();
+      $('select[name="sub_jpcoar_list"]').each(function () {
+        let currentValue = this.value;
+        $('option', this).each(function () {
+          let optionValue = $(this).val();
+          let currentOption = $(this);
+          if (currentValue != optionValue) {
+            currentSubList.forEach(function (selectedValue) {
+              if (optionValue == selectedValue) {
+                currentOption.prop("disabled", true);
+                return;
+              }
+            });
+          }// End if currentValue
+        }); // End Option each
+      }); // End sub_jpcoar_list each
+    }
+
 });
