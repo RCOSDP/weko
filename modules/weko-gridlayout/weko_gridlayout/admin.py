@@ -28,8 +28,9 @@ from math import ceil
 from flask import current_app, flash, redirect, request
 from flask_admin import BaseView, expose
 from flask_admin._backwards import ObsoleteAttr
-from flask_admin.babel import gettext
-from flask_admin.contrib.sqla import ModelView
+from flask_admin.actions import action
+from flask_admin.babel import gettext, lazy_gettext, ngettext
+from flask_admin.contrib.sqla import ModelView, tools
 from flask_admin.helpers import get_redirect_target
 from flask_admin.model import helpers, typefmt
 from flask_babelex import gettext as _
@@ -39,9 +40,10 @@ from wtforms.fields import StringField
 
 from . import config
 from .models import WidgetItem, WidgetMultiLangData
+from .services import WidgetDesignServices, WidgetItemServices
 from .utils import convert_data_to_desgin_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, get_register_language, \
-    get_unregister_language, validate_admin_widget_item_setting
+    get_unregister_language
 
 
 class WidgetDesign(BaseView):
@@ -252,8 +254,6 @@ class WidgetSettingView(ModelView):
             widget_data,
             multi_lang_data)
         model = convert_data_to_edit_pack(converted_data)
-        print("=== Model ===")
-        print(model)
         if model is None:
             flash(gettext('Record does not exist.'), 'error')
             return redirect(return_url)
@@ -325,6 +325,34 @@ class WidgetSettingView(ModelView):
                            get_value=self.get_detail_value,
                            return_url=return_url)
 
+    @action('delete',
+            lazy_gettext('Delete'),
+            lazy_gettext('Are you sure you want to delete selected records?'))
+    def action_delete(self, ids):
+        try:
+            query = tools.get_query_for_ids(self.get_query(), self.model, ids)
+
+            if self.fast_mass_delete:
+                count = query.delete(synchronize_session=False)
+            else:
+                count = 0
+                for m in query.all():
+                    if self.delete_model(m, self.session):
+                        count += 1
+
+            self.session.commit()
+
+            flash(ngettext('Record was successfully deleted.',
+                           '%(count)s records were successfully deleted.',
+                           count,
+                           count=count), 'success')
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                raise
+
+            flash(gettext('Failed to delete records. %(error)s',
+                          error=str(ex)), 'error')
+
     def get_query(self):
         return self.session.query(
             self.model).filter(self.model.is_deleted == 'False')
@@ -333,25 +361,27 @@ class WidgetSettingView(ModelView):
         return self.session.query(
             func.count('*')).filter(self.model.is_deleted == 'False')
 
-    def delete_model(self, model):
+    def delete_model(self, model, session=None):
         """Delete model.
 
-        :param model:
-            Model to delete
+        :param
+        model: Model to delete
+        session: session to delete
         """
+        if not self.on_model_delete(model):
+            flash(_("Cannot delete widget (ID: %(widget_id)s, "
+                    "because it's setting in Widget Design.",
+                    widget_id=model.widget_id),
+                  'error')
+            return False
         try:
-            if not self.on_model_delete(model):
-                flash(_("Cannot delete widget (Repository:%(repo)s, "
-                        "Widget Type:%(type)s"
-                        "because it's setting in Widget Design.",
-                        repo=model.repository_id, type=model.widget_type),
-                      'error')
-                return False
-            self.session.flush()
-            WidgetItem.delete(model.repository_id,
-                              model.widget_type,
-                              model.language,
-                              self.session)
+            if session:
+                WidgetItemServices.delete_multi_item_by_id(model.widget_id,
+                                                           session)
+                return True
+            else:
+                self.session.flush()
+                WidgetItemServices.delete_by_id(model.widget_id)
         except Exception as ex:
             if not self.handle_view_exception(ex):
                 flash(_('Failed to delete record. %(error)s',
@@ -377,11 +407,13 @@ class WidgetSettingView(ModelView):
             [true] -- [it isn't being used in widget design]
 
         """
-        if validate_admin_widget_item_setting(model):
+        if WidgetDesignServices.validate_admin_widget_item_setting(
+                model.widget_id):
             return False
         return True
 
     column_list = (
+        'widget_id',
         'repository_id',
         'widget_type',
         'label',
@@ -406,7 +438,8 @@ class WidgetSettingView(ModelView):
         'repo_selected': StringField('Repository Selector'),
     }
 
-    column_labels = dict(repository_id=_('Repository'),
+    column_labels = dict(widget_id=_('ID'),
+                         repository_id=_('Repository'),
                          widget_type=_('Widget Type'),
                          label=_('Label'),
                          is_enabled=_('Enable'),

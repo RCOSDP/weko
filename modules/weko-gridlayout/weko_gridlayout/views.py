@@ -149,7 +149,7 @@ def delete_widget_item():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
-    return delete_admin_widget_item_setting(data.get('data_id'))
+    return jsonify(WidgetItemServices.delete_by_id(data.get('data_id')))
 
 
 @blueprint_api.route('/get_account_role', methods=['GET'])
