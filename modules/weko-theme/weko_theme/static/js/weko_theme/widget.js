@@ -10,6 +10,18 @@ const ACCESS_COUNTER = "Access counter";
     getWidgetDesignSetting();
     window.lodash = _.noConflict();
 }());
+let current_role = undefined;
+
+let get_current_role = function() {
+    $.ajax({
+        method: 'GET',
+        url: '/api/admin/get_current_role',
+        success: function(response) {
+            console.log(response);
+            return response;
+        }
+    })
+}
 
 let PageBodyGrid = function () {
     this.init = function () {
@@ -100,17 +112,29 @@ let PageBodyGrid = function () {
               },
             data: JSON.stringify(request_data),
             dataType: 'json',
-            success: function(response) {
+            success: (response) => {
+
                 let result = response['data'];
+                console.log(response);
                 let host = window.location.origin;
                 let innerHTML = '';
                 for (let data in result) {
-                    innerHTML += '<li><a href="' + host + result[data]['url'] + '">' + result[data]['name'] +'</a></li>';
+                    innerHTML += '<li><a class="a-new-arrivals" href="#" data-roles="' + result[data]['roles'] +'" data-link="' + host + result[data]['url'] + '">' + result[data]['name'] +'</a></li>';
                 }
                 innerHTML = '<div class="no-li-style">' + innerHTML + '</div>';
                 $("#"+id).append(innerHTML)
+                this.validateRole();
             }
         })
+    }
+    this.validateRole = function () {
+        if (!current_role) {
+            current_role = get_current_role();
+        }
+        $('.a-new-arrivals').on('click', function () {
+            console.log($(this).data('link'));
+            console.log($(this).data('roles'));
+        });
     }
 
     this.widgetTemplate = function (node, index) {
@@ -178,7 +202,6 @@ let PageBodyGrid = function () {
 
         return template;
     };
-
 };
 
 function getWidgetDesignSetting() {
