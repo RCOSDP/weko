@@ -10,15 +10,15 @@ const ACCESS_COUNTER = "Access counter";
     getWidgetDesignSetting();
     window.lodash = _.noConflict();
 }());
-let current_role = undefined;
+let current_role = '';
 
 let get_current_role = function() {
     $.ajax({
         method: 'GET',
         url: '/api/admin/get_current_role',
+        async: false,
         success: function(response) {
-            console.log(response);
-            return response;
+            current_role = response['data'];
         }
     })
 }
@@ -91,16 +91,26 @@ let PageBodyGrid = function () {
     };
 
     this.buildAccessCounter = function(initNumber) {
-        // TODO: Get access count from API
-        let dummyData = 123456789;
+        let data = 0;
+        // TODO: remove comment code when API work
+        // $.ajax({
+        //     url: '/api/stats/top_page_access/0/0',
+        //     method: 'GET',
+        //     async: false,
+        //     success: (response) => {
+        //         if (response['all']['count']) {
+        //             data = response['all']['count'];
+        //         }
+        //     }
+        // })
 
         // Convert to display-able number
         let initNum = Number(initNumber);
-        let result = Number(dummyData);
+        let result = Number(data);
         if (Number.isNaN(initNum)) {
             result = dummyData + initNumber;
         }
-        return '<div style="text-align: center; font-size: 20px; font-weight: bold; margin: auto; width: 50%;">'+result+'</div>';
+        return '<div style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">'+result+'</div>';
     }
 
     this.buildNewArrivals = function(request_data, id) {
@@ -109,13 +119,11 @@ let PageBodyGrid = function () {
             url: '/api/admin/get_new_arrivals',
             headers: {
                 'Content-Type': 'application/json'
-              },
+            },
             data: JSON.stringify(request_data),
             dataType: 'json',
             success: (response) => {
-
                 let result = response['data'];
-                console.log(response);
                 let host = window.location.origin;
                 let innerHTML = '';
                 for (let data in result) {
@@ -129,11 +137,24 @@ let PageBodyGrid = function () {
     }
     this.validateRole = function () {
         if (!current_role) {
-            current_role = get_current_role();
+            get_current_role();
         }
         $('.a-new-arrivals').on('click', function () {
-            console.log($(this).data('link'));
-            console.log($(this).data('roles'));
+            let link = $(this).data('link');
+            let roles = $(this).data('roles');
+            let isValid = false;
+            for (let role of current_role) {
+                if (roles.indexOf(role) != -1) {
+                    isValid = true;
+                    break;
+                }
+            }
+            if (!isValid) {
+                // TODO: Change to modal type and change error message (based on requirement)
+                alert("You don't have permission to access the item");
+            }else {
+                window.location.href = link;
+            }
         });
     }
 
@@ -172,7 +193,12 @@ let PageBodyGrid = function () {
         } else if (node.type == NOTICE_TYPE) {
             content = this.buildNoticeType(languageDescription, index);
         } else if (node.type == ACCESS_COUNTER) {
-            content = this.buildAccessCounter(5);
+            let initNumber = 0;
+            if (node.access_counter &&
+                !Number.isNaN(Number(node.access_counter))) {
+                initNumber = Number(node.access_counter);
+            }
+            content = this.buildAccessCounter(initNumber);
         } else if (node.type == NEW_ARRIVALS) {
             let innerID = 'new_arrivals'+ '_' + index;
             id = 'id="' + innerID + '"';
@@ -201,7 +227,7 @@ let PageBodyGrid = function () {
             '</div>';
 
         return template;
-    };
+    }
 };
 
 function getWidgetDesignSetting() {
