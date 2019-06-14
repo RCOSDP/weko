@@ -51,7 +51,7 @@ IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          ]
 """Options list for Identifier Grant action."""
 
-IDENTIFIER_GRANT_SUFFIX_METHOD = 1
+IDENTIFIER_GRANT_SUFFIX_METHOD = 2
 """
     Suffix input method for Identifier Grant action
 

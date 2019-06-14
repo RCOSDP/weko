@@ -29,6 +29,8 @@ from weko_records.models import ItemMetadata
 
 from .api import WorkActivity
 from .config import IDENTIFIER_ITEMSMETADATA_FORM
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_pidstore.models import PIDDoesNotExistError, PIDAlreadyExists
 
 
 def get_community_id_by_index(index_name):
@@ -60,11 +62,13 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     activity_obj = WorkActivity()
     activity_detail = activity_obj.get_activity_detail(activity_id)
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+    
 
     # transfer to JPCOAR format
     res = {'pidstore_identifier': {}}
     tempdata = IDENTIFIER_ITEMSMETADATA_FORM
-
+    flagDelPidstore = False
+    
     if idf_grant == 0:
         res['pidstore_identifier'] = tempdata
     elif idf_grant == 1:  # identifier_grant_jalc_doi
@@ -107,9 +111,17 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifier']['properties']['identifierType'] = 'HDL'
             del tempdata['identifierRegistration']
             res['pidstore_identifier'] = tempdata
+    elif idf_grant == -1:
+        res['pidstore_identifier'] = tempdata
+        flagDelPidstore = del_invenio_pidstore(item.id)
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
+        res['pidstore_identifier'] = tempdata
     try:
+        print('flagDelPidstore', flagDelPidstore)
+        if not flagDelPidstore:
+            reg_invenio_pidstore(tempdata['identifier']['value'], item.id)
+        
         with db.session.begin_nested():
             item.update(res)
             item.commit()
@@ -126,12 +138,47 @@ def find_doi(doi_link):
     :param: doi_link
     :return: True/False
     """
-    itemMetadatas = ItemMetadata.query.all()
     isExistDoi = False
-    link_doi = doi_link['doi_link']
-    for itemMetadata in itemMetadatas:
-        pidstoreIdentifier = itemMetadata.json.get('pidstore_identifier')
-        if pidstoreIdentifier:
-            if str(pidstoreIdentifier['identifier']['value']) == link_doi:
-                isExistDoi = True
-    return isExistDoi
+    try:
+        link_doi = doi_link['doi_link']
+        pid_identifier = PersistentIdentifier.get('doi', link_doi)
+        if pid_identifier.pid_value == link_doi:
+            isExistDoi = True
+        return isExistDoi
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.error(_('[find_doi]==============PID does not exist!=============='))
+        current_app.logger.error(pidNotEx)
+        return isExistDoi
+
+
+def del_invenio_pidstore(item_id):
+    """
+    Change status of pids_tore has been registed.
+
+    :param: item_id
+    :return: True/False
+    """
+    try:
+        print('======================Del_invenio_pidstore')
+        pid_identifier = PersistentIdentifier.get_by_object('doi', 'rec', item_id)
+        print('======================Del_invenio_pidstore', pid_identifier)
+        if pid_identifier:
+            pid_identifier.delelte()
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.error(_('[del_invenio_pidstore]: =======PID does not exist!======='))
+        current_app.logger.error(pidNotEx)
+
+
+def reg_invenio_pidstore(pid_value, item_id):
+    """
+    Register pids_tore.
+
+    :param: pid_value, item_id
+    """
+    try:
+        print('====================Register invenio=======')
+        pid_identifier_reg =  PersistentIdentifier.create('doi', pid_value, None, PIDStatus.REGISTERED, 'rec', item_id)
+        print('====================After Register invenio=======', pid_identifier_reg)
+    except PIDAlreadyExists as pidArlEx:
+        current_app.logger.error(_('!==============PID Already Exists!=============='))
+        current_app.logger.error(pidArlEx)
