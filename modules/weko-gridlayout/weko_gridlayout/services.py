@@ -34,7 +34,7 @@ from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, \
     convert_data_to_desgin_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
-    update_general_item
+    update_general_item, get_role_list
 
 
 class WidgetItemServices:
@@ -717,7 +717,11 @@ class WidgetDataLoaderServices:
                     new_data['name'] = record_data['item_title']
                     new_data['url'] = '/records/' + \
                         record_data['control_number']
-                    new_data['rss'] = dict()
+                    new_data['roles'] = get_role_list(record_data['path'])
+                    rss = dict()
+                    if rss_status:
+                        rss = cls.get_arrivals_rss()
+                    new_data['rss'] = rss
                     data.append(new_data)
             result['data'] = data
         except Exception as e:
@@ -726,4 +730,5 @@ class WidgetDataLoaderServices:
 
     @classmethod
     def get_arrivals_rss(cls):
-        pass
+        result = dict()
+        return result
