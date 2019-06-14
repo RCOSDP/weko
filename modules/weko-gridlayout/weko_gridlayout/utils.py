@@ -23,9 +23,12 @@ import copy
 import json
 
 from flask import current_app, jsonify, make_response
+from flask_login import current_user
 from invenio_db import db
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
+from weko_index_tree.models import Index
+from invenio_accounts.models import Role
 
 from .api import WidgetItems, WidgetMultiLangData
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
@@ -700,4 +703,44 @@ def convert_data_to_edit_pack(data):
     result['repository_id'] = data.get('repository_id')
     result['text_color'] = settings.get('text_color')
     result['widget_type'] = data.get('widget_type')
+    return result
+
+
+def get_role_list(list_id):
+    """Get role list from list item id.
+
+    Arguments:
+        list_id {list} -- The id list
+
+    Returns:
+        list -- The role list
+    """
+    result = list()
+    if not list_id or len(list_id) == 0:
+        return result
+
+    for item_id in list_id:
+        item = Index.query.filter_by(id=item_id).one_or_none()
+        if not item:
+            continue
+        roles = str(item.browsing_role).split(',')
+        for role in roles:
+            if role not in result:
+                result.append(role)
+    return result
+
+
+def get_current_user_role():
+    """Get role of current login user.
+
+    Returns:
+        [list] -- list role
+
+    """
+    result = list()
+    list_role = current_user.roles
+    for role in list_role:
+        print('=====')
+        print(role.name)
+        result.append(role.name)
     return result
