@@ -80,7 +80,6 @@ class WidgetItemServices:
                             current_id):
                 result['message'] = 'Save fail. Data input to create is exist!'
                 return result
-
         if data.get('flag_edit'):
             old_repo = cls.get_repo_by_id(current_id)
             if (str(old_repo) != str(widget_data.get('repository')) and
@@ -293,17 +292,15 @@ class WidgetItemServices:
             boolean -- True if widget already exist
 
         """
-        list_id = WidgetItem.query.filter_by(
-                repository_id=str(repository_id), widget_type=str(type_id),
-                is_deleted=False
-            ).all()
+        list_id = WidgetItem.get_id_by_repository_and_type(
+                repository_id, type_id)
         if not list_id:
             return False
 
         if current_id and current_id in list_id:
             list_id.remove(current_id)
         for id in list_id:
-            multi_lang_data = WidgetMultiLangData.query.filter_by(widget_id = id.widget_id, is_deleted=False).all()
+            multi_lang_data = WidgetMultiLangData.query.filter_by(widget_id = id, is_deleted=False).all()
             if multi_lang_data:
                 for data in multi_lang_data:
                     dict_data = convert_widget_multi_lang_to_dict(data)

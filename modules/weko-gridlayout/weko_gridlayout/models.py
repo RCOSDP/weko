@@ -126,7 +126,8 @@ class WidgetItem(db.Model):
     def get_id_by_repository_and_type(cls, repository, type):
         widget_data = cls.query.filter_by(
             repository_id=repository,
-            widget_type=type
+            widget_type=type,
+            is_deleted = False
             ).all()
         if not widget_data:
             return None
