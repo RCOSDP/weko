@@ -566,6 +566,12 @@ def build_data_setting(data):
     result['frame_border_color'] = data.get('frame_border_color')
     result['label_color'] = data.get('label_color')
     result['text_color'] = data.get('text_color')
+    if str(data.get('widget_type')) == 'Access counter':
+        result['access_counter'] = data['settings'].get('access_counter') or ''
+    if str(data.get('widget_type')) == 'New arrivals':
+        result['new_dates'] = data['settings'].get('new_dates') or ''
+        result['display_result'] = data['settings'].get('display_result') or ''
+        result['rss_feed'] = data['settings'].get('rss_feed') or False
 
     return result
 
@@ -689,6 +695,7 @@ def convert_data_to_edit_pack(data):
     if not data:
         return None
     result = dict()
+    result_settings = dict()
     settings = copy.deepcopy(data.get('settings'))
     result['widget_id'] = data.get('widget_id')
     result['background_color'] = settings.get('background_color')
@@ -703,8 +710,14 @@ def convert_data_to_edit_pack(data):
     result['repository_id'] = data.get('repository_id')
     result['text_color'] = settings.get('text_color')
     result['widget_type'] = data.get('widget_type')
+    if str(data.get('widget_type')) == 'Access counter':
+        result_settings['access_counter'] = settings.get('access_counter')
+    if str(data.get('widget_type')) == 'New arrivals':
+        result_settings['new_dates'] = settings.get('new_dates')
+        result_settings['display_result'] = settings.get('display_result')
+        result_settings['rss_feed'] = settings.get('rss_feed')
+    result['settings'] = result_settings
     return result
-
 
 def get_role_list(list_id):
     """Get role list from list item id.
