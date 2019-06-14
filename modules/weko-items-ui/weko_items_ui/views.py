@@ -738,6 +738,8 @@ def prepare_edit_item():
 
                 # Create a new version of a record.
                 record = WekoDeposit.get_record(item_id)
+                if record is None:
+                    return jsonify(code=-1, msg=_('Record does not exist.'))
                 deposit = WekoDeposit(record, record.model)
                 new_record = deposit.newversion(pid_object)
                 if new_record is None:
