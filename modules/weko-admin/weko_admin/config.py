@@ -20,6 +20,8 @@
 
 """Configuration for weko-admin."""
 
+from flask_babelex import gettext as _
+
 WEKO_ADMIN_DEFAULT_LIFETIME = 60
 """ Session time out setting, default 60 minutes """
 
@@ -82,14 +84,82 @@ WEKO_ADMIN_DEFAULT_CRAWLER_LISTS = [
 ]
 """Default crawler files for restricting IP addresses and user agents."""
 
-WEKO_ADMIN_REPORT_EMAIL_DELIVERY = {
-    'day_of_week': 'Monday', 'month': 12, 'day': 1, 'hour': 12, 'minute': 0
+WEKO_ADMIN_REPORT_FREQUENCIES = ['daily', 'weekly', 'monthly']
+"""Email schedule frequency options."""
+
+WEKO_ADMIN_REPORT_DELIVERY_SCHED = {
+    'frequency': 'daily', 'details': '', 'enabled': False
 }
 """Default report email delivery schedule."""
 
-
 WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}'
-"""Redis cache"""
+"""Redis cache."""
+
+WEKO_ADMIN_REPORT_HEADERS = {
+    'file_download': _('No. Of File Downloads'),
+    'file_preview': _('No. Of File Previews'),
+    'index_access': _('Detail Views Per Index'),
+    'detail_view': _('Detail Views Count'),
+    'file_using_per_user': _('Usage Count By User'),
+    'search_count': _('Search Keyword Ranking'),
+    'top_page_access': _('Number Of Access By Host'),
+    'user_roles': _('User Affiliation Information'),
+    'site_access': _('Access Count By Site License')
+}
+"""Headers for the report .csv files"""
+
+WEKO_ADMIN_REPORT_SUB_HEADERS = {
+    'file_download': _('Open-Access No. Of File Downloads'),
+    'file_preview': _('Open-Access No. Of File Previews'),
+    'site_access': _('Access Number Breakdown By Site License')
+}
+"""Sub-Headers for the report .csv files"""
+
+WEKO_ADMIN_REPORT_COLS = {
+    'file_download': [
+        _('File Name'), _('Registered Index Name'),
+        _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
+        _('Logged In User'), _('Site License'), _('Admin'),
+        _('Registrar')],
+    'file_preview': [
+        _('File Name'), _('Registered Index Name'),
+        _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
+        _('Logged In User'), _('Site License'), _('Admin'),
+        _('Registrar')],
+    'index_access': [_('Index'), _('No. Of Views')],
+    'detail_view': [
+        _('Title'), _('Registered Index Name'), _('View Count'),
+        _('Non-logged-in User')],
+    'file_using_per_user': [_('Mail address'),
+                            _('Username'),
+                            _('File download count'),
+                            _('File playing count')],
+    'search_count': [_('Search Keyword'), _('Number Of Searches')],
+    'top_page_access': [_('Host'), _('IP Address'),
+                        _('WEKO Top Page Access Count')],
+    'user_roles': [_('Role'), _('Number Of Users')],
+    'site_access': [_('WEKO Top Page Access Count'),
+                    _('Number Of Searches'), _('Number Of Views'),
+                    _('Number Of File download'),
+                    _('Number Of File Regeneration')]
+}
+"""Columns for the report .csv files"""
+
+WEKO_ADMIN_REPORT_FILE_NAMES = {
+    'file_download': _('FileDownload_'),
+    'file_preview': _('FilePreview_'),
+    'index_access': _('IndexAccess_'),
+    'detail_view': _('DetailView_'),
+    'file_using_per_user': _('FileUsingPerUser_'),
+    'search_count': _('SearchCount_'),
+    'user_roles': _('UserAffiliate_'),
+    'site_access': _('SiteAccess_'),
+    'top_page_access': _('TopPageAccess_'),
+}
+"""File names for the report .csv files"""
+
+WEKO_ADMIN_REPORT_EMAIL_TEMPLATE = 'weko_admin/email_templates/report.html'
+"""Template for sending report email."""
 
 # Search management json
 

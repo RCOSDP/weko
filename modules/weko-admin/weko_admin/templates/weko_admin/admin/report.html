@@ -39,7 +39,6 @@
 {%- endblock javascript %}
 
 {%- block body %}
-<div id="alerts"></div>
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
 <style>
@@ -96,6 +95,7 @@
   </div>
 </div>
 
+<!-- Reports -->
 <div class="row content-font">
   <div class="col-md-1"></div>
   <div class="col-md-11">
@@ -145,18 +145,111 @@
         </select>
       </div>
       <input type="hidden" id="report_file_input" name="report" value="{}" />
+      <input type="hidden" id="send_email_input" name="send_email" value="False" />
     </form>
-    <div class="col-xs-2">
+    <div class="col-md-4">
       <button id="downloadReport" class="btn btn-primary action-big-button">
-            <span class="glyphicon glyphicon-download-alt"></span>
-                  {{_('Download')}}</button>
+        <span class="glyphicon glyphicon-download-alt"></span>
+        {{_('Download')}}
+      </button>
+      <a id="confirm_send_email" class="btn btn-light send-button"
+        data-toggle="modal" data-target="#confirm_send_email_modal">
+        <span class="glyphicon glyphicon-send"></span>
+        {{_('Send')}}
+      </a>
     </div>
   </div>
 </div>
 <hr>
 
+<!-- Set email addresses -->
+<form  name="email_form" method="POST" id="email_form"
+  action={{url_for('report.get_email_address')}}>
+  <div class="row content-font">
+    <div class="col-md-2"></div>
+    <div class="col-md-4">
+      <label>{{_('Receive Mail')}}</label><br/>
+      <p>{{_('Please register the email address to send the report:')}}</p>
+    </div>
+    <input type="hidden" id="email_address_length"
+      value="{{(emails | length) if emails else 1}}">
+
+    {% if not emails %}
+      <div class="form-group col-md-5 col-md-offset-3">
+        <input type="email" class="form-control inputEmail" id="inputEmail_0"
+          pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+          name="inputEmail"
+          placeholder="{{_('Enter email address.')}}"
+          value="" required/></br>
+      </div>
+    {% endif %}
+    {% for email in emails %}
+      <div id="emailID_{{email.id}}">
+        <div class="form-group col-md-5 col-md-offset-3">
+          <input type="email" class="form-control inputEmail" id="inputEmail_{{email.id}}"
+            pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+            name="inputEmail"
+            placeholder="{{_('Enter email address.')}}"
+            value={{email.email_address}} required/></br>
+        </div>
+        {% set limit = (emails | length) %}
+        {% if loop.index == 1 %}
+          <div class="col-md-1"></div>
+        {% else %}
+          <div class="col-md-1">
+              <a class="btn-default remove-button"
+                  onclick="$('#inputEmail_{{email.id}}').remove();"  id="remove_button">
+                  <span class="glyphicon glyphicon-remove"></span>
+              </a>
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <div id="newEmail" class="form-group" id="emailAdd"></div>
+    </div>
+    <div class="col-md-3"></div>
+    <div class="form-actions col-md-8">
+        <div class="col-md-2">
+          <a id="addEmail" class="btn btn-light add-big-button">
+              <span class="glyphicon glyphicon-plus"></span>
+                  {{_('Email Address')}}
+          </a>
+        </div>
+        <div class="col-md-4"></div>
+        <div class="col-md-2">
+          <a id="saveEmail" class="btn btn-primary save-button">
+              <span class="glyphicon glyphicon-download-alt"></span>
+                  {{_('Save')}}
+          </a>
+        </div>
+    </div>
+  </form>
+
+<!-- Scheduled Mail Delivery -->
+{% from "weko_admin/partials/email_schedule.html" import email_schedule_form %}
+{{ email_schedule_form(current_schedule, days_of_week, frequency_options) }}
+<hr>
+
+<!-- Custom Reports -->
 <div id="root"></div>
 
+<!-- Schedule Confirm Modal -->
+{% from "weko_theme/macros/modal_page.html" import confirm_modal %}
+{{ confirm_modal(modal_id="schedule_confirm_modal",
+                 button_id="confirm_schedule_button",
+                 button_text="Confirm",
+                 title=_('Confirmation'),
+                 body=_('Are you sure you want to save changes?'))}}
+
+<!-- Send Confirm Modal -->
+{% from "weko_theme/macros/modal_page.html" import confirm_modal %}
+{{ confirm_modal(modal_id="confirm_send_email_modal",
+                button_id="confirm_send_email_button",
+                button_text="Confirm",
+                title=_('Send Mail'),
+                body=_('Are you sure you want to send the mail?'))}}
+
+<!-- Error Modal -->
 <div class="modal fade" tabindex="-1" role="dialog" id="error_modal">
   <div class="modal-dialog" role="document">
     <div class="modal-content">

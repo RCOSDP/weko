@@ -51,6 +51,7 @@ search_management_js = Bundle(
 
 stats_report_js = Bundle(
     'js/weko_admin/stats_report.js',
+    'js/weko_admin/email_schedule.js',
     output="gen/weko_admin_ui_stats_report.%(version)s.js",
 )
 

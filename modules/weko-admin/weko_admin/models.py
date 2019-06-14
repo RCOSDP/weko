@@ -775,8 +775,59 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                     yield (name, value)
 
 
+class StatisticsEmail(db.Model):
+    """Save Email Address."""
+
+    __tablename__ = 'stats_email_address'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    email_address = db.Column(db.String(255), nullable=False)
+
+    @classmethod
+    def insert_email_address(cls, email_address):
+        """Insert Email Address."""
+        try:
+            dataObj = StatisticsEmail()
+            with db.session.begin_nested():
+                dataObj.email_address = email_address
+                db.session.add(dataObj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    @classmethod
+    def get_all_emails(cls):
+        """Get all recepient emails as a list."""
+        all_objects = cls.query.all()
+        return [row.email_address for row in all_objects]
+
+    @classmethod
+    def get_all(cls):
+        """Get all email address."""
+        try:
+            all = cls.query.all()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            all = []
+            raise
+        return all
+
+    @classmethod
+    def delete_all_row(cls):
+        """Delete all."""
+        try:
+            delete_all = StatisticsEmail.query.delete()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            raise
+        return delete_all
+
+
 __all__ = ([
     'SearchManagement', 'AdminLangSettings', 'ApiCertificate',
     'StatisticUnit', 'StatisticTarget', 'LogAnalysisRestrictedAddress',
-    'LogAnalysisRestrictedCrawlerList',
+    'LogAnalysisRestrictedCrawlerList', 'StatisticsEmail'
 ])
