@@ -90,8 +90,13 @@ require([
   }
 
   function isDOISuffixFormat(doi_link, doi_suffix){
-  
+    
     let regexDOI = /^[_\-.;()\/A-Za-z0-9]+$/gi;
+    
+    if(doi_suffix == "" || doi_suffix == null) {
+        alert("DOI is not input");
+        return false;
+    };
     
     if(!regexDOI.test(doi_suffix)) {
         alert("It's able to input only haft-width alphanumeric or half-width symbol _-.;()/");
@@ -110,6 +115,9 @@ require([
 
 //    if(isWithDrawDOI(doi_link)) {
 //    };
+
+
+    
     return true;
   }
 

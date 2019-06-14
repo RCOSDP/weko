@@ -46,6 +46,7 @@ from weko_items_ui.views import to_files_js
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
+from sqlalchemy import desc
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -586,7 +587,15 @@ def previous_action(activity_id='0', action_id=0, req=0):
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
     flow = Flow()
-
+    item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+    
+    print('pid_identifier previous')
+    pid_identifier = PersistentIdentifier.query.filter_by(
+                object_uuid=item.id, pid_type='doi').first()
+    pid_identifier.is_new()
+    pid_identifier.delete()
+    print('after delete pid_identifier row')
+    
     if req == 0:
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id)
@@ -737,6 +746,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                     identifier)
             # Clear identifier in ItemMetadata
             pidstore_identifier_mapping(None, -1, activity_id)
+            
             return jsonify(code=0,
                            msg=_('success'),
                            data={'redirect': url_for(
