@@ -1003,7 +1003,7 @@ def get_workflow_journal(activity_id):
     :param activity_id: The identify of Activity.
     :return: Workflow journal data
     """
-    journal_data = dict()
+    journal_data = None
     with db.session.no_autoflush:
         journal = ActionJournal.query.filter_by(
             activity_id=activity_id).one_or_none()
