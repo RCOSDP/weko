@@ -124,6 +124,7 @@
           $('div.sub_child_list').find('fieldset').attr('disabled', true);
         }
         saveMappingData();
+        disableSubAddButton();
       }
       if('del_sub_child' == action) {
         $(this).parents('.sub_child_itemtype_list').removeClass('sub_child_itemtype_list').addClass('sub_child_itemtype_del');
@@ -206,6 +207,8 @@
       if($('div.sub_child_list').length == 1) {
         $('div.sub_child_list').find('fieldset').attr('disabled', true);
       }
+      disableSubAddButton();
+      disableSubSelectOption();
     });
     function reset_sub_children_lists() {
       $('#sub-item-type-lists-label').text('Itemtype');
@@ -494,6 +497,7 @@
       $('div.sub_child_list').find('fieldset').removeAttr('disabled');
       saveMappingData();
       disableSubSelectOption();
+      disableSubAddButton();
     });
     $('select[name="sub_itemtype_list"], select[name="sub_jpcoar_list"]').on('change', function(ev){
       saveMappingData();
@@ -674,18 +678,9 @@
       previous = this.value;
     }).on('change', function (ev) {
       enableSelectOption(previous);
-      disableSelectOption(this.value);
-      $('option:selected', this).prop("disabled", false);
+      disableSubSelectOption();
       previous = this.value;
     });
-
-    function disableSelectOption(value) {
-      $('select[name="sub_jpcoar_list"] option').each(function () {
-        if (this.value == value) {
-          $(this).prop("disabled", true);
-        }
-      });
-    }
 
     function enableSelectOption(value) {
       $('select[name="sub_jpcoar_list"] option').each(function () {
@@ -722,6 +717,19 @@
           }// End if currentValue
         }); // End Option each
       }); // End sub_jpcoar_list each
+    }
+
+    function disableSubAddButton() {
+      if(page_global.sub_jpcoar_list.length > 0) {
+        let selectSize = $("select[name='sub_jpcoar_list']").size() - 1;
+        if (selectSize >= page_global.sub_jpcoar_list.length){
+          $("#sub_mapping-add").prop("disabled", true);
+        } else {
+          $("#sub_mapping-add").prop("disabled", false);
+        }
+      } else {
+        $("#sub_mapping-add").prop("disabled", true);
+      }
     }
 
 });
