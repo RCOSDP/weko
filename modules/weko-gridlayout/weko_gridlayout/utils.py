@@ -737,10 +737,10 @@ def get_current_user_role():
         [list] -- list role
 
     """
+    data = dict()
     result = list()
     list_role = current_user.roles
     for role in list_role:
-        print('=====')
-        print(role.name)
-        result.append(role.name)
-    return result
+        result.append(role.id)
+    data['data'] = result
+    return data
