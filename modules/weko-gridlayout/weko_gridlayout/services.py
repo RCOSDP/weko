@@ -722,7 +722,10 @@ class WidgetDataLoaderServices:
                     if rss_status:
                         rss = cls.get_arrivals_rss()
                     new_data['rss'] = rss
-                    data.append(new_data)
+                    if (len(data) < int(number_result)):
+                        data.append(new_data)
+                    else:
+                        break
             result['data'] = data
         except Exception as e:
             result['error'] = str(e)
