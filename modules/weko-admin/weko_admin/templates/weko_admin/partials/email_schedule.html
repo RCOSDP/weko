@@ -1,0 +1,95 @@
+{% macro email_schedule_form(current_schedule, days_of_week, frequency_options) %}
+<!-- Scheduled Mail Delivery -->
+<div class="row content-font">
+  <div class="col-md-1"></div>
+  <div class="col-md-11 pull-left">
+    <h4>{{_('Report Email Schedule')}}</h4>
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-4">
+    <label>{{_('Transmission Interval')}}</label>
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <div class="col-xs-2">
+      <p class="">{{_('Frequency')}}</p>
+    </div>
+    <div class="col-xs-2">
+      <p class="{{'hidden' if current_schedule['frequency'] == 'daily' else ''}}"
+        id="sched_details_label">{{_('Details')}}</p>
+    </div>
+  </div>
+</div>
+<div class="row content-font">
+  <div class="col-md-2"></div>
+  <div class="col-md-10">
+    <form method="POST" name="email_sched_form" id="email_sched_form"
+      action={{url_for('report.set_email_schedule')}}>
+      <div class="form-group">
+        <div class="col-xs-2">
+          <select class="form-control" id="email_sched_frequency" name="frequency">
+            {% for frequency in frequency_options %}
+              <option value="{{ frequency }}"
+                {{'selected = "selected"' if frequency == current_schedule['frequency'] else ''}}>
+                {{ frequency | title }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-xs-2">
+          <select class="form-control {{'' if current_schedule['frequency'] == 'monthly' else 'hidden'}}"
+            id="email_sched_details_monthly" name="monthly_details">
+            {%- for x in range(1, 31) %}
+              {%- set day = '%02d' % x %}
+              {%- set day_str = x | string %}
+              {%- set is_monthly = (current_schedule['frequency'] == 'monthly') %}
+              <option value="{{ day_str }}"
+                class="monthly-option"
+                {{'selected = "selected"' if day_str == current_schedule['details'] else ''}}>
+                {{ day }}
+              </option>
+            {%- endfor %}
+          </select>
+          <select class="form-control {{'' if current_schedule['frequency'] == 'weekly' else 'hidden'}}"
+            id="email_sched_details_weekly" name="weekly_details">
+            {%- for day_of_week in days_of_week %}
+              {%- set is_weekly = (current_schedule['frequency'] == 'weekly') %}
+              {%- set index = loop.index0 | string %}
+              <option class="weekly-option"
+                value="{{ index }}"
+                {{'selected = "selected"' if index == current_schedule['details'] else ''}}>
+                {{ day_of_week }}
+              </option>
+            {%- endfor %}
+          </select>
+        </div>
+        <div class="col-xs-2">
+          <div class="form-group">
+            <label class="radio-inline" for="enable_schedule">
+              <input type="radio" name="dis_enable_schedule" id="enable_schedule" value="True"
+                {{ 'checked' if current_schedule['enabled'] else '' }}>
+              {{_('On')}}
+            </label>
+            <label class="radio-inline" for="disable_schedule">
+              <input type="radio" name="dis_enable_schedule" id="disable_schedule" value="False"
+                {{ 'checked' if not current_schedule['enabled'] else '' }} >
+              {{_('Off')}}
+            </label>
+          </div>
+        </div>
+        <div class="form-group col-xs-2">
+          <a id="confirm_email_sched" class="btn btn-primary save-button"
+            data-toggle="modal" data-target="#schedule_confirm_modal">
+            <span class="glyphicon glyphicon-download-alt"></span>
+            {{_('Save')}}
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endmacro %}
