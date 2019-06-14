@@ -534,8 +534,7 @@ def next_action(activity_id='0', action_id=0):
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
-        return jsonify(code=-1,
-                       msg=_('error'))
+        return jsonify(code=-1, msg=_('error'))
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
     work_activity.upt_activity_action_status(
@@ -552,10 +551,14 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
-            item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-            record = WekoDeposit.get_record(item.id)
-            deposit = WekoDeposit(record, record.model)
-            deposit.publish()
+            if activity_detail is not None and \
+                activity_detail.item_id is not None:
+                record = WekoDeposit.get_record(activity_detail.item_id)
+                deposit = WekoDeposit(record, record.model)
+                deposit.publish()
+                # Make status Public as default
+                updated_item = UpdateItem()
+                updated_item.publish(record)
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
