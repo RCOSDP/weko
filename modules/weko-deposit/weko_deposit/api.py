@@ -338,19 +338,21 @@ class WekoDeposit(Deposit):
             # update relation version current to ES
             pid = PersistentIdentifier.get('recid', self.data.get('id'))
             relations = serialize_relations(pid)
-            if relations and 'version' in relations:
+            if relations is not None and 'version' in relations:
                 relations_ver = relations['version'][0]
                 relations['version'][0]['id'] = pid.object_uuid
                 self.indexer.update_relation_version_is_last(relations[
                     'version'][0])
 
                 # update relation version previous to ES
-                if 'previous' in relations_ver and relations_ver['previous']:
+                if relations_ver is not None and 'previous' in relations_ver \
+                    and relations_ver['previous'] is not None:
                     pid_val_prev = relations_ver['previous']['pid_value']
                     pid_prev = PersistentIdentifier.get(
                         'recid', pid_val_prev)
                     relations_prev = serialize_relations(pid_prev)
-                    if relations_prev and 'version' in relations_prev:
+                    if relations_prev is not None \
+                        and 'version' in relations_prev:
                         relations_prev['version'][0]['id'] = pid_prev.object_uuid
                         self.indexer.update_relation_version_is_last(
                             relations_prev['version'][0])
@@ -395,11 +397,9 @@ class WekoDeposit(Deposit):
 
         recid = PersistentIdentifier.get('recid', str(data['_deposit']['id']))
         depid = PersistentIdentifier.get('depid', str(data['_deposit']['id']))
-        pid_value=int(recid.pid_value)
-        pid_value+=1
         p_depid = PersistentIdentifier.create(
-            'depid',
-            str(pid_value),
+            'parent',
+            'parent:recid/{0}'.format(str(data['_deposit']['id'])),
             object_type='rec',
             object_uuid=uuid.uuid4(),
             status=PIDStatus.REGISTERED
@@ -505,59 +505,56 @@ class WekoDeposit(Deposit):
             # Check that there is not a newer draft version for this record
             # and this is the latest version
             pv = PIDVersioning(child=pid)
-            last_pid = pv.last_child
-            if not pv.draft_child and pid == last_pid:
+            if pv.exists and not pv.draft_child and pid == pv.last_child:
+                last_pid = pv.last_child
                 # Get copy of the latest record
                 latest_record = WekoDeposit.get_record(
                     last_pid.object_uuid)
-                data = latest_record.dumps()
-                item_metadata = ItemsMetadata.get_record(
-                    last_pid.object_uuid).dumps()
+                if latest_record is not None:
+                    data = latest_record.dumps()
 
-                owners = data['_deposit']['owners']
-                keys_to_remove = ('_deposit', 'doi', '_oai',
-                                  '_files', '_buckets', '$schema')
-                for k in keys_to_remove:
-                    data.pop(k, None)
+                    owners = data['_deposit']['owners']
+                    keys_to_remove = ('_deposit', 'doi', '_oai',
+                                      '_files', '_buckets', '$schema')
+                    for k in keys_to_remove:
+                        data.pop(k, None)
 
-                # NOTE: We call the superclass `create()` method, because we
-                # don't want a new empty bucket, but an unlocked snapshot of
-                # the old record's bucket.
-                deposit = super(WekoDeposit, self).create(data)
-                # Injecting owners is required in case of creating new
-                # version this outside of request context
-                deposit['_deposit']['owners'] = owners
+                    # NOTE: We call the superclass `create()` method, because we
+                    # don't want a new empty bucket, but an unlocked snapshot of
+                    # the old record's bucket.
+                    deposit = super(WekoDeposit, self).create(data)
+                    # Injecting owners is required in case of creating new
+                    # version this outside of request context
+                    deposit['_deposit']['owners'] = owners
 
-                recid = PersistentIdentifier.get(
-                    'recid', str(data['_deposit']['id']))
-                depid = PersistentIdentifier.get(
-                    'depid', str(data['_deposit']['id']))
-                PIDVersioning(parent=pv.parent).insert_draft_child(
-                    child=recid)
-                RecordDraft.link(recid, depid)
+                    recid = PersistentIdentifier.get(
+                        'recid', str(data['_deposit']['id']))
+                    depid = PersistentIdentifier.get(
+                        'depid', str(data['_deposit']['id']))
+                    PIDVersioning(parent=pv.parent).insert_draft_child(child=recid)
+                    RecordDraft.link(recid, depid)
 
-                # Create snapshot from the record's bucket and update data
-                snapshot = latest_record.files.bucket.snapshot(lock=False)
-                snapshot.locked = False
-                if 'extra_formats' in latest_record['_buckets']:
-                    extra_formats_snapshot = \
-                        latest_record.extra_formats.bucket.snapshot(
-                            lock=False)
-                deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                RecordsBuckets.create(
-                    record=deposit.model, bucket=snapshot)
-                if 'extra_formats' in latest_record['_buckets']:
-                    deposit['_buckets']['extra_formats'] = \
-                        str(extra_formats_snapshot.id)
-                    RecordsBuckets.create(record=deposit.model,
-                                          bucket=extra_formats_snapshot)
-                index = {'index': self.get('path', []), 'actions': 'private'
-                         if self.get('publish_status', '1') == '1' else 'publish'}
-                if 'activity_info' in session:
-                    del session['activity_info']
-                args = [index, item_metadata]
-                deposit.update(*args)
-                deposit.commit()
+                    # Create snapshot from the record's bucket and update data
+                    snapshot = latest_record.files.bucket.snapshot(lock=False)
+                    snapshot.locked = False
+                    deposit['_buckets'] = {'deposit': str(snapshot.id)}
+                    RecordsBuckets.create(record=deposit.model, bucket=snapshot)
+                    if 'extra_formats' in latest_record['_buckets']:
+                        extra_formats_snapshot = \
+                            latest_record.extra_formats.bucket.snapshot(lock=False)
+                        deposit['_buckets']['extra_formats'] = \
+                            str(extra_formats_snapshot.id)
+                        RecordsBuckets.create(record=deposit.model,
+                                              bucket=extra_formats_snapshot)
+                    index = {'index': self.get('path', []), 'actions': 'private'
+                        if self.get('publish_status', '1') == '1' else 'publish'}
+                    if 'activity_info' in session:
+                        del session['activity_info']
+                    item_metadata = ItemsMetadata.get_record(
+                        last_pid.object_uuid).dumps()
+                    args = [index, item_metadata]
+                    deposit.update(*args)
+                    deposit.commit()
             return deposit
         except SQLAlchemyError as ex:
             current_app.logger.debug(ex)

@@ -323,7 +323,7 @@ def display_activity(activity_id=0):
                 files = item_json.get('files')
         if not files:
             deposit = WekoDeposit.get_record(item.id)
-            if deposit:
+            if deposit is not None:
                 files = to_files_js(deposit)
 
         from weko_deposit.links import base_factory
@@ -554,11 +554,12 @@ def next_action(activity_id='0', action_id=0):
             if activity_detail is not None and \
                 activity_detail.item_id is not None:
                 record = WekoDeposit.get_record(activity_detail.item_id)
-                deposit = WekoDeposit(record, record.model)
-                deposit.publish()
-                # Make status Public as default
-                updated_item = UpdateItem()
-                updated_item.publish(record)
+                if record is not None:
+                    deposit = WekoDeposit(record, record.model)
+                    deposit.publish()
+                    # Make status Public as default
+                    updated_item = UpdateItem()
+                    updated_item.publish(record)
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
@@ -692,26 +693,36 @@ def cancel_action(activity_id='0', action_id=0):
     post_json = request.get_json()
     work_activity = WorkActivity()
 
-    # clear deposit
-    activity_detail = work_activity.get_activity_detail(activity_id)
-    cancel_item_id = activity_detail.item_id
-    cancel_record = WekoDeposit.get_record(cancel_item_id)
-    cancel_deposit = WekoDeposit(cancel_record, cancel_record.model)
-    cancel_deposit.clear()
-    # Remove draft child
-    cancel_pid = PersistentIdentifier.get_by_object(
-        pid_type='recid', object_type='rec', object_uuid=cancel_item_id)
-    cancel_pv = PIDVersioning(child=cancel_pid)
-    previous_pid = cancel_pv.previous
-    cancel_pv.remove_child(cancel_pid)
-
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,
         action_version=post_json.get('action_version'),
         action_status=ActionStatusPolicy.ACTION_CANCELED,
-        commond=post_json.get('commond'),
-        item_id=previous_pid.object_uuid)
+        commond=post_json.get('commond'))
+
+    # clear deposit
+    activity_detail = work_activity.get_activity_detail(activity_id)
+    if activity_detail is not None:
+        cancel_item_id = activity_detail.item_id
+        if cancel_item_id is None:
+            pid_value = post_json.get('pid_value')
+            if pid_value is not None:
+                pid = PersistentIdentifier.get('recid', pid_value)
+                cancel_item_id = pid.object_uuid
+        if cancel_item_id is not None:
+            cancel_record = WekoDeposit.get_record(cancel_item_id)
+            if cancel_record is not None:
+                cancel_deposit = WekoDeposit(cancel_record, cancel_record.model)
+                cancel_deposit.clear()
+                # Remove draft child
+                cancel_pid = PersistentIdentifier.get_by_object(
+                    pid_type='recid', object_type='rec', object_uuid=cancel_item_id)
+                cancel_pv = PIDVersioning(child=cancel_pid)
+                if cancel_pv.exists:
+                    previous_pid = cancel_pv.previous
+                    if previous_pid is not None:
+                        activity.update(dict(item_id=previous_pid.object_uuid))
+                    cancel_pv.remove_child(cancel_pid)
 
     work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
