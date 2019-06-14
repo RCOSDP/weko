@@ -292,6 +292,9 @@ function handleSharePermission(value) {
     function WekoRecordsCtrl($scope, $rootScope, $modal, InvenioRecordsAPI) {
       //      $scope.items = [ 'item1', 'item2', 'item3' ];
       $scope.filemeta_key = '';
+      $scope.bibliographic_key = '';
+      $scope.bibliographic_title_key = '';
+      $scope.bibliographic_title_lang_key = '';
       $scope.filemeta_form_idx = -1;
       $scope.is_item_owner = false;
       $scope.searchFilemetaKey = function () {
@@ -336,7 +339,7 @@ function handleSharePermission(value) {
           }
         });
         $rootScope.$broadcast('schemaFormRedraw');
-        
+
       }
       $scope.initContributorData = function() {
         $("#contributor-panel").addClass("hidden");
@@ -397,8 +400,63 @@ function handleSharePermission(value) {
         }
       }
 
+      $scope.getBibliographicMetaKey = function () {
+        Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+          ([key, value]) => {
+            if (value.properties && value.properties.hasOwnProperty('bibliographic_title')) {
+              $scope.bibliographic_key =  key;
+              const titleProperties = value.properties.bibliographic_title.items.properties;
+              Object.entries(titleProperties).forEach(([subKey, subValue]) => {
+                if (subValue.format == "text"){
+                  $scope.bibliographic_title_key = subKey;
+                } else if (subValue.format == "select"){
+                  $scope.bibliographic_title_lang_key = subKey;
+                }
+              });
+            }
+          }
+        );
+      }
+
+      $scope.autofillJournal = function () {
+        this.getBibliographicMetaKey();
+        const bibliographicKey = $scope.bibliographic_key;
+        const title = $scope.bibliographic_title_key;
+        const titleLanguage = $scope.bibliographic_title_lang_key;
+        const activityId = $("#hidden_activity_id").val();
+        if (bibliographicKey && $rootScope.recordsVM.invenioRecordsModel && activityId) {
+          let request = {
+            url: '/api/autofill/get_auto_fill_journal/' + activityId,
+            method: "GET",
+            dataType: "json"
+          };
+
+          InvenioRecordsAPI.request(request).then(
+            function success(response) {
+              let data = response.data;
+              if (data && data.result) {
+                let journalData = data.result;
+                const defaultLanguage = "en";
+                if (journalData.keywords) {
+                  let titleData = {};
+                  titleData[title] = journalData.keywords;
+                  titleData[titleLanguage] = defaultLanguage;
+                  $rootScope.recordsVM.invenioRecordsModel[bibliographicKey].bibliographic_title = [
+                    titleData
+                  ];
+                }
+              }
+            },
+            function error(response) {
+              addAlert(response);
+            }
+          );
+        }
+      }
+
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.initContributorData();
+        $scope.autofillJournal();
         $scope.initFilenameList();
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
