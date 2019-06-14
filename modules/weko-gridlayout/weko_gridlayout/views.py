@@ -197,5 +197,4 @@ def get_current_role():
         list -- role
 
     """
-    print('======================')
-    return jsonify(get_current_user_role)
+    return jsonify(get_current_user_role())
