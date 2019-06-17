@@ -510,6 +510,7 @@ class ExtendComponent extends React.Component {
         this.handleChangeDisplayResult = this.handleChangeDisplayResult.bind(this);
         this.handleChangeRssFeed = this.handleChangeRssFeed.bind(this);
         this.generateNewDate = this.generateNewDate.bind(this);
+        this.generateDisplayResult = this.generateDisplayResult.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
         if (!prevState.write_more && nextProps.data_load.more_description) {
@@ -519,9 +520,17 @@ class ExtendComponent extends React.Component {
             }
         }
         if (nextProps.type !== prevState.type) {
+            let defaultSettings = {};
+            if (nextProps.type == "New arrivals"){
+                defaultSettings['new_dates'] = '5';
+                defaultSettings['display_result'] = '5';
+            }
+            else {
+                settings = {};
+            }
             return {
                 type: nextProps.type,
-                settings: {},
+                settings: defaultSettings,
                 write_more: false
             };
         }
@@ -553,11 +562,28 @@ class ExtendComponent extends React.Component {
     }
 
     generateNewDate(){
-        let displayResult =['Today'];
-        for(let i=0; i<31; i++)
+        let newDates =['Today'];
+        for(let i=1; i<=31; i++)
         {
-            displayResult.push(i+"");
+            newDates.push(i+"");
         }
+
+        let options = newDates.map((value) => {
+            return (
+                <option>{value}</option>
+            )
+        });
+        console.log(this.state.settings.new_dates);
+
+        return (
+            <select value={this.state.settings.new_dates} onChange={this.handleChangeNewDates} className="form-control" name="new_dates">
+                {options}
+            </select>
+        )
+    }
+
+    generateDisplayResult(){
+        let displayResult =['5','10','20','50','100'];
 
         let options = displayResult.map((value) => {
             return (
@@ -566,7 +592,7 @@ class ExtendComponent extends React.Component {
         });
 
         return (
-            <select value={this.state.settings.new_dates} onChange={this.handleChangeNewDates} className="form-control" name="new_dates">
+            <select value={this.state.settings.new_dates} onChange={this.handleChangeDisplayResult} className="form-control" name="new_dates">
                 {options}
             </select>
         )
@@ -742,7 +768,7 @@ class ExtendComponent extends React.Component {
                     <div className="form-group row">
                         <label htmlFor="display_result" className="control-label col-xs-2 text-right">Display Results</label>
                         <div class="controls col-xs-3">
-                            <input name="display_result" id='display_result' type="text" value={this.state.settings.display_result} onChange={this.handleChangeDisplayResult} className="form-control" />
+                            {this.generateDisplayResult()}
                         </div>
                     </div>
                     <div className="form-group row">
@@ -1403,7 +1429,6 @@ $(function () {
             settings:{},
         }
     }
-    console.log(editData);
     let returnURL = $("#return_url").val();
     ReactDOM.render(
         <MainLayout data_load={editData} is_edit={isEdit} return_url={returnURL} data_id={data_id} />,

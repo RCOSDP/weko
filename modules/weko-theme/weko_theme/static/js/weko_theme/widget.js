@@ -92,23 +92,22 @@ let PageBodyGrid = function () {
 
     this.buildAccessCounter = function(initNumber) {
         let data = 0;
-        // TODO: remove comment code when API work
-        // $.ajax({
-        //     url: '/api/stats/top_page_access/0/0',
-        //     method: 'GET',
-        //     async: false,
-        //     success: (response) => {
-        //         if (response['all']['count']) {
-        //             data = response['all']['count'];
-        //         }
-        //     }
-        // })
-
+        $.ajax({
+            url: '/api/stats/top_page_access/0/0',
+            method: 'GET',
+            async: false,
+            success: (response) => {
+                if (response['all']['count']) {
+                    data = response['all']['count'];
+                }
+            }
+        })
+        console.log("data:" + data);
         // Convert to display-able number
         let initNum = Number(initNumber);
         let result = Number(data);
-        if (Number.isNaN(initNum)) {
-            result = dummyData + initNumber;
+        if (!Number.isNaN(initNum)) {
+            result = result + initNumber;
         }
         return '<div style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">'+result+'</div>';
     }
