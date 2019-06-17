@@ -115,6 +115,7 @@
         let parent_li = $(this).parents('.sub_child_list');
         itemtype_key = $('input[type="radio"]:checked').val();
         mapping_key = parent_li.find('select[name="sub_jpcoar_list"]').val();
+        enableSelectOption(mapping_key);
         if(remove_mapping_child_item(itemtype_key, mapping_key)) {
           $(this).parents('.sub_child_list').remove();
           $('#preview_mapping').text(JSON.stringify(page_global.mapping_prop, null, 4));
@@ -122,6 +123,8 @@
         if($('div.sub_child_list').length == 1) {
           $('div.sub_child_list').find('fieldset').attr('disabled', true);
         }
+        saveMappingData();
+        disableSubAddButton();
       }
       if('del_sub_child' == action) {
         $(this).parents('.sub_child_itemtype_list').removeClass('sub_child_itemtype_list').addClass('sub_child_itemtype_del');
@@ -131,6 +134,7 @@
           $(this).parents('.sub_children_itemtype_list').find('.sub_child_itemtype_list').find('.sub_itemtype_link').addClass('hide');
         }
         $(this).parents('.sub_child_itemtype_del').remove();
+        saveMappingData();
       }
     });
     function remove_mapping_parent_item(itemtype_key, mapping_key) {
@@ -185,6 +189,7 @@
     }
     $('select[name="parent_list"]').on('change', function(ev){
       $(this).parent().find('input[type="radio"]').trigger('click');
+      saveMappingData();
     });
     $('input[type="radio"]').on('click', function(ev){
       $('tr').removeClass('active');
@@ -202,7 +207,8 @@
       if($('div.sub_child_list').length == 1) {
         $('div.sub_child_list').find('fieldset').attr('disabled', true);
       }
-      $('#sub_mapping-create').removeAttr('disabled');
+      disableSubAddButton();
+      disableSubSelectOption();
     });
     function reset_sub_children_lists() {
       $('#sub-item-type-lists-label').text('Itemtype');
@@ -212,7 +218,6 @@
       let new_sub_info = $('div.sub_children_list').clone(true);
       new_sub_info.removeClass('sub_children_list hide').addClass('sub_child_list');
       new_sub_info.appendTo('#sub_children_lists');
-      $('#sub_mapping-create').attr('disabled', true);
     }
     function display_parent_prop(jpcoar_key) {
       $('#jpcoar-props-lists').find('.jpcoar-prop-list').remove();
@@ -469,15 +474,36 @@
       }
       if(page_global.sub_jpcoar_list.length > 0) {
           new_sub_info.find('select[name="sub_jpcoar_list"]').empty();
+          let currentSubList = getCurrentSubJPCOARList();
+          let isSelected = false;
           page_global.sub_jpcoar_list.forEach(function(element){
-            new_sub_info.find('select[name="sub_jpcoar_list"]').append('<option value="'+element+'">'+element+'</option>');
+            let isDisabled = false;
+            let selected = "";
+            currentSubList.forEach(function(selectedValue){
+              if (element == selectedValue) {
+                isDisabled = true;
+                return;
+              }
+            });
+            if (!isSelected && !isDisabled){
+              selected = "selected";
+              isSelected = true;
+            }
+            new_sub_info.find('select[name="sub_jpcoar_list"]').append('<option ' + selected + ' value="'+element+'">'+element+'</option>');
           });
         }
       new_sub_info.removeClass('sub_children_list hide').addClass('sub_child_list');
       new_sub_info.appendTo('#sub_children_lists');
       $('div.sub_child_list').find('fieldset').removeAttr('disabled');
+      saveMappingData();
+      disableSubSelectOption();
+      disableSubAddButton();
     });
-    $('#sub_mapping-create').on('click', function(ev){
+    $('select[name="sub_itemtype_list"], select[name="sub_jpcoar_list"]').on('change', function(ev){
+      saveMappingData();
+    });
+
+    function saveMappingData(){
       if(page_global.mapping_prop == null) {
         mapping_str = $('#hide_mapping_prop').text();
         page_global.mapping_prop = JSON.parse(mapping_str);
@@ -601,77 +627,8 @@
           }
         }
       });
-//      // schema parent property info
-//      if($('#jpcoar-props-lists').find('.jpcoar-prop-list').length > 0) {
-//        $('#jpcoar-props-lists').find('.jpcoar-prop-list').each((index, element) => {
-//          let label_txt = $(element).find('label').text();
-//          let p_txt = $(element).find('p').text();
-//          let attr_txt = '';
-//          if($(element).find('input[type="text"]').length > 0) {
-//            attr_txt = $(element).find('input[type="text"]:first').val();
-//          }
-//          if($(element).find('select').length > 0) {
-//            attr_txt = $(element).find('select:first').val();
-//          }
-//          if(attr_txt.length > 0) {
-//            $(element).removeClass('has-error');
-//            if(!page_global.mapping_prop.hasOwnProperty(itemtype_key)) {
-//              page_global.mapping_prop[itemtype_key] = {};
-//              page_global.mapping_prop[itemtype_key][jpcoar_type] = {};
-//              page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = {'@attributes':{}};
-//            }
-//            if(!page_global.mapping_prop[itemtype_key].hasOwnProperty(jpcoar_type)) {
-//              page_global.mapping_prop[itemtype_key][jpcoar_type] = {};
-//              page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = {'@attributes':{}};
-//            }
-//            if(!page_global.mapping_prop[itemtype_key][jpcoar_type].hasOwnProperty(jpcoar_parent_key)) {
-//              page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = {'@attributes':{}};
-//            }
-//            if(typeof page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] == 'object') {
-//              if(!page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key].hasOwnProperty('@attributes')) {
-//                page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'] = {};
-//              }
-//              let cur_obj = page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'];
-//              cur_obj[label_txt] = attr_txt;
-//            } else {
-//              let tmp_str = page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key];
-//              page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = {'@attributes':{}};
-//              let cur_obj = page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'];
-//              cur_obj[label_txt] = attr_txt;
-//              if(tmp_str.length > 0) {
-//                page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@value'] = tmp_str;
-//              }
-//            }
-//          } else {
-//            if(p_txt == 'required') {
-//              page_global.hasError = true;
-//              $(element).addClass('has-error');
-//            } else {
-//              if(page_global.mapping_prop.hasOwnProperty(itemtype_key)) {
-//                if(page_global.mapping_prop[itemtype_key].hasOwnProperty(jpcoar_type)) {
-//                  if(page_global.mapping_prop[itemtype_key][jpcoar_type].hasOwnProperty(jpcoar_parent_key)) {
-//                    if(page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key].hasOwnProperty('@attributes')) {
-//                      if(page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'].hasOwnProperty(label_txt)) {
-//                        delete page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'][label_txt];
-//                        if(Object.keys(page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes']).length == 0) {
-//                          delete page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@attributes'];
-//                          if(page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key].hasOwnProperty('@value')) {
-//                            page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key]['@value'];
-//                          } else {
-//                            page_global.mapping_prop[itemtype_key][jpcoar_type][jpcoar_parent_key] = '';
-//                          }
-//                        }
-//                      }
-//                    }
-//                  }
-//                }
-//              }
-//            }
-//          }
-//        });
-//      }
       $('#preview_mapping').text(JSON.stringify(page_global.mapping_prop, null, 4));
-    });
+    }
 
     $('#mapping-submit').on('click', function(){
       var data = {
@@ -715,4 +672,64 @@
         }
       });
     }
+    var previous;
+    $('select[name="sub_jpcoar_list"]').on('focus', function () {
+      // Store the current value on focus and on change
+      previous = this.value;
+    }).on('change', function (ev) {
+      enableSelectOption(previous);
+      disableSubSelectOption();
+      previous = this.value;
+    });
+
+    function enableSelectOption(value) {
+      $('select[name="sub_jpcoar_list"] option').each(function () {
+        if (this.value == value) {
+          $(this).prop("disabled", false);
+        }
+      });
+    }
+
+    function getCurrentSubJPCOARList() {
+      let currentList = [];
+      $('select[name="sub_jpcoar_list"]').each(function () {
+        if (!currentList.includes(this.value)) {
+          currentList.push(this.value);
+        }
+      });
+      return currentList;
+    }
+
+    function disableSubSelectOption() {
+      let currentSubList = getCurrentSubJPCOARList();
+      $('select[name="sub_jpcoar_list"]').each(function () {
+        let currentValue = this.value;
+        $('option', this).each(function () {
+          let optionValue = $(this).val();
+          let currentOption = $(this);
+          if (currentValue != optionValue) {
+            currentSubList.forEach(function (selectedValue) {
+              if (optionValue == selectedValue) {
+                currentOption.prop("disabled", true);
+                return;
+              }
+            });
+          }// End if currentValue
+        }); // End Option each
+      }); // End sub_jpcoar_list each
+    }
+
+    function disableSubAddButton() {
+      if(page_global.sub_jpcoar_list.length > 0) {
+        let selectSize = $("select[name='sub_jpcoar_list']").size() - 1;
+        if (selectSize >= page_global.sub_jpcoar_list.length){
+          $("#sub_mapping-add").prop("disabled", true);
+        } else {
+          $("#sub_mapping-add").prop("disabled", false);
+        }
+      } else {
+        $("#sub_mapping-add").prop("disabled", true);
+      }
+    }
+
 });
