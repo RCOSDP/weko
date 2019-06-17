@@ -147,7 +147,7 @@ def get_widget_preview(repository_id, default_language):
                         "widget_language")
                     languages = item.get("multiLangSetting")
                     if type(languages) is dict and lang_code_default \
-                            is not None:
+                        is not None:
                         if languages.get(lang_code_default):
                             data_display = languages.get(lang_code_default)
                             widget_preview["name_display"] = data_display.get(
@@ -217,7 +217,7 @@ def _get_widget_design_item_base_on_current_language(current_language,
     if not widget["multiLangSetting"]:
         default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
         if isinstance(languages, dict) \
-                and languages.get(default_language_code):
+            and languages.get(default_language_code):
             widget["multiLangSetting"] = languages.get(default_language_code)
         else:
             widget["multiLangSetting"] = {
@@ -321,7 +321,7 @@ def update_admin_widget_item_setting(data):
         else:
             if not WidgetItems.create(
                 data_result) and not WidgetMultiLangData.create(
-                    data_result.get('multiLangSetting')):
+                data_result.get('multiLangSetting')):
                 success = False
                 msg = 'Create widget item fail.'
             else:
@@ -348,7 +348,7 @@ def delete_item_in_preview_widget_item(data_id, json_data):
     if type(json_data) is list:
         for item in json_data:
             if str(item.get('name')) == str(data_id.get('label')) and str(
-                    item.get('type')) == str(data_id.get('widget_type')):
+                item.get('type')) == str(data_id.get('widget_type')):
                 remove_list.append(item)
     for item in remove_list:
         json_data.remove(item)
@@ -371,6 +371,33 @@ def update_general_item(item, data_result):
     item['name'] = data_result.get('label')
     item['type'] = data_result.get('widget_type')
     item['multiLangSetting'] = data_result.get('multiLangSetting')
+    settings = data_result.get('settings')
+    if str(data_result.get('widget_type')) == "Access counter":
+        update_access_counter_item(item, settings)
+    if str(data_result.get('widget_type')) == "New arrivals":
+        update_new_arrivals_item(item, settings)
+
+
+def update_access_counter_item(item, data_result):
+    """Update widget item type Access Counter.
+
+    Arguments:
+        item {WidgetItem} -- Item need to be update
+        data_result {dict} -- [data to update]
+    """
+    item['access_counter'] = data_result.get('access_counter')
+
+
+def update_new_arrivals_item(item, data_result):
+    """Update widget item type New Arrivals.
+
+    Arguments:
+        item {WidgetItem} -- Item need to be update
+        data_result {dict} -- [data to update]
+    """
+    item['new_dates'] = data_result.get('new_dates')
+    item['display_result'] = data_result.get('display_result')
+    item['rss_feed'] = data_result.get('rss_feed')
 
 
 def update_item_in_preview_widget_item(data_id, data_result, json_data):
@@ -410,7 +437,7 @@ def handle_change_item_in_preview_widget_item(data_id, data_result):
         if data.get('settings'):
             json_data = json.loads(data.get('settings'))
             if str(data_id.get('repository')) != str(data_result.get(
-                    'repository')) or data_result.get('enable') is False:
+                'repository')) or data_result.get('enable') is False:
                 data = delete_item_in_preview_widget_item(data_id, json_data)
             else:
                 data = update_item_in_preview_widget_item(
@@ -718,6 +745,7 @@ def convert_data_to_edit_pack(data):
         result_settings['rss_feed'] = settings.get('rss_feed')
     result['settings'] = result_settings
     return result
+
 
 def get_role_list(list_id):
     """Get role list from list item id.
