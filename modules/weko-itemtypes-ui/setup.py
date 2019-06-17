@@ -105,6 +105,7 @@ setup(
             ' = weko_itemtypes_ui.bundles:js_dependencies',
             'weko_itemtypes_ui_schema_editor_js'
             ' = weko_itemtypes_ui.bundles:js_schema_editor',
+            'weko_mapping_ui_css = weko_itemtypes_ui.bundles:style_mapping',
             'weko_itemtypes_ui_css = weko_itemtypes_ui.bundles:style',
         ],
         'invenio_access.actions': [
