@@ -21,7 +21,7 @@
 }
 
 .next-button {
-  width: 80px;
+  width: 120px;
   height: 40px;
   font-size: 15px;
 }
@@ -150,7 +150,7 @@
 }
 
 button#btn_quit.done-button {
-  width: auto;
+  width: 120px;
 }
 
 .action-button {

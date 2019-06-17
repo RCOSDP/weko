@@ -546,6 +546,32 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
                 if isinstance(value, str):
                     yield (name, value)
 
+class ChargingFilePermission(db.Model, Timestamp):
+    """Represent an itemtype property.
+
+    The ItemTypeProperty object contains a ``created`` and  a
+    ``updated`` properties that are automatically updated.
+    """
+
+    __tablename__ = 'charging_file_permission'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+    """Identifier of itemtype property."""
+
+    userid = db.Column(
+        db.Integer(),
+        nullable=False,
+        unique=True
+    )
+    """Name identifier of itemtype property."""
+
+    can_access = db.Column(
+        db.Boolean(name='access'), 
+        default=True)
 
 __all__ = (
     'Timestamp',
@@ -557,4 +583,5 @@ __all__ = (
     'FileMetadata',
     'SiteLicenseInfo',
     'SiteLicenseIpAddress',
+    'ChargingFilePermission',
 )

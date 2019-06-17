@@ -55,6 +55,8 @@ from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import get_community_id_by_index, pidstore_identifier_mapping
 
+from weko_groups.models import Group
+
 blueprint = Blueprint(
     'weko_workflow',
     __name__,
@@ -347,6 +349,10 @@ def display_activity(activity_id=0):
         session['itemlogin_res_check'] = res_check
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
+
+    groups = Group.get_group_list()
+    current_app.logger.debug('----------------------------------------')
+    current_app.logger.debug(groups)
     return render_template(
         'weko_workflow/activity_detail.html',
         render_widgets=True,
