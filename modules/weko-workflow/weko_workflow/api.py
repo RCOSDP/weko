@@ -1362,6 +1362,27 @@ class UpdateItem(object):
         indexer = WekoIndexer()
         indexer.update_publish_status(record)
 
+    def update_status(pid, record, status='1'):
+        r"""Record update status.
+
+        :param pid: PID object.
+        :param record: Record object.
+        :param status: Publish status (0: publish, 1: private).
+        """
+        from invenio_db import db
+        from weko_deposit.api import WekoIndexer
+        publish_status = record.get('publish_status')
+        if not publish_status:
+            record.update({'publish_status': status})
+        else:
+            record['publish_status'] = status
+
+        record.commit()
+        db.session.commit()
+
+        indexer = WekoIndexer()
+        indexer.update_publish_status(record)
+
     def set_item_relation(self, relation_data, record):
         """Set relation info of item.
 
