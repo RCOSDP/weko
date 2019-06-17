@@ -733,7 +733,8 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
         for list_url in crawler_lists:
             try:
                 with db.session.begin_nested():
-                    record = LogAnalysisRestrictedCrawlerList(list_url=list_url)
+                    record = LogAnalysisRestrictedCrawlerList(
+                        list_url=list_url)
                     db.session.add(record)
                 db.session.commit()
             except Exception as ex:
@@ -795,7 +796,7 @@ class StatisticsEmail(db.Model):
         except BaseException as ex:
             db.session.rollback()
             current_app.logger.debug(ex)
-            raise
+            raise ex
         return cls
 
     @classmethod
@@ -824,10 +825,88 @@ class StatisticsEmail(db.Model):
             current_app.logger.debug(ex)
             raise
         return delete_all
+        raise ex
+        return cls
+
+
+class RankingSettings(db.Model):
+    """Ranking settings."""
+
+    __tablename__ = 'ranking_settings'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    is_show = db.Column(db.Boolean(name='show'), nullable=False, default=False)
+
+    new_item_period = db.Column(db.Integer, nullable=False, default=14)
+
+    statistical_period = db.Column(db.Integer, nullable=False, default=365)
+
+    display_rank = db.Column(db.Integer, nullable=False, default=10)
+
+    rankings = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
+    @classmethod
+    def get(cls, id=0):
+        """Get ranking settings."""
+        return cls.query.filter_by(id=id).first()
+
+    @classmethod
+    def update(cls, id=0, data=None):
+        """Update/Create ranking settings."""
+        try:
+            with db.session.begin_nested():
+                new_data_flag = False
+                settings = cls.query.filter_by(id=id).first()
+                if not settings:
+                    settings = RankingSettings()
+                    new_data_flag = True
+                settings.id = id
+                settings.is_show = data.is_show
+                settings.new_item_period = data.new_item_period
+                settings.statistical_period = data.statistical_period
+                settings.display_rank = data.display_rank
+                settings.rankings = data.rankings
+                if new_data_flag:
+                    db.session.add(settings)
+                else:
+                    db.session.merge(settings)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    @classmethod
+    def delete(cls, id=0):
+        """Delete settings."""
+        try:
+            with db.session.begin_nested():
+                cls.query.filter_by(id=id).delete()
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise ex
+        return cls
 
 
 __all__ = ([
     'SearchManagement', 'AdminLangSettings', 'ApiCertificate',
     'StatisticUnit', 'StatisticTarget', 'LogAnalysisRestrictedAddress',
-    'LogAnalysisRestrictedCrawlerList', 'StatisticsEmail'
+    'LogAnalysisRestrictedCrawlerList', 'StatisticsEmail', 'RankingSettings'
 ])
