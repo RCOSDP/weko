@@ -557,9 +557,19 @@ def next_action(activity_id='0', action_id=0):
                 if record is not None:
                     deposit = WekoDeposit(record, record.model)
                     deposit.publish()
-                    # Make status Public as default
+                    # For current item: Make status Public as default
                     updated_item = UpdateItem()
                     updated_item.publish(record)
+                    # For previous item: Update status to Private
+                    current_pid = PersistentIdentifier.get_by_object(
+                        pid_type='recid', object_type='rec',
+                        object_uuid=activity_detail.item_id)
+                    current_pv = PIDVersioning(child=current_pid)
+                    if current_pv.exists and current_pv.previous is not None:
+                        prev_record = WekoDeposit.get_record(
+                            current_pv.previous.object_uuid)
+                        if prev_record is not None:
+                            updated_item.update_status(prev_record)
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
