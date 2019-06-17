@@ -14,14 +14,16 @@
         display_list_flg: false
       }
       page_global.queryObj = query_to_hash();
-      $('#page_count').val(page_global.queryObj['size'])
-      $('#page_count').on('change', function(){
-        if(page_global.queryObj['size'] != $('#page_count').val()) {
-          page_global.queryObj['size'] = $('#page_count').val();
-          queryStr = hash_to_query(page_global.queryObj);
-          window.location.href = window.location.pathname + '?' + queryStr;
-        }
-      });
+      if (page_global.queryObj) {
+        $('#page_count').val(page_global.queryObj['size'])
+        $('#page_count').on('change', function(){
+          if(page_global.queryObj['size'] != $('#page_count').val()) {
+            page_global.queryObj['size'] = $('#page_count').val();
+            queryStr = hash_to_query(page_global.queryObj);
+            window.location.href = window.location.pathname + '?' + queryStr;
+          }
+        });
+      }
       function query_to_hash(queryString) {
         var query = queryString || location.search.replace(/\?/, "");
         return query.split("&").reduce(function(obj, item, i) {

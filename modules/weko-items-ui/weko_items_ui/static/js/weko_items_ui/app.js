@@ -10,12 +10,10 @@ require([
     $('#myModal').modal('toggle');
     $("div.modal-backdrop").remove();
   });
-
   $("#meta-search-close").click(function () {
     $('#meta-search').modal('toggle');
     $("div.modal-backdrop").remove();
   });
-
 });
 
 // script for Contributor
@@ -289,54 +287,50 @@ function handleSharePermission(value) {
   // Bootstrap it!
   angular.element(document).ready(function () {
     angular.module('wekoRecords.controllers', []);
-    function WekoRecordsCtrl($scope, $rootScope, $modal, InvenioRecordsAPI) {
-      //      $scope.items = [ 'item1', 'item2', 'item3' ];
-      $scope.filemeta_key = '';
-      $scope.filemeta_form_idx = -1;
+    function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
+      $scope.cities = [];
+      $scope.filemeta_keys = [];
       $scope.is_item_owner = false;
       $scope.searchFilemetaKey = function () {
-        if ($scope.filemeta_key.length > 0) {
-          return $scope.filemeta_key;
+        if ($scope.filemeta_keys.length > 0) {
+          return $scope.filemeta_keys;
         }
         Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
           ([key, value]) => {
             if (value.type == 'array') {
               if (value.items.properties.hasOwnProperty('filename')) {
-                $scope.filemeta_key = key;
+                $scope.filemeta_keys.push(key)
               }
             }
           }
         );
       }
-      $scope.findFilemetaFormIdx = function () {
-        if ($scope.filemeta_form_idx >= 0) {
-          return $scope.filemeta_form_idx;
-        }
-        $rootScope.recordsVM.invenioRecordsForm.forEach(
-          (element, index) => {
-            if (element.hasOwnProperty('key')
-              && element.key == $scope.filemeta_key) {
-              $scope.filemeta_form_idx = index;
-            }
+      $scope.searchFilemetaForm = function (title) {
+        $rootScope.recordsVM.invenioRecordsForm.forEach(RecordForm => {
+          if (RecordForm.title == title) {
+            filemeta_form = RecordForm;
           }
-        );
+        });
+        return filemeta_form;
       }
       $scope.initFilenameList = function () {
         $scope.searchFilemetaKey();
-        $scope.findFilemetaFormIdx();
-        filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[$scope.filemeta_key];
-        filemeta_schema.items.properties['filename']['enum'] = [];
-        filemeta_form = $rootScope.recordsVM.invenioRecordsForm[$scope.filemeta_form_idx];
-        filemeta_filename_form = filemeta_form.items[0];
-        filemeta_filename_form['titleMap'] = [];
-        $rootScope.filesVM.files.forEach(file => {
-          if (file.completed) {
-            filemeta_schema.items.properties['filename']['enum'].push(file.key);
-            filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
+        $scope.filemeta_keys.forEach(filemeta_key => {
+          filemeta_schema = $rootScope.recordsVM.invenioRecordsSchema.properties[filemeta_key];
+          filemeta_form = $scope.searchFilemetaForm(filemeta_schema.title);
+          if (filemeta_schema && filemeta_form) {
+            filemeta_schema.items.properties['filename']['enum'] = [];
+            filemeta_filename_form = filemeta_form.items[0];
+            filemeta_filename_form['titleMap'] = [];
+            $rootScope.filesVM.files.forEach(file => {
+              if (file.completed) {
+                filemeta_schema.items.properties['filename']['enum'].push(file.key);
+                filemeta_filename_form['titleMap'].push({ name: file.key, value: file.key });
+              }
+            });
           }
         });
         $rootScope.$broadcast('schemaFormRedraw');
-        
       }
       $scope.initContributorData = function() {
         $("#contributor-panel").addClass("hidden");
@@ -396,9 +390,26 @@ function handleSharePermission(value) {
           }
         }
       }
+      $scope.initUserGroups = function () {
+        $.ajax({
+          url: '/accounts/settings/groups/grouplist',
+          method: 'GET',
+          async: false,
+          success: function(data, status) {
+            var group = "";
+            let index = 1;
+            while(data[index]) {
+              group = data[index];
+              $scope.cities.push(group);
+              index += 1;
+            }
+          }
+        });
+      }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.initContributorData();
+        $scope.initUserGroups();
         $scope.initFilenameList();
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
@@ -581,17 +592,12 @@ function handleSharePermission(value) {
         });
         $('#meta-search').modal('toggle');
       }
-
       $scope.searchSource = function(model_id,arrayFlg,form) {
-
           // alert(form.key[1]);
           var modalcontent = form.key[1];
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
-
       }
-
-
       $scope.searchAuthor = function(model_id,arrayFlg,form) {
         // add by ryuu. start 20180410
         $("#btn_id").text(model_id);
@@ -609,11 +615,6 @@ function handleSharePermission(value) {
         var authorInfoObj = JSON.parse(authorInfo);
         var updateIndex = 0;
         if (arrayFlg == 'true') {
-          //            $rootScope.recordsVM.invenioRecordsModel[modelId].push(authorInfoObj[0]);
-          //              $rootScope.recordsVM.invenioRecordsModel[modelId][array_index]= authorInfoObj[0];
-          //            2018/05/28 start
-          var familyName = "";
-          var givenName = "";
           if (authorInfoObj[0].hasOwnProperty('affiliation')) {
             $rootScope.recordsVM.invenioRecordsModel[modelId][array_index].affiliation = authorInfoObj[0].affiliation;
           }

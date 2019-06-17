@@ -25,7 +25,7 @@ import sys
 from flask import Blueprint, abort, current_app, json, jsonify, redirect, \
     render_template, request, url_for
 from flask_babelex import gettext as _
-from flask_login import login_required
+from flask_login import login_required, current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_records.api import ItemsMetadata, ItemTypeNames, ItemTypeProps, \
@@ -135,6 +135,11 @@ def register(item_type_id=0):
 def custom_property(property_id=0):
     """Renders an primitive property view."""
     lists = ItemTypeProps.get_records([])
+    current_app.logger.debug(current_user.id)
+    for list in lists:
+        if list.id == 103:
+            lists.remove(list)
+
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_CREATE_PROPERTY'],
         lists=lists
@@ -149,6 +154,11 @@ def get_property_list(property_id=0):
     lang = request.values.get('lang')
 
     props = ItemTypeProps.get_records([])
+    current_app.logger.debug('----------------------get_property_list')
+    for prop in props:
+        if prop.id == 103:
+            props.remove(prop)
+
     lists = {}
     for k in props:
         name = k.name
@@ -159,6 +169,15 @@ def get_property_list(property_id=0):
         tmp = {'name': name, 'schema': k.schema, 'form': k.form,
                'forms': k.forms, 'sort': k.sort}
         lists[k.id] = tmp
+        # if name == 'File' or name == 'Billing Information':
+        #     current_app.logger.debug(k.schema)
+        #     current_app.logger.debug(k.form)
+        #     current_app.logger.debug(k.forms)
+
+        #     # current_app.logger.debug(
+        #     #     '\nForms-----------------\n' +
+        #     #     k.forms
+        #     #     + '\n----------------------\n')
 
     lists['defaults'] = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
 
