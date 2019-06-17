@@ -509,6 +509,7 @@ class ExtendComponent extends React.Component {
         this.handleChangeNewDates = this.handleChangeNewDates.bind(this);
         this.handleChangeDisplayResult = this.handleChangeDisplayResult.bind(this);
         this.handleChangeRssFeed = this.handleChangeRssFeed.bind(this);
+        this.generateNewDate = this.generateNewDate.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
         if (!prevState.write_more && nextProps.data_load.more_description) {
@@ -549,6 +550,26 @@ class ExtendComponent extends React.Component {
             }
         }
         return null;
+    }
+
+    generateNewDate(){
+        let displayResult =['Today'];
+        for(let i=0; i<31; i++)
+        {
+            displayResult.push(i+"");
+        }
+
+        let options = displayResult.map((value) => {
+            return (
+                <option>{value}</option>
+            )
+        });
+
+        return (
+            <select value={this.state.settings.new_dates} onChange={this.handleChangeNewDates} className="form-control" name="new_dates">
+                {options}
+            </select>
+        )
     }
 
     handleChange(field, value) {
@@ -713,9 +734,9 @@ class ExtendComponent extends React.Component {
             return(
                 <div>
                     <div className="form-group row">
-                        <label htmlFor="new_dates" className="control-label col-xs-2 text-right">New dates</label>
+                        <label htmlFor="new_dates" className="control-label col-xs-2 text-right">New date</label>
                         <div class="controls col-xs-3">
-                            <input name="new_dates" id='new_dates' type="text" value={this.state.settings.new_dates} onChange={this.handleChangeNewDates} className="form-control" />
+                            {this.generateNewDate()}
                         </div>
                     </div>
                     <div className="form-group row">
