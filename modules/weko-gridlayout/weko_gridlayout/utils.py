@@ -594,10 +594,10 @@ def build_data_setting(data):
     result['label_color'] = data.get('label_color')
     result['text_color'] = data.get('text_color')
     if str(data.get('widget_type')) == 'Access counter':
-        result['access_counter'] = data['settings'].get('access_counter') or ''
+        result['access_counter'] = data['settings'].get('access_counter') or '5'
     if str(data.get('widget_type')) == 'New arrivals':
         result['new_dates'] = data['settings'].get('new_dates') or ''
-        result['display_result'] = data['settings'].get('display_result') or ''
+        result['display_result'] = data['settings'].get('display_result') or '5'
         result['rss_feed'] = data['settings'].get('rss_feed') or False
 
     return result
