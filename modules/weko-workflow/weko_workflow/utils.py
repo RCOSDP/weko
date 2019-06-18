@@ -118,7 +118,6 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
         current_app.logger.error(_('Identifier datas are empty!'))
         res['pidstore_identifier'] = tempdata
     try:
-        print('flagDelPidstore', flagDelPidstore)
         if not flagDelPidstore:
             reg_invenio_pidstore(tempdata['identifier']['value'], item.id)
         
@@ -159,7 +158,6 @@ def find_doi(doi_link):
     try:
         link_doi = doi_link['doi_link']
         pid_identifiers = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', pid_value=link_doi, status=PIDStatus.REGISTERED).all()
-        print('================Pid_identifiers', pid_identifiers)
         for pid_identifier in pid_identifiers:
             if pid_identifier.pid_value == link_doi:
                 isExistDoi = True
@@ -178,14 +176,16 @@ def del_invenio_pidstore(item_id):
     :return: True/False
     """
     try:
-        print('======================Del_invenio_pidstore')
-        pid_identifier = PersistentIdentifier.query.filter_by(object_uuid=item_id, status=PIDStatus.REGISTERED).one()
-        print('======================Del_invenio_pidstore', pid_identifier)
+        pid_identifier = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', object_uuid=item.id, status=PIDStatus.REGISTERED).one()
         if pid_identifier:
             pid_identifier.delete()
+            if pid_identifier.status == PIDStatus.DELETED:
+                return True
+            return False
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.error(_('[del_invenio_pidstore]: =======PID does not exist!======='))
         current_app.logger.error(pidNotEx)
+        return False
 
 
 def reg_invenio_pidstore(pid_value, item_id):
@@ -195,9 +195,7 @@ def reg_invenio_pidstore(pid_value, item_id):
     :param: pid_value, item_id
     """
     try:
-        print('====================Register invenio=======')
         pid_identifier_reg =  PersistentIdentifier.create('doi', pid_value, None, PIDStatus.REGISTERED, 'rec', item_id)
-        print('====================After Register invenio=======', pid_identifier_reg)
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(_('!==============PID Already Exists!=============='))
         current_app.logger.error(pidArlEx)
