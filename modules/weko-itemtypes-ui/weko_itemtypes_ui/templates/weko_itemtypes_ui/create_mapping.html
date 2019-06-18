@@ -128,15 +128,19 @@
                         1 -%}disabled{%- endif -%}>-->
                       <!-- INPUT BUTTON -->
 
-                         <i class="glyphicon glyphicon-plus" id="add-icon"></i>
-                          <input type="button" class="btn btn-light add-button
-                          ten-pixel-right-margin ten-pixel-bottom-margin"
-                          data-action="add" style="position:unset;" value="{{_('Add')}}">
+                          <button type="button" class="btn btn-light add-button
+                            ten-pixel-right-margin ten-pixel-bottom-margin"
+                            data-action="add" style="position:unset;">
+                            <span class="glyphicon glyphicon-plus"></span>
+                            {{_('Add')}}
+                          </button>
 
-                          <i class="glyphicon glyphicon-trash" id="delete-icon"></i>
-                          <input type="button" class="btn btn-danger
-                          delete-button ten-pixel-bottom-margin"
-                          style="position:unset;" data-action="del" value="{{_('Delete')}}" {%- if keys_count == 1 -%}disabled{%- endif -%}>
+                          <button type="button" class="btn btn-danger
+                            delete-button ten-pixel-bottom-margin"
+                            style="position:unset;" data-action="del" {%- if keys_count == 1 -%}disabled{%- endif -%}>
+                            <span class="glyphicon glyphicon-trash"></span>
+                            {{_('Delete')}}
+                          </button>
 
                       <!--Button-->
                   </div>
@@ -168,16 +172,19 @@
                     disabled>-->
                     <!-- INPUT BUTTON -->
 
-                              <i class="glyphicon glyphicon-plus" id="add-icon"></i>
-                              <input type="button" class="btn btn-light
-                              add-button five-pixel-margin"
-                              style="position:unset;" data-action="add" value="{{_('Add')}}">
+                              <button type="button" class="btn btn-light add-button
+                              ten-pixel-right-margin ten-pixel-bottom-margin"
+                              style="position:unset;" data-action="add" value="">
+                                <span class="glyphicon glyphicon-plus"></span>
+                                {{_('Add')}}
+                              </button>
 
-                              <i class="glyphicon glyphicon-trash" id="delete-icon"></i>
-                              <input type="button" class="btn btn-danger
-                              delete-button five-pixel-margin"
-                                                   style="position:unset;" data-action="del"
-                              value="{{_('Delete')}}"  disabled>
+                              <button type="button" class="btn btn-danger
+                              delete-button ten-pixel-bottom-margin"
+                              style="position:unset;" data-action="del" disabled>
+                                <span class="glyphicon glyphicon-trash"></span>
+                                {{_('Delete')}}
+                              </button>
 
                   <!--Button-->
                   </div>
@@ -229,7 +236,7 @@
             <label id="sub-item-type-lists-label">{{_('Itemtype List')}}</label><label>({{_('Child')}})</label>
           </div>
           <div class="col-sm-6">
-            <label id="sub-jpcoar-lists-label">{{_('JPCOAR')}}</label><label>({{_('Child')}})</label>
+            <label id="sub-jpcoar-lists-label">{{_('Schema')}}</label><label>({{_('Child')}})</label>
             <!-- <button id="sub_mapping-add" class="btn btn-success pull-right">{{_('Add')}}</button>-->
             <button id="sub_mapping-add" class="btn btn-light pull-right add-button twentyeight-pixel-right-margin">
               <span class="glyphicon glyphicon-plus"></span>
