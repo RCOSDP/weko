@@ -109,7 +109,7 @@ require([
     };
 
     isExistDOI=isExistDOI(doi_link)
-    if(isExistDOI)) {
+    if(isExistDOI) {
         alert(isExistDOI);
         return false;
     };

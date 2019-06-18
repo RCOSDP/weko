@@ -138,14 +138,11 @@ def is_withdrawn_doi(doi_link):
     :param: doi_link
     :return: True/False
     """
-    isWithdrawnDoi = False
     try:
         link_doi = doi_link['doi_link']
         query = PersistentIdentifier.query.filter_by(
             pid_value=link_doi, status=PIDStatus.DELETED)
-        if query.count() > 0:
-            isWithdrawnDoi = True
-        return isWithdrawnDoi
+        return query.count() > 0
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.error(pidNotEx)
         return False
