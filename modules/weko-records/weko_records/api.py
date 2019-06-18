@@ -1569,4 +1569,6 @@ class ChargingFilePerm(RecordBase):
         """
         with db.session.no_autoflush:
             obj = ChargingFilePermission.query.filter_by(userid=userid).one_or_none()
-            return obj
+            if obj:
+                return obj.can_access
+        return None
