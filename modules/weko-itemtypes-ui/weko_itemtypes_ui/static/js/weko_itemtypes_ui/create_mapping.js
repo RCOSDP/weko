@@ -67,7 +67,7 @@
         $(this).parent().addClass('has-error');
       }
     });
-    $('input[type="button"], button[type="button"]').on('click', function(ev){
+    $('button[type="button"]').on('click', function(ev){
       action = this.dataset.action;
       page_global.showDiag = true;
       if('add' == action) {
