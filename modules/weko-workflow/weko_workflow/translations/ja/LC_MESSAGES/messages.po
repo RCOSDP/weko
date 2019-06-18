@@ -350,6 +350,14 @@ msgstr "パスワードが入力されていません。"
 msgid "Invalid password"
 msgstr "パスワードが正しくありません。"
 
+#: weko-workflow/weko_workflow/views.py: 777
+msgid "This DOI has been used already for another item. Please input another DOI."
+msgstr "他のアイテムで既に使用されているDOIのため、他のDOIを入力ください。"
+
+#: weko-workflow/weko_workflow/views.py: 781
+msgid "This DOI was withdrawn. Please input another DOI."
+msgstr "このDOIが取り下げられたため、他のDOIを入力ください。"
+
 #~ msgid "Back"
 #~ msgstr "戻る"
 

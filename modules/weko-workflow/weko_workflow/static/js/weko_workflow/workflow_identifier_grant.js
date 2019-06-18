@@ -107,9 +107,10 @@ require([
         alert("Input value exceeds 300 characters");
         return false;
     };
-    
-    if(isExistDOI(doi_link)) {
-        alert("This DOI has been used already for another item. Please input another DOI");
+
+    isExistDOI=isExistDOI(doi_link)
+    if(isExistDOI)) {
+        alert(isExistDOI);
         return false;
     };
 
@@ -171,7 +172,7 @@ require([
         success: function (data, status) {
         debugger;
         if (0 == data.code) {
-            isExistDOI = data.isExistDOI;
+            isExistDOI = data.msg;
         } else {
             alert('Server error');
             $('#pwd').parent().addClass('has-error');
