@@ -1568,8 +1568,5 @@ class ChargingFilePerm(RecordBase):
         :returns: The :class:`Record` instance.
         """
         with db.session.no_autoflush:
-            obj = ItemTypeProperty.query.filter_by(id=property_id,
-                                                   delflg=False).first()
-            if obj is None:
-                return None
+            obj = ChargingFilePermission.query.filter_by(userid=userid).one_or_none()
             return obj
