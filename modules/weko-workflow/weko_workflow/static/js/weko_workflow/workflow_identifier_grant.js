@@ -16,8 +16,9 @@ require([
 
   // click button Save
   $('#btn-draft').on('click', function () {
-    preparePostData(1);
-    sendQuitAction();
+    if(preparePostData(1)){
+      sendQuitAction();
+    }
   });
 
   // click button Continue
@@ -42,7 +43,6 @@ require([
   // prepare data for sending
   function preparePostData(tmp_save) {
     let isSuffixFormat = true;
-
     data_global.post_uri = $('.cur_step').data('next-uri');
 
     let identifier_grant = $("input[name='identifier_grant']:checked").val();
@@ -70,6 +70,8 @@ require([
 
     switch(identifier_grant) {
       case "0":
+      case "4":
+      default:
         break;
       case "1":
         isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_doi_link, identifier_grant_jalc_doi_suffix);
@@ -80,10 +82,6 @@ require([
       case "3":
         isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix);
         break;
-      case "4":
-        break;
-      default:
-        break;
     };
     
     return isSuffixFormat;
@@ -92,34 +90,30 @@ require([
   function isDOISuffixFormat(doi_link, doi_suffix){
     
     let regexDOI = /^[_\-.;()\/A-Za-z0-9]+$/gi;
+    let msg = '';
+    let result = true;
     
     if(doi_suffix == "" || doi_suffix == null) {
-        alert("DOI is not input");
-        return false;
-    };
-    
-    if(!regexDOI.test(doi_suffix)) {
-        alert("It's able to input only haft-width alphanumeric or half-width symbol _-.;()/");
-        return false;
-    };
+        msg = $('#msg_required_doi').val();
+        result = false;
+    } else if(!regexDOI.test(doi_suffix)) {
+        msg = $('#msg_format_doi').val();
+        result = false;
+    } else if(doi_link.length >= 300) {
+        msg = $('#msg_length_doi').val();
+        result = false;
+    } else {
+      isExistDOI=isExistDOI(doi_link)
+      if(isExistDOI) {
+          msg = isExistDOI;
+          result = false;
+      }
+    }
 
-    if(doi_link.length >= 300) {
-        alert("Input value exceeds 300 characters");
-        return false;
-    };
-
-    isExistDOI=isExistDOI(doi_link)
-    if(isExistDOI) {
-        alert(isExistDOI);
-        return false;
-    };
-
-//    if(isWithDrawDOI(doi_link)) {
-//    };
-
-
-    
-    return true;
+    if (!result) {
+      alert(msg);
+    }
+    return result;
   }
 
   function getVal(inObject) {
@@ -173,11 +167,6 @@ require([
         debugger;
         if (0 == data.code) {
             isExistDOI = data.msg;
-        } else {
-            alert('Server error');
-            $('#pwd').parent().addClass('has-error');
-            $('#error-info').html(data.msg);
-            $('#error-info').parent().show();
         }
       },
       error: function (jqXHE, status) {

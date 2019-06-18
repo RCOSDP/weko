@@ -356,6 +356,18 @@ msgstr ""
 msgid "This DOI was withdrawn. Please input another DOI."
 msgstr ""
 
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:65
+msgid "It's able to input only haft-width alphanumeric or half-width symbol."
+msgstr "It's able to input only haft-width alphanumeric or half-width symbol "_-.;()/"."
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:66
+msgid "Input value exceeds 300 characters."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:67
+msgid "DOI has not been entered."
+msgstr ""
+
 #~ msgid "item type"
 #~ msgstr ""
 
