@@ -102,7 +102,6 @@ let PageBodyGrid = function () {
                 }
             }
         })
-        console.log("data:" + data);
         // Convert to display-able number
         let initNum = Number(initNumber);
         let result = Number(data);
@@ -199,18 +198,24 @@ let PageBodyGrid = function () {
             }
             content = this.buildAccessCounter(initNumber);
         } else if (node.type == NEW_ARRIVALS) {
-            let innerID = 'new_arrivals'+ '_' + index;
+            let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
-            let fake_data = {
-                'list_dates':
-                [
-                    "2019-06-13",
-                    "2019-06-12"
-                ],
-                'number_result': '3',
-                'rss_status': true
+            d = new Date();
+
+            let listDate = [parseDateFormat(d)];
+            if (node.new_dates != "Today") {
+                for (let i = 0; i < Number(node.new_dates); i++) {
+                    d.setDate(d.getDate() - 1);
+                    listDate.push(parseDateFormat(d));
+                }
+
             }
-            this.buildNewArrivals(fake_data, innerID);
+            let data = {
+                'list_dates': listDate,
+                'number_result': node.display_result,
+                'rss_status': node.rss_feed
+            }
+            this.buildNewArrivals(data, innerID);
         }
 
         let template =
@@ -280,4 +285,22 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
             $("#" + linkID).text(readMore);
         }
     }
+}
+
+function parseDateFormat(d){
+    let currentDate = "";
+    currentDate = d.getFullYear();
+
+    if (d.getMonth() < 9) {
+        currentDate += "-0" + (d.getMonth() + 1);
+    } else {
+        currentDate += '-' + (d.getMonth() + 1);
+    }
+
+    if (d.getDate() < 10) {
+        currentDate += "-0" + d.getDate();
+    } else {
+        currentDate += "-" + d.getDate();
+    }
+    return currentDate;
 }
