@@ -62,12 +62,13 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     activity_obj = WorkActivity()
     activity_detail = activity_obj.get_activity_detail(activity_id)
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+    
 
     # transfer to JPCOAR format
     res = {'pidstore_identifier': {}}
     tempdata = IDENTIFIER_ITEMSMETADATA_FORM
     flagDelPidstore = False
-
+    
     if idf_grant == 0:
         res['pidstore_identifier'] = tempdata
     elif idf_grant == 1:  # identifier_grant_jalc_doi
@@ -120,7 +121,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
         print('flagDelPidstore', flagDelPidstore)
         if not flagDelPidstore:
             reg_invenio_pidstore(tempdata['identifier']['value'], item.id)
-
+        
         with db.session.begin_nested():
             item.update(res)
             item.commit()
@@ -157,18 +158,14 @@ def find_doi(doi_link):
     isExistDoi = False
     try:
         link_doi = doi_link['doi_link']
-        pid_identifiers = PersistentIdentifier.query.filter_by(pid_type='doi',
-                                                               object_type='rec',
-                                                               pid_value=link_doi,
-                                                               status=PIDStatus.REGISTERED).all()
+        pid_identifiers = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', pid_value=link_doi, status=PIDStatus.REGISTERED).all()
         print('================Pid_identifiers', pid_identifiers)
         for pid_identifier in pid_identifiers:
             if pid_identifier.pid_value == link_doi:
                 isExistDoi = True
         return isExistDoi
     except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(
-            _('[find_doi]==============PID does not exist!=============='))
+        current_app.logger.error(_('[find_doi]==============PID does not exist!=============='))
         current_app.logger.error(pidNotEx)
         return isExistDoi
 
@@ -182,14 +179,12 @@ def del_invenio_pidstore(item_id):
     """
     try:
         print('======================Del_invenio_pidstore')
-        pid_identifier = PersistentIdentifier.query.filter_by(
-            object_uuid=item_id, status=PIDStatus.REGISTERED).one()
+        pid_identifier = PersistentIdentifier.query.filter_by(object_uuid=item_id, status=PIDStatus.REGISTERED).one()
         print('======================Del_invenio_pidstore', pid_identifier)
         if pid_identifier:
             pid_identifier.delete()
     except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(
-            _('[del_invenio_pidstore]: =======PID does not exist!======='))
+        current_app.logger.error(_('[del_invenio_pidstore]: =======PID does not exist!======='))
         current_app.logger.error(pidNotEx)
 
 
@@ -201,12 +196,8 @@ def reg_invenio_pidstore(pid_value, item_id):
     """
     try:
         print('====================Register invenio=======')
-        pid_identifier_reg = PersistentIdentifier.create('doi', pid_value, None,
-                                                         PIDStatus.REGISTERED,
-                                                         'rec', item_id)
-        print('====================After Register invenio=======',
-              pid_identifier_reg)
+        pid_identifier_reg =  PersistentIdentifier.create('doi', pid_value, None, PIDStatus.REGISTERED, 'rec', item_id)
+        print('====================After Register invenio=======', pid_identifier_reg)
     except PIDAlreadyExists as pidArlEx:
-        current_app.logger.error(
-            _('!==============PID Already Exists!=============='))
+        current_app.logger.error(_('!==============PID Already Exists!=============='))
         current_app.logger.error(pidArlEx)
