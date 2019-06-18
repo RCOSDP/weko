@@ -33,7 +33,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
@@ -168,7 +168,6 @@ def iframe_index(item_type_id=0):
 def iframe_save_model():
     """Renders an item register view.
 
-    :param item_type_id: Item type ID. (Default: 0)
     :return: The rendered template.
     """
     try:
@@ -221,6 +220,7 @@ def get_json_schema(item_type_id=0):
     """
     try:
         result = None
+        json_schema = None
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
@@ -735,8 +735,17 @@ def prepare_edit_item():
                 post_activity['itemtype_id'] = item_type_id
                 getargs = request.args
                 community = getargs.get('community', None)
+
+                # Create a new version of a record.
+                record = WekoDeposit.get_record(item_id)
+                if record is None:
+                    return jsonify(code=-1, msg=_('Record does not exist.'))
+                deposit = WekoDeposit(record, record.model)
+                new_record = deposit.newversion(pid_object)
+                if new_record is None:
+                    return jsonify(code=-1, msg=_('An error has occurred.'))
                 rtn = activity.init_activity(
-                    post_activity, community, pid_object.object_uuid)
+                    post_activity, community, new_record.model.id)
                 if rtn:
                     # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
                     identifier_actionid = get_actionid('identifier_grant')
