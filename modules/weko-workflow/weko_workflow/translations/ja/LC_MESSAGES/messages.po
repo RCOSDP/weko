@@ -359,7 +359,7 @@ msgid "This DOI was withdrawn. Please input another DOI."
 msgstr "このDOIが取り下げられたため、他のDOIを入力ください。"
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:65
-msgid "It's able to input only haft-width alphanumeric or half-width symbol."
+msgid "Its able to input only haft-width alphanumeric or half-width symbol."
 msgstr "半角英数字または半角記号「_-.;()/」のみ入力できます。"
 
 #: weko_workflow/templates/weko_workflow/identifier_grant.html:66
