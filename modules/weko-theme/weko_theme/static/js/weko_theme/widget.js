@@ -123,11 +123,12 @@ let PageBodyGrid = function () {
             success: (response) => {
                 let result = response['data'];
                 let host = window.location.origin;
+                let RssHtml = '<a class="a-new-arrivals" href="javascript:">RSS <i class="fa fa-rss"></i></a>';
                 let innerHTML = '';
                 for (let data in result) {
                     innerHTML += '<li><a class="a-new-arrivals" href="#" data-roles="' + result[data]['roles'] +'" data-link="' + host + result[data]['url'] + '">' + result[data]['name'] +'</a></li>';
                 }
-                innerHTML = '<div class="no-li-style">' + innerHTML + '</div>';
+                innerHTML = '<div class="no-li-style col-sm-8">' + innerHTML + '</div><div class= "col-sm-4 rss">'+RssHtml+'</div>';
                 $("#"+id).append(innerHTML)
                 this.validateRole();
             }
@@ -164,8 +165,12 @@ let PageBodyGrid = function () {
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
         let leftStyle = "left: initial; ";
+        let rightStyle = "";
         let paddingHeading = "padding: inherit; ";
         let overFlowBody = "overflow-y: scroll; ";
+        if (node.type == ACCESS_COUNTER){
+            overFlowBody = "overflow-y: hidden; ";
+        }
         let id = '';
         // Handle css style
         if (node.background_color) {
@@ -197,6 +202,8 @@ let PageBodyGrid = function () {
                 initNumber = Number(node.access_counter);
             }
             content = this.buildAccessCounter(initNumber);
+            rightStyle = "right: unset; ";
+            paddingHeading = "";
         } else if (node.type == NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
@@ -222,7 +229,7 @@ let PageBodyGrid = function () {
             '<div class="grid-stack-item">' +
             ' <div class="grid-stack-item-content panel panel-default widget" style="' +
             backgroundColor + frameBorderColor + '">' +
-            '     <div class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + '">' +
+            '     <div class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + rightStyle + '">' +
             '       <strong style="' + paddingHeading + '">' + multiLangSetting.label + '</strong>' +
             '     </div>' +
             '     <div class="panel-body ql-editor pad-top-30"' + id +' style="' + overFlowBody + '">' +

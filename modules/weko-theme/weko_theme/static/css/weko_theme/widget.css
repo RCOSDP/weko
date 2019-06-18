@@ -43,3 +43,20 @@
 .no-li-style {
   list-style-type: none;
 }
+
+.rss a{
+  position: absolute;
+  width: 30;
+  height: 10;
+  background-color: orange;
+  padding: 5px;
+  text-decoration: none;
+}
+
+.rss a:hover {
+  text-decoration: none;
+}
+
+.rss a > i {
+  color:white;
+}
