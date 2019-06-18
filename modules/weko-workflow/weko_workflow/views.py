@@ -552,7 +552,7 @@ def next_action(activity_id='0', action_id=0):
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
             if activity_detail is not None and \
-                activity_detail.item_id is not None:
+                    activity_detail.item_id is not None:
                 record = WekoDeposit.get_record(activity_detail.item_id)
                 if record is not None:
                     deposit = WekoDeposit(record, record.model)
@@ -722,7 +722,8 @@ def cancel_action(activity_id='0', action_id=0):
         if cancel_item_id is not None:
             cancel_record = WekoDeposit.get_record(cancel_item_id)
             if cancel_record is not None:
-                cancel_deposit = WekoDeposit(cancel_record, cancel_record.model)
+                cancel_deposit = WekoDeposit(
+                    cancel_record, cancel_record.model)
                 cancel_deposit.clear()
                 # Remove draft child
                 cancel_pid = PersistentIdentifier.get_by_object(

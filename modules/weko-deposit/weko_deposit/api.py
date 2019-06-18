@@ -19,10 +19,10 @@
 # MA 02111-1307, USA.
 
 """Weko Deposit API."""
+import uuid
 from datetime import datetime
 
 import redis
-import uuid
 from flask import abort, current_app, has_request_context, json, session
 from flask_security import current_user
 from invenio_db import db
@@ -79,7 +79,8 @@ class WekoFileObject(FileObject):
         super(WekoFileObject, self).dumps()
         self.data.update(self.obj.file.json)
         if hasattr(self, 'filename'):
-            # If the record has not been set into an index, then the attr 'filename' will not exist
+            # If the record has not been set into an index, then the attr
+            # 'filename' will not exist
             index = self['filename'].rfind('.')
             self['filename'] = self['filename'][:index]
         return self.data
@@ -346,13 +347,13 @@ class WekoDeposit(Deposit):
 
                 # update relation version previous to ES
                 if relations_ver is not None and 'previous' in relations_ver \
-                    and relations_ver['previous'] is not None:
+                        and relations_ver['previous'] is not None:
                     pid_val_prev = relations_ver['previous']['pid_value']
                     pid_prev = PersistentIdentifier.get(
                         'recid', pid_val_prev)
                     relations_prev = serialize_relations(pid_prev)
                     if relations_prev is not None \
-                        and 'version' in relations_prev:
+                            and 'version' in relations_prev:
                         relations_prev['version'][0]['id'] = pid_prev.object_uuid
                         self.indexer.update_relation_version_is_last(
                             relations_prev['version'][0])
@@ -531,23 +532,27 @@ class WekoDeposit(Deposit):
                         'recid', str(data['_deposit']['id']))
                     depid = PersistentIdentifier.get(
                         'depid', str(data['_deposit']['id']))
-                    PIDVersioning(parent=pv.parent).insert_draft_child(child=recid)
+                    PIDVersioning(
+                        parent=pv.parent).insert_draft_child(
+                        child=recid)
                     RecordDraft.link(recid, depid)
 
                     # Create snapshot from the record's bucket and update data
                     snapshot = latest_record.files.bucket.snapshot(lock=False)
                     snapshot.locked = False
                     deposit['_buckets'] = {'deposit': str(snapshot.id)}
-                    RecordsBuckets.create(record=deposit.model, bucket=snapshot)
+                    RecordsBuckets.create(
+                        record=deposit.model, bucket=snapshot)
                     if 'extra_formats' in latest_record['_buckets']:
                         extra_formats_snapshot = \
-                            latest_record.extra_formats.bucket.snapshot(lock=False)
+                            latest_record.extra_formats.bucket.snapshot(
+                                lock=False)
                         deposit['_buckets']['extra_formats'] = \
                             str(extra_formats_snapshot.id)
                         RecordsBuckets.create(record=deposit.model,
                                               bucket=extra_formats_snapshot)
                     index = {'index': self.get('path', []), 'actions': 'private'
-                        if self.get('publish_status', '1') == '1' else 'publish'}
+                             if self.get('publish_status', '1') == '1' else 'publish'}
                     if 'activity_info' in session:
                         del session['activity_info']
                     item_metadata = ItemsMetadata.get_record(
