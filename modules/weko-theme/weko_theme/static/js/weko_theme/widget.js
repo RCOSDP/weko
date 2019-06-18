@@ -123,7 +123,10 @@ let PageBodyGrid = function () {
             success: (response) => {
                 let result = response['data'];
                 let host = window.location.origin;
-                let RssHtml = '<a class="a-new-arrivals" href="javascript:">RSS <i class="fa fa-rss"></i></a>';
+                let RssHtml = '';
+                if(request_data.rss_status){
+                    RssHtml = '<a class="a-new-arrivals" href="javascript:">RSS <i class="fa fa-rss"></i></a>';
+                }
                 let innerHTML = '';
                 for (let data in result) {
                     innerHTML += '<li><a class="a-new-arrivals" href="#" data-roles="' + result[data]['roles'] +'" data-link="' + host + result[data]['url'] + '">' + result[data]['name'] +'</a></li>';
