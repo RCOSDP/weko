@@ -526,7 +526,7 @@ class ExtendComponent extends React.Component {
                 defaultSettings['display_result'] = '5';
             }
             else {
-                settings = {};
+                defaultSettings = {};
             }
             return {
                 type: nextProps.type,
