@@ -173,15 +173,6 @@ def get_property_list(property_id=0):
         tmp = {'name': name, 'schema': k.schema, 'form': k.form,
                'forms': k.forms, 'sort': k.sort}
         lists[k.id] = tmp
-        # if name == 'File' or name == 'Billing Information':
-        #     current_app.logger.debug(k.schema)
-        #     current_app.logger.debug(k.form)
-        #     current_app.logger.debug(k.forms)
-
-        #     # current_app.logger.debug(
-        #     #     '\nForms-----------------\n' +
-        #     #     k.forms
-        #     #     + '\n----------------------\n')
 
     lists['defaults'] = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
 
