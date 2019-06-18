@@ -347,3 +347,55 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
                                                                           ],'default_display':True,  'inputType':'radio_list', 'inputVal':'', 'mappingFlg':False, 'mappingName':''}
     ]
 }
+
+WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator"
+
+WEKO_PERMISSION_ROLE_REPO = "Repository Administrator"
+
+WEKO_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
+
+WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
+    'admin',
+    'harvestsettings',
+    'identifier',
+    'widgetitem',
+    'widgetdesign',
+    'community',
+]
+"""Classes Community Administrator can access."""
+
+WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
+    'bucket',
+    'flowsetting',
+    'fileinstance',
+    'identify',
+    'location',
+    'item_management',
+    'itemtypes',
+    'language',
+    'loganalysissetting',
+    'mail',
+    'others',
+    'pdfcoverpage',
+    'shibboleth',
+    'site-license',
+    'search-management',
+    'sitemap',
+    'indexlink',
+    'indextree',
+    'itemsetting',
+    'statssettings',
+    'stylesetting',
+    'webapiaccount',
+    'report',
+    'user',
+    'workflowsetting',
+] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
+"""Classes Repository Administrator can access."""
+
+WEKO_ADMIN_ACCESS_TABLE = {
+    "System Administrator": [], # Can access all, not needed
+    "Repository Administrator": WEKO_ADMIN_REPOSITORY_ACCESS_LIST,
+    "Community Administrator": WEKO_ADMIN_COMMUNITY_ACCESS_LIST,
+}
+"""Access table for different admin roles."""

@@ -22,16 +22,46 @@
 
 from datetime import timedelta
 
-from flask import session
+from flask import session, current_app, request
 from flask_babelex import gettext as _
+from flask_login import current_user
 
 from . import config
 from .models import SessionLifetime
 from .views import blueprint
 
+from invenio_db import db
+from invenio_accounts.models import Role, userrole
+from flask_admin import Admin
+
+from functools import partial
 
 class WekoAdmin(object):
     """WEKO-Admin extension."""
+
+    @staticmethod
+    def role_has_access(endpoint=None):
+        """Check if user's role has access to view endpoint."""
+        endpoint = endpoint or request.url_rule.endpoint.split('.')[0]
+        def _role_endpoint_viewable(endpoint):
+            """Check whether the current user role can view the endpoint - util."""
+            conf = current_app.config
+            access_table = conf['WEKO_ADMIN_ACCESS_TABLE']
+            system_admin = conf['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            try:
+                roles = db.session.query(Role).join(userrole).filter_by(
+                    user_id=current_user.get_id()).all()
+            except Exception as e:
+                current_app.logger.error(
+                    'Could not determine roles - returning False: ', e)
+                roles = []
+            for role in roles:  # Check if role can view endpoint
+                access_list = access_table[role.name] if role.name in access_table \
+                    else []
+                if endpoint in access_list or role.name == system_admin:
+                    return True
+            return False
+        return _role_endpoint_viewable(endpoint)
 
     def __init__(self, app=None):
         """
@@ -54,6 +84,17 @@ class WekoAdmin(object):
         self.init_config(app)
         app.register_blueprint(blueprint)
         app.extensions['weko-admin'] = self
+
+        @app.before_request  # Add extra access control for roles
+        def is_accessible_to_role():
+            """Check if current user's role has access to view."""
+            for view in app.extensions['admin'][0]._views:
+                setattr(view, 'is_accessible', self.role_has_access)
+                new_views = []
+                is_visible_fn = partial(self.role_has_access, view.endpoint)
+                setattr(view, 'is_visible', is_visible_fn)
+                new_views.append(view)
+            app.extensions['admin'][0]._views = new_views  # Overwrite views
 
     def init_config(self, app):
         """
