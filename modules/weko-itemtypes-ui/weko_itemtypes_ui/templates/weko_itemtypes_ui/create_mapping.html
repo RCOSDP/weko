@@ -44,7 +44,7 @@
         <div class="form-inline">
           <div class="col-sm-6 item-type-list">
             <div class="form-group">
-              <label for="item-type-lists">{{_('Item type List')}}</label>
+              <label for="item-type-lists">{{_('Item Type List')}}</label>
               <select class="form-control" id="item-type-lists">
                 {%- for list in lists -%}
                 <option  value="{{ list.item_type.0.id }}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
@@ -75,10 +75,10 @@
 <div class="row">
   <div class="col-sm-12">
     <div class="col-sm-6 item-type-list-header">
-      <label>{{_('Item Type ')}}</label><label>({{_('Parent')}})</label>
+      <label>{{_('Item Type')}}</label><label>({{_('Parent')}})</label>
     </div>
     <div class="col-sm-6 item-type-schema-header">
-      <label>{{_('Schema ')}}</label><label>({{_('Parent')}})</label>
+      <label>{{_('Schema')}}</label><label>({{_('Parent')}})</label>
     </div>
   </div>
 </div>
@@ -233,7 +233,7 @@
       <div class="header-child-list">
         <div class="panel-body item-type-list-header">
           <div class="col-sm-6 item-type-list">
-            <label id="sub-item-type-lists-label">{{_('Itemtype List')}}</label><label>({{_('Child')}})</label>
+            <label id="sub-item-type-lists-label">{{_('Item Type List')}}</label><label>({{_('Child')}})</label>
           </div>
           <div class="col-sm-6">
             <label id="sub-jpcoar-lists-label">{{_('Schema')}}</label><label>({{_('Child')}})</label>
