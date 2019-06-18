@@ -21,20 +21,19 @@
 """Extensions for weko-admin."""
 
 from datetime import timedelta
+from functools import partial
 
-from flask import session, current_app, request
+from flask import current_app, request, session
+from flask_admin import Admin
 from flask_babelex import gettext as _
 from flask_login import current_user
+from invenio_accounts.models import Role, userrole
+from invenio_db import db
 
 from . import config
 from .models import SessionLifetime
 from .views import blueprint
 
-from invenio_db import db
-from invenio_accounts.models import Role, userrole
-from flask_admin import Admin
-
-from functools import partial
 
 class WekoAdmin(object):
     """WEKO-Admin extension."""
@@ -43,6 +42,7 @@ class WekoAdmin(object):
     def role_has_access(endpoint=None):
         """Check if user's role has access to view endpoint."""
         endpoint = endpoint or request.url_rule.endpoint.split('.')[0]
+
         def _role_endpoint_viewable(endpoint):
             """Check whether the current user role can view the endpoint - util."""
             conf = current_app.config
