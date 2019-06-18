@@ -214,7 +214,7 @@ def display_activity(activity_id=0):
     if activity_detail.activity_status == \
         ActivityStatusPolicy.ACTIVITY_FINALLY \
         or activity_detail.activity_status == \
-            ActivityStatusPolicy.ACTIVITY_CANCEL:
+        ActivityStatusPolicy.ACTIVITY_CANCEL:
         activity_detail.activity_status_str = _('End')
     else:
         activity_detail.activity_status_str = \
@@ -294,8 +294,8 @@ def display_activity(activity_id=0):
         session['activity_info'] = activity_session
         # get item edit page info.
         step_item_login_url, need_file, record, json_schema, \
-            schema_form, item_save_uri, files, endpoints = item_login(
-                item_type_id=workflow_detail.itemtype_id)
+        schema_form, item_save_uri, files, endpoints = item_login(
+            item_type_id=workflow_detail.itemtype_id)
         if item:
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
@@ -386,6 +386,7 @@ def display_activity(activity_id=0):
 
 def check_authority(func):
     """Check Authority."""
+
     @wraps(func)
     def decorated_function(*args, **kwargs):
         work = WorkActivity()
@@ -587,15 +588,15 @@ def previous_action(activity_id='0', action_id=0, req=0):
     activity_detail = work_activity.get_activity_detail(activity_id)
     flow = Flow()
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-    
+
     print('pid_identifier previous')
     pid_identifier = PersistentIdentifier.get_by_object(
-            pid_type='doi', object_type='rec', object_uuid=item.id)
+        pid_type='doi', object_type='rec', object_uuid=item.id)
     with db.session.begin_nested():
         db.session.delete(pid_identifier)
     db.session.commit()
     print('after delete pid_identifier row')
-    
+
     if req == 0:
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id)
@@ -738,7 +739,8 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
-            identifier['action_identifier_select'] = IDENTIFIER_GRANT_IS_WITHDRAWING
+            identifier[
+                'action_identifier_select'] = IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
                 activity.create_or_update_action_identifier(
                     activity_id,
@@ -746,7 +748,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                     identifier)
             # Clear identifier in ItemMetadata
             pidstore_identifier_mapping(None, -1, activity_id)
-            
+
             return jsonify(code=0,
                            msg=_('success'),
                            data={'redirect': url_for(

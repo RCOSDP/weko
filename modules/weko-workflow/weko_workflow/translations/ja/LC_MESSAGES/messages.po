@@ -358,6 +358,18 @@ msgstr "他のアイテムで既に使用されているDOIのため、他のDOI
 msgid "This DOI was withdrawn. Please input another DOI."
 msgstr "このDOIが取り下げられたため、他のDOIを入力ください。"
 
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:65
+msgid "It's able to input only haft-width alphanumeric or half-width symbol."
+msgstr "半角英数字または半角記号「_-.;()/」のみ入力できます。"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:66
+msgid "Input value exceeds 300 characters."
+msgstr "入力値が300文字を超えています。"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:67
+msgid "DOI has not been entered."
+msgstr "DOIが入力されていません。"
+
 #~ msgid "Back"
 #~ msgstr "戻る"
 
