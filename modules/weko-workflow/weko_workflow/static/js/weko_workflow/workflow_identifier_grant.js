@@ -103,7 +103,7 @@ require([
         msg = $('#msg_length_doi').val();
         result = false;
     } else {
-      isExistDOI=isExistDOI(doi_link)
+      isExistDOI=checkDOIExisted(doi_link)
       if(isExistDOI) {
           msg = isExistDOI;
           result = false;
@@ -151,11 +151,10 @@ require([
     });
   }
   
-  function isExistDOI(doi_link){
-    debugger;
+  function checkDOIExisted(doi_link){
     let getUrl = '/workflow/findDOI';
     let data = {'doi_link': doi_link};
-    let isExistDOI = false;
+    let isExistedDOI = false;
     $.ajax({
         type: 'POST',
         url: getUrl,
@@ -166,7 +165,9 @@ require([
         success: function (data, status) {
         debugger;
         if (0 == data.code) {
-            isExistDOI = data.msg;
+            if (data.isExistDOI || data.isWithdrawnDoi) {
+                isExistedDOI = data.msg;
+            }
         }
       },
       error: function (jqXHE, status) {
@@ -174,7 +175,7 @@ require([
       }
     });
     
-    return isExistDOI;
+    return isExistedDOI;
   }
   
   function sendWithdrawAction() {
