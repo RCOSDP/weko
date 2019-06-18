@@ -141,9 +141,11 @@ def find_doi(doi_link):
     isExistDoi = False
     try:
         link_doi = doi_link['doi_link']
-        pid_identifier = PersistentIdentifier.get('doi', link_doi)
-        if pid_identifier.pid_value == link_doi:
-            isExistDoi = True
+        pid_identifiers = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', pid_value=link_doi, status=PIDStatus.REGISTERED).all()
+        print('================Pid_identifiers', pid_identifiers)
+        for pid_identifier in pid_identifiers:
+            if pid_identifier.pid_value == link_doi:
+                isExistDoi = True
         return isExistDoi
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.error(_('[find_doi]==============PID does not exist!=============='))
@@ -160,10 +162,10 @@ def del_invenio_pidstore(item_id):
     """
     try:
         print('======================Del_invenio_pidstore')
-        pid_identifier = PersistentIdentifier.get_by_object('doi', 'rec', item_id)
+        pid_identifier = PersistentIdentifier.query.filter_by(object_uuid=item_id, status=PIDStatus.REGISTERED).one()
         print('======================Del_invenio_pidstore', pid_identifier)
         if pid_identifier:
-            pid_identifier.delelte()
+            pid_identifier.delete()
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.error(_('[del_invenio_pidstore]: =======PID does not exist!======='))
         current_app.logger.error(pidNotEx)

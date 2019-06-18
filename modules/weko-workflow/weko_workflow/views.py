@@ -590,10 +590,11 @@ def previous_action(activity_id='0', action_id=0, req=0):
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
     
     print('pid_identifier previous')
-    pid_identifier = PersistentIdentifier.query.filter_by(
-                object_uuid=item.id, pid_type='doi').first()
-    pid_identifier.is_new()
-    pid_identifier.delete()
+    pid_identifier = PersistentIdentifier.get_by_object(
+            pid_type='doi', object_type='rec', object_uuid=item.id)
+    with db.session.begin_nested():
+        db.session.delete(pid_identifier)
+    db.session.commit()
     print('after delete pid_identifier row')
     
     if req == 0:
