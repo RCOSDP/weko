@@ -130,7 +130,27 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
         current_app.logger.exception(str(ex))
         db.session.rollback()
 
-        
+
+def is_withdrawn_doi(doi_link):
+    """
+    Get doi was withdrawn.
+
+    :param: doi_link
+    :return: True/False
+    """
+    isWithdrawnDoi = False
+    try:
+        link_doi = doi_link['doi_link']
+        query = PersistentIdentifier.query.filter_by(
+            pid_value=link_doi, status=PIDStatus.DELETED)
+        if query.count() > 0:
+            isWithdrawnDoi = True
+        return isWithdrawnDoi
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.error(pidNotEx)
+        return False
+
+
 def find_doi(doi_link):
     """
     Get doi has been register by another item.

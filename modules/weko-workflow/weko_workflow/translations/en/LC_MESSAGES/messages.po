@@ -348,6 +348,14 @@ msgstr ""
 msgid "Invalid password"
 msgstr ""
 
+#: weko-workflow/weko_workflow/views.py: 777
+msgid "This DOI has been used already for another item. Please input another DOI."
+msgstr ""
+
+#: weko-workflow/weko_workflow/views.py: 781
+msgid "This DOI was withdrawn. Please input another DOI."
+msgstr ""
+
 #~ msgid "item type"
 #~ msgstr ""
 
