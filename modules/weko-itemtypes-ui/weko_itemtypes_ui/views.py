@@ -33,7 +33,6 @@ from weko_records.api import ItemsMetadata, ItemTypeNames, ItemTypeProps, \
 from weko_schema_ui.api import WekoSchema
 
 from .permissions import item_type_permission
-from weko_records.api import ChargingFilePerm
 
 blueprint = Blueprint(
     'weko_itemtypes_ui',
@@ -137,10 +136,7 @@ def custom_property(property_id=0):
     """Renders an primitive property view."""
     lists = ItemTypeProps.get_records([])
 
-    if not ChargingFilePerm.check_userid(current_user.id):
-        for list in lists:
-            if list.id == 103:
-                lists.remove(list)
+    #TODO: BillingFileConfig
 
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_CREATE_PROPERTY'],
@@ -156,10 +152,11 @@ def get_property_list(property_id=0):
     lang = request.values.get('lang')
 
     props = ItemTypeProps.get_records([])
-    if not ChargingFilePerm.check_userid(current_user.id):
-        for prop in props:
-            if prop.id == 103:
-                props.remove(prop)
+
+    #TODO: BillingFileConfig
+    # for prop in props:
+    #     if prop.id == 103:
+    #         props.remove(prop)
 
     lists = {}
     for k in props:
