@@ -293,6 +293,7 @@
       $('#sub_children_lists div.sub_child_list').remove();
       let re = /\s*;\s*|\s*,\s*|\s*-\s*|\s*:\s*/g;
       if(Object.keys(page_global.sub_mapping_list).length > 0) {
+        console.log(page_global.sub_mapping_list);
         Object.entries(page_global.sub_mapping_list).forEach(([key, value]) => {
           let new_sub_info = $('div.sub_children_list').clone(true);
           if(page_global.sub_itemtype_list.length > 0) {

@@ -33,6 +33,8 @@ from weko_records.api import ItemsMetadata, ItemTypeNames, ItemTypeProps, \
 from weko_schema_ui.api import WekoSchema
 
 from .permissions import item_type_permission
+from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
+
 
 blueprint = Blueprint(
     'weko_itemtypes_ui',
@@ -136,7 +138,10 @@ def custom_property(property_id=0):
     """Renders an primitive property view."""
     lists = ItemTypeProps.get_records([])
 
-    #TODO: BillingFileConfig
+    if not WEKO_BILLING_FILE_ACCESS:
+        for prop in lists:
+            if prop.id == WEKO_BILLING_FILE_PROP_ID:
+                lists.remove(prop)
 
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_CREATE_PROPERTY'],
@@ -153,10 +158,10 @@ def get_property_list(property_id=0):
 
     props = ItemTypeProps.get_records([])
 
-    #TODO: BillingFileConfig
-    # for prop in props:
-    #     if prop.id == 103:
-    #         props.remove(prop)
+    if not WEKO_BILLING_FILE_ACCESS:
+        for prop in props:
+            if prop.id == WEKO_BILLING_FILE_PROP_ID:
+                props.remove(prop)
 
     lists = {}
     for k in props:

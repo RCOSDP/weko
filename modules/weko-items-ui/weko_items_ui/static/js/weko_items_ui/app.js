@@ -288,7 +288,7 @@ function handleSharePermission(value) {
   angular.element(document).ready(function () {
     angular.module('wekoRecords.controllers', []);
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
-      $scope.cities = [];
+      $scope.groups = [];
       $scope.filemeta_keys = [];
       $scope.is_item_owner = false;
       $scope.searchFilemetaKey = function () {
@@ -400,7 +400,7 @@ function handleSharePermission(value) {
             let index = 1;
             while(data[index]) {
               group = data[index];
-              $scope.cities.push(group);
+              $scope.groups.push(group);
               index += 1;
             }
           }

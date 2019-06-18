@@ -350,9 +350,6 @@ def display_activity(activity_id=0):
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
 
-    groups = Group.get_group_list()
-    current_app.logger.debug('----------------------------------------')
-    current_app.logger.debug(groups)
     return render_template(
         'weko_workflow/activity_detail.html',
         render_widgets=True,
