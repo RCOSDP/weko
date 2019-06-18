@@ -259,6 +259,16 @@ ${INVENIO_WEB_INSTANCE} users create \
        "test03@hitachi.com" \
        --password "${INVENIO_USER_PASS}" \
        --active
+
+${INVENIO_WEB_INSTANCE} users create \
+      "test04@hitachi.com" \
+      --password "${INVENIO_USER_PASS}" \
+      --active
+
+${INVENIO_WEB_INSTANCE} roles add \
+        "test04@hitachi.com" \
+       "${INVENIO_ROLE_COMMUNITY}"
+
 ##### sphinxdoc-create-test-data-end
 
 # sphinxdoc-set-web-api-account-combobox-begin
