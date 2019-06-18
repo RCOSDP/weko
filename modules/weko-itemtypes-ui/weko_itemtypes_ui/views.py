@@ -137,8 +137,7 @@ def custom_property(property_id=0):
     """Renders an primitive property view."""
     lists = ItemTypeProps.get_records([])
 
-    checkPermission = ChargingFilePerm()
-    if not checkPermission.check_userid(current_user.id):
+    if not ChargingFilePerm.check_userid(current_user.id):
         for list in lists:
             if list.id == 103:
                 lists.remove(list)
@@ -157,8 +156,7 @@ def get_property_list(property_id=0):
     lang = request.values.get('lang')
 
     props = ItemTypeProps.get_records([])
-    checkPermission = ChargingFilePerm()
-    if not checkPermission.check_userid(current_user.id):
+    if not ChargingFilePerm.check_userid(current_user.id):
         for prop in props:
             if prop.id == 103:
                 props.remove(prop)
