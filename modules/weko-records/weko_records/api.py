@@ -38,8 +38,7 @@ from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
 from .models import FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, \
-    ItemTypeName, ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress, \
-    ChargingFilePermission
+    ItemTypeName, ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress
 
 _records_state = LocalProxy(
     lambda: current_app.extensions['invenio-records'])
@@ -1554,21 +1553,3 @@ class WekoRecord(Record):
             pid_type='depid',
             pid_value=self.get('_deposit', {}).get('id')
         )
-
-class ChargingFilePerm(RecordBase):
-    """Define API for Itemtype Property creation and manipulation."""
-
-    @classmethod
-    def check_userid(cls, userid):
-        """Retrieve the record by id.
-
-        Raise a database exception if the record does not exist.
-
-        :param property_id: ID of item type property.
-        :returns: The :class:`Record` instance.
-        """
-        with db.session.no_autoflush:
-            obj = ChargingFilePermission.query.filter_by(userid=userid).one_or_none()
-            if obj:
-                return obj.can_access
-        return None
