@@ -35,9 +35,6 @@ from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
-from invenio_accounts.models import Role, userrole
-from invenio_admin.views import blueprint as invenio_admin_blueprint
-from invenio_admin.views import protected_adminview_factory
 from invenio_db import db
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
@@ -479,48 +476,6 @@ class LogAnalysisSettings(BaseView):
         return new_crawler_lists, new_ip_addresses
 
 
-def _role_endpoint_viewable(endpoint):
-    """Check whether the current user role can view the endpoint - util."""
-    conf = current_app.config
-    access_table = conf['WEKO_ADMIN_ACCESS_TABLE']
-    system_admin = conf['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
-    try:
-        roles = db.session.query(Role).join(userrole).filter_by(
-            user_id=current_user.get_id()).all()
-    except Exception as e:
-        current_app.logger.error(
-            'Could not determine roles - returning False: ', e)
-        # flash(_('Unexpected error occured.'))
-        roles = []
-    for role in roles:  # Check if role can view endpoint
-        access_list = access_table[role.name] if role.name in access_table \
-            else []
-        if endpoint in access_list or role.name == system_admin:
-            return True
-    return False
-
-
-@staticmethod
-def role_has_access():
-    """Check if user's role has access to view endpoint."""
-    endpoint = request.url_rule.endpoint.split('.')[0]
-    return _role_endpoint_viewable(endpoint)
-
-
-@invenio_admin_blueprint.before_app_first_request
-def is_accessible_to_role():
-    """Check if current user's role has access to view."""
-    for i, view in enumerate(current_app.extensions['admin'][0]._views):
-        setattr(view, 'is_accessible', role_has_access.__func__)
-
-        # Stop lambda from pointing to last instance of variable
-        if _role_endpoint_viewable(view.endpoint):
-            setattr(view, 'is_visible', lambda: True)
-        else:
-            setattr(view, 'is_visible', lambda: False)
-        current_app.extensions['admin'][0]._views[i] = view  # Overwrite view
-
-
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -547,6 +502,7 @@ stats_settings_adminview = {
         'endpoint': 'statssettings'
     }
 }
+
 
 log_analysis_settings_adminview = {
     'view_class': LogAnalysisSettings,
