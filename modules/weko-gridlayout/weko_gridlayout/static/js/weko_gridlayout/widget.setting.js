@@ -563,7 +563,7 @@ class ExtendComponent extends React.Component {
 
     generateNewDate(){
         let newDates =['Today'];
-        for(let i=1; i<=31; i++)
+        for(let i=1; i<31; i++)
         {
             newDates.push(i+"");
         }
