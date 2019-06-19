@@ -26,7 +26,7 @@ from flask import current_app
 from invenio_db import db
 from sqlalchemy import cast
 from sqlalchemy.dialects import postgresql
-from weko_records.models import ItemMetadata
+from invenio_records.models import RecordMetadata
 
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
@@ -701,19 +701,20 @@ class WidgetDataLoaderServices:
         try:
             data = list()
             for date in list_dates:
-                records = db.session.query(ItemMetadata).filter(
-                    ItemMetadata.json['pubdate'] == cast(
+                records = db.session.query(RecordMetadata).filter(
+                    RecordMetadata.json['pubdate']["attribute_value"] == cast(
                         date,
                         postgresql.JSONB),
-                    ItemMetadata.json['status'] == cast(
-                        "published",
+                    RecordMetadata.json['publish_status'] == cast(
+                        "0",
                         postgresql.JSONB)
-                ).all()
+                ).order_by(RecordMetadata.updated.desc()).all()
                 for record in records:
                     record_data = record.json
                     new_data = dict()
-                    new_data['name'] = record_data['title']
-                    new_data['url'] = '/records/' + record_data['id']
+                    new_data['name'] = record_data['item_title']
+                    new_data['url'] = '/records/' \
+                                      + record_data['control_number']
                     rss = dict()
                     if rss_status:
                         rss = cls.get_arrivals_rss()
@@ -722,6 +723,8 @@ class WidgetDataLoaderServices:
                         data.append(new_data)
                     else:
                         break
+                if len(data) == int(number_result):
+                    break
             result['data'] = data
         except Exception as e:
             result['error'] = str(e)
