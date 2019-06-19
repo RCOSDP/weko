@@ -119,13 +119,13 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
         // request api
         $http({
             method: 'POST',
-            url: '/item_management/save',
+            url: '/admin/items/custom_sort/save',
             data: post_data,
           headers: {'Content-Type': 'application/json'},
         }).then(function successCallback(response) {
-          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q + "&item_management=sort&sort=custom_sort";
+          window.location.href = '/admin/items/search?search_type=2&q='+$rootScope.index_id_q + "&item_management=sort&sort=custom_sort";
         }, function errorCallback(response) {
-          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q+ "&item_management=sort&sort=custom_sort";
+          window.location.href = '/admin/items/search?search_type=2&q='+$rootScope.index_id_q+ "&item_management=sort&sort=custom_sort";
         });
      }
 
@@ -163,5 +163,3 @@ angular.module('invenioSearch')
   .controller('searchResCtrl', searchResCtrl);
 
 // add by ryuu. at 20181129 end
-
-

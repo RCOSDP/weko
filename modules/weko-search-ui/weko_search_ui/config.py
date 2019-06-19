@@ -38,6 +38,9 @@ WEKO_SEARCH_UI_THEME_FRONTPAGE_TEMPLATE = \
 
 WEKO_SEARCH_UI_SEARCH_TEMPLATE = 'weko_search_ui/search.html'
 
+WEKO_SEARCH_UI_ADMIN_BULK_DELETE = \
+    'weko_search_ui/admin/item_management_display.html'
+
 """Reset search_ui_search config"""
 
 WEKO_SEARCH_UI_JSTEMPLATE_RESULTS = 'templates/weko_search_ui/itemlist.html'
@@ -99,7 +102,7 @@ RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
     'text/x-bibliography': ('weko_records.serializers:citeproc_v1_response')
 }
 
-# RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all  
+# RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all
 
 INDEXER_DEFAULT_INDEX = 'weko'
 INDEXER_DEFAULT_DOCTYPE = 'item'
@@ -302,4 +305,3 @@ WEKO_SEARCH_KEYWORDS_DICT = {
 WEKO_SEARCH_TYPE_KEYWORD = 'keyword'
 
 WEKO_SEARCH_TYPE_INDEX = 'index'
-
