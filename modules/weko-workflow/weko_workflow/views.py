@@ -46,7 +46,6 @@ from weko_items_ui.views import to_files_js
 from weko_records.api import ItemsMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
-from sqlalchemy import desc
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -54,8 +53,9 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import get_community_id_by_index, pidstore_identifier_mapping, \
-    find_doi, is_withdrawn_doi
+from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
+    pidstore_identifier_mapping
+
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -587,13 +587,13 @@ def previous_action(activity_id='0', action_id=0, req=0):
     activity_detail = work_activity.get_activity_detail(activity_id)
     flow = Flow()
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-    
+
     pid_identifier = PersistentIdentifier.get_by_object(
             pid_type='doi', object_type='rec', object_uuid=item.id)
     with db.session.begin_nested():
         db.session.delete(pid_identifier)
     db.session.commit()
-    
+
     if req == 0:
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id)
@@ -736,7 +736,8 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
-            identifier['action_identifier_select'] = IDENTIFIER_GRANT_IS_WITHDRAWING
+            identifier['action_identifier_select'] = \
+                IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
                 activity.create_or_update_action_identifier(
                     activity_id,
@@ -744,7 +745,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                     identifier)
             # Clear identifier in ItemMetadata
             pidstore_identifier_mapping(None, -1, activity_id)
-            
+
             return jsonify(code=0,
                            msg=_('success'),
                            data={'redirect': url_for(
@@ -781,4 +782,3 @@ def check_existed_doi():
             data['msg'] = _('success')
         data['code'] = 0
     return jsonify(data)
-
