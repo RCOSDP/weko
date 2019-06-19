@@ -329,6 +329,17 @@ function handleSharePermission(value) {
               }
             });
           }
+          groupsprice_schema = filemeta_schema.items.properties['groupsprice']
+          groupsprice_form = filemeta_form.items[6];
+          if (groupsprice_schema && groupsprice_form) {
+            groupsprice_schema.items.properties['group']['enum'] = [];
+            group_form = groupsprice_form.items[0];
+            group_form['titleMap'] = [];
+            $scope.groups.forEach(group => {
+              groupsprice_schema.items.properties['group']['enum'].push(group);
+              group_form['titleMap'].push({ name: group, value: group });
+            });
+          }
         });
         $rootScope.$broadcast('schemaFormRedraw');
       }
