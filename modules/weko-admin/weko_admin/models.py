@@ -776,7 +776,7 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                     yield (name, value)
 
 class BillingPermission(db.Model):
-    """Database for API Certificate."""
+    """Database for Billing Permission."""
 
     __tablename__ = 'billing_permission'
 
@@ -795,9 +795,11 @@ class BillingPermission(db.Model):
 
     @classmethod
     def create(cls, user_id, is_active=True):
-        """Get all information about certificates in database.
+        """Create new user can access billing file.
 
-        :return: list of pair (api short name, api full name, certificate data)
+        :param user_id: user's id
+        :param is_active: access state
+        :return: Unit if create succesfully
         """
         try:
             obj = BillingPermission()
@@ -815,9 +817,11 @@ class BillingPermission(db.Model):
 
     @classmethod
     def activation(cls, user_id, is_active):
-        """Get all information about certificates in database.
+        """Change access state of user.
 
-        :return: list of pair (api short name, api full name, certificate data)
+        :param user_id: user's id
+        :param is_active: access state
+        :return: Updated records
         """
         try:
             with db.session.begin_nested():
@@ -826,7 +830,8 @@ class BillingPermission(db.Model):
                     billing_data.is_active = is_active
                     db.session.merge(billing_data)
                 else:
-                    current_app.logger.debug(_('User is not exist!'))
+                    cls.create(user_id, is_active)
+                    current_app.logger.debug('New user is created!')
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -837,11 +842,10 @@ class BillingPermission(db.Model):
 
     @classmethod
     def get_billing_information_by_id(cls, user_id):
-        """Get all active crawler lists.
+        """Get billing information by user id
 
-        :return: All active crawler lists.
+        :return: Record or none
         """
-        billing_information = None
         try:
             billing_information = cls.query.filter_by(user_id=user_id).one_or_none()
         except Exception as ex:

@@ -160,10 +160,10 @@ def add_billing_user(user_id, is_active):
 @click.argument('is_active')
 @with_appcontext
 def toggle_active_billing_user(user_id, is_active):
-    """Ex: ja Japanese true 12 true."""
+    """Add new user can access billing file."""
     try:
         BillingPermission.activation(user_id, is_active)
-        if is_active:
+        if is_active == 'true':
             click.secho('active billing user success')
         else:
             click.secho('deactive billing user success')
