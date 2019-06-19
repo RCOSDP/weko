@@ -34,7 +34,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
 from weko_deposit.api import WekoRecord
-from weko_groups.api import Group
+from weko_groups.models import Group
 from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
@@ -47,8 +47,6 @@ from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, validate_user
-
-from weko_groups.models import Group
 
 blueprint = Blueprint(
     'weko_items_ui',

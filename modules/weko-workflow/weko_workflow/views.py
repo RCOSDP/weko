@@ -39,6 +39,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
 from weko_accounts.api import ShibUser
 from weko_deposit.api import WekoRecord
+from weko_groups.models import Group
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
@@ -54,8 +55,6 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import get_community_id_by_index, pidstore_identifier_mapping
-
-from weko_groups.models import Group
 
 blueprint = Blueprint(
     'weko_workflow',

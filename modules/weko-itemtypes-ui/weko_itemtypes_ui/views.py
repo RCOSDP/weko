@@ -25,16 +25,15 @@ import sys
 from flask import Blueprint, abort, current_app, json, jsonify, redirect, \
     render_template, request, url_for
 from flask_babelex import gettext as _
-from flask_login import login_required, current_user
+from flask_login import current_user, login_required
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_records.api import ItemsMetadata, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
 
-from .permissions import item_type_permission
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
-
+from .permissions import item_type_permission
 
 blueprint = Blueprint(
     'weko_itemtypes_ui',
