@@ -546,7 +546,6 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
                 if isinstance(value, str):
                     yield (name, value)
 
-
 __all__ = (
     'Timestamp',
     'ItemType',

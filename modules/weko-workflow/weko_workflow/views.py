@@ -39,7 +39,12 @@ from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
 from weko_accounts.api import ShibUser
+<<<<<<< HEAD
 from weko_deposit.api import WekoDeposit, WekoRecord
+=======
+from weko_deposit.api import WekoRecord
+from weko_groups.models import Group
+>>>>>>> feature/sp12-ChargingItemType-dev23
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
@@ -352,6 +357,7 @@ def display_activity(activity_id=0):
         session['itemlogin_res_check'] = res_check
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
+
     return render_template(
         'weko_workflow/activity_detail.html',
         render_widgets=True,

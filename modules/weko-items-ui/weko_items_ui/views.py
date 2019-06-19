@@ -88,9 +88,16 @@ def index(item_type_id=0):
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         need_file = False
+
+
+        current_app.logger.debug(
+            '\nForms-----------------\n' +
+            item_type.schema
+            + '\n----------------------\n')
         # if 'filemeta' in json.dumps(item_type.schema):
         if 'filename' in json.dumps(item_type.schema):
             need_file = True
+
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
             render_widgets=True,
@@ -456,7 +463,6 @@ def default_view_method(pid, record, template=None):
         if 'endpoints' in item_json:
             endpoints = item_json.get('endpoints')
     need_file = False
-    # if 'filemeta' in json.dumps(item_type.schema):
     if 'filename' in json.dumps(item_type.schema):
         need_file = True
     return render_template(
