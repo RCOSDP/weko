@@ -78,59 +78,72 @@
       <div class="panel panel-default">
         <div class="panel-body">
         <div class="container-fluid">
-          <div class="row">
+          <div class="row col-sm-9">
             <div class="col-sm-3">
               <div class="form-horizontal" style="display: inline-block;">
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Flow')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.flow_define.flow_name}}</p>
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                    <label>{{_('Flow')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.flow_define.flow_name}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Activity')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.activity_id}}</p>
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                    <label>{{_('Activity')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.activity_id}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Status')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{ activity.activity_status_str }}</p>
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                    <label>{{_('Status')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{ activity.activity_status_str }}</p>
+                  </div>
+                </div>
+              </div>
+            </div> 
+            <div class="col-sm-3">
+              <div class="form-horizontal" style="display: inline-block;">
+                <div class="form-group">
+                 <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                   <label>{{_('Created')}}</label>
+                 </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.activity_start.date()}}</p>
+                  </div>
+                </div>
+                <div class="form-group">
+                <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                  <label>{{_('Creater')}}</label>
+                </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="col-sm-1"></div>
+            <div class="col-sm-2"></div>
             <div class="col-sm-3">
               <div class="form-horizontal" style="display: inline-block;">
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Created')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.activity_start.date()}}</p>
+                <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                  <label>{{_('Updated')}}</label>
+                </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.updated.date()}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Creater')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
-                  </div>
+                <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                  <label>{{_('Updater')}}</label>
                 </div>
-              </div>
-            </div>
-            <div class="col-sm-1"></div>
-            <div class="col-sm-3">
-              <div class="form-horizontal" style="display: inline-block;">
-                <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Updated')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.updated.date()}}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Updater')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
                   </div>
                 </div>
                 <div class="col-sm-1"></div>
@@ -142,12 +155,12 @@
       <div class="panel panel-default">
         <div class="panel-body">
           <div class="row col-sm-9">
-                    <div class="col-xs-1 col-md-1 col-lg-1">
-                        <lable>{{_('Item')}}</lable>
-                    </div>
-                    <div class="col-xs-11 col-md-11 col-lg-11">
-                        <a href="#" id="lnk_item_detail">{{item.get('title') if item}}</a> 
-                    </div>
+            <div class="col-xs-1 col-md-1 col-lg-1">
+                <lable>{{_('Item')}}</lable>
+            </div>
+            <div class="col-xs-11 col-md-11 col-lg-11">
+                <a href="#" id="lnk_item_detail">{{item.get('title') if item}}</a> 
+            </div>
           </div>
         </div>
       </div>
