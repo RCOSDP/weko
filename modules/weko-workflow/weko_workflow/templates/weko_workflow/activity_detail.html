@@ -77,109 +77,133 @@
     <div id="workFlow" class="panel-group">
       <div class="panel panel-default">
         <div class="panel-body">
-          <div class="row">
+        <div class="container-fluid">
+          <div class="row col-sm-9">
             <div class="col-sm-3">
-              <div class="form-horizontal">
+              <div class="form-horizontal" style="display: inline-block;">
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Flow')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.flow_define.flow_name}}</p>
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                    <label>{{_('Flow')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.flow_define.flow_name}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Activity')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.activity_id}}</p>
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                    <label>{{_('Activity')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.activity_id}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Status')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{ activity.activity_status_str }}</p>
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                    <label>{{_('Status')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{ activity.activity_status_str }}</p>
+                  </div>
+                </div>
+              </div>
+            </div> 
+            <div class="col-sm-3">
+              <div class="form-horizontal" style="display: inline-block;">
+                <div class="form-group">
+                 <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                   <label>{{_('Created')}}</label>
+                 </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.activity_start.date()}}</p>
+                  </div>
+                </div>
+                <div class="form-group">
+                <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                  <label>{{_('Creater')}}</label>
+                </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="col-sm-2">
-              <div class="form-horizontal">
+            <div class="col-sm-2"></div>
+            <div class="col-sm-3">
+              <div class="form-horizontal" style="display: inline-block;">
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Created')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.activity_start.date()}}</p>
+                <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                  <label>{{_('Updated')}}</label>
+                </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.updated.date()}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Creater')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
+                <div class="col-xs-6 col-md-4 col-lg-4 control-lable">
+                  <label>{{_('Updater')}}</label>
+                </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
+                    <p>{{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
                   </div>
                 </div>
+                <div class="col-sm-1"></div>
               </div>
             </div>
-            <div class="col-sm-2">
-              <div class="form-horizontal">
-                <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Updated')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.updated.date()}}</p>
-                  </div>
-                </div>
-                <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Updater')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">{{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          </div></div>
         </div>
       </div>
       <div class="panel panel-default">
         <div class="panel-body">
-          <div class="row">
-            <div class="col-sm-3">
-              <div class="form-horizontal">
-                <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Item')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">
-                    <a href="#" id="lnk_item_detail">{{item.get('title') if item}}</a>
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div class="row col-sm-9">
+            <div class="col-xs-1 col-md-1 col-lg-1">
+                <lable>{{_('Item')}}</lable>
+            </div>
+            <div class="col-xs-11 col-md-11 col-lg-11">
+                <a href="#" id="lnk_item_detail">{{item.get('title') if item}}</a> 
             </div>
           </div>
         </div>
       </div>
       <div class="panel panel-default">
         <span class="indent">{{_('Step')}}</span>
-        <div class="panel-body">
-          <div class="row">
+        <div class="panel-body panel-styling">
+          <div class="col-sm-9 table-responsive table-bordered">
+          <div class="row" style="display: flex;">
             {%- for step in steps %}
-            <div class="col-sm-2">
-              <div class="row">
-                <div class="col-sm-9">
-                  <ul class="list-group">
-                    <li class="list-group-item break-word {{ style_including('style_li', step) }}">
-                      <span class="action-name {{ style_including('cur_step', step) }} {{ style_including('style_a', step) }}"
+            <div class="col-xl-3">
+              <div class="row" style="display: flex;">
+                <div class="col-md-8 col-xl-8">
+                  <ul class="list-group workflow-ul">
+                    <li class="list-group-item break-word {{
+                        style_including('style_li', step) }}"> 
+                      <span class="action-name {{ style_including('cur_step',
+                            step) }} {{ style_including('style_a', step) }}
+                            workflow-span"
                         data-action-version="{{ step.ActionVersion }}"
                         data-cancel-uri="{{ url_for('weko_workflow.cancel_action', activity_id=step.ActivityId, action_id=step.ActionId) }}"
-                        data-next-uri="{{ url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId) }}">{{ step.ActionName }}</span></li>
-                    <li class="list-group-item break-word {{ style_including('style_li', step) }} ">
-                      <span class="action-name {{ style_including('style_a', step) }}">{{ step.Author }}</span></li>
-                    <li class="list-group-item {{ style_including('style_li', step) }} {{ style_including('style_a', step) }}">{{_( step.Status )}}</li>
+                        data-next-uri="{{ url_for('weko_workflow.next_action',
+                        activity_id=step.ActivityId, action_id=step.ActionId)
+                        }}">{{ step.ActionName }}</span></li>
+                    <li class="list-group-item break-word {{
+                        style_including('style_li', step) }} ">
+                      <span class="action-name {{ style_including('style_a',
+                          step) }} workflow-span">{{ step.Author }}</span></li>
+                    <li class="list-group-item {{ style_including('style_li',
+                    step) }} {{ style_including('style_a', step) }}">
+                        <span class="workflow-span">{{_( step.Status)}}</span></li>
                   </ul>
                 </div>
+                
                 {%- if 'end_action' != step.ActionEndpoint %}
-                <div class="col-sm-3 pull-right">
-                  <span class="glyphicon glyphicon-arrow-right rightFoward_font" aria-hidden="true"></span>
+                <div class="col-md-4 col-xl-4">
+                  <span class="glyphicon glyphicon-arrow-right
+                      rightFoward_font" aria-hidden="true" style="display: inline-block; width:60px;"></span>
                 </div>
                 {%- endif %}
-              </div>
-            </div>
+                </div>
+            </div>   
             {% endfor %}
+            </div>
           </div>
         </div>
       </div>
@@ -254,7 +278,7 @@
       {%- block history_panel %}
       <div class="panel panel-default">
         <span class="indent">{{_('History')}}</span>
-        <div class="panel-body">
+        <div class="panel-body table-responsive">
           <table class="table table-bordered table-striped">
             <thead>
               <tr>
