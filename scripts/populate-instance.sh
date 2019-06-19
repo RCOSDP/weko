@@ -310,3 +310,6 @@ ${INVENIO_WEB_INSTANCE} report create_target \
 ${INVENIO_WEB_INSTANCE} report create_target \
        "3" "Contents download report" "1,2,3,4,5"
 # sphinxdoc-set-report-unit-and-target-end
+
+${INVENIO_WEB_INSTANCE} billing create \
+       1 "true"

@@ -73,6 +73,7 @@
   </div>
 </div>
 <div class="row">
+<<<<<<< HEAD
   <div class="col-sm-12">
     <div class="col-sm-6 item-type-list-header">
       <label>{{_('Item Type')}}</label><label>({{_('Parent')}})</label>
@@ -80,6 +81,13 @@
     <div class="col-sm-6 item-type-schema-header">
       <label>{{_('Schema')}}</label><label>({{_('Parent')}})</label>
     </div>
+=======
+  <div class="col-sm-6">
+    <label>{{_('Item Type')}} ({{_('Parent')}})</label>
+  </div>
+  <div class="col-sm-6">
+    <label>{{_('JPCOAR')}} ({{_('Parent')}})</label>
+>>>>>>> feature/sp12-ChargingItemType-dev23
   </div>
 </div>
 <div class="pre-scrollable">
@@ -226,6 +234,7 @@
   </div>
 </div>
 <hr>
+<<<<<<< HEAD
 <!-- ---------- Header for Item Child list ----------  -->
 <div>
   <div class="row">
@@ -234,6 +243,32 @@
         <div class="panel-body item-type-list-header">
           <div class="col-sm-6 item-type-list">
             <label id="sub-item-type-lists-label">{{_('Item Type List')}}</label><label>({{_('Child')}})</label>
+=======
+<div class="row">
+  <div class="col-sm-6">
+    <label id="sub-item-type-lists-label">{{_('Itemtype List')}} ({{_('Child')}})</label>
+  </div>
+  <div class="col-sm-6">
+    <label id="sub-jpcoar-lists-label">{{_('JPCOAR')}} ({{_('Child')}})</label>
+    <!-- <button id="sub_mapping-add" class="btn btn-success pull-right">{{_('Add')}}</button>-->
+    <button id="sub_mapping-add" class="btn btn-light pull-right add-button twentyeight-pixel-right-margin">
+       <span class="glyphicon glyphicon-plus"></span>
+           {{_('Add')}}
+    </button>
+  </div>
+</div>
+<div id="sub_children_lists">
+  <div class="row sub_children_list hide"><hr>
+    <div class="col-sm-6 sub_children_itemtype_list">
+      <div class="row sub_child_itemtype_list">
+        <div class="col-sm-8">
+          <div class="form">
+            <div class="form-group">
+              <select class="form-control" name="sub_itemtype_list">
+                <option value=""></option>
+              </select>
+            </div>
+>>>>>>> feature/sp12-ChargingItemType-dev23
           </div>
           <div class="col-sm-6">
             <label id="sub-jpcoar-lists-label">{{_('Schema')}}</label><label>({{_('Child')}})</label>

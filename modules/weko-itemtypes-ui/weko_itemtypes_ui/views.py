@@ -25,13 +25,14 @@ import sys
 from flask import Blueprint, abort, current_app, json, jsonify, redirect, \
     render_template, request, url_for
 from flask_babelex import gettext as _
-from flask_login import login_required
+from flask_login import current_user, login_required
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_records.api import ItemsMetadata, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
 
+from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
 from .permissions import item_type_permission
 
 blueprint = Blueprint(
@@ -135,6 +136,12 @@ def register(item_type_id=0):
 def custom_property(property_id=0):
     """Renders an primitive property view."""
     lists = ItemTypeProps.get_records([])
+
+    if not WEKO_BILLING_FILE_ACCESS:
+        for prop in lists:
+            if prop.id == WEKO_BILLING_FILE_PROP_ID:
+                lists.remove(prop)
+
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_CREATE_PROPERTY'],
         lists=lists
@@ -149,6 +156,12 @@ def get_property_list(property_id=0):
     lang = request.values.get('lang')
 
     props = ItemTypeProps.get_records([])
+
+    if not WEKO_BILLING_FILE_ACCESS:
+        for prop in props:
+            if prop.id == WEKO_BILLING_FILE_PROP_ID:
+                props.remove(prop)
+
     lists = {}
     for k in props:
         name = k.name
