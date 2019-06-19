@@ -176,8 +176,9 @@ def del_invenio_pidstore(item_id):
     :return: True/False
     """
     try:
-        pid_identifier = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', object_uuid=item_id,
-                                                              status=PIDStatus.REGISTERED).one()
+        pid_identifier = PersistentIdentifier.query.\
+            filter_by(pid_type='doi', object_type='rec', object_uuid=item_id,
+                      status=PIDStatus.REGISTERED).one()
         if pid_identifier:
             pid_identifier.delete()
             return pid_identifier.status == PIDStatus.DELETED
@@ -194,6 +195,7 @@ def reg_invenio_pidstore(pid_value, item_id):
     :param: pid_value, item_id
     """
     try:
-        PersistentIdentifier.create('doi', pid_value, None, PIDStatus.REGISTERED, 'rec', item_id)
+        PersistentIdentifier.create('doi', pid_value, None,
+                                    PIDStatus.REGISTERED, 'rec', item_id)
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
