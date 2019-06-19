@@ -198,10 +198,12 @@ class WidgetItems(object):
         return False
 
     @classmethod
-    def is_existed(cls, widget_items, id):
+    def is_existed(cls, widget_items, widget_item_id):
         """Check widget item is existed or not.
 
         :param widget_items:  Widget item
+        :param widget_item_id: Id of widget item
+
         :return:  true if it is existed else return false
         """
         if not isinstance(widget_items, dict):
@@ -214,7 +216,7 @@ class WidgetItems(object):
         if type(list_widget_items) is list:
             for item in list_widget_items:
                 item = cls.parse_result(item)
-                if id == item.get('id'):
+                if widget_item_id == item.get('id'):
                     continue
                 if cls.validate_exist_multi_language(item, sample_lang_data):
                     return True
@@ -271,12 +273,11 @@ class WidgetMultiLangData(object):
     """Define API for WidgetMultiLangData creation and update."""
 
     @classmethod
-    def build_general_data(cls, data_object, widget_items, is_update=False):
+    def build_general_data(cls, data_object, widget_items):
         """Build general data of object.
 
         :param data_object: object data
         :param widget_items: widget item
-        :param is_update: Update flag
         """
         try:
             data_object["repository_id"] = widget_items.get('repository')
@@ -319,7 +320,6 @@ class WidgetMultiLangData(object):
         """Build widget item object.
 
         :param widget_items: Widget Item
-        :param is_update: Update flag
         :return: Widget item object
         """
         if not isinstance(widget_items, dict):
@@ -349,7 +349,7 @@ class WidgetMultiLangData(object):
 
         if not isinstance(widget_items, dict):
             return
-
+        data = dict()
         for k, v in widget_items.items():
             new_data = dict()
             new_data['lang_code'] = k
@@ -443,10 +443,11 @@ class WidgetMultiLangData(object):
         return False
 
     @classmethod
-    def is_existed(cls, widget_items, id):
+    def is_existed(cls, widget_items, widget_item_id):
         """Check widget item is existed or not.
 
         :param widget_items:  Widget item
+        :param widget_item_id:  Widget item id
         :return:  true if it is existed else return false
         """
         if not isinstance(widget_items, dict):
@@ -459,7 +460,7 @@ class WidgetMultiLangData(object):
         if type(list_widget_items) is list:
             for item in list_widget_items:
                 item = cls.parse_result(item)
-                if id == item.get('id'):
+                if widget_item_id == item.get('id'):
                     continue
                 if cls.validate_exist_multi_language(item, sample_lang_data):
                     return True

@@ -69,7 +69,8 @@ class WidgetSettingView(ModelView):
         """Return search placeholder."""
         return 'Search'
 
-    def get_label_display_to_list(self, widget_id):
+    @staticmethod
+    def get_label_display_to_list(widget_id):
         """Helper to get label to display to list.
 
         Arguments:
@@ -169,7 +170,8 @@ class WidgetSettingView(ModelView):
         list_data = list()
         for widget_item in data:
             obj = copy.deepcopy(widget_item)
-            label = self.get_label_display_to_list(widget_item.widget_id)
+            label = WidgetSettingView.get_label_display_to_list(
+                widget_item.widget_id)
             obj.label = label
             list_data.append(obj)
 
@@ -302,12 +304,12 @@ class WidgetSettingView(ModelView):
         if not self.can_view_details:
             return redirect(return_url)
 
-        id = helpers.get_mdict_item_or_list(request.args, 'id')
-        if id is None:
+        widget_item_id = helpers.get_mdict_item_or_list(request.args, 'id')
+        if widget_item_id is None:
             return redirect(return_url)
 
-        model = self.get_one(id)
-        label = self.get_label_display_to_list(model.widget_id)
+        model = self.get_one(widget_item_id)
+        label = WidgetSettingView.get_label_display_to_list(model.widget_id)
         model.label = label
 
         if model is None:

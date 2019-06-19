@@ -18,7 +18,7 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Database models for weko-admin."""
+"""Database models for weko-gridlayout."""
 
 from flask import current_app
 from invenio_db import db
@@ -117,9 +117,9 @@ class WidgetItem(db.Model):
     # Query Operation
     #
     @classmethod
-    def get_by_id(cls, id):
+    def get_by_id(cls, widget_item_id):
         """Get a widget item by id."""
-        widget = cls.query.filter_by(widget_id=id).one_or_none()
+        widget = cls.query.filter_by(widget_id=widget_item_id).one_or_none()
         return widget
 
     @classmethod
@@ -170,11 +170,11 @@ class WidgetItem(db.Model):
         session.add(data)
 
     @classmethod
-    def update_by_id(cls, id, widget_data, session=None):
+    def update_by_id(cls, widget_item_id, widget_data, session=None):
         """Update the widget by id.
 
         Arguments:
-            id {Integer} -- Id of widget
+            widget_item_id {Integer} -- Id of widget
             widget_data {Dictionary} -- data
 
         Returns:
@@ -183,7 +183,7 @@ class WidgetItem(db.Model):
         """
         if not session:
             session = db.session
-        widget = cls.get_by_id(id)
+        widget = cls.get_by_id(widget_item_id)
         if not widget:
             return
         for k, v in widget_data.items():
@@ -287,7 +287,7 @@ class WidgetMultiLangData(db.Model):
         return list_data
 
     @classmethod
-    def update_by_id(cls, id, data):
+    def update_by_id(cls, widget_item_id, data):
         """Update widget multilanguage data by id.
 
         Arguments:
@@ -298,13 +298,13 @@ class WidgetMultiLangData(db.Model):
             True -- If deleted
 
         """
-        data = cls.get_by_id(id)
+        widget_multi_lang = cls.get_by_id(widget_item_id)
         if not data:
             return
         for k, v in data.items():
-            setattr(data, k, v)
-        db.session.merge(data)
-        return data
+            setattr(widget_multi_lang, k, v)
+        db.session.merge(widget_multi_lang)
+        return widget_multi_lang
 
     @classmethod
     def delete_by_widget_id(cls, widget_id, session):

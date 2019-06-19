@@ -24,9 +24,9 @@ import json
 
 from flask import current_app
 from invenio_db import db
+from invenio_records.models import RecordMetadata
 from sqlalchemy import cast
 from sqlalchemy.dialects import postgresql
-from invenio_records.models import RecordMetadata
 
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
@@ -137,9 +137,9 @@ class WidgetItemServices:
         lang_data = dict()
         for data in multi_lang_data:
             new_data = dict()
-            new_data['label'] = multi_lang_data.get('label')
-            new_data['description'] = multi_lang_data.get('description_data')
-            lang_data[multi_lang_data.get('lang_code')] = new_data
+            new_data['label'] = data.get('label')
+            new_data['description'] = data.get('description_data')
+            lang_data[data.get('lang_code')] = new_data
         widget_data['multiLangSetting'] = lang_data
         result['widget_data'] = widget_data
         return result
