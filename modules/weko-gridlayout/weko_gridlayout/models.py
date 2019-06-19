@@ -22,8 +22,8 @@
 
 from flask import current_app
 from invenio_db import db
-from sqlalchemy.dialects import postgresql
 from sqlalchemy import Sequence
+from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils.types import JSONType
 
 
@@ -123,11 +123,17 @@ class WidgetItem(db.Model):
         return widget
 
     @classmethod
-    def get_id_by_repository_and_type(cls, repository, type):
+    def get_id_by_repository_and_type(cls, repository, widget_type):
+        """Get id by repository id and widget type.
+
+        :param repository: Repository id
+        :param widget_type: Widget type
+        :return:Widget Item
+        """
         widget_data = cls.query.filter_by(
             repository_id=repository,
-            widget_type=type,
-            is_deleted = False
+            widget_type=widget_type,
+            is_deleted=False
             ).all()
         if not widget_data:
             return None
@@ -139,6 +145,11 @@ class WidgetItem(db.Model):
 
     @classmethod
     def get_sequence(cls, session):
+        """Get widget item next sequence.
+
+        :param session: Session
+        :return: Next sequence.
+        """
         if not session:
             session = db.session
         seq = Sequence('widget_items_widget_id_seq')
@@ -147,6 +158,12 @@ class WidgetItem(db.Model):
 
     @classmethod
     def create(cls, widget_data, session):
+        """Create widget item.
+
+        :param widget_data: widget data
+        :param session: session
+        :return:
+        """
         if not session:
             return None
         data = cls(**widget_data)
@@ -154,7 +171,7 @@ class WidgetItem(db.Model):
 
     @classmethod
     def update_by_id(cls, id, widget_data, session=None):
-        """Update the widget by id
+        """Update the widget by id.
 
         Arguments:
             id {Integer} -- Id of widget
@@ -162,6 +179,7 @@ class WidgetItem(db.Model):
 
         Returns:
             widget -- if success
+
         """
         if not session:
             session = db.session
@@ -174,16 +192,17 @@ class WidgetItem(db.Model):
         return widget
 
     @classmethod
-    def delete_by_id(cls, id, session):
+    def delete_by_id(cls, widget_id, session):
         """Delete the widget by id.
 
         Arguments:
-            id {Integer} -- The widget id
+            widget_id {Integer} -- The widget id
 
         Returns:
             widget -- If success
+
         """
-        widget = cls.get_by_id(id)
+        widget = cls.get_by_id(widget_id)
         if not widget:
             return
         setattr(widget, 'is_deleted', 'True')
@@ -226,20 +245,27 @@ class WidgetMultiLangData(db.Model):
     # Query Operation
     #
     @classmethod
-    def get_by_id(cls, id):
-        """Get widget multilanguage data by id.
+    def get_by_id(cls, widget_multi_lang_id):
+        """Get widget multi language data by id.
 
         Arguments:
-            id {Integer} -- The ID
+            widget_multilanguage_id {Integer} -- The ID
 
         Returns:
-            data -- Widget multilanguage data
+            data -- Widget multi language data
+
         """
-        data = cls.query.filter_by(id=id).one_or_none()
+        data = cls.query.filter_by(id=widget_multi_lang_id).one_or_none()
         return data
 
     @classmethod
     def create(cls, data, session):
+        """Create Widget multi language data.
+
+        :param data: WWidget multi language data
+        :param session: session
+        :return:
+        """
         if not data:
             return None
         obj = cls(**data)
@@ -255,6 +281,7 @@ class WidgetMultiLangData(db.Model):
 
         Returns:
             data -- List widget multilanguage data
+
         """
         list_data = cls.query.filter_by(widget_id=widget_id).all()
         return list_data
@@ -269,6 +296,7 @@ class WidgetMultiLangData(db.Model):
 
         Returns:
             True -- If deleted
+
         """
         data = cls.get_by_id(id)
         if not data:
@@ -401,5 +429,6 @@ class WidgetDesignSetting(db.Model):
 __all__ = ([
     'WidgetType',
     'WidgetItem',
-    'WidgetDesignSetting'
+    'WidgetDesignSetting',
+    'WidgetMultiLangData'
 ])

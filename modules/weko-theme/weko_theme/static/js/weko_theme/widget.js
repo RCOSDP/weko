@@ -10,18 +10,6 @@ const ACCESS_COUNTER = "Access counter";
     getWidgetDesignSetting();
     window.lodash = _.noConflict();
 }());
-let current_role = '';
-
-let get_current_role = function() {
-    $.ajax({
-        method: 'GET',
-        url: '/api/admin/get_current_role',
-        async: false,
-        success: function(response) {
-            current_role = response['data'];
-        }
-    })
-}
 
 let PageBodyGrid = function () {
     this.init = function () {
@@ -129,34 +117,10 @@ let PageBodyGrid = function () {
                 }
                 let innerHTML = '';
                 for (let data in result) {
-                    innerHTML += '<li><a class="a-new-arrivals" href="#" data-roles="' + result[data]['roles'] + '" data-link="' + host + result[data]['url'] + '">' + result[data]['name'] + '</a></li>';
+                    innerHTML += '<li><a class="a-new-arrivals" href="' + result[data].url + '">' + result[data].name + '</a></li>';
                 }
                 innerHTML = '<div class="no-li-style col-sm-9">' + innerHTML + '</div><div class= "col-sm-3 rss">' + rssHtml + '</div>';
                 $("#" + id).append(innerHTML);
-                this.validateRole();
-            }
-        });
-    };
-
-    this.validateRole = function () {
-        if (!current_role) {
-            get_current_role();
-        }
-        $('.a-new-arrivals').on('click', function () {
-            let link = $(this).data('link');
-            let roles = $(this).data('roles');
-            let isValid = false;
-            for (let role of current_role) {
-                if (roles.indexOf(role) != -1) {
-                    isValid = true;
-                    break;
-                }
-            }
-            if (!isValid) {
-                // TODO: Change to modal type and change error message (based on requirement)
-                alert("You don't have permission to access the item");
-            }else {
-                window.location.href = link;
             }
         });
     };
