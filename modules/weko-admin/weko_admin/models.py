@@ -781,6 +781,7 @@ class BillingPermission(db.Model):
 
     user_id = db.Column(
         db.Integer(),
+        primary_key=True,
         nullable=False, 
         unique=True
     )
@@ -833,6 +834,21 @@ class BillingPermission(db.Model):
 
         return cls
 
+    @classmethod
+    def get_billing_information_by_id(cls, user_id):
+        """Get all active crawler lists.
+
+        :return: All active crawler lists.
+        """
+        billing_information = None
+        try:
+            billing_information = cls.query.filter_by(user_id=user_id).one_or_none()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            billing_information = None
+            raise
+        return billing_information
+
 
 __all__ = ([
     'SearchManagement',
@@ -840,7 +856,7 @@ __all__ = ([
     'ApiCertificate',    
     'StatisticUnit',
     'StatisticTarget',
-    'LogAnalysisRestrictedAddress',
+    'LogAnalysisRestrictedIpAddress',
     'LogAnalysisRestrictedCrawlerList',
     'BillingPermission'
 ])
