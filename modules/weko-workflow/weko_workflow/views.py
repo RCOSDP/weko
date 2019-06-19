@@ -446,7 +446,12 @@ def next_action(activity_id='0', action_id=0):
 
     work_activity = WorkActivity()
 
-    if 1 == post_json.get('temporary_save'):
+    history = WorkActivityHistory()
+    action = Action().get_action_detail(action_id)
+    action_endpoint = action.action_endpoint
+
+    if (1 == post_json.get('temporary_save') and
+        action_endpoint != 'identifier_grant'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
@@ -460,10 +465,6 @@ def next_action(activity_id='0', action_id=0):
                 comment=post_json.get('commond')
             )
         return jsonify(code=0, msg=_('success'))
-
-    history = WorkActivityHistory()
-    action = Action().get_action_detail(action_id)
-    action_endpoint = action.action_endpoint
 
     if 'begin_action' == action_endpoint:
         return jsonify(code=0, msg=_('success'))
@@ -525,7 +526,10 @@ def next_action(activity_id='0', action_id=0):
             action_id=action_id,
             identifier=identifier_grant
         )
-        pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+        if post_json.get('temporary_save') != 1:
+            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+        else:
+            return jsonify(code=0, msg=_('success'))
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
