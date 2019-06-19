@@ -5,6 +5,7 @@ const HIDE_REST_DEFAULT = "Hide the rest";
 const READ_MORE_DEFAULT = "Read more";
 const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
+const INTERVAL_TIME = 60000; //one minute
 
 (function () {
     getWidgetDesignSetting();
@@ -79,24 +80,14 @@ let PageBodyGrid = function () {
     };
 
     this.buildAccessCounter = function (initNumber) {
-        let data = 0;
-        $.ajax({
-            url: '/api/stats/top_page_access/0/0',
-            method: 'GET',
-            async: false,
-            success: (response) => {
-                if (response.all && response.all.count) {
-                    data = response.all.count;
-                }
-            }
-        })
+        let data = this.getAccessTopPageValue();
         // Convert to display-able number
         let initNum = Number(initNumber);
         let result = Number(data);
         if (!Number.isNaN(initNum)) {
             result = result + initNumber;
         }
-        return '<div class="widget-access-counter" style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">' + result + '</div>';
+        return '<div class="widget-access-counter" data-init-number="' + initNumber + '" style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">' + result + '</div>';
     };
 
     this.buildNewArrivals = function (request_data, id) {
@@ -170,16 +161,17 @@ let PageBodyGrid = function () {
             rightStyle = "right: unset; ";
             paddingHeading = "";
             overFlowBody = "overflow-y: hidden; ";
+            setInterval(() => { this.setAccessCounterValue(); }, INTERVAL_TIME);
         } else if (node.type == NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
             let date = new Date();
 
-            let listDate = [parseDateFormat(date)];
+            let listDate = [this.parseDateFormat(date)];
             if (node.new_dates != "Today") {
                 for (let i = 0; i < Number(node.new_dates); i++) {
                     date.setDate(date.getDate() - 1);
-                    listDate.push(parseDateFormat(date));
+                    listDate.push(this.parseDateFormat(date));
                 }
 
             }
@@ -204,6 +196,49 @@ let PageBodyGrid = function () {
             '</div>';
 
         return template;
+    };
+
+    this.parseDateFormat = function(d){
+        let currentDate = "";
+        currentDate = d.getFullYear();
+
+        if (d.getMonth() < 9) {
+            currentDate += "-0" + (d.getMonth() + 1);
+        } else {
+            currentDate += '-' + (d.getMonth() + 1);
+        }
+
+        if (d.getDate() < 10) {
+            currentDate += "-0" + d.getDate();
+        } else {
+            currentDate += "-" + d.getDate();
+        }
+        return currentDate;
+    };
+
+    this.setAccessCounterValue = function(){
+      let data = this.getAccessTopPageValue();
+      let result = Number(data);
+      $(".widget-access-counter").each(function(){
+        let initNumber = $(this).data("initNumber");
+        let accessCounter = result + initNumber;
+        $(this).text(accessCounter);
+      });
+    };
+
+    this.getAccessTopPageValue = function(){
+        let data= 0;
+        $.ajax({
+                  url: '/api/stats/top_page_access/0/0',
+                  method: 'GET',
+                  async: false,
+                  success: (response) => {
+                      if (response.all && response.all.count) {
+                          data = response.all.count;
+                      }
+                  }
+              })
+         return data;
     };
 };
 
@@ -260,20 +295,4 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
     }
 }
 
-function parseDateFormat(d){
-    let currentDate = "";
-    currentDate = d.getFullYear();
 
-    if (d.getMonth() < 9) {
-        currentDate += "-0" + (d.getMonth() + 1);
-    } else {
-        currentDate += '-' + (d.getMonth() + 1);
-    }
-
-    if (d.getDate() < 10) {
-        currentDate += "-0" + d.getDate();
-    } else {
-        currentDate += "-" + d.getDate();
-    }
-    return currentDate;
-}
