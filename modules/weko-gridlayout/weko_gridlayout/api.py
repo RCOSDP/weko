@@ -102,7 +102,6 @@ class WidgetItems(object):
         :param widget_items: the widget item information.
         :returns: The :class:`widget item` instance lists or None.
         """
-
         def _add_widget_item(widget_setting):
             with db.session.begin_nested():
                 widget_item = WidgetItem(**widget_setting)
@@ -224,7 +223,6 @@ class WidgetItems(object):
     @classmethod
     def get_account_role(cls):
         """Get account role."""
-
         def _get_dict(x):
             dt = dict()
             for k, v in x.__dict__.items():
@@ -343,7 +341,6 @@ class WidgetMultiLangData(object):
         :param widget_items: the widget item information.
         :returns: The :class:`widget item` instance lists or None.
         """
-
         def _add_widget_item(widget_setting):
             with db.session.begin_nested():
                 widget_item = WidgetItem(**widget_setting)
@@ -471,7 +468,6 @@ class WidgetMultiLangData(object):
     @classmethod
     def get_account_role(cls):
         """Get account role."""
-
         def _get_dict(x):
             dt = dict()
             for k, v in x.__dict__.items():
