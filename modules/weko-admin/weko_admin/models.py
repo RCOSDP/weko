@@ -774,9 +774,73 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                 if isinstance(value, str):
                     yield (name, value)
 
+class BillingPermission(db.Model):
+    """Database for API Certificate."""
+
+    __tablename__ = 'billing_permission'
+
+    user_id = db.Column(
+        db.Integer(),
+        nullable=False, 
+        unique=True
+    )
+
+    is_active = db.Column(
+        db.Boolean(name='active'),
+        default=True, 
+        nullable=False
+    )
+
+    @classmethod
+    def create(cls, user_id, is_active=True):
+        """Get all information about certificates in database.
+
+        :return: list of pair (api short name, api full name, certificate data)
+        """
+        try:
+            obj = BillingPermission()
+            with db.session.begin_nested():
+                obj.user_id = user_id
+                obj.is_active = is_active
+                db.session.add(obj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
+        return cls
+
+    @classmethod
+    def activation(cls, user_id, is_active):
+        """Get all information about certificates in database.
+
+        :return: list of pair (api short name, api full name, certificate data)
+        """
+        try:
+            with db.session.begin_nested():
+                billing_data = cls.query.filter_by(user_id=user_id).one_or_none()
+                if billing_data:
+                    billing_data.is_active = is_active
+                    db.session.merge(billing_data)
+                else:
+                    current_app.logger.debug(_('User is not exist!'))
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
+        return cls
+
 
 __all__ = ([
-    'SearchManagement', 'AdminLangSettings', 'ApiCertificate',
-    'StatisticUnit', 'StatisticTarget', 'LogAnalysisRestrictedAddress',
+    'SearchManagement',
+    'AdminLangSettings',
+    'ApiCertificate',    
+    'StatisticUnit',
+    'StatisticTarget',
+    'LogAnalysisRestrictedAddress',
     'LogAnalysisRestrictedCrawlerList',
+    'BillingPermission'
 ])
