@@ -586,10 +586,9 @@ def previous_action(activity_id='0', action_id=0, req=0):
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
     flow = Flow()
-    item = ItemsMetadata.get_record(id_=activity_detail.item_id)
 
     pid_identifier = PersistentIdentifier.get_by_object(
-            pid_type='doi', object_type='rec', object_uuid=item.id)
+            pid_type='doi', object_type='rec', object_uuid=activity_detail.item_id)
     with db.session.begin_nested():
         db.session.delete(pid_identifier)
     db.session.commit()

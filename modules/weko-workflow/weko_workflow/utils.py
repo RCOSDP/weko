@@ -109,12 +109,13 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifier']['properties']['identifierType'] = 'HDL'
             del tempdata['identifierRegistration']
             res['pidstore_identifier'] = tempdata
-    elif idf_grant == -1:
+    elif idf_grant == -1:  # with draw identifier_grant
         res['pidstore_identifier'] = tempdata
         flagDelPidstore = del_invenio_pidstore(item.id)
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
         res['pidstore_identifier'] = tempdata
+        flagDelPidstore = del_invenio_pidstore(item.id)
     try:
         if not flagDelPidstore:
             reg_invenio_pidstore(tempdata['identifier']['value'], item.id)
@@ -163,7 +164,6 @@ def find_doi(doi_link):
                 isExistDoi = True
         return isExistDoi
     except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(_('[find_doi]==============PID does not exist!=============='))
         current_app.logger.error(pidNotEx)
         return isExistDoi
 
@@ -176,14 +176,13 @@ def del_invenio_pidstore(item_id):
     :return: True/False
     """
     try:
-        pid_identifier = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', object_uuid=item_id, status=PIDStatus.REGISTERED).one()
+        pid_identifier = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', object_uuid=item_id,
+                                                              status=PIDStatus.REGISTERED).one()
         if pid_identifier:
             pid_identifier.delete()
-            if pid_identifier.status == PIDStatus.DELETED:
-                return True
-            return False
+            return pid_identifier.status == PIDStatus.DELETED
+        return False
     except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(_('[del_invenio_pidstore]: =======PID does not exist!======='))
         current_app.logger.error(pidNotEx)
         return False
 
@@ -195,7 +194,6 @@ def reg_invenio_pidstore(pid_value, item_id):
     :param: pid_value, item_id
     """
     try:
-        pid_identifier_reg = PersistentIdentifier.create('doi', pid_value, None, PIDStatus.REGISTERED, 'rec', item_id)
+        PersistentIdentifier.create('doi', pid_value, None, PIDStatus.REGISTERED, 'rec', item_id)
     except PIDAlreadyExists as pidArlEx:
-        current_app.logger.error(_('!==============PID Already Exists!=============='))
         current_app.logger.error(pidArlEx)
