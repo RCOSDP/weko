@@ -229,7 +229,7 @@ class WidgetItems(object):
             dt = dict()
             for k, v in x.__dict__.items():
                 if not k.startswith('__') and not k.startswith('_') \
-                    and "description" not in k:
+                        and "description" not in k:
                     if not v:
                         v = ""
                     if isinstance(v, int) or isinstance(v, str):
@@ -476,7 +476,7 @@ class WidgetMultiLangData(object):
             dt = dict()
             for k, v in x.__dict__.items():
                 if not k.startswith('__') and not k.startswith('_') \
-                    and "description" not in k:
+                        and "description" not in k:
                     if not v:
                         v = ""
                     if isinstance(v, int) or isinstance(v, str):
