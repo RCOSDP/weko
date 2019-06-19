@@ -16,7 +16,7 @@ from .api import WidgetItems
 from .services import WidgetDataLoaderServices, WidgetDesignServices, \
     WidgetItemServices
 from .utils import get_default_language, get_system_language, \
-    get_widget_design_setting, get_widget_type_list, get_current_user_role
+    get_widget_design_setting, get_widget_type_list
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -187,14 +187,3 @@ def get_new_arrivals_data():
         data.get('list_dates'),
         data.get('number_result'),
         data.get('rss_status')))
-
-
-@blueprint_api.route('/get_current_role', methods=['GET'])
-def get_current_role():
-    """Get role of current login user.
-
-    Returns:
-        list -- role
-
-    """
-    return jsonify(get_current_user_role())

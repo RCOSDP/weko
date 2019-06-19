@@ -24,9 +24,9 @@ import json
 
 from flask import current_app
 from invenio_db import db
-from invenio_records.models import RecordMetadata
-from sqlalchemy.dialects import postgresql
 from sqlalchemy import cast
+from sqlalchemy.dialects import postgresql
+from weko_records.models import ItemMetadata
 
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
@@ -34,7 +34,7 @@ from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, \
     convert_data_to_desgin_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
-    update_general_item, get_role_list
+    update_general_item
 
 
 class WidgetItemServices:
@@ -299,8 +299,9 @@ class WidgetItemServices:
 
         if current_id and current_id in list_id:
             list_id.remove(current_id)
-        for id in list_id:
-            multi_lang_data = WidgetMultiLangData.query.filter_by(widget_id = id, is_deleted=False).all()
+        for widget_id in list_id:
+            multi_lang_data = WidgetMultiLangData.query.filter_by(
+                widget_id=widget_id, is_deleted=False).all()
             if multi_lang_data:
                 for data in multi_lang_data:
                     dict_data = convert_widget_multi_lang_to_dict(data)
@@ -700,26 +701,24 @@ class WidgetDataLoaderServices:
         try:
             data = list()
             for date in list_dates:
-                records = db.session.query(RecordMetadata).filter(
-                    RecordMetadata.json['pubdate']['attribute_value'] == cast(
+                records = db.session.query(ItemMetadata).filter(
+                    ItemMetadata.json['pubdate'] == cast(
                         date,
                         postgresql.JSONB),
-                    RecordMetadata.json['publish_status'] == cast(
-                        "1",
+                    ItemMetadata.json['status'] == cast(
+                        "published",
                         postgresql.JSONB)
                 ).all()
                 for record in records:
                     record_data = record.json
                     new_data = dict()
-                    new_data['name'] = record_data['item_title']
-                    new_data['url'] = '/records/' + \
-                        record_data['control_number']
-                    new_data['roles'] = get_role_list(record_data['path'])
+                    new_data['name'] = record_data['title']
+                    new_data['url'] = '/records/' + record_data['id']
                     rss = dict()
                     if rss_status:
                         rss = cls.get_arrivals_rss()
                     new_data['rss'] = rss
-                    if (len(data) < int(number_result)):
+                    if len(data) < int(number_result):
                         data.append(new_data)
                     else:
                         break
@@ -730,5 +729,9 @@ class WidgetDataLoaderServices:
 
     @classmethod
     def get_arrivals_rss(cls):
+        """Get New Arrivals RSS.
+
+        :rtype: object
+        """
         result = dict()
         return result
