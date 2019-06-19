@@ -24,13 +24,12 @@ from flask import current_app
 from flask_babelex import gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
+    PIDDoesNotExistError, PIDStatus
 from weko_records.api import ItemsMetadata
-from weko_records.models import ItemMetadata
 
 from .api import WorkActivity
 from .config import IDENTIFIER_ITEMSMETADATA_FORM
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus
-from invenio_pidstore.models import PIDDoesNotExistError, PIDAlreadyExists
 
 
 def get_community_id_by_index(index_name):
@@ -62,13 +61,12 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     activity_obj = WorkActivity()
     activity_detail = activity_obj.get_activity_detail(activity_id)
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-    
 
     # transfer to JPCOAR format
     res = {'pidstore_identifier': {}}
     tempdata = IDENTIFIER_ITEMSMETADATA_FORM
     flagDelPidstore = False
-    
+
     if idf_grant == 0:
         res['pidstore_identifier'] = tempdata
     elif idf_grant == 1:  # identifier_grant_jalc_doi
@@ -120,7 +118,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     try:
         if not flagDelPidstore:
             reg_invenio_pidstore(tempdata['identifier']['value'], item.id)
-        
+
         with db.session.begin_nested():
             item.update(res)
             item.commit()
@@ -157,7 +155,9 @@ def find_doi(doi_link):
     isExistDoi = False
     try:
         link_doi = doi_link['doi_link']
-        pid_identifiers = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', pid_value=link_doi, status=PIDStatus.REGISTERED).all()
+        pid_identifiers = PersistentIdentifier.query.filter_by(
+            pid_type='doi', object_type='rec',
+            pid_value=link_doi, status=PIDStatus.REGISTERED).all()
         for pid_identifier in pid_identifiers:
             if pid_identifier.pid_value == link_doi:
                 isExistDoi = True
@@ -195,7 +195,7 @@ def reg_invenio_pidstore(pid_value, item_id):
     :param: pid_value, item_id
     """
     try:
-        pid_identifier_reg =  PersistentIdentifier.create('doi', pid_value, None, PIDStatus.REGISTERED, 'rec', item_id)
+        pid_identifier_reg = PersistentIdentifier.create('doi', pid_value, None, PIDStatus.REGISTERED, 'rec', item_id)
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(_('!==============PID Already Exists!=============='))
         current_app.logger.error(pidArlEx)
