@@ -22,8 +22,8 @@
 import click
 from flask.cli import with_appcontext
 
-from .models import AdminLangSettings, ApiCertificate, SessionLifetime, \
-    StatisticTarget, StatisticUnit, BillingPermission
+from .models import AdminLangSettings, ApiCertificate, BillingPermission, \
+    SessionLifetime, StatisticTarget, StatisticUnit
 
 
 @click.group()
