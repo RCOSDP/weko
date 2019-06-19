@@ -176,7 +176,7 @@ def del_invenio_pidstore(item_id):
     :return: True/False
     """
     try:
-        pid_identifier = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', object_uuid=item.id, status=PIDStatus.REGISTERED).one()
+        pid_identifier = PersistentIdentifier.query.filter_by(pid_type='doi', object_type='rec', object_uuid=item_id, status=PIDStatus.REGISTERED).one()
         if pid_identifier:
             pid_identifier.delete()
             if pid_identifier.status == PIDStatus.DELETED:
