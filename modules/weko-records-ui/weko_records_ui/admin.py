@@ -24,7 +24,7 @@ import sys
 import unicodedata
 from datetime import datetime
 
-from flask import abort, current_app, flash, request
+from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.contrib.sqla.fields import QuerySelectField
@@ -33,7 +33,11 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_communities.models import Community
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.orm import load_only
+from weko_deposit.api import WekoRecord
+from weko_records.api import ItemsMetadata
+from weko_search_ui.api import get_search_detail_keyword
 from werkzeug.local import LocalProxy
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
@@ -131,6 +135,60 @@ class InstitutionNameSettingView(BaseView):
                            institution_name=institution_name)
 
 
+class ItemManagementBulkUpdate(BaseView):
+    """Item Management - Bulk Update view."""
+
+    @expose('/', methods=['GET'])
+    def index(self):
+        """Render view."""
+        detail_condition = get_search_detail_keyword('')
+        return self.render(
+            current_app.config['WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE'],
+            fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS'][
+                'fields'],
+            licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS'][
+                'licences'],
+            management_type='update',
+            detail_condition=detail_condition)
+
+    @expose('/items_metadata', methods=['GET'])
+    def get_items_metadata(self):
+        """Get the metadata of items to bulk update."""
+        def get_file_data(meta):
+            file_data = {}
+            for key in meta:
+                if isinstance(meta.get(key), list):
+                    for item in meta.get(key):
+                        if 'filename' in item:
+                            file_data[key] = meta.get(key)
+                            break
+            return file_data
+
+        pids = request.values.get('pids')
+        pid_list = []
+        if pids is not None:
+            pid_list = pids.split('/')
+
+        data = {}
+        for pid in pid_list:
+            record = WekoRecord.get_record_by_pid(pid)
+            indexes = []
+            if isinstance(record.get('path'), list):
+                for path in record.get('path'):
+                    indexes.append(path.split('/')[-1])
+
+            pidObject = PersistentIdentifier.get('recid', pid)
+            meta = ItemsMetadata.get_record(pidObject.object_uuid)
+
+            if meta:
+                data[pid] = {}
+                data[pid]['meta'] = meta
+                data[pid]['index'] = {"index": indexes}
+                data[pid]['contents'] = get_file_data(meta)
+
+        return jsonify(data)
+
+
 institution_adminview = {
     'view_class': InstitutionNameSettingView,
     'kwargs': {
@@ -155,6 +213,15 @@ pdfcoverpage_adminview = {
         'category': _('Setting'),
         'name': _('PDF Cover Page'),
         'endpoint': 'pdfcoverpage'
+    }
+}
+
+item_management_bulk_update_adminview = {
+    'view_class': ItemManagementBulkUpdate,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Bulk Update'),
+        'endpoint': 'items/bulk/update'
     }
 }
 

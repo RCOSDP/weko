@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- from "invenio_communities/macros.html" import community_header %}
 
@@ -39,11 +39,6 @@
   {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('item_management') }}
-{%- endblock page_body_tabs%}
-
 {%- block page_body_main %}
   <div class="hide" id="cur_index_id">{{index_id}}</div>
   <div class="row">
@@ -63,4 +58,3 @@
     </div>
   </div>
 {%- endblock page_body_main %}
-
