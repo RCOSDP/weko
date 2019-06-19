@@ -25,13 +25,13 @@
       <pre class="hide">{{record|tojson}}</pre>
       <div class="panel_bread" id="panel_bread">
         {%- if record.navi -%}
-        <table style="font-size: 110%">
-          <col width="50">
+        <table style="font-size: 110%;">
+          <col width="100">
           {%- for nav in record.navi -%}
           <tr>
-            <td valign="bottom">
+            <td style="max-width: 100%; white-space: nowrap;" valign="bottom">
               {%- if loop.index == 1 %}
-              <h4 style="display: inline;">{{_('Index')}}</h4>
+                <h4 style="display: inline;">{{_('Index')}}</h4>
               {%- endif %}
             </td>
             <td width="2048" valign="bottom">
