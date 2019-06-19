@@ -44,6 +44,11 @@
   list-style-type: none;
 }
 
+.rss {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
 .rss a{
   position: absolute;
   width: 30;

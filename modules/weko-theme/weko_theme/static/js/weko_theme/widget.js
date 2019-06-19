@@ -90,15 +90,15 @@ let PageBodyGrid = function () {
         return description;
     };
 
-    this.buildAccessCounter = function(initNumber) {
+    this.buildAccessCounter = function (initNumber) {
         let data = 0;
         $.ajax({
             url: '/api/stats/top_page_access/0/0',
             method: 'GET',
             async: false,
             success: (response) => {
-                if (response['all']['count']) {
-                    data = response['all']['count'];
+                if (response.all && response.all.count) {
+                    data = response.all.count;
                 }
             }
         })
@@ -108,10 +108,10 @@ let PageBodyGrid = function () {
         if (!Number.isNaN(initNum)) {
             result = result + initNumber;
         }
-        return '<div style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">'+result+'</div>';
-    }
+        return '<div class="widget-access-counter" style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">' + result + '</div>';
+    };
 
-    this.buildNewArrivals = function(request_data, id) {
+    this.buildNewArrivals = function (request_data, id) {
         $.ajax({
             method: 'POST',
             url: '/api/admin/get_new_arrivals',
@@ -121,22 +121,23 @@ let PageBodyGrid = function () {
             data: JSON.stringify(request_data),
             dataType: 'json',
             success: (response) => {
-                let result = response['data'];
+                let result = response.data;
                 let host = window.location.origin;
-                let RssHtml = '';
-                if(request_data.rss_status){
-                    RssHtml = '<a class="a-new-arrivals" href="javascript:">RSS <i class="fa fa-rss"></i></a>';
+                let rssHtml = '';
+                if (request_data.rss_status) {
+                    rssHtml = '<a class="" href="javascript:void(0)">RSS<i class="fa fa-rss"></i></a>';
                 }
                 let innerHTML = '';
                 for (let data in result) {
-                    innerHTML += '<li><a class="a-new-arrivals" href="#" data-roles="' + result[data]['roles'] +'" data-link="' + host + result[data]['url'] + '">' + result[data]['name'] +'</a></li>';
+                    innerHTML += '<li><a class="a-new-arrivals" href="#" data-roles="' + result[data]['roles'] + '" data-link="' + host + result[data]['url'] + '">' + result[data]['name'] + '</a></li>';
                 }
-                innerHTML = '<div class="no-li-style col-sm-8">' + innerHTML + '</div><div class= "col-sm-4 rss">'+RssHtml+'</div>';
-                $("#"+id).append(innerHTML)
+                innerHTML = '<div class="no-li-style col-sm-9">' + innerHTML + '</div><div class= "col-sm-3 rss">' + rssHtml + '</div>';
+                $("#" + id).append(innerHTML);
                 this.validateRole();
             }
-        })
-    }
+        });
+    };
+
     this.validateRole = function () {
         if (!current_role) {
             get_current_role();
@@ -158,7 +159,7 @@ let PageBodyGrid = function () {
                 window.location.href = link;
             }
         });
-    }
+    };
 
     this.widgetTemplate = function (node, index) {
         let labelColor = "";
@@ -171,9 +172,6 @@ let PageBodyGrid = function () {
         let rightStyle = "";
         let paddingHeading = "padding: inherit; ";
         let overFlowBody = "overflow-y: scroll; ";
-        if (node.type == ACCESS_COUNTER){
-            overFlowBody = "overflow-y: hidden; ";
-        }
         let id = '';
         // Handle css style
         if (node.background_color) {
@@ -207,16 +205,17 @@ let PageBodyGrid = function () {
             content = this.buildAccessCounter(initNumber);
             rightStyle = "right: unset; ";
             paddingHeading = "";
+            overFlowBody = "overflow-y: hidden; ";
         } else if (node.type == NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
-            d = new Date();
+            let date = new Date();
 
-            let listDate = [parseDateFormat(d)];
+            let listDate = [parseDateFormat(date)];
             if (node.new_dates != "Today") {
                 for (let i = 0; i < Number(node.new_dates); i++) {
-                    d.setDate(d.getDate() - 1);
-                    listDate.push(parseDateFormat(d));
+                    date.setDate(date.getDate() - 1);
+                    listDate.push(parseDateFormat(date));
                 }
 
             }
@@ -241,7 +240,7 @@ let PageBodyGrid = function () {
             '</div>';
 
         return template;
-    }
+    };
 };
 
 function getWidgetDesignSetting() {
