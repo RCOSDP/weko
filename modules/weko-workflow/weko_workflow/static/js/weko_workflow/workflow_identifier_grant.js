@@ -99,7 +99,7 @@ require([
     } else if(!regexDOI.test(doi_suffix)) {
         msg = $('#msg_format_doi').val();
         result = false;
-    } else if(doi_link.length >= 300) {
+    } else if(doi_link.length >= 256) {
         msg = $('#msg_length_doi').val();
         result = false;
     } else {
@@ -163,7 +163,6 @@ require([
         data: JSON.stringify(data),
         dataType: "json",
         success: function (data, status) {
-        debugger;
         if (0 == data.code) {
             if (data.isExistDOI || data.isWithdrawnDoi) {
                 isExistedDOI = data.msg;

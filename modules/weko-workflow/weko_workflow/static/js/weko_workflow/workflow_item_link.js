@@ -96,7 +96,6 @@ require([
       $('#' + btn_id).click();
   });
   $('#btn-approval').on('click', function () {
-      debugger;
       let uri_apo = $('.cur_step').data('next-uri');
       let act_ver = $('.cur_step').data('action-version');
       let post_data = {
