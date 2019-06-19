@@ -592,9 +592,9 @@ def build_data_setting(data):
     result['text_color'] = data.get('text_color')
     if str(data.get('widget_type')) == 'Access counter':
         result['access_counter'] = data['settings'] \
-                                       .get('access_counter') or '5'
+                                       .get('access_counter') or '0'
     if str(data.get('widget_type')) == 'New arrivals':
-        result['new_dates'] = data['settings'].get('new_dates') or ''
+        result['new_dates'] = data['settings'].get('new_dates') or '5'
         result['display_result'] = data['settings'].get(
             'display_result') or '5'
         result['rss_feed'] = data['settings'].get('rss_feed') or False
