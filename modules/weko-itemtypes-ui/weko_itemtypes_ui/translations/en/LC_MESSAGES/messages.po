@@ -224,7 +224,7 @@ msgid "Close"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:44
-msgid "Item type List"
+msgid "Item Type List"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:52

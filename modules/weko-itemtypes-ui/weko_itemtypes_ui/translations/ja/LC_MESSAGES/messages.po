@@ -230,7 +230,7 @@ msgid "Close"
 msgstr "閉じる"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:44
-msgid "Item type List"
+msgid "Item Type List"
 msgstr "アイテムタイプ リスト"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/create_mapping.html:52
