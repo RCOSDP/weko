@@ -350,6 +350,26 @@ msgstr "パスワードが入力されていません。"
 msgid "Invalid password"
 msgstr "パスワードが正しくありません。"
 
+#: weko-workflow/weko_workflow/views.py: 777
+msgid "This DOI has been used already for another item. Please input another DOI."
+msgstr "他のアイテムで既に使用されているDOIのため、他のDOIを入力ください。"
+
+#: weko-workflow/weko_workflow/views.py: 781
+msgid "This DOI was withdrawn. Please input another DOI."
+msgstr "このDOIが取り下げられたため、他のDOIを入力ください。"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:65
+msgid "Its able to input only haft-width alphanumeric or half-width symbol."
+msgstr "半角英数字または半角記号「_-.;()/」のみ入力できます。"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:66
+msgid "Input value exceeds 255 characters."
+msgstr "入力値が255文字を超えています。"
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:67
+msgid "DOI has not been entered."
+msgstr "DOIが入力されていません。"
+
 #~ msgid "Back"
 #~ msgstr "戻る"
 
