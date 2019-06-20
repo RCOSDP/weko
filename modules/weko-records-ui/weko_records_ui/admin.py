@@ -159,7 +159,7 @@ class ItemManagementBulkUpdate(BaseView):
             for key in meta:
                 if isinstance(meta.get(key), list):
                     for item in meta.get(key):
-                        if 'filename' in item:
+                        if isinstance(item, dict) and 'filename' in item:
                             file_data[key] = meta.get(key)
                             break
             return file_data
