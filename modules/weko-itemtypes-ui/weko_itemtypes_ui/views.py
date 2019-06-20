@@ -28,10 +28,12 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from weko_admin.models import BillingPermission
 from weko_records.api import ItemsMetadata, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
 
+from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
 from .permissions import item_type_permission
 
 blueprint = Blueprint(
@@ -135,6 +137,14 @@ def register(item_type_id=0):
 def custom_property(property_id=0):
     """Renders an primitive property view."""
     lists = ItemTypeProps.get_records([])
+
+    billing_perm = BillingPermission.get_billing_information_by_id(
+        WEKO_BILLING_FILE_ACCESS)
+    if not billing_perm or not billing_perm.is_active:
+        for prop in lists:
+            if prop.id == WEKO_BILLING_FILE_PROP_ID:
+                lists.remove(prop)
+
     return render_template(
         current_app.config['WEKO_ITEMTYPES_UI_CREATE_PROPERTY'],
         lists=lists
@@ -149,6 +159,14 @@ def get_property_list(property_id=0):
     lang = request.values.get('lang')
 
     props = ItemTypeProps.get_records([])
+
+    billing_perm = BillingPermission.get_billing_information_by_id(
+        WEKO_BILLING_FILE_ACCESS)
+    if not billing_perm and not billing_perm.is_active:
+        for prop in props:
+            if prop.id == WEKO_BILLING_FILE_PROP_ID:
+                props.remove(prop)
+
     lists = {}
     for k in props:
         name = k.name
@@ -270,18 +288,14 @@ def mapping_index(ItemTypeID=0):
                 elemStr = prop.get('title')
 
             itemtype_list.append((key, elemStr))
-            # itemtype_list.append((key, prop.get('title')))
-        # jpcoar_list = []
+
         mapping_name = request.args.get('mapping_type', 'jpcoar_mapping')
         jpcoar_xsd = WekoSchema.get_all()
         jpcoar_lists = {}
         for item in jpcoar_xsd:
             jpcoar_lists[item.schema_name] = json.loads(item.xsd)
-        # jpcoar_prop = json.loads(jpcoar_xsd.model.xsd)
-        # for key in jpcoar_prop.keys():
-        #     jpcoar_list.append((key, key))
+
         item_type_mapping = Mapping.get_record(ItemTypeID)
-        # mapping = json.dumps(item_type_mapping, indent=4, ensure_ascii=False)
         return render_template(
             current_app.config['WEKO_ITEMTYPES_UI_MAPPING_TEMPLATE'],
             lists=lists,
