@@ -884,11 +884,13 @@ function handleSharePermission(value) {
         var result = true;
         $scope.filemeta_keys.forEach(filemeta_key => {
           groupsprice_record = $rootScope.recordsVM.invenioRecordsModel[filemeta_key];
-          prices = groupsprice_record[0].groupsprice;
-          prices.forEach(price => {
-            if (price.price && isNaN(price.price)) {
-              result = false;
-            }
+          groupsprice_record.forEach(record => {
+            prices = record.groupsprice;
+            prices.forEach(price => {
+              if (price.price && isNaN(price.price)) {
+                result = false;
+              }
+            });
           });
         });
         return result;
