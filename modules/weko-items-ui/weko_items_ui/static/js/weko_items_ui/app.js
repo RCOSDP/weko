@@ -890,6 +890,13 @@ function handleSharePermission(value) {
             let title = "";
             let lang = "en";
             let titleID = data.title;
+            if (titleID && titleID.length == 6) {
+              if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])) {
+                if ($rootScope.recordsVM.invenioRecordsModel[titleID[0]].hasOwnProperty('bibliographic_title')) {
+                  titleID.splice(0, 3);
+                }
+              }
+            }
             if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
               let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
               if (Array.isArray(titleField)) {
@@ -903,7 +910,7 @@ function handleSharePermission(value) {
               if (titleField.hasOwnProperty(titleID[1])) {
                 title = titleField[titleID[1]];
                 if (titleField.hasOwnProperty(titleID[2]) && titleField[titleID[2]]) {
-                  lang = titleField[titleID[2]]
+                  lang = titleField[titleID[2]];
                 }
               }
             }
