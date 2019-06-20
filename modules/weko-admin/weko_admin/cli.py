@@ -149,7 +149,11 @@ def billing():
 @click.argument('is_active')
 @with_appcontext
 def add_billing_user(user_id, is_active):
-    """Ex: ja Japanese true 12 true."""
+    """Add new user can access billing file.
+
+    :param user_id: User's id (default: 1)
+    :param is_active: Access state
+    """
     try:
         BillingPermission.create(user_id, is_active)
         click.secho('insert billing user success')
@@ -162,7 +166,11 @@ def add_billing_user(user_id, is_active):
 @click.argument('is_active')
 @with_appcontext
 def toggle_active_billing_user(user_id, is_active):
-    """Add new user can access billing file."""
+    """Update access state of billing file.
+
+    :param user_id: User's id (default: 1)
+    :param is_active: Access state
+    """
     try:
         BillingPermission.activation(user_id, is_active)
         if is_active.lower() == 'true':

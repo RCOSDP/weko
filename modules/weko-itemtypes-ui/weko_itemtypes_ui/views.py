@@ -140,9 +140,7 @@ def custom_property(property_id=0):
 
     billing_perm = BillingPermission.get_billing_information_by_id(
         WEKO_BILLING_FILE_ACCESS)
-    if billing_perm and billing_perm.is_active:
-        pass
-    else:
+    if not billing_perm or not billing_perm.is_active:
         for prop in lists:
             if prop.id == WEKO_BILLING_FILE_PROP_ID:
                 lists.remove(prop)
@@ -164,9 +162,7 @@ def get_property_list(property_id=0):
 
     billing_perm = BillingPermission.get_billing_information_by_id(
         WEKO_BILLING_FILE_ACCESS)
-    if billing_perm and billing_perm.is_active:
-        pass
-    else:
+    if not billing_perm and not billing_perm.is_active:
         for prop in props:
             if prop.id == WEKO_BILLING_FILE_PROP_ID:
                 props.remove(prop)

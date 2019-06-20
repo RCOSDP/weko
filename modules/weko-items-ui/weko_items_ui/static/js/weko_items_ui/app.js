@@ -880,9 +880,28 @@ function handleSharePermission(value) {
         });
       }
 
+      $scope.priceValidator = function() {
+        var result = true;
+        $scope.filemeta_keys.forEach(filemeta_key => {
+          groupsprice_record = $rootScope.recordsVM.invenioRecordsModel[filemeta_key];
+          prices = groupsprice_record[0].groupsprice;
+          prices.forEach(price => {
+            if (price.price && isNaN(price.price)) {
+              result = false;
+            }
+          });
+        });
+        return result;
+      }
+
       $scope.updateDataJson = async function () {
         this.genTitleAndPubDate();
-        if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
+        if (!$scope.priceValidator()) {
+            var modalcontent = "Billing price is required half-width numbers.";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+        }
+        else if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
             //alert('Title is required! Please input title');
             var modalcontent =  "Title is required! Please input title.";
             $("#inputModal").html(modalcontent);
