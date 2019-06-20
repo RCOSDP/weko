@@ -728,8 +728,7 @@ def cancel_action(activity_id='0', action_id=0):
                 cancel_deposit.clear()
                 # Remove draft child
                 cancel_pid = PersistentIdentifier.get_by_object(
-                    pid_type='recid', object_type='rec',
-                    object_uuid=cancel_item_id)
+                    pid_type='recid', object_type='rec', object_uuid=cancel_item_id)
                 cancel_pv = PIDVersioning(child=cancel_pid)
                 if cancel_pv.exists:
                     previous_pid = cancel_pv.previous

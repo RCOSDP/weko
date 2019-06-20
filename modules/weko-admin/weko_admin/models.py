@@ -833,7 +833,7 @@ class BillingPermission(db.Model):
                     db.session.merge(billing_data)
                 else:
                     cls.create(user_id, is_active)
-                    current_app.logger.debug('New user is created!')
+                    current_app.logger.info('New user is created!')
             db.session.commit()
         except BaseException as ex:
             db.session.rollback()
@@ -846,6 +846,7 @@ class BillingPermission(db.Model):
     def get_billing_information_by_id(cls, user_id):
         """Get billing information by user id
 
+        :param user_id: user's id
         :return: Record or none
         """
         try:
