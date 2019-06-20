@@ -57,7 +57,6 @@ from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
     pidstore_identifier_mapping
 
-
 blueprint = Blueprint(
     'weko_workflow',
     __name__,
@@ -456,7 +455,7 @@ def next_action(activity_id='0', action_id=0):
     action_endpoint = action.action_endpoint
 
     if (1 == post_json.get('temporary_save') and
-        action_endpoint != 'identifier_grant'):
+            action_endpoint != 'identifier_grant'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
@@ -615,7 +614,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
     flow = Flow()
 
     pid_identifier = PersistentIdentifier.get_by_object(
-            pid_type='doi', object_type='rec', object_uuid=activity_detail.item_id)
+        pid_type='doi', object_type='rec', object_uuid=activity_detail.item_id)
     with db.session.begin_nested():
         db.session.delete(pid_identifier)
     db.session.commit()
@@ -828,7 +827,8 @@ def check_existed_doi():
                             'Please input another DOI.')
         elif isWithdrawnDoi:
             data['isWithdrawnDoi'] = isWithdrawnDoi
-            data['msg'] = _('This DOI was withdrawn. Please input another DOI.')
+            data['msg'] = _(
+                'This DOI was withdrawn. Please input another DOI.')
         else:
             data['msg'] = _('success')
         data['code'] = 0
