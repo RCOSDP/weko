@@ -67,24 +67,44 @@ require([
       commond: '',
       temporary_save: tmp_save
     };
-
-    switch(identifier_grant) {
-      case "0":
-      case "4":
-      default:
-        break;
-      case "1":
-        isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_doi_link, identifier_grant_jalc_doi_suffix);
-        break;
-      case "2":
-        isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_cr_doi_suffix);
-        break;
-      case "3":
-        isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix);
-        break;
-    };
+    
+    if(tmp_save == 1) {
+        let arrayDoi = [identifier_grant_jalc_doi_link, identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_dc_doi_link];
+        isSuffixFormat = validateLengDoi(arrayDoi);
+    } else {
+        switch(identifier_grant) {
+          case "0":
+          case "4":
+          default:
+            break;
+          case "1":
+            isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_doi_link, identifier_grant_jalc_doi_suffix);
+            break;
+          case "2":
+            isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_cr_doi_suffix);
+            break;
+          case "3":
+            isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix);
+            break;
+        };
+    }
     
     return isSuffixFormat;
+  }
+  
+  function validateLengDoi(arrayDoi){
+    let msg = '';
+    let result = true;
+    for (index = 0; index < arrayDoi.length; ++index) {
+        if(arrayDoi[index].length > 255) {
+            msg = $('#msg_length_doi').val();
+            result = false;
+        }
+    }
+    if (!result) {
+        alert(msg);
+    }
+    return result;
   }
 
   function isDOISuffixFormat(doi_link, doi_suffix){
