@@ -886,6 +886,9 @@ function handleSharePermission(value) {
           groupsprice_record = $rootScope.recordsVM.invenioRecordsModel[filemeta_key];
           groupsprice_record.forEach(record => {
             prices = record.groupsprice;
+            if (!prices) {
+              return;
+            }
             prices.forEach(price => {
               if (price.price && isNaN(price.price)) {
                 result = false;
