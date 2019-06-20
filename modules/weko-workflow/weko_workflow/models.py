@@ -852,17 +852,17 @@ class ActionIdentifier(db.Model, TimestampMixin):
     action_identifier_select = db.Column(db.Integer, nullable=True, default=0)
     """Action identifier grant."""
 
-    action_identifier_jalc_doi = db.Column(db.String(100),
+    action_identifier_jalc_doi = db.Column(db.String(255),
                                            nullable=True,
                                            default="")
     """Action identifier grant jalc doi input."""
 
-    action_identifier_jalc_cr_doi = db.Column(db.String(100),
+    action_identifier_jalc_cr_doi = db.Column(db.String(255),
                                               nullable=True,
                                               default="")
     """Action identifier grant jalc crossref doi input."""
 
-    action_identifier_jalc_dc_doi = db.Column(db.String(100),
+    action_identifier_jalc_dc_doi = db.Column(db.String(255),
                                               nullable=True,
                                               default="")
     """Action identifier grant jalc datacite doi input."""
