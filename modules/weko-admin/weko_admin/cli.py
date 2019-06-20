@@ -138,6 +138,7 @@ def save_report_target(target_id, target_name, target_unit):
     except Exception as e:
         click.secho(str(e))
 
+
 @click.group()
 def billing():
     """Billing commands."""
@@ -155,6 +156,7 @@ def add_billing_user(user_id, is_active):
     except Exception as e:
         click.secho(str(e))
 
+
 @billing.command('active')
 @click.argument('user_id')
 @click.argument('is_active')
@@ -163,7 +165,7 @@ def toggle_active_billing_user(user_id, is_active):
     """Add new user can access billing file."""
     try:
         BillingPermission.activation(user_id, is_active)
-        if is_active == 'true':
+        if is_active.lower() == 'true':
             click.secho('active billing user success')
         else:
             click.secho('deactive billing user success')

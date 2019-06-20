@@ -775,6 +775,7 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                 if isinstance(value, str):
                     yield (name, value)
 
+
 class BillingPermission(db.Model):
     """Database for Billing Permission."""
 
@@ -825,7 +826,8 @@ class BillingPermission(db.Model):
         """
         try:
             with db.session.begin_nested():
-                billing_data = cls.query.filter_by(user_id=user_id).one_or_none()
+                billing_data = cls.query.filter_by(
+                    user_id=user_id).one_or_none()
                 if billing_data:
                     billing_data.is_active = is_active
                     db.session.merge(billing_data)
@@ -847,10 +849,10 @@ class BillingPermission(db.Model):
         :return: Record or none
         """
         try:
-            billing_information = cls.query.filter_by(user_id=user_id).one_or_none()
+            billing_information = cls.query.filter_by(
+                user_id=user_id).one_or_none()
         except Exception as ex:
             current_app.logger.debug(ex)
-            billing_information = None
             raise
         return billing_information
 
@@ -904,8 +906,6 @@ class StatisticsEmail(db.Model):
             current_app.logger.debug(ex)
             raise
         return delete_all
-        raise ex
-        return cls
 
 
 class RankingSettings(db.Model):

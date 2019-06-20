@@ -46,7 +46,7 @@ WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
 }
 """Default properties of the item type."""
 
-WEKO_BILLING_FILE_ACCESS = True
+WEKO_BILLING_FILE_ACCESS = 1
 """Show billing file property in list."""
 
 WEKO_BILLING_FILE_PROP_ID = 103

@@ -89,12 +89,6 @@ def index(item_type_id=0):
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         need_file = False
 
-
-        current_app.logger.debug(
-            '\nForms-----------------\n' +
-            item_type.schema
-            + '\n----------------------\n')
-        # if 'filemeta' in json.dumps(item_type.schema):
         if 'filename' in json.dumps(item_type.schema):
             need_file = True
 
