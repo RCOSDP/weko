@@ -348,6 +348,26 @@ msgstr ""
 msgid "Invalid password"
 msgstr ""
 
+#: weko-workflow/weko_workflow/views.py: 777
+msgid "This DOI has been used already for another item. Please input another DOI."
+msgstr ""
+
+#: weko-workflow/weko_workflow/views.py: 781
+msgid "This DOI was withdrawn. Please input another DOI."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:65
+msgid "Its able to input only haft-width alphanumeric or half-width symbol."
+msgstr "It's able to input only haft-width alphanumeric or half-width symbol &quot;_-.;()/&quot;."
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:66
+msgid "Input value exceeds 255 characters."
+msgstr ""
+
+#: weko_workflow/templates/weko_workflow/identifier_grant.html:67
+msgid "DOI has not been entered."
+msgstr ""
+
 #~ msgid "item type"
 #~ msgstr ""
 
