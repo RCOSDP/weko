@@ -99,7 +99,7 @@ require([
     } else if(!regexDOI.test(doi_suffix)) {
         msg = $('#msg_format_doi').val();
         result = false;
-    } else if(doi_link.length >= 256) {
+    } else if(doi_link.length > 255) {
         msg = $('#msg_length_doi').val();
         result = false;
     } else {
