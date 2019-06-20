@@ -58,6 +58,9 @@ WEKO_ADMIN_WEB_API_ACCOUNT = 'weko_admin/admin/web_api_account.html'
 WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = 'weko_admin/search_management.html'
 """Site-license templates."""
 
+WEKO_ADMIN_RANKING_SETTINGS_TEMPLATE = 'weko_admin/admin/ranking_settings.html'
+"""Ranking Settings template."""
+
 LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
 
 WEKO_ADMIN_CROSSREF_API_URL = 'https://doi.crossref.org/'
@@ -344,3 +347,56 @@ WEKO_ADMIN_MANAGEMENT_OPTIONS = {
                                                                           ],'default_display':True,  'inputType':'radio_list', 'inputVal':'', 'mappingFlg':False, 'mappingName':''}
     ]
 }
+
+WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator"
+
+WEKO_PERMISSION_ROLE_REPO = "Repository Administrator"
+
+WEKO_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
+
+WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
+    'admin',
+    'harvestsettings',
+    'identifier',
+    'widgetitem',
+    'widgetdesign',
+    'community',
+]
+"""Classes Community Administrator can access."""
+
+WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
+    'bucket',
+    'flowsetting',
+    'fileinstance',
+    'identify',
+    'items',
+    'location',
+    'item_management',
+    'itemtypes',
+    'language',
+    'loganalysissetting',
+    'mail',
+    'others',
+    'pdfcoverpage',
+    'shibboleth',
+    'site-license',
+    'search-management',
+    'sitemap',
+    'indexlink',
+    'indextree',
+    'itemsetting',
+    'statssettings',
+    'stylesetting',
+    'webapiaccount',
+    'report',
+    'user',
+    'workflowsetting',
+] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
+"""Classes Repository Administrator can access."""
+
+WEKO_ADMIN_ACCESS_TABLE = {
+    "System Administrator": [], # Can access all, not needed
+    "Repository Administrator": WEKO_ADMIN_REPOSITORY_ACCESS_LIST,
+    "Community Administrator": WEKO_ADMIN_COMMUNITY_ACCESS_LIST,
+}
+"""Access table for different admin roles."""

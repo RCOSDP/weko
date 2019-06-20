@@ -99,6 +99,11 @@ setup(
         'invenio_base.api_apps': [
             'weko_search_rest = weko_search_ui:WekoSearchREST',
         ],
+        'invenio_admin.views': [
+            'weko_search_ui_bulk_delete = weko_search_ui.admin:item_management_bulk_delete_adminview',
+            'weko_search_ui_custom_sort = weko_search_ui.admin:item_management_custom_sort_adminview',
+            'weko_search_ui_bulk_search = weko_search_ui.admin:item_management_bulk_search_adminview',
+        ],
         'invenio_base.api_blueprints': [
             'weko_search_ui = weko_search_ui.views:blueprint_api',
         ],

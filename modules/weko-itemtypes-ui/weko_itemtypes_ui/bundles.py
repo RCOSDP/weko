@@ -29,6 +29,12 @@ style = Bundle(
     output="gen/itemtypes_ui.%(version)s.css"
 )
 
+style_mapping = Bundle(
+    'css/weko_itemtypes_ui/mapping.less',
+    filters='cleancss',
+    output="gen/mapping_ui.%(version)s.css"
+)
+
 js_dependencies_schema_editor = NpmBundle(
     'node_modules/react/dist/react.js',
     'node_modules/react-dom/dist/react-dom.js',

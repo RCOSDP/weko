@@ -6,6 +6,7 @@ require([
     post_uri: '',
     post_data: {}
   }
+  var withdraw_form = $('form[name$=withdraw_doi_form]');
 
   // click button Next
   $('#btn-finish').on('click', function () {
@@ -91,8 +92,8 @@ require([
     });
   }
 
-  function sendWithdrawAction() {
-    let form = $('form[name$=withdraw_doi_form]');
+  withdraw_form.submit(function(event) {
+    let form = withdraw_form;
     let withdraw_uri = form.attr('action');
     let post_data = {passwd: $('#pwd').val()};
     $.ajax({
@@ -118,5 +119,6 @@ require([
         alert('Server error');
       }
     });
-  }
+    event.preventDefault();
+  });
 })

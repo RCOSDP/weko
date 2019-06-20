@@ -25,7 +25,7 @@ from datetime import datetime
 from functools import partial
 
 from elasticsearch_dsl.query import Q
-from flask import current_app, flash, request
+from flask import current_app, request
 from flask_security import current_user
 from invenio_communities.models import Community
 from invenio_records_rest.errors import InvalidQueryRESTError
@@ -50,6 +50,7 @@ def get_permission_filter(comm_id=None):
     # check permission
     is_perm = search_permission.can()
     match = Q('match', publish_status='0')
+    version = Q('match', relation_version_is_last='true')
     rng = Q('range', **{'publish_date': {'lte': 'now/d'}})
     term_list = []
     mst = []
@@ -75,9 +76,12 @@ def get_permission_filter(comm_id=None):
                      Q('match', weko_shared_id=user_id)]
             shuld.append(Q('bool', must=mst))
             mut.append(Q('bool', should=shuld, must=[terms]))
+            mut.append(Q('bool', must=version))
     else:
         mut = mst
         mut.append(terms)
+        base_mut = [match, version]
+        mut.append(Q('bool', must=base_mut))
 
     return mut
 
@@ -437,8 +441,6 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
             query_q = _get_simple_search_query(qs)
 
     src = {'_source': {'excludes': ['content']}}
-    # extr = search._extra.copy()
-    # search.update_from_dict(src)
     search._extra.update(src)
 
     try:
@@ -489,8 +491,19 @@ def item_path_search_factory(self, search, index_id=None):
                 "excludes": ['content']
             },
             "query": {
-                "match": {
-                    "path.tree": "@index"
+                "bool": {
+                  "must": [
+                    {
+                      "match": {
+                        "path.tree": "@index"
+                      }
+                    },
+                    {
+                      "match": {
+                        "relation_version_is_last": "true"
+                      }
+                    }
+                  ]
                 }
             },
             "aggs": {
