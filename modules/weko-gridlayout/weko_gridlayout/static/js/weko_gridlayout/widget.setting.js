@@ -1,3 +1,8 @@
+const MAIN_CONTENT_TYPE = "Main contents";
+const FREE_DESCRIPTION_TYPE = "Free description";
+const NOTICE_TYPE = "Notice";
+const NEW_ARRIVALS = "New arrivals";
+const ACCESS_COUNTER = "Access counter";
 class ComponentSelectField extends React.Component {
     constructor(props) {
         super(props);
@@ -479,7 +484,7 @@ class ComponentFieldEditor extends React.Component {
 class ExtendComponent extends React.Component {
     constructor(props) {
         super(props);
-        if (this.props.type == "Notice") {
+        if (this.props.type == NOTICE_TYPE) {
             if (this.props.data_load.more_description) {
                 this.state = {
                     type: this.props.type,
@@ -521,7 +526,7 @@ class ExtendComponent extends React.Component {
         }
         if (nextProps.type !== prevState.type) {
             let defaultSettings = {};
-            if (nextProps.type == "New arrivals"){
+            if (nextProps.type == NEW_ARRIVALS){
                 defaultSettings['new_dates'] = '5';
                 defaultSettings['display_result'] = '5';
             }
@@ -573,7 +578,6 @@ class ExtendComponent extends React.Component {
                 <option>{value}</option>
             )
         });
-        console.log(this.state.settings.new_dates);
 
         return (
             <select value={this.state.settings.new_dates} onChange={this.handleChangeNewDates} className="form-control" name="new_dates">
@@ -592,7 +596,7 @@ class ExtendComponent extends React.Component {
         });
 
         return (
-            <select value={this.state.settings.new_dates} onChange={this.handleChangeDisplayResult} className="form-control" name="new_dates">
+            <select value={this.state.settings.display_result} onChange={this.handleChangeDisplayResult} className="form-control" name="new_dates">
                 {options}
             </select>
         )
@@ -686,14 +690,14 @@ class ExtendComponent extends React.Component {
     }
 
     render() {
-        if (this.state.type == "Free description") {
+        if (this.state.type == FREE_DESCRIPTION_TYPE) {
             return (
                 <div>
                     <ComponentFieldEditor handleChange={this.handleChange} name="Free description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
-        else if (this.state.type == "Notice") {
+        else if (this.state.type == NOTICE_TYPE) {
             if (this.state.write_more == false) {
                 return (
                     <div>
@@ -746,17 +750,17 @@ class ExtendComponent extends React.Component {
                 )
             }
         }
-        else if(this.state.type == "Access counter"){
+        else if(this.state.type == ACCESS_COUNTER){
             return(
                 <div className="form-group row">
                     <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
                     <div class="controls col-xs-3">
-                        <input name="Access_counter" id='Access_counter' type="text" value={this.state.settings.access_counter} onChange={this.handleChangeAccessCounter} className="form-control" />
+                        <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter} onChange={this.handleChangeAccessCounter} className="form-control" />
                     </div>
                 </div>
             )
         }
-        else if(this.state.type == "New arrivals"){
+        else if(this.state.type == NEW_ARRIVALS){
             return(
                 <div>
                     <div className="form-group row">
@@ -796,6 +800,7 @@ class ComponentButtonLayout extends React.Component {
         this.saveCommand = this.saveCommand.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
         this.isLabelValid = this.isLabelValid.bind(this);
+        this.validateFieldIsValid = this.validateFieldIsValid.bind(this);
     }
 
     saveCommand(event) {
@@ -823,7 +828,7 @@ class ComponentButtonLayout extends React.Component {
             let currentLangData = {
                 label: currentLabel,
             }
-            if((data['widget_type'] + "") == "Free description" || (data['widget_type'] + "") == "Notice"){
+            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE){
                 currentLangData["description"] = currentDescription;
             }
             multiLangData[currentLanguage] = currentLangData;
@@ -840,7 +845,7 @@ class ComponentButtonLayout extends React.Component {
             data_id: '',
         };
         request.data_id = this.props.data_id;
-
+        let data_validate = this.validateFieldIsValid(data.widget_type);
         if (data.repository == "0" || data.repository == "") {
             var modalcontent = "Repository is required!";
             $("#inputModal").html(modalcontent);
@@ -853,7 +858,11 @@ class ComponentButtonLayout extends React.Component {
             var modalcontent = "Label is required!";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
-        } else {
+        } else if(!data_validate.status){
+            var modalcontent = data_validate.error;
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+        }else {
             return fetch(this.props.url_request, {
                 method: "POST",
                 headers: {
@@ -872,6 +881,28 @@ class ComponentButtonLayout extends React.Component {
                         $("#allModal").modal("show");
                     }
                 });
+        }
+    }
+
+    validateFieldIsValid(widget_type){
+        if(widget_type == ACCESS_COUNTER){
+            let access_val =$('#Access_counter').val() || "0";
+            if (Number.isNaN(Number(access_val)) || Number(access_val) < 0){
+                return {
+                    status : false,
+                    error: "Please enter half-width numbers."
+                };
+            }
+            else if(access_val.length > 9){
+                return {
+                    status : false,
+                    error: "The input value exceeds 9 digits."
+                };
+            }
+        }
+        return{
+            status : true,
+            error: ""
         }
     }
 
@@ -1264,7 +1295,7 @@ class MainLayout extends React.Component {
         }
         let multiLangData = this.state.multiLangSetting[selectedLang];
         if (multiLangData) {
-            if((this.state.widget_type +"") == "Free description" || (this.state.widget_type+ "") == "Notice"){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
                 this.setState({
                     multiLanguageChange: true,
                     label: multiLangData['label'],
@@ -1299,7 +1330,7 @@ class MainLayout extends React.Component {
         let setting = {
             label: this.state.label,
         };
-        if((this.state.widget_type +"") == "Free description" || (this.state.widget_type+ "") == "Notice"){
+        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
             setting["description"] = this.state.settings
         }
         let storage = this.state.multiLangSetting;
@@ -1313,7 +1344,7 @@ class MainLayout extends React.Component {
         if (this.state.multiLangSetting[newLanguage]) {
             let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
             let currentSetting = this.state.multiLangSetting[newLanguage]['description'];
-            if((this.state.widget_type +"") == "Free description" || (this.state.widget_type+ "") == "Notice"){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
                 this.setState({
                     label: currentLabel,
                     multiLanguageChange: true,
@@ -1329,7 +1360,7 @@ class MainLayout extends React.Component {
                 });
             }
         } else {
-            if((this.state.widget_type +"") == "Free description" || (this.state.widget_type+ "") == "Notice"){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
                 this.setState({
                     label: '',
                     settings: {},
