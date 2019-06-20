@@ -890,13 +890,6 @@ function handleSharePermission(value) {
             let title = "";
             let lang = "en";
             let titleID = data.title;
-            if (titleID && titleID.length == 6) {
-              if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])) {
-                if ($rootScope.recordsVM.invenioRecordsModel[titleID[0]].hasOwnProperty('bibliographic_title')) {
-                  titleID.splice(0, 3);
-                }
-              }
-            }
             if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
               let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
               if (Array.isArray(titleField)) {
