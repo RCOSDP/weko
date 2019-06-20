@@ -246,7 +246,7 @@
                 <button type="button" class="btn btn-primary action-button" id="btn-return">{{_('Return')}}</button>
                 <button type="button" class="btn btn-primary action-button" id="btn-reject">{{_('Reject')}}</button>
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
-                  <span class="glyphicon glyphicon-download-alt"></span> {{_('Save')}}</button>
+                  <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
                 <button class="btn btn-danger done-button pull-right" id="btn_quit">
                   <i class="fa fa-sign-out"></i>
@@ -255,11 +255,11 @@
               {%- endif %}
               {%- if 'double_check' == cur_step %}
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
-                  <span class="glyphicon glyphicon-download-alt"></span> {{_('Save')}}</button>
+                  <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
               {%- elif 'oa_policy' == cur_step %}
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
-                  <span class="glyphicon glyphicon-download-alt"></span> {{_('Save')}}</button>
+                  <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
                 <button class="btn btn-danger done-button pull-right" id="btn_quit">
                   <i class="fa fa-sign-out"></i>
@@ -268,7 +268,7 @@
               {%- endif %}
               {%- if 'end_action' == cur_step %}
                 <button type="button" class="btn btn-primary" id="btn-draft" style="width: 120px; height: 40px;font-size: 15px;">
-                      <span class="glyphicon glyphicon-download-alt"></span> {{_('Save')}}</button>
+                      <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
               {%- endif %}
             </div>
