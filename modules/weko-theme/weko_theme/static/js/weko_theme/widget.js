@@ -110,7 +110,7 @@ let PageBodyGrid = function () {
                 for (let data in result) {
                     innerHTML += '<li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li>';
                 }
-                innerHTML = '<div class="no-li-style col-sm-9">' + innerHTML + '</div><div class= "col-sm-3 rss">' + rssHtml + '</div>';
+                innerHTML = '<div class="no-li-style col-sm-9 no-padding-col">' + innerHTML + '</div><div class= "col-sm-3 rss">' + rssHtml + '</div>';
                 $("#" + id).append(innerHTML);
             }
         });
