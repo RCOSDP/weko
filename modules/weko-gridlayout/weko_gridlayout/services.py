@@ -587,29 +587,6 @@ class WidgetDesignServices:
         return result
 
     @classmethod
-    def delete_item_in_preview_widget_item(cls, data_id, json_data):
-        """Delete item in preview widget design.
-
-        Arguments:
-            data_id {widget_item} -- [id of widget item]
-            json_data {dict} -- [data to be updated]
-
-        Returns:
-            [data] -- [data after updated]
-
-        """
-        remove_list = []
-        if type(json_data) is list:
-            for item in json_data:
-                if str(item.get('name')) == str(data_id.get('label')) and str(
-                        item.get('type')) == str(data_id.get('widget_type')):
-                    remove_list.append(item)
-        for item in remove_list:
-            json_data.remove(item)
-        data = json.dumps(json_data)
-        return data
-
-    @classmethod
     def update_item_in_preview_widget_item(cls, widget_id, data_result,
                                            json_data):
         """Update item in preview widget when it is edited in widget item.

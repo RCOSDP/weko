@@ -16,7 +16,7 @@ from .api import WidgetItems
 from .services import WidgetDataLoaderServices, WidgetDesignServices, \
     WidgetItemServices
 from .utils import get_default_language, get_system_language, \
-    get_widget_design_setting, get_widget_type_list
+    get_widget_type_list
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -98,7 +98,7 @@ def load_widget_design_setting(repository_id: str, current_language: str):
     :param current_language: The language default
     :return:
     """
-    result = get_widget_design_setting(repository_id, current_language)
+    result = WidgetDesignServices.get_widget_design_setting(repository_id, current_language)
     return jsonify(result)
 
 
