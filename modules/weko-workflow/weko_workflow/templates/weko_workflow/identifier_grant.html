@@ -63,6 +63,9 @@
             {{ render_identifier_link(idf_grant_labels[0], idf_grant_labels[1], idf_grant_labels[2],
             0, idf_grant_data["cnri"], idf_grant_data["suffix"], item, item_id) }}
           {%- endif %}
+          <input type="hidden" id="msg_format_doi" value="{{_('Its able to input only haft-width alphanumeric or half-width symbol.')}}" />
+          <input type="hidden" id="msg_length_doi" value="{{_('Input value exceeds 255 characters.')}}" />
+          <input type="hidden" id="msg_required_doi" value="{{_('DOI has not been entered.')}}" />
         {%- endif %}
       </table>
     </div>

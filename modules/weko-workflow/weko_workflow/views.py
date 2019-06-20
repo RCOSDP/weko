@@ -54,7 +54,9 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import get_community_id_by_index, pidstore_identifier_mapping
+from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
+    pidstore_identifier_mapping
+
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -448,31 +450,13 @@ def next_action(activity_id='0', action_id=0):
     )
 
     work_activity = WorkActivity()
-    idf_grant = post_json.get('identifier_grant')
-    idf_grant_jalc_doi_manual = post_json.get(
-        'identifier_grant_jalc_doi_suffix')
-    idf_grant_jalc_cr_doi_manual = post_json.get(
-        'identifier_grant_jalc_cr_doi_suffix')
-    idf_grant_jalc_dc_doi_manual = post_json.get(
-        'identifier_grant_jalc_dc_doi_suffix')
 
-    # If is action identifier_grant, then save to to database
-    if idf_grant is not None:
-        identifier_grant = {'action_identifier_select': idf_grant,
-                            'action_identifier_jalc_doi':
-                                idf_grant_jalc_doi_manual,
-                            'action_identifier_jalc_cr_doi':
-                                idf_grant_jalc_cr_doi_manual,
-                            'action_identifier_jalc_dc_doi':
-                                idf_grant_jalc_dc_doi_manual}
+    history = WorkActivityHistory()
+    action = Action().get_action_detail(action_id)
+    action_endpoint = action.action_endpoint
 
-        work_activity.create_or_update_action_identifier(
-            activity_id=activity_id,
-            action_id=action_id,
-            identifier=identifier_grant
-        )
-
-    if 1 == post_json.get('temporary_save'):
+    if (1 == post_json.get('temporary_save') and
+        action_endpoint != 'identifier_grant'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
@@ -486,10 +470,6 @@ def next_action(activity_id='0', action_id=0):
                 comment=post_json.get('commond')
             )
         return jsonify(code=0, msg=_('success'))
-
-    history = WorkActivityHistory()
-    action = Action().get_action_detail(action_id)
-    action_endpoint = action.action_endpoint
 
     if 'begin_action' == action_endpoint:
         return jsonify(code=0, msg=_('success'))
@@ -529,8 +509,32 @@ def next_action(activity_id='0', action_id=0):
         updated_item.set_item_relation(relation_data, item_record)
 
     # save pidstore_identifier to ItemsMetadata
+    idf_grant = post_json.get('identifier_grant')
     if 'identifier_grant' == action_endpoint and idf_grant is not None:
-        pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+        idf_grant_jalc_doi_manual = post_json.get(
+            'identifier_grant_jalc_doi_suffix')
+        idf_grant_jalc_cr_doi_manual = post_json.get(
+            'identifier_grant_jalc_cr_doi_suffix')
+        idf_grant_jalc_dc_doi_manual = post_json.get(
+            'identifier_grant_jalc_dc_doi_suffix')
+
+        # If is action identifier_grant, then save to to database
+        identifier_grant = {
+            'action_identifier_select': idf_grant,
+            'action_identifier_jalc_doi': idf_grant_jalc_doi_manual,
+            'action_identifier_jalc_cr_doi': idf_grant_jalc_cr_doi_manual,
+            'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual
+        }
+
+        work_activity.create_or_update_action_identifier(
+            activity_id=activity_id,
+            action_id=action_id,
+            identifier=identifier_grant
+        )
+        if post_json.get('temporary_save') != 1:
+            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+        else:
+            return jsonify(code=0, msg=_('success'))
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
@@ -609,6 +613,12 @@ def previous_action(activity_id='0', action_id=0, req=0):
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
     flow = Flow()
+
+    pid_identifier = PersistentIdentifier.get_by_object(
+            pid_type='doi', object_type='rec', object_uuid=activity_detail.item_id)
+    with db.session.begin_nested():
+        db.session.delete(pid_identifier)
+    db.session.commit()
 
     if req == 0:
         pre_action = flow.get_previous_flow_action(
@@ -786,6 +796,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                     identifier)
             # Clear identifier in ItemMetadata
             pidstore_identifier_mapping(None, -1, activity_id)
+
             return jsonify(code=0,
                            msg=_('success'),
                            data={'redirect': url_for(
@@ -796,3 +807,29 @@ def withdraw_confirm(activity_id='0', action_id='0'):
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error! Relogin'))
+
+
+@blueprint.route('/findDOI', methods=['POST'])
+@login_required
+def check_existed_doi():
+    """Next action."""
+    doi_link = request.get_json()
+    data = {}
+    data['isExistDOI'] = False
+    data['isWithdrawnDoi'] = False
+    data['code'] = 1
+    data['msg'] = 'error'
+    if doi_link is not None:
+        isExistDOI = find_doi(doi_link)
+        isWithdrawnDoi = is_withdrawn_doi(doi_link)
+        if isExistDOI:
+            data['isExistDOI'] = isExistDOI
+            data['msg'] = _('This DOI has been used already for another item. '
+                            'Please input another DOI.')
+        elif isWithdrawnDoi:
+            data['isWithdrawnDoi'] = isWithdrawnDoi
+            data['msg'] = _('This DOI was withdrawn. Please input another DOI.')
+        else:
+            data['msg'] = _('success')
+        data['code'] = 0
+    return jsonify(data)
