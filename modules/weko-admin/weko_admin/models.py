@@ -784,13 +784,13 @@ class BillingPermission(db.Model):
     user_id = db.Column(
         db.Integer(),
         primary_key=True,
-        nullable=False, 
+        nullable=False,
         unique=True
     )
 
     is_active = db.Column(
         db.Boolean(name='active'),
-        default=True, 
+        default=True,
         nullable=False
     )
 
@@ -844,7 +844,7 @@ class BillingPermission(db.Model):
 
     @classmethod
     def get_billing_information_by_id(cls, user_id):
-        """Get billing information by user id
+        """Get billing information by user id.
 
         :param user_id: user's id
         :return: Record or none
@@ -988,7 +988,7 @@ class RankingSettings(db.Model):
 __all__ = ([
     'SearchManagement',
     'AdminLangSettings',
-    'ApiCertificate',    
+    'ApiCertificate',
     'StatisticUnit',
     'StatisticTarget',
     'LogAnalysisRestrictedIpAddress',
