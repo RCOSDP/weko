@@ -28,8 +28,7 @@ from __future__ import absolute_import, print_function
 
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
-
-from weko_records.api import WekoRecord
+from weko_deposit.api import WekoDeposit
 
 
 def serialize_related_identifiers(pid):
@@ -38,7 +37,7 @@ def serialize_related_identifiers(pid):
     related_identifiers = []
     if pv.exists:
 
-        rec = WekoRecord.get_record(pid.get_assigned_object())
+        rec = WekoDeposit.get_record(pid.get_assigned_object())
         # External DOI records don't have Concept DOI
         if 'conceptdoi' in rec:
             ri = {
@@ -64,7 +63,6 @@ def serialize_related_identifiers(pid):
         #         'identifier': rec['doi']
         #     }
         #     related_identifiers.append(ri)
-
         # for p in right:
         #     rec = ZenodoRecord.get_record(p.get_assigned_object())
         #     ri = {
@@ -76,13 +74,14 @@ def serialize_related_identifiers(pid):
     pv = PIDVersioning(parent=pid)
     if pv.exists:
         for p in pv.children:
-            rec = WekoRecord.get_record(p.get_assigned_object())
-            ri = {
-                'scheme': 'doi',
-                'relation': 'hasVersion',
-                'identifier': rec['doi']
-            }
-            related_identifiers.append(ri)
+            rec = WekoDeposit.get_record(p.get_assigned_object())
+            if 'doi' in rec:
+                relation_info = {
+                    'scheme': 'doi',
+                    'relation': 'hasVersion',
+                    'identifier': rec['doi']
+                }
+                related_identifiers.append(relation_info)
     return related_identifiers
 
 

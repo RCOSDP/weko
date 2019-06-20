@@ -36,7 +36,7 @@ def get_item_pidstore_identifier(object_uuid):
         action_status = Activity.query.filter_by(
             item_id=object_uuid).one_or_none()
         meta = ItemsMetadata.get_record(object_uuid)
-        if meta is not None:
+        if meta and action_status:
             pidstore_identifier = meta.get('pidstore_identifier')
             if pidstore_identifier is not None \
                 and action_status.action_status == \

@@ -839,6 +839,8 @@ class WorkActivity(object):
                     db_activity.activity_status = \
                         ActivityStatusPolicy.ACTIVITY_CANCEL
                     db_activity.activity_end = datetime.utcnow()
+                    if 'item_id' in activity:
+                        db_activity.item_id = activity.get('item_id')
                     db.session.merge(db_activity)
 
                     db_history = ActivityHistory(
@@ -1353,6 +1355,27 @@ class UpdateItem(object):
             record.update({'publish_status': '0'})
         else:
             record['publish_status'] = '0'
+
+        record.commit()
+        db.session.commit()
+
+        indexer = WekoIndexer()
+        indexer.update_publish_status(record)
+
+    def update_status(pid, record, status='1'):
+        r"""Record update status.
+
+        :param pid: PID object.
+        :param record: Record object.
+        :param status: Publish status (0: publish, 1: private).
+        """
+        from invenio_db import db
+        from weko_deposit.api import WekoIndexer
+        publish_status = record.get('publish_status')
+        if not publish_status:
+            record.update({'publish_status': status})
+        else:
+            record['publish_status'] = status
 
         record.commit()
         db.session.commit()

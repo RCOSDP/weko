@@ -17,15 +17,6 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
-<div role="navigation">
-  <ul class="nav nav-tabs">
-    {%- block item_management_tabs %}
-      {% from "weko_theme/macros/item_management_tabs_selector.html" import tabs_selector %}
-      {{ tabs_selector('bulk_update') }}
-    {%- endblock item_management_tabs%}
-  </ul>
-</div>
-
 <div id="item_management_bulk_update" class="hide">item_management_bulk_update</div>
 <div class="panel-body">
   <div class="panel panel-default">
@@ -239,11 +230,10 @@
   </div><br>
   <div class="col-sm-12 col-md-12 text-center">
     <a id="submit-btn" class="btn btn-primary pull-right update-button">
-         <span class="glyphicon glyphicon-edit"></span> 
+         <span class="glyphicon glyphicon-edit"></span>
           {{ _('Update') }}</a>
   </div>
 
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
 </div>
-

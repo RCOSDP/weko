@@ -162,7 +162,7 @@ require([
       });
 
       // Update
-      getUrl = '/bulk_update/items_metadata?pids=' + pids;
+      getUrl = '/admin/items/bulk/update/items_metadata?pids=' + pids;
       $.ajax({
         method: 'GET',
         url: getUrl,
@@ -250,7 +250,7 @@ require([
       // Update
       $.ajax({
         method: 'PUT',
-        url: '/item_management/bulk_delete',
+        url: '/admin/items/bulk/delete/',
         async: false,
         cache: false,
         data: data,
