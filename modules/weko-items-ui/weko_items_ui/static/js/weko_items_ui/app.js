@@ -469,7 +469,8 @@ function handleSharePermission(value) {
               }
             },
             function error(response) {
-              addAlert(response);
+              $("#inputModal").html(response);
+              $("#allModal").modal("show");
             }
           );
         }
@@ -1049,7 +1050,6 @@ function handleSharePermission(value) {
     WekoRecordsCtrl.$inject = [
       '$scope',
       '$rootScope',
-      '$modal',
       'InvenioRecordsAPI',
     ];
     angular.module('wekoRecords.controllers')
