@@ -22,8 +22,8 @@
 import click
 from flask.cli import with_appcontext
 
-from .models import AdminLangSettings, ApiCertificate, SessionLifetime, \
-    StatisticTarget, StatisticUnit
+from .models import AdminLangSettings, ApiCertificate, BillingPermission, \
+    SessionLifetime, StatisticTarget, StatisticUnit
 
 
 @click.group()
@@ -135,5 +135,47 @@ def save_report_target(target_id, target_name, target_unit):
     try:
         StatisticTarget.create(target_id, target_name, target_unit)
         click.secho('insert report target success')
+    except Exception as e:
+        click.secho(str(e))
+
+
+@click.group()
+def billing():
+    """Billing commands."""
+
+
+@billing.command('create')
+@click.argument('user_id')
+@click.argument('is_active')
+@with_appcontext
+def add_billing_user(user_id, is_active):
+    """Add new user can access billing file.
+
+    :param user_id: User's id (default: 1)
+    :param is_active: Access state
+    """
+    try:
+        BillingPermission.create(user_id, is_active)
+        click.secho('insert billing user success')
+    except Exception as e:
+        click.secho(str(e))
+
+
+@billing.command('active')
+@click.argument('user_id')
+@click.argument('is_active')
+@with_appcontext
+def toggle_active_billing_user(user_id, is_active):
+    """Update access state of billing file.
+
+    :param user_id: User's id (default: 1)
+    :param is_active: Access state
+    """
+    try:
+        BillingPermission.activation(user_id, is_active)
+        if is_active.lower() == 'true':
+            click.secho('active billing user success')
+        else:
+            click.secho('deactive billing user success')
     except Exception as e:
         click.secho(str(e))

@@ -353,6 +353,7 @@ def display_activity(activity_id=0):
         session['itemlogin_res_check'] = res_check
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
+
     return render_template(
         'weko_workflow/activity_detail.html',
         render_widgets=True,
