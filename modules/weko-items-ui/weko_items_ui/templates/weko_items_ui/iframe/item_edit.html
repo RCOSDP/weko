@@ -66,17 +66,17 @@
         </div>
         {%- if need_file %}
           <invenio-files-uploader
-          method="PUT"
-          endpoint="{{ config.DEPOSIT_FILES_API }}"
-          {% if pid %}
-            initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
-            files='{{files|tojson}}'
-          {% else %}
-            initialization="{{ config.DEPOSIT_SEARCH_API }}"
-            files='{{files|tojson}}'
-          {% endif %}
-          extra-params='{"headers":{"Content-Type": "application/json"}}'
-        >
+            method="PUT"
+            endpoint="{{ config.DEPOSIT_FILES_API }}"
+            {% if pid %}
+              initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
+              files='{{files|tojson}}'
+            {% else %}
+              initialization="{{ config.DEPOSIT_SEARCH_API }}"
+              files='{{files|tojson}}'
+            {% endif %}
+            extra-params='{"headers":{"Content-Type": "application/json"}}'
+          >
         {%- endif %}
           <invenio-records
             {%- if pid %}
@@ -204,9 +204,7 @@
                   </div>
                 </div>
               </div>
-
               <button ng-show="false" id="btn_setItemMetadata" class="btn btn-default" type="button" ng-click="setItemMetadata()"></button>
-
               <div ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                 <invenio-records-form
                   form-templates='{{ config.DEPOSIT_FORM_TEMPLATES | tojson }}'
@@ -216,33 +214,32 @@
               </div>
               <div class="row">
                 <div class="col-sm-9">
-                  <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+                  <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     {%- if pid %}
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')" style="width: 120px; height: 40px;font-size: 15px;">
+                    <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')" style="width: 120px; height: 40px;font-size: 15px;">
                           <span class="glyphicon glyphicon-trash"></span>
                           {{_('Delete')}}
-                        </button></li>
+                        </button>
                     {%- endif %}
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
+                    <button ng-disabled="recordsVM.invenioRecordsLoading"
                             class="btn btn-primary save-button"
                             ng-click="saveDataJson('{{item_save_uri}}');">
                           <span class="glyphicon glyphicon-saved"></span>
                           {{_('Save')}}
-                        </button></li>
-                    <li><button ng-disabled="recordsVM.invenioRecordsLoading"
-                            class="btn btn-info next-button" ng-click="updateDataJson()">{{_('Next')}}
+                        </button>
+                    <button ng-disabled="recordsVM.invenioRecordsLoading"
+                            class="btn btn-info next-button" 
+                            ng-click="updateDataJson()">{{_('Next')}}
                     <span class="glyphicon glyphicon-chevron-right"></span>
-                    </button></li>
-                  </ul>
+                    </button>
+                  </div>
                 </div>
                 <div class="col-sm-3" style="padding-right: 0;">
-                  <ul class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-                    <li>
+                  <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                       <button ng-disabled="recordsVM.invenioRecordsLoading"
                               class="btn btn-danger done-button" id="btn_quit">
                         <i class="fa fa-sign-out"></i>
                         {{_('Quit')}}</button>
-                    </li>
                   </ul>
                 </div>
               </div>
