@@ -114,6 +114,7 @@ def get_auto_fill_record_data():
 
 @blueprint_api.route('/get_auto_fill_journal/<string:activity_id>',
                      methods=['GET'])
+@login_required
 def get_item_auto_fill_journal(activity_id):
     """Get workflow journal data.
 
