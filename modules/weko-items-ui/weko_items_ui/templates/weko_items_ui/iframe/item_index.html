@@ -63,96 +63,109 @@
     <div id="workFlow" class="panel-group">
       <div class="panel panel-default">
         <div class="panel-body">
-          <div class="row">
+          <div class="container-fluid">
+            <div class="row col-sm-9">
             <div class="col-sm-3">
               <div class="form-horizontal">
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Flow')}}</label>
-                  <div class="col-sm-8">
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-label">
+                    <label>{{_('Flow')}}</lable>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
                     <p class="form-control-static">{{activity.flow_define.flow_name}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Activity')}}</label>
-                  <div class="col-sm-8">
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-label">
+                        <label>{{_('Activity')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
                     <p class="form-control-static">{{activity.activity_id}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Status')}}</label>
-                  <div class="col-sm-8">
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-label">
+                        <label>{{_('Status')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
                     <p class="form-control-static">{{activity.activity_status_str}}</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="col-sm-2">
+            <div class="col-sm-3">
               <div class="form-horizontal">
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Created')}}</label>
-                  <div class="col-sm-8">
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-label">
+                        <label>{{_('Created')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
                     <p class="form-control-static">{{activity.activity_start.date()}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Creater')}}</label>
-                  <div class="col-sm-8">
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-label">
+                        <label>{{_('Creater')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
                     <p class="form-control-static">
                       {{activity.login_user if activity.login_user else activity.activity_login_user}}</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="col-sm-2">
-              <div class="form-horizontal">
+            <div class="col-sm-2"></div>
+            <div class="col-sm-3">
+              <div class="form-horizontal" style="display: inline-block;">
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Updated')}}</label>
-                  <div class="col-sm-8">
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-label">
+                        <label>{{_('Updated')}}</label>
+                   </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
                     <p class="form-control-static">{{activity.updated.date()}}</p>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Updater')}}</label>
-                  <div class="col-sm-8">
+                  <div class="col-xs-6 col-md-4 col-lg-4 control-label">
+                        <label>{{_('Updater')}}</label>
+                  </div>
+                  <div class="col-xs-12 col-md-8 col-lg-8">
                     <p class="form-control-static">
                       {{activity.update_user if activity.update_user else activity.activity_update_user}}</p>
                   </div>
                 </div>
+                <div class="col-sm-1"></div>
               </div>
             </div>
-          </div>
+          </div></div>
         </div>
       </div>
       <div class="panel panel-default">
         <div class="panel-body">
-          <div class="row">
-            <div class="col-sm-3">
-              <div class="form-horizontal">
-                <div class="form-group">
-                  <label class="col-sm-4 control-label">{{_('Item')}}</label>
-                  <div class="col-sm-8">
-                    <p class="form-control-static">
-                      <a href="#" id="lnk_item_detail">{{item.get('title_ja') if item}}</a>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="row col-sm-9">
+               <div class="col-xs-1 col-md-1 col-lg-1">
+                  <label>{{_('Item')}}</label>
+               </div>
+               <div class="col-xs-11 col-md-11 col-lg-11">
+                   <a href="#" id="lnk_item_detail">{{item.get('title_ja') if item}}</a>
+               </div>
           </div>
         </div>
       </div>
       <div class="panel panel-default">
         <span class="indent">{{_('Step')}}</span>
-        <div class="panel-body">
-          <div class="row">
+        <div class="panel-body panel-styling">
+          <div class="col-sm-9 table-responsive table-bordered">
+          <div class="row" style="display: flex;">
             {%- for step in steps %}
-            <div class="col-sm-2">
-              <div class="row">
-                <div class="col-sm-9">
-                  <ul class="list-group">
+            <div class="col-xl-3">
+              <div class="row" style="display: flex;">
+                <div class="col-md-8 col-xl-8">
+                  <ul class="list-group workflow-ul">
                     <li
                       class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
-                      <span class="action-name {% if cur_step == step.ActionEndpoint %} cur_step style_a {% endif %}"
+                      <span class="action-name {% if cur_step == step.ActionEndpoint %} cur_step style_a {% endif %} 
+                                  workflow-span"
                         data-action-version="{{step.ActionVersion}}"
                         data-cancel-uri="{{ url_for('weko_workflow.cancel_action', activity_id=step.ActivityId, action_id=step.ActionId) }}"
                         data-next-uri="{{url_for('weko_workflow.next_action', activity_id=step.ActivityId, action_id=step.ActionId)}}">{{step.ActionName}}</span>
@@ -160,14 +173,15 @@
                     <li
                       class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
                       <span
-                        class="action-name {% if cur_step == step.ActionEndpoint %} style_a {% endif %}">{{step.Author}}</span>
+                        class="action-name {% if cur_step == step.ActionEndpoint %} style_a {% endif %} workflow-span">{{step.Author}}</span>
                     </li>
                     <li class="list-group-item {% if cur_step == step.ActionEndpoint %} style_li style_a {% endif %}">
-                      {{_(step.Status)}}</li>
+                      <span class="workflow-span">{{_(step.Status)}}</span>
+                    </li>
                   </ul>
                 </div>
                 {%- if 'end_action' != step.ActionEndpoint %}
-                <div class="col-sm-3 pull-right">
+                <div class="col-md-4 col-xl-4">
                   <span class="glyphicon glyphicon-arrow-right rightFoward_font" aria-hidden="true"></span>
                 </div>
                 {%- endif %}
@@ -175,6 +189,7 @@
             </div>
             {% endfor %}
           </div>
+        </div>
         </div>
       </div>
       {%- if 'F' != activity.activity_status %}
@@ -201,7 +216,7 @@
         {%- endif %}
       </div>
       {%- endif %}
-      <div class="panel panel-default">
+      <div class="panel panel-default table-responsive">
         <span class="indent">{{_('History')}}</span>
         <div class="panel-body">
           <table class="table table-bordered table-striped">
@@ -240,10 +255,14 @@
       </div>
     </div>
     {%-if community%}
-    <a class="btn btn-default pull-right"
-      href="{{url_for('weko_workflow.index',community=community.id)}}">{{_('Back')}}</a>
+    <a class="btn btn-info pull-left back-button"
+      href="{{url_for('weko_workflow.index',community=community.id)}}">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+            {{_('Back')}}</a>
     {%-else%}
-    <a class="btn btn-default pull-right" href="{{url_for('weko_workflow.index')}}">{{_('Back')}}</a>
+    <a class="btn btn-info pull-left back-button" href="{{url_for('weko_workflow.index')}}">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+            {{_('Back')}}</a>
     {%-endif%}
   </div>
 </div>
