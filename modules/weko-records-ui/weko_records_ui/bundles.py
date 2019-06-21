@@ -39,6 +39,9 @@ style = NpmBundle(
 js_dependecies = NpmBundle(
     "node_modules/angular-ui-bootstrap/ui-bootstrap-tpls.js",
     "node_modules/angular/angular.js",
+    'node_modules/angular-animate/angular-animate.js',
+    'node_modules/angular-sanitize/angular-sanitize.js',
+    'node_modules/angular-strap/dist/angular-strap.js',
     "node_modules/angular-loading-bar/build/loading-bar.js",
     "node_modules/typeahead.js/dist/bloodhound.js",
     "node_modules/typeahead.js/dist/typeahead.bundle.js",
@@ -48,6 +51,9 @@ js_dependecies = NpmBundle(
     filters='jsmin',
     output='gen/weko_records_ui.dependencies.%(version)s.js',
     npm={
+        'angular-animate': '~1.4.8',
+        'angular-sanitize': '~1.4.10',
+        'angular-strap': '~2.3.9',
         'angular-ui-bootstrap': '~0.13.2',
         'almond': '~0.3.1',
         'angular-loading-bar': '~0.9.0',

@@ -14,6 +14,17 @@
     }
 //End
 
+.workflow-span {
+ display: block;
+ width:200px;
+}
+
+.workflow-ul {
+ width: 200px;
+ display: table;
+ table-layout: fixed;
+}
+
 .back-button {
   width: 80px;
   height: 40px;
@@ -21,7 +32,7 @@
 }
 
 .next-button {
-  width: 80px;
+  width: 120px;
   height: 40px;
   font-size: 15px;
 }
@@ -150,7 +161,7 @@
 }
 
 button#btn_quit.done-button {
-  width: auto;
+  width: 120px;
 }
 
 .action-button {

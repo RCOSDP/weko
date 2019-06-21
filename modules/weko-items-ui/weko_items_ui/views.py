@@ -88,9 +88,10 @@ def index(item_type_id=0):
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         need_file = False
-        # if 'filemeta' in json.dumps(item_type.schema):
+
         if 'filename' in json.dumps(item_type.schema):
             need_file = True
+
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
             render_widgets=True,
@@ -287,6 +288,17 @@ def get_schema_form(item_type_id=0):
                             sub_elem['title_i18n'] and len(
                                 sub_elem['title_i18n'][cur_lang]) > 0:
                             sub_elem['title'] = sub_elem['title_i18n'][cur_lang]
+                        if sub_elem.get('title') == 'Group/Price':
+                            for sub_item in sub_elem['items']:
+                                if sub_item['title'] == "価格" and \
+                                    'validationMessage_i18n' in sub_item and \
+                                    cur_lang in sub_item[
+                                    'validationMessage_i18n'] and\
+                                    len(sub_item['validationMessage_i18n']
+                                        [cur_lang]) > 0:
+                                    sub_item['validationMessage'] = sub_item[
+                                        'validationMessage_i18n'][cur_lang]
+
         return jsonify(schema_form)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
@@ -456,7 +468,6 @@ def default_view_method(pid, record, template=None):
         if 'endpoints' in item_json:
             endpoints = item_json.get('endpoints')
     need_file = False
-    # if 'filemeta' in json.dumps(item_type.schema):
     if 'filename' in json.dumps(item_type.schema):
         need_file = True
     return render_template(

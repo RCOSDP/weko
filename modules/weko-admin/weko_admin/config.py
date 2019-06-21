@@ -369,6 +369,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'flowsetting',
     'fileinstance',
     'identify',
+    'items',
     'location',
     'item_management',
     'itemtypes',
