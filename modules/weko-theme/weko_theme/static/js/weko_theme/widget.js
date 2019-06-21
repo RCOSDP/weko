@@ -3,6 +3,9 @@ const FREE_DESCRIPTION_TYPE = "Free description";
 const NOTICE_TYPE = "Notice";
 const HIDE_REST_DEFAULT = "Hide the rest";
 const READ_MORE_DEFAULT = "Read more";
+const NEW_ARRIVALS = "New arrivals";
+const ACCESS_COUNTER = "Access counter";
+const INTERVAL_TIME = 60000; //one minute
 
 (function () {
     getWidgetDesignSetting();
@@ -76,52 +79,167 @@ let PageBodyGrid = function () {
         return description;
     };
 
+    this.buildAccessCounter = function (initNumber) {
+        let data = this.getAccessTopPageValue();
+        // Convert to display-able number
+        let initNum = Number(initNumber);
+        let result = Number(data);
+        if (!Number.isNaN(initNum)) {
+            result = result + initNumber;
+        }
+        return '<div class="widget-access-counter" data-init-number="' + initNumber + '" style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">' + result + '</div>';
+    };
+
+    this.buildNewArrivals = function (request_data, id) {
+        $.ajax({
+            method: 'POST',
+            url: '/api/admin/get_new_arrivals',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify(request_data),
+            dataType: 'json',
+            success: (response) => {
+                let result = response.data;
+                let host = window.location.origin;
+                let rssHtml = '';
+                if (request_data.rss_status) {
+                    rssHtml = '<a class="" href="javascript:void(0)">RSS<i class="fa fa-rss"></i></a>';
+                }
+                let innerHTML = '';
+                for (let data in result) {
+                    innerHTML += '<li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li>';
+                }
+                innerHTML = '<div class="no-li-style col-sm-9 no-padding-col">' + innerHTML + '</div><div class= "col-sm-3 rss">' + rssHtml + '</div>';
+                $("#" + id).append(innerHTML);
+            }
+        });
+    };
+
     this.widgetTemplate = function (node, index) {
-        let labelColor = node.label_color;
-        let frameBorderColor = (node.frame_border) ? node.frame_border_color : "";
-        let backgroundColor = node.background_color;
-        let description = "";
-        let leftStyle = 0;
-        let paddingHeading = "";
-        let overFlowBody = "";
+        let labelColor = "";
+        let frameBorderColor = "";
+        let backgroundColor = "";
+        let content = "";
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
+        let leftStyle = "left: initial; ";
+        let rightStyle = "";
+        let paddingHeading = "padding: inherit; ";
+        let overFlowBody = "overflow-y: scroll; ";
+        let id = '';
+        // Handle css style
+        if (node.background_color) {
+            backgroundColor = "background-color: " + node.background_color + "; ";
+        }
+
+        if(node.frame_border && node.frame_border_color) {
+            frameBorderColor = "border-color: " + node.frame_border_color + "; ";
+        }
+
+        if (node.label_color) {
+            labelColor = "color: " + node.label_color + "; ";
+        }
+
         if (!$.isEmptyObject(multiLangSetting.description)) {
             languageDescription = multiLangSetting.description;
         }
 
         if (node.type == FREE_DESCRIPTION_TYPE) {
             if (!$.isEmptyObject(languageDescription)){
-                description = languageDescription.description;
+                content = languageDescription.description;
             }
-        }
+        } else if (node.type == NOTICE_TYPE) {
+            content = this.buildNoticeType(languageDescription, index);
+        } else if (node.type == ACCESS_COUNTER) {
+            let initNumber = 0;
+            if (node.access_counter &&
+                !Number.isNaN(Number(node.access_counter))) {
+                initNumber = Number(node.access_counter);
+            }
+            content = this.buildAccessCounter(initNumber);
+            rightStyle = "right: unset; ";
+            paddingHeading = "";
+            overFlowBody = "overflow-y: hidden; ";
+            setInterval(() => { this.setAccessCounterValue(); }, INTERVAL_TIME);
+        } else if (node.type == NEW_ARRIVALS) {
+            let innerID = 'new_arrivals' + '_' + index;
+            id = 'id="' + innerID + '"';
+            let date = new Date();
 
-        if (node.type == NOTICE_TYPE) {
-            description = this.buildNoticeType(languageDescription, index);
-        }
+            let listDate = [this.parseDateFormat(date)];
+            if (node.new_dates != "Today") {
+                for (let i = 0; i < Number(node.new_dates); i++) {
+                    date.setDate(date.getDate() - 1);
+                    listDate.push(this.parseDateFormat(date));
+                }
 
-        if (node.type == FREE_DESCRIPTION_TYPE || node.type == NOTICE_TYPE) {
-            leftStyle = "initial";
-            paddingHeading = "inherit";
-            overFlowBody = "scroll";
+            }
+            let data = {
+                'list_dates': listDate,
+                'number_result': node.display_result,
+                'rss_status': node.rss_feed
+            }
+            this.buildNewArrivals(data, innerID);
         }
 
         let template =
             '<div class="grid-stack-item">' +
-            ' <div class="grid-stack-item-content panel panel-default widget" style="background-color: ' +
-            backgroundColor + '; border-color: ' + frameBorderColor + ';">' +
-            '     <div class="panel-heading widget-header widget-header-position" style="color: ' + labelColor + ';left: ' +
-            leftStyle + ';">' +
-            '       <strong style="padding: ' + paddingHeading + ';">' + multiLangSetting.label + '</strong>' +
+            ' <div class="grid-stack-item-content panel panel-default widget" style="' +
+            backgroundColor + frameBorderColor + '">' +
+            '     <div class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + rightStyle + '">' +
+            '       <strong style="' + paddingHeading + '">' + multiLangSetting.label + '</strong>' +
             '     </div>' +
-            '     <div class="panel-body ql-editor" style="padding-top: 30px; overflow-y: ' + overFlowBody + ';">' +
-            description + '</div>' +
+            '     <div class="panel-body ql-editor pad-top-30"' + id +' style="' + overFlowBody + '">' +
+            content + '</div>' +
             '   </div>' +
             '</div>';
 
         return template;
     };
 
+    this.parseDateFormat = function(d){
+        let currentDate = "";
+        currentDate = d.getFullYear();
+
+        if (d.getMonth() < 9) {
+            currentDate += "-0" + (d.getMonth() + 1);
+        } else {
+            currentDate += '-' + (d.getMonth() + 1);
+        }
+
+        if (d.getDate() < 10) {
+            currentDate += "-0" + d.getDate();
+        } else {
+            currentDate += "-" + d.getDate();
+        }
+        return currentDate;
+    };
+
+    this.setAccessCounterValue = function(){
+      let data = this.getAccessTopPageValue();
+      let result = Number(data);
+      $(".widget-access-counter").each(function(){
+        let initNumber = $(this).data("initNumber");
+        let accessCounter = result + initNumber;
+        $(this).text(accessCounter);
+      });
+    };
+
+    this.getAccessTopPageValue = function(){
+        let data= 0;
+        $.ajax({
+                  url: '/api/stats/top_page_access/0/0',
+                  method: 'GET',
+                  async: false,
+                  success: (response) => {
+                      if (response.all && response.all.count) {
+                          data = response.all.count;
+                      }
+                  }
+              })
+         return data;
+    };
 };
 
 function getWidgetDesignSetting() {
@@ -176,3 +294,5 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
         }
     }
 }
+
+
