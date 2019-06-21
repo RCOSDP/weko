@@ -45,3 +45,9 @@ WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
     '6': {'name': _('Date'), 'value': 'datetime'}
 }
 """Default properties of the item type."""
+
+WEKO_BILLING_FILE_ACCESS = 1
+"""Show billing file property in list."""
+
+WEKO_BILLING_FILE_PROP_ID = 103
+"""Id of billing file property."""

@@ -776,6 +776,88 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                     yield (name, value)
 
 
+class BillingPermission(db.Model):
+    """Database for Billing Permission."""
+
+    __tablename__ = 'billing_permission'
+
+    user_id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        nullable=False,
+        unique=True
+    )
+
+    is_active = db.Column(
+        db.Boolean(name='active'),
+        default=True,
+        nullable=False
+    )
+
+    @classmethod
+    def create(cls, user_id, is_active=True):
+        """Create new user can access billing file.
+
+        :param user_id: user's id
+        :param is_active: access state
+        :return: Unit if create succesfully
+        """
+        try:
+            obj = BillingPermission()
+            with db.session.begin_nested():
+                obj.user_id = user_id
+                obj.is_active = is_active
+                db.session.add(obj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
+        return cls
+
+    @classmethod
+    def activation(cls, user_id, is_active):
+        """Change access state of user.
+
+        :param user_id: user's id
+        :param is_active: access state
+        :return: Updated records
+        """
+        try:
+            with db.session.begin_nested():
+                billing_data = cls.query.filter_by(
+                    user_id=user_id).one_or_none()
+                if billing_data:
+                    billing_data.is_active = is_active
+                    db.session.merge(billing_data)
+                else:
+                    cls.create(user_id, is_active)
+                    current_app.logger.info('New user is created!')
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
+        return cls
+
+    @classmethod
+    def get_billing_information_by_id(cls, user_id):
+        """Get billing information by user id.
+
+        :param user_id: user's id
+        :return: Record or none
+        """
+        try:
+            billing_information = cls.query.filter_by(
+                user_id=user_id).one_or_none()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            raise
+        return billing_information
+
+
 class StatisticsEmail(db.Model):
     """Save Email Address."""
 
@@ -825,8 +907,6 @@ class StatisticsEmail(db.Model):
             current_app.logger.debug(ex)
             raise
         return delete_all
-        raise ex
-        return cls
 
 
 class RankingSettings(db.Model):
@@ -906,7 +986,14 @@ class RankingSettings(db.Model):
 
 
 __all__ = ([
-    'SearchManagement', 'AdminLangSettings', 'ApiCertificate',
-    'StatisticUnit', 'StatisticTarget', 'LogAnalysisRestrictedAddress',
-    'LogAnalysisRestrictedCrawlerList', 'StatisticsEmail', 'RankingSettings'
+    'SearchManagement',
+    'AdminLangSettings',
+    'ApiCertificate',
+    'StatisticUnit',
+    'StatisticTarget',
+    'LogAnalysisRestrictedIpAddress',
+    'LogAnalysisRestrictedCrawlerList',
+    'StatisticsEmail',
+    'RankingSettings',
+    'BillingPermission'
 ])
