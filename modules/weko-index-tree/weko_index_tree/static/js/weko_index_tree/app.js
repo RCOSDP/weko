@@ -1,7 +1,4 @@
-require([
-  "jquery",
-  "bootstrap"
-  ], function() {
+$(document).ready(function () {
   $('#myModal').modal({
     show: false
   })
@@ -389,6 +386,12 @@ require([
       });
     });
   }
-
   //refreshIndexTree();
 });
+
+// require([
+//   // "jquery",
+//   // "bootstrap",
+//   ], function() {
+//
+// });

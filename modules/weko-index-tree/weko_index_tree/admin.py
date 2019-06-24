@@ -20,14 +20,18 @@
 
 """WEKO3 module docstring."""
 
+import os
 import sys
 
-from flask import abort, current_app, flash, request
+from flask import abort, current_app, flash, jsonify, request, session, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from invenio_db import db
 
+from .api import Indexes
 from .models import IndexStyle
+from .permissions import index_tree_permission
+from .utils import get_admin_coverpage_setting
 
 
 class IndexSettingView(BaseView):
@@ -107,6 +111,46 @@ class IndexLinkSettingView(BaseView):
             return abort(400)
 
 
+class IndexEditSettingView(BaseView):
+    """Index link setting view."""
+
+    @index_tree_permission.require(http_exception=403) # Not needed anymore?
+    @expose('/', methods=['GET'])
+    @expose('/<int:index_id>', methods=['GET'])
+    def index(self, index_id=0):
+        """Render the index tree edit page."""
+        return self.render(
+            current_app.config['WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE'],
+            get_tree_json=current_app.config['WEKO_INDEX_TREE_LIST_API'],
+            upt_tree_json='',
+            mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API'],
+            admin_coverpage_setting=str(get_admin_coverpage_setting()),
+            index_id=index_id,
+            lang_code=session.get('selected_language', 'en')  # Set default
+        )
+
+    @expose('/upload', methods=['POST'])
+    def upload_image(self):
+        """Upload images."""
+        if 'uploadFile' not in request.files:
+            current_app.logger.debug('No file part')
+            flash(_('No file part'))
+            return abort(400)
+        fp = request.files['uploadFile']
+        if '' == fp.filename:
+            current_app.logger.debug('No selected file')
+            flash(_('No selected file'))
+            return abort(400)
+
+        filename = os.path.join(
+            current_app.static_folder, 'indextree', fp.filename)
+        file_uri = url_for('static', filename='indextree/' + fp.filename)
+        fp.save(filename)
+        return jsonify({'code': 0,
+                        'msg': 'file upload success',
+                        'data': {'path': file_uri}})
+
+
 index_adminview = {
     'view_class': IndexSettingView,
     'kwargs': {
@@ -125,9 +169,20 @@ index_link_adminview = {
     }
 }
 
+index_edit_adminview = {
+    'view_class': IndexEditSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Edit Tree'),
+        'endpoint': 'indexedit'
+    }
+}
+
 __all__ = (
     'index_adminview',
     'IndexSettingView',
     'index_link_adminview',
     'IndexLinkSettingView',
+    'index_edit_adminview',
+    'IndexEditSettingView',
 )
