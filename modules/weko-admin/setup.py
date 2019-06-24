@@ -136,7 +136,10 @@ setup(
             'weko_admin.bundles:report_reactjs_lib',
             'weko_admin_log_analysis_js = '
             'weko_admin.bundles:log_analysis_js',
-
+            'weko_admin_admin_lte_js_dependecies = '
+            'weko_admin.bundles:admin_lte_js_dependecies',
+            'weko_admin_admin_lte_js = '
+            'weko_admin.bundles:admin_lte_js',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',
