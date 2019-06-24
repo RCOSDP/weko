@@ -676,6 +676,14 @@ class WekoDeposit(Deposit):
             abort(500, 'Failed to register item')
         # Get index path
         index_lst = index_obj.get('index', [])
+        # Prepare index id list if the current index_lst is a path list
+        if index_lst:
+            index_id_lst = []
+            for index in index_lst:
+                indexes = index.split('/')
+                index_id_lst.append(indexes[len(indexes) - 1])
+            index_lst=index_id_lst
+
         plst = Indexes.get_path_list(index_lst)
 
         if not plst or len(index_lst) != len(plst):
