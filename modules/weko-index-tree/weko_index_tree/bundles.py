@@ -38,6 +38,6 @@ js_treeview = NpmBundle(
 
 js = Bundle(
     'js/weko_index_tree/app.js',
-    filters='requirejs',
+    # filters='requirejs',  # JQuery etc is already included in Flask-Admin
     output="gen/index_tree.%(version)s.js"
 )

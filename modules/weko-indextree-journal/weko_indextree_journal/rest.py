@@ -116,8 +116,15 @@ def create_blueprint(app, endpoints):
         #     default_media_type=options.get('default_media_type'),
         # )
 
+        # blueprint.add_url_rule(
+        #     options.pop('indextree_journal_route'),
+        #     view_func=iar,
+        #     methods=['GET', 'PUT', 'POST', 'DELETE'],
+        # )
+
+        # Moved to admin
         blueprint.add_url_rule(
-            options.pop('indextree_journal_route'),
+            options.pop('admin_indexjournal_route'),
             view_func=iar,
             methods=['GET', 'PUT', 'POST', 'DELETE'],
         )
