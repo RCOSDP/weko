@@ -101,6 +101,9 @@ setup(
         'invenio_celery.tasks': [
             'weko_indextree_journal = weko_indextree_journal.tasks',
         ],
+        'invenio_admin.views': [
+            'weko_indextree_journal = weko_indextree_journal.admin:index_journal_adminview',
+        ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],
