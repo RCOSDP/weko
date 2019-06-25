@@ -298,6 +298,13 @@ def get_schema_form(item_type_id=0):
                                         [cur_lang]) > 0:
                                     sub_item['validationMessage'] = sub_item[
                                         'validationMessage_i18n'][cur_lang]
+                        if 'items' in sub_elem:
+                            for sub_item in sub_elem['items']:
+                                if 'title_i18n' in sub_item and cur_lang in \
+                                        sub_item['title_i18n'] and len(
+                                        sub_item['title_i18n'][cur_lang]) > 0:
+                                    sub_item['title'] = sub_item['title_i18n'][
+                                        cur_lang]
 
         return jsonify(schema_form)
     except BaseException:
