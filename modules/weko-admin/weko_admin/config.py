@@ -34,7 +34,7 @@ WEKO_ADMIN_SETTINGS_TEMPLATE = None
 WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
 """Settings base templates for weko-admin module."""
 
-WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/site_license.html'
+WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/admin/site_license_settings.html'
 """Site-license templates."""
 
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
@@ -46,7 +46,8 @@ WEKO_ADMIN_REPORT_TEMPLATE = 'weko_admin/admin/report.html'
 WEKO_ADMIN_STATS_SETTINGS_TEMPLATE = 'weko_admin/admin/stats_settings.html'
 """Stats Settings template."""
 
-WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE = 'weko_admin/admin/log_analysis_settings.html'
+WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE = \
+    'weko_admin/admin/log_analysis_settings.html'
 """Stats Settings template."""
 
 WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
@@ -55,7 +56,8 @@ WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
 WEKO_ADMIN_WEB_API_ACCOUNT = 'weko_admin/admin/web_api_account.html'
 """Web Api Account templates."""
 
-WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = 'weko_admin/search_management.html'
+WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = \
+    'weko_admin/admin/search_management_settings.html'
 """Site-license templates."""
 
 WEKO_ADMIN_RANKING_SETTINGS_TEMPLATE = 'weko_admin/admin/ranking_settings.html'
@@ -391,6 +393,10 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'report',
     'user',
     'workflowsetting',
+    'indexedit',
+    'indexjournal',
+    'searchsettings',
+    'sitelicensesettings',
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 

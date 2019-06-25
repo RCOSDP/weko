@@ -116,6 +116,7 @@
           var url = $location.path();
           dbJson = $scope.dbJson;
           $http.post(url, dbJson).then(function successCallback(response) {
+             $('html,body').scrollTop(0);
              addAlert(response.data.message);
           }, function errorCallback(response) {
              alert(response.data.message);
@@ -154,4 +155,3 @@
       document.getElementById('siteLicense'), ['siteLicenseModule']);
   });
 })(angular);
-
