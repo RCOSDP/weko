@@ -34,10 +34,13 @@ from invenio_i18n.ext import current_i18n
 from weko_records.api import ItemTypes
 
 from .api import Journals
+from .permissions import indextree_journal_permission
+
 
 class IndexJournalSettingView(BaseView):
     """Index journal setting view."""
 
+    @indextree_journal_permission.require(http_exception=403)
     @expose('/', methods=['GET'])
     @expose('/<int:index_id>', methods=['GET'])
     def index(self, index_id=0):

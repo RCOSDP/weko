@@ -94,8 +94,7 @@ setup(
             'lifetime = weko_admin.cli:lifetime',
             'language = weko_admin.cli:language',
             'cert = weko_admin.cli:cert',
-            'report = weko_admin.cli:report',
-            'billing = weko_admin.cli:billing'
+            'report = weko_admin.cli:report'
         ],
         'invenio_celery.tasks': [
             'weko_admin = weko_admin.tasks',
@@ -114,6 +113,8 @@ setup(
             'weko_admin_stats_settings = weko_admin.admin:stats_settings_adminview',
             'weko_admin_log_analysis = weko_admin.admin:log_analysis_settings_adminview',
             'weko_admin_ranking_settings = weko_admin.admin:ranking_settings_adminview',
+            'weko_admin_search_settings = weko_admin.admin:search_settings_adminview',
+            'weko_admin_site_license_settings = weko_admin.admin:site_license_settings_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -140,6 +141,7 @@ setup(
             'weko_admin.bundles:admin_lte_js_dependecies',
             'weko_admin_admin_lte_js = '
             'weko_admin.bundles:admin_lte_js',
+            'weko_admin_angular_js = weko_admin.bundles:angular_js',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',
