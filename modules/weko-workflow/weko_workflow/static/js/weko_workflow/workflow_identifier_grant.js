@@ -168,6 +168,7 @@ require([
   }
 
   withdraw_form.submit(function(event) {
+    $('#btn_withdraw_continue').prop('disabled', true);
     let form = withdraw_form;
     let withdraw_uri = form.attr('action');
     let post_data = {passwd: $('#pwd').val()};
@@ -189,9 +190,11 @@ require([
           $('#error-info').html(data.msg);
           $('#error-info').parent().show();
         }
+        $('#btn_withdraw_continue').prop('disabled', false);
       },
       error: function (jqXHE, status) {
         alert('Server error');
+        $('#btn_withdraw_continue').prop('disabled', false);
       }
     });
     event.preventDefault();
