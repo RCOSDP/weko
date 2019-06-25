@@ -644,6 +644,15 @@ report_adminview = {
     }
 }
 
+feedback_mail_adminview = {
+    'view_class': ReportView,
+    'kwargs': {
+        'category': _('Statistics'),
+        'name': _('Feedback Mail'),
+        'endpoint': 'feedbackmail'
+    }
+}
+
 stats_settings_adminview = {
     'view_class': StatsSettingsView,
     'kwargs': {
@@ -710,6 +719,7 @@ site_license_settings_adminview = {
 __all__ = (
     'style_adminview',
     'report_adminview',
+    'feedback_mail_adminview',
     'language_adminview',
     'web_api_account_adminview',
     'stats_settings_adminview',
