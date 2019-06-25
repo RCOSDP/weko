@@ -18,33 +18,27 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_SCHEMA_UI_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
-{{ super() }}
-{% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
-  {{ super() }}
-{% assets "weko_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_admin_lte_js_dependecies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_admin_lte_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-{% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-{{ tabs_selector('management') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
+{%- block body %}
 <div id="alerts"></div>
 <div id="siteLicense" class="table-responsive">
   <div ng-init="fetch('[[{{result}}]]')" ng-controller="siteLicenseCtrl">
   <!--<div ng-controller="siteLicenseCtrl">-->
     <form id="siteLicenseForm" class="form-inline">
       <table class="table table-bordered table-striped">
-        <tr>
-          <th class="column-header" colspan=2>{{_('Site License setting')}}</th>
-        </tr>
         <tr>
         </tr>
         <tr>
@@ -204,10 +198,10 @@
     </form>
     <div class="form-group">
       <button type="button" class="btn btn-primary pull-right save-button" ng-click="commitData()">
-        <span class="glyphicon glyphicon-saved"></span>
+        <span class="glyphicon glyphicon-download-alt"></span>
         {{_('Save')}}
       </button>
     </div>
   </div>
 </div>
-{%- endblock page_body_main %}
+{%- endblock body %}
