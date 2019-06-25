@@ -114,7 +114,7 @@ class IndexLinkSettingView(BaseView):
 class IndexEditSettingView(BaseView):
     """Index link setting view."""
 
-    @index_tree_permission.require(http_exception=403) # Not needed anymore?
+    @index_tree_permission.require(http_exception=403)
     @expose('/', methods=['GET'])
     @expose('/<int:index_id>', methods=['GET'])
     def index(self, index_id=0):
