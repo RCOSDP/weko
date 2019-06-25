@@ -22,11 +22,6 @@ require([
     }
   });
 
-  // click button Continue
-  $('#btn_withdraw_continue').on('click', function () {
-    sendWithdrawAction();
-  });
-
   // click button Withdraw
   $('#btn_withdraw').on('click', function () {
     $('#action_withdraw_confirmation').modal('show');
@@ -226,34 +221,5 @@ require([
     });
     
     return isExistedDOI;
-  }
-  
-  function sendWithdrawAction() {
-    let form = $('form[name$=withdraw_doi_form]');
-    let withdraw_uri = form.attr('action');
-    let post_data = {passwd: $('#pwd').val()};
-    $.ajax({
-      url: withdraw_uri,
-      method: 'POST',
-      async: true,
-      contentType: 'application/json',
-      data: JSON.stringify(post_data),
-      success: function (data, status) {
-        if (0 == data.code) {
-          if (data.hasOwnProperty('data') && data.data.hasOwnProperty('redirect')) {
-            document.location.href = data.data.redirect;
-          } else {
-            document.location.reload(true);
-          }
-        } else {
-          $('#pwd').parent().addClass('has-error');
-          $('#error-info').html(data.msg);
-          $('#error-info').parent().show();
-        }
-      },
-      error: function (jqXHE, status) {
-        alert('Server error');
-      }
-    });
   }
 })
