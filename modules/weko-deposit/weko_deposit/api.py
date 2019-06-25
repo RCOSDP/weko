@@ -682,7 +682,7 @@ class WekoDeposit(Deposit):
             for index in index_lst:
                 indexes = index.split('/')
                 index_id_lst.append(indexes[len(indexes) - 1])
-            index_lst=index_id_lst
+            index_lst = index_id_lst
 
         plst = Indexes.get_path_list(index_lst)
 
