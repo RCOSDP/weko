@@ -23,9 +23,9 @@
 WEKO_SCHEMA_UI_BASE_TEMPLATE = 'weko_schema_ui/base.html'
 """Default base template for the demo page."""
 
-WEKO_SCHEMA_UI_UPLOAD = 'weko_schema_ui/upload.html'
+WEKO_SCHEMA_UI_ADMIN_UPLOAD = 'weko_schema_ui/admin/upload.html'
 
-WEKO_SCHEMA_UI_LIST = 'weko_schema_ui/list.html'
+WEKO_SCHEMA_UI_ADMIN_LIST = 'weko_schema_ui/admin/list.html'
 
 WEKO_SCHEMA_UI_SEARCH_API = '/api/schemas/'
 """URL of search endpoint for schemas."""

@@ -19,7 +19,6 @@
 #}
 
 {% macro tabs_selector(tab_value='item_type') %}
-    <li role="presentation" {% if tab_value=='schema_management' %}class="active"{% endif %}><a href="{{url_for('weko_schema_ui.list')}}">{{ _('Schema Management') }}</a></li>
     <li role="presentation" {% if tab_value=='item_type' %}class="active"{% endif %}><a href="{{url_for('weko_itemtypes_ui.index')}}">{{ _('Item Type') }}</a></li>
     {%- if current_plugins is defined %}
       {%- for plugin in current_plugins.get_enabled_plugins() %}

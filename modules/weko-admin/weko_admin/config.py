@@ -363,6 +363,8 @@ WEKO_ADMIN_COMMUNITY_ACCESS_LIST = [
     'widgetitem',
     'widgetdesign',
     'community',
+    'indexedit',
+    'indexjournal',
 ]
 """Classes Community Administrator can access."""
 
@@ -393,10 +395,10 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'report',
     'user',
     'workflowsetting',
-    'indexedit',
-    'indexjournal',
     'searchsettings',
     'sitelicensesettings',
+    'itemtypesettings',
+    'schemasettings'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
