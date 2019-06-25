@@ -18,24 +18,21 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_SCHEMA_UI_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
-{{ super() }}
-{% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
-{% assets "weko_admin_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_angular_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-{% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-{{ tabs_selector('search_management') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
+{%- block body %}
 <div id="search_management" class="container-fluid table-responsive">
   <div ng-init="initData('{{setting_data}}')" ng-controller="searchManagementCtrl">
     <div class="row">
@@ -102,30 +99,30 @@
                     <div class="row">
                       <div class="col-sm-5 col-md-5 col-md-5">
                         <div class="col-sm-12 col-md-12 col-md-12">
-                          {{_('Deny')}}
+                          {{_('Allow')}}
                           <br>
-                          <select multiple name="select_deny" id="select_deny" class="form-control" ng-model="selected_deny">
-                            <option ng-repeat="opt_sort_deny in dataJson.sort_options.deny track by $index" value="[[$index]]">{{_('[[opt_sort_deny.contents]]')}}</option>
+                          <select multiple name="select_allow" id="select_allow" class="form-control" ng-model="selected_allow">
+                            <option ng-repeat="opt_sort_allow in dataJson.sort_options.allow track by $index" value="[[$index]]">{{_('[[opt_sort_allow.contents]]')}}</option>
                           </select>
                         </div>
                       </div>
                       <div class="col-sm-2 col-md-2 col-md-2 text-center">
                         &nbsp;<br>
-                        <button type="button" class="btn btn-default" ng-click="setAllow(selected_deny)">
+                        <button type="button" class="btn btn-default" ng-click="setDeny(selected_allow)">
                           <span class="glyphicon glyphicon-arrow-right"></span>
                         </button>
                         <br>
                         <br>
-                        <button type="button" class="btn btn-default" ng-click="setDeny(selected_allow)" >
+                        <button type="button" class="btn btn-default" ng-click="setAllow(selected_deny)" >
                           <span class="glyphicon glyphicon-arrow-left"></span>
                         </button>
                       </div>
                       <div class="col-sm-5 col-md-5 col-md-5">
                         <div class="col-sm-12 col-md-12 col-md-12">
-                          {{_('Allow')}}
+                          {{_('Deny')}}
                           <br>
-                          <select multiple name="select_allow" id="select_allow" class="form-control" ng-model="selected_allow">
-                            <option ng-repeat="opt_sort_allow in dataJson.sort_options.allow track by $index" value="[[$index]]">{{_('[[opt_sort_allow.contents]]')}}</option>
+                          <select multiple name="select_deny" id="select_deny" class="form-control" ng-model="selected_deny">
+                            <option ng-repeat="opt_sort_deny in dataJson.sort_options.deny track by $index" value="[[$index]]">{{_('[[opt_sort_deny.contents]]')}}</option>
                           </select>
                         </div>
                       </div>
@@ -212,11 +209,11 @@
     <div class="form-group">
       <button type="button" class="btn btn-primary pull-right save-button" ng-click="saveData()">
         <!--<span class="glyphicon glyphicon-save"></span>-->
-        <span class="glyphicon glyphicon-saved"></span>
+        <span class="glyphicon glyphicon-download-alt"></span>
         {{_('Save')}}
       </button>
     </div>
   </div>
 </div>
 
-{%- endblock page_body_main %}
+{%- endblock body %}
