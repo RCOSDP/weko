@@ -110,12 +110,14 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             del tempdata['identifierRegistration']
             res['pidstore_identifier'] = tempdata
     elif idf_grant == -1:  # with draw identifier_grant
+        pidstore_identifier = item.get('pidstore_identifier')
         res['pidstore_identifier'] = tempdata
-        flagDelPidstore = del_invenio_pidstore(item.id)
+        flagDelPidstore = del_invenio_pidstore(pidstore_identifier['identifier']['value'])
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
+        pidstore_identifier = item.get('pidstore_identifier')
         res['pidstore_identifier'] = tempdata
-        flagDelPidstore = del_invenio_pidstore(item.id)
+        flagDelPidstore = del_invenio_pidstore(pidstore_identifier['identifier']['value'])
     try:
         if not flagDelPidstore:
             reg_invenio_pidstore(tempdata['identifier']['value'], item.id)
@@ -168,16 +170,16 @@ def find_doi(doi_link):
         return isExistDoi
 
 
-def del_invenio_pidstore(item_id):
+def del_invenio_pidstore(link_doi):
     """
     Change status of pids_tore has been registed.
 
-    :param: item_id
+    :param: link_doi
     :return: True/False
     """
     try:
         pid_identifier = PersistentIdentifier.query.\
-            filter_by(pid_type='doi', object_type='rec', object_uuid=item_id,
+            filter_by(pid_type='doi', object_type='rec', pid_value=link_doi,
                       status=PIDStatus.REGISTERED).one()
         if pid_identifier:
             pid_identifier.delete()

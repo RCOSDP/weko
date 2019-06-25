@@ -36,6 +36,7 @@ from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
+from invenio_pidstore.errors import PIDDoesNotExistError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
 from weko_accounts.api import ShibUser
@@ -613,13 +614,16 @@ def previous_action(activity_id='0', action_id=0, req=0):
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
     flow = Flow()
-
-    pid_identifier = PersistentIdentifier.get_by_object(
-        pid_type='doi', object_type='rec', object_uuid=activity_detail.item_id)
-    with db.session.begin_nested():
-        db.session.delete(pid_identifier)
-    db.session.commit()
-
+    
+    try:
+        pid_identifier = PersistentIdentifier.get_by_object(
+            pid_type='doi', object_type='rec', object_uuid=activity_detail.item_id)
+        with db.session.begin_nested():
+            db.session.delete(pid_identifier)
+        db.session.commit()
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.info(pidNotEx)
+    
     if req == 0:
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id)
@@ -787,6 +791,10 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
+
+            # Clear identifier in ItemMetadata
+            pidstore_identifier_mapping(None, -1, activity_id)
+            
             identifier['action_identifier_select'] = \
                 IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
@@ -794,8 +802,6 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                     activity_id,
                     identifier_actionid,
                     identifier)
-            # Clear identifier in ItemMetadata
-            pidstore_identifier_mapping(None, -1, activity_id)
 
             return jsonify(code=0,
                            msg=_('success'),
