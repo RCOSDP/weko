@@ -470,6 +470,12 @@ def next_action(activity_id='0', action_id=0):
                 comment=post_json.get('commond')
             )
         return jsonify(code=0, msg=_('success'))
+    elif post_json.get('journal'):
+        work_activity.create_or_update_action_journal(
+            activity_id=activity_id,
+            action_id=action_id,
+            journal=post_json.get('journal')
+        )
 
     if 'begin_action' == action_endpoint:
         return jsonify(code=0, msg=_('success'))
