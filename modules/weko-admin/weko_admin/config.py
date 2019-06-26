@@ -53,7 +53,7 @@ WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE = \
 WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
 """Language templates."""
 
-WEKO_ADMIN_FEEDBACK_MAIL = 'weko_admin/admin/lang_settings.html'
+WEKO_ADMIN_FEEDBACK_MAIL = 'weko_admin/admin/feedback_mail.html'
 """Language templates."""
 
 WEKO_ADMIN_WEB_API_ACCOUNT = 'weko_admin/admin/web_api_account.html'

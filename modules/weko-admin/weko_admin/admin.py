@@ -380,7 +380,7 @@ class ReportView(BaseView):
         return redirect(url_for("report.index"))
 
 
-class LanguageSettingView(BaseView):
+class FeedbackMailView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         return self.render(
@@ -653,7 +653,7 @@ report_adminview = {
 }
 
 feedback_mail_adminview = {
-    'view_class': ReportView,
+    'view_class': FeedbackMailView,
     'kwargs': {
         'category': _('Statistics'),
         'name': _('Feedback Mail'),
