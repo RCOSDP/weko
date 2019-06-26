@@ -270,7 +270,8 @@ class Journals(object):
 
             if journals is None:
                 current_app.logger.info(
-                    '[{0}] Return {1} when get all journal.'.format(0, journals)
+                    '[{0}] Return {1} when get all journal.'.format(
+                        0, journals)
                 )
                 return None
 

@@ -524,8 +524,8 @@ def to_files_js(record):
                 'progress': 100,
                 'links': {
                     'self': (
-                        current_app.config['DEPOSIT_FILES_API'] +
-                        u'/{bucket}/{key}?versionId={version_id}'.format(
+                        current_app.config['DEPOSIT_FILES_API']
+                        + u'/{bucket}/{key}?versionId={version_id}'.format(
                             bucket=f.bucket_id,
                             key=f.key,
                             version_id=f.version_id,
@@ -727,8 +727,8 @@ def prepare_edit_item():
                     item_id=item_id)
             # show error when has stt is Begin or Doing
             if workflow_action_stt is not None and \
-                (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
-                 workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
+                (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN
+                 or workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
                 return jsonify(code=-13,
                                msg=_('The workflow is being edited. '))
 

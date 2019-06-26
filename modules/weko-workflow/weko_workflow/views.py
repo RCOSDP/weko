@@ -455,8 +455,8 @@ def next_action(activity_id='0', action_id=0):
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
 
-    if (1 == post_json.get('temporary_save') and
-            action_endpoint != 'identifier_grant'):
+    if (1 == post_json.get('temporary_save')
+            and action_endpoint != 'identifier_grant'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
