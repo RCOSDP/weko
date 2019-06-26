@@ -100,8 +100,8 @@ class WekoFeedEntry(FeedEntry):
         if not self.__atom_content:
             links = self.__atom_link or []
             if not [l for l in links if l.get('rel') == 'alternate']:
-                raise ValueError('Entry must contain an alternate link or ' +
-                                 'a content element.')
+                raise ValueError('Entry must contain an alternate link or '
+                                 + 'a content element.')
 
         XMLELEMENTS_NS = 'http://www.w3.org/XML/1998/namespace'
         # Add author elements
@@ -131,8 +131,8 @@ class WekoFeedEntry(FeedEntry):
                 # Surround xhtml with a div tag, parse it and embed it
                 if type == 'xhtml':
                     content.append(etree.fromstring(
-                        '<div xmlns="http://www.w3.org/1999/xhtml">' +
-                        self.__atom_content.get('content') + '</div>'))
+                        '<div xmlns="http://www.w3.org/1999/xhtml">'
+                        + self.__atom_content.get('content') + '</div>'))
                 elif type == 'CDATA':
                     content.text = etree.CDATA(
                         self.__atom_content.get('content'))
@@ -145,9 +145,9 @@ class WekoFeedEntry(FeedEntry):
                         self.__atom_content['content']))
                 # Everything else should be included base64 encoded
                 else:
-                    raise ValueError('base64 encoded content is not ' +
-                                     'supported at the moment. Pull requests' +
-                                     ' adding support are welcome.')
+                    raise ValueError('base64 encoded content is not '
+                                     + 'supported at the moment. Pull requests'
+                                     + ' adding support are welcome.')
             # Add type description of the content
             if type:
                 content.attrib['type'] = type
@@ -224,9 +224,9 @@ class WekoFeedEntry(FeedEntry):
             entry.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
                 self.__rss_itemUrl
 
-        if not (self.__rss_title or
-                self.__rss_description or
-                self.__rss_content):
+        if not (self.__rss_title
+                or self.__rss_description
+                or self.__rss_content):
             raise ValueError('Required fields not set')
         if self.__rss_title:
             title = etree.SubElement(entry, 'title')

@@ -82,8 +82,8 @@ class WidgetItemServices:
                 return result
         if data.get('flag_edit'):
             old_repo = cls.get_repo_by_id(current_id)
-            if (str(old_repo) != str(widget_data.get('repository')) and
-                    WidgetDesignServices.validate_admin_widget_item_setting(
+            if (str(old_repo) != str(widget_data.get('repository'))
+                    and WidgetDesignServices.validate_admin_widget_item_setting(
                     data.get('data_id'))):
                 result['message'] = "Cannot update repository " \
                     "of this widget because " \
@@ -412,8 +412,8 @@ class WidgetDesignServices:
                     data["Id"] = widget_item_data.get('widget_id')
                     settings = widget_item_data.get('settings')
                     languages = settings.get("multiLangSetting")
-                    if (isinstance(languages, dict) and
-                            lang_code_default is not None):
+                    if (isinstance(languages, dict)
+                            and lang_code_default is not None):
                         if languages.get(lang_code_default):
                             data_display = languages[lang_code_default]
                             data["label"] = data_display.get(
@@ -538,8 +538,8 @@ class WidgetDesignServices:
                     break
         if not widget["multiLangSetting"]:
             default_language_code = WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE
-            if (isinstance(languages, dict) and
-                    languages.get(default_language_code)):
+            if (isinstance(languages, dict)
+                    and languages.get(default_language_code)):
                 widget["multiLangSetting"] = languages.get(
                     default_language_code)
             else:

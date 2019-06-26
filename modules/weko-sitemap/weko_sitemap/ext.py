@@ -50,7 +50,8 @@ class WekoSitemap(Sitemap):
         page_name = 'sitemap_' + str(page).zfill(4)  # Cache key
         page_dic = dict(page=current_app.extensions['sitemap'].render_page(urlset=urlset),
                         lastmod=datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'))
-        current_app.extensions['weko-sitemap'].set_cache_page(page_name, page_dic)
+        current_app.extensions['weko-sitemap'].set_cache_page(
+            page_name, page_dic)
 
     def load_page(self, fn):
         """Load sitemap page."""

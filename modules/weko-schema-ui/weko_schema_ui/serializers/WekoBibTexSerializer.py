@@ -399,15 +399,15 @@ class WekoBibTexSerializer():
                 value = ''
                 dates = []
                 for element in elements:
-                    if field == 'date' and (element.get('dateType') is not None and
-                                            element.get('dateType').lower() == 'issued'):
+                    if field == 'date' and (element.get('dateType') is not None
+                                            and element.get('dateType').lower() == 'issued'):
                         dates.append(element.text)
                         continue
-                    elif field == 'type' and (element.get('descriptionType') is None or
-                                              element.get('descriptionType').lower() != 'other'):
+                    elif field == 'type' and (element.get('descriptionType') is None
+                                              or element.get('descriptionType').lower() != 'other'):
                         continue
-                    elif field == 'author' and (element.get(xml_ns + 'lang') is None or
-                                                element.get(xml_ns + 'lang').lower() != 'en'):
+                    elif field == 'author' and (element.get(xml_ns + 'lang') is None
+                                                or element.get(xml_ns + 'lang').lower() != 'en'):
                         continue
 
                     if value != '':

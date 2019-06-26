@@ -63,8 +63,8 @@ class IndexJournalSettingView(BaseView):
 
         """Log error for output info of journal, level: ERROR, status code: 101,
         content: Invalid setting file error."""
-        if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] !=
-            "/admin/indexjournal/jsonschema") \
+        if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API']
+                != "/admin/indexjournal/jsonschema") \
             or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] == ""
                 or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API']
                     is None)):
@@ -74,8 +74,8 @@ class IndexJournalSettingView(BaseView):
 
         """Log error for output info of journal, level: ERROR, status code: 101,
         content: Invalid setting file error."""
-        if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] !=
-            "/admin/indexjournal/schemaform") \
+        if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API']
+                != "/admin/indexjournal/schemaform") \
             or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] == ""
                 or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API']
                     is None)):
@@ -173,11 +173,11 @@ class IndexJournalSettingView(BaseView):
 
             """Log error for output info of journal, level: ERROR, status code: 101,
             content: Invalid setting file error."""
-            if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] !=
-                "schemas/schemaform.json") or \
-                (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] == ""
-                 or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE']
-                     is None)):
+            if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE']
+                    != "schemas/schemaform.json") or \
+                    (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] == ""
+                     or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE']
+                         is None)):
                 current_app.logger.error(
                     '[{0}] Invalid setting file error'.format(101)
                 )
