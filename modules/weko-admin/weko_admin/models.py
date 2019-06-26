@@ -23,11 +23,14 @@
 from datetime import datetime
 
 from flask import current_app, json
+from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy import asc
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func
+from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
 
 
@@ -985,6 +988,106 @@ class RankingSettings(db.Model):
         return cls
 
 
+class FeedbackMailSetting(db.Model, Timestamp):
+    """Feedback email setting.
+
+    The FeedbackMailSetting object contains a ``created``, a ``updated``
+    properties that are automatically updated.
+    """
+
+    __tablename__ = 'feedback_email_setting'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        autoincrement=True)
+    """FeedbackMailSetting identifier."""
+
+    user_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(
+            User.id,
+            ondelete='CASCADE'),
+        nullable=False
+    )
+    """Foreign key to :class:`~invenio_accounts.models.User`."""
+
+    is_sending_feedback = db.Column(
+        db.Boolean(name='is_sending_feedback'),
+        nullable=False,
+        default=False)
+    """Setting to send or not send feedback mail."""
+
+    is_deleted = db.Column(
+        db.Boolean(name='deleted'),
+        default=False,
+        nullable=False)
+    """Status of FeedbackMailSetting."""
+
+    deleted = db.Column(
+        db.DateTime,
+        default=datetime.now)
+    """Deleted Date"""
+
+    @classmethod
+    def get_all_active(cls, is_sending_feedback=False):
+        """Get all Feedback email setting which not deleted yet.
+
+        :param is_sending_feedback: sending feedback email setting
+        :return: All active Feedback email setting lists.
+        """
+        try:
+            all = cls.query(cls, User.email) \
+                .join(User, cls.user_id==User.id) \
+                .filter(User.active.is_(True)) \
+                .filter(cls.is_sending_feedback.is_(is_sending_feedback)) \
+                .filter(cls.is_deleted.is_(True)).all()
+        except NoResultFound:
+            return []
+        return all
+
+    @classmethod
+    def update(cls, id=0, data=None):
+        """Update/Create Feedback email setting."""
+        try:
+            with db.session.begin_nested():
+                new_data_flag = False
+                settings = cls.query.filter_by(id=id).first()
+                # Creating
+                if not settings:
+                    settings = RankingSettings()
+                    settings.user_id = data.user_id
+                    new_data_flag = True
+
+                settings.is_sending_feedback = data.is_sending_feedback
+                if new_data_flag:
+                    db.session.add(settings)
+                else:
+                    db.session.merge(settings)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    @classmethod
+    def delete(cls, id=0):
+        """Delete settings."""
+        try:
+            settings = cls.query.filter_by(id=id).first()
+            if settings:
+                with db.session.begin_nested():
+                    settings.is_deleted = True
+                    db.session.merge(settings)
+                db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+
 __all__ = ([
     'SearchManagement',
     'AdminLangSettings',
@@ -995,5 +1098,6 @@ __all__ = ([
     'LogAnalysisRestrictedCrawlerList',
     'StatisticsEmail',
     'RankingSettings',
-    'BillingPermission'
+    'BillingPermission',
+    'FeedbackMailSetting'
 ])
