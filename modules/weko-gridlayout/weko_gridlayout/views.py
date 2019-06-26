@@ -187,3 +187,8 @@ def get_new_arrivals_data():
         data.get('list_dates'),
         data.get('number_result'),
         data.get('rss_status')))
+
+
+@blueprint_api.route('get_rss_data', methods=['GET'])
+def get_rss_data():
+    return WidgetDataLoaderServices.get_arrivals_rss()

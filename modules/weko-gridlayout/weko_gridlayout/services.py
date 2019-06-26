@@ -34,7 +34,7 @@ from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, \
     convert_data_to_desgin_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
-    update_general_item
+    update_general_item, build_rss_xml
 
 
 class WidgetItemServices:
@@ -711,7 +711,1126 @@ class WidgetDataLoaderServices:
     def get_arrivals_rss(cls):
         """Get New Arrivals RSS.
 
-        :rtype: object
+        :type: object
         """
-        result = dict()
-        return result
+        data = {
+            "took": 8,
+            "timed_out": False,
+            "_shards": {
+                "total": 23,
+                "successful": 23,
+                "failed": 0
+            },
+            "hits": {
+                "total": 3,
+                "max_score": 0.55880964,
+                "hits": [{
+                    "_index": "weko-jpcoar-v1.0.0",
+                    "_type": "item",
+                    "_id": "0d35de8f-9601-4c1b-b5ff-4aeb8f80b1dc",
+                    "_score": 0.55880964,
+                    "_source": {
+                        "weko_creator_id": "1",
+                        "itemtype": "BaseView",
+                        "_item_metadata": {
+                            "item_1560938217591": {
+                                "attribute_name": "課金ファイル",
+                                "attribute_value_mlt": [{
+                                    "groupsprice": [{}]
+                                }]
+                            },
+                            "item_1554881204737": {
+                                "attribute_name": "Title",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255647225": "Zannaghazi",
+                                    "subitem_1551255648112": "en"
+                                }]
+                            },
+                            "pubdate": {
+                                "attribute_name": "公開日",
+                                "attribute_value": "2019-06-25"
+                            },
+                            "item_title": "Zannaghazi",
+                            "item_type_id": "116",
+                            "control_number": "1",
+                            "_oai": {
+                                "id": "oai:invenio:recid/1"
+                            },
+                            "weko_shared_id": -1,
+                            "owner": "1",
+                            "custom_sort": {
+                                "1561432655406": ""
+                            },
+                            "path": ["1561432655406"],
+                            "publish_status": "1"
+                        },
+                        "publish_status": "0",
+                        "title": ["Zannaghazi"],
+                        "_oai": {
+                            "id": "oai:invenio:recid/1"
+                        },
+                        "weko_shared_id": -1,
+                        "_created": "2019-06-25T03:22:53.980352+00:00",
+                        "custom_sort": {
+                            "1561432655406": ""
+                        },
+                        "control_number": "1",
+                        "path": ["1561432655406"],
+                        "_updated": "2019-06-25T03:23:00.090339+00:00",
+                        "publish_date": "2019-06-25",
+                        "relation_version_is_last": True
+                    }
+                }, {
+                    "_index": "weko-jpcoar-v1.0.0",
+                    "_type": "item",
+                    "_id": "70aae405-d943-4f51-a0f6-14db8c920a15",
+                    "_score": 0.047463723,
+                    "_source": {
+                        "weko_creator_id": "1",
+                        "identifierRegistration": [{
+                            "identifierType": "DataCite",
+                            "value": "123"
+                        }],
+                        "pageEnd": ["123"],
+                        "volume": ["123"],
+                        "dissertationNumber": ["123"],
+                        "version": ["123"],
+                        "numPages": ["123"],
+                        "relation": {
+                            "relatedTitle": ["123"],
+                            "relatedIdentifier": [{
+                                "identifierType": "NAID",
+                                "value": "123"
+                            }]
+                        },
+                        "title": ["Test1"],
+                        "control_number": "3",
+                        "apc": ["Not required"],
+                        "accessRights": ["embargoed access"],
+                        "temporal": ["123"],
+                        "language": ["arm"],
+                        "identifier": [{
+                            "identifierType": "HDL",
+                            "value": "123"
+                        }],
+                        "degreeGrantor": {
+                            "nameIdentifier": ["123"],
+                            "degreeGrantorName": ["123"]
+                        },
+                        "sourceIdentifier": [{
+                            "identifierType": "NCID",
+                            "value": "123"
+                        }],
+                        "_created": "2019-06-25T07:38:47.313901+00:00",
+                        "date": [{
+                            "value": "2019-06-19",
+                            "dateType": "Submitted"
+                        }],
+                        "_updated": "2019-06-25T07:38:53.698017+00:00",
+                        "publish_date": "2019-06-25",
+                        "rights": ["123"],
+                        "contributor": {
+                            "contributorName": ["123"],
+                            "nameIdentifier": ["123"],
+                            "affiliation": {
+                                "nameIdentifier": ["123"],
+                                "affiliationName": ["123"]
+                            },
+                            "contributorAlternative": ["123"],
+                            "familyName": ["123"],
+                            "givenName": ["123"]
+                        },
+                        "creator": {
+                            "nameIdentifier": ["123"],
+                            "creatorName": ["Zan"],
+                            "creatorAlternative": ["123"],
+                            "givenName": ["123"],
+                            "familyName": ["123"],
+                            "affiliation": {
+                                "nameIdentifier": ["123"],
+                                "affiliationName": ["123"]
+                            }
+                        },
+                        "geoLocation": {
+                            "geoLocationPoint": {
+                                "pointLongitude": ["123"],
+                                "pointLatitude": ["123"]
+                            },
+                            "geoLocationPlace": ["123"],
+                            "geoLocationBox": {
+                                "eastBoundLongitude": ["123"],
+                                "northBoundLatitude": ["123"],
+                                "southBoundLatitude": ["123"],
+                                "westBoundLongitude": ["123"]
+                            }
+                        },
+                        "type": ["departmental bulletin paper"],
+                        "sourceTitle": ["123"],
+                        "issue": ["123"],
+                        "rightsHolder": {
+                            "nameIdentifier": ["123"],
+                            "rightsHolderName": ["123"]
+                        },
+                        "path": ["1561432655406"],
+                        "itemtype": "Multiple",
+                        "alternative": ["Test2"],
+                        "description": ["123"],
+                        "degreeName": ["123"],
+                        "conference": {
+                            "conferenceCountry": ["asm"],
+                            "conferenceName": ["123"],
+                            "conferenceSequence": ["123"],
+                            "conferencePlace": ["123"]
+                        },
+                        "dateGranted": ["2019-06-20"],
+                        "subject": [{
+                            "subjectScheme": "MeSH",
+                            "value": "123"
+                        }],
+                        "_item_metadata": {
+                            "item_1551264447183": {
+                                "attribute_name": "Access Rights",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257578398": "123",
+                                    "subitem_1551257553743": "embargoed access"
+                                }]
+                            },
+                            "item_1551265002099": {
+                                "attribute_name": "Language",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255818386": "arm"
+                                }]
+                            },
+                            "item_1551264974654": {
+                                "attribute_name": "Date",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255753471": "2019-06-19",
+                                    "subitem_1551255775519": "Submitted"
+                                }]
+                            },
+                            "item_1551265438256": {
+                                "attribute_name": "Source Title",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256349044": "123",
+                                    "subitem_1551256350188": "ab"
+                                }]
+                            },
+                            "pubdate": {
+                                "attribute_name": "公開日",
+                                "attribute_value": "2019-06-25"
+                            },
+                            "item_1551264767789": {
+                                "attribute_name": "Rights Holder",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257249371": [{
+                                        "subitem_1551257257683": "sq",
+                                        "subitem_1551257255641": "123"
+                                    }],
+                                    "subitem_1551257138324": "123",
+                                    "subitem_1551257143244": [{
+                                        "subitem_1551257145912": "123",
+                                        "subitem_1551257232980": "123",
+                                        "subitem_1551257156244": "NRID"
+                                    }]
+                                }]
+                            },
+                            "item_1551265326081": {
+                                "attribute_name": "Geo Location",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256775293": "123123123",
+                                    "subitem_1551256842196": "123",
+                                    "subitem_1551256822219": [{
+                                        "subitem_1551256824945": "123",
+                                        "subitem_1551256834732": "123",
+                                        "subitem_1551256840435": "123",
+                                        "subitem_1551256831892": "123"
+                                    }],
+                                    "subitem_1551256778926": [{
+                                        "subitem_1551256783928": "123",
+                                        "subitem_1551256814806": "123"
+                                    }]
+                                }]
+                            },
+                            "item_1551264822581": {
+                                "attribute_name": "Subject",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257343002": "123",
+                                    "subitem_1551257323812": "ak",
+                                    "subitem_1551257315453": "123",
+                                    "subitem_1551257329877": "MeSH"
+                                }]
+                            },
+                            "item_1551265032053": {
+                                "attribute_name": "Resource Type",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255877772": "departmental bulletin paper",
+                                    "subitem_1551255930377": "123"
+                                }]
+                            },
+                            "item_1551265075370": {
+                                "attribute_name": "Version",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255975405": "123"
+                                }]
+                            },
+                            "item_1551264418667": {
+                                "attribute_name": "Contributor",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257272214": [{
+                                        "subitem_1551257316910": "as",
+                                        "subitem_1551257314588": "123"
+                                    }],
+                                    "subitem_1551257372442": [{
+                                        "subitem_1551257375939": "as",
+                                        "subitem_1551257374288": "123"
+                                    }],
+                                    "subitem_1551257339190": [{
+                                        "subitem_1551257343979": "aa",
+                                        "subitem_1551257342360": "123"
+                                    }],
+                                    "subitem_1551257036415": "Distributor",
+                                    "subitem_1551257150927": [{
+                                        "subitem_1551257172531": "ORCID",
+                                        "subitem_1551257152742": "123",
+                                        "subitem_1551257228080": "123"
+                                    }],
+                                    "subitem_1551257419251": [{
+                                        "subitem_1551257421633": [{
+                                            "subitem_1551261493409": "123",
+                                            "subitem_1551261485670": "ISNI",
+                                            "subitem_1551261472867": "123"
+                                        }],
+                                        "subitem_1551261534334": [{
+                                            "subitem_1551261546333": "ab",
+                                            "subitem_1551261542403": "123"
+                                        }]
+                                    }],
+                                    "subitem_1551257245638": [{
+                                        "subitem_1551257279831": "aa",
+                                        "subitem_1551257276108": "123"
+                                    }]
+                                }]
+                            },
+                            "item_1551265790591": {
+                                "attribute_name": "Degree Name",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256126428": "123",
+                                    "subitem_1551256129013": "av"
+                                }]
+                            },
+                            "item_1551264629907": {
+                                "attribute_name": "Rights",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257025236": [{
+                                        "subitem_1551257043769": "123",
+                                        "subitem_1551257047388": "sq"
+                                    }],
+                                    "subitem_1551257030435": "123"
+                                }]
+                            },
+                            "item_1551264326373": {
+                                "attribute_name": "Alternative Title",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255721061": "ab",
+                                    "subitem_1551255720400": "Test2"
+                                }]
+                            },
+                            "item_1551266003379": {
+                                "attribute_name": "File",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255558587": [{
+                                        "subitem_1551255581435": "fulltext",
+                                        "subitem_1551255570271": "123",
+                                        "subitem_1551255628842": "123"
+                                    }],
+                                    "subitem_1551255750794": "NUT",
+                                    "subitem_1551255854908": "123",
+                                    "subitem_1551255820788": [{
+                                        "subitem_1551255828320": "2019-06-13",
+                                        "subitem_1551255833133": "Issued"
+                                    }],
+                                    "subitem_1551255788530": "123"
+                                }]
+                            },
+                            "item_1551265553273": {
+                                "attribute_name": "Number of Pages",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256248092": "123"
+                                }]
+                            },
+                            "item_1551265973055": {
+                                "attribute_name": "Conference",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255947515": [{
+                                        "subitem_1551255951127": "123",
+                                        "subitem_1551255953139": "ar"
+                                    }],
+                                    "subitem_1551255911301": [{
+                                        "subitem_1551255924068": "ak",
+                                        "subitem_1551255919792": "123"
+                                    }],
+                                    "subitem_1551255945595": "123",
+                                    "subitem_1551255973390": "asm"
+                                }]
+                            },
+                            "item_1551265147138": {
+                                "attribute_name": "Identifier",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256116088": "123",
+                                    "subitem_1551256122128": "HDL"
+                                }]
+                            },
+                            "item_1551264605515": {
+                                "attribute_name": "APC",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257776901": "Not required"
+                                }]
+                            },
+                            "item_1551265302120": {
+                                "attribute_name": "Temporal",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256918211": "123",
+                                    "subitem_1551256920086": "ak"
+                                }]
+                            },
+                            "item_1551265903092": {
+                                "attribute_name": "Degree Grantor",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256037922": [{
+                                        "subitem_1551256047619": "av",
+                                        "subitem_1551256042287": "123"
+                                    }],
+                                    "subitem_1551256015892": [{
+                                        "subitem_1551256027296": "123",
+                                        "subitem_1551256029891": "123"
+                                    }]
+                                }]
+                            },
+                            "item_1551264308487": {
+                                "attribute_name": "Title",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255647225": "Test1",
+                                    "subitem_1551255648112": "en"
+                                }]
+                            },
+                            "item_1551264340087": {
+                                "attribute_name": "Creator",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255929209": [{
+                                        "subitem_1551255964991": "en",
+                                        "subitem_1551255938498": "123"
+                                    }],
+                                    "subitem_1551256025394": [{
+                                        "subitem_1551256055588": "av",
+                                        "subitem_1551256035730": "123"
+                                    }],
+                                    "subitem_1551255991424": [{
+                                        "subitem_1551256007414": "aa",
+                                        "subitem_1551256006332": "123"
+                                    }],
+                                    "subitem_1551255898956": [{
+                                        "subitem_1551255907416": "vi",
+                                        "subitem_1551255905565": "Zan"
+                                    }],
+                                    "subitem_1551256087090": [{
+                                        "subitem_1551256089084": [{
+                                            "subitem_1551256145018": "NRID",
+                                            "subitem_1551256097891": "123",
+                                            "subitem_1551256147368": "123"
+                                        }],
+                                        "subitem_1551256229037": [{
+                                            "subitem_1551256259183": "123",
+                                            "subitem_1551256259899": "an"
+                                        }]
+                                    }],
+                                    "subitem_1551255789000": [{
+                                        "subitem_1551255795486": "123",
+                                        "subitem_1551255793478": "123",
+                                        "subitem_1551255794292": "e-Rad"
+                                    }]
+                                }]
+                            },
+                            "item_1551264846237": {
+                                "attribute_name": "Description",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255577890": "123",
+                                    "subitem_1551255592625": "af",
+                                    "subitem_1551255637472": "TableOfContents"
+                                }]
+                            },
+                            "item_1551265569218": {
+                                "attribute_name": "Page Start",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256198917": "123"
+                                }]
+                            },
+                            "item_1551265178780": {
+                                "attribute_name": "Identifier Registration",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256259586": "DataCite",
+                                    "subitem_1551256250276": "123"
+                                }]
+                            },
+                            "item_1551265738931": {
+                                "attribute_name": "Dissertation Number",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256171004": "123"
+                                }]
+                            },
+                            "item_1551265118680": {
+                                "attribute_name": "Version Type",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256025676": "VoR"
+                                }]
+                            },
+                            "item_1551264917614": {
+                                "attribute_name": "Publisher",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255702686": "123",
+                                    "subitem_1551255710277": "sq"
+                                }]
+                            },
+                            "item_1551265811989": {
+                                "attribute_name": "Date Granted",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256096004": "2019-06-20"
+                                }]
+                            },
+                            "item_1551265409089": {
+                                "attribute_name": "Source Identifier",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256405981": "123",
+                                    "subitem_1551256409644": "NCID"
+                                }]
+                            },
+                            "item_1551265603279": {
+                                "attribute_name": "Page End",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256185532": "123"
+                                }]
+                            },
+                            "item_1551265227803": {
+                                "attribute_name": "Relation",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256465077": [{
+                                        "subitem_1551256629524": "NAID",
+                                        "subitem_1551256478339": "123"
+                                    }],
+                                    "subitem_1551256480278": [{
+                                        "subitem_1551256513476": "af",
+                                        "subitem_1551256498531": "123"
+                                    }],
+                                    "subitem_1551256387752": "123",
+                                    "subitem_1551256388439": "references"
+                                }]
+                            },
+                            "item_1551265385290": {
+                                "attribute_name": "Funding Reference",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256665850": [{
+                                        "subitem_1551256671920": "123",
+                                        "subitem_1551256679403": "123"
+                                    }],
+                                    "subitem_1551256454316": [{
+                                        "subitem_1551256614960": "123",
+                                        "subitem_1551256619706": "GRID"
+                                    }],
+                                    "subitem_1551256462220": [{
+                                        "subitem_1551256657859": "am",
+                                        "subitem_1551256653656": "123"
+                                    }],
+                                    "subitem_1551256688098": [{
+                                        "subitem_1551256694883": "ay",
+                                        "subitem_1551256691232": "123"
+                                    }]
+                                }]
+                            },
+                            "item_1551265463411": {
+                                "attribute_name": "Volume Number",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256328147": "123"
+                                }]
+                            },
+                            "item_1551265520160": {
+                                "attribute_name": "Issue Number",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256294723": "123"
+                                }]
+                            },
+                            "item_title": "Test1",
+                            "item_type_id": "75",
+                            "control_number": "3",
+                            "_oai": {
+                                "id": "oai:invenio:recid/3"
+                            },
+                            "weko_shared_id": -1,
+                            "owner": "1",
+                            "custom_sort": {
+                                "1561432655406": ""
+                            },
+                            "path": ["1561432655406"],
+                            "publish_status": "1"
+                        },
+                        "pageStart": ["123"],
+                        "file": {
+                            "mimeType": ["NUT"],
+                            "URI": [{
+                                "objectType": "fulltext",
+                                "value": "123"
+                            }],
+                            "version": ["123"],
+                            "extent": ["123"],
+                            "date": [{
+                                "value": "2019-06-13",
+                                "dateType": "Issued"
+                            }]
+                        },
+                        "publish_status": "0",
+                        "fundingReference": {
+                            "awardTitle": ["123"],
+                            "funderIdentifier": ["123"],
+                            "funderName": ["123"],
+                            "awardNumber": ["123"]
+                        },
+                        "weko_shared_id": -1,
+                        "versionType": ["VoR"],
+                        "custom_sort": {
+                            "1561432655406": ""
+                        },
+                        "publisher": ["123"],
+                        "_oai": {
+                            "id": "oai:invenio:recid/3"
+                        },
+                        "relation_version_is_last": True
+                    }
+                }, {
+                    "_index": "weko-jpcoar-v1.0.0",
+                    "_type": "item",
+                    "_id": "52283b6a-bc41-45a4-8ec2-c07c2e38e3e4",
+                    "_score": 0.047463723,
+                    "_source": {
+                        "weko_creator_id": "1",
+                        "identifierRegistration": [{
+                            "identifierType": "DataCite",
+                            "value": "123"
+                        }],
+                        "pageEnd": ["123"],
+                        "volume": ["123"],
+                        "publisher": ["123"],
+                        "version": ["123"],
+                        "numPages": ["123"],
+                        "relation": {
+                            "relatedTitle": ["123"],
+                            "relatedIdentifier": [{
+                                "identifierType": "NAID",
+                                "value": "123"
+                            }]
+                        },
+                        "title": ["Test1"],
+                        "control_number": "5",
+                        "apc": ["Not required"],
+                        "accessRights": ["embargoed access"],
+                        "temporal": ["123"],
+                        "language": ["arm"],
+                        "identifier": [{
+                            "identifierType": "HDL",
+                            "value": "123"
+                        }],
+                        "degreeGrantor": {
+                            "nameIdentifier": ["123"],
+                            "degreeGrantorName": ["123"]
+                        },
+                        "sourceIdentifier": [{
+                            "identifierType": "NCID",
+                            "value": "123"
+                        }],
+                        "_created": "2019-06-25T07:43:04.342245+00:00",
+                        "date": [{
+                            "value": "2019-06-19",
+                            "dateType": "Submitted"
+                        }],
+                        "_updated": "2019-06-25T07:43:04.535207+00:00",
+                        "publish_date": "2019-06-25",
+                        "rights": ["123"],
+                        "contributor": {
+                            "contributorName": ["123"],
+                            "nameIdentifier": ["123"],
+                            "affiliation": {
+                                "nameIdentifier": ["123"],
+                                "affiliationName": ["123"]
+                            },
+                            "contributorAlternative": ["123"],
+                            "familyName": ["123"],
+                            "givenName": ["123"]
+                        },
+                        "creator": {
+                            "nameIdentifier": ["123"],
+                            "creatorName": ["Zan"],
+                            "creatorAlternative": ["123"],
+                            "givenName": ["123"],
+                            "familyName": ["123"],
+                            "affiliation": {
+                                "nameIdentifier": ["123"],
+                                "affiliationName": ["123"]
+                            }
+                        },
+                        "geoLocation": {
+                            "geoLocationPoint": {
+                                "pointLongitude": ["123"],
+                                "pointLatitude": ["123"]
+                            },
+                            "geoLocationPlace": ["123"],
+                            "geoLocationBox": {
+                                "eastBoundLongitude": ["123"],
+                                "northBoundLatitude": ["123"],
+                                "southBoundLatitude": ["123"],
+                                "westBoundLongitude": ["123"]
+                            }
+                        },
+                        "type": ["departmental bulletin paper"],
+                        "sourceTitle": ["123"],
+                        "issue": ["123"],
+                        "dissertationNumber": ["123"],
+                        "rightsHolder": {
+                            "nameIdentifier": ["123"],
+                            "rightsHolderName": ["123"]
+                        },
+                        "path": ["1561432655406"],
+                        "itemtype": "Multiple",
+                        "alternative": ["Test2"],
+                        "description": ["123"],
+                        "degreeName": ["123"],
+                        "conference": {
+                            "conferenceCountry": ["asm"],
+                            "conferenceName": ["123"],
+                            "conferenceSequence": ["123"],
+                            "conferencePlace": ["123"]
+                        },
+                        "dateGranted": ["2019-06-20"],
+                        "subject": [{
+                            "subjectScheme": "MeSH",
+                            "value": "123"
+                        }],
+                        "_item_metadata": {
+                            "item_1551264822581": {
+                                "attribute_name": "Subject",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257343002": "123",
+                                    "subitem_1551257323812": "ak",
+                                    "subitem_1551257315453": "123",
+                                    "subitem_1551257329877": "MeSH"
+                                }]
+                            },
+                            "item_1551265569218": {
+                                "attribute_name": "Page Start",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256198917": "123"
+                                }]
+                            },
+                            "item_1551264767789": {
+                                "attribute_name": "Rights Holder",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257249371": [{
+                                        "subitem_1551257257683": "sq",
+                                        "subitem_1551257255641": "123"
+                                    }],
+                                    "subitem_1551257138324": "123",
+                                    "subitem_1551257143244": [{
+                                        "subitem_1551257145912": "123",
+                                        "subitem_1551257232980": "123",
+                                        "subitem_1551257156244": "NRID"
+                                    }]
+                                }]
+                            },
+                            "item_1551265326081": {
+                                "attribute_name": "Geo Location",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256775293": "123123123",
+                                    "subitem_1551256842196": "123",
+                                    "subitem_1551256822219": [{
+                                        "subitem_1551256824945": "123",
+                                        "subitem_1551256834732": "123",
+                                        "subitem_1551256840435": "123",
+                                        "subitem_1551256831892": "123"
+                                    }],
+                                    "subitem_1551256778926": [{
+                                        "subitem_1551256783928": "123",
+                                        "subitem_1551256814806": "123"
+                                    }]
+                                }]
+                            },
+                            "item_1551264418667": {
+                                "attribute_name": "Contributor",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257272214": [{
+                                        "subitem_1551257316910": "as",
+                                        "subitem_1551257314588": "123"
+                                    }],
+                                    "subitem_1551257372442": [{
+                                        "subitem_1551257375939": "as",
+                                        "subitem_1551257374288": "123"
+                                    }],
+                                    "subitem_1551257339190": [{
+                                        "subitem_1551257343979": "aa",
+                                        "subitem_1551257342360": "123"
+                                    }],
+                                    "subitem_1551257036415": "Distributor",
+                                    "subitem_1551257245638": [{
+                                        "subitem_1551257279831": "aa",
+                                        "subitem_1551257276108": "123"
+                                    }],
+                                    "subitem_1551257150927": [{
+                                        "subitem_1551257172531": "ORCID",
+                                        "subitem_1551257152742": "123",
+                                        "subitem_1551257228080": "123"
+                                    }],
+                                    "subitem_1551257419251": [{
+                                        "subitem_1551257421633": [{
+                                            "subitem_1551261493409": "123",
+                                            "subitem_1551261485670": "ISNI",
+                                            "subitem_1551261472867": "123"
+                                        }],
+                                        "subitem_1551261534334": [{
+                                            "subitem_1551261546333": "ab",
+                                            "subitem_1551261542403": "123"
+                                        }]
+                                    }]
+                                }]
+                            },
+                            "item_1551264629907": {
+                                "attribute_name": "Rights",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257025236": [{
+                                        "subitem_1551257043769": "123",
+                                        "subitem_1551257047388": "sq"
+                                    }],
+                                    "subitem_1551257030435": "123"
+                                }]
+                            },
+                            "item_1551266003379": {
+                                "attribute_name": "File",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255558587": [{
+                                        "subitem_1551255581435": "fulltext",
+                                        "subitem_1551255570271": "123",
+                                        "subitem_1551255628842": "123"
+                                    }],
+                                    "subitem_1551255750794": "NUT",
+                                    "subitem_1551255854908": "123",
+                                    "subitem_1551255820788": [{
+                                        "subitem_1551255828320": "2019-06-13",
+                                        "subitem_1551255833133": "Issued"
+                                    }],
+                                    "subitem_1551255788530": "123"
+                                }]
+                            },
+                            "item_1551265553273": {
+                                "attribute_name": "Number of Pages",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256248092": "123"
+                                }]
+                            },
+                            "item_1551265973055": {
+                                "attribute_name": "Conference",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255947515": [{
+                                        "subitem_1551255951127": "123",
+                                        "subitem_1551255953139": "ar"
+                                    }],
+                                    "subitem_1551255911301": [{
+                                        "subitem_1551255924068": "ak",
+                                        "subitem_1551255919792": "123"
+                                    }],
+                                    "subitem_1551255945595": "123",
+                                    "subitem_1551255973390": "asm"
+                                }]
+                            },
+                            "item_1551265147138": {
+                                "attribute_name": "Identifier",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256116088": "123",
+                                    "subitem_1551256122128": "HDL"
+                                }]
+                            },
+                            "item_1551265178780": {
+                                "attribute_name": "Identifier Registration",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256259586": "DataCite",
+                                    "subitem_1551256250276": "123"
+                                }]
+                            },
+                            "item_1551265738931": {
+                                "attribute_name": "Dissertation Number",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256171004": "123"
+                                }]
+                            },
+                            "item_1551264917614": {
+                                "attribute_name": "Publisher",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255702686": "123",
+                                    "subitem_1551255710277": "sq"
+                                }]
+                            },
+                            "item_1551264846237": {
+                                "attribute_name": "Description",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255577890": "123",
+                                    "subitem_1551255592625": "af",
+                                    "subitem_1551255637472": "TableOfContents"
+                                }]
+                            },
+                            "item_1551265409089": {
+                                "attribute_name": "Source Identifier",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256405981": "123",
+                                    "subitem_1551256409644": "NCID"
+                                }]
+                            },
+                            "item_1551265603279": {
+                                "attribute_name": "Page End",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256185532": "123"
+                                }]
+                            },
+                            "item_1551265118680": {
+                                "attribute_name": "Version Type",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256025676": "VoR"
+                                }]
+                            },
+                            "item_1551264447183": {
+                                "attribute_name": "Access Rights",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257578398": "123",
+                                    "subitem_1551257553743": "embargoed access"
+                                }]
+                            },
+                            "item_1551264974654": {
+                                "attribute_name": "Date",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255753471": "2019-06-19",
+                                    "subitem_1551255775519": "Submitted"
+                                }]
+                            },
+                            "item_1551265438256": {
+                                "attribute_name": "Source Title",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256349044": "123",
+                                    "subitem_1551256350188": "ab"
+                                }]
+                            },
+                            "pubdate": {
+                                "attribute_name": "公開日",
+                                "attribute_value": "2019-06-25"
+                            },
+                            "item_1551264605515": {
+                                "attribute_name": "APC",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551257776901": "Not required"
+                                }]
+                            },
+                            "item_1551265032053": {
+                                "attribute_name": "Resource Type",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255877772": "departmental bulletin paper",
+                                    "subitem_1551255930377": "123"
+                                }]
+                            },
+                            "item_1551265790591": {
+                                "attribute_name": "Degree Name",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256126428": "123",
+                                    "subitem_1551256129013": "av"
+                                }]
+                            },
+                            "item_1551264326373": {
+                                "attribute_name": "Alternative Title",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255721061": "ab",
+                                    "subitem_1551255720400": "Test2"
+                                }]
+                            },
+                            "item_1551264308487": {
+                                "attribute_name": "Title",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255647225": "Test1",
+                                    "subitem_1551255648112": "en"
+                                }]
+                            },
+                            "item_1551265302120": {
+                                "attribute_name": "Temporal",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256918211": "123",
+                                    "subitem_1551256920086": "ak"
+                                }]
+                            },
+                            "item_1551264340087": {
+                                "attribute_name": "Creator",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255929209": [{
+                                        "subitem_1551255964991": "en",
+                                        "subitem_1551255938498": "123"
+                                    }],
+                                    "subitem_1551256025394": [{
+                                        "subitem_1551256055588": "av",
+                                        "subitem_1551256035730": "123"
+                                    }],
+                                    "subitem_1551255991424": [{
+                                        "subitem_1551256007414": "aa",
+                                        "subitem_1551256006332": "123"
+                                    }],
+                                    "subitem_1551255898956": [{
+                                        "subitem_1551255907416": "vi",
+                                        "subitem_1551255905565": "Zan"
+                                    }],
+                                    "subitem_1551256087090": [{
+                                        "subitem_1551256089084": [{
+                                            "subitem_1551256145018": "NRID",
+                                            "subitem_1551256097891": "123",
+                                            "subitem_1551256147368": "123"
+                                        }],
+                                        "subitem_1551256229037": [{
+                                            "subitem_1551256259183": "123",
+                                            "subitem_1551256259899": "an"
+                                        }]
+                                    }],
+                                    "subitem_1551255789000": [{
+                                        "subitem_1551255795486": "123",
+                                        "subitem_1551255793478": "123",
+                                        "subitem_1551255794292": "e-Rad"
+                                    }]
+                                }]
+                            },
+                            "item_1551265002099": {
+                                "attribute_name": "Language",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255818386": "arm"
+                                }]
+                            },
+                            "item_1551265075370": {
+                                "attribute_name": "Version",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551255975405": "123"
+                                }]
+                            },
+                            "item_1551265903092": {
+                                "attribute_name": "Degree Grantor",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256037922": [{
+                                        "subitem_1551256047619": "av",
+                                        "subitem_1551256042287": "123"
+                                    }],
+                                    "subitem_1551256015892": [{
+                                        "subitem_1551256027296": "123",
+                                        "subitem_1551256029891": "123"
+                                    }]
+                                }]
+                            },
+                            "item_1551265811989": {
+                                "attribute_name": "Date Granted",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256096004": "2019-06-20"
+                                }]
+                            },
+                            "item_1551265463411": {
+                                "attribute_name": "Volume Number",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256328147": "123"
+                                }]
+                            },
+                            "item_1551265227803": {
+                                "attribute_name": "Relation",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256388439": "references",
+                                    "subitem_1551256480278": [{
+                                        "subitem_1551256513476": "af",
+                                        "subitem_1551256498531": "123"
+                                    }],
+                                    "subitem_1551256387752": "123",
+                                    "subitem_1551256465077": [{
+                                        "subitem_1551256629524": "NAID",
+                                        "subitem_1551256478339": "123"
+                                    }]
+                                }]
+                            },
+                            "item_1551265385290": {
+                                "attribute_name": "Funding Reference",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256665850": [{
+                                        "subitem_1551256671920": "123",
+                                        "subitem_1551256679403": "123"
+                                    }],
+                                    "subitem_1551256454316": [{
+                                        "subitem_1551256614960": "123",
+                                        "subitem_1551256619706": "GRID"
+                                    }],
+                                    "subitem_1551256462220": [{
+                                        "subitem_1551256657859": "am",
+                                        "subitem_1551256653656": "123"
+                                    }],
+                                    "subitem_1551256688098": [{
+                                        "subitem_1551256694883": "ay",
+                                        "subitem_1551256691232": "123"
+                                    }]
+                                }]
+                            },
+                            "item_1551265520160": {
+                                "attribute_name": "Issue Number",
+                                "attribute_value_mlt": [{
+                                    "subitem_1551256294723": "123"
+                                }]
+                            },
+                            "item_title": "Test2",
+                            "item_type_id": "75",
+                            "control_number": "5",
+                            "_oai": {
+                                "id": "oai:invenio:recid/5"
+                            },
+                            "weko_shared_id": -1,
+                            "owner": "1",
+                            "custom_sort": {
+                                "1561432655406": ""
+                            },
+                            "path": ["1561432655406"],
+                            "publish_status": "0"
+                        },
+                        "pageStart": ["123"],
+                        "file": {
+                            "mimeType": ["NUT"],
+                            "URI": [{
+                                "objectType": "fulltext",
+                                "value": "123"
+                            }],
+                            "version": ["123"],
+                            "extent": ["123"],
+                            "date": [{
+                                "value": "2019-06-13",
+                                "dateType": "Issued"
+                            }]
+                        },
+                        "publish_status": "0",
+                        "fundingReference": {
+                            "awardTitle": ["123"],
+                            "funderIdentifier": ["123"],
+                            "funderName": ["123"],
+                            "awardNumber": ["123"]
+                        },
+                        "weko_shared_id": -1,
+                        "versionType": ["VoR"],
+                        "custom_sort": {
+                            "1561432655406": ""
+                        },
+                        "_oai": {
+                            "id": "oai:invenio:recid/5"
+                        }
+                    }
+                }]
+            }
+        }
+
+        if not data or not data.get('hits'):
+            return None
+        hits = data.get('hits')
+        rss_data = hits.get('hits')
+        return build_rss_xml(rss_data)
