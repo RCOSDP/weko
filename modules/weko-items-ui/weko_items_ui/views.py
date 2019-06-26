@@ -819,8 +819,16 @@ def ranking():
     # new_items
     return render_template(current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
                            render_widgets=True,
+                           is_show=settings.is_show,
                            start_date=start_date,
                            end_date=end_date,
                            rankings=rankings)
 
+def check_ranking_show():
+    """Check ranking show/hide."""
+    result = 'hide'
+    settings = RankingSettings.get()
+    if settings.is_show:
+        result = ''
+    return result
 
