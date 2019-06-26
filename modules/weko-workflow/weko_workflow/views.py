@@ -614,10 +614,11 @@ def previous_action(activity_id='0', action_id=0, req=0):
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
     flow = Flow()
-    
+
     try:
         pid_identifier = PersistentIdentifier.get_by_object(
-            pid_type='doi', object_type='rec', object_uuid=activity_detail.item_id)
+            pid_type='doi', object_type='rec',
+            object_uuid=activity_detail.item_id)
         with db.session.begin_nested():
             db.session.delete(pid_identifier)
         db.session.commit()
@@ -741,7 +742,8 @@ def cancel_action(activity_id='0', action_id=0):
                 cancel_deposit.clear()
                 # Remove draft child
                 cancel_pid = PersistentIdentifier.get_by_object(
-                    pid_type='recid', object_type='rec', object_uuid=cancel_item_id)
+                    pid_type='recid', object_type='rec',
+                    object_uuid=cancel_item_id)
                 cancel_pv = PIDVersioning(child=cancel_pid)
                 if cancel_pv.exists:
                     previous_pid = cancel_pv.previous
