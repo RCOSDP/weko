@@ -109,7 +109,8 @@ def get_journal_info(index_id=0):
                 if data is not None and len(str(data)) > 0:
                     dataMap = value.get('titleMap')
                     if dataMap is not None:
-                        res = [x['name'] for x in dataMap if x['value'] == data]
+                        res = [x['name']
+                               for x in dataMap if x['value'] == data]
                         data = res[0]
                     val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
                     result.update({value['key']: val})

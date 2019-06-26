@@ -35,14 +35,10 @@ WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
         # item_tree_journal_route='/tree/journal/<int:pid_value>',
         # journal_move_route='/tree/journal/move/<int:index_id>',
         default_media_type='application/json',
-        create_permission_factory_imp=
-        'weko_indextree_journal.permissions:indextree_journal_permission',
-        read_permission_factory_imp=
-        'weko_indextree_journal.permissions:indextree_journal_permission',
-        update_permission_factory_imp=
-        'weko_indextree_journal.permissions:indextree_journal_permission',
-        delete_permission_factory_imp=
-        'weko_indextree_journal.permissions:indextree_journal_permission',
+        create_permission_factory_imp='weko_indextree_journal.permissions:indextree_journal_permission',
+        read_permission_factory_imp='weko_indextree_journal.permissions:indextree_journal_permission',
+        update_permission_factory_imp='weko_indextree_journal.permissions:indextree_journal_permission',
+        delete_permission_factory_imp='weko_indextree_journal.permissions:indextree_journal_permission',
     )
 )
 

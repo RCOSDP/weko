@@ -38,7 +38,7 @@ def get_widget_type_list():
     """
     widget_types = WidgetType.get_all_widget_types()
     options = []
-    if type(widget_types) is list:
+    if isinstance(widget_types, list):
         for widget_type in widget_types:
             option = dict()
             option["text"] = widget_type.type_name
@@ -61,7 +61,7 @@ def delete_item_in_preview_widget_item(data_id, json_data):
 
     """
     remove_list = []
-    if type(json_data) is list:
+    if isinstance(json_data, list):
         for item in json_data:
             if str(item.get('name')) == str(data_id.get('label')) and str(
                     item.get('type')) == str(data_id.get('widget_type')):
@@ -148,7 +148,7 @@ def get_default_language():
     :return:
     """
     result = get_register_language()
-    if type(result) is list:
+    if isinstance(result, list):
         return result[0]
     return
 
@@ -237,7 +237,7 @@ def build_data_setting(data):
     result['text_color'] = data.get('text_color')
     if str(data.get('widget_type')) == 'Access counter':
         result['access_counter'] = data['settings'] \
-                                       .get('access_counter') or '0'
+            .get('access_counter') or '0'
     if str(data.get('widget_type')) == 'New arrivals':
         result['new_dates'] = data['settings'].get('new_dates') or '5'
         result['display_result'] = data['settings'].get(

@@ -111,10 +111,12 @@ class ItemTypeMetaDataView(BaseView):
                     metaDataRecords = ItemsMetadata.get_by_item_type_id(
                         item_type_id=item.id)
                     if len(metaDataRecords) > 0:
-                        flash(_('Cannot delete due to child existing item types.'), 'error')
+                        flash(
+                            _('Cannot delete due to child existing item types.'), 'error')
                         return jsonify(code=-1)
                 # Get item type name
-                item_type_name = ItemTypeNames.get_record(id_=record.model.name_id)
+                item_type_name = ItemTypeNames.get_record(
+                    id_=record.model.name_id)
                 if all_records and item_type_name:
                     try:
                         # Delete item type name
@@ -150,10 +152,12 @@ class ItemTypeMetaDataView(BaseView):
         data = request.get_json()
         try:
             record = ItemTypes.update(id_=item_type_id,
-                                      name=data.get('table_row_map').get('name'),
+                                      name=data.get(
+                                          'table_row_map').get('name'),
                                       schema=data.get('table_row_map').get(
                                           'schema'),
-                                      form=data.get('table_row_map').get('form'),
+                                      form=data.get(
+                                          'table_row_map').get('form'),
                                       render=data)
             Mapping.create(item_type_id=record.model.id,
                            mapping=data.get('table_row_map').get('mapping'))
@@ -277,7 +281,7 @@ class ItemTypeMappingView(BaseView):
             itemtype_prop = item_type.schema.get('properties')
             table_rows = ['pubdate']
             render_table_row = item_type.render.get('table_row')
-            if type(render_table_row) is list:
+            if isinstance(render_table_row, list):
                 table_rows.extend(render_table_row)
             for key in table_rows:
                 prop = itemtype_prop.get(key)
@@ -302,7 +306,8 @@ class ItemTypeMappingView(BaseView):
                             if elem['key'] == key:
                                 if 'title_i18n' in elem:
                                     if cur_lang in elem['title_i18n']:
-                                        if len(elem['title_i18n'][cur_lang]) > 0:
+                                        if len(elem['title_i18n']
+                                               [cur_lang]) > 0:
                                             elemStr = elem['title_i18n'][
                                                 cur_lang]
                                 else:
@@ -374,34 +379,34 @@ class ItemTypeMappingView(BaseView):
 
 
 itemtype_meta_data_adminview = {
-        'view_class': ItemTypeMetaDataView,
-        'kwargs': {
-            'category': _('Item Types'),
-            'name': _('Meta'),
-            'url': '/admin/itemtypes',
-            'endpoint': 'itemtypesregister'
-        }
+    'view_class': ItemTypeMetaDataView,
+    'kwargs': {
+        'category': _('Item Types'),
+        'name': _('Meta'),
+        'url': '/admin/itemtypes',
+        'endpoint': 'itemtypesregister'
     }
+}
 
 itemtype_properties_adminview = {
-        'view_class': ItemTypePropertiesView,
-        'kwargs': {
-            'category': _('Item Types'),
-            'name': _('Properties'),
-            'url': '/admin/itemtypes/properties',
-            'endpoint': 'itemtypesproperties'
-        }
+    'view_class': ItemTypePropertiesView,
+    'kwargs': {
+        'category': _('Item Types'),
+        'name': _('Properties'),
+        'url': '/admin/itemtypes/properties',
+        'endpoint': 'itemtypesproperties'
     }
+}
 
 itemtype_mapping_adminview = {
-        'view_class': ItemTypeMappingView,
-        'kwargs': {
-            'category': _('Item Types'),
-            'name': _('Mapping'),
-            'url': '/admin/itemtypes/mapping',
-            'endpoint': 'itemtypesmapping'
-        }
+    'view_class': ItemTypeMappingView,
+    'kwargs': {
+        'category': _('Item Types'),
+        'name': _('Mapping'),
+        'url': '/admin/itemtypes/mapping',
+        'endpoint': 'itemtypesmapping'
     }
+}
 
 __all__ = (
     'itemtype_meta_data_adminview',

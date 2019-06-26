@@ -88,7 +88,8 @@ RECORDS_REST_ENDPOINTS['recid']['search_index'] = 'weko'
 RECORDS_REST_ENDPOINTS['recid']['search_type'] = 'item'
 
 # Opensearch endpoint
-RECORDS_REST_ENDPOINTS['opensearch'] = copy.deepcopy(RECORDS_REST_ENDPOINTS['recid'])
+RECORDS_REST_ENDPOINTS['opensearch'] = copy.deepcopy(
+    RECORDS_REST_ENDPOINTS['recid'])
 RECORDS_REST_ENDPOINTS['opensearch']['search_factory_imp'] = \
     'weko_search_ui.query.opensearch_factory'
 RECORDS_REST_ENDPOINTS['opensearch']['list_route'] = '/opensearch/search'
@@ -96,7 +97,7 @@ RECORDS_REST_ENDPOINTS['opensearch']['search_serializers'] = {
     'application/json': ('weko_records.serializers:opensearch_v1_search'),
 }
 
-RECORDS_REST_ENDPOINTS['recid']['record_class']='weko_records.api:WekoRecord'
+RECORDS_REST_ENDPOINTS['recid']['record_class'] = 'weko_records.api:WekoRecord'
 RECORDS_REST_ENDPOINTS['recid']['record_serializers'] = {
     'application/vnd.citationstyles.csl+json': ('weko_records.serializers:csl_v1_response'),
     'text/x-bibliography': ('weko_records.serializers:citeproc_v1_response')
@@ -166,16 +167,16 @@ RECORDS_REST_SORT_OPTIONS = dict(
         ),
         # add 20181121 start
         custom_sort=dict(
-                    title='Custom',
-                    fields=['custom_sort.sort'],
-                    default_order='asc',
-                    order=9,
+            title='Custom',
+            fields=['custom_sort.sort'],
+            default_order='asc',
+            order=9,
         ),
         itemType=dict(
-                    title='ItemType',
-                    fields=['itemtype'],
-                    default_order='asc',
-                    order=10,
+            title='ItemType',
+            fields=['itemtype'],
+            default_order='asc',
+            order=10,
         )
         # add 20181121 end
     )
