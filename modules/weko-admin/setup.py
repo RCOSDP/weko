@@ -135,6 +135,8 @@ setup(
             'weko_admin_date_picker_css = weko_admin.bundles:date_picker_css',
             'weko_admin_custom_report = '
             'weko_admin.bundles:custom_report_js',
+            'weko_admin_feedback_mail = '
+            'weko_admin.bundles:feedback_mail_js',
             'weko_report_reactjs_lib = '
             'weko_admin.bundles:report_reactjs_lib',
             'weko_admin_log_analysis_js = '
