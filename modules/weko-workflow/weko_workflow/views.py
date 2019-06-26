@@ -796,7 +796,6 @@ def withdraw_confirm(activity_id='0', action_id='0'):
 
             # Clear identifier in ItemMetadata
             pidstore_identifier_mapping(None, -1, activity_id)
-            
             identifier['action_identifier_select'] = \
                 IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
