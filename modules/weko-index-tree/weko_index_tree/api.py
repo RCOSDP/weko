@@ -195,8 +195,8 @@ class Indexes(object):
 
                 if getattr(index, "recursive_coverpage_check"):
                     cls.set_coverpage_state_resc(
-                            index_id,
-                            getattr(index, "coverpage_state")
+                        index_id,
+                        getattr(index, "coverpage_state")
                     )
                     setattr(index, "recursive_coverpage_check", False)
 
@@ -238,14 +238,14 @@ class Indexes(object):
                     recursive_t = cls.recs_query(pid=index_id)
                     obj = db.session.query(recursive_t). \
                         union_all(db.session.query(
-                                    Index.parent,
-                                    Index.id,
-                                    literal_column("''", db.Text).label("path"),
-                                    literal_column("''", db.Text).label("name"),
-                                    literal_column("''", db.Text).label(
-                                        "name_en"),
-                                    literal_column("0", db.Integer).label("lev")
-                                  ).filter(Index.id == index_id)).all()
+                            Index.parent,
+                            Index.id,
+                            literal_column("''", db.Text).label("path"),
+                            literal_column("''", db.Text).label("name"),
+                            literal_column("''", db.Text).label(
+                                "name_en"),
+                            literal_column("0", db.Integer).label("lev")
+                        ).filter(Index.id == index_id)).all()
 
                 if obj:
                     p_lst = [o.cid for o in obj]

@@ -627,13 +627,13 @@ class SiteLicenseSettingsView(BaseView):
 
 
 style_adminview = {
-        'view_class': StyleSettingView,
-        'kwargs': {
-            'category': _('Setting'),
-            'name': _('Style'),
-            'endpoint': 'stylesetting'
-        }
+    'view_class': StyleSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Style'),
+        'endpoint': 'stylesetting'
     }
+}
 
 report_adminview = {
     'view_class': ReportView,

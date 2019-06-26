@@ -83,11 +83,11 @@ class WidgetItemServices:
         if data.get('flag_edit'):
             old_repo = cls.get_repo_by_id(current_id)
             if (str(old_repo) != str(widget_data.get('repository')) and
-                WidgetDesignServices.validate_admin_widget_item_setting(
+                    WidgetDesignServices.validate_admin_widget_item_setting(
                     data.get('data_id'))):
                 result['message'] = "Cannot update repository " \
-                                 "of this widget because " \
-                                 "it's setting in Widget Design."
+                    "of this widget because " \
+                    "it's setting in Widget Design."
                 result['success'] = False
                 return result
 
@@ -249,7 +249,7 @@ class WidgetItemServices:
 
         if WidgetDesignServices.validate_admin_widget_item_setting(widget_id):
             result['message'] = "Cannot delete this widget because " \
-                               "it's setting in Widget Design."
+                "it's setting in Widget Design."
             return result
         session = db.session
         try:
@@ -293,7 +293,7 @@ class WidgetItemServices:
 
         """
         list_id = WidgetItem.get_id_by_repository_and_type(
-                repository_id, type_id)
+            repository_id, type_id)
         if not list_id:
             return False
 
@@ -305,8 +305,8 @@ class WidgetItemServices:
             if multi_lang_data:
                 for data in multi_lang_data:
                     dict_data = convert_widget_multi_lang_to_dict(data)
-                    if (dict_data.get('label') == label and
-                            dict_data.get('lang_code') == lang_code):
+                    if (dict_data.get('label') == label
+                            and dict_data.get('lang_code') == lang_code):
                         return True
         return False
 
@@ -401,7 +401,7 @@ class WidgetDesignServices:
             lang_code_default = None
             if default_language:
                 lang_code_default = default_language.get('lang_code')
-            if type(widget_item_list) is list:
+            if isinstance(widget_item_list, list):
                 for widget_item in widget_item_list:
                     data = dict()
                     widget_item_data = \
@@ -412,7 +412,7 @@ class WidgetDesignServices:
                     data["Id"] = widget_item_data.get('widget_id')
                     settings = widget_item_data.get('settings')
                     languages = settings.get("multiLangSetting")
-                    if (type(languages) is dict and
+                    if (isinstance(languages, dict) and
                             lang_code_default is not None):
                         if languages.get(lang_code_default):
                             data_display = languages[lang_code_default]
@@ -468,7 +468,7 @@ class WidgetDesignServices:
                         widget_preview["type"] = item.get("type")
                         widget_preview["name"] = item.get("name")
                         languages = item.get("multiLangSetting")
-                        if type(languages) is dict and lang_code_default \
+                        if isinstance(languages, dict) and lang_code_default \
                                 is not None:
                             if languages.get(lang_code_default):
                                 data_display = languages.get(lang_code_default)
@@ -564,7 +564,7 @@ class WidgetDesignServices:
         setting_data = data.get('settings')
         try:
             json_data = json.loads(setting_data)
-            if type(json_data) is list:
+            if isinstance(json_data, list):
                 for item in json_data:
                     widget_item = \
                         WidgetItemServices.get_widget_data_by_widget_id(
@@ -599,7 +599,7 @@ class WidgetDesignServices:
             [data] -- [data after updated]
 
         """
-        if type(json_data) is list:
+        if isinstance(json_data, list):
             for item in json_data:
                 if str(item.get('widget_id')) == str(widget_id):
                     update_general_item(item, data_result)

@@ -135,7 +135,7 @@ class WekoFeedEntry(FeedEntry):
                         self.__atom_content.get('content') + '</div>'))
                 elif type == 'CDATA':
                     content.text = etree.CDATA(
-                            self.__atom_content.get('content'))
+                        self.__atom_content.get('content'))
                 # Emed the text in escaped form
                 elif not type or type.startswith('text') or type == 'html':
                     content.text = self.__atom_content.get('content')
@@ -235,7 +235,8 @@ class WekoFeedEntry(FeedEntry):
             link = etree.SubElement(entry, 'link')
             link.text = self.__rss_link
         if self.__rss_seeAlso:
-            seeAlso = etree.SubElement(entry, '{http://www.w3.org/2000/01/rdf-schema#}seeAlso')
+            seeAlso = etree.SubElement(
+                entry, '{http://www.w3.org/2000/01/rdf-schema#}seeAlso')
             seeAlso.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource'] = \
                 self.__rss_seeAlso
 
@@ -293,7 +294,8 @@ class WekoFeedEntry(FeedEntry):
 
     def jpcoar_entry(self, extensions=True):
         """Create a JPCOAR item and return it."""
-        des = etree.Element('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description')
+        des = etree.Element(
+            '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description')
         des.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
             self.__jpcoar_itemUrl
 
@@ -441,7 +443,8 @@ class WekoFeedEntry(FeedEntry):
             if replace or self.__atom_author is None:
                 self.__atom_author = []
             self.__atom_author += ensure_format(author,
-                                                set(['name', 'email', 'uri', 'lang']),
+                                                set(['name', 'email',
+                                                     'uri', 'lang']),
                                                 set())
             self.__rss_author = []
             for a in self.__atom_author:
@@ -599,9 +602,9 @@ class WekoFeedEntry(FeedEntry):
             if replace or self.__atom_category is None:
                 self.__atom_category = []
             self.__atom_category += ensure_format(
-                    category,
-                    set(['term', 'scheme', 'label']),
-                    set(['term']))
+                category,
+                set(['term', 'scheme', 'label']),
+                set(['term']))
             # Map the ATOM categories to RSS categories. Use the atom:label as
             # name or if not present the atom:term. The atom:scheme is the
             # rss:domain.
@@ -638,7 +641,7 @@ class WekoFeedEntry(FeedEntry):
             if replace or self.__atom_contributor is None:
                 self.__atom_contributor = []
             self.__atom_contributor += ensure_format(
-                    contributor, set(['name', 'email', 'uri']), set(['name']))
+                contributor, set(['name', 'email', 'uri']), set(['name']))
         return self.__atom_contributor
 
     def published(self, published=None):
@@ -801,9 +804,9 @@ class WekoFeedEntry(FeedEntry):
 
         # `load_extension` registry
         self.__extensions[namespace] = {
-                'inst': extinst,
-                'extension_class_entry': extension_class_entry,
-                'atom': atom,
-                'rss': rss,
-                'jpcoar': jpcoar
-                }
+            'inst': extinst,
+            'extension_class_entry': extension_class_entry,
+            'atom': atom,
+            'rss': rss,
+            'jpcoar': jpcoar
+        }
