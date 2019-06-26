@@ -373,9 +373,11 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'flowsetting',
     'fileinstance',
     'identify',
-    'items',
+    'items/bulk/delete',
+    'items/search',
+    'items/custom_sort',
+    'items/bulk/update',
     'location',
-    'item_management',
     'itemtypes',
     'language',
     'loganalysissetting',
@@ -397,8 +399,10 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'workflowsetting',
     'searchsettings',
     'sitelicensesettings',
-    'itemtypes',
-    'schemasettings'
+    'schemasettings',
+    'itemtypesregister',
+    'itemtypesproperties',
+    'itemtypesmapping',
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
