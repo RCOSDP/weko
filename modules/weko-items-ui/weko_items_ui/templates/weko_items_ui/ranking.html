@@ -37,6 +37,7 @@
 {%- endblock page_body_tabs%}
 
 {%- block page_body_main %}
+{%- if is_show %}
   <div class="row">
     <div class="col-sm-1 col-md-1 col-md-1"></div>
     <p>
@@ -104,4 +105,7 @@
     {% endif %}
     <div class="col-sm-1 col-md-1 col-md-1"></div>
   </div>
+{% else %}
+    {%- include config.WEKO_PERMISSION_REQUIRED_TEMPLATE -%}
+{%- endif %}
 {%- endblock page_body_main %}
