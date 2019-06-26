@@ -55,6 +55,11 @@ stats_report_js = Bundle(
     output="gen/weko_admin_ui_stats_report.%(version)s.js",
 )
 
+feedback_mail_js = Bundle(
+    'js/weko_admin/feedback_mail.js',
+    output="gen/weko_admin_feedback_mail.%(version)s.js",
+)
+
 log_analysis_js = Bundle(
     'js/weko_admin/log_analysis.js',
     output="gen/weko_admin_ui_log_analysis.%(version)s.js",
