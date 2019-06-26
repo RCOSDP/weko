@@ -24,6 +24,8 @@ from invenio_db import db
 from weko_records.api import ItemsMetadata
 from weko_workflow.models import ActionStatusPolicy, Activity
 
+from .permissions import check_user_group_permission
+
 
 def get_item_pidstore_identifier(object_uuid):
     """
@@ -46,3 +48,50 @@ def get_item_pidstore_identifier(object_uuid):
                     return identifier.get('value')
 
     return None
+
+
+def get_groups_price(record: dict) -> list:
+    """Get the prices of Billing files set in each group.
+
+    :param record: Record metadata.
+    :return: The prices of Billing files set in each group.
+    """
+    groups_price = list()
+    for key, value in record.items():
+        if type(value) is dict:
+            attr_value = value.get('attribute_value_mlt')
+            if attr_value and type(attr_value) is list:
+                for attr in attr_value:
+                    group_price = attr.get('groupsprice')
+                    file_name = attr.get('filename')
+                    if file_name and group_price:
+                        result_data = {
+                            'file_name': file_name,
+                            'groups_price': group_price
+                        }
+                        groups_price.append(result_data)
+
+    return groups_price
+
+
+def get_billing_file_download_permission(groups_price: list) -> dict:
+    """Get billing file download permission.
+
+    :param groups_price: The prices of Billing files set in each group
+    :return:Billing file permission dictionary.
+    """
+    billing_file_permission = dict()
+    for data in groups_price:
+        file_name = data.get('file_name')
+        group_price_list = data.get('groups_price')
+        if file_name and type(group_price_list) is list:
+            is_ok = False
+            for group_price in group_price_list:
+                if type(group_price) is dict:
+                    group_id = group_price.get('group')
+                    is_ok = check_user_group_permission(group_id)
+                    if is_ok:
+                        break
+            billing_file_permission[file_name] = is_ok
+
+    return billing_file_permission
