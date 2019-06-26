@@ -1,0 +1,107 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('rank') }}
+{%- endblock page_body_tabs%}
+
+{%- block page_body_main %}
+  <div class="row">
+    <div class="col-sm-1 col-md-1 col-md-1"></div>
+    <p>
+        <b>{{ _('Aggregation Period') }} : </b>
+        {{ start_date.strftime('%Y-%m-%d') }} ~ 
+        {{ end_date.strftime('%Y-%m-%d') }}
+    </p>
+    {% if (rankings['most_reviewed_items'] if 'most_reviewed_items' in rankings else False) %}
+    <div class="col-sm-10 col-md-10 col-md-10">
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+          <h3 class="panel-title">{{_('The Most Reviewed Items')}}</h3>
+        </div>
+        <div class="panel-body index-body" style="overflow: auto;">
+            {% for item in rankings['most_reviewed_items'] %}
+            {{item}}
+            {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if (rankings['most_downloaded_items'] if 'most_downloaded_items' in rankings else False) %}
+    <div class="col-sm-10 col-md-10 col-md-10">
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+          <h3 class="panel-title">{{_('Most Downloaded Items')}}</h3>
+        </div>
+        <div class="panel-body index-body" style="overflow: auto;">
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if (rankings['created_most_items_user'] if 'created_most_items_user' in rankings else False) %}
+    <div class="col-sm-10 col-md-10 col-md-10">
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+          <h3 class="panel-title">{{_('User Who Created The Most Items')}}</h3>
+        </div>
+        <div class="panel-body index-body" style="overflow: auto;">
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if (rankings['most_searched_keywords'] if 'most_searched_keywords' in rankings else False) %}
+    <div class="col-sm-10 col-md-10 col-md-10">
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+          <h3 class="panel-title">{{_('Most Searched Keywords')}}</h3>
+        </div>
+        <div class="panel-body index-body" style="overflow: auto;">
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if (rankings['new_items'] if 'new_items' in rankings else False) %}
+    <div class="col-sm-10 col-md-10 col-md-10">
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+          <h3 class="panel-title">{{_('New Items')}}</h3>
+        </div>
+        <div class="panel-body index-body" style="overflow: auto;">
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="col-sm-1 col-md-1 col-md-1"></div>
+  </div>
+{%- endblock page_body_main %}
