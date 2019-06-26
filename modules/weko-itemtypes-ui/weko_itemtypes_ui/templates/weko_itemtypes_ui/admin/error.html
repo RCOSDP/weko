@@ -18,41 +18,23 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
   {{ super() }}
-  <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
 {%- endblock css %}
 
-{%- block page_header %}
-{%- endblock page_header %}
-
-{%- block page_footer %}
-{%- endblock page_footer %}
-
-{%- block page_body %}
-<div class="container-fluid">
+{%- block body %}
+<div class="container">
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-10">
       <div class="panel panel-warning">
-        {%- if 'no_itemtype' == error_type %}
         <div class="panel-body">
-          {{_('No itemtype to register.')}}<br>
+          {{_('You do not even have an itemtype.')}}<br>
+          {{_('Go to')}} <a href="{{ url_for('itemtypes.register.index') }}">{{_('Register Itemtype')}}</a>!
         </div>
-        {%- endif %}
-        {%- if 'item_login_success' == error_type %}
-        <div class="panel-body">
-          {{_('item login success')}}
-        </div>
-        {%- endif %}
-        {%- if 'item_login_error' == error_type %}
-        <div class="panel-body">
-          {{_('item login fail')}}
-        </div>
-        {%- endif %}
       </div>
     </div>
   </div>
 </div>
-{%- endblock page_body%}
+{%- endblock body %}
