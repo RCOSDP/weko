@@ -101,10 +101,9 @@ let PageBodyGrid = function () {
             dataType: 'json',
             success: (response) => {
                 let result = response.data;
-                let host = window.location.origin;
                 let rssHtml = '';
                 if (request_data.rss_status) {
-                    rssHtml = '<a class="" href="javascript:void(0)">RSS<i class="fa fa-rss"></i></a>';
+                    rssHtml = '<a class="" target="_blank" rel="noopener noreferrer" href="api/admin/get_rss_data">RSS<i class="fa fa-rss"></i></a>';
                 }
                 let innerHTML = '';
                 for (let data in result) {

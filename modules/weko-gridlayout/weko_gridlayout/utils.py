@@ -21,13 +21,16 @@
 """Utilities for convert response json."""
 import copy
 import json
+import xml.etree.ElementTree as ET
 
-from flask import current_app, jsonify, make_response
+from xml.etree.ElementTree import tostring
+from datetime import datetime
+from flask import current_app, Response
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
 
-from .api import WidgetItems, WidgetMultiLangData
 from .models import WidgetDesignSetting, WidgetType
+
 
 
 def get_widget_type_list():
@@ -389,3 +392,171 @@ def convert_data_to_edit_pack(data):
         result_settings['rss_feed'] = settings.get('rss_feed')
     result['settings'] = result_settings
     return result
+
+
+def build_rss_xml(data):
+    if not data or not isinstance(data, list):
+        return None
+
+    root = ET.Element('rdf')
+    root.set('xmlns', 'http://google.com.vn')
+    root.set('xmlns:rdf', 'http://google.com.vn')
+    root.set('xmlns:rdfs', 'http://google.com.vn')
+    root.set('xmlns:dc', 'http://google.com.vn')
+    root.set('xmlns:prism', 'http://google.com.vn')
+    root.set('xmlns:lang', 'http://google.com.vn')
+    root.set('version', '2.0')
+    # First layer
+    channel = ET.SubElement(root, 'channel')
+    channel.set('rdf:about', 'rdf:about')
+
+    # Channel layer
+    ET.SubElement(channel, 'title').text = 'WEKO3'
+    ET.SubElement(channel, 'link').text = 'http://google.com.vn'
+    current_time = datetime.now()
+    ET.SubElement(
+        channel,
+        'dc:date').text = current_time.isoformat() + '+00:00'
+    items = ET.SubElement(channel, 'rdf')
+    seq = ET.SubElement(items, 'rdf:Seq')
+    li = ET.SubElement(seq, 'rdf:li')
+    li.set('rdf:resource', 'resource')
+
+    # add item layer
+    for data_item in data:
+        item = ET.Element('item')
+
+        ET.SubElement(item, 'title').text = find_rss_value(
+            data_item,
+            'title')
+        ET.SubElement(item, 'link').text = find_rss_value(
+            data_item,
+            'link')
+        seeAlso = ET.SubElement(item, 'rdfs:seeAlso')
+        seeAlso.set('rdf:resource', 'resource')
+        seeAlso.text = find_rss_value(
+            data_item,
+            'seeAlso')
+        ET.SubElement(item, 'dc:creator').text = find_rss_value(
+            data_item,
+            'creator')
+        ET.SubElement(item, 'dc:publisher').text = find_rss_value(
+            data_item,
+            'publisher')
+        ET.SubElement(item, 'prism:publicationName').text = find_rss_value(
+            data_item,
+            'sourceTitle')
+        ET.SubElement(item, 'prism:issn').text = find_rss_value(
+            data_item,
+            'issn')
+        ET.SubElement(item, 'prism:volume').text = find_rss_value(
+            data_item,
+            'volume')
+        ET.SubElement(item, 'prism:number').text = find_rss_value(
+            data_item,
+            'issue')
+        ET.SubElement(item, 'prism:startingPage').text = find_rss_value(
+            data_item,
+            'pageStart')
+        ET.SubElement(item, 'prism:endingPage').text = find_rss_value(
+            data_item,
+            'pageEnd')
+        ET.SubElement(item, 'prism:publicationDate').text = find_rss_value(
+            data_item,
+            'date')
+        ET.SubElement(item, 'description').text = find_rss_value(
+            data_item,
+            'description')
+        ET.SubElement(item, 'dc:date').text = find_rss_value(
+            data_item,
+            '_updated'
+        )
+        root.append(item)
+    xml_str = tostring(root, encoding='utf-8')
+    xml_str = str.encode('<?xml version="1.0" encoding="UTF-8"?>') + xml_str
+    return Response(
+        xml_str,
+        mimetype='text/xml')
+
+
+def find_rss_value(data, keyword):
+    if not data or not data.get('_source'):
+        return None
+
+    source = data.get('_source')
+    meta_data = source.get('_item_metadata')
+
+    if keyword == 'title':
+        return meta_data.get('item_title')
+    elif keyword == 'link':
+        # TODO: change if requirement clear
+        return ''
+    elif keyword == 'seeAlso':
+        # TODO: change if requirement clear
+        return ''
+    elif keyword == 'creator':
+        if source.get('creator'):
+            creator = source.get('creator')
+            return get_rss_data_source(creator, 'creatorName')
+        else:
+            return ''
+    elif keyword == 'publisher':
+        return get_rss_data_source(source, 'publisher')
+    elif keyword == 'sourceTitle':
+        return get_rss_data_source(source, 'sourceTitle')
+    elif keyword == 'issn':
+        result = ''
+        if source.get('relation'):
+            relation = source.get('relation')
+            if (relation.get('relatedIdentifier') and
+               relation.get('relatedIdentifier')[0]):
+                related_identifier = relation.get('relatedIdentifier')[0]
+                result = get_rss_data_source(related_identifier, 'value')
+        if result == '':
+            if (source.get('sourceIdentifier') and
+               source.get('sourceIdentifier')[0]):
+                source_identifier = source.get('sourceIdentifier')[0]
+                result = get_rss_data_source(source_identifier, 'value')
+        return result
+    elif keyword == 'volume':
+        return get_rss_data_source(source, 'volume')
+    elif keyword == 'issue':
+        return get_rss_data_source(source, 'issue')
+    elif keyword == 'pageStart':
+        return get_rss_data_source(source, 'pageStart')
+    elif keyword == 'pageEnd':
+        return get_rss_data_source(source, 'pageEnd')
+    elif keyword == 'date':
+        if source.get('date') and source.get('date')[0]:
+            date = source.get('date')[0]
+            return get_rss_data_source(date, 'value')
+        else:
+            return ''
+    elif keyword == 'description':
+        if source.get('description') and source.get('description')[0]:
+            return source.get('description')[0]
+        else:
+            return ''
+    elif keyword == '_updated':
+        return get_rss_data_source(source, '_updated')
+    else:
+        return ''
+
+
+def get_rss_data_source(source, keyword):
+    """Get data from source tree.
+
+    Arguments:
+        source {dictionary} -- Source tree
+        keyword {string} -- The keyword
+
+    Returns:
+        string -- data of keyword in source tree
+
+    """
+    if source.get(keyword):
+        if isinstance(source.get(keyword), list):
+            return source.get(keyword)[0]
+        return source.get(keyword)
+    else:
+        return ''
