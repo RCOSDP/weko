@@ -65,7 +65,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     # transfer to JPCOAR format
     res = {'pidstore_identifier': {}}
     tempdata = IDENTIFIER_ITEMSMETADATA_FORM
-    flagDelPidstore = False
+    flag_del_pidstore = False
 
     if idf_grant == 0:
         res['pidstore_identifier'] = tempdata
@@ -112,14 +112,16 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     elif idf_grant == -1:  # with draw identifier_grant
         pidstore_identifier = item.get('pidstore_identifier')
         res['pidstore_identifier'] = tempdata
-        flagDelPidstore = del_invenio_pidstore(pidstore_identifier['identifier']['value'])
+        flag_del_pidstore = del_invenio_pidstore(
+            pidstore_identifier['identifier']['value'])
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
         pidstore_identifier = item.get('pidstore_identifier')
         res['pidstore_identifier'] = tempdata
-        flagDelPidstore = del_invenio_pidstore(pidstore_identifier['identifier']['value'])
+        flag_del_pidstore = del_invenio_pidstore(
+            pidstore_identifier['identifier']['value'])
     try:
-        if not flagDelPidstore:
+        if not flag_del_pidstore:
             reg_invenio_pidstore(tempdata['identifier']['value'], item.id)
 
         with db.session.begin_nested():

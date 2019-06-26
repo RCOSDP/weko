@@ -34,9 +34,9 @@ from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
-from invenio_pidstore.errors import PIDDoesNotExistError
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
 from weko_accounts.api import ShibUser
@@ -624,7 +624,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
         db.session.commit()
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.info(pidNotEx)
-    
+
     if req == 0:
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id)
