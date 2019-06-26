@@ -24,6 +24,7 @@ import os
 import sys
 
 import redis
+from datetime import date, timedelta
 from flask import Blueprint, abort, current_app, flash, json, jsonify, \
     redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -33,6 +34,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from simplekv.memory.redisstore import RedisStore
+from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
@@ -796,3 +798,29 @@ def prepare_edit_item():
         except Exception as e:
             current_app.logger.error('Unexpected error: ', str(e))
     return jsonify(code=-1, msg=_('An error has occurred.'))
+
+@blueprint.route('/ranking', methods=['GET'])
+def ranking():
+    """Ranking page view."""
+    # get ranking settings
+    settings = RankingSettings.get()
+    # get statistical period
+    end_date = date.today() - timedelta(days=1)
+    start_date = end_date - timedelta(days=int(settings.statistical_period))
+    # get rankings data
+    rankings = {}
+    # most_reviewed_items
+    if settings.rankings['most_reviewed_items']:
+        most_reviewed_items_list = ["a"]
+        rankings['most_reviewed_items'] = most_reviewed_items_list
+    # most_downloaded_items
+    # created_most_items_user
+    # most_searched_keywords
+    # new_items
+    return render_template(current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
+                           render_widgets=True,
+                           start_date=start_date,
+                           end_date=end_date,
+                           rankings=rankings)
+
+
