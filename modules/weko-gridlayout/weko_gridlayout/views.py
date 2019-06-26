@@ -11,12 +11,14 @@ from __future__ import absolute_import, print_function
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
+from invenio_search import RecordsSearch
 
 from .api import WidgetItems
 from .services import WidgetDataLoaderServices, WidgetDesignServices, \
     WidgetItemServices
 from .utils import get_default_language, get_system_language, \
     get_widget_type_list
+from weko_search_ui.query import item_search_factory
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -192,3 +194,24 @@ def get_new_arrivals_data():
 @blueprint_api.route('get_rss_data', methods=['GET'])
 def get_rss_data():
     return WidgetDataLoaderServices.get_arrivals_rss()
+
+@blueprint_api.route('/get_rss', methods=['GET'])
+def get_new_arrivals_data_rss():
+    """Get new arrivals rss feed .
+
+    Returns:
+        xml -- rss feed content
+
+    """
+    # TODO: get start/end date from admin setting
+    start_date = "2019-06-22"
+    end_date = "2019-06-25"
+
+    records_search = RecordsSearch()
+    records_search = records_search.with_preference_param().params(version=False)
+    search_instance, qs_kwargs = item_search_factory(
+        None, records_search, start_date, end_date)
+    search_result = search_instance.execute()
+    rd = search_result.to_dict()
+    return jsonify(rd.get('hits').get('hits'))
+

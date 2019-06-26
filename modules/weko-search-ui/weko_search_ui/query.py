@@ -697,3 +697,38 @@ def opensearch_factory(self, search, query_parser=None):
                                       search,
                                       query_parser,
                                       search_type='0')
+
+def item_search_factory(self, search, start_date, end_date):
+    """Factory for opensearch.
+
+    :param self:
+    :param search:
+    :return:
+    """
+
+    def _get_query(start_date, end_date):
+
+        query_q = {
+            "query": {
+                "query_string": {
+                    "query": "_type:item AND publish_date:[{} TO {}]".format(start_date, end_date)
+                }
+            }
+        }
+        return query_q
+
+    query_q = _get_query(start_date, end_date)
+    urlkwargs = MultiDict()
+    try:
+        # Aggregations.
+        extr = search._extra.copy()
+        search.update_from_dict(query_q)
+        search._extra.update(extr)
+    except SyntaxError:
+        q = request.values.get('q', '') if index_id is None else index_id
+        current_app.logger.debug(
+            "Failed parsing query: {0}".format(q),
+            exc_info=True)
+        raise InvalidQueryRESTError()
+
+    return search, urlkwargs
