@@ -18,11 +18,12 @@
 # MA 02111-1307, USA.
 #}
 
-
-{%- extends config.WEKO_ITEMTYPES_UI_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
   {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_itemtypes_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
@@ -34,12 +35,8 @@
   {% assets "weko_itemtypes_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('item_type') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
+{%- block body %}
+  <input id="lang-code" type="hidden" value="{{lang_code}}" />
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="panel panel-info  gray-color-class">
@@ -48,15 +45,15 @@
           <label class="radio-inline"><input type="radio" name="item_type" value="normal">{{_('Standard Item Type')}}</label>
           <label class="radio-inline"><input type="radio" name="item_type" value="harvesting">{{_('Item Type for Harvesting')}}</label>
           </div>
-          <div class="form-inline">
-              <div class="input-group">
-              <label class="sr-only" for="item-type-lists"></label>
-              <select class="form-control" id="item-type-lists">
-                <option value=""></option>
-                {% for list in lists %}
-                <option value="{{ list.item_type.0.id }}" class="{% if list.item_type.0.harvesting_type %}harvesting_type {% else %}normal_type {% endif %}{% if list.belonging_item_flg %}belonging_item{% endif %}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
-                {% endfor %}
-              </select>
+          <div class="form-inline col-sm-12 col-md-12">
+              <div class="input-group col-sm-10">
+                <label class="sr-only" for="item-type-lists"></label>
+                <select class="form-control" id="item-type-lists">
+                  <option value=""></option>
+                  {% for list in lists %}
+                  <option value="{{ list.item_type.0.id }}" class="{% if list.item_type.0.harvesting_type %}harvesting_type {% else %}normal_type {% endif %}{% if list.belonging_item_flg %}belonging_item{% endif %}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+                  {% endfor %}
+                </select>
                </div>
 
             <!-- <div class="pull-right twentyfive-pixel-bottom-margin">-->
@@ -64,21 +61,11 @@
               {%- if id -%}
               {%- set delete_button_class = '' -%}
               {%- endif -%}
-              <a role="button" class="btn btn-primary pull-right mapping-button ten-pixel-right-margin" href="{{
-                  url_for('weko_itemtypes_ui.mapping_index') }}">
-                  <span class="glyphicon glyphicon-hand-right"></span>
-                  {{ _('Mapping') }}
-              </a>
-              <a role="button" class="btn btn-primary pull-right property-button ten-pixel-right-margin" href="{{
-                  url_for('weko_itemtypes_ui.custom_property') }}">
-                  <span class="glyphicon glyphicon-hand-right"></span>
-                  {{ _('Property') }}
-              </a>
               <a role="button" class="btn btn-danger pull-right delete-button ten-pixel-right-margin" href="javascript:;" id="btn_delete_item">
                   <span class="glyphicon glyphicon-trash"></span>
                   {{ _('Delete') }}
               </a>
-              
+
               <div id="item_type_delete_confirmation" class="modal fade" tabindex="-1"
                    role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered" role="document" style="display: table; width: auto;">
@@ -175,7 +162,7 @@
         </table>
         <div class="col-sm-3 col-md-3 col-lg-3">
           <button type="button" class="btn btn-light add-big-button" id="btn_new_itemtype_meta">
-              <span class="glyphicon glyphicon-plus"></span> 
+              <span class="glyphicon glyphicon-plus"></span>
                    {{_('Add Metadata')}}</button>
         </div>
         <div class="col-sm-3 col-md-3 col-lg-2 pull-right">
@@ -231,9 +218,8 @@
     </div>
   </div>
 </div>
-{%- endblock page_body_main %}
-{%- block page_body %}
-{{  super() }}
+
+<!-- TODO: Use the modal confirm macro in weko-theme -- see /admin/report -->
 <!-- modal start -->
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog" role="document">
@@ -255,4 +241,4 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-{%- endblock page_body %}
+{%- endblock body %}

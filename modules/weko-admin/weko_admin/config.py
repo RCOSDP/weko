@@ -397,7 +397,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'workflowsetting',
     'searchsettings',
     'sitelicensesettings',
-    'itemtypesettings',
+    'itemtypes',
     'schemasettings'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""

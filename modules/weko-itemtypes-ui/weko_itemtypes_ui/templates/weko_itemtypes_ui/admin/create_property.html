@@ -18,11 +18,13 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_ITEMTYPES_UI_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
-{{ super() }}
-{% assets "weko_itemtypes_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_itemtypes_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -33,12 +35,8 @@
   {% assets "weko_itemtypes_property_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('item_type') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
+{%- block body %}
+  <input id="lang-code" type="hidden" value="{{lang_code}}" />
   <div class="row">
     <div class="col-sm-12 col-md-12 col-lg-11">
       <div class="panel panel-info">
@@ -53,11 +51,6 @@
                 {% endfor %}
               </select>
             </div>
-            <!-- <a type="button" class="btn btn-info pull-right" href="{{
-                url_for('weko_itemtypes_ui.index') }}" style="width: 80px; height: 40px;font-size: 15px;">
-                    <span class="glyphicon glyphicon-chevron-left"></span>
-                         {{ _('Back') }}
-            </a>-->
           </div>
         </div>
       </div>
@@ -71,8 +64,7 @@
             <div class="form-group">
               <label for="property_name">{{_('Property Name')}}</label>
               <input type="text" id="property_name" class="form-control"
-                                                    value=""
-                                                    placeholder="{{_('Enter property name')}}" />
+                value="" placeholder="{{_('Enter property name')}}" />
             </div>
           </div>
         </div>
@@ -92,7 +84,8 @@
                 <div class="panel-heading">
                   <button type="button" class="btn btn-primary
                       action-big-button" id="previews">
-                    <span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> {{_('Json Schema')}}
+                    <span class="glyphicon glyphicon-refresh"
+                      aria-hidden="true"></span> {{_('Json Schema')}}
                   </button>
                   <button type="button" class="btn btn-primary pull-right
                       action-button" id="rebuild">
@@ -128,20 +121,16 @@
                   <h3 class="panel-title">{{_('Form(Multiple)')}}</h3>
                 </div>
                 <div class="panel-body">
-                  <textarea class="form-control pre-scrollable" rows="50"
-                                                                id="form2_json"
-                                                                placeholder="{{_('Enter the value ...')}}"></textarea>
+                  <textarea class="form-control pre-scrollable"
+                            rows="50"
+                            id="form2_json"
+                            placeholder="{{_('Enter the value ...')}}"></textarea>
                 </div>
               </div>
             </div>
           </div>
         </div>
         <div class="panel-footer">
-           <a type="button" class="btn btn-info back-button" href="{{
-                url_for('weko_itemtypes_ui.index') }}">
-                    <span class="glyphicon glyphicon-chevron-left"></span>
-                         {{ _('Back') }}
-            </a>
             <button class="btn btn-primary pull-right save-button"
                 id="sending"><span class="glyphicon glyphicon-saved"></span>
             {{_('Save')}}
@@ -150,9 +139,8 @@
       </div>
     </div>
   </div>
-{%- endblock page_body_main%}
-{%- block page_body%}
-{{ super() }}
+
+<!-- TODO: Use the modal confirm macro in weko-theme -- see /admin/report -->
 <!-- modal start -->
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog" role="document">
@@ -173,4 +161,4 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-{%- endblock page_body%}
+{%- endblock body %}

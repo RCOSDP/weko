@@ -89,6 +89,14 @@ setup(
         'invenio_base.apps': [
             'weko_itemtypes_ui = weko_itemtypes_ui:WekoItemtypesUI',
         ],
+        'invenio_admin.views': [
+            'weko_itemtypes_ui_meta_data = '
+            'weko_itemtypes_ui.admin:itemtype_meta_data_adminview',
+            'weko_itemtypes_ui_properties = '
+            'weko_itemtypes_ui.admin:itemtype_properties_adminview',
+            'weko_itemtypes_ui_mapping = '
+            'weko_itemtypes_ui.admin:itemtype_mapping_adminview',
+        ],
         'invenio_base.api_blueprints': [
             'weko_itemtypes_ui = weko_itemtypes_ui.views:blueprint_api',
         ],
