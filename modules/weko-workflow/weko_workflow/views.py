@@ -34,6 +34,7 @@ from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
@@ -455,8 +456,8 @@ def next_action(activity_id='0', action_id=0):
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
 
-    if (1 == post_json.get('temporary_save') and
-            action_endpoint != 'identifier_grant'):
+    if (1 == post_json.get('temporary_save')
+            and action_endpoint != 'identifier_grant'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
@@ -620,11 +621,15 @@ def previous_action(activity_id='0', action_id=0, req=0):
     activity_detail = work_activity.get_activity_detail(activity_id)
     flow = Flow()
 
-    pid_identifier = PersistentIdentifier.get_by_object(
-        pid_type='doi', object_type='rec', object_uuid=activity_detail.item_id)
-    with db.session.begin_nested():
-        db.session.delete(pid_identifier)
-    db.session.commit()
+    try:
+        pid_identifier = PersistentIdentifier.get_by_object(
+            pid_type='doi', object_type='rec',
+            object_uuid=activity_detail.item_id)
+        with db.session.begin_nested():
+            db.session.delete(pid_identifier)
+        db.session.commit()
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.info(pidNotEx)
 
     if req == 0:
         pre_action = flow.get_previous_flow_action(
@@ -743,7 +748,8 @@ def cancel_action(activity_id='0', action_id=0):
                 cancel_deposit.clear()
                 # Remove draft child
                 cancel_pid = PersistentIdentifier.get_by_object(
-                    pid_type='recid', object_type='rec', object_uuid=cancel_item_id)
+                    pid_type='recid', object_type='rec',
+                    object_uuid=cancel_item_id)
                 cancel_pv = PIDVersioning(child=cancel_pid)
                 if cancel_pv.exists:
                     previous_pid = cancel_pv.previous
@@ -793,6 +799,9 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
+
+            # Clear identifier in ItemMetadata
+            pidstore_identifier_mapping(None, -1, activity_id)
             identifier['action_identifier_select'] = \
                 IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
@@ -800,8 +809,6 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                     activity_id,
                     identifier_actionid,
                     identifier)
-            # Clear identifier in ItemMetadata
-            pidstore_identifier_mapping(None, -1, activity_id)
 
             return jsonify(code=0,
                            msg=_('success'),

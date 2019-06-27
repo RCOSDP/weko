@@ -98,7 +98,8 @@ def load_widget_design_setting(repository_id: str, current_language: str):
     :param current_language: The language default
     :return:
     """
-    result = WidgetDesignServices.get_widget_design_setting(repository_id, current_language)
+    result = WidgetDesignServices.get_widget_design_setting(
+        repository_id, current_language)
     return jsonify(result)
 
 
