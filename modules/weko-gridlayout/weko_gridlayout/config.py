@@ -26,3 +26,19 @@ WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL = "No Title"
 
 WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE = "en"
 """Default widget language code"""
+
+WEKO_XMLNS_RDF = \
+    'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+"""Default XMLNS RDF url"""
+
+WEKO_XMLNS_RDFS = \
+    'http://www.w3.org/2000/01/rdf-schema#'
+"""Default XMLNS RDFS url"""
+
+WEKO_XMLNS_DC = \
+    'http://purl.org/dc/elements/1.1/'
+"""Default XMLNS DC url"""
+
+WEKO_XMLNS_PRISM = \
+    'http://prismstandard.org/namespaces/basic/2.0/'
+"""Default XMLNS PRISM url"""

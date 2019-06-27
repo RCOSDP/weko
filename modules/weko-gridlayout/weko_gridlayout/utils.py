@@ -25,9 +25,13 @@ import xml.etree.ElementTree as ET
 
 from xml.etree.ElementTree import tostring
 from datetime import datetime
-from flask import current_app, Response
+from flask import current_app, Response, request
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
+from invenio_search import RecordsSearch
+from invenio_i18n.ext import current_i18n
+from weko_search_ui.query import item_search_factory
+from . import config
 
 from .models import WidgetDesignSetting, WidgetType
 
@@ -394,25 +398,37 @@ def convert_data_to_edit_pack(data):
     return result
 
 
-def build_rss_xml(data):
-    if not data or not isinstance(data, list):
-        return None
+def build_rss_xml(data, term):
+    """Build RSS data as XML format.
 
-    root = ET.Element('rdf')
-    root.set('xmlns', 'http://google.com.vn')
-    root.set('xmlns:rdf', 'http://google.com.vn')
-    root.set('xmlns:rdfs', 'http://google.com.vn')
-    root.set('xmlns:dc', 'http://google.com.vn')
-    root.set('xmlns:prism', 'http://google.com.vn')
-    root.set('xmlns:lang', 'http://google.com.vn')
+    Arguments:
+        data {dictionary} -- Elastic search data
+        term {int} -- The term
+
+    Returns:
+        xml response -- RSS data as XML
+
+    """
+    root_url = request.url_root
+    root_url = str(root_url).replace('/api/', '')
+    root = ET.Element('rdf:RDF')
+    root.set('xmlns', root_url + '/rss/1.0')
+    root.set('xmlns:rdf', config.WEKO_XMLNS_RDF)
+    root.set('xmlns:rdfs', config.WEKO_XMLNS_RDFS)
+    root.set('xmlns:dc', config.WEKO_XMLNS_DC)
+    root.set('xmlns:prism', config.WEKO_XMLNS_PRISM)
+    root.set('xmlns:lang', current_i18n.language)
     root.set('version', '2.0')
+
     # First layer
+    requested_url = root_url + '/api/admin/get_rss_data?term=' + str(term)
     channel = ET.SubElement(root, 'channel')
-    channel.set('rdf:about', 'rdf:about')
+    channel.set('rdf:about', requested_url)
 
     # Channel layer
     ET.SubElement(channel, 'title').text = 'WEKO3'
-    ET.SubElement(channel, 'link').text = 'http://google.com.vn'
+    ET.SubElement(channel, 'link').text = requested_url
+    ET.SubElement(channel, 'description').text = 'WEKO'
     current_time = datetime.now()
     ET.SubElement(
         channel,
@@ -420,12 +436,21 @@ def build_rss_xml(data):
     items = ET.SubElement(channel, 'rdf')
     seq = ET.SubElement(items, 'rdf:Seq')
     li = ET.SubElement(seq, 'rdf:li')
-    li.set('rdf:resource', 'resource')
+    li.set('rdf:resource', root_url)
+    if not data or not isinstance(data, list):
+        xml_str = tostring(root, encoding='utf-8')
+        xml_str = str.encode(
+            '<?xml version="1.0" encoding="UTF-8"?>') + xml_str
+        return Response(
+            xml_str,
+            mimetype='text/xml')
 
     # add item layer
     for data_item in data:
         item = ET.Element('item')
-
+        item.set('rdf:about', find_rss_value(
+            data_item,
+            'link'))
         ET.SubElement(item, 'title').text = find_rss_value(
             data_item,
             'title')
@@ -433,13 +458,17 @@ def build_rss_xml(data):
             data_item,
             'link')
         seeAlso = ET.SubElement(item, 'rdfs:seeAlso')
-        seeAlso.set('rdf:resource', 'resource')
-        seeAlso.text = find_rss_value(
+        seeAlso.set('rdf:resource', find_rss_value(
             data_item,
-            'seeAlso')
-        ET.SubElement(item, 'dc:creator').text = find_rss_value(
-            data_item,
-            'creator')
+            'seeAlso'))
+
+        if isinstance(find_rss_value(data_item, 'creator'), list):
+            for creator in find_rss_value(data_item, 'creator'):
+                ET.SubElement(item, 'dc:creator').text = creator
+        else:
+            ET.SubElement(item, 'dc:creator').text = find_rss_value(
+                data_item,
+                'creator')
         ET.SubElement(item, 'dc:publisher').text = find_rss_value(
             data_item,
             'publisher')
@@ -480,6 +509,16 @@ def build_rss_xml(data):
 
 
 def find_rss_value(data, keyword):
+    """Analyze rss data from elasticsearch data
+
+    Arguments:
+        data {dictionary} -- elasticsearch data
+        keyword {string} -- The keyword
+
+    Returns:
+        string -- data for the keyword
+
+    """
     if not data or not data.get('_source'):
         return None
 
@@ -489,15 +528,36 @@ def find_rss_value(data, keyword):
     if keyword == 'title':
         return meta_data.get('item_title')
     elif keyword == 'link':
-        # TODO: change if requirement clear
-        return ''
+        root_url = request.url_root
+        root_url = str(root_url).replace('/api/', '')
+        record_number = get_rss_data_source(
+            meta_data,
+            'control_number')
+        if record_number == '':
+            return ''
+        else:
+            return root_url + '/record/' + record_number
     elif keyword == 'seeAlso':
         # TODO: change if requirement clear
         return ''
     elif keyword == 'creator':
         if source.get('creator'):
             creator = source.get('creator')
-            return get_rss_data_source(creator, 'creatorName')
+            if not creator or not creator.get('creatorName'):
+                return ''
+            else:
+                creator_name = creator.get('creatorName')
+                given_name = creator.get('givenName')
+                list_creator = list()
+                for i in range(0, len(creator_name)):
+                    if creator_name[i]:
+                        if given_name[i]:
+                            list_creator.append(
+                                given_name[i] + '.' + creator_name[i])
+                        else:
+                            list_creator.append(creator_name[i])
+                    else:
+                        continue
         else:
             return ''
     elif keyword == 'publisher':
@@ -560,3 +620,24 @@ def get_rss_data_source(source, keyword):
         return source.get(keyword)
     else:
         return ''
+
+
+def get_ES_result_by_date(start_date, end_date):
+    """Get data from elastic search.
+
+    Arguments:
+        start_date {string} -- start date
+        end_date {string} -- end date
+
+    Returns:
+        dictionary -- elastic search data
+
+    """
+    records_search = RecordsSearch()
+    records_search = records_search.with_preference_param().params(
+        version=False)
+    search_instance, qs_kwargs = item_search_factory(
+        None, records_search, start_date, end_date)
+    search_result = search_instance.execute()
+    rd = search_result.to_dict()
+    return rd
