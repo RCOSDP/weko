@@ -23,7 +23,6 @@
 from datetime import datetime
 
 from flask import current_app, json
-from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy import asc
 from sqlalchemy.dialects import mysql, postgresql
@@ -1003,31 +1002,17 @@ class FeedbackMailSetting(db.Model, Timestamp):
         autoincrement=True)
     """FeedbackMailSetting identifier."""
 
-    user_id = db.Column(
+    authors_id = db.Column(
         db.Integer(),
-        db.ForeignKey(
-            User.id,
-            ondelete='CASCADE'),
         nullable=False
     )
-    """Foreign key to :class:`~invenio_accounts.models.User`."""
+    """Author identifier."""
 
     is_sending_feedback = db.Column(
         db.Boolean(name='is_sending_feedback'),
         nullable=False,
         default=False)
     """Setting to send or not send feedback mail."""
-
-    is_deleted = db.Column(
-        db.Boolean(name='deleted'),
-        default=False,
-        nullable=False)
-    """Status of FeedbackMailSetting."""
-
-    deleted = db.Column(
-        db.DateTime,
-        nullable=True)
-    """Deleted Date"""
 
     @classmethod
     def get_all_active(cls, is_sending_feedback=False):
@@ -1037,8 +1022,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
         :return: All active Feedback email setting lists.
         """
         try:
-            all = db.session.query(cls, User) \
-                .join(User, cls.user_id==User.id).filter(User.active.is_(True))\
+            all = cls.query \
                 .filter(cls.is_sending_feedback.is_(is_sending_feedback)) \
                 .filter(cls.is_deleted.is_(False)).all()
         except NoResultFound:
@@ -1071,10 +1055,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
     def delete(cls, id=0):
         """Delete settings."""
         try:
-            settings = cls.query.filter_by(id=id).first()
-            if settings:
-                settings.is_deleted = True
-                db.session.merge(settings)
+            cls.query.filter_by(id=id).delete()
         except BaseException as ex:
             current_app.logger.debug(ex)
             raise

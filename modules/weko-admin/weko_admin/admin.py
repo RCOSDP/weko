@@ -36,13 +36,14 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
 from invenio_db import db
+from invenio_indexer.api import RecordIndexer
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
 
 from .models import LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress, RankingSettings, SearchManagement, \
-    StatisticsEmail
+    StatisticsEmail, FeedbackMailSetting
 from .permissions import admin_permission_factory
 from .utils import allowed_file, get_redis_cache, get_response_json, \
     get_search_setting
@@ -383,9 +384,109 @@ class ReportView(BaseView):
 class FeedbackMailView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
+        # Save list email
+        if request.method == 'POST':
+            creating_data, deleting_data, new_data = self.parse_form_data(
+                request.form)
+            try:
+                # Validate dupplicate email
+                dupplicate_email = self.validate_dupplicate_email(creating_data,
+                                                                  new_data)
+                if dupplicate_email:
+                    flash(_('Duplicate Email Addresses.'), 'error')
+                else:
+                    with db.session.begin_nested():
+                        # Create
+                        for add_record in creating_data:
+                            FeedbackMailSetting.update(data=add_record)
+                        # Delete
+                        for del_record in deleting_data:
+                            FeedbackMailSetting.delete(del_record['id'])
+                    db.session.commit()
+            except BaseException as e:
+                db.session.rollback()
+                current_app.logger.debug(e)
+                flash(_('Could not save data.'), 'error')
+
+        # Get list email
+        settings = FeedbackMailSetting.get_all_active()
+        if settings:
+            settings=self.parse_result(settings)
+
         return self.render(
-            current_app.config["WEKO_ADMIN_FEEDBACK_MAIL"]
+            current_app.config["WEKO_ADMIN_FEEDBACK_MAIL"],
+            settings_list=settings
         )
+
+    def parse_result(self, raw_result):
+        """Parse result data"""
+        result=[]
+        if raw_result:
+            for data in raw_result:
+                # get email from author_id
+                author_info=self.getAuthorById(data.author_id)
+                if author_info:
+                    result.append(
+                        dict(id=data.id,
+                             author_id=data.author_id,
+                             email=author_info['emailInfo'][0]['email'],
+                             is_sending_feedback=data.is_sending_feedback
+                             )
+                    )
+        return result
+
+    def parse_form_data(self, raw_data):
+        """Parse request form data"""
+        creating_data=raw_data
+        deleting_data=[]
+
+        # Get current data from DB
+        raw_current_data = FeedbackMailSetting.get_all_active()
+        if raw_current_data:
+            current_data = self.parse_result(raw_current_data)
+            # Get creating data include records which has id is None
+            creating_data = [i for i in raw_data if 'id' not in i.keys()]
+            new_data = [i for i in raw_data if 'id' in i.keys()]
+            deleting_data = [i for i in current_data if i not in new_data]
+
+        return creating_data, deleting_data, new_data
+
+    def getAuthorById(self, author_id):
+        """Get authors by Id."""
+        if author_id:
+            match = []
+            match.append({"match": {"pk_id": author_id}})
+            query = {"bool": {"must": match}}
+
+        body = {
+            "query": query
+        }
+
+        indexer = RecordIndexer()
+        result = indexer.client.search(index="authors", body=body)
+        return result['hits']['hits'][0]['_source']
+
+    def validate_dupplicate_email(self, checking_data, current_data):
+        """Validate dupplicate email"""
+        has_dupplicate_email=False
+        if checking_data and current_data:
+            # get list author_id of current_data
+            current_author_id = [val for i in current_data
+                               for k,val in i.items() if k == 'author_id']
+            # Get list email
+            exist_email=[]
+            for id in current_author_id:
+                author_info = self.getAuthorById(id)
+                if author_info:
+                    exist_email.append(author_info['emailInfo'][0]['email'])
+            checking_email=[val for i in checking_data
+                               for k,val in i.items() if k == 'email']
+            if exist_email:
+                dupplicate_email=[i for i, j in zip(checking_email, exist_email)
+                                  if i == j]
+                if dupplicate_email:
+                    has_dupplicate_email=True
+        return has_dupplicate_email
 
 
 class LanguageSettingView(BaseView):
