@@ -38,6 +38,9 @@
               url: `/api/files/${deposit}?versions`,
           }).then(function successCallback(response) {
               $('#bodyModal').append(createRow(response['data']));
+              if($('#billing_file_permission').val()){
+                handleDownloadBillingFile();
+              }
           }, function errorCallback(response) {
               console.log('Error when trigger api /api/files');
           });
@@ -179,7 +182,20 @@
               if (filename == "") {
                 filename = ele.key
               }
-              let txt_link = `<a href="${ele.links.self}">${filename}</a>`;
+              let txt_link;
+              if (billing_file_permission){
+                let selfLink = "";
+                let permission = "data-billing-file-permission=";
+                if (billing_file_permission === "True") {
+                  selfLink = ` data-billing-file-url="${ele.links.self}"`;
+                  permission += `"true"`;
+                } else {
+                  permission += `"false"`;
+                }
+                txt_link = `<a class="billing-file" ${permission} ${selfLink} href="javascript:void(0);">${filename}</a>`;
+              } else {
+                txt_link = `<a href="${ele.links.self}">${filename}</a>`;
+              }
 
               let size = formatBytes(ele.size, 2);
 
@@ -293,3 +309,31 @@
         'mgcrea.ngStrap.modal']);
   });
 })(angular);
+
+$(function () {
+  handleDownloadBillingFile();
+});
+
+function handleDownloadBillingFile(){
+  $('a.billing-file').on('click', function () {
+    let downloadPermission = $(this).data('billingFilePermission');
+    if(downloadPermission){
+      let url = $(this).data('billingFileUrl');
+      $("#confirm_download_button").data('billingFileUrl', url);
+      $("#confirm_download").modal("show");
+    } else {
+      let permissionErrorMsg =  "The file cannot be downloaded because you do not have permission to view this file.";
+      $("#inputModal").html(permissionErrorMsg);
+      $("#allModal").modal("show");
+    }
+  });
+
+  $('button#confirm_download_button').on('click', function () {
+    let url = $(this).data('billingFileUrl');
+    let link = document.createElement("a");
+    link.download = "";
+    link.href = url;
+    link.click();
+    $("#confirm_download").modal('toggle');
+  });
+}

@@ -18,7 +18,8 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 #}
-
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix" style="background-color: inherit;">
@@ -92,6 +93,16 @@
                 {%- set img = file.mimetype | get_image_src -%}
                 {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                   filename=file.key) %}
+                {%- set is_billing_file = False -%}
+                {%- set billing_file_data = "" -%}
+                {%- set billing_file_url = "" -%}
+                {%- set billing_file_class = "" -%}
+                {%- if billing_files_permission -%}
+                {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
+                {%- set is_billing_file = True -%}
+                {%- set billing_file_class = " billing-file" -%}
+                {%- set file_url = "JavaScript:void(0);" -%}
+                {%- endif %}
                 {%- set access_permission = record | check_file_permission(file.info()) -%}
                 {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
                   filename=file.key) %}
@@ -116,8 +127,15 @@
                       <img src="{{img}}" alt={{ file.filename }} />
                       {%- if not access_permission and file.accessrole == 'open_login' -%}
                       {%- set file_url = url_for_security('login', next=request.path) -%}
+                      {%- elif is_billing_file -%}
+                      {%- if billing_file_permission -%}
+                      {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value, filename=file.key) -%}
+                      {%- set billing_file_data = "data-billing-file-permission=true" -%}
+                      {%- else -%}
+                      {%- set billing_file_data = "data-billing-file-permission=false" -%}
                       {%- endif -%}
-                      <a class="forcewrap" href="{{file_url}}">{{ file.filename }}
+                      {%- endif -%}
+                      <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} href="{{file_url}}">{{ file.filename }}
                         ({{ file.size|filesizeformat }})</a><br>
                       {%- if access_permission -%}
                       <span>{{file.checksum.split(':')[0]}}: </span>
@@ -133,8 +151,14 @@
                     {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
                     {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                         filename=file.key, original=1) %}
+                    {%- if is_billing_file -%}
+                    {%- set original_file_url = "javascript:void(0)" -%}
+                    {%- if billing_file_permission -%}
+                    {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key, original=1) %}
+                    {%- endif -%}
+                    {%- endif -%}
                     <div class="text-right">
-                      <a class="forcewrap" href="{{original_file_url}}">{{_('Original')}}</a>
+                      <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} href="{{original_file_url}}">{{_('Original')}}</a>
                     </div>
                     {%- endif -%}
                   </td>
@@ -391,7 +415,23 @@
     </div>
   </div>
 </div>
-
+<div class="modal fade" id="confirm_download" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>{{_('Confirm')}}</h3>
+        </div>
+        <div class="modal-body">
+          <p id="download_confirm_content">{{_("This file is a Billing file. (Price: XXXXX). Do you want to download it?")}}</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="confirm_download_button" class="btn btn-primary">{{_('Yes')}}</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">{{_('No')}}</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
 {% block css %}
 <style>
   #invenio-csl span.twitter-typeahead .tt-menu {
