@@ -195,8 +195,8 @@ class Indexes(object):
 
                 if getattr(index, "recursive_coverpage_check"):
                     cls.set_coverpage_state_resc(
-                            index_id,
-                            getattr(index, "coverpage_state")
+                        index_id,
+                        getattr(index, "coverpage_state")
                     )
                     setattr(index, "recursive_coverpage_check", False)
 
@@ -238,14 +238,14 @@ class Indexes(object):
                     recursive_t = cls.recs_query(pid=index_id)
                     obj = db.session.query(recursive_t). \
                         union_all(db.session.query(
-                                    Index.parent,
-                                    Index.id,
-                                    literal_column("''", db.Text).label("path"),
-                                    literal_column("''", db.Text).label("name"),
-                                    literal_column("''", db.Text).label(
-                                        "name_en"),
-                                    literal_column("0", db.Integer).label("lev")
-                                  ).filter(Index.id == index_id)).all()
+                            Index.parent,
+                            Index.id,
+                            literal_column("''", db.Text).label("path"),
+                            literal_column("''", db.Text).label("name"),
+                            literal_column("''", db.Text).label(
+                                "name_en"),
+                            literal_column("0", db.Integer).label("lev")
+                        ).filter(Index.id == index_id)).all()
 
                 if obj:
                     p_lst = [o.cid for o in obj]
@@ -782,9 +782,9 @@ class Indexes(object):
                 db.session.query(
                     test_alias.parent,
                     test_alias.id,
-                    rec_alias.c.path +
-                    '/' +
-                    func.cast(
+                    rec_alias.c.path
+                    + '/'
+                    + func.cast(
                         test_alias.id,
                         db.Text),
                     func.coalesce(
@@ -801,8 +801,8 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev +
-                    1).filter(
+                    rec_alias.c.lev
+                    + 1).filter(
                     test_alias.parent == rec_alias.c.cid))
         else:
             recursive_t = db.session.query(
@@ -892,9 +892,9 @@ class Indexes(object):
                 db.session.query(
                     test_alias.parent,
                     test_alias.id,
-                    rec_alias.c.path +
-                    '/' +
-                    func.cast(
+                    rec_alias.c.path
+                    + '/'
+                    + func.cast(
                         test_alias.id,
                         db.Text),
                     func.coalesce(
@@ -911,8 +911,8 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev +
-                    1).filter(
+                    rec_alias.c.lev
+                    + 1).filter(
                     test_alias.parent == rec_alias.c.cid))
         else:
             recursive_t = db.session.query(

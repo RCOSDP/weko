@@ -44,11 +44,16 @@ WEKO_RECORDS_UI_BULK_UPDATE_FIELDS = {
                {'id': '2', 'name': 'Licence'}],
 
     'licences': [{'id': 'license_free', 'name': _('write your own license')},
-                 {'id': 'license_0', 'name': _('Creative Commons : Attribution')},
-                 {'id': 'license_1', 'name': _('Creative Commons : Attribution - ShareAlike')},
-                 {'id': 'license_2', 'name': _('Creative Commons : Attribution - NoDerivatives')},
-                 {'id': 'license_3', 'name': _('Creative Commons : Attribution - NonCommercial')},
-                 {'id': 'license_4', 'name': _('Creative Commons : Attribution - NonCommercial - ShareAlike')},
+                 {'id': 'license_0', 'name': _(
+                     'Creative Commons : Attribution')},
+                 {'id': 'license_1', 'name': _(
+                     'Creative Commons : Attribution - ShareAlike')},
+                 {'id': 'license_2', 'name': _(
+                     'Creative Commons : Attribution - NoDerivatives')},
+                 {'id': 'license_3', 'name': _(
+                     'Creative Commons : Attribution - NonCommercial')},
+                 {'id': 'license_4', 'name': _(
+                     'Creative Commons : Attribution - NonCommercial - ShareAlike')},
                  {'id': 'license_5', 'name': _('Creative Commons : Attribution - NonCommercial - NoDerivatives')}]
 }
 

@@ -285,13 +285,13 @@ class Group(db.Model):
             if description is not None:
                 self.description = description
             if (
-                privacy_policy is not None and
-                    PrivacyPolicy.validate(privacy_policy)
+                privacy_policy is not None
+                    and PrivacyPolicy.validate(privacy_policy)
             ):
                 self.privacy_policy = privacy_policy
             if (
-                subscription_policy is not None and
-                    SubscriptionPolicy.validate(subscription_policy)
+                subscription_policy is not None
+                    and SubscriptionPolicy.validate(subscription_policy)
             ):
                 self.subscription_policy = subscription_policy
             if is_managed is not None:

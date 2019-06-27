@@ -84,7 +84,7 @@ def get_records(**kwargs):
             scroll='{0}s'.format(scroll),
         ).extra(
             version=True,
-        )[(page_-1)*size_:page_*size_]
+        )[(page_ - 1) * size_:page_ * size_]
 
         if 'set' in kwargs:
             search = search.query('match', **{'_oai.sets': kwargs['set']})

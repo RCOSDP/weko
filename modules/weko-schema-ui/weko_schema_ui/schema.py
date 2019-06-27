@@ -322,8 +322,8 @@ class SchemaTree:
                             return
                         else:
                             if len(va) == 0 or \
-                                (va.get(self._atr) and
-                                 not va.get(self._v) and len(va) == 1):
+                                (va.get(self._atr)
+                                 and not va.get(self._v) and len(va) == 1):
                                 va.update({self._v: nv})
                                 return
 
