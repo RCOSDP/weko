@@ -698,6 +698,7 @@ def opensearch_factory(self, search, query_parser=None):
                                       query_parser,
                                       search_type='0')
 
+
 def item_search_factory(self, search, start_date, end_date):
     """Factory for opensearch.
 
@@ -707,11 +708,13 @@ def item_search_factory(self, search, start_date, end_date):
     """
 
     def _get_query(start_date, end_date):
-
+        query_string = "_type:item AND " \
+                       "publish_status:0 AND " \
+                       "publish_date:[{} TO {}]".format(start_date, end_date)
         query_q = {
             "query": {
                 "query_string": {
-                    "query": "_type:item AND publish_date:[{} TO {}]".format(start_date, end_date)
+                    "query": query_string
                 }
             }
         }
@@ -725,9 +728,8 @@ def item_search_factory(self, search, start_date, end_date):
         search.update_from_dict(query_q)
         search._extra.update(extr)
     except SyntaxError:
-        q = request.values.get('q', '') if index_id is None else index_id
         current_app.logger.debug(
-            "Failed parsing query: {0}".format(q),
+            "Failed parsing query: {0}".format(query_q),
             exc_info=True)
         raise InvalidQueryRESTError()
 

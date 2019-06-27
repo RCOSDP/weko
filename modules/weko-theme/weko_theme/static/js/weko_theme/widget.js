@@ -90,20 +90,23 @@ let PageBodyGrid = function () {
         return '<div class="widget-access-counter" data-init-number="' + initNumber + '" style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">' + result + '</div>';
     };
 
-    this.buildNewArrivals = function (request_data, id) {
+    this.buildNewArrivals = function (widgetID, term, rss, id) {
         $.ajax({
-            method: 'POST',
-            url: '/api/admin/get_new_arrivals',
+            method: 'GET',
+            url: '/api/admin/get_new_arrivals/' + widgetID,
             headers: {
                 'Content-Type': 'application/json'
             },
-            data: JSON.stringify(request_data),
-            dataType: 'json',
             success: (response) => {
                 let result = response.data;
+                console.log(result);
                 let rssHtml = '';
-                if (request_data.rss_status) {
-                    rssHtml = '<a class="" target="_blank" rel="noopener noreferrer" href="api/admin/get_rss_data">RSS<i class="fa fa-rss"></i></a>';
+                if (term == 'Today') {
+                    term = 0;
+                }
+                if (rss) {
+                    rssURL = "/api/admin/get_rss_data?term=" + term;
+                    rssHtml = '<a class="" target="_blank" rel="noopener noreferrer" href="' + rssURL + '">RSS<i class="fa fa-rss"></i></a>';
                 }
                 let innerHTML = '';
                 for (let data in result) {
@@ -164,22 +167,8 @@ let PageBodyGrid = function () {
         } else if (node.type == NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
-            let date = new Date();
-
-            let listDate = [this.parseDateFormat(date)];
-            if (node.new_dates != "Today") {
-                for (let i = 0; i < Number(node.new_dates); i++) {
-                    date.setDate(date.getDate() - 1);
-                    listDate.push(this.parseDateFormat(date));
-                }
-
-            }
-            let data = {
-                'list_dates': listDate,
-                'number_result': node.display_result,
-                'rss_status': node.rss_feed
-            }
-            this.buildNewArrivals(data, innerID);
+            
+            this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID);
         }
 
         let template =
@@ -195,24 +184,6 @@ let PageBodyGrid = function () {
             '</div>';
 
         return template;
-    };
-
-    this.parseDateFormat = function(d){
-        let currentDate = "";
-        currentDate = d.getFullYear();
-
-        if (d.getMonth() < 9) {
-            currentDate += "-0" + (d.getMonth() + 1);
-        } else {
-            currentDate += '-' + (d.getMonth() + 1);
-        }
-
-        if (d.getDate() < 10) {
-            currentDate += "-0" + d.getDate();
-        } else {
-            currentDate += "-" + d.getDate();
-        }
-        return currentDate;
     };
 
     this.setAccessCounterValue = function(){
