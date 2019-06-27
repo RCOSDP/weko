@@ -1049,23 +1049,20 @@ class FeedbackMailSetting(db.Model, Timestamp):
     def update(cls, id=0, data=None):
         """Update/Create Feedback email setting."""
         try:
-            with db.session.begin_nested():
-                new_data_flag = False
-                settings = cls.query.filter_by(id=id).first()
-                # Creating
-                if not settings:
-                    settings = FeedbackMailSetting()
-                    new_data_flag = True
-                for k, v in data.items():
-                    setattr(settings, k, v)
+            new_data_flag = False
+            settings = cls.query.filter_by(id=id).first()
+            # Creating
+            if not settings:
+                settings = FeedbackMailSetting()
+                new_data_flag = True
+            for k, v in data.items():
+                setattr(settings, k, v)
 
-                if new_data_flag:
-                    db.session.add(settings)
-                else:
-                    db.session.merge(settings)
-            db.session.commit()
+            if new_data_flag:
+                db.session.add(settings)
+            else:
+                db.session.merge(settings)
         except BaseException as ex:
-            db.session.rollback()
             current_app.logger.debug(ex)
             raise
         return cls
@@ -1076,12 +1073,9 @@ class FeedbackMailSetting(db.Model, Timestamp):
         try:
             settings = cls.query.filter_by(id=id).first()
             if settings:
-                with db.session.begin_nested():
-                    settings.is_deleted = True
-                    db.session.merge(settings)
-                db.session.commit()
+                settings.is_deleted = True
+                db.session.merge(settings)
         except BaseException as ex:
-            db.session.rollback()
             current_app.logger.debug(ex)
             raise
         return cls
