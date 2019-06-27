@@ -1026,7 +1026,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
 
     deleted = db.Column(
         db.DateTime,
-        default=datetime.now)
+        nullable=True)
     """Deleted Date"""
 
     @classmethod
@@ -1037,11 +1037,10 @@ class FeedbackMailSetting(db.Model, Timestamp):
         :return: All active Feedback email setting lists.
         """
         try:
-            all = cls.query(cls, User.email) \
-                .join(User, cls.user_id==User.id) \
-                .filter(User.active.is_(True)) \
+            all = db.session.query(cls, User) \
+                .join(User, cls.user_id==User.id).filter(User.active.is_(True))\
                 .filter(cls.is_sending_feedback.is_(is_sending_feedback)) \
-                .filter(cls.is_deleted.is_(True)).all()
+                .filter(cls.is_deleted.is_(False)).all()
         except NoResultFound:
             return []
         return all
@@ -1055,11 +1054,11 @@ class FeedbackMailSetting(db.Model, Timestamp):
                 settings = cls.query.filter_by(id=id).first()
                 # Creating
                 if not settings:
-                    settings = RankingSettings()
-                    settings.user_id = data.user_id
+                    settings = FeedbackMailSetting()
                     new_data_flag = True
+                for k, v in data.items():
+                    setattr(settings, k, v)
 
-                settings.is_sending_feedback = data.is_sending_feedback
                 if new_data_flag:
                     db.session.add(settings)
                 else:
