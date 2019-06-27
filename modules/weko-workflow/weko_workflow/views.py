@@ -812,7 +812,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             return jsonify(code=-1, msg=_('Invalid password'))
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return jsonify(code=-1, msg=_('Error! Relogin'))
+    return jsonify(code=-1, msg=_('Error!'))
 
 
 @blueprint.route('/findDOI', methods=['POST'])
