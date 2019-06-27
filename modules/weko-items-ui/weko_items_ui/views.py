@@ -21,6 +21,7 @@
 """Blueprint for weko-items-ui."""
 
 import os
+import operator
 import sys
 
 import redis
@@ -33,6 +34,8 @@ from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
+from invenio_stats.utils import QueryRecordViewReportHelper, \
+    QueryFileReportsHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -807,16 +810,76 @@ def ranking():
     # get statistical period
     end_date = date.today() - timedelta(days=1)
     start_date = end_date - timedelta(days=int(settings.statistical_period))
-    # get rankings data
+
     rankings = {}
     # most_reviewed_items
     if settings.rankings['most_reviewed_items']:
-        most_reviewed_items_list = ["a"]
+        most_reviewed_items_list = []
+        result = QueryRecordViewReportHelper.get(year=2019, month=6)
+        current_app.logger.debug(result)
+        if result and 'all' in result:
+            rank = 1
+            count = 0
+            for item in sorted(result['all'],
+                               key=lambda x:x['total_all'],
+                               reverse=True):
+                if settings.display_rank == len(most_reviewed_items_list):
+                    break
+                # test code
+                item['record_name'] = 'test'
+                item['pid_value'] = 1
+                # test code end
+                if not count == int(item['total_all']):
+                    rank = len(most_reviewed_items_list) + 1
+                    count = int(item['total_all'])
+                t = {}
+                t['rank'] = rank
+                t['title'] = item['record_name']
+                t['pid_value'] = item['pid_value']
+                t['count'] = count
+                most_reviewed_items_list.append(t)
         rankings['most_reviewed_items'] = most_reviewed_items_list
+
     # most_downloaded_items
+    if settings.rankings['most_downloaded_items']:
+        most_downloaded_items_list = []
+        result = QueryFileReportsHelper.get(year=2019, month=6,
+                                            event='file_download')
+        current_app.logger.debug(result)
+        if result and 'all' in result:
+            rank = 1
+            count = 0
+            for item in result['all']:
+                # test code
+                item['item_title'] = 'test'
+                item['item_id'] = 1
+                # test code end
+                if not count == int(item['total']):
+                    rank = len(most_downloaded_items_list) + 1
+                    count = int(item['total'])
+                t = {}
+                t['rank'] = rank
+                t['title'] = item['item_title']
+                t['pid_value'] = item['item_id']
+                t['count'] = count
+                most_downloaded_items_list.append(t)
+        rankings['most_downloaded_items'] = most_downloaded_items_list
+
     # created_most_items_user
+    if settings.rankings['created_most_items_user']:
+        created_most_items_user_list = []
+        rankings['created_most_items_user'] = created_most_items_user_list
+
     # most_searched_keywords
+    if settings.rankings['most_searched_keywords']:
+        most_searched_keywords_list = []
+        rankings['most_searched_keywords'] = most_searched_keywords_list
+
     # new_items
+    if settings.rankings['new_items']:
+        new_items_list = []
+        rankings['new_items'] = new_items_list
+
     return render_template(current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
                            render_widgets=True,
                            is_show=settings.is_show,
