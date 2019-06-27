@@ -923,9 +923,9 @@ class WorkActivity(object):
                 .filter(_FlowAction.id == _FlowActionRole.flow_action_id)\
                 .filter(_FlowAction.action_id == _Activity.action_id)\
                 .filter(
-                    ((_FlowActionRole.action_user == self_user_id) & (_FlowActionRole.action_user_exclude == '0')
-                    | (_FlowActionRole.action_role.in_(self_group_ids) & _FlowActionRole.action_role_exclude == '0')
-                ))\
+                    ((_FlowActionRole.action_user == self_user_id) & (_FlowActionRole.action_user_exclude == '0'))
+                    | (_FlowActionRole.action_role.in_(self_group_ids) & (_FlowActionRole.action_role_exclude == '0'))
+                )\
                 .filter(_Activity.activity_status == ActivityStatusPolicy.ACTIVITY_BEGIN
                         or _Activity.activity_status == ActivityStatusPolicy.ACTIVITY_MAKING)\
                 .order_by(asc(_Activity.id))\
