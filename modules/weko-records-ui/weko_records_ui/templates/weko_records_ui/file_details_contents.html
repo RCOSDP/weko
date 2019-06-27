@@ -80,7 +80,7 @@
                       {%- set billing_file_class = "" -%}
                       {%- elif billing_file_permission -%}
                       {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key) %}
-                      {%- set billing_file_data = "data-billing-file-permission=true" -%}
+                      {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename) -%}
                       {%- else -%}
                       {%- set billing_file_data = "data-billing-file-permission=false" -%}
                       {%- endif -%}
@@ -216,7 +216,9 @@
                 <input type="hidden" value="{{can_update_version}}" id="txt_can_update_version"/>
                 {%- if billing_files_permission -%}
                 {%- set billing_file_permission = billing_files_permission.get(filename) -%}
+                {%- set billing_file_price = billing_files_prices.get(filename) -%}
                 <input type="hidden" value="{{billing_file_permission}}" id="billing_file_permission"/>
+                <input type="hidden" value="{{billing_file_price}}" id="billing_file_price"/>
                 {%- endif -%}
                 <div class="table-responsive">
                   <table class="table table-striped table-bordered file_version_table" ng-init="showChangeLog('{{deposit}}')">

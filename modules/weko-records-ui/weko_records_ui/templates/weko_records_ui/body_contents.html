@@ -140,7 +140,7 @@
                       {%- elif is_billing_file -%}
                       {%- if billing_file_permission -%}
                       {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value, filename=file.key) -%}
-                      {%- set billing_file_data = "data-billing-file-permission=true" -%}
+                      {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename) -%}
                       {%- else -%}
                       {%- set billing_file_data = "data-billing-file-permission=false" -%}
                       {%- endif -%}
