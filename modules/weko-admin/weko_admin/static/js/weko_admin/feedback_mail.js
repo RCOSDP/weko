@@ -53,6 +53,7 @@ class ComponentExclusionTarget extends React.Component {
             "heiht": "50px",
             "border": "1px inset black",
             "display": "inline-block",
+            "padding": "10px",
         }
         this.style_full_size = {
             "width": "100%",
@@ -68,7 +69,7 @@ class ComponentExclusionTarget extends React.Component {
 
     }
     searchCommand(){
-
+        $("#searchFeedbackMail").modal("show");
     }
     render() {
         return (
@@ -76,7 +77,7 @@ class ComponentExclusionTarget extends React.Component {
                 <span className="control-label col-xs-2">Send exclusion target persons</span>
                 <div class="controls col-xs-10">
                     <div>
-                        <button type="button" className="btn" style={this.style_button}><i className = "glyphicon glyphicon-search" onClick={this.searchCommand}></i>&nbsp;From author DB</button>
+                        <button type="button" className="btn" style={this.style_button} onClick={this.searchCommand}><i className = "glyphicon glyphicon-search"></i>&nbsp;From author DB</button>
                     </div>
                     <div style = {this.style_full_size}>
                         <select multiple style = {this.style_selected_box}>
@@ -138,6 +139,7 @@ class ComponentButtonLayout extends React.Component {
 
     }
 }
+
 class MainLayout extends React.Component {
     constructor(props) {
         super(props);
