@@ -58,9 +58,9 @@ def get_groups_price(record: dict) -> list:
     """
     groups_price = list()
     for key, value in record.items():
-        if type(value) is dict:
+        if isinstance(value, dict):
             attr_value = value.get('attribute_value_mlt')
-            if attr_value and type(attr_value) is list:
+            if attr_value and isinstance(attr_value, list):
                 for attr in attr_value:
                     group_price = attr.get('groupsprice')
                     file_name = attr.get('filename')
@@ -84,10 +84,10 @@ def get_billing_file_download_permission(groups_price: list) -> dict:
     for data in groups_price:
         file_name = data.get('file_name')
         group_price_list = data.get('groups_price')
-        if file_name and type(group_price_list) is list:
+        if file_name and isinstance(group_price_list, list):
             is_ok = False
             for group_price in group_price_list:
-                if type(group_price) is dict:
+                if isinstance(group_price, dict):
                     group_id = group_price.get('group')
                     is_ok = check_user_group_permission(group_id)
                     if is_ok:
@@ -95,3 +95,29 @@ def get_billing_file_download_permission(groups_price: list) -> dict:
             billing_file_permission[file_name] = is_ok
 
     return billing_file_permission
+
+
+def get_min_price_billing_file_download(groups_price: list,
+                                        billing_file_permission: dict) -> dict:
+    """Get min price billing file download.
+
+    :param groups_price: The prices of Billing files set in each group
+    :param billing_file_permission: Billing file permission dictionary.
+    :return:Billing file permission dictionary.
+    """
+    min_prices = dict()
+    for data in groups_price:
+        file_name = data.get('file_name')
+        group_price_list = data.get('groups_price')
+        if not billing_file_permission.get(file_name):
+            continue
+        min_price = None
+        if file_name and isinstance(group_price_list, list):
+            for group_price in group_price_list:
+                if isinstance(group_price, dict):
+                    price = group_price.get('price')
+                    if not min_price or min_price > price:
+                        min_price = price
+            min_prices[file_name] = min_price
+
+    return min_prices
