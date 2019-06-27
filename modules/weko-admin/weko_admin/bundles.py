@@ -30,12 +30,12 @@ js = Bundle(
     output="gen/weko_admin_ui.%(version)s.js",
 )
 
-report_reactjs_lib = Bundle(
+statistics_reactjs_lib = Bundle(
     'js/weko_admin/react.production.min.js',
     'js/weko_admin/react-dom.production.min.js',
     'js/weko_admin/browser.min.js',
     filters='jsmin',
-    output="gen/weko_report_reactjs_lib.%(version)s.js",
+    output="gen/weko_statistics_reactjs_lib.%(version)s.js",
 )
 
 custom_report_js = Bundle(

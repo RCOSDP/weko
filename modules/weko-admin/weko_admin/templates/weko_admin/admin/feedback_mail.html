@@ -28,6 +28,8 @@
 
 {%- block javascript %}
   {{ super() }}
+  {% assets "weko_admin_feedback_mail" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block body %}

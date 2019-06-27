@@ -137,8 +137,8 @@ setup(
             'weko_admin.bundles:custom_report_js',
             'weko_admin_feedback_mail = '
             'weko_admin.bundles:feedback_mail_js',
-            'weko_report_reactjs_lib = '
-            'weko_admin.bundles:report_reactjs_lib',
+            'weko_admin_statistics_reactjs_lib = '
+            'weko_admin.bundles:statistics_reactjs_lib',
             'weko_admin_log_analysis_js = '
             'weko_admin.bundles:log_analysis_js',
             'weko_admin_admin_lte_js_dependecies = '
