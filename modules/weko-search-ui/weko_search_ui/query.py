@@ -716,7 +716,13 @@ def item_search_factory(self, search, start_date, end_date):
                 "query_string": {
                     "query": query_string
                 }
-            }
+            },
+            "sort":
+            [
+                {
+                    "publish_date": "desc"
+                }
+            ]
         }
         return query_q
 
