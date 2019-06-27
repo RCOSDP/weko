@@ -118,6 +118,8 @@
           let txt_hide = $('#txt_hide').val();
           let is_logged_in = $('#txt_is_logged_in').val();
           let can_update_version = $('#txt_can_update_version').val();
+          let billing_file_permission = $('#billing_file_permission').val();
+          let billing_file_price = $('#billing_file_price').val();
 
           // Remove the versions which does not match the current file
           for (let index = 0; index < contents.length; index++) {
@@ -188,7 +190,7 @@
                 let permission = "data-billing-file-permission=";
                 if (billing_file_permission === "True") {
                   selfLink = ` data-billing-file-url="${ele.links.self}"`;
-                  permission += `"true"`;
+                  permission += `"true" data-billing-file-price="${billing_file_price}"`;
                 } else {
                   permission += `"false"`;
                 }
@@ -319,6 +321,9 @@ function handleDownloadBillingFile(){
     let downloadPermission = $(this).data('billingFilePermission');
     if(downloadPermission){
       let url = $(this).data('billingFileUrl');
+      let price = $(this).data('billingFilePrice');
+      let confirmMsg = $("#download_confirm_content").text().replace("XXXXX", price);
+      $("#download_confirm_content").text(confirmMsg);
       $("#confirm_download_button").data('billingFileUrl', url);
       $("#confirm_download").modal("show");
     } else {
