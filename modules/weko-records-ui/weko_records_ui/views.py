@@ -51,7 +51,8 @@ from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
-from .utils import get_item_pidstore_identifier, get_groups_price, get_billing_file_download_permission
+from .utils import get_item_pidstore_identifier, get_groups_price, \
+    get_billing_file_download_permission, get_min_price_billing_file_download
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -395,9 +396,13 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     groups_price = get_groups_price(record)
     billing_files_permission = None
+    billing_files_prices = None
     if groups_price:
         billing_files_permission = \
             get_billing_file_download_permission(groups_price)
+        billing_files_prices = \
+            get_min_price_billing_file_download(groups_price,
+                                                billing_files_permission)
 
     return render_template(
         template,
@@ -414,6 +419,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         height=height,
         google_scholar_meta=google_scholar_meta,
         billing_files_permission=billing_files_permission,
+        billing_files_prices=billing_files_prices,
         **ctx,
         **kwargs
     )
