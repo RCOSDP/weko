@@ -27,8 +27,9 @@ from flask import current_app, request, session, url_for
 from flask_login import current_user
 from invenio_accounts.models import User, Role, userrole
 from invenio_db import db
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, types
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
@@ -937,8 +938,19 @@ class WorkActivity(object):
                 if activity not in action_activities:
                     activities.append(activity)
 
+            # Find the activities which has contributor:
+            # Query all ItemMetadata with json.shared_user_data equaling to current user
+            # After that, do fetching all activity which matches to above ItemMetadata.
+            item_metadata = ItemMetadata.query.filter(
+                cast(ItemMetadata.json['shared_user_id'], types.INT) == self_user_id)
+            item_uuids = [im.id for im in item_metadata]
+            contributor_activities = _Activity.query.filter(_Activity.item_id.in_(item_uuids)).all()
+            for activity in contributor_activities:
+                if activity not in activities:
+                    activities.append(activity)
+
             # Sort the list of activity
-            activities.sort(key=lambda activity:activity.activity_id)
+            activities.sort(key=lambda a: a.activity_id)
 
             for activi in activities:
                 if activi.item_id is None:
