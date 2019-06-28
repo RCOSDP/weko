@@ -429,8 +429,7 @@ class FeedbackMailView(BaseView):
                     result.append(
                         dict(id=data.id,
                              author_id=data.author_id,
-                             email=author_info['emailInfo'][0]['email'],
-                             is_sending_feedback=data.is_sending_feedback
+                             email=author_info['emailInfo'][0]['email']
                              )
                     )
         return result
@@ -439,6 +438,7 @@ class FeedbackMailView(BaseView):
         """Parse request form data"""
         creating_data=raw_data
         deleting_data=[]
+        new_data=[]
 
         # Get current data from DB
         raw_current_data = FeedbackMailSetting.get_all_active()
@@ -447,7 +447,10 @@ class FeedbackMailView(BaseView):
             # Get creating data include records which has id is None
             creating_data = [i for i in raw_data if 'id' not in i.keys()]
             new_data = [i for i in raw_data if 'id' in i.keys()]
-            deleting_data = [i for i in current_data if i not in new_data]
+            new_data_ids = [val for i in new_data
+                               for k,val in i.items() if k == 'id']
+            deleting_data = [i for i in current_data
+                             if i['id'] not in new_data_ids]
 
         return creating_data, deleting_data, new_data
 
