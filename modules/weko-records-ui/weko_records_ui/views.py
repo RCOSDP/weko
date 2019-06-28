@@ -51,8 +51,8 @@ from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
-from .utils import get_item_pidstore_identifier, get_groups_price, \
-    get_billing_file_download_permission, get_min_price_billing_file_download
+from .utils import get_billing_file_download_permission, get_groups_price, \
+    get_item_pidstore_identifier, get_min_price_billing_file_download
 
 blueprint = Blueprint(
     'weko_records_ui',

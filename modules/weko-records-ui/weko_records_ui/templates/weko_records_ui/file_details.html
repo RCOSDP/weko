@@ -109,7 +109,8 @@
             <h3 class="modal-title"><span class="glyphicon glyphicon-info-sign"></span>{{_('Confirm')}}</h3>
           </div>
           <div class="modal-body">
-            <p id="download_confirm_content">{{_("This file is a Billing file. (Price: XXXXX). Do you want to download it?")}}</p>
+            <input id="download_confirm_message" type="hidden" value="{{_('This file is a Billing file. (Price: XXXXX). Do you want to download it?')}}" />
+            <p id="download_confirm_content"></p>
           </div>
           <div class="modal-footer">
             <button type="button" id="confirm_download_button" class="btn btn-primary">{{_('Yes')}}</button>

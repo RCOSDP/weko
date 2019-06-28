@@ -80,7 +80,7 @@
                       {%- set billing_file_class = "" -%}
                       {%- elif billing_file_permission -%}
                       {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key) %}
-                      {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename) -%}
+                      {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename)|string -%}
                       {%- else -%}
                       {%- set billing_file_data = "data-billing-file-permission=false" -%}
                       {%- endif -%}
