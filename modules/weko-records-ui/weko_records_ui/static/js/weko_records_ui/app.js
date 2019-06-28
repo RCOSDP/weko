@@ -322,7 +322,7 @@ function handleDownloadBillingFile(){
     if(downloadPermission){
       let url = $(this).data('billingFileUrl');
       let price = $(this).data('billingFilePrice');
-      let confirmMsg = $("#download_confirm_content").text().replace("XXXXX", price);
+      let confirmMsg = $("#download_confirm_message").val().replace("XXXXX", price);
       $("#download_confirm_content").text(confirmMsg);
       $("#confirm_download_button").data('billingFileUrl', url);
       $("#confirm_download").modal("show");
@@ -340,5 +340,6 @@ function handleDownloadBillingFile(){
     link.href = url;
     link.click();
     $("#confirm_download").modal('toggle');
+    $("#download_confirm_content").text("");
   });
 }

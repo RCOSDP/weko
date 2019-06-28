@@ -20,6 +20,7 @@
 
 """Module of weko-records-ui utils."""
 
+from flask import current_app
 from invenio_db import db
 from weko_records.api import ItemsMetadata
 from weko_workflow.models import ActionStatusPolicy, Activity
@@ -111,13 +112,19 @@ def get_min_price_billing_file_download(groups_price: list,
         group_price_list = data.get('groups_price')
         if not billing_file_permission.get(file_name):
             continue
-        min_price = None
         if file_name and isinstance(group_price_list, list):
+            min_price = None
             for group_price in group_price_list:
                 if isinstance(group_price, dict):
                     price = group_price.get('price')
-                    if not min_price or min_price > price:
+                    try:
+                        price = float(price)
+                    except ValueError as error:
+                        current_app.logger.debug(error)
+                        price = None
+                    if price and (not min_price or min_price > price):
                         min_price = price
-            min_prices[file_name] = min_price
+            if min_price:
+                min_prices[file_name] = min_price
 
     return min_prices
