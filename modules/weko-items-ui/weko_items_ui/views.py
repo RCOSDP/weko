@@ -35,7 +35,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryRecordViewReportHelper, \
-    QueryFileReportsHelper
+    QueryItemRegReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -808,27 +808,23 @@ def ranking():
     # get ranking settings
     settings = RankingSettings.get()
     # get statistical period
-    end_date = date.today() - timedelta(days=1)
+    end_date = date.today()# - timedelta(days=1)
     start_date = end_date - timedelta(days=int(settings.statistical_period))
 
     rankings = {}
     # most_reviewed_items
     if settings.rankings['most_reviewed_items']:
         most_reviewed_items_list = []
-        result = QueryRecordViewReportHelper.get(year=2019, month=6)
+        result = QueryRecordViewReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                                 end_date=end_date.strftime('%Y-%m-%d'),
+                                                 agg_size=settings.display_rank,
+                                                 agg_sort={'key_name':'total_all',
+                                                           'order':'desc'})
         current_app.logger.debug(result)
         if result and 'all' in result:
             rank = 1
             count = 0
-            for item in sorted(result['all'],
-                               key=lambda x:x['total_all'],
-                               reverse=True):
-                if settings.display_rank == len(most_reviewed_items_list):
-                    break
-                # test code
-                item['record_name'] = 'test'
-                item['pid_value'] = 1
-                # test code end
+            for item in result['all']:
                 if not count == int(item['total_all']):
                     rank = len(most_reviewed_items_list) + 1
                     count = int(item['total_all'])
@@ -843,24 +839,25 @@ def ranking():
     # most_downloaded_items
     if settings.rankings['most_downloaded_items']:
         most_downloaded_items_list = []
-        result = QueryFileReportsHelper.get(year=2019, month=6,
-                                            event='file_download')
+        result = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                              end_date=end_date.strftime('%Y-%m-%d'),
+                                              target_report='3',
+                                              unit='Item',
+                                              agg_size=settings.display_rank,
+                                              agg_sort={'key_name':'col3',
+                                                        'order':'desc'})
         current_app.logger.debug(result)
-        if result and 'all' in result:
+        if result and 'data' in result:
             rank = 1
             count = 0
-            for item in result['all']:
-                # test code
-                item['item_title'] = 'test'
-                item['item_id'] = 1
-                # test code end
-                if not count == int(item['total']):
+            for item in result['data']:
+                if not count == int(item['col3']):
                     rank = len(most_downloaded_items_list) + 1
-                    count = int(item['total'])
+                    count = int(item['col3'])
                 t = {}
                 t['rank'] = rank
-                t['title'] = item['item_title']
-                t['pid_value'] = item['item_id']
+                t['title'] = item['col2']
+                t['pid_value'] = item['col1']
                 t['count'] = count
                 most_downloaded_items_list.append(t)
         rankings['most_downloaded_items'] = most_downloaded_items_list
