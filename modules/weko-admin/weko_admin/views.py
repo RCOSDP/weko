@@ -41,6 +41,7 @@ from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_initial_stats_report, \
     get_selected_language, get_unit_stats_report, save_api_certification, \
     update_admin_lang_setting, validate_certification
+from . import config
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -401,3 +402,62 @@ def get_statistic_detail_view(unit=1, page=1):
     response_data['num_page'] = math.ceil(len(result) / 10)
     response_data['page'] = page
     return jsonify(response_data)
+
+@blueprint_api.route("/search_email", methods=['POST'])
+@login_required
+def get():
+    """Get all authors."""
+    data = request.get_json()
+
+    search_key = data.get('searchKey') or ''
+    query = {"match": {"gather_flg": 0}}
+
+    if search_key:
+        match = {}
+        match["emailInfo.email"] = search_key
+        query = {
+             "match_phrase_prefix" : match
+        }
+
+    size = config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE
+    num = data.get('pageNumber') or 1
+    offset = (int(num) - 1) * size if int(num) > 1 else 0
+
+    sort_key = data.get('sortKey') or ''
+    sort_order = data.get('sortOrder') or ''
+    sort = {}
+    if sort_key and sort_order:
+        sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
+
+    body = {
+        "query": query,
+        "from": offset,
+        "size": size,
+        "sort": sort
+    }
+    query_item = {
+        "size": 0,
+        "query": {
+            "bool": {
+                "must_not": {
+                    "match": {
+                        "weko_id": "",
+                    }
+                }
+            }
+        }, "aggs": {
+            "item_count": {
+                "terms": {
+                    "field": "weko_id"
+                }
+            }
+        }
+    }
+
+    indexer = RecordIndexer()
+    result = indexer.client.search(index="authors", body=body)
+    result_itemCnt = indexer.client.search(index="weko", body=query_item)
+
+    result['item_cnt'] = result_itemCnt
+
+    return jsonify(result)
