@@ -937,6 +937,9 @@ class WorkActivity(object):
                 if activity not in action_activities:
                     activities.append(activity)
 
+            # Sort the list of activity
+            activities.sort(key=lambda activity:activity.activity_id)
+
             for activi in activities:
                 if activi.item_id is None:
                     activi.ItemName = ''
