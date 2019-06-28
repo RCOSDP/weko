@@ -1002,8 +1002,8 @@ class FeedbackMailSetting(db.Model, Timestamp):
         autoincrement=True)
     """FeedbackMailSetting identifier."""
 
-    authors_id = db.Column(
-        db.Integer(),
+    author_id = db.Column(
+        db.BigInteger,
         nullable=False
     )
     """Author identifier."""
