@@ -37,7 +37,9 @@ from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
+from sqlalchemy import types
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
@@ -45,6 +47,7 @@ from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
 from weko_records.api import ItemsMetadata
+from weko_records.models import ItemMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
 
@@ -463,6 +466,14 @@ def check_authority_action(activity_id='0', action_id=0):
             if activity.activity_login_user in community_user_ids:
                 return 0
             break
+
+    # Check if this activity has contributor equaling to current user
+    im = ItemMetadata.query.filter_by(id=activity.item_id)\
+        .filter(cast(ItemMetadata.json['shared_user_id'], types.INT) == int(cur_user))\
+        .one_or_none()
+    if im:
+        # There is an ItemMetadata with contributor equaling to current user, allow to access
+        return 0
 
     # Otherwise, user has no permission
     return 1
