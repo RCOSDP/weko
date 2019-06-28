@@ -866,14 +866,14 @@ def check_existed_doi():
     data['code'] = 1
     data['msg'] = 'error'
     if doi_link is not None:
-        isExistDOI = find_doi(doi_link)
-        isWithdrawnDoi = is_withdrawn_doi(doi_link)
-        if isExistDOI:
-            data['isExistDOI'] = isExistDOI
+        is_exist_doi = find_doi(doi_link)
+        doi_withdrawn = is_withdrawn_doi(doi_link)
+        if is_exist_doi:
+            data['isExistDOI'] = is_exist_doi
             data['msg'] = _('This DOI has been used already for another item. '
                             'Please input another DOI.')
-        elif isWithdrawnDoi:
-            data['isWithdrawnDoi'] = isWithdrawnDoi
+        elif doi_withdrawn:
+            data['isWithdrawnDoi'] = doi_withdrawn
             data['msg'] = _(
                 'This DOI was withdrawn. Please input another DOI.')
         else:
