@@ -159,6 +159,11 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_COMMUNITY}"
 
 ${INVENIO_WEB_INSTANCE} access \
+       allow "indextree-journal-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}"
+
+${INVENIO_WEB_INSTANCE} access \
        allow "item-type-access" \
        role "${INVENIO_ROLE_REPOSITORY}"
 
