@@ -1023,8 +1023,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
         """
         try:
             all = cls.query \
-                .filter(cls.is_sending_feedback.is_(is_sending_feedback)) \
-                .filter(cls.is_deleted.is_(False)).all()
+                .filter(cls.is_sending_feedback.is_(is_sending_feedback)).all()
         except NoResultFound:
             return []
         return all

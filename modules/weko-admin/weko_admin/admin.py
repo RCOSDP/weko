@@ -464,7 +464,8 @@ class FeedbackMailView(BaseView):
 
         indexer = RecordIndexer()
         result = indexer.client.search(index="authors", body=body)
-        return result['hits']['hits'][0]['_source']
+        return result['hits']['hits'][0]['_source'] \
+            if result['hits']['total']>0 else []
 
     def validate_dupplicate_email(self, checking_data, current_data):
         """Validate dupplicate email"""
@@ -474,13 +475,13 @@ class FeedbackMailView(BaseView):
             current_author_id = [val for i in current_data
                                for k,val in i.items() if k == 'author_id']
             # Get list email
+            checking_email=[val for i in checking_data
+                               for k,val in i.items() if k == 'email']
             exist_email=[]
             for id in current_author_id:
                 author_info = self.getAuthorById(id)
                 if author_info:
                     exist_email.append(author_info['emailInfo'][0]['email'])
-            checking_email=[val for i in checking_data
-                               for k,val in i.items() if k == 'email']
             if exist_email:
                 dupplicate_email=[i for i, j in zip(checking_email, exist_email)
                                   if i == j]
