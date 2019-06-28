@@ -96,13 +96,14 @@
 </div>
 
 <!-- Reports -->
+<!--<div class="container">-->
 <div class="row content-font">
-  <div class="col-md-1"></div>
-  <div class="col-md-11">
+  <div class="col-xs-1 col-md-1 col-lg-1"></div>
+  <div class="col-xs-17 col-md-11 col-lg-11">
     <form method="POST" name="report_file_form" id="report_file_form"
       action={{url_for('report.get_file_stats_tsv')}}>
-      <p class="col-xs-2 text-right">{{_('Type')}}</p>
-      <div class="col-xs-2">
+      <p class="col-xs-1 col-md-1 col-lg-2 text-right" style="padding: 5px;">{{_('Type')}}</p>
+      <div class="col-xs-1 col-md-1 col-lg-2" style="padding: 5px;">
         <select class="form-control" id="report_type_select" name="type">
           <option value="all" selected>{{_('All')}}</option>
           <option value="file_download">{{ _("File Downloads") }}</option>
@@ -117,8 +118,8 @@
         </select>
       </div>
 
-      <p class="col-xs-1 text-right">{{_('Year')}}</p>
-      <div class="col-xs-1">
+      <p class="col-xs-1 col-md-1 col-lg-1 text-right"  style="padding: 5px;">{{_('Year')}}</p>
+      <div class="col-xs-1 col-md-1 col-lg-1"  style="padding: 5px;">
         <select class="form-control" id="report_year_select" name="year">
           {% for x in range(5) %}
             {% set year = now.year - x %}
@@ -131,8 +132,8 @@
         </select>
       </div>
 
-      <p class="col-xs-1 text-right">{{_('Month')}}</p>
-      <div class="col-xs-1">
+      <p class="col-xs-1 col-md-1 col-lg-1 text-right" style="padding: 5px;">{{_('Month')}}</p>
+      <div class="col-xs-1 col-md-1 col-lg-1"  style="padding: 5px;">
         <select class="form-control" id="report_month_select" name="month">
           {% for x in range(1, 13) %}
           {% set mon = '%02d' % x %}
@@ -147,18 +148,24 @@
       <input type="hidden" id="report_file_input" name="report" value="{}" />
       <input type="hidden" id="send_email_input" name="send_email" value="False" />
     </form>
-    <div class="col-md-4">
-      <button id="downloadReport" class="btn btn-primary action-big-button">
+    <wbr>
+   <div class="container col-xs-12 col-md-6 col-lg-4" style="padding: 5px;">
+   <!--<br class="rwd-break">-->
+    <div class="row col-xs-6 col-md-2 col-lg-2 col-xl-1">
+       <button id="downloadReport" class="btn btn-primary action-button">
         <span class="glyphicon glyphicon-download-alt"></span>
         {{_('Download')}}
-      </button>
+       </button>
+     </div><div class="col-md-3"></div>
+     <div class="col-xs-6 col-md-7 col-lg-8 col-xl-1 pull-right">
       <a id="confirm_send_email" class="btn btn-light send-button"
         data-toggle="modal" data-target="#confirm_send_email_modal">
         <span class="glyphicon glyphicon-send"></span>
         {{_('Send')}}
       </a>
+      </div>
     </div>
-  </div>
+</div>
 </div>
 <hr>
 
@@ -175,7 +182,7 @@
       value="{{(emails | length) if emails else 1}}">
 
     {% if not emails %}
-      <div class="form-group col-md-5 col-md-offset-3">
+      <div class="form-group col-xs-11 col-md-5 col-md-offset-3">
         <input type="email" class="form-control inputEmail" id="inputEmail_0"
           pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
           name="inputEmail"
@@ -185,7 +192,7 @@
     {% endif %}
     {% for email in emails %}
       <div id="emailID_{{email.id}}">
-        <div class="form-group col-md-5 col-md-offset-3">
+        <div class="form-group col-xs-11 col-md-5 col-md-offset-3">
           <input type="email" class="form-control inputEmail" id="inputEmail_{{email.id}}"
             pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
             name="inputEmail"
@@ -194,9 +201,9 @@
         </div>
         {% set limit = (emails | length) %}
         {% if loop.index == 1 %}
-          <div class="col-md-1"></div>
+          <div class="col-xs-1 col-md-1"></div>
         {% else %}
-          <div class="col-md-1">
+          <div class="col-xs-1 col-md-1">
               <a class="btn-default remove-button"
                   onclick="$('#inputEmail_{{email.id}}').remove();"  id="remove_button">
                   <span class="glyphicon glyphicon-remove"></span>
@@ -207,16 +214,16 @@
     {% endfor %}
     <div id="newEmail" class="form-group" id="emailAdd"></div>
     </div>
-    <div class="col-md-3"></div>
-    <div class="form-actions col-md-8">
-        <div class="col-md-2">
+    <div class="col-xs-1 col-md-3 col-lg-3"></div>
+    <div class="form-actions col-xs-8 col-md-8 col-lg-8">
+        <div class="col-xs-2 col-md-2 col-lg-2">
           <a id="addEmail" class="btn btn-light add-big-button">
               <span class="glyphicon glyphicon-plus"></span>
                   {{_('Email Address')}}
           </a>
         </div>
-        <div class="col-md-4"></div>
-        <div class="col-md-2">
+        <div class="col-xs-8 col-md-4 col-lg-4"></div>
+        <div class="col-xs-2 col-md-2 col-lg-2">
           <a id="saveEmail" class="btn btn-primary save-button">
               <span class="glyphicon glyphicon-saved"></span>
                   {{_('Save')}}
