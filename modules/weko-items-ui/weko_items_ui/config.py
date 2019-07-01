@@ -43,6 +43,8 @@ WEKO_ITEMS_UI_UPLOAD_TEMPLATE = 'weko_items_ui/upload.html'
 
 WEKO_ITEMS_UI_INDEX_URL = '/items/index/{pid_value}'
 
+WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking.html'
+
 IDENTIFIER_GRANT_DOI = 0
 """Identifier grant was select."""
 
