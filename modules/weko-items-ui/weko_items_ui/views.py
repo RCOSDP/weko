@@ -911,6 +911,6 @@ def check_ranking_show():
     """Check ranking show/hide."""
     result = 'hide'
     settings = RankingSettings.get()
-    if settings.is_show:
+    if settings and settings.is_show:
         result = ''
     return result
