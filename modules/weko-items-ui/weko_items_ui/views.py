@@ -20,12 +20,12 @@
 
 """Blueprint for weko-items-ui."""
 
-import os
 import operator
+import os
 import sys
+from datetime import date, timedelta
 
 import redis
-from datetime import date, timedelta
 from flask import Blueprint, abort, current_app, flash, json, jsonify, \
     redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -34,8 +34,8 @@ from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
-from invenio_stats.utils import QueryRecordViewReportHelper, \
-    QueryItemRegReportHelper
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -802,13 +802,14 @@ def prepare_edit_item():
             current_app.logger.error('Unexpected error: ', str(e))
     return jsonify(code=-1, msg=_('An error has occurred.'))
 
+
 @blueprint.route('/ranking', methods=['GET'])
 def ranking():
     """Ranking page view."""
     # get ranking settings
     settings = RankingSettings.get()
     # get statistical period
-    end_date = date.today()# - timedelta(days=1)
+    end_date = date.today()  # - timedelta(days=1)
     start_date = end_date - timedelta(days=int(settings.statistical_period))
 
     rankings = {}
@@ -816,10 +817,11 @@ def ranking():
     if settings.rankings['most_reviewed_items']:
         most_reviewed_items_list = []
         result = QueryRecordViewReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
-                                                 end_date=end_date.strftime('%Y-%m-%d'),
+                                                 end_date=end_date.strftime(
+                                                     '%Y-%m-%d'),
                                                  agg_size=settings.display_rank,
-                                                 agg_sort={'key_name':'total_all',
-                                                           'order':'desc'})
+                                                 agg_sort={'key_name': 'total_all',
+                                                           'order': 'desc'})
         if result and 'all' in result:
             rank = 1
             count = 0
@@ -839,12 +841,13 @@ def ranking():
     if settings.rankings['most_downloaded_items']:
         most_downloaded_items_list = []
         result = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
-                                              end_date=end_date.strftime('%Y-%m-%d'),
+                                              end_date=end_date.strftime(
+                                                  '%Y-%m-%d'),
                                               target_report='3',
                                               unit='Item',
                                               agg_size=settings.display_rank,
-                                              agg_sort={'key_name':'col3',
-                                                        'order':'desc'})
+                                              agg_sort={'key_name': 'col3',
+                                                        'order': 'desc'})
         if result and 'data' in result:
             rank = 1
             count = 0
@@ -864,13 +867,14 @@ def ranking():
     if settings.rankings['created_most_items_user']:
         created_most_items_user_list = []
         result \
-        = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
-                                       end_date=end_date.strftime('%Y-%m-%d'),
-                                       target_report='0',
-                                       unit='User',
-                                       agg_size=settings.display_rank,
-                                       agg_sort={'key_name':'count',
-                                                 'order':'desc'})
+            = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                           end_date=end_date.strftime(
+                                               '%Y-%m-%d'),
+                                           target_report='0',
+                                           unit='User',
+                                           agg_size=settings.display_rank,
+                                           agg_sort={'key_name': 'count',
+                                                     'order': 'desc'})
         if result and 'data' in result:
             rank = 1
             count = 0
@@ -902,6 +906,7 @@ def ranking():
                            end_date=end_date,
                            rankings=rankings)
 
+
 def check_ranking_show():
     """Check ranking show/hide."""
     result = 'hide'
@@ -909,4 +914,3 @@ def check_ranking_show():
     if settings.is_show:
         result = ''
     return result
-
