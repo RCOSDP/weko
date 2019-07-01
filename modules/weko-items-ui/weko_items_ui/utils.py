@@ -285,3 +285,23 @@ def get_actionid(endpoint):
             return action.id
         else:
             return None
+
+
+def parse_ranking_results(results, list_name='all', title_key='title',
+                          count_key='count', pid_key=''):
+    """Parse the raw stats results to be usable by the view."""
+    ranking_list = []
+    if results and list_name in results:
+        rank = 1
+        count = 0
+        for item in results[list_name]:
+            if not count == int(item[count_key]):
+                rank = len(ranking_list) + 1
+                count = int(item[count_key])
+            t = {}
+            t['rank'] = rank
+            t['title'] = item[title_key]
+            t['pid_value'] = item[pid_key] if pid_key in item else ''
+            t['count'] = count
+            ranking_list.append(t)
+    return ranking_list

@@ -22,7 +22,7 @@
 
 from . import config
 from .permissions import item_permission
-from .views import blueprint
+from .views import blueprint, check_ranking_show
 
 
 class _WekoItemsUIState(object):
@@ -58,6 +58,7 @@ class WekoItemsUI(object):
         app.register_blueprint(blueprint)
         state = _WekoItemsUIState(app, item_permission)
         app.extensions['weko-items-ui'] = state
+        app.jinja_env.globals.update(check_ranking_show=check_ranking_show)
 
     def init_config(self, app):
         """Initialize configuration.
