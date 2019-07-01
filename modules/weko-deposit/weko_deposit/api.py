@@ -420,8 +420,20 @@ class WekoDeposit(Deposit):
             dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
         if has_request_context():
+            if current_user:
+                user = UserProfile.get_by_userid(current_user.get_id())
+                if user:
+                    username = user.username
+                else:
+                    username = ''
+            else:
+                username = ''
             item_created.send(
-                current_app._get_current_object(), item_id=self.pid)
+                current_app._get_current_object(),
+                username=username,
+                item_id=self.pid,
+                item_title=self.data['title']
+            )
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):

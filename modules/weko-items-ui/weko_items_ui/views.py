@@ -20,8 +20,10 @@
 
 """Blueprint for weko-items-ui."""
 
+import operator
 import os
 import sys
+from datetime import date, timedelta
 
 import redis
 from flask import Blueprint, abort, current_app, flash, json, jsonify, \
@@ -32,7 +34,10 @@ from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
+from invenio_stats.utils import QueryItemRegReportHelper, \
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
+from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
@@ -46,7 +51,8 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, validate_user
+    get_user_information, get_user_permission, parse_ranking_results, \
+    validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -796,3 +802,91 @@ def prepare_edit_item():
         except Exception as e:
             current_app.logger.error('Unexpected error: ', str(e))
     return jsonify(code=-1, msg=_('An error has occurred.'))
+
+
+@blueprint.route('/ranking', methods=['GET'])
+def ranking():
+    """Ranking page view."""
+    # get ranking settings
+    settings = RankingSettings.get()
+    # get statistical period
+    end_date = date.today()  # - timedelta(days=1)
+    start_date = end_date - timedelta(days=int(settings.statistical_period))
+
+    rankings = {}
+    # most_reviewed_items
+    if settings.rankings['most_reviewed_items']:
+        result = QueryRecordViewReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                                 end_date=end_date.strftime(
+                                                     '%Y-%m-%d'),
+                                                 agg_size=settings.display_rank,
+                                                 agg_sort={'key_name': 'total_all',
+                                                           'order': 'desc'})
+        rankings['most_reviewed_items'] = \
+            parse_ranking_results(result, list_name='all',
+                                  title_key='record_name',
+                                  count_key='total_all', pid_key='pid_value')
+
+    # most_downloaded_items
+    if settings.rankings['most_downloaded_items']:
+        result = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                              end_date=end_date.strftime(
+                                                  '%Y-%m-%d'),
+                                              target_report='3',
+                                              unit='Item',
+                                              agg_size=settings.display_rank,
+                                              agg_sort={'key_name': 'col3',
+                                                        'order': 'desc'})
+        rankings['most_downloaded_items'] = \
+            parse_ranking_results(result, list_name='data', title_key='col2',
+                                  count_key='col3', pid_key='col1')
+
+    # created_most_items_user
+    if settings.rankings['created_most_items_user']:
+        result \
+            = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                           end_date=end_date.strftime(
+                                               '%Y-%m-%d'),
+                                           target_report='0',
+                                           unit='User',
+                                           agg_size=settings.display_rank,
+                                           agg_sort={'key_name': 'count',
+                                                     'order': 'desc'})
+        rankings['created_most_items_user'] = \
+            parse_ranking_results(result, list_name='data',
+                                  title_key='username', count_key='count',
+                                  pid_key='')
+
+    # most_searched_keywords
+    if settings.rankings['most_searched_keywords']:
+        result = QuerySearchReportHelper.get(
+            start_date=start_date.strftime('%Y-%m-%d'),
+            end_date=end_date.strftime('%Y-%m-%d'),
+            agg_size=settings.display_rank,
+            agg_sort={'key_name': 'count', 'order': 'desc'}
+        )
+        rankings['most_searched_keywords'] = \
+            parse_ranking_results(result, list_name='all',
+                                  title_key='search_key', count_key='count',
+                                  pid_key='')
+
+    # new_items
+    if settings.rankings['new_items']:
+        new_items_list = []
+        rankings['new_items'] = new_items_list
+
+    return render_template(current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
+                           render_widgets=True,
+                           is_show=settings.is_show,
+                           start_date=start_date,
+                           end_date=end_date,
+                           rankings=rankings)
+
+
+def check_ranking_show():
+    """Check ranking show/hide."""
+    result = 'hide'
+    settings = RankingSettings.get()
+    if settings and settings.is_show:
+        result = ''
+    return result
