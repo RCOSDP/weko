@@ -21,9 +21,11 @@
 """Blueprint for weko-items-ui."""
 
 import os
+import operator
 import sys
 
 import redis
+from datetime import date, timedelta
 from flask import Blueprint, abort, current_app, flash, json, jsonify, \
     redirect, render_template, request, session, url_for
 from flask_babelex import gettext as _
@@ -32,7 +34,10 @@ from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
+from invenio_stats.utils import QueryRecordViewReportHelper, \
+    QueryItemRegReportHelper
 from simplekv.memory.redisstore import RedisStore
+from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
@@ -796,3 +801,112 @@ def prepare_edit_item():
         except Exception as e:
             current_app.logger.error('Unexpected error: ', str(e))
     return jsonify(code=-1, msg=_('An error has occurred.'))
+
+@blueprint.route('/ranking', methods=['GET'])
+def ranking():
+    """Ranking page view."""
+    # get ranking settings
+    settings = RankingSettings.get()
+    # get statistical period
+    end_date = date.today()# - timedelta(days=1)
+    start_date = end_date - timedelta(days=int(settings.statistical_period))
+
+    rankings = {}
+    # most_reviewed_items
+    if settings.rankings['most_reviewed_items']:
+        most_reviewed_items_list = []
+        result = QueryRecordViewReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                                 end_date=end_date.strftime('%Y-%m-%d'),
+                                                 agg_size=settings.display_rank,
+                                                 agg_sort={'key_name':'total_all',
+                                                           'order':'desc'})
+        if result and 'all' in result:
+            rank = 1
+            count = 0
+            for item in result['all']:
+                if not count == int(item['total_all']):
+                    rank = len(most_reviewed_items_list) + 1
+                    count = int(item['total_all'])
+                t = {}
+                t['rank'] = rank
+                t['title'] = item['record_name']
+                t['pid_value'] = item['pid_value']
+                t['count'] = count
+                most_reviewed_items_list.append(t)
+        rankings['most_reviewed_items'] = most_reviewed_items_list
+
+    # most_downloaded_items
+    if settings.rankings['most_downloaded_items']:
+        most_downloaded_items_list = []
+        result = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                              end_date=end_date.strftime('%Y-%m-%d'),
+                                              target_report='3',
+                                              unit='Item',
+                                              agg_size=settings.display_rank,
+                                              agg_sort={'key_name':'col3',
+                                                        'order':'desc'})
+        if result and 'data' in result:
+            rank = 1
+            count = 0
+            for item in result['data']:
+                if not count == int(item['col3']):
+                    rank = len(most_downloaded_items_list) + 1
+                    count = int(item['col3'])
+                t = {}
+                t['rank'] = rank
+                t['title'] = item['col2']
+                t['pid_value'] = item['col1']
+                t['count'] = count
+                most_downloaded_items_list.append(t)
+        rankings['most_downloaded_items'] = most_downloaded_items_list
+
+    # created_most_items_user
+    if settings.rankings['created_most_items_user']:
+        created_most_items_user_list = []
+        result \
+        = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                       end_date=end_date.strftime('%Y-%m-%d'),
+                                       target_report='0',
+                                       unit='User',
+                                       agg_size=settings.display_rank,
+                                       agg_sort={'key_name':'count',
+                                                 'order':'desc'})
+        if result and 'data' in result:
+            rank = 1
+            count = 0
+            for item in result['data']:
+                if not count == int(item['count']):
+                    rank = len(created_most_items_user_list) + 1
+                    count = int(item['count'])
+                t = {}
+                t['rank'] = rank
+                t['username'] = item['username']
+                t['count'] = count
+                created_most_items_user_list.append(t)
+        rankings['created_most_items_user'] = created_most_items_user_list
+
+    # most_searched_keywords
+    if settings.rankings['most_searched_keywords']:
+        most_searched_keywords_list = []
+        rankings['most_searched_keywords'] = most_searched_keywords_list
+
+    # new_items
+    if settings.rankings['new_items']:
+        new_items_list = []
+        rankings['new_items'] = new_items_list
+
+    return render_template(current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
+                           render_widgets=True,
+                           is_show=settings.is_show,
+                           start_date=start_date,
+                           end_date=end_date,
+                           rankings=rankings)
+
+def check_ranking_show():
+    """Check ranking show/hide."""
+    result = 'hide'
+    settings = RankingSettings.get()
+    if settings.is_show:
+        result = ''
+    return result
+
