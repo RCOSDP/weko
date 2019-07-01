@@ -22,11 +22,10 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import current_app, json, jsonify, request, session
+from flask import current_app, request, session
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 
-from .models import Authors
 from .permissions import author_permission
 
 
