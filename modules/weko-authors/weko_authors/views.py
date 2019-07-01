@@ -46,6 +46,7 @@ blueprint_api = Blueprint(
     static_folder='static',
 )
 
+
 @blueprint_api.route("/add", methods=['POST'])
 @login_required
 @author_permission.require(http_exception=403)
