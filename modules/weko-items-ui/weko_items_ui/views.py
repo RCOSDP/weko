@@ -35,7 +35,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from invenio_stats.utils import QueryItemRegReportHelper, \
-    QueryRecordViewReportHelper
+    QueryRecordViewReportHelper, QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -51,7 +51,8 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, validate_user
+    get_user_information, get_user_permission, parse_ranking_results, \
+    validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -815,31 +816,19 @@ def ranking():
     rankings = {}
     # most_reviewed_items
     if settings.rankings['most_reviewed_items']:
-        most_reviewed_items_list = []
         result = QueryRecordViewReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
                                                  end_date=end_date.strftime(
                                                      '%Y-%m-%d'),
                                                  agg_size=settings.display_rank,
                                                  agg_sort={'key_name': 'total_all',
                                                            'order': 'desc'})
-        if result and 'all' in result:
-            rank = 1
-            count = 0
-            for item in result['all']:
-                if not count == int(item['total_all']):
-                    rank = len(most_reviewed_items_list) + 1
-                    count = int(item['total_all'])
-                t = {}
-                t['rank'] = rank
-                t['title'] = item['record_name']
-                t['pid_value'] = item['pid_value']
-                t['count'] = count
-                most_reviewed_items_list.append(t)
-        rankings['most_reviewed_items'] = most_reviewed_items_list
+        rankings['most_reviewed_items'] = \
+            parse_ranking_results(result, list_name='all',
+                                  title_key='record_name',
+                                  count_key='total_all', pid_key='pid_value')
 
     # most_downloaded_items
     if settings.rankings['most_downloaded_items']:
-        most_downloaded_items_list = []
         result = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
                                               end_date=end_date.strftime(
                                                   '%Y-%m-%d'),
@@ -848,24 +837,12 @@ def ranking():
                                               agg_size=settings.display_rank,
                                               agg_sort={'key_name': 'col3',
                                                         'order': 'desc'})
-        if result and 'data' in result:
-            rank = 1
-            count = 0
-            for item in result['data']:
-                if not count == int(item['col3']):
-                    rank = len(most_downloaded_items_list) + 1
-                    count = int(item['col3'])
-                t = {}
-                t['rank'] = rank
-                t['title'] = item['col2']
-                t['pid_value'] = item['col1']
-                t['count'] = count
-                most_downloaded_items_list.append(t)
-        rankings['most_downloaded_items'] = most_downloaded_items_list
+        rankings['most_downloaded_items'] = \
+            parse_ranking_results(result, list_name='data', title_key='col2',
+                                  count_key='col3', pid_key='col1')
 
     # created_most_items_user
     if settings.rankings['created_most_items_user']:
-        created_most_items_user_list = []
         result \
             = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
                                            end_date=end_date.strftime(
@@ -875,24 +852,23 @@ def ranking():
                                            agg_size=settings.display_rank,
                                            agg_sort={'key_name': 'count',
                                                      'order': 'desc'})
-        if result and 'data' in result:
-            rank = 1
-            count = 0
-            for item in result['data']:
-                if not count == int(item['count']):
-                    rank = len(created_most_items_user_list) + 1
-                    count = int(item['count'])
-                t = {}
-                t['rank'] = rank
-                t['username'] = item['username']
-                t['count'] = count
-                created_most_items_user_list.append(t)
-        rankings['created_most_items_user'] = created_most_items_user_list
+        rankings['created_most_items_user'] = \
+            parse_ranking_results(result, list_name='data',
+                                  title_key='username', count_key='count',
+                                  pid_key='')
 
     # most_searched_keywords
     if settings.rankings['most_searched_keywords']:
-        most_searched_keywords_list = []
-        rankings['most_searched_keywords'] = most_searched_keywords_list
+        result = QuerySearchReportHelper.get(
+            start_date=start_date.strftime('%Y-%m-%d'),
+            end_date=end_date.strftime('%Y-%m-%d'),
+            agg_size=settings.display_rank,
+            agg_sort={'key_name': 'count', 'order': 'desc'}
+        )
+        rankings['most_searched_keywords'] = \
+            parse_ranking_results(result, list_name='all',
+                                  title_key='search_key', count_key='count',
+                                  pid_key='')
 
     # new_items
     if settings.rankings['new_items']:
