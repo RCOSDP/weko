@@ -820,7 +820,6 @@ def ranking():
                                                  agg_size=settings.display_rank,
                                                  agg_sort={'key_name':'total_all',
                                                            'order':'desc'})
-        current_app.logger.debug(result)
         if result and 'all' in result:
             rank = 1
             count = 0
@@ -846,7 +845,6 @@ def ranking():
                                               agg_size=settings.display_rank,
                                               agg_sort={'key_name':'col3',
                                                         'order':'desc'})
-        current_app.logger.debug(result)
         if result and 'data' in result:
             rank = 1
             count = 0
@@ -865,6 +863,26 @@ def ranking():
     # created_most_items_user
     if settings.rankings['created_most_items_user']:
         created_most_items_user_list = []
+        result \
+        = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                       end_date=end_date.strftime('%Y-%m-%d'),
+                                       target_report='0',
+                                       unit='User',
+                                       agg_size=settings.display_rank,
+                                       agg_sort={'key_name':'count',
+                                                 'order':'desc'})
+        if result and 'data' in result:
+            rank = 1
+            count = 0
+            for item in result['data']:
+                if not count == int(item['count']):
+                    rank = len(created_most_items_user_list) + 1
+                    count = int(item['count'])
+                t = {}
+                t['rank'] = rank
+                t['username'] = item['username']
+                t['count'] = count
+                created_most_items_user_list.append(t)
         rankings['created_most_items_user'] = created_most_items_user_list
 
     # most_searched_keywords
