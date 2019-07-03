@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module of weko-items-ui utils.."""
-
+from datetime import datetime
 from flask_login import current_user
 from invenio_db import db
 from sqlalchemy import MetaData, Table
@@ -287,21 +287,50 @@ def get_actionid(endpoint):
             return None
 
 
-def parse_ranking_results(results, list_name='all', title_key='title',
-                          count_key='count', pid_key=''):
+def parse_ranking_results(results, display_rank, list_name='all',
+                          title_key='title', count_key=None, pid_key=None,
+                          search_key=None, date_key=None):
     """Parse the raw stats results to be usable by the view."""
     ranking_list = []
+    if pid_key:
+        url = '../records/{0}'
+        key = pid_key
+    elif search_key:
+        url = '../search?page=1&size=20&search_type=1&q={0}'
+        key = search_key
+    else:
+        url = None
+
     if results and list_name in results:
         rank = 1
         count = 0
+        date = ''
         for item in results[list_name]:
-            if not count == int(item[count_key]):
-                rank = len(ranking_list) + 1
-                count = int(item[count_key])
             t = {}
-            t['rank'] = rank
-            t['title'] = item[title_key]
-            t['pid_value'] = item[pid_key] if pid_key in item else ''
-            t['count'] = count
+            if count_key:
+                if not count == int(item[count_key]):
+                    rank = len(ranking_list) + 1
+                    count = int(item[count_key])
+                t['rank'] = rank
+                t['count'] = count
+            elif date_key:
+                new_date = \
+                datetime.utcfromtimestamp(item[date_key]).strftime('%Y-%m-%d')
+                if new_date == date:
+                    t['date'] = ''
+                else:
+                    t['date'] = new_date
+                    date = new_date
+            title = item[title_key]
+            if title_key == 'user_id':
+                user_info = UserProfile.get_by_userid(title)
+                if user_info:
+                    title = user_info.username
+                else:
+                    title = 'None'
+            t['title'] = title
+            t['url'] = url.format(item[key]) if url and key in item else None
             ranking_list.append(t)
+            if len(ranking_list) == display_rank:
+                break
     return ranking_list
