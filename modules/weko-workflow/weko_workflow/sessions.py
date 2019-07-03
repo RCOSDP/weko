@@ -29,11 +29,11 @@ from simplekv.memory.redisstore import RedisStore
 from .api import WorkActivity
 
 
-def upt_activity_item(app, username, item_id, item_title):
+def upt_activity_item(app, user_id, item_id, item_title):
     """Connect to the item_created signal.
 
     :param app:
-    :param username:
+    :param user_id:
     :param item_id:
     :param item_title
     :return:
