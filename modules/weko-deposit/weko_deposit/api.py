@@ -27,7 +27,6 @@ from flask import abort, current_app, has_request_context, json, session
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
-from weko_records.models import ItemMetadata
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_indexer.api import RecordIndexer
