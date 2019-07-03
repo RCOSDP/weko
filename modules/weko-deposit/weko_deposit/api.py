@@ -45,6 +45,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
+from weko_records.models import ItemMetadata
 from weko_records.utils import get_all_items, get_options_and_order_list, \
     json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
