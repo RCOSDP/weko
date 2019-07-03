@@ -167,7 +167,6 @@
     </div>
 </div>
 </div>
-<hr>
 
 <!-- Set email addresses -->
 <form  name="email_form" method="POST" id="email_form"
@@ -181,41 +180,35 @@
     <input type="hidden" id="email_address_length"
       value="{{(emails | length) if emails else 1}}">
 
-    {% if not emails %}
-      <div class="form-group col-xs-11 col-md-5 col-md-offset-3">
-        <input type="email" class="form-control inputEmail" id="inputEmail_0"
-          pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
-          name="inputEmail"
-          placeholder="{{_('Enter email address.')}}"
-          value="" required/></br>
-      </div>
-    {% endif %}
+    <div class="form-group col-xs-11 col-md-5 col-md-offset-3">
+      <input type="email" class="form-control inputEmail" id="inputEmail_0"
+        pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+        name="inputEmail"
+        placeholder="{{_('Enter email address.')}}"
+        value="" required/></br>
+    </div>
     {% for email in emails %}
       <div id="emailID_{{email.id}}">
         <div class="form-group col-xs-11 col-md-5 col-md-offset-3">
-          <input type="email" class="form-control inputEmail" id="inputEmail_{{email.id}}"
+          <input type="email" class="form-control inputEmail" id="inputEmail_{{email.id + 1}}"
             pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
             name="inputEmail"
             placeholder="{{_('Enter email address.')}}"
             value={{email.email_address}} required/></br>
         </div>
-        {% set limit = (emails | length) %}
-        {% if loop.index == 1 %}
-          <div class="col-xs-1 col-md-1"></div>
-        {% else %}
-          <div class="col-xs-1 col-md-1">
-              <a class="btn-default remove-button"
-                  onclick="$('#inputEmail_{{email.id}}').remove();"  id="remove_button">
-                  <span class="glyphicon glyphicon-remove"></span>
-              </a>
-          </div>
-        {% endif %}
+        <div class="col-xs-1 col-md-1">
+            <a class="btn-default remove-button"
+                onclick="var email = document.getElementById('inputEmail_{{email.id + 1}}').parentElement.parentElement; email.parentElement.removeChild(email)"  id="remove_button">
+                <span class="glyphicon glyphicon-remove"></span>
+            </a>
+        </div>
       </div>
     {% endfor %}
     <div id="newEmail" class="form-group" id="emailAdd"></div>
-    </div>
+
     <div class="col-xs-1 col-md-3 col-lg-3"></div>
     <div class="form-actions col-xs-8 col-md-8 col-lg-8">
+        <div class="col-xs-4 col-md-4 col-lg-4"></div>
         <div class="col-xs-2 col-md-2 col-lg-2">
           <a id="addEmail" class="btn btn-light add-big-button">
               <span class="glyphicon glyphicon-plus"></span>
@@ -230,7 +223,8 @@
           </a>
         </div>
     </div>
-  </form>
+    <div class="col-xs-1 col-md-1 col-lg-1"></div>
+</form>
 
 <!-- Scheduled Mail Delivery -->
 {% from "weko_admin/partials/email_schedule.html" import email_schedule_form %}
