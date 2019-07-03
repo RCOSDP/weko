@@ -75,20 +75,28 @@ $(document).ready(function () {
    });
 
   $('#saveEmail').on('click', function () {
-      // save invalid address if entered
-      if (!document.getElementById('email_form').checkValidity()) {
-        let invalidInput = document.getElementById('inputEmail_0').value;
-        localStorage.setItem('invalidInput', invalidInput);
+      // save any invalid addresses
+      let invalidInputs = Array.from(document.getElementById('email_form').elements).filter(function(element){
+        return element.type == 'email' &&  element.value && !element.checkValidity();
+      });
+      let invalidEmails = [];
+      for (let element of invalidInputs) {
+        invalidEmails.push(element.value);
       }
+      localStorage.setItem('invalidEmails', JSON.stringify(invalidEmails));
       $('#email_form').submit();
   });
 
-  // load invalid address if saved
-  let invalidInput = localStorage.getItem('invalidInput');
-  if (invalidInput) {
-    document.getElementById('inputEmail_0').value = invalidInput;
+  // check before parsing to prevent error in case of empty string
+  if (localStorage.getItem('invalidEmails')) {
+    // load invalid address if saved
+    let invalidEmails = JSON.parse(localStorage.getItem('invalidEmails'));
+    for (let email of invalidEmails) {
+      document.getElementById('inputEmail_0').value = email;
+      moreEmail();
+    }
     // one time only
-    localStorage.setItem('invalidInput', '');
+    localStorage.setItem('invalidEmails', '');
   }
 });
 
@@ -137,7 +145,7 @@ function addAlert(message) {
 }
 
 function moreEmail(){
-  
+
   let removableEmailField = document.createElement('div');
 
   let emailInputDiv = document.createElement('div');
