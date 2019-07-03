@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-authors 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:29+0900\n"
+"POT-Creation-Date: 2019-07-02 04:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,12 +18,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_authors/views.py:86 weko_authors/views.py:114 weko_authors/views.py:143
+#: weko_authors/admin.py:69
+msgid "Setting"
+msgstr ""
+
+#: weko_authors/admin.py:70
+msgid "Author Management"
+msgstr ""
+
+#: weko_authors/views.py:56 weko_authors/views.py:84 weko_authors/views.py:113
 msgid "Header Error"
 msgstr ""
 
-#: weko_authors/views.py:104 weko_authors/views.py:133
-#: weko_authors/views.py:157
+#: weko_authors/views.py:74 weko_authors/views.py:103 weko_authors/views.py:127
 msgid "Success"
 msgstr ""
 
