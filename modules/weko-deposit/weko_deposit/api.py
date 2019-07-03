@@ -27,6 +27,7 @@ from flask import abort, current_app, has_request_context, json, session
 from flask_security import current_user
 from invenio_db import db
 from invenio_deposit.api import Deposit, index, preserve
+from weko_records.models import ItemMetadata
 from invenio_files_rest.models import Bucket, MultipartObject, ObjectVersion, \
     Part
 from invenio_indexer.api import RecordIndexer
@@ -691,7 +692,7 @@ class WekoDeposit(Deposit):
         if index_lst:
             index_id_lst = []
             for index in index_lst:
-                indexes = index.split('/')
+                indexes = str(index).split('/')
                 index_id_lst.append(indexes[len(indexes) - 1])
             index_lst = index_id_lst
 
