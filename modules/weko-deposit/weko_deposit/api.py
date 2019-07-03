@@ -337,7 +337,8 @@ class WekoDeposit(Deposit):
             deposit = super(WekoDeposit, self).publish(pid, id_)
 
             # update relation version current to ES
-            pid = PersistentIdentifier.get('recid', self.data.get('id'))
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', object_uuid=self.id).first()
             relations = serialize_relations(pid)
             if relations is not None and 'version' in relations:
                 relations_ver = relations['version'][0]
@@ -638,7 +639,7 @@ class WekoDeposit(Deposit):
             if not dc_owner:
                 self.data.update(dict(owner=current_user_id))
 
-        if self.is_edit:
+        if ItemMetadata.query.filter_by(id=self.id).first():
             obj = ItemsMetadata.get_record(self.id)
             obj.update(self.data)
             obj.commit()
