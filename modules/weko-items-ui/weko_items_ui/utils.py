@@ -20,6 +20,7 @@
 
 """Module of weko-items-ui utils.."""
 from datetime import datetime
+
 from flask_login import current_user
 from invenio_db import db
 from sqlalchemy import MetaData, Table
@@ -315,7 +316,8 @@ def parse_ranking_results(results, display_rank, list_name='all',
                 t['count'] = count
             elif date_key:
                 new_date = \
-                datetime.utcfromtimestamp(item[date_key]).strftime('%Y-%m-%d')
+                    datetime.utcfromtimestamp(
+                        item[date_key]).strftime('%Y-%m-%d')
                 if new_date == date:
                     t['date'] = ''
                 else:

@@ -44,6 +44,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemsMetadata, ItemTypes
+from weko_records.models import ItemMetadata
 from weko_records.utils import get_all_items, get_options_and_order_list, \
     json_loader, set_timestamp
 from weko_user_profiles.models import UserProfile
@@ -337,7 +338,8 @@ class WekoDeposit(Deposit):
             deposit = super(WekoDeposit, self).publish(pid, id_)
 
             # update relation version current to ES
-            pid = PersistentIdentifier.get('recid', self.data.get('id'))
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', object_uuid=self.id).first()
             relations = serialize_relations(pid)
             if relations is not None and 'version' in relations:
                 relations_ver = relations['version'][0]
@@ -634,7 +636,7 @@ class WekoDeposit(Deposit):
             if not dc_owner:
                 self.data.update(dict(owner=current_user_id))
 
-        if self.is_edit:
+        if ItemMetadata.query.filter_by(id=self.id).first():
             obj = ItemsMetadata.get_record(self.id)
             obj.update(self.data)
             obj.commit()
@@ -686,7 +688,7 @@ class WekoDeposit(Deposit):
         if index_lst:
             index_id_lst = []
             for index in index_lst:
-                indexes = index.split('/')
+                indexes = str(index).split('/')
                 index_id_lst.append(indexes[len(indexes) - 1])
             index_lst = index_id_lst
 
