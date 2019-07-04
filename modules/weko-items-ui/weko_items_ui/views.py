@@ -812,7 +812,8 @@ def ranking():
     settings = RankingSettings.get()
     # get statistical period
     end_date = date.today()  # - timedelta(days=1)
-    start_date = end_date - timedelta(days=int(settings.statistical_period)-1)
+    start_date = end_date - \
+        timedelta(days=int(settings.statistical_period) - 1)
 
     rankings = {}
     # most_reviewed_items
@@ -866,7 +867,7 @@ def ranking():
             end_date=end_date.strftime('%Y-%m-%d'),
             agg_size=settings.display_rank,
             agg_sort={'key_name': 'count', 'order': 'desc'},
-            agg_filter={'search_type': [0,1]}
+            agg_filter={'search_type': [0, 1]}
         )
         rankings['most_searched_keywords'] = \
             parse_ranking_results(result, settings.display_rank,
@@ -876,7 +877,7 @@ def ranking():
     # new_items
     if settings.rankings['new_items']:
         new_item_start_date = end_date - \
-            timedelta(days=int(settings.new_item_period)-1)
+            timedelta(days=int(settings.new_item_period) - 1)
         new_items_list = []
         result = QueryCommonReportsHelper.get(
             start_date=new_item_start_date.strftime('%Y-%m-%d'),
