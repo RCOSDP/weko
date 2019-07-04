@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-03 02:23+0000\n"
+"POT-Creation-Date: 2019-07-04 02:04+0000\n"
 "PO-Revision-Date: 2018-01-19 19:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -70,71 +70,71 @@ msgstr "スケジュールを変更しました"
 msgid "Could Not Save Changes."
 msgstr "変更を保存できませんでした"
 
-#: weko_admin/admin.py:417 weko_admin/admin.py:525
+#: weko_admin/admin.py:419 weko_admin/admin.py:527
 msgid "Successfully Changed Settings."
 msgstr "設定を変更しました"
 
-#: weko_admin/admin.py:438
+#: weko_admin/admin.py:440
 msgid "Could not save data."
 msgstr "データを保存できませんでした"
 
-#: weko_admin/admin.py:450
+#: weko_admin/admin.py:452
 msgid "Could not get restricted data: "
 msgstr "制限付きデータを取得できませんでした"
 
-#: weko_admin/admin.py:451
+#: weko_admin/admin.py:453
 msgid "Could not get restricted data."
 msgstr "制限付きデータを取得できませんでした"
 
-#: weko_admin/admin.py:529
+#: weko_admin/admin.py:531
 msgid "Failurely Changed Settings."
 msgstr "設定変更に失敗しました"
 
-#: weko_admin/admin.py:632 weko_admin/admin.py:650 weko_admin/admin.py:659
-#: weko_admin/admin.py:668 weko_admin/admin.py:677 weko_admin/admin.py:686
-#: weko_admin/admin.py:695 weko_admin/admin.py:704
+#: weko_admin/admin.py:634 weko_admin/admin.py:652 weko_admin/admin.py:661
+#: weko_admin/admin.py:670 weko_admin/admin.py:679 weko_admin/admin.py:688
+#: weko_admin/admin.py:697 weko_admin/admin.py:706
 msgid "Setting"
 msgstr "設定"
 
-#: weko_admin/admin.py:633
+#: weko_admin/admin.py:635
 msgid "Style"
 msgstr "様式"
 
-#: weko_admin/admin.py:641
+#: weko_admin/admin.py:643
 msgid "Statistics"
 msgstr "統計"
 
-#: weko_admin/admin.py:642
+#: weko_admin/admin.py:644
 msgid "Report"
 msgstr "レポート"
 
-#: weko_admin/admin.py:651
+#: weko_admin/admin.py:653
 msgid "Stats"
 msgstr "統計"
 
-#: weko_admin/admin.py:660
+#: weko_admin/admin.py:662
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:45
 msgid "Log Analysis"
 msgstr "ログ分析"
 
-#: weko_admin/admin.py:669
+#: weko_admin/admin.py:671
 #, fuzzy
 msgid "Language"
 msgstr "言語"
 
-#: weko_admin/admin.py:678
+#: weko_admin/admin.py:680
 msgid "WebAPI Account"
 msgstr ""
 
-#: weko_admin/admin.py:687
+#: weko_admin/admin.py:689
 msgid "Ranking"
 msgstr "ランキング"
 
-#: weko_admin/admin.py:696
+#: weko_admin/admin.py:698
 msgid "Search"
 msgstr "検索"
 
-#: weko_admin/admin.py:705 weko_admin/config.py:127 weko_admin/config.py:132
+#: weko_admin/admin.py:707 weko_admin/config.py:127 weko_admin/config.py:132
 msgid "Site License"
 msgstr "サイトライセンス"
 
@@ -425,7 +425,7 @@ msgstr "ようこそ"
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:169
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:191
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:145
-#: weko_admin/templates/weko_admin/admin/report.html:229
+#: weko_admin/templates/weko_admin/admin/report.html:222
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:213
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:202
 #: weko_admin/templates/weko_admin/admin/stats_settings.html:71
@@ -488,7 +488,7 @@ msgid "Shared Crawler Lists"
 msgstr "共有クローラーリスト"
 
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:183
-#: weko_admin/templates/weko_admin/admin/report.html:248
+#: weko_admin/templates/weko_admin/admin/report.html:245
 msgid "Confirmation"
 msgstr "確認"
 
@@ -497,7 +497,7 @@ msgid "Are you sure you want to block the given addresses?"
 msgstr "与えられたアドレスをブロックしてもよろしいですか？"
 
 #: weko_admin/templates/weko_admin/admin/log_analysis_settings.html:195
-#: weko_admin/templates/weko_admin/admin/report.html:273
+#: weko_admin/templates/weko_admin/admin/report.html:270
 msgid "Close"
 msgstr "閉じる"
 
@@ -519,7 +519,7 @@ msgstr "オフ"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:58
 msgid "Period To Judge As New Item"
-msgstr "新項目として判断する期間"
+msgstr "新着アイテムとして判断する期間"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:64
 msgid "Day (Range : 1~30)"
@@ -535,7 +535,7 @@ msgstr "日"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:77
 msgid "Display Rank"
-msgstr "ランクを表示"
+msgstr "表示する順位"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:85
 msgid "Rankings"
@@ -543,7 +543,7 @@ msgstr "ランキング"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:91
 msgid "The Most Reviewed Items"
-msgstr "最もレビューされたアイテム"
+msgstr "最も閲覧されたアイテム"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:102
 msgid "Most Downloaded Items"
@@ -559,7 +559,7 @@ msgstr "最も検索されたキーワード"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:135
 msgid "New Items"
-msgstr "新規アイテム"
+msgstr "新着アイテム"
 
 #: weko_admin/templates/weko_admin/admin/ranking_settings.html:149
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:68
@@ -652,41 +652,41 @@ msgstr "ダウンロード"
 msgid "Send"
 msgstr "送信"
 
-#: weko_admin/templates/weko_admin/admin/report.html:178
+#: weko_admin/templates/weko_admin/admin/report.html:177
 msgid "Receive Mail"
 msgstr "メール受信"
 
-#: weko_admin/templates/weko_admin/admin/report.html:179
+#: weko_admin/templates/weko_admin/admin/report.html:178
 msgid "Please register the email address to send the report:"
 msgstr "レポートを送信するためのメールアドレスを登録してください:"
 
-#: weko_admin/templates/weko_admin/admin/report.html:189
-#: weko_admin/templates/weko_admin/admin/report.html:199
+#: weko_admin/templates/weko_admin/admin/report.html:187
+#: weko_admin/templates/weko_admin/admin/report.html:196
 msgid "Enter email address."
 msgstr "メールアドレスを入力してください"
 
-#: weko_admin/templates/weko_admin/admin/report.html:222
+#: weko_admin/templates/weko_admin/admin/report.html:215
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:79
 msgid "Email Address"
 msgstr "メールアドレス"
 
-#: weko_admin/templates/weko_admin/admin/report.html:249
+#: weko_admin/templates/weko_admin/admin/report.html:246
 msgid "Are you sure you want to save changes?"
 msgstr "変更してもよろしいですか？"
 
-#: weko_admin/templates/weko_admin/admin/report.html:256
+#: weko_admin/templates/weko_admin/admin/report.html:253
 msgid "Send Mail"
 msgstr "メール送信"
 
-#: weko_admin/templates/weko_admin/admin/report.html:257
+#: weko_admin/templates/weko_admin/admin/report.html:254
 msgid "Are you sure you want to send the mail?"
 msgstr "メールを送信してもよろしいですか？"
 
-#: weko_admin/templates/weko_admin/admin/report.html:265
+#: weko_admin/templates/weko_admin/admin/report.html:262
 msgid "Error"
 msgstr "エラー"
 
-#: weko_admin/templates/weko_admin/admin/report.html:268
+#: weko_admin/templates/weko_admin/admin/report.html:265
 msgid "Could not download file."
 msgstr "ファイルをダウンロードできませんでした"
 

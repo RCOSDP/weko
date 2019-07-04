@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-items-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-07-03 04:22+0000\n"
+"POT-Creation-Date: 2019-07-04 02:07+0000\n"
 "PO-Revision-Date: 2018-01-22 15:20+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja_JP\n"
@@ -122,11 +122,11 @@ msgstr "登録するアイテムタイプがありません"
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:44
 msgid "Aggregation Period"
-msgstr "集約期間"
+msgstr "統計期間"
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:51
 msgid "The Most Reviewed Items"
-msgstr "最もレビューされたアイテム"
+msgstr "最も閲覧されたアイテム"
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:57
 msgid "Most Downloaded Items"
@@ -142,7 +142,7 @@ msgstr "最も検索されたキーワード"
 
 #: weko_items_ui/templates/weko_items_ui/ranking.html:75
 msgid "New Items"
-msgstr "新規アイテム"
+msgstr "新着アイテム"
 
 #: weko_items_ui/templates/weko_items_ui/upload.html:42
 msgid "Select Files"
@@ -253,7 +253,7 @@ msgstr "戻る"
 
 #: weko_items_ui/templates/weko_items_ui/macros/ranking_list.html:31
 msgid "place"
-msgstr "場所"
+msgstr "位"
 
 #~ msgid "Item Test Data"
 #~ msgstr "アイテムテストデータ"
