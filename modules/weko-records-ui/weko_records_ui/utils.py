@@ -54,7 +54,10 @@ def is_billing_item(item_type_id):
     if item_type:
         properties = item_type.schema['properties']
         for meta_key in properties:
-            if 'properties' in properties[meta_key] and  \
+            if properties[meta_key]['type'] == 'object' and \
                'groupsprice' in properties[meta_key]['properties']:
+                return True
+            elif properties[meta_key]['type'] == 'array' and \
+               'groupsprice' in properties[meta_key]['items']['properties']:
                 return True
         return False
