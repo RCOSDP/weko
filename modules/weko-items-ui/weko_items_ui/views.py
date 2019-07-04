@@ -821,8 +821,7 @@ def ranking():
                                                  end_date=end_date.strftime(
                                                      '%Y-%m-%d'),
                                                  agg_size=settings.display_rank,
-                                                 agg_sort={'key_name': 'total_all',
-                                                           'order': 'desc'})
+                                                 agg_sort={'value': 'desc'})
         rankings['most_reviewed_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='all', title_key='record_name',
@@ -836,8 +835,7 @@ def ranking():
                                               target_report='3',
                                               unit='Item',
                                               agg_size=settings.display_rank,
-                                              agg_sort={'key_name': 'col3',
-                                                        'order': 'desc'})
+                                              agg_sort={'_count': 'desc'})
         rankings['most_downloaded_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='data', title_key='col2',
@@ -852,8 +850,7 @@ def ranking():
                                            target_report='0',
                                            unit='User',
                                            agg_size=settings.display_rank,
-                                           agg_sort={'key_name': 'count',
-                                                     'order': 'desc'})
+                                           agg_sort={'_count': 'desc'})
         rankings['created_most_items_user'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='data',
@@ -865,7 +862,7 @@ def ranking():
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
             agg_size=settings.display_rank,
-            agg_sort={'key_name': 'count', 'order': 'desc'},
+            agg_sort={'value': 'desc'},
             agg_filter={'search_type': [0,1]}
         )
         rankings['most_searched_keywords'] = \
@@ -877,15 +874,16 @@ def ranking():
     if settings.rankings['new_items']:
         new_item_start_date = end_date - \
             timedelta(days=int(settings.new_item_period)-1)
+        if new_item_start_date < start_date:
+            new_item_start_date = start_date
         new_items_list = []
         result = QueryCommonReportsHelper.get(
             start_date=new_item_start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
             event='item_create',
             agg_size=settings.display_rank,
-            agg_sort={'key_name': 'create_date', 'order': 'desc'}
+            agg_sort={'_term': 'desc'}
         )
-        current_app.logger.debug(result)
         rankings['new_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='all', title_key='record_name',
