@@ -23,6 +23,20 @@
 from invenio_db import db
 from weko_records.api import ItemsMetadata
 from weko_workflow.models import ActionStatusPolicy, Activity
+from flask import current_app
+
+import redis
+from simplekv.memory.redisstore import RedisStore
+
+def check_email_display_setting():
+    datastore = RedisStore(redis.StrictRedis.from_url(
+        current_app.config['CACHE_REDIS_URL']))
+    cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        format(name='email_display')
+    if not datastore.redis.exists(cache_key):
+        datastore.put(cache_key,
+                      str(current_app.config['EMAIL_DISPLAY_FLG']).encode('utf-8'))
+    current_app.config['EMAIL_DISPLAY_FLG'] = eval(datastore.get(cache_key))
 
 
 def get_item_pidstore_identifier(object_uuid):
