@@ -58,6 +58,6 @@ def is_billing_item(item_type_id):
                'groupsprice' in properties[meta_key]['properties']:
                 return True
             elif properties[meta_key]['type'] == 'array' and \
-               'groupsprice' in properties[meta_key]['items']['properties']:
+                    'groupsprice' in properties[meta_key]['items']['properties']:
                 return True
         return False
