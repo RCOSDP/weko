@@ -28,11 +28,15 @@
       <table class="table table-striped  table-hover model-list">
         {% for item in rankings %}
           <tr>
-            <td  align="right">{{ item['rank'] }} {{ _('place') }}</td>
-            <td>({{ item['count'] }})</td>
+            {% if 'rank' in item %}
+              <td  align="right">{{ item['rank'] }} {{ _('place') }}</td>
+              <td>({{ item['count'] }})</td>
+            {% else %}
+                <td colspan="2" align="center"><b>{{ item['date'] }}</b></td>
+            {% endif %}
             <td width="90%">
-              {% if ('pid_value' in item and item['pid_value']) %}
-                <a href='../records/{{ item['pid_value'] }}'>
+              {% if item['url'] %}
+                <a href={{ item['url'] }}>
                     {{ item['title'] }}
                 </a>
               {% else %}

@@ -423,16 +423,12 @@ class WekoDeposit(Deposit):
         super(WekoDeposit, self).update(dc)
         if has_request_context():
             if current_user:
-                user = UserProfile.get_by_userid(current_user.get_id())
-                if user:
-                    username = user.username
-                else:
-                    username = ''
+                user_id = current_user.get_id()
             else:
-                username = ''
+                user_id = -1
             item_created.send(
                 current_app._get_current_object(),
-                username=username,
+                user_id=user_id,
                 item_id=self.pid,
                 item_title=self.data['title']
             )
