@@ -865,7 +865,8 @@ def ranking():
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
             agg_size=settings.display_rank,
-            agg_sort={'key_name': 'count', 'order': 'desc'}
+            agg_sort={'key_name': 'count', 'order': 'desc'},
+            agg_filter={'search_type': [0,1]}
         )
         rankings['most_searched_keywords'] = \
             parse_ranking_results(result, settings.display_rank,
