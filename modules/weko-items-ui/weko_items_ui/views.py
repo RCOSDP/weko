@@ -34,8 +34,9 @@ from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
-from invenio_stats.utils import QueryItemRegReportHelper, \
-    QueryRecordViewReportHelper, QuerySearchReportHelper
+from invenio_stats.utils import QueryCommonReportsHelper, \
+    QueryItemRegReportHelper, QueryRecordViewReportHelper, \
+    QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
 from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
@@ -811,7 +812,7 @@ def ranking():
     settings = RankingSettings.get()
     # get statistical period
     end_date = date.today()  # - timedelta(days=1)
-    start_date = end_date - timedelta(days=int(settings.statistical_period))
+    start_date = end_date - timedelta(days=int(settings.statistical_period)-1)
 
     rankings = {}
     # most_reviewed_items
@@ -823,8 +824,8 @@ def ranking():
                                                  agg_sort={'key_name': 'total_all',
                                                            'order': 'desc'})
         rankings['most_reviewed_items'] = \
-            parse_ranking_results(result, list_name='all',
-                                  title_key='record_name',
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all', title_key='record_name',
                                   count_key='total_all', pid_key='pid_value')
 
     # most_downloaded_items
@@ -838,7 +839,8 @@ def ranking():
                                               agg_sort={'key_name': 'col3',
                                                         'order': 'desc'})
         rankings['most_downloaded_items'] = \
-            parse_ranking_results(result, list_name='data', title_key='col2',
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data', title_key='col2',
                                   count_key='col3', pid_key='col1')
 
     # created_most_items_user
@@ -853,9 +855,9 @@ def ranking():
                                            agg_sort={'key_name': 'count',
                                                      'order': 'desc'})
         rankings['created_most_items_user'] = \
-            parse_ranking_results(result, list_name='data',
-                                  title_key='username', count_key='count',
-                                  pid_key='')
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data',
+                                  title_key='user_id', count_key='count')
 
     # most_searched_keywords
     if settings.rankings['most_searched_keywords']:
@@ -863,17 +865,31 @@ def ranking():
             start_date=start_date.strftime('%Y-%m-%d'),
             end_date=end_date.strftime('%Y-%m-%d'),
             agg_size=settings.display_rank,
-            agg_sort={'key_name': 'count', 'order': 'desc'}
+            agg_sort={'key_name': 'count', 'order': 'desc'},
+            agg_filter={'search_type': [0,1]}
         )
         rankings['most_searched_keywords'] = \
-            parse_ranking_results(result, list_name='all',
-                                  title_key='search_key', count_key='count',
-                                  pid_key='')
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all', title_key='search_key',
+                                  count_key='count', search_key='search_key')
 
     # new_items
     if settings.rankings['new_items']:
+        new_item_start_date = end_date - \
+            timedelta(days=int(settings.new_item_period)-1)
         new_items_list = []
-        rankings['new_items'] = new_items_list
+        result = QueryCommonReportsHelper.get(
+            start_date=new_item_start_date.strftime('%Y-%m-%d'),
+            end_date=end_date.strftime('%Y-%m-%d'),
+            event='item_create',
+            agg_size=settings.display_rank,
+            agg_sort={'key_name': 'create_date', 'order': 'desc'}
+        )
+        current_app.logger.debug(result)
+        rankings['new_items'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all', title_key='record_name',
+                                  pid_key='pid_value', date_key='create_date')
 
     return render_template(current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
                            render_widgets=True,
