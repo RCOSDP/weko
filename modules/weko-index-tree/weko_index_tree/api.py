@@ -319,7 +319,11 @@ class Indexes(object):
             try:
                 # move index on the same hierarchy
                 if str(pre_parent) == str(parent):
-                    parent_info = cls.get_index(pre_parent, with_count=True)
+                    if int(pre_parent) == 0:
+                        parent_info = cls.get_root_index_count()
+                    else:
+                        parent_info = cls.get_index(pre_parent,
+                                                    with_count=True)
                     position = int(data.get('position'))
                     pmax = parent_info.position_max \
                         if parent_info.position_max is not None else 0
@@ -388,7 +392,10 @@ class Indexes(object):
                                 db.session.rollback()
                 else:
                     slf_path = cls.get_self_path(index_id)
-                    parent_info = cls.get_index(parent, with_count=True)
+                    if int(parent) == 0:
+                        parent_info = cls.get_root_index_count()
+                    else:
+                        parent_info = cls.get_index(parent, with_count=True)
                     position_max = parent_info.position_max + 1 \
                         if parent_info.position_max is not None else 0
                     try:
@@ -396,8 +403,11 @@ class Indexes(object):
                     except IntegrityError as ie:
                         if 'uix_position' in ''.join(ie.args):
                             try:
-                                parent_info = cls.get_index(parent,
-                                                            with_count=True)
+                                if int(parent) == 0:
+                                    parent_info = cls.get_root_index_count()
+                                else:
+                                    parent_info = \
+                                        cls.get_index(parent, with_count=True)
                                 position_max = parent_info.position_max + 1 \
                                     if parent_info.position_max is not None \
                                     else 0
@@ -420,7 +430,8 @@ class Indexes(object):
                     from weko_deposit.api import WekoDeposit
                     WekoDeposit.update_by_index_tree_id(slf_path.path,
                                                         target.path)
-            except Exception:
+            except Exception as ex:
+                current_app.logger.debug(ex)
                 is_ok = False
         return is_ok
 
