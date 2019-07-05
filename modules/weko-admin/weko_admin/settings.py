@@ -20,9 +20,12 @@
 """Provide weko-Admin settings instance."""
 
 from invenio_db import db
+
 from .models import Settings
 
+
 def AdminSettings():
+    """AdminSettings."""
     settings = Settings.query.limit(1).first()
     if not settings:
         settings = Settings()
@@ -30,5 +33,3 @@ def AdminSettings():
         db.session.commit()
         settings = Settings.query.limit(1).first()
     return settings
-
-

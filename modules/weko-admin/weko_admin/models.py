@@ -990,11 +990,13 @@ class RankingSettings(db.Model):
 
 class Settings(db.Model):
     """settings."""
+
     __tablename__ = 'admin_settings'
 
     id = db.Column(db.Integer, primary_key=True)
 
     def __setattr__(self, name, value):
+        """Setattr."""
         db.Model.__setattr__(self, name, value)
         db.session.commit()
 
