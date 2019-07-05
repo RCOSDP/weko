@@ -105,17 +105,17 @@
           <strong>{{_(Warning)}}:</strong> {{_('Item type name is blank.')}}
         </div>
         <form class="form-inline">
-          <div class="form-group mr-5">
+          <div class="form-group col-sm-12">
             <label for="itemtype_name">{{_('Item Type')}}:</label>
-            <input type="text" class="form-control" id="itemtype_name"
+            <input type="text" class="form-control width_60" id="itemtype_name"
             placeholder="{{_('Input Type Name')}}" value="">*
+            <label class="radio-inline">
+              <input type="radio" name="radio_versionup" class="radio_versionup" id="upt_version" value="upt">{{_('Version Upgrade')}}
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="radio_versionup" class="radio_versionup" id="new_version" value="new" checked>{{_('New Registration')}}
+            </label>
           </div>
-          <label class="radio-inline">
-            <input type="radio" name="radio_versionup" class="radio_versionup" id="upt_version" value="upt">{{_('Version Upgrade')}}
-          </label>
-          <label class="radio-inline">
-            <input type="radio" name="radio_versionup" class="radio_versionup" id="new_version" value="new" checked>{{_('New Registration')}}
-          </label>
         </form>
       </div>
       <div class="row table-responsive">
