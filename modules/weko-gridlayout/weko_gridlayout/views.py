@@ -8,16 +8,17 @@
 """Module of weko-gridlayout."""
 from __future__ import absolute_import, print_function
 
+from datetime import date, timedelta
+
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
-from datetime import date, timedelta
 
 from .api import WidgetItems
 from .services import WidgetDataLoaderServices, WidgetDesignServices, \
     WidgetItemServices
-from .utils import get_default_language, get_system_language, \
-    get_widget_type_list, get_ES_result_by_date
+from .utils import get_default_language, get_ES_result_by_date, \
+    get_system_language, get_widget_type_list
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -190,7 +191,7 @@ def get_new_arrivals_data(widget_id):
 
 @blueprint_api.route('get_rss_data', methods=['GET'])
 def get_rss_data():
-    """Get rss data based on term
+    """Get rss data based on term.
 
     Returns:
         xml -- RSS data
