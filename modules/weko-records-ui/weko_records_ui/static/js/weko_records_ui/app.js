@@ -39,7 +39,7 @@
           }).then(function successCallback(response) {
               $('#bodyModal').append(createRow(response['data']));
               if($('#billing_file_permission').val()){
-                handleDownloadBillingFile();
+                handleDownloadBillingFile(true);
               }
           }, function errorCallback(response) {
               console.log('Error when trigger api /api/files');
@@ -194,7 +194,7 @@
                 } else {
                   permission += `"false"`;
                 }
-                txt_link = `<a class="billing-file" ${permission} ${selfLink} href="javascript:void(0);">${filename}</a>`;
+                txt_link = `<a class="billing-file-version" ${permission} ${selfLink} href="javascript:void(0);">${filename}</a>`;
               } else {
                 txt_link = `<a href="${ele.links.self}">${filename}</a>`;
               }
@@ -314,12 +314,17 @@
 
 $(function () {
   handleDownloadBillingFile();
+  handleConfirmButton();
 });
 
-function handleDownloadBillingFile(){
-  $('a.billing-file').on('click', function () {
+function handleDownloadBillingFile(isVersionTable = false) {
+  let billingFileHandleName = 'a.billing-file';
+  if (isVersionTable) {
+    billingFileHandleName = 'a.billing-file-version';
+  }
+  $(billingFileHandleName).on('click', function () {
     let downloadPermission = $(this).data('billingFilePermission');
-    if(downloadPermission){
+    if (downloadPermission) {
       let url = $(this).data('billingFileUrl');
       let price = $(this).data('billingFilePrice');
       let confirmMsg = $("#download_confirm_message").val().replace("XXXXX", price);
@@ -327,12 +332,14 @@ function handleDownloadBillingFile(){
       $("#confirm_download_button").data('billingFileUrl', url);
       $("#confirm_download").modal("show");
     } else {
-      let permissionErrorMsg =  "The file cannot be downloaded because you do not have permission to view this file.";
+      let permissionErrorMsg = "The file cannot be downloaded because you do not have permission to view this file.";
       $("#inputModal").html(permissionErrorMsg);
       $("#allModal").modal("show");
     }
   });
+}
 
+function handleConfirmButton() {
   $('button#confirm_download_button').on('click', function () {
     let url = $(this).data('billingFileUrl');
     let link = document.createElement("a");
