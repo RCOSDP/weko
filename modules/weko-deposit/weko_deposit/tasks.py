@@ -85,7 +85,7 @@ def update_items_by_id(p_path, target):
                     obj['path'] = new_path_lst
                 obj.update_item_by_task()
                 try:
-                    obj.indexer.update_path(obj)
+                    obj.indexer.update_path(obj, False)
                 except TransportError:
                     current_app.logger.exception(
                         'Could not updated index {0}.'.format(result))
