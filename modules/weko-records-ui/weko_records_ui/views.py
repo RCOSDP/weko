@@ -47,6 +47,8 @@ from weko_workflow.models import ActionStatusPolicy
 
 from weko_records_ui.models import InstitutionName
 
+from weko_records_ui.utils import check_items_settings
+
 from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
@@ -328,6 +330,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :returns: The rendered template.
     """
     check_site_license_permission()
+    check_items_settings()
     send_info = {}
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False

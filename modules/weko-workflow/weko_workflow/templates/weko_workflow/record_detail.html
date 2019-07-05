@@ -174,11 +174,9 @@
                             <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br/>
                           {%- endif -%}
                         {%- endfor -%}
-                        {%- if config['EMAIL_DISPLAY_FLG'] -%}
-                          {%- for creatorMail in l['creatorMails'] if creatorMail -%}
-                            <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br/>
-                          {%- endfor -%}
-                        {%- endif -%}
+                        {%- for creatorMail in l['creatorMails'] if creatorMail -%}
+                          <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br/>
+                        {%- endfor -%}
                       {% endfor %}
                     {% else %}
                       {%- for l in lst['attribute_value_mlt'] %}
