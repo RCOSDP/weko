@@ -170,7 +170,11 @@ def json_loader(data, pid):
             # dc js saved on postgresql
             dc_owner = dc.get("owner", None)
             if not dc_owner:
-                dc.update(dict(weko_shared_id=data.get('shared_user_id', None)))
+                dc.update(
+                    dict(
+                        weko_shared_id=data.get(
+                            'shared_user_id',
+                            None)))
                 dc.update(dict(owner=current_user_id))
             else:
                 if current_user_id == int(dc_owner):

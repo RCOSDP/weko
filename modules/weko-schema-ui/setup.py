@@ -88,6 +88,10 @@ setup(
         'invenio_base.apps': [
             'weko_schema_ui = weko_schema_ui:WekoSchemaUI',
         ],
+        'invenio_admin.views': [
+            'weko_schema_ui_oai_schema = '
+            'weko_schema_ui.admin:oai_schema_adminview',
+        ],
         'invenio_base.api_apps': [
             'weko_schema_rest = weko_schema_ui:WekoSchemaREST',
         ],

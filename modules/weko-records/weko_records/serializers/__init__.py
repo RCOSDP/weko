@@ -53,6 +53,7 @@ csl_v1 = WekoJSONSerializer(RecordSchemaCSLJSON, replace_refs=True)
 citeproc_v1 = CiteprocSerializer(csl_v1)
 
 #: CSL-JSON record serializer for individual records.
-csl_v1_response = record_responsify(csl_v1, 'application/vnd.citationstyles.csl+json')
+csl_v1_response = record_responsify(
+    csl_v1, 'application/vnd.citationstyles.csl+json')
 #: CSL Citation Formatter serializer for individual records.
 citeproc_v1_response = record_responsify(citeproc_v1, 'text/x-bibliography')

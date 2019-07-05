@@ -38,11 +38,14 @@ from flask_mail import Attachment
 from invenio_db import db
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
+from weko_records.api import ItemTypes, SiteLicense
 
 from .models import LogAnalysisRestrictedCrawlerList, \
-    LogAnalysisRestrictedIpAddress, RankingSettings, StatisticsEmail
+    LogAnalysisRestrictedIpAddress, RankingSettings, SearchManagement, \
+    StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import allowed_file, get_redis_cache
+from .utils import allowed_file, get_redis_cache, get_response_json, \
+    get_search_setting
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, reset_redis_cache
 
@@ -319,7 +322,7 @@ class ReportView(BaseView):
                 return resp
         except Exception as e:
             current_app.logger.error('Unexpected error: ', e)
-            flash(_('Unexpected Error'))
+            flash(_('Unexpected error occurred.'), 'error')
         return redirect(url_for('report.index'))
 
     @expose('/user_report_data', methods=['GET'])
@@ -354,9 +357,9 @@ class ReportView(BaseView):
 
         try:
             reset_redis_cache(cache_key, json.dumps(schedule))
-            flash(_('Successfully Changed Schedule.'))
+            flash(_('Successfully Changed Schedule.'), 'error')
         except Exception:
-            flash(_('Could Not Save Changes.'))
+            flash(_('Could Not Save Changes.'), 'error')
         return redirect(url_for('report.index'))
 
     @expose('/get_email_address', methods=['POST'])
@@ -365,6 +368,7 @@ class ReportView(BaseView):
         inputEmail = request.form.getlist('inputEmail')
         StatisticsEmail.delete_all_row()
         alert_msg = 'Successfully saved email addresses.'
+        category = 'info'
         for input in inputEmail:
             if input:
                 match = re.match(
@@ -373,7 +377,8 @@ class ReportView(BaseView):
                     StatisticsEmail.insert_email_address(input)
                 else:
                     alert_msg = 'Please check email input fields.'
-        flash(_(alert_msg))
+                    category = 'error'
+        flash(_(alert_msg), category=category)
         return redirect(url_for("report.index"))
 
 
@@ -432,7 +437,7 @@ class LogAnalysisSettings(BaseView):
             except Exception as e:
                 current_app.logger.error(
                     'Could not save restricted data: ', e)
-                flash(_('Could not save data.'))
+                flash(_('Could not save data.'), 'error')
 
         # Get most current restricted addresses/user agents
         try:
@@ -443,9 +448,9 @@ class LogAnalysisSettings(BaseView):
                 LogAnalysisRestrictedCrawlerList \
                     .add_list(current_app.config["WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
                 shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
-        except Exception:
-            current_app.logger.error(_('Could not get restricted data: '),
-                                     sys.exc_info()[0])
+        except Exception as e:
+            current_app.logger.error(_('Could not get restricted data: '), e)
+            flash(_('Could not get restricted data.'), 'error')
             restricted_ip_addresses = []
             shared_crawlers = []
 
@@ -554,6 +559,75 @@ class RankingSettingsView(BaseView):
         )
 
 
+class SearchSettingsView(BaseView):
+    """Search settings view."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Site license setting page."""
+        result = json.dumps(get_search_setting())
+        if 'POST' in request.method:
+            jfy = {}
+            try:
+                # update search setting
+                dbData = request.get_json()
+                res = SearchManagement.get()
+
+                if res:
+                    id = res.id
+                    SearchManagement.update(id, dbData)
+                else:
+                    SearchManagement.create(dbData)
+                jfy['status'] = 201
+                jfy['message'] = 'Search setting was successfully updated.'
+            except BaseException:
+                jfy['status'] = 500
+                jfy['message'] = 'Failed to update search setting.'
+            return make_response(jsonify(jfy), jfy['status'])
+
+        try:
+            return self.render(
+                current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
+                setting_data=result
+            )
+        except BaseException as e:
+            abort(500)
+            # current_app.logger.error('Could not save search settings', e)
+            # flash(_('Unable to change search settings.'), 'error')
+
+
+class SiteLicenseSettingsView(BaseView):
+    """Site License settings view."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Site License settings view."""
+        if 'POST' in request.method:
+            jfy = {}
+            try:
+                # update item types and site license info
+                SiteLicense.update(request.get_json())
+                jfy['status'] = 201
+                jfy['message'] = 'Site license was successfully updated.'
+            except BaseException:
+                jfy['status'] = 500
+                jfy['message'] = 'Failed to update site license.'
+            return make_response(jsonify(jfy), jfy['status'])
+
+        try:
+            # site license list
+            result_list = SiteLicense.get_records()
+            # item types list
+            n_lst = ItemTypes.get_latest()
+            result = get_response_json(result_list, n_lst)
+            return self.render(
+                current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
+                result=json.dumps(result))
+        except BaseException as e:
+            current_app.logger.error('Could not save site license settings', e)
+            abort(500)
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -580,7 +654,6 @@ stats_settings_adminview = {
         'endpoint': 'statssettings'
     }
 }
-
 
 log_analysis_settings_adminview = {
     'view_class': LogAnalysisSettings,
@@ -618,6 +691,24 @@ ranking_settings_adminview = {
     }
 }
 
+search_settings_adminview = {
+    'view_class': SearchSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Search'),
+        'endpoint': 'searchsettings'
+    }
+}
+
+site_license_settings_adminview = {
+    'view_class': SiteLicenseSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Site License'),
+        'endpoint': 'sitelicensesettings'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -625,5 +716,7 @@ __all__ = (
     'web_api_account_adminview',
     'stats_settings_adminview',
     'log_analysis_settings_adminview',
-    'ranking_settings_adminview'
+    'ranking_settings_adminview',
+    'search_settings_adminview',
+    'site_license_settings_adminview',
 )

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-index-tree 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:36+0900\n"
+"POT-Creation-Date: 2019-07-02 06:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,35 +18,40 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_index_tree/admin.py:66
+#: weko_index_tree/admin.py:70
 msgid "The information was updated."
 msgstr ""
 
-#: weko_index_tree/admin.py:113 weko_index_tree/admin.py:122
-msgid "Setting"
-msgstr ""
-
-#: weko_index_tree/admin.py:114
-msgid "Index Tree"
-msgstr ""
-
-#: weko_index_tree/admin.py:123
-msgid "Index Link"
-msgstr ""
-
-#: weko_index_tree/views.py:65
+#: weko_index_tree/admin.py:137
 msgid "No file part"
 msgstr ""
 
-#: weko_index_tree/views.py:70
+#: weko_index_tree/admin.py:142
 msgid "No selected file"
 msgstr ""
 
-#: weko_index_tree/templates/weko_index_tree/base.html:32
+#: weko_index_tree/admin.py:157 weko_index_tree/admin.py:166
+#: weko_index_tree/admin.py:175
+msgid "Setting"
+msgstr ""
+
+#: weko_index_tree/admin.py:158
+msgid "Index Tree"
+msgstr ""
+
+#: weko_index_tree/admin.py:167
+msgid "Index Link"
+msgstr ""
+
+#: weko_index_tree/admin.py:176
+msgid "Edit Tree"
+msgstr ""
+
+#: weko_index_tree/templates/weko_index_tree/base.html:33
 msgid "Add Logo file..."
 msgstr ""
 
-#: weko_index_tree/templates/weko_index_tree/base.html:37
+#: weko_index_tree/templates/weko_index_tree/base.html:38
 msgid "Start upload"
 msgstr ""
 

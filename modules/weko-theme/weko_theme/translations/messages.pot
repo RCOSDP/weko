@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 19:02+0900\n"
+"POT-Creation-Date: 2019-07-02 02:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -142,7 +142,7 @@ msgstr ""
 msgid "Index Link"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_index.html:45
+#: weko_theme/templates/weko_theme/body_index.html:46
 msgid "Index Tree"
 msgstr ""
 
@@ -293,7 +293,7 @@ msgid "Journal Title"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/body_search_detail.html:186
-msgid "ＩＤ"
+msgid "ID"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/body_search_detail.html:192
@@ -393,7 +393,6 @@ msgid "Software"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/body_search_detail.html:299
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:23
 msgid "Item Type"
 msgstr ""
 
@@ -538,39 +537,39 @@ msgid "ANY"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/body_search_detail.html:485
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:103
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:112
 msgid "Clear"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:16
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:18
 msgid "[[key_option.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:24
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:26
 msgid "Enter Input Value"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:28
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:30
 msgid "[[sub_sel_option.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:34
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:36
 msgid "[[sub_check.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:41
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:43
 msgid "[[sub_radio.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:66
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:68
 msgid "[[sub_attr.contents]]"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:88
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:93
 msgid "Add Search Condition"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/body_search_detail_new.html:97
+#: weko_theme/templates/weko_theme/body_search_detail_new.html:106
 msgid "Search"
 msgstr ""
 
@@ -579,9 +578,15 @@ msgid "Top Page"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/footer_editor.html:27
-#: weko_theme/templates/weko_theme/footer_wysiwyg.html:27
 #, python-format
 msgid "<p>Powered by <a href=\"%(link)s\">CERN Data Centre & Invenio</a><p>"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/footer_wysiwyg.html:27
+#, python-format
+msgid ""
+"<p>Powered by <a href=\"%(link)s\" style=\"color: #ffffff;\">CERN Data "
+"Centre & Invenio</a><p>"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/header_editor.html:23
@@ -600,30 +605,6 @@ msgstr ""
 #: weko_theme/templates/weko_theme/header_login.html:44
 #: weko_theme/templates/weko_theme/header_login.html:48
 msgid "Log out"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/page.html:27
-msgid "Menu"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:22
-msgid "Schema Management"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:24
-msgid "Item Management"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:25
-msgid "Search Management"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:26
-msgid "Edit Tree"
-msgstr ""
-
-#: weko_theme/templates/weko_theme/macros/edit_tabs_selector.html:27
-msgid "Management"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/macros/edit_tree_tabs_selector.html:22
@@ -650,21 +631,33 @@ msgstr ""
 msgid "Language:"
 msgstr ""
 
+#: weko_theme/templates/weko_theme/macros/modal_page.html:31
+msgid "WEKO"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/macros/modal_page.html:39
+msgid "Cancel"
+msgstr ""
+
+#: weko_theme/templates/weko_theme/macros/modal_page.html:67
+msgid "Close"
+msgstr ""
+
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:23
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:26
 msgid "Top"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:24
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:28
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:27
 msgid "WorkFlow"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:27
-msgid "Author Management"
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:28
+msgid "Communities"
 msgstr ""
 
-#: weko_theme/templates/weko_theme/macros/tabs_selector.html:29
-msgid "Communities"
+#: weko_theme/templates/weko_theme/macros/tabs_selector.html:30
+msgid "Ranking"
 msgstr ""
 
