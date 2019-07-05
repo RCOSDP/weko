@@ -1002,8 +1002,8 @@ class FeedbackMailSetting(db.Model, Timestamp):
         autoincrement=True)
     """FeedbackMailSetting identifier."""
 
-    author_id = db.Column(
-        db.BigInteger,
+    account_author = db.Column(
+        db.Text,
         nullable=False
     )
     """Author identifier."""
@@ -1015,50 +1015,94 @@ class FeedbackMailSetting(db.Model, Timestamp):
     """Setting to send or not send feedback mail."""
 
     @classmethod
-    def get_all_active(cls, is_sending_feedback=False):
-        """Get all Feedback email setting which not deleted yet.
+    def create(cls, account_author, is_sending_feedback):
+        """Create a feedback mail setting.
 
-        :param is_sending_feedback: sending feedback email setting
-        :return: All active Feedback email setting lists.
+        Arguments:
+            account_author {string} -- author data
+            is_sending_feedback {bool} -- is sending feedback
+
+        Returns:
+            bool -- True if success
+
         """
         try:
-            all = cls.query \
-                .filter(cls.is_sending_feedback.is_(is_sending_feedback)).all()
-        except NoResultFound:
-            return []
-        return all
+            new_record = FeedbackMailSetting()
+            print("abc")
+            with db.session.begin_nested():
+                print("123")
+                new_record.account_author = account_author
+                new_record.is_sending_feedback = is_sending_feedback
+                db.session.add(new_record)
+            print("before commit")
+            db.session.commit()
+            print("after commit")
+        except BaseException:
+            import traceback
+            traceback.print_exc()
+            db.session.rollback()
+            return False
+        return True
 
     @classmethod
-    def update(cls, id=0, data=None):
-        """Update/Create Feedback email setting."""
+    def get_all_feedback_email_setting(cls):
+        """Get all feedback email setting
+
+        Returns:
+            class -- this class
+
+        """
         try:
-            new_data_flag = False
-            settings = cls.query.filter_by(id=id).first()
-            # Creating
-            if not settings:
-                settings = FeedbackMailSetting()
-                new_data_flag = True
-            for k, v in data.items():
-                setattr(settings, k, v)
-
-            if new_data_flag:
-                db.session.add(settings)
-            else:
-                db.session.merge(settings)
-        except BaseException as ex:
-            current_app.logger.debug(ex)
-            raise
-        return cls
+            all = cls.query.all()
+            return all
+        except Exception:
+            return []
 
     @classmethod
-    def delete(cls, id=0):
-        """Delete settings."""
+    def update(cls, account_author, is_sending_feedback, id=1):
+        """Update existed feedback mail setting.
+
+        Arguments:
+            account_author {string} -- author data
+            is_sending_feedback {bool} -- is sending feedback
+
+        Keyword Arguments:
+            id {int} -- the id (default: {1})
+
+        Returns:
+            bool -- True if success
+
+        """
+        try:
+            with db.session.begin_nested():
+                settings = cls.query.all()[0]
+                settings.account_author = account_author
+                settings.is_sending_feedback = is_sending_feedback
+                db.session.merge(settings)
+            db.session.commit()
+            return True
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            return False
+
+    @classmethod
+    def delete(cls, id=1):
+        """Delete the settings. default delete first setting.
+
+        Keyword Arguments:
+            id {int} -- The setting id (default: {1})
+
+        Returns:
+            bool -- true if delete success
+
+        """
         try:
             cls.query.filter_by(id=id).delete()
+            return True
         except BaseException as ex:
             current_app.logger.debug(ex)
-            raise
-        return cls
+            return False
 
 
 __all__ = ([

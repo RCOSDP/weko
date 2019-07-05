@@ -35,10 +35,11 @@ from invenio_i18n.views import set_lang
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_records.api import ItemsMetadata
+from weko_authors.models import Authors
 
 from . import config
 from .models import AdminLangSettings, ApiCertificate, SearchManagement, \
-    StatisticTarget, StatisticUnit
+    StatisticTarget, StatisticUnit, FeedbackMailSetting
 
 
 def get_response_json(result_list, n_lst):
@@ -509,3 +510,146 @@ def get_redis_cache(cache_key):
     except Exception as e:
         current_app.logger.error('Could get value for ' + cache_key, e)
     return None
+
+
+def get_feed_back_email_setting():
+    """Get list feedback email setting.
+
+    Returns:
+        dictionary -- feedback email setting
+
+    """
+    result = {
+        'data': '',
+        'is_sending_feedback': '',
+        'error': ''
+    }
+    setting = FeedbackMailSetting.get_all_feedback_email_setting()
+    if len(setting) == 0:
+        return result
+    list_author_id = setting[0].account_author.split(',')
+    result['is_sending_feedback'] = setting[0].is_sending_feedback
+    list_data = list()
+    for author_id in list_author_id:
+        email = Authors.get_first_email_by_id(author_id)
+        new_data = dict()
+        new_data['author_id'] = author_id
+        new_data['email'] = email
+        list_data.append(new_data)
+    result['data'] = list_data
+    return result
+
+
+def update_feedback_email_setting(data, is_sending_feedback):
+    """Update feedback email setting
+
+    Arguments:
+        data {list} -- data list
+        is_sending_feedback {bool} -- is sending feedback
+
+    Returns:
+        dict -- error message
+
+    """
+    result = {
+        'error': ''
+    }
+    update_result = False
+    if not data:
+        update_result = FeedbackMailSetting.delete()
+        return handle_update_message(
+            result,
+            update_result
+        )
+    error_message = validate_feedback_mail_setting(data)
+    if error_message:
+        result['error'] = error_message
+        return result
+    current_setting = FeedbackMailSetting.get_all_feedback_email_setting()
+    if len(current_setting) == 0:
+        update_result = FeedbackMailSetting.create(
+            convert_feedback_email_data_to_string(data),
+            is_sending_feedback
+        )
+    else:
+        update_result = FeedbackMailSetting.update(
+            convert_feedback_email_data_to_string(data),
+            is_sending_feedback
+        )
+    return handle_update_message(
+        result,
+        update_result
+    )
+
+
+def convert_feedback_email_data_to_string(data, keyword='author_id'):
+    """Convert feedback email data to string
+
+    Arguments:
+        data {list} -- Data list
+
+    Keyword Arguments:
+        keyword {str} -- search keyword (default: {'author_id'})
+
+    Returns:
+        string -- list as string
+
+    """
+    if not isinstance(data, list):
+        return None
+    result = ''
+    for item in data:
+        if item.get(keyword):
+            result = result + ',' + item.get(keyword)
+    return result[1:]
+
+
+def handle_update_message(result, success):
+    """Check query result and return message
+
+    Arguments:
+        result {dict} -- message
+        success {bool} -- query result
+
+    Returns:
+        dict -- message
+
+    """
+    if not success:
+        result['error'] = 'Cannot update Feedback email settings.'
+    return result
+
+
+def validate_feedback_mail_setting(data):
+    """Validate duplicate email and author id
+
+    Arguments:
+        data {list} -- data list
+
+    Returns:
+        string -- error message
+
+    """
+    error_message = None
+    list_author = convert_feedback_email_data_to_string(
+        data
+    ).split(',')
+    list_email = convert_feedback_email_data_to_string(
+        data,
+        'email'
+    ).split(',')
+    new_list = list()
+    for item in list_author:
+        if len(new_list) == 0 or item not in new_list:
+            new_list.append(item)
+        else:
+            error_message = 'Author is duplicated!'
+            return error_message
+    new_list = list()
+    for item in list_email:
+        if len(new_list) == 0 or item not in new_list:
+            new_list.append(item)
+        else:
+            error_message = 'Email is duplicated!'
+            return error_message
+    return error_message

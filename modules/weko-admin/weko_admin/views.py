@@ -41,7 +41,8 @@ from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_initial_stats_report, \
     get_selected_language, get_unit_stats_report, save_api_certification, \
-    update_admin_lang_setting, validate_certification
+    update_admin_lang_setting, validate_certification, \
+    update_feedback_email_setting, get_feed_back_email_setting
 from . import config
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
@@ -467,4 +468,53 @@ def get():
 
     result['item_cnt'] = result_itemCnt
 
+    return jsonify(result)
+
+
+@blueprint_api.route('/update_feedback_mail', methods=['POST'])
+def update_feedback_mail():
+    """ API allow to save feedback mail setting.
+
+    Returns:
+        json -- response result
+
+    """
+    result = {
+        'success': '',
+        'error': ''
+    }
+    data = request.get_json()
+    response = update_feedback_email_setting(
+        data.get('data', ''),
+        data.get('is_sending_feedback', False))
+
+    if not response.get('error'):
+        result['success'] = True
+        return jsonify(result)
+    else:
+        result['error'] = response.get('error')
+        result['success'] = False
+        return jsonify(result)
+
+
+@blueprint_api.route('/get_feedback_mail', methods=['GET'])
+def get_feedback_mail():
+    """ API allow get feedback email setting.
+
+    Returns:
+        json -- email settings
+
+    """
+    result = {
+        'data': '',
+        'is_sending_feedback': '',
+        'error': ''
+    }
+
+    data = get_feed_back_email_setting()
+    if data.get('error'):
+        result['error'] = data.get('error')
+        return jsonify(result)
+    result['data'] = data.get('data')
+    result['is_sending_feedback'] = data.get('is_sending_feedback')
     return jsonify(result)
