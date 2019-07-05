@@ -46,7 +46,6 @@ from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionStatusPolicy
 
 from weko_records_ui.models import InstitutionName
-
 from weko_records_ui.utils import check_items_settings
 
 from .ipaddr import check_site_license_permission
