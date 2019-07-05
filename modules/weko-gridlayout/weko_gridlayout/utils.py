@@ -418,7 +418,6 @@ def build_rss_xml(data, term):
     root.set('xmlns:dc', config.WEKO_XMLNS_DC)
     root.set('xmlns:prism', config.WEKO_XMLNS_PRISM)
     root.set('xmlns:lang', current_i18n.language)
-    root.set('version', '2.0')
 
     # First layer
     requested_url = root_url + '/api/admin/get_rss_data?term=' + str(term)
@@ -433,7 +432,7 @@ def build_rss_xml(data, term):
     ET.SubElement(
         channel,
         'dc:date').text = current_time.isoformat() + '+00:00'
-    items = ET.SubElement(channel, 'rdf')
+    items = ET.SubElement(channel, 'items')
     seq = ET.SubElement(items, 'rdf:Seq')
     li = ET.SubElement(seq, 'rdf:li')
     li.set('rdf:resource', root_url)
