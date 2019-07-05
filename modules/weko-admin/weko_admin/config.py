@@ -71,6 +71,9 @@ LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
 WEKO_ADMIN_CROSSREF_API_URL = 'https://doi.crossref.org/'
 """URL of CrossRef API."""
 
+WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE = 10
+"""Numbers result per page in weko admin feedback mail"""
+
 WEKO_ADMIN_ENDPOINT = 'openurl'
 """Endpoint to concate URL of CrossRef API."""
 
