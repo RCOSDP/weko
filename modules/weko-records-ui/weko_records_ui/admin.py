@@ -35,6 +35,7 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.orm import load_only
+from weko_admin.settings import AdminSettings
 from weko_deposit.api import WekoRecord
 from weko_records.api import ItemsMetadata
 from weko_search_ui.api import get_search_detail_keyword
@@ -42,12 +43,9 @@ from werkzeug.local import LocalProxy
 from wtforms.fields import StringField
 from wtforms.validators import ValidationError
 
-import redis
-from simplekv.memory.redisstore import RedisStore
-
 from . import config
 from .models import Identifier, InstitutionName, PDFCoverPageSettings
-from .utils import check_email_display_setting
+from .utils import check_items_settings
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -59,11 +57,7 @@ class ItemSettingView(BaseView):
     def index(self):
         """Index."""
         try:
-            datastore = RedisStore(redis.StrictRedis.from_url(
-                current_app.config['CACHE_REDIS_URL']))
-            cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
-                format(name='email_display')
-            check_email_display_setting()
+            check_items_settings()
             email_display_flg = '0'
             search_author_flg = 'name'
             if current_app.config['EMAIL_DISPLAY_FLG']:
@@ -75,14 +69,15 @@ class ItemSettingView(BaseView):
                 # Process forms
                 form = request.form.get('submit', None)
                 if form == 'set_search_author_form':
+                    settings = AdminSettings()
                     search_author_flg = request.form.get(
                         'searchRadios', 'name')
-                    _app.config['ITEM_SEARCH_FLG'] = search_author_flg
+                    settings.items_search_author = search_author_flg
                     email_display_flg = request.form.get('displayRadios', '0')
                     if email_display_flg == '1':
-                        datastore.put(cache_key, 'True'.encode('utf-8'))
+                        settings.items_display_email = True
                     else:
-                        datastore.put(cache_key, 'False'.encode('utf-8'))
+                        settings.items_display_email = False
                     flash(_('Author flag was updated.'), category='success')
 
             return self.render(config.ADMIN_SET_ITEM_TEMPLATE,
