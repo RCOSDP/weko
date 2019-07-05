@@ -92,8 +92,8 @@ class ProfileForm(FlaskForm):
         try:
             user_profile = UserProfile.get_by_username(field.data)
             if current_userprofile.is_anonymous or \
-                    (current_userprofile.user_id != user_profile.user_id and
-                     field.data != current_userprofile.username):
+                    (current_userprofile.user_id != user_profile.user_id
+                     and field.data != current_userprofile.username):
                 # NOTE: Form validation error.
                 raise ValidationError(_('Username already exists.'))
         except NoResultFound:

@@ -303,7 +303,7 @@ class IdentifierSettingView(ModelView):
                 for inchar in field.data:
                     if unicodedata.east_asian_width(inchar) in 'FWA':
                         raise ValidationError(
-                            _('Only allow halfwith 1-bytes character in input'))
+                            _('Only allow half with 1-bytes character in input'))
             except Exception as ex:
                 raise ValidationError('{}'.format(ex))
 
@@ -423,6 +423,7 @@ identifier_adminview = dict(
     model=Identifier,
     category=_('Setting'),
     name=_('Identifier'),
+    endpoint='identifier'
 )
 
 __all__ = (
