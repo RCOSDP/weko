@@ -35,6 +35,7 @@ from invenio_admin.proxies import current_admin
 from sqlalchemy.orm import session
 from weko_records.api import ItemTypes
 from werkzeug.local import LocalProxy
+from invenio_indexer.api import RecordIndexer
 
 from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
@@ -413,10 +414,16 @@ def get():
     query = {"match": {"gather_flg": 0}}
 
     if search_key:
-        match = {}
-        match["emailInfo.email"] = search_key
+        search_keys = search_key.split(" ")
+        match = []
+        for key in search_keys:
+            if key:
+                match.append({"match_phrase_prefix" : {"emailInfo.email": key}})
         query = {
-             "match_phrase_prefix" : match
+            "bool":
+            {
+                "should": match, "minimum_should_match": 1
+            }
         }
 
     size = config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE
