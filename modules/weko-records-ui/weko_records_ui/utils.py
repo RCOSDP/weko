@@ -22,7 +22,7 @@
 
 from flask import current_app
 from invenio_db import db
-from weko_records.api import ItemsMetadata
+from weko_records.api import ItemsMetadata, ItemTypes
 from weko_workflow.models import ActionStatusPolicy, Activity
 
 from .permissions import check_user_group_permission
@@ -128,3 +128,18 @@ def get_min_price_billing_file_download(groups_price: list,
                 min_prices[file_name] = min_price
 
     return min_prices
+
+
+def is_billing_item(item_type_id):
+    """Checks if item is a billing item based on its meta data schema."""
+    item_type = ItemTypes.get_by_id(id_=item_type_id)
+    if item_type:
+        properties = item_type.schema['properties']
+        for meta_key in properties:
+            if properties[meta_key]['type'] == 'object' and \
+               'groupsprice' in properties[meta_key]['properties']:
+                return True
+            elif properties[meta_key]['type'] == 'array' and \
+                    'groupsprice' in properties[meta_key]['items']['properties']:
+                return True
+        return False

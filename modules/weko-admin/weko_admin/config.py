@@ -103,6 +103,8 @@ WEKO_ADMIN_CACHE_PREFIX = 'admin_cache_{name}'
 WEKO_ADMIN_REPORT_HEADERS = {
     'file_download': _('No. Of File Downloads'),
     'file_preview': _('No. Of File Previews'),
+    'billing_file_download': _('No. Of Paid File Downloads'),
+    'billing_file_preview': _('No. Of Paid File Previews'),
     'index_access': _('Detail Views Per Index'),
     'detail_view': _('Detail Views Count'),
     'file_using_per_user': _('Usage Count By User'),
@@ -123,12 +125,12 @@ WEKO_ADMIN_REPORT_SUB_HEADERS = {
 WEKO_ADMIN_REPORT_COLS = {
     'file_download': [
         _('File Name'), _('Registered Index Name'),
-        _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
+        _('No. Of Times Downloaded'), _('Non-Logged In User'),
         _('Logged In User'), _('Site License'), _('Admin'),
         _('Registrar')],
     'file_preview': [
         _('File Name'), _('Registered Index Name'),
-        _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
+        _('No. Of Times Viewed'), _('Non-Logged In User'),
         _('Logged In User'), _('Site License'), _('Admin'),
         _('Registrar')],
     'index_access': [_('Index'), _('No. Of Views')],
@@ -153,6 +155,8 @@ WEKO_ADMIN_REPORT_COLS = {
 WEKO_ADMIN_REPORT_FILE_NAMES = {
     'file_download': _('FileDownload_'),
     'file_preview': _('FilePreview_'),
+    'billing_file_download': _('PayFileDownload_'),
+    'billing_file_preview': _('PayFilePreview_'),
     'index_access': _('IndexAccess_'),
     'detail_view': _('DetailView_'),
     'file_using_per_user': _('FileUsingPerUser_'),
