@@ -155,13 +155,15 @@
 }
 
 .done-button {
-  width: 80px;
+  width: 120px;
   height: 40px;
   font-size: 15px;
 }
 
 button#btn_quit.done-button {
   width: 120px;
+  height: 40px;
+  font-size: 15px;
 }
 
 .action-button {
