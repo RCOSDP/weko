@@ -228,7 +228,13 @@ def display_activity(activity_id=0):
 
     # display_activity of Identifier grant
     idf_grant_data = None
+    identifier_type = []
+    resource_type = []
     if 'identifier_grant' == action_endpoint and item:
+        pidstore_identifier = item.get('pidstore_identifier')
+        if pidstore_identifier:
+            identifier_type = \
+                pidstore_identifier['properties']['identifierType']
         path = WekoRecord.get_record(item.id).get('path')
         if len(path) > 1:
             community_id = 'Root Index'
@@ -386,6 +392,8 @@ def display_activity(activity_id=0):
         res_check=res_check,
         pid=pid,
         community_id=community_id,
+        identifier_type=identifier_type,
+        resource_type=resource_type,
         **ctx
     )
 
