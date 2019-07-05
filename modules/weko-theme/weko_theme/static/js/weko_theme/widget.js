@@ -106,13 +106,16 @@ let PageBodyGrid = function () {
                 }
                 if (rss) {
                     rssURL = "/api/admin/get_rss_data?term=" + term;
-                    rssHtml = '<a class="" target="_blank" rel="noopener noreferrer" href="' + rssURL + '">RSS<i class="fa fa-rss"></i></a>';
+                    rssHtml = '<a class="" target="_blank" rel="noopener noreferrer" href="' + rssURL + '"><i class="fa fa-rss"></i></a>';
                 }
                 let innerHTML = '';
                 for (let data in result) {
-                    innerHTML += '<li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li>';
+                    if (innerHTML == '') {
+                        innerHTML += '<div class="no-li-style col-sm-11 no-padding-col"><li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li></div>' + '</div><div class= "col-sm-1 rss text-right">' + rssHtml + '</div>';
+                    }else {
+                        innerHTML += '<div class="no-li-style no-padding-col"><li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li></div>';
+                    }
                 }
-                innerHTML = '<div class="no-li-style col-sm-9 no-padding-col">' + innerHTML + '</div><div class= "col-sm-3 rss">' + rssHtml + '</div>';
                 $("#" + id).append(innerHTML);
             }
         });
