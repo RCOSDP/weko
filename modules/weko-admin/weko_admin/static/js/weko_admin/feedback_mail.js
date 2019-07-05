@@ -31,6 +31,9 @@ class ComponentFeedbackMail extends React.Component {
 class ComponentExclusionTarget extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+          list_email: []
+        }
         this.style_component = {
             "margin-top": "15px",
             "font-size": "18px",
@@ -65,7 +68,38 @@ class ComponentExclusionTarget extends React.Component {
         this.deleteCommand = this.deleteCommand.bind(this);
         this.searchCommand = this.searchCommand.bind(this);
     }
-    deleteCommand(){
+
+    componentDidMount() {
+      let thisClass = this
+      fetch("/api/admin/get_feedback_mail")
+      .then(res => res.json())
+      .then((result) => {
+        if (result.error) {
+          // Display error
+          return;
+        }
+        let mailData = result.data;
+        let sendData = result.is_sending_feedback;
+
+        if (sendData) {
+          $("input[name=feedback_mail][value='send']").prop("checked", true);
+        } else {
+          $("input[name=feedback_mail][value='not_send']").prop("checked", true);
+        }
+        if ($.isEmptyObject(mailData)) {
+          return;
+        }
+        let innerHTML = [];
+        for (let id in mailData) {
+          innerHTML.push(<option value={mailData[id].author_id}>{mailData[id].email}</option>);
+        }
+        thisClass.setState({
+          list_email: innerHTML
+        });
+      });
+    }
+
+    deleteCommand() {
 
     }
     searchCommand(){
@@ -83,10 +117,7 @@ class ComponentExclusionTarget extends React.Component {
                     </div>
                     <div style = {this.style_full_size}>
                         <select multiple style = {this.style_selected_box}>
-                            <option value="volvo">Volvo</option>
-                            <option value="saab">Saab</option>
-                            <option value="opel">Opel</option>
-                            <option value="audi">Audi</option>
+                            {this.state.list_email}
                         </select>
                         <button className="btn btn-danger delete-button style-my-button" onClick={this.deleteCommand} style = {this.style_deleteBtn}>
                             <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
@@ -335,7 +366,53 @@ class ComponentButtonLayout extends React.Component {
     }
 
     saveCommand(event) {
+      // TODO: Change to real data binding from modal
+      let mailData = [
+        {
+          "author_id": "1562301336829",
+          "email": "vothanhhieu@gcs.com"
+        },
+        {
+          "author_id": "1562301436629",
+          "email": "zannaghazi@gcs.com"
+        },
+        {
+          "author_id": "1562301453501",
+          "email": "meoloca@gcs.com"
+        }
+      ];
 
+      let is_sending_feedback = false;
+      if ($('input[name=feedback_mail]:checked').val() == "send") {
+        is_sending_feedback = true;
+      }
+
+      let request_param = {
+        "data": mailData,
+        "is_sending_feedback": is_sending_feedback
+      }
+
+      fetch(
+        "/api/admin/update_feedback_mail",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(request_param)
+        }
+      )
+      .then(res => res.json())
+      .then((result) => {
+        if (result.success) {
+          // TODO: Notify success message
+          return;
+        }else {
+          // TODO: Notify error message
+          error_message = result.error;
+          return;
+        }
+      });
     }
 
     sendCommand(event){
