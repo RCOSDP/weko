@@ -22,19 +22,18 @@
 import copy
 import json
 import xml.etree.ElementTree as ET
-
-from xml.etree.ElementTree import tostring
 from datetime import datetime
-from flask import current_app, Response, request
+from xml.etree.ElementTree import tostring
+
+from flask import Response, current_app, request
+from invenio_i18n.ext import current_i18n
+from invenio_search import RecordsSearch
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
-from invenio_search import RecordsSearch
-from invenio_i18n.ext import current_i18n
 from weko_search_ui.query import item_search_factory
+
 from . import config
-
 from .models import WidgetDesignSetting, WidgetType
-
 
 
 def get_widget_type_list():
@@ -509,7 +508,7 @@ def build_rss_xml(data, term):
 
 
 def find_rss_value(data, keyword):
-    """Analyze rss data from elasticsearch data
+    """Analyze rss data from elasticsearch data.
 
     Arguments:
         data {dictionary} -- elasticsearch data
