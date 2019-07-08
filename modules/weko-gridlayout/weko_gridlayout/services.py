@@ -703,7 +703,7 @@ class WidgetDataLoaderServices:
                 return result
             es_data = hits.get('hits')
             for es_item in es_data:
-                if len(data) > int(number_result):
+                if len(data) >= int(number_result):
                     break
                 new_data = dict()
                 source = es_item.get('_source')
