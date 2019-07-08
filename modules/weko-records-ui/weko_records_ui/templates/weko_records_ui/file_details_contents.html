@@ -83,6 +83,7 @@
                       {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename)|string -%}
                       {%- else -%}
                       {%- set billing_file_data = "data-billing-file-permission=false" -%}
+                      <input id="download_permission_error" type="hidden" value="{{_('The file cannot be downloaded because you do not have permission to view this file.')}}" />
                       {%- endif -%}
                       {%- endif -%}
                       <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
