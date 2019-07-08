@@ -137,6 +137,7 @@
                       <img src="{{img}}" alt={{ file.filename }} />
                       {%- if not access_permission and file.accessrole == 'open_login' -%}
                       {%- set file_url = url_for_security('login', next=request.path) -%}
+                      {%- set billing_file_class = "" -%}
                       {%- elif is_billing_file -%}
                       {%- if billing_file_permission -%}
                       {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key) -%}
