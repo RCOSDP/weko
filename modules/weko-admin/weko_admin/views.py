@@ -348,9 +348,6 @@ def get_statistic_item_regis(unit=1, page=1):
             temp_page_data.append(result[i])
         i = i + 1
 
-    print("----------====================------------")
-    print(page - 1)
-    print(page_result)
     response_data['data'] = page_result[page]
     response_data['num_page'] = math.ceil(len(result) / 10)
     response_data['page'] = page
