@@ -1,3 +1,6 @@
+const NUM_OF_RESULT = 10;
+const LIMIT_PAGINATION_NUMBER = 5;
+
 class ComponentFeedbackMail extends React.Component {
     constructor(props) {
         super(props);
@@ -145,6 +148,7 @@ class TableUserEmailComponent extends React.Component {
     this.generateBodyTableUser = this.generateBodyTableUser.bind(this);
     this.importEmail = this.importEmail.bind(this);
   }
+
   static getDerivedStateFromProps(nextProps, prevState) {
     if (nextProps.listUser != prevState.listUser)
     {
@@ -154,25 +158,25 @@ class TableUserEmailComponent extends React.Component {
     }
     return null;
   }
+
   generateBodyTableUser()
   {
-    let tBodyElement = this.state.listUser.map((row) => {
-      return (
-        <tr>
+    let tBodyElement = this.state.listUser.map((row) => (
+        <tr key = {row._source.pk_id.toString()}>
           <td>{row._source.authorNameInfo[0].fullName}</td>
           <td>{row._source.emailInfo[0].email}</td>
-          <td><button ref="btn" class="btn btn-info" onClick = {() => this.importEmail(row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
+          <td><button className="btn btn-info" onClick = {(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
         </tr>
       )
-    })
+    )
     return (
       <tbody >
         {tBodyElement}
       </tbody>
     )
   }
-  importEmail(pk_id, email){
-    console.log();
+  importEmail(event, pk_id, email){
+    event.target.disabled=true;
   }
   render(){
     return (
@@ -197,7 +201,7 @@ class SearchComponent extends React.Component {
   constructor(props){
     super(props);
     this.state = {
-      searchKey : "",
+      searchKey : this.props.searchKey,
     }
     this.searchEmail = this.searchEmail.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -216,11 +220,12 @@ class SearchComponent extends React.Component {
     })
     .then(res => res.json())
     .then((result) => {
-      this.props.getListUser(result.hits.hits);
+      this.props.getListUser(result.hits.hits, result.hits.total);
     });
   }
   handleChange(event){
     this.setState({ searchKey: event.target.value });
+    this.props.getSearchKey(event.target.value);
     event.preventDefault();
   }
   render(){
@@ -242,22 +247,125 @@ class SearchComponent extends React.Component {
 class Pagination extends React.Component {
   constructor(props) {
     super(props);
+    this.state = {
+      numOfResult: this.props.numOfResult,
+      startPage: 1,
+      endPage: 1,
+      currentPage: 1,
+      numOfPage: 1,
+    }
+    this.style_more = {
+      "border" : "none",
+    }
+    this.generatePagination = this.generatePagination.bind(this);
+  }
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (nextProps.numOfResult != prevState.numOfResult)
+    {
+      let pageCount = nextProps.numOfResult / NUM_OF_RESULT;
+      pageCount = parseInt(pageCount);
+      if(nextProps.numOfResult % NUM_OF_RESULT != 0){
+        pageCount += 1;
+      }
+      let endPage = pageCount;
+      let startPage = 1;
+      if (pageCount > 5)
+      {
+        endPage = 5;
+      }
+      return {
+        numOfResult: nextProps.numOfResult,
+        numOfPage: pageCount,
+        endPage: endPage,
+        startPage: startPage,
+      }
+    }
+    return null;
+  }
+  locatePageResult(pageNumber){
+    if(pageNumber < 1 || pageNumber > this.state.numOfPage){
+      return;
+    }
+    let startPage = this.state.startPage;
+    let endPage = this.state.endPage;
+    if (this.state.numOfPage > 5 ){
+      if(pageNumber > 2 && pageNumber < this.state.numOfPage -2){
+        startPage = pageNumber -2 ;
+        endPage = pageNumber + 2;
+      }
+      else {
+        if(pageNumber < 3){
+          startPage = 1;
+          endPage = 5;
+        }
+        if (pageNumber > this.state.numOfPage -2){
+          startPage = this.state.numOfPage - 4;
+          endPage = this.state.numOfPage;
+        }
+      }
+    }
+    this.setState({
+      currentPage: pageNumber,
+      startPage: startPage,
+      endPage:endPage
+    });
+    let request = {
+      searchKey: this.props.searchKey,
+      pageNumber: pageNumber,
+    }
+    fetch("/api/admin/search_email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(request),
+    })
+    .then(res => res.json())
+    .then((result) => {
+      this.props.getListUser(result.hits.hits, result.hits.total);
+    });
+  }
+  generatePagination(){
+    let limitPage = 0;
+    if (this.state.numOfPage > 5){
+      limitPage = 5;
+    }
+    else{
+      limitPage = this.state.numOfPage;
+    }
+    let listPage = [];
+    for (let i = this.state.startPage; i <= this.state.endPage; i++){
+      listPage.push(
+        <li  key = {i.toString()}>
+          <a  href="#" className = {this.state.currentPage == i ? 'mypage active' : 'mypage'} onClick = {() => this.locatePageResult(i)}>{i}</a>
+        </li>
+      )
+    }
+    return (
+      <ul  className="pagination">
+        {this.state.numOfPage > 5 ?
+        <li >
+          <a  href="#" onClick = {() => this.locatePageResult(1)} className = {this.state.currentPage == 1 ? 'disabled' : ''}><span  aria-hidden="true">&#8810;</span></a>
+        </li> : null }
+        <li >
+          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage - 1)} className = {this.state.currentPage == 1 ? 'disabled' : ''}><span  aria-hidden="true">&lt;</span></a>
+        </li>
+        {listPage}
+        <li >
+          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage + 1)} className = {this.state.currentPage == this.state.numOfPage ? 'disabled' : ''}><span  aria-hidden="true">&gt;</span></a>
+        </li>
+        {this.state.numOfPage > 5 ?
+        <li >
+          <a  href="#" onClick = {() => this.locatePageResult(this.state.numOfPage)} className = {this.state.currentPage == this.state.numOfPage ? 'disabled' : ''}><span  aria-hidden="true">&#8811;</span></a>
+        </li> : null }
+      </ul>
+    )
   }
   render () {
     return (
       <div  className="row">
         <div  className="col-sm-12 col-md-12 alignCenter">
-          <ul  className="pagination">
-            <li >
-              <a  href="#"><span  aria-hidden="true">&lt;</span></a>
-            </li>
-            <li  id="pageLink_1">
-              <a  href="#">1</a>
-            </li>
-            <li >
-              <a  href="#"><span  aria-hidden="true">&gt;</span></a>
-            </li>
-          </ul>
+          {this.generatePagination()}
         </div>
       </div>
     )
@@ -269,15 +377,25 @@ class ModalBodyComponent extends React.Component {
     super(props);
     this.state = {
       listUser: [],
+      numOfResult: 0,
+      searchKey: "",
+
     }
     this.margin_left_page = {
       "margin-left": "60%",
     }
     this.getListUser = this.getListUser.bind(this);
+    this.getSearchKey = this.getSearchKey.bind(this);
   }
-  getListUser(data)
+  getListUser(data, count)
   {
-    this.setState({listUser: data});
+    this.setState({
+      listUser: data,
+      numOfResult: count
+    });
+  }
+  getSearchKey(data){
+    this.setState({searchKey:data});
   }
   render() {
     return (
@@ -286,13 +404,13 @@ class ModalBodyComponent extends React.Component {
           <div className="col-sm-12 col-md-12 col-md-12">
             <div className="row">
               <div className="row">
-                <SearchComponent getListUser = {this.getListUser}/>
+                <SearchComponent getListUser = {this.getListUser} searchKey = {this.state.searchKey} getSearchKey= {this.getSearchKey}/>
               </div>
               <div className="row">
                 <TableUserEmailComponent listUser = {this.state.listUser}/>
               </div>
               <div style={this.margin_left_page}>
-                <Pagination />
+                <Pagination numOfResult = {this.state.numOfResult} searchKey = {this.state.searchKey} getListUser = {this.getListUser}/>
               </div>
             </div>
           </div>
