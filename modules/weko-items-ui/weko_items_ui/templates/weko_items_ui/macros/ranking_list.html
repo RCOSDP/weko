@@ -29,7 +29,7 @@
         {% for item in rankings %}
           <tr>
             {% if 'rank' in item %}
-              <td  align="right">{{ item['rank'] }} {{ _('place') }}</td>
+              <td  align="right">{{ item['rank'] }}</td>
               <td>({{ item['count'] }})</td>
             {% else %}
                 <td colspan="2" align="center"><b>{{ item['date'] }}</b></td>
