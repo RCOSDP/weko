@@ -75,7 +75,7 @@ class OAISchemaSettingView(BaseView):
 oai_schema_adminview = {
     'view_class': OAISchemaSettingView,
     'kwargs': {
-        'category': _('Setting'),
+        'category': _('Item Types'),
         'name': _('OAI Schema'),
         'endpoint': 'schemasettings'
     }

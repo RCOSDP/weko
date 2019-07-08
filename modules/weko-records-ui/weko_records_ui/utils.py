@@ -24,10 +24,18 @@ from decimal import Decimal
 
 from flask import current_app
 from invenio_db import db
+from weko_admin.settings import AdminSettings
 from weko_records.api import ItemsMetadata, ItemTypes
 from weko_workflow.models import ActionStatusPolicy, Activity
 
 from .permissions import check_user_group_permission
+
+
+def check_items_settings():
+    """Check items setting."""
+    settings = AdminSettings()
+    current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
+    current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
 
 
 def get_item_pidstore_identifier(object_uuid):
