@@ -127,12 +127,15 @@ def get_min_price_billing_file_download(groups_price: list,
             for group_price in group_price_list:
                 if isinstance(group_price, dict):
                     price = group_price.get('price')
+                    group_id = group_price.get('group')
+                    is_ok = check_user_group_permission(group_id)
                     try:
                         price = Decimal(price)
                     except Exception as error:
                         current_app.logger.debug(error)
                         price = None
-                    if price and (not min_price or min_price > price):
+                    if is_ok and price \
+                            and (not min_price or min_price > price):
                         min_price = price
             if min_price:
                 min_prices[file_name] = min_price
