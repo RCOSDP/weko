@@ -20,6 +20,8 @@
 
 """Module of weko-records-ui utils."""
 
+from decimal import Decimal
+
 from flask import current_app
 from invenio_db import db
 from weko_records.api import ItemsMetadata, ItemTypes
@@ -118,8 +120,8 @@ def get_min_price_billing_file_download(groups_price: list,
                 if isinstance(group_price, dict):
                     price = group_price.get('price')
                     try:
-                        price = float(price)
-                    except ValueError as error:
+                        price = Decimal(price)
+                    except Exception as error:
                         current_app.logger.debug(error)
                         price = None
                     if price and (not min_price or min_price > price):
