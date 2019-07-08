@@ -738,8 +738,7 @@ class WekoDeposit(Deposit):
         """Update by index tree id."""
         # update item path only
         from .tasks import update_items_by_id
-        update_items_by_id.delay(path)
-        # update_items_by_id(path, target)
+        update_items_by_id.delay(path, target)
 
     def update_pid_by_index_tree_id(self, path):
         """Update pid by index tree id.
