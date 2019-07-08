@@ -332,7 +332,7 @@ function handleDownloadBillingFile(isVersionTable = false) {
       $("#confirm_download_button").data('billingFileUrl', url);
       $("#confirm_download").modal("show");
     } else {
-      let permissionErrorMsg = "The file cannot be downloaded because you do not have permission to view this file.";
+      let permissionErrorMsg = $("#download_permission_error").val();
       $("#inputModal").html(permissionErrorMsg);
       $("#allModal").modal("show");
     }
