@@ -45,7 +45,8 @@ from .models import PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
     file_permission_factory
-from .utils import is_billing_item
+from .utils import get_billing_file_download_permission, get_groups_price, \
+    get_min_price_billing_file_download, is_billing_item
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -322,6 +323,19 @@ def add_signals_info(record, obj):
 
     # Check whether billing file or not
     obj.is_billing_item = is_billing_item(record['item_type_id'])
+
+    # Add billing file price
+    billing_file_price = ''
+    if obj.is_billing_item:
+        groups_price = get_groups_price(record)
+        billing_files_permission = \
+            get_billing_file_download_permission(groups_price)
+        min_price_dict = \
+            get_min_price_billing_file_download(groups_price,
+                                                billing_files_permission)
+        if isinstance(min_price_dict, dict):
+            billing_file_price = min_price_dict.get(obj.key)
+    obj.billing_file_price = billing_file_price
 
     # Add site license flag to send_obj
     obj.site_license_flag = True if hasattr(current_user, 'site_licese_flag') \
