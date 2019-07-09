@@ -30,6 +30,7 @@ from weko_records.api import ItemsMetadata
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import FilesMetadata, ItemTypes
 from weko_records.api import Mapping
+from weko_records.serializers.utils import get_mapping, get_metadata_from_map
 
 from .api import WorkActivity
 from .config import IDENTIFIER_ITEMSMETADATA_FORM
@@ -206,29 +207,64 @@ def reg_invenio_pidstore(pid_value, item_id):
         current_app.logger.error(pidArlEx)
 
 
-def identifier_regist_validation(item_id, idf_select):
+def item_metadata_validation(item_id, idf_select):
     """
     Register pids_tore.
 
     :param: pid_value, item_id
     """
-
     if idf_select == 0:
-        return True
+        return None
 
+    error_list = []
     record = WekoRecord.get_record(item_id)
-    current_app.logger.debug(idf_select)
-    current_app.logger.debug(record)
     item_type = ItemTypes.get_by_id(id_=record.get('item_type_id'))
-    current_app.logger.debug(item_type.name_id)
+    item_type_mapping = Mapping.get_record(item_type.id)
+    item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
 
-    if idf_select == 2:
+    # get record's resource type
+    type_key = item_map.get("type.@value").split('.')[0]
+    resource_json = record.get(type_key)
+    resource_type = None
+    # check resource type request
+    if not type_key or not resource_json:
+        return error_list.append(type_key)
+
+    if resource_json.get("attribute_value_mlt"):
+        resource_type = resource_json.get("attribute_value_mlt")[0].get("resourcetype")
+    elif resource_json.get("attribute_value"):
+        resource_type = resource_json.get("attribute_value").get("resourcetype")
+
+    # current_app.logger.debug(type_key)
+    # current_app.logger.debug(resource_json)
+    # current_app.logger.debug(idf_select)
+    # current_app.logger.debug(item_type.name_id)
+
+    # JaLC DOI identifier registration
+    if idf_select == '1':
+        # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
+        if item_type.name_id == 14 or resource_type == 'other（プレプリント）':
+            # check タイトル dc:title
+            title_key = item_map.get("title.@value")
+            title_data = None
+            title_attribute = record.get(title_key.split('.')[0])
+            if title_attribute.get('attribute_value_mlt'):
+                title_data = title_attribute['attribute_value_mlt'][0].get(title_key.split('.')[1])
+            elif title_attribute.get('attribute_value'):
+                title_data = title_attribute['attribute_value'].get(title_key.split('.')[1])
+
+            if not title_data:
+                error_list.append(title_key)
+
+            # check 識別子 jpcoar:identifier
+
+
+    # CrossRef DOI identifier registration
+    elif idf_select == '2':
         if item_type and ( item_type.name_id == 14 or item_type.name_id == 16 or item_type.name_id == 12 or item_type.name_id == 15):
             pass
         else:
-            return False # Error
+            return None # Error
 
-    item_type_mapping = Mapping.get_record(item_type.id)
-    current_app.logger.debug(item_type_mapping)
-
-    return False
+    current_app.logger.debug(error_list)
+    return error_list

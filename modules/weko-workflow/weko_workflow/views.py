@@ -56,7 +56,7 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
-    pidstore_identifier_mapping, identifier_regist_validation
+    pidstore_identifier_mapping, item_metadata_validation
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -537,10 +537,13 @@ def next_action(activity_id='0', action_id=0):
 
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
-        if not identifier_regist_validation(activity_detail.item_id, idf_grant):
+        valid_error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
+        if valid_error_list:
             # previous_action(activity_id=activity_id, action_id=action_id, req=-1)
             # return jsonify(code=0, msg=_('success'))
             return jsonify(code = -1, msg=_('error'))
+        else:
+            return jsonify(code = -1, msg=_('error 2'))
 
         work_activity.create_or_update_action_identifier(
             activity_id=activity_id,
