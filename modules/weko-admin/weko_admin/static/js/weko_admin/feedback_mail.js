@@ -34,6 +34,9 @@ class ComponentFeedbackMail extends React.Component {
 class ComponentExclusionTarget extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+          listEmail: [],
+        }
         this.style_component = {
             "margin-top": "15px",
             "font-size": "18px",
@@ -69,31 +72,34 @@ class ComponentExclusionTarget extends React.Component {
         this.searchCommand = this.searchCommand.bind(this);
         this.generateSelectedBox = this.generateSelectedBox.bind(this);
     }
+    componentWillMount(){
+      let mailData = [];
+      $.ajax({
+        url: "/api/admin/get_feedback_mail",
+        async: false,
+        method: "GET",
+        success: function (data, statusRequest) {
+          mailData = data.data;
+          let sendData = data.is_sending_feedback;
+          if (sendData) {
+            $("input[name=feedback_mail][value='send']").prop("checked", true);
+          } else {
+            $("input[name=feedback_mail][value='not_send']").prop("checked", true);
+          }
+        }
+      })
+      this.setState({listEmail:mailData});
+      this.props.bindingValueOfComponent('listEmail', mailData);
+    }
 
-    generateSelectedBox() {
+    generateSelectedBox(listEmail) {
       let innerHTML = [];
-      fetch("/api/admin/get_feedback_mail")
-      .then(res => res.json())
-      .then((result) => {
-        if (result.error) {
-          // Display error
-          return;
-        }
-        let mailData = result.data;
-        let sendData = result.is_sending_feedback;
-
-        if (sendData) {
-          $("input[name=feedback_mail][value='send']").prop("checked", true);
-        } else {
-          $("input[name=feedback_mail][value='not_send']").prop("checked", true);
-        }
-        if ($.isEmptyObject(mailData)) {
-          return;
-        }
-        for (let id in mailData) {
-          innerHTML.push(<option value={mailData[id].author_id}>{mailData[id].email}</option>);
-        }
-      });
+      if ($.isEmptyObject(listEmail)) {
+        return;
+      }
+      for (let id in listEmail) {
+        innerHTML.push(<option value={listEmail[id].author_id}>{listEmail[id].email}</option>);
+      }
       return (
         <select multiple style = {this.style_selected_box} id="sltBoxListEmail">
           {innerHTML}
@@ -122,7 +128,7 @@ class ComponentExclusionTarget extends React.Component {
                         </ReactBootstrap.Button>
                     </div>
                     <div style = {this.style_full_size}>
-                      {this.generateSelectedBox()}
+                      {this.generateSelectedBox(this.state.listEmail)}
                       <button className="btn btn-danger delete-button style-my-button" onClick={this.deleteCommand} style = {this.style_deleteBtn}>
                           <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
                           &nbsp;Delete
@@ -180,7 +186,7 @@ class TableUserEmailComponent extends React.Component {
     event.target.disabled=true;
     $('#sltBoxListEmail').append("<option value=" + pk_id + ">" +email+"</option>")
     let data = {
-      "pk_id" : pk_id,
+      "author_id" : pk_id,
       "email" : email
     }
     this.props.addEmailToList(data);
@@ -333,13 +339,6 @@ class Pagination extends React.Component {
     });
   }
   generatePagination(){
-    let limitPage = 0;
-    if (this.state.numOfPage > 5){
-      limitPage = 5;
-    }
-    else{
-      limitPage = this.state.numOfPage;
-    }
     let listPage = [];
     for (let i = this.state.startPage; i <= this.state.endPage; i++){
       listPage.push(
@@ -491,29 +490,21 @@ class ComponentButtonLayout extends React.Component {
     }
 
     saveCommand(event) {
-      // TODO: Change to real data binding from modal
-      let mailData = [
-        {
-          "author_id": "1562301336829",
-          "email": "vothanhhieu@gcs.com"
-        },
-        {
-          "author_id": "1562301436629",
-          "email": "zannaghazi@gcs.com"
-        },
-        {
-          "author_id": "1562301453501",
-          "email": "meoloca@gcs.com"
-        }
-      ];
-
       let is_sending_feedback = false;
       if ($('input[name=feedback_mail]:checked').val() == "send") {
         is_sending_feedback = true;
       }
-
+      let seen = new Set();
+      var hasDuplicates = this.props.listEmail.some(function(currentObject) {
+          return seen.size === seen.add(currentObject.author_id).size;
+      });
+      if(hasDuplicates){
+        var modalcontent = "Duplicate user email !";
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
+      }
       let request_param = {
-        "data": mailData,
+        "data": this.props.listEmail,
         "is_sending_feedback": is_sending_feedback
       }
 
@@ -530,11 +521,11 @@ class ComponentButtonLayout extends React.Component {
       .then(res => res.json())
       .then((result) => {
         if (result.success) {
-          // TODO: Notify success message
+          console.log(result.success);
           return;
         }else {
           // TODO: Notify error message
-          error_message = result.error;
+          console.log(result.error);
           return;
         }
       });
@@ -579,6 +570,9 @@ class MainLayout extends React.Component {
         case "showModalSearch":
           this.setState({showModalSearch: value});
           break;
+        case "listEmail":
+            this.setState({listEmail: value});
+            break;
       }
     }
     addEmailToList(data){
@@ -588,7 +582,8 @@ class MainLayout extends React.Component {
     }
     removeEmailFromList(listData){
       let listEmail = this.state.listEmail;
-      listEmail = listEmail.filter((el) => !listData.includes(el.pk_id));
+      listEmail = listEmail.filter((el) => !listData.includes(el.author_id));
+      this.setState({listEmail: listEmail});
     }
     render() {
         return (
@@ -600,7 +595,7 @@ class MainLayout extends React.Component {
                     <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} listEmail= {this.state.listEmail} removeEmailFromList = {this.removeEmailFromList}/>
                 </div>
                 <div className="row">
-                    <ComponentButtonLayout />
+                    <ComponentButtonLayout listEmail = {this.state.listEmail}/>
                 </div>
                 <div className="row">
                     <ModalComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent} addEmailToList={this.addEmailToList}/>

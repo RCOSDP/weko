@@ -47,11 +47,10 @@
   {% assets "weko_admin_feedback_mail" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
   <script src = "https://cdnjs.cloudflare.com/ajax/libs/react-bootstrap/0.32.4/react-bootstrap.min.js" type="text/javascript"></script>
-  <script type="text/babel">
-  </script>
 {%- endblock javascript %}
 
 {%- block body %}
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
 <div id="root" class="col-xs-12"></div>
-
 {%- endblock body %}
