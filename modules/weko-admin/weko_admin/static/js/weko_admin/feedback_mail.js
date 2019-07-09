@@ -4,6 +4,9 @@ const LIMIT_PAGINATION_NUMBER = 5;
 class ComponentFeedbackMail extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {
+          flagSend: this.props.flagSend,
+        }
         this.style_component = {
             "margin-top": "15px",
             "font-size": "18px",
@@ -15,15 +18,38 @@ class ComponentFeedbackMail extends React.Component {
             "width" : "18px",
             "height" : "18px",
         }
+        this.handleChangeSend = this.handleChangeSend.bind(this);
+        this.handleChangeNotSend = this.handleChangeNotSend.bind(this);
     }
+
+    static getDerivedStateFromProps(nextProps, prevState) {
+      if (nextProps.flagSend != prevState.flagSend)
+      {
+        return {
+          flagSend: nextProps.flagSend,
+        }
+      }
+      return null;
+    }
+
+    handleChangeSend(event){
+      this.setState({flagSend: true});
+      this.props.bindingValueOfComponent("flagSend", true);
+    }
+
+    handleChangeNotSend(event){
+      this.setState({flagSend: false});
+      this.props.bindingValueOfComponent("flagSend", false);
+    }
+
     render() {
         return (
             <div className="form-group" style = {this.style_component}>
                 <span className="control-label col-xs-2">ON/OFF</span>
                 <div class="controls col-xs-10">
                     <div className="form-group">
-                        <span><input style = {this.style_radioBtn} type="radio"  name="feedback_mail" value="send"/>Send</span>
-                        <span  style = {this.margin_left}><input style = {this.style_radioBtn} type="radio" name="feedback_mail" value="not_send"/>Do not send</span>
+                        <span><input style = {this.style_radioBtn} type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>Send</span>
+                        <span  style = {this.margin_left}><input style = {this.style_radioBtn} type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>Do not send</span>
                     </div>
                 </div>
             </div>
@@ -74,22 +100,19 @@ class ComponentExclusionTarget extends React.Component {
     }
     componentWillMount(){
       let mailData = [];
+      let sendData = false;
       $.ajax({
         url: "/api/admin/get_feedback_mail",
         async: false,
         method: "GET",
         success: function (data, statusRequest) {
           mailData = data.data;
-          let sendData = data.is_sending_feedback;
-          if (sendData) {
-            $("input[name=feedback_mail][value='send']").prop("checked", true);
-          } else {
-            $("input[name=feedback_mail][value='not_send']").prop("checked", true);
-          }
+          sendData = data.is_sending_feedback;
         }
       })
       this.setState({listEmail:mailData});
       this.props.bindingValueOfComponent('listEmail', mailData);
+      this.props.bindingValueOfComponent('flagSend', sendData);
     }
 
     generateSelectedBox(listEmail) {
@@ -183,13 +206,22 @@ class TableUserEmailComponent extends React.Component {
     )
   }
   importEmail(event, pk_id, email){
-    event.target.disabled=true;
-    $('#sltBoxListEmail').append("<option value=" + pk_id + ">" +email+"</option>")
-    let data = {
-      "author_id" : pk_id,
-      "email" : email
+    let listUser = [];
+    $("#sltBoxListEmail > option").each(function(){
+      listUser.push(this.value);
+    });
+    let isExist = listUser.includes(pk_id);
+    if(!isExist){
+      event.target.disabled=true;
+      let data = {
+        "author_id" : pk_id,
+        "email" : email
+      }
+      this.props.addEmailToList(data);
     }
-    this.props.addEmailToList(data);
+    else{
+     alert("The email you import is exist!");
+    }
   }
   render(){
     return (
@@ -490,19 +522,7 @@ class ComponentButtonLayout extends React.Component {
     }
 
     saveCommand(event) {
-      let is_sending_feedback = false;
-      if ($('input[name=feedback_mail]:checked').val() == "send") {
-        is_sending_feedback = true;
-      }
-      let seen = new Set();
-      var hasDuplicates = this.props.listEmail.some(function(currentObject) {
-          return seen.size === seen.add(currentObject.author_id).size;
-      });
-      if(hasDuplicates){
-        var modalcontent = "Duplicate user email !";
-        $("#inputModal").html(modalcontent);
-        $("#allModal").modal("show");
-      }
+      let is_sending_feedback = this.props.flagSend;
       let request_param = {
         "data": this.props.listEmail,
         "is_sending_feedback": is_sending_feedback
@@ -521,12 +541,12 @@ class ComponentButtonLayout extends React.Component {
       .then(res => res.json())
       .then((result) => {
         if (result.success) {
-          console.log(result.success);
-          return;
+          var modalcontent = "Update success!"
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
         }else {
           // TODO: Notify error message
           console.log(result.error);
-          return;
         }
       });
     }
@@ -560,6 +580,7 @@ class MainLayout extends React.Component {
         this.state = {
           showModalSearch: false,
           listEmail: [],
+          flagSend: false,
         }
         this.bindingValueOfComponent = this.bindingValueOfComponent.bind(this);
         this.addEmailToList = this.addEmailToList.bind(this);
@@ -572,6 +593,9 @@ class MainLayout extends React.Component {
           break;
         case "listEmail":
             this.setState({listEmail: value});
+            break;
+        case "flagSend":
+            this.setState({flagSend: value});
             break;
       }
     }
@@ -589,13 +613,13 @@ class MainLayout extends React.Component {
         return (
             <div>
                 <div className="row">
-                    <ComponentFeedbackMail/>
+                    <ComponentFeedbackMail flagSend = {this.state.flagSend} bindingValueOfComponent = {this.bindingValueOfComponent}/>
                 </div>
                 <div className="row">
                     <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} listEmail= {this.state.listEmail} removeEmailFromList = {this.removeEmailFromList}/>
                 </div>
                 <div className="row">
-                    <ComponentButtonLayout listEmail = {this.state.listEmail}/>
+                    <ComponentButtonLayout listEmail = {this.state.listEmail} flagSend={this.state.flagSend}/>
                 </div>
                 <div className="row">
                     <ModalComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent} addEmailToList={this.addEmailToList}/>
