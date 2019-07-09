@@ -1,4 +1,5 @@
-{#
+# -*- coding: utf-8 -*-
+#
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
@@ -16,25 +17,24 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-#}
 
-{%- extends config.WEKO_ITEMTYPES_UI_BASE_TEMPLATE %}
+"""Utils for weko-itemtypes-ui."""
 
-{%- block css %}
-  {{ super() }}
-{%- endblock css %}
+from flask import current_app
 
-{%- block page_body %}
-<div class="container">
-  <div class="row">
-    <div class="col-sm-12 col-md-12 col-lg-10">
-      <div class="panel panel-warning">
-        <div class="panel-body">
-          {{_('You do not even have an itemtype.')}}<br>
-          {{_('Go to')}} <a href="{{ url_for('weko_itemtypes_ui.index') }}">{{_('Register Itemtype')}}</a>!
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-{%- endblock page_body%}
+
+def remove_xsd_prefix(jpcoar_lists):
+    """Remove xsd prefix."""
+    jpcoar_copy = {}
+
+    def remove_prefix(jpcoar_src, jpcoar_dst):
+        for key, value in jpcoar_src.items():
+            if 'type' == key:
+                jpcoar_dst[key] = value
+                continue
+            jpcoar_dst[key.split(':').pop()] = {}
+            if isinstance(value, object):
+                remove_prefix(value, jpcoar_dst[key.split(':').pop()])
+
+    remove_prefix(jpcoar_lists, jpcoar_copy)
+    return jpcoar_copy

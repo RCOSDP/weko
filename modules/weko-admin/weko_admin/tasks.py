@@ -123,7 +123,7 @@ def _due_to_run(schedule):
         return False
     now = datetime.now()
     return (schedule['frequency'] == 'daily') or \
-        (schedule['frequency'] == 'weekly' and
-         int(schedule['details']) == now.weekday()) or \
-        (schedule['frequency'] == 'monthly' and
-         int(schedule['details']) == now.day)
+        (schedule['frequency'] == 'weekly'
+         and int(schedule['details']) == now.weekday()) or \
+        (schedule['frequency'] == 'monthly'
+         and int(schedule['details']) == now.day)

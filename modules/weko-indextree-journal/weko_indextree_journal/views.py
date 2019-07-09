@@ -38,80 +38,20 @@ blueprint = Blueprint(
 )
 
 
-@blueprint.route("/")
-@blueprint.route("/<int:index_id>")
-@login_required
-def index(index_id=0):
-    """Render a basic view."""
-    lists = ItemTypes.get_latest()
-    if lists is None or len(lists) == 0:
-        return render_template(
-            current_app.config['WEKO_ITEMS_UI_ERROR_TEMPLATE']
-        )
-
-    # Get journal info.
-    journal = []
-    journal_id = None
-    if index_id > 0:
-        journal = Journals.get_journal_by_index_id(index_id)
-        if journal is not None:
-            journal_id = journal.get("id")
-
-    json_record = journal
-
-    """Log error for output info of journal, level: ERROR, status code: 101,
-    content: Invalid setting file error."""
-    if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] !=
-        "/indextree/journal/jsonschema") \
-        or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] == ""
-            or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API']
-                is None)):
-        current_app.logger.error(
-            '[{0}] Invalid setting file error'.format(101)
-        )
-
-    """Log error for output info of journal, level: ERROR, status code: 101,
-    content: Invalid setting file error."""
-    if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] !=
-        "/indextree/journal/schemaform") \
-        or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] == ""
-            or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API']
-                is None)):
-        current_app.logger.error(
-            '[{0}] Invalid setting file error'.format(101)
-        )
-
-    return render_template(
-        current_app.config['WEKO_INDEXTREE_JOURNAL_INDEX_TEMPLATE'],
-        get_tree_json=current_app.config['WEKO_INDEX_TREE_LIST_API'],
-        upt_tree_json='',
-        mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API'],
-        mod_journal_detail=current_app.config['WEKO_INDEXTREE_JOURNAL_API'],
-        record=json_record,
-        jsonschema=current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'],
-        schemaform=current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'],
-        lists=lists,
-        links=None,
-        pid=None,
-        index_id=index_id,
-        journal_id=journal_id
-    )
-
-
-@blueprint.route("/index/<int:index_id>")
-def get_journal_by_index_id(index_id=0):
-    """Get journal by index id."""
-    try:
-        result = None
-        if index_id > 0:
-            journal = Journals.get_journal_by_index_id(index_id)
-
-        if journal is None:
-            journal = '{}'
-        return jsonify(journal)
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return abort(400)
+# @blueprint.route("/index/<int:index_id>")
+# def get_journal_by_index_id(index_id=0):
+#     """Get journal by index id."""
+#     try:
+#         result = None
+#         if index_id > 0:
+#             journal = Journals.get_journal_by_index_id(index_id)
+#
+#         if journal is None:
+#             journal = '{}'
+#         return jsonify(journal)
+#     except BaseException:
+#         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+#     return abort(400)
 
 
 @blueprint.route("/export", methods=['GET'])
@@ -136,104 +76,6 @@ def export_journals():
 def obj_dict(obj):
     """Return a dict."""
     return obj.__dict__
-
-
-@blueprint.route('/jsonschema', methods=['GET'])
-@login_required
-# @item_permission.require(http_exception=403)
-def get_json_schema():
-    """Get json schema.
-
-    :return: The json object.
-    """
-    try:
-        json_schema = None
-        cur_lang = current_i18n.language
-
-        """Log error for output info of journal, level: ERROR, status code: 101,
-        content: Invalid setting file error"""
-        if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE']
-            != "schemas/jsonschema.json")\
-            or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE']
-                == ""
-                or (current_app.config[
-                        'WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'
-                    ] is None)):
-            current_app.logger.error(
-                '[{0}] Invalid setting file error'.format(101)
-            )
-
-        schema_file = os.path.join(
-            os.path.dirname(__file__),
-            current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'])
-
-        json_schema = json.load(open(schema_file))
-        if json_schema is None:
-            return '{}'
-
-        properties = json_schema.get('properties')
-
-        for key, value in properties.items():
-            if 'validationMessage_i18n' in value:
-                msg = {}
-                for k, v in value['validationMessage_i18n'].items():
-                    msg[k] = v[cur_lang]
-                value['validationMessage'] = msg
-
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-        abort(500)
-    return jsonify(json_schema)
-
-
-@blueprint.route('/schemaform', methods=['GET'])
-@login_required
-# @item_permission.require(http_exception=403)
-def get_schema_form():
-    """Get schema form.
-
-    :return: The json object.
-    """
-    try:
-        schema_form = None
-        cur_lang = current_i18n.language
-
-        """Log error for output info of journal, level: ERROR, status code: 101,
-        content: Invalid setting file error."""
-        if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] !=
-            "schemas/schemaform.json") or \
-            (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] == ""
-             or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE']
-                 is None)):
-            current_app.logger.error(
-                '[{0}] Invalid setting file error'.format(101)
-            )
-
-        form_file = os.path.join(
-            os.path.dirname(__file__),
-            current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'])
-
-        schema_form = json.load(open(form_file))
-        if schema_form is None:
-            return '["*"]'
-
-        if 'default' != cur_lang:
-            for elem in schema_form:
-                if 'title_i18n' in elem:
-                    if cur_lang in elem['title_i18n']:
-                        if len(elem['title_i18n'][cur_lang]) > 0:
-                            elem['title'] = elem['title_i18n'][cur_lang]
-                if 'items' in elem:
-                    for sub_elem in elem['items']:
-                        if 'title_i18n' in sub_elem:
-                            if cur_lang in sub_elem['title_i18n']:
-                                if len(sub_elem['title_i18n'][cur_lang]) > 0:
-                                    sub_elem['title'] = sub_elem['title_i18n'][
-                                        cur_lang]
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-        abort(500)
-    return jsonify(schema_form)
 
 
 @blueprint.route('/save/kbart', methods=['GET'])

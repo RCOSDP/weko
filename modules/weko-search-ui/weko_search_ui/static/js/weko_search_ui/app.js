@@ -68,6 +68,12 @@
     }
     $(document).ready(function(){
       showJournalInfo();
+      let urlVars = getUrlVars();
+      if (urlVars !== {} && urlVars.hasOwnProperty("q") && urlVars.hasOwnProperty("search_type") && urlVars["search_type"] !== "2") {
+        document.getElementById("q").value = urlVars["q"];
+      } else {
+        document.getElementById("q").value = "";
+      }
       $("#display_details").click(function(){
         $(".icon-right").toggle(50);
         $("#collapsed_details").collapse('toggle');
@@ -75,6 +81,13 @@
       });
     });
 });
+
+
+function getUrlVars() {
+    let vars = {};
+    let parts = decodeURI(window.location.href).replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {vars[key] = value;});
+    return vars;
+}
 
 //add controller to invenioSearch
 // add by ryuu. at 20181129 start

@@ -227,8 +227,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
 
                 # browsing role and group check
                 if browsing_role:
-                    if roles[0] or (check_roles(roles, brw_role) and
-                                    check_groups(groups, brw_group)):
+                    if roles[0] or (check_roles(roles, brw_role)
+                                    and check_groups(groups, brw_group)):
 
                         if public_state or (
                             isinstance(
@@ -244,8 +244,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         tree.pop(i)
                 # contribute role and group check
                 else:
-                    if roles[0] or (check_roles(roles, contribute_role) and
-                                    check_groups(groups, contribute_group)):
+                    if roles[0] or (check_roles(roles, contribute_role)
+                                    and check_groups(groups, contribute_group)):
                         lst['disabled'] = False
 
                         plst = plst or []

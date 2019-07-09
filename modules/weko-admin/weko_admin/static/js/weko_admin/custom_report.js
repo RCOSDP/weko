@@ -281,7 +281,7 @@ class ComponentCombobox extends React.Component {
     }
     let buttonHtml;
     if (this.props.id_component == 'unit') {
-      buttonHtml = <button className="btn btn-primary col-xs-1" onClick={this.handleClickEvent}>Display</button>
+      buttonHtml = <button className="btn btn-primary action-button col-md-2" onClick={this.handleClickEvent}>Display</button>
     } else {
       <button className="hidden"></button>
     }

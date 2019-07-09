@@ -32,7 +32,7 @@ require([
   });
 
   $('#btn-finish').on('click', function () {
-    let comment = ''
+    let comment = '';
     if ($('#input-comment') && $('#input-comment').val()) {
       comment = $('#input-comment').val();
     }
@@ -43,6 +43,18 @@ require([
       action_version: $('.cur_step').data('action-version'),
       temporary_save: 0
     };
+    // Get Journal
+    if ($('#action-journal')) {
+      if ($('#action-journal').text()) {
+        post_data['journal'] = $.parseJSON($('#action-journal').text());
+      } else {
+        if ($("#journal-info").attr("hidden")) {
+          if ($('#search-key').val()) {
+            post_data['journal'] = { keywords: $('#search-key').val() };
+          }
+        }
+      }
+    }
 
     $.ajax({
       url: post_uri,

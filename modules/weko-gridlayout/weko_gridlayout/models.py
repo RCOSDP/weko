@@ -86,16 +86,16 @@ class WidgetItem(db.Model):
                             db.ForeignKey(WidgetType.type_id),
                             nullable=False)
     settings = db.Column(db.JSON().with_variant(
-                                               postgresql.JSONB(
-                                                   none_as_null=True
-                                                   ),
-                                               'postgresql',)
-                                  .with_variant(JSONType(),
-                                                'sqlite',)
-                                  .with_variant(JSONType(),
-                                                'mysql',),
-                         default=lambda: dict(),
-                         nullable=True)
+        postgresql.JSONB(
+            none_as_null=True
+        ),
+        'postgresql',)
+        .with_variant(JSONType(),
+                      'sqlite',)
+        .with_variant(JSONType(),
+                      'mysql',),
+        default=lambda: dict(),
+        nullable=True)
     browsing_role = db.Column(db.Text,
                               nullable=True)
     edit_role = db.Column(db.Text,
@@ -134,7 +134,7 @@ class WidgetItem(db.Model):
             repository_id=repository,
             widget_type=widget_type,
             is_deleted=False
-            ).all()
+        ).all()
         if not widget_data:
             return None
 
@@ -225,18 +225,18 @@ class WidgetMultiLangData(db.Model):
     label = db.Column(db.String(100),
                       nullable=False)
     description_data = db.Column(db.JSON().with_variant(
-                                                postgresql.JSONB(
-                                                    none_as_null=True
-                                                ),
-                                                'postgresql',)
-                                          .with_variant(
-                                              JSONType(),
-                                              'sqlite',)
-                                          .with_variant(
-                                              JSONType(),
-                                              'mysql',),
-                                 default=lambda: dict(),
-                                 nullable=True)
+        postgresql.JSONB(
+            none_as_null=True
+        ),
+        'postgresql',)
+        .with_variant(
+        JSONType(),
+        'sqlite',)
+        .with_variant(
+        JSONType(),
+        'mysql',),
+        default=lambda: dict(),
+        nullable=True)
 
     is_deleted = db.Column(db.Boolean(name='deleted'),
                            default=False)

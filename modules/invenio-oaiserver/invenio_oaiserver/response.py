@@ -278,7 +278,8 @@ def getrecord(**kwargs):
     # record = Record.get_record(pid.object_uuid)
 
     identify = OaiIdentify.get_all()
-    harvest_public_state, record = WekoRecord.get_record_with_hps(pid.object_uuid)
+    harvest_public_state, record = WekoRecord.get_record_with_hps(
+        pid.object_uuid)
     if (identify and not identify.outPutSetting) or not harvest_public_state:
         return error(get_error_code_msg(), **kwargs)
 

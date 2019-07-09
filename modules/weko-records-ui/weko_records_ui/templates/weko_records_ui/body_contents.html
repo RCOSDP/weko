@@ -19,38 +19,45 @@
 # MA 02111-1307, USA.
 #}
 
+
 <div class="panel-group">
   <div class="panel panel-default">
     <div class="panel-heading clearfix" style="background-color: inherit;">
       <pre class="hide">{{record|tojson}}</pre>
       <div class="panel_bread" id="panel_bread">
         {%- if record.navi -%}
-        <table style="font-size: 110%">
+        <table style="font-size: 110%;">
           <col width="50">
           {%- for nav in record.navi -%}
+          <!--<div class="row col-xs-6 col-md-6 col-lg-10 col-xl-10"><div
+               style="overflow:hidden;">-->
           <tr>
-            <td valign="bottom">
+            <td style="max-width:100%; white-space: nowrap;" valign="top">
+                <div class="row col-xs-4 col-md-4 col-lg-4 col-xl-4">
               {%- if loop.index == 1 %}
               <h4 style="display: inline;">{{_('Index')}}</h4>
               {%- endif %}
+              </div>
             </td>
             <td width="2048" valign="bottom">
-              <div class="row col-sm-12">
-                <ol class="breadcrumb"
-                  style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
+                <div class="row col-xs-6 col-md-6 col-lg-10 col-xl-12"><div
+                    style="overflow:hidden;">
+                <ol class="breadcrumb" style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
                   {%- set name = nav.name.split('/') -%}
                   {%- set p = nav.path.split('/') -%}
                   {%- for n in name -%}
                   {%- if community_id%}
-                  <li><a
-                      href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]+"&community="+community_id}}>{{n}}</a>
+                  <li>
+                    <a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]+"&community="+community_id}}>{{n}}</a>
                   </li>
                   {%-else%}
-                  <li><a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}>{{n}}</a></li>
+                  <li>
+                    <a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}>{{n}}</a>
+                  </li>
                   {%- endif -%}
                   {%- endfor -%}
                 </ol>
-              </div>
+                </div></div>
             </td>
           </tr>
           {%- endfor %}
@@ -60,8 +67,10 @@
               <h4 style="display: inline;">{{_('Item')}}</h4>
             </td>
             <td valign="bottom">
-              <h3 style="display: inline;"><a href='#' style="margin-left: 0.2em;">{{ record.get('item_title', _('No title')) }}</a></h3>
-              {%- if record.permalink_uri -%}
+              <h3 style="display: inline;"><a href='#' style="margin-left:
+                      0.2em;">{{ record.get('item_title', _('No title'))
+                      }}</a></h3>
+              {%- if record.permalink_uri -%} 
               <span class="pull-right" style="display: inline;">Permalink :
                 {{ record.permalink_uri }}</span>
               {%- endif -%}
@@ -129,7 +138,6 @@
                       </div>
                       {%- endif -%}
                     </span>
-
                     {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
                     {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                         filename=file.key, original=1) %}
