@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-items-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:43+0900\n"
+"POT-Creation-Date: 2019-07-04 02:07+0000\n"
 "PO-Revision-Date: 2018-01-22 15:20+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja_JP\n"
@@ -19,141 +19,241 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: weko_items_ui/views.py:324
+#: weko_items_ui/views.py:342
 msgid "invalide request"
 msgstr "無効なリクエスト"
 
-#: weko_items_ui/views.py:374
+#: weko_items_ui/views.py:404
 #, fuzzy
 msgid "Invalid Request"
 msgstr "無効なリクエスト"
 
-#: weko_items_ui/views.py:554
+#: weko_items_ui/views.py:616 weko_items_ui/views.py:716
 msgid "Header Error"
-msgstr ""
+msgstr "ヘッダエラー"
+
+#: weko_items_ui/views.py:739
+msgid "The workflow is being edited. "
+msgstr "ワークフローを編集中です"
+
+#: weko_items_ui/views.py:743
+msgid "You are not allowed to edit this item."
+msgstr "このアイテムを編集することは許可されていません"
+
+#: weko_items_ui/views.py:747
+msgid "You do not even have an itemtype."
+msgstr "あなたはアイテムタイプを持っていません"
+
+#: weko_items_ui/views.py:751
+msgid "This itemtype not found."
+msgstr "このアイテムタイプは見つかりませんでした"
+
+#: weko_items_ui/views.py:766
+#, fuzzy
+msgid "Record does not exist."
+msgstr "レコードが存在しません"
+
+#: weko_items_ui/views.py:770 weko_items_ui/views.py:804
+msgid "An error has occurred."
+msgstr "エラーが発生しました"
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 msgid "Itemtype List"
 msgstr "アイテムタイプリスト"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:106
-#: weko_items_ui/templates/weko_items_ui/edit.html:221
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:101
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:230
+#: weko_items_ui/templates/weko_items_ui/edit.html:95
+#: weko_items_ui/templates/weko_items_ui/edit.html:213
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:105
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:232
 msgid "Next"
 msgstr "次へ"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:117
-#: weko_items_ui/templates/weko_items_ui/edit.html:231
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:113
+#: weko_items_ui/templates/weko_items_ui/edit.html:106
+#: weko_items_ui/templates/weko_items_ui/edit.html:223
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:117
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:221
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:241
 msgid "Delete"
 msgstr "削除"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:145
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:143
+#: weko_items_ui/templates/weko_items_ui/edit.html:134
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:147
 msgid "Automatic Metadata Input"
-msgstr "メータデータ自動入力"
+msgstr "メタデータ自動入力"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:259
-#: weko_items_ui/templates/weko_items_ui/edit.html:281
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:265
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:289
+#: weko_items_ui/templates/weko_items_ui/edit.html:251
+#: weko_items_ui/templates/weko_items_ui/edit.html:277
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:266
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:290
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:287
 #: weko_items_ui/templates/weko_items_ui/upload.html:100
 msgid "Close"
-msgstr ""
+msgstr "閉じる"
 
-#: weko_items_ui/templates/weko_items_ui/edit.html:271
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:277
+#: weko_items_ui/templates/weko_items_ui/edit.html:263
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:278
 msgid "Please select the ID."
-msgstr "IDを選択ください。"
+msgstr "IDを選択してください"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:265
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:279
+msgid "Please input value."
+msgstr "値を入力してください"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:267
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:280
+msgid "Specified ID does not exist."
+msgstr "指定されたIDが存在しません"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:269
+#: weko_items_ui/templates/weko_items_ui/edit.html:271
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:282
+msgid "Automatic metadata input"
+msgstr "メタデータ自動入力"
 
 #: weko_items_ui/templates/weko_items_ui/edit.html:272
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:278
-msgid "Please input value."
-msgstr "値を入力ください。"
-
-#: weko_items_ui/templates/weko_items_ui/edit.html:273
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:279
-msgid "Specified ID does not exist."
-msgstr "指定したIDが存在しません。"
-
-#: weko_items_ui/templates/weko_items_ui/edit.html:274
-#: weko_items_ui/templates/weko_items_ui/edit.html:275
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:281
-msgid "Automatic metadata input"
-msgstr "メータデータ自動入力"
-
-#: weko_items_ui/templates/weko_items_ui/edit.html:276
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:284
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:285
 msgid "Get"
 msgstr "取得"
 
 #: weko_items_ui/templates/weko_items_ui/error.html:33
-#: weko_items_ui/templates/weko_items_ui/iframe/error.html:40
+#: weko_items_ui/templates/weko_items_ui/iframe/error.html:41
 msgid "No itemtype to register."
-msgstr ""
+msgstr "登録するアイテムタイプがありません"
 
-#: weko_items_ui/templates/weko_items_ui/error.html:34
-#: weko_items_ui/templates/weko_items_ui/iframe/error.html:41
-msgid "Go to"
-msgstr "移動"
+#: weko_items_ui/templates/weko_items_ui/ranking.html:44
+msgid "Aggregation Period"
+msgstr "統計期間"
 
-#: weko_items_ui/templates/weko_items_ui/error.html:34
-#: weko_items_ui/templates/weko_items_ui/iframe/error.html:41
-msgid "Register Itemtype"
-msgstr "アイテムタイプをレジストする"
+#: weko_items_ui/templates/weko_items_ui/ranking.html:51
+msgid "The Most Reviewed Items"
+msgstr "最も閲覧されたアイテム"
+
+#: weko_items_ui/templates/weko_items_ui/ranking.html:57
+msgid "Most Downloaded Items"
+msgstr "最もダウンロードされたアイテム"
+
+#: weko_items_ui/templates/weko_items_ui/ranking.html:63
+msgid "User Who Created The Most Items"
+msgstr "最もアイテムを作成したユーザー"
+
+#: weko_items_ui/templates/weko_items_ui/ranking.html:69
+msgid "Most Searched Keywords"
+msgstr "最も検索されたキーワード"
+
+#: weko_items_ui/templates/weko_items_ui/ranking.html:75
+msgid "New Items"
+msgstr "新着アイテム"
 
 #: weko_items_ui/templates/weko_items_ui/upload.html:42
 msgid "Select Files"
-msgstr ""
+msgstr "ファイル選択"
 
 #: weko_items_ui/templates/weko_items_ui/upload.html:48
 msgid "Import Data"
-msgstr ""
+msgstr "データをインポート"
 
 #: weko_items_ui/templates/weko_items_ui/upload.html:55
 msgid "Import"
-msgstr ""
+msgstr "インポート"
 
 #: weko_items_ui/templates/weko_items_ui/upload.html:68
 msgid "Error List"
-msgstr ""
+msgstr "エラー一覧"
 
 #: weko_items_ui/templates/weko_items_ui/upload.html:73
 msgid "Category"
-msgstr ""
+msgstr "カテゴリー"
 
 #: weko_items_ui/templates/weko_items_ui/upload.html:74
 msgid "Line"
-msgstr ""
+msgstr "ライン"
 
 #: weko_items_ui/templates/weko_items_ui/upload.html:75
 msgid "Item ID"
-msgstr ""
+msgstr "アイテムID"
 
 #: weko_items_ui/templates/weko_items_ui/upload.html:76
 msgid "Error"
-msgstr ""
+msgstr "エラー"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/error.html:46
 msgid "item login success"
-msgstr ""
+msgstr "アイテムのログインに成功"
 
 #: weko_items_ui/templates/weko_items_ui/iframe/error.html:51
 msgid "item login fail"
-msgstr ""
+msgstr "アイテムのログインに失敗"
 
-#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:227
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:228
 msgid "Save"
 msgstr "保存"
 
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:242
 msgid "Quit"
-msgstr "強制終了"
+msgstr "終了"
 
-msgid "Are you sure you want to quit the activity?"
-msgstr "このアクティビティを強制終了してもよろしいでしょうか。"
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:72
+msgid "Flow"
+msgstr "フロー"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:80
+msgid "Activity"
+msgstr "アクティビティ"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:88
+msgid "Status"
+msgstr "ステータス"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:100
+msgid "Created"
+msgstr "作成"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:108
+msgid "Creater"
+msgstr "作成者"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:122
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:226
+msgid "Updated"
+msgstr "更新"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:130
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:227
+msgid "Updater"
+msgstr "更新者"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:147
+msgid "Item"
+msgstr "アイテム"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:156
+msgid "Step"
+msgstr "ステップ"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:220
+msgid "History"
+msgstr "ヒストリー"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:225
+msgid "Action"
+msgstr "アクション"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:228
+msgid "Result"
+msgstr "結果"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:229
+msgid "Comment"
+msgstr "コメント"
+
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:261
+#: weko_items_ui/templates/weko_items_ui/iframe/item_index.html:265
+msgid "Back"
+msgstr "戻る"
+
+#: weko_items_ui/templates/weko_items_ui/macros/ranking_list.html:31
+msgid "place"
+msgstr "位"
 
 #~ msgid "Item Test Data"
 #~ msgstr "アイテムテストデータ"
@@ -205,3 +305,13 @@ msgstr "このアクティビティを強制終了してもよろしいでしょ
 
 #~ msgid "You do not even have an itemtype."
 #~ msgstr "アイテムタイプは存在しません"
+
+#~ msgid "Go to"
+#~ msgstr "移動"
+
+#~ msgid "Register Itemtype"
+#~ msgstr "アイテムタイプをレジストする"
+
+#~ msgid "Are you sure you want to quit the activity?"
+#~ msgstr "このアクティビティを強制終了してもよろしいでしょうか。"
+

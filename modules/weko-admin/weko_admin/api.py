@@ -62,7 +62,8 @@ def _is_crawler(user_info):
         if not raw_res:
             continue
         restrict_list = raw_res.split('\n')
-        restrict_list = [agent for agent in restrict_list if not agent.startswith('#')]
+        restrict_list = [
+            agent for agent in restrict_list if not agent.startswith('#')]
         if user_info['user_agent'] in restrict_list or \
            user_info['ip_address'] in restrict_list:
             return True

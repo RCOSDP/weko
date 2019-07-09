@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-groups 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:34+0900\n"
+"POT-Creation-Date: 2019-07-02 09:24+0000\n"
 "PO-Revision-Date: 2018-01-22 11:17+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -24,31 +24,31 @@ msgstr ""
 msgid ""
 "Required. Provide list of the emails of the users you wish to be added. "
 "Put each email on new line."
-msgstr "必須。追加したいユーザーのメールアドレスを提供している。メールアドレスを新行に追加する。"
+msgstr "必須です　追加したいユーザーのメールアドレスを指定してください 新しいの行にメールアドレスを追加してください"
 
 #: weko_groups/models.py:54
 msgid "Users can self-subscribe."
-msgstr "ユーザーが自己購読できる。"
+msgstr "ユーザーは自己購読できます"
 
 #: weko_groups/models.py:56
 msgid "Users can self-subscribe but requires administrator approval."
-msgstr "管理者の許可ある限り、ユーザーは自己購読できる。"
+msgstr "管理者の許可があれば、ユーザーは自己購読できます"
 
 #: weko_groups/models.py:58
 msgid "Subscription is by administrator invitation only."
-msgstr "管理者の招待がある場合のみ購読できる。"
+msgstr "管理者の招待があれば、購読できます"
 
 #: weko_groups/models.py:96
 msgid "Group membership is fully public."
-msgstr "グループメンバーは完全公開している。"
+msgstr "グループメンバーは公開されています"
 
 #: weko_groups/models.py:98
 msgid "Only group members can view other members."
-msgstr "グループメンバー同士のみがほかのメンバーをご覧になれる。"
+msgstr "他のメンバーを表示できるのは、グループメンバーだけです"
 
 #: weko_groups/models.py:100
 msgid "Only administrators can view members."
-msgstr "管理者のみがメンバーを見れる。"
+msgstr "管理者のみがメンバーを表示できます"
 
 #: weko_groups/models.py:152
 msgid "Public"
@@ -68,7 +68,7 @@ msgstr "開く"
 
 #: weko_groups/models.py:160
 msgid "Open with approval"
-msgstr "許可得て開く"
+msgstr "承認を得て開く"
 
 #: weko_groups/models.py:161
 msgid "Closed"
@@ -80,7 +80,7 @@ msgstr "名前"
 
 #: weko_groups/models.py:173
 msgid "Required. A name of a group."
-msgstr "グループ名前が必須。"
+msgstr "グループ名は必須"
 
 #: weko_groups/models.py:180
 msgid "Description"
@@ -88,7 +88,7 @@ msgstr "説明"
 
 #: weko_groups/models.py:181
 msgid "Optional. A short description of the group. Default: Empty"
-msgstr "任意。簡単なグループ説明。デフォルト：空欄。"
+msgstr "グループの簡単な説明はオプションですオプションです デフォルト:空値"
 
 #: weko_groups/models.py:194
 msgid "Privacy Policy"
@@ -100,11 +100,11 @@ msgstr "購読ポリシー"
 
 #: weko_groups/models.py:544
 msgid "Pending admin approval"
-msgstr "管理者許可未決定"
+msgstr "保留中の管理者承認"
 
 #: weko_groups/models.py:545
 msgid "Pending member approval"
-msgstr "メンバー許可未決定"
+msgstr "保留中のメンバー承認"
 
 #: weko_groups/models.py:546
 msgid "Active"
@@ -139,7 +139,7 @@ msgstr "グループ \"%(name)s\" が作成されました"
 
 #: weko_groups/views.py:191
 msgid "Group creation failure"
-msgstr "がループ作成に失敗しました"
+msgstr "グループ作成に失敗しました"
 
 #: weko_groups/templates/weko_groups/index.html:99
 #: weko_groups/templates/weko_groups/members.html:35 weko_groups/views.py:202
@@ -177,47 +177,47 @@ msgstr "メンバー"
 #: weko_groups/views.py:320
 #, python-format
 msgid "You are not allowed to see members of this group %(group_name)s."
-msgstr "グループ %(group_name)s メンバーがご覧になれません。"
+msgstr "このグループ %(group_name)s のメンバーを見ることはできません"
 
 #: weko_groups/views.py:348
 #, python-format
 msgid "You have successfully left %(group_name)s group."
-msgstr "グループ %(group_name)s を離脱しました。"
+msgstr "グループ %(group_name)s を退会しました"
 
 #: weko_groups/views.py:357
 #, python-format
 msgid "You cannot leave the group %(group_name)s"
-msgstr "グループ %(group_name)s を離脱できません。"
+msgstr "グループ %(group_name)s から退会できません"
 
 #: weko_groups/views.py:387
 #, fuzzy, python-format
 msgid "%(user)s accepted to %(group_name)s group."
-msgstr "%(user)s は %(group_name)s group に参加しました"
+msgstr "%(user)s は %(group_name)s グループに参加しました"
 
 #: weko_groups/views.py:393
 #, python-format
 msgid "You cannot approve memberships for the group %(group_name)s"
-msgstr "グループ %(group_name)s group のメンバー承認ができません。"
+msgstr "グループ %(group_name)s の会員になることはできません"
 
 #: weko_groups/views.py:423
 #, python-format
 msgid "User %(user_email)s was removed from %(group_name)s group."
-msgstr "ユーザー  %(user_email)s　がグループ %(group_name)s から取り除かれました。"
+msgstr "ユーザー  %(user_email)s　がグループ %(group_name)s から削除されました"
 
 #: weko_groups/views.py:428
 #, python-format
 msgid "You cannot delete users of the group %(group_name)s"
-msgstr "ユーザーをグループ %(group_name)s から削除する権限がありません。"
+msgstr "グループ %(group_name)s からユーザーを削除することができません"
 
 #: weko_groups/views.py:457
 #, fuzzy, python-format
 msgid "You are now part of %(group_name)s group."
-msgstr "グループ %(group_name)s の一員ではありません。"
+msgstr "あなたは現在グループ %(group_name)s の一員です"
 
 #: weko_groups/views.py:485
 #, fuzzy, python-format
 msgid "You have rejected invitation to %(group_name)s group."
-msgstr "グループ %(group_name)s の招待を拒否しました。"
+msgstr "グループ %(group_name)s への招待を拒否しました"
 
 #: weko_groups/views.py:496
 msgid "NewMember"
@@ -258,29 +258,29 @@ msgid ""
 "List of groups your are currently admin or member of. While being in "
 "particular group you gain special privileges, which enables you to get "
 "more involved in growth of the community."
-msgstr "あなたは管理・所在しているグループリストは特別な権利を所得して、コミュニティ成長のためにますますのご協力をお願い申し上げます"
+msgstr "あなたが現在管理者またはメンバーであるグループのリストです コミュニティ成長のためにますますのご協力をお願いします"
 
 #: weko_groups/templates/weko_groups/index.html:62
 msgid "Go ahead and create new group!"
-msgstr "進んで新グループを作成します"
+msgstr "新しいグループを作成しましょう！"
 
 #: weko_groups/templates/weko_groups/index.html:67
 msgid "No results found."
-msgstr "結果が見当たりません。"
+msgstr "該当なし"
 
 #: weko_groups/templates/weko_groups/index.html:94
 msgid "Leave"
-msgstr "止める"
+msgstr "退会"
 
 #: weko_groups/templates/weko_groups/index.html:102
 #: weko_groups/templates/weko_groups/members.html:36
-#: weko_groups/templates/weko_groups/new_member.html:56
+#: weko_groups/templates/weko_groups/new_member.html:52
 msgid "Invite"
 msgstr "招待"
 
 #: weko_groups/templates/weko_groups/members.html:45
 msgid "No results found"
-msgstr "結果が見当たりません"
+msgstr "該当なし"
 
 #: weko_groups/templates/weko_groups/members.html:53
 msgid "UserID"
@@ -288,24 +288,24 @@ msgstr "ユーザーID"
 
 #: weko_groups/templates/weko_groups/members.html:54
 msgid "Email"
-msgstr "Eメール"
+msgstr "メール"
 
 #: weko_groups/templates/weko_groups/members.html:57
 #: weko_groups/templates/weko_groups/members.html:59
 msgid "Status"
-msgstr "状況"
+msgstr "ステータス"
 
 #: weko_groups/templates/weko_groups/members.html:62
 msgid "Modify"
-msgstr "調整"
+msgstr "修正"
 
 #: weko_groups/templates/weko_groups/members.html:76
 msgid "Remove"
-msgstr "取り除く"
+msgstr "削除"
 
 #: weko_groups/templates/weko_groups/members.html:79
 msgid "Revoke"
-msgstr "取り消す"
+msgstr "取消"
 
 #: weko_groups/templates/weko_groups/new.html:59
 #: weko_groups/templates/weko_groups/new.html:93
@@ -322,7 +322,7 @@ msgstr "作成"
 
 #: weko_groups/templates/weko_groups/new.html:66
 #: weko_groups/templates/weko_groups/new.html:88
-#: weko_groups/templates/weko_groups/new_member.html:53
+#: weko_groups/templates/weko_groups/new_member.html:49
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -332,41 +332,41 @@ msgstr "グループ削除"
 
 #: weko_groups/templates/weko_groups/new.html:80
 msgid "You are about to "
-msgstr "あなたは今"
+msgstr ""
 
 #: weko_groups/templates/weko_groups/new.html:81
 msgid "delete"
-msgstr "削除しようとしているのは"
+msgstr "削除"
 
 #: weko_groups/templates/weko_groups/new.html:84
 msgid "This action cannot be undone. Are you sure you want to proceed?"
-msgstr "このアクションは元に戻すことはできない。"
+msgstr "この操作を元に戻すことはできません 続行してよろしいですか？"
 
-#: weko_groups/templates/weko_groups/new_member.html:43
+#: weko_groups/templates/weko_groups/new_member.html:39
 msgid ""
 "Specifies email addresses of the users you would like to add to your "
 "group. Each user will be sent invitation."
-msgstr "追加したいユーザーのEメールアドレスを指定してください。招待メッセージは指定した全員に送ります。"
+msgstr "追加したいユーザーのメールアドレスを指定してください　招待メッセージは指定した全員に送信されます"
 
 #: weko_groups/templates/weko_groups/paginate.html:98
 #, python-format
 msgid "Displaying items %(start)d - %(stop)d out of %(total)d"
-msgstr "アイテムを表示している: %(start)d - %(stop)d, トータル: %(total)d"
+msgstr "アイテム表示: %(start)d - %(stop)d, トータル: %(total)d"
 
 #: weko_groups/templates/weko_groups/pending.html:35
 msgid "Pending invitations"
-msgstr "未決定招待"
+msgstr "保留中の招待"
 
 #: weko_groups/templates/weko_groups/pending.html:35
 msgid "Pending requests"
-msgstr "未決定リクエスト"
+msgstr "保留中のリクエスト"
 
 #: weko_groups/templates/weko_groups/pending.html:41
 msgid ""
 "Invitations you received from communities admins. Click accept in order "
 "to become a member of the particular team or reject to cancel a pending "
 "invitation."
-msgstr "コミュニティの管理者から未決定の招待状がありました。同意ボタンをクリックしてチームメンバーになるもしくは拒否ボタンをクリックして拒否する。"
+msgstr "コミュニティの管理者から招待状を受け取りました 同意ボタンをクリックしてチームメンバーになるもしくは拒否ボタンをクリックして拒否してください"
 
 #: weko_groups/templates/weko_groups/pending.html:55
 msgid "Group"

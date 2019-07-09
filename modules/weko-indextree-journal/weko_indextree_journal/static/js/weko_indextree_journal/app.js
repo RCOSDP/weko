@@ -1,8 +1,8 @@
-require([
-  "jquery",
-  "bootstrap"
-], function() {
-});
+// require([
+//   "jquery",
+//   "bootstrap"
+// ], function() {
+// });
 
 (function (angular) {
   // Bootstrap it!
@@ -64,7 +64,7 @@ require([
           page_info.send_method = "PUT";
         }
         var request = {
-          url: '/api/indextree/journal/'+$scope.cur_index_id,
+          url: '/api/admin/indexjournal/'+$scope.cur_index_id,
           method: page_info.send_method,
           headers: {
             'Content-Type': 'application/json'

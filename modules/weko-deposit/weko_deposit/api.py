@@ -422,8 +422,16 @@ class WekoDeposit(Deposit):
             dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
         if has_request_context():
+            if current_user:
+                user_id = current_user.get_id()
+            else:
+                user_id = -1
             item_created.send(
-                current_app._get_current_object(), item_id=self.pid)
+                current_app._get_current_object(),
+                user_id=user_id,
+                item_id=self.pid,
+                item_title=self.data['title']
+            )
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
@@ -676,6 +684,14 @@ class WekoDeposit(Deposit):
             abort(500, 'Failed to register item')
         # Get index path
         index_lst = index_obj.get('index', [])
+        # Prepare index id list if the current index_lst is a path list
+        if index_lst:
+            index_id_lst = []
+            for index in index_lst:
+                indexes = str(index).split('/')
+                index_id_lst.append(indexes[len(indexes) - 1])
+            index_lst = index_id_lst
+
         plst = Indexes.get_path_list(index_lst)
 
         if not plst or len(index_lst) != len(plst):
