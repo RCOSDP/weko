@@ -32,7 +32,11 @@ from invenio_files_rest.views import ObjectResource, check_permission, \
     file_downloaded
 from invenio_records_files.utils import record_file_factory
 from weko_deposit.api import WekoRecord
-from weko_records.api import FilesMetadata, ItemTypes
+from weko_groups.api import Group
+from weko_records.api import FilesMetadata, ItemsMetadata, ItemTypeProps, \
+    ItemTypes, Mapping
+from weko_records.serializers.utils import get_item_type_name, \
+    get_item_type_name_id
 from weko_user_profiles.models import UserProfile
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
@@ -41,6 +45,7 @@ from .models import PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
     file_permission_factory
+from .utils import is_billing_item
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -291,10 +296,13 @@ def add_signals_info(record, obj):
     :param obj: send object.
     """
     # Add user role info to send_obj
+
     userrole = 'guest'
     userid = 0
+    user_groups = []
     if hasattr(current_user, 'id'):
         userid = current_user.id
+        user_groups = Group.query_by_user(current_user).all()
         if len(current_user.roles) == 0:
             userrole = 'user'
         elif len(current_user.roles) == 1:
@@ -307,6 +315,13 @@ def add_signals_info(record, obj):
                     userrole = r.name
     obj.userrole = userrole
     obj.userid = userid
+
+    # Add groups of current users
+    groups = [{'group_id': g.id, 'group_name': g.name} for g in user_groups]
+    obj.user_group_list = groups if groups else None
+
+    # Check whether billing file or not
+    obj.is_billing_item = is_billing_item(record['item_type_id'])
 
     # Add site license flag to send_obj
     obj.site_license_flag = True if hasattr(current_user, 'site_licese_flag') \

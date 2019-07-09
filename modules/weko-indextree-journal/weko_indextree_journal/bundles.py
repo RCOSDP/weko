@@ -38,6 +38,6 @@ js_treeview = NpmBundle(
 
 js = Bundle(
     'js/weko_indextree_journal/app.js',
-    filters='requirejs',
+    # filters='requirejs',
     output="gen/indextree_journal.%(version)s.js"
 )

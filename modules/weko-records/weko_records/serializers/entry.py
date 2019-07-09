@@ -100,8 +100,8 @@ class WekoFeedEntry(FeedEntry):
         if not self.__atom_content:
             links = self.__atom_link or []
             if not [l for l in links if l.get('rel') == 'alternate']:
-                raise ValueError('Entry must contain an alternate link or ' +
-                                 'a content element.')
+                raise ValueError('Entry must contain an alternate link or '
+                                 + 'a content element.')
 
         XMLELEMENTS_NS = 'http://www.w3.org/XML/1998/namespace'
         # Add author elements
@@ -131,11 +131,11 @@ class WekoFeedEntry(FeedEntry):
                 # Surround xhtml with a div tag, parse it and embed it
                 if type == 'xhtml':
                     content.append(etree.fromstring(
-                        '<div xmlns="http://www.w3.org/1999/xhtml">' +
-                        self.__atom_content.get('content') + '</div>'))
+                        '<div xmlns="http://www.w3.org/1999/xhtml">'
+                        + self.__atom_content.get('content') + '</div>'))
                 elif type == 'CDATA':
                     content.text = etree.CDATA(
-                            self.__atom_content.get('content'))
+                        self.__atom_content.get('content'))
                 # Emed the text in escaped form
                 elif not type or type.startswith('text') or type == 'html':
                     content.text = self.__atom_content.get('content')
@@ -145,9 +145,9 @@ class WekoFeedEntry(FeedEntry):
                         self.__atom_content['content']))
                 # Everything else should be included base64 encoded
                 else:
-                    raise ValueError('base64 encoded content is not ' +
-                                     'supported at the moment. Pull requests' +
-                                     ' adding support are welcome.')
+                    raise ValueError('base64 encoded content is not '
+                                     + 'supported at the moment. Pull requests'
+                                     + ' adding support are welcome.')
             # Add type description of the content
             if type:
                 content.attrib['type'] = type
@@ -224,9 +224,9 @@ class WekoFeedEntry(FeedEntry):
             entry.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
                 self.__rss_itemUrl
 
-        if not (self.__rss_title or
-                self.__rss_description or
-                self.__rss_content):
+        if not (self.__rss_title
+                or self.__rss_description
+                or self.__rss_content):
             raise ValueError('Required fields not set')
         if self.__rss_title:
             title = etree.SubElement(entry, 'title')
@@ -235,7 +235,8 @@ class WekoFeedEntry(FeedEntry):
             link = etree.SubElement(entry, 'link')
             link.text = self.__rss_link
         if self.__rss_seeAlso:
-            seeAlso = etree.SubElement(entry, '{http://www.w3.org/2000/01/rdf-schema#}seeAlso')
+            seeAlso = etree.SubElement(
+                entry, '{http://www.w3.org/2000/01/rdf-schema#}seeAlso')
             seeAlso.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource'] = \
                 self.__rss_seeAlso
 
@@ -293,7 +294,8 @@ class WekoFeedEntry(FeedEntry):
 
     def jpcoar_entry(self, extensions=True):
         """Create a JPCOAR item and return it."""
-        des = etree.Element('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description')
+        des = etree.Element(
+            '{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description')
         des.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
             self.__jpcoar_itemUrl
 
@@ -441,7 +443,8 @@ class WekoFeedEntry(FeedEntry):
             if replace or self.__atom_author is None:
                 self.__atom_author = []
             self.__atom_author += ensure_format(author,
-                                                set(['name', 'email', 'uri', 'lang']),
+                                                set(['name', 'email',
+                                                     'uri', 'lang']),
                                                 set())
             self.__rss_author = []
             for a in self.__atom_author:
@@ -599,9 +602,9 @@ class WekoFeedEntry(FeedEntry):
             if replace or self.__atom_category is None:
                 self.__atom_category = []
             self.__atom_category += ensure_format(
-                    category,
-                    set(['term', 'scheme', 'label']),
-                    set(['term']))
+                category,
+                set(['term', 'scheme', 'label']),
+                set(['term']))
             # Map the ATOM categories to RSS categories. Use the atom:label as
             # name or if not present the atom:term. The atom:scheme is the
             # rss:domain.
@@ -638,7 +641,7 @@ class WekoFeedEntry(FeedEntry):
             if replace or self.__atom_contributor is None:
                 self.__atom_contributor = []
             self.__atom_contributor += ensure_format(
-                    contributor, set(['name', 'email', 'uri']), set(['name']))
+                contributor, set(['name', 'email', 'uri']), set(['name']))
         return self.__atom_contributor
 
     def published(self, published=None):
@@ -801,9 +804,9 @@ class WekoFeedEntry(FeedEntry):
 
         # `load_extension` registry
         self.__extensions[namespace] = {
-                'inst': extinst,
-                'extension_class_entry': extension_class_entry,
-                'atom': atom,
-                'rss': rss,
-                'jpcoar': jpcoar
-                }
+            'inst': extinst,
+            'extension_class_entry': extension_class_entry,
+            'atom': atom,
+            'rss': rss,
+            'jpcoar': jpcoar
+        }

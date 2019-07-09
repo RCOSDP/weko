@@ -18,11 +18,13 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_ITEMTYPES_UI_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
   {{ super() }}
   {% assets "weko_mapping_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -30,12 +32,8 @@
   {% assets "weko_itemtypes_mapping_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('item_type') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
+{%- block body %}
+<input id="lang-code" type="hidden" value="{{lang_code}}" />
 <div id="alerts"></div>
 <div class="row">
   <div class="col-sm-12">
@@ -61,11 +59,6 @@
                 {%- endfor -%}
               </select>
             </div>
-           <!-- <a type="button" class="btn btn-info pull-right" href="{{
-                url_for('weko_itemtypes_ui.index') }}" style="width: 80px; height: 40px;font-size: 15px;">
-                 <span class="glyphicon glyphicon-chevron-left"></span>
-                 {{ _('Back') }}
-           </a>-->
           </div>
         </div>
       </div>
@@ -388,13 +381,7 @@
     <!--<div class= "col-sm-2"> -->
     <pre class="hide" id="hide_mapping_prop">{{hide_mapping_prop|tojson}}</pre>
     <pre class="pre-scrollable hide"><code id="preview_mapping">{{ hide_mapping_prop|tojson(indent=4) }}</code></pre>
-    <div class="col-sm-1">
-       <a type="button" class="btn btn-info back-button" href="{{url_for('weko_itemtypes_ui.index') }}">
-               <span class="glyphicon glyphicon-chevron-left"></span>
-               {{ _('Back') }}
-       </a>
-    </div>
-    <div class="col-sm-9"></div>
+    <div class="col-sm-10"></div>
     <div class="col-sm-2">
       <button id="mapping-submit" class="btn btn-primary save-button pull-right">
          <span class="glyphicon glyphicon-saved"></span>
@@ -402,9 +389,8 @@
       </button>
   </div>
 </div>
-{%- endblock page_body_main%}
-{%- block page_body%}
-{{ super() }}
+
+<!-- TODO: Use the modal confirm macro in weko-theme -- see /admin/report -->
 <!-- modal start -->
 <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
   <div class="modal-dialog" role="document">
@@ -430,4 +416,4 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-{%- endblock page_body %}
+{%- endblock body %}

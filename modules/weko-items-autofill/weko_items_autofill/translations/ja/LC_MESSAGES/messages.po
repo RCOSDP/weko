@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-items-autofill 1.0.0.dev20190000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:38+0900\n"
+"POT-Creation-Date: 2019-07-02 06:17+0000\n"
 "PO-Revision-Date: 2019-03-13 13:54+0700\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -22,22 +22,22 @@ msgstr ""
 #. NOTE: This is a note to a translator.
 #: weko_items_autofill/ext.py:25
 msgid "A translation string"
-msgstr ""
+msgstr "翻訳文字列"
 
-#: weko_items_autofill/views.py:43
+#: weko_items_autofill/views.py:42
 msgid "WEKO-Items-Autofill"
-msgstr ""
+msgstr "WEKOアイテムの自動入力"
 
-#: weko_items_autofill/views.py:61
-msgid "Header Error"
-msgstr "ヘッダ誤り"
-
-#: weko_items_autofill/views.py:97
+#: weko_items_autofill/views.py:54
 msgid "Select the ID"
 msgstr "ID選択"
+
+#: weko_items_autofill/views.py:88
+msgid "Header Error"
+msgstr "ヘッダエラー"
 
 #: weko_items_autofill/templates/weko_items_autofill/index.html:12
 #, python-format
 msgid "Welcome to %(module_name)s"
-msgstr ""
+msgstr "%(module_name)s へようこそ"
 

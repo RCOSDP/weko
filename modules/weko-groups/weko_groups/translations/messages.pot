@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-groups 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:34+0900\n"
+"POT-Creation-Date: 2019-07-02 09:24+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -271,7 +271,7 @@ msgstr ""
 
 #: weko_groups/templates/weko_groups/index.html:102
 #: weko_groups/templates/weko_groups/members.html:36
-#: weko_groups/templates/weko_groups/new_member.html:56
+#: weko_groups/templates/weko_groups/new_member.html:52
 msgid "Invite"
 msgstr ""
 
@@ -319,7 +319,7 @@ msgstr ""
 
 #: weko_groups/templates/weko_groups/new.html:66
 #: weko_groups/templates/weko_groups/new.html:88
-#: weko_groups/templates/weko_groups/new_member.html:53
+#: weko_groups/templates/weko_groups/new_member.html:49
 msgid "Cancel"
 msgstr ""
 
@@ -339,7 +339,7 @@ msgstr ""
 msgid "This action cannot be undone. Are you sure you want to proceed?"
 msgstr ""
 
-#: weko_groups/templates/weko_groups/new_member.html:43
+#: weko_groups/templates/weko_groups/new_member.html:39
 msgid ""
 "Specifies email addresses of the users you would like to add to your "
 "group. Each user will be sent invitation."

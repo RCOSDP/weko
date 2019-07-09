@@ -321,8 +321,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     offset = pdf.x + w1
     pdf.multi_cell(w1,
                    meta_h,
-                   lang_data["Title"]["METADATA"] +
-                   '\n' * (metadata_lfnum + 1),
+                   lang_data["Title"]["METADATA"]
+                   + '\n' * (metadata_lfnum + 1),
                    1,
                    'C',
                    True)
@@ -344,8 +344,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     top = pdf.y
     pdf.multi_cell(w1,
                    url_oapolicy_h,
-                   lang_data["Title"]["OAPOLICY"] +
-                   '\n' * (oa_policy_lfnum + 1),
+                   lang_data["Title"]["OAPOLICY"]
+                   + '\n' * (oa_policy_lfnum + 1),
                    1,
                    'C',
                    True)

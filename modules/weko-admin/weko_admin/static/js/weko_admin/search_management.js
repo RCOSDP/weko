@@ -51,14 +51,16 @@
                     '<button type="button" class="close" data-dismiss="alert">' +
                     '&times;</button>' + message + '</div>');
         }
-        
+
         $scope.saveData=function(){
         var url = $location.path();
         dbJson = $scope.dataJson;
-       
+
         $http.post(url, dbJson).then(function successCallback(response) {
             // alert(response.data.message);
+            $('html,body').scrollTop(0);
             addAlert(response.data.message);
+            // Move to top
            }, function errorCallback(response) {
            alert(response.data.message);
         });
@@ -124,4 +126,3 @@
       document.getElementById('search_management'), ['searchSettingModule']);
   });
 })(angular);
-

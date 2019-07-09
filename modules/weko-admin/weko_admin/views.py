@@ -33,15 +33,14 @@ from flask_login import current_user, login_required
 from flask_menu import register_menu
 from invenio_admin.proxies import current_admin
 from sqlalchemy.orm import session
-from weko_records.api import ItemTypes, SiteLicense
+from weko_records.api import ItemTypes
 from werkzeug.local import LocalProxy
 
 from .models import SearchManagement, SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_initial_stats_report, \
-    get_response_json, get_search_setting, get_selected_language, \
-    get_unit_stats_report, save_api_certification, update_admin_lang_setting, \
-    validate_certification
+    get_selected_language, get_unit_stats_report, save_api_certification, \
+    update_admin_lang_setting, validate_certification
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -161,70 +160,6 @@ def session_info_offline():
                    lifetime=lifetime_str,
                    _app_lifetime=str(_app.permanent_session_lifetime),
                    current_app_name=current_app.name)
-
-
-@blueprint.route('/admin/site-license', methods=['GET', 'POST'])
-@blueprint.route('/admin/site-license/', methods=['GET', 'POST'])
-def site_license():
-    """Site license setting page."""
-    current_app.logger.info('site-license setting page')
-    if 'POST' in request.method:
-        jfy = {}
-        try:
-            # update item types and site license info
-            SiteLicense.update(request.get_json())
-            jfy['status'] = 201
-            jfy['message'] = 'Site license was successfully updated.'
-        except BaseException:
-            jfy['status'] = 500
-            jfy['message'] = 'Failed to update site license.'
-        return make_response(jsonify(jfy), jfy['status'])
-
-    try:
-        # site license list
-        result_list = SiteLicense.get_records()
-        # item types list
-        n_lst = ItemTypes.get_latest()
-        result = get_response_json(result_list, n_lst)
-        return render_template(
-            current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
-            result=json.dumps(result))
-    except BaseException:
-        abort(500)
-
-
-@blueprint.route('/admin/search-management', methods=['GET', 'POST'])
-def set_search():
-    """Site license setting page."""
-    current_app.logger.info('search setting page')
-    result = json.dumps(get_search_setting())
-
-    if 'POST' in request.method:
-        jfy = {}
-        try:
-            # update search setting
-            dbData = request.get_json()
-            res = SearchManagement.get()
-
-            if res:
-                id = res.id
-                SearchManagement.update(id, dbData)
-            else:
-                SearchManagement.create(dbData)
-            jfy['status'] = 201
-            jfy['message'] = 'Search setting was successfully updated.'
-        except BaseException:
-            jfy['status'] = 500
-            jfy['message'] = 'Failed to update search setting.'
-        return make_response(jsonify(jfy), jfy['status'])
-
-    try:
-        return render_template(
-            current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
-            setting_data=result
-        )
-    except BaseException:
-        abort(500)
 
 
 @blueprint_api.route('/load_lang', methods=['GET'])

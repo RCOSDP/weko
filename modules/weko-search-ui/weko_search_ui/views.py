@@ -192,13 +192,13 @@ def opensearch_description():
 
     url = ET.SubElement(root, '{' + ns_opensearch + '}Url')
     url.set('type', 'application/atom+xml')
-    url.set('template', request.host_url +
-            'api/opensearch/search?q={searchTerms}')
+    url.set('template', request.host_url
+            + 'api/opensearch/search?q={searchTerms}')
 
     url = ET.SubElement(root, '{' + ns_opensearch + '}Url')
     url.set('type', 'application/atom+xml')
-    url.set('template', request.host_url +
-            'api/opensearch/search?q={searchTerms}&amp;format=atom')
+    url.set('template', request.host_url
+            + 'api/opensearch/search?q={searchTerms}&amp;format=atom')
 
     response.data = ET.tostring(root)
 
