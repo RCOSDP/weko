@@ -90,7 +90,7 @@ let PageBodyGrid = function () {
         return '<div class="widget-access-counter" data-init-number="' + initNumber + '" style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">' + result + '</div>';
     };
 
-    this.buildNewArrivals = function (widgetID, term, rss, id) {
+    this.buildNewArrivals = function (widgetID, term, rss, id, count) {
         $.ajax({
             method: 'GET',
             url: '/api/admin/get_new_arrivals/' + widgetID,
@@ -105,7 +105,7 @@ let PageBodyGrid = function () {
                     term = 0;
                 }
                 if (rss) {
-                    rssURL = "/api/admin/get_rss_data?term=" + term;
+                    rssURL = "/api/admin/get_rss_data?term=" + term + "&count=" + count;
                     rssHtml = '<a class="" target="_blank" rel="noopener noreferrer" href="' + rssURL + '"><i class="fa fa-rss"></i></a>';
                 }
                 let innerHTML = '';
@@ -171,7 +171,7 @@ let PageBodyGrid = function () {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
             
-            this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID);
+            this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
         }
 
         let template =

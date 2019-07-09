@@ -198,15 +198,18 @@ def get_rss_data():
 
     """
     term = 0
+    count = 0
     try:
-        data = request.args.get('term')
-        term = int(data)
+        data = request.args
+        term = int(data.get('term'))
+        count = int(data.get('count'))
     except Exception:
+        count = -1
         term = -1
-    if term < 0:
-        return WidgetDataLoaderServices.get_arrivals_rss(None, 0)
+    if term < 0 or count < 0:
+        return WidgetDataLoaderServices.get_arrivals_rss(None, 0, 0)
     current_date = date.today()
     end_date = current_date.strftime("%Y-%m-%d")
     start_date = (current_date - timedelta(days=term)).strftime("%Y-%m-%d")
     rd = get_ES_result_by_date(start_date, end_date)
-    return WidgetDataLoaderServices.get_arrivals_rss(rd, term)
+    return WidgetDataLoaderServices.get_arrivals_rss(rd, term, count)

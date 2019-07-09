@@ -722,14 +722,14 @@ class WidgetDataLoaderServices:
         return result
 
     @classmethod
-    def get_arrivals_rss(cls, data, term):
+    def get_arrivals_rss(cls, data, term, count):
         """Get New Arrivals RSS.
 
         :dictionary: elastic search data
 
         """
         if not data or not data.get('hits'):
-            return build_rss_xml(None, term)
+            return build_rss_xml(None, term, 0)
         hits = data.get('hits')
         rss_data = hits.get('hits')
-        return build_rss_xml(rss_data, term)
+        return build_rss_xml(rss_data, term, count)
