@@ -540,8 +540,7 @@ def find_rss_value(data, keyword):
         else:
             return root_url + '/records/' + record_number
     elif keyword == 'seeAlso':
-        # TODO: change if requirement clear
-        return ''
+        return 'https://www.w3.org/TR/rdf-schema/'
     elif keyword == 'creator':
         if source.get('creator'):
             creator = source.get('creator')
@@ -562,6 +561,7 @@ def find_rss_value(data, keyword):
                             list_creator.append(creator_name[i])
                     else:
                         continue
+                return list_creator
         else:
             return ''
     elif keyword == 'publisher':
