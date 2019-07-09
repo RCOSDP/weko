@@ -23,11 +23,11 @@
 WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'
 """Default base template for the author page."""
 
-WEKO_AUTHORS_LIST_TEMPLATE = 'weko_authors/list.html'
-"""List template for the author page."""
+WEKO_AUTHORS_ADMIN_LIST_TEMPLATE = 'weko_authors/admin/list.html'
+"""List template for the admin author page."""
 
-WEKO_AUTHORS_EDIT_TEMPLATE = 'weko_authors/edit.html'
-"""Edit template for the author page."""
+WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE = 'weko_authors/admin/edit.html'
+"""Edit template for the admin author page."""
 
 WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""

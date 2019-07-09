@@ -25,6 +25,7 @@ from flask import current_app
 from invenio_cache import current_cache
 from invenio_db import db
 from weko_records.api import ItemTypes, Mapping
+from weko_workflow.models import ActionJournal
 
 from .api import CiNiiURL, CrossRefOpenURL
 
@@ -994,3 +995,18 @@ def build_record(data, value, child_data, sub_child_data):
             if child_key_list and len(child_key_list) == 3:
                 sub_key = child_key_list[2].replace("[]", "")
                 sub_child_data[sub_key] = convert_html_escape(v)
+
+
+def get_workflow_journal(activity_id):
+    """Get workflow journal data.
+
+    :param activity_id: The identify of Activity.
+    :return: Workflow journal data
+    """
+    journal_data = None
+    with db.session.no_autoflush:
+        journal = ActionJournal.query.filter_by(
+            activity_id=activity_id).one_or_none()
+        if journal:
+            journal_data = journal.action_journal
+    return journal_data

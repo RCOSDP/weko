@@ -122,7 +122,8 @@ class ItemManagementCustomSort(BaseView):
             # save data to DB
             item_sort = {}
             for sort in sort_data:
-                item_sort[sort.get('id')] = sort.get('custom_sort').get(index_id)
+                item_sort[sort.get('id')] = sort.get(
+                    'custom_sort').get(index_id)
 
             Indexes.set_item_sort_custom(index_id, item_sort)
 
@@ -153,7 +154,8 @@ class ItemManagementBulkSearch(BaseView):
         cur_index_id = search_type if search_type not in ('0', '1', ) else None
         if 'community' in getArgs:
             from weko_workflow.api import GetCommunity
-            comm = GetCommunity.get_community_by_id(request.args.get('community'))
+            comm = GetCommunity.get_community_by_id(
+                request.args.get('community'))
             ctx = {'community': comm}
             community_id = comm.id
 

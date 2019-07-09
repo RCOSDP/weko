@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 19:01+0900\n"
+"POT-Creation-Date: 2019-07-02 04:41+0000\n"
 "PO-Revision-Date: 2015-10-09 17:08+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,10 +19,22 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
+#: weko_search_ui/admin.py:223 weko_search_ui/admin.py:232
+msgid "Items"
+msgstr "アイテム"
+
+#: weko_search_ui/admin.py:224
+msgid "Bulk Delete"
+msgstr "一括削除"
+
+#: weko_search_ui/admin.py:233
+msgid "Custom Sort"
+msgstr "カスタムソート"
+
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:27
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:66
 msgid "Title"
-msgstr ""
+msgstr "タイトル"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:38
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:67
@@ -39,15 +51,15 @@ msgstr "検索結果"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:112
 msgid "Export Checked Items"
-msgstr "チェックしたアイテムをExport"
+msgstr "チェックしたアイテムをエクスポート"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:113
 msgid "Export All Displayed Items"
-msgstr "表示中の全てのアイテムをExport"
+msgstr "表示中のアイテムをエクスポート"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:114
 msgid "Export All Items Of This Index"
-msgstr "このインデックスの全てのアイテムをExport"
+msgstr "このインデックス全てのアイテムをエクスポート"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:115
 msgid "Print Checked Items"
@@ -55,11 +67,11 @@ msgstr "チェックしたアイテムを印刷"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:116
 msgid "Print All Displayed Items"
-msgstr "表示中の全てのアイテムを印刷"
+msgstr "表示中のアイテムを印刷"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:117
 msgid "Print All Items Of This Index"
-msgstr "このインデックスの全てのアイテムを印刷"
+msgstr "このインデックス全てのアイテムを印刷"
 
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:119
 msgid "Execution"
@@ -146,56 +158,56 @@ msgstr "カスタム（降順）"
 msgid "Display Number"
 msgstr "表示数"
 
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:58
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:187
-#: weko_search_ui/templates/weko_search_ui/item_list_display.html:67
 msgid "Search failed."
-msgstr "検索に失敗しました。"
+msgstr "検索に失敗しました"
 
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:64
 #: weko_search_ui/templates/weko_search_ui/body_contents.html:193
-#: weko_search_ui/templates/weko_search_ui/item_list_display.html:73
 msgid "Loading..."
-msgstr "読み込み中"
+msgstr "読み込み中..."
 
-#: weko_search_ui/templates/weko_search_ui/bulk_delete_display.html:45
-#: weko_search_ui/templates/weko_search_ui/item_list_display.html:46
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:36
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:37
 msgid "Target Index"
-msgstr ""
+msgstr "ターゲットインデックス"
 
-#: weko_search_ui/templates/weko_search_ui/bulk_delete_display.html:58
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:49
 msgid "Delete items of child recursively"
-msgstr ""
+msgstr "子のアイテムを再帰的に削除します"
 
-#: weko_search_ui/templates/weko_search_ui/bulk_delete_display.html:70
-#: weko_search_ui/templates/weko_search_ui/bulk_delete_display.html:74
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:61
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:65
 msgid "Delete"
-msgstr ""
+msgstr "削除"
 
-#: weko_search_ui/templates/weko_search_ui/bulk_delete_display.html:88
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:79
 msgid "Are you sure you want to delete it?"
-msgstr ""
+msgstr "削除してよろしいですか？"
 
-#: weko_search_ui/templates/weko_search_ui/bulk_delete_display.html:91
-#: weko_search_ui/templates/weko_search_ui/item_list_display.html:126
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:82
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:117
 msgid "Continue"
-msgstr ""
+msgstr "継続"
 
-#: weko_search_ui/templates/weko_search_ui/bulk_delete_display.html:93
-#: weko_search_ui/templates/weko_search_ui/item_list_display.html:108
-#: weko_search_ui/templates/weko_search_ui/item_list_display.html:127
+#: weko_search_ui/templates/weko_search_ui/admin/bulk_delete_display.html:84
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:99
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:118
 msgid "Cancel"
-msgstr ""
+msgstr "キャンセル"
 
-#: weko_search_ui/templates/weko_search_ui/item_list_display.html:100
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:91
 msgid "Edit"
-msgstr ""
+msgstr "編集"
 
-#: weko_search_ui/templates/weko_search_ui/item_list_display.html:105
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:96
 msgid "Save"
-msgstr ""
+msgstr "保存"
 
-#: weko_search_ui/templates/weko_search_ui/item_list_display.html:123
+#: weko_search_ui/templates/weko_search_ui/admin/item_list_display.html:114
 msgid "Is the input contents discarded ?"
-msgstr ""
+msgstr "入力内容を破棄してもよろしいですか？"
 
 #~ msgid "Search"
 #~ msgstr "キーワード検索"

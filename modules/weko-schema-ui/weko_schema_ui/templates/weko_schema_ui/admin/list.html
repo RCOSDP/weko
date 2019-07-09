@@ -18,32 +18,28 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_SCHEMA_UI_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
-{% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
-{{ super() }}
+  {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
-{% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{{ super() }}
-{% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-{% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {{ super() }}
+  {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('schema_management') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
+{%- block body %}
 <div>
   <div ng-app="myApp" ng-controller="mp" ng-csp>
     <div class="row">
-      <div class="body col-sm-12 col-md-9">
-        <h4 class="title">{{ _('OAI Schema') }}</h4>
-        <a class="btn btn-light pull-right add-big-button" href="{{ url_for('weko_schema_ui.index') }}">
+      <div class="body col-sm-offset-1 col-sm-10 col-md-9">
+        <a class="btn btn-light pull-right add-big-button" href="{{ url_for('schemasettings.add') }}">
           <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
           {{_('Add Schema')}}
         </a><br/><br/>
@@ -58,7 +54,7 @@
           </tr>
           </thead>
           <tbody>
-          <form class="form form-inline" action="{{ url_for('.delete')}}" method="POST">
+          <form class="form form-inline" action="{{ url_for('schemasettings.delete')}}" method="POST">
             <div class="form-group">
               {%- for r in records -%}
               {% if r.dis == 'disabled' %}{% set pid = '#' %}{% else %}{% set pid = r.pid %}{% endif %}
@@ -67,12 +63,10 @@
                 <td class="nowrap">{{ r.root_name }}</td>
                 <td class="forcewrap">
                   <span class="pull-left">
-                          <a class="btn btn-primary mapping-button" href="{{url_for('weko_itemtypes_ui.mapping_index')}}">
-                            <i class="fa fa-hand-o-right"></i> {{_("Mapping")}}</a>
-                          <button class="btn btn-danger delete-button" name="pid" type="submit" value="{{pid}}" {{r.dis}}>
-                               <span class="glyphicon glyphicon-trash"></span>
-                                     {{_("Delete")}}</a>
-                          </button>
+                    <button class="btn btn-danger delete-button" name="pid" type="submit" value="{{pid}}" {{r.dis}}>
+                         <span class="glyphicon glyphicon-trash"></span>
+                               {{_("Delete")}}</a>
+                    </button>
                   </span>
                 </td>
               </tr>
@@ -86,5 +80,4 @@
     </div>
   </div>
 </div>
-{%- endblock page_body_main %}
-
+{%- endblock body %}

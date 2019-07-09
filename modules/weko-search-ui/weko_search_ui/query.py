@@ -207,7 +207,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                 if isinstance(vlst, list):
                                     attr_val = [x for x in attr_val_str.split(
                                         ',') if x.isdecimal()
-                                                and int(x) < len(vlst)]
+                                        and int(x) < len(vlst)]
                                     if attr_val:
                                         shud = []
                                         name = v[0] + ".value"
@@ -492,18 +492,18 @@ def item_path_search_factory(self, search, index_id=None):
             },
             "query": {
                 "bool": {
-                  "must": [
-                    {
-                      "match": {
-                        "path.tree": "@index"
-                      }
-                    },
-                    {
-                      "match": {
-                        "relation_version_is_last": "true"
-                      }
-                    }
-                  ]
+                    "must": [
+                        {
+                            "match": {
+                                "path.tree": "@index"
+                            }
+                        },
+                        {
+                            "match": {
+                                "relation_version_is_last": "true"
+                            }
+                        }
+                    ]
                 }
             },
             "aggs": {
