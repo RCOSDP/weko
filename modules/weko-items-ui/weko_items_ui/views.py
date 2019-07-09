@@ -220,6 +220,7 @@ def get_json_schema(item_type_id=0):
     :return: The json object.
     """
     try:
+        print('============GET JSON SCHEMA============')
         result = None
         json_schema = None
         cur_lang = current_i18n.language
@@ -245,6 +246,22 @@ def get_json_schema(item_type_id=0):
                     filemeta_group['enum'] = group_enum
 
                 json_schema = result
+                
+        #
+        session['update_json_schema'] =\
+            {"required": ["subitem_1551255647225",
+                          {"item_1554881204737": "subitem_1551255647225"}
+                          ]
+            }
+        update_json_schema = session['update_json_schema']
+        print('============Update_json_schema============', update_json_schema)
+        if update_json_schema:
+            if 'required' in update_json_schema:
+                for item in update_json_schema['required']:
+                    if isinstance(item, dict) and "item_1554881204737" in result["properties"]:
+                        result["properties"]["item_1554881204737"]["required"].append("subitem_1551255647225")
+                    else:
+                        result["required"].append(item)
 
         if result is None:
             return '{}'

@@ -418,6 +418,23 @@ function handleSharePermission(value) {
           }
         });
       }
+      
+      $scope.initMetadataValidationDOI = function () {
+        //schema_form_error_message = $('#schema_form_error_message').text()
+        // template: schema_form_error_message='{"form_name":"error message"}';
+        // schema_form_error_message='{"subitem_1551255647225":"Required.","subitem_1522300014469":"Required."}';
+        schema_form_error_message='{"schemaForm.error.pubdate":"Required."}';
+        console.log($rootScope);
+        if (schema_form_error_message.length > 2) {
+          error_message_list = JSON.parse(schema_form_error_message);
+          for(var k in error_message_list) {
+            console.log(k, error_message_list[k]);
+            $rootScope.$broadcast(k,error_message_list[k],false);
+          }
+        }
+        console.log($rootScope);
+      }
+      
       $scope.searchTypeKey = function () {
         if ($scope.resourceTypeKey.length > 0) {
           return $scope.resourceTypeKey;
@@ -592,6 +609,7 @@ function handleSharePermission(value) {
         $scope.initContributorData();
         $scope.initUserGroups();
         $scope.initFilenameList();
+        $scope.initMetadataValidationDOI();
         $scope.searchTypeKey();
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
@@ -1114,7 +1132,9 @@ function handleSharePermission(value) {
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
-        if ($scope.is_item_owner) {
+        $scope.$broadcast('schemaFormValidate');
+        var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
+        if (!invalidFlg && $scope.is_item_owner) {
           if (!this.registerUserPermission()) {
             // Do nothing
           } else {
