@@ -328,3 +328,12 @@ ${INVENIO_WEB_INSTANCE} report create_target \
 
 ${INVENIO_WEB_INSTANCE} billing create \
        1 "true"
+
+# create-admin-settings-begin
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       1 "items_display_settings" \
+       "{'items_search_author': 'name', 'items_display_email': True}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       2 "storage_check_settings" \
+       "{'threshold_rate': 80, 'cycle': 'weekly', 'day': 0}"
+# create-admin-settings-end
