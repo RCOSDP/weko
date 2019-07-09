@@ -34,9 +34,6 @@ class ComponentFeedbackMail extends React.Component {
 class ComponentExclusionTarget extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-          list_email: []
-        }
         this.style_component = {
             "margin-top": "15px",
             "font-size": "18px",
@@ -70,10 +67,11 @@ class ComponentExclusionTarget extends React.Component {
         }
         this.deleteCommand = this.deleteCommand.bind(this);
         this.searchCommand = this.searchCommand.bind(this);
+        this.generateSelectedBox = this.generateSelectedBox.bind(this);
     }
 
-    componentDidMount() {
-      let thisClass = this
+    generateSelectedBox() {
+      let innerHTML = [];
       fetch("/api/admin/get_feedback_mail")
       .then(res => res.json())
       .then((result) => {
@@ -92,18 +90,23 @@ class ComponentExclusionTarget extends React.Component {
         if ($.isEmptyObject(mailData)) {
           return;
         }
-        let innerHTML = [];
         for (let id in mailData) {
           innerHTML.push(<option value={mailData[id].author_id}>{mailData[id].email}</option>);
         }
-        thisClass.setState({
-          list_email: innerHTML
-        });
       });
+      return (
+        <select multiple style = {this.style_selected_box} id="sltBoxListEmail">
+          {innerHTML}
+        </select>
+      )
     }
 
-    deleteCommand() {
-
+    deleteCommand(event) {
+      let selectedElement = $('select#sltBoxListEmail').val();
+      selectedElement.forEach(element => {
+        $("#sltBoxListEmail option[value='"+element+"']").remove();
+      });
+      this.props.removeEmailFromList(selectedElement);
     }
     searchCommand(){
       this.props.bindingValueOfComponent("showModalSearch", true);
@@ -119,13 +122,11 @@ class ComponentExclusionTarget extends React.Component {
                         </ReactBootstrap.Button>
                     </div>
                     <div style = {this.style_full_size}>
-                        <select multiple style = {this.style_selected_box}>
-                            {this.state.list_email}
-                        </select>
-                        <button className="btn btn-danger delete-button style-my-button" onClick={this.deleteCommand} style = {this.style_deleteBtn}>
-                            <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
-                            &nbsp;Delete
-                        </button>
+                      {this.generateSelectedBox()}
+                      <button className="btn btn-danger delete-button style-my-button" onClick={this.deleteCommand} style = {this.style_deleteBtn}>
+                          <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                          &nbsp;Delete
+                      </button>
                     </div>
                 </div>
             </div>
@@ -177,6 +178,12 @@ class TableUserEmailComponent extends React.Component {
   }
   importEmail(event, pk_id, email){
     event.target.disabled=true;
+    $('#sltBoxListEmail').append("<option value=" + pk_id + ">" +email+"</option>")
+    let data = {
+      "pk_id" : pk_id,
+      "email" : email
+    }
+    this.props.addEmailToList(data);
   }
   render(){
     return (
@@ -337,26 +344,26 @@ class Pagination extends React.Component {
     for (let i = this.state.startPage; i <= this.state.endPage; i++){
       listPage.push(
         <li  key = {i.toString()}>
-          <a  href="#" className = {this.state.currentPage == i ? 'mypage active' : 'mypage'} onClick = {() => this.locatePageResult(i)}>{i}</a>
+          <a  href="#" className = {this.state.currentPage == i ? 'mypage my-pagionation-active' : 'mypage'} onClick = {() => this.locatePageResult(i)}>{i}</a>
         </li>
       )
     }
     return (
       <ul  className="pagination">
-        {this.state.numOfPage > 5 ?
+        {this.state.numOfPage > LIMIT_PAGINATION_NUMBER ?
         <li >
-          <a  href="#" onClick = {() => this.locatePageResult(1)} className = {this.state.currentPage == 1 ? 'disabled' : ''}><span  aria-hidden="true">&#8810;</span></a>
+          <a  href="#" onClick = {() => this.locatePageResult(1)} className = {this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8810;</span></a>
         </li> : null }
         <li >
-          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage - 1)} className = {this.state.currentPage == 1 ? 'disabled' : ''}><span  aria-hidden="true">&lt;</span></a>
+          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage - 1)} className = {this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&lt;</span></a>
         </li>
         {listPage}
         <li >
-          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage + 1)} className = {this.state.currentPage == this.state.numOfPage ? 'disabled' : ''}><span  aria-hidden="true">&gt;</span></a>
+          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage + 1)} className = {this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&gt;</span></a>
         </li>
-        {this.state.numOfPage > 5 ?
+        {this.state.numOfPage > LIMIT_PAGINATION_NUMBER ?
         <li >
-          <a  href="#" onClick = {() => this.locatePageResult(this.state.numOfPage)} className = {this.state.currentPage == this.state.numOfPage ? 'disabled' : ''}><span  aria-hidden="true">&#8811;</span></a>
+          <a  href="#" onClick = {() => this.locatePageResult(this.state.numOfPage)} className = {this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8811;</span></a>
         </li> : null }
       </ul>
     )
@@ -407,7 +414,7 @@ class ModalBodyComponent extends React.Component {
                 <SearchComponent getListUser = {this.getListUser} searchKey = {this.state.searchKey} getSearchKey= {this.getSearchKey}/>
               </div>
               <div className="row">
-                <TableUserEmailComponent listUser = {this.state.listUser}/>
+                <TableUserEmailComponent listUser = {this.state.listUser} addEmailToList={this.props.addEmailToList}/>
               </div>
               <div style={this.margin_left_page}>
                 <Pagination numOfResult = {this.state.numOfResult} searchKey = {this.state.searchKey} getListUser = {this.getListUser}/>
@@ -457,7 +464,7 @@ class ModalComponent extends React.Component {
     return (
       <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="feedback-mail-modal">
         <ReactBootstrap.Modal.Body className="feedback-mail-modal-body">
-          <ModalBodyComponent/>
+          <ModalBodyComponent addEmailToList = {this.props.addEmailToList}/>
         </ReactBootstrap.Modal.Body>
         <ReactBootstrap.Modal.Footer>
           <ModalFooterComponent bindingValueOfComponent = {this.props.bindingValueOfComponent}/>
@@ -561,17 +568,27 @@ class MainLayout extends React.Component {
         super(props);
         this.state = {
           showModalSearch: false,
+          listEmail: [],
         }
         this.bindingValueOfComponent = this.bindingValueOfComponent.bind(this);
+        this.addEmailToList = this.addEmailToList.bind(this);
+        this.removeEmailFromList = this.removeEmailFromList.bind(this);
     }
     bindingValueOfComponent (key, value) {
       switch (key) {
         case "showModalSearch":
-          this.setState({showModalSearch: value})
-          break;
-        default:
+          this.setState({showModalSearch: value});
           break;
       }
+    }
+    addEmailToList(data){
+      let listEmail = this.state.listEmail;
+      listEmail.push(data);
+      this.setState({listEmail: listEmail})
+    }
+    removeEmailFromList(listData){
+      let listEmail = this.state.listEmail;
+      listEmail = listEmail.filter((el) => !listData.includes(el.pk_id));
     }
     render() {
         return (
@@ -580,13 +597,13 @@ class MainLayout extends React.Component {
                     <ComponentFeedbackMail/>
                 </div>
                 <div className="row">
-                    <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent}/>
+                    <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} listEmail= {this.state.listEmail} removeEmailFromList = {this.removeEmailFromList}/>
                 </div>
                 <div className="row">
                     <ComponentButtonLayout />
                 </div>
                 <div className="row">
-                    <ModalComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent}/>
+                    <ModalComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent} addEmailToList={this.addEmailToList}/>
                 </div>
             </div>
         )
