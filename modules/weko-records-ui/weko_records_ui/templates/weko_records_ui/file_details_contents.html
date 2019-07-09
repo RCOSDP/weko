@@ -75,7 +75,7 @@
                     <span class="filename">
                       <img src="{{img}}" alt={{ file.filename }}/>
                       {%- if is_billing_file -%}
-                      {%- if not access_permission and file.accessrole == 'open_login' -%}
+                      {%- if not session['user_id'] and not access_permission and file.accessrole == 'open_login' -%}
                       {%- set file_url = url_for_security('login', next=request.path) -%}
                       {%- set billing_file_class = "" -%}
                       {%- elif billing_file_permission -%}
