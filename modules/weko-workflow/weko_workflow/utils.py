@@ -27,6 +27,9 @@ from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
 from weko_records.api import ItemsMetadata
+from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_records.api import FilesMetadata, ItemTypes
+from weko_records.api import Mapping
 
 from .api import WorkActivity
 from .config import IDENTIFIER_ITEMSMETADATA_FORM
@@ -201,3 +204,31 @@ def reg_invenio_pidstore(pid_value, item_id):
                                     PIDStatus.REGISTERED, 'rec', item_id)
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
+
+
+def identifier_regist_validation(item_id, idf_select):
+    """
+    Register pids_tore.
+
+    :param: pid_value, item_id
+    """
+
+    if idf_select == 0:
+        return True
+
+    record = WekoRecord.get_record(item_id)
+    current_app.logger.debug(idf_select)
+    current_app.logger.debug(record)
+    item_type = ItemTypes.get_by_id(id_=record.get('item_type_id'))
+    current_app.logger.debug(item_type.name_id)
+
+    if idf_select == 2:
+        if item_type and ( item_type.name_id == 14 or item_type.name_id == 16 or item_type.name_id == 12 or item_type.name_id == 15):
+            pass
+        else:
+            return False # Error
+
+    item_type_mapping = Mapping.get_record(item_type.id)
+    current_app.logger.debug(item_type_mapping)
+
+    return False

@@ -64,7 +64,8 @@ require([
       temporary_save: tmp_save
     };
     
-    if(tmp_save == 1) {
+    let idf_grant_method = $('#idf_grant_method').val();
+    if(tmp_save == 1 || idf_grant_method == 0) {
         let arrayDoi = [identifier_grant_jalc_doi_link, identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_dc_doi_link];
         isSuffixFormat = validateLengDoi(arrayDoi);
     } else {

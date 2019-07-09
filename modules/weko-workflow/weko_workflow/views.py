@@ -56,7 +56,7 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
-    pidstore_identifier_mapping
+    pidstore_identifier_mapping, identifier_regist_validation
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -535,6 +535,13 @@ def next_action(activity_id='0', action_id=0):
             'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual
         }
 
+        activity_obj = WorkActivity()
+        activity_detail = activity_obj.get_activity_detail(activity_id)
+        if not identifier_regist_validation(activity_detail.item_id, idf_grant):
+            # previous_action(activity_id=activity_id, action_id=action_id, req=-1)
+            # return jsonify(code=0, msg=_('success'))
+            return jsonify(code = -1, msg=_('error'))
+
         work_activity.create_or_update_action_identifier(
             activity_id=activity_id,
             action_id=action_id,
@@ -632,7 +639,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.info(pidNotEx)
     
-    if req == 0:
+    if req == -1:
+        pre_action = flow.get_item_registration_flow_action(
+            activity_detail.flow_define.flow_id)
+    elif req == 0:
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id)
     else:
