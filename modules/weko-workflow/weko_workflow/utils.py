@@ -250,13 +250,30 @@ def item_metadata_validation(item_id, idf_select):
             title_attribute = record.get(title_key.split('.')[0])
             if title_attribute.get('attribute_value_mlt'):
                 title_data = title_attribute['attribute_value_mlt'][0].get(title_key.split('.')[1])
-            elif title_attribute.get('attribute_value'):
-                title_data = title_attribute['attribute_value'].get(title_key.split('.')[1])
 
             if not title_data:
                 error_list.append(title_key)
 
             # check 識別子 jpcoar:identifier
+            identifier_key = item_map.get("identifier.@value")
+            identifier_type_key = item_map.get("identifier.@attributes.identifierType")
+            identifier_data = None
+            identifier_type_data = None
+            
+            identifier_attribute = record.get(identifier_key.split('.')[0])
+            if identifier_attribute.get('attribute_value_mlt'):
+                for attr in identifier_attribute.get('attribute_value_mlt'):
+                    identifier_data = attr.get(identifier_key.split('.')[1])
+                    identifier_type_data = attr.get(identifier_type_key.split('.')[1])
+                    if (identifier_type_data == 'HDL'):
+                        break
+
+            current_app.logger.debug(identifier_data)
+            current_app.logger.debug(identifier_type_data)
+            # if not identifier_data:
+            #     error_list.append(identifier_key)
+            # if not identifier_type_data in ['HDL', 'URI']:
+            #     error_list.append(identifier_type_key)
 
 
     # CrossRef DOI identifier registration

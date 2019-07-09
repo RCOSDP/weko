@@ -456,6 +456,10 @@ function handleSharePermission(value) {
         resourcetype = resourcetype.split("string:").pop();
         let resourceuri = "";
         if ($scope.resourceTypeKey) {
+          if (!$("#resourceuri").prop('disabled')) {
+            $("#resourceuri").prop('disabled', true);
+          }
+
           switch (resourcetype) {
             // multiple
             case 'interactive resource':
@@ -483,6 +487,7 @@ function handleSharePermission(value) {
               resourceuri = "http://purl.org/coar/resource_type/c_1843";
               break;
             case 'other（プレプリント）':
+              $("#resourceuri").prop('disabled', false);
               resourceuri = "";
               break;
             // conference
