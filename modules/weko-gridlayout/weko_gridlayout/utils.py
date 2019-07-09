@@ -30,6 +30,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
+from weko_theme import config as theme_config
 from weko_search_ui.query import item_search_factory
 
 from . import config
@@ -397,7 +398,7 @@ def convert_data_to_edit_pack(data):
     return result
 
 
-def build_rss_xml(data, term):
+def build_rss_xml(data, term, count):
     """Build RSS data as XML format.
 
     Arguments:
@@ -426,7 +427,7 @@ def build_rss_xml(data, term):
     # Channel layer
     ET.SubElement(channel, 'title').text = 'WEKO3'
     ET.SubElement(channel, 'link').text = requested_url
-    ET.SubElement(channel, 'description').text = 'WEKO'
+    ET.SubElement(channel, 'description').text = theme_config.THEME_SITENAME
     current_time = datetime.now()
     ET.SubElement(
         channel,
@@ -442,9 +443,11 @@ def build_rss_xml(data, term):
         return Response(
             xml_str,
             mimetype='text/xml')
-
+    number_of_item = 0
     # add item layer
     for data_item in data:
+        if number_of_item >= count:
+            break
         item = ET.Element('item')
         item.set('rdf:about', find_rss_value(
             data_item,
@@ -499,6 +502,7 @@ def build_rss_xml(data, term):
             '_updated'
         )
         root.append(item)
+        number_of_item = number_of_item + 1
     xml_str = tostring(root, encoding='utf-8')
     xml_str = str.encode('<?xml version="1.0" encoding="UTF-8"?>') + xml_str
     return Response(
@@ -534,14 +538,16 @@ def find_rss_value(data, keyword):
         if record_number == '':
             return ''
         else:
-            return root_url + '/record/' + record_number
+            return root_url + '/records/' + record_number
     elif keyword == 'seeAlso':
         # TODO: change if requirement clear
         return ''
     elif keyword == 'creator':
         if source.get('creator'):
             creator = source.get('creator')
-            if not creator or not creator.get('creatorName'):
+            if (not creator or
+               not creator.get('creatorName') or
+               not creator.get('givenName')):
                 return ''
             else:
                 creator_name = creator.get('creatorName')
