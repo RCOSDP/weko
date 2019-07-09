@@ -551,3 +551,39 @@ msgstr "Update"
 #~ msgid "Organization name"
 #~ msgstr "Condition Name"
 
+#: weko_admin/static/js/weko_admin/feedback_mail.js:48
+msgid "ON/OFF"
+msgstr ""
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:51
+msgid "Send"
+msgstr ""
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:52
+msgid "Do not send"
+msgstr ""
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:146
+msgid "Send exclusion target persons"
+msgstr ""
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:150
+msgid "From author DB"
+msgstr ""
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:563
+msgid "Save"
+msgstr ""
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:568
+msgid "Manual Send"
+msgstr ""
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:544
+msgid "Update successfully."
+msgstr ""
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:223
+msgid "Duplicate Email Addresses."
+msgstr ""
+

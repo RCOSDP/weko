@@ -549,3 +549,38 @@ msgstr "アップデート"
 #~ msgid "Organization name"
 #~ msgstr ""
 
+#: weko_admin/static/js/weko_admin/feedback_mail.js:48
+msgid "ON/OFF"
+msgstr "フィードバックメール"
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:51
+msgid "Send"
+msgstr "送信する"
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:52
+msgid "Do not send"
+msgstr "送信しない"
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:146
+msgid "Send exclusion target persons"
+msgstr "送信除外対象者"
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:150
+msgid "From author DB"
+msgstr "著者DBから入力"
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:563
+msgid "Save"
+msgstr "設定内容を保存"
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:568
+msgid "Manual Send"
+msgstr "メール手動送信"
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:544
+msgid "Update successfully."
+msgstr "更新が正常に終了しました。"
+
+#: weko_admin/static/js/weko_admin/feedback_mail.js:223
+msgid "Duplicate Email Addresses."
+msgstr "メールアドレスが重複しています。"

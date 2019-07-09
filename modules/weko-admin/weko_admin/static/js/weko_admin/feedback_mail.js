@@ -1,5 +1,15 @@
 const NUM_OF_RESULT = 10;
 const LIMIT_PAGINATION_NUMBER = 5;
+const COMPONENT_SEND_NAME = document.getElementById("component-send").value;
+const SEND_RADIO_BUTTON_NAME = document.getElementById("first-radio-name").value;
+const NOT_SEND_RADIO_BUTTON_NAME = document.getElementById("second-radio-name").value;
+const COMPONENT_SEARCH_EMAIL_NAME = document.getElementById("component-search-email-name").value;
+const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
+const SAVE_BUTTON_NAME = document.getElementById("save-button-name").value;
+const SEND_BUTTON_NAME = document.getElementById("manual-send-name").value;
+const MESSAGE_SUCCESS = document.getElementById("message-success").value;
+const DUPLICATE_ERROR_MESSAGE = document.getElementById("duplicate-error-message").value;
+
 
 class ComponentFeedbackMail extends React.Component {
     constructor(props) {
@@ -45,11 +55,11 @@ class ComponentFeedbackMail extends React.Component {
     render() {
         return (
             <div className="form-group" style = {this.style_component}>
-                <span className="control-label col-xs-2">ON/OFF</span>
+                <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
                 <div class="controls col-xs-10">
                     <div className="form-group">
-                        <span><input style = {this.style_radioBtn} type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>Send</span>
-                        <span  style = {this.margin_left}><input style = {this.style_radioBtn} type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>Do not send</span>
+                        <span><input style = {this.style_radioBtn} type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>{SEND_RADIO_BUTTON_NAME}</span>
+                        <span  style = {this.margin_left}><input style = {this.style_radioBtn} type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>{NOT_SEND_RADIO_BUTTON_NAME}</span>
                     </div>
                 </div>
             </div>
@@ -143,11 +153,11 @@ class ComponentExclusionTarget extends React.Component {
     render() {
         return (
             <div className="form-group"  style = {this.style_component}>
-                <span className="control-label col-xs-2">Send exclusion target persons</span>
+                <span className="control-label col-xs-2">{COMPONENT_SEARCH_EMAIL_NAME}</span>
                 <div className="controls col-xs-10">
                     <div>
                         <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
-                            <i className = "glyphicon glyphicon-search"></i>&nbsp;From author DB
+                            <i className = "glyphicon glyphicon-search"></i>&nbsp;{SEARCH_BUTTON_NAME}
                         </ReactBootstrap.Button>
                     </div>
                     <div style = {this.style_full_size}>
@@ -220,7 +230,7 @@ class TableUserEmailComponent extends React.Component {
       this.props.addEmailToList(data);
     }
     else{
-     alert("The email you import is exist!");
+     alert(DUPLICATE_ERROR_MESSAGE);
     }
   }
   render(){
@@ -541,7 +551,7 @@ class ComponentButtonLayout extends React.Component {
       .then(res => res.json())
       .then((result) => {
         if (result.success) {
-          var modalcontent = "Update success!"
+          var modalcontent = MESSAGE_SUCCESS;
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
         }else {
@@ -560,12 +570,12 @@ class ComponentButtonLayout extends React.Component {
         <div className="form-group" style={this.style_component}>
           <div className="col-xs-5">
             <button style={this.style_button} className="btn btn-primary" onClick={this.saveCommand}>
-              Save
+              {SAVE_BUTTON_NAME}
             </button>
           </div>
           <div className="col-xs-offset-10">
             <button style = {this.style_button} className="btn btn-primary" onClick={this.sendCommand}>
-              Manual Send
+              {SEND_BUTTON_NAME}
             </button>
           </div>
         </div>
