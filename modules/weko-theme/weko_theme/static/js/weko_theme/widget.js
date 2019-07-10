@@ -99,7 +99,6 @@ let PageBodyGrid = function () {
             },
             success: (response) => {
                 let result = response.data;
-                console.log(result);
                 let rssHtml = '';
                 if (term == 'Today') {
                     term = 0;
