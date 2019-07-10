@@ -140,6 +140,10 @@ msgstr ""
 msgid "Item Type for Harvesting"
 msgstr ""
 
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:47
+msgid "Deleted Item Type"
+msgstr ""
+
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:66
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:132
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:120
@@ -154,6 +158,10 @@ msgstr ""
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:353
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_mapping.html:359
 msgid "Delete"
+msgstr ""
+
+#: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:174
+msgid "Restore"
 msgstr ""
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:81
