@@ -313,7 +313,7 @@ def update_json_schema_by_activity_id(json, activity_id):
     if not json or not activity_id or not session.get('update_json_schema') \
         or not session['update_json_schema'].get(activity_id):
         return None
-    udpate_json_schema = session[activity_id]
+    udpate_json_schema = session['update_json_schema'].get(activity_id)
     if udpate_json_schema.get('required'):
         for item in udpate_json_schema['required']:
             if isinstance(item, list) and json['properties'][item[0]]:
