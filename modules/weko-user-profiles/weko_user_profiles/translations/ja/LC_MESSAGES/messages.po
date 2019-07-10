@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-user-profiles 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 19:04+0900\n"
+"POT-Creation-Date: 2019-07-02 02:08+0000\n"
 "PO-Revision-Date: 2018-04-12 10:55+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -40,15 +40,15 @@ msgstr "ユーザー管理"
 
 #: weko_user_profiles/config.py:47
 msgid "(GMT-12:00) Eniwetok, Kwajalein"
-msgstr "(GMT-12:00) エニウェトク環礁，クェゼリン環礁"
+msgstr ""
 
 #: weko_user_profiles/config.py:48
 msgid "(GMT-11:00) Midway Island, Samoa"
-msgstr "(GMT-11:00) ミッドウェー島，サモア"
+msgstr ""
 
 #: weko_user_profiles/config.py:49
 msgid "(GMT-10:00) Hawaii"
-msgstr "(GMT-10:00) ハワイ州"
+msgstr ""
 
 #: weko_user_profiles/config.py:50
 msgid "(GMT-9:00) Alaska"
@@ -160,61 +160,61 @@ msgstr ""
 
 #: weko_user_profiles/config.py:89
 msgid "Automatic"
-msgstr ""
+msgstr "自動"
 
 #: weko_user_profiles/config.py:90
 msgid "Japanese"
-msgstr ""
+msgstr "日本語"
 
 #: weko_user_profiles/config.py:91
 msgid "English"
-msgstr ""
+msgstr "英語"
 
 #. NOTE: Form field help text
 #: weko_user_profiles/forms.py:61
 #, python-format
 msgid "Required. %(username_rules)s"
-msgstr ""
+msgstr "%(username_rules)sは入力必須です"
 
 #: weko_user_profiles/forms.py:63
 msgid "Username not provided."
-msgstr ""
+msgstr "ユーザー名が指定されていません"
 
 #. NOTE: Form validation error.
 #: weko_user_profiles/forms.py:98
 msgid "Username already exists."
-msgstr ""
+msgstr "ユーザー名は既に存在します"
 
 #. NOTE: Form field label
 #: weko_user_profiles/forms.py:108
 msgid "Email address"
-msgstr ""
+msgstr "メールアドレス"
 
 #. NOTE: Form field label
 #: weko_user_profiles/forms.py:120
 msgid "Re-enter email address"
-msgstr ""
+msgstr "メールアドレスの再入力"
 
 #. NOTE: Form field help text
 #: weko_user_profiles/forms.py:122
 msgid "Please re-enter your email address."
-msgstr ""
+msgstr "メールアドレスを再入力してください"
 
 #. NOTE: Form validation error.
 #: weko_user_profiles/forms.py:127
 msgid "Email addresses do not match."
-msgstr ""
+msgstr "メールアドレスが一致しません"
 
 #. NOTE: Form button label
 #: weko_user_profiles/forms.py:136
 msgid "Resend verification email"
-msgstr ""
+msgstr "確認メールを再送"
 
 #: weko_user_profiles/validators.py:30
 msgid ""
 "Username must start with a letter, be at least three characters long and "
 "only contain alphanumeric characters, dashes and underscores."
-msgstr "ユーザーネームは最低3文字であり英数字、ハイフン、アンダースコアを含む。"
+msgstr "ユーザー名は3文字以上を指定してください(英数字, ハイフン, アンダーバーのみ使用可能)"
 
 #. NOTE: Menu item text (icon replaced by a user icon).
 #: weko_user_profiles/views.py:93
@@ -229,7 +229,7 @@ msgstr "プロフィール"
 #. NOTE: Flash message.
 #: weko_user_profiles/views.py:143
 msgid "Verification email sent."
-msgstr "確認メールを送信しました。"
+msgstr "確認メールを送信しました"
 
 #. NOTE: Flash message after successful update of profile.
 #: weko_user_profiles/views.py:172
@@ -237,12 +237,12 @@ msgstr "確認メールを送信しました。"
 msgid ""
 "Profile was updated. We have sent a verification email to %(email)s. "
 "Please check it."
-msgstr "プロフィールを更新しました。我々は %(email)s に確認メールを送信しました。どうぞ、それをチェックしてください。"
+msgstr "プロフィールを更新しました %(email)s に確認メールを送信しましたので、ご確認ください"
 
 #. NOTE: Flash message after successful update of profile.
 #: weko_user_profiles/views.py:178
 msgid "Profile was updated."
-msgstr "プロフィールを更新しました。"
+msgstr "プロフィールを更新しました"
 
 #~ msgid "You have not yet verified your email address."
 #~ msgstr "あなたはまだあなたのメールアドレスを確認していません。"

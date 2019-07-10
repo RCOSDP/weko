@@ -21,6 +21,7 @@
 """Bundles for weko-admin-ui."""
 
 from flask_assets import Bundle
+from invenio_assets import NpmBundle
 
 js = Bundle(
     'js/weko_admin/block_style.js',
@@ -45,12 +46,12 @@ custom_report_js = Bundle(
 
 search_management_js = Bundle(
     'js/weko_admin/search_management.js',
-    filters='requirejs',
     output="gen/weko_admin_ui_search.%(version)s.js",
 )
 
 stats_report_js = Bundle(
     'js/weko_admin/stats_report.js',
+    'js/weko_admin/email_schedule.js',
     output="gen/weko_admin_ui_stats_report.%(version)s.js",
 )
 
@@ -79,4 +80,38 @@ css = Bundle(
 weko_admin_quill_sknow_css = Bundle(
     'css/weko_admin/quill.snow.css',
     output="gen/weko_admin_ui_quill.%(version)s.css",
+)
+
+admin_lte_js_dependecies = NpmBundle(
+    'node_modules/jquery/jquery.js',
+    'node_modules/moment/moment.js',
+    'node_modules/select2/dist/js/select2.full.js',
+    'node_modules/requirejs/require.js',
+    'js/settings.js',
+    'node_modules/angular/angular.js',
+    filters='jsmin',
+    npm={
+        'requirejs': '~2.3.6',
+        'jquery': '~1.9.1',
+        'angular': '~1.4.9',
+        'moment': '~2.9.0',
+        'select2': '~4.0.2',
+    },
+    output='gen/weko_admin_ui.admin_js_dependecies.%(version)s.js',
+)
+
+admin_lte_js = NpmBundle(
+    'node_modules/admin-lte/dist/js/app.js',
+    npm={
+        'admin-lte': '~2.3.6',
+    },
+    output='gen/weko_admin_ui.admin_lte_js.%(version)s.js',
+)
+
+angular_js = NpmBundle(  # Already included in front-end
+    'node_modules/angular/angular.js',
+    npm={
+        'angular': '~1.4.9',
+    },
+    output='gen/weko_admin_ui.angular_js.%(version)s.js',
 )

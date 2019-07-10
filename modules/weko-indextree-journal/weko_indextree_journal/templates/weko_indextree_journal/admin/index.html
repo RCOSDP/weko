@@ -18,7 +18,7 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_INDEXTREE_JOURNAL_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
   {% assets "weko_indextree_journal_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
@@ -29,6 +29,8 @@
     overflow-x:hidden;
     }
   </style>
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -39,26 +41,14 @@
   {% assets "weko_indextree_journal_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('edit_tree') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
+{%- block body %}
+<input id="lang-code" type="hidden" value="{{lang_code}}" />
 <div class="row">
   <div class="hide" id="get_tree_json">{{ get_tree_json }}</div>
   <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
   <div class="hide" id="mod_tree_detail">{{ mod_tree_detail }}</div>
   <app-root-tree-hensyu journalDisplayFlg="1"></app-root-tree-hensyu>
   <div class="col-sm-8 col-md-8 col-lg-8">
-    <div role="navigation">
-      <ul class="nav nav-tabs">
-        {%- block edit_tree_tabs %}
-          {% from "weko_theme/macros/edit_tree_tabs_selector.html" import tabs_selector %}
-          {{ tabs_selector('journal_edit', index_id) }}
-        {%- endblock edit_tree_tabs%}
-      </ul>
-    </div>
     <br>
     {% if index_id > 0 %}
     <fieldset>
@@ -120,4 +110,4 @@
     </fieldset>
   </div>
 </div>
-{%- endblock page_body_main %}
+{%- endblock body %}

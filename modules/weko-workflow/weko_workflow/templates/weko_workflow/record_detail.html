@@ -64,7 +64,7 @@
                   <tr><td colspan="2">
                 <a class="btn btn-default" id="btn_check" href="/ezas/pdf-detect-weko.html" target="_blank">
                 <span class="glyphicon glyphicon-edit"
-                  aria-hidden="true"></span>{{_('Plagiarism Check')}}</a>
+                  aria-hidden="true"></span> {{_('Plagiarism Check')}}</a>
               </td></tr>
               {%- endif -%}
               {%- endif -%}
@@ -174,11 +174,9 @@
                             <label class="p-left-10">{{nameIdentifier['nameIdentifierScheme']}}: </label><a href="{{nid}}">{{ nameIdentifier['nameIdentifier'] }}</a><br/>
                           {%- endif -%}
                         {%- endfor -%}
-                        {%- if config['EMAIL_DISPLAY_FLG'] -%}
-                          {%- for creatorMail in l['creatorMails'] if creatorMail -%}
-                            <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br/>
-                          {%- endfor -%}
-                        {%- endif -%}
+                        {%- for creatorMail in l['creatorMails'] if creatorMail -%}
+                          <label class="p-left-10">e-mail: </label><a href="{{'mailto:'+creatorMail['creatorMail']}}">{{ creatorMail['creatorMail'] }}</a><br/>
+                        {%- endfor -%}
                       {% endfor %}
                     {% else %}
                       {%- for l in lst['attribute_value_mlt'] %}

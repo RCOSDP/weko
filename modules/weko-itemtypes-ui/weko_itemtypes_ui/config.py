@@ -22,18 +22,23 @@
 
 from flask_babelex import lazy_gettext as _
 
+# TODO: Delete if not being used
 WEKO_ITEMTYPES_UI_BASE_TEMPLATE = 'weko_itemtypes_ui/base.html'
 """Default base template for the item type page."""
 
-WEKO_ITEMTYPES_UI_REGISTER_TEMPLATE = 'weko_itemtypes_ui/create_itemtype.html'
+WEKO_ITEMTYPES_UI_ADMIN_REGISTER_TEMPLATE = \
+    'weko_itemtypes_ui/admin/create_itemtype.html'
 """Register template for the item type page."""
 
-WEKO_ITEMTYPES_UI_CREATE_PROPERTY = 'weko_itemtypes_ui/create_property.html'
+WEKO_ITEMTYPES_UI_ADMIN_CREATE_PROPERTY = \
+    'weko_itemtypes_ui/admin/create_property.html'
+"""Create property template."""
 
-WEKO_ITEMTYPES_UI_MAPPING_TEMPLATE = 'weko_itemtypes_ui/create_mapping.html'
+WEKO_ITEMTYPES_UI_ADMIN_MAPPING_TEMPLATE = \
+    'weko_itemtypes_ui/admin/create_mapping.html'
 """Mapping template for the item type page."""
 
-WEKO_ITEMTYPES_UI_ERROR_TEMPLATE = 'weko_itemtypes_ui/error.html'
+WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE = 'weko_itemtypes_ui/admin/error.html'
 """Error template for the item type page."""
 
 WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
@@ -45,3 +50,9 @@ WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES = {
     '6': {'name': _('Date'), 'value': 'datetime'}
 }
 """Default properties of the item type."""
+
+WEKO_BILLING_FILE_ACCESS = 1
+"""Show billing file property in list."""
+
+WEKO_BILLING_FILE_PROP_ID = 103
+"""Id of billing file property."""

@@ -29,6 +29,12 @@ style = Bundle(
     output="gen/itemtypes_ui.%(version)s.css"
 )
 
+style_mapping = Bundle(
+    'css/weko_itemtypes_ui/mapping.less',
+    filters='cleancss',
+    output="gen/mapping_ui.%(version)s.css"
+)
+
 js_dependencies_schema_editor = NpmBundle(
     'node_modules/react/dist/react.js',
     'node_modules/react-dom/dist/react-dom.js',
@@ -51,18 +57,18 @@ js_schema_editor = NpmBundle(
 
 js = Bundle(
     'js/weko_itemtypes_ui/create_itemtype.js',
-    filters='requirejs',
+    # filters='requirejs',
     output="gen/itemtypes_ui.js"
 )
 
 js_property = Bundle(
     'js/weko_itemtypes_ui/create_property.js',
-    filters='requirejs',
+    # filters='requirejs',
     output="gen/itemtypes_ui_property.js"
 )
 
 js_mapping = Bundle(
     'js/weko_itemtypes_ui/create_mapping.js',
-    filters='requirejs',
+    # filters='requirejs',
     output="gen/itemtypes_ui_mapping.js"
 )

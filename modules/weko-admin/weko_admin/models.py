@@ -733,7 +733,8 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
         for list_url in crawler_lists:
             try:
                 with db.session.begin_nested():
-                    record = LogAnalysisRestrictedCrawlerList(list_url=list_url)
+                    record = LogAnalysisRestrictedCrawlerList(
+                        list_url=list_url)
                     db.session.add(record)
                 db.session.commit()
             except Exception as ex:
@@ -775,8 +776,244 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                     yield (name, value)
 
 
+class BillingPermission(db.Model):
+    """Database for Billing Permission."""
+
+    __tablename__ = 'billing_permission'
+
+    user_id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        nullable=False,
+        unique=True
+    )
+
+    is_active = db.Column(
+        db.Boolean(name='active'),
+        default=True,
+        nullable=False
+    )
+
+    @classmethod
+    def create(cls, user_id, is_active=True):
+        """Create new user can access billing file.
+
+        :param user_id: user's id
+        :param is_active: access state
+        :return: Unit if create succesfully
+        """
+        try:
+            obj = BillingPermission()
+            with db.session.begin_nested():
+                obj.user_id = user_id
+                obj.is_active = is_active
+                db.session.add(obj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
+        return cls
+
+    @classmethod
+    def activation(cls, user_id, is_active):
+        """Change access state of user.
+
+        :param user_id: user's id
+        :param is_active: access state
+        :return: Updated records
+        """
+        try:
+            with db.session.begin_nested():
+                billing_data = cls.query.filter_by(
+                    user_id=user_id).one_or_none()
+                if billing_data:
+                    billing_data.is_active = is_active
+                    db.session.merge(billing_data)
+                else:
+                    cls.create(user_id, is_active)
+                    current_app.logger.info('New user is created!')
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
+        return cls
+
+    @classmethod
+    def get_billing_information_by_id(cls, user_id):
+        """Get billing information by user id.
+
+        :param user_id: user's id
+        :return: Record or none
+        """
+        try:
+            billing_information = cls.query.filter_by(
+                user_id=user_id).one_or_none()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            raise
+        return billing_information
+
+
+class StatisticsEmail(db.Model):
+    """Save Email Address."""
+
+    __tablename__ = 'stats_email_address'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    email_address = db.Column(db.String(255), nullable=False)
+
+    @classmethod
+    def insert_email_address(cls, email_address):
+        """Insert Email Address."""
+        try:
+            dataObj = StatisticsEmail()
+            with db.session.begin_nested():
+                dataObj.email_address = email_address
+                db.session.add(dataObj)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise ex
+        return cls
+
+    @classmethod
+    def get_all_emails(cls):
+        """Get all recepient emails as a list."""
+        all_objects = cls.query.all()
+        return [row.email_address for row in all_objects]
+
+    @classmethod
+    def get_all(cls):
+        """Get all email address."""
+        try:
+            all = cls.query.all()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            all = []
+            raise
+        return all
+
+    @classmethod
+    def delete_all_row(cls):
+        """Delete all."""
+        try:
+            with db.session.begin_nested():
+                delete_all = cls.query.delete()
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            db.session.rollback()
+            raise ex
+        return delete_all
+
+
+class RankingSettings(db.Model):
+    """Ranking settings."""
+
+    __tablename__ = 'ranking_settings'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    is_show = db.Column(db.Boolean(name='show'), nullable=False, default=False)
+
+    new_item_period = db.Column(db.Integer, nullable=False, default=14)
+
+    statistical_period = db.Column(db.Integer, nullable=False, default=365)
+
+    display_rank = db.Column(db.Integer, nullable=False, default=10)
+
+    rankings = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
+    @classmethod
+    def get(cls, id=0):
+        """Get ranking settings."""
+        return cls.query.filter_by(id=id).first()
+
+    @classmethod
+    def update(cls, id=0, data=None):
+        """Update/Create ranking settings."""
+        try:
+            with db.session.begin_nested():
+                new_data_flag = False
+                settings = cls.query.filter_by(id=id).first()
+                if not settings:
+                    settings = RankingSettings()
+                    new_data_flag = True
+                settings.id = id
+                settings.is_show = data.is_show
+                settings.new_item_period = data.new_item_period
+                settings.statistical_period = data.statistical_period
+                settings.display_rank = data.display_rank
+                settings.rankings = data.rankings
+                if new_data_flag:
+                    db.session.add(settings)
+                else:
+                    db.session.merge(settings)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+        return cls
+
+    @classmethod
+    def delete(cls, id=0):
+        """Delete settings."""
+        try:
+            with db.session.begin_nested():
+                cls.query.filter_by(id=id).delete()
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise ex
+        return cls
+
+
+class Settings(db.Model):
+    """settings."""
+
+    __tablename__ = 'admin_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    def __setattr__(self, name, value):
+        """Setattr."""
+        db.Model.__setattr__(self, name, value)
+        db.session.commit()
+
+    items_search_author = db.Column(db.String(5), default='name')
+    items_display_email = db.Column(db.Boolean(name='items_display_email'), default=True)
+
+
 __all__ = ([
-    'SearchManagement', 'AdminLangSettings', 'ApiCertificate',
-    'StatisticUnit', 'StatisticTarget', 'LogAnalysisRestrictedAddress',
+    'SearchManagement',
+    'AdminLangSettings',
+    'ApiCertificate',
+    'StatisticUnit',
+    'StatisticTarget',
+    'LogAnalysisRestrictedIpAddress',
     'LogAnalysisRestrictedCrawlerList',
+    'StatisticsEmail',
+    'RankingSettings',
+    'BillingPermission',
+    'Settings'
 ])

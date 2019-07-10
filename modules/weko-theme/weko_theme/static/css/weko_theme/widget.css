@@ -12,6 +12,7 @@
 .widget-header {
   border-top-right-radius: 0px !important;
   border-top-left-radius: 0px !important;
+  z-index: 999;
 }
 
 .writeMoreNoT {
@@ -38,4 +39,43 @@
 
 .pad-top-30 {
   padding-top: 30px !important;
+}
+
+.no-li-style {
+  list-style-type: none;
+}
+
+.rss {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+.rss a{
+  position: absolute;
+  width: 30;
+  height: 10;
+  background-color: orange;
+  padding: 5px;
+  text-decoration: none;
+}
+
+.rss a:hover {
+  text-decoration: none;
+}
+
+.rss a > i {
+  color:white;
+}
+
+.arrival-scale {
+  text-overflow: ellipsis;
+  width: 100%;
+  white-space: nowrap;
+  display: block;
+  overflow: hidden;
+}
+
+.no-padding-col {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
 }

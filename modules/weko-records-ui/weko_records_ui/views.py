@@ -34,20 +34,19 @@ from invenio_files_rest.proxies import current_permission_factory
 from invenio_files_rest.views import ObjectResource, check_permission, \
     file_downloaded
 from invenio_oaiserver.response import getrecord
-from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
 from simplekv.memory.redisstore import RedisStore
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_index_tree.models import IndexStyle
-from weko_records.api import ItemsMetadata
 from weko_records.serializers import citeproc_v1
 from weko_search_ui.api import get_search_detail_keyword
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionStatusPolicy
 
 from weko_records_ui.models import InstitutionName
+from weko_records_ui.utils import check_items_settings
 
 from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
@@ -330,6 +329,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :returns: The rendered template.
     """
     check_site_license_permission()
+    check_items_settings()
     send_info = {}
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False
@@ -412,59 +412,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         **ctx,
         **kwargs
     )
-
-
-@blueprint.route("/item_management/bulk_update", methods=['GET'])
-def bulk_update():
-    """Render view."""
-    detail_condition = get_search_detail_keyword('')
-    return render_template(
-        current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
-        fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS'][
-            'fields'],
-        licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS'][
-            'licences'],
-        management_type='update',
-        detail_condition=detail_condition)
-
-
-@blueprint.route('/bulk_update/items_metadata', methods=['GET'])
-@login_required
-def get_items_metadata():
-    """Get the metadata of items to bulk update."""
-    def get_file_data(meta):
-        file_data = {}
-        for key in meta:
-            if isinstance(meta.get(key), list):
-                for item in meta.get(key):
-                    if 'filename' in item:
-                        file_data[key] = meta.get(key)
-                        break
-        return file_data
-
-    pids = request.values.get('pids')
-    pid_list = []
-    if pids is not None:
-        pid_list = pids.split('/')
-
-    data = {}
-    for pid in pid_list:
-        record = WekoRecord.get_record_by_pid(pid)
-        indexes = []
-        if isinstance(record.get('path'), list):
-            for path in record.get('path'):
-                indexes.append(path.split('/')[-1])
-
-        pidObject = PersistentIdentifier.get('recid', pid)
-        meta = ItemsMetadata.get_record(pidObject.object_uuid)
-
-        if meta:
-            data[pid] = {}
-            data[pid]['meta'] = meta
-            data[pid]['index'] = {"index": indexes}
-            data[pid]['contents'] = get_file_data(meta)
-
-    return jsonify(data)
 
 
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])

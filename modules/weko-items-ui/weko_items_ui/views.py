@@ -20,8 +20,10 @@
 
 """Blueprint for weko-items-ui."""
 
+import operator
 import os
 import sys
+from datetime import date, timedelta
 
 import redis
 from flask import Blueprint, abort, current_app, flash, json, jsonify, \
@@ -32,8 +34,12 @@ from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records_ui.signals import record_viewed
+from invenio_stats.utils import QueryCommonReportsHelper, \
+    QueryItemRegReportHelper, QueryRecordViewReportHelper, \
+    QuerySearchReportHelper
 from simplekv.memory.redisstore import RedisStore
-from weko_deposit.api import WekoRecord
+from weko_admin.models import RankingSettings
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
 from weko_records.api import ItemTypes
@@ -46,7 +52,8 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, validate_user
+    get_user_information, get_user_permission, parse_ranking_results, \
+    validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -88,9 +95,10 @@ def index(item_type_id=0):
         json_schema = '/items/jsonschema/{}'.format(item_type_id)
         schema_form = '/items/schemaform/{}'.format(item_type_id)
         need_file = False
-        # if 'filemeta' in json.dumps(item_type.schema):
+
         if 'filename' in json.dumps(item_type.schema):
             need_file = True
+
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
             render_widgets=True,
@@ -168,7 +176,6 @@ def iframe_index(item_type_id=0):
 def iframe_save_model():
     """Renders an item register view.
 
-    :param item_type_id: Item type ID. (Default: 0)
     :return: The rendered template.
     """
     try:
@@ -221,6 +228,7 @@ def get_json_schema(item_type_id=0):
     """
     try:
         result = None
+        json_schema = None
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
@@ -287,6 +295,24 @@ def get_schema_form(item_type_id=0):
                             sub_elem['title_i18n'] and len(
                                 sub_elem['title_i18n'][cur_lang]) > 0:
                             sub_elem['title'] = sub_elem['title_i18n'][cur_lang]
+                        if sub_elem.get('title') == 'Group/Price':
+                            for sub_item in sub_elem['items']:
+                                if sub_item['title'] == "価格" and \
+                                    'validationMessage_i18n' in sub_item and \
+                                    cur_lang in sub_item[
+                                    'validationMessage_i18n'] and\
+                                    len(sub_item['validationMessage_i18n']
+                                        [cur_lang]) > 0:
+                                    sub_item['validationMessage'] = sub_item[
+                                        'validationMessage_i18n'][cur_lang]
+                        if 'items' in sub_elem:
+                            for sub_item in sub_elem['items']:
+                                if 'title_i18n' in sub_item and cur_lang in \
+                                        sub_item['title_i18n'] and len(
+                                        sub_item['title_i18n'][cur_lang]) > 0:
+                                    sub_item['title'] = sub_item['title_i18n'][
+                                        cur_lang]
+
         return jsonify(schema_form)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
@@ -456,7 +482,6 @@ def default_view_method(pid, record, template=None):
         if 'endpoints' in item_json:
             endpoints = item_json.get('endpoints')
     need_file = False
-    # if 'filemeta' in json.dumps(item_type.schema):
     if 'filename' in json.dumps(item_type.schema):
         need_file = True
     return render_template(
@@ -506,8 +531,8 @@ def to_files_js(record):
                 'progress': 100,
                 'links': {
                     'self': (
-                        current_app.config['DEPOSIT_FILES_API'] +
-                        u'/{bucket}/{key}?versionId={version_id}'.format(
+                        current_app.config['DEPOSIT_FILES_API']
+                        + u'/{bucket}/{key}?versionId={version_id}'.format(
                             bucket=f.bucket_id,
                             key=f.key,
                             version_id=f.version_id,
@@ -709,8 +734,8 @@ def prepare_edit_item():
                     item_id=item_id)
             # show error when has stt is Begin or Doing
             if workflow_action_stt is not None and \
-                (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN or
-                 workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
+                (workflow_action_stt == ActionStatusPolicy.ACTION_BEGIN
+                 or workflow_action_stt == ActionStatusPolicy.ACTION_DOING):
                 return jsonify(code=-13,
                                msg=_('The workflow is being edited. '))
 
@@ -735,8 +760,17 @@ def prepare_edit_item():
                 post_activity['itemtype_id'] = item_type_id
                 getargs = request.args
                 community = getargs.get('community', None)
+
+                # Create a new version of a record.
+                record = WekoDeposit.get_record(item_id)
+                if record is None:
+                    return jsonify(code=-1, msg=_('Record does not exist.'))
+                deposit = WekoDeposit(record, record.model)
+                new_record = deposit.newversion(pid_object)
+                if new_record is None:
+                    return jsonify(code=-1, msg=_('An error has occurred.'))
                 rtn = activity.init_activity(
-                    post_activity, community, pid_object.object_uuid)
+                    post_activity, community, new_record.model.id)
                 if rtn:
                     # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
                     identifier_actionid = get_actionid('identifier_grant')
@@ -769,3 +803,105 @@ def prepare_edit_item():
         except Exception as e:
             current_app.logger.error('Unexpected error: ', str(e))
     return jsonify(code=-1, msg=_('An error has occurred.'))
+
+
+@blueprint.route('/ranking', methods=['GET'])
+def ranking():
+    """Ranking page view."""
+    # get ranking settings
+    settings = RankingSettings.get()
+    # get statistical period
+    end_date = date.today()  # - timedelta(days=1)
+    start_date = end_date - \
+        timedelta(days=int(settings.statistical_period) - 1)
+
+    rankings = {}
+    # most_reviewed_items
+    if settings.rankings['most_reviewed_items']:
+        result = QueryRecordViewReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                                 end_date=end_date.strftime(
+                                                     '%Y-%m-%d'),
+                                                 agg_size=settings.display_rank,
+                                                 agg_sort={'value': 'desc'})
+        rankings['most_reviewed_items'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all', title_key='record_name',
+                                  count_key='total_all', pid_key='pid_value')
+
+    # most_downloaded_items
+    if settings.rankings['most_downloaded_items']:
+        result = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                              end_date=end_date.strftime(
+                                                  '%Y-%m-%d'),
+                                              target_report='3',
+                                              unit='Item',
+                                              agg_size=settings.display_rank,
+                                              agg_sort={'_count': 'desc'})
+        rankings['most_downloaded_items'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data', title_key='col2',
+                                  count_key='col3', pid_key='col1')
+
+    # created_most_items_user
+    if settings.rankings['created_most_items_user']:
+        result \
+            = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
+                                           end_date=end_date.strftime(
+                                               '%Y-%m-%d'),
+                                           target_report='0',
+                                           unit='User',
+                                           agg_size=settings.display_rank,
+                                           agg_sort={'_count': 'desc'})
+        rankings['created_most_items_user'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='data',
+                                  title_key='user_id', count_key='count')
+
+    # most_searched_keywords
+    if settings.rankings['most_searched_keywords']:
+        result = QuerySearchReportHelper.get(
+            start_date=start_date.strftime('%Y-%m-%d'),
+            end_date=end_date.strftime('%Y-%m-%d'),
+            agg_size=settings.display_rank,
+            agg_sort={'value': 'desc'},
+            agg_filter={'search_type': [0, 1]}
+        )
+        rankings['most_searched_keywords'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all', title_key='search_key',
+                                  count_key='count', search_key='search_key')
+
+    # new_items
+    if settings.rankings['new_items']:
+        new_item_start_date = end_date - \
+            timedelta(days=int(settings.new_item_period) - 1)
+        if new_item_start_date < start_date:
+            new_item_start_date = start_date
+        new_items_list = []
+        result = QueryCommonReportsHelper.get(
+            start_date=new_item_start_date.strftime('%Y-%m-%d'),
+            end_date=end_date.strftime('%Y-%m-%d'),
+            event='item_create',
+            agg_size=settings.display_rank,
+            agg_sort={'_term': 'desc'}
+        )
+        rankings['new_items'] = \
+            parse_ranking_results(result, settings.display_rank,
+                                  list_name='all', title_key='record_name',
+                                  pid_key='pid_value', date_key='create_date')
+
+    return render_template(current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
+                           render_widgets=True,
+                           is_show=settings.is_show,
+                           start_date=start_date,
+                           end_date=end_date,
+                           rankings=rankings)
+
+
+def check_ranking_show():
+    """Check ranking show/hide."""
+    result = 'hide'
+    settings = RankingSettings.get()
+    if settings and settings.is_show:
+        result = ''
+    return result
