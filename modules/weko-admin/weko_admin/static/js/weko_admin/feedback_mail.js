@@ -66,27 +66,35 @@ class ComponentExclusionTarget extends React.Component {
         this.searchCommand = this.searchCommand.bind(this);
         this.generateSelectedBox = this.generateSelectedBox.bind(this);
     }
-    componentWillMount(){
+    componentDidMount(){
       let mailData = [];
       let sendData = false;
       $.ajax({
         url: "/api/admin/get_feedback_mail",
         async: false,
         method: "GET",
-        success: function (data, statusRequest) {
+        success: function (data) {
           mailData = data.data || [];
           sendData = data.is_sending_feedback || false;
         }
       })
-      this.setState({listEmail:mailData});
       this.props.bindingValueOfComponent('listEmail', mailData);
       this.props.bindingValueOfComponent('flagSend', sendData);
+    }
+    static getDerivedStateFromProps(nextProps, prevState) {
+      if (nextProps.listEmail != prevState.listEmail)
+      {
+        return {
+          listEmail: nextProps.listEmail,
+        }
+      }
+      return null;
     }
 
     generateSelectedBox(listEmail) {
       let innerHTML = [];
       for (let id in listEmail) {
-        innerHTML.push(<option value={listEmail[id].author_id}>{listEmail[id].email}</option>);
+        innerHTML.push(<option key={listEmail[id].email} value={listEmail[id].author_id}>{listEmail[id].email}</option>);
       }
       return (
         <select multiple className="style-selected-box" id="sltBoxListEmail">
@@ -97,9 +105,6 @@ class ComponentExclusionTarget extends React.Component {
 
     deleteCommand(event) {
       let selectedElement = $('select#sltBoxListEmail').val();
-      selectedElement.forEach(element => {
-        $("#sltBoxListEmail option[value='"+element+"']").remove();
-      });
       this.props.removeEmailFromList(selectedElement);
     }
 
@@ -560,7 +565,7 @@ class MainLayout extends React.Component {
                     <ComponentFeedbackMail flagSend = {this.state.flagSend} bindingValueOfComponent = {this.bindingValueOfComponent}/>
                 </div>
                 <div className="row">
-                    <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} listEmail= {this.state.listEmail} removeEmailFromList = {this.removeEmailFromList}/>
+                    <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} removeEmailFromList = {this.removeEmailFromList} listEmail={this.state.listEmail}/>
                 </div>
                 <div className="row">
                     <ComponentButtonLayout listEmail = {this.state.listEmail} flagSend={this.state.flagSend}/>
