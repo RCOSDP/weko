@@ -459,7 +459,8 @@ def check_authority_action(activity_id='0', action_id=0):
         .filter(userrole.c.role_id == Role.id) \
         .filter(User.id == userrole.c.user_id) \
         .all()
-    community_user_ids = [community_user.id for community_user in community_users]
+    community_user_ids = [
+        community_user.id for community_user in community_users]
     for role in list(current_user.roles or []):
         if role.name in community_role_name:
             # User has community role

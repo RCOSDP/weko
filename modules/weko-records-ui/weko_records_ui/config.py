@@ -34,12 +34,13 @@ WEKO_PERMISSION_REQUIRED_TEMPLATE = 'weko_workflow/permission_required.html'
 WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Repository Administrator',
                              'Contributor',
-                             'General')
+                             'General',
+                             'Community Administrator')
 
 WEKO_PERMISSION_SUPER_ROLE_USER = ('System Administrator',
                                    'Repository Administrator')
 
-WEKO_PERMISSION_ROLE_COMMUNITY = "Community Administrator"
+WEKO_PERMISSION_ROLE_COMMUNITY = 'Community Administrator'
 
 WEKO_RECORDS_UI_BULK_UPDATE_FIELDS = {
     'fields': [{'id': '1', 'name': 'Access Type'},
