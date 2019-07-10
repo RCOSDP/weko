@@ -988,6 +988,22 @@ class RankingSettings(db.Model):
         return cls
 
 
+class Settings(db.Model):
+    """settings."""
+
+    __tablename__ = 'admin_settings'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    def __setattr__(self, name, value):
+        """Setattr."""
+        db.Model.__setattr__(self, name, value)
+        db.session.commit()
+
+    items_search_author = db.Column(db.String(5), default='name')
+    items_display_email = db.Column(db.Boolean(name='items_display_email'), default=True)
+
+
 __all__ = ([
     'SearchManagement',
     'AdminLangSettings',
@@ -998,5 +1014,6 @@ __all__ = ([
     'LogAnalysisRestrictedCrawlerList',
     'StatisticsEmail',
     'RankingSettings',
-    'BillingPermission'
+    'BillingPermission',
+    'Settings'
 ])
