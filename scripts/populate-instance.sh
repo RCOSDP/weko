@@ -146,7 +146,8 @@ ${INVENIO_WEB_INSTANCE} access \
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "admin-access" \
-       role "${INVENIO_ROLE_REPOSITORY}"
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "schema-access" \
@@ -154,7 +155,13 @@ ${INVENIO_WEB_INSTANCE} access \
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "index-tree-access" \
-       role "${INVENIO_ROLE_REPOSITORY}"
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}"
+
+${INVENIO_WEB_INSTANCE} access \
+       allow "indextree-journal-access" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "item-type-access" \
@@ -163,47 +170,55 @@ ${INVENIO_WEB_INSTANCE} access \
 ${INVENIO_WEB_INSTANCE} access \
        allow "item-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "files-rest-bucket-update" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "files-rest-object-delete" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "files-rest-object-delete-version" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "search-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "detail-page-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "download-original-pdf-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
-       role "${INVENIO_ROLE_CONTRIBUTOR}" \
-       role "${INVENIO_ROLE_COMMUNITY}"
+       role "${INVENIO_ROLE_COMMUNITY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "author-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
        allow "items-autofill" \
        role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 # sphinxdoc-set-role-access-end
 
@@ -259,6 +274,16 @@ ${INVENIO_WEB_INSTANCE} users create \
        "test03@hitachi.com" \
        --password "${INVENIO_USER_PASS}" \
        --active
+
+${INVENIO_WEB_INSTANCE} users create \
+      "test04@hitachi.com" \
+      --password "${INVENIO_USER_PASS}" \
+      --active
+
+${INVENIO_WEB_INSTANCE} roles add \
+        "test04@hitachi.com" \
+       "${INVENIO_ROLE_COMMUNITY}"
+
 ##### sphinxdoc-create-test-data-end
 
 # sphinxdoc-set-web-api-account-combobox-begin
@@ -300,3 +325,6 @@ ${INVENIO_WEB_INSTANCE} report create_target \
 ${INVENIO_WEB_INSTANCE} report create_target \
        "3" "Contents download report" "1,2,3,4,5"
 # sphinxdoc-set-report-unit-and-target-end
+
+${INVENIO_WEB_INSTANCE} billing create \
+       1 "true"

@@ -26,28 +26,28 @@ import json
 import os
 import re
 import sys
-import zipfile
 from datetime import datetime
-from io import BytesIO, StringIO
 
 import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
-    redirect, request, url_for
+    redirect, render_template, request, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_accounts.models import Role, User, userrole
-from invenio_cache import current_cache
+from flask_mail import Attachment
 from invenio_db import db
+from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
-from sqlalchemy import func
-from weko_items_ui.utils import get_user_information
-from weko_records.api import ItemsMetadata
+from weko_records.api import ItemTypes, SiteLicense
 
 from .models import LogAnalysisRestrictedCrawlerList, \
-    LogAnalysisRestrictedIpAddress
+    LogAnalysisRestrictedIpAddress, RankingSettings, SearchManagement, \
+    StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import allowed_file
+from .utils import allowed_file, get_redis_cache, get_response_json, \
+    get_search_setting
+from .utils import get_user_report_data as get_user_report
+from .utils import package_reports, reset_redis_cache
 
 
 class StyleSettingView(BaseView):
@@ -223,65 +223,7 @@ class StyleSettingView(BaseView):
 
 
 class ReportView(BaseView):
-
-    header_rows = {
-        'file_download': _('No. Of File Downloads'),
-        'file_preview': _('No. Of File Previews'),
-        'index_access': _('Detail Views Per Index'),
-        'detail_view': _('Detail Views Count'),
-        'file_using_per_user': _('Usage Count By User'),
-        'search_count': _('Search Keyword Ranking'),
-        'top_page_access': _('Number Of Access By Host'),
-        'user_roles': _('User Affiliation Information'),
-        'site_access': _('Access Count By Site License')
-    }
-
-    sub_header_rows = {
-        'file_download': _('Open-Access No. Of File Downloads'),
-        'file_preview': _('Open-Access No. Of File Previews'),
-        'site_access': _('Access Number Breakdown By Site License')
-    }
-
-    report_cols = {
-        'file_download': [
-            _('File Name'), _('Registered Index Name'),
-            _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
-            _('Logged In User'), _('Site License'), _('Admin'),
-            _('Registrar')],
-        'file_preview': [
-            _('File Name'), _('Registered Index Name'),
-            _('No. Of Times Downloaded/Viewed'), _('Non-Logged In User'),
-            _('Logged In User'), _('Site License'), _('Admin'),
-            _('Registrar')],
-        'index_access': [_('Index'), _('No. Of Views')],
-        'detail_view': [
-            _('Title'), _('Registered Index Name'), _('View Count'),
-            _('Non-logged-in User')],
-        'file_using_per_user': [_('Mail address'),
-                                _('Username'),
-                                _('File download count'),
-                                _('File playing count')],
-        'search_count': [_('Search Keyword'), _('Number Of Searches')],
-        'top_page_access': [_('Host'), _('IP Address'),
-                            _('WEKO Top Page Access Count')],
-        'user_roles': [_('Role'), _('Number Of Users')],
-        'site_access': [_('WEKO Top Page Access Count'),
-                        _('Number Of Searches'), _('Number Of Views'),
-                        _('Number Of File download'),
-                        _('Number Of File Regeneration')]
-    }
-
-    file_names = {
-        'file_download': _('FileDownload_'),
-        'file_preview': _('FilePreview_'),
-        'index_access': _('IndexAccess_'),
-        'detail_view': _('DetailView_'),
-        'file_using_per_user': _('FileUsingPerUser_'),
-        'search_count': _('SearchCount_'),
-        'top_page_access':_('HostAccess_'),
-        'user_roles': _('UserAffiliate_'),
-        'site_access': _('SiteAccess_')
-    }
+    """Report view."""
 
     @expose('/', methods=['GET'])
     def index(self):
@@ -313,12 +255,31 @@ class ReportView(BaseView):
 
             result.update({'total': total})
 
+            cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+                format(name='email_schedule')
+            current_schedule = get_redis_cache(cache_key)
+            current_schedule = json.loads(current_schedule) if \
+                current_schedule else \
+                current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
+
+            # current_schedule = self.get_current_email_schedule() or \
+            #     current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
+
+            # Emails to send reports to
+            all_emailAddress = StatisticsEmail().get_all()
+            current_app.logger.info(all_emailAddress)
             return self.render(
                 current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
                 result=result,
-                now=datetime.utcnow())
-        except Exception:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+                now=datetime.utcnow(),
+                emails=all_emailAddress,
+                days_of_week=[_('Monday'), _('Tuesday'), _('Wednesday'),
+                              _('Thursday'), _('Friday'), _('Saturday'),
+                              _('Sunday')],
+                current_schedule=current_schedule,
+                frequency_options=current_app.config['WEKO_ADMIN_REPORT_FREQUENCIES'])
+        except Exception as e:
+            current_app.logger.error('Unexpected error: ', e)
         return abort(400)
 
     @expose('/stats_file_tsv', methods=['POST'])
@@ -329,168 +290,96 @@ class ReportView(BaseView):
         year = request.form.get('year')
         month = request.form.get('month').zfill(2)
 
-        # File Format: logReport_File[Download, Preview]_YYYY-MM.tsv
-        tsv_files = []
-        for stats_type, stats in stats_json.items():
-            file_name = 'logReport_' + self.file_names.get(stats_type, '_') \
-                        + year + '-' + month + '.tsv'
-            tsv_files.append({
-                'file_name': file_name,
-                'stream': self.make_stats_tsv(stats, stats_type, year, month)})
+        # current_app.logger.info(request.form.to_dict())
 
-        zip_name = 'logReport_' + year + '-' + month
-        zip_stream = BytesIO()
-
+        # File Format: logReport__YYYY-MM.zip
+        zip_date = str(year) + '-' + str(month).zfill(2)
+        zip_name = 'logReport_' + zip_date + '.zip'
         try:
             # Dynamically create zip from StringIO data into BytesIO
-            report_zip = zipfile.ZipFile(zip_stream, 'w')
-            for tsv_file in tsv_files:
-                report_zip.writestr(tsv_file['file_name'],
-                                    tsv_file['stream'].getvalue())
-            report_zip.close()
+            zip_stream = package_reports(stats_json, year, month)
 
-            resp = make_response()
-            resp.data = zip_stream.getvalue()
-            resp.headers['Content-Type'] = 'application/x-zip-compressed'
-            resp.headers['Content-Disposition'] = 'attachment; filename=' + \
-                zip_name + '.zip'
-        except Exception:
-            current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-            abort(500)
-        return resp
-
-    def make_stats_tsv(self, raw_stats, file_type, year, month):
-        """Make TSV report file for stats."""
-        header_row = self.header_rows.get(file_type)
-        sub_header_row = self.sub_header_rows.get(file_type)
-        tsv_output = StringIO()
-        try:
-            writer = csv.writer(tsv_output, delimiter='\t',
-                                lineterminator="\n")
-            writer.writerows([[header_row],
-                              [_('Aggregation Month'), year + '-' + month],
-                              [''], [header_row]])
-
-            cols = self.report_cols.get(file_type, [])
-            writer.writerow(cols)
-
-            # Special cases:
-            # Write total for per index views
-            if file_type == 'index_access':
-                writer.writerow([_('Total Detail Views'), raw_stats['total']])
-
-            elif file_type == 'site_access':
-                self.write_report_tsv_rows(writer,
-                                           raw_stats['site_license'],
-                                           file_type,
-                                           _('Site license member'))
-                self.write_report_tsv_rows(writer,
-                                           raw_stats['other'],
-                                           file_type,
-                                           _('Other than site license'))
+            # Make the send email function a task so it
+            if request.form.get('send_email') == 'True':
+                recepients = StatisticsEmail.get_all_emails()
+                html_body = render_template(
+                    current_app.config['WEKO_ADMIN_REPORT_EMAIL_TEMPLATE'],
+                    report_date=zip_date,
+                    attached_file=zip_name)
+                subject = zip_date + _(' Log report.')
+                attachments = [Attachment(zip_name,
+                                          'application/x-zip-compressed',
+                                          zip_stream.getvalue())]
+                send_mail(subject, recepients, html=html_body,
+                          attachments=attachments)
+                flash(_('Successfully sent the reports to the recepients.'))
             else:
-                self.write_report_tsv_rows(writer, raw_stats['all'], file_type)
-
-            # Write open access stats
-            if sub_header_row is not None:
-                writer.writerows([[''], [sub_header_row]])
-                if 'open_access' in raw_stats:
-                    writer.writerow(cols)
-                    self.write_report_tsv_rows(writer,
-                                               raw_stats['open_access'])
-                elif 'institution_name' in raw_stats:
-                    writer.writerows([[_('Institution Name')] + cols])
-                    self.write_report_tsv_rows(writer,
-                                               raw_stats['institution_name'],
-                                               file_type)
-        except Exception:
-            current_app.logger.error('Unexpected error: ',
-                                     sys.exc_info()[0])
-            abort(500)
-        return tsv_output
-
-    def write_report_tsv_rows(self, writer, records,
-                              file_type=None, other_info=None):
-        """Write tsv rows for stats."""
-        if isinstance(records, dict):
-            records = list(records.values())
-        for record in records:
-            try:
-                if file_type is None or \
-                        file_type == 'file_download' or \
-                        file_type == 'file_preview':
-                    writer.writerow([record['file_key'], record['index_list'],
-                                     record['total'], record['no_login'],
-                                     record['login'], record['site_license'],
-                                     record['admin'], record['reg']])
-                elif file_type == 'index_access':
-                    writer.writerow(
-                        [record['index_name'], record['view_count']])
-                elif file_type == 'search_count':
-                    writer.writerow([record['search_key'], record['count']])
-                elif file_type == 'user_roles':
-                    writer.writerow([record['role_name'], record['count']])
-                elif file_type == 'detail_view':
-                    item_metadata_json = ItemsMetadata.\
-                        get_record(record['record_id'])
-                    writer.writerow([
-                        item_metadata_json['title'], record['index_names'],
-                        record['total_all'], record['total_not_login']])
-                elif file_type == 'file_using_per_user':
-                    user_email = ''
-                    user_name = 'Guest'
-                    user_id = int(record['cur_user_id'])
-                    if user_id > 0:
-                        user_info = get_user_information(user_id)
-                        user_email = user_info['email']
-                        user_name = user_info['username']
-                    writer.writerow([
-                        user_email, user_name,
-                        record['total_download'], record['total_preview']])
-                elif file_type == 'top_page_access':
-                    writer.writerow([record['host'], record['ip'],
-                                     record['count']])
-                elif file_type == 'site_access':
-                    if record:
-                        if other_info:
-                            writer.writerow([other_info, record['top_view'],
-                                             record['search'],
-                                             record['record_view'],
-                                             record['file_download'],
-                                             record['file_preview']])
-                        else:
-                            writer.writerow([record['name'], record['top_view'],
-                                             record['search'],
-                                             record['record_view'],
-                                             record['file_download'],
-                                             record['file_preview']])
-            except Exception:
-                current_app.logger.error('Unexpected error: ',
-                                         sys.exc_info()[0])
-                abort(500)
+                resp = make_response()
+                resp.data = zip_stream.getvalue()
+                resp.headers['Content-Type'] = 'application/x-zip-compressed'
+                resp.headers['Content-Disposition'] = 'attachment; filename=' + \
+                    zip_name
+                return resp
+        except Exception as e:
+            current_app.logger.error('Unexpected error: ', e)
+            flash(_('Unexpected error occurred.'), 'error')
+        return redirect(url_for('report.index'))
 
     @expose('/user_report_data', methods=['GET'])
     def get_user_report_data(self):
         """Get user report data from db and modify."""
-        role_counts = []
+        return jsonify(get_user_report())
+
+    @expose('/set_email_schedule', methods=['POST'])
+    def set_email_schedule(self):
+        """Set new email schedule."""
+        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+            format(name='email_schedule')
+
+        # Get Schedule
+        # current_app.logger.info(request.form.to_dict())
+        frequency = request.form.get('frequency')
+        enabled = True if request.form.get('dis_enable_schedule') == 'True' \
+            else False
+
+        # Details come in two different types
+        details = ''
+        if frequency == 'weekly':
+            details = request.form.get('weekly_details')
+        elif frequency == 'monthly':
+            details = request.form.get('monthly_details')
+
+        schedule = {
+            'frequency': frequency,
+            'details': details,
+            'enabled': enabled
+        }
+
         try:
-            role_counts = db.session.query(Role.name, func.count(userrole.c.role_id)) \
-                .outerjoin(userrole) \
-                .group_by(Role.id).all()
+            reset_redis_cache(cache_key, json.dumps(schedule))
+            flash(_('Successfully Changed Schedule.'), 'error')
         except Exception:
-            current_app.logger.error(_('Could not retrieve user report data: '),
-                                     sys.exc_info()[0])
-            abort(500)
+            flash(_('Could Not Save Changes.'), 'error')
+        return redirect(url_for('report.index'))
 
-        role_counts = [dict(role_name=name, count=count)
-                       for name, count in role_counts]
-        response = {'all': role_counts}
-        total_users = sum([x['count'] for x in role_counts])
-
-        # Total registered users
-        response['all'].append({'role_name': _('Registered Users'),
-                                'count': total_users})
-        return jsonify(response)
+    @expose('/get_email_address', methods=['POST'])
+    def get_email_address(self):
+        """Save Email Address."""
+        inputEmail = request.form.getlist('inputEmail')
+        StatisticsEmail.delete_all_row()
+        alert_msg = 'Successfully saved email addresses.'
+        category = 'info'
+        for input in inputEmail:
+            if input:
+                match = re.match(
+                    r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
+                if match:
+                    StatisticsEmail.insert_email_address(input)
+                else:
+                    alert_msg = 'Please check email input fields.'
+                    category = 'error'
+        flash(_(alert_msg), category=category)
+        return redirect(url_for("report.index"))
 
 
 class LanguageSettingView(BaseView):
@@ -512,19 +401,16 @@ class WebApiAccount(BaseView):
 class StatsSettingsView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
-        datastore = RedisStore(redis.StrictRedis.from_url(
-            current_app.config['CACHE_REDIS_URL']))
         cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
             format(name='display_stats')
 
         current_display_setting = True  # Default
+        datastore = RedisStore(redis.StrictRedis.from_url(
+            current_app.config['CACHE_REDIS_URL']))
         if datastore.redis.exists(cache_key):
             curr_display_setting = datastore.get(cache_key).decode('utf-8')
-            current_app.logger.info('Current: ')
-            current_app.logger.info(current_display_setting)
-            current_display_setting = True if curr_display_setting == 'True' else False
-        else:
-            current_display_setting = True
+            current_display_setting = True if curr_display_setting == 'True' \
+                else False
 
         if request.method == 'POST':
             display_setting = request.form.get('record_stats_radio', 'True')
@@ -535,8 +421,7 @@ class StatsSettingsView(BaseView):
 
         return self.render(
             current_app.config["WEKO_ADMIN_STATS_SETTINGS_TEMPLATE"],
-            display_stats=current_display_setting
-        )
+            display_stats=current_display_setting)
 
 
 class LogAnalysisSettings(BaseView):
@@ -549,10 +434,10 @@ class LogAnalysisSettings(BaseView):
                 LogAnalysisRestrictedIpAddress.update_table(new_ip_addresses)
                 LogAnalysisRestrictedCrawlerList.update_or_insert_list(
                     crawler_lists)
-            except Exception:
-                current_app.logger.error(_('Could not save restricted data: '),
-                                         sys.exc_info()[0])
-                flash(_('Could not save data.'))
+            except Exception as e:
+                current_app.logger.error(
+                    'Could not save restricted data: ', e)
+                flash(_('Could not save data.'), 'error')
 
         # Get most current restricted addresses/user agents
         try:
@@ -563,9 +448,9 @@ class LogAnalysisSettings(BaseView):
                 LogAnalysisRestrictedCrawlerList \
                     .add_list(current_app.config["WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
                 shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
-        except Exception:
-            current_app.logger.error(_('Could not get restricted data: '),
-                                     sys.exc_info()[0])
+        except Exception as e:
+            current_app.logger.error(_('Could not get restricted data: '), e)
+            flash(_('Could not get restricted data.'), 'error')
             restricted_ip_addresses = []
             shared_crawlers = []
 
@@ -596,6 +481,153 @@ class LogAnalysisSettings(BaseView):
         return new_crawler_lists, new_ip_addresses
 
 
+class RankingSettingsView(BaseView):
+    """Ranking settings view."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        if request.method == 'POST':
+            try:
+                form = request.form.get('submit', None)
+                if form == 'save_ranking_settings':
+                    settings = RankingSettings()
+                    settings.is_show = request.form.get('is_show', False)
+                    new_item_period = int(request.form.get('new_item_period',
+                                                           14))
+                    if new_item_period < 1 or new_item_period > 30:
+                        current_app.logger.debug(new_item_period)
+                        raise
+                    settings.new_item_period = new_item_period
+                    settings.statistical_period = \
+                        request.form.get('statistical_period', 365)
+                    settings.display_rank = \
+                        request.form.get('display_rank', 10)
+                    most_reviewed_items_flag = True \
+                        if request.form.get('most_reviewed_items') else False
+                    most_downloaded_items_flag = True \
+                        if request.form.get('most_downloaded_items') \
+                        else False
+                    created_most_items_user_flag = True \
+                        if request.form.get('created_most_items_user') \
+                        else False
+                    most_searched_keywords_flag = True \
+                        if request.form.get('most_searched_keywords') \
+                        else False
+                    new_items_flag = True \
+                        if request.form.get('new_items') else False
+                    settings.rankings = {
+                        'most_reviewed_items': most_reviewed_items_flag,
+                        'most_downloaded_items': most_downloaded_items_flag,
+                        'created_most_items_user':
+                        created_most_items_user_flag,
+                        'most_searched_keywords': most_searched_keywords_flag,
+                        'new_items': new_items_flag
+                    }
+                    RankingSettings.update(data=settings)
+                    flash(_('Successfully Changed Settings.'))
+                    return redirect(url_for('rankingsettings.index'))
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                flash(_('Failurely Changed Settings.'), 'error')
+                return redirect(url_for('rankingsettings.index'))
+
+        settings = RankingSettings.get()
+        if settings:
+            is_show = settings.is_show
+            new_item_period = settings.new_item_period
+            statistical_period = settings.statistical_period
+            display_rank = settings.display_rank
+            rankings = settings.rankings
+        else:
+            is_show = False
+            new_item_period = 14
+            statistical_period = 365
+            display_rank = 10
+            rankings = {'most_reviewed_items': False,
+                        'most_downloaded_items': False,
+                        'created_most_items_user': False,
+                        'most_searched_keywords': False,
+                        'new_items': False}
+
+        return self.render(
+            current_app.config["WEKO_ADMIN_RANKING_SETTINGS_TEMPLATE"],
+            is_show=is_show,
+            new_item_period=new_item_period,
+            statistical_period=statistical_period,
+            display_rank=display_rank,
+            rankings=rankings
+        )
+
+
+class SearchSettingsView(BaseView):
+    """Search settings view."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Site license setting page."""
+        result = json.dumps(get_search_setting())
+        if 'POST' in request.method:
+            jfy = {}
+            try:
+                # update search setting
+                dbData = request.get_json()
+                res = SearchManagement.get()
+
+                if res:
+                    id = res.id
+                    SearchManagement.update(id, dbData)
+                else:
+                    SearchManagement.create(dbData)
+                jfy['status'] = 201
+                jfy['message'] = 'Search setting was successfully updated.'
+            except BaseException:
+                jfy['status'] = 500
+                jfy['message'] = 'Failed to update search setting.'
+            return make_response(jsonify(jfy), jfy['status'])
+
+        try:
+            return self.render(
+                current_app.config['WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE'],
+                setting_data=result
+            )
+        except BaseException as e:
+            abort(500)
+            # current_app.logger.error('Could not save search settings', e)
+            # flash(_('Unable to change search settings.'), 'error')
+
+
+class SiteLicenseSettingsView(BaseView):
+    """Site License settings view."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """Site License settings view."""
+        if 'POST' in request.method:
+            jfy = {}
+            try:
+                # update item types and site license info
+                SiteLicense.update(request.get_json())
+                jfy['status'] = 201
+                jfy['message'] = 'Site license was successfully updated.'
+            except BaseException:
+                jfy['status'] = 500
+                jfy['message'] = 'Failed to update site license.'
+            return make_response(jsonify(jfy), jfy['status'])
+
+        try:
+            # site license list
+            result_list = SiteLicense.get_records()
+            # item types list
+            n_lst = ItemTypes.get_latest()
+            result = get_response_json(result_list, n_lst)
+            return self.render(
+                current_app.config['WEKO_ADMIN_SITE_LICENSE_TEMPLATE'],
+                result=json.dumps(result))
+        except BaseException as e:
+            current_app.logger.error('Could not save site license settings', e)
+            abort(500)
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -622,7 +654,6 @@ stats_settings_adminview = {
         'endpoint': 'statssettings'
     }
 }
-
 
 log_analysis_settings_adminview = {
     'view_class': LogAnalysisSettings,
@@ -651,6 +682,33 @@ web_api_account_adminview = {
     }
 }
 
+ranking_settings_adminview = {
+    'view_class': RankingSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Ranking'),
+        'endpoint': 'rankingsettings'
+    }
+}
+
+search_settings_adminview = {
+    'view_class': SearchSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Search'),
+        'endpoint': 'searchsettings'
+    }
+}
+
+site_license_settings_adminview = {
+    'view_class': SiteLicenseSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Site License'),
+        'endpoint': 'sitelicensesettings'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -658,4 +716,7 @@ __all__ = (
     'web_api_account_adminview',
     'stats_settings_adminview',
     'log_analysis_settings_adminview',
+    'ranking_settings_adminview',
+    'search_settings_adminview',
+    'site_license_settings_adminview',
 )

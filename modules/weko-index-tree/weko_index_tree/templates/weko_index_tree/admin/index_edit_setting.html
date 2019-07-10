@@ -18,12 +18,14 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_INDEX_TREE_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
   {% assets "weko_items_ui_indextree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_index_tree_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_theme_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -32,12 +34,8 @@
   {% assets "weko_index_tree_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('edit_tree') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
+{%- block body %}
+<input id="lang-code" type="hidden" value="{{lang_code}}" />
 <div class="row">
   <div class="hide" id="get_tree_json">{{ get_tree_json }}</div>
   <div class="hide" id="upt_tree_json">{{ upt_tree_json }}</div>
@@ -45,4 +43,4 @@
   <div class="hide" id="admin_coverpage_setting">{{ admin_coverpage_setting }}</div>
   <app-root-tree-hensyu nodeId={{index_id}}></app-root-tree-hensyu>
 </div>
-{%- endblock page_body_main %}
+{%- endblock body %}

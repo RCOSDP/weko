@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-flow 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:55+0900\n"
+"POT-Creation-Date: 2019-07-02 06:39+0000\n"
 "PO-Revision-Date: 2018-08-01 13:42+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -24,11 +24,11 @@ msgstr "プラグイン"
 
 #: weko_plugins/admin.py:132
 msgid "Plugin List"
-msgstr "ラグイン一覧\""
+msgstr "ラグイン一覧"
 
 #: weko_plugins/views.py:41
 msgid "weko-plugins"
-msgstr "プラグイン"
+msgstr "WEKOプラグイン"
 
 #: weko_plugins/templates/weko_plugins/index.html:28
 #, python-format

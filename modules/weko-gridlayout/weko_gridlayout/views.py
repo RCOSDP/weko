@@ -13,10 +13,10 @@ from flask_babelex import gettext as _
 from flask_login import login_required
 
 from .api import WidgetItems
-from .utils import delete_admin_widget_item_setting, get_default_language, \
-    get_repository_list, get_system_language, get_widget_design_setting, \
-    get_widget_list, get_widget_preview, get_widget_type_list, \
-    update_admin_widget_item_setting, update_widget_design_setting
+from .services import WidgetDataLoaderServices, WidgetDesignServices, \
+    WidgetItemServices
+from .utils import get_default_language, get_system_language, \
+    get_widget_type_list
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -59,7 +59,7 @@ def load_repository():
             'error': ''
         }
     """
-    result = get_repository_list()
+    result = WidgetDesignServices.get_repository_list()
     return jsonify(result)
 
 
@@ -80,8 +80,10 @@ def load_widget_list_design_setting(repository_id):
     """
     result = dict()
     lang_default = get_default_language()
-    result["widget-list"] = get_widget_list(repository_id, lang_default)
-    result["widget-preview"] = get_widget_preview(repository_id, lang_default)
+    result["widget-list"] = WidgetDesignServices.get_widget_list(repository_id,
+                                                                 lang_default)
+    result["widget-preview"] = WidgetDesignServices.get_widget_preview(
+        repository_id, lang_default)
     result["error"] = result["widget-list"].get("error") or result[
         "widget-preview"].get("error")
     return jsonify(result)
@@ -96,7 +98,8 @@ def load_widget_design_setting(repository_id: str, current_language: str):
     :param current_language: The language default
     :return:
     """
-    result = get_widget_design_setting(repository_id, current_language)
+    result = WidgetDesignServices.get_widget_design_setting(
+        repository_id, current_language)
     return jsonify(result)
 
 
@@ -114,7 +117,7 @@ def save_widget_layout_setting():
         return jsonify(result)
 
     data = request.get_json()
-    result = update_widget_design_setting(data)
+    result = WidgetDesignServices.update_widget_design_setting(data)
 
     return jsonify(result)
 
@@ -135,7 +138,7 @@ def save_widget_item():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
-    return update_admin_widget_item_setting(data)
+    return jsonify(WidgetItemServices.save_command(data))
 
 
 @blueprint_api.route('/delete_widget_item', methods=['POST'])
@@ -146,7 +149,7 @@ def delete_widget_item():
         current_app.logger.debug(request.headers['Content-Type'])
         return jsonify(msg='Header Error')
     data = request.get_json()
-    return delete_admin_widget_item_setting(data.get('data_id'))
+    return jsonify(WidgetItemServices.delete_by_id(data.get('data_id')))
 
 
 @blueprint_api.route('/get_account_role', methods=['GET'])
@@ -170,3 +173,18 @@ def get_system_lang():
     """
     result = get_system_language()
     return jsonify(result)
+
+
+@blueprint_api.route('/get_new_arrivals', methods=['POST'])
+def get_new_arrivals_data():
+    """Get new arrivals data.
+
+    Returns:
+        json -- new arrivals data
+
+    """
+    data = request.get_json()
+    return jsonify(WidgetDataLoaderServices.get_new_arrivals_data(
+        data.get('list_dates'),
+        data.get('number_result'),
+        data.get('rss_status')))

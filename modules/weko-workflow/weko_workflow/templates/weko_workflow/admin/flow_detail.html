@@ -72,14 +72,14 @@
           <div class="col-sm-offset-3 col-sm-9">
             {%- if flow_id == '0' %}
             <button type="button" class="btn btn-primary save-button" id="btn-new-flow">
-              <span class="glyphicon glyphicon-download-alt"
+              <span class="glyphicon glyphicon-saved"
                   aria-hidden="true"></span>
                   {{_('Save')}}
             </button>
             {%- else %}
             <button type="button" class="btn btn-primary update-button" id="btn-upt-flow">
-              <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-                     {{_('Update')}}
+              <span class="glyphicon glyphicon-saved" aria-hidden="true"></span>
+                     {{_('Save')}}
             </button>
             {% endif %}
             <button type="button" class="btn btn-danger delete-button" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
@@ -185,7 +185,7 @@
    <button type="button" class="btn btn-info back-button" id="btn_back">
       <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
   <button type="button" class="btn btn-primary pull-right save-button" id="btn_submit" data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
-      <span class="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+      <span class="glyphicon glyphicon-saved" aria-hidden="true"></span>
                 {{_('Save')}}
     </button>
   </div>

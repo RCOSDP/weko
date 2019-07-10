@@ -1,3 +1,8 @@
+const MAIN_CONTENT_TYPE = "Main contents";
+const FREE_DESCRIPTION_TYPE = "Free description";
+const NOTICE_TYPE = "Notice";
+const NEW_ARRIVALS = "New arrivals";
+const ACCESS_COUNTER = "Access counter";
 class ComponentSelectField extends React.Component {
     constructor(props) {
         super(props);
@@ -99,7 +104,7 @@ class ComponentTextboxField extends React.Component {
             <div className="form-group row">
                 <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
                 <div class="controls col-xs-6">
-                    <input name={this.props.name} id='label' type="text" name="name" value={this.state.value} onChange={this.handleChange} className="form-control" />
+                    <input name={this.props.name} id='label' type="text" value={this.state.value} onChange={this.handleChange} className="form-control" />
                 </div>
             </div>
         )
@@ -479,7 +484,7 @@ class ComponentFieldEditor extends React.Component {
 class ExtendComponent extends React.Component {
     constructor(props) {
         super(props);
-        if (this.props.type == "Notice") {
+        if (this.props.type == NOTICE_TYPE) {
             if (this.props.data_load.more_description) {
                 this.state = {
                     type: this.props.type,
@@ -505,6 +510,12 @@ class ExtendComponent extends React.Component {
         this.handleChangeCheckBox = this.handleChangeCheckBox.bind(this);
         this.handleChangeHideTheRest = this.handleChangeHideTheRest.bind(this);
         this.handleChangeReadMore = this.handleChangeReadMore.bind(this);
+        this.handleChangeAccessCounter = this.handleChangeAccessCounter.bind(this);
+        this.handleChangeNewDates = this.handleChangeNewDates.bind(this);
+        this.handleChangeDisplayResult = this.handleChangeDisplayResult.bind(this);
+        this.handleChangeRssFeed = this.handleChangeRssFeed.bind(this);
+        this.generateNewDate = this.generateNewDate.bind(this);
+        this.generateDisplayResult = this.generateDisplayResult.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
         if (!prevState.write_more && nextProps.data_load.more_description) {
@@ -514,9 +525,17 @@ class ExtendComponent extends React.Component {
             }
         }
         if (nextProps.type !== prevState.type) {
+            let defaultSettings = {};
+            if (nextProps.type == NEW_ARRIVALS){
+                defaultSettings['new_dates'] = '5';
+                defaultSettings['display_result'] = '5';
+            }
+            else {
+                defaultSettings = {};
+            }
             return {
                 type: nextProps.type,
-                settings: {},
+                settings: defaultSettings,
                 write_more: false
             };
         }
@@ -547,6 +566,42 @@ class ExtendComponent extends React.Component {
         return null;
     }
 
+    generateNewDate(){
+        let newDates =['Today'];
+        for(let i=1; i<31; i++)
+        {
+            newDates.push(i+"");
+        }
+
+        let options = newDates.map((value) => {
+            return (
+                <option>{value}</option>
+            )
+        });
+
+        return (
+            <select value={this.state.settings.new_dates} onChange={this.handleChangeNewDates} className="form-control" name="new_dates">
+                {options}
+            </select>
+        )
+    }
+
+    generateDisplayResult(){
+        let displayResult =['5','10','20','50','100'];
+
+        let options = displayResult.map((value) => {
+            return (
+                <option>{value}</option>
+            )
+        });
+
+        return (
+            <select value={this.state.settings.display_result} onChange={this.handleChangeDisplayResult} className="form-control" name="new_dates">
+                {options}
+            </select>
+        )
+    }
+
     handleChange(field, value) {
         let data = this.state.settings;
         switch (field) {
@@ -561,6 +616,18 @@ class ExtendComponent extends React.Component {
                 break;
             case "hide_the_rest":
                 data["hide_the_rest"] = value;
+                break;
+            case "access_counter":
+                data["access_counter"] = value;
+                break;
+            case "new_dates":
+                data["new_dates"] = value;
+                break;
+            case "display_result":
+                data["display_result"] = value;
+                break;
+            case "rss_feed":
+                data["rss_feed"] = value;
                 break;
         }
         this.setState({
@@ -596,15 +663,41 @@ class ExtendComponent extends React.Component {
         this.handleChange("read_more", event.target.value);
     }
 
+    handleChangeAccessCounter(event){
+        let setting = this.state.settings;
+        setting['access_counter'] = event.target.value;
+        this.setState({ settings: setting });
+        this.handleChange("access_counter", event.target.value);
+    }
+
+    handleChangeNewDates(event) {
+        let setting = this.state.settings;
+        setting['new_dates'] = event.target.value;
+        this.setState({ settings: setting });
+        this.handleChange("new_dates", event.target.value);
+    }
+    handleChangeDisplayResult(event){
+        let setting = this.state.settings;
+        setting['display_result'] = event.target.value;
+        this.setState({ settings: setting });
+        this.handleChange("display_result", event.target.value);
+    }
+    handleChangeRssFeed(event){
+        let setting = this.state.settings;
+        setting['rss_feed'] = event.target.checked;
+        this.setState({ settings: setting });
+        this.handleChange("rss_feed", event.target.checked);
+    }
+
     render() {
-        if (this.state.type == "Free description") {
+        if (this.state.type == FREE_DESCRIPTION_TYPE) {
             return (
                 <div>
                     <ComponentFieldEditor handleChange={this.handleChange} name="Free description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
-        else if (this.state.type == "Notice") {
+        else if (this.state.type == NOTICE_TYPE) {
             if (this.state.write_more == false) {
                 return (
                     <div>
@@ -657,6 +750,40 @@ class ExtendComponent extends React.Component {
                 )
             }
         }
+        else if(this.state.type == ACCESS_COUNTER){
+            return(
+                <div className="form-group row">
+                    <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
+                    <div class="controls col-xs-3">
+                        <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter} onChange={this.handleChangeAccessCounter} className="form-control" />
+                    </div>
+                </div>
+            )
+        }
+        else if(this.state.type == NEW_ARRIVALS){
+            return(
+                <div>
+                    <div className="form-group row">
+                        <label htmlFor="new_dates" className="control-label col-xs-2 text-right">New date</label>
+                        <div class="controls col-xs-3">
+                            {this.generateNewDate()}
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <label htmlFor="display_result" className="control-label col-xs-2 text-right">Display Results</label>
+                        <div class="controls col-xs-3">
+                            {this.generateDisplayResult()}
+                        </div>
+                    </div>
+                    <div className="form-group row">
+                        <label htmlFor="rss_feed" className="control-label col-xs-2 text-right">RSS feed</label>
+                        <div class="controls col-xs-1">
+                            <input name="rss_feed" type="checkbox" onChange={this.handleChangeRssFeed} defaultChecked={this.state.settings.rss_feed} />
+                        </div>
+                    </div>
+                </div>
+            )
+        }
         else {
             return (
                 <div>
@@ -670,16 +797,10 @@ class ExtendComponent extends React.Component {
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            id: 0,
-            repository: '',
-            widget_type: '',
-            label: '',
-            language: ''
-        }
         this.saveCommand = this.saveCommand.bind(this);
         this.deleteCommand = this.deleteCommand.bind(this);
         this.isLabelValid = this.isLabelValid.bind(this);
+        this.validateFieldIsValid = this.validateFieldIsValid.bind(this);
     }
 
     saveCommand(event) {
@@ -703,56 +824,28 @@ class ComponentButtonLayout extends React.Component {
                 break;
             }
         }
-
         if (currentLabel || !noData) {
             let currentLangData = {
                 label: currentLabel,
-                description: currentDescription
             }
-            if($.isEmptyObject(multiLangData)) {
-                currentLangData['isDefault'] = true;
-            }else {
-                currentLangData['isDefault'] = false;
+            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE){
+                currentLangData["description"] = currentDescription;
             }
             multiLangData[currentLanguage] = currentLangData;
         }else {
             delete multiLangData[currentLanguage];
         }
 
-        let hasDefault = false;
-        for (let object in multiLangData) {
-            let langData = multiLangData[object];
-            if (langData['isDefault']) {
-                hasDefault = true;
-                currentLabel = langData['label'];
-                currentDescription = langData['description'];
-                currentLanguage = object;
-                break;
-            }
-        }
-        if(!hasDefault) {
-            let keys = Object.keys(multiLangData);
-            if (!$.isEmptyObject(keys)) {
-                multiLangData[keys[0]]['isDefault'] = true;
-                currentLabel = multiLangData[keys[0]]['label'];
-                currentDescription = multiLangData[keys[0]]['description'];
-                currentLanguage = keys[0];
-            }
-        }
         this.props.getValueOfField('multiLangData', multiLangData);
         data['multiLangSetting'] = multiLangData;
-        if (!this.props.is_edit) {
-            data['label'] = currentLabel;
-            data['settings'] = currentDescription;
-            data['language'] = currentLanguage;
-        }
+
         let request = {
             flag_edit: this.props.is_edit,
             data: data,
             data_id: '',
         };
         request.data_id = this.props.data_id;
-
+        let data_validate = this.validateFieldIsValid(data.widget_type);
         if (data.repository == "0" || data.repository == "") {
             var modalcontent = "Repository is required!";
             $("#inputModal").html(modalcontent);
@@ -765,7 +858,11 @@ class ComponentButtonLayout extends React.Component {
             var modalcontent = "Label is required!";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
-        } else {
+        } else if(!data_validate.status){
+            var modalcontent = data_validate.error;
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+        }else {
             return fetch(this.props.url_request, {
                 method: "POST",
                 headers: {
@@ -777,12 +874,6 @@ class ComponentButtonLayout extends React.Component {
                 .then((result) => {
                     if (result.success) {
                         addAlert(result.message);
-                        this.setState({
-                            repository: data.repository,
-                            widget_type: data.widget_type,
-                            label: data.label,
-                            language: data.language
-                        })
                     } else {
                         //alert(result.message);
                         var modalcontent = result.message;
@@ -790,6 +881,28 @@ class ComponentButtonLayout extends React.Component {
                         $("#allModal").modal("show");
                     }
                 });
+        }
+    }
+
+    validateFieldIsValid(widget_type){
+        if(widget_type == ACCESS_COUNTER){
+            let access_val =$('#Access_counter').val() || "0";
+            if (Number.isNaN(Number(access_val)) || Number(access_val) < 0){
+                return {
+                    status : false,
+                    error: "Please enter half-width numbers."
+                };
+            }
+            else if(access_val.length > 9){
+                return {
+                    status : false,
+                    error: "The input value exceeds 9 digits."
+                };
+            }
+        }
+        return{
+            status : true,
+            error: ""
         }
     }
 
@@ -973,17 +1086,16 @@ class ComponentLanguage extends React.Component {
                     langList = this.removeDuplicatedLang(langList, registeredLang);
 
                     // Load data for edit UI
-                    let loadedData = this.props.loaded_data;
-                    let selectedLang = langList[0];
-                    let defaultLang = langList[0];
-                    if(this.props.is_edit) {
-                        for (let item in loadedData) {
-                            if (loadedData[item]['isDefault']) {
-                                selectedLang = item;
-                                defaultLang = item;
-                            }
-                        }
-                     }
+                    let selectedLang;
+                    let defaultLang;
+                    if ($.isEmptyObject(registeredLang)) {
+                        selectedLang = langList[0];
+                        defaultLang = langList[0];
+                    } else {
+                        selectedLang = registeredLang[0];
+                        defaultLang = registeredLang[0];
+                        this.props.initEditData(selectedLang);
+                    }
                     this.displayOptions(langList, registeredLang, langName, true, selectedLang);
                     this.props.getValueOfField('lang', langList[0]);
                     this.setState({
@@ -1103,41 +1215,25 @@ class MainLayout extends React.Component {
         this.state = {
             repository: this.props.data_load.repository_id,
             widget_type: this.props.data_load.widget_type,
-            label: this.props.data_load.label,
+            label: '',
             label_color: this.props.data_load.label_color,
-            frame_border: this.props.data_load.has_frame_border,
+            frame_border: this.props.data_load.frame_border,
             frame_border_color: this.props.data_load.frame_border_color,
             text_color: this.props.data_load.text_color,
             background_color: this.props.data_load.background_color,
             browsing_role: this.props.data_load.browsing_role,
             edit_role: this.props.data_load.edit_role,
             enable: this.props.data_load.is_enabled,
-            settings: {},
+            settings: this.props.data_load.settings,
             language: this.props.data_load.language,
             multiLangSetting: this.props.data_load.multiLangSetting,
             multiLanguageChange: false,
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
+        this.initEditData = this.initEditData.bind(this);
     }
-    componentDidMount() {
-        // For edit option - Convert data
-        let description = {};
-        let labelDefault = '';
-        if (!$.isEmptyObject(this.state.multiLangSetting)) {
-            for (let object in this.state.multiLangSetting) {
-                if (this.state.multiLangSetting[object]['isDefault']) {
-                    description = this.state.multiLangSetting[object]['description'];
-                    labelDefault = this.state.multiLangSetting[object]['label']
-                }
-            }
-        }
-        this.setState({
-            settings: description,
-            label: labelDefault,
-            multiLanguageChange: true
-        })
-    }
+
     getValueOfField(key, value) {
         switch (key) {
             case 'repository':
@@ -1193,6 +1289,29 @@ class MainLayout extends React.Component {
         }
     }
 
+    initEditData(selectedLang) {
+        if (!selectedLang) {
+            return;
+        }
+        let multiLangData = this.state.multiLangSetting[selectedLang];
+        if (multiLangData) {
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+                this.setState({
+                    multiLanguageChange: true,
+                    label: multiLangData['label'],
+                    settings: multiLangData['description']
+                });
+            }
+            else{
+                this.setState({
+                    multiLanguageChange: true,
+                    label: multiLangData['label'],
+                });
+            }
+
+        }
+    }
+
     storeMultiLangSetting(lang, newLanguage) {
         var result = true;
         if (this.state.label == '' && $.isEmptyObject(this.state.settings)) {
@@ -1210,15 +1329,11 @@ class MainLayout extends React.Component {
         }
         let setting = {
             label: this.state.label,
-            description: this.state.settings
         };
-
-        let storage = this.state.multiLangSetting;
-        if ($.isEmptyObject(storage)) {
-            setting['isDefault'] = true;
-        } else {
-            setting['isDefault'] = false;
+        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            setting["description"] = this.state.settings
         }
+        let storage = this.state.multiLangSetting;
         if (this.state.label || !$.isEmptyObject(this.state.settings)) {
             storage[lang] = setting;
         } else {
@@ -1229,19 +1344,37 @@ class MainLayout extends React.Component {
         if (this.state.multiLangSetting[newLanguage]) {
             let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
             let currentSetting = this.state.multiLangSetting[newLanguage]['description'];
-            this.setState({
-                label: currentLabel,
-                settings: currentSetting,
-                multiLanguageChange: true,
-                language: newLanguage
-            });
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+                this.setState({
+                    label: currentLabel,
+                    multiLanguageChange: true,
+                    language: newLanguage,
+                    settings: currentSetting
+                });
+            }
+            else{
+                this.setState({
+                    label: currentLabel,
+                    multiLanguageChange: true,
+                    language: newLanguage,
+                });
+            }
         } else {
-            this.setState({
-                label: '',
-                settings: {},
-                multiLanguageChange: true,
-                language: newLanguage
-            });
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+                this.setState({
+                    label: '',
+                    settings: {},
+                    multiLanguageChange: true,
+                    language: newLanguage
+                });
+            }
+            else{
+                this.setState({
+                    label: '',
+                    multiLanguageChange: true,
+                    language: newLanguage
+                });
+            }
         }
         this.setState({
             multiLangSetting: storage
@@ -1260,7 +1393,7 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} />
                 </div>
                 <div className="row">
-                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit}
+                    <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit} initEditData={this.initEditData}
                         storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} loaded_data={this.props.data_load.multiLangSetting} />
                 </div>
                 <div className="row">
@@ -1307,13 +1440,7 @@ $(function () {
     let data_id;
     if (editData) {
         isEdit = true;
-        data_id = {
-            id: editData.id,
-            repository: editData.repository_id,
-            widget_type: editData.widget_type,
-            label: editData.label,
-            language: editData.language
-        }
+        data_id = editData['widget_id'];
     }
     else {
         editData = {
@@ -1321,7 +1448,7 @@ $(function () {
             widget_type: '',
             label: '',
             label_color: '#4169E1',
-            has_frame_border: true,
+            frame_border: true,
             frame_border_color: '#4169E1',
             text_color: '#4169E1',
             background_color: '#4169E1',
@@ -1329,7 +1456,8 @@ $(function () {
             edit_role: [1, 2, 3, 4, 99],
             is_enabled: true,
             language: '',
-            multiLangSetting: {}
+            multiLangSetting: {},
+            settings:{},
         }
     }
     let returnURL = $("#return_url").val();

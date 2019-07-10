@@ -24,6 +24,8 @@ from flask import current_app
 from flask_babelex import gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
+    PIDDoesNotExistError, PIDStatus
 from weko_records.api import ItemsMetadata
 
 from .api import WorkActivity
@@ -63,6 +65,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     # transfer to JPCOAR format
     res = {'pidstore_identifier': {}}
     tempdata = IDENTIFIER_ITEMSMETADATA_FORM
+    flag_del_pidstore = False
 
     if idf_grant == 0:
         res['pidstore_identifier'] = tempdata
@@ -73,8 +76,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifier']['value'] = jalcdoi_link
             tempdata['identifier']['properties']['identifierType'] = 'DOI'
             tempdata['identifierRegistration']['value'] = \
-                jalcdoi_tail[1] + \
-                jalcdoi_tail[2]
+                jalcdoi_tail[1:]
             tempdata['identifierRegistration']['properties'][
                 'identifierType'] = 'JaLC'
             res['pidstore_identifier'] = tempdata
@@ -85,8 +87,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifier']['value'] = jalcdoi_cr_link
             tempdata['identifier']['properties']['identifierType'] = 'DOI'
             tempdata['identifierRegistration']['value'] = \
-                jalcdoi_cr_tail[1] + \
-                jalcdoi_cr_tail[2]
+                jalcdoi_cr_tail[1:]
             tempdata['identifierRegistration']['properties'][
                 'identifierType'] = 'Crossref'
             res['pidstore_identifier'] = tempdata
@@ -97,8 +98,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifier']['value'] = jalcdoi_dc_link
             tempdata['identifier']['properties']['identifierType'] = 'DOI'
             tempdata['identifierRegistration']['value'] = \
-                jalcdoi_dc_tail[1] + \
-                jalcdoi_dc_tail[2]
+                jalcdoi_dc_tail[1:]
             tempdata['identifierRegistration']['properties'][
                 'identifierType'] = 'Datacite'
             res['pidstore_identifier'] = tempdata
@@ -109,9 +109,21 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             tempdata['identifier']['properties']['identifierType'] = 'HDL'
             del tempdata['identifierRegistration']
             res['pidstore_identifier'] = tempdata
+    elif idf_grant == -1:  # with draw identifier_grant
+        pidstore_identifier = item.get('pidstore_identifier')
+        res['pidstore_identifier'] = tempdata
+        flag_del_pidstore = del_invenio_pidstore(
+            pidstore_identifier['identifier']['value'])
     else:
         current_app.logger.error(_('Identifier datas are empty!'))
+        pidstore_identifier = item.get('pidstore_identifier')
+        res['pidstore_identifier'] = tempdata
+        flag_del_pidstore = del_invenio_pidstore(
+            pidstore_identifier['identifier']['value'])
     try:
+        if not flag_del_pidstore:
+            reg_invenio_pidstore(tempdata['identifier']['value'], item.id)
+
         with db.session.begin_nested():
             item.update(res)
             item.commit()
@@ -119,3 +131,75 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     except Exception as ex:
         current_app.logger.exception(str(ex))
         db.session.rollback()
+
+
+def is_withdrawn_doi(doi_link):
+    """
+    Get doi was withdrawn.
+
+    :param: doi_link
+    :return: True/False
+    """
+    try:
+        link_doi = doi_link['doi_link']
+        query = PersistentIdentifier.query.filter_by(
+            pid_value=link_doi, status=PIDStatus.DELETED)
+        return query.count() > 0
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.error(pidNotEx)
+        return False
+
+
+def find_doi(doi_link):
+    """
+    Get doi has been register by another item.
+
+    :param: doi_link
+    :return: True/False
+    """
+    isExistDoi = False
+    try:
+        link_doi = doi_link['doi_link']
+        pid_identifiers = PersistentIdentifier.query.filter_by(
+            pid_type='doi', object_type='rec',
+            pid_value=link_doi, status=PIDStatus.REGISTERED).all()
+        for pid_identifier in pid_identifiers:
+            if pid_identifier.pid_value == link_doi:
+                isExistDoi = True
+        return isExistDoi
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.error(pidNotEx)
+        return isExistDoi
+
+
+def del_invenio_pidstore(link_doi):
+    """
+    Change status of pids_tore has been registed.
+
+    :param: link_doi
+    :return: True/False
+    """
+    try:
+        pid_identifier = PersistentIdentifier.query.\
+            filter_by(pid_type='doi', object_type='rec', pid_value=link_doi,
+                      status=PIDStatus.REGISTERED).one()
+        if pid_identifier:
+            pid_identifier.delete()
+            return pid_identifier.status == PIDStatus.DELETED
+        return False
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.error(pidNotEx)
+        return False
+
+
+def reg_invenio_pidstore(pid_value, item_id):
+    """
+    Register pids_tore.
+
+    :param: pid_value, item_id
+    """
+    try:
+        PersistentIdentifier.create('doi', pid_value, None,
+                                    PIDStatus.REGISTERED, 'rec', item_id)
+    except PIDAlreadyExists as pidArlEx:
+        current_app.logger.error(pidArlEx)

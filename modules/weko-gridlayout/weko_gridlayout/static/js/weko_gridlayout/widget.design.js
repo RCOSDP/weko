@@ -184,7 +184,7 @@ class ButtonLayout extends React.Component {
         return (
             <div className="form-group col-xs-10">
                 <button id="save-grid" className="btn btn-primary save-button" style={this.style} onClick={this.handleSave}>
-                    <span className="glyphicon glyphicon-download-alt" aria-hidden="true"></span>
+                    <span className="glyphicon glyphicon-saved" aria-hidden="true"></span>
                     &nbsp;Save
                 </button>
                 <button id="clear-grid" className="form-group btn btn-info cancel-button" onClick={this.handleCancel} >
@@ -278,7 +278,6 @@ var PreviewGrid = new function () {
             let id = el.data("id");
             let type = el.data("type");
             let widget_id = el.data("widget_id")
-            let nameDisplay = el.data("name_display")
             if (!id) {
                 return;
             } else if(MAIN_CONTENT_TYPE == type){
@@ -292,7 +291,6 @@ var PreviewGrid = new function () {
                 name: name,
                 id: id,
                 type: type,
-                name_display: nameDisplay,
                 widget_id: widget_id,
             };
         }, this);
@@ -326,7 +324,7 @@ var PreviewGrid = new function () {
         + ' <div class="center-block text-right"><div class="glyphicon glyphicon-remove" style="z-index: 90;"></div></div>'
         + ' <div class="grid-stack-item-content">'
         + '     <span class="widget-label">&lt;' + node.type + '&gt;</span>'
-        + '     <span class="widget-label">' + node.name_display + '</span>'
+        + '     <span class="widget-label">' + node.name + '</span>'
         + ' </div>'
         + '<div/>';
         return template;
@@ -351,7 +349,6 @@ function addWidget() {
             let widgetName = $(this).data('widgetName');
             let widgetId = $(this).data('widgetId');
             let widgetType = $(this).data('widgetType');
-            let widgetNameDisplay = $(this).data('widgetNameDisplay');
             let id = $(this).data('id');
             if(MAIN_CONTENT_TYPE == widgetType && isHasMainContent){
                 alert("Main Content has been existed in Preview panel.");
@@ -367,7 +364,6 @@ function addWidget() {
                 name: widgetName,
                 id: widgetId,
                 type:widgetType,
-                name_display: widgetNameDisplay,
                 widget_id: id,
             };
             PreviewGrid.addNewWidget(node);
@@ -399,7 +395,6 @@ function loadWidgetList(widgetListItems) {
     let y = 0;
     _.each(widgetListItems, function (widget) {
         let buttonId = "";
-        console.log(widget);
         if(MAIN_CONTENT_TYPE ==  widget.widgetType) {
             buttonId = 'id="' + MAIN_CONTENT_BUTTON_ID + '"';
         }
@@ -407,11 +402,10 @@ function loadWidgetList(widgetListItems) {
             '<div>'
             + '<div class="grid-stack-item-content">'
             + ' <span class="widget-label" >&lt;' + widget.widgetType + '&gt;</span>'
-            + ' <span class="widget-label">' + widget.widgetLabelDisplay + '</span>'
+            + ' <span class="widget-label">' + widget.label + '</span>'
             + ' <button ' + buttonId + ' data-widget-type="' + widget.widgetType
-            + '" data-widget-name="' + widget.widgetLabel + '" data-widget-id="' + widget.widgetId
-            + '" data-widget-name-display="' + widget.widgetLabelDisplay + '" data-id="' + widget.Id
-            +  '" class="btn btn-default add-new-widget">'
+            + '" data-widget-name="' + widget.label + '" data-widget-id="' + widget.widgetId
+            + '" data-id="' + widget.Id +  '" class="btn btn-default add-new-widget">'
             + ' Add Widget'
             + ' </button>'
             + '</div>'

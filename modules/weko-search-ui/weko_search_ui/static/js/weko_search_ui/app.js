@@ -14,14 +14,16 @@
         display_list_flg: false
       }
       page_global.queryObj = query_to_hash();
-      $('#page_count').val(page_global.queryObj['size'])
-      $('#page_count').on('change', function(){
-        if(page_global.queryObj['size'] != $('#page_count').val()) {
-          page_global.queryObj['size'] = $('#page_count').val();
-          queryStr = hash_to_query(page_global.queryObj);
-          window.location.href = window.location.pathname + '?' + queryStr;
-        }
-      });
+      if (page_global.queryObj) {
+        $('#page_count').val(page_global.queryObj['size'])
+        $('#page_count').on('change', function(){
+          if(page_global.queryObj['size'] != $('#page_count').val()) {
+            page_global.queryObj['size'] = $('#page_count').val();
+            queryStr = hash_to_query(page_global.queryObj);
+            window.location.href = window.location.pathname + '?' + queryStr;
+          }
+        });
+      }
       function query_to_hash(queryString) {
         var query = queryString || location.search.replace(/\?/, "");
         return query.split("&").reduce(function(obj, item, i) {
@@ -66,6 +68,12 @@
     }
     $(document).ready(function(){
       showJournalInfo();
+      let urlVars = getUrlVars();
+      if (urlVars !== {} && urlVars.hasOwnProperty("q") && urlVars.hasOwnProperty("search_type") && urlVars["search_type"] !== "2") {
+        document.getElementById("q").value = urlVars["q"];
+      } else {
+        document.getElementById("q").value = "";
+      }
       $("#display_details").click(function(){
         $(".icon-right").toggle(50);
         $("#collapsed_details").collapse('toggle');
@@ -73,6 +81,13 @@
       });
     });
 });
+
+
+function getUrlVars() {
+    let vars = {};
+    let parts = decodeURI(window.location.href).replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {vars[key] = value;});
+    return vars;
+}
 
 //add controller to invenioSearch
 // add by ryuu. at 20181129 start
@@ -119,13 +134,13 @@ function searchResCtrl($scope, $rootScope, $http, $location) {
         // request api
         $http({
             method: 'POST',
-            url: '/item_management/save',
+            url: '/admin/items/custom_sort/save',
             data: post_data,
           headers: {'Content-Type': 'application/json'},
         }).then(function successCallback(response) {
-          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q + "&item_management=sort&sort=custom_sort";
+          window.location.href = '/admin/items/search?search_type=2&q='+$rootScope.index_id_q + "&item_management=sort&sort=custom_sort";
         }, function errorCallback(response) {
-          window.location.href = '/search?search_type=2&q='+$rootScope.index_id_q+ "&item_management=sort&sort=custom_sort";
+          window.location.href = '/admin/items/search?search_type=2&q='+$rootScope.index_id_q+ "&item_management=sort&sort=custom_sort";
         });
      }
 
@@ -163,5 +178,3 @@ angular.module('invenioSearch')
   .controller('searchResCtrl', searchResCtrl);
 
 // add by ryuu. at 20181129 end
-
-

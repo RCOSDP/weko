@@ -11,49 +11,36 @@
 .testimonial-group > .row > .col-xs-4 {
       display: inline-block;
         float: none;
-    }
+}
 //End
 
-.back-button {
+.workflow-span {
+ display: block;
+ width:200px;
+}
+
+.workflow-ul {
+ width: 200px;
+ display: table;
+ table-layout: fixed;
+}
+
+.back-button, .done-button {
   width: 80px;
   height: 40px;
   font-size: 15px;
 }
 
-.next-button {
-  width: 80px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.save-button {
+.save-button, .delete-button, .edit-button, .action-button, .search-button, .next-button, .detail-button {
   width: 120px;
   height: 40px;
   font-size: 15px;
 }
 
-.save-flow-button {
+.detail-search-button, .save-flow-button {
   width: 150px;
   height: 40px;
   font-size: 15px;
-}
-
-.delete-button {
-  width: 120px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.detail-search-button {
-  width: 150px;
-  height: 40px;
-  font-size:15px;
-}
-
-.search-button {
-  width: 120px;
-  height: 40px;
-  font-size:15px;
 }
 
 .add-search-button{
@@ -65,19 +52,7 @@
   font-size: 15px;
 }
 
-.clear-button {
-  width: 100px;
-  height: 40px;
-  font-size:15px;
-}
-
-.cancel-button {
-  width: 100px;
-  height: 40px;
-  font-size:15px;
-}
-
-.close-button {
+.cancel-button, .close-button,.clear-button {
   width: 100px;
   height: 40px;
   font-size:15px;
@@ -92,7 +67,7 @@
   font-size: 15px;
 }
 
-.add-big-button {
+.more-big-button, .create-big-button, .add-big-button {
   background-color:#008000;
   border-color: #9ACD32;
   color: white;
@@ -101,68 +76,17 @@
   font-size: 15px;
 }
 
-.create-button {
+.more-button,.create-button {
   background-color:#008000;
   border-color: #9ACD32;
   color: white;
   width: 120px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.create-big-button {
-  background-color:#008000;
-  border-color: #9ACD32;
-  color: white;
-  width: 150px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.more-button {
-  background-color:#008000;
-  border-color: #9ACD32;
-  color: white;
-  width: 120px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.more-big-button {
-  background-color:#008000;
-  border-color: #9ACD32;
-  color: white;
-  width: 150px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.preview-button {
-  width: 150px;
-  height: 40px;
-  font-size:15px;
-}
-
-.done-button {
-  width: 80px;
   height: 40px;
   font-size: 15px;
 }
 
 button#btn_quit.done-button {
-  width: auto;
-}
-
-.action-button {
   width: 120px;
-  height: 40px;
-  font-size:15px;
-}
-
-.action-big-button {
-  width: 150px;
-  height: 40px;
-  font-size:15px
 }
 
 .automatic-metadata-input-button {
@@ -177,24 +101,6 @@ button#btn_quit.done-button {
   font-size:15px
 }
 
-.edit-button {
-  width: 120px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.update-button {
-  width: 130px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.update-profile-button {
-  width: 150px;
-  height: 40px;
-  font-size: 15px;
-}
-
 .send-button{
   background-color: #32CD32;
   border-color: #808000;
@@ -204,36 +110,13 @@ button#btn_quit.done-button {
   font-size: 15px;
 }
 
-.sighup-button {
+.update-button, .sighup-button,.login-button, .logout-button {
    width: 130px;
    height: 40px;
    font-size: 15px;
  }
 
-.logout-button {
-  width: 130px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.login-button {
-   width: 130px;
-   height: 40px;
-   font-size: 15px;
-}
-
-.mapping-button {
-  width: 150px;
-  height: 40px;
-  font-size:15px
-}
-.detail-button {
-   width: 120px;
-   height: 40px;
-   font-size:15px;
-}
-
-.property-button {
+.action-big-button,.preview-button .update-profile-button, .mapping-button, .property-button {
   width: 150px;
   height: 40px;
   font-size:15px

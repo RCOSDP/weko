@@ -31,20 +31,15 @@ from flask import Blueprint, abort, current_app, jsonify, make_response, \
 from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
-from invenio_indexer.api import RecordIndexer
-from invenio_pidstore.models import PersistentIdentifier
-from invenio_records.api import Record
-from invenio_search import RecordsSearch
-from weko_deposit.api import WekoIndexer
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
-from weko_indextree_journal.api import Journals
 from weko_records_ui.ipaddr import check_site_license_permission
 
 from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
 from .query import item_path_search_factory
+from .utils import get_journal_info
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -105,39 +100,7 @@ def search():
                 index_link_list.append(
                     (index.id, index.index_link_name_english))
 
-    if 'item_management' in getArgs:
-        management_type = request.args.get('item_management', 'sort')
-
-        has_items = False
-        has_child_trees = False
-        if management_type == 'delete':
-            # Does this tree has items or children?
-            q = request.args.get('q')
-            if q is not None and q.isdigit():
-                current_tree = Indexes.get_index(q)
-                recursive_tree = Indexes.get_recursive_tree(q)
-
-                if current_tree is not None:
-                    tree_items = get_tree_items(current_tree.id)
-                    has_items = len(tree_items) > 0
-                    if recursive_tree is not None:
-                        has_child_trees = len(recursive_tree) > 1
-
-        return render_template(
-            current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
-            index_id=cur_index_id,
-            community_id=community_id,
-            width=width,
-            height=height,
-            management_type=management_type,
-            fields=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['fields'],
-            licences=current_app.config['WEKO_RECORDS_UI_BULK_UPDATE_FIELDS']['licences'],
-            has_items=has_items,
-            has_child_trees=has_child_trees,
-            detail_condition=detail_condition,
-            **ctx)
-
-    elif 'item_link' in getArgs:
+    if 'item_link' in getArgs:
         activity_id = request.args.get('item_link')
         from weko_workflow.api import WorkActivity
         workFlowActivity = WorkActivity()
@@ -229,13 +192,13 @@ def opensearch_description():
 
     url = ET.SubElement(root, '{' + ns_opensearch + '}Url')
     url.set('type', 'application/atom+xml')
-    url.set('template', request.host_url +
-            'api/opensearch/search?q={searchTerms}')
+    url.set('template', request.host_url
+            + 'api/opensearch/search?q={searchTerms}')
 
     url = ET.SubElement(root, '{' + ns_opensearch + '}Url')
     url.set('type', 'application/atom+xml')
-    url.set('template', request.host_url +
-            'api/opensearch/search?q={searchTerms}&amp;format=atom')
+    url.set('template', request.host_url
+            + 'api/opensearch/search?q={searchTerms}&amp;format=atom')
 
     response.data = ET.tostring(root)
 
@@ -244,177 +207,8 @@ def opensearch_description():
     return response
 
 
-def get_tree_items(index_tree_id):
-    """Get tree items."""
-    records_search = RecordsSearch()
-    records_search = records_search.with_preference_param().params(version=False)
-    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
-    search_instance, qs_kwargs = item_path_search_factory(
-        None, records_search, index_id=index_tree_id)
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-
-    return rd.get('hits').get('hits')
-
-
-@blueprint.route("/item_management/bulk_delete", methods=['GET', 'PUT'])
-def bulk_delete():
-    """Bulk delete items and index trees."""
-    def delete_records(index_tree_id):
-        record_indexer = RecordIndexer()
-        hits = get_tree_items(index_tree_id)
-        for hit in hits:
-            recid = hit.get('_id')
-            record = Record.get_record(recid)
-            if record is not None and record['path'] is not None:
-                paths = record['path']
-                if len(paths) > 0:
-                    # Remove the element which matches the index_tree_id
-                    removed_path = None
-                    for path in paths:
-                        if path.endswith(str(index_tree_id)):
-                            removed_path = path
-                            paths.remove(path)
-                            break
-
-                    # Do update the path on record
-                    record.update({'path': paths})
-                    record.commit()
-                    db.session.commit()
-
-                    # Indexing
-                    indexer = WekoIndexer()
-                    indexer.update_path(record, update_revision=False)
-
-                    if len(paths) == 0 and removed_path is not None:
-                        from weko_deposit.api import WekoDeposit
-                        WekoDeposit.delete_by_index_tree_id(removed_path)
-                        Record.get_record(recid).delete()  # flag as deleted
-                        db.session.commit()  # terminate the transaction
-
-    if request.method == 'PUT':
-        # Do delete items inside the current index tree (maybe root tree)
-        q = request.values.get('q')
-        if q is not None and q.isdigit():
-            current_tree = Indexes.get_index(q)
-            recursive_tree = Indexes.get_recursive_tree(q)
-
-            if current_tree is not None:
-
-                # Delete items in current_tree
-                delete_records(current_tree.id)
-
-                # If recursively, then delete all child index trees and theirs
-                # items
-                if request.values.get(
-                        'recursively') == 'true' and recursive_tree is not None:
-                    # Delete recursively
-                    direct_child_trees = []
-                    for index, obj in enumerate(recursive_tree):
-                        if obj[1] != current_tree.id:
-                            child_tree = Indexes.get_index(obj[1])
-
-                            # Do delete items in child_tree
-                            delete_records(child_tree.id)
-
-                            # Add the level 1 child into the current_tree
-                            if obj[0] == current_tree.id:
-                                direct_child_trees.append(child_tree.id)
-                    # Then do delete child_tree inside current_tree
-                    for cid in direct_child_trees:
-                        # Delete this tree and children
-                        Indexes.delete(cid)
-
-                return jsonify({'status': 1})
-        else:
-            return jsonify({'status': 0, 'msg': 'Invalid tree'})
-
-    """Render view."""
-    detail_condition = get_search_detail_keyword('')
-    return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
-                           management_type='delete',
-                           detail_condition=detail_condition)
-
-
-@blueprint.route("/item_management/save", methods=['POST'])
-def save_sort():
-    """Save custom sort."""
-    try:
-        data = request.get_json()
-        index_id = data.get("q_id")
-        sort_data = data.get("sort")
-
-        # save data to DB
-        item_sort = {}
-        for sort in sort_data:
-            item_sort[sort.get('id')] = sort.get('custom_sort').get(index_id)
-
-        Indexes.set_item_sort_custom(index_id, item_sort)
-
-        # update es
-        fp = Indexes.get_self_path(index_id)
-        Indexes.update_item_sort_custom_es(fp.path, sort_data)
-
-        jfy = {}
-        jfy['status'] = 200
-        jfy['message'] = 'Data is successfully updated.'
-        return make_response(jsonify(jfy), jfy['status'])
-    except Exception as ex:
-        jfy['status'] = 405
-        jfy['message'] = 'Error'
-        return make_response(jsonify(jfy), jfy['status'])
-
-
-def get_journal_info(index_id=0):
-    """Get journal information.
-
-    :return: The object.
-    """
-    try:
-        if index_id == 0:
-            return None
-        schema_file = os.path.join(
-            os.path.abspath(__file__ + "/../../../"),
-            'weko-indextree-journal/weko_indextree_journal',
-            current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'])
-        schema_data = json.load(open(schema_file))
-
-        cur_lang = current_i18n.language
-        journal = Journals.get_journal_by_index_id(index_id)
-        if len(journal) <= 0 or journal.get('is_output') is False:
-            return None
-
-        result = {}
-        for value in schema_data:
-            title = value.get('title_i18n')
-            if title is not None:
-                data = journal.get(value['key'])
-                if data is not None and len(str(data)) > 0:
-                    dataMap = value.get('titleMap')
-                    if dataMap is not None:
-                        res = [x['name'] for x in dataMap if x['value'] == data]
-                        data = res[0]
-                    val = title.get(cur_lang) + '{0}{1}'.format(': ', data)
-                    result.update({value['key']: val})
-        # real url: ?action=repository_opensearch&index_id=
-        result.update({'openSearchUrl': request.url_root +
-                       "search?search_type=2&q={}".format(index_id)})
-
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-        abort(500)
-    return result
-
-
 @blueprint.route("/journal_info/<int:index_id>", methods=['GET'])
 def journal_detail(index_id=0):
     """Render a check view."""
     result = get_journal_info(index_id)
     return jsonify(result)
-
-
-@blueprint.route("/item_management/custom_sort", methods=['GET'])
-def custom_sort():
-    """Render view."""
-    return render_template(current_app.config['WEKO_ITEM_MANAGEMENT_TEMPLATE'],
-                           management_type='sort')

@@ -33,12 +33,14 @@ from flask_babelex import gettext as _
 from flask_login import current_user, login_required
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.orm.exc import NoResultFound
 from weko_accounts.api import ShibUser
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
@@ -53,7 +55,8 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import get_community_id_by_index, pidstore_identifier_mapping
+from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
+    pidstore_identifier_mapping
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -315,11 +318,15 @@ def display_activity(activity_id=0):
             'redis://{host}:{port}/1'.format(
                 host=os.getenv('INVENIO_REDIS_HOST', 'localhost'),
                 port=os.getenv('INVENIO_REDIS_PORT', '6379'))))
-        if sessionstore.redis.exists('activity_item_' + activity_id):
-            item_str = sessionstore.get('activity_item_' + activity_id)
+        if sessionstore.redis.exists('activity_item_' + str(activity_id)):
+            item_str = sessionstore.get('activity_item_' + str(activity_id))
             item_json = json.loads(item_str.decode('utf-8'))
             if 'files' in item_json:
                 files = item_json.get('files')
+        if not files:
+            deposit = WekoDeposit.get_record(item.id)
+            if deposit is not None:
+                files = to_files_js(deposit)
 
         from weko_deposit.links import base_factory
         links = base_factory(pid)
@@ -347,6 +354,7 @@ def display_activity(activity_id=0):
         session['itemlogin_res_check'] = res_check
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
+
     return render_template(
         'weko_workflow/activity_detail.html',
         render_widgets=True,
@@ -443,31 +451,13 @@ def next_action(activity_id='0', action_id=0):
     )
 
     work_activity = WorkActivity()
-    idf_grant = post_json.get('identifier_grant')
-    idf_grant_jalc_doi_manual = post_json.get(
-        'identifier_grant_jalc_doi_suffix')
-    idf_grant_jalc_cr_doi_manual = post_json.get(
-        'identifier_grant_jalc_cr_doi_suffix')
-    idf_grant_jalc_dc_doi_manual = post_json.get(
-        'identifier_grant_jalc_dc_doi_suffix')
 
-    # If is action identifier_grant, then save to to database
-    if idf_grant is not None:
-        identifier_grant = {'action_identifier_select': idf_grant,
-                            'action_identifier_jalc_doi':
-                                idf_grant_jalc_doi_manual,
-                            'action_identifier_jalc_cr_doi':
-                                idf_grant_jalc_cr_doi_manual,
-                            'action_identifier_jalc_dc_doi':
-                                idf_grant_jalc_dc_doi_manual}
+    history = WorkActivityHistory()
+    action = Action().get_action_detail(action_id)
+    action_endpoint = action.action_endpoint
 
-        work_activity.create_or_update_action_identifier(
-            activity_id=activity_id,
-            action_id=action_id,
-            identifier=identifier_grant
-        )
-
-    if 1 == post_json.get('temporary_save'):
+    if (1 == post_json.get('temporary_save')
+            and action_endpoint != 'identifier_grant'):
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
@@ -481,10 +471,12 @@ def next_action(activity_id='0', action_id=0):
                 comment=post_json.get('commond')
             )
         return jsonify(code=0, msg=_('success'))
-
-    history = WorkActivityHistory()
-    action = Action().get_action_detail(action_id)
-    action_endpoint = action.action_endpoint
+    elif post_json.get('journal'):
+        work_activity.create_or_update_action_journal(
+            activity_id=activity_id,
+            action_id=action_id,
+            journal=post_json.get('journal')
+        )
 
     if 'begin_action' == action_endpoint:
         return jsonify(code=0, msg=_('success'))
@@ -524,13 +516,36 @@ def next_action(activity_id='0', action_id=0):
         updated_item.set_item_relation(relation_data, item_record)
 
     # save pidstore_identifier to ItemsMetadata
+    idf_grant = post_json.get('identifier_grant')
     if 'identifier_grant' == action_endpoint and idf_grant is not None:
-        pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+        idf_grant_jalc_doi_manual = post_json.get(
+            'identifier_grant_jalc_doi_suffix')
+        idf_grant_jalc_cr_doi_manual = post_json.get(
+            'identifier_grant_jalc_cr_doi_suffix')
+        idf_grant_jalc_dc_doi_manual = post_json.get(
+            'identifier_grant_jalc_dc_doi_suffix')
+
+        # If is action identifier_grant, then save to to database
+        identifier_grant = {
+            'action_identifier_select': idf_grant,
+            'action_identifier_jalc_doi': idf_grant_jalc_doi_manual,
+            'action_identifier_jalc_cr_doi': idf_grant_jalc_cr_doi_manual,
+            'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual
+        }
+
+        work_activity.create_or_update_action_identifier(
+            activity_id=activity_id,
+            action_id=action_id,
+            identifier=identifier_grant
+        )
+        if post_json.get('temporary_save') != 1:
+            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+        else:
+            return jsonify(code=0, msg=_('success'))
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
-        return jsonify(code=-1,
-                       msg=_('error'))
+        return jsonify(code=-1, msg=_('error'))
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
     work_activity.upt_activity_action_status(
@@ -547,6 +562,25 @@ def next_action(activity_id='0', action_id=0):
     if next_flow_action and len(next_flow_action) > 0:
         next_action_endpoint = next_flow_action[0].action.action_endpoint
         if 'end_action' == next_action_endpoint:
+            if activity_detail is not None and \
+                    activity_detail.item_id is not None:
+                record = WekoDeposit.get_record(activity_detail.item_id)
+                if record is not None:
+                    deposit = WekoDeposit(record, record.model)
+                    deposit.publish()
+                    # For current item: Make status Public as default
+                    updated_item = UpdateItem()
+                    updated_item.publish(record)
+                    # For previous item: Update status to Private
+                    current_pid = PersistentIdentifier.get_by_object(
+                        pid_type='recid', object_type='rec',
+                        object_uuid=activity_detail.item_id)
+                    current_pv = PIDVersioning(child=current_pid)
+                    if current_pv.exists and current_pv.previous is not None:
+                        prev_record = WekoDeposit.get_record(
+                            current_pv.previous.object_uuid)
+                        if prev_record is not None:
+                            updated_item.update_status(prev_record)
             activity.update(
                 action_id=next_flow_action[0].action_id,
                 action_version=next_flow_action[0].action_version,
@@ -586,6 +620,16 @@ def previous_action(activity_id='0', action_id=0, req=0):
     # next action
     activity_detail = work_activity.get_activity_detail(activity_id)
     flow = Flow()
+
+    try:
+        pid_identifier = PersistentIdentifier.get_by_object(
+            pid_type='doi', object_type='rec',
+            object_uuid=activity_detail.item_id)
+        with db.session.begin_nested():
+            db.session.delete(pid_identifier)
+        db.session.commit()
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.info(pidNotEx)
 
     if req == 0:
         pre_action = flow.get_previous_flow_action(
@@ -687,6 +731,32 @@ def cancel_action(activity_id='0', action_id=0):
         action_status=ActionStatusPolicy.ACTION_CANCELED,
         commond=post_json.get('commond'))
 
+    # clear deposit
+    activity_detail = work_activity.get_activity_detail(activity_id)
+    if activity_detail is not None:
+        cancel_item_id = activity_detail.item_id
+        if cancel_item_id is None:
+            pid_value = post_json.get('pid_value')
+            if pid_value is not None:
+                pid = PersistentIdentifier.get('recid', pid_value)
+                cancel_item_id = pid.object_uuid
+        if cancel_item_id is not None:
+            cancel_record = WekoDeposit.get_record(cancel_item_id)
+            if cancel_record is not None:
+                cancel_deposit = WekoDeposit(
+                    cancel_record, cancel_record.model)
+                cancel_deposit.clear()
+                # Remove draft child
+                cancel_pid = PersistentIdentifier.get_by_object(
+                    pid_type='recid', object_type='rec',
+                    object_uuid=cancel_item_id)
+                cancel_pv = PIDVersioning(child=cancel_pid)
+                if cancel_pv.exists:
+                    previous_pid = cancel_pv.previous
+                    if previous_pid is not None:
+                        activity.update(dict(item_id=previous_pid.object_uuid))
+                    cancel_pv.remove_child(cancel_pid)
+
     work_activity.upt_activity_action_status(
         activity_id=activity_id, action_id=action_id,
         action_status=ActionStatusPolicy.ACTION_CANCELED)
@@ -729,14 +799,17 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             identifier = activity.get_action_identifier_grant(
                 activity_id,
                 identifier_actionid)
-            identifier['action_identifier_select'] = IDENTIFIER_GRANT_IS_WITHDRAWING
+
+            # Clear identifier in ItemMetadata
+            pidstore_identifier_mapping(None, -1, activity_id)
+            identifier['action_identifier_select'] = \
+                IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
                 activity.create_or_update_action_identifier(
                     activity_id,
                     identifier_actionid,
                     identifier)
-            # Clear identifier in ItemMetadata
-            pidstore_identifier_mapping(None, -1, activity_id)
+
             return jsonify(code=0,
                            msg=_('success'),
                            data={'redirect': url_for(
@@ -747,3 +820,30 @@ def withdraw_confirm(activity_id='0', action_id='0'):
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error! Relogin'))
+
+
+@blueprint.route('/findDOI', methods=['POST'])
+@login_required
+def check_existed_doi():
+    """Next action."""
+    doi_link = request.get_json()
+    data = {}
+    data['isExistDOI'] = False
+    data['isWithdrawnDoi'] = False
+    data['code'] = 1
+    data['msg'] = 'error'
+    if doi_link is not None:
+        isExistDOI = find_doi(doi_link)
+        isWithdrawnDoi = is_withdrawn_doi(doi_link)
+        if isExistDOI:
+            data['isExistDOI'] = isExistDOI
+            data['msg'] = _('This DOI has been used already for another item. '
+                            'Please input another DOI.')
+        elif isWithdrawnDoi:
+            data['isWithdrawnDoi'] = isWithdrawnDoi
+            data['msg'] = _(
+                'This DOI was withdrawn. Please input another DOI.')
+        else:
+            data['msg'] = _('success')
+        data['code'] = 0
+    return jsonify(data)

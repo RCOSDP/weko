@@ -19,15 +19,6 @@
 #}
 <div id="invenio-search">
   <div id="item_management_bulk_delete" class="hide">item_management_bulk_delete</div>
-  <div role="navigation">
-    <ul class="nav nav-tabs">
-      {%- block item_management_tabs %}
-      {% from "weko_theme/macros/item_management_tabs_selector.html" import tabs_selector %}
-      {{ tabs_selector('bulk_delete') }}
-      {%- endblock item_management_tabs%}
-    </ul>
-  </div>
-  <br/>
   <invenio-search
     {%- if index_id %}
     search-endpoint="{{ config.WEKO_SEARCH_UI_SEARCH_INDEX_API }}"
@@ -38,7 +29,7 @@
     search-hidden-params='{% if search_hidden_params %}{{search_hidden_params|tojson}}{% endif %}'
     search-headers='{"Accept": "{{ config.SEARCH_UI_SEARCH_MIMETYPE|default(' application/json')}}"}'
   >
-  <div class="panel-group m-top-5" id="search_res" ng-controller="searchResCtrl">
+  <div class="panel-group" id="search_res" ng-controller="searchResCtrl">
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
       <span class="panel-title">
@@ -100,4 +91,3 @@
   </div>
   </invenio-search>
 </div>
-

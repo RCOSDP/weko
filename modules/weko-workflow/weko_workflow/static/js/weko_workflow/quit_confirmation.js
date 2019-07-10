@@ -16,9 +16,11 @@ require([
       comment = $('#input-comment').val();
     }
     let post_uri = $('.cur_step').data('cancel-uri');
+    let request_uri = $('#post_url').text();
     let data = {
       commond: comment,
       action_version: $('.cur_step').data('action-version'),
+      pid_value: request_uri.substring(request_uri.lastIndexOf("/") + 1, request_uri.length),
     };
     send(post_uri, data,
       function (data) {

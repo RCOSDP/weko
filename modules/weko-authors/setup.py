@@ -85,6 +85,10 @@ setup(
         'invenio_base.apps': [
             'weko_authors = weko_authors:WekoAuthors',
         ],
+        'invenio_admin.views': [
+            'weko_authors_management = '
+            'weko_authors.admin:authors_list_adminview',
+        ],
         'invenio_base.blueprints': [
             'weko_authors = weko_authors.views:blueprint',
         ],

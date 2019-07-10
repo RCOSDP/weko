@@ -33,18 +33,20 @@ class SitemapSettingView(BaseView):
     def update_sitemap(self):
         """Start the task to update the sitemap."""
         from .tasks import update_sitemap, link_success_handler, link_error_handler
-        baseurl = urlparse(request.base_url).netloc  # Celery cannot access config
+        # Celery cannot access config
+        baseurl = urlparse(request.base_url).netloc
         task = update_sitemap.apply_async(args=(
-                    baseurl, datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
-                    {'ip_address': request.remote_addr,
-                     'user_agent': request.user_agent.string,
-                     'user_id': (
-                        current_user.get_id() if current_user.is_authenticated else None),
-                     'session_id': session.get('sid_s')}),
-                     link=link_success_handler.s(),
-                     link_error=link_error_handler.s())
+            baseurl, datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),
+            {'ip_address': request.remote_addr,
+             'user_agent': request.user_agent.string,
+             'user_id': (
+                 current_user.get_id() if current_user.is_authenticated else None),
+             'session_id': session.get('sid_s')}),
+            link=link_success_handler.s(),
+            link_error=link_error_handler.s())
         # Get all tasks:
-        return jsonify({'task_id': task.id, 'loc': url_for('.get_task_status', task_id=task.id)})
+        return jsonify({'task_id': task.id, 'loc': url_for(
+            '.get_task_status', task_id=task.id)})
 
     @expose('/task_status/<string:task_id>', methods=['GET'])
     def get_task_status(self, task_id):
@@ -52,7 +54,8 @@ class SitemapSettingView(BaseView):
         if not task_id:
             return abort(500)
 
-        task_result = AsyncResult(task_id)  # TODO: Change the responses and the logic
+        # TODO: Change the responses and the logic
+        task_result = AsyncResult(task_id)
         if task_result.state == 'SUCCESS':
             response = {
                 'start_time': task_result.info[0]['start_time'],

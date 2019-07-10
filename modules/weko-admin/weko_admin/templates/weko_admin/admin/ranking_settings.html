@@ -1,0 +1,156 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
+{% endblock %}
+
+{%- block javascript %}
+{{ super() }}
+{%- endblock javascript %}
+
+{%- block body %}
+<div class="panel">
+    <div class="panel-body">
+        <form method="POST" name="ranking_settings_form" action={{url_for('rankingsettings.index')}}>
+        <table style="width:80%">
+            <tbody>
+                <tr>
+                    <th style="text-align: right;">{{_('Show/Hide Ranking')}}</th>
+                    <td style="width:5%"></td>
+                    <td>
+                        <label class="radio-inline">
+                            <input type="radio" name="is_show" id="ranking_show" value="True"
+                            {{ 'checked' if is_show else '' }}>
+                            {{_('On')}}
+                        </label>
+                        <label class="radio-inline">
+                            <input type="radio" name="is_show" id="ranking_hide" value="False"
+                            {{ 'checked' if not is_show else '' }}>
+                            {{_('Off')}}
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+            <dii class="form-actions">
+                    <th style="text-align: right;">{{_('Period To Judge As New Item')}}</th>
+                    <td></td>
+                    <td>
+                        <input type="text" name="new_item_period" style="text-align:center;"
+                                                                  value={{new_item_period}}
+                                                                  pattern="[0-9]{1,2}">
+                        <label>{{_('Day (Range : 1~30)')}}</label>
+                    </td>
+                </tr>
+                <tr>
+                    <th style="text-align: right;">{{_('Statistical Period')}}</th>
+                    <td></td>
+                    <td>
+                        <input type="text" name="statistical_period" style="text-align:center;"
+                        value={{statistical_period}} pattern="[1-9][0-9]*">
+                        <label>{{_('Day')}}</label>
+                    </td>
+                </tr>
+                <tr>
+                    <th style="text-align: right;">{{_('Display Rank')}}</th>
+                    <td></td>
+                    <td>
+                        <input type="text" name="display_rank" style="text-align:center;"
+                        value={{display_rank}} pattern="[1-9][0-9]*">
+                    </td>
+                </tr>
+                <tr>
+                    <th style="text-align: right;">{{_('Rankings')}}</th>
+                    <td></td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="most_reviewed_items"
+                            {{ 'checked' if rankings['most_reviewed_items'] else '' }}>
+                            {{_('The Most Reviewed Items')}}
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td></td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="most_downloaded_items"
+                            {{ 'checked' if rankings['most_downloaded_items'] else '' }}>
+                            {{_('Most Downloaded Items')}}
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td></td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="created_most_items_user"
+                            {{ 'checked' if rankings['created_most_items_user'] else '' }} >
+                            {{_('User Who Created The Most Items')}}
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td></td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="most_searched_keywords"
+                            {{ 'checked' if rankings['most_searched_keywords'] else '' }}>
+                            {{_('Most Searched Keywords')}}
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td></td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="new_items"
+                            {{ 'checked' if rankings['new_items'] else '' }}>
+                            {{_('New Items')}}
+                        </label>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="row">
+            <div class="form-actions">
+                <button type="submit" name="submit" value="save_ranking_settings" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-saved"></span> 
+                    {{_('Save')}}
+                </button>
+                <button type="submit" name="submit" value="delete_rankings_settings" class="btn btn-danger">
+                    <span class="glyphicon glyphicon-trash"></span>
+                    {{_('Delete')}}
+                </button>
+            </div>
+        </div>
+        </form>
+    </div>
+</div>
+{%- endblock body %}
