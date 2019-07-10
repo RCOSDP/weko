@@ -234,7 +234,7 @@ def display_activity(activity_id=0):
         pidstore_identifier = item.get('pidstore_identifier')
         if pidstore_identifier:
             identifier_type = \
-                pidstore_identifier['properties']['identifierType']
+                pidstore_identifier['identifierRegistration']
         path = WekoRecord.get_record(item.id).get('path')
         if len(path) > 1:
             community_id = 'Root Index'
