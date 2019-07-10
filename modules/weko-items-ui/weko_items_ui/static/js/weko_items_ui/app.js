@@ -1114,7 +1114,9 @@ function handleSharePermission(value) {
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
-        if ($scope.is_item_owner) {
+        $scope.$broadcast('schemaFormValidate');
+        var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
+        if (!invalidFlg && $scope.is_item_owner) {
           if (!this.registerUserPermission()) {
             // Do nothing
           } else {

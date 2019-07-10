@@ -20,6 +20,7 @@
 
 """Module of weko-items-ui utils.."""
 
+from flask import session
 from flask_login import current_user
 from invenio_db import db
 from sqlalchemy import MetaData, Table
@@ -285,3 +286,56 @@ def get_actionid(endpoint):
             return action.id
         else:
             return None
+
+
+def update_json_schema_by_activity_id(json, activity_id):
+    """Update json schema by activity id.
+
+    parameter:
+        json: The json schema
+        activity_id: Activity ID
+    return: json schema
+    """
+    # start data template
+    session = \
+        {'update_json_schema':
+           {'A-20190708-00003':
+                {'required': ['pubdate',
+                              ['item_1554881204737', 'subitem_1551255648112'],
+                              ['item_1560938217591', 'accessrole'],
+                              ['item_1560938217591', 'groupsprice', 'price']
+                              ],
+                 'properties': []
+                 }
+            }
+        }
+    # end data template
+    if not json or not activity_id or not session.get('update_json_schema') \
+        or not session['update_json_schema'].get(activity_id):
+        return None
+    udpate_json_schema = session[activity_id]
+    if udpate_json_schema.get('required'):
+        for item in udpate_json_schema['required']:
+            if isinstance(item, list) and json['properties'][item[0]]:
+                length = len(item)
+                if length < 3:
+                    if 'required' in json['properties'][item[0]]:
+                        json['properties'][item[0]]['required'].append(item[1])
+                    elif json['properties'][item[0]].get('items') \
+                            and 'required' in json['properties'][item[0]]['items']:
+                        json['properties'][item[0]
+                                           ]['items']['required'].append(item[1])
+                elif length < 4:
+                    if json['properties'][item[0]].get('items') \
+                            and json['properties'][item[0]]['items'].get('properties') \
+                            and json['properties'][item[0]]['items']['properties'].get(item[1]) \
+                            and json['properties'][item[0]]['items']['properties'][item[1]].get('items')\
+                            and 'required' in json['properties'][item[0]]['items']['properties'][item[1]]['items']:
+                        json['properties'][item[0]]['items']['properties'][item[1]
+                                                                           ]['items']['required'].append(item[2])
+            else:
+                json['required'].append(item)
+    if udpate_json_schema.get('properties'):
+        # TODO
+        pass
+    return json
