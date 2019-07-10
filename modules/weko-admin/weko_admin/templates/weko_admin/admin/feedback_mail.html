@@ -24,29 +24,14 @@
 
 {%- block css %}
   {{ super() }}
-  <style>
-    .container-modal {
-      padding-left: 15px;
-      padding-right: 15px;
-    }
-    .feedback-mail-modal {
-      width: 70%;
-    }
-    .my-pagination-disabled {
-      cursor: not-allowed;
-    }
-    .my-pagionation-active, .mypage:hover {
-      background-color: #666 !important;
-      color: white !important;
-    }
-  </style>
+  {% assets "weko_admin_feedback_mail_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
   {{ super() }}
   {% assets "weko_admin_feedback_mail" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  <script src = "https://cdnjs.cloudflare.com/ajax/libs/react-bootstrap/0.32.4/react-bootstrap.min.js" type="text/javascript"></script>
+  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block body %}

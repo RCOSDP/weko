@@ -20,7 +20,6 @@
 
 """Utilities for convert response json."""
 import csv
-import sys
 import zipfile
 from io import BytesIO, StringIO
 
@@ -28,18 +27,18 @@ import redis
 import requests
 from flask import current_app, session
 from flask_babelex import lazy_gettext as _
-from invenio_accounts.models import Role, User, userrole
+from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
-from weko_records.api import ItemsMetadata
 from weko_authors.models import Authors
+from weko_records.api import ItemsMetadata
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, SearchManagement, \
-    StatisticTarget, StatisticUnit, FeedbackMailSetting
+from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
+    SearchManagement, StatisticTarget, StatisticUnit
 
 
 def get_response_json(result_list, n_lst):
@@ -58,8 +57,8 @@ def get_response_json(result_list, n_lst):
                 for alst in adr_lst:
                     alst['start_ip_address'] = alst['start_ip_address'].split(
                         '.')
-                    alst['finish_ip_address'] = alst['finish_ip_address'].split(
-                        '.')
+                    alst['finish_ip_address'] = alst[
+                        'finish_ip_address'].split('.')
             newlst.append(rlst.dumps())
         result.update(dict(site_license=newlst))
         del result_list
@@ -341,7 +340,8 @@ def get_user_report_data():
     """Get user report data from db and modify."""
     role_counts = []
     try:
-        role_counts = db.session.query(Role.name, func.count(userrole.c.role_id)) \
+        role_counts = db.session.query(Role.name,
+                                       func.count(userrole.c.role_id)) \
             .outerjoin(userrole) \
             .group_by(Role.id).all()
     except Exception as e:
@@ -368,7 +368,8 @@ def package_reports(all_stats, year, month):
     month = str(month)
     try:  # TODO: Make this into one loop, no need for two
         for stats_type, stats in all_stats.items():
-            file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(stats_type, '_')
+            file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(
+                stats_type, '_')
             file_name = 'logReport_' + file_name + year + '-' + month + '.tsv'
             tsv_files.append({
                 'file_name': file_name,
@@ -389,7 +390,8 @@ def package_reports(all_stats, year, month):
 def make_stats_tsv(raw_stats, file_type, year, month):
     """Make TSV report file for stats."""
     header_row = current_app.config['WEKO_ADMIN_REPORT_HEADERS'].get(file_type)
-    sub_header_row = current_app.config['WEKO_ADMIN_REPORT_SUB_HEADERS'].get(file_type)
+    sub_header_row = current_app.config['WEKO_ADMIN_REPORT_SUB_HEADERS'].get(
+        file_type)
     tsv_output = StringIO()
 
     writer = csv.writer(tsv_output, delimiter='\t',
@@ -541,7 +543,7 @@ def get_feed_back_email_setting():
 
 
 def update_feedback_email_setting(data, is_sending_feedback):
-    """Update feedback email setting
+    """Update feedback email setting.
 
     Arguments:
         data {list} -- data list
@@ -583,7 +585,7 @@ def update_feedback_email_setting(data, is_sending_feedback):
 
 
 def convert_feedback_email_data_to_string(data, keyword='author_id'):
-    """Convert feedback email data to string
+    """Convert feedback email data to string.
 
     Arguments:
         data {list} -- Data list
@@ -605,7 +607,7 @@ def convert_feedback_email_data_to_string(data, keyword='author_id'):
 
 
 def handle_update_message(result, success):
-    """Check query result and return message
+    """Check query result and return message.
 
     Arguments:
         result {dict} -- message
@@ -616,12 +618,12 @@ def handle_update_message(result, success):
 
     """
     if not success:
-        result['error'] = 'Cannot update Feedback email settings.'
+        result['error'] = _('Cannot update Feedback email settings.')
     return result
 
 
 def validate_feedback_mail_setting(data):
-    """Validate duplicate email and author id
+    """Validate duplicate email and author id.
 
     Arguments:
         data {list} -- data list
@@ -643,13 +645,13 @@ def validate_feedback_mail_setting(data):
         if len(new_list) == 0 or item not in new_list:
             new_list.append(item)
         else:
-            error_message = 'Author is duplicated!'
+            error_message = _('Author is duplicated.')
             return error_message
     new_list = list()
     for item in list_email:
         if len(new_list) == 0 or item not in new_list:
             new_list.append(item)
         else:
-            error_message = 'Email is duplicated!'
+            error_message = _('Duplicate Email Addresses.')
             return error_message
     return error_message
