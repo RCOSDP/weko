@@ -46,8 +46,7 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
 from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
-    get_user_information, get_user_permission, \
-    update_json_schema_by_activity_id, validate_user
+    get_user_information, get_user_permission, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -212,18 +211,16 @@ def iframe_error():
 
 
 @blueprint.route('/jsonschema/<int:item_type_id>', methods=['GET'])
-@blueprint.route('/jsonschema/<int:item_type_id>/<string:activity_id>',
-                 methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
-def get_json_schema(item_type_id=0, activity_id=''):
+def get_json_schema(item_type_id=0):
     """Get json schema.
 
     :param item_type_id: Item type ID. (Default: 0)
-    :param activity_id: Activity ID. (Default: '')
     :return: The json object.
     """
     try:
+        print('============GET JSON SCHEMA============')
         result = None
         json_schema = None
         cur_lang = current_i18n.language
@@ -248,16 +245,26 @@ def get_json_schema(item_type_id=0, activity_id=''):
                         'filemeta').get('items').get('properties').get('groups')
                     filemeta_group['enum'] = group_enum
 
+                json_schema = result
+                
+        #
+        session['update_json_schema'] =\
+            {"required": ["subitem_1551255647225",
+                          {"item_1554881204737": "subitem_1551255647225"}
+                          ]
+            }
+        update_json_schema = session['update_json_schema']
+        print('============Update_json_schema============', update_json_schema)
+        if update_json_schema:
+            if 'required' in update_json_schema:
+                for item in update_json_schema['required']:
+                    if isinstance(item, dict) and "item_1554881204737" in result["properties"]:
+                        result["properties"]["item_1554881204737"]["required"].append("subitem_1551255647225")
+                    else:
+                        result["required"].append(item)
+
         if result is None:
             return '{}'
-
-        if activity_id:
-            updated_json_schema = update_json_schema_by_activity_id(result,
-                                                                    activity_id)
-            if updated_json_schema is not None:
-                result=updated_json_schema
-
-        json_schema = result
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])

@@ -56,7 +56,7 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
-    pidstore_identifier_mapping
+    pidstore_identifier_mapping, item_metadata_validation
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -228,7 +228,13 @@ def display_activity(activity_id=0):
 
     # display_activity of Identifier grant
     idf_grant_data = None
+    identifier_type = []
+    resource_type = []
     if 'identifier_grant' == action_endpoint and item:
+        pidstore_identifier = item.get('pidstore_identifier')
+        if pidstore_identifier:
+            identifier_type = \
+                pidstore_identifier['identifierRegistration']
         path = WekoRecord.get_record(item.id).get('path')
         if len(path) > 1:
             community_id = 'Root Index'
@@ -386,6 +392,8 @@ def display_activity(activity_id=0):
         res_check=res_check,
         pid=pid,
         community_id=community_id,
+        identifier_type=identifier_type,
+        resource_type=resource_type,
         **ctx
     )
 
@@ -527,6 +535,16 @@ def next_action(activity_id='0', action_id=0):
             'action_identifier_jalc_dc_doi': idf_grant_jalc_dc_doi_manual
         }
 
+        activity_obj = WorkActivity()
+        activity_detail = activity_obj.get_activity_detail(activity_id)
+        valid_error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
+        if valid_error_list:
+            # previous_action(activity_id=activity_id, action_id=action_id, req=-1)
+            # return jsonify(code=0, msg=_('success'))
+            return jsonify(code = -1, msg=_('error'))
+        else:
+            return jsonify(code = -1, msg=_('error 2'))
+
         work_activity.create_or_update_action_identifier(
             activity_id=activity_id,
             action_id=action_id,
@@ -624,7 +642,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.info(pidNotEx)
     
-    if req == 0:
+    if req == -1:
+        pre_action = flow.get_item_registration_flow_action(
+            activity_detail.flow_define.flow_id)
+    elif req == 0:
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id)
     else:
