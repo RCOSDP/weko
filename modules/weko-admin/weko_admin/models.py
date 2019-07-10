@@ -1047,9 +1047,9 @@ class FeedbackMailSetting(db.Model, Timestamp):
 
         """
         try:
-            with db.session.no_auto_flush():
-                all = cls.query.all()
-                return all
+            with db.session.no_autoflush:
+                feedback_settings = cls.query.all()
+                return feedback_settings
         except Exception:
             return []
 
