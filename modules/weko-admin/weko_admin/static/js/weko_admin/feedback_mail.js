@@ -17,17 +17,6 @@ class ComponentFeedbackMail extends React.Component {
         this.state = {
           flagSend: this.props.flagSend,
         }
-        this.style_component = {
-            "margin-top": "15px",
-            "font-size": "18px",
-        }
-        this.margin_left = {
-            "margin-left": "10%",
-        }
-        this.style_radioBtn = {
-            "width" : "18px",
-            "height" : "18px",
-        }
         this.handleChangeSend = this.handleChangeSend.bind(this);
         this.handleChangeNotSend = this.handleChangeNotSend.bind(this);
     }
@@ -54,12 +43,12 @@ class ComponentFeedbackMail extends React.Component {
 
     render() {
         return (
-            <div className="form-group" style = {this.style_component}>
+            <div className="form-group style-component">
                 <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
                 <div class="controls col-xs-10">
                     <div className="form-group">
-                        <span><input style = {this.style_radioBtn} type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>{SEND_RADIO_BUTTON_NAME}</span>
-                        <span  style = {this.margin_left}><input style = {this.style_radioBtn} type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>{NOT_SEND_RADIO_BUTTON_NAME}</span>
+                        <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>{SEND_RADIO_BUTTON_NAME}</span>
+                        <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>{NOT_SEND_RADIO_BUTTON_NAME}</span>
                     </div>
                 </div>
             </div>
@@ -73,37 +62,6 @@ class ComponentExclusionTarget extends React.Component {
         this.state = {
           listEmail: [],
         }
-        this.style_component = {
-            "margin-top": "15px",
-            "font-size": "18px",
-        }
-        this.margin_left = {
-            "margin-left": "10%",
-        }
-        this.style_radioBtn = {
-            "width" : "18px",
-            "height" : "18px",
-        }
-        this.style_button = {
-            "box-shadow": "4px 4px 5px #7D7D7D",
-            "background-color": "white",
-            "border": "1px ridge black"
-        }
-        this.style_selected_box = {
-            "margin-top": "15px",
-            "width": "70%",
-            "heiht": "50px",
-            "border": "1px inset black",
-            "display": "inline-block",
-            "padding": "10px",
-        }
-        this.style_full_size = {
-            "width": "100% !important;%",
-        }
-        this.style_deleteBtn = {
-            "margin-left": "5px",
-            "margin-bottom": "10px",
-        }
         this.deleteCommand = this.deleteCommand.bind(this);
         this.searchCommand = this.searchCommand.bind(this);
         this.generateSelectedBox = this.generateSelectedBox.bind(this);
@@ -116,8 +74,8 @@ class ComponentExclusionTarget extends React.Component {
         async: false,
         method: "GET",
         success: function (data, statusRequest) {
-          mailData = data.data;
-          sendData = data.is_sending_feedback;
+          mailData = data.data || [];
+          sendData = data.is_sending_feedback || false;
         }
       })
       this.setState({listEmail:mailData});
@@ -127,14 +85,11 @@ class ComponentExclusionTarget extends React.Component {
 
     generateSelectedBox(listEmail) {
       let innerHTML = [];
-      if ($.isEmptyObject(listEmail)) {
-        return;
-      }
       for (let id in listEmail) {
         innerHTML.push(<option value={listEmail[id].author_id}>{listEmail[id].email}</option>);
       }
       return (
-        <select multiple style = {this.style_selected_box} id="sltBoxListEmail">
+        <select multiple className="style-selected-box" id="sltBoxListEmail">
           {innerHTML}
         </select>
       )
@@ -147,12 +102,14 @@ class ComponentExclusionTarget extends React.Component {
       });
       this.props.removeEmailFromList(selectedElement);
     }
+
     searchCommand(){
       this.props.bindingValueOfComponent("showModalSearch", true);
     }
+
     render() {
         return (
-            <div className="form-group"  style = {this.style_component}>
+            <div className="form-group style-component">
                 <span className="control-label col-xs-2">{COMPONENT_SEARCH_EMAIL_NAME}</span>
                 <div className="controls col-xs-10">
                     <div>
@@ -160,9 +117,9 @@ class ComponentExclusionTarget extends React.Component {
                             <i className = "glyphicon glyphicon-search"></i>&nbsp;{SEARCH_BUTTON_NAME}
                         </ReactBootstrap.Button>
                     </div>
-                    <div style = {this.style_full_size}>
+                    <div className="style-full-size">
                       {this.generateSelectedBox(this.state.listEmail)}
-                      <button className="btn btn-danger delete-button style-my-button" onClick={this.deleteCommand} style = {this.style_deleteBtn}>
+                      <button className="btn btn-danger delete-button style-my-button style-deleteBtn" onClick={this.deleteCommand}>
                           <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
                           &nbsp;Delete
                       </button>
@@ -178,12 +135,6 @@ class TableUserEmailComponent extends React.Component {
     super(props);
     this.state = {
       listUser: this.props.listUser,
-    }
-    this.style_table_modal = {
-      "width": "100%"
-    }
-    this.style_column = {
-      "width" : "40%"
     }
     this.generateBodyTableUser = this.generateBodyTableUser.bind(this);
     this.importEmail = this.importEmail.bind(this);
@@ -236,12 +187,12 @@ class TableUserEmailComponent extends React.Component {
   render(){
     return (
       <div className="col-sm-12 col-md-12">
-        <table className="table table-striped" id="table_data" style = {this.style_table_modal}>
+        <table className="table table-striped style-table-modal" id="table_data">
           <caption ></caption>
           <thead >
             <tr  className="success">
-              <th  className="thWidth" style={this.style_column}>Name</th>
-              <th  className="thWidth" style={this.style_column}>Mail Address</th>
+              <th  className="thWidth style-column">Name</th>
+              <th  className="thWidth style-column">Mail Address</th>
               <th  className="alignCenter" ></th>
             </tr>
           </thead>
@@ -308,9 +259,6 @@ class Pagination extends React.Component {
       endPage: 1,
       currentPage: 1,
       numOfPage: 1,
-    }
-    this.style_more = {
-      "border" : "none",
     }
     this.generatePagination = this.generatePagination.bind(this);
   }
@@ -429,9 +377,6 @@ class ModalBodyComponent extends React.Component {
       searchKey: "",
 
     }
-    this.margin_left_page = {
-      "margin-left": "60%",
-    }
     this.getListUser = this.getListUser.bind(this);
     this.getSearchKey = this.getSearchKey.bind(this);
   }
@@ -457,7 +402,7 @@ class ModalBodyComponent extends React.Component {
               <div className="row">
                 <TableUserEmailComponent listUser = {this.state.listUser} addEmailToList={this.props.addEmailToList}/>
               </div>
-              <div style={this.margin_left_page}>
+              <div className = "margin-left-page">
                 <Pagination numOfResult = {this.state.numOfResult} searchKey = {this.state.searchKey} getListUser = {this.getListUser}/>
               </div>
             </div>
@@ -518,15 +463,6 @@ class ModalComponent extends React.Component {
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
-        this.style_component = {
-            "margin-top": "15px",
-            "font-size": "18px",
-        }
-        this.style_button = {
-            "width" : "100px",
-            "border-radius" : "5%",
-            "font-weight" : "600",
-        }
         this.saveCommand = this.saveCommand.bind(this);
         this.sendCommand = this.sendCommand.bind(this);
     }
@@ -550,14 +486,12 @@ class ComponentButtonLayout extends React.Component {
       )
       .then(res => res.json())
       .then((result) => {
-        if (result.success) {
-          var modalcontent = MESSAGE_SUCCESS;
-          $("#inputModal").html(modalcontent);
-          $("#allModal").modal("show");
-        }else {
-          // TODO: Notify error message
-          console.log(result.error);
+        let modalContent = MESSAGE_SUCCESS;
+        if (!result.success) {
+          modalContent = result.error;
         }
+        $("#inputModal").html(modalContent);
+        $("#allModal").modal("show");
       });
     }
 
@@ -567,14 +501,14 @@ class ComponentButtonLayout extends React.Component {
 
     render() {
       return (
-        <div className="form-group" style={this.style_component}>
+        <div className="form-group style-component ">
           <div className="col-xs-5">
-            <button style={this.style_button} className="btn btn-primary" onClick={this.saveCommand}>
+            <button className="btn btn-primary style-button" onClick={this.saveCommand}>
               {SAVE_BUTTON_NAME}
             </button>
           </div>
           <div className="col-xs-offset-10">
-            <button style = {this.style_button} className="btn btn-primary" onClick={this.sendCommand}>
+            <button className="btn btn-primary style-button" onClick={this.sendCommand}>
               {SEND_BUTTON_NAME}
             </button>
           </div>

@@ -1028,18 +1028,12 @@ class FeedbackMailSetting(db.Model, Timestamp):
         """
         try:
             new_record = FeedbackMailSetting()
-            print("abc")
             with db.session.begin_nested():
-                print("123")
                 new_record.account_author = account_author
                 new_record.is_sending_feedback = is_sending_feedback
                 db.session.add(new_record)
-            print("before commit")
             db.session.commit()
-            print("after commit")
         except BaseException:
-            import traceback
-            traceback.print_exc()
             db.session.rollback()
             return False
         return True
@@ -1053,13 +1047,14 @@ class FeedbackMailSetting(db.Model, Timestamp):
 
         """
         try:
-            all = cls.query.all()
-            return all
+            with db.session.no_auto_flush():
+                all = cls.query.all()
+                return all
         except Exception:
             return []
 
     @classmethod
-    def update(cls, account_author, is_sending_feedback, id=1):
+    def update(cls, account_author, is_sending_feedback):
         """Update existed feedback mail setting.
 
         Arguments:

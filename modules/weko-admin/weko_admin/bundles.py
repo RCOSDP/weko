@@ -49,6 +49,11 @@ search_management_js = Bundle(
     output="gen/weko_admin_ui_search.%(version)s.js",
 )
 
+react_bootstrap_js = Bundle(
+    'js/weko_admin/react-bootstrap.min.js',
+    output="gen/react_bootstrap_js.%(version)s.js",
+)
+
 stats_report_js = Bundle(
     'js/weko_admin/stats_report.js',
     'js/weko_admin/email_schedule.js',
@@ -57,6 +62,7 @@ stats_report_js = Bundle(
 
 feedback_mail_js = Bundle(
     'js/weko_admin/feedback_mail.js',
+    filters='jsmin',
     output="gen/weko_admin_feedback_mail.%(version)s.js",
 )
 
@@ -85,6 +91,11 @@ css = Bundle(
 weko_admin_quill_sknow_css = Bundle(
     'css/weko_admin/quill.snow.css',
     output="gen/weko_admin_ui_quill.%(version)s.css",
+)
+
+weko_admin_feedback_mail_css = Bundle(
+    'css/weko_admin/feedback.mail.css',
+    output="gen/weko_admin_feedback_mail.%(version)s.css",
 )
 
 admin_lte_js_dependecies = NpmBundle(
@@ -120,3 +131,4 @@ angular_js = NpmBundle(  # Already included in front-end
     },
     output='gen/weko_admin_ui.angular_js.%(version)s.js',
 )
+
