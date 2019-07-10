@@ -44,6 +44,7 @@
           <div class="form-group mr-5">
           <label class="radio-inline"><input type="radio" name="item_type" value="normal">{{_('Standard Item Type')}}</label>
           <label class="radio-inline"><input type="radio" name="item_type" value="harvesting">{{_('Item Type for Harvesting')}}</label>
+          <label class="radio-inline"><input type="radio" name="item_type" value="deleted">{{_('Deleted Item Type')}}</label>
           </div>
           <div class="form-inline col-sm-12 col-md-12">
               <div class="input-group col-sm-10">
@@ -61,10 +62,6 @@
               {%- if id -%}
               {%- set delete_button_class = '' -%}
               {%- endif -%}
-              <a role="button" class="btn btn-danger pull-right delete-button ten-pixel-right-margin" href="javascript:;" id="btn_delete_item">
-                  <span class="glyphicon glyphicon-trash"></span>
-                  {{ _('Delete') }}
-              </a>
 
               <div id="item_type_delete_confirmation" class="modal fade" tabindex="-1"
                    role="dialog" aria-labelledby="deleteHeader" aria-hidden="true">
@@ -165,16 +162,22 @@
               <span class="glyphicon glyphicon-plus"></span>
                    {{_('Add Metadata')}}</button>
         </div>
-        <div class="col-sm-3 col-md-3 col-lg-2 pull-right">
-          <button type="button" class="btn btn-primary save-button" id="btn_create_itemtype_schema">
-              <span class="glyphicon glyphicon-saved"></span>
-                     {{_('Save')}}</button>
-        </div>
-        <div class="col-sm-3 col-md-3 col-lg-3 pull-right hide">
+        <div class="col-sm-3 col-md-3 col-lg-3 hide">
           <button type="button" class="btn btn-primary btn-block preview-button" id="btn_previews_itemtype_schema">
                <span class="glyphicon glyphicon-hand-right"></span>
                      {{_('Preview')}}
           </button>
+        </div>
+        <div class="col-sm-6 col-md-6 col-lg-5 pull-right">
+          <button type="button" class="btn btn-primary save-button pull-right" id="btn_restore_itemtype_schema">
+              <span class="glyphicon glyphicon-repeat"></span>
+                     {{_('Restore')}}</button>
+          <a role="button" class="btn btn-danger delete-button pull-right ten-pixel-right-margin" href="javascript:;" id="btn_delete_item">
+              <span class="glyphicon glyphicon-trash"></span>
+                      {{ _('Delete') }}</a>
+          <button type="button" class="btn btn-primary save-button pull-right ten-pixel-right-margin" id="btn_create_itemtype_schema">
+              <span class="glyphicon glyphicon-saved"></span>
+                     {{_('Save')}}</button>
         </div>
       </div>
       <div class="panel panel-default hide">
