@@ -25,7 +25,7 @@ from datetime import datetime
 
 from flask import current_app, request, session, url_for
 from flask_login import current_user
-from invenio_accounts.models import User, Role, userrole
+from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from sqlalchemy import asc, desc, types
 from sqlalchemy.orm.exc import NoResultFound
@@ -930,10 +930,10 @@ class WorkActivity(object):
                     | (_FlowActionRole.action_role.in_(self_group_ids)
                        & (_FlowActionRole.action_role_exclude == '0'))
             )\
-                .filter(_Activity.activity_status ==
-                        ActivityStatusPolicy.ACTIVITY_BEGIN
-                        or _Activity.activity_status ==
-                        ActivityStatusPolicy.ACTIVITY_MAKING)
+                .filter(_Activity.activity_status
+                        == ActivityStatusPolicy.ACTIVITY_BEGIN
+                        or _Activity.activity_status
+                        == ActivityStatusPolicy.ACTIVITY_MAKING)
             if not is_admin and not is_community_admin:
                 query_action_activities = query_action_activities\
                     .filter(_Activity.activity_login_user == self_user_id)
@@ -952,8 +952,8 @@ class WorkActivity(object):
             # After that, do fetching all activity which matches to
             # above ItemMetadata.
             item_metadata = ItemMetadata.query.filter(
-                cast(ItemMetadata.json['shared_user_id'], types.INT) ==
-                self_user_id)
+                cast(ItemMetadata.json['shared_user_id'], types.INT)
+                == self_user_id)
             item_uuids = [im.id for im in item_metadata]
             contributor_activities = _Activity.query.filter(
                 _Activity.item_id.in_(item_uuids)).all()

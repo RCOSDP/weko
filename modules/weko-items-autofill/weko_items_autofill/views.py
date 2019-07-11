@@ -45,7 +45,7 @@ def index():
 
 @blueprint_api.route('/select_options', methods=['GET'])
 @login_required
-#@auto_fill_permission.require(http_exception=403)
+# @auto_fill_permission.require(http_exception=403)
 def get_selection_option():
     """Get metadata  select options.
 
