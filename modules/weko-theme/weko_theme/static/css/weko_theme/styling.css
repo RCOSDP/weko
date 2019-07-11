@@ -31,28 +31,19 @@
   font-size: 15px;
 }
 
-.save-button, .delete-button, .edit-button, .action-button, .search-button, .next-button, .detail-button {
+.save-button, .delete-button, .edit-button, .action-button, .next-button, .detail-button {
   width: 120px;
   height: 40px;
   font-size: 15px;
 }
 
-.detail-search-button, .save-flow-button {
+.save-flow-button {
   width: 150px;
   height: 40px;
   font-size: 15px;
 }
 
-.add-search-button{
-  background-color    :#008000;
-  border-color: #9ACD32;
-  color: white;
-  width: 200px;
-  height: 40px;
-  font-size: 15px;
-}
-
-.cancel-button, .close-button,.clear-button {
+.cancel-button, .close-button {
   width: 100px;
   height: 40px;
   font-size:15px;
@@ -89,12 +80,6 @@ button#btn_quit.done-button {
   width: 120px;
 }
 
-.automatic-metadata-input-button {
-  width: 250px;
-   height: 40px;
-  font-size:15px;
-}
-
 .ok-button {
   width: 70px;
   height: 40px;
@@ -116,7 +101,7 @@ button#btn_quit.done-button {
    font-size: 15px;
  }
 
-.action-big-button,.preview-button .update-profile-button, .mapping-button, .property-button {
+.action-big-button, .update-profile-button, .mapping-button, .property-button {
   width: 150px;
   height: 40px;
   font-size:15px

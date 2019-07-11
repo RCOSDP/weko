@@ -140,10 +140,9 @@
               <div class="row">
                 <div class="col-sm-9">
                 <p class="text-center">
-                  <button class="btn btn-primary
-                          automatic-metadata-input-button"
+                  <button class="btn btn-success"
                       ng-click="getItemMetadata()">
-                    <span class="glyphicon glyphicon-search"></span>
+                      <span class="glyphicon glyphicon-plus"></span>&nbsp
                     {{_('Automatic Metadata Input')}}
                 </button>
                 </p>
@@ -216,20 +215,20 @@
                 <div class="col-sm-9">
                   <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                     {%- if pid %}
-                    <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')" style="width: 120px; height: 40px;font-size: 15px;">
-                          <span class="glyphicon glyphicon-trash"></span>
+                    <button ng-disabled="recordsVM.invenioRecordsLoading" ng-hide="!recordsVM.invenioRecordsEndpoints.initialization" class="btn btn-danger" ng-click="recordsVM.actionHandler(['self', 'DELETE'], 'ret')">
+                          <span class="glyphicon glyphicon-trash"></span>&nbsp
                           {{_('Delete')}}
                         </button>
                     {%- endif %}
                     <button ng-disabled="recordsVM.invenioRecordsLoading"
-                            class="btn btn-primary save-button"
+                            class="btn btn-primary"
                             ng-click="saveDataJson('{{item_save_uri}}');">
-                          <span class="glyphicon glyphicon-saved"></span>
+                          <span class="glyphicon glyphicon-save"></span>&nbsp
                           {{_('Save')}}
-                        </button>
+                    </button>
                     <button ng-disabled="recordsVM.invenioRecordsLoading"
-                            class="btn btn-info next-button" 
-                            ng-click="updateDataJson()">{{_('Next')}}
+                            class="btn btn-info" 
+                            ng-click="updateDataJson()">{{_('Next')}}&nbsp
                     <span class="glyphicon glyphicon-chevron-right"></span>
                     </button>
                   </div>
@@ -237,9 +236,9 @@
                 <div class="col-sm-3" style="padding-right: 0;">
                   <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                       <button ng-disabled="recordsVM.invenioRecordsLoading"
-                              class="btn btn-danger done-button" id="btn_quit">
+                              class="btn btn-danger" id="btn_quit">
                         <i class="fa fa-sign-out"></i>
-                        {{_('Quit')}}</button>
+                        {{_('Quit')}}</button>&nbsp
                   </ul>
                 </div>
               </div>
@@ -261,8 +260,8 @@
         <app-author-search></app-author-search>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
-             <span class="glyphicon glyphicon-remove"></span>
+        <button type="button" class="btn btn-default" id="btnModalClose" data-dismiss="modal">
+             <span class="glyphicon glyphicon-remove"></span>&nbsp
                  {{_('Close')}}
         </button>
       </div>
@@ -285,8 +284,8 @@
         <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" id="meta-search-close" data-dismiss="modal">
-               <span class="glyphicon glyphicon-remove"></span>
+        <button type="button" class="btn btn-default" id="meta-search-close" data-dismiss="modal">
+               <span class="glyphicon glyphicon-remove"></span>&nbsp
                    {{_('Close')}}
         </button>
       </div>
