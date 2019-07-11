@@ -113,10 +113,10 @@
                             <br/>
                           {%- endif %}
                         {%- endfor %}
-                        <a id="remove_row" class="btn btn-default">
+                        <a id="remove_row" class="btn btn-danger btn-sm">
                            <span class="glyphicon glyphicon-remove"></span>
                         </a>
-                        <a id="add_row" class="btn btn-default">
+                        <a id="add_row" class="btn btn-success btn-sm">
                            <span class="glyphicon glyphicon-plus"></span>
                         </a>
                       </div>
@@ -164,8 +164,8 @@
           </tr>
         </table>
         <div class="form-group col-sm-3 col-sm-offset-4">
-          <a id="confirm_button" class="btn btn-primary save-button" data-toggle="modal" data-target="#confirm_modal">
-            <span class="glyphicon glyphicon-saved"></span>
+          <a id="confirm_button" class="btn btn-primary" data-toggle="modal" data-target="#confirm_modal">
+            <span class="glyphicon glyphicon-save"></span>&nbsp
             {{_('Save')}}
           </a>
         </div>
@@ -186,12 +186,12 @@
         <p class="text-center">{{_('Are you sure you want to block the given addresses?')}}</p>
       </div>
       <div class="modal-footer">
-        <button id="submit_button" class="btn btn-primary save-button">
-          <span class="glyphicon glyphicon-download-alt"></span>
+        <button id="submit_button" class="btn btn-primary">
+            <span class="glyphicon glyphicon-save"></span>&nbsp
           {{_('Save')}}
         </button>
-        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
-          <span class="glyphicon glyphicon-remove"></span>
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          <span class="glyphicon glyphicon-remove"></span>&nbsp
           {{_('Close')}}
         </button>
       </div>
