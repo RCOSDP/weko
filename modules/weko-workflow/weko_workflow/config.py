@@ -81,3 +81,8 @@ IDENTIFIER_GRANT_IS_WITHDRAWING = -2
 
 ITEM_REGISTRATION_FLOW_ID = 3
 """Identifier grant is withdrawing."""
+
+IDENTIFIER_GRANT_SELECT_DICT = {
+    'JaLCDOI': '1',
+    'CrossRefDOI': '2'
+}

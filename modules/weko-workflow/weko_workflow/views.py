@@ -541,16 +541,17 @@ def next_action(activity_id='0', action_id=0):
 
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
-        valid_error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
-        
-        if valid_error_list:
-            session['update_json_schema'] = valid_error_list
-            previous_action(activity_id=activity_id, action_id=action_id, req=-1)
-            return jsonify(code=0, msg=_('success'))
-            # return jsonify(code = -1, msg=_('error'))
+        error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
+
+        if isinstance(error_list, str):
+            return jsonify(code = -1, msg=_(error_list))
+
+        if error_list:
+            session['update_json_schema'] = error_list
+            return previous_action(activity_id=activity_id, action_id=action_id, req=-1)
         else:
-            return jsonify(code = -1, msg=_('error 2'))
-        
+            return jsonify(code = -1, msg=_('PASS'))
+
         work_activity.create_or_update_action_identifier(
             activity_id=activity_id,
             action_id=action_id,
