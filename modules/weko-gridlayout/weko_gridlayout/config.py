@@ -28,7 +28,7 @@ WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE = "en"
 """Default widget language code"""
 
 WEKO_XMLNS = \
-    'http://purl.org/rss/1.0/rss/1.0'
+    'http://purl.org/rss/1.0/'
 """Default XMLNS url"""
 
 WEKO_XMLNS_RDF = \
