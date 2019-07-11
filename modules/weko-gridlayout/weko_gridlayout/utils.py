@@ -507,9 +507,10 @@ def build_rss_xml(data, term, count):
         number_of_item = number_of_item + 1
     xml_str = tostring(root, encoding='utf-8')
     xml_str = str.encode('<?xml version="1.0" encoding="UTF-8"?>') + xml_str
-    return Response(
-        xml_str,
-        mimetype='text/xml')
+    response = current_app.response_class()
+    response.data = xml_str
+    response.headers['Content-Type'] = 'application/xml'
+    return response
 
 
 def find_rss_value(data, keyword):
