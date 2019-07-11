@@ -58,11 +58,11 @@ USERPROFILES_TIMEZONE_LIST = [
     ('Etc/GMT+2', _('(GMT-2:00) Mid-Atlantic')),
     ('Etc/GMT+1', _('(GMT-1:00) Azores, Cape Verde Islands')),
     ('Etc/GMT', _('(GMT) Greenwich Mean Time, London, Dublin, Lisbon,'
-                ' Casablanca, Monrovia')),
+                  ' Casablanca, Monrovia')),
     ('Etc/GMT-1', _('(GMT+1:00) Amsterdam, Berlin, Rome, Copenhagen,'
-                 ' Brussels, Madrid, Paris')),
+                    ' Brussels, Madrid, Paris')),
     ('Etc/GMT-2', _('(GMT+2:00) Athens, Istanbul, Minsk, Helsinki,'
-                 ' Jerusalem, South Africa')),
+                    ' Jerusalem, South Africa')),
     ('Etc/GMT-3', _('(GMT+3:00) Baghdad, Kuwait, Riyadh, Moscow, St. Petersburg')),
     ('Asia/Tehran', _('(GMT+3:30) Tehran')),
     ('Etc/GMT-4', _('(GMT+4:00) Abu Dhabi, Muscat, Baku, Tbilisi')),
@@ -72,14 +72,14 @@ USERPROFILES_TIMEZONE_LIST = [
     ('Etc/GMT-6', _('(GMT+6:00) Almaty, Dhaka, Colombo')),
     ('Etc/GMT-7', _('(GMT+7:00) Bangkok, Hanoi, Jakarta')),
     ('Etc/GMT-8', _('(GMT+8:00) Beijing, Perth, Singapore, Hong Kong,'
-                 ' Urumqi, Taipei')),
+                    ' Urumqi, Taipei')),
     ('Etc/GMT-9', _('(GMT+9:00) Tokyo, Seoul, Osaka, Sapporo, Yakutsk')),
     ('Australia/Adelaide', _('(GMT+9:30) Adelaide, Darwin')),
     ('Etc/GMT-10', _('(GMT+10:00) Brisbane, Canberra, Melbourne, Sydney,'
-                 'Guam, Vlasdiostok')),
+                     'Guam, Vlasdiostok')),
     ('Etc/GMT-11', _('(GMT+11:00) Magadan, Solomon Islands, New Caledonia')),
     ('Etc/GMT-12', _('(GMT+12:00) Auckland, Wellington, Fiji, Kamchatka,'
-                 'Marshall Island'))
+                     'Marshall Island'))
 ]
 """Settings timezone list for user profile module."""
 
