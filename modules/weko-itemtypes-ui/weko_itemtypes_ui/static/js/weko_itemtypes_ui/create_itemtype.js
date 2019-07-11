@@ -10,7 +10,8 @@ $(document).ready(function () {
     meta_fix: {},
     schemaeditor: {       // objectの場合
       schema:{}           //   生成したschemaの情報を保存する
-    }
+    },
+    edit_notes: {}         // Map of notes for each attribute, keep seperate
   };
   properties_obj = {}     // 作成したメタデータ項目タイプ
   select_option = '';
@@ -93,6 +94,9 @@ $(document).ready(function () {
       properties: {},
       required: []
     };
+
+    // Keep the notes seperate from schema to avoid extracting later
+    page_global.table_row_map['form'] = [];
 
     // コンテンツ本体
     if(page_global.upload_file) {
@@ -236,6 +240,7 @@ $(document).ready(function () {
 
     // テーブルの行をトラバースし、マップに追加する
     err_input_id = []
+
     $.each(page_global.table_row, function(idx, row_id){
       var tmp = {}
       tmp.title = $('#txt_title_'+row_id).val();
@@ -254,6 +259,9 @@ $(document).ready(function () {
       tmp.option.hidden = $('#chk_'+row_id+'_4').is(':checked')?true:false;
       tmp.option.showlist = tmp.option.hidden?false:($('#chk_'+row_id+'_2').is(':checked')?true:false);
       tmp.option.crtf = tmp.option.hidden?false:($('#chk_'+row_id+'_3').is(':checked')?true:false);
+
+      // Retrieve notes edited
+      page_global.edit_notes[row_id] = $('#edit_notes_' + row_id).val();
 
       if(src_render.hasOwnProperty('meta_list')
           && src_render['meta_list'].hasOwnProperty(row_id)) {
@@ -589,6 +597,9 @@ $(document).ready(function () {
         + '<td>'
         + '  <button type="button" class="btn btn-danger" id="btn_del_' + row_id + '">' + "Delete" + '</button>'
         + '</td>'
+        + '<td>'
+        + '  <textarea type="button" class="form-control" rows="4" id="edit_notes_' + row_id + '">' + "" + '</textarea>'
+        + '</td>'
         + '</tr>';
     $('#tbody_itemtype').append(row_template);
     page_global.table_row.push(row_id);
@@ -818,6 +829,12 @@ $(document).ready(function () {
         $('#chk_'+row_id+'_2').attr('checked', data.meta_list[row_id].option.showlist);
         $('#chk_'+row_id+'_3').attr('checked', data.meta_list[row_id].option.crtf);
         $('#chk_'+row_id+'_4').attr('checked', data.meta_list[row_id].option.hidden);
+
+        // Add the notes for the row here
+        if(row_id in data.edit_notes) {
+          $('#edit_notes_' + row_id).val(data.edit_notes[row_id]);
+        }
+
         if(data.meta_list[row_id].option.hidden) {
           $('#chk_prev_' + row_id + '_2').addClass('disabled');
           $('#chk_' + row_id + '_2').attr('disabled', true);
