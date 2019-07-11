@@ -307,6 +307,10 @@ def display_activity(activity_id=0):
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
+            
+        if 'update_json_schema' in session:
+            json_schema = (json_schema + "/{}").format(activity_id)
+            
     # if 'approval' == action_endpoint:
     if item:
         # get record data for the first time access to editing item screen
@@ -538,13 +542,15 @@ def next_action(activity_id='0', action_id=0):
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
         valid_error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
+        
         if valid_error_list:
-            # previous_action(activity_id=activity_id, action_id=action_id, req=-1)
-            # return jsonify(code=0, msg=_('success'))
-            return jsonify(code = -1, msg=_('error'))
+            session['update_json_schema'] = valid_error_list
+            previous_action(activity_id=activity_id, action_id=action_id, req=-1)
+            return jsonify(code=0, msg=_('success'))
+            # return jsonify(code = -1, msg=_('error'))
         else:
             return jsonify(code = -1, msg=_('error 2'))
-
+        
         work_activity.create_or_update_action_identifier(
             activity_id=activity_id,
             action_id=action_id,
