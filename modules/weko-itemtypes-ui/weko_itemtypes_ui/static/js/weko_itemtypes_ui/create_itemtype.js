@@ -57,11 +57,24 @@ $(document).ready(function () {
       if (this.value === 'normal') {
           $('option.normal_type').show()
           $('option.harvesting_type').hide()
-      } else {
+          disabled_deleted_type()
+      } else if (this.value === 'harvesting') {
           $('option.normal_type').hide()
           $('option.harvesting_type').show()
+          disabled_deleted_type()
+      } else {
+          $('option.deleted_type').show()
+          $('option.normal_type').hide()
+          $('option.harvesting_type').hide()
+          $('#btn_restore_itemtype_schema').prop('disabled', false)
+          $('div.metadata-content *').not("[id=btn_restore_itemtype_schema]").prop('disabled', true);
       }
   });
+  function disabled_deleted_type(){
+      $('option.deleted_type').hide()
+      $('#btn_restore_itemtype_schema').prop('disabled', true)
+      $('div.metadata-content *').not("[id=btn_restore_itemtype_schema]").prop('disabled', false)
+  }
 
   $('#btn_create_itemtype_schema').on('click', function(){
     if($('#itemtype_name').val() == "") {
