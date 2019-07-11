@@ -904,10 +904,13 @@ class StatisticsEmail(db.Model):
     def delete_all_row(cls):
         """Delete all."""
         try:
-            delete_all = StatisticsEmail.query.delete()
+            with db.session.begin_nested():
+                delete_all = cls.query.delete()
+            db.session.commit()
         except Exception as ex:
             current_app.logger.debug(ex)
-            raise
+            db.session.rollback()
+            raise ex
         return delete_all
 
 
@@ -987,6 +990,7 @@ class RankingSettings(db.Model):
         return cls
 
 
+<<<<<<< HEAD
 class FeedbackMailSetting(db.Model, Timestamp):
     """Feedback email setting.
 
@@ -1098,6 +1102,90 @@ class FeedbackMailSetting(db.Model, Timestamp):
         except BaseException as ex:
             current_app.logger.debug(ex)
             return False
+=======
+class AdminSettings(db.Model):
+    """settings."""
+
+    __tablename__ = 'admin_settings'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    name = db.Column(db.String(30), unique=True)
+
+    settings = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
+    class Dict2Obj(object):
+        """Dict to obj."""
+
+        def __init__(self, data):
+            """Init object."""
+            for key in data:
+                setattr(self, key, data[key])
+
+    @classmethod
+    def get(cls, name):
+        """Get settings by name."""
+        try:
+            o = cls.query.filter_by(name=name).first()
+            return cls.Dict2Obj(o.settings)
+        except Exception as ex:
+            current_app.logger.error(ex)
+
+        return None
+
+    @classmethod
+    def update(cls, name, settings, id=None):
+        """Update/Create settings."""
+        try:
+            with db.session.begin_nested():
+                new_setting_flag = False
+                o = cls.query.filter_by(name=name).first()
+                if not o:
+                    o = AdminSettings()
+                    new_setting_flag = True
+                if id:
+                    o.id = id
+                o.name = name
+                o.settings = settings
+                if new_setting_flag:
+                    db.session.add(o)
+                else:
+                    db.session.merge(o)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+
+        return cls
+
+    @classmethod
+    def delete(cls, name):
+        """Delete settings."""
+        try:
+            with db.session.begin_nested():
+                cls.query.filter_by(name=name).delete()
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise ex
+
+        return cls
+>>>>>>> sp14
 
 
 __all__ = ([
@@ -1111,5 +1199,9 @@ __all__ = ([
     'StatisticsEmail',
     'RankingSettings',
     'BillingPermission',
+<<<<<<< HEAD
     'FeedbackMailSetting'
+=======
+    'AdminSettings'
+>>>>>>> sp14
 ])

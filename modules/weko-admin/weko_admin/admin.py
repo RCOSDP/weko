@@ -369,6 +369,7 @@ class ReportView(BaseView):
         inputEmail = request.form.getlist('inputEmail')
         StatisticsEmail.delete_all_row()
         alert_msg = 'Successfully saved email addresses.'
+        category = 'info'
         for input in inputEmail:
             if input:
                 match = re.match(
@@ -377,7 +378,8 @@ class ReportView(BaseView):
                     StatisticsEmail.insert_email_address(input)
                 else:
                     alert_msg = 'Please check email input fields.'
-        flash(_(alert_msg))
+                    category = 'error'
+        flash(_(alert_msg), category=category)
         return redirect(url_for("report.index"))
 
 
@@ -635,13 +637,13 @@ class SiteLicenseSettingsView(BaseView):
 
 
 style_adminview = {
-        'view_class': StyleSettingView,
-        'kwargs': {
-            'category': _('Setting'),
-            'name': _('Style'),
-            'endpoint': 'stylesetting'
-        }
+    'view_class': StyleSettingView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Style'),
+        'endpoint': 'stylesetting'
     }
+}
 
 report_adminview = {
     'view_class': ReportView,

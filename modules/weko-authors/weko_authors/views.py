@@ -20,8 +20,7 @@
 
 """Views for weko-authors."""
 
-from flask import Blueprint, current_app, json, jsonify, render_template, \
-    request
+from flask import Blueprint, current_app, json, jsonify, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from invenio_db import db
@@ -46,38 +45,6 @@ blueprint_api = Blueprint(
     template_folder='templates',
     static_folder='static',
 )
-
-
-@blueprint.route("/")
-@login_required
-@author_permission.require(http_exception=403)
-def index():
-    """Render a basic view."""
-    return render_template(
-        current_app.config['WEKO_AUTHORS_LIST_TEMPLATE'],
-        render_widgets=True)
-
-
-@blueprint.route("/add", methods=['GET'])
-@login_required
-@author_permission.require(http_exception=403)
-def add():
-    """Render an adding author view."""
-    return render_template(
-        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'],
-        render_widgets=True)
-
-
-# add by ryuu at 20180808 start
-@blueprint.route("/edit", methods=['GET'])
-@login_required
-@author_permission.require(http_exception=403)
-def edit():
-    """Render an adding author view."""
-    return render_template(
-        current_app.config['WEKO_AUTHORS_EDIT_TEMPLATE'],
-        render_widgets=True,)
-# add by ryuu at 20180808 end
 
 
 @blueprint_api.route("/add", methods=['POST'])
@@ -192,8 +159,8 @@ def get():
             }
         }
 
-    size = (data.get('numOfPage') or
-            current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
+    size = (data.get('numOfPage')
+            or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
     num = data.get('pageNumber') or 1
     offset = (int(num) - 1) * size if int(num) > 1 else 0
 

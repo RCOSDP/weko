@@ -1,7 +1,5 @@
-require([
-  "jquery",
-  "bootstrap"
-],function() {
+// require(["jquery", "bootstrap"],function() {});
+$(document).ready(function () {
   src_render = {};
   src_mapping = {};
   page_global = {
@@ -17,7 +15,7 @@ require([
   properties_obj = {}     // 作成したメタデータ項目タイプ
   select_option = '';
   page_json_editor = {}   //   一時的editorオブジェクトの保存
-  url_update_schema = '/itemtypes/register';
+  url_update_schema = '/admin/itemtypes/register';
   // デフォルトマッピングのテンプレート
   mapping_value = {
     "display_lang_type": "",
@@ -40,19 +38,19 @@ require([
     itemname = $('#item-type-lists').find("option:selected").text();
     itemname = itemname.substr(0,itemname.lastIndexOf('('));
     $('#itemtype_name').val(itemname);
-    url_update_schema = '/itemtypes/'+$('#item-type-lists').val()+'/register';
+    url_update_schema = '/admin/itemtypes/'+$('#item-type-lists').val()+'/register';
   }
 
   $('.radio_versionup').on('click', function(){
     if($(this).val() == 'upt') {
-      url_update_schema = '/itemtypes/'+$('#item-type-lists').val()+'/register';
+      url_update_schema = '/admin/itemtypes/'+$('#item-type-lists').val()+'/register';
     } else {
-      url_update_schema = '/itemtypes/register';
+      url_update_schema = '/admin/itemtypes/register';
     }
   });
 
   $('#item-type-lists').on('change', function(){
-    window.location.href = '/itemtypes/' + $('#item-type-lists').val();
+    window.location.href = '/admin/itemtypes/' + $('#item-type-lists').val();
   });
 
   $('input[type=radio][name=item_type]').on ('change', function(){
@@ -755,7 +753,7 @@ require([
     });
   }
 
-  getPropUrl = '/itemtypes/property/list?lang=' + $('#lang-code').val();
+  getPropUrl = '/admin/itemtypes/properties/list?lang=' + $('#lang-code').val();
   select_option = '';
   // 作成したメタデータ項目タイプの取得
   $.ajax({
@@ -801,7 +799,7 @@ require([
   });
 
   if($('#item-type-lists').val().length > 0) {
-    $.get('/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
+    $.get('/admin/itemtypes/' + $('#item-type-lists').val() + '/render', function(data, status){
       Object.assign(src_render ,data);
       page_global.upload_file = false;    // data.upload_file;
       $('#chk_upload_file').attr('checked', data.upload_file);
@@ -869,15 +867,13 @@ require([
 
   $('#item_type_delete_continue').on('click', function(){
     $("#item_type_delete_confirmation").modal("hide");
-    send_uri('/itemtypes/delete/' + $('#item-type-lists').val(), {},
+    send_uri('/admin/itemtypes/delete/' + $('#item-type-lists').val(), {},
       function(data){
-        if (data.code == 0) {
-          window.location.href = "/itemtypes/register";
-        }
-        alert(data.msg);
+        window.location.href = "/admin/itemtypes";  // Error/Success flash set from server side
       },
       function(errmsg){
-        alert(JSON.stringify(errmsg));
+        window.location.href = "/admin/itemtypes";
+        //alert(JSON.stringify(errmsg));
     });
   });
 

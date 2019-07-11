@@ -95,7 +95,8 @@ setup(
             'language = weko_admin.cli:language',
             'cert = weko_admin.cli:cert',
             'report = weko_admin.cli:report',
-            'billing = weko_admin.cli:billing'
+            'billing = weko_admin.cli:billing',
+            'admin_settings = weko_admin.cli:admin_settings'
         ],
         'invenio_celery.tasks': [
             'weko_admin = weko_admin.tasks',

@@ -16,7 +16,7 @@ from weko_admin.utils import get_current_api_certification
 
 from .permissions import auto_fill_permission
 from .utils import get_cinii_record_data, get_crossref_record_data, \
-    get_title_pubdate_path
+    get_title_pubdate_path, get_workflow_journal
 
 blueprint = Blueprint(
     "weko_items_autofill",
@@ -108,5 +108,20 @@ def get_auto_fill_record_data():
             result['error'] = api_type + ' is NOT support autofill feature.'
     except Exception as e:
         result['error'] = str(e)
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_auto_fill_journal/<string:activity_id>',
+                     methods=['GET'])
+@login_required
+def get_item_auto_fill_journal(activity_id):
+    """Get workflow journal data.
+
+    :param activity_id: The identify of Activity.
+    :return: Workflow journal data.
+    """
+    result = dict()
+    result['result'] = get_workflow_journal(activity_id)
 
     return jsonify(result)
