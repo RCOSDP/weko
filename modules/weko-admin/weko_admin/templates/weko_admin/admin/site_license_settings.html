@@ -63,8 +63,8 @@
                     </button>
                   </td>
                   <td rowspan="4" class="width_15 btnMiddle">
-                    <button type="button" class="btn btn-danger delete-button" ng-click="deleteSiteLicense(ipIndex)">
-                         <span class="glyphicon glyphicon-trash"></span>
+                    <button type="button" class="btn btn-danger" ng-click="deleteSiteLicense(ipIndex)">
+                         <span class="glyphicon glyphicon-trash"></span>&nbsp
                                {{_('Delete')}}
                     </button>
                   </td>
@@ -134,9 +134,9 @@
                     <span style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipRangeCheck">{{_('The range of ipAddress is not correct')}}</span>
                     <p></p>
                     <div class="form-group">
-                      <button type="button" class="btn btn-primary"
-                          ng-click="addNewRowRange(ipIndex)" style="width: 200px; height: 40px;font-size:15px">
-                         <span class="glyphicon glyphicon-plus"></span>
+                      <button type="button" class="btn btn-success"
+                          ng-click="addNewRowRange(ipIndex)">
+                         <span class="glyphicon glyphicon-plus"></span>&nbsp
                               {{_('More Input Row')}}
                       </button>
                     </div>
@@ -145,9 +145,9 @@
               </table>
             </div>
             <div class="form-group">
-              <button type="button" class="btn btn-primary"
-                  ng-click="addNewRowSiteLicense()" style="width: 200px; height: 40px;font-size:15px">
-                <span class="glyphicon glyphicon-plus"></span>
+              <button type="button" class="btn btn-success"
+                  ng-click="addNewRowSiteLicense()">
+                <span class="glyphicon glyphicon-plus"></span>&nbsp
                 {{_('More Input Row')}}
               </button>
             </div>
@@ -197,8 +197,8 @@
       </table>
     </form>
     <div class="form-group">
-      <button type="button" class="btn btn-primary pull-right save-button" ng-click="commitData()">
-        <span class="glyphicon glyphicon-download-alt"></span>
+      <button type="button" class="btn btn-primary pull-right" ng-click="commitData()">
+        <span class="glyphicon glyphicon-save"></span>&nbsp
         {{_('Save')}}
       </button>
     </div>
