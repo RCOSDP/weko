@@ -589,6 +589,9 @@ $(document).ready(function () {
         + '  </div>'
         + '</td>'
         + '<td>'
+        + '  <textarea type="button" class="form-control" rows="5" id="edit_notes_' + row_id + '">' + "" + '</textarea>'
+        + '</td>'
+        + '<td>'
         + '  <div class="btn-group-vertical" role="group" aria-label="' + "Replace" + '">'
         + '    <button type="button" class="btn btn-default sortable_up" id="btn_up_' + row_id + '" metaid="' + row_id + '">↑</button>'
         + '    <button type="button" class="btn btn-default sortable_down" id="btn_down_' + row_id + '" metaid="' + row_id + '">↓</button>'
@@ -596,9 +599,6 @@ $(document).ready(function () {
         + '</td>'
         + '<td>'
         + '  <button type="button" class="btn btn-danger" id="btn_del_' + row_id + '">' + "Delete" + '</button>'
-        + '</td>'
-        + '<td>'
-        + '  <textarea type="button" class="form-control" rows="4" id="edit_notes_' + row_id + '">' + "" + '</textarea>'
         + '</td>'
         + '</tr>';
     $('#tbody_itemtype').append(row_template);
