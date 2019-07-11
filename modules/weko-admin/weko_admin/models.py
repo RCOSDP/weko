@@ -1001,8 +1001,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
 
     id = db.Column(
         db.Integer,
-        primary_key=True,
-        autoincrement=True)
+        primary_key=True)
     """FeedbackMailSetting identifier."""
 
     account_author = db.Column(
@@ -1096,7 +1095,9 @@ class FeedbackMailSetting(db.Model, Timestamp):
 
         """
         try:
-            cls.query.filter_by(id=id).delete()
+            with db.session.begin_nested():
+                cls.query.delete()
+            db.session.commit()
             return True
         except BaseException as ex:
             current_app.logger.debug(ex)
