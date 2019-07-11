@@ -412,7 +412,7 @@ def build_rss_xml(data, term, count):
     root_url = request.url_root
     root_url = str(root_url).replace('/api/', '')
     root = ET.Element('rdf:RDF')
-    root.set('xmlns', root_url + '/rss/1.0')
+    root.set('xmlns', config.WEKO_XMLNS)
     root.set('xmlns:rdf', config.WEKO_XMLNS_RDF)
     root.set('xmlns:rdfs', config.WEKO_XMLNS_RDFS)
     root.set('xmlns:dc', config.WEKO_XMLNS_DC)

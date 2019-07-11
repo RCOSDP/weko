@@ -27,6 +27,10 @@ WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL = "No Title"
 WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE = "en"
 """Default widget language code"""
 
+WEKO_XMLNS = \
+    'http://purl.org/rss/1.0/rss/1.0'
+"""Default XMLNS url"""
+
 WEKO_XMLNS_RDF = \
     'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
 """Default XMLNS RDF url"""
