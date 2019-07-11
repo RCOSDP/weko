@@ -166,12 +166,12 @@ get_search_data = function (keyword) {
   $.ajax({
     url: get_search_data_url,
     method: "GET",
-    success: function(data, status) {
+    success: function (data, status) {
       if (data.error) {
-          //alert("Some errors have occured!\nDetail:" + data.error);
+        //alert("Some errors have occured!\nDetail:" + data.error);
         var modalcontent = "Some errors have occured!\nDetail:" + data.error;
-          $("#inputModal").html(modalcontent);
-          $("#allModal").modal("show");
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
         return null;
       } else {
         if (keyword === 'username') {
@@ -193,11 +193,11 @@ get_search_data = function (keyword) {
         return data.results;
       }
     },
-    error: function(data, status) {
-        //alert("Cannot connect to server!");
-        var modalcontent =  "Cannot connect to server!";
-        $("#inputModal").html(modalcontent);
-        $("#allModal").modal("show");
+    error: function (data, status) {
+      //alert("Cannot connect to server!");
+      var modalcontent = "Cannot connect to server!";
+      $("#inputModal").html(modalcontent);
+      $("#allModal").modal("show");
     }
   });
 }
@@ -227,24 +227,24 @@ get_autofill_data = function (keyword, data, mode) {
     },
     data: JSON.stringify(param),
     dataType: "json",
-    success: function(data, status) {
+    success: function (data, status) {
       if (mode == 'share_username') {
         $("#share_email").val(data.results.email);
       } else {
         if (mode == 'share_email') {
           if (data.results.username) {
             $("#share_username").val(data.results.username);
-          }else {
+          } else {
             $("#share_username").val("");
           }
         }
       }
     },
-    error: function(data, status) {
-        //alert("Cannot connect to server!");
-        var modalcontent =  "Cannot connect to server!";
-        $("#inputModal").html(modalcontent);
-        $("#allModal").modal("show");
+    error: function (data, status) {
+      //alert("Cannot connect to server!");
+      var modalcontent = "Cannot connect to server!";
+      $("#inputModal").html(modalcontent);
+      $("#allModal").modal("show");
     }
   });
 }
@@ -280,14 +280,15 @@ function handleSharePermission(value) {
 (function (angular) {
   function addAlert(message) {
     $('#alerts').append(
-        '<div class="alert alert-light" id="alert-style">' +
-        '<button type="button" class="close" data-dismiss="alert">' +
-        '&times;</button>' + message + '</div>');
-         }
+      '<div class="alert alert-light" id="alert-style">' +
+      '<button type="button" class="close" data-dismiss="alert">' +
+      '&times;</button>' + message + '</div>');
+  }
   // Bootstrap it!
   angular.element(document).ready(function () {
     angular.module('wekoRecords.controllers', []);
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
+      $scope.resourceTypeKey = "";
       $scope.groups = [];
       $scope.filemeta_keys = [];
       $scope.bibliographic_key = '';
@@ -346,16 +347,16 @@ function handleSharePermission(value) {
         });
         $rootScope.$broadcast('schemaFormRedraw');
       }
-      $scope.initContributorData = function() {
+      $scope.initContributorData = function () {
         $("#contributor-panel").addClass("hidden");
         // Load Contributor information
         let recordModel = $rootScope.recordsVM.invenioRecordsModel;
         let owner_id = 0
-            if (recordModel.owner) {
-              owner_id = recordModel.owner;
-            } else {
-              $scope.is_item_owner = true;
-            }
+        if (recordModel.owner) {
+          owner_id = recordModel.owner;
+        } else {
+          $scope.is_item_owner = true;
+        }
         if (!recordModel.hasOwnProperty('shared_user_id')) {
           $("#contributor-panel").removeClass("hidden");
           $(".input_contributor").prop("checked", true);
@@ -372,24 +373,24 @@ function handleSharePermission(value) {
             $.ajax({
               url: get_user_url,
               method: 'GET',
-              success: function(data, stauts) {
+              success: function (data, stauts) {
                 if (data.owner) {
                   $scope.is_item_owner = true;
                   $("#contributor-panel").removeClass("hidden");
                   $(".other_user_rad").click();
                   $("#share_username").val(data.username);
                   $("#share_email").val(data.email);
-                }else {
+                } else {
                   $(".other_user_rad").click();
                   $("#share_username").val(data.username);
                   $("#share_email").val(data.email);
                 }
               },
-              error: function(data, status) {
-                  //alert("Cannot connect to server!");
-                  var modalcontent =  "Cannot connect to server!";
-                  $("#inputModal").html(modalcontent);
-                  $("#allModal").modal("show");
+              error: function (data, status) {
+                //alert("Cannot connect to server!");
+                var modalcontent = "Cannot connect to server!";
+                $("#inputModal").html(modalcontent);
+                $("#allModal").modal("show");
               }
             });
           } else {
@@ -409,16 +410,207 @@ function handleSharePermission(value) {
           url: '/accounts/settings/groups/grouplist',
           method: 'GET',
           async: false,
-          success: function(data, status) {
+          success: function (data, status) {
             var group = "";
             let index = 1;
-            while(data[index]) {
+            while (data[index]) {
               group = data[index];
               $scope.groups.push(group);
               index += 1;
             }
           }
         });
+      }
+      
+      $scope.initMetadataValidationDOI = function () {
+        //schema_form_error_message = $('#schema_form_error_message').text()
+        // template: schema_form_error_message='{"form_name":"error message"}';
+        // schema_form_error_message='{"subitem_1551255647225":"Required.","subitem_1522300014469":"Required."}';
+        schema_form_error_message='{"schemaForm.error.pubdate":"Required."}';
+        console.log($rootScope);
+        if (schema_form_error_message.length > 2) {
+          error_message_list = JSON.parse(schema_form_error_message);
+          for(var k in error_message_list) {
+            console.log(k, error_message_list[k]);
+            $rootScope.$broadcast(k,error_message_list[k],false);
+          }
+        }
+        console.log($rootScope);
+      }
+      
+      $scope.searchTypeKey = function () {
+        if ($scope.resourceTypeKey.length > 0) {
+          return $scope.resourceTypeKey;
+        }
+        Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
+          ([key, value]) => {
+            if (value.type == 'object') {
+              if (value.properties.hasOwnProperty('resourcetype')) {
+                $scope.resourceTypeKey = key;
+                console.log(key);
+              }
+            }
+          }
+        );
+      }
+
+      $scope.resourceTypeSelect = function () {
+        let resourcetype = $("select[name='resourcetype']").val();
+        resourcetype = resourcetype.split("string:").pop();
+        let resourceuri = "";
+        if ($scope.resourceTypeKey) {
+          if (!$("#resourceuri").prop('disabled')) {
+            $("#resourceuri").prop('disabled', true);
+          }
+
+          switch (resourcetype) {
+            // multiple
+            case 'interactive resource':
+              resourceuri = "http://purl.org/coar/resource_type/c_e9a0";
+              break;
+            case 'learning material':
+              resourceuri = "http://purl.org/coar/resource_type/c_1843";
+              break;
+            case 'musical notation':
+              resourceuri = "http://purl.org/coar/resource_type/c_18cw";
+              break;
+            case 'research proposal':
+              resourceuri = "http://purl.org/coar/resource_type/c_baaf";
+              break;
+            case 'software':
+              resourceuri = "http://purl.org/coar/resource_type/c_5ce6";
+              break;
+            case 'technical documentation':
+              resourceuri = "http://purl.org/coar/resource_type/c_71bd";
+              break;
+            case 'workflow':
+              resourceuri = "http://purl.org/coar/resource_type/c_393c";
+              break;
+            case 'other（その他）':
+              resourceuri = "http://purl.org/coar/resource_type/c_1843";
+              break;
+            case 'other（プレプリント）':
+              $("#resourceuri").prop('disabled', false);
+              resourceuri = "";
+              break;
+            // conference
+            case 'conference object':
+              resourceuri = "http://purl.org/coar/resource_type/c_c94f";
+              break;
+            case 'conference proceedings':
+              resourceuri = "http://purl.org/coar/resource_type/c_f744";
+              break;
+            case 'conference poster':
+              resourceuri = "http://purl.org/coar/resource_type/c_6670";
+              break;
+            // patent
+            case 'patent':
+              resourceuri = "http://purl.org/coar/resource_type/c_15cd";
+              break;
+            // lecture
+            case 'lecture':
+              resourceuri = "http://purl.org/coar/resource_type/c_8544";
+              break;
+            // Book
+            case 'book':
+              resourceuri = "http://purl.org/coar/resource_type/c_2f33";
+              break;
+            case 'book part':
+              resourceuri = "http://purl.org/coar/resource_type/c_3248";
+              break;
+            // Dataset
+            case 'dataset':
+              resourceuri = "http://purl.org/coar/resource_type/c_ddb1";
+              break;
+            // Article
+            case 'conference paper':
+              resourceuri = "http://purl.org/coar/resource_type/c_5794";
+              break;
+            case 'data paper':
+              resourceuri = "http://purl.org/coar/resource_type/c_beb9";
+              break;
+            case 'departmental bulletin paper':
+              resourceuri = "http://purl.org/coar/resource_type/c_6501";
+              break;
+            case 'editorial':
+              resourceuri = "http://purl.org/coar/resource_type/c_b239";
+              break;
+            case 'journal article':
+              resourceuri = "http://purl.org/coar/resource_type/c_6501";
+              break;
+            case 'periodical':
+              resourceuri = "http://purl.org/coar/resource_type/c_2659";
+              break;
+            case 'review article':
+              resourceuri = "http://purl.org/coar/resource_type/c_dcae04bc";
+              break;
+            case 'article':
+              resourceuri = "http://purl.org/coar/resource_type/c_6501";
+              break;
+            // Image
+            case 'image':
+              resourceuri = "http://purl.org/coar/resource_type/c_c513";
+              break;
+            case 'still image':
+              resourceuri = "http://purl.org/coar/resource_type/c_ecc8";
+              break;
+            case 'moving image':
+              resourceuri = "http://purl.org/coar/resource_type/c_8a7e";
+              break;
+            case 'video':
+              resourceuri = "http://purl.org/coar/resource_type/c_12ce";
+              break;
+            // Cartographic
+            case 'cartographic material':
+              resourceuri = "http://purl.org/coar/resource_type/c_12cc";
+              break;
+            case 'map':
+              resourceuri = "http://purl.org/coar/resource_type/c_12cd";
+              break;
+            // Sound
+            case 'sound':
+              resourceuri = "http://purl.org/coar/resource_type/c_18cc";
+              break;
+            // Report
+            case 'internal report':
+              resourceuri = "http://purl.org/coar/resource_type/c_18ww";
+              break;
+            case 'report':
+              resourceuri = "http://purl.org/coar/resource_type/c_93fc";
+              break;
+            case 'research report':
+              resourceuri = "http://purl.org/coar/resource_type/c_18ws";
+              break;
+            case 'technical report':
+              resourceuri = "http://purl.org/coar/resource_type/c_18gh";
+              break;
+            case 'policy report':
+              resourceuri = "http://purl.org/coar/resource_type/c_186u";
+              break;
+            case 'report part':
+              resourceuri = "http://purl.org/coar/resource_type/c_ba1f";
+              break;
+            case 'working paper':
+              resourceuri = "http://purl.org/coar/resource_type/c_8042";
+              break;
+            // Thesis
+            case 'thesis':
+              resourceuri = "http://purl.org/coar/resource_type/c_46ec";
+              break;
+            case 'bachelor thesis':
+              resourceuri = "http://purl.org/coar/resource_type/c_7a1f";
+              break;
+            case 'master thesis':
+              resourceuri = "http://purl.org/coar/resource_type/c_bdcc";
+              break;
+            case 'doctoral thesis':
+              resourceuri = "http://purl.org/coar/resource_type/c_db06";
+              break;
+            default:
+              resourceuri = "";
+          }
+          $rootScope.recordsVM.invenioRecordsModel[$scope.resourceTypeKey].resourceuri = resourceuri;
+        }
       }
 
       $scope.getBibliographicMetaKey = function () {
@@ -481,6 +673,8 @@ function handleSharePermission(value) {
         $scope.autofillJournal();
         $scope.initUserGroups();
         $scope.initFilenameList();
+        $scope.initMetadataValidationDOI();
+        $scope.searchTypeKey();
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
           endpoints = JSON.parse($('#hide_endpoints').text());
@@ -553,14 +747,14 @@ function handleSharePermission(value) {
         this.setRecordDataFromApi(param);
       }
 
-      $scope.clearAllField = function() {
+      $scope.clearAllField = function () {
         $rootScope.recordsVM.invenioRecordsModel["pubdate"] = "";
         for (let item in $rootScope.recordsVM.invenioRecordsModel) {
           this.clearAllFieldCallBack($rootScope.recordsVM.invenioRecordsModel[item])
         }
       }
 
-      $scope.clearAllFieldCallBack = function(item) {
+      $scope.clearAllFieldCallBack = function (item) {
         if ($.isEmptyObject(item)) {
           return "";
         }
@@ -584,7 +778,7 @@ function handleSharePermission(value) {
         }
       }
 
-      $scope.setRecordDataFromApi = function(param) {
+      $scope.setRecordDataFromApi = function (param) {
         let request = {
           url: '/api/autofill/get_auto_fill_record_data',
           headers: {
@@ -608,12 +802,12 @@ function handleSharePermission(value) {
             }
           },
           function error(response) {
-             $scope.setAutoFillErrorMessage("Cannot connect to server!");
+            $scope.setAutoFillErrorMessage("Cannot connect to server!");
           }
         );
       }
 
-      $scope.setRecordDataCallBack = function(data) {
+      $scope.setRecordDataCallBack = function (data) {
         const THREE_FLOOR_ITEM = [
           "creator",
           "relation",
@@ -621,40 +815,40 @@ function handleSharePermission(value) {
         ];
         const CREATOR_NAMES = "creatorNames";
 
-        data.result.forEach(function(item){
-          if (THREE_FLOOR_ITEM.includes(item.key)){
+        data.result.forEach(function (item) {
+          if (THREE_FLOOR_ITEM.includes(item.key)) {
             let keys = Object.keys(item);
-            keys.forEach(function(itemKey) {
+            keys.forEach(function (itemKey) {
               if (itemKey != 'key') {
-                  let listSubData = item[itemKey];
-                  if (!$.isEmptyObject(listSubData)){
-                    if(Array.isArray(listSubData)){
-                      listSubData.forEach(function(subData) {
-                        let subKey = Object.keys(subData)[0];
-                        if (!$.isEmptyObject(subData[subKey])){
-                          if (subData.hasOwnProperty(CREATOR_NAMES)) {
-                            $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey][0]['creatorName'] = subData.creatorNames;
-                          }else{
-                            $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey] = subData[subKey];
-                          }
+                let listSubData = item[itemKey];
+                if (!$.isEmptyObject(listSubData)) {
+                  if (Array.isArray(listSubData)) {
+                    listSubData.forEach(function (subData) {
+                      let subKey = Object.keys(subData)[0];
+                      if (!$.isEmptyObject(subData[subKey])) {
+                        if (subData.hasOwnProperty(CREATOR_NAMES)) {
+                          $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey][0]['creatorName'] = subData.creatorNames;
+                        } else {
+                          $rootScope.recordsVM.invenioRecordsModel[itemKey][0][subKey] = subData[subKey];
                         }
-                      });
-                    } else if (typeof listSubData === 'object') {
-                      if (listSubData.hasOwnProperty(CREATOR_NAMES) &&
-                           $rootScope.recordsVM.invenioRecordsModel[itemKey].hasOwnProperty(CREATOR_NAMES)) {
-                        $rootScope.recordsVM.invenioRecordsModel[itemKey][CREATOR_NAMES][0]['creatorName'] = listSubData.creatorNames;
                       }
+                    });
+                  } else if (typeof listSubData === 'object') {
+                    if (listSubData.hasOwnProperty(CREATOR_NAMES) &&
+                      $rootScope.recordsVM.invenioRecordsModel[itemKey].hasOwnProperty(CREATOR_NAMES)) {
+                      $rootScope.recordsVM.invenioRecordsModel[itemKey][CREATOR_NAMES][0]['creatorName'] = listSubData.creatorNames;
                     }
                   }
+                }
               }
             });
-          }else {
+          } else {
             let keys = Object.keys(item)
-            keys.forEach(function(itemKey) {
+            keys.forEach(function (itemKey) {
               if (itemKey != 'key') {
                 let itemData = item[itemKey];
-                if(!$.isEmptyObject(itemData)){
-                    $rootScope.recordsVM.invenioRecordsModel[itemKey] = itemData;
+                if (!$.isEmptyObject(itemData)) {
+                  $rootScope.recordsVM.invenioRecordsModel[itemKey] = itemData;
                 }
               }
             });
@@ -662,13 +856,13 @@ function handleSharePermission(value) {
         });
         $('#meta-search').modal('toggle');
       }
-      $scope.searchSource = function(model_id,arrayFlg,form) {
-          // alert(form.key[1]);
-          var modalcontent = form.key[1];
-          $("#inputModal").html(modalcontent);
-          $("#allModal").modal("show");
+      $scope.searchSource = function (model_id, arrayFlg, form) {
+        // alert(form.key[1]);
+        var modalcontent = form.key[1];
+        $("#inputModal").html(modalcontent);
+        $("#allModal").modal("show");
       }
-      $scope.searchAuthor = function(model_id,arrayFlg,form) {
+      $scope.searchAuthor = function (model_id, arrayFlg, form) {
         // add by ryuu. start 20180410
         $("#btn_id").text(model_id);
         $("#array_flg").text(arrayFlg);
@@ -826,8 +1020,8 @@ function handleSharePermission(value) {
             url: '/api/items/get_current_login_user_id',
             method: 'GET',
             async: false,
-            success: function(data, status) {
-              if (data.user_id){
+            success: function (data, status) {
+              if (data.user_id) {
                 current_login_user = data.user_id;
               }
             }
@@ -845,12 +1039,12 @@ function handleSharePermission(value) {
             async: false,
             data: JSON.stringify(param),
             dataType: "json",
-            success: function(data, stauts) {
+            success: function (data, stauts) {
               if (data.error) {
-                  alert('Some errors have occured!\nDetail: ' + data.error);
-                  //var modalcontent =  "Some errors have occured!\nDetail: " + data.error;
-                  //$("#inputModal").html(modalcontent);
-                  //$("#allModal").modal("show");
+                alert('Some errors have occured!\nDetail: ' + data.error);
+                //var modalcontent =  "Some errors have occured!\nDetail: " + data.error;
+                //$("#inputModal").html(modalcontent);
+                //$("#allModal").modal("show");
               } else {
                 if (data.validation) {
                   userInfo = data.results;
@@ -860,41 +1054,41 @@ function handleSharePermission(value) {
                     userID: userInfo.user_id
                   };
                   if (otherUser.userID == current_login_user) {
-                      alert('You cannot specify yourself in "Other users" setting.');
-                      //var modalcontent = "You cannot specify yourself in "Other users" setting.";
-                      //$("#inputModal").html(modalcontent);
-                      //$("#allModal").modal("show");
-                  }else {
+                    alert('You cannot specify yourself in "Other users" setting.');
+                    //var modalcontent = "You cannot specify yourself in "Other users" setting.";
+                    //$("#inputModal").html(modalcontent);
+                    //$("#allModal").modal("show");
+                  } else {
                     $rootScope.recordsVM.invenioRecordsModel['shared_user_id'] = otherUser.userID;
                     result = true;
                   }
                 } else {
-                    alert('Shared user information is not valid\nPlease check it again!');
-                    //var modalcontent = "Shared user information is not valid\nPlease check it again!";
-                    //$("#inputModal").html(modalcontent);
-                    //$("#allModal").modal("show");
+                  alert('Shared user information is not valid\nPlease check it again!');
+                  //var modalcontent = "Shared user information is not valid\nPlease check it again!";
+                  //$("#inputModal").html(modalcontent);
+                  //$("#allModal").modal("show");
                 }
               }
             },
-            error: function(data, status) {
-                alert('Cannot connect to server!');
-                //var modalcontent =  "Cannot connect to server!";
-                //$("#inputModal").html(modalcontent);
-                //$("#allModal").modal("show");
+            error: function (data, status) {
+              alert('Cannot connect to server!');
+              //var modalcontent =  "Cannot connect to server!";
+              //$("#inputModal").html(modalcontent);
+              //$("#allModal").modal("show");
             }
           })
         } else {
-            alert('Some errors have occured when edit Contributer');
-            //var modalcontent =  "Some errors have occured when edit Contributer";
-            //$("#inputModal").html(modalcontent);
-            //$("#allModal").modal("show");
+          alert('Some errors have occured when edit Contributer');
+          //var modalcontent =  "Some errors have occured when edit Contributer";
+          //$("#inputModal").html(modalcontent);
+          //$("#allModal").modal("show");
         }
         return result;
       }
 
-      $scope.genTitleAndPubDate = function() {
+      $scope.genTitleAndPubDate = function () {
         let itemTypeId = $("#autofill_item_type_id").val();
-        let get_url = '/api/autofill/get_title_pubdate_id/'+itemTypeId;
+        let get_url = '/api/autofill/get_title_pubdate_id/' + itemTypeId;
         $.ajax({
           url: get_url,
           method: 'GET',
@@ -903,10 +1097,10 @@ function handleSharePermission(value) {
             let title = "";
             let lang = "en";
             let titleID = data.title;
-            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
+            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])) {
               let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
               if (Array.isArray(titleField)) {
-                if (titleField[0].hasOwnProperty(titleID[1])){
+                if (titleField[0].hasOwnProperty(titleID[1])) {
                   titleField = titleField[0];
                 }
               }
@@ -920,26 +1114,26 @@ function handleSharePermission(value) {
                 }
               }
             }
-            if (!$rootScope.recordsVM.invenioRecordsModel['title']){
+            if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
               $rootScope.recordsVM.invenioRecordsModel['title'] = title;
               $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
-            }else {
+            } else {
               if (title != "") {
                 $rootScope.recordsVM.invenioRecordsModel['title'] = title;
                 $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
               }
             }
           },
-          error: function(data, status) {
-              //alert('Cannot connect to server!');
-              var modalcontent =  "Cannot connect to server!";
-              $("#inputModal").html(modalcontent);
-              $("#allModal").modal("show");
+          error: function (data, status) {
+            //alert('Cannot connect to server!');
+            var modalcontent = "Cannot connect to server!";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
           }
         });
       }
 
-      $scope.priceValidator = function() {
+      $scope.priceValidator = function () {
         var result = true;
         $scope.filemeta_keys.forEach(filemeta_key => {
           groupsprice_record = $rootScope.recordsVM.invenioRecordsModel[filemeta_key];
@@ -961,20 +1155,20 @@ function handleSharePermission(value) {
       $scope.updateDataJson = async function () {
         this.genTitleAndPubDate();
         if (!$scope.priceValidator()) {
-            var modalcontent = "Billing price is required half-width numbers.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+          var modalcontent = "Billing price is required half-width numbers.";
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
         }
         else if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
-            //alert('Title is required! Please input title');
-            var modalcontent =  "Title is required! Please input title.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
-        }else if (!$rootScope.recordsVM.invenioRecordsModel['pubdate']){
-            //alert('PubDate is required! Please input pubDate');
-            var modalcontent =  "PubDate is required! Please input pubDate.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+          //alert('Title is required! Please input title');
+          var modalcontent = "Title is required! Please input title.";
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
+        } else if (!$rootScope.recordsVM.invenioRecordsModel['pubdate']) {
+          //alert('PubDate is required! Please input pubDate');
+          var modalcontent = "PubDate is required! Please input pubDate.";
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
         }
         else {
           let next_frame = $('#next-frame').val();
@@ -1002,18 +1196,20 @@ function handleSharePermission(value) {
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
-        if ($scope.is_item_owner) {
+        $scope.$broadcast('schemaFormValidate');
+        var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
+        if (!invalidFlg && $scope.is_item_owner) {
           if (!this.registerUserPermission()) {
             // Do nothing
           } else {
             this.saveDataJsonCallback(item_save_uri);
           }
-        }else {
+        } else {
           this.saveDataJsonCallback(item_save_uri);
         }
-        
+
       }
-      $scope.saveDataJsonCallback = function(item_save_uri) {
+      $scope.saveDataJsonCallback = function (item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
           metainfo = angular.merge(
@@ -1038,10 +1234,10 @@ function handleSharePermission(value) {
             addAlert(response.data.msg);
           },
           function error(response) {
-              //alert(response);
-              var modalcontent =  response;
-              $("#inputModal").html(modalcontent);
-              $("#allModal").modal("show");
+            //alert(response);
+            var modalcontent = response;
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
           }
         );
       }

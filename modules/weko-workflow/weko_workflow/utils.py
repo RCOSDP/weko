@@ -27,9 +27,14 @@ from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
 from weko_records.api import ItemsMetadata
+from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_records.api import FilesMetadata, ItemTypes
+from weko_records.api import Mapping
+from weko_records.serializers.utils import get_mapping
+import re
 
 from .api import WorkActivity
-from .config import IDENTIFIER_ITEMSMETADATA_FORM
+from .config import IDENTIFIER_ITEMSMETADATA_FORM, IDENTIFIER_GRANT_SELECT_DICT
 
 
 def get_community_id_by_index(index_name):
@@ -203,3 +208,219 @@ def reg_invenio_pidstore(pid_value, item_id):
                                     PIDStatus.REGISTERED, 'rec', item_id)
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
+
+
+def item_metadata_validation(item_id, identifier_type):
+    """
+    Register pids_tore.
+
+    :param: pid_value, item_id
+    """
+    if identifier_type == 0:
+        return None
+
+    error_list = []
+    journalarticle_nameid = 14
+    journalarticle_type = 'other（プレプリント）'
+    thesis_nameid = 12
+    report_nameid = 16
+    report_types = ['technical report','research report','report']
+    elearning_type = 'learning material'
+    dataset_nameid = 22
+    dataset_type = 'software'
+    datageneral_nameid = [13, 17, 18, 19, 20, 21]
+    datageneral_types = ['internal report', 'policy report', 'report part',
+                'working paper', 'interactive resource','research proposal', 'technical documentation', 'workflow', 'その他（その他）']
+
+    metadata_item = MappingData(item_id)
+    item_type = metadata_item.get_data_item_type()
+    resource_type, type_key = metadata_item.get_data_by_property("type.@value")
+
+    # check resource type request
+    if not (type_key or resource_type):
+        error_list.append(type_key.split('.')[0])
+        return error_list
+    resource_type = resource_type.pop()
+
+    # JaLC DOI identifier registration
+    if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
+        # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
+        if item_type.name_id == journalarticle_nameid or resource_type == journalarticle_type:
+            properties = ['title', 'identifier', 'identifierRegistration']
+            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
+        elif item_type.name_id == thesis_nameid:
+            properties = ['title', 'identifier', 'identifierRegistration']
+            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
+        elif item_type.name_id == report_nameid or resource_type in report_types:
+            properties = ['title', 'identifier', 'identifierRegistration']
+            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
+        elif resource_type == elearning_type:
+            properties = ['title', 'identifier', 'identifierRegistration']
+            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
+        elif item_type.name_id == dataset_nameid or resource_type == dataset_type:
+            properties = ['title', 'givenName', 'identifier', 'identifierRegistration']
+            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
+        elif item_type.name_id in datageneral_nameid or resource_type in datageneral_types:
+            properties = ['title', 'identifier', 'identifierRegistration']
+            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        else:
+            error_list = 'false'
+    # CrossRef DOI identifier registration
+    elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
+        if item_type.name_id == journalarticle_nameid or resource_type == journalarticle_type:
+            properties = ['title', 'identifier', 'identifierRegistration', 'sourceIdentifier', 'sourceTitle']
+            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        if item_type.name_id in [thesis_nameid, report_nameid] or resource_type in report_types:
+            properties = ['title', 'identifier', 'identifierRegistration']
+            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        else:
+            error_list = 'false'
+    else:
+        error_list = 'false'
+
+    if error_list == 'false':
+        return 'Selected Identifier Grant NOT support for current ItemType'
+
+    return error_list
+
+def validation_item_property(mapping_data, identifier_type, properties):
+    error_list = []
+    # check タイトル dc:title
+    if 'title' in properties:
+        title_data, title_key = mapping_data.get_data_by_property("title.@value")
+
+        if not title_data:
+            error_list.append(title_key)
+
+    # check 識別子 jpcoar:givenName
+    if 'givenName' in properties:
+        datas, key = mapping_data.get_data_by_property("creator.givenName.@value")
+        
+        if not datas:
+            error_list.append(key)
+        else:
+            idx = 0
+            for data in datas:
+                if not data:
+                    error_list.append(key + '.' + str(idx))
+                idx += 1
+
+    # check 識別子 jpcoar:identifier
+    if 'identifier' in properties:
+        datas, key = mapping_data.get_data_by_property("identifier.@value")
+        type_datas, type_key = mapping_data.get_data_by_property("identifier.@attributes.identifierType")
+        
+        if not (datas or type_datas):
+            error_list.append(key)
+            error_list.append(type_key)
+        else:
+            idx = 0
+            for data in datas:
+                if not data:
+                    error_list.append(key + '.' + str(idx))
+                idx += 1
+            idx = 0
+            for type_data in type_datas:
+                if not type_data in ['HDL', 'URI']:
+                    error_list.append(type_key + '.' + str(idx))
+                idx += 1
+
+    # check ID登録 jpcoar:identifierRegistration
+    if 'identifierRegistration' in properties:
+        datas, key = mapping_data.get_data_by_property("identifierRegistration.@value")
+        type_datas, type_key = mapping_data.get_data_by_property("identifierRegistration.@attributes.identifierType")
+        
+        if not (datas or type_datas):
+            error_list.append(key)
+            error_list.append(type_key)
+        else:
+            idx = 0
+            for data in datas:
+                if not data:
+                    error_list.append(key + '.' + str(idx))
+                else:
+                    char_re = re.compile(r'[^a-zA-Z0-9\-\.\_\;\(\)\/.]')
+                    result = char_re.search(data)
+                    if bool(result):
+                        error_list.append(key + '.' + str(idx))
+                idx += 1
+            idx = 0
+            for type_data in type_datas:
+                if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI'] and not type_data == 'JaLC':
+                    error_list.append(type_key + '.' + str(idx))
+                if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI'] and not type_data == 'Crossref':
+                    error_list.append(type_key + '.' + str(idx))
+                idx += 1
+
+    # check 収録物識別子 jpcoar:sourceIdentifier
+    if 'sourceIdentifier' in properties:
+        datas, key = mapping_data.get_data_by_property("sourceIdentifier.@value")
+        type_datas, type_key = mapping_data.get_data_by_property("sourceIdentifier.@attributes.identifierType")
+        
+        if not (datas or type_datas):
+            error_list.append(key)
+            error_list.append(type_key)
+        else:
+            idx = 0
+            for data in datas:
+                if not data:
+                    error_list.append(key + '.' + str(idx))
+                idx += 1
+            idx = 0
+            for type_data in type_datas:
+                if not type_data:
+                    error_list.append(type_key + '.' + str(idx))
+                idx += 1
+
+    # check 収録物名 jpcoar:sourceTitle
+    if 'sourceTitle' in properties:
+        datas, key = mapping_data.get_data_by_property("sourceTitle.@value")
+        lang_datas, lang_key = mapping_data.get_data_by_property("sourceTitle.@attributes.xml:lang")
+        
+        if not (datas or lang_datas):
+            error_list.append(key)
+            error_list.append(lang_key)
+        else:
+            idx = 0
+            for data in datas:
+                if not data:
+                    error_list.append(key + '.' + str(idx))
+                idx += 1
+            if not 'en' in lang_datas:
+                error_list.append(lang_key + '.' + str(idx))
+
+    return error_list
+
+
+class MappingData(object):
+    """Dummy pagination class."""
+
+    record = None
+    item_map = None
+
+    def __init__(self, item_id):
+        """Initilize pagination."""
+        self.record = WekoRecord.get_record(item_id)
+        item_type = self.get_data_item_type()
+        item_type_mapping = Mapping.get_record(item_type.id)
+        self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
+    
+    def get_data_by_property(self, property):
+        key = self.item_map.get(property)
+        data = []
+        attribute = self.record.get(key.split('.')[0])
+        if not attribute:
+            return None, key
+        else:
+            for attr in attribute.get('attribute_value_mlt'):
+                data.append(attr.get(key.split('.')[1]))
+        return data, key
+
+    def get_data_item_type(self):
+        item_type = ItemTypes.get_by_id(id_=self.record.get('item_type_id'))
+        return item_type

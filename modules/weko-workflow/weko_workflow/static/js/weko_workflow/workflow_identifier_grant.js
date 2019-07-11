@@ -8,30 +8,23 @@ require([
     }
     var withdraw_form = $('form[name$=withdraw_doi_form]');
 
-    // click button Next
-    $('#btn-finish').on('click', function() {
-        if (preparePostData(0)) {
-            sendQuitAction();
-        }
-    });
-
     // click button Save
-    $('#btn-draft').on('click', function() {
-        if (preparePostData(1)) {
-            sendQuitAction();
+    $('#btn-draft').on('click', function () {
+        if(preparePostData(1)){
+        sendQuitAction();
         }
     });
 
     // click button Withdraw
-    $('#btn_withdraw').on('click', function() {
+    $('#btn_withdraw').on('click', function () {
         $('#action_withdraw_confirmation').modal('show');
     });
 
-    $('#lnk_item_detail').on('click', function() {
+    $('#lnk_item_detail').on('click', function () {
         $('#myModal').modal('show');
     });
 
-    $('button#btn_close_alert').on('click', function() {
+    $('button#btn_close_alert').on('click', function () {
         $('#pwd').parent().removeClass('has-error');
         $('#error-info').parent().hide();
     });
@@ -41,50 +34,48 @@ require([
         let isSuffixFormat = true;
         data_global.post_uri = $('.cur_step').data('next-uri');
 
-        let identifier_grant =
-        $("input[name='identifier_grant']:checked").val();
-
-        let identifier_grant_jalc_doi_suffix =
-        getVal($("input[name='idf_grant_input_1']"));
-
-        let identifier_grant_jalc_doi_link =
-        $("span[name='idf_grant_link_1']").text() +
-        getVal($("input[name='idf_grant_input_1']"));
-
-        let identifier_grant_jalc_cr_doi_suffix =
-        getVal($("input[name='idf_grant_input_2']"));
-
-        let identifier_grant_jalc_cr_doi_link =
-        $("span[name='idf_grant_link_2']").text() +
-        getVal($("input[name='idf_grant_input_2']"));
-
-        let identifier_grant_jalc_dc_doi_suffix =
-        getVal($("input[name='idf_grant_input_3']"));
-
-        let identifier_grant_jalc_dc_doi_link =
-        $("span[name='idf_grant_link_3']").text() +
-        getVal($("input[name='idf_grant_input_3']"));
-
-        let identifier_grant_crni_link =
-        $("span[name='idf_grant_link_4']").text();
+        let identifier_grant = $("input[name='identifier_grant']:checked").val();
+        let identifier_grant_jalc_doi_suffix = getVal($("input[name='idf_grant_input_1']"));
+        let identifier_grant_jalc_doi_link = $("span[name='idf_grant_link_1']").text() + getVal($("input[name='idf_grant_input_1']"));
+        let identifier_grant_jalc_cr_doi_suffix = getVal($("input[name='idf_grant_input_2']"));
+        let identifier_grant_jalc_cr_doi_link = $("span[name='idf_grant_link_2']").text() + getVal($("input[name='idf_grant_input_2']"));
+        let identifier_grant_jalc_dc_doi_suffix = getVal($("input[name='idf_grant_input_3']"));
+        let identifier_grant_jalc_dc_doi_link = $("span[name='idf_grant_link_3']").text() + getVal($("input[name='idf_grant_input_3']"));
+        let identifier_grant_crni_link = $("span[name='idf_grant_link_4']").text();
 
         data_global.post_data = {
-            identifier_grant: identifier_grant,
-            identifier_grant_jalc_doi_suffix:
-            identifier_grant_jalc_doi_suffix,
-            identifier_grant_jalc_doi_link: identifier_grant_jalc_doi_link,
-            identifier_grant_jalc_cr_doi_suffix:
-            identifier_grant_jalc_cr_doi_suffix,
-            identifier_grant_jalc_cr_doi_link:
-            identifier_grant_jalc_cr_doi_link,
-            identifier_grant_jalc_dc_doi_suffix:
-            identifier_grant_jalc_dc_doi_suffix,
-            identifier_grant_jalc_dc_doi_link:
-            identifier_grant_jalc_dc_doi_link,
-            identifier_grant_crni_link: identifier_grant_crni_link,
-            action_version: $('.cur_step').data('action-version'),
-            commond: '',
-            temporary_save: tmp_save
+        identifier_grant: identifier_grant,
+        identifier_grant_jalc_doi_suffix: identifier_grant_jalc_doi_suffix,
+        identifier_grant_jalc_doi_link: identifier_grant_jalc_doi_link,
+        identifier_grant_jalc_cr_doi_suffix: identifier_grant_jalc_cr_doi_suffix,
+        identifier_grant_jalc_cr_doi_link: identifier_grant_jalc_cr_doi_link,
+        identifier_grant_jalc_dc_doi_suffix: identifier_grant_jalc_dc_doi_suffix,
+        identifier_grant_jalc_dc_doi_link: identifier_grant_jalc_dc_doi_link,
+        identifier_grant_crni_link: identifier_grant_crni_link,
+        action_version: $('.cur_step').data('action-version'),
+        commond: '',
+        temporary_save: tmp_save
+        };
+    
+    let idf_grant_method = $('#idf_grant_method').val();
+    if(tmp_save == 1 || idf_grant_method == 0) {
+        let arrayDoi = [identifier_grant_jalc_doi_link, identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_dc_doi_link];
+        isSuffixFormat = validateLengDoi(arrayDoi);
+    } else {
+        switch(identifier_grant) {
+          case "0":
+          case "4":
+          default:
+            break;
+          case "1":
+            isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_doi_link, identifier_grant_jalc_doi_suffix);
+            break;
+          case "2":
+            isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_cr_doi_suffix);
+            break;
+          case "3":
+            isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix);
+            break;
         };
 
         if (tmp_save == 1) {

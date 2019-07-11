@@ -42,6 +42,7 @@ from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
 from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
+from .config import ITEM_REGISTRATION_FLOW_ID
 
 
 class Flow(object):
@@ -247,6 +248,19 @@ class Flow(object):
                 last_action = flow_actions.pop()
                 return last_action
         return None
+
+    def get_item_registration_flow_action(self, flow_id):
+        """Return Item Registration action info.
+
+        :param flow_id:
+        :return:
+        """
+        with db.session.no_autoflush:
+            flow_action = _FlowAction.query.filter_by(
+                flow_id=flow_id,
+                action_id=ITEM_REGISTRATION_FLOW_ID).all()
+            current_app.logger.debug(flow_action)
+            return flow_action
 
 
 class WorkFlow(object):

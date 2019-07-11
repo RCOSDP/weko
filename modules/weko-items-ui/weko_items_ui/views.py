@@ -53,7 +53,7 @@ from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    validate_user
+    update_json_schema_by_activity_id, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -218,9 +218,11 @@ def iframe_error():
 
 
 @blueprint.route('/jsonschema/<int:item_type_id>', methods=['GET'])
+@blueprint.route('/jsonschema/<int:item_type_id>/<string:activity_id>',
+                 methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
-def get_json_schema(item_type_id=0):
+def get_json_schema(item_type_id=0, activity_id=""):
     """Get json schema.
 
     :param item_type_id: Item type ID. (Default: 0)
@@ -251,10 +253,14 @@ def get_json_schema(item_type_id=0):
                         'filemeta').get('items').get('properties').get('groups')
                     filemeta_group['enum'] = group_enum
 
-                json_schema = result
-
         if result is None:
             return '{}'
+
+        if activity_id:
+            updated_json_schema = update_json_schema_by_activity_id(result, activity_id)
+            if updated_json_schema is not None: result=updated_json_schema
+
+        json_schema = result
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
