@@ -22,12 +22,11 @@
 
 from datetime import datetime
 
-from flask import current_app, json
+from flask import current_app
 from invenio_db import db
 from sqlalchemy import asc
-from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func
 from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
@@ -761,7 +760,8 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                         db.session.merge(current_record)
                     else:
                         db.session.add(
-                            LogAnalysisRestrictedCrawlerList(list_url=new_list))
+                            LogAnalysisRestrictedCrawlerList(
+                                list_url=new_list))
                 db.session.commit()
             except BaseException as ex:
                 current_app.logger.debug(ex)
@@ -990,7 +990,6 @@ class RankingSettings(db.Model):
         return cls
 
 
-<<<<<<< HEAD
 class FeedbackMailSetting(db.Model, Timestamp):
     """Feedback email setting.
 
@@ -1044,7 +1043,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
 
     @classmethod
     def get_all_feedback_email_setting(cls):
-        """Get all feedback email setting
+        """Get all feedback email setting.
 
         Returns:
             class -- this class
@@ -1102,7 +1101,8 @@ class FeedbackMailSetting(db.Model, Timestamp):
         except BaseException as ex:
             current_app.logger.debug(ex)
             return False
-=======
+
+
 class AdminSettings(db.Model):
     """settings."""
 
@@ -1185,7 +1185,6 @@ class AdminSettings(db.Model):
             raise ex
 
         return cls
->>>>>>> sp14
 
 
 __all__ = ([
@@ -1199,9 +1198,6 @@ __all__ = ([
     'StatisticsEmail',
     'RankingSettings',
     'BillingPermission',
-<<<<<<< HEAD
-    'FeedbackMailSetting'
-=======
+    'FeedbackMailSetting',
     'AdminSettings'
->>>>>>> sp14
 ])
