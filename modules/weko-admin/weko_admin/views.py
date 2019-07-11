@@ -367,9 +367,9 @@ def get_email_author():
 
     indexer = RecordIndexer()
     result = indexer.client.search(index="authors", body=body)
-    result_itemCnt = indexer.client.search(index="weko", body=query_item)
+    result_item_cnt = indexer.client.search(index="weko", body=query_item)
 
-    result['item_cnt'] = result_itemCnt
+    result['item_cnt'] = result_item_cnt
 
     return jsonify(result)
 
