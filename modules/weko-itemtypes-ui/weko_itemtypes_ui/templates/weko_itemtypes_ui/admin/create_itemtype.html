@@ -95,7 +95,7 @@
   </div>
 <div class="container">
   <div class="row">
-    <div class="col-sm-12 col-md-12 col-lg-11">
+    <div class="col-sm-12 col-md-12 col-lg-11 metadata-content">
       <div class="row">
         <div id="alerts"></div>
         <div class="alert alert-danger hide" role="alert" id="itemtype_name_warning">
@@ -172,9 +172,9 @@
           <button type="button" class="btn btn-primary save-button pull-right" id="btn_restore_itemtype_schema">
               <span class="glyphicon glyphicon-repeat"></span>
                      {{_('Restore')}}</button>
-          <a role="button" class="btn btn-danger delete-button pull-right ten-pixel-right-margin" href="javascript:;" id="btn_delete_item">
+          <button type="button" class="btn btn-danger delete-button pull-right ten-pixel-right-margin" id="btn_delete_item">
               <span class="glyphicon glyphicon-trash"></span>
-                      {{ _('Delete') }}</a>
+                      {{ _('Delete') }}</button>
           <button type="button" class="btn btn-primary save-button pull-right ten-pixel-right-margin" id="btn_create_itemtype_schema">
               <span class="glyphicon glyphicon-saved"></span>
                      {{_('Save')}}</button>
