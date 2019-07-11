@@ -434,8 +434,6 @@ def build_rss_xml(data, term, count):
         'dc:date').text = current_time.isoformat() + '+00:00'
     items = ET.SubElement(channel, 'items')
     seq = ET.SubElement(items, 'rdf:Seq')
-    li = ET.SubElement(seq, 'rdf:li')
-    li.set('rdf:resource', root_url)
     if not data or not isinstance(data, list):
         xml_str = tostring(root, encoding='utf-8')
         xml_str = str.encode(
@@ -458,8 +456,8 @@ def build_rss_xml(data, term, count):
         ET.SubElement(item, 'link').text = find_rss_value(
             data_item,
             'link')
-        seeAlso = ET.SubElement(item, 'rdfs:seeAlso')
-        seeAlso.set('rdf:resource', find_rss_value(
+        see_also = ET.SubElement(item, 'rdfs:seeAlso')
+        see_also.set('rdf:resource', find_rss_value(
             data_item,
             'seeAlso'))
 
@@ -501,6 +499,10 @@ def build_rss_xml(data, term, count):
             data_item,
             '_updated'
         )
+        li = ET.SubElement(seq, 'rdf:li')
+        li.set('rdf:resource', find_rss_value(
+            data_item,
+            'link'))
         root.append(item)
         number_of_item = number_of_item + 1
     xml_str = tostring(root, encoding='utf-8')
