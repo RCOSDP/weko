@@ -178,7 +178,10 @@ class ItemTypeMetaDataView(BaseView):
             db.session.rollback()
             return jsonify(msg=_('Failed to register Item type.'))
         current_app.logger.debug('itemtype register: {}'.format(item_type_id))
-        return jsonify(msg=_('Successfuly registered Item type.'))
+        flash(_('Successfuly registered Item type.'))
+        redirect_url = url_for('.index', item_type_id=record.model.id)
+        return jsonify(msg=_('Successfuly registered Item type.'),
+                       redirect_url=redirect_url)
 
 
 class ItemTypePropertiesView(BaseView):

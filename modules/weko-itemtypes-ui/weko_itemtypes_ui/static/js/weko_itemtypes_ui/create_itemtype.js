@@ -753,9 +753,14 @@ $(document).ready(function () {
       contentType: 'application/json',
       dataType: 'json',
       data: JSON.stringify(data),
-      success: function(data,textStatus){
-        $('.modal-body').text(data.msg);
-        $('#myModal').modal('show');
+      success: function(data,textStatus) {
+        if('redirect_url' in data){
+          window.location.href = data.redirect_url
+        }
+        else {
+          $('.modal-body').text(data.msg);
+          $('#myModal').modal('show');
+        }
       },
       error: function(textStatus,errorThrown){
         $('.modal-body').text('Error: ' + JSON.stringify(textStatus));
