@@ -63,8 +63,8 @@ class IndexJournalSettingView(BaseView):
 
         """Log error for output info of journal, level: ERROR, status code: 101,
         content: Invalid setting file error."""
-        if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] !=
-            "/admin/indexjournal/jsonschema") \
+        if (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API']
+                != "/admin/indexjournal/jsonschema") \
             or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API'] == ""
                 or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_API']
                     is None)):
@@ -74,8 +74,8 @@ class IndexJournalSettingView(BaseView):
 
         """Log error for output info of journal, level: ERROR, status code: 101,
         content: Invalid setting file error."""
-        if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] !=
-            "/admin/indexjournal/schemaform") \
+        if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API']
+                != "/admin/indexjournal/schemaform") \
             or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API'] == ""
                 or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_API']
                     is None)):
@@ -100,7 +100,8 @@ class IndexJournalSettingView(BaseView):
             lang_code=session.get('selected_language', 'en')  # Set default
         )
 
-    @expose('/index/<int:index_id>', methods=['GET'])  # TODO: Delete if not used.
+    # TODO: Delete if not used.
+    @expose('/index/<int:index_id>', methods=['GET'])
     def get_journal_by_index_id(self, index_id=0):
         """Get journal by index id."""
         try:
@@ -132,8 +133,8 @@ class IndexJournalSettingView(BaseView):
                 or (current_app.config['WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE']
                     == ""
                     or (current_app.config[
-                            'WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'
-                        ] is None)):
+                        'WEKO_INDEXTREE_JOURNAL_SCHEMA_JSON_FILE'
+                    ] is None)):
                 current_app.logger.error(
                     '[{0}] Invalid setting file error'.format(101)
                 )
@@ -172,11 +173,11 @@ class IndexJournalSettingView(BaseView):
 
             """Log error for output info of journal, level: ERROR, status code: 101,
             content: Invalid setting file error."""
-            if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] !=
-                "schemas/schemaform.json") or \
-                (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] == ""
-                 or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE']
-                     is None)):
+            if (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE']
+                    != "schemas/schemaform.json") or \
+                    (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE'] == ""
+                     or (current_app.config['WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE']
+                         is None)):
                 current_app.logger.error(
                     '[{0}] Invalid setting file error'.format(101)
                 )
@@ -199,7 +200,8 @@ class IndexJournalSettingView(BaseView):
                         for sub_elem in elem['items']:
                             if 'title_i18n' in sub_elem:
                                 if cur_lang in sub_elem['title_i18n']:
-                                    if len(sub_elem['title_i18n'][cur_lang]) > 0:
+                                    if len(sub_elem['title_i18n']
+                                           [cur_lang]) > 0:
                                         sub_elem['title'] = sub_elem['title_i18n'][
                                             cur_lang]
         except BaseException:

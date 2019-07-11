@@ -289,8 +289,8 @@ class WekoFeedGenerator(FeedGenerator):
             channel.attrib['{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'] = \
                 self.__rss_request_url
 
-        if not (self.__rss_title and
-                self.__rss_link):
+        if not (self.__rss_title
+                and self.__rss_link):
             missing = ([] if self.__rss_title else ['title']) + \
                       ([] if self.__rss_link else ['link'])
             # ([] if self.__rss_description else ['description'])

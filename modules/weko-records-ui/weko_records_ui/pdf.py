@@ -240,7 +240,7 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     creator_item = item_metadata_json.get(_creator_item_id)
     try:
         creator_mail = creator_item['creatorMails'][0].get('creatorMail')
-    except (KeyError, IndexError):
+    except (KeyError, IndexError, TypeError):
         creator_mail = None
     try:
         creator_name = None
@@ -253,12 +253,12 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
 
         if creator_name is None:
             creator_name = default_creator_name
-    except (KeyError, IndexError):
+    except (KeyError, IndexError, TypeError):
         creator_name = None
     try:
         affiliation = creator_item['affiliation'][0].get(
             'affiliationNames')
-    except (KeyError, IndexError):
+    except (KeyError, IndexError, TypeError):
         affiliation = None
 
     metadata_dict = {
@@ -321,8 +321,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     offset = pdf.x + w1
     pdf.multi_cell(w1,
                    meta_h,
-                   lang_data["Title"]["METADATA"] +
-                   '\n' * (metadata_lfnum + 1),
+                   lang_data["Title"]["METADATA"]
+                   + '\n' * (metadata_lfnum + 1),
                    1,
                    'C',
                    True)
@@ -344,8 +344,8 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     top = pdf.y
     pdf.multi_cell(w1,
                    url_oapolicy_h,
-                   lang_data["Title"]["OAPOLICY"] +
-                   '\n' * (oa_policy_lfnum + 1),
+                   lang_data["Title"]["OAPOLICY"]
+                   + '\n' * (oa_policy_lfnum + 1),
                    1,
                    'C',
                    True)
@@ -358,7 +358,10 @@ def make_combined_pdf(pid, obj_file_uri, fileobj, obj, lang_user):
     pdf.set_font('Courier', '', 10)
     pdf.set_x(108)
 
-    license = item_metadata_json[_file_item_id][0].get('licensetype')
+    try:
+        license = item_metadata_json[_file_item_id][0].get('licensetype')
+    except (KeyError, IndexError, TypeError):
+        license = None
     if license == 'license_free':  # Free writing
         txt = item_metadata_json[_file_item_id][0].get('licensefree')
         if txt is None:

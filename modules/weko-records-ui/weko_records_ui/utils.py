@@ -20,9 +20,19 @@
 
 """Module of weko-records-ui utils."""
 
+from flask import current_app
 from invenio_db import db
-from weko_records.api import ItemsMetadata
+from weko_admin.models import AdminSettings
+from weko_records.api import ItemsMetadata, ItemTypes
 from weko_workflow.models import ActionStatusPolicy, Activity
+
+
+def check_items_settings():
+    """Check items setting."""
+    settings = AdminSettings.get('items_display_settings')
+    current_app.logger.debug(settings)
+    current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
+    current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
 
 
 def get_item_pidstore_identifier(object_uuid):
@@ -46,3 +56,18 @@ def get_item_pidstore_identifier(object_uuid):
                     return identifier.get('value')
 
     return None
+
+
+def is_billing_item(item_type_id):
+    """Checks if item is a billing item based on its meta data schema."""
+    item_type = ItemTypes.get_by_id(id_=item_type_id)
+    if item_type:
+        properties = item_type.schema['properties']
+        for meta_key in properties:
+            if properties[meta_key]['type'] == 'object' and \
+               'groupsprice' in properties[meta_key]['properties']:
+                return True
+            elif properties[meta_key]['type'] == 'array' and \
+                    'groupsprice' in properties[meta_key]['items']['properties']:
+                return True
+        return False

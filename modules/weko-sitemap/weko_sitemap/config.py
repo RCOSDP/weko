@@ -16,5 +16,5 @@ WEKO_SITEMAP_ADMIN_TEMPLATE = 'weko_sitemap/sitemap.html'
 WEKO_SITEMAP_TOTAL_MAX_URL_COUNT = 10000000
 """Max urls for all pages in total."""
 
-#WEKO_SITEMAP_CACHE_PREFIX = 'sitemap_cache::'
+# WEKO_SITEMAP_CACHE_PREFIX = 'sitemap_cache::'
 """Sitemap pages cache prefix."""

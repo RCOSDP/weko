@@ -18,11 +18,12 @@
 # MA 02111-1307, USA.
 #}
 
-{%- extends config.WEKO_SCHEMA_UI_BASE_TEMPLATE %}
+{%- extends admin_base_template %}
 
 {%- block css %}
   {% assets "invenio_deposit_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -32,15 +33,10 @@
   {% assets "weko_schema_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
-{%- block page_body_tabs %}
-  {% from "weko_theme/macros/edit_tabs_selector.html" import tabs_selector %}
-  {{ tabs_selector('schema_management') }}
-{%- endblock page_body_tabs%}
-
-{%- block page_body_main %}
+{%- block body %}
   <div>
     <div class="row">
-      <div class="col-md-12">
+      <div class="col-md-offset-1 col-md-10">
         <div id="invenio-records">
           <invenio-files-uploader
             method="PUT"
@@ -101,20 +97,12 @@
               </invenio-records-form>
               <div ng-hide="false">
                 <div ng-show="true">
-                  <ul class="list-inline text-right">
+                  <ul class="list-inline text-center">
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
                             class="btn btn-primary save-button"
                             ng-click="recordsVM.actionHandler(['self',
-                            'POST'])"><span class="glyphicon glyphicon-saved"></span>
+                            'POST'], '{{ url_for('schemasettings.list') }}')"><span class="glyphicon glyphicon-saved"></span>
                             {{_('Save')}}
-                        </button>
-                    </li>
-                    <li>
-                        <button ng-disabled="recordsVM.invenioRecordsLoading"
-                            ng-hide="!recordsVM.invenioRecordsEndpoints.initialization"
-                            class="btn btn-danger delete-button" ng-click="recordsVM.actionHandler(['self', 'DELETE'])">
-                               <span class="glyphicon glyphicon-trash"></span>
-                                 {{_('Delete')}}
                         </button>
                     </li>
                   </ul>
@@ -126,5 +114,4 @@
       </div>
     </div>
   </div>
-{%- endblock page_body_main %}
-
+{%- endblock body %}

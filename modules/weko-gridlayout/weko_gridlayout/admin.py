@@ -161,11 +161,11 @@ class WidgetSettingView(ModelView):
             action_form = None
 
         clear_search_url = self._get_list_url(
-                            view_args.clone(page=0,
-                                            sort=view_args.sort,
-                                            sort_desc=view_args.sort_desc,
-                                            search=None,
-                                            filters=None))
+            view_args.clone(page=0,
+                            sort=view_args.sort,
+                            sort_desc=view_args.sort_desc,
+                            search=None,
+                            filters=None))
 
         list_data = list()
         for widget_item in data:

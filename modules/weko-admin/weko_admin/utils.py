@@ -356,7 +356,7 @@ def get_user_report_data():
 
     # Total registered users
     results['all'].append({'role_name': _('Registered Users'),
-                          'count': total_users})
+                           'count': total_users})
     return results
 
 
@@ -400,7 +400,12 @@ def make_stats_tsv(raw_stats, file_type, year, month):
                       [_('Aggregation Month'), year + '-' + month],
                       [''], [header_row]])
 
-    cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
+    if file_type in ['billing_file_download', 'billing_file_preview']:
+        col_dict_key = file_type.split('_', 1)[1]
+        cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key, [])
+        cols[3:1] = raw_stats['all_groups']  # Insert group columns
+    else:
+        cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
     writer.writerow(cols)
 
     # Special cases:
@@ -408,6 +413,9 @@ def make_stats_tsv(raw_stats, file_type, year, month):
     if file_type == 'index_access':
         writer.writerow([_('Total Detail Views'), raw_stats['total']])
 
+    elif file_type in ['billing_file_download', 'billing_file_preview']:
+        write_report_tsv_rows(writer, raw_stats['all'], file_type,
+                              raw_stats['all_groups'])  # Pass all groups
     elif file_type == 'site_access':
         write_report_tsv_rows(writer,
                               raw_stats['site_license'],
@@ -447,6 +455,18 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
                              record['total'], record['no_login'],
                              record['login'], record['site_license'],
                              record['admin'], record['reg']])
+
+        elif file_type in ['billing_file_download', 'billing_file_preview']:
+            row = [record['file_key'], record['index_list'],
+                   record['total'], record['no_login'],
+                   record['login'], record['site_license'],
+                   record['admin'], record['reg']]
+            group_counts = []
+            for group_name in other_info:  # Add group counts in
+                group_counts.append(record['group_counts'].get(group_name, 0))
+            row[3:1] = group_counts
+            writer.writerow(row)
+
         elif file_type == 'index_access':
             writer.writerow(
                 [record['index_name'], record['view_count']])

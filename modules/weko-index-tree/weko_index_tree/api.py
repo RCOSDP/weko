@@ -195,8 +195,8 @@ class Indexes(object):
 
                 if getattr(index, "recursive_coverpage_check"):
                     cls.set_coverpage_state_resc(
-                            index_id,
-                            getattr(index, "coverpage_state")
+                        index_id,
+                        getattr(index, "coverpage_state")
                     )
                     setattr(index, "recursive_coverpage_check", False)
 
@@ -238,14 +238,14 @@ class Indexes(object):
                     recursive_t = cls.recs_query(pid=index_id)
                     obj = db.session.query(recursive_t). \
                         union_all(db.session.query(
-                                    Index.parent,
-                                    Index.id,
-                                    literal_column("''", db.Text).label("path"),
-                                    literal_column("''", db.Text).label("name"),
-                                    literal_column("''", db.Text).label(
-                                        "name_en"),
-                                    literal_column("0", db.Integer).label("lev")
-                                  ).filter(Index.id == index_id)).all()
+                            Index.parent,
+                            Index.id,
+                            literal_column("''", db.Text).label("path"),
+                            literal_column("''", db.Text).label("name"),
+                            literal_column("''", db.Text).label(
+                                "name_en"),
+                            literal_column("0", db.Integer).label("lev")
+                        ).filter(Index.id == index_id)).all()
 
                 if obj:
                     p_lst = [o.cid for o in obj]
@@ -319,7 +319,11 @@ class Indexes(object):
             try:
                 # move index on the same hierarchy
                 if str(pre_parent) == str(parent):
-                    parent_info = cls.get_index(pre_parent, with_count=True)
+                    if int(pre_parent) == 0:
+                        parent_info = cls.get_root_index_count()
+                    else:
+                        parent_info = cls.get_index(pre_parent,
+                                                    with_count=True)
                     position = int(data.get('position'))
                     pmax = parent_info.position_max \
                         if parent_info.position_max is not None else 0
@@ -388,7 +392,10 @@ class Indexes(object):
                                 db.session.rollback()
                 else:
                     slf_path = cls.get_self_path(index_id)
-                    parent_info = cls.get_index(parent, with_count=True)
+                    if int(parent) == 0:
+                        parent_info = cls.get_root_index_count()
+                    else:
+                        parent_info = cls.get_index(parent, with_count=True)
                     position_max = parent_info.position_max + 1 \
                         if parent_info.position_max is not None else 0
                     try:
@@ -396,8 +403,11 @@ class Indexes(object):
                     except IntegrityError as ie:
                         if 'uix_position' in ''.join(ie.args):
                             try:
-                                parent_info = cls.get_index(parent,
-                                                            with_count=True)
+                                if int(parent) == 0:
+                                    parent_info = cls.get_root_index_count()
+                                else:
+                                    parent_info = \
+                                        cls.get_index(parent, with_count=True)
                                 position_max = parent_info.position_max + 1 \
                                     if parent_info.position_max is not None \
                                     else 0
@@ -420,7 +430,8 @@ class Indexes(object):
                     from weko_deposit.api import WekoDeposit
                     WekoDeposit.update_by_index_tree_id(slf_path.path,
                                                         target.path)
-            except Exception:
+            except Exception as ex:
+                current_app.logger.debug(ex)
                 is_ok = False
         return is_ok
 
@@ -782,9 +793,9 @@ class Indexes(object):
                 db.session.query(
                     test_alias.parent,
                     test_alias.id,
-                    rec_alias.c.path +
-                    '/' +
-                    func.cast(
+                    rec_alias.c.path
+                    + '/'
+                    + func.cast(
                         test_alias.id,
                         db.Text),
                     func.coalesce(
@@ -801,8 +812,8 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev +
-                    1).filter(
+                    rec_alias.c.lev
+                    + 1).filter(
                     test_alias.parent == rec_alias.c.cid))
         else:
             recursive_t = db.session.query(
@@ -892,9 +903,9 @@ class Indexes(object):
                 db.session.query(
                     test_alias.parent,
                     test_alias.id,
-                    rec_alias.c.path +
-                    '/' +
-                    func.cast(
+                    rec_alias.c.path
+                    + '/'
+                    + func.cast(
                         test_alias.id,
                         db.Text),
                     func.coalesce(
@@ -911,8 +922,8 @@ class Indexes(object):
                     test_alias.display_no,
                     test_alias.coverpage_state,
                     test_alias.recursive_coverpage_check,
-                    rec_alias.c.lev +
-                    1).filter(
+                    rec_alias.c.lev
+                    + 1).filter(
                     test_alias.parent == rec_alias.c.cid))
         else:
             recursive_t = db.session.query(
