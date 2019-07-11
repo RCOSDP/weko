@@ -26,12 +26,12 @@ from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from flask_login import login_required
+from flask_login import current_user, login_required
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import BillingPermission
-from weko_records.api import ItemsMetadata, ItemTypeNames, ItemTypeProps, \
-    ItemTypes, Mapping
+from weko_records.api import ItemsMetadata, ItemTypeEditHistory, \
+    ItemTypeNames, ItemTypeProps, ItemTypes, Mapping
 from weko_schema_ui.api import WekoSchema
 
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
@@ -84,10 +84,14 @@ class ItemTypeMetaDataView(BaseView):
                 'meta_list': {},
                 'schemaeditor': {
                     'schema': {}
-                }
+                },
+                'edit_notes': {}
             }
         else:
+            edit_notes = result.latest_edit_history
             result = result.render
+            result['edit_notes'] = edit_notes
+
         return jsonify(result)
 
     @expose('/delete', methods=['POST'])
@@ -159,14 +163,25 @@ class ItemTypeMetaDataView(BaseView):
                                       form=data.get(
                                           'table_row_map').get('form'),
                                       render=data)
+
             Mapping.create(item_type_id=record.model.id,
                            mapping=data.get('table_row_map').get('mapping'))
+
+            ItemTypeEditHistory.create_or_update(
+                item_type_id=record.model.id,
+                user_id=current_user.get_id(),
+                notes=data.get('edit_notes', {})
+            )
+
             db.session.commit()
         except BaseException:
             db.session.rollback()
             return jsonify(msg=_('Failed to register Item type.'))
         current_app.logger.debug('itemtype register: {}'.format(item_type_id))
-        return jsonify(msg=_('Successfuly registered Item type.'))
+        flash(_('Successfuly registered Item type.'))
+        redirect_url = url_for('.index', item_type_id=record.model.id)
+        return jsonify(msg=_('Successfuly registered Item type.'),
+                       redirect_url=redirect_url)
 
 
 class ItemTypePropertiesView(BaseView):
