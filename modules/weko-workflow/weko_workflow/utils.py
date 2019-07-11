@@ -233,12 +233,12 @@ def item_metadata_validation(item_id, identifier_type):
     metadata_item = MappingData(item_id)
     item_type = metadata_item.get_data_item_type()
     resource_type, type_key = metadata_item.get_data_by_property("type.@value")
-    resource_type = resource_type.pop()
 
     # check resource type request
     if not (type_key or resource_type):
         error_list.append(type_key.split('.')[0])
         return error_list
+    resource_type = resource_type.pop()
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
