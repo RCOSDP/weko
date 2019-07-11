@@ -76,7 +76,7 @@ USA. #}
               </form>
             </div>
             <div class="col-xs-1 text-center">
-              <button ng-if="!$first" type="button" class="btn btn-danger" ng-click="delete_search_key($index)">
+              <button ng-if="!$first" type="button" class="btn btn-danger btn-sm" ng-click="delete_search_key($index)">
                 <span class="glyphicon glyphicon-remove"></span>
               </button>
             </div>
@@ -87,10 +87,10 @@ USA. #}
     <div class="row">
        <div class="col-xs-11 col-lg-11"></div>
        <div class="col-xs-1 col-lg-1">
-            <button id="add-big-button" class="btn btn-light
-                add-search-button" style="float:right;" ng-click="add_search_key()" ng-disabled="condition_data.length==detail_search_key.length">
+            <button id="add-big-button" class="btn btn-success"
+                    style="float:right;" ng-click="add_search_key()" ng-disabled="condition_data.length==detail_search_key.length">
                      <span class="glyphicon glyphicon-plus"></span>
-                       {{_('Add Search Condition')}}
+                       {{_('Add Search Condition')}}&nbsp
             </button>
             </div>
         </div>
@@ -100,16 +100,16 @@ USA. #}
         <div class="row">
             <div class="col-xs-1 col-xs-offset-5">
                 <button id="detail-search-btn"
-                    type="submit" class="btn btn-primary search-button"
+                    type="submit" class="btn btn-primary"
                     ng-click="detail_search()" style="float:right;">
                        <span class="glyphicon glyphicon-search"></span>
-                            {{_('Search')}}
+                            {{_('Search')}}&nbsp
                 </button>
             </div>
             <div class="col-xs-1">
-                <button id="clear-search-btn" type="button" class="btn btn-info clear-button" ng-click="detail_search_clear()">
+                <button id="clear-search-btn" type="button" class="btn btn-default" ng-click="detail_search_clear()">
                      <span class="glyphicon glyphicon-remove"></span>
-                          {{_('Clear')}}
+                          {{_('Clear')}}&nbsp
                 </button>
             </div>
     </div>
