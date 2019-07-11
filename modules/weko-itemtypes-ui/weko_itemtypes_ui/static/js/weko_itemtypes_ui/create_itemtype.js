@@ -587,7 +587,7 @@ $(document).ready(function () {
         + '  </div>'
         + '</td>'
         + '<td>'
-        + '  <button type="button" class="btn btn-danger" id="btn_del_' + row_id + '">' + "Delete" + '</button>'
+          + '  <button type="button" class="btn btn-danger" id="btn_del_' + row_id + '"><span class="glyphicon glyphicon-remove"></span></button>'
         + '</td>'
         + '</tr>';
     $('#tbody_itemtype').append(row_template);
