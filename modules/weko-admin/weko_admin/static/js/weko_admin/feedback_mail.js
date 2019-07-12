@@ -47,8 +47,8 @@ class ComponentFeedbackMail extends React.Component {
                 <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
                 <div class="controls col-xs-10">
                     <div className="form-group">
-                        <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>{SEND_RADIO_BUTTON_NAME}</span>
-                        <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>{NOT_SEND_RADIO_BUTTON_NAME}</span>
+                        <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>&nbsp;{SEND_RADIO_BUTTON_NAME}</span>
+                        <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>&nbsp;{NOT_SEND_RADIO_BUTTON_NAME}</span>
                     </div>
                 </div>
             </div>
@@ -337,8 +337,8 @@ class Pagination extends React.Component {
     let listPage = [];
     for (let i = this.state.startPage; i <= this.state.endPage; i++){
       listPage.push(
-        <li  key = {i.toString()}>
-          <a  href="#" className = {this.state.currentPage == i ? 'mypage my-pagionation-active' : 'mypage'} onClick = {() => this.locatePageResult(i)}>{i}</a>
+        <li  key = {i.toString()} className = {this.state.currentPage == i ? 'active' : ''}>
+          <a  href="#" onClick = {() => this.locatePageResult(i)}>{i}</a>
         </li>
       )
     }
@@ -365,7 +365,7 @@ class Pagination extends React.Component {
   render () {
     return (
       <div  className="row">
-        <div  className="col-sm-12 col-md-12 alignCenter">
+        <div  className="col-sm-12 col-md-12 text-center">
           {this.generatePagination()}
         </div>
       </div>
@@ -407,7 +407,7 @@ class ModalBodyComponent extends React.Component {
               <div className="row">
                 <TableUserEmailComponent listUser = {this.state.listUser} addEmailToList={this.props.addEmailToList}/>
               </div>
-              <div className = "margin-left-page">
+              <div>
                 <Pagination numOfResult = {this.state.numOfResult} searchKey = {this.state.searchKey} getListUser = {this.getListUser}/>
               </div>
             </div>
@@ -509,11 +509,15 @@ class ComponentButtonLayout extends React.Component {
         <div className="form-group style-component ">
           <div className="col-xs-5">
             <button className="btn btn-primary style-button" onClick={this.saveCommand}>
+              <span className="glyphicon glyphicon-saved"></span>
+              &nbsp;
               {SAVE_BUTTON_NAME}
             </button>
           </div>
           <div className="col-xs-offset-10">
             <button className="btn btn-primary style-button" onClick={this.sendCommand}>
+              <span class="glyphicon glyphicon-send"></span>
+              &nbsp;
               {SEND_BUTTON_NAME}
             </button>
           </div>
