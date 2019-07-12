@@ -46,11 +46,17 @@
   }
 
   .style-column{
-    width : 40%;
+    width : 45%;
   }
 
   .style-button{
     min-width: 120px;
     height: 40px;
     font-size: 15px;
+  }
+
+  .alert-info {
+    background-color: #00a65a !important;
+    border-color: #008d4c !important;
+    border-radius: 3px;
   }

@@ -135,11 +135,25 @@ class ComponentExclusionTarget extends React.Component {
     }
 }
 
+class ModalMessageComponent extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  render(){
+    return(
+      <div className="alert alert-info">
+          Sorry，No results.
+      </div>
+    )
+  }
+}
+
 class TableUserEmailComponent extends React.Component {
   constructor(props){
     super(props);
     this.state = {
       listUser: this.props.listUser,
+      firstRender: true,
     }
     this.generateBodyTableUser = this.generateBodyTableUser.bind(this);
     this.importEmail = this.importEmail.bind(this);
@@ -148,8 +162,10 @@ class TableUserEmailComponent extends React.Component {
   static getDerivedStateFromProps(nextProps, prevState) {
     if (nextProps.listUser != prevState.listUser)
     {
+      console.log(nextProps.listUser, prevState.listUser)
       return {
         listUser: nextProps.listUser,
+        firstRender: false,
       }
     }
     return null;
@@ -161,7 +177,7 @@ class TableUserEmailComponent extends React.Component {
         <tr key = {row._source.pk_id.toString()}>
           <td>{row._source.authorNameInfo[0].fullName}</td>
           <td>{row._source.emailInfo[0].email}</td>
-          <td><button className="btn btn-info" onClick = {(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
+          <td className="text-right"><button className="btn btn-info" onClick = {(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
         </tr>
       )
     )
@@ -203,6 +219,7 @@ class TableUserEmailComponent extends React.Component {
           </thead>
           {this.generateBodyTableUser()}
         </table>
+        {this.state.firstRender == false && this.state.listUser.length == 0 ? <ModalMessageComponent/> : ""}
       </div>
     )
   }
@@ -380,7 +397,6 @@ class ModalBodyComponent extends React.Component {
       listUser: [],
       numOfResult: 0,
       searchKey: "",
-
     }
     this.getListUser = this.getListUser.bind(this);
     this.getSearchKey = this.getSearchKey.bind(this);
@@ -407,7 +423,7 @@ class ModalBodyComponent extends React.Component {
               <div className="row">
                 <TableUserEmailComponent listUser = {this.state.listUser} addEmailToList={this.props.addEmailToList}/>
               </div>
-              <div>
+              <div className = "row">
                 <Pagination numOfResult = {this.state.numOfResult} searchKey = {this.state.searchKey} getListUser = {this.getListUser}/>
               </div>
             </div>
@@ -491,12 +507,11 @@ class ComponentButtonLayout extends React.Component {
       )
       .then(res => res.json())
       .then((result) => {
-        let modalContent = MESSAGE_SUCCESS;
+        let message = MESSAGE_SUCCESS;
         if (!result.success) {
-          modalContent = result.error;
+          message = result.error;
         }
-        $("#inputModal").html(modalContent);
-        $("#allModal").modal("show");
+        addAlert(message, !result.success);
       });
     }
 
@@ -565,6 +580,7 @@ class MainLayout extends React.Component {
     render() {
         return (
             <div>
+                <div id="alerts"></div>
                 <div className="row">
                     <ComponentFeedbackMail flagSend = {this.state.flagSend} bindingValueOfComponent = {this.bindingValueOfComponent}/>
                 </div>
@@ -588,3 +604,14 @@ $(function () {
         document.getElementById('root')
     )
 });
+
+function addAlert(message, isError) {
+  let className = "alert alert-info";
+  if(isError){
+    className = "alert alert-danger alert-dismissable";
+  }
+  $('#alerts').append(
+    '<div class="' + className + '">'
+    + '<button type="button" class="close" data-dismiss="alert">'
+    + '&times;</button>' + message + '</div>');
+}
