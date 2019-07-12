@@ -11,7 +11,7 @@
 
 .style-component {
     margin-top: 15px;
-    font-size: 18px;
+    font-size: 14px;
   }
 
   .margin-left {
@@ -19,13 +19,13 @@
   }
 
   .style-radioBtn {
-    width : 18px;
-    height : 18px;
+    width : 13px;
+    height : 13px;
   }
 
   .style-selected-box{
     margin-top: 15px;
-    width: 70%;
+    width: 60%;
     height: 50px;
     border: 1px inset #99999994;
     display: inline-block;
@@ -37,7 +37,7 @@
   }
 
   .style-deleteBtn{
-    margin-left: 5px;
+    margin-left: 15px;
     margin-bottom: 10px;
   }
 
@@ -52,7 +52,7 @@
   .style-button{
     min-width: 120px;
     height: 40px;
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .alert-info {

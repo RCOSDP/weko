@@ -5,6 +5,7 @@ const SEND_RADIO_BUTTON_NAME = document.getElementById("first-radio-name").value
 const NOT_SEND_RADIO_BUTTON_NAME = document.getElementById("second-radio-name").value;
 const COMPONENT_SEARCH_EMAIL_NAME = document.getElementById("component-search-email-name").value;
 const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
+const DELETE_BUTTON_NAME = document.getElementById("delete-button-name").value;
 const SAVE_BUTTON_NAME = document.getElementById("save-button-name").value;
 const SEND_BUTTON_NAME = document.getElementById("manual-send-name").value;
 const MESSAGE_SUCCESS = document.getElementById("message-success").value;
@@ -126,7 +127,7 @@ class ComponentExclusionTarget extends React.Component {
                       {this.generateSelectedBox(this.state.listEmail)}
                       <button className="btn btn-danger delete-button style-my-button style-deleteBtn" onClick={this.deleteCommand}>
                           <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
-                          &nbsp;Delete
+                          &nbsp;{DELETE_BUTTON_NAME}
                       </button>
                     </div>
                 </div>
@@ -529,7 +530,7 @@ class ComponentButtonLayout extends React.Component {
               {SAVE_BUTTON_NAME}
             </button>
           </div>
-          <div className="col-xs-offset-10">
+          <div className="col-xs-offset-8">
             <button className="btn btn-primary style-button" onClick={this.sendCommand}>
               <span class="glyphicon glyphicon-send"></span>
               &nbsp;
