@@ -22,14 +22,15 @@
 
 from flask import current_app
 from invenio_db import db
-from weko_admin.settings import AdminSettings
+from weko_admin.models import AdminSettings
 from weko_records.api import ItemsMetadata, ItemTypes
 from weko_workflow.models import ActionStatusPolicy, Activity
 
 
 def check_items_settings():
     """Check items setting."""
-    settings = AdminSettings()
+    settings = AdminSettings.get('items_display_settings')
+    current_app.logger.debug(settings)
     current_app.config['EMAIL_DISPLAY_FLG'] = settings.items_display_email
     current_app.config['ITEM_SEARCH_FLG'] = settings.items_search_author
 

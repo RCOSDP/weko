@@ -25,10 +25,11 @@ from datetime import datetime
 
 from flask import current_app, request, session, url_for
 from flask_login import current_user
-from invenio_accounts.models import User
+from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, types
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
@@ -876,42 +877,93 @@ class WorkActivity(object):
         :return:
         """
         with db.session.no_autoflush:
+            # Super users
+            is_admin = False
+            supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+            for role in list(current_user.roles or []):
+                if role.name in supers:
+                    is_admin = True
+                    break
+            # Community users
+            is_community_admin = False
+            community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+            for role in list(current_user.roles or []):
+                if role.name in community_role_name:
+                    is_community_admin = True
+                    break
+
             self_user_id = int(current_user.get_id())
             self_group_ids = [role.id for role in current_user.roles]
 
-            db_flow_action_users = _FlowActionRole.query.filter_by(
-                action_user=self_user_id, action_user_exclude=False).all()
-            db_flow_action_ids = [db_flow_action_user.flow_action_id for
-                                  db_flow_action_user in db_flow_action_users]
-            db_flow_action_roles = _FlowActionRole.query.filter_by(
-                action_user_exclude=False).filter(
-                _FlowActionRole.action_role.in_(self_group_ids)).all()
-            db_flow_action_ids.extend(
-                [db_flow_action_role.flow_action_id for
-                 db_flow_action_role in db_flow_action_roles])
-            db_flow_actions = _FlowAction.query.filter(
-                _FlowAction.id.in_(db_flow_action_ids)).all()
-            db_flow_define_flow_ids = [db_flow_action.flow_id for
-                                       db_flow_action in db_flow_actions]
-            db_flow_defines = _Flow.query.filter(
-                _Flow.flow_id.in_(db_flow_define_flow_ids)).all()
-            db_flow_define_ids = [db_flow_define.id for
-                                  db_flow_define in db_flow_defines]
-            db_activitys = _Activity.query.filter_by(
-                activity_login_user=self_user_id).all()
-            db_flow_define_ids.extend(
-                [db_activity.flow_id for db_activity in db_activitys])
-            db_flow_define_ids = list(set(db_flow_define_ids))
-            if community_id is not None:
-                activities = _Activity.query.filter(
-                    _Activity.flow_id.in_(db_flow_define_ids),
-                    _Activity.activity_community_id == community_id
-                ).order_by(
+            activities = []
+            # Get all activities of user or role
+            # TODO Combine the queries of all activities and action
+            #  activities into one query for pagination
+            if is_admin:
+                all_activities = _Activity.query.order_by(
                     asc(_Activity.id)).all()
+            elif is_community_admin:
+                # Get the list of users who has the community role
+                community_users = User.query.outerjoin(userrole).outerjoin(Role)\
+                    .filter(community_role_name == Role.name)\
+                    .filter(userrole.c.role_id == Role.id)\
+                    .filter(User.id == userrole.c.user_id)\
+                    .all()
+                community_user_ids = [
+                    community_user.id for community_user in community_users]
+                # Filter all activities which is created by a community user
+                all_activities = _Activity.query.filter(
+                    _Activity.activity_login_user.in_(community_user_ids))\
+                    .order_by(asc(_Activity.id))\
+                    .all()
             else:
-                activities = _Activity.query.filter(
-                    _Activity.flow_id.in_(db_flow_define_ids)).order_by(
-                    asc(_Activity.id)).all()
+                all_activities = _Activity.query\
+                    .filter(_Activity.activity_login_user == self_user_id)\
+                    .order_by(asc(_Activity.id)).all()
+
+            # Find action activities
+            query_action_activities = _Activity.query.outerjoin(_Flow)\
+                .outerjoin(_FlowAction).outerjoin(_FlowActionRole)\
+                .filter(
+                    ((_FlowActionRole.action_user == self_user_id)
+                     & (_FlowActionRole.action_user_exclude == '0'))
+                    | (_FlowActionRole.action_role.in_(self_group_ids)
+                       & (_FlowActionRole.action_role_exclude == '0'))
+            )\
+                .filter(_Activity.activity_status
+                        == ActivityStatusPolicy.ACTIVITY_BEGIN
+                        or _Activity.activity_status
+                        == ActivityStatusPolicy.ACTIVITY_MAKING)
+            if not is_admin and not is_community_admin:
+                query_action_activities = query_action_activities\
+                    .filter(_Activity.activity_login_user == self_user_id)
+            action_activities = query_action_activities\
+                .order_by(asc(_Activity.id)).all()
+
+            # Append to do and action activities into the master list
+            activities.extend(action_activities)
+            for activity in all_activities:
+                if activity not in action_activities:
+                    activities.append(activity)
+
+            # Find the activities which has contributor:
+            # Query all ItemMetadata with json.shared_user_data equaling to
+            # current user
+            # After that, do fetching all activity which matches to
+            # above ItemMetadata.
+            item_metadata = ItemMetadata.query.filter(
+                cast(ItemMetadata.json['shared_user_id'], types.INT)
+                == self_user_id)
+            item_uuids = [im.id for im in item_metadata]
+            contributor_activities = _Activity.query.filter(
+                _Activity.item_id.in_(item_uuids)).all()
+            for activity in contributor_activities:
+                if activity not in activities:
+                    activities.append(activity)
+
+            # Sort the list of activity
+            activities.sort(key=lambda a: a.activity_id)
+
             for activi in activities:
                 if activi.item_id is None:
                     activi.ItemName = ''

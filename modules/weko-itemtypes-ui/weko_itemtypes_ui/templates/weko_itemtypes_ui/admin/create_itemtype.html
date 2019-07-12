@@ -62,7 +62,7 @@
               {%- set delete_button_class = '' -%}
               {%- endif -%}
               <a role="button" class="btn btn-danger pull-right delete-button ten-pixel-right-margin" href="javascript:;" id="btn_delete_item">
-                  <span class="glyphicon glyphicon-trash"></span>
+                  <span class="glyphicon glyphicon-trash"></span>&nbsp
                   {{ _('Delete') }}
               </a>
 
@@ -128,6 +128,7 @@
               <th class="width-150">{{_('Item Name')}}</th>
               <th>{{_('Attribute')}}</th>
               <th class="width-150">{{_('Option')}}</th>
+              <th class="width-150">{{_('Notes')}}</th>
               <th class="width-50">{{_('Replacement')}}</th>
               <th class="width-71">{{_('Delete')}}</th>
             </tr>
@@ -157,24 +158,19 @@
               </td>
               <td> </td>
               <td> </td>
+              <td> </td>
             </tr>
           </tbody>
         </table>
         <div class="col-sm-3 col-md-3 col-lg-3">
-          <button type="button" class="btn btn-light add-big-button" id="btn_new_itemtype_meta">
-              <span class="glyphicon glyphicon-plus"></span>
+          <button type="button" class="btn btn-success" id="btn_new_itemtype_meta">
+              <span class="glyphicon glyphicon-plus"></span>&nbsp
                    {{_('Add Metadata')}}</button>
         </div>
         <div class="col-sm-3 col-md-3 col-lg-2 pull-right">
-          <button type="button" class="btn btn-primary save-button" id="btn_create_itemtype_schema">
-              <span class="glyphicon glyphicon-saved"></span>
+          <button type="button" class="btn btn-primary" id="btn_create_itemtype_schema">
+              <span class="glyphicon glyphicon-save"></span>&nbsp
                      {{_('Save')}}</button>
-        </div>
-        <div class="col-sm-3 col-md-3 col-lg-3 pull-right hide">
-          <button type="button" class="btn btn-primary btn-block preview-button" id="btn_previews_itemtype_schema">
-               <span class="glyphicon glyphicon-hand-right"></span>
-                     {{_('Preview')}}
-          </button>
         </div>
       </div>
       <div class="panel panel-default hide">
@@ -232,9 +228,9 @@
         <p>One fine body&hellip;</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button"
+        <button id="result_modal_close_btn" type="button" class="btn btn-info"
         data-dismiss="modal">
-             <span class="glyphicon glyphicon-remove"></span>
+             <span class="glyphicon glyphicon-remove"></span>&nbsp
                 {{_('Close')}}
         </button>
       </div>

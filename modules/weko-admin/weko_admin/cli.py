@@ -19,11 +19,13 @@
 # MA 02111-1307, USA.
 
 """Command line interface creation kit."""
+import ast
+
 import click
 from flask.cli import with_appcontext
 
-from .models import AdminLangSettings, ApiCertificate, BillingPermission, \
-    SessionLifetime, StatisticTarget, StatisticUnit
+from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
+    BillingPermission, SessionLifetime, StatisticTarget, StatisticUnit
 
 
 @click.group()
@@ -179,3 +181,27 @@ def toggle_active_billing_user(user_id, is_active):
             click.secho('deactive billing user success')
     except Exception as e:
         click.secho(str(e))
+
+
+@click.group()
+def admin_settings():
+    """Settings commands."""
+
+
+@admin_settings.command('create_settings')
+@click.argument('id')
+@click.argument('name')
+@click.argument('settings')
+@with_appcontext
+def create_settings(id, name, settings):
+    """Add new settings.
+
+    :param name: setting's name
+    :param settings: setting info
+    """
+    try:
+        data = ast.literal_eval(settings)
+        AdminSettings.update(name, data, id)
+        click.secho('insert setting success')
+    except Exception as ex:
+        click.secho(str(ex))

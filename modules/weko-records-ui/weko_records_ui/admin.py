@@ -35,7 +35,7 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.orm import load_only
-from weko_admin.settings import AdminSettings
+from weko_admin.models import AdminSettings
 from weko_deposit.api import WekoRecord
 from weko_records.api import ItemsMetadata
 from weko_search_ui.api import get_search_detail_keyword
@@ -69,7 +69,7 @@ class ItemSettingView(BaseView):
                 # Process forms
                 form = request.form.get('submit', None)
                 if form == 'set_search_author_form':
-                    settings = AdminSettings()
+                    settings = AdminSettings.get('items_display_settings')
                     search_author_flg = request.form.get(
                         'searchRadios', 'name')
                     settings.items_search_author = search_author_flg
@@ -78,6 +78,8 @@ class ItemSettingView(BaseView):
                         settings.items_display_email = True
                     else:
                         settings.items_display_email = False
+                    AdminSettings.update('items_display_settings',
+                                         settings.__dict__)
                     flash(_('Author flag was updated.'), category='success')
 
             return self.render(config.ADMIN_SET_ITEM_TEMPLATE,
