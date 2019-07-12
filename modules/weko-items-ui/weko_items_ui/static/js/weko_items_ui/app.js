@@ -556,17 +556,17 @@ function handleSharePermission(value) {
       $scope.clearAllField = function() {
         $rootScope.recordsVM.invenioRecordsModel["pubdate"] = "";
         for (let item in $rootScope.recordsVM.invenioRecordsModel) {
-          this.clearAllFieldCallBack($rootScope.recordsVM.invenioRecordsModel[item])
+          this.clearAllFieldCallBack($rootScope.recordsVM.invenioRecordsModel[item]);
         }
       }
 
       $scope.clearAllFieldCallBack = function(item) {
         if ($.isEmptyObject(item)) {
-          return "";
+          return item;
         }
         if (Array.isArray(item)) {
           let subItem = item[0];
-          this.clearAllFieldCallBack(subItem)
+          this.clearAllFieldCallBack(subItem);
         } else {
           for (let subItem in item) {
             if ($.isEmptyObject(item[subItem])) {
@@ -574,10 +574,12 @@ function handleSharePermission(value) {
             } else if (Array.isArray(item[subItem])) {
               let childItem = item[subItem][0];
               let result = [];
-              result.push(this.clearAllFieldCallBack(childItem))
+              result.push(this.clearAllFieldCallBack(childItem));
               item[subItem] = result;
             } else {
-              item[subItem] = "";
+              if (typeof item[subItem] === 'string' || item[subItem] instanceof String) {
+                item[subItem] = "";
+              }
             }
           }
           return item;
