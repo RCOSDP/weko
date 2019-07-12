@@ -437,7 +437,7 @@ def build_rss_xml(data, term, count):
     if not data or not isinstance(data, list):
         xml_str = tostring(root, encoding='utf-8')
         xml_str = str.encode(
-            '<?xml version="1.0" encoding="UTF-8"?>') + xml_str
+            config.WEKO_XML_FORMAT) + xml_str
         return Response(
             xml_str,
             mimetype='text/xml')
@@ -506,7 +506,7 @@ def build_rss_xml(data, term, count):
         root.append(item)
         number_of_item = number_of_item + 1
     xml_str = tostring(root, encoding='utf-8')
-    xml_str = str.encode('<?xml version="1.0" encoding="UTF-8"?>') + xml_str
+    xml_str = str.encode(config.WEKO_XML_FORMAT) + xml_str
     response = current_app.response_class()
     response.data = xml_str
     response.headers['Content-Type'] = 'application/xml'
@@ -543,7 +543,7 @@ def find_rss_value(data, keyword):
         else:
             return root_url + '/records/' + record_number
     elif keyword == 'seeAlso':
-        return 'https://www.w3.org/TR/rdf-schema/'
+        return config.WEKO_RDF_SCHEMA
     elif keyword == 'creator':
         if source.get('creator'):
             creator = source.get('creator')

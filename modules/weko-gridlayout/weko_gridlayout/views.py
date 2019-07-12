@@ -197,8 +197,6 @@ def get_rss_data():
         xml -- RSS data
 
     """
-    term = 0
-    count = 0
     try:
         data = request.args
         term = int(data.get('term'))
