@@ -159,6 +159,12 @@ class ItemType(db.Model, Timestamp):
     version_id = db.Column(db.Integer, nullable=False)
     """Used by SQLAlchemy for optimistic concurrency control."""
 
+    is_deleted = db.Column(
+        db.Boolean(name='deleted'),
+        default=False
+    )
+    """Status of item type."""
+
     __mapper_args__ = {
         'version_id_col': version_id
     }
