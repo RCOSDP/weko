@@ -167,6 +167,7 @@ class ItemType(db.Model, Timestamp):
 
     is_deleted = db.Column(
         db.Boolean(name='deleted'),
+        nullable=False,
         default=False
     )
     """Status of item type."""

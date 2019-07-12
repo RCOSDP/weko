@@ -919,11 +919,14 @@ $(document).ready(function () {
     if (restore_itemtype.val() !== '' && restore_itemtype.hasClass("deleted_type")) {
       send_uri('/admin/itemtypes/restore/' + restore_itemtype.val(), {},
         function(data){
-          $("#item-type-lists option[value='"+restore_itemtype.val()+"']").remove();
+          restore_itemtype.removeAttr("selected");
+          restore_itemtype.hide();
+          restore_itemtype.removeClass("deleted_type");
+          restore_itemtype.addClass("normal_type");
           alert(data.msg);
         },
         function(errmsg){
-          alert('server error');
+          alert(data.msg);
       });
     }
   });

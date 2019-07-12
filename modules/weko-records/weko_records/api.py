@@ -243,6 +243,19 @@ class ItemTypeNames(RecordBase):
         )
         return self
 
+    def restore(self):
+        """Restore an logically deleted item type name.
+
+        #. Restore the current record.
+
+        :returns: The restored :class:`ItemTypeName` instance.
+        """
+        with db.session.begin_nested():
+            self.is_active = True
+            db.session.merge(self)
+
+        return self
+
 
 class ItemTypes(RecordBase):
     """Define API for item type creation and manipulation."""
@@ -357,7 +370,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(id=id_)
             if not with_deleted:
-                query = query.filter(cls.is_deleted.is_(False))  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             obj = query.one_or_none()
             if obj is None:
                 return None
@@ -374,7 +387,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter(ItemType.id.in_(ids))
             if not with_deleted:
-                query = query.filter(cls.is_deleted.is_(False))  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return [cls(obj.json, model=obj) for obj in query.all()]
 
     @classmethod
@@ -388,7 +401,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(id=id_)
             if not with_deleted:
-                query = query.filter(cls.is_deleted.is_(False))  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return query.one_or_none()
 
     @classmethod
@@ -402,7 +415,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(name_id=name_id)
             if not with_deleted:
-                query = query.filter(cls.is_deleted.is_(False))  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return query.order_by(desc(ItemType.tag)).all()
 
     @classmethod
@@ -416,7 +429,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(name_id=name_id)
             if not with_deleted:
-                query = query.filter(cls.is_deleted.is_(False))  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return [cls(obj.schema, model=obj) for obj in query.all()]
 
     @classmethod
@@ -429,7 +442,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(cls.is_deleted.is_(False))
+                query = query.join(ItemType).filter(ItemType.is_deleted.is_(False))
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod
@@ -442,7 +455,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query
             if not with_deleted:
-                query = query.filter(cls.is_deleted.is_(False))  # noqa
+                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             return query.order_by(ItemType.name_id, ItemType.tag).all()
 
     def patch(self, patch):
@@ -578,6 +591,22 @@ class ItemTypes(RecordBase):
             record=self
         )
         return self.__class__(self.model.json, model=self.model)
+
+    def restore(self):
+        """Restore an logically deleted item type.
+
+        #. Restore the current record.
+
+        :returns: The restored :class:`ItemTypes` instance.
+        """
+        if self.model is None:
+            raise MissingModelError()
+
+        with db.session.begin_nested():
+            self.model.is_deleted = False
+            db.session.merge(self.model)
+
+        return self
 
     @property
     def revisions(self):
