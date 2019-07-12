@@ -55,6 +55,7 @@
     min-width: 120px;
     height: 40px;
     font-size: 14px;
+    margin-left: 15px;
   }
 
   .alert-info {
