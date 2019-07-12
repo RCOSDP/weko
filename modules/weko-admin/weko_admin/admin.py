@@ -41,9 +41,9 @@ from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
 
-from .models import LogAnalysisRestrictedCrawlerList, \
+from .models import FeedbackMailSetting, LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress, RankingSettings, SearchManagement, \
-    StatisticsEmail, FeedbackMailSetting
+    StatisticsEmail
 from .permissions import admin_permission_factory
 from .utils import allowed_file, get_redis_cache, get_response_json, \
     get_search_setting
@@ -389,6 +389,7 @@ class FeedbackMailView(BaseView):
         return self.render(
             current_app.config["WEKO_ADMIN_FEEDBACK_MAIL"]
         )
+
 
 class LanguageSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])

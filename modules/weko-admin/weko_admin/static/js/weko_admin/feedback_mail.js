@@ -264,8 +264,10 @@ class SearchComponent extends React.Component {
           <input className="form-control" placeholder="" type="text" onChange={this.handleChange} value={this.state.searchKey}/>
         </div>
         <div className="col-sm-1 col-md-1">
-          <button className="btn btn-info" type="button" onClick={this.searchEmail}>&nbsp;&nbsp;
-            Search&nbsp;&nbsp;
+          <button class="btn btn-primary search-button" type="button">&nbsp;&nbsp;
+            <i class="fa fa-search-plus"></i>
+            &nbsp;
+            Search &nbsp;&nbsp;
           </button>
         </div>
       </div>
