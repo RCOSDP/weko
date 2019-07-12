@@ -73,6 +73,7 @@ setup(
         ],
         'invenio_base.apps': [
             'weko_gridlayout = weko_gridlayout:WekoGridLayout',
+            'weko_gridlayout_rss = weko_gridlayout:WekoGridLayout',
         ],
         'invenio_base.api_blueprints': [
             'weko_gridlayout = weko_gridlayout.views:blueprint_api',
@@ -90,6 +91,7 @@ setup(
         ],
         'invenio_base.blueprints': [
             'weko_gridlayout = weko_gridlayout.views:blueprint',
+            'weko_gridlayout_rss = weko_gridlayout.views:blueprint',
         ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
