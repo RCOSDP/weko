@@ -56,8 +56,8 @@
   <div class="form-actions">
   <div class="col-sm-offset-2 col-sm-10">
       <button type="submit" id="index_form_submit" name="submit"
-          value="index_link_form" class="btn btn-primary update-button">
-            <i class="fa fa-edit"></i> 
+          value="index_link_form" class="btn btn-primary">
+         <span class="glyphicon glyphicon-save"></span>&nbsp
                {{ _('Update') }}
       </button>
       </div>
@@ -65,28 +65,4 @@
 </form>
 {%- endblock body %}
 {% block tail %}
-<script>
-  function addAlert(message) {
-    $('#alerts').append(
-        '<div class="alert alert-light" id="alert-style">' +
-        '<button type="button" class="close" data-dismiss="alert">' +
-        '&times;</button>' + message + '</div>');
-         }
- 
- $(document).ready(function() {
-    $('#index_form_submit').on('click', function(){
-      let height = $('#height').val();
-      if(height != null && height != '' && (isNaN(height) || height <= 0)) {
-        //alert("Invalid height of indextree panel.");
-        var modalcontent =  "Invalid height of indextree panel.";
-        $("#inputModal").html(modalcontent);
-        $("#allModal").modal("show");
-        return false;
-      } else{
-         addAlert("Successfully Updated.");
-          }
-
-    });
-  })
-</script>
 {% endblock %}
