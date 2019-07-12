@@ -930,7 +930,6 @@ msgstr "更新"
 #~ msgid "Organization name"
 #~ msgstr ""
 
-<<<<<<< HEAD
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:41
 msgid "ON/OFF"
 msgstr "フィードバックメール"
@@ -952,6 +951,10 @@ msgid "From author DB"
 msgstr "著者DBから入力"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:46
+msgid "Delete"
+msgstr "削除"
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:46
 msgid "Save"
 msgstr "設定内容を保存"
 
@@ -970,7 +973,7 @@ msgstr "メールアドレスが重複しています。"
 #: weko_admin/utils.py:646
 msgid "Author is duplicated."
 msgstr " 著者が重複しています。"
-=======
+
 #~ msgid "Aggregation Monh"
 #~ msgstr ""
 
@@ -1016,4 +1019,3 @@ msgstr " 著者が重複しています。"
 #~ msgid "12"
 #~ msgstr ""
 
->>>>>>> sp14

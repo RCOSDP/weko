@@ -894,18 +894,22 @@ msgid "From author DB"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:46
-msgid "Save"
+msgid "Delete"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:47
-msgid "Manual Send"
+msgid "Save"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:48
-msgid "Update successfully."
+msgid "Manual Send"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:49
+msgid "Update successfully."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:50
 msgid "Duplicate Email Addresses."
 msgstr ""
 
