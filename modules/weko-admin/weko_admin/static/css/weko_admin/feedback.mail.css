@@ -39,6 +39,8 @@
   .style-deleteBtn{
     margin-left: 15px;
     margin-bottom: 10px;
+    min-width: 120px;
+    height: 40px;
   }
 
   .style-table-modal{
