@@ -8,57 +8,49 @@
 .my-pagination-disabled {
   cursor: not-allowed;
 }
-.my-pagination-active, .mypage:hover {
-  background-color: #666 !important;
-  color: white !important;
-}
 
 .style-component {
     margin-top: 15px;
     font-size: 18px;
   }
-  
+
   .margin-left {
     margin-left: 10%;
   }
-  
+
   .style-radioBtn {
     width : 18px;
     height : 18px;
   }
-  
+
   .style-selected-box{
     margin-top: 15px;
     width: 70%;
     height: 50px;
-    border: 1px inset black;
+    border: 1px inset #99999994;
     display: inline-block;
     padding: 10px;
   }
-  
+
   .style-full-size{
     width: 100% !important;
   }
-  
+
   .style-deleteBtn{
     margin-left: 5px;
     margin-bottom: 10px;
   }
-  
+
   .style-table-modal{
     width: 100%;
   }
-  
+
   .style-column{
     width : 40%;
   }
-  
-  .margin-left-page{
-    margin-left: 60%;
-  }
-  
+
   .style-button{
-    min-width : 100px;
-    border-radius : 5%;
-    font-weight : 600;
+    min-width: 120px;
+    height: 40px;
+    font-size: 15px;
   }
