@@ -103,6 +103,7 @@ class IndexLinkSettingView(BaseView):
                 else:
                     style.index_link_enabled = False
                 db.session.commit()
+                flash(_('IndexLink flag was updated.'), category='success')
             return self.render(
                 current_app.config['WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE'],
                 enable=style.index_link_enabled)

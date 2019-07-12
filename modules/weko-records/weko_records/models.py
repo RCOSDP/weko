@@ -23,6 +23,7 @@
 import uuid
 from datetime import datetime
 
+from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.sql.expression import desc
@@ -159,6 +160,11 @@ class ItemType(db.Model, Timestamp):
     version_id = db.Column(db.Integer, nullable=False)
     """Used by SQLAlchemy for optimistic concurrency control."""
 
+    edit_notes = db.relationship('ItemTypeEditHistory',
+                                 order_by='ItemTypeEditHistory.created',
+                                 backref='item_type')
+    """Used to reference whole edit history."""
+
     is_deleted = db.Column(
         db.Boolean(name='deleted'),
         default=False
@@ -168,6 +174,63 @@ class ItemType(db.Model, Timestamp):
     __mapper_args__ = {
         'version_id_col': version_id
     }
+
+    @property
+    def latest_edit_history(self):
+        """Get latest edit note of self."""
+        return self.edit_notes[0].notes if self.edit_notes else {}
+
+
+class ItemTypeEditHistory(db.Model, Timestamp):
+    """Represent an item type edit history.
+
+    The ItemTypeEditHistory object contains a ``created`` and  a ``updated``
+    properties that are automatically updated.
+    """
+
+    __tablename__ = 'item_type_edit_history'
+
+    id = db.Column(
+        db.Integer(),
+        primary_key=True,
+        autoincrement=True
+    )
+    """Identifier of item type edit history."""
+
+    item_type_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(ItemType.id),
+        nullable=False
+    )
+    """Identifier for item type."""
+
+    user_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(User.id),
+        nullable=False
+    )
+    """Identifier for author of item type."""
+
+    notes = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Edit notes for item type."""
+
+    @classmethod
+    def get_latest_by_item_type_id(cls, item_type_id=0):
+        """Get latest notes for item type."""
+        pass
 
 
 class ItemTypeName(db.Model, Timestamp):

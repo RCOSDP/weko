@@ -38,7 +38,9 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
 from simplekv.memory.redisstore import RedisStore
+from sqlalchemy import types
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
@@ -46,6 +48,7 @@ from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
 from weko_records.api import ItemsMetadata
+from weko_records.models import ItemMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
 
@@ -422,16 +425,61 @@ def check_authority_action(activity_id='0', action_id=0):
     cur_user = current_user.get_id()
     cur_role = db.session.query(Role).join(userrole).filter_by(
         user_id=cur_user).all()
+
+    # If action_user is set:
+    # If current_user is in denied action_user
     if users['deny'] and int(cur_user) in users['deny']:
         return 1
-    if users['allow'] and int(cur_user) not in users['allow']:
-        return 1
+    # If current_user is in allowed action_user
+    if users['allow'] and int(cur_user) in users['allow']:
+        return 0
+    # Else if action_user is not set or action_user does not contain current_user:
     for role in cur_role:
         if roles['deny'] and role.id in roles['deny']:
             return 1
         if roles['allow'] and role.id not in roles['allow']:
             return 1
-    return 0
+
+    # If action_roles is not set or action roles does not contain any role of current_user:
+    # Gather information
+    from .models import User, Activity
+    activity = Activity.query.filter_by(
+        activity_id=activity_id).first()
+    # If user is the author of activity
+    if int(cur_user) == activity.activity_login_user:
+        return 0
+    # If user has admin role
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            return 0
+    # If user has community role and the user who created activity is member of community role -> has permission:
+    community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    # Get the list of users who has the community role
+    community_users = User.query.outerjoin(userrole).outerjoin(Role) \
+        .filter(community_role_name == Role.name) \
+        .filter(userrole.c.role_id == Role.id) \
+        .filter(User.id == userrole.c.user_id) \
+        .all()
+    community_user_ids = [
+        community_user.id for community_user in community_users]
+    for role in list(current_user.roles or []):
+        if role.name in community_role_name:
+            # User has community role
+            if activity.activity_login_user in community_user_ids:
+                return 0
+            break
+
+    # Check if this activity has contributor equaling to current user
+    im = ItemMetadata.query.filter_by(id=activity.item_id)\
+        .filter(cast(ItemMetadata.json['shared_user_id'], types.INT) == int(cur_user))\
+        .one_or_none()
+    if im:
+        # There is an ItemMetadata with contributor equaling to current user, allow to access
+        return 0
+
+    # Otherwise, user has no permission
+    return 1
 
 
 @blueprint.route(
@@ -833,14 +881,14 @@ def check_existed_doi():
     data['code'] = 1
     data['msg'] = 'error'
     if doi_link is not None:
-        isExistDOI = find_doi(doi_link)
-        isWithdrawnDoi = is_withdrawn_doi(doi_link)
-        if isExistDOI:
-            data['isExistDOI'] = isExistDOI
+        is_exist_doi = find_doi(doi_link)
+        doi_withdrawn = is_withdrawn_doi(doi_link)
+        if is_exist_doi:
+            data['isExistDOI'] = is_exist_doi
             data['msg'] = _('This DOI has been used already for another item. '
                             'Please input another DOI.')
-        elif isWithdrawnDoi:
-            data['isWithdrawnDoi'] = isWithdrawnDoi
+        elif doi_withdrawn:
+            data['isWithdrawnDoi'] = doi_withdrawn
             data['msg'] = _(
                 'This DOI was withdrawn. Please input another DOI.')
         else:

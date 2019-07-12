@@ -37,8 +37,10 @@ from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
-from .models import FileMetadata, ItemMetadata, ItemType, ItemTypeMapping, \
-    ItemTypeName, ItemTypeProperty, SiteLicenseInfo, SiteLicenseIpAddress
+from .models import FileMetadata, ItemMetadata, ItemType
+from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
+from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
+    SiteLicenseInfo, SiteLicenseIpAddress
 
 _records_state = LocalProxy(
     lambda: current_app.extensions['invenio-records'])
@@ -372,7 +374,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter(ItemType.id.in_(ids))
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(cls.is_deleted.is_(False))  # noqa
             return [cls(obj.json, model=obj) for obj in query.all()]
 
     @classmethod
@@ -386,7 +388,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(id=id_)
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(cls.is_deleted.is_(False))  # noqa
             return query.one_or_none()
 
     @classmethod
@@ -400,7 +402,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(name_id=name_id)
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(cls.is_deleted.is_(False))  # noqa
             return query.order_by(desc(ItemType.tag)).all()
 
     @classmethod
@@ -414,7 +416,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(name_id=name_id)
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(cls.is_deleted.is_(False))  # noqa
             return [cls(obj.schema, model=obj) for obj in query.all()]
 
     @classmethod
@@ -440,7 +442,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(cls.is_deleted.is_(False))  # noqa
             return query.order_by(ItemType.name_id, ItemType.tag).all()
 
     def patch(self, patch):
@@ -584,6 +586,46 @@ class ItemTypes(RecordBase):
             raise MissingModelError()
 
         return RevisionsIterator(self.model)
+
+
+class ItemTypeEditHistory(object):
+    """Define API for Itemtype Property creation and manipulation."""
+
+    @classmethod
+    def create_or_update(cls, id=0, item_type_id=None, user_id=None,
+                         notes={}):
+        r"""Create or update ItemTypeEditHistory and store it in the database.
+
+        :param id: ID of Itemtype property.
+        :param item_type_id: Existing ItemType model id.
+        :param user_id: Existing user format.
+        :param notes: map of notes in JSON format.
+        :returns: A new :class:`` instance.
+        """
+        with db.session.begin_nested():
+            existing = ItemTypeEditHistoryModel.query \
+                .filter_by(id=id).one_or_none()
+            new_edit_history = existing or \
+                ItemTypeEditHistoryModel(
+                    item_type_id=item_type_id,
+                    user_id=user_id,
+                )
+
+            if new_edit_history.notes != notes:
+                new_edit_history.notes = notes
+                db.session.add(new_edit_history)
+        return new_edit_history
+
+    @classmethod
+    def get_by_item_type_id(cls, item_type_id):
+        """Retrieve record by id.
+
+        :param item_type_id: ItemType id.
+        :returns: ItemTypeEditHistory record or None.
+        """
+        with db.session.no_autoflush:
+            return ItemTypeEditHistoryModel.query \
+                .filter_by(item_type_id=item_type_id).one_or_none()
 
 
 class Mapping(RecordBase):

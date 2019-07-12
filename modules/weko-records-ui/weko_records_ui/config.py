@@ -35,11 +35,14 @@ WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Repository Administrator',
                              'Community Administrator',
                              'Contributor',
-                             'General')
+                             'General',
+                             'Community Administrator')
 
 WEKO_PERMISSION_SUPER_ROLE_USER = ('System Administrator',
                                    'Repository Administrator',
                                    'Community Administrator')
+
+WEKO_PERMISSION_ROLE_COMMUNITY = 'Community Administrator'
 
 WEKO_RECORDS_UI_BULK_UPDATE_FIELDS = {
     'fields': [{'id': '1', 'name': 'Access Type'},
