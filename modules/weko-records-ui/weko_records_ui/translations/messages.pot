@@ -541,3 +541,12 @@ msgstr ""
 msgid "Versions"
 msgstr ""
 
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/body_contents.html:146
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details_contents.html:86
+msgid "The file cannot be downloaded because you do not have permission to view this file."
+msgstr ""
+
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/body_contents.html:436
+#: weko-records-ui/weko_records_ui/templates/weko_records_ui/file_details.html:112
+msgid "This file is a Billing file. (Price: XXXXX). Do you want to download it?"
+msgstr ""

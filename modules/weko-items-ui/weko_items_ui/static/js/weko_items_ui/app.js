@@ -339,8 +339,8 @@ function handleSharePermission(value) {
             group_form = groupsprice_form.items[0];
             group_form['titleMap'] = [];
             $scope.groups.forEach(group => {
-              groupsprice_schema.items.properties['group']['enum'].push(group);
-              group_form['titleMap'].push({ name: group, value: group });
+              groupsprice_schema.items.properties['group']['enum'].push(group.id);
+              group_form['titleMap'].push({ name: group.value, value: group.id });
             });
           }
         });
@@ -410,12 +410,14 @@ function handleSharePermission(value) {
           method: 'GET',
           async: false,
           success: function(data, status) {
-            var group = "";
-            let index = 1;
-            while(data[index]) {
-              group = data[index];
-              $scope.groups.push(group);
-              index += 1;
+            if(!$.isEmptyObject(data)){
+              for (let key in data) {
+                let group = {
+                  id: key,
+                  value: data[key]
+                };
+                $scope.groups.push(group);
+              }
             }
           }
         });
