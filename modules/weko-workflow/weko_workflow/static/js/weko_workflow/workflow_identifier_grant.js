@@ -1,7 +1,7 @@
 require([
     "jquery",
     "bootstrap"
-], function() {
+], function () {
     data_global = {
         post_uri: '',
         post_data: {}
@@ -10,8 +10,8 @@ require([
 
     // click button Save
     $('#btn-draft').on('click', function () {
-        if(preparePostData(1)){
-        sendQuitAction();
+        if (preparePostData(1)) {
+            sendQuitAction();
         }
     });
 
@@ -44,44 +44,22 @@ require([
         let identifier_grant_crni_link = $("span[name='idf_grant_link_4']").text();
 
         data_global.post_data = {
-        identifier_grant: identifier_grant,
-        identifier_grant_jalc_doi_suffix: identifier_grant_jalc_doi_suffix,
-        identifier_grant_jalc_doi_link: identifier_grant_jalc_doi_link,
-        identifier_grant_jalc_cr_doi_suffix: identifier_grant_jalc_cr_doi_suffix,
-        identifier_grant_jalc_cr_doi_link: identifier_grant_jalc_cr_doi_link,
-        identifier_grant_jalc_dc_doi_suffix: identifier_grant_jalc_dc_doi_suffix,
-        identifier_grant_jalc_dc_doi_link: identifier_grant_jalc_dc_doi_link,
-        identifier_grant_crni_link: identifier_grant_crni_link,
-        action_version: $('.cur_step').data('action-version'),
-        commond: '',
-        temporary_save: tmp_save
-        };
-    
-    let idf_grant_method = $('#idf_grant_method').val();
-    if(tmp_save == 1 || idf_grant_method == 0) {
-        let arrayDoi = [identifier_grant_jalc_doi_link, identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_dc_doi_link];
-        isSuffixFormat = validateLengDoi(arrayDoi);
-    } else {
-        switch(identifier_grant) {
-          case "0":
-          case "4":
-          default:
-            break;
-          case "1":
-            isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_doi_link, identifier_grant_jalc_doi_suffix);
-            break;
-          case "2":
-            isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_cr_doi_suffix);
-            break;
-          case "3":
-            isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix);
-            break;
+            identifier_grant: identifier_grant,
+            identifier_grant_jalc_doi_suffix: identifier_grant_jalc_doi_suffix,
+            identifier_grant_jalc_doi_link: identifier_grant_jalc_doi_link,
+            identifier_grant_jalc_cr_doi_suffix: identifier_grant_jalc_cr_doi_suffix,
+            identifier_grant_jalc_cr_doi_link: identifier_grant_jalc_cr_doi_link,
+            identifier_grant_jalc_dc_doi_suffix: identifier_grant_jalc_dc_doi_suffix,
+            identifier_grant_jalc_dc_doi_link: identifier_grant_jalc_dc_doi_link,
+            identifier_grant_crni_link: identifier_grant_crni_link,
+            action_version: $('.cur_step').data('action-version'),
+            commond: '',
+            temporary_save: tmp_save
         };
 
-        if (tmp_save == 1) {
-            let arrayDoi = [identifier_grant_jalc_doi_link,
-            identifier_grant_jalc_cr_doi_link,
-            identifier_grant_jalc_dc_doi_link];
+        let idf_grant_method = $('#idf_grant_method').val();
+        if (tmp_save == 1 || idf_grant_method == 0) {
+            let arrayDoi = [identifier_grant_jalc_doi_link, identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_dc_doi_link];
             isSuffixFormat = validateLengDoi(arrayDoi);
         } else {
             switch (identifier_grant) {
@@ -90,167 +68,190 @@ require([
                 default:
                     break;
                 case "1":
-                    isSuffixFormat = isDOISuffixFormat(
-                    identifier_grant_jalc_doi_link,
-                    identifier_grant_jalc_doi_suffix);
+                    isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_doi_link, identifier_grant_jalc_doi_suffix);
                     break;
                 case "2":
-                    isSuffixFormat = isDOISuffixFormat(
-                    identifier_grant_jalc_cr_doi_link,
-                    identifier_grant_jalc_cr_doi_suffix);
+                    isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_cr_doi_link, identifier_grant_jalc_cr_doi_suffix);
                     break;
                 case "3":
-                    isSuffixFormat = isDOISuffixFormat(
-                    identifier_grant_jalc_dc_doi_link,
-                    identifier_grant_jalc_dc_doi_suffix);
+                    isSuffixFormat = isDOISuffixFormat(identifier_grant_jalc_dc_doi_link, identifier_grant_jalc_dc_doi_suffix);
                     break;
             };
+
+            if (tmp_save == 1) {
+                let arrayDoi = [identifier_grant_jalc_doi_link,
+                    identifier_grant_jalc_cr_doi_link,
+                    identifier_grant_jalc_dc_doi_link];
+                isSuffixFormat = validateLengDoi(arrayDoi);
+            } else {
+                switch (identifier_grant) {
+                    case "0":
+                    case "4":
+                    default:
+                        break;
+                    case "1":
+                        isSuffixFormat = isDOISuffixFormat(
+                            identifier_grant_jalc_doi_link,
+                            identifier_grant_jalc_doi_suffix);
+                        break;
+                    case "2":
+                        isSuffixFormat = isDOISuffixFormat(
+                            identifier_grant_jalc_cr_doi_link,
+                            identifier_grant_jalc_cr_doi_suffix);
+                        break;
+                    case "3":
+                        isSuffixFormat = isDOISuffixFormat(
+                            identifier_grant_jalc_dc_doi_link,
+                            identifier_grant_jalc_dc_doi_suffix);
+                        break;
+                };
+            }
+
+            return isSuffixFormat;
         }
 
-        return isSuffixFormat;
-    }
+        function validateLengDoi(arrayDoi) {
+            let msg = '';
+            let result = true;
+            for (index = 0; index < arrayDoi.length; ++index) {
+                if (arrayDoi[index].length > 255) {
+                    msg = $('#msg_length_doi').val();
+                    result = false;
+                }
+            }
+            if (!result) {
+                alert(msg);
+            }
+            return result;
+        }
 
-    function validateLengDoi(arrayDoi) {
-        let msg = '';
-        let result = true;
-        for (index = 0; index < arrayDoi.length; ++index) {
-            if (arrayDoi[index].length > 255) {
+        function isDOISuffixFormat(doi_link, doi_suffix) {
+
+            let regexDOI = /^[_\-.;()\/A-Za-z0-9]+$/gi;
+            let msg = '';
+            let result = true;
+
+            if (doi_suffix == "" || doi_suffix == null) {
+                msg = $('#msg_required_doi').val();
+                result = false;
+            } else if (!regexDOI.test(doi_suffix)) {
+                msg = $('#msg_format_doi').val();
+                result = false;
+            } else if (doi_link.length > 255) {
                 msg = $('#msg_length_doi').val();
                 result = false;
+            } else {
+                isExistDOI = checkDOIExisted(doi_link)
+                if (isExistDOI) {
+                    msg = isExistDOI;
+                    result = false;
+                }
             }
+
+            if (!result) {
+                alert(msg);
+            }
+            return result;
         }
-        if (!result) {
-            alert(msg);
-        }
-        return result;
-    }
 
-    function isDOISuffixFormat(doi_link, doi_suffix) {
-
-        let regexDOI = /^[_\-.;()\/A-Za-z0-9]+$/gi;
-        let msg = '';
-        let result = true;
-
-        if (doi_suffix == "" || doi_suffix == null) {
-            msg = $('#msg_required_doi').val();
-            result = false;
-        } else if (!regexDOI.test(doi_suffix)) {
-            msg = $('#msg_format_doi').val();
-            result = false;
-        } else if (doi_link.length > 255) {
-            msg = $('#msg_length_doi').val();
-            result = false;
-        } else {
-            isExistDOI = checkDOIExisted(doi_link)
-            if (isExistDOI) {
-                msg = isExistDOI;
-                result = false;
+        function getVal(inObject) {
+            val = inObject.val();
+            if (val === undefined) {
+                return '';
+            } else {
+                return val;
             }
         }
 
-        if (!result) {
-            alert(msg);
-        }
-        return result;
-    }
-
-    function getVal(inObject) {
-        val = inObject.val();
-        if (val === undefined) {
-            return '';
-        } else {
-            return val;
-        }
-    }
-
-    // send
-    function sendQuitAction() {
-        $.ajax({
-            url: data_global.post_uri,
-            method: 'POST',
-            async: true,
-            contentType: 'application/json',
-            data: JSON.stringify(data_global.post_data),
-            success: function(data, status) {
-                if (0 == data.code) {
-                    if (data.hasOwnProperty('data') &&
-                    data.data.hasOwnProperty('redirect')) {
-                        document.location.href = data.data.redirect;
+        // send
+        function sendQuitAction() {
+            $.ajax({
+                url: data_global.post_uri,
+                method: 'POST',
+                async: true,
+                contentType: 'application/json',
+                data: JSON.stringify(data_global.post_data),
+                success: function (data, status) {
+                    if (0 == data.code) {
+                        if (data.hasOwnProperty('data') &&
+                            data.data.hasOwnProperty('redirect')) {
+                            document.location.href = data.data.redirect;
+                        } else {
+                            document.location.reload(true);
+                        }
                     } else {
-                        document.location.reload(true);
+                        alert(data.msg);
                     }
-                } else {
-                    alert(data.msg);
+                },
+                error: function (jqXHE, status) {
+                    alert('Server error');
+                    $('#myModal').modal('hide');
                 }
-            },
-            error: function(jqXHE, status) {
-                alert('Server error');
-                $('#myModal').modal('hide');
-            }
-        });
-    }
+            });
+        }
 
-    withdraw_form.submit(function(event) {
-        $('#btn_withdraw_continue').prop('disabled', true);
-        let form = withdraw_form;
-        let withdraw_uri = form.attr('action');
-        let post_data = {
-            passwd: $('#pwd').val()
-        };
-        $.ajax({
-            url: withdraw_uri,
-            method: 'POST',
-            async: true,
-            contentType: 'application/json',
-            data: JSON.stringify(post_data),
-            success: function(data, status) {
-                if (0 == data.code) {
-                    if (data.hasOwnProperty('data') &&
-                    data.data.hasOwnProperty('redirect')) {
-                        document.location.href = data.data.redirect;
+        withdraw_form.submit(function (event) {
+            $('#btn_withdraw_continue').prop('disabled', true);
+            let form = withdraw_form;
+            let withdraw_uri = form.attr('action');
+            let post_data = {
+                passwd: $('#pwd').val()
+            };
+            $.ajax({
+                url: withdraw_uri,
+                method: 'POST',
+                async: true,
+                contentType: 'application/json',
+                data: JSON.stringify(post_data),
+                success: function (data, status) {
+                    if (0 == data.code) {
+                        if (data.hasOwnProperty('data') &&
+                            data.data.hasOwnProperty('redirect')) {
+                            document.location.href = data.data.redirect;
+                        } else {
+                            document.location.reload(true);
+                        }
                     } else {
-                        document.location.reload(true);
+                        $('#pwd').parent().addClass('has-error');
+                        $('#error-info').html(data.msg);
+                        $('#error-info').parent().show();
                     }
-                } else {
-                    $('#pwd').parent().addClass('has-error');
-                    $('#error-info').html(data.msg);
-                    $('#error-info').parent().show();
+                    $('#btn_withdraw_continue').prop('disabled', false);
+                },
+                error: function (jqXHE, status) {
+                    alert('Server error');
+                    $('#btn_withdraw_continue').prop('disabled', false);
                 }
-                $('#btn_withdraw_continue').prop('disabled', false);
-            },
-            error: function(jqXHE, status) {
-                alert('Server error');
-                $('#btn_withdraw_continue').prop('disabled', false);
-            }
-        });
-        event.preventDefault();
-    });
-
-    function checkDOIExisted(doi_link) {
-        let getUrl = '/workflow/findDOI';
-        let data = {
-            'doi_link': doi_link
-        };
-        let isExistedDOI = false;
-        $.ajax({
-            type: 'POST',
-            url: getUrl,
-            contentType: 'application/json; charset=UTF-8',
-            async: false,
-            data: JSON.stringify(data),
-            dataType: "json",
-            success: function(data, status) {
-                if (0 == data.code) {
-                    if (data.isExistDOI || data.isWithdrawnDoi) {
-                        isExistedDOI = data.msg;
-                    }
-                }
-            },
-            error: function(jqXHE, status) {
-                alert('Server error');
-            }
+            });
+            event.preventDefault();
         });
 
-        return isExistedDOI;
+        function checkDOIExisted(doi_link) {
+            let getUrl = '/workflow/findDOI';
+            let data = {
+                'doi_link': doi_link
+            };
+            let isExistedDOI = false;
+            $.ajax({
+                type: 'POST',
+                url: getUrl,
+                contentType: 'application/json; charset=UTF-8',
+                async: false,
+                data: JSON.stringify(data),
+                dataType: "json",
+                success: function (data, status) {
+                    if (0 == data.code) {
+                        if (data.isExistDOI || data.isWithdrawnDoi) {
+                            isExistedDOI = data.msg;
+                        }
+                    }
+                },
+                error: function (jqXHE, status) {
+                    alert('Server error');
+                }
+            });
+
+            return isExistedDOI;
+        }
     }
-})
+});
