@@ -183,6 +183,43 @@ class ItemTypeMetaDataView(BaseView):
         return jsonify(msg=_('Successfuly registered Item type.'),
                        redirect_url=redirect_url)
 
+    @expose('/restore', methods=['POST'])
+    @expose('/restore/', methods=['POST'])
+    @expose('/restore/<int:item_type_id>', methods=['POST'])
+    @item_type_permission.require(http_exception=403)
+    def restore_itemtype(self, item_type_id=0):
+        """Restore logically deleted item types."""
+        if item_type_id > 0:
+            record = ItemTypes.get_record(id_=item_type_id, with_deleted=True)
+            if record is not None and record.is_deleted:
+                # Get all versions
+                all_records = ItemTypes.get_records_by_name_id(
+                    name_id=record.model.name_id, with_deleted=True)
+                # Get item type name
+                item_type_name = ItemTypeNames.get_record(
+                    id_=record.model.name_id, with_deleted=True)
+                if all_records and item_type_name:
+                    try:
+                        # Restore item type name
+                        ItemTypeNames.restore(item_type_name)
+                        # Restore item typea
+                        for k in all_records:
+                            k.restore()
+                        db.session.commit()
+                    except BaseException:
+                        db.session.rollback()
+                        current_app.logger.error('Unexpected error: ',
+                                                 sys.exc_info()[0])
+                        return jsonify(code=-1,
+                                       msg=_('Failed to restore Item type.'))
+
+                    current_app.logger.debug(
+                        'Itemtype restore: {}'.format(item_type_id))
+                    return jsonify(code=0,
+                                   msg=_('Restored Item type successfully.'))
+
+        return jsonify(code=-1,msg=_('An error has occurred.'))
+
 
 class ItemTypePropertiesView(BaseView):
     """ItemTypePropertiesView."""
