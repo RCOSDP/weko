@@ -355,7 +355,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemType.query.filter_by(id=id_)
             if not with_deleted:
-                query = query.filter(ItemType.schema != None)  # noqa
+                query = query.filter(cls.is_deleted.is_(False))  # noqa
             obj = query.one_or_none()
             if obj is None:
                 return None
@@ -427,8 +427,7 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(
-                    ItemType.schema is not None)
+                query = query.join(ItemType).filter(cls.is_deleted.is_(False))
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod
@@ -534,7 +533,7 @@ class ItemTypes(RecordBase):
             if force:
                 db.session.delete(self.model)
             else:
-                self.model.schema = None
+                self.model.is_deleted = True
                 db.session.merge(self.model)
 
         after_record_delete.send(

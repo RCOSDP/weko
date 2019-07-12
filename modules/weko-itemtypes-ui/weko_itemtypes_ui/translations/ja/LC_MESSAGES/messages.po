@@ -171,7 +171,7 @@ msgstr "削除"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:174
 msgid "Restore"
-msgstr "リストア"
+msgstr "復元"
 
 #: weko_itemtypes_ui/templates/weko_itemtypes_ui/admin/create_itemtype.html:81
 msgid "Are you sure you want to delete this Item type?"

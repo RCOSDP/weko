@@ -50,7 +50,7 @@ class ItemTypeMetaDataView(BaseView):
 
         :param item_type_id: Item type i. Default 0.
         """
-        lists = ItemTypes.get_latest()
+        lists = ItemTypes.get_latest(True)
         # Check that item type is already registered to an item or not
         for list in lists:
             # Get all versions

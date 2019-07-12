@@ -52,7 +52,8 @@
                 <select class="form-control" id="item-type-lists">
                   <option value=""></option>
                   {% for list in lists %}
-                  <option value="{{ list.item_type.0.id }}" class="{% if list.item_type.0.harvesting_type %}harvesting_type {% else %}normal_type {% endif %}{% if list.belonging_item_flg %}belonging_item{% endif %}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
+                  <option value="{{ list.item_type.0.id }}"
+                          class="{% if list.item_type.0.harvesting_type %}harvesting_type {% elif list.item_type.0.is_deleted %}deleted_type {% else %}normal_type {% endif %}{% if list.belonging_item_flg %}belonging_item{% endif %}" {% if list.item_type.0.id == id %}selected{% endif %}>{{ list.name }}({{ list.item_type.0.tag }})</option>
                   {% endfor %}
                 </select>
                </div>
