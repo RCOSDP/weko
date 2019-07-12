@@ -21,6 +21,7 @@
 """Utils for weko-itemtypes-ui."""
 
 from flask import current_app
+from flask_login import current_user
 
 
 def remove_xsd_prefix(jpcoar_lists):
@@ -38,3 +39,14 @@ def remove_xsd_prefix(jpcoar_lists):
 
     remove_prefix(jpcoar_lists, jpcoar_copy)
     return jpcoar_copy
+
+def has_system_admin_access():
+    """Use to check if a user has System Administrator access."""
+    is_sys_admin=False
+    if current_user.is_authenticated:
+        system_admin = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+        for role in list(current_user.roles or []):
+            if role.name == system_admin:
+                is_sys_admin = True
+                break
+    return is_sys_admin
