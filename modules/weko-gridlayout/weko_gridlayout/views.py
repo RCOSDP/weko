@@ -27,6 +27,14 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
+blueprint_rss = Blueprint(
+    'weko_gridlayout_rss',
+    __name__,
+    url_prefix='/rss',
+    template_folder='templates',
+    static_folder='static',
+)
+
 blueprint_api = Blueprint(
     'weko_gridlayout',
     __name__,
@@ -189,7 +197,7 @@ def get_new_arrivals_data(widget_id):
     return jsonify(WidgetDataLoaderServices.get_new_arrivals_data(widget_id))
 
 
-@blueprint_api.route('get_rss_data', methods=['GET'])
+@blueprint_rss.route('records', methods=['GET'])
 def get_rss_data():
     """Get rss data based on term.
 
