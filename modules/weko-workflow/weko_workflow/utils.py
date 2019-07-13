@@ -237,7 +237,7 @@ def item_metadata_validation(item_id, identifier_type):
     resource_type, type_key = metadata_item.get_data_by_property("type.@value")
 
     # check resource type request
-    if not (type_key or resource_type):
+    if not (item_type or resource_type):
         error_list.append(type_key.split('.')[0])
         return error_list
     resource_type = resource_type.pop()
@@ -409,10 +409,13 @@ class MappingData(object):
         item_type = self.get_data_item_type()
         item_type_mapping = Mapping.get_record(item_type.id)
         self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
-    
+
     def get_data_by_property(self, property):
         key = self.item_map.get(property)
         data = []
+        if not key:
+            current_app.logger.debug(str(property) + ' jpcoar:mapping is not correct')
+            return None, None
         attribute = self.record.get(key.split('.')[0])
         if not attribute:
             return None, key
