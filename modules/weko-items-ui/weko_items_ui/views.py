@@ -53,7 +53,8 @@ from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    update_json_schema_by_activity_id, validate_user
+    validate_user, update_json_schema_by_activity_id
+
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -240,7 +241,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
                     return '{}'
                 json_schema = result.schema
                 properties = json_schema.get('properties')
-                for key, value in properties.items():
+                for _, value in properties.items():
                     if 'validationMessage_i18n' in value:
                         value['validationMessage'] =\
                             value['validationMessage_i18n'][cur_lang]
@@ -258,7 +259,8 @@ def get_json_schema(item_type_id=0, activity_id=""):
 
         if activity_id:
             updated_json_schema = update_json_schema_by_activity_id(result, activity_id)
-            if updated_json_schema is not None: result=updated_json_schema
+            if updated_json_schema: result = updated_json_schema
+            current_app.logger.debug(result)
 
         json_schema = result
         return jsonify(json_schema)
@@ -911,3 +913,27 @@ def check_ranking_show():
     if settings and settings.is_show:
         result = ''
     return result
+
+@blueprint_api.route('/get_identifier_grant_error_list/<string:activity_id>',
+                     methods=['GET'])
+@login_required
+@item_permission.require(http_exception=403)
+def get_identifier_grant_error_list(activity_id):
+    """Get workflow journal data.
+
+    :param activity_id: The identify of Activity.
+    :return: Workflow journal data.
+    """
+    # error_list = None
+    # update_json_schema = None
+    # update_json_schema = session['update_json_schema']
+
+    # if update_json_schema:
+    #     error_list = update_json_schema[activity_id]
+    #     return jsonify(code=1,
+    #                 msg=_('PID does not meet the conditions.'),
+    #                 error_list=error_list)
+    # else:
+    #     return jsonify(code=0)
+    return jsonify(code=1,
+                    msg=_('PID does not meet the conditions.'))

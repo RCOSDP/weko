@@ -421,23 +421,6 @@ function handleSharePermission(value) {
           }
         });
       }
-      
-      $scope.initMetadataValidationDOI = function () {
-        //schema_form_error_message = $('#schema_form_error_message').text()
-        // template: schema_form_error_message='{"form_name":"error message"}';
-        // schema_form_error_message='{"subitem_1551255647225":"Required.","subitem_1522300014469":"Required."}';
-        schema_form_error_message='{"schemaForm.error.pubdate":"Required."}';
-        console.log($rootScope);
-        if (schema_form_error_message.length > 2) {
-          error_message_list = JSON.parse(schema_form_error_message);
-          for(var k in error_message_list) {
-            console.log(k, error_message_list[k]);
-            $rootScope.$broadcast(k,error_message_list[k],false);
-          }
-        }
-        console.log($rootScope);
-      }
-      
       $scope.searchTypeKey = function () {
         if ($scope.resourceTypeKey.length > 0) {
           return $scope.resourceTypeKey;
@@ -447,13 +430,11 @@ function handleSharePermission(value) {
             if (value.type == 'object') {
               if (value.properties.hasOwnProperty('resourcetype')) {
                 $scope.resourceTypeKey = key;
-                console.log(key);
               }
             }
           }
         );
       }
-
       $scope.resourceTypeSelect = function () {
         let resourcetype = $("select[name='resourcetype']").val();
         resourcetype = resourcetype.split("string:").pop();
@@ -612,7 +593,6 @@ function handleSharePermission(value) {
           $rootScope.recordsVM.invenioRecordsModel[$scope.resourceTypeKey].resourceuri = resourceuri;
         }
       }
-
       $scope.getBibliographicMetaKey = function () {
         Object.entries($rootScope.recordsVM.invenioRecordsSchema.properties).forEach(
           ([key, value]) => {
@@ -630,13 +610,13 @@ function handleSharePermission(value) {
           }
         );
       }
-
       $scope.autofillJournal = function () {
         this.getBibliographicMetaKey();
         const bibliographicKey = $scope.bibliographic_key;
         const title = $scope.bibliographic_title_key;
         const titleLanguage = $scope.bibliographic_title_lang_key;
-        const activityId = $("#hidden_activity_id").val();
+        // const activityId = $("#hidden_activity_id").val();
+        const activityId = $("#activity_id").text();
         if (bibliographicKey && $rootScope.recordsVM.invenioRecordsModel && activityId) {
           let request = {
             url: '/api/autofill/get_auto_fill_journal/' + activityId,
@@ -667,14 +647,31 @@ function handleSharePermission(value) {
           );
         }
       }
+      $scope.renderValidationErrorList = function () {
+        const activityId = $("#activity_id").text();
+        $.ajax({
+          url: '/api/items/get_identifier_grant_error_list/' + activityId,
+          method: 'GET',
+          async: false,
+          success: function (response) {
+            console.log(response);
+            if (response.code) {
+              addAlert(response.msg);
+            }
+          },
+          error: function (data) {
+            alert('Cannot connect to server!');
+          }
+        });
+      }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.initContributorData();
         $scope.autofillJournal();
         $scope.initUserGroups();
         $scope.initFilenameList();
-        $scope.initMetadataValidationDOI();
         $scope.searchTypeKey();
+        $scope.renderValidationErrorList();
         hide_endpoints = $('#hide_endpoints').text()
         if (hide_endpoints.length > 2) {
           endpoints = JSON.parse($('#hide_endpoints').text());

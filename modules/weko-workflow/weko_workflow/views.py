@@ -601,7 +601,9 @@ def next_action(activity_id='0', action_id=0):
             return jsonify(code = -1, msg=_(error_list))
 
         if error_list:
-            session['update_json_schema'] = error_list
+            temp_dict = {}
+            temp_dict[activity_id] = error_list
+            session['update_json_schema'] = temp_dict
             return previous_action(activity_id=activity_id, action_id=action_id, req=-1)
         else:
             return jsonify(code = -1, msg=_('PASS'))

@@ -237,7 +237,7 @@ def item_metadata_validation(item_id, identifier_type):
     resource_type, type_key = metadata_item.get_data_by_property("type.@value")
 
     # check resource type request
-    if not (item_type or resource_type):
+    if not (item_type and resource_type):
         error_list.append(type_key.split('.')[0])
         return error_list
     resource_type = resource_type.pop()
@@ -275,7 +275,7 @@ def item_metadata_validation(item_id, identifier_type):
         if item_type.name_id == journalarticle_nameid or resource_type == journalarticle_type:
             properties = ['title', 'identifier', 'identifierRegistration', 'sourceIdentifier', 'sourceTitle']
             error_list = validation_item_property(metadata_item, identifier_type, properties)
-        if item_type.name_id in [thesis_nameid, report_nameid] or resource_type in report_types:
+        elif item_type.name_id in [thesis_nameid, report_nameid] or resource_type in report_types:
             properties = ['title', 'identifier', 'identifierRegistration']
             error_list = validation_item_property(metadata_item, identifier_type, properties)
         else:
@@ -315,7 +315,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         datas, key = mapping_data.get_data_by_property("identifier.@value")
         type_datas, type_key = mapping_data.get_data_by_property("identifier.@attributes.identifierType")
         
-        if not (datas or type_datas):
+        if not (datas and type_datas):
             error_list.append(key)
             error_list.append(type_key)
         else:
@@ -335,7 +335,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         datas, key = mapping_data.get_data_by_property("identifierRegistration.@value")
         type_datas, type_key = mapping_data.get_data_by_property("identifierRegistration.@attributes.identifierType")
         
-        if not (datas or type_datas):
+        if not (datas and type_datas):
             error_list.append(key)
             error_list.append(type_key)
         else:
@@ -362,7 +362,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         datas, key = mapping_data.get_data_by_property("sourceIdentifier.@value")
         type_datas, type_key = mapping_data.get_data_by_property("sourceIdentifier.@attributes.identifierType")
         
-        if not (datas or type_datas):
+        if not (datas and type_datas):
             error_list.append(key)
             error_list.append(type_key)
         else:
@@ -382,7 +382,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         datas, key = mapping_data.get_data_by_property("sourceTitle.@value")
         lang_datas, lang_key = mapping_data.get_data_by_property("sourceTitle.@attributes.xml:lang")
         
-        if not (datas or lang_datas):
+        if not (datas and lang_datas):
             error_list.append(key)
             error_list.append(lang_key)
         else:
