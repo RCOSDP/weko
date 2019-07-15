@@ -59,7 +59,8 @@ provision_web_common_ubuntu14 () {
          rlwrap \
          screen \
          vim \
-         gnupg
+         gnupg \
+         apt-transport-https
     # sphinxdoc-install-useful-system-tools-ubuntu14-end
 
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin
@@ -82,6 +83,22 @@ provision_web_common_ubuntu14 () {
          python-dev \
          python-pip
     # sphinxdoc-install-web-common-ubuntu14-end
+
+    python --version
+
+    apt-cache policy nodejs
+    echo "deb http://deb.nodesource.com/node_6.x stretch main\n" > /etc/apt/sources.list.d/nodesource.list
+    echo "deb-src http://deb.nodesource.com/node_6.x stretch main" >> /etc/apt/sources.list.d/nodesource.list
+    apt-get update
+    apt-get remove -y nodejs
+    curl -sL http://deb.nodesource.com/setup_6.x -o /tmp/setup_6.x.sh
+    sed -i 's/https\:/http\:/g' /tmp/setup_6.x.sh
+    chmod +x /tmp/setup_6.x.sh
+    /tmp/setup_6.x.sh
+    apt-cache policy nodejs
+    apt-get install -qy --fix-missing --no-install-recommends nodejs
+    nodejs -v
+    npm -v
 }
 
 provision_web_libpostgresql_ubuntu14 () {
@@ -143,7 +160,8 @@ setup_npm_and_css_js_filters () {
 
     # sphinxdoc-install-npm-and-css-js-filters-begin
     # $sudo su -c "npm install -g npm"
-    $sudo su -c "npm install -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js"
+    $sudo npm config set registry http://registry.npmjs.org/
+    $sudo su -c "npm install --loglevel verbose -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js"
     # sphinxdoc-install-npm-and-css-js-filters-end
 
 }
@@ -155,8 +173,8 @@ setup_virtualenvwrapper () {
     set +o nounset
 
     # sphinxdoc-install-virtualenvwrapper-begin
-    $sudo pip install -U setuptools pip
-    $sudo pip install -U virtualenvwrapper
+    $sudo pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -U setuptools pip
+    $sudo pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -U virtualenv
     if ! grep -q virtualenvwrapper ~/.bashrc; then
         mkdir -p "$HOME/.virtualenvs"
         echo "export WORKON_HOME=$HOME/.virtualenvs" >> "$HOME/.bashrc"
@@ -223,7 +241,7 @@ setup_nginx_centos7 () {
     fi
     # sphinxdoc-install-web-nginx-centos7-end
 }
- 
+
 cleanup_web_ubuntu14 () {
     # sphinxdoc-install-web-cleanup-ubuntu14-begin
     $sudo apt-get -y autoremove && $sudo apt-get -y clean

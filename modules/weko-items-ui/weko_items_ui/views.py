@@ -260,7 +260,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
         if activity_id:
             updated_json_schema = update_json_schema_by_activity_id(result, activity_id)
             if updated_json_schema: result = updated_json_schema
-            current_app.logger.debug(result)
+            current_app.logger.debug(updated_json_schema)
 
         json_schema = result
         return jsonify(json_schema)
@@ -926,7 +926,7 @@ def get_identifier_grant_error_list(activity_id):
     """
     # error_list = None
     # update_json_schema = None
-    # update_json_schema = session['update_json_schema']
+    update_json_schema = session.get('update_json_schema')
 
     # if update_json_schema:
     #     error_list = update_json_schema[activity_id]
@@ -935,5 +935,8 @@ def get_identifier_grant_error_list(activity_id):
     #                 error_list=error_list)
     # else:
     #     return jsonify(code=0)
-    return jsonify(code=1,
+    if update_json_schema and update_json_schema.get(activity_id):
+        return jsonify(code=1,
                     msg=_('PID does not meet the conditions.'))
+    else:
+        return jsonify(code=0)

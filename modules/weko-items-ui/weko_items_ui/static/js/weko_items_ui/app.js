@@ -681,6 +681,7 @@ function handleSharePermission(value) {
             );
           }
         }
+        $scope.$broadcast('schemaFormValidate');
       });
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();

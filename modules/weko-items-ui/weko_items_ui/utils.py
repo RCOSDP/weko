@@ -348,13 +348,14 @@ def update_json_schema_by_activity_id(json, activity_id):
     return: json schema
     """
     if not json or not activity_id or not session.get('update_json_schema') \
-        or not session['update_json_schema'][activity_id]:
+        or not session['update_json_schema'].get(activity_id):
         return None
     update_json_schema = session['update_json_schema'][activity_id]
     current_app.logger.debug(update_json_schema)
     if update_json_schema:
-        json['required'].append('item_1551265178780')
-        json['required'].append('subitem_1551256250276')
+        json['properties']['item_1551265178780']['required'] = ['subitem_1551256250276']
+        # json['required'].append('item_1551265178780')
+        # json['required'].append('subitem_1551256250276')
     #     for item in update_json_schema['required']:
     #         if isinstance(item, list) and json['properties'][item[0]]:
     #             length = len(item)

@@ -297,124 +297,123 @@ def validation_item_property(mapping_data, identifier_type, properties):
     :param: mapping_data, identifier_type, properties
     :return: error_list
     """
-    error_list = []
+    error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
+    empty_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property("title.@value")
 
         if not title_data:
-            error_list.append(title_key)
+            error_list['required'].append(title_key)
 
     # check 識別子 jpcoar:givenName
     if 'givenName' in properties:
-        datas, key = mapping_data.\
-            get_data_by_property("creator.givenName.@value")
+        data, key = mapping_data.get_data_by_property("creator.givenName.@value")
+        requirements = check_required_data(data, key)
 
-        if not datas:
-            error_list.append(key)
-        else:
-            idx = 0
-            for data in datas:
-                if not data:
-                    error_list.append(key + '.' + str(idx))
-                idx += 1
+        if requirements:
+            error_list['required'] += requirements
 
     # check 識別子 jpcoar:identifier
     if 'identifier' in properties:
-        datas, key = mapping_data.\
-            get_data_by_property("identifier.@value")
-        type_datas, type_key = \
-            mapping_data.\
-                get_data_by_property("identifier.@attributes.identifierType")
+        data, key = mapping_data.get_data_by_property("identifier.@value")
+        type_data, type_key = mapping_data.get_data_by_property("identifier.@attributes.identifierType")
+        
+        requirements = check_required_data(data, key)
+        type_requirements = check_required_data(type_data, type_key)
 
-        if not (datas and type_datas):
-            error_list.append(key)
-            error_list.append(type_key)
+        if requirements:
+            error_list['required'] += requirements
+        if type_requirements:
+            error_list['required'] += type_requirements
         else:
             idx = 0
-            for data in datas:
-                if not data:
-                    error_list.append(key + '.' + str(idx))
-                idx += 1
-            idx = 0
-            for type_data in type_datas:
-                if type_data not in ['HDL', 'URI']:
-                    error_list.append(type_key + '.' + str(idx))
+            for item in type_data:
+                if not item in ['HDL', 'URI']:
+                    error_list['required'].append(type_key + '.' + str(idx))
                 idx += 1
 
     # check ID登録 jpcoar:identifierRegistration
     if 'identifierRegistration' in properties:
-        datas, key = mapping_data.\
-            get_data_by_property("identifierRegistration.@value")
-        type_datas, type_key = \
-            mapping_data.\
-                get_data_by_property(
-                "identifierRegistration.@attributes.identifierType")
+        data, key = mapping_data.get_data_by_property("identifierRegistration.@value")
+        type_data, type_key = mapping_data.get_data_by_property("identifierRegistration.@attributes.identifierType")
+        
+        requirements = check_required_data(data, key)
+        type_requirements = check_required_data(type_data, type_key)
 
-        if not (datas and type_datas):
-            error_list.append(key)
-            error_list.append(type_key)
+        if requirements:
+            error_list['required'] += requirements
         else:
             idx = 0
-            for data in datas:
-                if not data:
-                    error_list.append(key + '.' + str(idx))
-                else:
-                    char_re = re.compile(r'[^a-zA-Z0-9\-\.\_\;\(\)\/.]')
-                    result = char_re.search(data)
-                    if bool(result):
-                        error_list.append(key + '.' + str(idx))
+            for item in data:
+                char_re = re.compile(r'[^a-zA-Z0-9\-\.\_\;\(\)\/.]')
+                result = char_re.search(item)
+                if bool(result):
+                    error_list['pattern'].append(key + '.' + str(idx))
                 idx += 1
+        if type_requirements:
+            error_list['required'] += type_requirements
+        else:
             idx = 0
-            for type_data in type_datas:
-                if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI'] and not type_data == 'JaLC':
-                    error_list.append(type_key + '.' + str(idx))
-                if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI'] and not type_data == 'Crossref':
-                    error_list.append(type_key + '.' + str(idx))
+            for item in type_data:
+                if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI'] and not item == 'JaLC':
+                    error_list['type'].append(type_key + '.' + str(idx))
+                    error_list['doi'] = 'JaLC'
+                elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI'] and not item == 'Crossref':
+                    error_list['type'].append(type_key + '.' + str(idx))
+                    error_list['doi'] = 'Crossref'
                 idx += 1
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
-        datas, key = mapping_data.\
-            get_data_by_property("sourceIdentifier.@value")
-        type_datas, type_key = mapping_data.\
-            get_data_by_property("sourceIdentifier.@attributes.identifierType")
+        data, key = mapping_data.get_data_by_property("sourceIdentifier.@value")
+        type_data, type_key = mapping_data.get_data_by_property("sourceIdentifier.@attributes.identifierType")
+        
+        requirements = check_required_data(data, key)
+        type_requirements = check_required_data(type_data, type_key)
 
-        if not (datas and type_datas):
-            error_list.append(key)
-            error_list.append(type_key)
-        else:
-            idx = 0
-            for data in datas:
-                if not data:
-                    error_list.append(key + '.' + str(idx))
-                idx += 1
-            idx = 0
-            for type_data in type_datas:
-                if not type_data:
-                    error_list.append(type_key + '.' + str(idx))
-                idx += 1
+        if requirements:
+            error_list['required'] += requirements
+        if type_requirements:
+            error_list['required'] += type_requirements
 
     # check 収録物名 jpcoar:sourceTitle
     if 'sourceTitle' in properties:
-        datas, key = mapping_data.get_data_by_property("sourceTitle.@value")
-        lang_datas, lang_key = mapping_data.\
-            get_data_by_property("sourceTitle.@attributes.xml:lang")
+        data, key = mapping_data.get_data_by_property("sourceTitle.@value")
+        lang_data, lang_key = mapping_data.get_data_by_property("sourceTitle.@attributes.xml:lang")
+        
+        requirements = check_required_data(data, key)
+        lang_requirements = check_required_data(lang_data, lang_key)
 
-        if not (datas and lang_datas):
-            error_list.append(key)
-            error_list.append(lang_key)
+        if requirements:
+            error_list['required'] += requirements
+        if lang_requirements:
+            error_list['required'] += lang_requirements
         else:
-            idx = 0
-            for data in datas:
-                if not data:
-                    error_list.append(key + '.' + str(idx))
-                idx += 1
-            if 'en' not in lang_datas:
-                error_list.append(lang_key + '.' + str(idx))
+            if not 'en' in lang_data:
+                error_list['required'].append(lang_key + '.' + str(idx))
 
-    return error_list
+    if error_list == empty_list:
+        return None
+    else:
+        return error_list
 
+
+def check_required_data(data, key):
+    error_list = []
+    idx = 0
+    if not data:
+        error_list.append(key)
+    else:
+        for item in data:
+            if not item:
+                error_list.append(key + '.' + str(idx))
+            idx += 1
+    
+    if not error_list:
+        return None
+    else:
+        return error_list
 
 class MappingData(object):
     """Dummy pagination class."""
