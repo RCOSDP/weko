@@ -197,7 +197,7 @@ def get_new_arrivals_data(widget_id):
     return jsonify(WidgetDataLoaderServices.get_new_arrivals_data(widget_id))
 
 
-@blueprint_rss.route('records', methods=['GET'])
+@blueprint_rss.route('/records', methods=['GET'])
 def get_rss_data():
     """Get rss data based on term.
 
