@@ -923,6 +923,7 @@ $(document).ready(function () {
           restore_itemtype.hide();
           restore_itemtype.removeClass("deleted_type");
           restore_itemtype.addClass("normal_type");
+          $('#itemtype_name').val('');
           alert(data.msg);
         },
         function(errmsg){
