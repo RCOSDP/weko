@@ -620,6 +620,7 @@ class SiteLicenseIpAddress(db.Model, Timestamp):
 __all__ = (
     'Timestamp',
     'ItemType',
+    'ItemTypeEditHistory',
     'ItemTypeName',
     'ItemTypeMapping',
     'ItemTypeProperty',
