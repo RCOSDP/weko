@@ -104,17 +104,15 @@ let PageBodyGrid = function () {
                     term = 0;
                 }
                 if (rss) {
-                    rssURL = "/api/admin/get_rss_data?term=" + term + "&count=" + count;
+                    let rssURL = "/rss/records?term=" + term + "&count=" + count;
                     rssHtml = '<a class="" target="_blank" rel="noopener noreferrer" href="' + rssURL + '"><i class="fa fa-rss"></i></a>';
                 }
-                let innerHTML = '';
+                let innerHTML = '<div class= "rss text-right">' + rssHtml + '</div>'
+                                +'<div>';
                 for (let data in result) {
-                    if (innerHTML == '') {
-                        innerHTML += '<div class="no-li-style col-sm-11 no-padding-col"><li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li></div>' + '</div><div class= "col-sm-1 rss text-right">' + rssHtml + '</div>';
-                    }else {
-                        innerHTML += '<div class="no-li-style no-padding-col"><li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li></div>';
-                    }
+                    innerHTML += '<div class="no-li-style no-padding-col"><li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li></div>';
                 }
+                innerHTML +='</div>';
                 $("#" + id).append(innerHTML);
             }
         });
@@ -169,18 +167,18 @@ let PageBodyGrid = function () {
         } else if (node.type == NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
-            
+
             this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
         }
 
         let template =
-            '<div class="grid-stack-item">' +
+            '<div class="grid-stack-item widget-resize">' +
             ' <div class="grid-stack-item-content panel panel-default widget" style="' +
             backgroundColor + frameBorderColor + '">' +
-            '     <div class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + rightStyle + '">' +
+            '     <div " class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + rightStyle + '">' +
             '       <strong style="' + paddingHeading + '">' + multiLangSetting.label + '</strong>' +
             '     </div>' +
-            '     <div class="panel-body ql-editor pad-top-30"' + id +' style="' + overFlowBody + '">' +
+            '     <div class="panel-body ql-editor"' + id +' style="' + overFlowBody + '">' +
             content + '</div>' +
             '   </div>' +
             '</div>';
@@ -239,6 +237,12 @@ function getWidgetDesignSetting() {
                     let pageBodyGrid = new PageBodyGrid();
                     pageBodyGrid.init();
                     pageBodyGrid.loadGrid(widgetList);
+                    new ResizeSensor($('.widget-resize'), function(){
+                        $('.widget-resize').each(function(){
+                            let headerElementHeight = $(this).find('.panel-heading').height();
+                            $(this).find('.panel-body').css("padding-top", String(headerElementHeight+11) + "px");
+                        });
+                    });
                 }
             }
             toggleWidgetUI();
@@ -266,5 +270,4 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
         }
     }
 }
-
 
