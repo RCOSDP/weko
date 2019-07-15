@@ -38,6 +38,9 @@
               url: `/api/files/${deposit}?versions`,
           }).then(function successCallback(response) {
               $('#bodyModal').append(createRow(response['data']));
+              if($('#billing_file_permission').val()){
+                handleDownloadBillingFile(true);
+              }
           }, function errorCallback(response) {
               console.log('Error when trigger api /api/files');
           });
@@ -115,6 +118,8 @@
           let txt_hide = $('#txt_hide').val();
           let is_logged_in = $('#txt_is_logged_in').val();
           let can_update_version = $('#txt_can_update_version').val();
+          let billing_file_permission = $('#billing_file_permission').val();
+          let billing_file_price = $('#billing_file_price').val();
 
           // Remove the versions which does not match the current file
           for (let index = 0; index < contents.length; index++) {
@@ -179,7 +184,20 @@
               if (filename == "") {
                 filename = ele.key
               }
-              let txt_link = `<a href="${ele.links.self}">${filename}</a>`;
+              let txt_link;
+              if (billing_file_permission){
+                let selfLink = "";
+                let permission = "data-billing-file-permission=";
+                if (billing_file_permission === "True") {
+                  selfLink = ` data-billing-file-url="${ele.links.self}"`;
+                  permission += `"true" data-billing-file-price="${billing_file_price}"`;
+                } else {
+                  permission += `"false"`;
+                }
+                txt_link = `<a class="billing-file-version" ${permission} ${selfLink} href="javascript:void(0);">${filename}</a>`;
+              } else {
+                txt_link = `<a href="${ele.links.self}">${filename}</a>`;
+              }
 
               let size = formatBytes(ele.size, 2);
 
@@ -293,3 +311,42 @@
         'mgcrea.ngStrap.modal']);
   });
 })(angular);
+
+$(function () {
+  handleDownloadBillingFile();
+  handleConfirmButton();
+});
+
+function handleDownloadBillingFile(isVersionTable = false) {
+  let billingFileHandleName = 'a.billing-file';
+  if (isVersionTable) {
+    billingFileHandleName = 'a.billing-file-version';
+  }
+  $(billingFileHandleName).on('click', function () {
+    let downloadPermission = $(this).data('billingFilePermission');
+    if (downloadPermission) {
+      let url = $(this).data('billingFileUrl');
+      let price = $(this).data('billingFilePrice');
+      let confirmMsg = $("#download_confirm_message").val().replace("XXXXX", price);
+      $("#download_confirm_content").text(confirmMsg);
+      $("#confirm_download_button").data('billingFileUrl', url);
+      $("#confirm_download").modal("show");
+    } else {
+      let permissionErrorMsg = $("#download_permission_error").val();
+      $("#inputModal").html(permissionErrorMsg);
+      $("#allModal").modal("show");
+    }
+  });
+}
+
+function handleConfirmButton() {
+  $('button#confirm_download_button').on('click', function () {
+    let url = $(this).data('billingFileUrl');
+    let link = document.createElement("a");
+    link.download = "";
+    link.href = url;
+    link.click();
+    $("#confirm_download").modal('toggle');
+    $("#download_confirm_content").text("");
+  });
+}
