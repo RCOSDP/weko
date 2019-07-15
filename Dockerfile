@@ -35,7 +35,7 @@ ENV INVENIO_REDIS_HOST=redis
 ENV INVENIO_ELASTICSEARCH_HOST=elasticsearch
 ENV INVENIO_RABBITMQ_HOST=rabbitmq
 ENV INVENIO_WORKER_HOST=127.0.0.1
-
+ 
 # Install Weko web node pre-requisites:
 COPY scripts/provision-web.sh /tmp/
 RUN /tmp/provision-web.sh
@@ -46,7 +46,6 @@ ADD . /code
 
 # Run container as user `weko` with UID `1000`, which should match
 # current host user in most situations:
-RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org --verbose virtualenvwrapper
 RUN adduser --uid 1000 --disabled-password --gecos '' invenio && \
     chown -R invenio:invenio /code
 USER invenio
