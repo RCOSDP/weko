@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module of weko-workflow utils."""
+import re
 
 from flask import current_app
 from flask_babelex import gettext as _
@@ -26,15 +27,13 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
-from weko_records.api import ItemsMetadata
+from weko_records.api import ItemsMetadata, FilesMetadata, ItemTypes, Mapping
 from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import FilesMetadata, ItemTypes
-from weko_records.api import Mapping
 from weko_records.serializers.utils import get_mapping
-import re
+
 
 from .api import WorkActivity
-from .config import IDENTIFIER_ITEMSMETADATA_FORM, IDENTIFIER_GRANT_SELECT_DICT
+from .config import IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_FORM
 
 
 def get_community_id_by_index(index_name):
@@ -212,9 +211,10 @@ def reg_invenio_pidstore(pid_value, item_id):
 
 def item_metadata_validation(item_id, identifier_type):
     """
-    Register pids_tore.
+    Validate item metadata.
 
-    :param: pid_value, item_id
+    :param: item_id, identifier_type
+    :return: error_list
     """
     if identifier_type == 0:
         return None
@@ -288,7 +288,14 @@ def item_metadata_validation(item_id, identifier_type):
 
     return error_list
 
+
 def validation_item_property(mapping_data, identifier_type, properties):
+    """
+    Validate item property.
+
+    :param: mapping_data, identifier_type, properties
+    :return: error_list
+    """
     error_list = []
     # check タイトル dc:title
     if 'title' in properties:
@@ -411,6 +418,7 @@ class MappingData(object):
         self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
 
     def get_data_by_property(self, property):
+        """Return data by property."""
         key = self.item_map.get(property)
         data = []
         if not key:
@@ -425,5 +433,5 @@ class MappingData(object):
         return data, key
 
     def get_data_item_type(self):
-        item_type = ItemTypes.get_by_id(id_=self.record.get('item_type_id'))
-        return item_type
+        """Return item type data."""
+        return ItemTypes.get_by_id(id_=self.record.get('item_type_id'))

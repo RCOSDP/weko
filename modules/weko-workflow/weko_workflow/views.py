@@ -59,7 +59,7 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
-    pidstore_identifier_mapping, item_metadata_validation
+    item_metadata_validation, pidstore_identifier_mapping
 
 blueprint = Blueprint(
     'weko_workflow',
