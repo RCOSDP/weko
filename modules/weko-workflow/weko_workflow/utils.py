@@ -27,8 +27,8 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
-from weko_records.api import ItemsMetadata, FilesMetadata, ItemTypes, Mapping
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_records.api import ItemsMetadata, FilesMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 
 
