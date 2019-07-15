@@ -260,7 +260,6 @@ def get_json_schema(item_type_id=0, activity_id=""):
         if activity_id:
             updated_json_schema = update_json_schema_by_activity_id(result, activity_id)
             if updated_json_schema: result = updated_json_schema
-            current_app.logger.debug(updated_json_schema)
 
         json_schema = result
         return jsonify(json_schema)

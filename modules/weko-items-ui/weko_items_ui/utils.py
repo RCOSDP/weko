@@ -353,9 +353,52 @@ def update_json_schema_by_activity_id(json, activity_id):
     update_json_schema = session['update_json_schema'][activity_id]
     current_app.logger.debug(update_json_schema)
     if update_json_schema:
-        json['properties']['item_1551265178780']['required'] = ['subitem_1551256250276']
-        # json['required'].append('item_1551265178780')
-        # json['required'].append('subitem_1551256250276')
+        for item in update_json_schema['required']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    if not json['properties'][sub_item[0]]['items'].get('required'):
+                        json['properties'][sub_item[0]]['items']['required'] = []
+                    json['properties'][sub_item[0]]['items']['required'].append(sub_item[1])
+                else:
+                    json['properties'][sub_item[0]]['required'].append(sub_item[1])
+        for item in update_json_schema['pattern']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    if not json['properties'][sub_item[0]]['items'].get('required'):
+                        json['properties'][sub_item[0]]['items']['required'] = []
+                    json['properties'][sub_item[0]]['items']['required'].append(sub_item[1])
+                else:
+                    json['properties'][sub_item[0]]['required'].append(sub_item[1])
+        for item in update_json_schema['pattern']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    if not json['properties'][sub_item[0]]['items'].get('required'):
+                        json['properties'][sub_item[0]]['items']['required'] = []
+                    json['properties'][sub_item[0]]['items']['required'].append(sub_item[1])
+                else:
+                    json['properties'][sub_item[0]]['required'].append(sub_item[1])
+        for item in update_json_schema['types']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    json['properties'][sub_item[0]]['items']['properties'][sub_item[1]]['enum'] = [update_json_schema['doi']]
+                else:
+                    json['properties'][sub_item[0]]['properties'][sub_item[1]]['enum'] = [update_json_schema['doi']]
+    # elif len(sub_item) == 3:
+    # json['properties']['item_1551265178780']['required'] = ['subitem_1551256250276']
+    # json['required'].append('item_1551265178780')
+    # json['required'].append('subitem_1551256250276')
     #     for item in update_json_schema['required']:
     #         if isinstance(item, list) and json['properties'][item[0]]:
     #             length = len(item)

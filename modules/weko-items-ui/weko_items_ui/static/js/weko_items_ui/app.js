@@ -664,6 +664,15 @@ function handleSharePermission(value) {
           }
         });
       }
+      $scope.showError = function () {
+        var check = setInterval(show, 500);
+        function show() {
+          if($("input[name=pubdate]").length>0) {
+            $scope.$broadcast('schemaFormValidate');
+            clearInterval(check);
+          }
+        }
+      }
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.initContributorData();
@@ -681,7 +690,7 @@ function handleSharePermission(value) {
             );
           }
         }
-        $scope.$broadcast('schemaFormValidate');
+        $scope.showError();
       });
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
