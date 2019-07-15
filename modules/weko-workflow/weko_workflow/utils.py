@@ -236,7 +236,7 @@ def item_metadata_validation(item_id, identifier_type):
     metadata_item = MappingData(item_id)
     item_type = metadata_item.get_data_item_type()
     resource_type, type_key = metadata_item.get_data_by_property("type.@value")
-
+    current_app.logger.debug(resource_type)
     # check resource type request
     if not (item_type and resource_type):
         error_list.append(type_key.split('.')[0])
@@ -245,6 +245,9 @@ def item_metadata_validation(item_id, identifier_type):
 
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
+        current_app.logger.debug(identifier_type)
+        current_app.logger.debug(item_type.name_id)
+        current_app.logger.debug(resource_type)
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
         if item_type.name_id == journalarticle_nameid or resource_type == journalarticle_type:
             properties = ['title', 'identifier', 'identifierRegistration']
@@ -427,6 +430,8 @@ class MappingData(object):
         item_type = self.get_data_item_type()
         item_type_mapping = Mapping.get_record(item_type.id)
         self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
+        current_app.logger.debug(self.record)
+        current_app.logger.debug(self.item_map)
 
     def get_data_by_property(self, property):
         """Return data by property."""
