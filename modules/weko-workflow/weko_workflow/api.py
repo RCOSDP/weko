@@ -32,6 +32,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
+from .config import ITEM_REGISTRATION_FLOW_ID
 from .models import Action as _Action
 from .models import ActionCommentPolicy, ActionIdentifier, ActionJournal, \
     ActionStatusPolicy
@@ -42,7 +43,6 @@ from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
 from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
-from .config import ITEM_REGISTRATION_FLOW_ID
 
 
 class Flow(object):
