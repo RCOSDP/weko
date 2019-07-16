@@ -25,7 +25,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from xml.etree.ElementTree import tostring
 
-from flask import Response, current_app, request, Markup
+from flask import Response, current_app, request
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from sqlalchemy import asc
@@ -420,9 +420,8 @@ def build_rss_xml(data, term, count):
     root.set('xmlns:lang', current_i18n.language)
 
     # First layer
-    requested_url = Markup(
-        root_url + 'api/admin/get_rss_data?term=' + \
-        str(term) + '&count=' + str(count))
+    requested_url = root_url + 'rss/records?term=' + \
+        str(term) + '&count=' + str(count)
     channel = ET.SubElement(root, 'channel')
     channel.set('rdf:about', requested_url)
 
