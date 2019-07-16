@@ -221,7 +221,7 @@ class ItemTypeNames(RecordBase):
         #. Send a signal :data:`weko_records.signals.after_record_delete`
            with the current deleted record as parameter.
 
-        :param force: if ``True``, completely deletes the current item type name
+        :param force: if ``True``, deletes the current item type name
                from the database, otherwise soft-deletes it.
         :returns: The deleted :class:`ItemTypeName` instance.
         """
@@ -442,7 +442,8 @@ class ItemTypes(RecordBase):
         with db.session.no_autoflush:
             query = ItemTypeName.query
             if not with_deleted:
-                query = query.join(ItemType).filter(ItemType.is_deleted.is_(False))
+                query = query.join(ItemType).filter(
+                    ItemType.is_deleted.is_(False))
             return query.order_by(ItemTypeName.id).all()
 
     @classmethod
@@ -532,7 +533,7 @@ class ItemTypes(RecordBase):
         #. Send a signal :data:`weko_records.signals.after_record_delete`
            with the current deleted record as parameter.
 
-        :param force: if ``True``, completely deletes the current item type from
+        :param force: if ``True``, deletes the current item type from
                the database, otherwise soft-deletes it.
         :returns: The deleted :class:`ItemTypes` instance.
         """
@@ -569,7 +570,8 @@ class ItemTypes(RecordBase):
            with the reverted record as parameter.
 
         :param revision_id: Specify the item type revision id
-        :returns: The :class:`ItemTypes` instance corresponding to the revision id
+        :returns: The :class:`ItemTypes` instance corresponding to the revision
+        id
         """
         if self.model is None:
             raise MissingModelError()
@@ -893,7 +895,7 @@ class ItemTypeProps(RecordBase):
     @classmethod
     def create(cls, property_id=None, name=None, schema=None, form_single=None,
                form_array=None):
-        r"""Create a new ItemTypeProperty instance and store it in the database.
+        """Create a new ItemTypeProperty instance and store it in the database.
 
         :param property_id: ID of Itemtype property.
         :param name: Property name.
