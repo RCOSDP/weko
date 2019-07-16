@@ -234,7 +234,8 @@ def item_metadata_validation(item_id, identifier_type):
     resource_type, type_key = metadata_item.get_data_by_property("type.@value")
     # check resource type request
     if not (item_type and resource_type):
-        error_list.append(type_key.split('.')[0])
+        error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
+        error_list['required'].append(type_key)
         return error_list
     resource_type = resource_type.pop()
 
@@ -313,7 +314,6 @@ def validation_item_property(mapping_data, identifier_type, properties):
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property("title.@value")
-
         if not title_data:
             error_list['required'].append(title_key)
 
@@ -321,7 +321,6 @@ def validation_item_property(mapping_data, identifier_type, properties):
     if 'givenName' in properties:
         data, key = mapping_data.get_data_by_property("creator.givenName.@value")
         requirements = check_required_data(data, key)
-
         if requirements:
             error_list['required'] += requirements
 
@@ -332,17 +331,14 @@ def validation_item_property(mapping_data, identifier_type, properties):
         
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
-
         if requirements:
             error_list['required'] += requirements
         if type_requirements:
             error_list['required'] += type_requirements
         else:
-            idx = 0
             for item in type_data:
-                if not item in ['HDL', 'URI']:
+                if item not in ['HDL', 'URI']:
                     error_list['required'].append(type_key)
-                idx += 1
 
     # check ID登録 jpcoar:identifierRegistration
     if 'identifierRegistration' in properties:
@@ -351,7 +347,6 @@ def validation_item_property(mapping_data, identifier_type, properties):
         
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
-
         if requirements:
             error_list['required'] += requirements
         # half-with and special character check
@@ -366,7 +361,6 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if type_requirements:
             error_list['required'] += type_requirements
         else:
-            idx = 0
             for item in type_data:
                 if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI'] and not item == 'JaLC':
                     error_list['types'].append(type_key)
@@ -374,16 +368,14 @@ def validation_item_property(mapping_data, identifier_type, properties):
                 elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI'] and not item == 'Crossref':
                     error_list['types'].append(type_key)
                     error_list['doi'] = 'Crossref'
-                idx += 1
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
         data, key = mapping_data.get_data_by_property("sourceIdentifier.@value")
         type_data, type_key = mapping_data.get_data_by_property("sourceIdentifier.@attributes.identifierType")
-        
+
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
-
         if requirements:
             error_list['required'] += requirements
         if type_requirements:
@@ -392,20 +384,20 @@ def validation_item_property(mapping_data, identifier_type, properties):
     # check 収録物名/出版者 jpcoar:sourceTitle/dc:publisher
     if ('sourceTitle' or 'publisher') in properties:
         text = "sourceTitle"
-        if not text in properties:
+        if text not in properties:
             text = "publisher"
         data, key = mapping_data.get_data_by_property(text + ".@value")
-        lang_data, lang_key = mapping_data.get_data_by_property(text + ".@attributes.xml:lang")
+        lang_data, lang_key = mapping_data.get_data_by_property(
+            text + ".@attributes.xml:lang")
         
         requirements = check_required_data(data, key)
         lang_requirements = check_required_data(lang_data, lang_key)
-
         if requirements:
             error_list['required'] += requirements
         if lang_requirements:
             error_list['required'] += lang_requirements
         else:
-            if not 'en' in lang_data:
+            if 'en' not in lang_data:
                 error_list['required'].append(lang_key + '.' + str(idx))
 
     if error_list == empty_list:
@@ -416,15 +408,14 @@ def validation_item_property(mapping_data, identifier_type, properties):
 
 def check_required_data(data, key):
     error_list = []
-    idx = 0
+
     if not data:
         error_list.append(key)
     else:
         for item in data:
             if not item:
-                error_list.append(key + '.' + str(idx))
-            idx += 1
-    
+                error_list.append(key)
+
     if not error_list:
         return None
     else:
