@@ -395,31 +395,4 @@ def update_json_schema_by_activity_id(json, activity_id):
                     json['properties'][sub_item[0]]['items']['properties'][sub_item[1]]['enum'] = [update_json_schema['doi']]
                 else:
                     json['properties'][sub_item[0]]['properties'][sub_item[1]]['enum'] = [update_json_schema['doi']]
-    # elif len(sub_item) == 3:
-    # json['properties']['item_1551265178780']['required'] = ['subitem_1551256250276']
-    # json['required'].append('item_1551265178780')
-    # json['required'].append('subitem_1551256250276')
-    #     for item in update_json_schema['required']:
-    #         if isinstance(item, list) and json['properties'][item[0]]:
-    #             length = len(item)
-    #             if length < 3:
-    #                 if 'required' in json['properties'][item[0]]:
-    #                     json['properties'][item[0]]['required'].append(item[1])
-    #                 elif json['properties'][item[0]].get('items') \
-    #                         and 'required' in json['properties'][item[0]]['items']:
-    #                     json['properties'][item[0]
-    #                                        ]['items']['required'].append(item[1])
-    #             elif length < 4:
-    #                 if json['properties'][item[0]].get('items') \
-    #                         and json['properties'][item[0]]['items'].get('properties') \
-    #                         and json['properties'][item[0]]['items']['properties'].get(item[1]) \
-    #                         and json['properties'][item[0]]['items']['properties'][item[1]].get('items')\
-    #                         and 'required' in json['properties'][item[0]]['items']['properties'][item[1]]['items']:
-    #                     json['properties'][item[0]]['items']['properties'][item[1]
-    #                                                                        ]['items']['required'].append(item[2])
-    #         else:
-    #             json['required'].append(item)
-    # if update_json_schema.get('properties'):
-    #     # TODO
-    #     pass
     return json

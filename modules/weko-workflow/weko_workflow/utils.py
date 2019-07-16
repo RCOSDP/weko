@@ -277,7 +277,7 @@ def item_metadata_validation(item_id, identifier_type):
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
         if item_type.name_id == journalarticle_nameid or resource_type == journalarticle_type:
-            properties = ['title', 'identifier', 'identifierRegistration', 'sourceIdentifier', 'sourceTitle']
+            properties = ['title', 'identifier', 'publisher', 'identifierRegistration', 'sourceIdentifier', 'sourceTitle']
             error_list = validation_item_property(metadata_item, identifier_type, properties)
         elif item_type.name_id in [thesis_nameid, report_nameid] or resource_type in report_types:
             properties = ['title', 'identifier', 'identifierRegistration']
@@ -346,14 +346,15 @@ def validation_item_property(mapping_data, identifier_type, properties):
 
         if requirements:
             error_list['required'] += requirements
-        else:
-            idx = 0
-            for item in data:
-                char_re = re.compile(r'[^a-zA-Z0-9\-\.\_\;\(\)\/.]')
-                result = char_re.search(item)
-                if bool(result):
-                    error_list['pattern'].append(key + '.' + str(idx))
-                idx += 1
+        # half-with and special character check
+        # else:
+        #     idx = 0
+        #     for item in data:
+        #         char_re = re.compile(r'[^a-zA-Z0-9\-\.\_\;\(\)\/.]')
+        #         result = char_re.search(item)
+        #         if bool(result):
+        #             error_list['pattern'].append(key + '.' + str(idx))
+        #         idx += 1
         if type_requirements:
             error_list['required'] += type_requirements
         else:
@@ -380,10 +381,13 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if type_requirements:
             error_list['required'] += type_requirements
 
-    # check 収録物名 jpcoar:sourceTitle
-    if 'sourceTitle' in properties:
-        data, key = mapping_data.get_data_by_property("sourceTitle.@value")
-        lang_data, lang_key = mapping_data.get_data_by_property("sourceTitle.@attributes.xml:lang")
+    # check 収録物名/出版者 jpcoar:sourceTitle/dc:publisher
+    if ('sourceTitle' or 'publisher') in properties:
+        text = "sourceTitle"
+        if not text in properties:
+            text = "publisher"
+        data, key = mapping_data.get_data_by_property(text + ".@value")
+        lang_data, lang_key = mapping_data.get_data_by_property(text + ".@attributes.xml:lang")
         
         requirements = check_required_data(data, key)
         lang_requirements = check_required_data(lang_data, lang_key)

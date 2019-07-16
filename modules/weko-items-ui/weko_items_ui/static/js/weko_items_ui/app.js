@@ -667,7 +667,7 @@ function handleSharePermission(value) {
       $scope.showError = function () {
         var check = setInterval(show, 500);
         function show() {
-          if($("input[name=pubdate]").length>0) {
+          if($('#loader_spinner').hasClass('ng-hide')) {
             $scope.$broadcast('schemaFormValidate');
             clearInterval(check);
           }
