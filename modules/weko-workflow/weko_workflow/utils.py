@@ -310,7 +310,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
     :return: error_list or None
     """
     error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
-    empty_list = error_list.copy()
+    empty_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property(
