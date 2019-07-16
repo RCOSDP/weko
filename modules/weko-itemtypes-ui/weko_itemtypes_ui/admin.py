@@ -26,7 +26,7 @@ from flask import abort, current_app, flash, json, jsonify, redirect, \
     request, session, url_for
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
-from flask_login import current_user, login_required
+from flask_login import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import BillingPermission
@@ -62,7 +62,7 @@ class ItemTypeMetaDataView(BaseView):
                 item.belonging_item_flg = len(metaDataRecords) > 0
                 if item.belonging_item_flg:
                     break
-        is_sys_admin=has_system_admin_access()
+        is_sys_admin = has_system_admin_access()
 
         return self.render(
             current_app.config['WEKO_ITEMTYPES_UI_ADMIN_REGISTER_TEMPLATE'],
@@ -107,7 +107,8 @@ class ItemTypeMetaDataView(BaseView):
             if record is not None:
                 # Check harvesting_type
                 if record.model.harvesting_type:
-                    flash(_('Cannot delete Item type for Harvesting.'), 'error')
+                    flash(_('Cannot delete Item type for Harvesting.'),
+                          'error')
                     return jsonify(code=-1)
                 # Get all versions
                 all_records = ItemTypes.get_records_by_name_id(
@@ -118,7 +119,10 @@ class ItemTypeMetaDataView(BaseView):
                         item_type_id=item.id)
                     if len(metaDataRecords) > 0:
                         flash(
-                            _('Cannot delete due to child existing item types.'), 'error')
+                            _(
+                                'Cannot delete due to child'
+                                ' existing item types.'),
+                            'error')
                         return jsonify(code=-1)
                 # Get item type name
                 item_type_name = ItemTypeNames.get_record(
@@ -220,7 +224,7 @@ class ItemTypeMetaDataView(BaseView):
                     return jsonify(code=0,
                                    msg=_('Restored Item type successfully.'))
 
-        return jsonify(code=-1,msg=_('An error has occurred.'))
+        return jsonify(code=-1, msg=_('An error has occurred.'))
 
 
 class ItemTypePropertiesView(BaseView):
@@ -264,14 +268,16 @@ class ItemTypePropertiesView(BaseView):
         for k in props:
             name = k.name
             if lang and 'title_i18n' in k.form and \
-                    lang in k.form['title_i18n'] and k.form['title_i18n'][lang]:
+                lang in k.form['title_i18n'] and \
+                    k.form['title_i18n'][lang]:
                 name = k.form['title_i18n'][lang]
 
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
                    'forms': k.forms, 'sort': k.sort}
             lists[k.id] = tmp
 
-        lists['defaults'] = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
+        lists['defaults'] = current_app.config[
+            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
 
         return jsonify(lists)
 
@@ -324,7 +330,8 @@ class ItemTypeMappingView(BaseView):
             lists = ItemTypes.get_latest()    # ItemTypes.get_all()
             if lists is None or len(lists) == 0:
                 return self.render(
-                    current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE']
+                    current_app.config['WEKO_ITEMTYPE'
+                                       'S_UI_ADMIN_ERROR_TEMPLATE']
                 )
             item_type = ItemTypes.get_by_id(ItemTypeID)
             if item_type is None:
@@ -341,20 +348,23 @@ class ItemTypeMappingView(BaseView):
                 prop = itemtype_prop.get(key)
                 cur_lang = current_i18n.language
                 schema_form = item_type.form
-                elemStr = ''
+                elem_str = ''
                 if 'default' != cur_lang:
                     for elem in schema_form:
                         if 'items' in elem:
                             for sub_elem in elem['items']:
-                                if 'key' in sub_elem and sub_elem['key'] == key:
+                                if 'key' in sub_elem and \
+                                        sub_elem['key'] == key:
                                     if 'title_i18n' in sub_elem:
                                         if cur_lang in sub_elem['title_i18n']:
                                             if len(
-                                                    sub_elem['title_i18n'][cur_lang]) > 0:
-                                                elemStr = sub_elem['title_i18n'][
-                                                    cur_lang]
+                                                sub_elem['title_i18n'][
+                                                    cur_lang]) > 0:
+                                                elem_str = \
+                                                    sub_elem['title_i18n'][
+                                                        cur_lang]
                                     else:
-                                        elemStr = sub_elem['title']
+                                        elem_str = sub_elem['title']
                                     break
                         else:
                             if elem['key'] == key:
@@ -362,18 +372,18 @@ class ItemTypeMappingView(BaseView):
                                     if cur_lang in elem['title_i18n']:
                                         if len(elem['title_i18n']
                                                [cur_lang]) > 0:
-                                            elemStr = elem['title_i18n'][
+                                            elem_str = elem['title_i18n'][
                                                 cur_lang]
                                 else:
-                                    elemStr = elem['title']
+                                    elem_str = elem['title']
 
-                        if elemStr != '':
+                        if elem_str != '':
                             break
 
-                if elemStr == '':
-                    elemStr = prop.get('title')
+                if elem_str == '':
+                    elem_str = prop.get('title')
 
-                itemtype_list.append((key, elemStr))
+                itemtype_list.append((key, elem_str))
 
             mapping_name = request.args.get('mapping_type', 'jpcoar_mapping')
             jpcoar_xsd = WekoSchema.get_all()

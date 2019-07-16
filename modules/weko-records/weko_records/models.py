@@ -130,8 +130,8 @@ class ItemType(db.Model, Timestamp):
         nullable=True
     )
     """Store schema form in JSON format.
-    When you create a new ``item type`` the ``form`` field value should never be
-    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
+    When you create a new ``item type`` the ``form`` field value should never 
+    be ``NULL``. Default value is an empty dict. ``NULL`` value means that the
     record metadata has been deleted.
     """
 
