@@ -31,6 +31,10 @@ msgstr ""
 msgid "Header Error"
 msgstr ""
 
+#: weko_items_ui/views.py:929
+msgid "PID does not meet the conditions."
+msgstr ""
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 #, fuzzy
 msgid "Itemtype List"

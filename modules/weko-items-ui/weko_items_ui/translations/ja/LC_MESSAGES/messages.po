@@ -57,6 +57,10 @@ msgstr "レコードが存在しません"
 msgid "An error has occurred."
 msgstr "エラーが発生しました"
 
+#: weko_items_ui/views.py:929
+msgid "PID does not meet the conditions."
+msgstr "PID付与の条件を満たしていません。"
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 msgid "Itemtype List"
 msgstr "アイテムタイプリスト"

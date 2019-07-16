@@ -252,8 +252,8 @@ class Flow(object):
     def get_item_registration_flow_action(self, flow_id):
         """Return Item Registration action info.
 
-        :param flow_id:
-        :return:
+        :param flow_id: item_registration's flow id
+        :return flow_action: flow action's object 
         """
         with db.session.no_autoflush:
             flow_action = _FlowAction.query.filter_by(

@@ -226,11 +226,11 @@ def get_json_schema(item_type_id=0, activity_id=""):
     """Get json schema.
 
     :param item_type_id: Item type ID. (Default: 0)
+    :param activity_id: Activity ID.  (Default: Null)
     :return: The json object.
     """
     try:
         result = None
-        json_schema = None
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
@@ -257,8 +257,10 @@ def get_json_schema(item_type_id=0, activity_id=""):
             return '{}'
 
         if activity_id:
-            updated_json_schema = update_json_schema_by_activity_id(result, activity_id)
-            if updated_json_schema: result = updated_json_schema
+            updated_json_schema = update_json_schema_by_activity_id(result,
+                                                                    activity_id)
+            if updated_json_schema:
+                result = updated_json_schema
 
         json_schema = result
         return jsonify(json_schema)
@@ -922,8 +924,9 @@ def check_validation_error_msg(activity_id):
     :param activity_id: The identify of Activity.
     :return: Show error message
     """
-    if session.get('update_json_schema') and session['update_json_schema'].get(activity_id):
+    if session.get('update_json_schema') and session[
+            'update_json_schema'].get(activity_id):
         return jsonify(code=1,
-                    msg=_('PID does not meet the conditions.'))
+                       msg=_('PID does not meet the conditions.'))
     else:
         return jsonify(code=0)

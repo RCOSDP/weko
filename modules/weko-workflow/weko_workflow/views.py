@@ -203,18 +203,20 @@ def display_activity(activity_id=0):
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
     item = None
-    if activity_detail is not None and activity_detail.item_id is not None:
+    if activity_detail and activity_detail.item_id:
         try:
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
         except NoResultFound as ex:
             current_app.logger.exception(str(ex))
             item = None
+        workflow = WorkFlow()
+        workflow_detail = workflow.get_workflow_by_id(
+            activity_detail.workflow_id)
 
     steps = activity.get_activity_steps(activity_id)
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
-    workflow = WorkFlow()
-    workflow_detail = workflow.get_workflow_by_id(activity_detail.workflow_id)
+
     if activity_detail.activity_status == \
         ActivityStatusPolicy.ACTIVITY_FINALLY \
         or activity_detail.activity_status == \
@@ -304,10 +306,11 @@ def display_activity(activity_id=0):
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
-            
-        if session.get('update_json_schema') and  session['update_json_schema'].get(activity_id):
+
+        if session.get('update_json_schema') and session[
+                'update_json_schema'].get(activity_id):
             json_schema = (json_schema + "/{}").format(activity_id)
-            
+
     # if 'approval' == action_endpoint:
     if item:
         # get record data for the first time access to editing item screen
@@ -596,13 +599,16 @@ def next_action(activity_id='0', action_id=0):
         error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
 
         if isinstance(error_list, str):
-            return jsonify(code = -1, msg=_(error_list))
+            return jsonify(code=-1,
+                           msg=_(error_list))
 
         if error_list:
             if not session.get('update_json_schema'):
                 session['update_json_schema'] = {}
             session['update_json_schema'][activity_id] = error_list
-            return previous_action(activity_id=activity_id, action_id=action_id, req=-1)
+            return previous_action(activity_id=activity_id,
+                                   action_id=action_id,
+                                   req=-1)
 
         if post_json.get('temporary_save') != 1:
             pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
@@ -696,7 +702,7 @@ def previous_action(activity_id='0', action_id=0, req=0):
         db.session.commit()
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.info(pidNotEx)
-    
+
     if req == -1:
         pre_action = flow.get_item_registration_flow_action(
             activity_detail.flow_define.flow_id)

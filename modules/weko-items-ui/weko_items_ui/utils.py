@@ -21,7 +21,7 @@
 """Module of weko-items-ui utils.."""
 from datetime import datetime
 
-from flask import session, current_app
+from flask import session
 from flask_login import current_user
 from invenio_db import db
 from sqlalchemy import MetaData, Table
@@ -342,57 +342,36 @@ def parse_ranking_results(results, display_rank, list_name='all',
 def update_json_schema_by_activity_id(json, activity_id):
     """Update json schema by activity id.
 
-    parameter:
-        json: The json schema
-        activity_id: Activity ID
-    return: json schema
+    :param json: The json schema
+    :param activity_id: Activity ID
+    :return: json schema
     """
-    if not json or not activity_id or not session.get('update_json_schema') \
-        or not session['update_json_schema'].get(activity_id):
+    if not session.get('update_json_schema') or not session[
+            'update_json_schema'].get(activity_id):
         return None
-    update_json_schema = session['update_json_schema'][activity_id]
+    error_list = session['update_json_schema'][activity_id]
 
-    if update_json_schema:
-        for item in update_json_schema['required']:
+    if error_list:
+        for item in error_list['required']:
             sub_item = item.split('.')
             if len(sub_item) == 1:
                 json['required'] = sub_item
             else:
                 if json['properties'][sub_item[0]].get('items'):
-                    if not json['properties'][sub_item[0]]['items'].get('required'):
-                        json['properties'][sub_item[0]]['items']['required'] = []
-                    json['properties'][sub_item[0]]['items']['required'].append(sub_item[1])
+                    json['properties'][sub_item[0]]['items']['required'].append(
+                        sub_item[1])
                 else:
-                    json['properties'][sub_item[0]]['required'].append(sub_item[1])
-        for item in update_json_schema['pattern']:
+                    json['properties'][sub_item[0]]['required'].append(
+                        sub_item[1])
+        for item in error_list['types']:
             sub_item = item.split('.')
             if len(sub_item) == 1:
                 json['required'] = sub_item
             else:
                 if json['properties'][sub_item[0]].get('items'):
-                    if not json['properties'][sub_item[0]]['items'].get('required'):
-                        json['properties'][sub_item[0]]['items']['required'] = []
-                    json['properties'][sub_item[0]]['items']['required'].append(sub_item[1])
+                    json['properties'][sub_item[0]]['items']['properties'][
+                        sub_item[1]]['enum'] = [error_list['doi']]
                 else:
-                    json['properties'][sub_item[0]]['required'].append(sub_item[1])
-        for item in update_json_schema['pattern']:
-            sub_item = item.split('.')
-            if len(sub_item) == 1:
-                json['required'] = sub_item
-            else:
-                if json['properties'][sub_item[0]].get('items'):
-                    if not json['properties'][sub_item[0]]['items'].get('required'):
-                        json['properties'][sub_item[0]]['items']['required'] = []
-                    json['properties'][sub_item[0]]['items']['required'].append(sub_item[1])
-                else:
-                    json['properties'][sub_item[0]]['required'].append(sub_item[1])
-        for item in update_json_schema['types']:
-            sub_item = item.split('.')
-            if len(sub_item) == 1:
-                json['required'] = sub_item
-            else:
-                if json['properties'][sub_item[0]].get('items'):
-                    json['properties'][sub_item[0]]['items']['properties'][sub_item[1]]['enum'] = [update_json_schema['doi']]
-                else:
-                    json['properties'][sub_item[0]]['properties'][sub_item[1]]['enum'] = [update_json_schema['doi']]
+                    json['properties'][sub_item[0]]['properties'][
+                        sub_item[1]]['enum'] = [error_list['doi']]
     return json

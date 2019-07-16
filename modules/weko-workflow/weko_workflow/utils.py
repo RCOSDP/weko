@@ -19,16 +19,14 @@
 # MA 02111-1307, USA.
 
 """Module of weko-workflow utils."""
-import re
-
 from flask import current_app
 from flask_babelex import gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
-from weko_deposit.api import WekoDeposit, WekoRecord
-from weko_records.api import FilesMetadata, ItemsMetadata, ItemTypes, Mapping
+from weko_deposit.api import WekoRecord
+from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 
 from .api import WorkActivity
@@ -214,7 +212,6 @@ def item_metadata_validation(item_id, identifier_type):
     if identifier_type == 0:
         return None
 
-    error_list = []
     journalarticle_nameid = 14
     journalarticle_type = 'other（プレプリント）'
     thesis_nameid = 12
@@ -306,20 +303,24 @@ def validation_item_property(mapping_data, identifier_type, properties):
     """
     Validate item property.
 
-    :param: mapping_data, identifier_type, properties
-    :return: error_list
+    :param mapping_data: Mapping Data contain record and item_map
+    :param identifier_type: Selected identifier
+    :param properties: Property's keywords
+    :return: error_list or None
     """
     error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
     empty_list = error_list.copy()
     # check タイトル dc:title
     if 'title' in properties:
-        title_data, title_key = mapping_data.get_data_by_property("title.@value")
+        title_data, title_key = mapping_data.get_data_by_property(
+            "title.@value")
         if not title_data:
             error_list['required'].append(title_key)
 
     # check 識別子 jpcoar:givenName
     if 'givenName' in properties:
-        data, key = mapping_data.get_data_by_property("creator.givenName.@value")
+        data, key = mapping_data.get_data_by_property(
+            "creator.givenName.@value")
         requirements = check_required_data(data, key)
         if requirements:
             error_list['required'] += requirements
@@ -327,8 +328,9 @@ def validation_item_property(mapping_data, identifier_type, properties):
     # check 識別子 jpcoar:identifier
     if 'identifier' in properties:
         data, key = mapping_data.get_data_by_property("identifier.@value")
-        type_data, type_key = mapping_data.get_data_by_property("identifier.@attributes.identifierType")
-        
+        type_data, type_key = mapping_data.get_data_by_property(
+            "identifier.@attributes.identifierType")
+
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
         if requirements:
@@ -342,37 +344,40 @@ def validation_item_property(mapping_data, identifier_type, properties):
 
     # check ID登録 jpcoar:identifierRegistration
     if 'identifierRegistration' in properties:
-        data, key = mapping_data.get_data_by_property("identifierRegistration.@value")
-        type_data, type_key = mapping_data.get_data_by_property("identifierRegistration.@attributes.identifierType")
-        
+        data, key = mapping_data.get_data_by_property(
+            "identifierRegistration.@value")
+        type_data, type_key = mapping_data.get_data_by_property(
+            "identifierRegistration.@attributes.identifierType")
+
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
         if requirements:
             error_list['required'] += requirements
         # half-with and special character check
         # else:
-        #     idx = 0
         #     for item in data:
         #         char_re = re.compile(r'[^a-zA-Z0-9\-\.\_\;\(\)\/.]')
         #         result = char_re.search(item)
         #         if bool(result):
-        #             error_list['pattern'].append(key + '.' + str(idx))
-        #         idx += 1
+        #             error_list['pattern'].append(key)
         if type_requirements:
             error_list['required'] += type_requirements
         else:
             for item in type_data:
-                if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI'] and not item == 'JaLC':
+                if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']\
+                        and not item == 'JaLC':
                     error_list['types'].append(type_key)
                     error_list['doi'] = 'JaLC'
-                elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI'] and not item == 'Crossref':
+                elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT[
+                        'CrossRefDOI'] and not item == 'Crossref':
                     error_list['types'].append(type_key)
                     error_list['doi'] = 'Crossref'
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
         data, key = mapping_data.get_data_by_property("sourceIdentifier.@value")
-        type_data, type_key = mapping_data.get_data_by_property("sourceIdentifier.@attributes.identifierType")
+        type_data, type_key = mapping_data.get_data_by_property(
+            "sourceIdentifier.@attributes.identifierType")
 
         requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
@@ -389,7 +394,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         data, key = mapping_data.get_data_by_property(text + ".@value")
         lang_data, lang_key = mapping_data.get_data_by_property(
             text + ".@attributes.xml:lang")
-        
+
         requirements = check_required_data(data, key)
         lang_requirements = check_required_data(lang_data, lang_key)
         if requirements:
@@ -398,7 +403,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
             error_list['required'] += lang_requirements
         else:
             if 'en' not in lang_data:
-                error_list['required'].append(lang_key + '.' + str(idx))
+                error_list['required'].append(lang_key)
 
     if error_list == empty_list:
         return None
@@ -407,6 +412,13 @@ def validation_item_property(mapping_data, identifier_type, properties):
 
 
 def check_required_data(data, key):
+    """
+    Check whether data exist or not.
+
+    :param data: request data
+    :param key: key of attribute contain data
+    :return: error_list or None
+    """
     error_list = []
 
     if not data:
@@ -423,7 +435,7 @@ def check_required_data(data, key):
 
 
 class MappingData(object):
-    """Dummy pagination class."""
+    """Mapping Data class."""
 
     record = None
     item_map = None
@@ -435,8 +447,17 @@ class MappingData(object):
         item_type_mapping = Mapping.get_record(item_type.id)
         self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
 
+    def get_data_item_type(self):
+        """Return item type data."""
+        return ItemTypes.get_by_id(id_=self.record.get('item_type_id'))
+
     def get_data_by_property(self, item_property):
-        """Return data by property."""
+        """
+        Get data by property text.
+
+        :param item_property: property value in item_map
+        :return: error_list or None
+        """
         key = self.item_map.get(item_property)
         data = []
         if not key:
@@ -450,7 +471,3 @@ class MappingData(object):
             for attr in attribute.get('attribute_value_mlt'):
                 data.append(attr.get(key.split('.')[1]))
         return data, key
-
-    def get_data_item_type(self):
-        """Return item type data."""
-        return ItemTypes.get_by_id(id_=self.record.get('item_type_id'))
