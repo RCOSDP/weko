@@ -223,7 +223,8 @@ def item_metadata_validation(item_id, identifier_type):
     datageneral_nameid = [13, 17, 18, 19, 20, 21]
     datageneral_types = ['internal report', 'policy report', 'report part',
                          'working paper', 'interactive resource',
-                         'research proposal', 'technical documentation',
+                         'musical notation', 'research proposal',
+                         'technical documentation',
                          'workflow', 'その他（その他）']
 
     metadata_item = MappingData(item_id)
