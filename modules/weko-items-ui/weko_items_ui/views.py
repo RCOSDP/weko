@@ -53,8 +53,7 @@ from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    validate_user, update_json_schema_by_activity_id
-
+    update_json_schema_by_activity_id, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -913,28 +912,17 @@ def check_ranking_show():
         result = ''
     return result
 
-@blueprint_api.route('/get_identifier_grant_error_list/<string:activity_id>',
+@blueprint_api.route('/check_validation_error_msg/<string:activity_id>',
                      methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
-def get_identifier_grant_error_list(activity_id):
-    """Get workflow journal data.
+def check_validation_error_msg(activity_id):
+    """Check whether session('update_json_schema') is exist.
 
     :param activity_id: The identify of Activity.
-    :return: Workflow journal data.
+    :return: Show error message
     """
-    # error_list = None
-    # update_json_schema = None
-    update_json_schema = session.get('update_json_schema')
-
-    # if update_json_schema:
-    #     error_list = update_json_schema[activity_id]
-    #     return jsonify(code=1,
-    #                 msg=_('PID does not meet the conditions.'),
-    #                 error_list=error_list)
-    # else:
-    #     return jsonify(code=0)
-    if update_json_schema and update_json_schema.get(activity_id):
+    if session.get('update_json_schema') and session['update_json_schema'].get(activity_id):
         return jsonify(code=1,
                     msg=_('PID does not meet the conditions.'))
     else:

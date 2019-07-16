@@ -653,7 +653,7 @@ function handleSharePermission(value) {
       $scope.renderValidationErrorList = function () {
         const activityId = $("#activity_id").text();
         $.ajax({
-          url: '/api/items/get_identifier_grant_error_list/' + activityId,
+          url: '/api/items/check_validation_error_msg/' + activityId,
           method: 'GET',
           async: false,
           success: function (response) {

@@ -72,46 +72,42 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
 
     if idf_grant == 0:
         res['pidstore_identifier'] = tempdata
-    elif idf_grant == 1:  # identifier_grant_jalc_doi
+    elif idf_grant == 1 and post_json.get('identifier_grant_jalc_doi_link'):
         jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
-        if jalcdoi_link:
-            jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
-            tempdata['identifier']['value'] = jalcdoi_link
-            tempdata['identifier']['properties']['identifierType'] = 'DOI'
-            tempdata['identifierRegistration']['value'] = \
-                jalcdoi_tail[1:]
-            tempdata['identifierRegistration']['properties'][
-                'identifierType'] = 'JaLC'
-            res['pidstore_identifier'] = tempdata
-    elif idf_grant == 2:  # identifier_grant_jalc_cr
+        jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
+        tempdata['identifier']['value'] = jalcdoi_link
+        tempdata['identifier']['properties']['identifierType'] = 'DOI'
+        tempdata['identifierRegistration']['value'] = \
+            jalcdoi_tail[1:]
+        tempdata['identifierRegistration']['properties'][
+            'identifierType'] = 'JaLC'
+        res['pidstore_identifier'] = tempdata
+    elif idf_grant == 2 and post_json.get('identifier_grant_jalc_cr_doi_link'):
         jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
-        if jalcdoi_cr_link:
-            jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
-            tempdata['identifier']['value'] = jalcdoi_cr_link
-            tempdata['identifier']['properties']['identifierType'] = 'DOI'
-            tempdata['identifierRegistration']['value'] = \
-                jalcdoi_cr_tail[1:]
-            tempdata['identifierRegistration']['properties'][
-                'identifierType'] = 'Crossref'
-            res['pidstore_identifier'] = tempdata
-    elif idf_grant == 3:  # identifier_grant_jalc_dc_doi
+        jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
+        tempdata['identifier']['value'] = jalcdoi_cr_link
+        tempdata['identifier']['properties']['identifierType'] = 'DOI'
+        tempdata['identifierRegistration']['value'] = \
+            jalcdoi_cr_tail[1:]
+        tempdata['identifierRegistration']['properties'][
+            'identifierType'] = 'Crossref'
+        res['pidstore_identifier'] = tempdata
+    elif idf_grant == 3 and post_json.get('identifier_grant_jalc_dc_doi_link'):
         jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
-        if jalcdoi_dc_link:
-            jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
-            tempdata['identifier']['value'] = jalcdoi_dc_link
-            tempdata['identifier']['properties']['identifierType'] = 'DOI'
-            tempdata['identifierRegistration']['value'] = \
-                jalcdoi_dc_tail[1:]
-            tempdata['identifierRegistration']['properties'][
-                'identifierType'] = 'Datacite'
-            res['pidstore_identifier'] = tempdata
-    elif idf_grant == 4:  # identifier_grant_crni
+        jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
+        tempdata['identifier']['value'] = jalcdoi_dc_link
+        tempdata['identifier']['properties']['identifierType'] = 'DOI'
+        tempdata['identifierRegistration']['value'] = \
+            jalcdoi_dc_tail[1:]
+        tempdata['identifierRegistration']['properties'][
+            'identifierType'] = 'Datacite'
+        res['pidstore_identifier'] = tempdata
+    elif idf_grant == 4 and post_json.get('identifier_grant_crni_link'):
         jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
-        if jalcdoi_crni_link:
-            tempdata['identifier']['value'] = jalcdoi_crni_link
-            tempdata['identifier']['properties']['identifierType'] = 'HDL'
-            del tempdata['identifierRegistration']
-            res['pidstore_identifier'] = tempdata
+        tempdata['identifier']['value'] = jalcdoi_crni_link
+        tempdata['identifier']['properties']['identifierType'] = 'HDL'
+        del tempdata['identifierRegistration']
+        res['pidstore_identifier'] = tempdata
     elif idf_grant == -1:  # with draw identifier_grant
         pidstore_identifier = item.get('pidstore_identifier')
         res['pidstore_identifier'] = tempdata
@@ -160,7 +156,7 @@ def find_doi(doi_link):
     :param: doi_link
     :return: True/False
     """
-    isExistDoi = False
+    is_existed = False
     try:
         link_doi = doi_link['doi_link']
         pid_identifiers = PersistentIdentifier.query.filter_by(
@@ -168,11 +164,11 @@ def find_doi(doi_link):
             pid_value=link_doi, status=PIDStatus.REGISTERED).all()
         for pid_identifier in pid_identifiers:
             if pid_identifier.pid_value == link_doi:
-                isExistDoi = True
-        return isExistDoi
+                is_existed = True
+        return is_existed
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.error(pidNotEx)
-        return isExistDoi
+        return is_existed
 
 
 def del_invenio_pidstore(link_doi):
@@ -245,39 +241,55 @@ def item_metadata_validation(item_id, identifier_type):
     # JaLC DOI identifier registration
     if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']:
         # 別表2-1 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【ジャーナルアーティクル】
-        if item_type.name_id == journalarticle_nameid or resource_type == journalarticle_type:
-            properties = ['title', 'identifier', 'identifierRegistration']
-            error_list = validation_item_property(metadata_item, identifier_type, properties)
         # 別表2-2 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【学位論文】
-        elif item_type.name_id == thesis_nameid:
-            properties = ['title', 'identifier', 'identifierRegistration']
-            error_list = validation_item_property(metadata_item, identifier_type, properties)
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
-        elif item_type.name_id == report_nameid or resource_type in report_types:
-            properties = ['title', 'identifier', 'identifierRegistration']
-            error_list = validation_item_property(metadata_item, identifier_type, properties)
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
-        elif resource_type == elearning_type:
-            properties = ['title', 'identifier', 'identifierRegistration']
-            error_list = validation_item_property(metadata_item, identifier_type, properties)
-        # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
-        elif item_type.name_id == dataset_nameid or resource_type == dataset_type:
-            properties = ['title', 'givenName', 'identifier', 'identifierRegistration']
-            error_list = validation_item_property(metadata_item, identifier_type, properties)
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        elif item_type.name_id in datageneral_nameid or resource_type in datageneral_types:
-            properties = ['title', 'identifier', 'identifierRegistration']
-            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        if (item_type.name_id == journalarticle_nameid or resource_type ==
+                journalarticle_type) or (item_type.name_id == thesis_nameid) \
+            or (item_type.name_id == report_nameid or resource_type in
+                report_types) or (resource_type == elearning_type) or (
+            item_type.name_id in datageneral_nameid or resource_type in
+                datageneral_types):
+            properties = ['title',
+                          'identifier',
+                          'identifierRegistration']
+            error_list = validation_item_property(metadata_item,
+                                                  identifier_type,
+                                                  properties)
+        # 別表2-5 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【研究データ】
+        elif item_type.name_id == dataset_nameid or resource_type == \
+                dataset_type:
+            properties = ['title',
+                          'givenName',
+                          'identifier',
+                          'identifierRegistration']
+            error_list = validation_item_property(metadata_item,
+                                                  identifier_type,
+                                                  properties)
         else:
             error_list = 'false'
     # CrossRef DOI identifier registration
     elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI']:
-        if item_type.name_id == journalarticle_nameid or resource_type == journalarticle_type:
-            properties = ['title', 'identifier', 'publisher', 'identifierRegistration', 'sourceIdentifier', 'sourceTitle']
-            error_list = validation_item_property(metadata_item, identifier_type, properties)
-        elif item_type.name_id in [thesis_nameid, report_nameid] or resource_type in report_types:
-            properties = ['title', 'identifier', 'identifierRegistration']
-            error_list = validation_item_property(metadata_item, identifier_type, properties)
+        if item_type.name_id == journalarticle_nameid or resource_type == \
+                journalarticle_type:
+            properties = ['title',
+                          'identifier',
+                          'publisher',
+                          'identifierRegistration',
+                          'sourceIdentifier',
+                          'sourceTitle']
+            error_list = validation_item_property(metadata_item,
+                                                  identifier_type,
+                                                  properties)
+        elif item_type.name_id in [thesis_nameid, report_nameid] or \
+                resource_type in report_types:
+            properties = ['title',
+                          'identifier',
+                          'identifierRegistration']
+            error_list = validation_item_property(metadata_item,
+                                                  identifier_type,
+                                                  properties)
         else:
             error_list = 'false'
     else:
@@ -297,7 +309,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
     :return: error_list
     """
     error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
-    empty_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
+    empty_list = error_list.copy()
     # check タイトル dc:title
     if 'title' in properties:
         title_data, title_key = mapping_data.get_data_by_property("title.@value")
@@ -329,7 +341,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
             idx = 0
             for item in type_data:
                 if not item in ['HDL', 'URI']:
-                    error_list['required'].append(type_key + '.' + str(idx))
+                    error_list['required'].append(type_key)
                 idx += 1
 
     # check ID登録 jpcoar:identifierRegistration
@@ -357,10 +369,10 @@ def validation_item_property(mapping_data, identifier_type, properties):
             idx = 0
             for item in type_data:
                 if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI'] and not item == 'JaLC':
-                    error_list['types'].append(type_key + '.' + str(idx))
+                    error_list['types'].append(type_key)
                     error_list['doi'] = 'JaLC'
                 elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI'] and not item == 'Crossref':
-                    error_list['types'].append(type_key + '.' + str(idx))
+                    error_list['types'].append(type_key)
                     error_list['doi'] = 'Crossref'
                 idx += 1
 
@@ -418,6 +430,7 @@ def check_required_data(data, key):
     else:
         return error_list
 
+
 class MappingData(object):
     """Dummy pagination class."""
 
@@ -431,12 +444,13 @@ class MappingData(object):
         item_type_mapping = Mapping.get_record(item_type.id)
         self.item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
 
-    def get_data_by_property(self, property):
+    def get_data_by_property(self, item_property):
         """Return data by property."""
-        key = self.item_map.get(property)
+        key = self.item_map.get(item_property)
         data = []
         if not key:
-            current_app.logger.debug(str(property) + ' jpcoar:mapping is not correct')
+            current_app.logger.debug(str(item_property) + ' jpcoar:mapping '
+                                                          'is not correct')
             return None, None
         attribute = self.record.get(key.split('.')[0])
         if not attribute:

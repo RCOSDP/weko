@@ -351,7 +351,7 @@ def update_json_schema_by_activity_id(json, activity_id):
         or not session['update_json_schema'].get(activity_id):
         return None
     update_json_schema = session['update_json_schema'][activity_id]
-    current_app.logger.debug(update_json_schema)
+
     if update_json_schema:
         for item in update_json_schema['required']:
             sub_item = item.split('.')

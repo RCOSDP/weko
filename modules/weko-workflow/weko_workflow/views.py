@@ -305,7 +305,7 @@ def display_activity(activity_id=0):
                 pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
             
-        if 'update_json_schema' in session:
+        if session.get('update_json_schema') and  session['update_json_schema'].get(activity_id):
             json_schema = (json_schema + "/{}").format(activity_id)
             
     # if 'approval' == action_endpoint:
