@@ -94,8 +94,8 @@
                     <label>{{_('Activity')}}</label>
                   </div>
                   <div class="col-xs-12 col-md-8 col-lg-8">
-                    <p>{{activity.activity_id}}</p>
-                    <input type="hidden" id="hidden_activity_id" value="{{activity.activity_id}}">
+                    <p id="activity_id">{{activity.activity_id}}</p>
+                    <!-- <input type="hidden" id="hidden_activity_id" value="{{activity.activity_id}}"> -->
                   </div>
                 </div>
                 <div class="form-group">
@@ -244,8 +244,8 @@
                 <button type="button" class="btn btn-primary action-big-button" id="btn-approval-req">{{_('Approval Request')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
               {%- elif 'approval' == cur_step %}
-                <button type="button" class="btn btn-primary action-button" id="btn-return">{{_('Return')}}</button>
-                <button type="button" class="btn btn-primary action-button" id="btn-reject">{{_('Reject')}}</button>
+                <button type="button" class="btn btn-danger action-button" id="btn-return">{{_('Return')}}</button>
+                <button type="button" class="btn btn-danger action-button" id="btn-reject">{{_('Reject')}}</button>
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>

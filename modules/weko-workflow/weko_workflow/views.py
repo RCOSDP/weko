@@ -59,7 +59,7 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
-    pidstore_identifier_mapping
+    item_metadata_validation, pidstore_identifier_mapping
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -304,6 +304,10 @@ def display_activity(activity_id=0):
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
+            
+        if 'update_json_schema' in session:
+            json_schema = (json_schema + "/{}").format(activity_id)
+            
     # if 'approval' == action_endpoint:
     if item:
         # get record data for the first time access to editing item screen
@@ -586,6 +590,20 @@ def next_action(activity_id='0', action_id=0):
             action_id=action_id,
             identifier=identifier_grant
         )
+
+        activity_obj = WorkActivity()
+        activity_detail = activity_obj.get_activity_detail(activity_id)
+        error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
+
+        if isinstance(error_list, str):
+            return jsonify(code = -1, msg=_(error_list))
+
+        if error_list:
+            if not session.get('update_json_schema'):
+                session['update_json_schema'] = {}
+            session['update_json_schema'][activity_id] = error_list
+            return previous_action(activity_id=activity_id, action_id=action_id, req=-1)
+
         if post_json.get('temporary_save') != 1:
             pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
         else:
@@ -678,8 +696,11 @@ def previous_action(activity_id='0', action_id=0, req=0):
         db.session.commit()
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.info(pidNotEx)
-
-    if req == 0:
+    
+    if req == -1:
+        pre_action = flow.get_item_registration_flow_action(
+            activity_detail.flow_define.flow_id)
+    elif req == 0:
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id)
     else:
@@ -867,7 +888,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             return jsonify(code=-1, msg=_('Invalid password'))
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return jsonify(code=-1, msg=_('Error! Relogin'))
+    return jsonify(code=-1, msg=_('Error!'))
 
 
 @blueprint.route('/findDOI', methods=['POST'])

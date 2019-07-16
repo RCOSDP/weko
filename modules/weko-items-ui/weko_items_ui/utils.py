@@ -21,6 +21,7 @@
 """Module of weko-items-ui utils.."""
 from datetime import datetime
 
+from flask import session, current_app
 from flask_login import current_user
 from invenio_db import db
 from sqlalchemy import MetaData, Table
@@ -336,3 +337,62 @@ def parse_ranking_results(results, display_rank, list_name='all',
             if len(ranking_list) == display_rank:
                 break
     return ranking_list
+
+
+def update_json_schema_by_activity_id(json, activity_id):
+    """Update json schema by activity id.
+
+    parameter:
+        json: The json schema
+        activity_id: Activity ID
+    return: json schema
+    """
+    if not json or not activity_id or not session.get('update_json_schema') \
+        or not session['update_json_schema'].get(activity_id):
+        return None
+    update_json_schema = session['update_json_schema'][activity_id]
+    current_app.logger.debug(update_json_schema)
+    if update_json_schema:
+        for item in update_json_schema['required']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    if not json['properties'][sub_item[0]]['items'].get('required'):
+                        json['properties'][sub_item[0]]['items']['required'] = []
+                    json['properties'][sub_item[0]]['items']['required'].append(sub_item[1])
+                else:
+                    json['properties'][sub_item[0]]['required'].append(sub_item[1])
+        for item in update_json_schema['pattern']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    if not json['properties'][sub_item[0]]['items'].get('required'):
+                        json['properties'][sub_item[0]]['items']['required'] = []
+                    json['properties'][sub_item[0]]['items']['required'].append(sub_item[1])
+                else:
+                    json['properties'][sub_item[0]]['required'].append(sub_item[1])
+        for item in update_json_schema['pattern']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    if not json['properties'][sub_item[0]]['items'].get('required'):
+                        json['properties'][sub_item[0]]['items']['required'] = []
+                    json['properties'][sub_item[0]]['items']['required'].append(sub_item[1])
+                else:
+                    json['properties'][sub_item[0]]['required'].append(sub_item[1])
+        for item in update_json_schema['types']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    json['properties'][sub_item[0]]['items']['properties'][sub_item[1]]['enum'] = [update_json_schema['doi']]
+                else:
+                    json['properties'][sub_item[0]]['properties'][sub_item[1]]['enum'] = [update_json_schema['doi']]
+    return json
