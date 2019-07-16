@@ -361,10 +361,10 @@ def validation_item_property(mapping_data, identifier_type, properties):
             idx = 0
             for item in type_data:
                 if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI'] and not item == 'JaLC':
-                    error_list['type'].append(type_key + '.' + str(idx))
+                    error_list['types'].append(type_key + '.' + str(idx))
                     error_list['doi'] = 'JaLC'
                 elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT['CrossRefDOI'] and not item == 'Crossref':
-                    error_list['type'].append(type_key + '.' + str(idx))
+                    error_list['types'].append(type_key + '.' + str(idx))
                     error_list['doi'] = 'Crossref'
                 idx += 1
 
