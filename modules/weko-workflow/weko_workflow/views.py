@@ -599,13 +599,9 @@ def next_action(activity_id='0', action_id=0):
             return jsonify(code = -1, msg=_(error_list))
 
         if error_list:
-            temp_dict = {}
-            temp_dict[activity_id] = error_list
-            if session['update_json_schema']:
-                if session['update_json_schema'].get(activity_id):
-                    session['update_json_schema'][activity_id] = error_list
-                else:
-                    session['update_json_schema'] += temp_dict
+            if not session.get('update_json_schema'):
+                session['update_json_schema'] = {}
+            session['update_json_schema'][activity_id] = error_list
             return previous_action(activity_id=activity_id, action_id=action_id, req=-1)
 
         if post_json.get('temporary_save') != 1:

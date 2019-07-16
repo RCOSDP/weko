@@ -666,12 +666,16 @@ function handleSharePermission(value) {
         });
       }
       $scope.showError = function () {
-        if (render_requirements) {
+        if ($scope.render_requirements) {
           var check = setInterval(show, 500);
           function show() {
+            var cnt = 0;
             if($('#loader_spinner').hasClass('ng-hide')) {
+              cnt++;
               $scope.$broadcast('schemaFormValidate');
-              clearInterval(check);
+              if (cnt===3) {
+                clearInterval(check);
+              }
             }
           }
         }
