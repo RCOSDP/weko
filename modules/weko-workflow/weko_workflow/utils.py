@@ -209,7 +209,7 @@ def item_metadata_validation(item_id, identifier_type):
     :param: item_id, identifier_type
     :return: error_list
     """
-    if identifier_type == 0:
+    if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['NotGrant']:
         return None
 
     journalarticle_nameid = 14
