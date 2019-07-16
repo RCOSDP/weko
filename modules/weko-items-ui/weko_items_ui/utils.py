@@ -26,6 +26,7 @@ from invenio_db import db
 from sqlalchemy import MetaData, Table
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
+from copy import deepcopy
 
 
 def get_list_username():
@@ -336,3 +337,90 @@ def parse_ranking_results(results, display_rank, list_name='all',
             if len(ranking_list) == display_rank:
                 break
     return ranking_list
+
+
+def parse_required_item_in_schema(json_schema):
+    """Get required item and split to sub items.
+
+    Arguments:
+        json_schema {dictionary} -- The schema data
+
+    Returns:
+        dictionary -- The schema after parse
+
+    """
+    data = deepcopy(json_schema)
+    required = deepcopy(data.get('required'))
+    if 'pubdate' in required:
+        required.remove('pubdate')
+    if len(required) == 0:
+        return None
+    properties = data.get('properties')
+    if not properties:
+        return None
+    for item in required:
+        required_data = add_required_subitem(properties.get(item))
+        if required_data:
+            properties[item] = required_data
+    return data
+
+
+def add_required_subitem(data):
+    """Get schema after add required.
+
+    Arguments:
+        data {dictionary} -- item in schema
+
+    Returns:
+        dictionary -- data after add required
+
+    """
+    if not data:
+        return None
+    item = deepcopy(data)
+    has_item = False
+    if 'items' in item.keys():
+        has_item = True
+        sub_item = item.get('items')
+    else:
+        sub_item = item
+
+    properties = sub_item.get('properties')
+    list_required_item = []
+    if not properties:
+        return None
+    if 'required' in sub_item.keys():
+        for k, v in properties.items():
+            if is_properties_exist_in_item(v):
+                sub_data = add_required_subitem(v)
+                properties[k] = sub_data
+            else:
+                list_required_item.append(str(k))
+        sub_item['required'] = list_required_item
+    else:
+        for k, v in properties.items():
+            if not add_required_subitem(v, k):
+                return None
+            else:
+                sub_data = add_required_subitem(v)
+                properties[k] = sub_data
+    if has_item:
+        item['items'] = sub_item
+        return item
+    else:
+        return sub_item
+
+
+def is_properties_exist_in_item(data):
+    """Check item have children or not.
+
+    Arguments:
+        data {dictionary} -- Item data
+
+    Returns:
+        boolean -- True if child is exists
+
+    """
+    if data.get('properties') or data.get('items'):
+        return True
+    return False

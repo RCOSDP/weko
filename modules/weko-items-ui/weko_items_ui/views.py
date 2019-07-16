@@ -53,7 +53,7 @@ from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    validate_user
+    validate_user, parse_required_item_in_schema
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -255,7 +255,7 @@ def get_json_schema(item_type_id=0):
 
         if result is None:
             return '{}'
-        return jsonify(json_schema)
+        return jsonify(parse_required_item_in_schema(json_schema))
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
