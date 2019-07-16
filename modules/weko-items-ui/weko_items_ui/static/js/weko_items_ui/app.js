@@ -295,6 +295,7 @@ function handleSharePermission(value) {
       $scope.bibliographic_title_key = '';
       $scope.bibliographic_title_lang_key = '';
       $scope.is_item_owner = false;
+      $scope.render_requirements = false;
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
           return $scope.filemeta_keys;
@@ -654,9 +655,9 @@ function handleSharePermission(value) {
           method: 'GET',
           async: false,
           success: function (response) {
-            console.log(response);
             if (response.code) {
               addAlert(response.msg);
+              $scope.render_requirements = true;
             }
           },
           error: function (data) {
@@ -665,11 +666,13 @@ function handleSharePermission(value) {
         });
       }
       $scope.showError = function () {
-        var check = setInterval(show, 500);
-        function show() {
-          if($('#loader_spinner').hasClass('ng-hide')) {
-            $scope.$broadcast('schemaFormValidate');
-            clearInterval(check);
+        if (render_requirements) {
+          var check = setInterval(show, 500);
+          function show() {
+            if($('#loader_spinner').hasClass('ng-hide')) {
+              $scope.$broadcast('schemaFormValidate');
+              clearInterval(check);
+            }
           }
         }
       }
