@@ -252,3 +252,5 @@ msgstr ""
 msgid "place"
 msgstr ""
 
+msgid "The following items is required. Please recheck and input."
+msgstr ""

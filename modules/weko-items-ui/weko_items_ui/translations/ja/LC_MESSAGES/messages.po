@@ -315,3 +315,5 @@ msgstr "位"
 #~ msgid "Are you sure you want to quit the activity?"
 #~ msgstr "このアクティビティを強制終了してもよろしいでしょうか。"
 
+msgid "The following items is required. Please recheck and input."
+msgstr "以下の項目が入力必須となります。ご確認の上、再度入力してください。"
