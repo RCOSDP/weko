@@ -398,14 +398,27 @@ def validation_item_property(mapping_data, identifier_type, properties):
         if type_requirements:
             error_list['required'] += type_requirements
 
-    # check 収録物名/出版者 jpcoar:sourceTitle/dc:publisher
-    if ('sourceTitle' or 'publisher') in properties:
-        text = "sourceTitle"
-        if text not in properties:
-            text = "publisher"
-        data, key = mapping_data.get_data_by_property(text + ".@value")
+    # check 収録物名 jpcoar:sourceTitle
+    if 'sourceTitle' in properties:
+        data, key = mapping_data.get_data_by_property("sourceTitle.@value")
         lang_data, lang_key = mapping_data.get_data_by_property(
-            text + ".@attributes.xml:lang")
+            "sourceTitle.@attributes.xml:lang")
+
+        requirements = check_required_data(data, key)
+        lang_requirements = check_required_data(lang_data, lang_key)
+        if requirements:
+            error_list['required'] += requirements
+        if lang_requirements:
+            error_list['required'] += lang_requirements
+        else:
+            if 'en' not in lang_data:
+                error_list['required'].append(lang_key)
+
+    # check 収録物名 dc:publisher
+    if 'publisher' in properties:
+        data, key = mapping_data.get_data_by_property("publisher.@value")
+        lang_data, lang_key = mapping_data.get_data_by_property(
+            "publisher.@attributes.xml:lang")
 
         requirements = check_required_data(data, key)
         lang_requirements = check_required_data(lang_data, lang_key)
