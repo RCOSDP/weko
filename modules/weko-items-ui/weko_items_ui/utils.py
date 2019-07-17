@@ -377,7 +377,9 @@ def update_json_schema_by_activity_id(json, activity_id):
         for item in error_list['pattern']:
             sub_item = item.split('.')
             if len(sub_item) == 2:
-                creators = json['properties'][sub_item[0]]['properties']
+                creators = json['properties'][sub_item[0]].get('properties')
+                if not creators:
+                    break
                 for creator in creators:
                     if creator.get('items'):
                         givenames = creator['items'].get('properties')

@@ -322,9 +322,13 @@ def validation_item_property(mapping_data, identifier_type, properties):
     if 'givenName' in properties:
         data, key = mapping_data.get_data_by_property(
             "creator.givenName.@value")
-        requirements = check_required_data(data, key)
-        if requirements:
-            error_list['pattern'] += requirements
+        creators = mapping_data.record.get(key.split('.')[0])
+        for subitem in creators.get("attribute_value_mlt")[0]:
+            for item in subitem[0]:
+                if item.get(key.split('.')[1]):
+                    data = item.get(key.split('.')[1])
+        if not data:
+            error_list['pattern'] += [key]
 
     # check 識別子 jpcoar:identifier
     if 'identifier' in properties:
