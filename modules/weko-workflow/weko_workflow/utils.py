@@ -324,7 +324,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
             "creator.givenName.@value")
         requirements = check_required_data(data, key)
         if requirements:
-            error_list['required'] += requirements
+            error_list['pattern'] += requirements
 
     # check 識別子 jpcoar:identifier
     if 'identifier' in properties:

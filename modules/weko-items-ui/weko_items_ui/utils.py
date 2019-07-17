@@ -358,8 +358,8 @@ def update_json_schema_by_activity_id(json, activity_id):
                 json['required'] = sub_item
             else:
                 if json['properties'][sub_item[0]].get('items'):
-                    json['properties'][sub_item[0]]['items']['required'].append(
-                        sub_item[1])
+                    json['properties'][sub_item[0]][
+                        'items']['required'].append(sub_item[1])
                 else:
                     json['properties'][sub_item[0]]['required'].append(
                         sub_item[1])
@@ -374,4 +374,14 @@ def update_json_schema_by_activity_id(json, activity_id):
                 else:
                     json['properties'][sub_item[0]]['properties'][
                         sub_item[1]]['enum'] = [error_list['doi']]
+        for item in error_list['pattern']:
+            sub_item = item.split('.')
+            if len(sub_item) == 2:
+                creators = json['properties'][sub_item[0]]['properties']
+                for creator in creators:
+                    if creator.get('items'):
+                        givenames = creator['items'].get('properties')
+                        if sub_item[1] in givenames:
+                            creator['items']['required'].append(
+                        sub_item[1])
     return json
