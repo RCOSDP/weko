@@ -23,6 +23,7 @@
 import operator
 import os
 import sys
+import re
 from datetime import date, timedelta
 
 import redis
@@ -905,3 +906,127 @@ def check_ranking_show():
     if settings and settings.is_show:
         result = ''
     return result
+
+
+def find(key, data):
+    """Find value in dictionary by key.
+
+    Arguments:
+        key {string} -- key to find
+        dictionary {dict} -- dictionary to find
+    """
+    if isinstance(data, list):
+        for index in data:
+            for k, v in index.items():
+                if k == key:
+                    return v
+                elif isinstance(v, dict):
+                    for result in find(key, v):
+                        return result
+                elif isinstance(v, list):
+                    for item in v:
+                        for result in find(key, item):
+                            return result
+    else:
+        for k, v in data.items():
+            if k == key:
+                return v
+            elif isinstance(v, dict):
+                for result in find(key, v):
+                    return result
+            elif isinstance(v, list):
+                for item in v:
+                    for result in find(key, item):
+                        return result
+
+
+def validate_required_field(key_field_required, data):
+    """Validate required field.
+
+    Arguments:
+        key_field_required {string} -- key to validate
+        data {list or dict} -- data to validate
+    """
+    value = find(key_field_required, data)
+    return value
+
+
+def validate_format_field(key_field_required, data, data_validate):
+    """
+
+    Arguments:
+        key_field_required {[type]} -- [description]
+        data {[type]} -- [description]
+    """
+    value = find(key_field_required, data)
+    return re.match(data_validate, value)
+
+
+@blueprint_api.route('/validate_input_data', methods=['POST'])
+# @login_required
+# @item_permission.require(http_exception=403)
+def validate_input_data():
+    if request.headers['Content-Type'] != 'application/json':
+        return jsonify(msg=_('Header Error'))
+    data = request.get_json()
+    item_type = ItemTypes.get_by_id(data.get('item_id'))
+    if item_type is None:
+        return '{}'
+    json_schema = item_type.schema
+
+    json_schema_properties = json_schema.get('properties')
+    result = {
+        "is_valid": True,
+        "required_errors": [],
+        "pattern_errors": [],
+    }
+    validate_data_list = list()
+    for key, item in json_schema_properties.items():
+        validation_data = dict()
+        get_validation_condition(item, key, validation_data)
+        if validation_data:
+            validation_data['parent_key'] = key
+            validate_data_list.append(validation_data)
+    data_receive = data.get('data')
+    for data in validate_data_list:
+        for k, v in data.items():
+            if k == "required":
+                required_field = data.get(k)
+                for field in required_field:
+                    if not validate_required_field(field, data_receive.get(
+                        data.get("parent_key"))):
+                        result["is_valid"] = False
+                        result["required_errors"].append(field)
+            elif k == "parent_key":
+                continue
+            else:
+                data_validate = v.get('pattern')
+                if not validate_format_field(k, data_receive.get(
+                    data.get("parent_key")), data_validate):
+                    result["is_valid"] = False
+                    result["pattern_errors"].append(k)
+
+    return jsonify(result)
+
+
+def get_validation_condition(json_schema: dict, key: str,
+                             validation_data: dict):
+    """Get validation condition.
+
+    :param json_schema:json schema
+    :param key: Current key
+    :param validation_data: Validation data
+    """
+    if isinstance(json_schema, dict) and (
+        key == "properties" or json_schema.get('properties')
+        or json_schema.get('items')):
+        for current_key, value in json_schema.items():
+            get_validation_condition(value, current_key, validation_data)
+    elif isinstance(json_schema, dict) and json_schema.get('pattern'):
+        # Get pattern setting
+        validation_data[key] = json_schema
+    elif (isinstance(json_schema, list) and len(json_schema) > 0
+          and key == 'required'):
+        # Get required item
+        validation_data[key] = json_schema
+

@@ -943,6 +943,33 @@ function handleSharePermission(value) {
         });
       }
 
+      $scope.validateInputData = function() {
+        let itemTypeId = $("#autofill_item_type_id").val();
+        let get_url = '/api/items/validate_input_data';
+        let requestData = {
+          'item_id': itemTypeId,
+          'data': $rootScope.recordsVM.invenioRecordsModel
+        }
+        $.ajax({
+          url: get_url,
+          method: 'POST',
+          async: false,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: JSON.stringify(requestData),
+          success: (data, status) => {
+
+          },
+          error: function(data, status) {
+              //alert('Cannot connect to server!');
+              var modalcontent =  "Cannot connect to server!";
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
+          }
+        });
+      }
+
       $scope.priceValidator = function() {
         var result = true;
         $scope.filemeta_keys.forEach(filemeta_key => {
