@@ -150,7 +150,6 @@ def get_tree_json(obj, pid=0):
     set_node(parent)
 
     parent = sorted(parent, key=lambda x: x["position"])
-    current_app.config['WEKO_INDEX_TREE_UPDATED'] = True
 
     return parent
 

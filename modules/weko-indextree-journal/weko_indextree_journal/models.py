@@ -342,12 +342,4 @@ class Journal_export_processing(db.Model, Timestamp):
         ).first()
 
 
-def journal_removed_or_inserted(mapper, connection, target):
-    current_app.config['WEKO_INDEXTREE_JOURNAL_UPDATED'] = True
-
-
-listen(Journal, 'after_insert', journal_removed_or_inserted)
-listen(Journal, 'after_delete', journal_removed_or_inserted)
-listen(Journal, 'after_update', journal_removed_or_inserted)
-
 __all__ = ('IndexJournal', 'Journal_export_processing')
