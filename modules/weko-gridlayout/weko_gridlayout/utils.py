@@ -30,8 +30,8 @@ from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
-from weko_theme import config as theme_config
 from weko_search_ui.query import item_search_factory
+from weko_theme import config as theme_config
 
 from . import config
 from .models import WidgetDesignSetting, WidgetType
@@ -548,9 +548,9 @@ def find_rss_value(data, keyword):
     elif keyword == 'creator':
         if source.get('creator'):
             creator = source.get('creator')
-            if (not creator or
-               not creator.get('creatorName') or
-               not creator.get('givenName')):
+            if (not creator
+                    or not creator.get('creatorName')
+                    or not creator.get('givenName')):
                 return ''
             else:
                 creator_name = creator.get('creatorName')
@@ -576,13 +576,13 @@ def find_rss_value(data, keyword):
         result = ''
         if source.get('relation'):
             relation = source.get('relation')
-            if (relation.get('relatedIdentifier') and
-               relation.get('relatedIdentifier')[0]):
+            if (relation.get('relatedIdentifier')
+                    and relation.get('relatedIdentifier')[0]):
                 related_identifier = relation.get('relatedIdentifier')[0]
                 result = get_rss_data_source(related_identifier, 'value')
         if result == '':
-            if (source.get('sourceIdentifier') and
-               source.get('sourceIdentifier')[0]):
+            if (source.get('sourceIdentifier')
+                    and source.get('sourceIdentifier')[0]):
                 source_identifier = source.get('sourceIdentifier')[0]
                 result = get_rss_data_source(source_identifier, 'value')
         return result

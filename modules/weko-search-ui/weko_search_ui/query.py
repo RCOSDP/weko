@@ -706,7 +706,6 @@ def item_search_factory(self, search, start_date, end_date):
     :param search:
     :return:
     """
-
     def _get_query(start_date, end_date):
         query_string = "_type:item AND " \
                        "relation_version_is_last:true AND " \
