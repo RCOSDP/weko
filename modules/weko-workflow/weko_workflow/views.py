@@ -209,13 +209,13 @@ def display_activity(activity_id=0):
         except NoResultFound as ex:
             current_app.logger.exception(str(ex))
             item = None
-        workflow = WorkFlow()
-        workflow_detail = workflow.get_workflow_by_id(
-            activity_detail.workflow_id)
 
     steps = activity.get_activity_steps(activity_id)
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
+    workflow = WorkFlow()
+    workflow_detail = workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
 
     if activity_detail.activity_status == \
         ActivityStatusPolicy.ACTIVITY_FINALLY \
