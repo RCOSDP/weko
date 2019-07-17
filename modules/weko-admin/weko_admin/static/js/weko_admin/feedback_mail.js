@@ -163,7 +163,6 @@ class TableUserEmailComponent extends React.Component {
   static getDerivedStateFromProps(nextProps, prevState) {
     if (nextProps.listUser != prevState.listUser)
     {
-      console.log(nextProps.listUser, prevState.listUser)
       return {
         listUser: nextProps.listUser,
         firstRender: false,
@@ -264,7 +263,7 @@ class SearchComponent extends React.Component {
           <input className="form-control" placeholder="" type="text" onChange={this.handleChange} value={this.state.searchKey}/>
         </div>
         <div className="col-sm-1 col-md-1">
-          <button class="btn btn-primary search-button" type="button">&nbsp;&nbsp;
+          <button class="btn btn-primary search-button" type="button" onClick = {this.searchEmail}>&nbsp;&nbsp;
             <i class="fa fa-search-plus"></i>
             &nbsp;
             Search &nbsp;&nbsp;
