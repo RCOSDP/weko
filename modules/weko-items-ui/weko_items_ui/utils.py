@@ -381,9 +381,8 @@ def update_json_schema_by_activity_id(json, activity_id):
                 if not creators:
                     break
                 for creator in creators:
-                    if creator.get('items'):
-                        givenames = creator['items'].get('properties')
-                        if sub_item[1] in givenames:
-                            creator['items']['required'].append(
-                        sub_item[1])
+                    if creators[creator].get('items'):
+                        givename = creators[creator]['items']
+                        if givename['properties'].get(sub_item[1]):
+                            givename['required'].append(sub_item[1])
     return json

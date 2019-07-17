@@ -609,6 +609,10 @@ def next_action(activity_id='0', action_id=0):
             return previous_action(activity_id=activity_id,
                                    action_id=action_id,
                                    req=-1)
+        else:
+            if session.get('update_json_schema') \
+                    and session['update_json_schema'].get(activity_id):
+                session['update_json_schema'][activity_id] = {}
 
         if post_json.get('temporary_save') != 1:
             pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
