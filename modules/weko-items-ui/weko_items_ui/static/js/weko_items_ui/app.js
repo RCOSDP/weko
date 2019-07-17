@@ -896,53 +896,6 @@ function handleSharePermission(value) {
         return result;
       }
 
-      $scope.genTitleAndPubDate = function() {
-        let itemTypeId = $("#autofill_item_type_id").val();
-        let get_url = '/api/autofill/get_title_pubdate_id/'+itemTypeId;
-        $.ajax({
-          url: get_url,
-          method: 'GET',
-          async: false,
-          success: (data, status) => {
-            let title = "";
-            let lang = "en";
-            let titleID = data.title;
-            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
-              let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
-              if (Array.isArray(titleField)) {
-                if (titleField[0].hasOwnProperty(titleID[1])){
-                  titleField = titleField[0];
-                }
-              }
-              if (titleField && titleField[0]) {
-                titleField = titleField[0];
-              }
-              if (titleField.hasOwnProperty(titleID[1])) {
-                title = titleField[titleID[1]];
-                if (titleField.hasOwnProperty(titleID[2]) && titleField[titleID[2]]) {
-                  lang = titleField[titleID[2]];
-                }
-              }
-            }
-            if (!$rootScope.recordsVM.invenioRecordsModel['title']){
-              $rootScope.recordsVM.invenioRecordsModel['title'] = title;
-              $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
-            }else {
-              if (title != "") {
-                $rootScope.recordsVM.invenioRecordsModel['title'] = title;
-                $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
-              }
-            }
-          },
-          error: function(data, status) {
-              //alert('Cannot connect to server!');
-              var modalcontent =  "Cannot connect to server!";
-              $("#inputModal").html(modalcontent);
-              $("#allModal").modal("show");
-          }
-        });
-      }
-
       $scope.validateInputData = function() {
         let itemTypeId = $("#autofill_item_type_id").val();
         let get_url = '/api/items/validate_input_data';
@@ -958,8 +911,24 @@ function handleSharePermission(value) {
             'Content-Type': 'application/json'
           },
           data: JSON.stringify(requestData),
-          success: (data, status) => {
-
+          success: (response) => {
+            if (response.is_valid) {
+              return true;
+            }
+            let requiredErrorItems = response.required_errors;
+            let patternErrorItems = response.pattern_errors;
+            if (requiredErrorItems.length == 0 && patternErrorItems.length == 0) {
+              return true;
+            }
+            let message = $("#validate_error").val() + '<br/><br/>';
+            message += requiredErrorItems[0];
+            for (let i = 1; i < requiredErrorItems.length; i++) {
+              let newItem = ', ' + requiredErrorItems[i];
+              message += newItem;
+            }
+            $("#inputModal").html(message);
+            $("#allModal").modal("show");
+            return false;
           },
           error: function(data, status) {
               //alert('Cannot connect to server!');
@@ -989,23 +958,72 @@ function handleSharePermission(value) {
         return result;
       }
 
+      $scope.findSubitemInSchemaForm = function (item) {
+        let result = [];
+        if (item.hasOwnProperty('items')) {
+          let subitem = item.items;
+          for (let i = 0; i < subitem.length; i++) {
+            result.push.apply(result, this.findSubitemInSchemaForm(subitem[i]));
+          }
+        } else {
+          if (item.required) {
+            let newData = {
+              'title': '',
+              'id': '',
+            }
+            if (item.hasOwnProperty('title_i18n')) {
+              let currentLanguage = $("#current_language").val();
+              newData['title'] = item.title_i18n[currentLanguage];
+            }
+            if (!newData['title']) {
+              newData['title'] = item.title;
+            }
+            newData['id'] = item.key[item.key.length - 1]
+            result.push(newData);
+          }
+        }
+        return result;
+      }
+      $scope.validatePristineProperties = function() {
+        let schemaForm = $rootScope.recordsVM.invenioRecordsForm;
+        let depositionForm = $scope.depositionForm;
+        let listItemErrors = []
+        for (let i = 0; i < schemaForm.length; i++) {
+          listSubItem = $scope.findSubitemInSchemaForm(schemaForm[i])
+          if (listSubItem.length == 0) {
+            continue;
+          }
+          for (let j = 0; j < listSubItem.length; j++) {
+            if (depositionForm[listSubItem[j].id].$pristine) {
+              listItemErrors.push(listSubItem[j].title);
+            }
+          }
+        }
+        if (listItemErrors.length > 0) {
+          let message = $("#validate_error").val() + '<br/><br/>';
+          message += listItemErrors[0];
+          for (let k = 1; k < listItemErrors.length; k++) {
+            let subMessage = ', ' + listItemErrors[k];
+            message += subMessage
+          }
+          $("#inputModal").html(message);
+          $("#allModal").modal("show");
+          return false;
+        }
+        return true;
+      }
+
       $scope.updateDataJson = async function () {
-        this.genTitleAndPubDate();
+        $scope.updateDataJson = async function () {
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
+        } else if ($scope.validatePristineProperties()) {
+          return true;
         }
-        else if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
-            //alert('Title is required! Please input title');
-            var modalcontent =  "Title is required! Please input title.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
-        }else if (!$rootScope.recordsVM.invenioRecordsModel['pubdate']){
-            //alert('PubDate is required! Please input pubDate');
-            var modalcontent =  "PubDate is required! Please input pubDate.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+        else if (!$scope.validationInputtedData) {
+          return
         }
         else {
           let next_frame = $('#next-frame').val();
