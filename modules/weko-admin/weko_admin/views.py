@@ -20,27 +20,28 @@
 
 """Views for weko-admin."""
 
-import json
-import math
+
 import sys
 from datetime import timedelta
 
 from flask import Blueprint, abort, current_app, flash, jsonify, \
-    make_response, render_template, request
+    render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
 from invenio_admin.proxies import current_admin
+from invenio_indexer.api import RecordIndexer
 from sqlalchemy.orm import session
-from weko_records.api import ItemTypes
 from werkzeug.local import LocalProxy
 
-from .models import SearchManagement, SessionLifetime
+from . import config
+from .models import SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
-    get_current_api_certification, get_initial_stats_report, \
-    get_selected_language, get_unit_stats_report, save_api_certification, \
-    update_admin_lang_setting, validate_certification
+    get_current_api_certification, get_feed_back_email_setting, \
+    get_initial_stats_report, get_selected_language, get_unit_stats_report, \
+    save_api_certification, update_admin_lang_setting, \
+    update_feedback_email_setting, validate_certification
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -307,97 +308,116 @@ def get_init_selection(selection=""):
     return jsonify(result)
 
 
-@blueprint_api.route('/get_statistic_item_regis/<int:unit>/<int:page>',
-                     methods=['GET'])
-def get_statistic_item_regis(unit=1, page=1):
-    """Get statistic item regis."""
-    response_data = {
-        'data': '',
-        'num_page': 1,
-        'page': 1
+@blueprint_api.route("/search_email", methods=['POST'])
+@login_required
+def get_email_author():
+    """Get all authors."""
+    data = request.get_json()
+
+    search_key = data.get('searchKey') or ''
+    query = {"match": {"gather_flg": 0}}
+
+    if search_key:
+        search_keys = search_key.split(" ")
+        match = []
+        for key in search_keys:
+            if key:
+                match.append({"match_phrase_prefix": {"emailInfo.email": key}})
+        query = {
+            "bool":
+            {
+                "should": match, "minimum_should_match": 1
+            }
+        }
+
+    size = config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE
+    num = data.get('pageNumber') or 1
+    offset = (int(num) - 1) * size if int(num) > 1 else 0
+
+    sort_key = data.get('sortKey') or ''
+    sort_order = data.get('sortOrder') or ''
+    sort = {}
+    if sort_key and sort_order:
+        sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
+
+    body = {
+        "query": query,
+        "from": offset,
+        "size": size,
+        "sort": sort
     }
-    result = list()
-    for i in range(1, 30):
-        temp_data = dict()
-        if unit == 1:
-            temp_data['col1'] = "2019-04-" + str(i)
-            temp_data['col2'] = i + 50
-        elif unit == 2:
-            temp_data['col1'] = "2019-01-01 - 2019-04-" + str(i)
-            temp_data['col2'] = i + 50
-        elif unit == 3:
-            temp_data['col1'] = "20" + str(i).zfill(2)
-            temp_data['col2'] = i + 50
-        else:
-            temp_data['col1'] = "User " + str(i)
-            temp_data['col2'] = "192.168.1." + str(i)
-            temp_data['col3'] = i + 50
-        result.append(temp_data)
-    page_result = list()
-    i = 0
-    temp_page_data = list()
-    while i < len(result):
-        if i % 10 == 0 or i == (len(result) - 1):
-            page_result.append(temp_page_data)
-            temp_page_data = list()
-            temp_page_data.append(result[i])
-        else:
-            temp_page_data.append(result[i])
-        i = i + 1
-
-    print("----------====================------------")
-    print(page - 1)
-    print(page_result)
-    response_data['data'] = page_result[page]
-    response_data['num_page'] = math.ceil(len(result) / 10)
-    response_data['page'] = page
-    return jsonify(response_data)
-
-
-@blueprint_api.route('/get_statistic_detail_view/<int:unit>/<int:page>',
-                     methods=['GET'])
-def get_statistic_detail_view(unit=1, page=1):
-    """Get statistic detail view."""
-    response_data = {
-        'data': '',
-        'num_page': 1,
-        'page': 1
+    query_item = {
+        "size": 0,
+        "query": {
+            "bool": {
+                "must_not": {
+                    "match": {
+                        "weko_id": "",
+                    }
+                }
+            }
+        }, "aggs": {
+            "item_count": {
+                "terms": {
+                    "field": "weko_id"
+                }
+            }
+        }
     }
-    result = list()
-    for i in range(1, 30):
-        temp_data = dict()
-        if unit == 1:
-            temp_data['col1'] = "2019-05-" + str(i)
-            temp_data['col2'] = i + 100
-        elif unit == 2:
-            temp_data['col1'] = "2019-01-01 - 2019-04-" + str(i)
-            temp_data['col2'] = i + 100
-        elif unit == 3:
-            temp_data['col1'] = "20" + str(i).zfill(2)
-            temp_data['col2'] = i + 100
-        elif unit == 4:
-            temp_data['col1'] = "100" + str(i)
-            temp_data['col2'] = "Test Item " + str(i)
-            temp_data['col3'] = i + 100
-        else:
-            temp_data['col1'] = "User " + str(i)
-            temp_data['col2'] = "192.168.1." + str(i)
-            temp_data['col3'] = i + 100
-        result.append(temp_data)
 
-    page_result = list()
-    i = 0
-    temp_page_data = list()
-    while i < len(result):
-        if i % 10 == 0 or i == (len(result) - 1):
-            page_result.append(temp_page_data)
-            temp_page_data = list()
-            temp_page_data.append(result[i])
-        else:
-            temp_page_data.append(result[i])
-        i = i + 1
+    indexer = RecordIndexer()
+    result = indexer.client.search(index="authors", body=body)
+    result_item_cnt = indexer.client.search(index="weko", body=query_item)
 
-    response_data['data'] = page_result[page]
-    response_data['num_page'] = math.ceil(len(result) / 10)
-    response_data['page'] = page
-    return jsonify(response_data)
+    result['item_cnt'] = result_item_cnt
+
+    return jsonify(result)
+
+
+@blueprint_api.route('/update_feedback_mail', methods=['POST'])
+def update_feedback_mail():
+    """API allow to save feedback mail setting.
+
+    Returns:
+        json -- response result
+
+    """
+    result = {
+        'success': '',
+        'error': ''
+    }
+    data = request.get_json()
+    response = update_feedback_email_setting(
+        data.get('data', ''),
+        data.get('is_sending_feedback', False))
+
+    if not response.get('error'):
+        result['success'] = True
+        return jsonify(result)
+    else:
+        result['error'] = response.get('error')
+        result['success'] = False
+        return jsonify(result)
+
+
+@blueprint_api.route('/get_feedback_mail', methods=['GET'])
+def get_feedback_mail():
+    """API allow get feedback email setting.
+
+    Returns:
+        json -- email settings
+
+    """
+    result = {
+        'data': '',
+        'is_sending_feedback': '',
+        'error': ''
+    }
+
+    data = get_feed_back_email_setting()
+    if data.get('error'):
+        result['error'] = data.get('error')
+        return jsonify(result)
+    result['data'] = data.get('data')
+    result['is_sending_feedback'] = data.get('is_sending_feedback')
+    return jsonify(result)

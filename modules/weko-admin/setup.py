@@ -110,6 +110,7 @@ setup(
         'invenio_admin.views': [
             'weko_admin_style = weko_admin.admin:style_adminview',
             'weko_admin_report = weko_admin.admin:report_adminview',
+            'weko_admin_feedback_mail = weko_admin.admin:feedback_mail_adminview',
             'weko_admin_language = weko_admin.admin:language_adminview',
             'weko_admin_web_api_account = weko_admin.admin:web_api_account_adminview',
             'weko_admin_stats_settings = weko_admin.admin:stats_settings_adminview',
@@ -129,14 +130,18 @@ setup(
             'weko_admin_js = weko_admin.bundles:js',
             'weko_admin_search_js = weko_admin.bundles:search_management_js',
             'weko_admin_stats_report_js = weko_admin.bundles:stats_report_js',
+            'weko_admin_react_bootstrap_js = weko_admin.bundles:react_bootstrap_js',
             'weko_admin_css = weko_admin.bundles:css',
             'weko_admin_quill_css = weko_admin.bundles:weko_admin_quill_sknow_css',
+            'weko_admin_feedback_mail_css = weko_admin.bundles:weko_admin_feedback_mail_css',
             'weko_admin_date_picker_js = weko_admin.bundles:date_picker_js',
             'weko_admin_date_picker_css = weko_admin.bundles:date_picker_css',
             'weko_admin_custom_report = '
             'weko_admin.bundles:custom_report_js',
-            'weko_report_reactjs_lib = '
-            'weko_admin.bundles:report_reactjs_lib',
+            'weko_admin_feedback_mail = '
+            'weko_admin.bundles:feedback_mail_js',
+            'weko_admin_statistics_reactjs_lib = '
+            'weko_admin.bundles:statistics_reactjs_lib',
             'weko_admin_log_analysis_js = '
             'weko_admin.bundles:log_analysis_js',
             'weko_admin_admin_lte_js_dependecies = '

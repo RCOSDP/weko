@@ -26,3 +26,31 @@ WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL = "No Title"
 
 WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE = "en"
 """Default widget language code"""
+
+WEKO_XML_FORMAT = \
+    '<?xml version="1.0" encoding="UTF-8"?>'
+"""Default setting for xml"""
+
+WEKO_XMLNS = \
+    'http://purl.org/rss/1.0/'
+"""Default XMLNS url"""
+
+WEKO_XMLNS_RDF = \
+    'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+"""Default XMLNS RDF url"""
+
+WEKO_XMLNS_RDFS = \
+    'http://www.w3.org/2000/01/rdf-schema#'
+"""Default XMLNS RDFS url"""
+
+WEKO_XMLNS_DC = \
+    'http://purl.org/dc/elements/1.1/'
+"""Default XMLNS DC url"""
+
+WEKO_XMLNS_PRISM = \
+    'http://prismstandard.org/namespaces/basic/2.0/'
+"""Default XMLNS PRISM url"""
+
+WEKO_RDF_SCHEMA = \
+    'https://www.w3.org/TR/rdf-schema/'
+"""Defaul RDF Schema"""

@@ -25,7 +25,6 @@ from datetime import datetime
 from flask import current_app, flash
 from invenio_db import db
 from sqlalchemy.dialects import mysql, postgresql
-from sqlalchemy.event import listen
 from sqlalchemy_utils.types import JSONType, UUIDType
 from weko_records.models import Timestamp
 
@@ -217,15 +216,6 @@ class Index(db.Model, Timestamp):
 #     """Record identifier."""
 #
 #     index = db.relationship(Index, back_populates='index_item')
-
-
-def index_removed_or_inserted(mapper, connection, target):
-    current_app.config['WEKO_INDEX_TREE_UPDATED'] = True
-
-
-listen(Index, 'after_insert', index_removed_or_inserted)
-listen(Index, 'after_delete', index_removed_or_inserted)
-listen(Index, 'after_update', index_removed_or_inserted)
 
 
 class IndexStyle(db.Model, Timestamp):

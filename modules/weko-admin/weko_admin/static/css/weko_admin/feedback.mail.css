@@ -1,0 +1,65 @@
+.container-modal {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+.feedback-mail-modal {
+  width: 70%;
+}
+.my-pagination-disabled {
+  cursor: not-allowed;
+}
+
+.style-component {
+    margin-top: 15px;
+    font-size: 14px;
+  }
+
+  .margin-left {
+    margin-left: 10%;
+  }
+
+  .style-radioBtn {
+    width : 13px;
+    height : 13px;
+  }
+
+  .style-selected-box{
+    margin-top: 15px;
+    width: 60%;
+    height: 50px;
+    border: 1px inset #99999994;
+    display: inline-block;
+    padding: 10px;
+  }
+
+  .style-full-size{
+    width: 100% !important;
+  }
+
+  .style-deleteBtn{
+    margin-left: 15px;
+    margin-bottom: 10px;
+    min-width: 120px;
+    height: 40px;
+  }
+
+  .style-table-modal{
+    width: 100%;
+  }
+
+  .style-column{
+    width : 45%;
+  }
+
+  .style-button{
+    min-width: 120px;
+    height: 40px;
+    font-size: 14px;
+    margin-left: 15px;
+  }
+
+  .alert-info {
+    background-color: #00a65a !important;
+    border-color: #008d4c !important;
+    border-radius: 3px;
+  }
