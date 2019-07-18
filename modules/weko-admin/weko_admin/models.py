@@ -346,7 +346,8 @@ class AdminLangSettings(db.Model):
 
         :return: All language have registered
         """
-        result = cls.query.filter_by(is_registered=True)
+        result = cls.query.filter_by(is_registered=True).order_by(
+            asc('admin_lang_settings_sequence'))
 
         return cls.parse_result(result)
 
