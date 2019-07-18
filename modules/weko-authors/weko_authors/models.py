@@ -71,7 +71,7 @@ class Authors(db.Model, Timestamp):
 
     @classmethod
     def get_first_email_by_id(cls, author_id):
-        """Get first email of author by id
+        """Get first email of author by id.
 
         Arguments:
             author_id {int} -- author id
