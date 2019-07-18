@@ -363,17 +363,17 @@ def update_json_schema_by_activity_id(json, activity_id):
                 else:
                     json['properties'][sub_item[0]]['required'].append(
                         sub_item[1])
-        for item in error_list['types']:
-            sub_item = item.split('.')
-            if len(sub_item) == 1:
-                json['required'] = sub_item
-            else:
-                if json['properties'][sub_item[0]].get('items'):
-                    json['properties'][sub_item[0]]['items']['properties'][
-                        sub_item[1]]['enum'] = [error_list['doi']]
-                else:
-                    json['properties'][sub_item[0]]['properties'][
-                        sub_item[1]]['enum'] = [error_list['doi']]
+        # for item in error_list['types']:
+        #     sub_item = item.split('.')
+        #     if len(sub_item) == 1:
+        #         json['required'] = sub_item
+        #     else:
+        #         if json['properties'][sub_item[0]].get('items'):
+        #             json['properties'][sub_item[0]]['items']['properties'][
+        #                 sub_item[1]]['enum'] = [error_list['doi']]
+        #         else:
+        #             json['properties'][sub_item[0]]['properties'][
+        #                 sub_item[1]]['enum'] = [error_list['doi']]
         for item in error_list['pattern']:
             sub_item = item.split('.')
             if len(sub_item) == 2:

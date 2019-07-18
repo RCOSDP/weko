@@ -382,12 +382,12 @@ def validation_item_property(mapping_data, identifier_type, properties):
             for item in type_data:
                 if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']\
                         and not item == 'JaLC':
-                    error_list['types'].append(type_key)
-                    error_list['doi'] = 'JaLC'
+                    error_list['required'].append(type_key)
+                    # error_list['doi'] = 'JaLC'
                 elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT[
                         'CrossRefDOI'] and not item == 'Crossref':
-                    error_list['types'].append(type_key)
-                    error_list['doi'] = 'Crossref'
+                    error_list['required'].append(type_key)
+                    # error_list['doi'] = 'Crossref'
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
