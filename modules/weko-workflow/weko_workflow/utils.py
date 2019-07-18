@@ -317,10 +317,13 @@ def validation_item_property(mapping_data, identifier_type, properties):
             "title.@value")
         lang_data, lang_key = mapping_data.get_data_by_property(
             "title.@attributes.xml:lang")
-        if not title_data:
-            error_list['required'].append(title_key)
-        if not lang_data:
-            error_list['required'].append(lang_key)
+
+        requirements = check_required_data(title_data, title_key)
+        lang_requirements = check_required_data(lang_data, lang_key)
+        if requirements:
+            error_list['required'] += requirements
+        if lang_requirements:
+            error_list['required'] += lang_requirements
 
     # check 識別子 jpcoar:givenName
     if 'givenName' in properties:
@@ -334,8 +337,9 @@ def validation_item_property(mapping_data, identifier_type, properties):
                     if item.get(key.split('.')[1]):
                         data.append(item.get(key.split('.')[1]))
 
-        if None in data:
-            error_list['pattern'] += [key]
+        requirements = check_required_data(data, key)
+        if requirements:
+            error_list['pattern'] += requirements
 
     # check 識別子 jpcoar:identifier
     if 'identifier' in properties:
