@@ -1014,7 +1014,6 @@ function handleSharePermission(value) {
       }
 
       $scope.updateDataJson = async function () {
-        $scope.updateDataJson = async function () {
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
             $("#inputModal").html(modalcontent);
@@ -1023,7 +1022,7 @@ function handleSharePermission(value) {
           return true;
         }
         else if (!$scope.validationInputtedData) {
-          return
+          return false;
         }
         else {
           let next_frame = $('#next-frame').val();
@@ -1050,6 +1049,7 @@ function handleSharePermission(value) {
           }
         }
       }
+
       $scope.saveDataJson = function (item_save_uri) {
         if ($scope.is_item_owner) {
           if (!this.registerUserPermission()) {
