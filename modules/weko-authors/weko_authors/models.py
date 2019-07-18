@@ -19,7 +19,7 @@
 # MA 02111-1307, USA.
 
 """Models for weko-index-tree."""
-
+import json
 from datetime import datetime
 
 from flask import current_app
@@ -68,6 +68,27 @@ class Authors(db.Model, Timestamp):
         nullable=True
     )
     """json for author info"""
+
+    @classmethod
+    def get_first_email_by_id(cls, author_id):
+        """Get first email of author by id.
+
+        Arguments:
+            author_id {int} -- author id
+
+        Returns:
+            string -- first email
+
+        """
+        try:
+            author = cls.query.filter_by(id=author_id).one_or_none()
+            if not author:
+                return None
+            json_data = json.loads(author.json)
+            email_info = json_data.get('emailInfo')
+            return email_info[0].get('email')
+        except Exception:
+            return None
 
 
 __all__ = ('Authors', )

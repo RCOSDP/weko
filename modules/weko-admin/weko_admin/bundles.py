@@ -30,12 +30,12 @@ js = Bundle(
     output="gen/weko_admin_ui.%(version)s.js",
 )
 
-report_reactjs_lib = Bundle(
+statistics_reactjs_lib = Bundle(
     'js/weko_admin/react.production.min.js',
     'js/weko_admin/react-dom.production.min.js',
     'js/weko_admin/browser.min.js',
     filters='jsmin',
-    output="gen/weko_report_reactjs_lib.%(version)s.js",
+    output="gen/weko_statistics_reactjs_lib.%(version)s.js",
 )
 
 custom_report_js = Bundle(
@@ -49,10 +49,21 @@ search_management_js = Bundle(
     output="gen/weko_admin_ui_search.%(version)s.js",
 )
 
+react_bootstrap_js = Bundle(
+    'js/weko_admin/react-bootstrap.min.js',
+    output="gen/react_bootstrap_js.%(version)s.js",
+)
+
 stats_report_js = Bundle(
     'js/weko_admin/stats_report.js',
     'js/weko_admin/email_schedule.js',
     output="gen/weko_admin_ui_stats_report.%(version)s.js",
+)
+
+feedback_mail_js = Bundle(
+    'js/weko_admin/feedback_mail.js',
+    filters='jsmin',
+    output="gen/weko_admin_feedback_mail.%(version)s.js",
 )
 
 log_analysis_js = Bundle(
@@ -80,6 +91,11 @@ css = Bundle(
 weko_admin_quill_sknow_css = Bundle(
     'css/weko_admin/quill.snow.css',
     output="gen/weko_admin_ui_quill.%(version)s.css",
+)
+
+weko_admin_feedback_mail_css = Bundle(
+    'css/weko_admin/feedback.mail.css',
+    output="gen/weko_admin_feedback_mail.%(version)s.css",
 )
 
 admin_lte_js_dependecies = NpmBundle(

@@ -20,16 +20,17 @@
 #}
 
 {%- set record_url = url_for('invenio_records_ui.recid', pid_value=pid.pid_value) %}
-
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+{{ all_modal() }}
 <div class="panel-group">
   <div class="panel panel-default" ng-controller="ItemController">
     <div class="panel-heading clearfix" style="background-color: inherit; font-size: 120%">
       <h4 style="display: inline;">
         {{_('Item')}}
-        <span style="margin-left: 0.25em; margin-right: 0.25em;">{{ '/' }} </span> 
+        <span style="margin-left: 0.25em; margin-right: 0.25em;">{{ '/' }} </span>
         <a class="forcewrap" href="{{record_url}}"></span>
           {{ record.get('item_title', _('No title')) }}</a>
-        <span style="margin-left: 0.25em; margin-right: 0.25em;">{{ '/' }} </span> 
+        <span style="margin-left: 0.25em; margin-right: 0.25em;">{{ '/' }} </span>
         {{ filename.split('.')[0] }}
       </h4>
     </div>
@@ -58,11 +59,34 @@
               {%- set img = file.mimetype | get_image_src -%}
               {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
               filename=file.key) %}
+              {%- set is_billing_file = False -%}
+              {%- set billing_file_data = "" -%}
+              {%- set billing_file_url = "" -%}
+              {%- set billing_file_class = "" -%}
+              {%- if billing_files_permission -%}
+              {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
+              {%- set is_billing_file = True -%}
+              {%- set billing_file_class = " billing-file" -%}
+              {%- set file_url = "javascript:void(0);" -%}
+              {%- set access_permission = record | check_file_permission(file.info()) -%}
+              {%- endif %}
               <tr>
                 <td>
                     <span class="filename">
                       <img src="{{img}}" alt={{ file.filename }}/>
-                      <a class="forcewrap"
+                      {%- if is_billing_file -%}
+                      {%- if not session['user_id'] and not access_permission and file.accessrole == 'open_login' -%}
+                      {%- set file_url = url_for_security('login', next=request.path) -%}
+                      {%- set billing_file_class = "" -%}
+                      {%- elif billing_file_permission -%}
+                      {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key) %}
+                      {%- set billing_file_data = "data-billing-file-permission=true data-billing-file-price=" + billing_files_prices.get(file.filename)|string -%}
+                      {%- else -%}
+                      {%- set billing_file_data = "data-billing-file-permission=false" -%}
+                      <input id="download_permission_error" type="hidden" value="{{_('The file cannot be downloaded because you do not have permission to view this file.')}}" />
+                      {%- endif -%}
+                      {%- endif -%}
+                      <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}}
                          href="{{file_url}}">{{ file.filename }} ({{ file.size|filesizeformat }})</a>
 
                       <span>{{file.checksum.split(':')[0]}}</span>
@@ -71,8 +95,14 @@
                   {%- if 'pdf' in file.mimetype and can_download_original_pdf -%}
                   {%- set original_file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
                   filename=file.key, original=1) %}
+                  {%- if is_billing_file -%}
+                  {%- set original_file_url = "javascript:void(0)" -%}
+                  {%- if billing_file_permission -%}
+                  {%- set billing_file_url = "data-billing-file-url=" + url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value, filename=file.key, original=1) %}
+                  {%- endif -%}
+                  {%- endif -%}
                   <div class="text-right">
-                    <a class="forcewrap" href="{{original_file_url}}">{{_('Original')}}</a>
+                    <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} href="{{original_file_url}}">{{_('Original')}}</a>
                   </div>
                   {%- endif -%}
                 </td>
@@ -185,6 +215,12 @@
                 <input type="hidden" value="{{_('Hide')}}" id="txt_hide"/>
                 <input type="hidden" value="{{is_logged_in}}" id="txt_is_logged_in"/>
                 <input type="hidden" value="{{can_update_version}}" id="txt_can_update_version"/>
+                {%- if billing_files_permission -%}
+                {%- set billing_file_permission = billing_files_permission.get(filename) -%}
+                {%- set billing_file_price = billing_files_prices.get(filename) -%}
+                <input type="hidden" value="{{billing_file_permission}}" id="billing_file_permission"/>
+                <input type="hidden" value="{{billing_file_price}}" id="billing_file_price"/>
+                {%- endif -%}
                 <div class="table-responsive">
                   <table class="table table-striped table-bordered file_version_table" ng-init="showChangeLog('{{deposit}}')">
                     <thead>

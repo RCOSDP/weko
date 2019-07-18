@@ -116,8 +116,20 @@ def check_file_download_permission(record, fjson):
                         is_can = True
                         break
 
-                is_can = is_can & check_user_group_permission(
-                    fjson.get('groups'))
+                # Billing file permission check
+                if fjson.get('groupsprice'):
+                    is_user_group_permission = False
+                    groups = fjson.get('groupsprice')
+                    for group in list(groups or []):
+                        group_id = group.get('group')
+                        if check_user_group_permission(group_id):
+                            is_user_group_permission = \
+                                check_user_group_permission(group_id)
+                            break
+                    is_can = is_can & is_user_group_permission
+                else:
+                    is_can = is_can & check_user_group_permission(
+                        fjson.get('groups'))
 
             #  can not access
             elif 'open_no' in acsrole:

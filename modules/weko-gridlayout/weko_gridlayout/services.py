@@ -21,20 +21,18 @@
 """Service for widget modules."""
 import copy
 import json
+from datetime import date, timedelta
 
 from flask import current_app
 from invenio_db import db
-from invenio_records.models import RecordMetadata
-from sqlalchemy import cast
-from sqlalchemy.dialects import postgresql
 
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
 from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
-from .utils import build_data, build_multi_lang_data, \
+from .utils import build_data, build_multi_lang_data, build_rss_xml, \
     convert_data_to_desgin_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
-    update_general_item
+    get_ES_result_by_date, update_general_item
 
 
 class WidgetItemServices:
@@ -662,7 +660,7 @@ class WidgetDataLoaderServices:
     """Services for load data to page."""
 
     @classmethod
-    def get_new_arrivals_data(cls, list_dates, number_result, rss_status):
+    def get_new_arrivals_data(cls, widget_id):
         """Get new arrivals data from DB.
 
         Returns:
@@ -673,45 +671,65 @@ class WidgetDataLoaderServices:
             'data': '',
             'error': ''
         }
-        if not list_dates or number_result == 0:
-            return None
+        if not widget_id:
+            result['error'] = 'Widget is not exist'
+            return result
         try:
             data = list()
-            for date in list_dates:
-                records = db.session.query(RecordMetadata).filter(
-                    RecordMetadata.json['pubdate']["attribute_value"] == cast(
-                        date,
-                        postgresql.JSONB),
-                    RecordMetadata.json['publish_status'] == cast(
-                        "0",
-                        postgresql.JSONB)
-                ).order_by(RecordMetadata.updated.desc()).all()
-                for record in records:
-                    record_data = record.json
-                    new_data = dict()
-                    new_data['name'] = record_data['item_title']
-                    new_data['url'] = '/records/' \
-                                      + record_data['control_number']
-                    rss = dict()
-                    if rss_status:
-                        rss = cls.get_arrivals_rss()
-                    new_data['rss'] = rss
-                    if len(data) < int(number_result):
-                        data.append(new_data)
-                    else:
-                        break
-                if len(data) == int(number_result):
+            widget = WidgetItemServices.get_widget_data_by_widget_id(widget_id)
+            setting = widget.get('settings')
+            if not setting:
+                result['error'] = 'Widget is not exist'
+                return result
+            number_result = setting.get('display_result')
+            new_date = setting.get('new_dates')
+
+            if not number_result or not new_date:
+                result['error'] = 'Widget is not exist'
+                return result
+
+            try:
+                term = int(new_date)
+            except Exception:
+                term = 0
+            current_date = date.today()
+            end_date = current_date.strftime("%Y-%m-%d")
+            start_date = (current_date - timedelta(days=term)).strftime(
+                "%Y-%m-%d")
+            rd = get_ES_result_by_date(start_date, end_date)
+            hits = rd.get('hits')
+            if not hits:
+                result['error'] = 'Cannot search data'
+                return result
+            es_data = hits.get('hits')
+            for es_item in es_data:
+                if len(data) >= int(number_result):
                     break
+                new_data = dict()
+                source = es_item.get('_source')
+                if not source:
+                    continue
+                item_metadata = source.get('_item_metadata')
+                if not item_metadata:
+                    continue
+                new_data['name'] = item_metadata.get('item_title')
+                new_data['url'] = '/records/' + item_metadata.get(
+                    'control_number')
+                data.append(new_data)
             result['data'] = data
         except Exception as e:
             result['error'] = str(e)
         return result
 
     @classmethod
-    def get_arrivals_rss(cls):
+    def get_arrivals_rss(cls, data, term, count):
         """Get New Arrivals RSS.
 
-        :rtype: object
+        :dictionary: elastic search data
+
         """
-        result = dict()
-        return result
+        if not data or not data.get('hits'):
+            return build_rss_xml(None, term, 0)
+        hits = data.get('hits')
+        rss_data = hits.get('hits')
+        return build_rss_xml(rss_data, term, count)

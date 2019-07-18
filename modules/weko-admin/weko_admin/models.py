@@ -22,12 +22,13 @@
 
 from datetime import datetime
 
-from flask import current_app, json
+from flask import current_app
 from invenio_db import db
 from sqlalchemy import asc
-from sqlalchemy.dialects import mysql, postgresql
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
+from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
 
 
@@ -760,7 +761,8 @@ class LogAnalysisRestrictedCrawlerList(db.Model):
                         db.session.merge(current_record)
                     else:
                         db.session.add(
-                            LogAnalysisRestrictedCrawlerList(list_url=new_list))
+                            LogAnalysisRestrictedCrawlerList(
+                                list_url=new_list))
                 db.session.commit()
             except BaseException as ex:
                 current_app.logger.debug(ex)
@@ -989,6 +991,120 @@ class RankingSettings(db.Model):
         return cls
 
 
+class FeedbackMailSetting(db.Model, Timestamp):
+    """Feedback email setting.
+
+    The FeedbackMailSetting object contains a ``created``, a ``updated``
+    properties that are automatically updated.
+    """
+
+    __tablename__ = 'feedback_email_setting'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True)
+    """FeedbackMailSetting identifier."""
+
+    account_author = db.Column(
+        db.Text,
+        nullable=False
+    )
+    """Author identifier."""
+
+    is_sending_feedback = db.Column(
+        db.Boolean(name='is_sending_feedback'),
+        nullable=False,
+        default=False)
+    """Setting to send or not send feedback mail."""
+
+    @classmethod
+    def create(cls, account_author, is_sending_feedback):
+        """Create a feedback mail setting.
+
+        Arguments:
+            account_author {string} -- author data
+            is_sending_feedback {bool} -- is sending feedback
+
+        Returns:
+            bool -- True if success
+
+        """
+        try:
+            new_record = FeedbackMailSetting()
+            with db.session.begin_nested():
+                new_record.account_author = account_author
+                new_record.is_sending_feedback = is_sending_feedback
+                db.session.add(new_record)
+            db.session.commit()
+        except BaseException:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def get_all_feedback_email_setting(cls):
+        """Get all feedback email setting.
+
+        Returns:
+            class -- this class
+
+        """
+        try:
+            with db.session.no_autoflush:
+                feedback_settings = cls.query.all()
+                return feedback_settings
+        except Exception:
+            return []
+
+    @classmethod
+    def update(cls, account_author, is_sending_feedback):
+        """Update existed feedback mail setting.
+
+        Arguments:
+            account_author {string} -- author data
+            is_sending_feedback {bool} -- is sending feedback
+
+        Keyword Arguments:
+            id {int} -- the id (default: {1})
+
+        Returns:
+            bool -- True if success
+
+        """
+        try:
+            with db.session.begin_nested():
+                settings = cls.query.all()[0]
+                settings.account_author = account_author
+                settings.is_sending_feedback = is_sending_feedback
+                db.session.merge(settings)
+            db.session.commit()
+            return True
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            return False
+
+    @classmethod
+    def delete(cls, id=1):
+        """Delete the settings. default delete first setting.
+
+        Keyword Arguments:
+            id {int} -- The setting id (default: {1})
+
+        Returns:
+            bool -- true if delete success
+
+        """
+        try:
+            with db.session.begin_nested():
+                cls.query.delete()
+            db.session.commit()
+            return True
+        except BaseException as ex:
+            current_app.logger.debug(ex)
+            return False
+
+
 class AdminSettings(db.Model):
     """settings."""
 
@@ -1084,5 +1200,6 @@ __all__ = ([
     'StatisticsEmail',
     'RankingSettings',
     'BillingPermission',
+    'FeedbackMailSetting',
     'AdminSettings'
 ])

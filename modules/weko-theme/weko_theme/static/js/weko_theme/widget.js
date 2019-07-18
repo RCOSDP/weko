@@ -90,27 +90,29 @@ let PageBodyGrid = function () {
         return '<div class="widget-access-counter" data-init-number="' + initNumber + '" style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">' + result + '</div>';
     };
 
-    this.buildNewArrivals = function (request_data, id) {
+    this.buildNewArrivals = function (widgetID, term, rss, id, count) {
         $.ajax({
-            method: 'POST',
-            url: '/api/admin/get_new_arrivals',
+            method: 'GET',
+            url: '/api/admin/get_new_arrivals/' + widgetID,
             headers: {
                 'Content-Type': 'application/json'
             },
-            data: JSON.stringify(request_data),
-            dataType: 'json',
             success: (response) => {
                 let result = response.data;
-                let host = window.location.origin;
                 let rssHtml = '';
-                if (request_data.rss_status) {
-                    rssHtml = '<a class="" href="javascript:void(0)">RSS<i class="fa fa-rss"></i></a>';
+                if (term == 'Today') {
+                    term = 0;
                 }
-                let innerHTML = '';
+                if (rss) {
+                    let rssURL = "/rss/records?term=" + term + "&count=" + count;
+                    rssHtml = '<a class="" target="_blank" rel="noopener noreferrer" href="' + rssURL + '"><i class="fa fa-rss"></i></a>';
+                }
+                let innerHTML = '<div class= "rss text-right">' + rssHtml + '</div>'
+                                +'<div>';
                 for (let data in result) {
-                    innerHTML += '<li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li>';
+                    innerHTML += '<div class="no-li-style no-padding-col"><li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li></div>';
                 }
-                innerHTML = '<div class="no-li-style col-sm-9 no-padding-col">' + innerHTML + '</div><div class= "col-sm-3 rss">' + rssHtml + '</div>';
+                innerHTML +='</div>';
                 $("#" + id).append(innerHTML);
             }
         });
@@ -165,55 +167,23 @@ let PageBodyGrid = function () {
         } else if (node.type == NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
-            let date = new Date();
 
-            let listDate = [this.parseDateFormat(date)];
-            if (node.new_dates != "Today") {
-                for (let i = 0; i < Number(node.new_dates); i++) {
-                    date.setDate(date.getDate() - 1);
-                    listDate.push(this.parseDateFormat(date));
-                }
-
-            }
-            let data = {
-                'list_dates': listDate,
-                'number_result': node.display_result,
-                'rss_status': node.rss_feed
-            }
-            this.buildNewArrivals(data, innerID);
+            this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
         }
 
         let template =
-            '<div class="grid-stack-item">' +
+            '<div class="grid-stack-item widget-resize">' +
             ' <div class="grid-stack-item-content panel panel-default widget" style="' +
             backgroundColor + frameBorderColor + '">' +
-            '     <div class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + rightStyle + '">' +
+            '     <div " class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + rightStyle + '">' +
             '       <strong style="' + paddingHeading + '">' + multiLangSetting.label + '</strong>' +
             '     </div>' +
-            '     <div class="panel-body ql-editor pad-top-30"' + id +' style="' + overFlowBody + '">' +
+            '     <div class="panel-body ql-editor"' + id +' style="' + overFlowBody + '">' +
             content + '</div>' +
             '   </div>' +
             '</div>';
 
         return template;
-    };
-
-    this.parseDateFormat = function(d){
-        let currentDate = "";
-        currentDate = d.getFullYear();
-
-        if (d.getMonth() < 9) {
-            currentDate += "-0" + (d.getMonth() + 1);
-        } else {
-            currentDate += '-' + (d.getMonth() + 1);
-        }
-
-        if (d.getDate() < 10) {
-            currentDate += "-0" + d.getDate();
-        } else {
-            currentDate += "-" + d.getDate();
-        }
-        return currentDate;
     };
 
     this.setAccessCounterValue = function(){
@@ -267,6 +237,12 @@ function getWidgetDesignSetting() {
                     let pageBodyGrid = new PageBodyGrid();
                     pageBodyGrid.init();
                     pageBodyGrid.loadGrid(widgetList);
+                    new ResizeSensor($('.widget-resize'), function(){
+                        $('.widget-resize').each(function(){
+                            let headerElementHeight = $(this).find('.panel-heading').height();
+                            $(this).find('.panel-body').css("padding-top", String(headerElementHeight+11) + "px");
+                        });
+                    });
                 }
             }
             toggleWidgetUI();
@@ -294,5 +270,4 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
         }
     }
 }
-
 

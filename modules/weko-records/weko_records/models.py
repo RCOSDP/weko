@@ -130,8 +130,8 @@ class ItemType(db.Model, Timestamp):
         nullable=True
     )
     """Store schema form in JSON format.
-    When you create a new ``item type`` the ``form`` field value should never be
-    ``NULL``. Default value is an empty dict. ``NULL`` value means that the
+    When you create a new ``item type`` the ``form`` field value should never
+    be ``NULL``. Default value is an empty dict. ``NULL`` value means that the
     record metadata has been deleted.
     """
 
@@ -164,6 +164,13 @@ class ItemType(db.Model, Timestamp):
                                  order_by='ItemTypeEditHistory.created',
                                  backref='item_type')
     """Used to reference whole edit history."""
+
+    is_deleted = db.Column(
+        db.Boolean(name='deleted'),
+        nullable=False,
+        default=False
+    )
+    """Status of item type."""
 
     __mapper_args__ = {
         'version_id_col': version_id

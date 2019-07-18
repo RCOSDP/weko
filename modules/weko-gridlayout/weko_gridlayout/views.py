@@ -8,6 +8,8 @@
 """Module of weko-gridlayout."""
 from __future__ import absolute_import, print_function
 
+from datetime import date, timedelta
+
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -15,12 +17,20 @@ from flask_login import login_required
 from .api import WidgetItems
 from .services import WidgetDataLoaderServices, WidgetDesignServices, \
     WidgetItemServices
-from .utils import get_default_language, get_system_language, \
-    get_widget_type_list
+from .utils import get_default_language, get_ES_result_by_date, \
+    get_system_language, get_widget_type_list
 
 blueprint = Blueprint(
     'weko_gridlayout',
     __name__,
+    template_folder='templates',
+    static_folder='static',
+)
+
+blueprint_rss = Blueprint(
+    'weko_gridlayout_rss',
+    __name__,
+    url_prefix='/rss',
     template_folder='templates',
     static_folder='static',
 )
@@ -99,7 +109,8 @@ def load_widget_design_setting(repository_id: str, current_language: str):
     :return:
     """
     result = WidgetDesignServices.get_widget_design_setting(
-        repository_id, current_language)
+        repository_id,
+        current_language)
     return jsonify(result)
 
 
@@ -175,16 +186,36 @@ def get_system_lang():
     return jsonify(result)
 
 
-@blueprint_api.route('/get_new_arrivals', methods=['POST'])
-def get_new_arrivals_data():
+@blueprint_api.route('/get_new_arrivals/<int:widget_id>', methods=['GET'])
+def get_new_arrivals_data(widget_id):
     """Get new arrivals data.
 
     Returns:
         json -- new arrivals data
 
     """
-    data = request.get_json()
-    return jsonify(WidgetDataLoaderServices.get_new_arrivals_data(
-        data.get('list_dates'),
-        data.get('number_result'),
-        data.get('rss_status')))
+    return jsonify(WidgetDataLoaderServices.get_new_arrivals_data(widget_id))
+
+
+@blueprint_rss.route('/records', methods=['GET'])
+def get_rss_data():
+    """Get rss data based on term.
+
+    Returns:
+        xml -- RSS data
+
+    """
+    try:
+        data = request.args
+        term = int(data.get('term'))
+        count = int(data.get('count'))
+    except Exception:
+        count = -1
+        term = -1
+    if term < 0 or count < 0:
+        return WidgetDataLoaderServices.get_arrivals_rss(None, 0, 0)
+    current_date = date.today()
+    end_date = current_date.strftime("%Y-%m-%d")
+    start_date = (current_date - timedelta(days=term)).strftime("%Y-%m-%d")
+    rd = get_ES_result_by_date(start_date, end_date)
+    return WidgetDataLoaderServices.get_arrivals_rss(rd, term, count)

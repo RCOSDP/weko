@@ -53,6 +53,9 @@ WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE = \
 WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
 """Language templates."""
 
+WEKO_ADMIN_FEEDBACK_MAIL = 'weko_admin/admin/feedback_mail.html'
+"""Language templates."""
+
 WEKO_ADMIN_WEB_API_ACCOUNT = 'weko_admin/admin/web_api_account.html'
 """Web Api Account templates."""
 
@@ -67,6 +70,9 @@ LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
 
 WEKO_ADMIN_CROSSREF_API_URL = 'https://doi.crossref.org/'
 """URL of CrossRef API."""
+
+WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE = 10
+"""Numbers result per page in weko admin feedback mail"""
 
 WEKO_ADMIN_ENDPOINT = 'openurl'
 """Endpoint to concate URL of CrossRef API."""
