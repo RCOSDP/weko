@@ -36,11 +36,12 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
 from invenio_db import db
+from invenio_indexer.api import RecordIndexer
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
 
-from .models import LogAnalysisRestrictedCrawlerList, \
+from .models import FeedbackMailSetting, LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress, RankingSettings, SearchManagement, \
     StatisticsEmail
 from .permissions import admin_permission_factory
@@ -382,6 +383,14 @@ class ReportView(BaseView):
         return redirect(url_for("report.index"))
 
 
+class FeedbackMailView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_FEEDBACK_MAIL"]
+        )
+
+
 class LanguageSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
@@ -646,6 +655,15 @@ report_adminview = {
     }
 }
 
+feedback_mail_adminview = {
+    'view_class': FeedbackMailView,
+    'kwargs': {
+        'category': _('Statistics'),
+        'name': _('Feedback Mail'),
+        'endpoint': 'feedbackmail'
+    }
+}
+
 stats_settings_adminview = {
     'view_class': StatsSettingsView,
     'kwargs': {
@@ -712,6 +730,7 @@ site_license_settings_adminview = {
 __all__ = (
     'style_adminview',
     'report_adminview',
+    'feedback_mail_adminview',
     'language_adminview',
     'web_api_account_adminview',
     'stats_settings_adminview',
