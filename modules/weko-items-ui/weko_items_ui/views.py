@@ -54,7 +54,7 @@ from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    validate_user, parse_required_item_in_schema
+    validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
