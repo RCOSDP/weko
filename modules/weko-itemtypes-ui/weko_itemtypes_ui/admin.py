@@ -36,7 +36,7 @@ from weko_schema_ui.api import WekoSchema
 
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
 from .permissions import item_type_permission
-from .utils import remove_xsd_prefix
+from .utils import remove_xsd_prefix, parse_required_item_in_schema
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -158,8 +158,9 @@ class ItemTypeMetaDataView(BaseView):
             record = ItemTypes.update(id_=item_type_id,
                                       name=data.get(
                                           'table_row_map').get('name'),
-                                      schema=data.get('table_row_map').get(
-                                          'schema'),
+                                      schema=parse_required_item_in_schema(
+                                          data.get('table_row_map').get(
+                                              'schema')),
                                       form=data.get(
                                           'table_row_map').get('form'),
                                       render=data)

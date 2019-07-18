@@ -256,7 +256,7 @@ def get_json_schema(item_type_id=0):
 
         if result is None:
             return '{}'
-        return jsonify(parse_required_item_in_schema(json_schema))
+        return jsonify(json_schema)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return abort(400)
