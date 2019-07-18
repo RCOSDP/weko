@@ -41,6 +41,56 @@ def remove_xsd_prefix(jpcoar_lists):
     return jpcoar_copy
 
 
+def fix_json_schema(json_schema):
+    """Fix format for json schema.
+
+    Arguments:
+        json_schema {dictionary} -- The json schema
+
+    Returns:
+        dictionary -- The json schema after fix format
+
+    """
+    return fix_min_max_multiple_item(
+        parse_required_item_in_schema(
+            json_schema))
+
+
+def fix_min_max_multiple_item(json_schema):
+    """Fix min max value for multiple type.
+
+    Arguments:
+        json_schema {dictionary} -- The json schema
+
+    Returns:
+        dictionary -- The json schema after fix format
+
+    """
+    properties = deepcopy(json_schema.get('properties'))
+    for item in properties:
+        item_data = properties[item]
+        if 'maxItems' in properties[item].keys():
+            max_item = item_data.get('maxItems')
+            if not max_item:
+                continue
+            try:
+                item_data['maxItems'] = int(max_item)
+            except Exception as e:
+                print('Cannot parse maxItems ' + e)
+                return None
+        if 'minItems' in properties[item].keys():
+            min_item = item_data.get('minItems')
+            if not min_item:
+                continue
+            try:
+                item_data['minItems'] = int(min_item)
+            except Exception as e:
+                print('Cannot parse minItems ' + e)
+                return None
+    json_schema['properties'] = properties
+    return json_schema
+
+
 def parse_required_item_in_schema(json_schema):
     """Get required item and split to sub items.
 
@@ -91,7 +141,7 @@ def add_required_subitem(data):
     list_required_item = list()
     if not properties:
         return None
-    if 'required' in sub_item.keys():
+    if 'type' in sub_item.keys() and sub_item['type'] == 'object':
         for k, v in properties.items():
             if is_properties_exist_in_item(v):
                 sub_data = add_required_subitem(v)

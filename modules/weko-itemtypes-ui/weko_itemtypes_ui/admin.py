@@ -36,7 +36,7 @@ from weko_schema_ui.api import WekoSchema
 
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
 from .permissions import item_type_permission
-from .utils import remove_xsd_prefix, parse_required_item_in_schema
+from .utils import remove_xsd_prefix, fix_json_schema
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -155,12 +155,17 @@ class ItemTypeMetaDataView(BaseView):
 
         data = request.get_json()
         try:
+            json_schema = fix_json_schema(
+                data.get(
+                    'table_row_map').get(
+                        'schema'))
+            if not json_schema:
+                raise ValueError('Schema is in wrong format.')
+
             record = ItemTypes.update(id_=item_type_id,
                                       name=data.get(
                                           'table_row_map').get('name'),
-                                      schema=parse_required_item_in_schema(
-                                          data.get('table_row_map').get(
-                                              'schema')),
+                                      schema=json_schema,
                                       form=data.get(
                                           'table_row_map').get('form'),
                                       render=data)
