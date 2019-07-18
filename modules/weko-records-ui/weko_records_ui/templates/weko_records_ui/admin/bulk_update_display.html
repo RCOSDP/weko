@@ -236,4 +236,6 @@
 
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
+{% from "weko_theme/macros/modal_page.html" import confirm_modal %}
+{{confirm_modal('confirm_update', 'confirm_submit', 'Continue', 'List of Update')}}
 </div>
