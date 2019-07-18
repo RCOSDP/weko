@@ -926,7 +926,10 @@ def check_validation_error_msg(activity_id):
     """
     if session.get('update_json_schema') and session[
             'update_json_schema'].get(activity_id):
+        error_list = session[
+            'update_json_schema'].get(activity_id)
         return jsonify(code=1,
-                       msg=_('PID does not meet the conditions.'))
+                       msg=_('PID does not meet the conditions.'),
+                       error_list=error_list)
     else:
         return jsonify(code=0)

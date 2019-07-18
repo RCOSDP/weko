@@ -296,6 +296,7 @@ function handleSharePermission(value) {
       $scope.bibliographic_title_lang_key = '';
       $scope.is_item_owner = false;
       $scope.render_requirements = false;
+      $scope.error_list = [];
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
           return $scope.filemeta_keys;
@@ -660,6 +661,7 @@ function handleSharePermission(value) {
             if (response.code) {
               addAlert(response.msg);
               $scope.render_requirements = true;
+              $scope.error_list = response.error_list;
             }
           },
           error: function (data) {
@@ -670,12 +672,22 @@ function handleSharePermission(value) {
       $scope.showError = function () {
         if ($scope.render_requirements) {
           var check = setInterval(show, 500);
+          var cnt = 0;
           function show() {
-            var cnt = 0;
             if($('#loader_spinner').hasClass('ng-hide')) {
               cnt++;
               $scope.$broadcast('schemaFormValidate');
               if (cnt===3) {
+                if ($scope.error_list['required'].length > 0) {
+                    angular.forEach($scope.error_list['required'], function(value, key) {
+                      let id = value.split('.')[1]
+                      if (id) {
+                        $scope.depositionForm[id].$viewValue = '';
+                        $scope.depositionForm[id].$commitViewValue();
+                      }
+                    });
+                    $scope.$broadcast('schemaFormValidate');
+                }
                 clearInterval(check);
               }
             }
