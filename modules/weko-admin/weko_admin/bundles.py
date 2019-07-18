@@ -131,4 +131,3 @@ angular_js = NpmBundle(  # Already included in front-end
     },
     output='gen/weko_admin_ui.angular_js.%(version)s.js',
 )
-

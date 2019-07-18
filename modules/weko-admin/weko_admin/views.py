@@ -25,7 +25,7 @@ import sys
 from datetime import timedelta
 
 from flask import Blueprint, abort, current_app, flash, jsonify, \
-     render_template, request
+    render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
