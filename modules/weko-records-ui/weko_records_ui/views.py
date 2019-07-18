@@ -430,9 +430,6 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
 def set_pdfcoverpage_header():
     """Set pdfcoverage header."""
-    # limit upload file size : 1MB
-    current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
-
     @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
     def handle_over_max_file_size(error):
         return 'result : file size is overed.'

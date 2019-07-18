@@ -51,12 +51,12 @@
 }
 
 .rss a{
-  position: absolute;
-  width: 30;
-  height: 10;
   background-color: orange;
   padding: 5px;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
   text-decoration: none;
+  border-radius: 25%;
 }
 
 .rss a:hover {
@@ -78,4 +78,8 @@
 .no-padding-col {
   padding-left: 0px !important;
   padding-right: 0px !important;
+}
+
+.widget-resize{
+  position: absolute !important;
 }
