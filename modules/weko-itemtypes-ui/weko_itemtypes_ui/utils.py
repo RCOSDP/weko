@@ -101,7 +101,7 @@ def add_required_subitem(data):
         sub_item['required'] = list_required_item
     else:
         for k, v in properties.items():
-            if not add_required_subitem(v, k):
+            if not add_required_subitem(v):
                 return None
             else:
                 sub_data = add_required_subitem(v)
