@@ -875,6 +875,9 @@ $(document).ready(function () {
           render_empty('schema_'+row_id);
         }
       });
+      if($('input[type=radio][name=item_type]:checked').val() === 'deleted') {
+        $('div.metadata-content *').not('[id=btn_restore_itemtype_schema]').prop('disabled', true);
+      }
     });
     $.get('/api/itemtypes/' + $('#item-type-lists').val() + '/mapping', function(data, status){
       Object.assign(src_mapping, data);

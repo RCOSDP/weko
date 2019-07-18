@@ -78,7 +78,7 @@ class ItemTypeMetaDataView(BaseView):
         """Renderer."""
         result = None
         if item_type_id > 0:
-            result = ItemTypes.get_by_id(id_=item_type_id)
+            result = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
         if result is None:
             result = {
                 'table_row': [],
