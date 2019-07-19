@@ -249,7 +249,7 @@ def item_metadata_validation(item_id, identifier_type):
             or (item_type.name_id == report_nameid or resource_type in
                 report_types) or (resource_type == elearning_type) or (
             item_type.name_id in datageneral_nameid or resource_type in
-                datageneral_types):
+                datageneral_types) or item_type.name_id < 10:
             properties = ['title',
                           'identifier',
                           'identifierRegistration']
