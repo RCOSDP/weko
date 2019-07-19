@@ -457,12 +457,15 @@ def check_required_data(data, key, repeatable=False):
     """
     error_list = []
 
-    if not data or (not repeatable and len(data) > 1):
+    if not data:
         error_list.append(key)
     else:
-        for item in data:
-            if not item:
-                error_list.append(key)
+        if not repeatable and len(data) > 1:
+            error_list.append(key)
+        else:
+            for item in data:
+                if not item:
+                    error_list.append(key)
 
     if not error_list:
         return None
