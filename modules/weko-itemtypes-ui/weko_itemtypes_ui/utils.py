@@ -20,7 +20,6 @@
 
 """Utils for weko-itemtypes-ui."""
 
-from flask import current_app
 from copy import deepcopy
 
 
@@ -113,6 +112,7 @@ def parse_required_item_in_schema(json_schema):
         dictionary -- The schema after parse
 
     """
+    helper_remove_empty_enum(json_schema)
     data = deepcopy(json_schema)
     required = deepcopy(data.get('required'))
     if 'pubdate' in required:
@@ -127,6 +127,23 @@ def parse_required_item_in_schema(json_schema):
         if required_data:
             properties[item] = required_data
     return data
+
+
+def helper_remove_empty_enum(data):
+    """Help to remove enum key if it is empty.
+
+    Arguments:
+        data {dict} -- schema to remove enum key
+    """
+    if "enum" in data.keys():
+        if not data.get("enum"):
+            data.pop("enum", None)
+    elif "properties" in data.keys():
+        for k, v in data.get("properties").items():
+            if v:
+                helper_remove_empty_enum(v)
+    elif "items" in data.keys():
+        helper_remove_empty_enum(data.get("items"))
 
 
 def add_required_subitem(data):
