@@ -295,7 +295,8 @@ def item_metadata_validation(item_id, identifier_type):
         error_list = 'false'
 
     if error_list == 'false':
-        return 'Selected Identifier Grant NOT support for current ItemType'
+        return _('Cannot register selected DOI for current Item Type of this '
+                 'item.')
 
     return error_list
 
@@ -318,8 +319,11 @@ def validation_item_property(mapping_data, identifier_type, properties):
         lang_data, lang_key = mapping_data.get_data_by_property(
             "title.@attributes.xml:lang")
 
-        requirements = check_required_data(title_data, title_key)
-        lang_requirements = check_required_data(lang_data, lang_key)
+        repeatable = True
+        requirements = check_required_data(title_data, title_key, repeatable)
+        lang_requirements = check_required_data(lang_data,
+                                                lang_key,
+                                                repeatable)
         if requirements:
             error_list['required'] += requirements
         if lang_requirements:
@@ -424,8 +428,11 @@ def validation_item_property(mapping_data, identifier_type, properties):
         lang_data, lang_key = mapping_data.get_data_by_property(
             "publisher.@attributes.xml:lang")
 
-        requirements = check_required_data(data, key)
-        lang_requirements = check_required_data(lang_data, lang_key)
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        lang_requirements = check_required_data(lang_data,
+                                                lang_key,
+                                                repeatable)
         if requirements:
             error_list['required'] += requirements
         if lang_requirements:
@@ -440,7 +447,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         return error_list
 
 
-def check_required_data(data, key):
+def check_required_data(data, key, repeatable=False):
     """
     Check whether data exist or not.
 
@@ -450,7 +457,7 @@ def check_required_data(data, key):
     """
     error_list = []
 
-    if not data:
+    if not data or (not repeatable and len(data) > 1):
         error_list.append(key)
     else:
         for item in data:

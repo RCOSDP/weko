@@ -167,6 +167,10 @@ msgstr ""
 msgid "Identifier datas are empty!"
 msgstr ""
 
+#: weko_workflow/utils.py:298
+msgid "Cannot register selected DOI for current Item Type of this item."
+msgstr ""
+
 #: weko_workflow/views.py:405 weko_workflow/views.py:407
 #: weko_workflow/views.py:410 weko_workflow/views.py:412
 msgid "Authorization required"
