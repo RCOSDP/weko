@@ -230,8 +230,10 @@ def item_metadata_validation(item_id, identifier_type):
     metadata_item = MappingData(item_id)
     item_type = metadata_item.get_data_item_type()
     resource_type, type_key = metadata_item.get_data_by_property("type.@value")
+    type_check = check_required_data(resource_type, type_key)
+
     # check resource type request
-    if not item_type or not resource_type:
+    if not (item_type or resource_type) and type_check:
         error_list = {'required': [], 'pattern': [], 'types': [], 'doi': ''}
         error_list['required'].append(type_key)
         return error_list
