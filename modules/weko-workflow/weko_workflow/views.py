@@ -602,6 +602,11 @@ def next_action(activity_id='0', action_id=0):
             return jsonify(code=-1,
                            msg=_(error_list))
 
+        if post_json.get('temporary_save') != 1:
+            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+        else:
+            return jsonify(code=0, msg=_('success'))
+
         if error_list:
             if not session.get('update_json_schema'):
                 session['update_json_schema'] = {}
@@ -613,11 +618,6 @@ def next_action(activity_id='0', action_id=0):
             if session.get('update_json_schema') \
                     and session['update_json_schema'].get(activity_id):
                 session['update_json_schema'][activity_id] = {}
-
-        if post_json.get('temporary_save') != 1:
-            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
-        else:
-            return jsonify(code=0, msg=_('success'))
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
