@@ -194,3 +194,8 @@ button#btn_quit.done-button {
  border-radius: 3px;
  color: white;
 }
+
+.alert-danger {
+  background-color: #dd4b39!important;
+  color: white;
+}

@@ -278,9 +278,14 @@ function handleSharePermission(value) {
 }
 
 (function (angular) {
-  function addAlert(message) {
+  function addAlert(message, class_style) {
+    id_alert="";
+    if (typeof class_style === 'undefined') {
+      class_style='alert-light'
+      id_alert='alert-style'
+    }
     $('#alerts').append(
-      '<div class="alert alert-light" id="alert-style">' +
+      '<div class="alert ' + class_style + '" id="' + id_alert + '">' +
       '<button type="button" class="close" data-dismiss="alert">' +
       '&times;</button>' + message + '</div>');
   }
@@ -659,7 +664,7 @@ function handleSharePermission(value) {
           async: false,
           success: function (response) {
             if (response.code) {
-              addAlert(response.msg);
+              addAlert(response.msg, 'alert-danger');
               $scope.render_requirements = true;
               $scope.error_list = response.error_list;
             }
