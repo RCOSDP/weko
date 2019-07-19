@@ -51,9 +51,21 @@ def fix_json_schema(json_schema):
         dictionary -- The json schema after fix format
 
     """
-    return fix_min_max_multiple_item(
-        parse_required_item_in_schema(
-            json_schema))
+    return remove_head_required(
+        fix_min_max_multiple_item(
+            parse_required_item_in_schema(
+                json_schema)))
+
+
+def remove_head_required(json_schema):
+    """Delete unused required tag.
+
+    Arguments:
+        json_schema {dictionary} -- The json schema
+
+    """
+    if 'required' in json_schema.keys():
+        del json_schema['required']
 
 
 def fix_min_max_multiple_item(json_schema):
