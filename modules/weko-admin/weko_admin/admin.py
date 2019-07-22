@@ -142,6 +142,7 @@ class StyleSettingView(BaseView):
 
                     with open(scss_file, 'w', encoding='utf-8') as fp:
                         fp.writelines('\n'.join(form_lines))
+                    flash(_('Successfully update color.'), category="success")
         except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return self.render(
