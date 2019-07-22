@@ -93,19 +93,20 @@
       <div class="form-group">
         <div class="col-sm-offset-2">
           <div class="col-sm-offset-2 col-sm-6">
-            <button type="button" class="btn btn-info back-button" id="btn_back">
-              <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
-            <button type="button" class="btn btn-primary pull-right save-button" id="btn_create">
+            <button type="button" class="btn btn-default" id="btn_back">
+              <span class="glyphicon glyphicon-chevron-left"  aria-hidden="true"></span>&nbsp
+               {{_('Back')}}
+            </button>
+            <button type="button" class="btn btn-primary pull-right" id="btn_create">
               <!--<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>-->
-              <span class="glyphicon glyphicon-saved"></span>
+              <span class="glyphicon glyphicon-save"></span>&nbsp
               {{_('Save')}}
             </button>
             {%- if workflow %}
             <button type="button" class="btn btn-danger pull-right
-                                  delete-button five-pixel-right-margin"
-                id="btn_delete">
-              <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
-                    {{_('Delete')}}
+                                  five-pixel-right-margin" id="btn_delete">
+              <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>&nbsp
+               {{_('Delete')}}
             </button>
             <div class="hide" id="delete_uri">{{url_for('workflowsetting.delete_workflow', workflow_id=workflow.flows_id)}}</div>
             {%- endif %}
