@@ -896,6 +896,53 @@ function handleSharePermission(value) {
         return result;
       }
 
+      $scope.genTitleAndPubDate = function() {
+        let itemTypeId = $("#autofill_item_type_id").val();
+        let get_url = '/api/autofill/get_title_pubdate_id/'+itemTypeId;
+        $.ajax({
+          url: get_url,
+          method: 'GET',
+          async: false,
+          success: (data, status) => {
+            let title = "";
+            let lang = "en";
+            let titleID = data.title;
+            if ($rootScope.recordsVM.invenioRecordsModel.hasOwnProperty(titleID[0])){
+              let titleField = $rootScope.recordsVM.invenioRecordsModel[titleID[0]];
+              if (Array.isArray(titleField)) {
+                if (titleField[0].hasOwnProperty(titleID[1])){
+                  titleField = titleField[0];
+                }
+              }
+              if (titleField && titleField[0]) {
+                titleField = titleField[0];
+              }
+              if (titleField.hasOwnProperty(titleID[1])) {
+                title = titleField[titleID[1]];
+                if (titleField.hasOwnProperty(titleID[2]) && titleField[titleID[2]]) {
+                  lang = titleField[titleID[2]];
+                }
+              }
+            }
+            if (!$rootScope.recordsVM.invenioRecordsModel['title']){
+              $rootScope.recordsVM.invenioRecordsModel['title'] = title;
+              $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+            }else {
+              if (title != "") {
+                $rootScope.recordsVM.invenioRecordsModel['title'] = title;
+                $rootScope.recordsVM.invenioRecordsModel['lang'] = lang;
+              }
+            }
+          },
+          error: function(data, status) {
+              //alert('Cannot connect to server!');
+              var modalcontent =  "Cannot connect to server!";
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
+          }
+        });
+      }
+
       $scope.validateInputData = function() {
         let itemTypeId = $("#autofill_item_type_id").val();
         let get_url = '/api/items/validate_input_data';
@@ -1014,16 +1061,17 @@ function handleSharePermission(value) {
       }
 
       $scope.updateDataJson = async function () {
+        $scope.genTitleAndPubDate();
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
-        } else if ($scope.validatePristineProperties()) {
+        } else if (!$scope.validatePristineProperties()) {
           return true;
         }
-        else if (!$scope.validationInputtedData) {
-          return false;
-        }
+        // else if (!$scope.validationInputtedData) {
+        //   return false;
+        // }
         else {
           let next_frame = $('#next-frame').val();
           if ($scope.is_item_owner) {
