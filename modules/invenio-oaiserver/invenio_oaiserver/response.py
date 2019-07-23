@@ -11,9 +11,9 @@
 from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, url_for
-# from invenio_db import db
+from invenio_db import db
 # from invenio_records.api import Record
-# from invenio_records.models import RecordMetadata
+from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 from weko_deposit.api import WekoRecord
@@ -95,6 +95,12 @@ def verb(**kwargs):
 
 def identify(**kwargs):
     """Create OAI-PMH response for verb Identify."""
+    def get_error_code_msg():
+        code = "noRecordsMatch"
+        msg = "The combination of the values of the from, until, " \
+              "set and metadataPrefix arguments results in an empty list."
+        return [(code, msg)]
+
     cfg = current_app.config
 
     # add by Mr ryuu. at 2018/06/06 start
@@ -108,7 +114,8 @@ def identify(**kwargs):
         e_identify, etree.QName(NS_OAIPMH, 'repositoryName'))
 
     # add by Mr ryuu. at 2018/06/06 start
-    cfg['OAISERVER_REPOSITORY_NAME'] = oaiObj.repositoryName
+    if oaiObj is not None:
+        cfg['OAISERVER_REPOSITORY_NAME'] = oaiObj.repositoryName
     # add by Mr ryuu. at 2018/06/06 end
 
     e_repositoryName.text = cfg['OAISERVER_REPOSITORY_NAME']
@@ -122,7 +129,8 @@ def identify(**kwargs):
     e_protocolVersion.text = cfg['OAISERVER_PROTOCOL_VERSION']
 
     # add by Mr ryuu. at 2018/06/06 start
-    cfg['OAISERVER_ADMIN_EMAILS'][0] = oaiObj.emails
+    if oaiObj is not None:
+        cfg['OAISERVER_ADMIN_EMAILS'][0] = oaiObj.emails
     # add by Mr ryuu. at 2018/06/06 end
 
     for adminEmail in cfg['OAISERVER_ADMIN_EMAILS']:
@@ -134,11 +142,13 @@ def identify(**kwargs):
             NS_OAIPMH, 'earliestDatestamp'))
 
     # update by Mr ryuu. at 2018/06/06 start
-    # e_earliestDatestamp.text = datetime_to_datestamp(
-    #     db.session.query(db.func.min(RecordMetadata.created)).scalar() or
-    #     datetime(MINYEAR, 1, 1)
-    # )
-    e_earliestDatestamp.text = datetime_to_datestamp(oaiObj.earliestDatastamp)
+    if not oaiObj:
+        e_earliestDatestamp.text = datetime_to_datestamp(
+            db.session.query(db.func.min(RecordMetadata.created)).scalar() or
+            datetime(MINYEAR, 1, 1)
+        )
+    else:
+        e_earliestDatestamp.text = datetime_to_datestamp(oaiObj.earliestDatastamp)
     # update by Mr ryuu. at 2018/06/06 end
 
     e_deletedRecord = SubElement(e_identify,
