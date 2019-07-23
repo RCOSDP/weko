@@ -66,7 +66,8 @@ def remove_head_required(json_schema):
 
     """
     if 'required' in json_schema.keys():
-        del json_schema['required']
+        json_schema.pop('required', None)
+    return json_schema
 
 
 def fix_min_max_multiple_item(json_schema):
@@ -117,10 +118,12 @@ def parse_required_item_in_schema(json_schema):
     helper_remove_empty_enum(json_schema)
     data = deepcopy(json_schema)
     required = deepcopy(data.get('required'))
+    if not required:
+        return json_schema
     if 'pubdate' in required:
         required.remove('pubdate')
     if len(required) == 0:
-        return None
+        return json_schema
     properties = data.get('properties')
     if not properties:
         return None

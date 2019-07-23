@@ -950,7 +950,23 @@ class ItemTypeProps(RecordBase):
                                                    delflg=False).first()
             if obj is None:
                 return None
+            cls.helper_remove_empty_required(obj.schema)
             return obj
+
+    @classmethod
+    def helper_remove_empty_required(cls, data):
+        """Help to remove required key if it is empty
+
+        Arguments:
+            data {dict} -- schema to remove required key
+        """
+        if "required" in data:
+            if not data.get("required"):
+                data.pop("required", None)
+        if "properties" in data:
+            for k, v in data.get("properties").items():
+                if v.get("items"):
+                    cls.helper_remove_empty_required(v.get("items"))
 
     @classmethod
     def get_records(cls, ids):
