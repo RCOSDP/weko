@@ -25,12 +25,27 @@ import json
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_pidstore import current_pidstore
 from invenio_records.api import Record
+from invenio_records.models import RecordMetadata
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
-
+from invenio_pidstore.models import PersistentIdentifier
+from .api import WekoDeposit
 # from copy import deepcopy
+
+def publish(**kwargs):
+    try:
+        pid_value = kwargs.get('pid_value').value
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=pid_value).first()
+        r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+        dep = WekoDeposit(r.json, r)
+        dep.publish()
+    except BaseException:
+        abort(400, "Failed to publish item")
+
+    return jsonify({'status': 'success'})
 
 
 def create_blueprint(app, endpoints):
@@ -117,6 +132,12 @@ def create_blueprint(app, endpoints):
             options.pop('rdc_route'),
             view_func=isr,
             methods=['PUT', 'POST'],
+        )
+
+        blueprint.add_url_rule(
+            options.pop('pub_route'),
+            view_func=publish,
+            methods=['PUT'],
         )
 
     return blueprint

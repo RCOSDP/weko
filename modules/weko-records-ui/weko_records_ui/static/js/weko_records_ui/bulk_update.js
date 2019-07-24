@@ -266,6 +266,7 @@ require([
           var errorMsgs = [];
           var redirect_url = "/api/deposits/redirect";
           var items_url = "/api/deposits/items";
+          var publish_url = "/api/deposits/publish";
 
           itemsMeta = data;
           Object.keys(itemsMeta).forEach(function(pid) {
@@ -282,7 +283,7 @@ require([
                     });
                   }
                   // Licence
-                  if(licence !== 'unselected') {
+                  if(licence !== 'unselected' && licence !== '') {
                     value['licensetype'] = licence;
                   }
                   // Licence Description
@@ -300,11 +301,12 @@ require([
               // URL
               var index_url = redirect_url + "/" + pid;
               var self_url = items_url + "/" + pid;
+              var pub_url = publish_url + "/" + pid;
 
               var error = {};
 
               // Update items
-              updateItems(index_url, self_url, meta, index, error);
+              updateItems(index_url, self_url, pub_url, meta, index, error);
 
               if(error.isError) {
                 errorMsgs.push('[ ID: '+pid.toString()+', Title: '+
@@ -372,7 +374,7 @@ require([
       });
     });
 
-    function updateItems(index_url, self_url, itemData, indexData, error) {
+    function updateItems(index_url, self_url, pub_url, itemData, indexData, error) {
       // Post to index select
       $.ajax({
         type: "PUT",
@@ -391,6 +393,20 @@ require([
             data: indexData,
             contentType: "application/json",
             success: function(){
+                $.ajax({
+                    type: "PUT",
+                    url: pub_url,
+                    async: false,
+                    cache: false,
+                    data: {},
+                    contentType: "application/json",
+                success: function(){
+                },
+                error: function() {
+                  error['isError'] = true;
+                  error['msg'] = "Error in publish item.";
+                }
+              });
             },
             error: function() {
               error['isError'] = true;
