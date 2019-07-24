@@ -26,6 +26,7 @@
   {{ super() }}
   <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
   <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
+  {% assets "weko_admin_feedback_mail_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -39,6 +40,8 @@
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_authors_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_items_ui_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_items_ui_feedback_maillist" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_header %}
@@ -159,46 +162,41 @@
               <div class="row">
                 <div class="col-sm-9" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
                   <div class="panel panel-default" >
-                      <div class="panel-heading">
-                        <h3 class="panel-title">Contributor</h3>
-                      </div>
-                      <div class="panel-body">    
-                          <div class="row" id="radio_form_share">
-                            <div class="radio">
-                              <label>
-                               <input type="radio" role="presentation" name="checkedSharePermiss" id="input" class="input_contributor" value="this_user" checked="checked" onchange="handleSharePermission(this.value)">This user</label>
-                               <br><label><input type="radio" role="presentation" onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input" value="other_user" class="other_user_rad">Other user</label>
+                    <div class="panel-heading">
+                      <h3 class="panel-title">Contributor</h3>
+                    </div>
+                    <div class="panel-body">    
+                        <div class="row" id="radio_form_share">
+                          <div class="radio">
+                            <label>
+                              <input type="radio" role="presentation" name="checkedSharePermiss" id="input" class="input_contributor" value="this_user" checked="checked" onchange="handleSharePermission(this.value)">This user</label>
+                              <br><label><input type="radio" role="presentation" onchange="handleSharePermission(this.value)" name="checkedSharePermiss" id="input" value="other_user" class="other_user_rad">Other user</label>
+                          </div>
+                        </div>
+                        <div class="form_share_permission">     
+                          <div class="row" id="pd_username">
+                            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
+                              <label for="share_username">Username </label>
+                            </div>
+                            <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                              <div class="autocomplete">
+                                  <input id="share_username" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
+                                  <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_username"></span>
+                                </div>
                             </div>
                           </div>
-                          <div class="form_share_permission">     
-                            <div class="row" id="pd_username">
-
-                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_username">
-                                  <label for="share_username">Username </label>
-                              </div>
-
-                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                                  <div class="autocomplete">
-                                      <input id="share_username" autocomplete="off" type="text" name="share_username" placeholder="Username" class="form-control"  onclick="get_search_data('username')">
-                                      <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_username"></span>
-                                    </div>
+                          <div class="row">
+                            <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
+                              <label for="share_email">Email </label>
+                            </div>
+                            <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
+                              <div class="autocomplete">
+                                  <input id="share_email" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
+                                  <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_email"></span>
                               </div>
                             </div>
-                            <div class="row">
-
-                              <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3" id="label_email">
-                                  <label for="share_email">Email </label>
-                              </div>
-
-                              <div class="col-xs-9 col-sm-9 col-md-9 col-lg-9">
-                                  <div class="autocomplete">
-                                      <input id="share_email" autocomplete="off" type="text" name="share_email" placeholder="Email" class="form-control" onclick="get_search_data('email')">
-                                      <span class="glyphicon glyphicon-refresh glyphicon-refresh-animate" id="id_spinners_email"></span>
-                                  </div>
-                              </div>
-                            </div>      
-                          </div>             
-
+                          </div>      
+                        </div>             
                       </div>
                   </div>
                 </div>
@@ -211,6 +209,19 @@
                   template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
                 </invenio-records-form>
               </div>
+              {%- block feedback_mail_list %}
+                <div id="react"></div>
+                <input id="component-send" type="hidden" value="{{_('ON/OFF')}}" />
+                <input id="first-radio-name" type="hidden" value="{{_('Send')}}" />
+                <input id="second-radio-name" type="hidden" value="{{_('Do not send')}}" />
+                <input id="component-search-email-name" type="hidden" value="{{_('Send exclusion target persons')}}" />
+                <input id="search-button-name" type="hidden" value="{{_('From author DB')}}" />
+                <input id="save-button-name" type="hidden" value="{{_('Save')}}" />
+                <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
+                <input id="manual-send-name" type="hidden" value="{{_('Manual Send')}}" />
+                <input id="message-success" type="hidden" value="{{_('Update successfully.')}}" />
+                <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
+              {%- endblock feedback_mail_list %}
               <div class="row">
                 <div class="col-sm-9">
                   <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">

@@ -866,3 +866,36 @@ class ActionIdentifier(db.Model, TimestampMixin):
                                               nullable=True,
                                               default="")
     """Action identifier grant jalc datacite doi input."""
+
+class ActionFeedbackMail(db.Model, TimestampMixin):
+    """Define action identifier info."""
+
+    __tablename__ = 'workflow_action_feedbackmail'
+
+    id = db.Column(db.Integer(), nullable=False,
+                   primary_key=True, autoincrement=True)
+    """ActionFeedbackMail identifier."""
+
+    activity_id = db.Column(
+        db.String(24), nullable=False, unique=False, index=True)
+    """Activity id of Activity Action."""
+
+    action_id = db.Column(
+        db.Integer(), db.ForeignKey(Action.id), nullable=True, unique=False)
+    """Action id."""
+
+    feedback_mail_list = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+    """Action journal info."""
