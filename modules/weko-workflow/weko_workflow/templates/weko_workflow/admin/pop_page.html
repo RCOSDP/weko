@@ -36,16 +36,17 @@
                 <tr>
                   <td colspan="6">
                     <div>
-                      <button class="btn btn-primary btn_apply action-button" id="btn_apply_{{action.id}}" data-action-id="{{action.id}}">
-                                   {{_('Apply')}}
+                      <button class="btn btn-primary btn_apply" id="btn_apply_{{action.id}}" data-action-id="{{action.id}}">
+                          <i class="fa fa-bell"></i>&nbsp
+                            {{_('Apply')}}
                       </button>
-                      <button class="btn btn-warning btn_unusable action-button" id="btn_unusable_{{action.id}}" data-action-id="{{action.id}}" disabled>
-                              <i class="fa fa-bell-slash"> </i>
-                                   {{_('Unusable')}}
+                      <button class="btn btn-warning btn_unusable" id="btn_unusable_{{action.id}}" data-action-id="{{action.id}}" disabled>
+                              <i class="fa fa-bell-slash"> </i>&nbsp
+                            {{_('Unusable')}}
                       </button>
-                      <button class="btn btn-primary btn_update update-button" id="btn_update_{{action.id}}" data-action-id="{{action.id}}">
-                              <span class="glyphicon glyphicon-edit"></span> 
-                                   {{_('Update')}}
+                      <button class="btn btn-primary btn_update" id="btn_update_{{action.id}}" data-action-id="{{action.id}}">
+                           <span class="glyphicon glyphicon-save"></span>&nbsp 
+                            {{_('Update')}}
                       </button>
                     </div>
                   </td>
@@ -57,8 +58,10 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-info close-button" data-dismiss="modal">
-          <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>{{_('Close')}}</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+          <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>&nbsp
+          {{_('Close')}}
+        </button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->

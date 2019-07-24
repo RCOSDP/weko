@@ -86,16 +86,16 @@
       </div>
       <div class="row">
         <div class="col-sm-9 col-md-9">
-          <a ng-hide="!display_flg" class="btn btn-primary edit-button" ng-click="itemManagementEdit()">
-            <span class="glyphicon glyphicon-edit"></span>
+          <a ng-hide="!display_flg" class="btn btn-primary" ng-click="itemManagementEdit()">
+            <span class="glyphicon glyphicon-edit"></span>&nbsp
             {{ _("Edit") }}</a>
         </div>
         <div class="col-sm-3 col-md-3">
-          <a ng-hide="display_flg" class="btn btn-primary save-button" ng-click="itemManagementSave()">
-             <span class="glyphicon glyphicon-saved"></span>
+          <a ng-hide="display_flg" class="btn btn-primary" ng-click="itemManagementSave()">
+             <span class="glyphicon glyphicon-save"></span>&nbsp
             {{ _('Save') }}</a>
-          <a ng-hide="display_flg" class="btn btn-info cancel-button" ng-click="itemManagementCancel()">
-            <span class="glyphicon glyphicon-remove"></span>
+          <a ng-hide="display_flg" class="btn btn-default" ng-click="itemManagementCancel()">
+            <span class="glyphicon glyphicon-remove"></span>&nbsp
             {{ _('Cancel') }}</a>
         </div>
       </div>

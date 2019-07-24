@@ -58,11 +58,24 @@ $(document).ready(function () {
       if (this.value === 'normal') {
           $('option.normal_type').show()
           $('option.harvesting_type').hide()
-      } else {
+          disabled_deleted_type();
+      } else if (this.value === 'harvesting') {
           $('option.normal_type').hide()
           $('option.harvesting_type').show()
+          disabled_deleted_type();
+      } else {
+          $('option.deleted_type').show();
+          $('option.normal_type').hide();
+          $('option.harvesting_type').hide();
+          $('#btn_restore_itemtype_schema').prop('disabled', false);
+          $('div.metadata-content *').not("[id=btn_restore_itemtype_schema]").prop('disabled', true);
       }
   });
+  function disabled_deleted_type(){
+      $('option.deleted_type').hide();
+      $('#btn_restore_itemtype_schema').prop('disabled', true);
+      $('div.metadata-content *').not("[id=btn_restore_itemtype_schema]").prop('disabled', false);
+  }
 
   $('#btn_create_itemtype_schema').on('click', function(){
     if($('#itemtype_name').val() == "") {
@@ -862,6 +875,9 @@ $(document).ready(function () {
           render_empty('schema_'+row_id);
         }
       });
+      if($('input[type=radio][name=item_type]:checked').val() === 'deleted') {
+        $('div.metadata-content *').not('[id=btn_restore_itemtype_schema]').prop('disabled', true);
+      }
     });
     $.get('/api/itemtypes/' + $('#item-type-lists').val() + '/mapping', function(data, status){
       Object.assign(src_mapping, data);
@@ -872,6 +888,8 @@ $(document).ready(function () {
       $('input[type=radio][name=item_type][value=normal]').click()
   } else if ($("#item-type-lists option:selected").hasClass('harvesting_type')) {
       $('input[type=radio][name=item_type][value=harvesting]').click()
+  } else if ($("#item-type-lists option:selected").hasClass('deleted_type')) {
+      $('input[type=radio][name=item_type][value=deleted]').click()
   }
 
   $('#btn_delete_item').on('click', function(){
@@ -897,6 +915,24 @@ $(document).ready(function () {
         window.location.href = "/admin/itemtypes";
         //alert(JSON.stringify(errmsg));
     });
+  });
+
+  $('#btn_restore_itemtype_schema').on('click', function(){
+    var restore_itemtype = $("#item-type-lists :selected");
+    if (restore_itemtype.val() !== '' && restore_itemtype.hasClass("deleted_type")) {
+      send_uri('/admin/itemtypes/restore/' + restore_itemtype.val(), {},
+        function(data){
+          restore_itemtype.removeAttr("selected");
+          restore_itemtype.hide();
+          restore_itemtype.removeClass("deleted_type");
+          restore_itemtype.addClass("normal_type");
+          $('#itemtype_name').val('');
+          alert(data.msg);
+        },
+        function(errmsg){
+          alert(data.msg);
+      });
+    }
   });
 
   function send_uri(url, data, handleSuccess, handleError){

@@ -21,6 +21,8 @@
 """Utils for weko-itemtypes-ui."""
 
 from copy import deepcopy
+from flask import current_app
+from flask_login import current_user
 
 
 def remove_xsd_prefix(jpcoar_lists):
@@ -205,3 +207,13 @@ def is_properties_exist_in_item(data):
     if data.get('properties') or data.get('items'):
         return True
     return False
+def has_system_admin_access():
+    """Use to check if a user has System Administrator access."""
+    is_sys_admin = False
+    if current_user.is_authenticated:
+        system_admin = current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+        for role in list(current_user.roles or []):
+            if role.name == system_admin:
+                is_sys_admin = True
+                break
+    return is_sys_admin

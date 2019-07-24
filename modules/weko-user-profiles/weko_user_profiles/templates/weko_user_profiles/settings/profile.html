@@ -50,13 +50,12 @@
   {%- endif %}
   {%- endfor %}
   <div class="form-actions">
-    <a href="." class="btn btn-info cancel-button">
-      <i class="fa fa-times"></i>
+    <a href="." class="btn btn-default">
+      <i class="fa fa-times"></i>&nbsp
       {{ _('Cancel') }}
     </a>
-    <button type="submit" name="submit" value="profile" class="btn btn-primary
-                                                      pull-right update-profile-button">
-      <i class="fa fa-edit"></i>
+    <button type="submit" name="submit" value="profile" class="btn btn-primary pull-right">
+      <span class="glyphicon glyphicon-save"></span>&nbsp
       {{_('Update Profile')}}
     </button>
   </div>

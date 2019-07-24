@@ -33,14 +33,12 @@ WEKO_PERMISSION_REQUIRED_TEMPLATE = 'weko_workflow/permission_required.html'
 
 WEKO_PERMISSION_ROLE_USER = ('System Administrator',
                              'Repository Administrator',
-                             'Community Administrator',
                              'Contributor',
                              'General',
                              'Community Administrator')
 
 WEKO_PERMISSION_SUPER_ROLE_USER = ('System Administrator',
-                                   'Repository Administrator',
-                                   'Community Administrator')
+                                   'Repository Administrator')
 
 WEKO_PERMISSION_ROLE_COMMUNITY = 'Community Administrator'
 

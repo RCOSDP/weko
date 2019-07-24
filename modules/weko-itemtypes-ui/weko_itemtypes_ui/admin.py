@@ -36,7 +36,7 @@ from weko_schema_ui.api import WekoSchema
 
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
 from .permissions import item_type_permission
-from .utils import remove_xsd_prefix, fix_json_schema
+from .utils import has_system_admin_access, remove_xsd_prefix, fix_json_schema
 
 
 class ItemTypeMetaDataView(BaseView):
@@ -50,23 +50,25 @@ class ItemTypeMetaDataView(BaseView):
 
         :param item_type_id: Item type i. Default 0.
         """
-        lists = ItemTypes.get_latest()
+        lists = ItemTypes.get_latest(True)
         # Check that item type is already registered to an item or not
-        for list in lists:
+        for item in lists:
             # Get all versions
-            all_records = ItemTypes.get_records_by_name_id(name_id=list.id)
-            list.belonging_item_flg = False
+            all_records = ItemTypes.get_records_by_name_id(name_id=item.id)
+            item.belonging_item_flg = False
             for item in all_records:
                 metaDataRecords = ItemsMetadata.get_by_item_type_id(
                     item_type_id=item.id)
-                list.belonging_item_flg = len(metaDataRecords) > 0
-                if list.belonging_item_flg:
+                item.belonging_item_flg = len(metaDataRecords) > 0
+                if item.belonging_item_flg:
                     break
+        is_sys_admin = has_system_admin_access()
 
         return self.render(
             current_app.config['WEKO_ITEMTYPES_UI_ADMIN_REGISTER_TEMPLATE'],
             lists=lists,
             id=item_type_id,
+            is_sys_admin=is_sys_admin,
             lang_code=session.get('selected_language', 'en')  # Set default
         )
 
@@ -76,7 +78,7 @@ class ItemTypeMetaDataView(BaseView):
         """Renderer."""
         result = None
         if item_type_id > 0:
-            result = ItemTypes.get_by_id(id_=item_type_id)
+            result = ItemTypes.get_by_id(id_=item_type_id, with_deleted=True)
         if result is None:
             result = {
                 'table_row': [],
@@ -105,7 +107,8 @@ class ItemTypeMetaDataView(BaseView):
             if record is not None:
                 # Check harvesting_type
                 if record.model.harvesting_type:
-                    flash(_('Cannot delete Item type for Harvesting.'), 'error')
+                    flash(_('Cannot delete Item type for Harvesting.'),
+                          'error')
                     return jsonify(code=-1)
                 # Get all versions
                 all_records = ItemTypes.get_records_by_name_id(
@@ -116,7 +119,10 @@ class ItemTypeMetaDataView(BaseView):
                         item_type_id=item.id)
                     if len(metaDataRecords) > 0:
                         flash(
-                            _('Cannot delete due to child existing item types.'), 'error')
+                            _(
+                                'Cannot delete due to child'
+                                ' existing item types.'),
+                            'error')
                         return jsonify(code=-1)
                 # Get item type name
                 item_type_name = ItemTypeNames.get_record(
@@ -189,6 +195,43 @@ class ItemTypeMetaDataView(BaseView):
         return jsonify(msg=_('Successfuly registered Item type.'),
                        redirect_url=redirect_url)
 
+    @expose('/restore', methods=['POST'])
+    @expose('/restore/', methods=['POST'])
+    @expose('/restore/<int:item_type_id>', methods=['POST'])
+    @item_type_permission.require(http_exception=403)
+    def restore_itemtype(self, item_type_id=0):
+        """Restore logically deleted item types."""
+        if item_type_id > 0:
+            record = ItemTypes.get_record(id_=item_type_id, with_deleted=True)
+            if record is not None and record.model.is_deleted:
+                # Get all versions
+                all_records = ItemTypes.get_records_by_name_id(
+                    name_id=record.model.name_id, with_deleted=True)
+                # Get item type name
+                item_type_name = ItemTypeNames.get_record(
+                    id_=record.model.name_id, with_deleted=True)
+                if all_records and item_type_name:
+                    try:
+                        # Restore item type name
+                        ItemTypeNames.restore(item_type_name)
+                        # Restore item typea
+                        for k in all_records:
+                            k.restore()
+                        db.session.commit()
+                    except BaseException:
+                        db.session.rollback()
+                        current_app.logger.error('Unexpected error: ',
+                                                 sys.exc_info()[0])
+                        return jsonify(code=-1,
+                                       msg=_('Failed to restore Item type.'))
+
+                    current_app.logger.debug(
+                        'Itemtype restore: {}'.format(item_type_id))
+                    return jsonify(code=0,
+                                   msg=_('Restored Item type successfully.'))
+
+        return jsonify(code=-1, msg=_('An error has occurred.'))
+
 
 class ItemTypePropertiesView(BaseView):
     """ItemTypePropertiesView."""
@@ -231,14 +274,16 @@ class ItemTypePropertiesView(BaseView):
         for k in props:
             name = k.name
             if lang and 'title_i18n' in k.form and \
-                    lang in k.form['title_i18n'] and k.form['title_i18n'][lang]:
+                lang in k.form['title_i18n'] and \
+                    k.form['title_i18n'][lang]:
                 name = k.form['title_i18n'][lang]
 
             tmp = {'name': name, 'schema': k.schema, 'form': k.form,
                    'forms': k.forms, 'sort': k.sort}
             lists[k.id] = tmp
 
-        lists['defaults'] = current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
+        lists['defaults'] = current_app.config[
+            'WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES']
 
         return jsonify(lists)
 
@@ -291,7 +336,8 @@ class ItemTypeMappingView(BaseView):
             lists = ItemTypes.get_latest()    # ItemTypes.get_all()
             if lists is None or len(lists) == 0:
                 return self.render(
-                    current_app.config['WEKO_ITEMTYPES_UI_ADMIN_ERROR_TEMPLATE']
+                    current_app.config['WEKO_ITEMTYPE'
+                                       'S_UI_ADMIN_ERROR_TEMPLATE']
                 )
             item_type = ItemTypes.get_by_id(ItemTypeID)
             if item_type is None:
@@ -308,20 +354,23 @@ class ItemTypeMappingView(BaseView):
                 prop = itemtype_prop.get(key)
                 cur_lang = current_i18n.language
                 schema_form = item_type.form
-                elemStr = ''
+                elem_str = ''
                 if 'default' != cur_lang:
                     for elem in schema_form:
                         if 'items' in elem:
                             for sub_elem in elem['items']:
-                                if 'key' in sub_elem and sub_elem['key'] == key:
+                                if 'key' in sub_elem and \
+                                        sub_elem['key'] == key:
                                     if 'title_i18n' in sub_elem:
                                         if cur_lang in sub_elem['title_i18n']:
                                             if len(
-                                                    sub_elem['title_i18n'][cur_lang]) > 0:
-                                                elemStr = sub_elem['title_i18n'][
-                                                    cur_lang]
+                                                sub_elem['title_i18n'][
+                                                    cur_lang]) > 0:
+                                                elem_str = \
+                                                    sub_elem['title_i18n'][
+                                                        cur_lang]
                                     else:
-                                        elemStr = sub_elem['title']
+                                        elem_str = sub_elem['title']
                                     break
                         else:
                             if elem['key'] == key:
@@ -329,18 +378,18 @@ class ItemTypeMappingView(BaseView):
                                     if cur_lang in elem['title_i18n']:
                                         if len(elem['title_i18n']
                                                [cur_lang]) > 0:
-                                            elemStr = elem['title_i18n'][
+                                            elem_str = elem['title_i18n'][
                                                 cur_lang]
                                 else:
-                                    elemStr = elem['title']
+                                    elem_str = elem['title']
 
-                        if elemStr != '':
+                        if elem_str != '':
                             break
 
-                if elemStr == '':
-                    elemStr = prop.get('title')
+                if elem_str == '':
+                    elem_str = prop.get('title')
 
-                itemtype_list.append((key, elemStr))
+                itemtype_list.append((key, elem_str))
 
             mapping_name = request.args.get('mapping_type', 'jpcoar_mapping')
             jpcoar_xsd = WekoSchema.get_all()
