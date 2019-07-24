@@ -154,5 +154,9 @@
     "Set_CoverPage_Recursively": [
         null,
         "Also reflect recursively on child index."
+    ],
+    "RSS_Icon": [
+        null,
+        "RSS Icon"
     ]
 }
