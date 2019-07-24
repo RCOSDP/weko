@@ -76,3 +76,12 @@ docker-compose.dev.yml
 header-icons/*
 combined-pdfs/*
 !.gitkeep
+
+# pyenv
+.python-version
+# celery
+celerybeat-schedule
+celeryd.pid
+# demo data
+weko-demodata/
+
