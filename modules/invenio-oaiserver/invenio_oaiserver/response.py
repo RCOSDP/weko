@@ -210,6 +210,9 @@ def listsets(**kwargs):
     size = current_app.config['OAISERVER_PAGE_SIZE']
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
+    if not oai_sets.total:
+        return error(get_error_code_msg('noSetHierarchy'), **kwargs)
+
     for oai_set in oai_sets.items:
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
         e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
@@ -314,6 +317,9 @@ def listidentifiers(**kwargs):
     e_tree, e_listidentifiers = verb(**kwargs)
     result = get_records(**kwargs)
 
+    if not result.total:
+        return error(get_error_code_msg(), **kwargs)
+
     for record in result.items:
         pid = oaiid_fetcher(record['id'], record['json']['_source'])
         header(
@@ -334,6 +340,9 @@ def listrecords(**kwargs):
     e_tree, e_listrecords = verb(**kwargs)
     result = get_records(**kwargs)
 
+    if not result.total:
+        return error(get_error_code_msg(), **kwargs)
+
     for record in result.items:
         pid = oaiid_fetcher(record['id'], record['json']['_source'])
         e_record = SubElement(e_listrecords,
@@ -349,3 +358,12 @@ def listrecords(**kwargs):
 
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree
+
+
+def get_error_code_msg(code='noRecordsMatch'):
+    msg = 'The combination of the values of the from, until, ' \
+          'set and metadataPrefix arguments results in an empty list.'
+    if code=='noSetHierarchy':
+        msg='This repository does not support sets'
+
+    return [(code, msg)]
