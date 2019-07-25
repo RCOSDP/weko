@@ -619,14 +619,14 @@ class SiteLicenseSettingsView(BaseView):
                 data = request.get_json()
                 if data and data.get('site_license'):
                     for license in data['site_license']:
-                        err_addr=False
+                        err_addr = False
                         if not license.get('addresses'):
-                            err_addr=True
+                            err_addr = True
                         else:
                             for addresses in license['addresses']:
                                 for item in addresses.values():
                                     if not item or '' in item:
-                                        err_addr=True
+                                        err_addr = True
                                         # break for item addresses
                                         break
                                 if err_addr:
