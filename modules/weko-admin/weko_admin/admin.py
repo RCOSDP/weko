@@ -36,14 +36,15 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
 from invenio_db import db
+from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_indexer.api import RecordIndexer
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
 
-from .models import FeedbackMailSetting, LogAnalysisRestrictedCrawlerList, \
-    LogAnalysisRestrictedIpAddress, RankingSettings, SearchManagement, \
-    StatisticsEmail
+from .models import AdminSettings, FeedbackMailSetting, \
+    LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
+    RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
 from .utils import allowed_file, get_redis_cache, get_response_json, \
     get_search_setting
@@ -637,6 +638,62 @@ class SiteLicenseSettingsView(BaseView):
             abort(500)
 
 
+class FilePreviewSettingsView(BaseView):
+    """File preview settings."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """File preview settings."""
+        if request.method == 'POST':
+            try:
+                form = request.form.get('submit', None)
+                if form == 'save_settings':
+                    old_settings = AdminSettings.get('convert_pdf_settings')
+                    old_path = old_settings.path if old_settings else None
+
+                    new_settings = {}
+                    new_path = request.form.get('path')
+                    if not new_path or new_path == '/':
+                        current_app.logger.debug(new_path)
+                        raise
+                    else:
+                        new_path = new_path \
+                            if not new_path[-1:] == '/' else new_path[:-1]
+
+                    # Delete files in old folder if folder is changed
+                    if old_path and not new_path == old_path:
+                        old_path = old_path + '/pdf_dir'
+                        remove_dir_with_file(old_path)
+
+                    # Save settings in db
+                    new_settings['path'] = new_path
+                    new_settings['pdf_ttl'] = \
+                        int(request.form.get('pdf_ttl'))
+                    AdminSettings.update('convert_pdf_settings',
+                                         new_settings)
+                    flash(_('Successfully Changed Settings.'))
+                else:
+                    current_app.logger.debug(form)
+                    flash(_('Failurely Changed Settings.'), 'error')
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                flash(_('Failurely Changed Settings.'), 'error')
+            return redirect(url_for('filepreview.index'))
+
+        # Load settings from settings if there is not settings in db
+        settings = AdminSettings.get('convert_pdf_settings')
+        if not settings:
+            temp = {}
+            temp['path'] = current_app.config.get('FILES_REST_DEFAULT_PDF_SAVE_PATH')
+            temp['pdf_ttl'] = current_app.config.get('FILES_REST_DEFAULT_PDF_TTL')
+            settings = AdminSettings.Dict2Obj(temp)
+
+        return self.render(
+            current_app.config["WEKO_ADMIN_FILE_PREVIEW_SETTINGS_TEMPLATE"],
+            settings=settings
+        )
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -727,6 +784,15 @@ site_license_settings_adminview = {
     }
 }
 
+file_preview_settings_adminview = {
+    'view_class': FilePreviewSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('File Preview'),
+        'endpoint': 'filepreview'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -738,4 +804,5 @@ __all__ = (
     'ranking_settings_adminview',
     'search_settings_adminview',
     'site_license_settings_adminview',
+    'file_preview_settings_adminview',
 )

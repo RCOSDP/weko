@@ -1137,6 +1137,9 @@ class AdminSettings(db.Model):
             for key in data:
                 setattr(self, key, data[key])
 
+    def _get_count():
+        return db.session.query(db.func.max(AdminSettings.id)).first()[0]
+
     @classmethod
     def get(cls, name):
         """Get settings by name."""
@@ -1144,6 +1147,7 @@ class AdminSettings(db.Model):
             o = cls.query.filter_by(name=name).first()
             return cls.Dict2Obj(o.settings)
         except Exception as ex:
+            current_app.logger.debug('dict to object')
             current_app.logger.error(ex)
 
         return None
@@ -1157,6 +1161,7 @@ class AdminSettings(db.Model):
                 o = cls.query.filter_by(name=name).first()
                 if not o:
                     o = AdminSettings()
+                    o.id = AdminSettings._get_count() + 1
                     new_setting_flag = True
                 if id:
                     o.id = id
