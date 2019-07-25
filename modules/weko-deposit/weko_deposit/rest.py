@@ -24,17 +24,21 @@ import json
 
 from flask import Blueprint, abort, current_app, jsonify, request
 from invenio_pidstore import current_pidstore
+from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
 from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import pass_record
 from invenio_rest import ContentNegotiatedMethodView
-from invenio_pidstore.models import PersistentIdentifier
+
 from .api import WekoDeposit
+
 # from copy import deepcopy
 
+
 def publish(**kwargs):
+    """Publish item."""
     try:
         pid_value = kwargs.get('pid_value').value
         pid = PersistentIdentifier.query.filter_by(

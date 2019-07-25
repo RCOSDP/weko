@@ -436,9 +436,9 @@ class WekoDeposit(Deposit):
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
+        """Clear only drafts."""
         if self['_deposit']['status'] != 'draft':
             return
-        """Clear only drafts."""
         super(WekoDeposit, self).clear(*args, **kwargs)
 
     @index(delete=True)
