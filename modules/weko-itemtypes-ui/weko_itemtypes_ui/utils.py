@@ -52,22 +52,9 @@ def fix_json_schema(json_schema):
         dictionary -- The json schema after fix format
 
     """
-    return remove_head_required(
-        fix_min_max_multiple_item(
-            parse_required_item_in_schema(
-                json_schema)))
-
-
-def remove_head_required(json_schema):
-    """Delete unused required tag.
-
-    Arguments:
-        json_schema {dictionary} -- The json schema
-
-    """
-    if 'required' in json_schema.keys():
-        json_schema.pop('required', None)
-    return json_schema
+    return fix_min_max_multiple_item(
+        parse_required_item_in_schema(
+            json_schema))
 
 
 def fix_min_max_multiple_item(json_schema):
@@ -90,7 +77,7 @@ def fix_min_max_multiple_item(json_schema):
             try:
                 item_data['maxItems'] = int(max_item)
             except Exception as e:
-                print('Cannot parse maxItems ' + e)
+                current_app.logger.error('Cannot parse maxItems: ', str(e))
                 return None
         if 'minItems' in properties[item].keys():
             min_item = item_data.get('minItems')
@@ -99,7 +86,7 @@ def fix_min_max_multiple_item(json_schema):
             try:
                 item_data['minItems'] = int(min_item)
             except Exception as e:
-                print('Cannot parse minItems ' + e)
+                current_app.logger.error('Cannot parse minItems: ', str(e))
                 return None
     json_schema['properties'] = properties
     return json_schema
@@ -210,6 +197,8 @@ def is_properties_exist_in_item(data):
     if data.get('properties') or data.get('items'):
         return True
     return False
+
+
 def has_system_admin_access():
     """Use to check if a user has System Administrator access."""
     is_sys_admin = False
