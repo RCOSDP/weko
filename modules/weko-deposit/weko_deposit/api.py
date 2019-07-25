@@ -416,6 +416,7 @@ class WekoDeposit(Deposit):
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def update(self, *args, **kwargs):
         """Update only drafts."""
+        self['_deposit']['status'] = 'draft'
         if len(args) > 1:
             dc = self.convert_item_metadata(args[0], args[1])
         else:
@@ -435,6 +436,8 @@ class WekoDeposit(Deposit):
 
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
+        if self['_deposit']['status'] != 'draft':
+            return
         """Clear only drafts."""
         super(WekoDeposit, self).clear(*args, **kwargs)
 

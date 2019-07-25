@@ -118,7 +118,6 @@ require([
       return false;
     });
 
-    // Bulk Update
     $('#submit-btn').on('click', function() {
       // Get id
       pids = '';
@@ -137,8 +136,104 @@ require([
         $("#inputModal").html(modalcontent);
         $("#allModal").modal("show");
         return;
+      } else {
+        $("#confirm_update").modal("show");
       }
+      $('#table_list_of_update').remove()
+      $("#confirm_update > div > div > div.modal-body").append(
+          '<table id="table_list_of_update" class="table table-striped table-bordered table-hover">\
+            <thead>\
+              <tr>\
+                <th rowspan="2" valign="middle">Item</th>\
+                <th colspan="2" align="center">Before</th>\
+                <th colspan="2" align="center">After</th>\
+              </tr>\
+              <tr>\
+                <th>Access Type</th>\
+                <th>Licence</th>\
+                <th>Access Type</th>\
+                <th>Licence</th>\
+              </tr>\
+            </thead>\
+            <tbody>\
+            </tbody>\
+          </table>'
+      )  
+      // Get setting fields
+      var accessType = {};
+      var licence= '';
+      var licenceDes= '';
+      $('.row.field-row').each(function(i, row) {
+        var field = $($(row).find('select[name="field_sel"]')[0]);
+        // Access Type
+        if(field.prop('value') === '1') {
+          var type = $($(row).find('input[name="access_type"]:checked')[0]).prop('value');
+          accessType = {'accessrole': type};
+          if (type === 'open_date') {
+            accessType['accessdate'] = $($(row).find('input[name="access_date"]')[0]).prop('value');
+          }
+        // Licence
+        }else if(field.prop('value') === '2') {
+          licence = $($(row).find('select[name="licence_sel"]')[0]).prop('value');
+          if(licence === 'license_free') {
+            licenceDes = $($(row).find('textarea[name="licence_des"]')[0]).prop('value');
+          }
+        }
+      });
 
+      getUrl = '/admin/items/bulk/update/items_metadata?pids=' + pids;
+      $.ajax({
+        method: 'GET',
+        url: getUrl,
+        async: false,
+        success: function(data, status){
+
+          itemsMeta = data;
+          Object.keys(itemsMeta).forEach(function(pid) {
+            // Contents Meta
+            if (Object.keys(itemsMeta[pid].contents).length !== 0) {
+                Object.values(itemsMeta[pid].contents).forEach(function(content){
+                    for(i = 0; i < content.length; ++i) {
+                        var before_access_type = content[i]['accessrole'];
+                        var before_licence = content[i]['licensetype'];
+                        var after_access_type = accessType['accessrole'] ? accessType['accessrole'] : before_access_type;
+                        var after_licence = licence ? licence : before_licence;
+                        $('#table_list_of_update > tbody').append(
+                         '<tr>' +
+                         '<td>' + content[i]['filename'] + '</td>' +
+                         '<td>' + before_access_type + '</td>' +
+                         '<td>' + before_licence + '</td>' +
+                         '<td>' + after_access_type + '</td>' +
+                         '<td>' + after_licence + '</td>' +
+                         '</tr>' 
+                        );
+                    };
+                });
+            };
+          });
+        },
+        error: function(status, error){
+          console.log(error);
+        }
+      });
+    });
+
+
+    // Bulk Update
+    $('#confirm_submit').on('click', function() {
+      // Get id
+      pids = '';
+      $('input[type="checkbox"]').each(function(i, elem) {
+        if($(elem).prop('checked') === true){
+          if(pids === '') {
+            pids = $(elem).prop('value');
+          } else {
+            pids = pids + '/' + $(elem).prop('value');
+          }
+        }
+      });
+
+      $('#confirm_update').modal('hide')
       // Get setting fields
       var accessType = {};
       var licence= '';
@@ -171,6 +266,7 @@ require([
           var errorMsgs = [];
           var redirect_url = "/api/deposits/redirect";
           var items_url = "/api/deposits/items";
+          var publish_url = "/api/deposits/publish";
 
           itemsMeta = data;
           Object.keys(itemsMeta).forEach(function(pid) {
@@ -187,7 +283,7 @@ require([
                     });
                   }
                   // Licence
-                  if(licence !== 'unselected') {
+                  if(licence !== 'unselected' && licence !== '') {
                     value['licensetype'] = licence;
                   }
                   // Licence Description
@@ -205,11 +301,12 @@ require([
               // URL
               var index_url = redirect_url + "/" + pid;
               var self_url = items_url + "/" + pid;
+              var pub_url = publish_url + "/" + pid;
 
               var error = {};
 
               // Update items
-              updateItems(index_url, self_url, meta, index, error);
+              updateItems(index_url, self_url, pub_url, meta, index, error);
 
               if(error.isError) {
                 errorMsgs.push('[ ID: '+pid.toString()+', Title: '+
@@ -224,10 +321,10 @@ require([
             alert(msg);
 
           } else {
-            //alert('All selected items have been updated successfully.');
-            var modalcontent =  "All selected items have been updated successfully.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+            alert('All selected items have been updated successfully.');
+            //var modalcontent =  "All selected items have been updated successfully.";
+            //$("#inputModal").html(modalcontent);
+            //$("#allModal").modal("show");
           }
         },
         error: function(status, error){
@@ -277,7 +374,7 @@ require([
       });
     });
 
-    function updateItems(index_url, self_url, itemData, indexData, error) {
+    function updateItems(index_url, self_url, pub_url, itemData, indexData, error) {
       // Post to index select
       $.ajax({
         type: "PUT",
@@ -296,6 +393,20 @@ require([
             data: indexData,
             contentType: "application/json",
             success: function(){
+                $.ajax({
+                    type: "PUT",
+                    url: pub_url,
+                    async: false,
+                    cache: false,
+                    data: {},
+                    contentType: "application/json",
+                success: function(){
+                },
+                error: function() {
+                  error['isError'] = true;
+                  error['msg'] = "Error in publish item.";
+                }
+              });
             },
             error: function() {
               error['isError'] = true;
