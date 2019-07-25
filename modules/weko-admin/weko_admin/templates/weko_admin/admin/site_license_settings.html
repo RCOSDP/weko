@@ -128,10 +128,10 @@
                       ng-model="ipAddressRangeDetail.finish_ip_address[3]"
                       ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[3],$parent.$index)"
                       size="1" maxlength="3" placeholder="0">
-                      <span id="span_[[$index]]" style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipCheckFlg" class="ng-hide">{{_('Please input a correct number')}}</span>
-                      <span style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipRangeCheck" class="ng-hide">{{_('The range of ipAddress is not correct')}}</span>
                       <p></p>
                     </div>
+                    <span id="span_[[$index]]" style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipCheckFlg" class="ng-hide">{{_('Please input a correct number')}}</span>
+                    <span style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipRangeCheck" class="ng-hide">{{_('The range of ipAddress is not correct')}}</span>
                     <p></p>
                     <div class="form-group">
                       <button type="button" class="btn btn-success"
