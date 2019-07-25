@@ -26,7 +26,8 @@ def validate_metadata_prefix(value):
     """
     metadataFormats = current_app.config['OAISERVER_METADATA_FORMATS']
     if value not in metadataFormats:
-        raise ValidationError('metadataPrefix does not exist',
+        raise ValidationError('The metadataPrefix "{0}" is not supported '
+                              'by this repository.'.format(value),
                               field_names=['metadataPrefix'])
 
 

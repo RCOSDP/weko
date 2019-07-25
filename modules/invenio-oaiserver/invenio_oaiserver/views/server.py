@@ -40,10 +40,12 @@ def validation_error(exception):
         """Extract errors from exception."""
         if isinstance(messages, dict):
             for field, message in messages.items():
+                error_code='badArgument'
                 if field == 'verb':
-                    yield 'badVerb', '\n'.join(message)
-                else:
-                    yield 'badArgument', '\n'.join(message)
+                    error_code='badVerb'
+                elif field == 'metadataPrefix':
+                    error_code='cannotDisseminateFormat'
+                yield error_code, '\n'.join(message)
         else:
             for field in exception.field_names:
                 if field == 'verb':
