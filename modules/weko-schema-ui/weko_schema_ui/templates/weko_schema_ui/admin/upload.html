@@ -99,9 +99,10 @@
                 <div ng-show="true">
                   <ul class="list-inline text-center">
                     <li><button ng-disabled="recordsVM.invenioRecordsLoading"
-                            class="btn btn-primary save-button"
+                            class="btn btn-primary"
                             ng-click="recordsVM.actionHandler(['self',
-                            'POST'], '{{ url_for('schemasettings.list') }}')"><span class="glyphicon glyphicon-saved"></span>
+                            'POST'], '{{ url_for('schemasettings.list')
+                            }}')"><span class="glyphicon glyphicon-save"></span>&nbsp
                             {{_('Save')}}
                         </button>
                     </li>

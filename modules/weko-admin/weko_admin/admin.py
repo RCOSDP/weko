@@ -144,6 +144,7 @@ class StyleSettingView(BaseView):
 
                     with open(scss_file, 'w', encoding='utf-8') as fp:
                         fp.writelines('\n'.join(form_lines))
+                    flash(_('Successfully update color.'), category="success")
         except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return self.render(
@@ -616,7 +617,26 @@ class SiteLicenseSettingsView(BaseView):
             jfy = {}
             try:
                 # update item types and site license info
-                SiteLicense.update(request.get_json())
+                data = request.get_json()
+                if data and data.get('site_license'):
+                    for license in data['site_license']:
+                        err_addr=False
+                        if not license.get('addresses'):
+                            err_addr=True
+                        else:
+                            for addresses in license['addresses']:
+                                for item in addresses.values():
+                                    if not item or '' in item:
+                                        err_addr=True
+                                        # break for item addresses
+                                        break
+                                if err_addr:
+                                    # break for addresses
+                                    break
+                        if err_addr:
+                            raise ValueError('IP Address is incorrect')
+
+                SiteLicense.update(data)
                 jfy['status'] = 201
                 jfy['message'] = 'Site license was successfully updated.'
             except BaseException:

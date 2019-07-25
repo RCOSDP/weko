@@ -50,7 +50,7 @@ provision_web_common_ubuntu14 () {
 
     # sphinxdoc-install-useful-system-tools-ubuntu14-begin
     # update list of available packages:
-    $sudo apt-get -y update
+    $sudo apt-get -y update --allow-releaseinfo-change
 
     # install useful system tools:
     $sudo apt-get -y install \
@@ -67,6 +67,11 @@ provision_web_common_ubuntu14 () {
         curl -sL https://deb.nodesource.com/setup_4.x | $sudo bash -
     fi
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-end
+
+
+    # Added in order to accomidate Debians Version 9 -> 10 update
+    # See: https://github.com/nodesource/distributions/issues/866 
+    $sudo printf "\nPackage: *\nPin: origin deb.nodesource.com\nPin-Priority: 600" >> /etc/apt/preferences.d/nodesource
 
     # sphinxdoc-install-web-common-ubuntu14-begin
     $sudo apt-get -y install \

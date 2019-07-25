@@ -39,8 +39,8 @@
   <div ng-app="myApp" ng-controller="mp" ng-csp>
     <div class="row">
       <div class="body col-sm-offset-1 col-sm-10 col-md-9">
-        <a class="btn btn-light pull-right add-big-button" href="{{ url_for('schemasettings.add') }}">
-          <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+        <a class="btn btn-success pull-right" href="{{ url_for('schemasettings.add') }}">
+          <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp
           {{_('Add Schema')}}
         </a><br/><br/>
         {% if not records %} No Schema .. Please add your greatest schema {% endif %}
@@ -63,8 +63,8 @@
                 <td class="nowrap">{{ r.root_name }}</td>
                 <td class="forcewrap">
                   <span class="pull-left">
-                    <button class="btn btn-danger delete-button" name="pid" type="submit" value="{{pid}}" {{r.dis}}>
-                         <span class="glyphicon glyphicon-trash"></span>
+                    <button class="btn btn-danger" name="pid" type="submit" value="{{pid}}" {{r.dis}}>
+                         <span class="glyphicon glyphicon-trash"></span>&nbsp
                                {{_("Delete")}}</a>
                     </button>
                   </span>
