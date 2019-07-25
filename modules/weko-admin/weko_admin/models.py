@@ -1138,7 +1138,10 @@ class AdminSettings(db.Model):
                 setattr(self, key, data[key])
 
     def _get_count():
-        return db.session.query(db.func.max(AdminSettings.id)).first()[0]
+        count = db.session.query(db.func.max(AdminSettings.id)).first()
+        if count[0]:
+            return count[0]
+        return 0
 
     @classmethod
     def get(cls, name):
