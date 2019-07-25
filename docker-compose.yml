@@ -90,8 +90,8 @@ nginx:
   restart: "always"
   build: ./nginx
   ports:
-    - "8001:80"
-    - "4401:443"
+    - "80:80"
+    - "443:443"
   volumes_from:
     - static
   links:

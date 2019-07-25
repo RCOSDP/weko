@@ -1,12 +1,22 @@
--e git+https://github.com/RCOSDP/invenio-files-rest.git@feature/weko#egg=invenio-files-rest
--e git+https://github.com/RCOSDP/invenio-s3.git@feature/weko#egg=invenio-s3
+#sp14
+-e git+https://github.com/RCOSDP/invenio-files-rest.git@796160e6f09f45c8b34a5e4c447f9489451a24b3#egg=invenio_files_rest
+-e git+https://github.com/RCOSDP/invenio-s3.git@edc776d322d15cb34ef965895ab3d26a9f2bbc69#egg=invenio_s3
+-e git+https://github.com/RCOSDP/invenio-oaiharvester.git@a23651118c117f9cc4e1a3d82e59f82a9c0a3a1c#egg=invenio_oaiharvester
+-e git+https://github.com/RCOSDP/invenio-previewer.git@7d4158090ef1c734f1748f842ce65200b403f7c5#egg=invenio_previewer
+-e git+https://github.com/RCOSDP/invenio-stats.git@7549239c549a8d3813bccf0b84cc38210f323d88#egg=invenio_stats
+-e git+https://github.com/RCOSDP/invenio-records-rest.git@6d1d8a0084c3e452e9a3a6256fd394f9575ed1cb#egg=invenio_records_rest
+-e git+https://github.com/RCOSDP/invenio-communities.git@42e2650a582ed9120b68c365367826506c264765#egg=invenio_communities
+-e git+https://github.com/RCOSDP/invenio-mail.git@9dafd727e17b5aea5d84c2f4efdf5460d73f22c9#egg=invenio_mail
+
+#-e git+https://github.com/RCOSDP/invenio-files-rest.git@feature/weko#egg=invenio-files-rest
+#-e git+https://github.com/RCOSDP/invenio-s3.git@feature/weko#egg=invenio-s3
+#-e git+https://github.com/RCOSDP/invenio-oaiharvester.git@feature/weko#egg=invenio-oaiharvester
+#-e git+https://github.com/RCOSDP/invenio-previewer.git@feature/weko#egg=invenio-previewer
+#-e git+https://github.com/RCOSDP/invenio-stats.git@feature/weko#egg=invenio-stats
+#-e git+https://github.com/RCOSDP/invenio-records-rest.git@feature/weko#egg=invenio-records-rest
+#-e git+https://github.com/RCOSDP/invenio-communities.git@feature/weko#egg=invenio-communities
+#-e git+https://github.com/RCOSDP/invenio-mail.git@feature/weko#egg=invenio-mail
 -e /code/modules/invenio-oaiserver
--e git+https://github.com/RCOSDP/invenio-oaiharvester.git@feature/weko#egg=invenio-oaiharvester
--e git+https://github.com/RCOSDP/invenio-previewer.git@feature/weko#egg=invenio-previewer
--e git+https://github.com/RCOSDP/invenio-stats.git@feature/weko#egg=invenio-stats
--e git+https://github.com/RCOSDP/invenio-records-rest.git@feature/weko#egg=invenio-records-rest
--e git+https://github.com/RCOSDP/invenio-communities.git@feature/weko#egg=invenio-communities
--e git+https://github.com/RCOSDP/invenio-mail.git@feature/weko#egg=invenio-mail
 -e /code/modules/weko-theme
 -e /code/modules/weko-itemtypes-ui
 -e /code/modules/weko-items-ui
