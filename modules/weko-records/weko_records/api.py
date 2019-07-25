@@ -1522,25 +1522,26 @@ class SiteLicense(RecordBase):
         # update has_site_license field on item type name tbl
         ItemTypeNames.update(obj.get('item_type'))
         site_license = obj.get('site_license')
-        if site_license and isinstance(site_license, list):
-            sif = []
-            for i in range(len(site_license)):
-                lst = site_license[i]
-                slif = SiteLicenseInfo(
-                    organization_id=i + 1,
-                    organization_name=lst.get('organization_name'),
-                    mail_address=lst.get('mail_address'),
-                    domain_name=lst.get('domain_name'),
-                    addresses=get_addr(
-                        lst.get('addresses'),
-                        i))
-                sif.append(slif)
-
+        if isinstance(site_license, list):
             # delete all rows first
             SiteLicenseIpAddress.query.delete()
             SiteLicenseInfo.query.delete()
             # add new rows
-            db.session.add_all(sif)
+            if site_license:
+                sif = []
+                for i in range(len(site_license)):
+                    lst = site_license[i]
+                    slif = SiteLicenseInfo(
+                        organization_id=i + 1,
+                        organization_name=lst.get('organization_name'),
+                        mail_address=lst.get('mail_address'),
+                        domain_name=lst.get('domain_name'),
+                        addresses=get_addr(
+                            lst.get('addresses'),
+                            i))
+                    sif.append(slif)
+                # add new rows
+                db.session.add_all(sif)
         db.session.commit()
 
 
