@@ -109,14 +109,11 @@ class Index(db.Model, Timestamp):
     recursive_public_state = db.Column(
         db.Boolean(name='recs_public_state'), nullable=True, default=False)
     """Recursive Public State of the index."""
-    
+
     rss_status = db.Column(
-        db.Boolean(
-            name='rss_status'),
-        nullable=True,
-        default=False)
+        db.Boolean(name='rss_status'), nullable=True, default=False)
     """RSS Icon Status of the index."""
-    
+
     coverpage_state = db.Column(
         db.Boolean(
             name='coverpage_state'),
