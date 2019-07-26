@@ -175,12 +175,9 @@ class Indexes(object):
         try:
             with db.session.begin_nested():
                 index = cls.get_index(index_id)
-                print('BAO========index===', index)
                 if not index:
                     return
-                    
-                print('=======Bao============', data)
-                
+
                 for k, v in data.items():
                     if isinstance(getattr(index, k), int):
                         if isinstance(v, str) and len(v) == 0:
