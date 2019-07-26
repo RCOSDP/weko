@@ -25,11 +25,11 @@
 
   .style-selected-box{
     margin-top: 15px;
-    width: 60%;
-    height: 50px;
+    width: 80%;
+    height: 150px;
     border: 1px inset #99999994;
     display: inline-block;
-    padding: 10px;
+    overflow: scroll;
   }
 
   .style-full-size{
@@ -38,7 +38,7 @@
 
   .style-deleteBtn{
     margin-left: 15px;
-    margin-bottom: 10px;
+    margin-bottom: 26px;
     min-width: 120px;
     height: 40px;
   }

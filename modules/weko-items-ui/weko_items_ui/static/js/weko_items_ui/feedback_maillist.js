@@ -1,3 +1,5 @@
+// import ListGroup from 'react-bootstrap/ListGroup'
+
 const NUM_OF_RESULT = 10;
 const LIMIT_PAGINATION_NUMBER = 5;
 const COMPONENT_SEND_NAME = document.getElementById("component-send").value;
@@ -7,150 +9,140 @@ const COMPONENT_SEARCH_EMAIL_NAME = document.getElementById("component-search-em
 const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
 const DELETE_BUTTON_NAME = document.getElementById("delete-button-name").value;
 const SAVE_BUTTON_NAME = document.getElementById("save-button-name").value;
-const SEND_BUTTON_NAME = document.getElementById("manual-send-name").value;
+// const SEND_BUTTON_NAME = document.getElementById("manual-send-name").value;
 const MESSAGE_SUCCESS = document.getElementById("message-success").value;
 const DUPLICATE_ERROR_MESSAGE = document.getElementById("duplicate-error-message").value;
 
 
-class ComponentFeedbackMail extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-          flagSend: this.props.flagSend,
-        }
-        this.handleChangeSend = this.handleChangeSend.bind(this);
-        this.handleChangeNotSend = this.handleChangeNotSend.bind(this);
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-      if (nextProps.flagSend != prevState.flagSend)
-      {
-        return {
-          flagSend: nextProps.flagSend,
-        }
-      }
-      return null;
-    }
-
-    handleChangeSend(event){
-      this.setState({flagSend: true});
-      this.props.bindingValueOfComponent("flagSend", true);
-    }
-
-    handleChangeNotSend(event){
-      this.setState({flagSend: false});
-      this.props.bindingValueOfComponent("flagSend", false);
-    }
-
-    render() {
-        return (
-            <div className="form-group style-component">
-                <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
-                <div class="controls col-xs-10">
-                    <div className="form-group">
-                        <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>&nbsp;{SEND_RADIO_BUTTON_NAME}</span>
-                        <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>&nbsp;{NOT_SEND_RADIO_BUTTON_NAME}</span>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-}
-
 class ComponentExclusionTarget extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-          listEmail: [],
-        }
-        this.deleteCommand = this.deleteCommand.bind(this);
-        this.searchCommand = this.searchCommand.bind(this);
-        this.generateSelectedBox = this.generateSelectedBox.bind(this);
+  constructor(props) {
+    super(props);
+    this.state = {
+      listEmail: [],
+      selectedId: null
     }
-    componentDidMount(){
-      let mailData = [];
-      let sendData = false;
-      $.ajax({
-        url: "/api/admin/get_feedback_mail",
-        async: false,
-        method: "GET",
-        success: function (data) {
-          mailData = data.data || [];
-          sendData = data.is_sending_feedback || false;
-        }
+    this.deleteCommand = this.deleteCommand.bind(this);
+    this.searchCommand = this.searchCommand.bind(this);
+    this.generateSelectedBox = this.generateSelectedBox.bind(this);
+    this.handleClick = this.handleClick.bind(this)
+    this.handleKeyPress = this.handleKeyPress.bind(this)
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.listEmail !== this.state.listEmail) {
+      this.setState({
+        listEmail: [...nextProps.listEmail,] || [],
       })
-      this.props.bindingValueOfComponent('listEmail', mailData);
-      this.props.bindingValueOfComponent('flagSend', sendData);
     }
-    static getDerivedStateFromProps(nextProps, prevState) {
-      if (nextProps.listEmail != prevState.listEmail)
-      {
-        return {
-          listEmail: nextProps.listEmail,
+  }
+
+  handleClick(id) {
+    this.setState({
+      selectedId: id
+    })
+  }
+
+  handleKeyPress(event) {
+    if (event.key === 'Enter') {
+      const new_email = {
+        author_id: "",
+        email: event.target.value
+      }
+      this.props.addEmailToList(new_email)
+      input = document.getElementById('input_email')
+      input.value = ''
+    }
+  }
+
+  generateSelectedBox(listEmail) {
+    let innerHTML = [];
+    const itemStyle = {
+      height: 32,
+      paddingTop: 5,
+      paddingBottom: 5,
+    };
+
+    return (
+      <div class="list-group" className="style-selected-box" id="sltBoxListEmail">
+        {
+          listEmail.map((item, id) => {
+            return (
+              <a className={`list-group-item list-group-item-action ${this.state.selectedId === id && 'active'}`}
+                onClick={() => {
+                    this.handleClick(id)
+                  }}
+                key={id}
+                value={item.author_id}
+                style={itemStyle}>
+                  {item.email}
+              </a>
+            )
+          })
         }
-      }
-      return null;
-    }
+        {innerHTML}
+        <input class="list-group-item list-group-item-action" id="input_email"
+          style={{
+            ...itemStyle,
+            width: '100%',
+            fontSize: '14px'
+          }} 
+          placeholder="テキスト入力可"
+          onKeyPress={(event) => {
+            this.handleKeyPress(event)
+          }}
+        />
+      </div>
+    )
+  }
 
-    generateSelectedBox(listEmail) {
-      let innerHTML = [];
-      for (let id in listEmail) {
-        innerHTML.push(<option key={listEmail[id].email} value={listEmail[id].author_id}>{listEmail[id].email}</option>);
-      }
-      return (
-        <select multiple className="style-selected-box" id="sltBoxListEmail">
-          {innerHTML}
-        </select>
-      )
-    }
+  deleteCommand(event) {
+    let selectedElement = $(".list-group-item.list-group-item-action.active").text();
+    this.props.removeEmailFromList(selectedElement);
+    this.handleClick(-1);
+  }
 
-    deleteCommand(event) {
-      let selectedElement = $('select#sltBoxListEmail').val();
-      this.props.removeEmailFromList(selectedElement);
-    }
+  searchCommand() {
+    this.props.bindingValueOfComponent("showModalSearch", true);
+  }
 
-    searchCommand(){
-      this.props.bindingValueOfComponent("showModalSearch", true);
-    }
-
-    render() {
-        return (
-            <div className="form-group style-component">
-                <span className="control-label col-xs-2">{COMPONENT_SEARCH_EMAIL_NAME}</span>
-                <div className="controls col-xs-10">
-                    <div>
-                        <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
-                            <i className = "glyphicon glyphicon-search"></i>&nbsp;{SEARCH_BUTTON_NAME}
-                        </ReactBootstrap.Button>
-                    </div>
-                    <div className="style-full-size">
-                      {this.generateSelectedBox(this.state.listEmail)}
-                      <button className="btn btn-danger delete-button style-my-button style-deleteBtn" onClick={this.deleteCommand}>
-                          <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
-                          &nbsp;{DELETE_BUTTON_NAME}
-                      </button>
-                    </div>
-                </div>
-            </div>
-        )
-    }
+  render() {
+    return (
+      <div className="col-sm-9 form-group style-component">
+        <span className="control-label col-xs-3">{COMPONENT_SEARCH_EMAIL_NAME}</span>
+        <div className="controls col-xs-9">
+          <div>
+            <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
+              <i className="glyphicon glyphicon-search"></i>&nbsp;{SEARCH_BUTTON_NAME}
+            </ReactBootstrap.Button>
+          </div>
+          <div className="style-full-size">
+            {this.generateSelectedBox(this.state.listEmail)}
+            <button className="btn btn-danger delete-button style-my-button style-deleteBtn" onClick={this.deleteCommand}>
+              <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
+              &nbsp;{DELETE_BUTTON_NAME}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
 
 class ModalMessageComponent extends React.Component {
   constructor(props) {
     super(props);
   }
-  render(){
-    return(
+  render() {
+    return (
       <div className="alert alert-info">
-          Sorry，No results.
+        Sorry，No results.
       </div>
     )
   }
 }
 
 class TableUserEmailComponent extends React.Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
       listUser: this.props.listUser,
@@ -161,8 +153,7 @@ class TableUserEmailComponent extends React.Component {
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    if (nextProps.listUser != prevState.listUser)
-    {
+    if (nextProps.listUser != prevState.listUser) {
       return {
         listUser: nextProps.listUser,
         firstRender: false,
@@ -171,15 +162,14 @@ class TableUserEmailComponent extends React.Component {
     return null;
   }
 
-  generateBodyTableUser()
-  {
+  generateBodyTableUser() {
     let tBodyElement = this.state.listUser.map((row) => (
-        <tr key = {row._source.pk_id.toString()}>
-          <td>{row._source.authorNameInfo[0].fullName}</td>
-          <td>{row._source.emailInfo[0].email}</td>
-          <td className="text-right"><button className="btn btn-info" onClick = {(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
-        </tr>
-      )
+      <tr key={row._source.pk_id.toString()}>
+        <td>{row._source.authorNameInfo[0].fullName}</td>
+        <td>{row._source.emailInfo[0].email}</td>
+        <td className="text-right"><button className="btn btn-info" onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
+      </tr>
+    )
     )
     return (
       <tbody >
@@ -187,83 +177,84 @@ class TableUserEmailComponent extends React.Component {
       </tbody>
     )
   }
-  importEmail(event, pk_id, email){
+
+  importEmail(event, pk_id, email) {
     let listUser = [];
-    $("#sltBoxListEmail > option").each(function(){
+    $("#sltBoxListEmail > a").each(function () {
       listUser.push(this.value);
     });
     let isExist = listUser.includes(pk_id);
-    if(!isExist){
-      event.target.disabled=true;
+    if (!isExist) {
+      event.target.disabled = true;
       let data = {
-        "author_id" : pk_id,
-        "email" : email
+        "author_id": pk_id,
+        "email": email
       }
       this.props.addEmailToList(data);
     }
-    else{
-     alert(DUPLICATE_ERROR_MESSAGE);
+    else {
+      alert(DUPLICATE_ERROR_MESSAGE);
     }
   }
-  render(){
+  render() {
     return (
       <div className="col-sm-12 col-md-12">
         <table className="table table-striped style-table-modal" id="table_data">
           <caption ></caption>
           <thead >
-            <tr  className="success">
-              <th  className="thWidth style-column">Name</th>
-              <th  className="thWidth style-column">Mail Address</th>
-              <th  className="alignCenter" ></th>
+            <tr className="success">
+              <th className="thWidth style-column">Name</th>
+              <th className="thWidth style-column">Mail Address</th>
+              <th className="alignCenter" ></th>
             </tr>
           </thead>
           {this.generateBodyTableUser()}
         </table>
-        {this.state.firstRender == false && this.state.listUser.length == 0 ? <ModalMessageComponent/> : ""}
+        {this.state.firstRender == false && this.state.listUser.length == 0 ? <ModalMessageComponent /> : ""}
       </div>
     )
   }
 }
 
 class SearchComponent extends React.Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
-      searchKey : this.props.searchKey,
+      searchKey: this.props.searchKey,
     }
     this.searchEmail = this.searchEmail.bind(this);
     this.handleChange = this.handleChange.bind(this);
   }
-  searchEmail(){
+  searchEmail() {
     let request = {
       searchKey: this.state.searchKey,
       pageNumber: 1,
     }
     fetch("/api/admin/search_email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(request),
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
     })
-    .then(res => res.json())
-    .then((result) => {
-      this.props.getListUser(result.hits.hits, result.hits.total);
-    });
+      .then(res => res.json())
+      .then((result) => {
+        this.props.getListUser(result.hits.hits, result.hits.total);
+      });
   }
-  handleChange(event){
+  handleChange(event) {
     this.setState({ searchKey: event.target.value });
     this.props.getSearchKey(event.target.value);
     event.preventDefault();
   }
-  render(){
+  render() {
     return (
       <div>
         <div className="col-sm-5 col-md-5">
-          <input className="form-control" placeholder="" type="text" onChange={this.handleChange} value={this.state.searchKey}/>
+          <input className="form-control" placeholder="" type="text" onChange={this.handleChange} value={this.state.searchKey} />
         </div>
         <div className="col-sm-1 col-md-1">
-          <button class="btn btn-primary search-button" type="button" onClick = {this.searchEmail}>&nbsp;&nbsp;
+          <button class="btn btn-primary search-button" type="button" onClick={this.searchEmail}>&nbsp;&nbsp;
             <i class="fa fa-search-plus"></i>
             &nbsp;
             Search &nbsp;&nbsp;
@@ -287,17 +278,15 @@ class Pagination extends React.Component {
     this.generatePagination = this.generatePagination.bind(this);
   }
   static getDerivedStateFromProps(nextProps, prevState) {
-    if (nextProps.numOfResult != prevState.numOfResult)
-    {
+    if (nextProps.numOfResult != prevState.numOfResult) {
       let pageCount = nextProps.numOfResult / NUM_OF_RESULT;
       pageCount = parseInt(pageCount);
-      if(nextProps.numOfResult % NUM_OF_RESULT != 0){
+      if (nextProps.numOfResult % NUM_OF_RESULT != 0) {
         pageCount += 1;
       }
       let endPage = pageCount;
       let startPage = 1;
-      if (pageCount > 5)
-      {
+      if (pageCount > 5) {
         endPage = 5;
       }
       return {
@@ -309,23 +298,23 @@ class Pagination extends React.Component {
     }
     return null;
   }
-  locatePageResult(pageNumber){
-    if(pageNumber < 1 || pageNumber > this.state.numOfPage){
+  locatePageResult(pageNumber) {
+    if (pageNumber < 1 || pageNumber > this.state.numOfPage) {
       return;
     }
     let startPage = this.state.startPage;
     let endPage = this.state.endPage;
-    if (this.state.numOfPage > 5 ){
-      if(pageNumber > 2 && pageNumber < this.state.numOfPage -2){
-        startPage = pageNumber -2 ;
+    if (this.state.numOfPage > 5) {
+      if (pageNumber > 2 && pageNumber < this.state.numOfPage - 2) {
+        startPage = pageNumber - 2;
         endPage = pageNumber + 2;
       }
       else {
-        if(pageNumber < 3){
+        if (pageNumber < 3) {
           startPage = 1;
           endPage = 5;
         }
-        if (pageNumber > this.state.numOfPage -2){
+        if (pageNumber > this.state.numOfPage - 2) {
           startPage = this.state.numOfPage - 4;
           endPage = this.state.numOfPage;
         }
@@ -334,57 +323,57 @@ class Pagination extends React.Component {
     this.setState({
       currentPage: pageNumber,
       startPage: startPage,
-      endPage:endPage
+      endPage: endPage
     });
     let request = {
       searchKey: this.props.searchKey,
       pageNumber: pageNumber,
     }
     fetch("/api/admin/search_email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(request),
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
     })
-    .then(res => res.json())
-    .then((result) => {
-      this.props.getListUser(result.hits.hits, result.hits.total);
-    });
+      .then(res => res.json())
+      .then((result) => {
+        this.props.getListUser(result.hits.hits, result.hits.total);
+      });
   }
-  generatePagination(){
+  generatePagination() {
     let listPage = [];
-    for (let i = this.state.startPage; i <= this.state.endPage; i++){
+    for (let i = this.state.startPage; i <= this.state.endPage; i++) {
       listPage.push(
-        <li  key = {i.toString()} className = {this.state.currentPage == i ? 'active' : ''}>
-          <a  href="#" onClick = {() => this.locatePageResult(i)}>{i}</a>
+        <li key={i.toString()} className={this.state.currentPage == i ? 'active' : ''}>
+          <a href="#" onClick={() => this.locatePageResult(i)}>{i}</a>
         </li>
       )
     }
     return (
-      <ul  className="pagination">
+      <ul className="pagination">
         {this.state.numOfPage > LIMIT_PAGINATION_NUMBER ?
+          <li >
+            <a href="#" onClick={() => this.locatePageResult(1)} className={this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&#8810;</span></a>
+          </li> : null}
         <li >
-          <a  href="#" onClick = {() => this.locatePageResult(1)} className = {this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8810;</span></a>
-        </li> : null }
-        <li >
-          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage - 1)} className = {this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&lt;</span></a>
+          <a href="#" onClick={() => this.locatePageResult(this.state.currentPage - 1)} className={this.state.currentPage == 1 ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&lt;</span></a>
         </li>
         {listPage}
         <li >
-          <a  href="#" onClick = {() => this.locatePageResult(this.state.currentPage + 1)} className = {this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&gt;</span></a>
+          <a href="#" onClick={() => this.locatePageResult(this.state.currentPage + 1)} className={this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&gt;</span></a>
         </li>
         {this.state.numOfPage > LIMIT_PAGINATION_NUMBER ?
-        <li >
-          <a  href="#" onClick = {() => this.locatePageResult(this.state.numOfPage)} className = {this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8811;</span></a>
-        </li> : null }
+          <li >
+            <a href="#" onClick={() => this.locatePageResult(this.state.numOfPage)} className={this.state.currentPage == this.state.numOfPage ? 'my-pagination-disabled' : ''}><span aria-hidden="true">&#8811;</span></a>
+          </li> : null}
       </ul>
     )
   }
-  render () {
+  render() {
     return (
-      <div  className="row">
-        <div  className="col-sm-12 col-md-12 text-center">
+      <div className="row">
+        <div className="col-sm-12 col-md-12 text-center">
           {this.generatePagination()}
         </div>
       </div>
@@ -403,15 +392,14 @@ class ModalBodyComponent extends React.Component {
     this.getListUser = this.getListUser.bind(this);
     this.getSearchKey = this.getSearchKey.bind(this);
   }
-  getListUser(data, count)
-  {
+  getListUser(data, count) {
     this.setState({
       listUser: data,
       numOfResult: count
     });
   }
-  getSearchKey(data){
-    this.setState({searchKey:data});
+  getSearchKey(data) {
+    this.setState({ searchKey: data });
   }
   render() {
     return (
@@ -420,13 +408,13 @@ class ModalBodyComponent extends React.Component {
           <div className="col-sm-12 col-md-12 col-md-12">
             <div className="row">
               <div className="row">
-                <SearchComponent getListUser = {this.getListUser} searchKey = {this.state.searchKey} getSearchKey= {this.getSearchKey}/>
+                <SearchComponent getListUser={this.getListUser} searchKey={this.state.searchKey} getSearchKey={this.getSearchKey} />
               </div>
               <div className="row">
-                <TableUserEmailComponent listUser = {this.state.listUser} addEmailToList={this.props.addEmailToList}/>
+                <TableUserEmailComponent listUser={this.state.listUser} addEmailToList={this.props.addEmailToList} />
               </div>
-              <div className = "row">
-                <Pagination numOfResult = {this.state.numOfResult} searchKey = {this.state.searchKey} getListUser = {this.getListUser}/>
+              <div className="row">
+                <Pagination numOfResult={this.state.numOfResult} searchKey={this.state.searchKey} getListUser={this.getListUser} />
               </div>
             </div>
           </div>
@@ -436,14 +424,14 @@ class ModalBodyComponent extends React.Component {
   }
 }
 class ModalFooterComponent extends React.Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.handleClose = this.handleClose.bind(this);
   }
   handleClose() {
     this.props.bindingValueOfComponent("showModalSearch", false);
   }
-  render(){
+  render() {
     return (
       <ReactBootstrap.Button variant="secondary" onClick={this.handleClose}>
         <span className="glyphicon glyphicon-remove"></span>
@@ -461,159 +449,84 @@ class ModalComponent extends React.Component {
     };
   }
   static getDerivedStateFromProps(nextProps, prevState) {
-    if (nextProps.showModalSearch != prevState.showModalSearch)
-    {
+    if (nextProps.showModalSearch != prevState.showModalSearch) {
       return {
         show: nextProps.showModalSearch,
       }
     }
     return null;
   }
-  render(){
+  render() {
     return (
       <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="feedback-mail-modal">
         <ReactBootstrap.Modal.Body className="feedback-mail-modal-body">
-          <ModalBodyComponent addEmailToList = {this.props.addEmailToList}/>
+          <ModalBodyComponent addEmailToList={this.props.addEmailToList} />
         </ReactBootstrap.Modal.Body>
         <ReactBootstrap.Modal.Footer>
-          <ModalFooterComponent bindingValueOfComponent = {this.props.bindingValueOfComponent}/>
+          <ModalFooterComponent bindingValueOfComponent={this.props.bindingValueOfComponent} />
         </ReactBootstrap.Modal.Footer>
       </ReactBootstrap.Modal>
     )
   }
 }
 
-class ComponentButtonLayout extends React.Component {
-    constructor(props) {
-        super(props);
-        this.saveCommand = this.saveCommand.bind(this);
-        this.sendCommand = this.sendCommand.bind(this);
-    }
-
-    saveCommand(event) {
-      let is_sending_feedback = this.props.flagSend;
-      let request_param = {
-        "data": this.props.listEmail,
-        "is_sending_feedback": is_sending_feedback
-      }
-
-      fetch(
-        "/api/admin/update_feedback_mail",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(request_param)
-        }
-      )
-      .then(res => res.json())
-      .then((result) => {
-        let message = MESSAGE_SUCCESS;
-        if (!result.success) {
-          message = result.error;
-        }
-        addAlert(message, !result.success);
-      });
-    }
-
-    sendCommand(event){
-
-    }
-
-    render() {
-      return (
-        <div className="form-group style-component ">
-          <div className="col-xs-5">
-            <button className="btn btn-primary style-button" onClick={this.saveCommand}>
-              <span className="glyphicon glyphicon-saved"></span>
-              &nbsp;
-              {SAVE_BUTTON_NAME}
-            </button>
-          </div>
-          <div className="col-xs-offset-8">
-            <button className="btn btn-primary style-button" onClick={this.sendCommand}>
-              <span class="glyphicon glyphicon-send"></span>
-              &nbsp;
-              {SEND_BUTTON_NAME}
-            </button>
-          </div>
-        </div>
-      )
-
-    }
-}
-
 class MainLayout extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-          showModalSearch: false,
-          listEmail: [],
-          flagSend: false,
-        }
-        this.bindingValueOfComponent = this.bindingValueOfComponent.bind(this);
-        this.addEmailToList = this.addEmailToList.bind(this);
-        this.removeEmailFromList = this.removeEmailFromList.bind(this);
+  constructor(props) {
+    super(props);
+    this.state = {
+      showModalSearch: false,
+      listEmail: [],
+      flagSend: false,
     }
-    bindingValueOfComponent (key, value) {
-      switch (key) {
-        case "showModalSearch":
-          this.setState({showModalSearch: value});
-          break;
-        case "listEmail":
-            this.setState({listEmail: value});
-            break;
-        case "flagSend":
-            this.setState({flagSend: value});
-            break;
-      }
+    this.bindingValueOfComponent = this.bindingValueOfComponent.bind(this);
+    this.addEmailToList = this.addEmailToList.bind(this);
+    this.removeEmailFromList = this.removeEmailFromList.bind(this);
+  }
+  bindingValueOfComponent(key, value) {
+    switch (key) {
+      case "showModalSearch":
+        this.setState({ showModalSearch: value });
+        break;
+      case "listEmail":
+        this.setState({ listEmail: value });
+        break;
+      case "flagSend":
+        this.setState({ flagSend: value });
+        break;
     }
-    addEmailToList(data){
-      let listEmail = this.state.listEmail;
-      listEmail.push(data);
-      this.setState({listEmail: listEmail})
-    }
-    removeEmailFromList(listData){
-      let listEmail = this.state.listEmail;
-      listEmail = listEmail.filter((el) => !listData.includes(el.author_id));
-      this.setState({listEmail: listEmail});
-    }
-    render() {
-        return (
-            <div>
-                <div id="alerts"></div>
-                <div className="row">
-                    <ComponentFeedbackMail flagSend = {this.state.flagSend} bindingValueOfComponent = {this.bindingValueOfComponent}/>
-                </div>
-                <div className="row">
-                    <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} removeEmailFromList = {this.removeEmailFromList} listEmail={this.state.listEmail}/>
-                </div>
-                <div className="row">
-                    <ComponentButtonLayout listEmail = {this.state.listEmail} flagSend={this.state.flagSend}/>
-                </div>
-                <div className="row">
-                    <ModalComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent} addEmailToList={this.addEmailToList}/>
-                </div>
-            </div>
-        )
-    }
+  }
+  addEmailToList(data) {
+    let listEmail = this.state.listEmail;
+    listEmail.push(data);
+    this.setState({ listEmail: listEmail })
+  }
+  removeEmailFromList(listData) {
+    let listEmail = this.state.listEmail;
+    listEmail = listEmail.filter((el) => !listData.includes(el.email));
+    this.setState({ listEmail: listEmail });
+  }
+  render() {
+    return (
+      <div>
+        <div className="row">
+          <ComponentExclusionTarget
+            bindingValueOfComponent={this.bindingValueOfComponent}
+            removeEmailFromList={this.removeEmailFromList}
+            listEmail={this.state.listEmail}
+            addEmailToList={(data) => { this.addEmailToList(data) }}
+          />
+        </div>
+        <div className="row">
+          <ModalComponent showModalSearch={this.state.showModalSearch} bindingValueOfComponent={this.bindingValueOfComponent} addEmailToList={this.addEmailToList} />
+        </div>
+      </div>
+    )
+  }
 }
 
 $(function () {
-    ReactDOM.render(
-        <MainLayout/>,
-        document.getElementById('react')
-    )
+  ReactDOM.render(
+    <MainLayout />,
+    document.getElementById('react')
+  )
 });
-
-function addAlert(message, isError) {
-  let className = "alert alert-info";
-  if(isError){
-    className = "alert alert-danger alert-dismissable";
-  }
-  $('#alerts').append(
-    '<div class="' + className + '">'
-    + '<button type="button" class="close" data-dismiss="alert">'
-    + '&times;</button>' + message + '</div>');
-}
