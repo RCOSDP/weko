@@ -246,6 +246,12 @@ def file_ui(
         can_download_original_pdf = check_original_pdf_download_permission(
             record)
 
+        convert_to_pdf = False
+        if is_preview \
+                and ('msword' in fileobj.mimetype
+                     or 'vnd.ms' in fileobj.mimetype
+                     or 'vnd.openxmlformats' in fileobj.mimetype):
+            convert_to_pdf = True
         # if not pdf or cover page disabled: Download directly
         # if pdf and cover page enabled and has original in query param: check
         # permission (user roles)
@@ -263,7 +269,8 @@ def file_ui(
                     'pid_value': pid.pid_value,
                 },
                 as_attachment=not is_preview,
-                is_preview=is_preview
+                is_preview=is_preview,
+                convert_to_pdf=convert_to_pdf
             )
     except AttributeError:
         return ObjectResource.send_object(

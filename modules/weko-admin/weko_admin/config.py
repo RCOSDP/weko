@@ -66,6 +66,9 @@ WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = \
 WEKO_ADMIN_RANKING_SETTINGS_TEMPLATE = 'weko_admin/admin/ranking_settings.html'
 """Ranking Settings template."""
 
+WEKO_ADMIN_FILE_PREVIEW_SETTINGS_TEMPLATE = 'weko_admin/admin/file_preview_settings.html'
+"""File Preview Settings templates."""
+
 LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
 
 WEKO_ADMIN_CROSSREF_API_URL = 'https://doi.crossref.org/'

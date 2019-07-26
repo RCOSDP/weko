@@ -262,6 +262,7 @@
               </tbody>
             </table>
             {%- endif %}
+            <div class="table-responsive">
             <table class="table table-bordered table-striped">
               {% if record.item_type_info %}
               <tr>
@@ -370,6 +371,7 @@
               </tr>
               {% endif %}
             </table>
+            </div>
             {%- if 'main_entry_personal_name' in record %}
             <p class="record_authors">
               <i>{{ record['main_entry_personal_name']['personal_name'] }}</i>
@@ -462,6 +464,16 @@
 
   #invenio-csl span.twitter-typeahead .empty-results {
     max-width: 250px;
+</style>
+<style type="text/css">
+  .table {
+      table-layout: fixed;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+  }
+
+  .table tr th:nth-child(1) {
+      width: 30%;
   }
 </style>
 {% endblock %}
