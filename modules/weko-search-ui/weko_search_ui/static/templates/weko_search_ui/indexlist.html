@@ -11,6 +11,9 @@
             {{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</a>
           <span ng-if="$last">{{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('/')[$index]}}</span>
         </li>
+        <span ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].rss_status == true" class="ng-scope" style="float: right;">
+            <i class="fa fa-rss" style="color:#fd7e14; font-size:fa-lg;"></i>
+        </span>
       </ol>
       <div class="row" ng-if="journal_info && vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1">
         <div class="col-xs-12">
@@ -63,7 +66,14 @@
       <ul class="list-group">
         <a class="list-group-item" ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0] track by $index"
            ng-if="!$first" ng-href="/search?search_type=2&q={{ index_path.key.split('/').pop() }}{{commInfoIndex}}">
-          <span ng-if="index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0" class="badge">{{index_path.date_range.pub_cnt}} items (Private {{index_path.date_range.un_pub_cnt}} items )</span>
+          <span ng-if="index_path.date_range.pub_cnt!=0||index_path.date_range.un_pub_cnt!=0" class="badge">{{index_path.date_range.pub_cnt}} items (Private {{index_path.date_range.un_pub_cnt}} items )
+              <span ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].rss_status">
+                <i class="fa fa-rss" style="color:#fd7e14; font-size:fa-lg;"></i>
+              </span>
+          </span>
+          <span ng-if="index_path.rss_status">
+            <i class="fa fa-rss" style="color:#fd7e14;font-size:fa-lg;float: right;padding-left: 10px;"></i>
+          </span>
           <span ng-if="index_path.date_range.pub_cnt==0&&index_path.date_range.un_pub_cnt==0" class="badge">{{index_path.date_range.pub_cnt}} items </span>
           <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
           {{ index_path.name.split('/').pop() }}
