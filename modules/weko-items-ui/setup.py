@@ -99,7 +99,8 @@ setup(
             'weko_items_ui_upload_js = weko_items_ui.bundles:upload_js',
             'weko_items_authors_search_css = weko_items_ui.bundles:items_author_search_css',
             'weko_items_authors_search_js = weko_items_ui.bundles:items_author_search_js',
-            'weko_items_ui_feedback_maillist = weko_items_ui.bundles:feedback_maillist_js',
+            'weko_items_ui_feedback_maillist_js = weko_items_ui.bundles:feedback_maillist_js',
+            'weko_items_ui_feedback_maillist_css = weko_items_ui.bundles:feedback_maillist_css',
         ],
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',

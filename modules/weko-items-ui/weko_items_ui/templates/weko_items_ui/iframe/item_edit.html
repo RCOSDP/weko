@@ -26,7 +26,7 @@
   {{ super() }}
   <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
   <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
-  {% assets "weko_admin_feedback_mail_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -37,7 +37,7 @@
   <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_items_ui_feedback_maillist" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
