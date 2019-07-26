@@ -75,7 +75,7 @@ feedback_maillist_js = Bundle(
     output="gen/weko_items_ui_feedback_maillist.%(version)s.js",
 )
 
-feedback_mail_css = Bundle(
+feedback_maillist_css = Bundle(
     'css/weko_items_ui/feedback.mail.css',
     output="gen/weko_items_ui_feedback_maillist.%(version)s.css",
 )
