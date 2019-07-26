@@ -210,9 +210,6 @@ def listsets(**kwargs):
     size = current_app.config['OAISERVER_PAGE_SIZE']
     oai_sets = OAISet.query.paginate(page=page, per_page=size, error_out=False)
 
-    if not oai_sets.total:
-        return error(get_error_code_msg('noSetHierarchy'), **kwargs)
-
     for oai_set in oai_sets.items:
         e_set = SubElement(e_listsets, etree.QName(NS_OAIPMH, 'set'))
         e_setSpec = SubElement(e_set, etree.QName(NS_OAIPMH, 'setSpec'))
@@ -242,6 +239,9 @@ def listmetadataformats(**kwargs):
     if 'identifier' in kwargs:
         # test if record exists
         OAIIDProvider.get(pid_value=kwargs['identifier'])
+
+    if not len(cfg.get('OAISERVER_METADATA_FORMATS', {})):
+        return error(get_error_code_msg('noMetadataFormats'), **kwargs)
 
     for prefix, metadata in cfg.get('OAISERVER_METADATA_FORMATS', {}).items():
         e_metadataformat = SubElement(
@@ -363,7 +363,8 @@ def listrecords(**kwargs):
 def get_error_code_msg(code='noRecordsMatch'):
     msg = 'The combination of the values of the from, until, ' \
           'set and metadataPrefix arguments results in an empty list.'
-    if code=='noSetHierarchy':
-        msg='This repository does not support sets'
+
+    if code == 'noMetadataFormats':
+        msg = 'There is no metadata format available.'
 
     return [(code, msg)]
