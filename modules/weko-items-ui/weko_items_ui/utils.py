@@ -21,12 +21,15 @@
 """Module of weko-items-ui utils.."""
 from datetime import datetime
 
+from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
+from invenio_records.api import RecordBase
+from jsonschema import ValidationError
 from sqlalchemy import MetaData, Table
+from weko_records.api import ItemTypes
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
-from copy import deepcopy
 
 
 def get_list_username():
@@ -337,3 +340,28 @@ def parse_ranking_results(results, display_rank, list_name='all',
             if len(ranking_list) == display_rank:
                 break
     return ranking_list
+
+
+def validate_required_item(result: dict, item_id: str, data: dict):
+    item_type = ItemTypes.get_by_id(item_id)
+    json_schema = item_type.schema.copy()
+
+    data['$schema'] = json_schema.copy()
+    validation_data = RecordBase(data)
+    try:
+        validation_data.validate()
+    except ValidationError as error:
+        result["is_valid"] = False
+        print(error.validator_value)
+        print(error.cause)
+        print(error.context)
+        if 'required' == error.validator:
+            result['error'] = _('Please input all required item.')
+            """TODO:
+            EN: Please input all required item.
+            JP: 必須項目は全て入力して下さい。
+            """
+        elif 'pattern' == error.validator:
+            result['error'] = _('Please input the correct data.')
+        else:
+            result['error'] = _(error.message)
