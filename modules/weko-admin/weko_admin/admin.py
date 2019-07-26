@@ -143,6 +143,7 @@ class StyleSettingView(BaseView):
 
                     with open(scss_file, 'w', encoding='utf-8') as fp:
                         fp.writelines('\n'.join(form_lines))
+                    flash(_('Successfully update color.'), category="success")
         except BaseException:
             current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         return self.render(
@@ -242,7 +243,8 @@ class ReportView(BaseView):
             }
 
             from invenio_stats.utils import get_aggregations
-            aggs_results = get_aggregations('weko', aggs_query)
+            aggs_results = get_aggregations(
+                current_app.config['SEARCH_UI_SEARCH_INDEX'], aggs_query)
 
             total = 0
             result = {}

@@ -1035,10 +1035,14 @@ class Indexes(object):
                     }
                 }
             }
+            es_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+            es_doc_type = current_app.config['INDEXER_DEFAULT_DOCTYPE']
             query_q = json.dumps(upd_item_sort_q).replace("@index", index_path)
             query_q = json.loads(query_q)
             indexer = RecordIndexer()
-            res = indexer.client.search(index="weko", body=query_q)
+            res = indexer.client.search(
+                index=es_index,
+                body=query_q)
 
             for d in sort_json:
                 for h in res.get("hits").get("hits"):
@@ -1051,8 +1055,8 @@ class Indexes(object):
                             }
                         }
                         indexer.client.update(
-                            index="weko",
-                            doc_type="item",
+                            index=es_index,
+                            doc_type=es_doc_type,
                             id=h.get("_id"),
                             body=body
                         )

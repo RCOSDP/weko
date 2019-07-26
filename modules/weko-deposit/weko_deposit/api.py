@@ -183,6 +183,7 @@ class WekoIndexer(RecordIndexer):
     def get_item_link_info(self, pid):
         """Get item link info."""
         try:
+            self.get_es_index()
             item_link_info = None
             get_item_link_q = {
                 "query": {
@@ -195,7 +196,7 @@ class WekoIndexer(RecordIndexer):
                 "@control_number", pid)
             query_q = json.loads(query_q)
             indexer = RecordIndexer()
-            res = indexer.client.search(index="weko", body=query_q)
+            res = indexer.client.search(index=self.es_index, body=query_q)
             item_link_info = res.get("hits").get(
                 "hits")[0].get('_source').get("relation")
         except Exception as ex:

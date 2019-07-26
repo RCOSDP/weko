@@ -61,7 +61,7 @@
     }
   },
   "mappings": {
-    "author": {
+    "author-v1.0.0": {
       "properties": {
         "authorNameInfo": {
           "type": "object",
