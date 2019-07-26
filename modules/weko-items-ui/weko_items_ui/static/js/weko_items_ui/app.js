@@ -943,47 +943,48 @@ function handleSharePermission(value) {
         });
       }
 
-      $scope.validateInputData = function() {
-        let itemTypeId = $("#autofill_item_type_id").val();
-        let get_url = '/api/items/validate_input_data';
-        let requestData = {
-          'item_id': itemTypeId,
-          'data': $rootScope.recordsVM.invenioRecordsModel
+      $scope.validateInputData = function () {
+        if (!this.validateRequiredItem()) {
+          // Check required item
+          return false;
+        } else if ($scope.depositionForm.$invalid) {
+          // Check containing control or form is invalid
+          return false;
         }
-        $.ajax({
-          url: get_url,
-          method: 'POST',
-          async: false,
-          headers: {
-            'Content-Type': 'application/json'
+
+        // Call API to validate input data base on json schema define
+        let validateURL = '/api/items/validate';
+        let request = InvenioRecordsAPI.prepareRequest(
+          validateURL
+          ,
+          'POST',
+          $rootScope.recordsVM.invenioRecordsModel,
+          $rootScope.recordsVM.invenioRecordsArgs,
+          $rootScope.recordsVM.invenioRecordsEndpoints
+        );
+        let requestData = {
+          'item_id': $("#autofill_item_type_id").val(),
+          'data': request.data
+        }
+        request.data = requestData;
+        InvenioRecordsAPI.request(request).then(
+          function success(response) {
+            let data = response.data;
+            if (data.is_valid) {
+              return true;
+            } else {
+              $("#inputModal").html(data.error);
+              $("#allModal").modal("show");
+              return false;
+            }
           },
-          data: JSON.stringify(requestData),
-          success: (response) => {
-            if (response.is_valid) {
-              return true;
-            }
-            let requiredErrorItems = response.required_errors;
-            let patternErrorItems = response.pattern_errors;
-            if (requiredErrorItems.length == 0 && patternErrorItems.length == 0) {
-              return true;
-            }
-            let message = $("#validate_error").val() + '<br/><br/>';
-            message += requiredErrorItems[0];
-            for (let i = 1; i < requiredErrorItems.length; i++) {
-              let newItem = ', ' + requiredErrorItems[i];
-              message += newItem;
-            }
-            $("#inputModal").html(message);
+          function error(response) {
+            var modalcontent = response;
+            $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
             return false;
-          },
-          error: function(data, status) {
-              //alert('Cannot connect to server!');
-              var modalcontent =  "Cannot connect to server!";
-              $("#inputModal").html(modalcontent);
-              $("#allModal").modal("show");
           }
-        });
+        );
       }
 
       $scope.priceValidator = function() {
@@ -1005,12 +1006,12 @@ function handleSharePermission(value) {
         return result;
       }
 
-      $scope.findSubitemInSchemaForm = function (item) {
+      $scope.findRequiredItemInSchemaForm = function (item) {
         let result = [];
         if (item.hasOwnProperty('items')) {
           let subitem = item.items;
           for (let i = 0; i < subitem.length; i++) {
-            result.push.apply(result, this.findSubitemInSchemaForm(subitem[i]));
+            result.push.apply(result, this.findRequiredItemInSchemaForm(subitem[i]));
           }
         } else {
           if (item.required) {
@@ -1031,17 +1032,18 @@ function handleSharePermission(value) {
         }
         return result;
       }
-      $scope.validatePristineProperties = function() {
+
+      $scope.validateRequiredItem = function() {
         let schemaForm = $rootScope.recordsVM.invenioRecordsForm;
         let depositionForm = $scope.depositionForm;
         let listItemErrors = []
         for (let i = 0; i < schemaForm.length; i++) {
-          listSubItem = $scope.findSubitemInSchemaForm(schemaForm[i])
+          let listSubItem = $scope.findRequiredItemInSchemaForm(schemaForm[i])
           if (listSubItem.length == 0) {
             continue;
           }
           for (let j = 0; j < listSubItem.length; j++) {
-            if (depositionForm[listSubItem[j].id].$pristine) {
+            if (depositionForm[listSubItem[j].id].$pristine || !depositionForm[listSubItem[j].id].$viewValue) {
               listItemErrors.push(listSubItem[j].title);
             }
           }
@@ -1061,18 +1063,15 @@ function handleSharePermission(value) {
       }
 
       $scope.updateDataJson = async function () {
-        $scope.genTitleAndPubDate();
         if (!$scope.priceValidator()) {
-            var modalcontent = "Billing price is required half-width numbers.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
-        } else if (!$scope.validatePristineProperties()) {
-          return true;
+          var modalcontent = "Billing price is required half-width numbers.";
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
+        } else if (!this.validateInputData()) {
+          return false;
         }
-        // else if (!$scope.validationInputtedData) {
-        //   return false;
-        // }
         else {
+          $scope.genTitleAndPubDate();
           let next_frame = $('#next-frame').val();
           if ($scope.is_item_owner) {
             if (!this.registerUserPermission()) {
@@ -1108,8 +1107,8 @@ function handleSharePermission(value) {
         }else {
           this.saveDataJsonCallback(item_save_uri);
         }
-        
       }
+
       $scope.saveDataJsonCallback = function(item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
