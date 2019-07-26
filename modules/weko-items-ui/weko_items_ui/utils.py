@@ -342,7 +342,13 @@ def parse_ranking_results(results, display_rank, list_name='all',
     return ranking_list
 
 
-def validate_required_item(result: dict, item_id: str, data: dict):
+def validate_form_input_data(result: dict, item_id: str, data: dict):
+    """Validate input data.
+
+    :param result: result dictionary.
+    :param item_id: item type identifier.
+    :param data: form input data
+    """
     item_type = ItemTypes.get_by_id(item_id)
     json_schema = item_type.schema.copy()
 

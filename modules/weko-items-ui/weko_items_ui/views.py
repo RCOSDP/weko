@@ -54,7 +54,7 @@ from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    validate_required_item, validate_user
+    validate_form_input_data, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -920,6 +920,6 @@ def validate():
         "error": ""
     }
     request_data = request.get_json()
-    validate_required_item(result, request_data.get('item_id'),
-                           request_data.get('data'))
+    validate_form_input_data(result, request_data.get('item_id'),
+                             request_data.get('data'))
     return jsonify(result)

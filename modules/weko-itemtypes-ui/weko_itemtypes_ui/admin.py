@@ -36,7 +36,7 @@ from weko_schema_ui.api import WekoSchema
 
 from .config import WEKO_BILLING_FILE_ACCESS, WEKO_BILLING_FILE_PROP_ID
 from .permissions import item_type_permission
-from .utils import has_system_admin_access, remove_xsd_prefix, fix_json_schema
+from .utils import fix_json_schema, has_system_admin_access, remove_xsd_prefix
 
 
 class ItemTypeMetaDataView(BaseView):

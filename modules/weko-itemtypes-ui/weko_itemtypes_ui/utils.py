@@ -21,6 +21,7 @@
 """Utils for weko-itemtypes-ui."""
 
 from copy import deepcopy
+
 from flask import current_app
 from flask_login import current_user
 
