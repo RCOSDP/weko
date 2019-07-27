@@ -69,6 +69,14 @@ blueprint = Blueprint(
     url_prefix='/workflow'
 )
 
+blueprint_api = Blueprint(
+    'weko_workflow',
+    __name__,
+    template_folder='templates',
+    static_folder='static',
+    url_prefix="/workflow",
+)
+
 
 @blueprint.route('/')
 @login_required
@@ -895,3 +903,33 @@ def check_existed_doi():
             data['msg'] = _('success')
         data['code'] = 0
     return jsonify(data)
+
+@blueprint_api.route('/save_feedback_maillist/<string:activity_id>',
+                methods=['POST'])
+@login_required
+@check_authority
+def save_feedback_maillist(activity_id='0'):
+    """Save feedback_mail's list to Activity History models.
+
+    :return:
+    """
+    current_app.logger.debug('save_feedback_maillist')
+    ITEM_REGISTRATION_ACTION_ID = 3
+    try:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(code=-1, msg=_('Header Error'))
+
+        feedback_maillist = request.get_json()
+        current_app.logger.debug(feedback_maillist)
+
+        work_activity = WorkActivity()
+        work_activity.create_or_update_action_feedbackmail(
+            activity_id=activity_id,
+            action_id=ITEM_REGISTRATION_ACTION_ID,
+            feedback_maillist=feedback_maillist
+        )
+        return jsonify(code=0, msg=_('Success'))
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return jsonify(code=-1, msg=_('Authorization Error'))

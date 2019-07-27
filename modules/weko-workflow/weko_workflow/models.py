@@ -872,16 +872,28 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
 
     __tablename__ = 'workflow_action_feedbackmail'
 
-    id = db.Column(db.Integer(), nullable=False,
-                   primary_key=True, autoincrement=True)
+    id = db.Column(
+        db.Integer(),
+        nullable=False,
+        primary_key=True,
+        autoincrement=True
+    )
     """ActionFeedbackMail identifier."""
 
     activity_id = db.Column(
-        db.String(24), nullable=False, unique=False, index=True)
+        db.String(24),
+        nullable=False,
+        unique=False,
+        index=True
+    )
     """Activity id of Activity Action."""
 
     action_id = db.Column(
-        db.Integer(), db.ForeignKey(Action.id), nullable=True, unique=False)
+        db.Integer(),
+        db.ForeignKey(Action.id),
+        nullable=True,
+        unique=False
+    )
     """Action id."""
 
     feedback_mail_list = db.Column(

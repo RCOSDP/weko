@@ -208,20 +208,14 @@
                   form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                   template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
                 </invenio-records-form>
+                {%- block feedback_mail_list %}
+                  <div id="react"></div>
+                  <input id="component-search-email-name" type="hidden" value="{{_('フィードバックメール送信先')}}" />
+                  <input id="search-button-name" type="hidden" value="{{_('From author DB')}}" />
+                  <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
+                  <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
+                {%- endblock feedback_mail_list %}
               </div>
-              {%- block feedback_mail_list %}
-                <div id="react"></div>
-                <input id="component-send" type="hidden" value="{{_('ON/OFF')}}" />
-                <input id="first-radio-name" type="hidden" value="{{_('Send')}}" />
-                <input id="second-radio-name" type="hidden" value="{{_('Do not send')}}" />
-                <input id="component-search-email-name" type="hidden" value="{{_('フィードバックメール送信先')}}" />
-                <input id="search-button-name" type="hidden" value="{{_('From author DB')}}" />
-                <input id="save-button-name" type="hidden" value="{{_('Save')}}" />
-                <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
-                <input id="manual-send-name" type="hidden" value="{{_('Manual Send')}}" />
-                <input id="message-success" type="hidden" value="{{_('Update successfully.')}}" />
-                <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
-              {%- endblock feedback_mail_list %}
               <div class="row">
                 <div class="col-sm-9">
                   <div class="list-inline text-right" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
@@ -303,5 +297,4 @@
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
-
 {%- endblock page_body %}

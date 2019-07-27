@@ -294,6 +294,7 @@ function handleSharePermission(value) {
       $scope.bibliographic_title_key = '';
       $scope.bibliographic_title_lang_key = '';
       $scope.is_item_owner = false;
+      $scope.feedback_emails = []
       $scope.searchFilemetaKey = function () {
         if ($scope.filemeta_keys.length > 0) {
           return $scope.filemeta_keys;
@@ -943,6 +944,29 @@ function handleSharePermission(value) {
         });
       }
 
+      $scope.getFeedbackMailList = function() {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        invalid_emails = [];
+        emails = []
+        emails = $('#sltBoxListEmail').children('a');
+        if (emails.length === 0) {
+          return invalid_emails;
+        }
+        emails.each(idx => {
+          email = emails[idx]
+          result = re.test(String(email.text).toLowerCase());
+          if (result) {
+            $scope.feedback_emails.push({
+              "author_id": email.attributes[1]['value'],
+              "email": email.text
+            })
+          } else {
+            invalid_emails.push(email.text);
+          }
+        });
+        return invalid_emails;
+      }
+
       $scope.priceValidator = function() {
         var result = true;
         $scope.filemeta_keys.forEach(filemeta_key => {
@@ -979,6 +1003,14 @@ function handleSharePermission(value) {
             var modalcontent =  "PubDate is required! Please input pubDate.";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
+        }else if ($scope.getFeedbackMailList().length > 0){
+          let lang_code = $('#lang-code').val();
+          var modalcontent = 'Invalid email format.'
+          if (lang_code == 'ja') {
+            modalcontent = 'メールアドレスのフォーマットが正しくありません。'
+          }
+          $("#inputModal").html(modalcontent);
+          $("#allModal").modal("show");
         }
         else {
           let next_frame = $('#next-frame').val();
@@ -991,6 +1023,10 @@ function handleSharePermission(value) {
               if (indexOfLink != -1) {
                 str = str.split(',"authorLink":[]').join('');
               }
+              if (!$scope.saveFeedbackMailListCallback()) {
+                return;
+              }
+              $scope.saveFeedbackMailListCallback();
               $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
               $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
             }
@@ -1000,22 +1036,39 @@ function handleSharePermission(value) {
             if (indexOfLink != -1) {
               str = str.split(',"authorLink":[]').join('');
             }
+            if (!$scope.saveFeedbackMailListCallback()) {
+              return;
+            }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
         }
       }
       $scope.saveDataJson = function (item_save_uri) {
+        let permission = false;
         if ($scope.is_item_owner) {
           if (!this.registerUserPermission()) {
             // Do nothing
           } else {
-            this.saveDataJsonCallback(item_save_uri);
+            permission = true;
           }
         }else {
-          this.saveDataJsonCallback(item_save_uri);
+          permission = true;
         }
-        
+        if (permission) {
+          if ($scope.getFeedbackMailList().length > 0) {
+            let lang_code = $('#lang-code').val();
+            var modalcontent = 'Invalid email format.'
+            if (lang_code == 'ja') {
+              modalcontent = 'メールアドレスのフォーマットが正しくありません。'
+            }
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+            return;
+          }
+          this.saveDataJsonCallback(item_save_uri);
+          this.saveFeedbackMailListCallback();
+        }
       }
       $scope.saveDataJsonCallback = function(item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
@@ -1048,6 +1101,30 @@ function handleSharePermission(value) {
               $("#allModal").modal("show");
           }
         );
+      }
+      $scope.saveFeedbackMailListCallback = function () {
+        const activityId = $("#hidden_activity_id").val();
+        let emails = $scope.feedback_emails;
+        let result = true;
+        $.ajax({
+          url: '/api/workflow/save_feedback_maillist/' + activityId,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: 'POST',
+          async: false,
+          data: JSON.stringify(emails),
+          dataType: "json",
+          success: function(data, stauts) {
+          },
+          error: function(data, status) {
+            var modalcontent =  "Cannot save Feedback-Mail list!";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+            result = false;
+          }
+        });
+        return result;
       }
     }
     // Inject depedencies

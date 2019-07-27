@@ -28,13 +28,14 @@ from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from sqlalchemy import asc, desc, types
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
 from .models import ActionCommentPolicy, ActionIdentifier, ActionJournal, \
-    ActionStatusPolicy
+    ActionStatusPolicy, ActionFeedbackMail
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
@@ -701,6 +702,36 @@ class WorkActivity(object):
 
         db.session.commit()
 
+    def create_or_update_action_feedbackmail(self, 
+                                             activity_id,
+                                             action_id,
+                                             feedback_maillist):
+        """Create or update action ActionFeedbackMail's model.
+
+        :param activity_id: activity identifier
+        :param action_id:   action identifier
+        :param feedback_maillist: list of feedback mail in json format
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                action_feedbackmail = ActionFeedbackMail.query.filter_by(
+                    activity_id=activity_id).one_or_none()
+                if action_feedbackmail:
+                    action_feedbackmail.feedback_mail_list = feedback_maillist
+                    db.session.merge(action_feedbackmail)
+                else:
+                    action_feedbackmail = ActionFeedbackMail(
+                        activity_id=activity_id,
+                        action_id=action_id,
+                        feedback_mail_list=feedback_maillist
+                    )
+                    db.session.add(action_feedbackmail)
+                db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+
     def get_action_journal(self, activity_id, action_id):
         """Get action journal info.
 
@@ -741,6 +772,18 @@ class WorkActivity(object):
             else:
                 identifier = action_identifier
         return identifier
+
+    def get_action_feedbackmail(self, activity_id, action_id):
+        """Get ActionFeedbackMail object from model base on activity's id.
+
+        :param activity_id: acitivity identifier
+        :param action_id:   action identifier
+        :return:    object's model or none
+        """
+        with db.session.no_autoflush:
+            action_feedbackmail = ActionFeedbackMail.query.filter_by(
+                activity_id=activity_id).one_or_none()
+        return action_feedbackmail
 
     def get_activity_action_status(self, activity_id, action_id):
         """Get activity action status."""

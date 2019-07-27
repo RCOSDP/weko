@@ -1,16 +1,8 @@
-// import ListGroup from 'react-bootstrap/ListGroup'
-
 const NUM_OF_RESULT = 10;
 const LIMIT_PAGINATION_NUMBER = 5;
-const COMPONENT_SEND_NAME = document.getElementById("component-send").value;
-const SEND_RADIO_BUTTON_NAME = document.getElementById("first-radio-name").value;
-const NOT_SEND_RADIO_BUTTON_NAME = document.getElementById("second-radio-name").value;
 const COMPONENT_SEARCH_EMAIL_NAME = document.getElementById("component-search-email-name").value;
 const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
 const DELETE_BUTTON_NAME = document.getElementById("delete-button-name").value;
-const SAVE_BUTTON_NAME = document.getElementById("save-button-name").value;
-// const SEND_BUTTON_NAME = document.getElementById("manual-send-name").value;
-const MESSAGE_SUCCESS = document.getElementById("message-success").value;
 const DUPLICATE_ERROR_MESSAGE = document.getElementById("duplicate-error-message").value;
 
 
@@ -46,7 +38,7 @@ class ComponentExclusionTarget extends React.Component {
     if (event.key === 'Enter') {
       const new_email = {
         author_id: "",
-        email: event.target.value
+        email: event.target.value.trim()
       }
       this.props.addEmailToList(new_email)
       input = document.getElementById('input_email')
@@ -55,7 +47,6 @@ class ComponentExclusionTarget extends React.Component {
   }
 
   generateSelectedBox(listEmail) {
-    let innerHTML = [];
     const itemStyle = {
       height: 32,
       paddingTop: 5,
@@ -79,7 +70,6 @@ class ComponentExclusionTarget extends React.Component {
             )
           })
         }
-        {innerHTML}
         <input class="list-group-item list-group-item-action" id="input_email"
           style={{
             ...itemStyle,
@@ -482,6 +472,7 @@ class MainLayout extends React.Component {
     this.addEmailToList = this.addEmailToList.bind(this);
     this.removeEmailFromList = this.removeEmailFromList.bind(this);
   }
+
   bindingValueOfComponent(key, value) {
     switch (key) {
       case "showModalSearch":
@@ -505,6 +496,11 @@ class MainLayout extends React.Component {
     listEmail = listEmail.filter((el) => !listData.includes(el.email));
     this.setState({ listEmail: listEmail });
   }
+
+  componentDidMount(){
+    // TODO: Render previous email list
+  }
+
   render() {
     return (
       <div>
