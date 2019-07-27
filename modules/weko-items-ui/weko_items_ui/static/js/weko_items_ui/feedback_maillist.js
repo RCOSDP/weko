@@ -20,6 +20,22 @@ class ComponentExclusionTarget extends React.Component {
     this.handleKeyPress = this.handleKeyPress.bind(this)
   }
 
+  componentDidMount(){
+    const activityID = $("#hidden_activity_id").val();
+    let emails = [];
+    $.ajax({
+      url: "/workflow/get_feedback_maillist/" + activityID,
+      async: false,
+      method: "GET",
+      success: function (response) {
+        if (response.code) {
+          emails = response.data || [];
+        }
+      }
+    })
+    this.props.bindingValueOfComponent('listEmail', emails);
+  }
+
   componentWillReceiveProps(nextProps) {
     if (nextProps.listEmail !== this.state.listEmail) {
       this.setState({
@@ -40,9 +56,7 @@ class ComponentExclusionTarget extends React.Component {
         author_id: "",
         email: event.target.value.trim()
       }
-      this.props.addEmailToList(new_email)
-      input = document.getElementById('input_email')
-      input.value = ''
+      this.props.addEmailToList(new_email);
     }
   }
 
@@ -70,7 +84,8 @@ class ComponentExclusionTarget extends React.Component {
             )
           })
         }
-        <input class="list-group-item list-group-item-action" id="input_email"
+        <input class="list-group-item list-group-item-action"
+          id="custom_input_email"
           style={{
             ...itemStyle,
             width: '100%',
@@ -471,6 +486,7 @@ class MainLayout extends React.Component {
     this.bindingValueOfComponent = this.bindingValueOfComponent.bind(this);
     this.addEmailToList = this.addEmailToList.bind(this);
     this.removeEmailFromList = this.removeEmailFromList.bind(this);
+    this.isDuplicateEmail = this.isDuplicateEmail.bind(this);
   }
 
   bindingValueOfComponent(key, value) {
@@ -486,21 +502,32 @@ class MainLayout extends React.Component {
         break;
     }
   }
+
   addEmailToList(data) {
     let listEmail = this.state.listEmail;
-    listEmail.push(data);
-    this.setState({ listEmail: listEmail })
+    if(this.isDuplicateEmail(data, listEmail)){
+      alert(DUPLICATE_ERROR_MESSAGE)
+      return false;
+    } else {
+      listEmail.push(data);
+      this.setState({ listEmail: listEmail })
+      return true;
+    }
   }
+
   removeEmailFromList(listData) {
     let listEmail = this.state.listEmail;
     listEmail = listEmail.filter((el) => !listData.includes(el.email));
     this.setState({ listEmail: listEmail });
   }
 
-  componentDidMount(){
-    // TODO: Render previous email list
+  isDuplicateEmail(data, listEmail){
+    const existEmail = listEmail.filter(item=>{
+      return item.email === data.email
+    })
+    return !!existEmail.length
   }
-
+    
   render() {
     return (
       <div>

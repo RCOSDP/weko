@@ -655,72 +655,6 @@ class FeedbackMailList(db.Model, Timestamp):
     )
     """List of feedback mail in json format."""
 
-    @classmethod
-    def create(cls, item_id, mail_list):
-        """Create a new instance feedback_mail_list.
-
-        :param mail_list: list mail feedback
-        :return: bool: True if success
-        """
-        try:
-            new_record = FeedbackMailList()
-            with db.session.begin_nested():
-                new_record.item_id = item_id
-                new_record.mail_list = mail_list
-                db.session.add(new_record)
-            db.session.commit()
-        except BaseException:
-            db.session.rollback()
-            return False
-        return True
-
-    @classmethod
-    def update(cls, item_id, data ):
-        """Update a feedback_mail_list.
-
-        :param item_id: item_id of target feed_back_mail_list
-        :param data:
-        :return: bool: True if success
-        """
-        try:
-            with db.session.begin_nested():
-                feedback_mail_list = cls.query.filter_by(item_id=item_id).one()
-                feedback_mail_list.mail_list = data.get('mail_list')
-                db.session.merge(feedback_mail_list)
-            db.session.commit()
-        except BaseException:
-            db.session.rollback()
-            return False
-        return True
-
-    @classmethod
-    def get_mail_list_by_item_id(cls, item_id):
-        """get a feedback_mail_list by item_id.
-
-        :param item_id:
-        :return feedback_mail_list
-
-        """
-        with db.session.begin_nested():
-            query_result = cls.query.filter_by(item_id=item_id).one_or_none()
-        return query_result
-
-    @classmethod
-    def delete(cls, item_id):
-        """Delete a feedback_mail_list by item_id.
-
-        :param item_id: item_id of target feed_back_mail_list
-        :return: bool: True if success
-        """
-        try:
-            with db.session.begin_nested():
-                cls.query.filter_by(item_id=item_id).delete()
-            db.session.commit()
-        except BaseException:
-            db.session.rollback()
-            return False
-        return True
-
 
 __all__ = (
     'Timestamp',
@@ -733,4 +667,5 @@ __all__ = (
     'FileMetadata',
     'SiteLicenseInfo',
     'SiteLicenseIpAddress',
+    'FeedbackMailList',
 )

@@ -48,15 +48,15 @@ from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
 from weko_records.api import ItemsMetadata
-from weko_records.models import ItemMetadata
+from weko_records.models import ItemMetadata, FeedbackMailList
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD
-from .models import ActionStatusPolicy, ActivityStatusPolicy
+    IDENTIFIER_GRANT_SUFFIX_METHOD, ITEM_REGISTRATION_ACTION_ID
+from .models import ActionStatusPolicy, ActivityStatusPolicy, ActionFeedbackMail
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
     pidstore_identifier_mapping
@@ -537,15 +537,23 @@ def next_action(activity_id='0', action_id=0):
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
         item = None
-        if activity_detail is not None and activity_detail.item_id is not None:
+        if activity_detail and activity_detail.item_id:
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
             record_class = import_string('weko_deposit.api:WekoRecord')
             resolver = Resolver(pid_type='recid', object_type='rec',
                                 getter=record_class.get_record)
-            pid, approval_record = resolver.resolve(pid_identifier.pid_value)
+            # pid, approval_record = resolver.resolve(pid_identifier.pid_value)
 
+            action_feedbackmail = activity_obj.get_action_feedbackmail(
+                activity_id=activity_id,
+                action_id=ITEM_REGISTRATION_ACTION_ID)
+            if action_feedbackmail and action_feedbackmail.feedback_maillist:
+                FeedbackMailList.update(
+                    item_id=activity_detail.item_id,
+                    feedback_maillist=action_feedbackmail.feedback_maillist
+                )
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 
@@ -559,7 +567,7 @@ def next_action(activity_id='0', action_id=0):
         record_class = import_string('weko_deposit.api:WekoRecord')
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
-        pid, item_record = resolver.resolve(pid_identifier.pid_value)
+        _, item_record = resolver.resolve(pid_identifier.pid_value)
         updated_item = UpdateItem()
         updated_item.set_item_relation(relation_data, item_record)
 
@@ -896,32 +904,52 @@ def check_existed_doi():
         data['code'] = 0
     return jsonify(data)
 
-@blueprint.route('/save_feedback_maillist/<string:activity_id>',
+@blueprint.route('/save_feedback_maillist/<string:activity_id>/<int:action_id>',
                 methods=['POST'])
 @login_required
 @check_authority
-def save_feedback_maillist(activity_id='0'):
+def save_feedback_maillist(activity_id='0', action_id='0'):
     """Save feedback_mail's list to Activity History models.
 
     :return:
     """
-    current_app.logger.debug('save_feedback_maillist')
-    ITEM_REGISTRATION_ACTION_ID = 3
     try:
         if request.headers['Content-Type'] != 'application/json':
             """Check header of request"""
             return jsonify(code=-1, msg=_('Header Error'))
 
         feedback_maillist = request.get_json()
-        current_app.logger.debug(feedback_maillist)
 
         work_activity = WorkActivity()
         work_activity.create_or_update_action_feedbackmail(
             activity_id=activity_id,
-            action_id=ITEM_REGISTRATION_ACTION_ID,
+            action_id=action_id,
             feedback_maillist=feedback_maillist
         )
         return jsonify(code=0, msg=_('Success'))
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return jsonify(code=-1, msg=_('Authorization Error'))
+    return jsonify(code=-1, msg=_('Error'))
+
+@blueprint.route('/get_feedback_maillist/<string:activity_id>',
+                methods=['GET'])
+@login_required
+def get_feedback_maillist(activity_id='0'):
+    """Get feedback_mail's list base on Activity Identifier.
+
+    :return:
+    """
+    try:
+        work_activity = WorkActivity()
+        feedback_maillist = work_activity.get_action_feedbackmail(
+            activity_id=activity_id,
+            action_id=ITEM_REGISTRATION_ACTION_ID)
+        if feedback_maillist and feedback_maillist.feedback_mail_list:
+            return jsonify(code=1,
+                           msg=_('Success'),
+                           data=feedback_maillist.feedback_mail_list)
+        else:
+            return jsonify(code=0, msg=_('Empty!'))
+    except BaseException:
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return jsonify(code=-1, msg=_('Error'))

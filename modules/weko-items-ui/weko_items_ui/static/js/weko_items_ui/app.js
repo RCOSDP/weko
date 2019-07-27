@@ -283,7 +283,8 @@ function handleSharePermission(value) {
         '<div class="alert alert-light" id="alert-style">' +
         '<button type="button" class="close" data-dismiss="alert">' +
         '&times;</button>' + message + '</div>');
-         }
+  }
+
   // Bootstrap it!
   angular.element(document).ready(function () {
     angular.module('wekoRecords.controllers', []);
@@ -946,6 +947,7 @@ function handleSharePermission(value) {
 
       $scope.getFeedbackMailList = function() {
         const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        $scope.feedback_emails = []
         invalid_emails = [];
         emails = []
         emails = $('#sltBoxListEmail').children('a');
@@ -1103,11 +1105,12 @@ function handleSharePermission(value) {
         );
       }
       $scope.saveFeedbackMailListCallback = function () {
-        const activityId = $("#hidden_activity_id").val();
+        const activityID = $("#hidden_activity_id").val();
+        const actionID = 3 // Item Registration's Action ID
         let emails = $scope.feedback_emails;
         let result = true;
         $.ajax({
-          url: '/workflow/save_feedback_maillist/' + activityId,
+          url: '/workflow/save_feedback_maillist/'+ activityID+ '/'+ actionID,
           headers: {
             'Content-Type': 'application/json'
           },
