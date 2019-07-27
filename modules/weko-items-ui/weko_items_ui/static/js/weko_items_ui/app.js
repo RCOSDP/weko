@@ -1107,7 +1107,7 @@ function handleSharePermission(value) {
         let emails = $scope.feedback_emails;
         let result = true;
         $.ajax({
-          url: '/api/workflow/save_feedback_maillist/' + activityId,
+          url: '/workflow/save_feedback_maillist/' + activityId,
           headers: {
             'Content-Type': 'application/json'
           },

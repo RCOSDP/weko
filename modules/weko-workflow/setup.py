@@ -118,9 +118,6 @@ setup(
         'invenio_db.alembic': [
             'weko_workflow = weko_workflow:alembic',
         ],
-        'invenio_base.api_blueprints': [
-            'weko_workflow = weko_workflow.views:blueprint_api',
-        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

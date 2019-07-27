@@ -69,14 +69,6 @@ blueprint = Blueprint(
     url_prefix='/workflow'
 )
 
-blueprint_api = Blueprint(
-    'weko_workflow',
-    __name__,
-    template_folder='templates',
-    static_folder='static',
-    url_prefix="/workflow",
-)
-
 
 @blueprint.route('/')
 @login_required
@@ -904,7 +896,7 @@ def check_existed_doi():
         data['code'] = 0
     return jsonify(data)
 
-@blueprint_api.route('/save_feedback_maillist/<string:activity_id>',
+@blueprint.route('/save_feedback_maillist/<string:activity_id>',
                 methods=['POST'])
 @login_required
 @check_authority
