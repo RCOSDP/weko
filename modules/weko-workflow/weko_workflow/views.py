@@ -549,7 +549,7 @@ def next_action(activity_id='0', action_id=0):
             action_feedbackmail = activity_obj.get_action_feedbackmail(
                 activity_id=activity_id,
                 action_id=ITEM_REGISTRATION_ACTION_ID)
-            if action_feedbackmail and action_feedbackmail.feedback_maillist:
+            if action_feedbackmail:
                 FeedbackMailList.update(
                     item_id=activity_detail.item_id,
                     feedback_maillist=action_feedbackmail.feedback_maillist
@@ -949,7 +949,7 @@ def get_feedback_maillist(activity_id='0'):
         feedback_maillist = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
             action_id=ITEM_REGISTRATION_ACTION_ID)
-        if feedback_maillist and feedback_maillist.feedback_maillist:
+        if feedback_maillist:
             return jsonify(code=1,
                            msg=_('Success'),
                            data=feedback_maillist.feedback_maillist)
