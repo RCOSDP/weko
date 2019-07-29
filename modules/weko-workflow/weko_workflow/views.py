@@ -47,8 +47,8 @@ from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
-from weko_records.api import ItemsMetadata
-from weko_records.models import ItemMetadata, FeedbackMailList
+from weko_records.api import ItemsMetadata, FeedbackMailList
+from weko_records.models import ItemMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
 
@@ -944,10 +944,10 @@ def get_feedback_maillist(activity_id='0'):
         feedback_maillist = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
             action_id=ITEM_REGISTRATION_ACTION_ID)
-        if feedback_maillist and feedback_maillist.feedback_mail_list:
+        if feedback_maillist and feedback_maillist.feedback_maillist:
             return jsonify(code=1,
                            msg=_('Success'),
-                           data=feedback_maillist.feedback_mail_list)
+                           data=feedback_maillist.feedback_maillist)
         else:
             return jsonify(code=0, msg=_('Empty!'))
     except BaseException:

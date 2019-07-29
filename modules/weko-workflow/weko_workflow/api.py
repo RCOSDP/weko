@@ -43,7 +43,6 @@ from .models import FlowActionRole as _FlowActionRole
 from .models import FlowDefine as _Flow
 from .models import FlowStatusPolicy
 from .models import WorkFlow as _WorkFlow
-from .models import FeedbackMailList as _FeedbackMailList
 
 
 class Flow(object):
@@ -719,13 +718,13 @@ class WorkActivity(object):
                 action_feedbackmail = ActionFeedbackMail.query.filter_by(
                     activity_id=activity_id).one_or_none()
                 if action_feedbackmail:
-                    action_feedbackmail.feedback_mail_list = feedback_maillist
+                    action_feedbackmail.feedback_maillist = feedback_maillist
                     db.session.merge(action_feedbackmail)
                 else:
                     action_feedbackmail = ActionFeedbackMail(
                         activity_id=activity_id,
                         action_id=action_id,
-                        feedback_mail_list=feedback_maillist
+                        feedback_maillist=feedback_maillist
                     )
                     db.session.add(action_feedbackmail)
             db.session.commit()
@@ -1500,68 +1499,3 @@ class GetCommunity(object):
         from invenio_communities.models import Community
         c = Community.get(community_id)
         return c
-
-class FeedbackMailList(object):
-    """Feedback-Mail List API."""
-
-    @classmethod
-    def update(cls, item_id, feedback_maillist):
-        """Create a new instance feedback_mail_list.
-
-        :param feedback_maillist: list mail feedback
-        :return boolean: True if success
-        """
-        try:
-            with db.session.begin_nested():
-                query_object = _FeedbackMailList.query.filter_by(
-                    item_id=item_id).one_or_none()
-                if not query_object:
-                    query_object = _FeedbackMailList(
-                        item_id=item_id,
-                        mail_list=feedback_maillist
-                    )
-                    db.session.add(query_object)
-                else:
-                    query_object.mail_list = feedback_maillist
-                    db.session.merge(query_object)
-            db.session.commit()
-        except BaseException:
-            db.session.rollback()
-            return False
-        return True
-
-    @classmethod
-    def get_mail_list_by_item_id(cls, item_id):
-        """Get a FeedbackMail list by item_id.
-
-        :param item_id:
-        :return feedback_mail_list
-
-        """
-        try:
-            with db.session.no_autoflush:
-                query_object = _FeedbackMailList.query.filter_by(
-                    item_id=item_id).one_or_none()
-                if query_object and query_object.mail_list:
-                    return query_object.mail_list
-                else:
-                    return []
-        except Exception:
-            return []
-
-    @classmethod
-    def delete(cls, item_id):
-        """Delete a feedback_mail_list by item_id.
-
-        :param item_id: item_id of target feed_back_mail_list
-        :return: bool: True if success
-        """
-        try:
-            with db.session.begin_nested():
-                _FeedbackMailList.query.filter_by(
-                    item_id=item_id).delete()
-            db.session.commit()
-        except BaseException:
-            db.session.rollback()
-            return False
-        return True

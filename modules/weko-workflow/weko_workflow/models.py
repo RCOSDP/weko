@@ -896,7 +896,7 @@ class ActionFeedbackMail(db.Model, TimestampMixin):
     )
     """Action id."""
 
-    feedback_mail_list = db.Column(
+    feedback_maillist = db.Column(
         db.JSON().with_variant(
             postgresql.JSONB(none_as_null=True),
             'postgresql',
