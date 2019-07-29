@@ -554,6 +554,11 @@ def next_action(activity_id='0', action_id=0):
                     item_id=activity_detail.item_id,
                     feedback_maillist=action_feedbackmail.feedback_maillist
                 )
+
+            record = WekoDeposit.get_record(activity_detail.item_id)
+            if record is not None:
+                deposit = WekoDeposit(record, record.model)
+                deposit.update_feedback_mail()
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 

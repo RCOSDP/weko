@@ -43,7 +43,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
-from weko_records.api import ItemsMetadata, ItemTypes
+from weko_records.api import ItemsMetadata, ItemTypes, FeedbackMailList
 from weko_records.models import ItemMetadata
 from weko_records.utils import get_all_items, get_options_and_order_list, \
     json_loader, set_timestamp
@@ -301,6 +301,17 @@ class WekoIndexer(RecordIndexer):
 
             self.client.clear_scroll(scroll_id=scroll_id)
 
+    def update_feedback_mail_list(self, feedback_mail):
+        """Update relation version is_last."""
+        self.get_es_index()
+        pst = 'feedback_mail_list'
+        body = {'doc': {pst: feedback_mail.mail_list}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(feedback_mail.get('id')),
+            body=body
+        )
 
 class WekoDeposit(Deposit):
     """Define API for changing deposit state."""
@@ -778,6 +789,16 @@ class WekoDeposit(Deposit):
                 pass
             raise PIDResolveRESTError(description='This item has been deleted')
 
+    def update_feedback_mail(self):
+        """Update item by task."""
+        item_id = self.id
+        mail_list = FeedbackMailList.get_mail_list_by_item_id(item_id)
+        if mail_list:
+            feedback_mail = {
+                "id": item_id,
+                "mail_list": mail_list
+            }
+            self.indexer.update_relation_version_is_last(feedback_mail)
 
 class WekoRecord(Record):
     """Extend Record obj for record ui."""
