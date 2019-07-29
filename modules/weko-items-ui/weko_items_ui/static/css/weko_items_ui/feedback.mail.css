@@ -32,10 +32,15 @@
     overflow: scroll;
   }
 
-  .list-group-item{
+  .style-selected-box .list-group-item{
     height: 32px;
     padding-top: 5px;
     padding-bottom: 5px;
+  }
+
+  .style-selected-box #custom_input_email {
+    width: '100%';
+    font-size: 14px;
   }
 
   .style-full-size{
@@ -68,9 +73,4 @@
     background-color: #00a65a !important;
     border-color: #008d4c !important;
     border-radius: 3px;
-  }
-
-  #custom_input_email {
-    width: '100%';
-    font-size: 14px;
   }
