@@ -1590,44 +1590,6 @@ class RevisionsIterator(object):
             return False
 
 
-class WekoRecord(Record):
-    """Weko Record."""
-
-    record_fetcher = staticmethod(weko_record_fetcher)
-
-    @classmethod
-    def get_record(cls, pid, id_, with_deleted=False):
-        """Retrieve the record by id.
-
-        Raise a database exception if the record does not exist.
-
-        :param id_: record ID.
-        :param with_deleted: If `True` then it includes deleted records.
-        :returns: The :class:`Record` instance.
-        """
-        pr = super(WekoRecord, cls).get_record(id_)
-
-        with db.session.no_autoflush:
-            query = FileMetadata.query.filter_by(pid=pid)
-            if not with_deleted:
-                query = query.filter(FileMetadata.contents != None)  # noqa
-
-            return [cls(obj.json, model=obj) for obj in query.all()]
-
-    @property
-    def pid(self):
-        """Return an instance of record PID."""
-        pid = self.record_fetcher(self.id, self)
-        return PersistentIdentifier.get(pid.pid_type, pid.pid_value)
-
-    @property
-    def depid(self):
-        """Return depid of the record."""
-        return PersistentIdentifier.get(
-            pid_type='depid',
-            pid_value=self.get('_deposit', {}).get('id')
-        )
-
 class FeedbackMailList(object):
     """Feedback-Mail List API."""
 

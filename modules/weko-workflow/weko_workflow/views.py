@@ -567,7 +567,7 @@ def next_action(activity_id='0', action_id=0):
         record_class = import_string('weko_deposit.api:WekoRecord')
         resolver = Resolver(pid_type='recid', object_type='rec',
                             getter=record_class.get_record)
-        _, item_record = resolver.resolve(pid_identifier.pid_value)
+        pid, item_record = resolver.resolve(pid_identifier.pid_value)
         updated_item = UpdateItem()
         updated_item.set_item_relation(relation_data, item_record)
 
