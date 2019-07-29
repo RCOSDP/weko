@@ -66,12 +66,6 @@ class ComponentExclusionTarget extends React.Component {
   }
 
   generateSelectedBox(listEmail) {
-    // const itemStyle = {
-    //   height: 32,
-    //   paddingTop: 5,
-    //   paddingBottom: 5,
-    // };
-
     return (
       <div class="list-group" className="style-selected-box" id="sltBoxListEmail">
         {
@@ -92,11 +86,6 @@ class ComponentExclusionTarget extends React.Component {
         }
         <input class="list-group-item list-group-item-action"
           id="custom_input_email"
-          // style={{
-          //   ...itemStyle,
-          //   width: '100%',
-          //   fontSize: '14px'
-          // }} 
           placeholder="テキスト入力可"
           onKeyPress={(event) => {
             this.handleKeyPress(event)

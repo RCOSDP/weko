@@ -305,7 +305,7 @@ class WekoIndexer(RecordIndexer):
         """Update relation version is_last."""
         self.get_es_index()
         pst = 'feedback_mail_list'
-        body = {'doc': {pst: feedback_mail.mail_list}}
+        body = {'doc': {pst: feedback_mail.get('mail_list')}}
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
@@ -798,7 +798,7 @@ class WekoDeposit(Deposit):
                 "id": item_id,
                 "mail_list": mail_list
             }
-            self.indexer.update_relation_version_is_last(feedback_mail)
+            self.indexer.update_feedback_mail_list(feedback_mail)
 
 class WekoRecord(Record):
     """Extend Record obj for record ui."""

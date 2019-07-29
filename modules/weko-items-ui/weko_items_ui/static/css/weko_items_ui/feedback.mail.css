@@ -38,8 +38,8 @@
     padding-bottom: 5px;
   }
 
-  .style-selected-box #custom_input_email {
-    width: '100%';
+  #custom_input_email {
+    width: 100%;
     font-size: 14px;
   }
 
@@ -70,7 +70,5 @@
   }
 
   .alert-info {
-    background-color: #00a65a !important;
-    border-color: #008d4c !important;
     border-radius: 3px;
   }
