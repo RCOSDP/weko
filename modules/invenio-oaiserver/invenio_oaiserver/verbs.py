@@ -100,9 +100,15 @@ class Verbs(object):
     class GetRecord(OAISchema):
         """Arguments for GetRecord verb."""
 
-        identifier = fields.Str(required=True)
-        metadataPrefix = fields.Str(required=True,
-                                    validate=validate_metadata_prefix)
+        identifier = fields.Str(
+            required=True,
+            error_messages =
+            {"required": 'Missing data for required field "identifier".'})
+        metadataPrefix = fields.Str(
+            required=True,
+            validate=validate_metadata_prefix,
+            error_messages =
+            {"required": 'Missing data for required field "metadataPrefix".'})
 
     class GetMetadata(OAISchema):
         """Arguments for GetMetadata verb."""
@@ -120,8 +126,11 @@ class Verbs(object):
         from_ = DateTime(format='permissive', load_from='from', dump_to='from')
         until = DateTime(format='permissive')
         set = fields.Str()
-        metadataPrefix = fields.Str(required=True,
-                                    validate=validate_metadata_prefix)
+        metadataPrefix = fields.Str(
+            required=True,
+            validate=validate_metadata_prefix,
+            error_messages =
+            {"required": 'Missing data for required field "metadataPrefix".'})
 
     class ListMetadataFormats(OAISchema):
         """Arguments for ListMetadataFormats verb."""
