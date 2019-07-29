@@ -158,5 +158,9 @@
     "RSS_Icon": [
         null,
         "RSS Icon"
+    ],
+    "Display": [
+        null,
+        "Display"
     ]
 }

@@ -157,6 +157,10 @@
     ],
     "RSS_Icon": [
         null,
-        "RSS Icon"
+        "RSSアイコン"
+    ],
+    "Display": [
+        null,
+        "表示する"
     ]
 }
