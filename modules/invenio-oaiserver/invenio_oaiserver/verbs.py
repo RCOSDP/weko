@@ -25,9 +25,10 @@ def validate_metadata_prefix(value):
         ``OAISERVER_METADATA_FORMATS``.
     """
     metadataFormats = current_app.config['OAISERVER_METADATA_FORMATS']
+    message='The metadataPrefix "{0}" is not supported ' \
+            'by this repository.'.format(value)
     if value not in metadataFormats:
-        raise ValidationError('The metadataPrefix "{0}" is not supported '
-                              'by this repository.'.format(value),
+        raise ValidationError({'cannotDisseminateFormat': [message]},
                               field_names=['metadataPrefix'])
 
 

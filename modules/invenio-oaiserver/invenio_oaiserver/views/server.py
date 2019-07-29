@@ -43,8 +43,14 @@ def validation_error(exception):
                 error_code='badArgument'
                 if field == 'verb':
                     error_code='badVerb'
-                elif field == 'metadataPrefix':
-                    error_code='cannotDisseminateFormat'
+
+                if isinstance(message, list) and field == 'metadataPrefix':
+                    for item in message:
+                        if isinstance(item, dict) \
+                            and item.get('cannotDisseminateFormat'):
+                            error_code='cannotDisseminateFormat'
+                            message=item.get(error_code)
+
                 yield error_code, '\n'.join(message)
         else:
             for field in exception.field_names:
