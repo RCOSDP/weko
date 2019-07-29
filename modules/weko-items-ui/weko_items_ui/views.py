@@ -46,6 +46,7 @@ from weko_records.api import ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_workflow.api import GetCommunity, WorkActivity
 from weko_workflow.models import ActionStatusPolicy
+from weko_workflow.config import ITEM_REGISTRATION_ACTION_ID
 
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN
@@ -789,6 +790,17 @@ def prepare_edit_item():
                             rtn.activity_id,
                             identifier_actionid,
                             identifier)
+
+                    feedbackmail = activity.get_action_feedbackmail(
+                        activity_id=upt_current_activity.activity_id,
+                        action_id=ITEM_REGISTRATION_ACTION_ID)
+                    if feedbackmail and \
+                            feedbackmail.feedback_maillist:
+                        activity.create_or_update_action_feedbackmail(
+                            activity_id=rtn.activity_id,
+                            action_id=ITEM_REGISTRATION_ACTION_ID,
+                            feedback_maillist=feedbackmail.feedback_maillist
+                        )
 
                     if community:
                         comm = GetCommunity.get_community_by_id(community)

@@ -1007,7 +1007,7 @@ function handleSharePermission(value) {
             $("#allModal").modal("show");
         }else if ($scope.getFeedbackMailList().length > 0){
           let lang_code = $('#lang-code').val();
-          var modalcontent = 'Invalid email format.'
+          let modalcontent = $('#invalid-email-format').val();
           if (lang_code == 'ja') {
             modalcontent = 'メールアドレスのフォーマットが正しくありません。'
           }
@@ -1060,7 +1060,7 @@ function handleSharePermission(value) {
         if (permission) {
           if ($scope.getFeedbackMailList().length > 0) {
             let lang_code = $('#lang-code').val();
-            var modalcontent = 'Invalid email format.'
+            let modalcontent = $('#invalid-email-format').val();
             if (lang_code == 'ja') {
               modalcontent = 'メールアドレスのフォーマットが正しくありません。'
             }

@@ -434,8 +434,7 @@ class ModalFooterComponent extends React.Component {
   render() {
     return (
       <ReactBootstrap.Button variant="secondary" onClick={this.handleClose}>
-        <span className="glyphicon glyphicon-remove"></span>
-        Close
+        <span className="glyphicon glyphicon-remove"></span> Close
       </ReactBootstrap.Button>
     )
   }
@@ -518,11 +517,12 @@ class MainLayout extends React.Component {
 
   isDuplicateEmail(data, listEmail){
     const existEmail = listEmail.filter(item=>{
+      console.log(data);
       return item.email === data.email
     })
     return !!existEmail.length
   }
-    
+
   render() {
     return (
       <div>
