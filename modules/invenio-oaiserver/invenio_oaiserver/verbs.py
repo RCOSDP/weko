@@ -32,6 +32,18 @@ def validate_metadata_prefix(value):
                               field_names=['metadataPrefix'])
 
 
+def validate_duplicate_argument(field_name):
+    """Check duplicate of argument.
+
+    :param field_name: name of field.
+    """
+    all_verbs=set(request.args.getlist(field_name))
+    if len(all_verbs) > 1:
+        raise ValidationError(
+            'Illegal duplicate of argument "{0}".'.format(field_name),
+            field_names=[field_name])
+
+
 class DateTime(_DateTime):
     """DateTime with a permissive deserializer."""
 
@@ -66,7 +78,10 @@ class DateTime(_DateTime):
 class OAISchema(Schema):
     """Base OAI argument schema."""
 
-    verb = fields.Str(required=True, load_only=True)
+    verb = fields.Str(
+        required=True,
+        load_only=True,
+        error_messages={"required": 'Missing data for required field "verb".'})
 
     class Meta:
         """Schema configuration."""
@@ -87,11 +102,13 @@ class OAISchema(Schema):
                 data['from_'] > data['until']:
             raise ValidationError('Date "from" must be before "until".')
 
-        extra = set(request.values.keys()) - set([
-            f.load_from or f.name for f in self.fields.values()
-        ])
+        list_argument=[f.load_from or f.name for f in self.fields.values()]
+        extra = set(request.values.keys()) - set(list_argument)
         if extra:
             raise ValidationError('You have passed too many arguments.')
+
+        for arg in list_argument:
+            validate_duplicate_argument(arg)
 
 
 class Verbs(object):
