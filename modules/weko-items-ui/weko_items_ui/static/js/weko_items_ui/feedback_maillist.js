@@ -56,16 +56,21 @@ class ComponentExclusionTarget extends React.Component {
         author_id: "",
         email: event.target.value.trim()
       }
-      this.props.addEmailToList(new_email);
+      if (this.props.addEmailToList(new_email)) {
+        $('#custom_input_email').val('');
+        $('#sltBoxListEmail').animate({
+          scrollTop: $("#custom_input_email").offset().top
+        }, 1000);
+      }
     }
   }
 
   generateSelectedBox(listEmail) {
-    const itemStyle = {
-      height: 32,
-      paddingTop: 5,
-      paddingBottom: 5,
-    };
+    // const itemStyle = {
+    //   height: 32,
+    //   paddingTop: 5,
+    //   paddingBottom: 5,
+    // };
 
     return (
       <div class="list-group" className="style-selected-box" id="sltBoxListEmail">
@@ -78,7 +83,8 @@ class ComponentExclusionTarget extends React.Component {
                   }}
                 key={id}
                 value={item.author_id}
-                style={itemStyle}>
+                // style={itemStyle}
+                >
                   {item.email}
               </a>
             )
@@ -86,11 +92,11 @@ class ComponentExclusionTarget extends React.Component {
         }
         <input class="list-group-item list-group-item-action"
           id="custom_input_email"
-          style={{
-            ...itemStyle,
-            width: '100%',
-            fontSize: '14px'
-          }} 
+          // style={{
+          //   ...itemStyle,
+          //   width: '100%',
+          //   fontSize: '14px'
+          // }} 
           placeholder="テキスト入力可"
           onKeyPress={(event) => {
             this.handleKeyPress(event)
@@ -536,7 +542,7 @@ class MainLayout extends React.Component {
             bindingValueOfComponent={this.bindingValueOfComponent}
             removeEmailFromList={this.removeEmailFromList}
             listEmail={this.state.listEmail}
-            addEmailToList={(data) => { this.addEmailToList(data) }}
+            addEmailToList={(data) => { return this.addEmailToList(data) }}
           />
         </div>
         <div className="row">

@@ -32,6 +32,12 @@
     overflow: scroll;
   }
 
+  .list-group-item{
+    height: 32px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+
   .style-full-size{
     width: 100% !important;
   }
@@ -62,4 +68,9 @@
     background-color: #00a65a !important;
     border-color: #008d4c !important;
     border-radius: 3px;
+  }
+
+  #custom_input_email {
+    width: '100%';
+    font-size: 14px;
   }
