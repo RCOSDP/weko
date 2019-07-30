@@ -107,14 +107,17 @@ class WekoIndexer(RecordIndexer):
         #                       doc_type=self.es_doc_type):
         #     self.client.delete(id=str(item_id), index=self.es_index,
         #                        doc_type=self.es_doc_type)
-        self.client.index(id=str(item_id),
-                          index=self.es_index,
-                          doc_type=self.es_doc_type,
-                          version=revision_id + 1,
-                          version_type=self._version_type,
-                          body=jrc,
-                          pipeline='item-file-pipeline'
-                          )
+        full_body = dict(id=str(item_id),
+                         index=self.es_index,
+                         doc_type=self.es_doc_type,
+                         version=revision_id + 1,
+                         version_type=self._version_type,
+                         body=jrc)
+
+        if 'content' in jrc:  # Only pass through pipeline if file exists
+            full_body['pipeline'] = 'item-file-pipeline'
+
+        self.client.index(**full_body)
 
     def delete_file_index(self, body, parent_id):
         """Delete file index in Elastic search.
