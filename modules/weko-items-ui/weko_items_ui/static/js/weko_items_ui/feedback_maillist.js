@@ -4,14 +4,14 @@ const COMPONENT_SEARCH_EMAIL_NAME = document.getElementById("component-search-em
 const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
 const DELETE_BUTTON_NAME = document.getElementById("delete-button-name").value;
 const DUPLICATE_ERROR_MESSAGE = document.getElementById("duplicate-error-message").value;
-
+const INPUT_TEXT_PLACEHOLDER = document.getElementById("input-text-placeholder").value;
 
 class ComponentExclusionTarget extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       listEmail: [],
-      selectedId: null
+      selectedId: []
     }
     this.deleteCommand = this.deleteCommand.bind(this);
     this.searchCommand = this.searchCommand.bind(this);
@@ -45,9 +45,24 @@ class ComponentExclusionTarget extends React.Component {
   }
 
   handleClick(id) {
-    this.setState({
-      selectedId: id
-    })
+    const selectedId = this.state.selectedId
+    if (id < 0) {
+      this.setState({
+        selectedId : []
+      });
+    } else {
+      if(!this.state.selectedId.includes(id)){
+
+        selectedId.push(id);
+        this.setState({
+          selectedId: selectedId
+        });
+      } else {
+        this.setState({
+          selectedId : selectedId.filter(e => e!==id)
+        });
+      }
+    }
   }
 
   handleKeyPress(event) {
@@ -71,14 +86,10 @@ class ComponentExclusionTarget extends React.Component {
         {
           listEmail.map((item, id) => {
             return (
-              <a className={`list-group-item list-group-item-action ${this.state.selectedId === id && 'active'}`}
-                onClick={() => {
-                    this.handleClick(id)
-                  }}
+              <a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
+                onClick={() => {this.handleClick(id)}}
                 key={id}
-                value={item.author_id}
-                // style={itemStyle}
-                >
+                value={item.author_id}>
                   {item.email}
               </a>
             )
@@ -86,18 +97,21 @@ class ComponentExclusionTarget extends React.Component {
         }
         <input class="list-group-item list-group-item-action"
           id="custom_input_email"
-          placeholder="テキスト入力可"
-          onKeyPress={(event) => {
-            this.handleKeyPress(event)
-          }}
+          placeholder={INPUT_TEXT_PLACEHOLDER}
+          onKeyPress={(event) => {this.handleKeyPress(event)}}
         />
       </div>
     )
   }
 
   deleteCommand(event) {
-    let selectedElement = $(".list-group-item.list-group-item-action.active").text();
-    this.props.removeEmailFromList(selectedElement);
+    const listEmail = this.state.listEmail;
+    const selectedId = this.state.selectedId;
+    let selectedElement = listEmail.filter((item, id) => {
+        return selectedId.includes(id)
+    })
+
+    this.props.removeEmailFromList(Array.from(selectedElement, item=> item.email));
     this.handleClick(-1);
   }
 
