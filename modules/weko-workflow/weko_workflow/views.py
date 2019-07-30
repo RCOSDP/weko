@@ -954,7 +954,7 @@ def get_feedback_maillist(activity_id='0'):
         if action_feedbackmail:
             mail_list = action_feedbackmail.feedback_maillist
             for mail in mail_list:
-                if mail.author_id:
+                if mail.get('author_id'):
                     email = Authors.get_first_email_by_id(mail.get('author_id'))
                     if email:
                         mail['email'] = email
