@@ -21,7 +21,9 @@
 """Utilities for convert response json."""
 import csv
 import zipfile
+import os
 from io import BytesIO, StringIO
+from jinja2 import Template
 
 import redis
 import requests
@@ -726,8 +728,60 @@ def get_list_statistic_email():
     return list_email
 
 
-def fill_email_data(template, data):
-    return None
+def fill_email_data(mail_data):
+    """ Fill data to template.
+
+        Arguments:
+            mail_data {string} -- data for mail content.
+
+        Returns:
+            string -- mail content
+        """
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    current_language = current_i18n.language
+    file_name = 'statistic_mail_template_en.tpl'  # default template file
+    if current_language == 'ja':
+        file_name = 'statistic_mail_template_ja.tpl'
+    elif current_language == 'en':
+        file_name = 'statistic_mail_template_en.tpl'
+
+    file_path = os.path.join(
+        current_path,
+        'templates',
+        'weko_admin',
+        'email_templates',
+        file_name)
+    with open(file_path, 'r') as file:
+        data = file.read()
+
+    # FAKE DATA
+    data_content = """
+[タイトル]         : Zan1
+[URL]             : gooogle.com
+[閲覧回数]         : 5
+[ファイルダウンロード回数] :
+    ABC(10)
+    DEF(5)
+----------------------------------------
+[タイトル]         : Zan2
+[URL]             : gooogle.com
+[閲覧回数]         : 2
+[ファイルダウンロード回数] :
+    ABC(100)
+    DEF(35)
+    """
+    mail_data = {
+        'user_name': 'Zannaghazi',
+        'organization': 'WEKO3',
+        'time': '2019-07',
+        'data': data_content,
+        'total_item': '2',
+        'total_file': '4',
+        'total_detail_view': '7',
+        'total_download': '150'
+    }
+    # =====================
+    return Template(data).render(mail_data)
 
 
 def send_mail(receiver, body, subject):
@@ -742,13 +796,12 @@ def send_mail(receiver, body, subject):
         boolean -- True if send success
     """
     # FAKE DATA:
-    receiver = 'weko-ope@nii.ac.jp',
-    body = 'This is a test mail.'
+    receiver = 'weko-ope@nii.ac.jp'
     subject = 'Test statistic mail'
     # ========
     rf = {
         'subject': subject,
-        'body': body,
+        'body': fill_email_data('abc'),
         'recipient': receiver
     }
     return MailSettingView.send_statistic_mail(rf)
