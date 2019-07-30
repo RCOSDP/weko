@@ -730,6 +730,36 @@
             },
             "license_notation": {
               "type": "text"
+            },
+            "file": {
+              "type": "text",
+              "term_vector": "with_positions_offsets",
+              "store": true,
+              "fields": {
+                "ja": {
+                  "type": "text",
+                  "term_vector": "with_positions_offsets",
+                  "store": true,
+                  "analyzer": "ja_analyzer"
+                }
+              }
+            },
+            "attachment": {
+              "properties": {
+                "content": {
+                  "type": "text",
+                  "term_vector": "with_positions_offsets",
+                  "store": true,
+                  "fields": {
+                    "ja": {
+                      "type": "text",
+                      "term_vector": "with_positions_offsets",
+                      "store": true,
+                      "analyzer": "ja_analyzer"
+                    }
+                  }
+                }
+              }
             }
           }
         },

@@ -113,6 +113,7 @@ class WekoIndexer(RecordIndexer):
                           version=revision_id + 1,
                           version_type=self._version_type,
                           body=jrc,
+                          pipeline='item-file-pipeline'
                           )
 
     def delete_file_index(self, body, parent_id):
