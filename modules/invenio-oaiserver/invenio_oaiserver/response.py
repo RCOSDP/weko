@@ -95,12 +95,6 @@ def verb(**kwargs):
 
 def identify(**kwargs):
     """Create OAI-PMH response for verb Identify."""
-    def get_error_code_msg():
-        code = "noRecordsMatch"
-        msg = "The combination of the values of the from, until, " \
-              "set and metadataPrefix arguments results in an empty list."
-        return [(code, msg)]
-
     cfg = current_app.config
 
     # add by Mr ryuu. at 2018/06/06 start
@@ -144,11 +138,12 @@ def identify(**kwargs):
     # update by Mr ryuu. at 2018/06/06 start
     if not oaiObj:
         e_earliestDatestamp.text = datetime_to_datestamp(
-            db.session.query(db.func.min(RecordMetadata.created)).scalar() or
-            datetime(MINYEAR, 1, 1)
+            db.session.query(db.func.min(RecordMetadata.created)
+                             ).scalar() or datetime(MINYEAR, 1, 1)
         )
     else:
-        e_earliestDatestamp.text = datetime_to_datestamp(oaiObj.earliestDatastamp)
+        e_earliestDatestamp.text = datetime_to_datestamp(
+            oaiObj.earliestDatastamp)
     # update by Mr ryuu. at 2018/06/06 end
 
     e_deletedRecord = SubElement(e_identify,
@@ -281,9 +276,9 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
     def get_error_code_msg():
-        code = "noRecordsMatch"
-        msg = "The combination of the values of the from, until, " \
-              "set and metadataPrefix arguments results in an empty list."
+        code = 'noRecordsMatch'
+        msg = 'The combination of the values of the from, until, ' \
+              'set and metadataPrefix arguments results in an empty list.'
         return [(code, msg)]
 
     record_dumper = serializer(kwargs['metadataPrefix'])
@@ -361,6 +356,7 @@ def listrecords(**kwargs):
 
 
 def get_error_code_msg(code='noRecordsMatch'):
+    """Return list error message."""
     msg = 'The combination of the values of the from, until, ' \
           'set and metadataPrefix arguments results in an empty list.'
 
