@@ -31,6 +31,7 @@ from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
+from invenio_mail.admin import MailSettingView
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
@@ -677,6 +678,80 @@ def validate_feedback_mail_setting(data):
             error_message = _('Duplicate Email Addresses.')
             return error_message
     return error_message
+
+
+def get_statistic_email_data(data):
+    """ Convert statistic data to email data.
+
+    Arguments:
+        data {list} -- list statistic data
+
+    Returns:
+        list -- email data
+
+    """
+    list_result = list()
+    for item in data:
+        new_data = dict()
+        new_data['title'] = ''
+        new_data['url'] = ''
+        new_data['detail_view'] = 0
+        new_data['file_download'] = 0
+
+        list_result.append(new_data)
+    return list_result
+
+
+def get_list_statistic_email():
+    """Get list statistic email from setting.
+
+    Returns:
+        list -- list email
+
+    """
+    setting = FeedbackMailSetting.get_all_feedback_email_setting()
+    is_send = setting[0].is_sending_feedback
+    if not is_send:
+        return None
+
+    email_setting = setting[0].json.get('email')
+    authors = get_feed_back_email_setting
+    list_email = list()
+    for auth in authors:
+        list_email.append(auth.get('email'))
+
+    for mail in email_setting:
+        if mail in list_email:
+            list_email.remove(mail)
+    return list_email
+
+
+def fill_email_data(template, data):
+    return None
+
+
+def send_mail(receiver, body, subject):
+    """Send mail to receiver.
+
+    Arguments:
+        receiver {string} -- receiver mail address
+        body {string} -- mail content
+        subject {string} -- mail subject
+
+    Returns:
+        boolean -- True if send success
+    """
+    # FAKE DATA:
+    receiver = 'weko-ope@nii.ac.jp',
+    body = 'This is a test mail.'
+    subject = 'Test statistic mail'
+    # ========
+    rf = {
+        'subject': subject,
+        'body': body,
+        'recipient': receiver
+    }
+    return MailSettingView.send_statistic_mail(rf)
 
 
 def count_file_view_per_item(record_id):
