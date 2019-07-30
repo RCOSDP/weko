@@ -42,11 +42,11 @@ from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
-from weko_records.api import ItemTypes, FeedbackMailList
+from weko_records.api import FeedbackMailList, ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_workflow.api import GetCommunity, WorkActivity
-from weko_workflow.models import ActionStatusPolicy
 from weko_workflow.config import ITEM_REGISTRATION_ACTION_ID
+from weko_workflow.models import ActionStatusPolicy
 
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
     IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_WITHDRAWN

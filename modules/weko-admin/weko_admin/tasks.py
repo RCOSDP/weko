@@ -121,7 +121,8 @@ def check_send_all_reports():
 def send_feedback_mail():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
-        #TODO: Implement code auto send email here
+        # TODO: Implement code auto send email here
+        pass
 
 
 def _due_to_run(schedule):

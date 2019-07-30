@@ -131,7 +131,7 @@ class ComponentExclusionTarget extends React.Component {
           </div>
           <div className="style-full-size">
             {this.generateSelectedBox(this.state.listEmail)}
-            <button className="btn btn-danger delete-button style-my-button style-deleteBtn" onClick={this.deleteCommand}>
+            <button className="btn btn-danger style-deleteBtn" onClick={this.deleteCommand}>
               <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
               &nbsp;{DELETE_BUTTON_NAME}
             </button>

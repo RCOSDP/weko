@@ -32,17 +32,17 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     after_record_revert, after_record_update, before_record_delete, \
     before_record_insert, before_record_revert, before_record_update
 from jsonpatch import apply_patch
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
+from .models import FeedbackMailList as _FeedbackMailList
 from .models import FileMetadata, ItemMetadata, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
 from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
     SiteLicenseInfo, SiteLicenseIpAddress
-from .models import FeedbackMailList as _FeedbackMailList
-
 
 _records_state = LocalProxy(
     lambda: current_app.extensions['invenio-records'])
@@ -1636,6 +1636,7 @@ class FeedbackMailList(object):
     def update(cls, item_id, feedback_maillist):
         """Create a new instance feedback_mail_list.
 
+        :param item_id: Item Identifier
         :param feedback_maillist: list mail feedback
         :return boolean: True if success
         """
@@ -1653,7 +1654,7 @@ class FeedbackMailList(object):
                     query_object.mail_list = feedback_maillist
                     db.session.merge(query_object)
             db.session.commit()
-        except BaseException:
+        except SQLAlchemyError:
             db.session.rollback()
             return False
         return True
@@ -1674,7 +1675,7 @@ class FeedbackMailList(object):
                     return query_object.mail_list
                 else:
                     return []
-        except Exception:
+        except SQLAlchemyError:
             return []
 
     @classmethod
@@ -1689,7 +1690,7 @@ class FeedbackMailList(object):
                 _FeedbackMailList.query.filter_by(
                     item_id=item_id).delete()
             db.session.commit()
-        except BaseException:
+        except SQLAlchemyError:
             db.session.rollback()
             return False
         return True

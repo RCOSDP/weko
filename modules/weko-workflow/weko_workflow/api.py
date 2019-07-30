@@ -34,8 +34,8 @@ from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionIdentifier, ActionJournal, \
-    ActionStatusPolicy, ActionFeedbackMail
+from .models import ActionCommentPolicy, ActionFeedbackMail, \
+    ActionIdentifier, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
@@ -702,7 +702,7 @@ class WorkActivity(object):
 
         db.session.commit()
 
-    def create_or_update_action_feedbackmail(self, 
+    def create_or_update_action_feedbackmail(self,
                                              activity_id,
                                              action_id,
                                              feedback_maillist):

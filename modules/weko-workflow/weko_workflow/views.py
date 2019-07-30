@@ -42,22 +42,22 @@ from sqlalchemy import types
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
+from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
-from weko_records.api import ItemsMetadata, FeedbackMailList
+from weko_records.api import FeedbackMailList, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
-from weko_authors.models import Authors
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, ITEM_REGISTRATION_ACTION_ID
-from .models import ActionStatusPolicy, ActivityStatusPolicy, ActionFeedbackMail
+from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
     pidstore_identifier_mapping
@@ -911,7 +911,7 @@ def check_existed_doi():
     return jsonify(data)
 
 @blueprint.route('/save_feedback_maillist/<string:activity_id>/<int:action_id>',
-                methods=['POST'])
+                 methods=['POST'])
 @login_required
 @check_authority
 def save_feedback_maillist(activity_id='0', action_id='0'):
@@ -933,16 +933,16 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
             feedback_maillist=feedback_maillist
         )
         return jsonify(code=0, msg=_('Success'))
-    except BaseException:
+    except (ValueError, Exception):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))
 
 @blueprint.route('/get_feedback_maillist/<string:activity_id>',
-                methods=['GET'])
+                 methods=['GET'])
 @login_required
 def get_feedback_maillist(activity_id='0'):
     """Get feedback_mail's list base on Activity Identifier.
-    
+
     :param activity_id: Acitivity Identifier.
     :return: Return code and mail list in json format.
     """
@@ -958,11 +958,13 @@ def get_feedback_maillist(activity_id='0'):
                     email = Authors.get_first_email_by_id(mail.get('author_id'))
                     if email:
                         mail['email'] = email
+                    else:
+                        mail_list.remove(mail)
             return jsonify(code=1,
                            msg=_('Success'),
                            data=mail_list)
         else:
             return jsonify(code=0, msg=_('Empty!'))
-    except BaseException:
+    except (ValueError, Exception):
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error'))

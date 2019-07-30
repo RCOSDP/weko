@@ -110,14 +110,21 @@ setup(
         'invenio_admin.views': [
             'weko_admin_style = weko_admin.admin:style_adminview',
             'weko_admin_report = weko_admin.admin:report_adminview',
-            'weko_admin_feedback_mail = weko_admin.admin:feedback_mail_adminview',
+            'weko_admin_feedback_mail = '
+            'weko_admin.admin:feedback_mail_adminview',
             'weko_admin_language = weko_admin.admin:language_adminview',
-            'weko_admin_web_api_account = weko_admin.admin:web_api_account_adminview',
-            'weko_admin_stats_settings = weko_admin.admin:stats_settings_adminview',
-            'weko_admin_log_analysis = weko_admin.admin:log_analysis_settings_adminview',
-            'weko_admin_ranking_settings = weko_admin.admin:ranking_settings_adminview',
-            'weko_admin_search_settings = weko_admin.admin:search_settings_adminview',
-            'weko_admin_site_license_settings = weko_admin.admin:site_license_settings_adminview',
+            'weko_admin_web_api_account = '
+            'weko_admin.admin:web_api_account_adminview',
+            'weko_admin_stats_settings = '
+            'weko_admin.admin:stats_settings_adminview',
+            'weko_admin_log_analysis = '
+            'weko_admin.admin:log_analysis_settings_adminview',
+            'weko_admin_ranking_settings = '
+            'weko_admin.admin:ranking_settings_adminview',
+            'weko_admin_search_settings = '
+            'weko_admin.admin:search_settings_adminview',
+            'weko_admin_site_license_settings = '
+            'weko_admin.admin:site_license_settings_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -130,10 +137,13 @@ setup(
             'weko_admin_js = weko_admin.bundles:js',
             'weko_admin_search_js = weko_admin.bundles:search_management_js',
             'weko_admin_stats_report_js = weko_admin.bundles:stats_report_js',
-            'weko_admin_react_bootstrap_js = weko_admin.bundles:react_bootstrap_js',
+            'weko_admin_react_bootstrap_js = '
+            'weko_admin.bundles:react_bootstrap_js',
             'weko_admin_css = weko_admin.bundles:css',
-            'weko_admin_quill_css = weko_admin.bundles:weko_admin_quill_sknow_css',
-            'weko_admin_feedback_mail_css = weko_admin.bundles:weko_admin_feedback_mail_css',
+            'weko_admin_quill_css = '
+            'weko_admin.bundles:weko_admin_quill_sknow_css',
+            'weko_admin_feedback_mail_css = '
+            'weko_admin.bundles:weko_admin_feedback_mail_css',
             'weko_admin_date_picker_js = weko_admin.bundles:date_picker_js',
             'weko_admin_date_picker_css = weko_admin.bundles:date_picker_css',
             'weko_admin_custom_report = weko_admin.bundles:custom_report_js',
