@@ -950,41 +950,44 @@ function handleSharePermission(value) {
         } else if ($scope.depositionForm.$invalid) {
           // Check containing control or form is invalid
           return false;
+        } else {
+          // Call API to validate input data base on json schema define
+          let validateURL = '/api/items/validate';
+          let isValid = false;
+          let request = InvenioRecordsAPI.prepareRequest(
+            validateURL,
+            'POST',
+            $rootScope.recordsVM.invenioRecordsModel,
+            $rootScope.recordsVM.invenioRecordsArgs,
+            $rootScope.recordsVM.invenioRecordsEndpoints
+          );
+          let requestData = {
+            'item_id': $("#autofill_item_type_id").val(),
+            'data': request.data
+          }
+          request.data = JSON.stringify(requestData);
+          $.ajax({
+            ...request,
+            async: false,
+            success: function(data, status) {
+              if (data.is_valid) {
+                isValid = true;
+              } else {
+                $("#inputModal").html(data.error);
+                $("#allModal").modal("show");
+                isValid = false;
+              }
+            },
+            error: function(data, status) {
+              var modalcontent = data;
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
+              isValid = false;
+            }
+          });
+          return isValid;
         }
 
-        // Call API to validate input data base on json schema define
-        let validateURL = '/api/items/validate';
-        let request = InvenioRecordsAPI.prepareRequest(
-          validateURL
-          ,
-          'POST',
-          $rootScope.recordsVM.invenioRecordsModel,
-          $rootScope.recordsVM.invenioRecordsArgs,
-          $rootScope.recordsVM.invenioRecordsEndpoints
-        );
-        let requestData = {
-          'item_id': $("#autofill_item_type_id").val(),
-          'data': request.data
-        }
-        request.data = requestData;
-        InvenioRecordsAPI.request(request).then(
-          function success(response) {
-            let data = response.data;
-            if (data.is_valid) {
-              return true;
-            } else {
-              $("#inputModal").html(data.error);
-              $("#allModal").modal("show");
-              return false;
-            }
-          },
-          function error(response) {
-            var modalcontent = response;
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
-            return false;
-          }
-        );
       }
 
       $scope.priceValidator = function() {
@@ -1043,7 +1046,7 @@ function handleSharePermission(value) {
             continue;
           }
           for (let j = 0; j < listSubItem.length; j++) {
-            if (depositionForm[listSubItem[j].id].$pristine || !depositionForm[listSubItem[j].id].$viewValue) {
+            if (!depositionForm[listSubItem[j].id].$viewValue) {
               listItemErrors.push(listSubItem[j].title);
             }
           }
@@ -1053,7 +1056,7 @@ function handleSharePermission(value) {
           message += listItemErrors[0];
           for (let k = 1; k < listItemErrors.length; k++) {
             let subMessage = ', ' + listItemErrors[k];
-            message += subMessage
+            message += subMessage;
           }
           $("#inputModal").html(message);
           $("#allModal").modal("show");
@@ -1067,10 +1070,12 @@ function handleSharePermission(value) {
           var modalcontent = "Billing price is required half-width numbers.";
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
-        } else if (!this.validateInputData()) {
           return false;
         }
-        else {
+        let isValid = this.validateInputData();
+        if (!isValid) {
+          return false;
+        } else {
           $scope.genTitleAndPubDate();
           let next_frame = $('#next-frame').val();
           if ($scope.is_item_owner) {
