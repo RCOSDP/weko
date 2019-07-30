@@ -20,7 +20,7 @@ class ComponentExclusionTarget extends React.Component {
     this.handleKeyPress = this.handleKeyPress.bind(this)
   }
 
-  componentDidMount(){
+  componentDidMount() {
     const activityID = $("#hidden_activity_id").val();
     let emails = [];
     $.ajax({
@@ -48,10 +48,10 @@ class ComponentExclusionTarget extends React.Component {
     const selectedId = this.state.selectedId
     if (id < 0) {
       this.setState({
-        selectedId : []
+        selectedId: []
       });
     } else {
-      if(!this.state.selectedId.includes(id)){
+      if (!this.state.selectedId.includes(id)) {
 
         selectedId.push(id);
         this.setState({
@@ -59,7 +59,7 @@ class ComponentExclusionTarget extends React.Component {
         });
       } else {
         this.setState({
-          selectedId : selectedId.filter(e => e!==id)
+          selectedId: selectedId.filter(e => e !== id)
         });
       }
     }
@@ -87,10 +87,10 @@ class ComponentExclusionTarget extends React.Component {
           listEmail.map((item, id) => {
             return (
               <a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
-                onClick={() => {this.handleClick(id)}}
+                onClick={() => { this.handleClick(id) }}
                 key={id}
                 value={item.author_id}>
-                  {item.email}
+                {item.email}
               </a>
             )
           })
@@ -98,7 +98,7 @@ class ComponentExclusionTarget extends React.Component {
         <input class="list-group-item list-group-item-action"
           id="custom_input_email"
           placeholder={INPUT_TEXT_PLACEHOLDER}
-          onKeyPress={(event) => {this.handleKeyPress(event)}}
+          onKeyPress={(event) => { this.handleKeyPress(event) }}
         />
       </div>
     )
@@ -108,10 +108,10 @@ class ComponentExclusionTarget extends React.Component {
     const listEmail = this.state.listEmail;
     const selectedId = this.state.selectedId;
     let selectedElement = listEmail.filter((item, id) => {
-        return selectedId.includes(id)
+      return selectedId.includes(id)
     })
 
-    this.props.removeEmailFromList(Array.from(selectedElement, item=> item.email));
+    this.props.removeEmailFromList(Array.from(selectedElement, item => item.email));
     this.handleClick(-1);
   }
 
@@ -513,13 +513,22 @@ class MainLayout extends React.Component {
 
   addEmailToList(data) {
     let listEmail = this.state.listEmail;
-    if(this.isDuplicateEmail(data, listEmail)){
+    if (this.isDuplicateEmail(data, listEmail)) {
       alert(DUPLICATE_ERROR_MESSAGE)
       return false;
     } else {
-      listEmail.push(data);
-      this.setState({ listEmail: listEmail })
-      return true;
+      if (!data.author_id || !this.isDuplicateAuthorId(listEmail, data.author_id)) {
+        listEmail.push(data);
+        this.setState({ listEmail: listEmail })
+        return true;
+      } else {
+        const newList = listEmail.filter(item => item.author_id !== data.author_id)
+        newList.push(data)
+        this.setState({
+          listEmail: newList
+        })
+        return true;
+      }
     }
   }
 
@@ -529,8 +538,17 @@ class MainLayout extends React.Component {
     this.setState({ listEmail: listEmail });
   }
 
-  isDuplicateEmail(data, listEmail){
-    const existEmail = listEmail.filter(item=>{
+  isDuplicateAuthorId(listEmail, author_id) {
+    const authorIdList = Array.from(listEmail, item => {
+      if(item.author_id) {
+        return item.author_id
+      }
+    })
+    return authorIdList.includes(author_id)
+  }
+
+  isDuplicateEmail(data, listEmail) {
+    const existEmail = listEmail.filter(item => {
       console.log(data);
       return item.email === data.email
     })

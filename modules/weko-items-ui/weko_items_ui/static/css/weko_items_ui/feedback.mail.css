@@ -28,7 +28,6 @@
     width: 100%;
     height: 150px;
     border: 1px solid #ddd;
-    padding: 10px;
     display: inline-block;
     overflow-y: scroll;
     overflow-x: hidden;
@@ -53,10 +52,7 @@
 
   .style-deleteBtn{
     float: right !important;
-    margin-left: 15px;
     margin-bottom: 32px;
-    min-width: 120px;
-    height: 40px;
   }
 
   .style-table-modal{

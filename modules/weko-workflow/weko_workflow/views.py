@@ -51,6 +51,7 @@ from weko_records.api import ItemsMetadata, FeedbackMailList
 from weko_records.models import ItemMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
+from weko_authors.models import Authors
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
@@ -941,18 +942,25 @@ def save_feedback_maillist(activity_id='0', action_id='0'):
 @login_required
 def get_feedback_maillist(activity_id='0'):
     """Get feedback_mail's list base on Activity Identifier.
-
-    :return:
+    
+    :param activity_id: Acitivity Identifier.
+    :return: Return code and mail list in json format.
     """
     try:
         work_activity = WorkActivity()
-        feedback_maillist = work_activity.get_action_feedbackmail(
+        action_feedbackmail = work_activity.get_action_feedbackmail(
             activity_id=activity_id,
             action_id=ITEM_REGISTRATION_ACTION_ID)
-        if feedback_maillist:
+        if action_feedbackmail:
+            mail_list = action_feedbackmail.feedback_maillist
+            for mail in mail_list:
+                if mail.author_id:
+                    email = Authors.get_first_email_by_id(mail.get('author_id'))
+                    if email:
+                        mail['email'] = email
             return jsonify(code=1,
                            msg=_('Success'),
-                           data=feedback_maillist.feedback_maillist)
+                           data=mail_list)
         else:
             return jsonify(code=0, msg=_('Empty!'))
     except BaseException:
