@@ -254,3 +254,9 @@ msgstr ""
 
 msgid "The following items is required. Please recheck and input."
 msgstr ""
+
+msgid "Please input all required item."
+msgstr ""
+
+msgid "Please input the correct data."
+msgstr ""

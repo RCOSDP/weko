@@ -358,15 +358,8 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
         validation_data.validate()
     except ValidationError as error:
         result["is_valid"] = False
-        print(error.validator_value)
-        print(error.cause)
-        print(error.context)
         if 'required' == error.validator:
             result['error'] = _('Please input all required item.')
-            """TODO:
-            EN: Please input all required item.
-            JP: 必須項目は全て入力して下さい。
-            """
         elif 'pattern' == error.validator:
             result['error'] = _('Please input the correct data.')
         else:
