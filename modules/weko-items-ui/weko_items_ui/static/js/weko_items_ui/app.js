@@ -1006,11 +1006,7 @@ function handleSharePermission(value) {
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
         }else if ($scope.getFeedbackMailList().length > 0){
-          let lang_code = $('#lang-code').val();
           let modalcontent = $('#invalid-email-format').val();
-          if (lang_code == 'ja') {
-            modalcontent = 'メールアドレスのフォーマットが正しくありません。'
-          }
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
         }
@@ -1059,11 +1055,7 @@ function handleSharePermission(value) {
         }
         if (permission) {
           if ($scope.getFeedbackMailList().length > 0) {
-            let lang_code = $('#lang-code').val();
             let modalcontent = $('#invalid-email-format').val();
-            if (lang_code == 'ja') {
-              modalcontent = 'メールアドレスのフォーマットが正しくありません。'
-            }
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
             return;

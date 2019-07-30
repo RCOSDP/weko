@@ -867,6 +867,7 @@ class ActionIdentifier(db.Model, TimestampMixin):
                                               default="")
     """Action identifier grant jalc datacite doi input."""
 
+
 class ActionFeedbackMail(db.Model, TimestampMixin):
     """Define action identifier info."""
 
