@@ -244,7 +244,8 @@ class ReportView(BaseView):
             }
 
             from invenio_stats.utils import get_aggregations
-            aggs_results = get_aggregations('weko', aggs_query)
+            aggs_results = get_aggregations(
+                current_app.config['SEARCH_UI_SEARCH_INDEX'], aggs_query)
 
             total = 0
             result = {}
