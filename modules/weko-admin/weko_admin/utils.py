@@ -35,6 +35,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
+import requests
 
 from . import config
 from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
@@ -279,7 +280,7 @@ def create_crossref_url(pid):
     if not pid:
         raise ValueError('PID is required')
     url = config.WEKO_ADMIN_CROSSREF_API_URL + config.WEKO_ADMIN_ENDPOINT + \
-        '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
+          '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
     return url
 
 
@@ -291,7 +292,7 @@ def validate_certification(cert_data):
     """
     response = requests.get(create_crossref_url(cert_data))
     return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
-        str(vars(response).get('_content', None))
+           str(vars(response).get('_content', None))
 
 
 def get_initial_stats_report():
@@ -402,7 +403,8 @@ def make_stats_tsv(raw_stats, file_type, year, month):
 
     if file_type in ['billing_file_download', 'billing_file_preview']:
         col_dict_key = file_type.split('_', 1)[1]
-        cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key, [])
+        cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key,
+                                                                [])
         cols[3:1] = raw_stats['all_groups']  # Insert group columns
     else:
         cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
@@ -449,8 +451,8 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
         records = list(records.values())
     for record in records:
         if file_type is None or \
-                file_type == 'file_download' or \
-                file_type == 'file_preview':
+            file_type == 'file_download' or \
+            file_type == 'file_preview':
             writer.writerow([record['file_key'], record['index_list'],
                              record['total'], record['no_login'],
                              record['login'], record['site_license'],
@@ -475,7 +477,7 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
         elif file_type == 'user_roles':
             writer.writerow([record['role_name'], record['count']])
         elif file_type == 'detail_view':
-            item_metadata_json = ItemsMetadata.\
+            item_metadata_json = ItemsMetadata. \
                 get_record(record['record_id'])
             writer.writerow([
                 item_metadata_json['title'], record['index_names'],
@@ -675,3 +677,35 @@ def validate_feedback_mail_setting(data):
             error_message = _('Duplicate Email Addresses.')
             return error_message
     return error_message
+
+
+def count_file_view_per_item(record_id):
+    """Count number of view of items
+
+    Arguments:
+        record_id {string} -- id of item to count
+    """
+    root_url = request.url_root
+    url = root_url + '/api/stats/' + record_id
+    time = str(datetime.now().month - 1) + '-' + (datetime.now().year)
+    data = {
+        "date": time
+    }
+    response = requests.post(url, data=data)
+    return response["total"]
+
+
+def count_file_download_per_item(bucket_id, file_key):
+    """Count number of view of items
+
+    Arguments:
+        record_id {string} -- id of item to count
+    """
+    root_url = request.url_root
+    url = root_url + '/api/stats/' + bucket_id + '/' + file_key
+    time = str(datetime.now().month - 1) + '-' + (datetime.now().year)
+    data = {
+        "date": time
+    }
+    response = requests.post(url, data=data)
+    return response["total"]
