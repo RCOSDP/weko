@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+f# -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
@@ -118,7 +118,8 @@ setup(
             'weko_admin_ranking_settings = weko_admin.admin:ranking_settings_adminview',
             'weko_admin_search_settings = weko_admin.admin:search_settings_adminview',
             'weko_admin_site_license_settings = weko_admin.admin:site_license_settings_adminview',
-            'weko_admin_file_preview_settings = weko_admin.admin:file_preview_settings_adminview'
+            'weko_admin_file_preview_settings = weko_admin.admin:file_preview_settings_adminview',
+            'weko_admin_item_export_settings = weko_admin.admin:item_export_settings_adminview'
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',

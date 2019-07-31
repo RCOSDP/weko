@@ -49,9 +49,10 @@ from .permissions import admin_permission_factory
 from .utils import allowed_file, get_redis_cache, get_response_json, \
     get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, reset_redis_cache
+from .utils import package_reports, reset_redis_cache, str_to_bool
 
 
+# FIXME: Change all setting views' path to be under settings/
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
@@ -698,7 +699,7 @@ class FilePreviewSettingsView(BaseView):
                     flash(_('Failurely Changed Settings.'), 'error')
             except Exception as ex:
                 current_app.logger.debug(ex)
-                flash(_('Failurely Changed Settings.'), 'error')
+                flash(_('Failed to Change Settings.'), 'error')
             return redirect(url_for('filepreview.index'))
 
         # Load settings from settings if there is not settings in db
@@ -713,6 +714,42 @@ class FilePreviewSettingsView(BaseView):
             current_app.config["WEKO_ADMIN_FILE_PREVIEW_SETTINGS_TEMPLATE"],
             settings=settings
         )
+
+
+class ItemExportSettingsView(BaseView):
+    """Item export settings."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """File preview settings."""
+        if request.method == 'POST':
+            item_setting = request.form.get('item_export_radio', 'True')
+            contents_setting = request.form.get('export_contents_radio', 'True')
+            new_settings = {
+                'allow_item_exporting': str_to_bool(item_setting),
+                'enable_contents_exporting': str_to_bool(contents_setting)
+            }
+
+            try:
+                AdminSettings.update('item_export_settings', new_settings)
+                flash(_('Successfully Changed Settings'))
+            except Exception as e:
+                current_app.logger.error(
+                    'ERROR Item Export Settings: {}'.format(e))
+                flash(_('Failed To Change Settings'), 'error')
+
+            return redirect(url_for('itemexportsettings.index'))
+
+        return self.render(
+            current_app.config['WEKO_ADMIN_ITEM_EXPORT_SETTINGS_TEMPLATE'],
+            settings=self._get_current_settings()
+        )
+
+    def _get_current_settings(self):
+        """Get current item export settings."""
+        return AdminSettings.get('item_export_settings') or \
+            AdminSettings.Dict2Obj(
+                current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
 
 
 style_adminview = {
@@ -814,6 +851,15 @@ file_preview_settings_adminview = {
     }
 }
 
+item_export_settings_adminview = {
+    'view_class': ItemExportSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Item Export'),
+        'endpoint': 'itemexportsettings'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -826,4 +872,5 @@ __all__ = (
     'search_settings_adminview',
     'site_license_settings_adminview',
     'file_preview_settings_adminview',
+    'item_export_settings_adminview',
 )
