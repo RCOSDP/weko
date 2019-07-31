@@ -1,4 +1,4 @@
-f# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 #
 # This file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
