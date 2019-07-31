@@ -122,7 +122,9 @@ class ComponentExclusionTarget extends React.Component {
   render() {
     return (
       <div className="col-sm-9 form-group style-component">
-        <span className="control-label col-xs-3">{COMPONENT_SEARCH_EMAIL_NAME}</span>
+        <label className="control-label col-xs-3" style={{textAlign:'right'}}>
+          {COMPONENT_SEARCH_EMAIL_NAME}
+        </label>
         <div className="controls col-xs-9">
           <div>
             <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
@@ -181,7 +183,12 @@ class TableUserEmailComponent extends React.Component {
       <tr key={row._source.pk_id.toString()}>
         <td>{row._source.authorNameInfo[0].fullName}</td>
         <td>{row._source.emailInfo[0].email}</td>
-        <td className="text-right"><button className="btn btn-info" onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
+        <td className="text-right">
+          <button className="btn btn-info"
+            onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
+              &nbsp;&nbsp;Import&nbsp;&nbsp;
+          </button>
+        </td>
       </tr>
     )
     )
@@ -540,7 +547,7 @@ class MainLayout extends React.Component {
 
   isDuplicateAuthorId(listEmail, author_id) {
     const authorIdList = Array.from(listEmail, item => {
-      if(item.author_id) {
+      if (item.author_id) {
         return item.author_id
       }
     })
