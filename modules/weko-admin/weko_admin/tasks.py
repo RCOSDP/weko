@@ -35,7 +35,7 @@ from invenio_stats.utils import QueryCommonReportsHelper, \
 
 from . import config
 from .models import StatisticsEmail
-from .utils import get_redis_cache, get_user_report_data, package_reports
+from .utils import get_redis_cache, get_user_report_data, package_reports, send_mail
 
 logger = get_task_logger(__name__)
 
@@ -122,8 +122,7 @@ def send_feedback_mail():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
         #TODO: Implement code auto send email here
-        print("=====================================")
-        print("1111111111111111111111111111111111111")
+        send_mail('weko-ope@nii.ac.jp', 'This is a test mail.', 'Test statistic mail')
 
 
 def _due_to_run(schedule):

@@ -22,11 +22,13 @@
 import csv
 import zipfile
 import os
+import json
 from io import BytesIO, StringIO
 from jinja2 import Template
 
 import redis
 import requests
+from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from flask import current_app, session
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
@@ -832,6 +834,14 @@ def send_mail(receiver, mail_data):
     """
     # FAKE DATA:
     receiver = 'weko-ope@nii.ac.jp'
+    month = str(datetime.now().month)
+    month = month.zfill(2)
+    time = str(datetime.now().year) + '-' + month
+    query_file_view = QueryRecordViewCount()
+    count_file_view = query_file_view.get_data('e033a605-e233-4465-a2aa-2641a4d38301', time)
+    query_file_download = QueryFileStatsCount()
+    count_file_download = query_file_download.get_data()
+    # subject = 'Test statistic mail'
     # ========
     rf = {
         'subject': build_statistic_mail_subject('WEKO3', '2019-06'),
@@ -848,38 +858,6 @@ def build_statistic_mail_subject(title, send_date):
     elif get_system_default_language() == 'en':
         result += ' Usage Statistics Report'
     return result
-
-
-def count_file_view_per_item(record_id):
-    """Count number of view of items
-
-    Arguments:
-        record_id {string} -- id of item to count
-    """
-    root_url = request.url_root
-    url = root_url + '/api/stats/' + record_id
-    time = str(datetime.now().month - 1) + '-' + (datetime.now().year)
-    data = {
-        "date": time
-    }
-    response = requests.post(url, data=data)
-    return response["total"]
-
-
-def count_file_download_per_item(bucket_id, file_key):
-    """Count number of view of items
-
-    Arguments:
-        record_id {string} -- id of item to count
-    """
-    root_url = request.url_root
-    url = root_url + '/api/stats/' + bucket_id + '/' + file_key
-    time = str(datetime.now().month - 1) + '-' + (datetime.now().year)
-    data = {
-        "date": time
-    }
-    response = requests.post(url, data=data)
-    return response["total"]
 
 
 def get_system_default_language():
