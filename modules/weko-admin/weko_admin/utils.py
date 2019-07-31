@@ -38,7 +38,6 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
-import requests
 
 from . import config
 from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
@@ -693,15 +692,44 @@ def get_statistic_email_data(data):
 
     """
     list_result = list()
-    for item in data:
-        new_data = dict()
-        new_data['title'] = ''
-        new_data['url'] = ''
-        new_data['detail_view'] = 0
-        new_data['file_download'] = 0
+    # FAKE DATA:
+    list_result = data
+    # =================
 
-        list_result.append(new_data)
-    return list_result
+    # TODO: Rewrite when get statistic data successfully
+    # for item in data:
+    #     new_data = dict()
+    #     new_data['title'] = ''
+    #     new_data['url'] = ''
+    #     new_data['detail_view'] = 0
+    #     new_data['file_download'] = []
+
+    #     list_result.append(new_data)
+    return build_mail_data_to_string(list_result)
+
+
+def build_mail_data_to_string(data):
+    result = ''
+    if not data:
+        return result  # Return null string, avoid exception
+
+    for item in data:
+        file_down_str = ''
+        for str_count in item['file_download']:
+            file_down_str += '    ' + str_count + '\n'
+        result += '----------------------------------------\n'
+        if get_system_default_language() == 'ja':
+            result += '[タイトル] : ' + item['title'] + '\n'
+            result += '[URL] : ' + item['url'] + '\n'
+            result += '[閲覧回数] : ' + item['detail_view'] + '\n'
+            result += '[ファイルダウンロード回数] : ' + file_down_str
+
+        else:
+            result += '[Title] : ' + item['title'] + '\n'
+            result += '[URL] : ' + item['url'] + '\n'
+            result += '[DetailView] : ' + item['detail_view'] + '\n'
+            result += '[FileDownload] : \n' + file_down_str
+    return result
 
 
 def get_list_statistic_email():
@@ -738,11 +766,10 @@ def fill_email_data(mail_data):
             string -- mail content
         """
     current_path = os.path.dirname(os.path.abspath(__file__))
-    current_language = current_i18n.language
     file_name = 'statistic_mail_template_en.tpl'  # default template file
-    if current_language == 'ja':
+    if get_system_default_language() == 'ja':
         file_name = 'statistic_mail_template_ja.tpl'
-    elif current_language == 'en':
+    elif get_system_default_language() == 'en':
         file_name = 'statistic_mail_template_en.tpl'
 
     file_path = os.path.join(
@@ -755,21 +782,29 @@ def fill_email_data(mail_data):
         data = file.read()
 
     # FAKE DATA
-    data_content = """
-[タイトル]         : Zan1
-[URL]             : gooogle.com
-[閲覧回数]         : 5
-[ファイルダウンロード回数] :
-    ABC(10)
-    DEF(5)
-----------------------------------------
-[タイトル]         : Zan2
-[URL]             : gooogle.com
-[閲覧回数]         : 2
-[ファイルダウンロード回数] :
-    ABC(100)
-    DEF(35)
-    """
+    fake_statistic_data = [
+        {
+            'title': 'Cold Summer',
+            'url': 'google.com.vn',
+            'detail_view': '15',
+            'file_download': [
+                'Chapter 1(14)',
+                'Chapter 2(33)'
+            ]
+        },
+        {
+            'title': 'Hot Winter',
+            'url': 'google.com.vn',
+            'detail_view': '75',
+            'file_download': [
+                'Session 1(44)',
+                'Session 2(33)',
+                'Session 3(22)',
+                'Session 4(11)'
+            ]
+        }
+    ]
+    data_content = get_statistic_email_data(fake_statistic_data)
     mail_data = {
         'user_name': 'Zannaghazi',
         'organization': 'WEKO3',
@@ -784,7 +819,7 @@ def fill_email_data(mail_data):
     return Template(data).render(mail_data)
 
 
-def send_mail(receiver, body, subject):
+def send_mail(receiver, mail_data):
     """Send mail to receiver.
 
     Arguments:
@@ -797,14 +832,22 @@ def send_mail(receiver, body, subject):
     """
     # FAKE DATA:
     receiver = 'weko-ope@nii.ac.jp'
-    subject = 'Test statistic mail'
     # ========
     rf = {
-        'subject': subject,
-        'body': fill_email_data('abc'),
+        'subject': build_statistic_mail_subject('WEKO3', '2019-06'),
+        'body': str(fill_email_data('abc')),
         'recipient': receiver
     }
     return MailSettingView.send_statistic_mail(rf)
+
+
+def build_statistic_mail_subject(title, send_date):
+    result = '[' + title + ']' + send_date
+    if get_system_default_language() == 'ja':
+        result += ' 利用統計レポート'
+    elif get_system_default_language() == 'en':
+        result += ' Usage Statistics Report'
+    return result
 
 
 def count_file_view_per_item(record_id):
@@ -837,3 +880,16 @@ def count_file_download_per_item(bucket_id, file_key):
     }
     response = requests.post(url, data=data)
     return response["total"]
+
+
+def get_system_default_language():
+    """Get system default language.
+
+    Returns:
+        string -- language code
+    """
+    registered_languages = AdminLangSettings.get_registered_language()
+    if not registered_languages:
+        return 'en'
+    default_language = registered_languages[0].get('lang_code')
+    return default_language
