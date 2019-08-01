@@ -22,17 +22,17 @@
 import csv
 import zipfile
 import os
-import json
 from io import BytesIO, StringIO
 from jinja2 import Template
 
 import redis
 import requests
-from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from flask import current_app, session
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
+from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
+from invenio_records.api import Record
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 from invenio_mail.admin import MailSettingView
@@ -683,183 +683,6 @@ def validate_feedback_mail_setting(data):
     return error_message
 
 
-def get_statistic_email_data(data):
-    """ Convert statistic data to email data.
-
-    Arguments:
-        data {list} -- list statistic data
-
-    Returns:
-        list -- email data
-
-    """
-    list_result = list()
-    # FAKE DATA:
-    list_result = data
-    # =================
-
-    # TODO: Rewrite when get statistic data successfully
-    # for item in data:
-    #     new_data = dict()
-    #     new_data['title'] = ''
-    #     new_data['url'] = ''
-    #     new_data['detail_view'] = 0
-    #     new_data['file_download'] = []
-
-    #     list_result.append(new_data)
-    return build_mail_data_to_string(list_result)
-
-
-def build_mail_data_to_string(data):
-    result = ''
-    if not data:
-        return result  # Return null string, avoid exception
-
-    for item in data:
-        file_down_str = ''
-        for str_count in item['file_download']:
-            file_down_str += '    ' + str_count + '\n'
-        result += '----------------------------------------\n'
-        if get_system_default_language() == 'ja':
-            result += '[タイトル] : ' + item['title'] + '\n'
-            result += '[URL] : ' + item['url'] + '\n'
-            result += '[閲覧回数] : ' + item['detail_view'] + '\n'
-            result += '[ファイルダウンロード回数] : ' + file_down_str
-
-        else:
-            result += '[Title] : ' + item['title'] + '\n'
-            result += '[URL] : ' + item['url'] + '\n'
-            result += '[DetailView] : ' + item['detail_view'] + '\n'
-            result += '[FileDownload] : \n' + file_down_str
-    return result
-
-
-def get_list_statistic_email():
-    """Get list statistic email from setting.
-
-    Returns:
-        list -- list email
-
-    """
-    setting = FeedbackMailSetting.get_all_feedback_email_setting()
-    is_send = setting[0].is_sending_feedback
-    if not is_send:
-        return None
-
-    email_setting = setting[0].json.get('email')
-    authors = get_feed_back_email_setting
-    list_email = list()
-    for auth in authors:
-        list_email.append(auth.get('email'))
-
-    for mail in email_setting:
-        if mail in list_email:
-            list_email.remove(mail)
-    return list_email
-
-
-def fill_email_data(mail_data):
-    """ Fill data to template.
-
-        Arguments:
-            mail_data {string} -- data for mail content.
-
-        Returns:
-            string -- mail content
-        """
-    current_path = os.path.dirname(os.path.abspath(__file__))
-    file_name = 'statistic_mail_template_en.tpl'  # default template file
-    if get_system_default_language() == 'ja':
-        file_name = 'statistic_mail_template_ja.tpl'
-    elif get_system_default_language() == 'en':
-        file_name = 'statistic_mail_template_en.tpl'
-
-    file_path = os.path.join(
-        current_path,
-        'templates',
-        'weko_admin',
-        'email_templates',
-        file_name)
-    with open(file_path, 'r') as file:
-        data = file.read()
-
-    # FAKE DATA
-    fake_statistic_data = [
-        {
-            'title': 'Cold Summer',
-            'url': 'google.com.vn',
-            'detail_view': '15',
-            'file_download': [
-                'Chapter 1(14)',
-                'Chapter 2(33)'
-            ]
-        },
-        {
-            'title': 'Hot Winter',
-            'url': 'google.com.vn',
-            'detail_view': '75',
-            'file_download': [
-                'Session 1(44)',
-                'Session 2(33)',
-                'Session 3(22)',
-                'Session 4(11)'
-            ]
-        }
-    ]
-    data_content = get_statistic_email_data(fake_statistic_data)
-    mail_data = {
-        'user_name': 'Zannaghazi',
-        'organization': 'WEKO3',
-        'time': '2019-07',
-        'data': data_content,
-        'total_item': '2',
-        'total_file': '4',
-        'total_detail_view': '7',
-        'total_download': '150'
-    }
-    # =====================
-    return Template(data).render(mail_data)
-
-
-def send_mail(receiver, mail_data):
-    """Send mail to receiver.
-
-    Arguments:
-        receiver {string} -- receiver mail address
-        body {string} -- mail content
-        subject {string} -- mail subject
-
-    Returns:
-        boolean -- True if send success
-    """
-    # FAKE DATA:
-    receiver = 'weko-ope@nii.ac.jp'
-    month = str(datetime.now().month)
-    month = month.zfill(2)
-    time = str(datetime.now().year) + '-' + month
-    query_file_view = QueryRecordViewCount()
-    count_file_view = query_file_view.get_data('e033a605-e233-4465-a2aa-2641a4d38301', time)
-    query_file_download = QueryFileStatsCount()
-    count_file_download = query_file_download.get_data()
-    # subject = 'Test statistic mail'
-    # ========
-    rf = {
-        'subject': build_statistic_mail_subject('WEKO3', '2019-06'),
-        'body': str(fill_email_data('abc')),
-        'recipient': receiver
-    }
-    return MailSettingView.send_statistic_mail(rf)
-
-
-def build_statistic_mail_subject(title, send_date):
-    result = '[' + title + ']' + send_date
-    if get_system_default_language() == 'ja':
-        result += ' 利用統計レポート'
-    elif get_system_default_language() == 'en':
-        result += ' Usage Statistics Report'
-    return result
-
-
 def get_system_default_language():
     """Get system default language.
 
@@ -871,3 +694,238 @@ def get_system_default_language():
         return 'en'
     default_language = registered_languages[0].get('lang_code')
     return default_language
+
+
+class StatisticMail:
+    @classmethod
+    def send_mail_to_all(cls):
+        # FAKE DATA :TODO: Get real data from elastic search
+        list_mail_data = {
+            'abc@gcs.com':
+            {
+                'author_id': '1',
+                'item':
+                [
+                    'id1',
+                    'id2'
+                ]
+            },
+            'def@gcs.com':
+            {
+                'author_id': '',
+                'item':
+                [
+                    'id3'
+                ]
+            }
+        }
+        # =============================
+        title = 'WEKO3'  # TODO: Get from weko_theme.config.SITE_NAME
+        stat_date = '2019/06'  # TODO: Statistic month
+        for k, v in list_mail_data.items():
+            mail_data = {
+                'user_name': '',
+                'organization': '',
+                'time': stat_date
+            }
+            recipient = str(k)
+            subject = str(cls.__build_statistic_mail_subject(title, stat_date))
+            body = str(cls.__fill_email_data(
+                cls.__get_list_statistic_data,
+                mail_data))
+            cls.send_mail(recipient, body, subject)
+
+    def __get_list_statistic_data(self, list_item_id, time):
+        list_result = {
+            'data': [],
+            'summary': {}
+        }
+        statistic_data = list()
+        total_item = 0
+        total_files = 0
+        total_view = 0
+        total_download = 0
+        for item_id in list_item_id:
+            data = self.__get_item_information(item_id, time)
+            file_download = data.get('file_download')
+            list_file_download = list()
+            for k, v in file_download.items():
+                total_download += int(v)
+                list_file_download.append(str(k + '(' + v + ')'))
+            total_item += 1
+            total_files += len(list_file_download)
+            total_view += int(data.get('detail_view'))
+            data['file_download'] = list_file_download
+            statistic_data.append(data)
+        summary_data = {
+            'total_item': total_item,
+            'total_files': total_files,
+            'total_view': total_view,
+            'total_download': total_download
+        }
+        # FAKE DATA TODO: Remove fake data if __get_item_information run
+        # statistic_data = [
+        #     {
+        #         'title': 'Cold Summer',
+        #         'url': 'google.com.vn',
+        #         'detail_view': '15',
+        #         'file_download': [
+        #             'Chapter 1(14)',
+        #             'Chapter 2(33)'
+        #         ]
+        #     },
+        #     {
+        #         'title': 'Hot Winter',
+        #         'url': 'google.com.vn',
+        #         'detail_view': '75',
+        #         'file_download': [
+        #             'Session 1(44)',
+        #             'Session 2(33)',
+        #             'Session 3(22)',
+        #             'Session 4(11)'
+        #         ]
+        #     }
+        # ]
+        # =================================
+        list_result['data'] = statistic_data
+        list_result['summary'] = summary_data
+        return list_result
+
+    def __get_item_information(self, item_id, time):
+        records_metadata = Record.get_record(item_id)
+        data = records_metadata.json
+        count_item_view = self.get_item_view(item_id, time)
+        count_item_download = self.get_item_download(data, time)
+        title = data.get("item_1554889928799").get("attribute_value_mlt")[0].get("subitem_1551255647225")
+        result = {
+            'title' : title,
+            'url' : 'weko3.com', #fake
+            'detail_view' : count_item_view,
+            'file_download' : count_item_download
+        }
+        return result
+
+    def __get_item_view(self, item_id, time):
+        query_file_view = QueryRecordViewCount()
+        return query_file_view.get_data(item_id, time).get("count")
+
+    def __get_item_download(self, data, time):
+        list_file = get_file_in_item(data)
+        result = []
+        if list_file:
+            for file_key in list_file.get("list_file_key"):
+                query_file_download = QueryFileStatsCount()
+                count_file_download = query_file_download.get_data().get("count")
+                item = {
+                    file_key : count_file_download
+                }
+                result.append(item)
+        return result
+
+    def __get_file_in_item(self, data):
+        bucket_id = data.get("_buckets").get("deposit")
+        list_file = data.get("item_1538028827221").get("attribute_value_mlt")
+        list_file_key = []
+        if list_file:
+            for f in list_file:
+                list_file_key.append(f.get("filename"))
+        return {
+            "bucket_id" : bucket_id,
+            "list_file_key" : list_file_key,
+        }
+
+    def __fill_email_data(self, statistic_data, mail_data):
+        """ Fill data to template.
+
+            Arguments:
+                mail_data {string} -- data for mail content.
+
+            Returns:
+                string -- mail content
+            """
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        file_name = 'statistic_mail_template_en.tpl'  # default template file
+        if get_system_default_language() == 'ja':
+            file_name = 'statistic_mail_template_ja.tpl'
+        elif get_system_default_language() == 'en':
+            file_name = 'statistic_mail_template_en.tpl'
+
+        file_path = os.path.join(
+            current_path,
+            'templates',
+            'weko_admin',
+            'email_templates',
+            file_name)
+        with open(file_path, 'r') as file:
+            data = file.read()
+
+        data_content = self.__build_mail_data_to_string(
+            statistic_data.get('data'))
+        summary_data = statistic_data.get('summary')
+        mail_data = {
+            'user_name': mail_data.get('user_name'),
+            'organization': mail_data.get('organization'),
+            'time': mail_data.get('time'),
+            'data': data_content,
+            'total_item': summary_data.get('total_item'),
+            'total_file': summary_data.get('total_files'),
+            'total_detail_view': summary_data.get('total_view'),
+            'total_download': summary_data.get('total_download')
+        }
+        return Template(data).render(mail_data)
+
+    @classmethod
+    def send_mail(cls, recipient, body, subject):
+        """Send mail to receiver.
+
+        Arguments:
+            receiver {string} -- receiver mail address
+            body {string} -- mail content
+            subject {string} -- mail subject
+
+        Returns:
+            boolean -- True if send success
+        """
+        try:
+            from .views import set_lifetime
+            from flask import url_for
+            body = str(url_for(set_lifetime))
+        except Exception as ex:
+            body = str(ex)
+            rf = {
+                'subject': subject,
+                'body': body,
+                'recipient': recipient
+            }
+        return MailSettingView.send_statistic_mail(rf)
+
+    def __build_statistic_mail_subject(self, title, send_date):
+        result = '[' + title + ']' + send_date
+        if get_system_default_language() == 'ja':
+            result += ' 利用統計レポート'
+        elif get_system_default_language() == 'en':
+            result += ' Usage Statistics Report'
+        return result
+
+    def __build_mail_data_to_string(self, data):
+        result = ''
+        if not data:
+            return result  # Return null string, avoid exception
+
+        for item in data:
+            file_down_str = ''
+            for str_count in item['file_download']:
+                file_down_str += '    ' + str_count + '\n'
+            result += '----------------------------------------\n'
+            if get_system_default_language() == 'ja':
+                result += '[タイトル] : ' + item['title'] + '\n'
+                result += '[URL] : ' + item['url'] + '\n'
+                result += '[閲覧回数] : ' + item['detail_view'] + '\n'
+                result += '[ファイルダウンロード回数] : ' + file_down_str
+
+            else:
+                result += '[Title] : ' + item['title'] + '\n'
+                result += '[URL] : ' + item['url'] + '\n'
+                result += '[DetailView] : ' + item['detail_view'] + '\n'
+                result += '[FileDownload] : \n' + file_down_str
+        return result
