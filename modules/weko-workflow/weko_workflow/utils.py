@@ -361,7 +361,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
             error_list['required'] += type_requirements
         else:
             for item in type_data:
-                if item not in ['HDL', 'URI']:
+                if item not in ['HDL', 'URI', 'DOI']:
                     error_list['required'].append(type_key)
 
     # check ID登録 jpcoar:identifierRegistration
@@ -449,7 +449,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         return error_list
 
 
-def check_required_data(data, key, repeatable=False):
+def check_required_data(data, key, repeatable=True):
     """
     Check whether data exist or not.
 
