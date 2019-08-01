@@ -743,3 +743,80 @@ def item_search_factory(self, search, start_date, end_date):
         raise InvalidQueryRESTError()
 
     return search, urlkwargs
+
+
+def feedback_email_search_factory(self, search):
+    """Factory for search feedback email list.
+
+    :param self:
+    :param search:
+    :return:
+    """
+    def _get_query():
+        query_string = "_type:item AND " \
+                       "relation_version_is_last:true "
+        query_q = {
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must": [
+                        {"nested":
+                            {
+                                "path": "feedback_mail_list",
+                                "query": {"match_all": {}},
+                                "filter": {
+                                    "exists": {
+                                        "field": "feedback_mail_list.email"}
+                                    }
+                            }
+                        },
+                        {"query_string":
+                            {
+                                "query": query_string
+                            }
+                        }
+                    ]
+                }
+            },
+            "aggs": {
+                "feedback_mail_list": {
+                    "nested": {
+                        "path": "feedback_mail_list"
+                    },
+                    "aggs": {
+                        "email_list": {
+                            "terms": {
+                                "field": "feedback_mail_list.email"
+                            },
+                            "aggs": {
+                                "author_id": {
+                                    "terms": {
+                                        "field": "feedback_mail_list.author_id"
+                                    },
+                                    "aggs": {
+                                        "top_tag_hits": {
+                                            "top_hits": {}
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return query_q
+
+    query_q = _get_query()
+    try:
+        # Aggregations.
+        extr = search._extra.copy()
+        search.update_from_dict(query_q)
+        search._extra.update(extr)
+    except SyntaxError:
+        current_app.logger.debug(
+            "Failed parsing query: {0}".format(query_q),
+            exc_info=True)
+        raise InvalidQueryRESTError()
+
+    return search
