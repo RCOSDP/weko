@@ -675,3 +675,8 @@ def validate_feedback_mail_setting(data):
             error_message = _('Duplicate Email Addresses.')
             return error_message
     return error_message
+
+
+def str_to_bool(str):
+    """Convert string to bool."""
+    return str.lower() in ['true', 't']

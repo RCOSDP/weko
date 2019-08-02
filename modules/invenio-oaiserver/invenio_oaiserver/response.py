@@ -11,9 +11,9 @@
 from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, url_for
-# from invenio_db import db
+from invenio_db import db
 # from invenio_records.api import Record
-# from invenio_records.models import RecordMetadata
+from invenio_records.models import RecordMetadata
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 from weko_deposit.api import WekoRecord
@@ -108,7 +108,8 @@ def identify(**kwargs):
         e_identify, etree.QName(NS_OAIPMH, 'repositoryName'))
 
     # add by Mr ryuu. at 2018/06/06 start
-    cfg['OAISERVER_REPOSITORY_NAME'] = oaiObj.repositoryName
+    if oaiObj is not None:
+        cfg['OAISERVER_REPOSITORY_NAME'] = oaiObj.repositoryName
     # add by Mr ryuu. at 2018/06/06 end
 
     e_repositoryName.text = cfg['OAISERVER_REPOSITORY_NAME']
@@ -122,7 +123,8 @@ def identify(**kwargs):
     e_protocolVersion.text = cfg['OAISERVER_PROTOCOL_VERSION']
 
     # add by Mr ryuu. at 2018/06/06 start
-    cfg['OAISERVER_ADMIN_EMAILS'][0] = oaiObj.emails
+    if oaiObj is not None:
+        cfg['OAISERVER_ADMIN_EMAILS'][0] = oaiObj.emails
     # add by Mr ryuu. at 2018/06/06 end
 
     for adminEmail in cfg['OAISERVER_ADMIN_EMAILS']:
@@ -134,11 +136,14 @@ def identify(**kwargs):
             NS_OAIPMH, 'earliestDatestamp'))
 
     # update by Mr ryuu. at 2018/06/06 start
-    # e_earliestDatestamp.text = datetime_to_datestamp(
-    #     db.session.query(db.func.min(RecordMetadata.created)).scalar() or
-    #     datetime(MINYEAR, 1, 1)
-    # )
-    e_earliestDatestamp.text = datetime_to_datestamp(oaiObj.earliestDatastamp)
+    if not oaiObj:
+        e_earliestDatestamp.text = datetime_to_datestamp(
+            db.session.query(db.func.min(RecordMetadata.created)
+                             ).scalar() or datetime(MINYEAR, 1, 1)
+        )
+    else:
+        e_earliestDatestamp.text = datetime_to_datestamp(
+            oaiObj.earliestDatastamp)
     # update by Mr ryuu. at 2018/06/06 end
 
     e_deletedRecord = SubElement(e_identify,
@@ -230,6 +235,9 @@ def listmetadataformats(**kwargs):
         # test if record exists
         OAIIDProvider.get(pid_value=kwargs['identifier'])
 
+    if not len(cfg.get('OAISERVER_METADATA_FORMATS', {})):
+        return error(get_error_code_msg('noMetadataFormats'), **kwargs)
+
     for prefix, metadata in cfg.get('OAISERVER_METADATA_FORMATS', {}).items():
         e_metadataformat = SubElement(
             e_listmetadataformats, etree.QName(NS_OAIPMH, 'metadataFormat')
@@ -268,9 +276,9 @@ def header(parent, identifier, datestamp, sets=None, deleted=False):
 def getrecord(**kwargs):
     """Create OAI-PMH response for verb Identify."""
     def get_error_code_msg():
-        code = "noRecordsMatch"
-        msg = "The combination of the values of the from, until, " \
-              "set and metadataPrefix arguments results in an empty list."
+        code = 'noRecordsMatch'
+        msg = 'The combination of the values of the from, until, ' \
+              'set and metadataPrefix arguments results in an empty list.'
         return [(code, msg)]
 
     record_dumper = serializer(kwargs['metadataPrefix'])
@@ -304,6 +312,9 @@ def listidentifiers(**kwargs):
     e_tree, e_listidentifiers = verb(**kwargs)
     result = get_records(**kwargs)
 
+    if not result.total:
+        return error(get_error_code_msg(), **kwargs)
+
     for record in result.items:
         pid = oaiid_fetcher(record['id'], record['json']['_source'])
         header(
@@ -324,6 +335,9 @@ def listrecords(**kwargs):
     e_tree, e_listrecords = verb(**kwargs)
     result = get_records(**kwargs)
 
+    if not result.total:
+        return error(get_error_code_msg(), **kwargs)
+
     for record in result.items:
         pid = oaiid_fetcher(record['id'], record['json']['_source'])
         e_record = SubElement(e_listrecords,
@@ -339,3 +353,14 @@ def listrecords(**kwargs):
 
     resumption_token(e_listrecords, result, **kwargs)
     return e_tree
+
+
+def get_error_code_msg(code='noRecordsMatch'):
+    """Return list error message."""
+    msg = 'The combination of the values of the from, until, ' \
+          'set and metadataPrefix arguments results in an empty list.'
+
+    if code == 'noMetadataFormats':
+        msg = 'There is no metadata format available.'
+
+    return [(code, msg)]

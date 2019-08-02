@@ -45,6 +45,18 @@ WEKO_ITEMS_UI_INDEX_URL = '/items/index/{pid_value}'
 
 WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking.html'
 
+WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM = 100
+"""Default max number of allowed to be exported."""
+
+WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE = {
+    'System Administrator': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,
+    'Repository Administrator': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,
+    'Contributor': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,
+    'General': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,
+    'Community Administrator': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM
+}
+"""Max number of items that can be exported per role."""
+
 IDENTIFIER_GRANT_DOI = 0
 """Identifier grant was select."""
 
