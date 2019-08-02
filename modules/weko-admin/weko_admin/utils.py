@@ -699,28 +699,15 @@ def get_system_default_language():
 class StatisticMail:
     @classmethod
     def send_mail_to_all(cls):
-        # FAKE DATA :TODO: Get real data from elastic search
-        list_mail_data = {
-            'abc@gcs.com':
-            {
-                'author_id': '1',
-                'item':
-                [
-                    'id1',
-                    'id2'
-                ]
-            },
-            'def@gcs.com':
-            {
-                'author_id': '',
-                'item':
-                [
-                    'id3'
-                ]
-            }
-        }
-        # =============================
-        title = 'WEKO3'  # TODO: Get from weko_theme.config.SITE_NAME
+        from weko_theme import config as theme_config
+        from weko_search_ui.utils import get_feedback_mail_list, \
+            parse_feedback_mail_data
+        feedback_mail_data = get_feedback_mail_list()
+        if not feedback_mail_data:
+            return
+        list_mail_data = parse_feedback_mail_data(
+            feedback_mail_data)
+        title = theme_config.SITE_NAME
         stat_date = '2019/06'  # TODO: Statistic month
         for k, v in list_mail_data.items():
             mail_data = {
