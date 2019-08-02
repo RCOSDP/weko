@@ -68,3 +68,14 @@ upload_js = Bundle(
     'js/weko_items_ui/upload.js',
     output="gen/items_ui_upload.js",
 )
+
+feedback_maillist_js = Bundle(
+    'js/weko_items_ui/feedback_maillist.js',
+    filters='jsmin',
+    output="gen/weko_items_ui_feedback_maillist.%(version)s.js",
+)
+
+feedback_maillist_css = Bundle(
+    'css/weko_items_ui/feedback.mail.css',
+    output="gen/weko_items_ui_feedback_maillist.%(version)s.css",
+)

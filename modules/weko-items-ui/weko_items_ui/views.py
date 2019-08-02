@@ -42,9 +42,10 @@ from weko_admin.models import RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
-from weko_records.api import ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_workflow.api import GetCommunity, WorkActivity
+from weko_workflow.config import ITEM_REGISTRATION_ACTION_ID
 from weko_workflow.models import ActionStatusPolicy
 
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, IDENTIFIER_GRANT_DOI, \
@@ -789,6 +790,15 @@ def prepare_edit_item():
                             rtn.activity_id,
                             identifier_actionid,
                             identifier)
+
+                    mail_list = FeedbackMailList.get_mail_list_by_item_id(
+                        item_id=pid_object.object_uuid)
+                    if mail_list:
+                        activity.create_or_update_action_feedbackmail(
+                            activity_id=rtn.activity_id,
+                            action_id=ITEM_REGISTRATION_ACTION_ID,
+                            feedback_maillist=mail_list
+                        )
 
                     if community:
                         comm = GetCommunity.get_community_by_id(community)

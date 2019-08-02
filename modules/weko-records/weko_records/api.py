@@ -32,11 +32,13 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     after_record_revert, after_record_update, before_record_delete, \
     before_record_insert, before_record_revert, before_record_update
 from jsonpatch import apply_patch
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
+from .models import FeedbackMailList as _FeedbackMailList
 from .models import FileMetadata, ItemMetadata, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
 from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
@@ -1625,3 +1627,70 @@ class WekoRecord(Record):
             pid_type='depid',
             pid_value=self.get('_deposit', {}).get('id')
         )
+
+
+class FeedbackMailList(object):
+    """Feedback-Mail List API."""
+
+    @classmethod
+    def update(cls, item_id, feedback_maillist):
+        """Create a new instance feedback_mail_list.
+
+        :param item_id: Item Identifier
+        :param feedback_maillist: list mail feedback
+        :return boolean: True if success
+        """
+        try:
+            with db.session.begin_nested():
+                query_object = _FeedbackMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if not query_object:
+                    query_object = _FeedbackMailList(
+                        item_id=item_id,
+                        mail_list=feedback_maillist
+                    )
+                    db.session.add(query_object)
+                else:
+                    query_object.mail_list = feedback_maillist
+                    db.session.merge(query_object)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def get_mail_list_by_item_id(cls, item_id):
+        """Get a FeedbackMail list by item_id.
+
+        :param item_id:
+        :return feedback_mail_list
+
+        """
+        try:
+            with db.session.no_autoflush:
+                query_object = _FeedbackMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if query_object and query_object.mail_list:
+                    return query_object.mail_list
+                else:
+                    return []
+        except SQLAlchemyError:
+            return []
+
+    @classmethod
+    def delete(cls, item_id):
+        """Delete a feedback_mail_list by item_id.
+
+        :param item_id: item_id of target feed_back_mail_list
+        :return: bool: True if success
+        """
+        try:
+            with db.session.begin_nested():
+                _FeedbackMailList.query.filter_by(
+                    item_id=item_id).delete()
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
