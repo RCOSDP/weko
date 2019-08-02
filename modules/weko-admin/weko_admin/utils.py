@@ -724,7 +724,7 @@ class StatisticMail:
         stat_date = '2019/06'  # TODO: Statistic month
         for k, v in list_mail_data.items():
             mail_data = {
-                'user_name': '',
+                'user_name': cls.__get_author_name(str(k), v.get('author_id')),
                 'organization': '',
                 'time': stat_date
             }
@@ -929,3 +929,23 @@ class StatisticMail:
                 result += '[DetailView] : ' + item['detail_view'] + '\n'
                 result += '[FileDownload] : \n' + file_down_str
         return result
+
+    def __get_author_name(self, mail, author_id):
+        """Get author name by id.
+
+        Arguments:
+            mail {string} -- default email if author not exist
+            author_id {string} -- author id
+
+        Returns:
+            string -- author name
+        """
+        if not author_id:
+            return mail
+        author_data = Authors.get_author_by_id(author_id)
+        if not author_data:
+            return mail
+        author_info = author_data.get('authorNameInfo')
+        if not author_info:
+            return mail
+        return author_info[0].get('fullName')

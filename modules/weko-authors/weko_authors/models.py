@@ -90,5 +90,24 @@ class Authors(db.Model, Timestamp):
         except Exception:
             return None
 
+    @classmethod
+    def get_author_by_id(cls, author_id):
+        """Get author data by id.
+
+        Arguments:
+            author_id {string} -- author id
+
+        Returns:
+            dictionary -- author data
+        """
+        try:
+            author = cls.query.filter_by(id=author_id).one_or_none()
+            if not author:
+                return None
+            json_data = json.loads(author.json)
+            return json_data
+        except Exception:
+            return None
+
 
 __all__ = ('Authors', )
