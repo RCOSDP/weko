@@ -1047,6 +1047,11 @@ function handleSharePermission(value) {
           }
           for (let j = 0; j < listSubItem.length; j++) {
             if (!depositionForm[listSubItem[j].id].$viewValue) {
+              if (depositionForm[listSubItem[j].id].$name == "pubdate") {
+                depositionForm[listSubItem[j].id].$setViewValue(null);
+              } else {
+                depositionForm[listSubItem[j].id].$setViewValue("");
+              }
               listItemErrors.push(listSubItem[j].title);
             }
           }
