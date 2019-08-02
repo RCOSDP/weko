@@ -480,7 +480,6 @@ function handleSharePermission(value) {
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.initContributorData();
-        $scope.autofillJournal();
         $scope.initUserGroups();
         $scope.initFilenameList();
         hide_endpoints = $('#hide_endpoints').text()
@@ -492,10 +491,17 @@ function handleSharePermission(value) {
             );
           }
         }
+
+        // Delay 3s after page render
+        setTimeout(() => {
+          $scope.autofillJournal();
+        }, 3000);
       });
+
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
       });
+
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
         $scope.initFilenameList();
       });
@@ -1015,7 +1021,7 @@ function handleSharePermission(value) {
         }else {
           this.saveDataJsonCallback(item_save_uri);
         }
-        
+
       }
       $scope.saveDataJsonCallback = function(item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
