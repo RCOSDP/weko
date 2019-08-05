@@ -20,7 +20,6 @@
 
 """Utilities for convert response json."""
 import csv
-import datetime
 import os
 import zipfile
 from io import BytesIO, StringIO
@@ -41,6 +40,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
+from datetime import datetime
 
 from . import config
 from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
@@ -709,7 +709,7 @@ class StatisticMail:
             string -- time with format yyyy-MM
 
         """
-        month = str(datetime.now().month)
+        month = str(datetime.now().month - 1)
         month = month.zfill(2)
         return str(datetime.now().year) + '-' + month
 
@@ -724,7 +724,7 @@ class StatisticMail:
             return
         list_mail_data = parse_feedback_mail_data(
             feedback_mail_data)
-        title = theme_config.SITE_NAME  # site name
+        title = theme_config.THEME_SITENAME  # site name
         stat_date = cls.get_send_time()
         for k, v in list_mail_data.items():
             mail_data = {
