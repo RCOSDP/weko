@@ -23,9 +23,9 @@
 import json
 from datetime import datetime
 
-from celery import shared_task, task
+from celery import shared_task
 from celery.utils.log import get_task_logger
-from flask import current_app, render_template, url_for
+from flask import current_app, render_template
 from flask_babelex import gettext as _
 from flask_mail import Attachment
 from invenio_mail.api import send_mail
@@ -33,9 +33,9 @@ from invenio_stats.utils import QueryCommonReportsHelper, \
     QueryFileReportsHelper, QueryRecordViewPerIndexReportHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
 
-from . import config
 from .models import StatisticsEmail
-from .utils import get_redis_cache, get_user_report_data, package_reports, StatisticMail
+from .utils import StatisticMail, get_redis_cache, get_user_report_data, \
+    package_reports
 
 logger = get_task_logger(__name__)
 
@@ -103,11 +103,10 @@ def send_all_reports(report_type=None, year=None, month=None):
 def check_send_all_reports():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
-        schedule = None
         current_app.logger.info(
             '[{0}] [{1}] '.format(0, 'Checking if report emails are due'))
 
-        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX'].\
+        cache_key = current_app.config['WEKO_ADMIN_CACHE_PREFIX']. \
             format(name='email_schedule')
         schedule = get_redis_cache(cache_key)  # Schedule set in the view
         schedule = json.loads(schedule) if schedule else None
@@ -121,8 +120,10 @@ def check_send_all_reports():
 def send_feedback_mail():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
-        #TODO: Implement code auto send email here
-        StatisticMail.send_mail('weko-ope@nii.ac.jp', 'This is a test mail.', 'Test statistic mail')
+        # TODO: Implement code auto send email here
+        # StatisticMail.send_mail_to_all()
+        StatisticMail.send_mail('weko-ope@nii.ac.jp', 'This is a test mail.',
+                                'Test statistic mail')
 
 
 def _due_to_run(schedule):
@@ -131,7 +132,7 @@ def _due_to_run(schedule):
         return False
     now = datetime.now()
     return (schedule['frequency'] == 'daily') or \
-        (schedule['frequency'] == 'weekly'
-         and int(schedule['details']) == now.weekday()) or \
-        (schedule['frequency'] == 'monthly'
-         and int(schedule['details']) == now.day)
+           (schedule['frequency'] == 'weekly'
+            and int(schedule['details']) == now.weekday()) or \
+           (schedule['frequency'] == 'monthly'
+            and int(schedule['details']) == now.day)
