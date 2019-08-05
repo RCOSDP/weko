@@ -20,10 +20,10 @@
 
 """Utilities for convert response json."""
 import csv
-import zipfile
+import datetime
 import os
+import zipfile
 from io import BytesIO, StringIO
-from jinja2 import Template
 
 import redis
 import requests
@@ -31,11 +31,12 @@ from flask import current_app, session
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
-from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
-from invenio_records.api import Record
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
 from invenio_mail.admin import MailSettingView
+from invenio_records.models import RecordMetadata
+from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
+from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
@@ -284,7 +285,7 @@ def create_crossref_url(pid):
     if not pid:
         raise ValueError('PID is required')
     url = config.WEKO_ADMIN_CROSSREF_API_URL + config.WEKO_ADMIN_ENDPOINT + \
-          '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
+        '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
     return url
 
 
@@ -296,7 +297,7 @@ def validate_certification(cert_data):
     """
     response = requests.get(create_crossref_url(cert_data))
     return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
-           str(vars(response).get('_content', None))
+        str(vars(response).get('_content', None))
 
 
 def get_initial_stats_report():
@@ -456,7 +457,7 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
     for record in records:
         if file_type is None or \
             file_type == 'file_download' or \
-            file_type == 'file_preview':
+                file_type == 'file_preview':
             writer.writerow([record['file_key'], record['index_list'],
                              record['total'], record['no_login'],
                              record['login'], record['site_license'],
@@ -688,6 +689,7 @@ def get_system_default_language():
 
     Returns:
         string -- language code
+
     """
     registered_languages = AdminLangSettings.get_registered_language()
     if not registered_languages:
@@ -697,6 +699,12 @@ def get_system_default_language():
 
 
 class StatisticMail:
+    @classmethod
+    def get_send_time(cls):
+        month = str(datetime.now().month)
+        month = month.zfill(2)
+        return str(datetime.now().year) + '-' + month
+
     @classmethod
     def send_mail_to_all(cls):
         from weko_theme import config as theme_config
@@ -708,21 +716,34 @@ class StatisticMail:
         list_mail_data = parse_feedback_mail_data(
             feedback_mail_data)
         title = theme_config.SITE_NAME
-        stat_date = '2019/06'  # TODO: Statistic month
+        stat_date = cls.get_send_time()
         for k, v in list_mail_data.items():
             mail_data = {
-                'user_name': cls.__get_author_name(str(k), v.get('author_id')),
+                'user_name': cls.get_author_name(str(k), v.get('author_id')),
                 'organization': '',
                 'time': stat_date
             }
             recipient = str(k)
-            subject = str(cls.__build_statistic_mail_subject(title, stat_date))
-            body = str(cls.__fill_email_data(
-                cls.__get_list_statistic_data,
+            subject = str(cls.build_statistic_mail_subject(title, stat_date))
+            body = str(cls.fill_email_data(
+                cls.__get_list_statistic_data(v.get("item"), stat_date),
                 mail_data))
             cls.send_mail(recipient, body, subject)
 
-    def __get_list_statistic_data(self, list_item_id, time):
+    @classmethod
+    def convert_download_count_to_int(cls, download_count):
+        try:
+            if '.' in download_count:
+                index = download_count.index('.')
+                download_count = download_count[0:index]
+            return int(download_count)
+        except Exception as ex:
+            current_app.logger.error(
+                'Cannot convert download count to int', ex)
+            return 0
+
+    @classmethod
+    def get_list_statistic_data(cls, list_item_id, time):
         list_result = {
             'data': [],
             'summary': {}
@@ -733,15 +754,17 @@ class StatisticMail:
         total_view = 0
         total_download = 0
         for item_id in list_item_id:
-            data = self.__get_item_information(item_id, time)
+            data = cls.get_item_information(item_id, time)
             file_download = data.get('file_download')
             list_file_download = list()
             for k, v in file_download.items():
-                total_download += int(v)
-                list_file_download.append(str(k + '(' + v + ')'))
+                total_download += cls.convert_download_count_to_int(v)
+                list_file_download.append(str(
+                    k + '(' + str(cls.convert_download_count_to_int(v)) + ')'))
             total_item += 1
             total_files += len(list_file_download)
-            total_view += int(data.get('detail_view'))
+            total_view += cls.convert_download_count_to_int(
+                data.get('detail_view'))
             data['file_download'] = list_file_download
             statistic_data.append(data)
         summary_data = {
@@ -750,7 +773,7 @@ class StatisticMail:
             'total_view': total_view,
             'total_download': total_download
         }
-        # FAKE DATA TODO: Remove fake data if __get_item_information run
+        # FAKE DATA TODO: Remove fake data if get_item_information run
         # statistic_data = [
         #     {
         #         'title': 'Cold Summer',
@@ -778,58 +801,75 @@ class StatisticMail:
         list_result['summary'] = summary_data
         return list_result
 
-    def __get_item_information(self, item_id, time):
-        records_metadata = Record.get_record(item_id)
-        data = records_metadata.json
-        count_item_view = self.get_item_view(item_id, time)
-        count_item_download = self.get_item_download(data, time)
-        title = data.get("item_1554889928799").get("attribute_value_mlt")[0].get("subitem_1551255647225")
+    @classmethod
+    def get_item_information(cls, item_id, time):
+        result = db.session.query(RecordMetadata).filter(
+            RecordMetadata.id ==
+            "30cab97b-dd22-4a32-a6f6-ddadac7aa67a").one_or_none()
+        data = result.json
+        count_item_view = cls.get_item_view(item_id, time)
+        count_item_download = cls.get_item_download(data, time)
+        title = data.get("item_title")
         result = {
-            'title' : title,
-            'url' : 'weko3.com', #fake
-            'detail_view' : count_item_view,
-            'file_download' : count_item_download
+            'title': title,
+            'url': 'weko3.com',  # fake
+            'detail_view': count_item_view,
+            'file_download': count_item_download
         }
         return result
 
-    def __get_item_view(self, item_id, time):
+    @classmethod
+    def get_item_view(cls, item_id, time):
         query_file_view = QueryRecordViewCount()
-        return query_file_view.get_data(item_id, time).get("count")
+        return str(query_file_view.get_data(item_id, time).get("total"))
 
-    def __get_item_download(self, data, time):
-        list_file = get_file_in_item(data)
-        result = []
+    @classmethod
+    def get_item_download(cls, data, time):
+        list_file = cls.get_file_in_item(data)
+        result = {}
         if list_file:
             for file_key in list_file.get("list_file_key"):
                 query_file_download = QueryFileStatsCount()
-                count_file_download = query_file_download.get_data().get("count")
-                item = {
-                    file_key : count_file_download
-                }
-                result.append(item)
+                count_file_download = query_file_download.get_data(
+                    list_file.get("bucket_id"), file_key, time).get(
+                    "download_total")
+                result[file_key] = str(count_file_download)
         return result
 
-    def __get_file_in_item(self, data):
+    @classmethod
+    def __find_value_in_dict(cls, key, data):
+        for k, v in data.items():
+            if k == key:
+                yield v
+            if isinstance(v, dict):
+                for result in cls.__find_value_in_dict(key, v):
+                    yield result
+            elif isinstance(v, list):
+                for d in v:
+                    if isinstance(d, dict):
+                        for result in cls.__find_value_in_dict(key, d):
+                            yield result
+
+    @classmethod
+    def get_file_in_item(cls, data):
         bucket_id = data.get("_buckets").get("deposit")
-        list_file = data.get("item_1538028827221").get("attribute_value_mlt")
-        list_file_key = []
-        if list_file:
-            for f in list_file:
-                list_file_key.append(f.get("filename"))
+        list_file_key = list(cls.__find_value_in_dict("filename", data))
         return {
-            "bucket_id" : bucket_id,
-            "list_file_key" : list_file_key,
+            "bucket_id": bucket_id,
+            "list_file_key": list_file_key,
         }
 
-    def __fill_email_data(self, statistic_data, mail_data):
-        """ Fill data to template.
+    @classmethod
+    def fill_email_data(cls, statistic_data, mail_data):
+        """Fill data to template.
 
-            Arguments:
-                mail_data {string} -- data for mail content.
+        Arguments:
+            mail_data {string} -- data for mail content.
 
-            Returns:
-                string -- mail content
-            """
+        Returns:
+            string -- mail content
+
+        """
         current_path = os.path.dirname(os.path.abspath(__file__))
         file_name = 'statistic_mail_template_en.tpl'  # default template file
         if get_system_default_language() == 'ja':
@@ -846,7 +886,7 @@ class StatisticMail:
         with open(file_path, 'r') as file:
             data = file.read()
 
-        data_content = self.__build_mail_data_to_string(
+        data_content = cls.build_mail_data_to_string(
             statistic_data.get('data'))
         summary_data = statistic_data.get('summary')
         mail_data = {
@@ -872,21 +912,30 @@ class StatisticMail:
 
         Returns:
             boolean -- True if send success
+
         """
         try:
-            from .views import set_lifetime
-            from flask import url_for
-            body = str(url_for(set_lifetime))
+            mail_data = {
+                'user_name': '',
+                'organization': '',
+                'time': "2019-08"
+            }
+            list_item = ["30cab97b-dd22-4a32-a6f6-ddadac7aa67a"]
+            body = str(cls.fill_email_data(
+                cls.get_list_statistic_data(list_item, "2019-08"),
+                mail_data))
         except Exception as ex:
             body = str(ex)
-            rf = {
-                'subject': subject,
-                'body': body,
-                'recipient': recipient
-            }
+
+        rf = {
+            'subject': subject,
+            'body': body,
+            'recipient': recipient
+        }
         return MailSettingView.send_statistic_mail(rf)
 
-    def __build_statistic_mail_subject(self, title, send_date):
+    @classmethod
+    def build_statistic_mail_subject(cls, title, send_date):
         result = '[' + title + ']' + send_date
         if get_system_default_language() == 'ja':
             result += ' 利用統計レポート'
@@ -894,7 +943,8 @@ class StatisticMail:
             result += ' Usage Statistics Report'
         return result
 
-    def __build_mail_data_to_string(self, data):
+    @classmethod
+    def build_mail_data_to_string(cls, data):
         result = ''
         if not data:
             return result  # Return null string, avoid exception
@@ -907,17 +957,22 @@ class StatisticMail:
             if get_system_default_language() == 'ja':
                 result += '[タイトル] : ' + item['title'] + '\n'
                 result += '[URL] : ' + item['url'] + '\n'
-                result += '[閲覧回数] : ' + item['detail_view'] + '\n'
+                result += '[閲覧回数] : ' + str(
+                    cls.convert_download_count_to_int(
+                        item['detail_view'])) + '\n'
                 result += '[ファイルダウンロード回数] : ' + file_down_str
 
             else:
                 result += '[Title] : ' + item['title'] + '\n'
                 result += '[URL] : ' + item['url'] + '\n'
-                result += '[DetailView] : ' + item['detail_view'] + '\n'
+                result += '[DetailView] : ' + str(
+                    cls.convert_download_count_to_int(
+                        item['detail_view'])) + '\n'
                 result += '[FileDownload] : \n' + file_down_str
         return result
 
-    def __get_author_name(self, mail, author_id):
+    @classmethod
+    def get_author_name(cls, mail, author_id):
         """Get author name by id.
 
         Arguments:
@@ -926,6 +981,7 @@ class StatisticMail:
 
         Returns:
             string -- author name
+
         """
         if not author_id:
             return mail
