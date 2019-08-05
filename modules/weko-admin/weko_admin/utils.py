@@ -701,12 +701,21 @@ def get_system_default_language():
 class StatisticMail:
     @classmethod
     def get_send_time(cls):
+        """Get statistic time.
+
+        Returns:
+            string -- time with format yyyy-MM
+
+        """
         month = str(datetime.now().month)
         month = month.zfill(2)
         return str(datetime.now().year) + '-' + month
 
     @classmethod
     def send_mail_to_all(cls):
+        """Send mail to all setting email.
+
+        """
         from weko_theme import config as theme_config
         from weko_search_ui.utils import get_feedback_mail_list, \
             parse_feedback_mail_data
@@ -715,7 +724,7 @@ class StatisticMail:
             return
         list_mail_data = parse_feedback_mail_data(
             feedback_mail_data)
-        title = theme_config.SITE_NAME
+        title = theme_config.SITE_NAME  # site name
         stat_date = cls.get_send_time()
         for k, v in list_mail_data.items():
             mail_data = {
@@ -732,6 +741,15 @@ class StatisticMail:
 
     @classmethod
     def convert_download_count_to_int(cls, download_count):
+        """Convert statistic float string to int string.
+
+        Arguments:
+            download_count {string} -- float string
+
+        Returns:
+            string -- int string
+
+        """
         try:
             if '.' in download_count:
                 index = download_count.index('.')
@@ -744,6 +762,16 @@ class StatisticMail:
 
     @classmethod
     def get_list_statistic_data(cls, list_item_id, time):
+        """Get list statistic data for user.
+
+        Arguments:
+            list_item_id {list} -- item id
+            time {string} -- statistic time
+
+        Returns:
+            dictionary -- The statistic data
+
+        """
         list_result = {
             'data': [],
             'summary': {}
@@ -945,6 +973,16 @@ class StatisticMail:
 
     @classmethod
     def build_statistic_mail_subject(cls, title, send_date):
+        """Build mail subject.
+
+        Arguments:
+            title {string} -- The site name
+            send_date {string} -- statistic time
+
+        Returns:
+            string -- The mail subject
+
+        """
         result = '[' + title + ']' + send_date
         if get_system_default_language() == 'ja':
             result += ' 利用統計レポート'
@@ -954,6 +992,15 @@ class StatisticMail:
 
     @classmethod
     def build_mail_data_to_string(cls, data):
+        """Build statistic data as string.
+
+        Arguments:
+            data {dictionary} -- mail data
+
+        Returns:
+            string -- statistic data as string
+
+        """
         result = ''
         if not data:
             return result  # Return null string, avoid exception
