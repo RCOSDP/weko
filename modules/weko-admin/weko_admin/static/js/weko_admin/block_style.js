@@ -29,7 +29,7 @@ require([
           head.appendChild(link);
         }
 
-        document.querySelector('#logo_file').onchange = function() {
+        /*document.querySelector('#logo_file').onchange = function() {
 //          var reader = new FileReader();
 //
 //          reader.onload = function() {
@@ -42,7 +42,7 @@ require([
           $('#fpsize').text(humanSize(this.files[0].size, 0));
           $('#fptype').text(this.files[0].type);
           $('#logo_info').removeClass('hide');
-        };
+        };*/
         unit = ['bytes','KB','MB','GB'];
         function humanSize(defSize, unit_idx) {
           let tmp_size = round(defSize, 2);

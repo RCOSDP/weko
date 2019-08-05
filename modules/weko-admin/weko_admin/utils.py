@@ -1048,3 +1048,8 @@ class StatisticMail:
         if not author_info:
             return mail
         return author_info[0].get('fullName')
+
+
+def str_to_bool(str):
+    """Convert string to bool."""
+    return str.lower() in ['true', 't']

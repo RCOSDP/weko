@@ -107,13 +107,17 @@ class WekoIndexer(RecordIndexer):
         #                       doc_type=self.es_doc_type):
         #     self.client.delete(id=str(item_id), index=self.es_index,
         #                        doc_type=self.es_doc_type)
-        self.client.index(id=str(item_id),
-                          index=self.es_index,
-                          doc_type=self.es_doc_type,
-                          version=revision_id + 1,
-                          version_type=self._version_type,
-                          body=jrc,
-                          )
+        full_body = dict(id=str(item_id),
+                         index=self.es_index,
+                         doc_type=self.es_doc_type,
+                         version=revision_id + 1,
+                         version_type=self._version_type,
+                         body=jrc)
+
+        if 'content' in jrc:  # Only pass through pipeline if file exists
+            full_body['pipeline'] = 'item-file-pipeline'
+
+        self.client.index(**full_body)
 
     def delete_file_index(self, body, parent_id):
         """Delete file index in Elastic search.
@@ -183,6 +187,7 @@ class WekoIndexer(RecordIndexer):
     def get_item_link_info(self, pid):
         """Get item link info."""
         try:
+            self.get_es_index()
             item_link_info = None
             get_item_link_q = {
                 "query": {
@@ -195,7 +200,7 @@ class WekoIndexer(RecordIndexer):
                 "@control_number", pid)
             query_q = json.loads(query_q)
             indexer = RecordIndexer()
-            res = indexer.client.search(index="weko", body=query_q)
+            res = indexer.client.search(index=self.es_index, body=query_q)
             item_link_info = res.get("hits").get(
                 "hits")[0].get('_source').get("relation")
         except Exception as ex:
@@ -432,6 +437,7 @@ class WekoDeposit(Deposit):
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def update(self, *args, **kwargs):
         """Update only drafts."""
+        self['_deposit']['status'] = 'draft'
         if len(args) > 1:
             dc = self.convert_item_metadata(args[0], args[1])
         else:
@@ -452,6 +458,8 @@ class WekoDeposit(Deposit):
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
         """Clear only drafts."""
+        if self['_deposit']['status'] != 'draft':
+            return
         super(WekoDeposit, self).clear(*args, **kwargs)
 
     @index(delete=True)

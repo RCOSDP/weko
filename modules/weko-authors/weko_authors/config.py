@@ -20,6 +20,8 @@
 
 """Configuration for weko-authors."""
 
+from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
+
 WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'
 """Default base template for the author page."""
 
@@ -31,3 +33,9 @@ WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE = 'weko_authors/admin/edit.html'
 
 WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""
+
+WEKO_AUTHORS_ES_INDEX_NAME = "{}-authors".format(index_prefix)
+"""Elasticsearch index alias for author."""
+
+WEKO_AUTHORS_ES_DOC_TYPE = "author-v1.0.0"
+"""Elasticsearch document type for author."""

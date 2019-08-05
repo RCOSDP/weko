@@ -341,6 +341,21 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         mt.extend(_get_detail_keywords_query())
         return Q('bool', must=mt) if mt else Q()
 
+    def _get_file_content_query(qstr):
+        """Query for searching indexed file contents."""
+        multi_cont_q = Q('multi_match', query=qstr, operator='and',
+                         fields=['content.attachment.content^1.5',
+                                 'content.attachment.content.ja^1.2'],
+                         type='most_fields', minimum_should_match='75%')
+
+        # Search fields may increase so leaving as multi
+        multi_q = Q('multi_match', query=qstr, operator='and',
+                    fields=['search_string'], type='most_fields',
+                    minimum_should_match='75%')
+
+        nested_content = Q('nested', query=multi_cont_q, path='content')
+        return Q('bool', should=[nested_content, multi_q])
+
     def _default_parser(qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
 
@@ -364,11 +379,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         else:
             # Full Text Search
             if qstr:
-                q_s = Q('multi_match', query=qstr, operator='and',
-                        fields=['content.file.content^1.5',
-                                'content.file.content.ja^1.2',
-                                '_all', 'search_string'],
-                        type='most_fields', minimum_should_match='75%')
+                q_s = _get_file_content_query(qstr)
                 mt.append(q_s)
         return Q('bool', must=mt) if mt else Q()
 
@@ -398,11 +409,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         else:
             # Full Text Search
             if qstr:
-                q_s = Q('multi_match', query=qstr, operator='and',
-                        fields=['content.file.content^1.5',
-                                'content.file.content.ja^1.2',
-                                '_all', 'search_string'],
-                        type='most_fields', minimum_should_match='75%')
+                q_s = _get_file_content_query(qstr)
                 mt.append(q_s)
         return Q('bool', must=mt) if mt else Q()
 

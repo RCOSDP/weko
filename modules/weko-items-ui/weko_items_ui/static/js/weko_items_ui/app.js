@@ -969,6 +969,52 @@ function handleSharePermission(value) {
         return invalid_emails;
       }
 
+      $scope.validateInputData = function () {
+        if (!this.validateRequiredItem()) {
+          // Check required item
+          return false;
+        } else if ($scope.depositionForm.$invalid) {
+          // Check containing control or form is invalid
+          return false;
+        } else {
+          // Call API to validate input data base on json schema define
+          let validateURL = '/api/items/validate';
+          let isValid = false;
+          let request = InvenioRecordsAPI.prepareRequest(
+            validateURL,
+            'POST',
+            $rootScope.recordsVM.invenioRecordsModel,
+            $rootScope.recordsVM.invenioRecordsArgs,
+            $rootScope.recordsVM.invenioRecordsEndpoints
+          );
+          let requestData = {
+            'item_id': $("#autofill_item_type_id").val(),
+            'data': request.data
+          }
+          request.data = JSON.stringify(requestData);
+          $.ajax({
+            ...request,
+            async: false,
+            success: function(data, status) {
+              if (data.is_valid) {
+                isValid = true;
+              } else {
+                $("#inputModal").html(data.error);
+                $("#allModal").modal("show");
+                isValid = false;
+              }
+            },
+            error: function(data, status) {
+              var modalcontent = data;
+              $("#inputModal").html(modalcontent);
+              $("#allModal").modal("show");
+              isValid = false;
+            }
+          });
+          return isValid;
+        }
+      }
+
       $scope.priceValidator = function() {
         var result = true;
         $scope.filemeta_keys.forEach(filemeta_key => {
@@ -988,14 +1034,73 @@ function handleSharePermission(value) {
         return result;
       }
 
+      $scope.findRequiredItemInSchemaForm = function (item) {
+        let result = [];
+        if (item.hasOwnProperty('items')) {
+          let subitem = item.items;
+          for (let i = 0; i < subitem.length; i++) {
+            result.push.apply(result, this.findRequiredItemInSchemaForm(subitem[i]));
+          }
+        } else {
+          if (item.required) {
+            let newData = {
+              'title': '',
+              'id': '',
+            }
+            if (item.hasOwnProperty('title_i18n')) {
+              let currentLanguage = $("#current_language").val();
+              newData['title'] = item.title_i18n[currentLanguage];
+            }
+            if (!newData['title']) {
+              newData['title'] = item.title;
+            }
+            newData['id'] = item.key[item.key.length - 1]
+            result.push(newData);
+          }
+        }
+        return result;
+      }
+
+      $scope.validateRequiredItem = function() {
+        let schemaForm = $rootScope.recordsVM.invenioRecordsForm;
+        let depositionForm = $scope.depositionForm;
+        let listItemErrors = []
+        for (let i = 0; i < schemaForm.length; i++) {
+          let listSubItem = $scope.findRequiredItemInSchemaForm(schemaForm[i])
+          if (listSubItem.length == 0) {
+            continue;
+          }
+          for (let j = 0; j < listSubItem.length; j++) {
+            if (!depositionForm[listSubItem[j].id].$viewValue) {
+              if (depositionForm[listSubItem[j].id].$name == "pubdate") {
+                depositionForm[listSubItem[j].id].$setViewValue(null);
+              } else {
+                depositionForm[listSubItem[j].id].$setViewValue("");
+              }
+              listItemErrors.push(listSubItem[j].title);
+            }
+          }
+        }
+        if (listItemErrors.length > 0) {
+          let message = $("#validate_error").val() + '<br/><br/>';
+          message += listItemErrors[0];
+          for (let k = 1; k < listItemErrors.length; k++) {
+            let subMessage = ', ' + listItemErrors[k];
+            message += subMessage;
+          }
+          $("#inputModal").html(message);
+          $("#allModal").modal("show");
+          return false;
+        }
+        return true;
+      }
+
       $scope.updateDataJson = async function () {
-        this.genTitleAndPubDate();
         if (!$scope.priceValidator()) {
             var modalcontent = "Billing price is required half-width numbers.";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
-        }
-        else if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
+        }else if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
             //alert('Title is required! Please input title');
             var modalcontent =  "Title is required! Please input title.";
             $("#inputModal").html(modalcontent);
@@ -1010,7 +1115,11 @@ function handleSharePermission(value) {
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
         }
-        else {
+        let isValid = this.validateInputData();
+        if (!isValid) {
+          return false;
+        } else {
+          $scope.genTitleAndPubDate();
           let next_frame = $('#next-frame').val();
           if ($scope.is_item_owner) {
             if (!this.registerUserPermission()) {
@@ -1042,6 +1151,7 @@ function handleSharePermission(value) {
           }
         }
       }
+
       $scope.saveDataJson = function (item_save_uri) {
         let permission = false;
         if ($scope.is_item_owner) {
@@ -1064,6 +1174,7 @@ function handleSharePermission(value) {
           this.saveFeedbackMailListCallback();
         }
       }
+
       $scope.saveDataJsonCallback = function(item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {

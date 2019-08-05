@@ -58,8 +58,8 @@ def create():
     data = request.get_json()
     data["gather_flg"] = 0
     indexer = RecordIndexer()
-    indexer.client.index(index="authors",
-                         doc_type="author",
+    indexer.client.index(index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+                         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
                          body=data,)
 
     author_data = dict()
@@ -87,8 +87,8 @@ def update_author():
     indexer = RecordIndexer()
     body = {'doc': data}
     indexer.client.update(
-        index="authors",
-        doc_type="author",
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
         id=json.loads(json.dumps(data))["id"],
         body=body
     )
@@ -114,9 +114,10 @@ def delete_author():
 
     data = request.get_json()
     indexer = RecordIndexer()
-    indexer.client.delete(id=json.loads(json.dumps(data))["Id"],
-                          index="authors",
-                          doc_type="author",)
+    indexer.client.delete(
+        id=json.loads(json.dumps(data))["Id"],
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],)
 
     with db.session.begin_nested():
         author_data = Authors.query.filter_by(
@@ -137,28 +138,14 @@ def get():
     data = request.get_json()
 
     search_key = data.get('searchKey') or ''
-    query = {"match": {"gather_flg": 0}}
+    match = [{"term": {"gather_flg": 0}}]
 
     if search_key:
         search_keys = search_key.split(" ")
-        match = []
         for key in search_keys:
             if key:
-                match.append({"match": {"_all": key}})
-        # query = {"bool": {"should": match},"filter":{"term":{"gather_flg":0}}}
-        query = {
-            "filtered": {
-                "filter": {
-                    "bool": {
-                        "should": match,
-                        "must": {
-                            "term": {"gather_flg": 0}
-                        }
-                    }
-                }
-            }
-        }
-
+                match.append({"multi_match": {"query": key}})
+    query = {"bool": {"must": match}}
     size = (data.get('numOfPage')
             or current_app.config['WEKO_AUTHORS_NUM_OF_PAGE'])
     num = data.get('pageNumber') or 1
@@ -196,8 +183,14 @@ def get():
     }
 
     indexer = RecordIndexer()
-    result = indexer.client.search(index="authors", body=body)
-    result_itemCnt = indexer.client.search(index="weko", body=query_item)
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=body
+    )
+    result_itemCnt = indexer.client.search(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+        body=query_item
+    )
 
     result['item_cnt'] = result_itemCnt
 
@@ -222,7 +215,10 @@ def getById():
     }
 
     indexer = RecordIndexer()
-    result = indexer.client.search(index="authors", body=body)
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=body
+    )
     return json.dumps(result)
 
 
@@ -236,7 +232,10 @@ def mapping():
     # get author data
     author_id = data.get('id') or ''
     indexer = RecordIndexer()
-    result = indexer.client.get(index="authors", id=author_id)
+    result = indexer.client.get(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        id=author_id
+    )
 
     # transfer to JPCOAR format
     res = {'familyNames': [], 'givenNames': [], 'creatorNames': [],
@@ -310,7 +309,10 @@ def gatherById():
     for t in gatherFrom:
         q = json.dumps(update_author_q).replace("@id", t)
         q = json.loads(q)
-        res = indexer.client.search(index="authors", body=q)
+        res = indexer.client.search(
+            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            body=q
+        )
         for h in res.get("hits").get("hits"):
             body = {
                 'doc': {
@@ -318,8 +320,8 @@ def gatherById():
                 }
             }
             indexer.client.update(
-                index="authors",
-                doc_type="author",
+                index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+                doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
                 id=h.get("_id"),
                 body=body
             )
@@ -336,7 +338,10 @@ def gatherById():
     for t in gatherFrom:
         q = json.dumps(update_q).replace("@id", t)
         q = json.loads(q)
-        res = indexer.client.search(index="weko", body=q)
+        res = indexer.client.search(
+            index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+            body=q
+        )
         current_app.logger.debug(res.get("hits").get("hits"))
         for h in res.get("hits").get("hits"):
             sub = {"id": h.get("_id"), "weko_id": t}
@@ -348,8 +353,8 @@ def gatherById():
                 }
             }
             indexer.client.update(
-                index="weko",
-                doc_type="item",
+                index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+                doc_type=current_app.config['INDEXER_DEFAULT_DOCTYPE'],
                 id=h.get("_id"),
                 body=body
             )

@@ -574,12 +574,18 @@ var SchemaObject = React.createClass({
 			}
 		});
 
-		return {
+		let result = {
 			type: 'object',
 			format: 'object',
 			properties: properties,
-			required: this.state.required.length ? this.state.required : []
+			required: this.state.required
 		};
+
+		if(!result.required.length){
+			delete result.required;
+		}
+
+		return result;
 	},
 	on: function on(event, callback) {
 		this.callbacks = this.callbacks || {};

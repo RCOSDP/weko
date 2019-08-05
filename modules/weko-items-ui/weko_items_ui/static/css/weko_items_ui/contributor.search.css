@@ -106,3 +106,8 @@
   #pd_username {
     margin-bottom: 20px;
   }
+
+  label.field-required::after {
+    content: "*";
+    color: red;
+  }

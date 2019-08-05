@@ -82,11 +82,12 @@ extras_require = {
     'postgresql': [
         'invenio-db[postgresql]' + invenio_db_version,
     ],
-    # Elasticsearch versions
-    'elasticsearch2': [
-        'elasticsearch>=2.0.0,<3.0.0',
-        'elasticsearch-dsl>=2.0.0,<3.0.0',
-    ],
+    # Elasticsearch version
+    'elasticsearch6': [
+        'elasticsearch>=6.0.0,<7.0.0',
+        'elasticsearch-dsl>=6.0.0,<6.2.0',
+     ],
+
     # Docs and test dependencies
     'docs': [
         'Sphinx>=1.5.1',

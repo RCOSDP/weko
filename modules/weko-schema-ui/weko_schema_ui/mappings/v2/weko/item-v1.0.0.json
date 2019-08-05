@@ -71,7 +71,7 @@
     }
   },
   "mappings": {
-    "item": {
+    "item-v1.0.0": {
       "_all": {
         "enabled": true,
         "analyzer": "ngram_analyzer"

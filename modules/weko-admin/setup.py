@@ -112,7 +112,8 @@ setup(
             'weko_admin_report = weko_admin.admin:report_adminview',
             'weko_admin_feedback_mail = '
             'weko_admin.admin:feedback_mail_adminview',
-            'weko_admin_language = weko_admin.admin:language_adminview',
+            'weko_admin_language = '
+            'weko_admin.admin:language_adminview',
             'weko_admin_web_api_account = '
             'weko_admin.admin:web_api_account_adminview',
             'weko_admin_stats_settings = '
@@ -125,6 +126,10 @@ setup(
             'weko_admin.admin:search_settings_adminview',
             'weko_admin_site_license_settings = '
             'weko_admin.admin:site_license_settings_adminview',
+            'weko_admin_file_preview_settings = '
+            'weko_admin.admin:file_preview_settings_adminview',
+            'weko_admin_item_export_settings = '
+            'weko_admin.admin:item_export_settings_adminview'
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
