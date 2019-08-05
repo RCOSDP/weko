@@ -36,21 +36,23 @@ from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
 from invenio_db import db
+from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_indexer.api import RecordIndexer
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
 
-from .models import FeedbackMailSetting, LogAnalysisRestrictedCrawlerList, \
-    LogAnalysisRestrictedIpAddress, RankingSettings, SearchManagement, \
-    StatisticsEmail
+from .models import AdminSettings, FeedbackMailSetting, \
+    LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
+    RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
 from .utils import allowed_file, get_redis_cache, get_response_json, \
     get_search_setting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, reset_redis_cache
+from .utils import package_reports, reset_redis_cache, str_to_bool
 
 
+# FIXME: Change all setting views' path to be under settings/
 class StyleSettingView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
@@ -243,7 +245,8 @@ class ReportView(BaseView):
             }
 
             from invenio_stats.utils import get_aggregations
-            aggs_results = get_aggregations('weko', aggs_query)
+            aggs_results = get_aggregations(
+                current_app.config['SEARCH_UI_SEARCH_INDEX'], aggs_query)
 
             total = 0
             result = {}
@@ -616,7 +619,26 @@ class SiteLicenseSettingsView(BaseView):
             jfy = {}
             try:
                 # update item types and site license info
-                SiteLicense.update(request.get_json())
+                data = request.get_json()
+                if data and data.get('site_license'):
+                    for license in data['site_license']:
+                        err_addr = False
+                        if not license.get('addresses'):
+                            err_addr = True
+                        else:
+                            for addresses in license['addresses']:
+                                for item in addresses.values():
+                                    if not item or '' in item:
+                                        err_addr = True
+                                        # break for item addresses
+                                        break
+                                if err_addr:
+                                    # break for addresses
+                                    break
+                        if err_addr:
+                            raise ValueError('IP Address is incorrect')
+
+                SiteLicense.update(data)
                 jfy['status'] = 201
                 jfy['message'] = 'Site license was successfully updated.'
             except BaseException:
@@ -636,6 +658,98 @@ class SiteLicenseSettingsView(BaseView):
         except BaseException as e:
             current_app.logger.error('Could not save site license settings', e)
             abort(500)
+
+
+class FilePreviewSettingsView(BaseView):
+    """File preview settings."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """File preview settings."""
+        if request.method == 'POST':
+            try:
+                form = request.form.get('submit', None)
+                if form == 'save_settings':
+                    old_settings = AdminSettings.get('convert_pdf_settings')
+                    old_path = old_settings.path if old_settings else None
+
+                    new_settings = {}
+                    new_path = request.form.get('path')
+                    if not new_path or new_path == '/':
+                        current_app.logger.debug(new_path)
+                        raise
+                    else:
+                        new_path = new_path \
+                            if not new_path[-1:] == '/' else new_path[:-1]
+
+                    # Delete files in old folder if folder is changed
+                    if old_path and not new_path == old_path:
+                        old_path = old_path + '/pdf_dir'
+                        remove_dir_with_file(old_path)
+
+                    # Save settings in db
+                    new_settings['path'] = new_path
+                    new_settings['pdf_ttl'] = \
+                        int(request.form.get('pdf_ttl'))
+                    AdminSettings.update('convert_pdf_settings',
+                                         new_settings)
+                    flash(_('Successfully Changed Settings.'))
+                else:
+                    current_app.logger.debug(form)
+                    flash(_('Failurely Changed Settings.'), 'error')
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                flash(_('Failed to Change Settings.'), 'error')
+            return redirect(url_for('filepreview.index'))
+
+        # Load settings from settings if there is not settings in db
+        settings = AdminSettings.get('convert_pdf_settings')
+        if not settings:
+            temp = {}
+            temp['path'] = current_app.config.get('FILES_REST_DEFAULT_PDF_SAVE_PATH')
+            temp['pdf_ttl'] = current_app.config.get('FILES_REST_DEFAULT_PDF_TTL')
+            settings = AdminSettings.Dict2Obj(temp)
+
+        return self.render(
+            current_app.config["WEKO_ADMIN_FILE_PREVIEW_SETTINGS_TEMPLATE"],
+            settings=settings
+        )
+
+
+class ItemExportSettingsView(BaseView):
+    """Item export settings."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        """File preview settings."""
+        if request.method == 'POST':
+            item_setting = request.form.get('item_export_radio', 'True')
+            contents_setting = request.form.get('export_contents_radio', 'True')
+            new_settings = {
+                'allow_item_exporting': str_to_bool(item_setting),
+                'enable_contents_exporting': str_to_bool(contents_setting)
+            }
+
+            try:
+                AdminSettings.update('item_export_settings', new_settings)
+                flash(_('Successfully Changed Settings'))
+            except Exception as e:
+                current_app.logger.error(
+                    'ERROR Item Export Settings: {}'.format(e))
+                flash(_('Failed To Change Settings'), 'error')
+
+            return redirect(url_for('itemexportsettings.index'))
+
+        return self.render(
+            current_app.config['WEKO_ADMIN_ITEM_EXPORT_SETTINGS_TEMPLATE'],
+            settings=self._get_current_settings()
+        )
+
+    def _get_current_settings(self):
+        """Get current item export settings."""
+        return AdminSettings.get('item_export_settings') or \
+            AdminSettings.Dict2Obj(
+                current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
 
 
 style_adminview = {
@@ -728,6 +842,24 @@ site_license_settings_adminview = {
     }
 }
 
+file_preview_settings_adminview = {
+    'view_class': FilePreviewSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('File Preview'),
+        'endpoint': 'filepreview'
+    }
+}
+
+item_export_settings_adminview = {
+    'view_class': ItemExportSettingsView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Item Export'),
+        'endpoint': 'itemexportsettings'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -739,4 +871,6 @@ __all__ = (
     'ranking_settings_adminview',
     'search_settings_adminview',
     'site_license_settings_adminview',
+    'file_preview_settings_adminview',
+    'item_export_settings_adminview',
 )

@@ -23,7 +23,7 @@
 from flask import request, url_for
 
 
-def default_links_factory(pid):
+def default_links_factory(pid, **kwargs):
     """Factory for record links generation.
 
     :param pid: A Persistent Identifier instance.

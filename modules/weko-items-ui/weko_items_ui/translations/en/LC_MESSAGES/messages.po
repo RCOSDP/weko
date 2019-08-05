@@ -225,3 +225,12 @@ msgstr ""
 
 #~ msgid "You do not even have an itemtype."
 #~ msgstr ""
+
+msgid "The following items is required. Please recheck and input."
+msgstr "The following items is required. Please recheck and input."
+
+msgid "Please input all required item."
+msgstr ""
+
+msgid "Please input the correct data."
+msgstr ""

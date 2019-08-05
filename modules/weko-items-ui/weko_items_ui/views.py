@@ -22,6 +22,7 @@
 
 import operator
 import os
+import re
 import sys
 from datetime import date, timedelta
 
@@ -54,7 +55,7 @@ from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    validate_user
+    validate_form_input_data, validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -915,3 +916,20 @@ def check_ranking_show():
     if settings and settings.is_show:
         result = ''
     return result
+
+
+@blueprint_api.route('/validate', methods=['POST'])
+@login_required
+def validate():
+    """Validate input data.
+
+    :return:
+    """
+    result = {
+        "is_valid": True,
+        "error": ""
+    }
+    request_data = request.get_json()
+    validate_form_input_data(result, request_data.get('item_id'),
+                             request_data.get('data'))
+    return jsonify(result)

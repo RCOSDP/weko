@@ -1,0 +1,69 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/weko_admin/quill.snow.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/weko_admin/language.css') }}" rel="stylesheet">
+{% endblock %}
+
+{%- block javascript %}
+{{ super() }}
+{%- endblock javascript %}
+
+{%- block body %}
+<div class="panel">
+    <div class="panel-body">
+        <form method="POST" name="settings_form" action={{url_for('filepreview.index')}}>
+        <table style="width:80%">
+            <tbody>
+                <tr>
+                    <th style="text-align: right;">{{_('PDF Save Path')}}</th>
+                    <td style="width:5%"></td>
+                    <td>
+                        <input type="text" name="path" style="text-align:center;" value={{ settings.path }}>
+                        <font color="red"><label>'/'{{_(' Can not be selected')}}</label></font>
+                    </td>
+                </tr>
+                <tr>
+                    <th style="text-align: right;">{{_('PDF TTL')}}</th>
+                    <td></td>
+                    <td>
+                        <input type="text" name="pdf_ttl" style="text-align:center;" value={{ settings.pdf_ttl }} pattern="[0-9]*">
+                        <label>{{_('Seconds')}}</label>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="row">
+            <div class="form-actions">
+                <button type="submit" name="submit" value="save_settings" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-save"></span>
+                    {{_('Save')}}
+                </button>
+            </div>
+        </div>
+        </form>
+    </div>
+</div>
+{%- endblock body %}

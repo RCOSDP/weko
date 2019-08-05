@@ -26,19 +26,19 @@ WEKO_ADMIN_DEFAULT_LIFETIME = 60
 """ Session time out setting, default 60 minutes """
 
 WEKO_ADMIN_BASE_TEMPLATE = 'weko_admin/base.html'
-"""Base templates for weko-admin module."""
+"""Base template for weko-admin module."""
 
 WEKO_ADMIN_SETTINGS_TEMPLATE = None
-"""Settings base templates for weko-admin module."""
+"""Settings base template for weko-admin module."""
 
 WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
-"""Settings base templates for weko-admin module."""
+"""Settings base template for weko-admin module."""
 
 WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/admin/site_license_settings.html'
-"""Site-license templates."""
+"""Site-license template."""
 
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
-"""Block-style templates."""
+"""Block-style template."""
 
 WEKO_ADMIN_REPORT_TEMPLATE = 'weko_admin/admin/report.html'
 """Report template."""
@@ -51,20 +51,28 @@ WEKO_ADMIN_LOG_ANALYSIS_SETTINGS_TEMPLATE = \
 """Stats Settings template."""
 
 WEKO_ADMIN_LANG_SETTINGS = 'weko_admin/admin/lang_settings.html'
-"""Language templates."""
+"""Language template."""
 
 WEKO_ADMIN_FEEDBACK_MAIL = 'weko_admin/admin/feedback_mail.html'
-"""Language templates."""
+"""Language template."""
 
 WEKO_ADMIN_WEB_API_ACCOUNT = 'weko_admin/admin/web_api_account.html'
-"""Web Api Account templates."""
+"""Web Api Account template."""
 
 WEKO_ADMIN_SEARCH_MANAGEMENT_TEMPLATE = \
     'weko_admin/admin/search_management_settings.html'
-"""Site-license templates."""
+"""Site-license template."""
 
 WEKO_ADMIN_RANKING_SETTINGS_TEMPLATE = 'weko_admin/admin/ranking_settings.html'
 """Ranking Settings template."""
+
+WEKO_ADMIN_FILE_PREVIEW_SETTINGS_TEMPLATE = \
+    'weko_admin/admin/file_preview_settings.html'
+"""File Preview Settings template."""
+
+WEKO_ADMIN_ITEM_EXPORT_SETTINGS_TEMPLATE = \
+    'weko_admin/admin/item_export_settings.html'
+"""Item Export Settings template."""
 
 LOGO_ALLOWED_EXTENSIONS = set(['png', 'jpeg', 'jpg'])
 
@@ -86,7 +94,7 @@ WEKO_ADMIN_FORMAT = '&format=json'
 WEKO_ADMIN_VALIDATION_MESSAGE = 'The login you supplied is not recognized'
 """Validate message of certificate."""
 
-WEKO_ADMIN_DISPLAY_FILE_STATS = True
+WEKO_ADMIN_DISPLAY_FILE_STATS = True  # TODO: Delete if not used
 """Display record stats or not."""
 
 WEKO_ADMIN_DEFAULT_CRAWLER_LISTS = [
@@ -619,6 +627,7 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'itemtypesregister',
     'itemtypesproperties',
     'itemtypesmapping',
+    'itemexportsettings',
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
 
@@ -626,5 +635,11 @@ WEKO_ADMIN_ACCESS_TABLE = {
     "System Administrator": [],  # Can access all, not needed
     "Repository Administrator": WEKO_ADMIN_REPOSITORY_ACCESS_LIST,
     "Community Administrator": WEKO_ADMIN_COMMUNITY_ACCESS_LIST,
+}
+"""Access table for different admin roles."""
+
+WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS = {
+    'allow_item_exporting': True,
+    'enable_contents_exporting': True
 }
 """Access table for different admin roles."""
