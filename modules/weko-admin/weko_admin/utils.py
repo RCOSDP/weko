@@ -285,7 +285,7 @@ def create_crossref_url(pid):
     if not pid:
         raise ValueError('PID is required')
     url = config.WEKO_ADMIN_CROSSREF_API_URL + config.WEKO_ADMIN_ENDPOINT + \
-        '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
+          '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
     return url
 
 
@@ -297,7 +297,7 @@ def validate_certification(cert_data):
     """
     response = requests.get(create_crossref_url(cert_data))
     return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
-        str(vars(response).get('_content', None))
+           str(vars(response).get('_content', None))
 
 
 def get_initial_stats_report():
@@ -457,7 +457,7 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
     for record in records:
         if file_type is None or \
             file_type == 'file_download' or \
-                file_type == 'file_preview':
+            file_type == 'file_preview':
             writer.writerow([record['file_key'], record['index_list'],
                              record['total'], record['no_login'],
                              record['login'], record['site_license'],
@@ -726,7 +726,7 @@ class StatisticMail:
             recipient = str(k)
             subject = str(cls.build_statistic_mail_subject(title, stat_date))
             body = str(cls.fill_email_data(
-                cls.__get_list_statistic_data(v.get("item"), stat_date),
+                cls.get_list_statistic_data(v.get("item"), stat_date),
                 mail_data))
             cls.send_mail(recipient, body, subject)
 
@@ -773,36 +773,22 @@ class StatisticMail:
             'total_view': total_view,
             'total_download': total_download
         }
-        # FAKE DATA TODO: Remove fake data if get_item_information run
-        # statistic_data = [
-        #     {
-        #         'title': 'Cold Summer',
-        #         'url': 'google.com.vn',
-        #         'detail_view': '15',
-        #         'file_download': [
-        #             'Chapter 1(14)',
-        #             'Chapter 2(33)'
-        #         ]
-        #     },
-        #     {
-        #         'title': 'Hot Winter',
-        #         'url': 'google.com.vn',
-        #         'detail_view': '75',
-        #         'file_download': [
-        #             'Session 1(44)',
-        #             'Session 2(33)',
-        #             'Session 3(22)',
-        #             'Session 4(11)'
-        #         ]
-        #     }
-        # ]
-        # =================================
         list_result['data'] = statistic_data
         list_result['summary'] = summary_data
         return list_result
 
     @classmethod
     def get_item_information(cls, item_id, time):
+        """Get infomation of item.
+
+        Arguments:
+            item_id {string} -- id of item
+            time {string} -- time to statistic data
+
+        Returns:
+            [dictionary] -- data template insert to email
+
+        """
         result = db.session.query(RecordMetadata).filter(
             RecordMetadata.id ==
             "30cab97b-dd22-4a32-a6f6-ddadac7aa67a").one_or_none()
@@ -812,7 +798,7 @@ class StatisticMail:
         title = data.get("item_title")
         result = {
             'title': title,
-            'url': 'weko3.com',  # fake
+            'url': 'weko3.com',  # FAKE DATA
             'detail_view': count_item_view,
             'file_download': count_item_download
         }
@@ -820,11 +806,31 @@ class StatisticMail:
 
     @classmethod
     def get_item_view(cls, item_id, time):
+        """Get view of item.
+
+        Arguments:
+            item_id {string} -- id of item
+            time {string} -- time to statistic data
+
+        Returns:
+            [string] -- viewed of item
+
+        """
         query_file_view = QueryRecordViewCount()
         return str(query_file_view.get_data(item_id, time).get("total"))
 
     @classmethod
     def get_item_download(cls, data, time):
+        """Get download of item.
+
+        Arguments:
+            data {dictionary} -- data of item in records_metadata
+            time {string} -- time to statistic data
+
+        Returns:
+            [dictionary] -- dictionary of filet and it's downloaded
+
+        """
         list_file = cls.get_file_in_item(data)
         result = {}
         if list_file:
@@ -837,23 +843,39 @@ class StatisticMail:
         return result
 
     @classmethod
-    def __find_value_in_dict(cls, key, data):
+    def find_value_in_dict(cls, key, data):
+        """Find value of key in dictionary.
+
+        Arguments:
+            key {string} -- key of dictionary to find
+            data {dictionary} -- data to find key
+
+        """
         for k, v in data.items():
             if k == key:
                 yield v
             if isinstance(v, dict):
-                for result in cls.__find_value_in_dict(key, v):
+                for result in cls.find_value_in_dict(key, v):
                     yield result
             elif isinstance(v, list):
                 for d in v:
                     if isinstance(d, dict):
-                        for result in cls.__find_value_in_dict(key, d):
+                        for result in cls.find_value_in_dict(key, d):
                             yield result
 
     @classmethod
     def get_file_in_item(cls, data):
+        """Get all file in item.
+
+        Arguments:
+            data {dictionary} -- data of item in records_metadata
+
+        Returns:
+            [dictionary] -- bucket id and file key of all file in item
+
+        """
         bucket_id = data.get("_buckets").get("deposit")
-        list_file_key = list(cls.__find_value_in_dict("filename", data))
+        list_file_key = list(cls.find_value_in_dict("filename", data))
         return {
             "bucket_id": bucket_id,
             "list_file_key": list_file_key,
@@ -914,19 +936,6 @@ class StatisticMail:
             boolean -- True if send success
 
         """
-        try:
-            mail_data = {
-                'user_name': '',
-                'organization': '',
-                'time': "2019-08"
-            }
-            list_item = ["30cab97b-dd22-4a32-a6f6-ddadac7aa67a"]
-            body = str(cls.fill_email_data(
-                cls.get_list_statistic_data(list_item, "2019-08"),
-                mail_data))
-        except Exception as ex:
-            body = str(ex)
-
         rf = {
             'subject': subject,
             'body': body,
