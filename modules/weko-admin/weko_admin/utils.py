@@ -699,6 +699,8 @@ def get_system_default_language():
 
 
 class StatisticMail:
+    """Pack of function to send statistic mail."""
+
     @classmethod
     def get_send_time(cls):
         """Get statistic time.
@@ -713,9 +715,7 @@ class StatisticMail:
 
     @classmethod
     def send_mail_to_all(cls):
-        """Send mail to all setting email.
-
-        """
+        """Send mail to all setting email."""
         from weko_theme import config as theme_config
         from weko_search_ui.utils import get_feedback_mail_list, \
             parse_feedback_mail_data
