@@ -1531,9 +1531,14 @@ class SiteLicense(RecordBase):
                 sif = []
                 for i in range(len(site_license)):
                     lst = site_license[i]
+                    if lst.get('mail_address'):
+                        receive_mail_flag = lst.get('receive_mail_flag')
+                    else:
+                        receive_mail_flag = 'F'
                     slif = SiteLicenseInfo(
                         organization_id=i + 1,
                         organization_name=lst.get('organization_name'),
+                        receive_mail_flag=receive_mail_flag,
                         mail_address=lst.get('mail_address'),
                         domain_name=lst.get('domain_name'),
                         addresses=get_addr(

@@ -26,7 +26,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
@@ -41,6 +41,7 @@ from invenio_indexer.api import RecordIndexer
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
+from weko_records.models import SiteLicenseInfo
 
 from .models import AdminSettings, FeedbackMailSetting, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
@@ -658,6 +659,39 @@ class SiteLicenseSettingsView(BaseView):
             abort(500)
 
 
+class SiteLicenseSendMailSettingsView(BaseView):
+    """Site-License send mail settings."""
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        if request.method == 'POST':
+            data = request.get_json()
+            settings = AdminSettings.get('site_license_mail_settings')
+            settings.auto_send_flag = data['auto_send_flag']
+            AdminSettings.update('site_license_mail_settings',
+                                 settings.__dict__)
+            for name in data['checked_list']:
+                sitelicense = SiteLicenseInfo.query.filter_by(
+                    organization_name=name).first()
+                if sitelicense:
+                    sitelicense.receive_mail_flag = data['checked_list'][name]
+                    db.session.commit()
+
+        sitelicenses = SiteLicenseInfo.query.order_by(
+            SiteLicenseInfo.organization_id).all()
+        settings = AdminSettings.get('site_license_mail_settings')
+        now = datetime.utcnow()
+        last_month = (now.replace(day=1) - timedelta(days=1)).replace(day=1)
+
+        return self.render(
+            current_app.config['WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE'],
+            sitelicenses=sitelicenses,
+            auto_send=settings.auto_send_flag,
+            now=now,
+            last_month=last_month
+        )
+
+
 class FilePreviewSettingsView(BaseView):
     """File preview settings."""
 
@@ -696,7 +730,7 @@ class FilePreviewSettingsView(BaseView):
                     current_app.logger.debug(form)
                     flash(_('Failurely Changed Settings.'), 'error')
             except Exception as ex:
-                current_app.logger.debug(ex)
+                current_app.logger.error(ex)
                 flash(_('Failurely Changed Settings.'), 'error')
             return redirect(url_for('filepreview.index'))
 
@@ -804,6 +838,15 @@ site_license_settings_adminview = {
     }
 }
 
+site_license_send_mail_settings_adminview = {
+    'view_class': SiteLicenseSendMailSettingsView,
+    'kwargs': {
+        'category': _('Statistics'),
+        'name': _('Site License'),
+        'endpoint': 'sitelicensesendmail'
+    }
+}
+
 file_preview_settings_adminview = {
     'view_class': FilePreviewSettingsView,
     'kwargs': {
@@ -824,5 +867,6 @@ __all__ = (
     'ranking_settings_adminview',
     'search_settings_adminview',
     'site_license_settings_adminview',
+    'site_license_send_mail_settings_adminview',
     'file_preview_settings_adminview',
 )

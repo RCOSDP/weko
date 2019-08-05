@@ -22,6 +22,9 @@
 
 from flask_babelex import gettext as _
 
+WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH = 2
+"""default aggregation month for site license mail."""
+
 WEKO_ADMIN_DEFAULT_LIFETIME = 60
 """ Session time out setting, default 60 minutes """
 
@@ -36,6 +39,9 @@ WEKO_ADMIN_LIFETIME_TEMPLATE = 'weko_admin/settings/lifetime.html'
 
 WEKO_ADMIN_SITE_LICENSE_TEMPLATE = 'weko_admin/admin/site_license_settings.html'
 """Site-license templates."""
+
+WEKO_ADMIN_SITE_LICENSE_SEND_MAIL_TEMPLATE = 'weko_admin/admin/site_license_send_mail_settings.html'
+"""Site-license send mail settings templates."""
 
 WEKO_ADMIN_BlOCK_STYLE_TEMPLATE = 'weko_admin/admin/block_style.html'
 """Block-style templates."""
