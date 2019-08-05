@@ -22,6 +22,7 @@
 import csv
 import os
 import zipfile
+from datetime import datetime
 from io import BytesIO, StringIO
 
 import redis
@@ -40,7 +41,6 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
-from datetime import datetime
 
 from . import config
 from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
@@ -285,7 +285,7 @@ def create_crossref_url(pid):
     if not pid:
         raise ValueError('PID is required')
     url = config.WEKO_ADMIN_CROSSREF_API_URL + config.WEKO_ADMIN_ENDPOINT + \
-          '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
+        '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
     return url
 
 
@@ -297,7 +297,7 @@ def validate_certification(cert_data):
     """
     response = requests.get(create_crossref_url(cert_data))
     return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
-           str(vars(response).get('_content', None))
+        str(vars(response).get('_content', None))
 
 
 def get_initial_stats_report():
@@ -457,7 +457,7 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
     for record in records:
         if file_type is None or \
             file_type == 'file_download' or \
-            file_type == 'file_preview':
+                file_type == 'file_preview':
             writer.writerow([record['file_key'], record['index_list'],
                              record['total'], record['no_login'],
                              record['login'], record['site_license'],
@@ -716,28 +716,34 @@ class StatisticMail:
     @classmethod
     def send_mail_to_all(cls):
         """Send mail to all setting email."""
-        from weko_theme import config as theme_config
-        from weko_search_ui.utils import get_feedback_mail_list, \
-            parse_feedback_mail_data
-        feedback_mail_data = get_feedback_mail_list()
-        if not feedback_mail_data:
-            return
-        list_mail_data = parse_feedback_mail_data(
-            feedback_mail_data)
-        title = theme_config.THEME_SITENAME  # site name
-        stat_date = cls.get_send_time()
-        for k, v in list_mail_data.items():
-            mail_data = {
-                'user_name': cls.get_author_name(str(k), v.get('author_id')),
-                'organization': '',
-                'time': stat_date
-            }
-            recipient = str(k)
-            subject = str(cls.build_statistic_mail_subject(title, stat_date))
-            body = str(cls.fill_email_data(
-                cls.get_list_statistic_data(v.get("item"), stat_date),
-                mail_data))
-            cls.send_mail(recipient, body, subject)
+        try:
+            from weko_theme import config as theme_config
+            from weko_search_ui.utils import get_feedback_mail_list, \
+                parse_feedback_mail_data
+            feedback_mail_data = get_feedback_mail_list()
+            if not feedback_mail_data:
+                return
+            list_mail_data = parse_feedback_mail_data(
+                feedback_mail_data)
+            title = theme_config.THEME_SITENAME
+            stat_date = cls.get_send_time()
+            for k, v in list_mail_data.items():
+                mail_data = {
+                    'user_name': cls.get_author_name(str(k),
+                                                     v.get('author_id')),
+                    'organization': '',
+                    'time': stat_date
+                }
+                recipient = str(k)
+                subject = str(
+                    cls.build_statistic_mail_subject(title, stat_date))
+                body = str(cls.fill_email_data(
+                    cls.get_list_statistic_data(v.get("item"), stat_date),
+                    mail_data))
+                cls.send_mail(recipient, body, subject)
+        except Exception as ex:
+            current_app.logger.error(
+                '[{0}] Error has occured. Error:{1}'.format(1, ex))
 
     @classmethod
     def convert_download_count_to_int(cls, download_count):
@@ -964,6 +970,9 @@ class StatisticMail:
             boolean -- True if send success
 
         """
+        current_app.logger.debug("START Send Feedback Mail")
+        current_app.logger.debug('Recipient: {0}'.format(recipient))
+        current_app.logger.debug('Mail data: \n{0}'.format(body))
         rf = {
             'subject': subject,
             'body': body,
