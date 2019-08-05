@@ -28,6 +28,7 @@ from invenio_pidstore.models import PersistentIdentifier, PIDStatus, \
 def weko_deposit_minter(record_uuid, data):
     """Weko deposit."""
     id_ = RecordIdentifier.next()
+
     recid = PersistentIdentifier.create(
         'recid',
         str(id_),
@@ -35,6 +36,7 @@ def weko_deposit_minter(record_uuid, data):
         object_uuid=record_uuid,
         status=PIDStatus.REGISTERED
     )
+    data['recid'] = int(recid.pid_value)
 
     # Create depid with same pid_value of the recid
     depid = PersistentIdentifier.create(
