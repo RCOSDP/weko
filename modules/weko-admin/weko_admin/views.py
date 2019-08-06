@@ -369,8 +369,14 @@ def get_email_author():
     }
 
     indexer = RecordIndexer()
-    result = indexer.client.search(index="authors", body=body)
-    result_item_cnt = indexer.client.search(index="weko", body=query_item)
+    result = indexer.client.search(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        body=body
+    )
+    result_item_cnt = indexer.client.search(
+        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+        body=query_item
+    )
 
     result['item_cnt'] = result_item_cnt
 
