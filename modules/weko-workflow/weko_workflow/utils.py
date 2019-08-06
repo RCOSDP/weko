@@ -246,12 +246,15 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if (item_type.name_id == journalarticle_nameid or resource_type ==
-                journalarticle_type) or (item_type.name_id == thesis_nameid) \
-            or (item_type.name_id == report_nameid or resource_type in
-                report_types) or (resource_type == elearning_type) or (
-            item_type.name_id in datageneral_nameid or resource_type in
-                datageneral_types) or item_type.name_id < 10:
+        if (item_type.name_id == journalarticle_nameid
+            or resource_type == journalarticle_type) \
+            or (item_type.name_id == thesis_nameid) \
+            or (item_type.name_id == report_nameid
+                or resource_type in report_types) \
+            or (resource_type == elearning_type) \
+            or (item_type.name_id in datageneral_nameid
+                or resource_type in datageneral_types) \
+                or item_type.name_id < 10:
             properties = ['title',
                           'identifier',
                           'identifierRegistration']
@@ -387,18 +390,16 @@ def validation_item_property(mapping_data, identifier_type, properties):
             error_list['required'] += type_requirements
         else:
             for item in type_data:
-                if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']\
-                        and not item == 'JaLC':
+                if (identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']
+                        and not item == 'JaLC') or \
+                    (identifier_type == IDENTIFIER_GRANT_SELECT_DICT[
+                        'CrossRefDOI'] and not item == 'Crossref'):
                     error_list['required'].append(type_key)
-                    # error_list['doi'] = 'JaLC'
-                elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT[
-                        'CrossRefDOI'] and not item == 'Crossref':
-                    error_list['required'].append(type_key)
-                    # error_list['doi'] = 'Crossref'
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
-        data, key = mapping_data.get_data_by_property("sourceIdentifier.@value")
+        data, key = mapping_data.get_data_by_property(
+            "sourceIdentifier.@value")
         type_data, type_key = mapping_data.get_data_by_property(
             "sourceIdentifier.@attributes.identifierType")
 
