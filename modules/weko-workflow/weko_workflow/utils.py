@@ -356,7 +356,8 @@ def validation_item_property(mapping_data, identifier_type, properties):
         type_data, type_key = mapping_data.get_data_by_property(
             "identifier.@attributes.identifierType")
 
-        requirements = check_required_data(data, key)
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
         type_requirements = check_required_data(type_data, type_key)
         if requirements:
             error_list['required'] += requirements
@@ -374,8 +375,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         type_data, type_key = mapping_data.get_data_by_property(
             "identifierRegistration.@attributes.identifierType")
 
-        repeatable = True
-        requirements = check_required_data(data, key, repeatable)
+        requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
         if requirements:
             error_list['required'] += requirements
