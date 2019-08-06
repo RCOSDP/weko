@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Module of weko-items-ui utils.."""
+
 from datetime import datetime
 
 from flask import session
@@ -386,8 +387,12 @@ def update_json_schema_by_activity_id(json, activity_id):
                 json['required'] = sub_item
             else:
                 if json['properties'][sub_item[0]].get('items'):
-                    json['properties'][sub_item[0]][
-                        'items']['required'].append(sub_item[1])
+                    if not json['properties'][sub_item[0]]['items'].get(
+                            'required'):
+                        json['properties'][sub_item[0]]['items']['required'] \
+                            = []
+                    json['properties'][sub_item[0]]['items'][
+                        'required'].append(sub_item[1])
                 else:
                     json['properties'][sub_item[0]]['required'].append(
                         sub_item[1])
@@ -401,5 +406,7 @@ def update_json_schema_by_activity_id(json, activity_id):
                     if creators['properties'][creator].get('items'):
                         givename = creators['properties'][creator]['items']
                         if givename['properties'].get(sub_item[1]):
+                            if not givename.get('required'):
+                                givename['required'] = []
                             givename['required'].append(sub_item[1])
     return json
