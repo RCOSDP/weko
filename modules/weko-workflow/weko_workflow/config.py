@@ -61,17 +61,13 @@ IDENTIFIER_GRANT_SUFFIX_METHOD = 0
 """
 
 IDENTIFIER_ITEMSMETADATA_FORM = {
-    'identifier': {
-        'value': '',
-        'properties': {
-            'identifierType': ''
-        }
+    'item_1551265147138': {
+        'subitem_1551256116088': '',
+        'subitem_1551256122128': ''
     },
-    'identifierRegistration': {
-        "value": '',
-        "properties": {
-            "identifierType": ''
-        }
+    'item_1551265178780': {
+        'subitem_1551256250276': '',
+        'subitem_1551256259586': ''
     }
 }
 """ItemsMetadata format for Identifier Grant action."""

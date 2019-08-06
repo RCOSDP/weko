@@ -553,6 +553,10 @@ def next_action(activity_id='0', action_id=0):
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
 
+            record = WekoDeposit.get_record(activity_detail.item_id)
+            if record is not None:
+                deposit = WekoDeposit(record, record.model)
+                deposit.update_jpcoar_identifier()
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 

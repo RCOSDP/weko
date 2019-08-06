@@ -19,6 +19,9 @@
 # MA 02111-1307, USA.
 
 """Module of weko-workflow utils."""
+
+from copy import deepcopy
+
 from flask import current_app
 from flask_babelex import gettext as _
 from invenio_communities.models import Community
@@ -64,67 +67,74 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
 
     # transfer to JPCOAR format
-    res = {'pidstore_identifier': {}}
-    tempdata = IDENTIFIER_ITEMSMETADATA_FORM
+    attrs = ['item_1551265147138', 'item_1551265178780']
+    res = {
+        attrs[0]: item.get(attrs[0]),
+        'pidstore_identifier': {}
+        }
+    tempdata = deepcopy(IDENTIFIER_ITEMSMETADATA_FORM)
     flag_del_pidstore = False
+    identifier_value = ''
+    identifier_type = ''
+    identifierReg_value = ''
+    identifierReg_type = ''
 
-    if idf_grant == 0:
-        res['pidstore_identifier'] = tempdata
-    elif idf_grant == 1 and post_json.get('identifier_grant_jalc_doi_link'):
+    if idf_grant == 1 and post_json.get('identifier_grant_jalc_doi_link'):
         jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
-        tempdata['identifier']['value'] = jalcdoi_link
-        tempdata['identifier']['properties']['identifierType'] = 'DOI'
-        tempdata['identifierRegistration']['value'] = \
-            jalcdoi_tail[1:]
-        tempdata['identifierRegistration']['properties'][
-            'identifierType'] = 'JaLC'
-        res['pidstore_identifier'] = tempdata
+        identifier_value = jalcdoi_link
+        identifier_type = 'DOI'
+        identifierReg_value = '/'.join(jalcdoi_tail[1:])
+        identifierReg_type = 'JaLC'
     elif idf_grant == 2 and post_json.get('identifier_grant_jalc_cr_doi_link'):
         jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
-        tempdata['identifier']['value'] = jalcdoi_cr_link
-        tempdata['identifier']['properties']['identifierType'] = 'DOI'
-        tempdata['identifierRegistration']['value'] = \
-            jalcdoi_cr_tail[1:]
-        tempdata['identifierRegistration']['properties'][
-            'identifierType'] = 'Crossref'
-        res['pidstore_identifier'] = tempdata
+        identifier_value = jalcdoi_cr_link
+        identifier_type = 'DOI'
+        identifierReg_value = '/'.join(jalcdoi_cr_tail[1:])
+        identifierReg_type = 'Crossref'
     elif idf_grant == 3 and post_json.get('identifier_grant_jalc_dc_doi_link'):
         jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
-        tempdata['identifier']['value'] = jalcdoi_dc_link
-        tempdata['identifier']['properties']['identifierType'] = 'DOI'
-        tempdata['identifierRegistration']['value'] = \
-            jalcdoi_dc_tail[1:]
-        tempdata['identifierRegistration']['properties'][
-            'identifierType'] = 'Datacite'
-        res['pidstore_identifier'] = tempdata
+        identifier_value = jalcdoi_dc_link
+        identifier_type = 'DOI'
+        identifierReg_value = '/'.join(jalcdoi_dc_tail[1:])
+        identifierReg_type = 'Datacite'
     elif idf_grant == 4 and post_json.get('identifier_grant_crni_link'):
         jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
-        tempdata['identifier']['value'] = jalcdoi_crni_link
-        tempdata['identifier']['properties']['identifierType'] = 'HDL'
-        del tempdata['identifierRegistration']
-        res['pidstore_identifier'] = tempdata
+        identifier_value = jalcdoi_crni_link
+        identifier_type = 'HDL'
+        del tempdata[attrs[1]]
     elif idf_grant == -1:  # with draw identifier_grant
         pidstore_identifier = item.get('pidstore_identifier')
-        res['pidstore_identifier'] = tempdata
         flag_del_pidstore = del_invenio_pidstore(
-            pidstore_identifier['identifier']['value'])
-    else:
+            pidstore_identifier['identifier_value'])
+    elif idf_grant != 0:
         current_app.logger.error(_('Identifier datas are empty!'))
         pidstore_identifier = item.get('pidstore_identifier')
-        res['pidstore_identifier'] = tempdata
         flag_del_pidstore = del_invenio_pidstore(
-            pidstore_identifier['identifier']['value'])
+            pidstore_identifier['identifier_value'])
     try:
-        if not flag_del_pidstore:
-            reg_invenio_pidstore(tempdata['identifier']['value'], item.id)
+        tempdata[attrs[0]]['subitem_1551256116088'] = identifier_value
+        tempdata[attrs[0]]['subitem_1551256122128'] = identifier_type
+        if tempdata.get(attrs[1]):
+            tempdata[attrs[1]]['subitem_1551256250276'] = identifierReg_value
+            tempdata[attrs[1]]['subitem_1551256259586'] = identifierReg_type
 
-        with db.session.begin_nested():
-            item.update(res)
-            item.commit()
-        db.session.commit()
+        if not flag_del_pidstore:
+            reg_invenio_pidstore(
+                tempdata[attrs[0]]['subitem_1551256116088'], item.id)
+
+        # Update metadata
+        if tempdata != IDENTIFIER_ITEMSMETADATA_FORM:
+            res[attrs[0]].append(tempdata[attrs[0]])
+            res['pidstore_identifier']['identifier_value'] = identifier_value
+            if tempdata.get(attrs[1]):
+                res[attrs[1]] = [(tempdata[attrs[1]])]
+            with db.session.begin_nested():
+                item.update(res)
+                item.commit()
+            db.session.commit()
     except Exception as ex:
         current_app.logger.exception(str(ex))
         db.session.rollback()
