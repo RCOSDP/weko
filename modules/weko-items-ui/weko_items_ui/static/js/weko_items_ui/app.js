@@ -1100,20 +1100,12 @@ function handleSharePermission(value) {
             var modalcontent = "Billing price is required half-width numbers.";
             $("#inputModal").html(modalcontent);
             $("#allModal").modal("show");
-        }else if (!$rootScope.recordsVM.invenioRecordsModel['title']) {
-            //alert('Title is required! Please input title');
-            var modalcontent =  "Title is required! Please input title.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
-        }else if (!$rootScope.recordsVM.invenioRecordsModel['pubdate']){
-            //alert('PubDate is required! Please input pubDate');
-            var modalcontent =  "PubDate is required! Please input pubDate.";
-            $("#inputModal").html(modalcontent);
-            $("#allModal").modal("show");
+            return false;
         }else if ($scope.getFeedbackMailList().length > 0){
           let modalcontent = $('#invalid-email-format').val();
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
+          return false;
         }
         let isValid = this.validateInputData();
         if (!isValid) {
