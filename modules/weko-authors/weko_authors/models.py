@@ -99,6 +99,7 @@ class Authors(db.Model, Timestamp):
 
         Returns:
             dictionary -- author data
+
         """
         try:
             author = cls.query.filter_by(id=author_id).one_or_none()

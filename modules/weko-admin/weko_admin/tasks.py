@@ -123,7 +123,6 @@ def send_feedback_mail():
         StatisticMail.send_mail_to_all()
 
 
-
 def _due_to_run(schedule):
     """Check if a task needs to be ran."""
     if not schedule['enabled']:

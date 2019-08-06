@@ -742,8 +742,7 @@ class StatisticMail:
                     mail_data))
                 cls.send_mail(recipient, body, subject)
         except Exception as ex:
-            current_app.logger.error(
-                '[{0}] Error has occured. Error:{1}'.format(1, ex))
+            current_app.logger.error('Error has occurred', ex)
 
     @classmethod
     def convert_download_count_to_int(cls, download_count):
@@ -813,7 +812,7 @@ class StatisticMail:
 
     @classmethod
     def get_item_information(cls, item_id, time):
-        """Get infomation of item.
+        """Get information of item.
 
         Arguments:
             item_id {string} -- id of item
@@ -832,7 +831,7 @@ class StatisticMail:
         title = data.get("item_title")
         result = {
             'title': title,
-            'url': 'weko3.com',  # FAKE DATA
+            'url': 'weko3.com',  # FIXME: Fake data
             'detail_view': count_item_view,
             'file_download': count_item_download
         }
@@ -862,7 +861,7 @@ class StatisticMail:
             time {string} -- time to statistic data
 
         Returns:
-            [dictionary] -- dictionary of filet and it's downloaded
+            [dictionary] -- dictionary of file and it's downloaded
 
         """
         list_file = cls.get_file_in_item(data)
@@ -970,7 +969,7 @@ class StatisticMail:
             boolean -- True if send success
 
         """
-        current_app.logger.debug("START Send Feedback Mail")
+        current_app.logger.debug("START Prepare Feedback Mail Data")
         current_app.logger.debug('Recipient: {0}'.format(recipient))
         current_app.logger.debug('Mail data: \n{0}'.format(body))
         rf = {
@@ -978,6 +977,7 @@ class StatisticMail:
             'body': body,
             'recipient': recipient
         }
+        current_app.logger.debug("END Prepare Feedback Mail Data")
         return MailSettingView.send_statistic_mail(rf)
 
     @classmethod
