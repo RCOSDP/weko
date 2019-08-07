@@ -346,7 +346,8 @@ def validation_item_property(mapping_data, identifier_type, properties):
                     if item.get(key.split('.')[1]):
                         data.append(item.get(key.split('.')[1]))
 
-        requirements = check_required_data(data, key)
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
         if requirements:
             error_list['pattern'] += requirements
 
