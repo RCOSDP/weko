@@ -358,7 +358,9 @@ def validation_item_property(mapping_data, identifier_type, properties):
 
         repeatable = True
         requirements = check_required_data(data, key, repeatable)
-        type_requirements = check_required_data(type_data, type_key)
+        type_requirements = check_required_data(type_data,
+                                                type_key,
+                                                repeatable)
         if requirements:
             error_list['required'] += requirements
         if type_requirements:
