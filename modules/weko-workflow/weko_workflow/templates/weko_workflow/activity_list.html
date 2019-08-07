@@ -115,12 +115,12 @@
     </table>
     </div>
     {%-if community%}
-      <a class="btn btn-light pull-right add-big-button" href="{{url_for('weko_workflow.new_activity', community=community.id)}}">
-            <span class="glyphicon glyphicon-plus"></span>
+      <a class="btn btn-success pull-right" href="{{url_for('weko_workflow.new_activity', community=community.id)}}">
+            <span class="glyphicon glyphicon-plus"></span>&nbsp
               {{_('New Activity')}}</a>
     {%-else%}
-      <a class="btn btn-light pull-right add-big-button" href="{{url_for('weko_workflow.new_activity')}}">
-           <span class="glyphicon glyphicon-plus"></span>
+      <a class="btn btn-success pull-right" href="{{url_for('weko_workflow.new_activity')}}">
+           <span class="glyphicon glyphicon-plus"></span>&nbsp
                {{_('New Activity')}}</a>
     {%- endif%}
 

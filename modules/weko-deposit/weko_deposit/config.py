@@ -99,6 +99,8 @@ DEPOSIT_REST_ENDPOINTS = dict(
 WEKO_DEPOSIT_REST_ENDPOINTS = copy.deepcopy(DEPOSIT_REST_ENDPOINTS)
 WEKO_DEPOSIT_REST_ENDPOINTS['depid']['rdc_route'] = '/deposits/redirect/<{0}:pid_value>'.format(
     _PID)
+WEKO_DEPOSIT_REST_ENDPOINTS['depid']['pub_route'] = '/deposits/publish/<{0}:pid_value>'.format(
+    _PID)
 
 DEPOSIT_RECORDS_UI_ENDPOINTS = {
     'depid': {

@@ -35,6 +35,7 @@
 {%- endblock css %}
 
 {%- block javascript %}
+  {% assets "weko_admin_angular_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_admin_admin_lte_js_dependecies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}

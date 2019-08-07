@@ -61,7 +61,19 @@ def preview(pid, record, template=None, **kwargs):
     # Find a suitable previewer
     fileobj = PreviewFile(pid, record, fileobj)
 
-    if fileobj.has_extensions('.zip'):
+    if fileobj.has_extensions('.doc', '.docx', '.ppt',
+                              '.pptx', '.xls', '.xlsx'):
+        for plugin in current_previewer.iter_previewers(previewers=['pdfjs']):
+            try:
+                return plugin.preview(fileobj)
+            except Exception:
+                current_app.logger.warning(
+                    ('Preview failed for {key}, in {pid_type}:{pid_value}'
+                     .format(key=fileobj.file.key,
+                             pid_type=fileobj.pid.pid_type,
+                             pid_value=fileobj.pid.pid_value)),
+                    exc_info=True)
+    elif fileobj.has_extensions('.zip'):
         return zip_preview(fileobj)
     else:
         for plugin in current_previewer.iter_previewers(

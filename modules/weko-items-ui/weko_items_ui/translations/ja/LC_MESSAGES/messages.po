@@ -57,6 +57,10 @@ msgstr "レコードが存在しません"
 msgid "An error has occurred."
 msgstr "エラーが発生しました"
 
+#: weko_items_ui/views.py:929
+msgid "PID does not meet the conditions."
+msgstr "PID付与の条件を満たしていません。"
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 msgid "Itemtype List"
 msgstr "アイテムタイプリスト"
@@ -315,3 +319,11 @@ msgstr "位"
 #~ msgid "Are you sure you want to quit the activity?"
 #~ msgstr "このアクティビティを強制終了してもよろしいでしょうか。"
 
+msgid "The following items is required. Please recheck and input."
+msgstr "以下の項目が入力必須となります。ご確認の上、再度入力してください。"
+
+msgid "Please input all required item."
+msgstr "必須項目は全て入力して下さい。"
+
+msgid "Please input the correct data."
+msgstr "データを正しく入力して下さい。"

@@ -19,11 +19,17 @@
 # MA 02111-1307, USA.
 
 """Module of weko-items-ui utils.."""
+
 from datetime import datetime
 
+from flask import session
+from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
+from invenio_records.api import RecordBase
+from jsonschema import ValidationError
 from sqlalchemy import MetaData, Table
+from weko_records.api import ItemTypes
 from weko_user_profiles import UserProfile
 from weko_workflow.models import Action as _Action
 
@@ -336,3 +342,71 @@ def parse_ranking_results(results, display_rank, list_name='all',
             if len(ranking_list) == display_rank:
                 break
     return ranking_list
+
+
+def validate_form_input_data(result: dict, item_id: str, data: dict):
+    """Validate input data.
+
+    :param result: result dictionary.
+    :param item_id: item type identifier.
+    :param data: form input data
+    """
+    item_type = ItemTypes.get_by_id(item_id)
+    json_schema = item_type.schema.copy()
+
+    data['$schema'] = json_schema.copy()
+    validation_data = RecordBase(data)
+    try:
+        validation_data.validate()
+    except ValidationError as error:
+        result["is_valid"] = False
+        if 'required' == error.validator:
+            result['error'] = _('Please input all required item.')
+        elif 'pattern' == error.validator:
+            result['error'] = _('Please input the correct data.')
+        else:
+            result['error'] = _(error.message)
+
+
+def update_json_schema_by_activity_id(json, activity_id):
+    """Update json schema by activity id.
+
+    :param json: The json schema
+    :param activity_id: Activity ID
+    :return: json schema
+    """
+    if not session.get('update_json_schema') or not session[
+            'update_json_schema'].get(activity_id):
+        return None
+    error_list = session['update_json_schema'][activity_id]
+
+    if error_list:
+        for item in error_list['required']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    if not json['properties'][sub_item[0]]['items'].get(
+                            'required'):
+                        json['properties'][sub_item[0]]['items']['required'] \
+                            = []
+                    json['properties'][sub_item[0]]['items'][
+                        'required'].append(sub_item[1])
+                else:
+                    json['properties'][sub_item[0]]['required'].append(
+                        sub_item[1])
+        for item in error_list['pattern']:
+            sub_item = item.split('.')
+            if len(sub_item) == 2:
+                creators = json['properties'][sub_item[0]].get('items')
+                if not creators:
+                    break
+                for creator in creators.get('properties'):
+                    if creators['properties'][creator].get('items'):
+                        givename = creators['properties'][creator]['items']
+                        if givename['properties'].get(sub_item[1]):
+                            if not givename.get('required'):
+                                givename['required'] = []
+                            givename['required'].append(sub_item[1])
+    return json

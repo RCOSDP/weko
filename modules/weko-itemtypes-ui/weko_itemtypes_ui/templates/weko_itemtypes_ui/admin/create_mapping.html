@@ -121,18 +121,17 @@
                         1 -%}disabled{%- endif -%}>-->
                       <!-- INPUT BUTTON -->
 
-                          <button type="button" class="btn btn-light add-button
+                          <button type="button" class="btn btn-success
                             ten-pixel-right-margin ten-pixel-bottom-margin"
                             data-action="add" style="position:unset;">
-                            <span class="glyphicon glyphicon-plus"></span>
+                            <span class="glyphicon glyphicon-plus"></span>&nbsp
                             {{_('Add')}}
                           </button>
 
                           <button type="button" class="btn btn-danger
-                            delete-button ten-pixel-bottom-margin"
+                            ten-pixel-bottom-margin"
                             style="position:unset;" data-action="del" {%- if keys_count == 1 -%}disabled{%- endif -%}>
-                            <span class="glyphicon glyphicon-trash"></span>
-                            {{_('Delete')}}
+                            <span class="glyphicon glyphicon-remove"></span>
                           </button>
 
                       <!--Button-->
@@ -165,18 +164,17 @@
                     disabled>-->
                     <!-- INPUT BUTTON -->
 
-                              <button type="button" class="btn btn-light add-button
+                              <button type="button" class="btn btn-success
                               ten-pixel-right-margin ten-pixel-bottom-margin"
                               style="position:unset;" data-action="add" value="">
-                                <span class="glyphicon glyphicon-plus"></span>
+                                <span class="glyphicon glyphicon-plus"></span>&nbsp
                                 {{_('Add')}}
                               </button>
 
                               <button type="button" class="btn btn-danger
-                              delete-button ten-pixel-bottom-margin"
+                              ten-pixel-bottom-margin"
                               style="position:unset;" data-action="del" disabled>
-                                <span class="glyphicon glyphicon-trash"></span>
-                                {{_('Delete')}}
+                                <span class="glyphicon glyphicon-remove"></span>
                               </button>
 
                   <!--Button-->
@@ -231,8 +229,8 @@
           <div class="col-sm-6">
             <label id="sub-jpcoar-lists-label">{{_('Schema')}}</label><label>({{_('Child')}})</label>
             <!-- <button id="sub_mapping-add" class="btn btn-success pull-right">{{_('Add')}}</button>-->
-            <button id="sub_mapping-add" class="btn btn-light pull-right add-button twentyeight-pixel-right-margin">
-              <span class="glyphicon glyphicon-plus"></span>
+            <button id="sub_mapping-add" class="btn btn-success pull-right twentyeight-pixel-right-margin">
+              <span class="glyphicon glyphicon-plus"></span>&nbsp
                   {{_('Add')}}
             </button>
           </div>
@@ -260,8 +258,8 @@
                   <input type="text" class="form-control max-width-64"
                                     maxlength="1" value="" placeholder="{{_('Input Field')}}">
                 </div>
-                <button type="button" class="btn btn-danger delete-button five-pixel-margin" style="position:unset;" data-action="del_sub_child">
-                  <span class="glyphicon glyphicon-trash"></span>
+                <button type="button" class="btn btn-danger five-pixel-margin" style="position:unset;" data-action="del_sub_child">
+                  <span class="glyphicon glyphicon-trash"></span>&nbsp
                   {{_('Delete')}}
                 </button>
                 <!--<div style="position: relative;" style="padding: 50px; background-color: #E5E4E2; display: inline-block;">
@@ -285,14 +283,14 @@
             </div>
             <div class="col-sm-5">
               <fieldset class="pull-right">
-                <button type="button" class="btn btn-danger delete-button five-pixel-margin" style="position:unset;" data-action="del_child">
-                  <span class="glyphicon glyphicon-trash"></span>
+                <button type="button" class="btn btn-danger five-pixel-margin" style="position:unset;" data-action="del_child">
+                  <span class="glyphicon glyphicon-trash"></span>&nbsp
                   {{_('Delete')}}
                 </button>
               </fieldset>
               <fieldset class="pull-right">
-                <button type="button" class="btn btn-light pull-right action-button five-pixel-margin" data-action="add_child">
-                  {{_('Linking')}}
+                <button type="button" class="btn btn-success pull-right five-pixel-margin" data-action="add_child">
+                  {{_('Join')}}
                 </button>
               </fieldset>
             <!-- <button class="btn btn-light pull-right action-button" data-action="add_child">
@@ -348,8 +346,8 @@
             <div class="col-sm-6">
               <fieldset class="pull-right">
                 <div class="button-container">
-                  <button type="button" class="btn btn-danger delete-button twentyeight-pixel-right-margin" style="position:unset;" data-action="del_child">
-                      <span class="glyphicon glyphicon-trash"></span>
+                  <button type="button" class="btn btn-danger twentyeight-pixel-right-margin" style="position:unset;" data-action="del_child">
+                      <span class="glyphicon glyphicon-trash"></span>&nbsp
                       {{_('Delete')}}
                   </button>
                 </div>
@@ -359,8 +357,8 @@
                           {{_('Delete')}}
                 </button> -->
               </fieldset>
-            <button class="btn btn-light pull-right add-button twentyeight-pixel-right-margin" data-action="add_child">
-                        {{_('Link')}}
+            <button class="btn btn-success pull-right twentyeight-pixel-right-margin" data-action="add_child">
+                        {{_('Join')}}
             </button>
             </div>
           </div>
@@ -383,8 +381,8 @@
     <pre class="pre-scrollable hide"><code id="preview_mapping">{{ hide_mapping_prop|tojson(indent=4) }}</code></pre>
     <div class="col-sm-10"></div>
     <div class="col-sm-2">
-      <button id="mapping-submit" class="btn btn-primary save-button pull-right">
-         <span class="glyphicon glyphicon-saved"></span>
+      <button id="mapping-submit" class="btn btn-primary pull-right">
+         <span class="glyphicon glyphicon-save"></span>&nbsp
            {{_('Save')}}
       </button>
   </div>
@@ -403,13 +401,13 @@
         <p>One fine body&hellip;</p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-success hide ok-button" id="btn_confirm">{{_('OK')}}</button>
-        <button type="button" class="btn btn-primary hide save-button" id="btn_submit">
-                <span class="glyphicon glyphicon-saved"></span>
+        <button type="button" class="btn btn-primary hide" id="btn_confirm">{{_('OK')}}</button>
+        <button type="button" class="btn btn-primary hide" id="btn_submit">
+                <span class="glyphicon glyphicon-save"></span>&nbsp
                 {{_('Save')}}
        </button>
-        <button type="button" class="btn btn-inf close-button" data-dismiss="modal">
-            <span class="glyphicon glyphicon-remove"></span>
+        <button type="button" class="btn btn-default" data-dismiss="modal">
+            <span class="glyphicon glyphicon-remove"></span>&nbsp
                 {{_('Close')}}
         </button>
       </div>

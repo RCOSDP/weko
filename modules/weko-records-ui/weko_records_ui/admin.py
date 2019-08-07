@@ -136,6 +136,7 @@ class InstitutionNameSettingView(BaseView):
         if request.method == 'POST':
             rf = request.form.to_dict()
             InstitutionName.set_institution_name(rf['institution_name'])
+            flash(_('Institution Name was updated.'), category='success')
         institution_name = InstitutionName.get_institution_name()
         return self.render(config.INSTITUTION_NAME_SETTING_TEMPLATE,
                            institution_name=institution_name)

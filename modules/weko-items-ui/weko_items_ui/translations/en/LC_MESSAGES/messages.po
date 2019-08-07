@@ -31,6 +31,10 @@ msgstr ""
 msgid "Header Error"
 msgstr ""
 
+#: weko_items_ui/views.py:929
+msgid "PID does not meet the conditions."
+msgstr ""
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 #, fuzzy
 msgid "Itemtype List"
@@ -198,3 +202,12 @@ msgstr ""
 
 #~ msgid "You do not even have an itemtype."
 #~ msgstr ""
+
+msgid "The following items is required. Please recheck and input."
+msgstr "The following items is required. Please recheck and input."
+
+msgid "Please input all required item."
+msgstr ""
+
+msgid "Please input the correct data."
+msgstr ""

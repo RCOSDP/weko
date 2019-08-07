@@ -127,7 +127,6 @@
               <option value="view_print">{{_('Print All Displayed Items')}}</option>
               <option value="all_print">{{_('Print All Items Of This Index')}}</option>
             </select>
-            <button type="button" class="btn btn-primary hide action-button">{{_('Execution')}}</button>
             <div class="pull-right">
               <div class="form-group hide">
                 <label for="sort_item">{{_('Display order')}}</label>
@@ -176,7 +175,7 @@
                 {%- endif %}
               {%- endblock search_sort %}
               <div class="form-group">
-                <label for="page_count">{{_('The number of display')}}</label>
+                {{_('The number of display')}}:
                 <select class="form-control" id="page_count">
                   <option value="20">20</option>
                   <option value="50">50</option>
@@ -229,11 +228,13 @@
     </invenio-search>
   </div><br>
   <div class="col-sm-12 col-md-12 text-center">
-    <a id="submit-btn" class="btn btn-primary pull-right update-button">
-         <span class="glyphicon glyphicon-edit"></span>
+    <a id="submit-btn" class="btn btn-primary pull-right">
+        <span class="glyphicon glyphicon-save"></span>&nbsp
           {{ _('Update') }}</a>
   </div>
 
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
+{% from "weko_theme/macros/modal_page.html" import confirm_modal %}
+{{confirm_modal('confirm_update', 'confirm_submit', 'Continue', 'List of Update')}}
 </div>
