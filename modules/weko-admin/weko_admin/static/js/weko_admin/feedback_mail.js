@@ -64,12 +64,20 @@ class ComponentExclusionTarget extends React.Component {
         super(props);
         this.state = {
           listEmail: [],
+          selectedId: [],
         }
         this.deleteCommand = this.deleteCommand.bind(this);
         this.searchCommand = this.searchCommand.bind(this);
+        this.handleKeyPress = this.handleKeyPress.bind(this);
         this.generateSelectedBox = this.generateSelectedBox.bind(this);
+        this.setWrapperRef = this.setWrapperRef.bind(this);
+        this.setDeleteWrapperRef = this.setDeleteWrapperRef.bind(this);
+        this.handleClickOutside = this.handleClickOutside.bind(this);
+        this.handleClick = this.handleClick.bind(this)
     }
+
     componentDidMount(){
+      document.addEventListener('mousedown', this.handleClickOutside);
       let mailData = [];
       let sendData = false;
       $.ajax({
@@ -84,6 +92,19 @@ class ComponentExclusionTarget extends React.Component {
       this.props.bindingValueOfComponent('listEmail', mailData);
       this.props.bindingValueOfComponent('flagSend', sendData);
     }
+
+    componentWillUnmount() {
+      document.removeEventListener('mousedown', this.handleClickOutside);
+    }
+
+    setWrapperRef(node) {
+      this.wrapperRef = node;
+    }
+
+    setDeleteWrapperRef(node) {
+      this.deleteRef = node;
+    }
+
     static getDerivedStateFromProps(nextProps, prevState) {
       if (nextProps.listEmail != prevState.listEmail)
       {
@@ -94,21 +115,75 @@ class ComponentExclusionTarget extends React.Component {
       return null;
     }
 
+    handleClickOutside(event) {
+      if (this.wrapperRef) {
+        if (this.deleteRef && this.deleteRef.contains(event.target)){
+        } else if (!this.wrapperRef.contains(event.target)) {
+          this.setState({selectedId: []})
+        }
+      }
+    }
+
+    handleClick(id) {
+      const selectedId = this.state.selectedId
+      if (id < 0) {
+        this.setState({
+          selectedId: []
+        });
+      } else {
+        if (!this.state.selectedId.includes(id)) {
+
+          selectedId.push(id);
+          this.setState({
+            selectedId: selectedId
+          });
+        } else {
+          this.setState({
+            selectedId: selectedId.filter(e => e !== id)
+          });
+        }
+      }
+    }
+
+    handleKeyPress(event){
+      if (event.key =='Enter') {
+        let new_email = {
+          author_id: "",
+          email: event.target.value.trim()
+        }
+        if (this.props.addEmailToList(new_email)) {
+          $('#custom_input_email').val('');
+          console.log("1");
+          $('#sltBoxListEmail').animate({
+            scrollTop: $("#custom_input_email").offset().top
+          }, 1000);
+        }
+      }
+    }
+
     generateSelectedBox(listEmail) {
       let innerHTML = [];
       for (let id in listEmail) {
-        innerHTML.push(<option key={listEmail[id].email} value={listEmail[id].author_id}>{listEmail[id].email}</option>);
+        innerHTML.push(<a className={`list-group-item list-group-item-action ${this.state.selectedId.includes(id) ? 'active' : ''}`}
+                        onClick={() => { this.handleClick(id) }}
+                        key={id}
+                        value={listEmail[id].author_id}>{listEmail[id].email}</a>);
       }
       return (
-        <select multiple className="style-selected-box" id="sltBoxListEmail">
+        <div ref={this.setWrapperRef} class="list-group" className="style-selected-box" id="sltBoxListEmail">
           {innerHTML}
-        </select>
+          <input class="list-group-item list-group-item-action style-full-size"
+          type ="text"
+          id="custom_input_email"
+          onKeyPress={(e) => this.handleKeyPress(e)}
+          />
+        </div>
       )
     }
 
     deleteCommand(event) {
-      let selectedElement = $('select#sltBoxListEmail').val();
-      this.props.removeEmailFromList(selectedElement);
+      this.setState({selectedId: []})
+      this.props.removeEmailFromList(this.state.selectedId);
     }
 
     searchCommand(){
@@ -127,7 +202,7 @@ class ComponentExclusionTarget extends React.Component {
                     </div>
                     <div className="style-full-size">
                       {this.generateSelectedBox(this.state.listEmail)}
-                      <button className="btn btn-danger delete-button style-my-button style-deleteBtn" onClick={this.deleteCommand}>
+                      <button ref={this.setDeleteWrapperRef}  className="btn btn-danger delete-button style-my-button style-deleteBtn" onClick={this.deleteCommand}>
                           <span className="glyphicon glyphicon-trash" aria-hidden="true"></span>
                           &nbsp;{DELETE_BUTTON_NAME}
                       </button>
@@ -175,13 +250,19 @@ class TableUserEmailComponent extends React.Component {
 
   generateBodyTableUser()
   {
-    let tBodyElement = this.state.listUser.map((row) => (
-        <tr key = {row._source.pk_id.toString()}>
-          <td>{row._source.authorNameInfo[0].fullName}</td>
-          <td>{row._source.emailInfo[0].email}</td>
-          <td className="text-right"><button className="btn btn-info" onClick = {(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
-        </tr>
-      )
+    let tBodyElement = this.state.listUser.map((row) =>{
+      let name = "";
+      if (row._source.authorNameInfo[0]){
+        name = row._source.authorNameInfo[0].fullName
+      }
+      return (
+          <tr key = {row._source.pk_id.toString()}>
+            <td>{name}</td>
+            <td>{row._source.emailInfo[0].email}</td>
+            <td className="text-right"><button className="btn btn-info" onClick = {(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>&nbsp;&nbsp;Import&nbsp;&nbsp;</button></td>
+          </tr>
+        )
+      }
     )
     return (
       <tbody >
@@ -190,22 +271,12 @@ class TableUserEmailComponent extends React.Component {
     )
   }
   importEmail(event, pk_id, email){
-    let listUser = [];
-    $("#sltBoxListEmail > option").each(function(){
-      listUser.push(this.value);
-    });
-    let isExist = listUser.includes(pk_id);
-    if(!isExist){
-      event.target.disabled=true;
-      let data = {
-        "author_id" : pk_id,
-        "email" : email
-      }
-      this.props.addEmailToList(data);
+    event.target.disabled=true;
+    let data = {
+      "author_id" : pk_id,
+      "email" : email
     }
-    else{
-     alert(DUPLICATE_ERROR_MESSAGE);
-    }
+    this.props.addEmailToList(data);
   }
   render(){
     return (
@@ -774,13 +845,26 @@ class MainLayout extends React.Component {
       }
     }
     addEmailToList(data){
+      let listUser = [];
+      $("#sltBoxListEmail > a").each(function(){
+        listUser.push(this.text);
+      });
+      let isExist = listUser.includes(data.email);
+      if(isExist){
+        alert(DUPLICATE_ERROR_MESSAGE);
+        return false;
+      }
       let listEmail = this.state.listEmail;
       listEmail.push(data);
       this.setState({listEmail: listEmail})
+      return true;
     }
     removeEmailFromList(listData){
+      listData.sort();
       let listEmail = this.state.listEmail;
-      listEmail = listEmail.filter((el) => !listData.includes(el.author_id));
+      for (var i = listData.length -1; i >= 0; i--){
+        listEmail.splice(listData[i],1);
+      }
       this.setState({listEmail: listEmail});
     }
     render() {
@@ -791,7 +875,7 @@ class MainLayout extends React.Component {
                   <ComponentFeedbackMail flagSend = {this.state.flagSend} bindingValueOfComponent = {this.bindingValueOfComponent}/>
                 </div>
                 <div className="row">
-                  <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} removeEmailFromList = {this.removeEmailFromList} listEmail={this.state.listEmail}/>
+                  <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} removeEmailFromList = {this.removeEmailFromList} listEmail={this.state.listEmail} addEmailToList= {this.addEmailToList}/>
                 </div>
                 <div className = "row">
                   <ComponentLogsTable bindingValueOfComponent = {this.bindingValueOfComponent}/>
