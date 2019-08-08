@@ -957,7 +957,7 @@ class ItemTypeProps(RecordBase):
 
     @classmethod
     def helper_remove_empty_required(cls, data):
-        """Help to remove required key if it is empty
+        """Help to remove required key if it is empty.
 
         Arguments:
             data {dict} -- schema to remove required key

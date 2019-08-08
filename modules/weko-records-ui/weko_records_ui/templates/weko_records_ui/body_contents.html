@@ -20,6 +20,7 @@
 #}
 
 
+{% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
 <div class="panel-group">
@@ -72,7 +73,7 @@
               <h3 style="display: inline;"><a href='#' style="margin-left:
                       0.2em;">{{ record.get('item_title', _('No title'))
                       }}</a></h3>
-              {%- if record.permalink_uri -%} 
+              {%- if record.permalink_uri -%}
               <span class="pull-right" style="display: inline;">Permalink :
                 {{ record.permalink_uri }}</span>
               {%- endif -%}
@@ -90,6 +91,10 @@
           {%- set files = record.files -%}
           {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
             {%- if files -%}
+
+            <!-- Preview Carousel -->
+            {{ preview_carousel(files=files, pid=pid) }}
+
             <table class="table table-bordered table-striped">
               <thead>
                 <tr>
@@ -118,7 +123,12 @@
                 {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
                   filename=file.key) %}
                 <tr>
-                  <td>{{file.filename}} <a href="{{file_details_url}}">{{_('Detail')}}</a></td>
+                  <td>{{file.filename}}
+                    <a href="{{file_details_url}}">{{_('Detail')}}</a>
+                    <a href="#preview_carousel" data-slide-to="{{ loop.index0 }}">
+                      {{_('Preview')}}
+                    </a>
+                  </td>
                   <td rowspan="2">
                     {%- if not 'simple' in file.displaytype -%}
                     {%- if 'license_free' == file.licensetype -%}
@@ -191,72 +201,6 @@
                 {%- endif -%}
                 {%- endif -%}
                 <!-- demo -->
-                {%- if access_permission -%}
-                {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
-                <tr>
-                  <td colspan="2">
-                    <div class="panel panel-default" id="preview_de" ng-init="collapsed{{loop.index}} = false">
-                      <div class="panel-heading">
-                        <a id="preview_{{loop.index}}" class="panel-toggle"
-                          ng-click="collapsed{{loop.index}} = !collapsed{{loop.index}}">
-                          {{_('Preview')}}
-                          <span class="pull-right" ng-hide="collapsed{{loop.index}}"><i
-                              class="fa fa-chevron-right"></i></span>
-                          <span class="pull-right ng-hide" ng-show="collapsed{{loop.index}}"><i
-                              class="fa fa-chevron-down"></i></span>
-                        </a>
-                      </div>
-                      <div class="ng-hide" id="preview_{{loop.index}}" ng-show="collapsed{{loop.index}}">
-                        <div class="embed-responsive embed-responsive-16by9">
-                          <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
-                            src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
-                          </iframe>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                {%- endif -%}
-                {%- if 'preview' in file.displaytype -%}
-                {%- set file_preview_url = url_for('invenio_records_ui.recid_file_preview', pid_value=pid.pid_value,
-                  filename=file.key) %}
-                <tr>
-                  <td colspan="2">
-                    <div class="panel panel-default" id="preview" ng-init="collapsed{{loop.index}} = false">
-                      <div class="panel-heading">
-                        <a id="preview_{{loop.index}}" class="panel-toggle"
-                          ng-click="collapsed{{loop.index}} = !collapsed{{loop.index}}">
-                          {{_('Preview')}}
-                          <span class="pull-right" ng-hide="collapsed{{loop.index}}"><i
-                              class="fa fa-chevron-right"></i></span>
-                          <span class="pull-right ng-hide" ng-show="collapsed{{loop.index}}"><i
-                              class="fa fa-chevron-down"></i></span>
-                        </a>
-                      </div>
-                      <div id="preview_{{loop.index}}" class="ng-hide" ng-show="collapsed{{loop.index}}">
-                        <div class="embed-responsive embed-responsive-16by9">
-                          {%- if 'audio' in file.mimetype -%}
-                          <audio controls preload="auto">
-                            <source src="{{file_preview_url}}" type="{{file.mimetype}}">
-                          </audio>
-                          {%- elif 'video' in file.mimetype -%}
-                          <video controls>
-                            <source src="{{file_preview_url}}" type="{{file.mimetype}}">
-                          </video>
-                          {%- elif 'text' in file.mimetype -%}
-                          <object data="{{file_preview_url}}" type="{{file.mimetype}}" />
-                          {%- else -%}
-                          <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
-                            src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
-                          </iframe>
-                          {%- endif -%}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                {%- endif -%}
-                {%- endif -%}
                 {%- endif -%}
                 {%- endfor -%}
               </tbody>
@@ -450,7 +394,7 @@
         </div>
       </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
-  </div><!-- /.modal -->
+</div><!-- /.modal -->
 {% block css %}
 <style>
   #invenio-csl span.twitter-typeahead .tt-menu {

@@ -19,8 +19,10 @@
 # MA 02111-1307, USA.
 
 """Module of weko-items-ui utils.."""
+
 from datetime import datetime
 
+from flask import session
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_db import db
@@ -364,3 +366,47 @@ def validate_form_input_data(result: dict, item_id: str, data: dict):
             result['error'] = _('Please input the correct data.')
         else:
             result['error'] = _(error.message)
+
+
+def update_json_schema_by_activity_id(json, activity_id):
+    """Update json schema by activity id.
+
+    :param json: The json schema
+    :param activity_id: Activity ID
+    :return: json schema
+    """
+    if not session.get('update_json_schema') or not session[
+            'update_json_schema'].get(activity_id):
+        return None
+    error_list = session['update_json_schema'][activity_id]
+
+    if error_list:
+        for item in error_list['required']:
+            sub_item = item.split('.')
+            if len(sub_item) == 1:
+                json['required'] = sub_item
+            else:
+                if json['properties'][sub_item[0]].get('items'):
+                    if not json['properties'][sub_item[0]]['items'].get(
+                            'required'):
+                        json['properties'][sub_item[0]]['items']['required'] \
+                            = []
+                    json['properties'][sub_item[0]]['items'][
+                        'required'].append(sub_item[1])
+                else:
+                    json['properties'][sub_item[0]]['required'].append(
+                        sub_item[1])
+        for item in error_list['pattern']:
+            sub_item = item.split('.')
+            if len(sub_item) == 2:
+                creators = json['properties'][sub_item[0]].get('items')
+                if not creators:
+                    break
+                for creator in creators.get('properties'):
+                    if creators['properties'][creator].get('items'):
+                        givename = creators['properties'][creator]['items']
+                        if givename['properties'].get(sub_item[1]):
+                            if not givename.get('required'):
+                                givename['required'] = []
+                            givename['required'].append(sub_item[1])
+    return json

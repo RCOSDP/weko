@@ -51,7 +51,7 @@ IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          ]
 """Options list for Identifier Grant action."""
 
-IDENTIFIER_GRANT_SUFFIX_METHOD = 2
+IDENTIFIER_GRANT_SUFFIX_METHOD = 0
 """
     Suffix input method for Identifier Grant action
 
@@ -81,3 +81,13 @@ IDENTIFIER_GRANT_IS_WITHDRAWING = -2
 
 ITEM_REGISTRATION_ACTION_ID = 3
 """Item Registration action id default."""
+
+ITEM_REGISTRATION_FLOW_ID = 3
+"""Identifier grant is withdrawing."""
+
+IDENTIFIER_GRANT_SELECT_DICT = {
+    'NotGrant': '0',
+    'JaLCDOI': '1',
+    'CrossRefDOI': '2'
+}
+"""Identifier grant selected enum."""

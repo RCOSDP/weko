@@ -23,6 +23,7 @@
 
 {%- block css %}
   {{ super() }}
+  {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
@@ -47,6 +48,7 @@
   {%- endif %}
   {% assets "workflow_quit_confirmation_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -94,8 +96,8 @@
                     <label>{{_('Activity')}}</label>
                   </div>
                   <div class="col-xs-12 col-md-8 col-lg-8">
-                    <p>{{activity.activity_id}}</p>
-                    <input type="hidden" id="hidden_activity_id" value="{{activity.activity_id}}">
+                    <p id="activity_id">{{activity.activity_id}}</p>
+                    <!-- <input type="hidden" id="hidden_activity_id" value="{{activity.activity_id}}"> -->
                   </div>
                 </div>
                 <div class="form-group">
@@ -107,7 +109,7 @@
                   </div>
                 </div>
               </div>
-            </div> 
+            </div>
             <div class="col-sm-3">
               <div class="form-horizontal" style="display: inline-block;">
                 <div class="form-group">
@@ -160,7 +162,7 @@
                 <lable>{{_('Item')}}</lable>
             </div>
             <div class="col-xs-11 col-md-11 col-lg-11">
-                <a href="#" id="lnk_item_detail">{{item.get('title') if item}}</a> 
+                <a href="#" id="lnk_item_detail">{{item.get('title') if item}}</a>
             </div>
           </div>
         </div>
@@ -176,7 +178,7 @@
                 <div class="col-md-8 col-xl-8">
                   <ul class="list-group workflow-ul">
                     <li class="list-group-item break-word {{
-                        style_including('style_li', step) }}"> 
+                        style_including('style_li', step) }}">
                       <span class="action-name {{ style_including('cur_step',
                             step) }} {{ style_including('style_a', step) }}
                             workflow-span"
@@ -194,7 +196,7 @@
                         <span class="workflow-span">{{_( step.Status)}}</span></li>
                   </ul>
                 </div>
-                
+
                 {%- if 'end_action' != step.ActionEndpoint %}
                 <div class="col-md-4 col-xl-4">
                   <span class="glyphicon glyphicon-arrow-right
@@ -202,7 +204,7 @@
                 </div>
                 {%- endif %}
                 </div>
-            </div>   
+            </div>
             {% endfor %}
             </div>
           </div>
@@ -229,7 +231,9 @@
                 {%- include 'weko_workflow/identifier_grant.html' %}
                 {% include "weko_workflow/modal_quit_confirmation.html" %}
               {%- elif 'approval' == cur_step %}
-                {% include 'weko_workflow/record_detail.html' %}
+                {%- with preview_carousel_id='main_preview_carousel' %}
+                  {% include 'weko_workflow/record_detail.html' %}
+                {%- endwith %}
               {%- else %}
                 <div class="form-group">
                   <label class="sr-only" for="input-comment">{{_('Comment')}}</label>
@@ -244,8 +248,8 @@
                 <button type="button" class="btn btn-primary action-big-button" id="btn-approval-req">{{_('Approval Request')}}</button>
                 <button type="button" class="btn btn-primary done-button" id="btn-finish">{{_('Done')}}</button>
               {%- elif 'approval' == cur_step %}
-                <button type="button" class="btn btn-primary action-button" id="btn-return">{{_('Return')}}</button>
-                <button type="button" class="btn btn-primary action-button" id="btn-reject">{{_('Reject')}}</button>
+                <button type="button" class="btn btn-danger action-button" id="btn-return">{{_('Return')}}</button>
+                <button type="button" class="btn btn-danger action-button" id="btn-reject">{{_('Reject')}}</button>
                 <button type="button" class="btn btn-primary save-button" id="btn-draft">
                   <span class="glyphicon glyphicon-saved"></span> {{_('Save')}}</button>
                 <button type="button" class="btn btn-info action-button" id="btn-approval">{{_('Approval')}}</button>
@@ -340,7 +344,9 @@
   <div class="modal-dialog modelWidth" role="document">
     <div class="modal-content">
       <div class="modal-body">
-        {% include 'weko_workflow/record_detail.html' %}
+        {%- with preview_carousel_id='modal_preview_carousel' %}
+          {% include 'weko_workflow/record_detail.html' %}
+        {%- endwith %}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-info close-button" id="btnModalClose" data-dismiss="modal">
@@ -358,7 +364,7 @@
 </div>
 <div class="communities">
 </div>
-{%- endif%}
+{%- endif %}
 {%- endblock page_body %}
 
 {% macro style_including(inStyle, step) -%}
