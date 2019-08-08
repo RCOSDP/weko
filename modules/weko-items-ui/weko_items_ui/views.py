@@ -55,7 +55,8 @@ from .permissions import item_permission
 from .utils import get_actionid, get_current_user, get_list_email, \
     get_list_username, get_user_info_by_email, get_user_info_by_username, \
     get_user_information, get_user_permission, parse_ranking_results, \
-    validate_form_input_data, validate_user
+    update_json_schema_by_activity_id, validate_form_input_data, \
+    validate_user
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -220,17 +221,19 @@ def iframe_error():
 
 
 @blueprint.route('/jsonschema/<int:item_type_id>', methods=['GET'])
+@blueprint.route('/jsonschema/<int:item_type_id>/<string:activity_id>',
+                 methods=['GET'])
 @login_required
 @item_permission.require(http_exception=403)
-def get_json_schema(item_type_id=0):
+def get_json_schema(item_type_id=0, activity_id=""):
     """Get json schema.
 
     :param item_type_id: Item type ID. (Default: 0)
+    :param activity_id: Activity ID.  (Default: Null)
     :return: The json object.
     """
     try:
         result = None
-        json_schema = None
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
@@ -240,7 +243,7 @@ def get_json_schema(item_type_id=0):
                     return '{}'
                 json_schema = result.schema
                 properties = json_schema.get('properties')
-                for key, value in properties.items():
+                for _, value in properties.items():
                     if 'validationMessage_i18n' in value:
                         value['validationMessage'] =\
                             value['validationMessage_i18n'][cur_lang]
@@ -253,10 +256,16 @@ def get_json_schema(item_type_id=0):
                         'filemeta').get('items').get('properties').get('groups')
                     filemeta_group['enum'] = group_enum
 
-                json_schema = result
-
         if result is None:
             return '{}'
+
+        if activity_id:
+            updated_json_schema = update_json_schema_by_activity_id(result,
+                                                                    activity_id)
+            if updated_json_schema:
+                result = updated_json_schema
+
+        json_schema = result
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
@@ -933,3 +942,24 @@ def validate():
     validate_form_input_data(result, request_data.get('item_id'),
                              request_data.get('data'))
     return jsonify(result)
+
+
+@blueprint_api.route('/check_validation_error_msg/<string:activity_id>',
+                     methods=['GET'])
+@login_required
+@item_permission.require(http_exception=403)
+def check_validation_error_msg(activity_id):
+    """Check whether session('update_json_schema') is exist.
+
+    :param activity_id: The identify of Activity.
+    :return: Show error message
+    """
+    if session.get('update_json_schema') and session[
+            'update_json_schema'].get(activity_id):
+        error_list = session[
+            'update_json_schema'].get(activity_id)
+        return jsonify(code=1,
+                       msg=_('PID does not meet the conditions.'),
+                       error_list=error_list)
+    else:
+        return jsonify(code=0)

@@ -160,6 +160,10 @@ msgstr ""
 msgid "Subscription Policy"
 msgstr ""
 
+#: weko_workflow/utils.py:298
+msgid "Cannot register selected DOI for current Item Type of this item."
+msgstr ""
+
 #: weko_workflow/views.py:301 weko_workflow/views.py:303
 #: weko_workflow/views.py:306 weko_workflow/views.py:308
 msgid "Authorization required"

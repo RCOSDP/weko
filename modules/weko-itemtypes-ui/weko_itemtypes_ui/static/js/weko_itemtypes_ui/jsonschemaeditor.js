@@ -561,6 +561,9 @@ var SchemaObject = React.createClass({
 				} else if ('checkboxes' === value.format || 'radios' === value.format || 'select' === value.format) {
 					properties[itemKey] = self.refs['subitem' + index].export();
 					properties[itemKey].title = value.title;
+					if (typeof value.default != 'undefined') {
+						properties[itemKey].default = value.default;
+					}
 				} else if ('array' === value.format) {
 					properties[itemKey] = { type: "array", format: "array", items: {}, title: value.title };
 					properties[itemKey].items = self.refs['subitem' + index].export();

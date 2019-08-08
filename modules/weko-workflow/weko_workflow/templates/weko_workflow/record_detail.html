@@ -18,6 +18,8 @@
  # MA 02111-1307, USA.
  #}
 
+{% from "weko_records_ui/box/preview_carousel.html" import preview_carousel %}
+
 {%- if record !=[] -%}
 <div class="panel panel-default">
   <div class="panel-heading clearfix">
@@ -31,6 +33,9 @@
           {%- block record_author %}
             {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
             {%- if files -%}
+            <!-- Preview Carousel -->
+            {{ preview_carousel(files=files, pid=pid, el_id=preview_carousel_id) }}
+            <hr />
             <table class="table table-bordered table-striped">
               <thead>
               <tr >
@@ -69,62 +74,6 @@
               {%- endif -%}
               {%- endif -%}
               <!-- demo -->
-              {%- if 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
-              <tr >
-                <td colspan="2">
-                  <div class="panel panel-default" id="preview_de">
-                    <div class="panel-heading">
-                      <a class="panel-toggle" data-toggle="collapse" href="#{{loop.index}}">
-                        {{_('Preview')}}
-                        <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
-                        <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
-                      </a>
-                    </div>
-                    <div id="{{loop.index}}" class="collapse">
-                      <div class="embed-responsive embed-responsive-16by9">
-                          <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
-                                src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
-                          </iframe>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-              {%- endif -%}
-              {%- if 'preview' in file.displaytype -%}
-              <tr >
-                <td colspan="2">
-                  <div class="panel panel-default" id="preview">
-                    <div class="panel-heading">
-                      <a class="panel-toggle" data-toggle="collapse" href="#{{loop.index}}">
-                        {{_('Preview')}}
-                        <span class="pull-right show-on-collapsed"><i class="fa fa-chevron-right"></i></span>
-                        <span class="pull-right hide-on-collapsed"><i class="fa fa-chevron-down"></i></span>
-                      </a>
-                    </div>
-                    <div id="{{loop.index}}" class="collapse">
-                      <div class="embed-responsive embed-responsive-16by9">
-                        {%- if 'audio' in file.mimetype -%}
-                          <audio controls preload="auto">
-                            <source src="{{file_url}}" type="{{file.mimetype}}">
-                          </audio>
-                        {%- elif 'video' in file.mimetype -%}
-                          <video controls>
-                            <source src="{{file_url}}" type="{{file.mimetype}}">
-                          </video>
-                        {%- elif 'text' in file.mimetype -%}
-                          <object data="{{file_url}}" type="{{file.mimetype}}"/>
-                        {%- else -%}
-                          <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
-                                src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.key) }}">
-                          </iframe>
-                        {%- endif -%}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-              {%- endif -%}
               {%- endfor -%}
               </tbody>
             </table>
