@@ -625,7 +625,6 @@ function handleSharePermission(value) {
         const bibliographicKey = $scope.bibliographic_key;
         const title = $scope.bibliographic_title_key;
         const titleLanguage = $scope.bibliographic_title_lang_key;
-        // const activityId = $("#hidden_activity_id").val();
         const activityId = $("#activity_id").text();
         if (bibliographicKey && $rootScope.recordsVM.invenioRecordsModel && activityId) {
           let request = {
@@ -1426,7 +1425,7 @@ function handleSharePermission(value) {
         );
       }
       $scope.saveFeedbackMailListCallback = function () {
-        const activityID = $("#hidden_activity_id").val();
+        const activityID = $("#activity_id").text();
         const actionID = 3 // Item Registration's Action ID
         let emails = $scope.feedback_emails;
         let result = true;

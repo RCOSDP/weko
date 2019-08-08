@@ -21,7 +21,7 @@ class ComponentExclusionTarget extends React.Component {
   }
 
   componentDidMount() {
-    const activityID = $("#hidden_activity_id").val();
+    const activityID = $("#activity_id").text();
     let emails = [];
     $.ajax({
       url: "/workflow/get_feedback_maillist/" + activityID,
