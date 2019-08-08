@@ -28,7 +28,7 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
-from weko_deposit.api import WekoRecord
+from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 
@@ -65,11 +65,12 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     activity_obj = WorkActivity()
     activity_detail = activity_obj.get_activity_detail(activity_id)
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
+    record = WekoDeposit.get_record(activity_detail.item_id)
 
     # transfer to JPCOAR format
     attrs = ['item_1551265147138', 'item_1551265178780']
     res = {
-        attrs[0]: item.get(attrs[0]),
+        attrs[0]: record.get(attrs[0]).get('attribute_value_mlt'),
         'pidstore_identifier': {}
         }
     tempdata = deepcopy(IDENTIFIER_ITEMSMETADATA_FORM)
@@ -130,7 +131,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             res[attrs[0]].append(tempdata[attrs[0]])
             res['pidstore_identifier']['identifier_value'] = identifier_value
             if tempdata.get(attrs[1]):
-                res[attrs[1]] = [(tempdata[attrs[1]])]
+                res[attrs[1]] = (tempdata[attrs[1]])
             with db.session.begin_nested():
                 item.update(res)
                 item.commit()
@@ -353,7 +354,8 @@ def validation_item_property(mapping_data, identifier_type, properties):
                     if item.get(key.split('.')[1]):
                         data.append(item.get(key.split('.')[1]))
 
-        requirements = check_required_data(data, key)
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
         if requirements:
             error_list['pattern'] += requirements
 
@@ -363,8 +365,9 @@ def validation_item_property(mapping_data, identifier_type, properties):
         type_data, type_key = mapping_data.get_data_by_property(
             "identifier.@attributes.identifierType")
 
-        requirements = check_required_data(data, key)
-        type_requirements = check_required_data(type_data, type_key)
+        repeatable = True
+        requirements = check_required_data(data, key, repeatable)
+        type_requirements = check_required_data(type_data, type_key, repeatable)
         if requirements:
             error_list['required'] += requirements
         if type_requirements:
@@ -381,8 +384,7 @@ def validation_item_property(mapping_data, identifier_type, properties):
         type_data, type_key = mapping_data.get_data_by_property(
             "identifierRegistration.@attributes.identifierType")
 
-        repeatable = True
-        requirements = check_required_data(data, key, repeatable)
+        requirements = check_required_data(data, key)
         type_requirements = check_required_data(type_data, type_key)
         if requirements:
             error_list['required'] += requirements

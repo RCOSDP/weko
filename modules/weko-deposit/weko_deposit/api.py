@@ -805,7 +805,7 @@ class WekoDeposit(Deposit):
                  'item_1551265178780']
         dc = {
             attrs[1]: {attrs[0]: obj.get(attrs[1])},
-            attrs[2]: {attrs[0]: obj.get(attrs[2])}
+            attrs[2]: {attrs[0]: [obj.get(attrs[2])]}
         }
         self.indexer.update_jpcoar_identifier(dc, self.id)
         record = RecordMetadata.query.get(self.id)
@@ -813,7 +813,7 @@ class WekoDeposit(Deposit):
             try:
                 with db.session.begin_nested():
                     record.json[attrs[1]][attrs[0]] = obj.get(attrs[1])
-                    record.json[attrs[2]][attrs[0]] = obj.get(attrs[2])
+                    record.json[attrs[2]][attrs[0]] = [obj.get(attrs[2])]
                     flag_modified(record, 'json')
                     db.session.merge(record)
                 db.session.commit()
