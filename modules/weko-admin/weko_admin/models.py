@@ -28,6 +28,7 @@ from sqlalchemy import asc, Sequence
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
+from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
 
@@ -1256,12 +1257,13 @@ class FeedbackMailHistory(db.Model):
     @classmethod
     def get_sequence(cls, session):
         """Get session sequence.
-        
+
         Arguments:
             session {sessiosn} -- The DB session
-        
+
         Returns:
             number -- The next id
+
         """
         if not session:
             session = db.session
@@ -1277,7 +1279,9 @@ class FeedbackMailHistory(db.Model):
             list -- history
 
         """
-        result = cls.query.all()
+        result = cls.query.order_by(
+            desc(cls.id)
+        ).all()
         return result
 
     @classmethod
@@ -1366,7 +1370,7 @@ class FeedbackMailFailed(db.Model):
 
     @classmethod
     def delete_by_history_id(cls, session, history_id):
-        """Delete all mail by history id
+        """Delete all mail by history id.
 
         Arguments:
             history_id {integer} -- The history id
@@ -1421,5 +1425,7 @@ __all__ = ([
     'RankingSettings',
     'BillingPermission',
     'FeedbackMailSetting',
-    'AdminSettings'
+    'AdminSettings',
+    'FeedbackMailHistory',
+    'FeedbackMailFailed'
 ])

@@ -443,35 +443,7 @@ def get_send_mail_history():
     except Exception as ex:
         current_app.logger.debug('Cannot convert paramater', ex)
         page = 1
-    # FIXME: FAKE DATA:
-    if page != 1:
-        error = {
-            'data': [],
-            'error': 'Wrong parameter'
-        }
-        return jsonify(error)
-    result = {
-        'data': [
-            {
-                'id': 1,
-                'start_time': '2019-06-01 18:00:00.000',
-                'end_time': '2019-06-01 18:30:00.00',
-                'count': 100,
-                'success': 90,
-                'error': 10
-            },
-            {
-                'id': 2,
-                'start_time': '2019-07-01 18:00:00.000',
-                'end_time': '2019-07-01 18:30:00.00',
-                'count': 110,
-                'success': 100,
-                'error': 0
-            }
-        ],
-        'error': ''
-    }
-    # ==================================
+    result = FeedbackMail.load_feedback_mail_history(page)
     return jsonify(result)
 
 
@@ -491,58 +463,5 @@ def get_failed_mail():
         current_app.logger.debug('Cannot convert paramater', ex)
         page = 1
         id = 1
-
-    # FIXME: FAKE DATA:
-    if page != 1 or id != 1:
-        error = {
-            'data': [],
-            'error': 'Wrong parameter'
-        }
-        return jsonify(error)
-    result = {
-        'data': [
-            {
-                'name': 'Zannaghazi',
-                'mail': 'zannaghazi@yahoo.com'
-            },
-            {
-                'name': 'ABC',
-                'mail': 'abc@yahoo.com'
-            },
-            {
-                'name': 'DEF',
-                'mail': 'def@yahoo.com'
-            },
-            {
-                'name': 'GHI',
-                'mail': 'ghi@yahoo.com'
-            },
-            {
-                'name': 'JKL',
-                'mail': 'jkl@yahoo.com'
-            },
-            {
-                'name': 'MNO',
-                'mail': 'mno@yahoo.com'
-            },
-            {
-                'name': 'PQRS',
-                'mail': 'pqrs@yahoo.com'
-            },
-            {
-                'name': 'TUV',
-                'mail': 'tuv@yahoo.com'
-            },
-            {
-                'name': 'XYZ',
-                'mail': 'xyz@yahoo.com'
-            },
-            {
-                'name': '123',
-                'mail': '123@yahoo.com'
-            }
-        ],
-        'error': ''
-    }
-    # ========================
+    result = FeedbackMail.load_feedback_failed_mail(id, page)
     return jsonify(result)

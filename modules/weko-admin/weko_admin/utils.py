@@ -44,7 +44,8 @@ from weko_records.api import ItemsMetadata
 
 from . import config
 from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
-    SearchManagement, StatisticTarget, StatisticUnit
+    SearchManagement, StatisticTarget, StatisticUnit, FeedbackMailHistory, \
+    FeedbackMailFailed
 
 
 def get_response_json(result_list, n_lst):
@@ -1097,3 +1098,163 @@ class FeedbackMail:
                 error_message = _('Duplicate Email Addresses.')
                 return error_message
         return error_message
+
+    @classmethod
+    def load_feedback_mail_history(cls, page_num):
+        """Load all history of send mail.
+
+        Arguments:
+            page_num {integer} -- The page number
+
+        Raises:
+            ValueError: Parameter error
+
+        Returns:
+            dictionary -- List of send mail history
+
+        """
+        result = {
+            'data': [],
+            'total_page': 0,
+            'selected_page': 0,
+            'error': ''
+        }
+        try:
+            data = FeedbackMailHistory.get_all_history()
+            list_history = list()
+            page_num_end = page_num * 10
+            page_num_start = page_num_end - 10
+            if page_num_start > len(data):
+                raise ValueError('Page out of range')
+
+            for index in range(page_num_start, page_num_end):
+                if index >= len(data):
+                    break
+                new_data = dict()
+                new_data['id'] = data[index].id
+                new_data['start_time'] = data[index].start_time.strftime(
+                    '%Y-%m-%d %H:%M:%S.%f')
+                new_data['end_time'] = data[index].end_time.strftime(
+                    '%Y-%m-%d %H:%M:%S.%f')
+                new_data['count'] = int(data[index].count)
+                new_data['error'] = int(data[index].error)
+                new_data['success'] = int(
+                    data[index].count) - int(data[index].error)
+                list_history.append(new_data)
+            result['data'] = list_history
+            result['total_page'] = cls.get_total_page(len(data))
+            result['selected_page'] = page_num
+            return result
+        except Exception as ex:
+            result['error'] = 'Cannot get data. Detail: ' + str(ex)
+            return result
+
+    @classmethod
+    def load_feedback_failed_mail(cls, id, page_num):
+        """Load all failed mail by history id.
+
+        Arguments:
+            id {integer} -- History id
+            page_num {integer} -- Page number
+
+        Raises:
+            ValueError: Parameter error
+
+        Returns:
+            dictionary -- List email
+
+        """
+        result = {
+            'data': [],
+            'total_page': 0,
+            'selected_page': 0,
+            'error': ''
+        }
+        try:
+            data = FeedbackMailFailed.get_by_history_id(id)
+            list_mail = list()
+            page_num_end = page_num * 10
+            page_num_start = page_num_end - 10
+            if page_num_start > len(data):
+                raise ValueError('Page out of range')
+
+            for index in range(page_num_start, page_num_end):
+                if index >= len(data):
+                    break
+                new_data = dict()
+                new_data['name'] = cls.get_email_name(
+                    data[index].author_id,
+                    data[index].mail
+                )
+                new_data['mail'] = cls.get_newest_email(
+                    data[index].author_id,
+                    data[index].mail
+                )
+                list_mail.append(new_data)
+            result['data'] = list_mail
+            result['total_page'] = cls.get_total_page(len(data))
+            result['selected_page'] = page_num
+            return result
+        except Exception as ex:
+            result['error'] = 'Cannot get data. Detail: ' + str(ex)
+            return result
+
+    @classmethod
+    def get_email_name(cls, author_id, mail):
+        """Get name when author have id.
+
+        Arguments:
+            author_id {string} -- author id
+            mail {string} -- email
+
+        Returns:
+            string -- name of author
+
+        """
+        if not author_id:
+            return mail
+        author_data = Authors.get_author_by_id(author_id)
+        if not author_data:
+            return mail
+        author_info = author_data.get('authorNameInfo')
+        if not author_info:
+            return mail
+        return author_info[0].get('fullName')
+
+    @classmethod
+    def get_newest_email(cls, author_id, mail):
+        """Get newest email of author.
+
+        Arguments:
+            author_id {string} -- author id
+            mail {string} -- email
+
+        Returns:
+            string -- newest email
+
+        """
+        if not author_id:
+            return mail
+        author_data = Authors.get_author_by_id(author_id)
+        if not author_data:
+            return mail
+        email_info = author_data.get('emailInfo')
+        if not email_info:
+            return mail
+        return email_info[0].get('email')
+
+    @classmethod
+    def get_total_page(cls, data_length):
+        """Get total page.
+
+        Arguments:
+            data_length {integer} -- length of data
+
+        Returns:
+            integer -- total page number
+
+        """
+        if data_length % 10 != 0:
+            return int(data_length / 10) + 1
+        else:
+            return int(data_length / 10)
