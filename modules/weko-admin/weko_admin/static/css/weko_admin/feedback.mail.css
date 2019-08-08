@@ -2,9 +2,25 @@
   padding-left: 15px;
   padding-right: 15px;
 }
+
 .feedback-mail-modal {
   width: 70%;
 }
+
+.resend-mail-modal {
+  width: 50%;
+}
+
+.resend-mail-table {
+  width: 94%;
+  margin: 15px 3%;
+}
+
+.label-resend-email{
+  font-weight: 400;
+  margin-left: 15px;
+}
+
 .my-pagination-disabled {
   cursor: not-allowed;
 }
@@ -62,4 +78,30 @@
     background-color: #00a65a !important;
     border-color: #008d4c !important;
     border-radius: 3px;
+  }
+
+  .style-table-send-logs {
+    width: 80%;
+    margin-left: 3%;
+    margin-top: 15px;
+  }
+
+  .width-small {
+    width: 4%;
+  }
+
+  .width-medium {
+    width: 10%;
+  }
+
+  .width-long {
+    width: 33%;
+  }
+
+  .text-white {
+    color: white;
+  }
+
+  .left-align {
+    float: left;
   }

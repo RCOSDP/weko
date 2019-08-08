@@ -1,3 +1,5 @@
+const { useState, useEffect  } = React;
+
 const NUM_OF_RESULT = 10;
 const LIMIT_PAGINATION_NUMBER = 5;
 const COMPONENT_SEND_NAME = document.getElementById("component-send").value;
@@ -43,17 +45,17 @@ class ComponentFeedbackMail extends React.Component {
     }
 
     render() {
-      return (
-        <div className="form-group style-component">
-            <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
-            <div class="controls col-xs-10">
-                <div className="form-group">
-                    <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>&nbsp;{SEND_RADIO_BUTTON_NAME}</span>
-                    <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>&nbsp;{NOT_SEND_RADIO_BUTTON_NAME}</span>
+        return (
+            <div className="form-group style-component">
+                <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
+                <div class="controls col-xs-10">
+                    <div className="form-group">
+                        <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>&nbsp;{SEND_RADIO_BUTTON_NAME}</span>
+                        <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>&nbsp;{NOT_SEND_RADIO_BUTTON_NAME}</span>
+                    </div>
                 </div>
             </div>
-        </div>
-      )
+        )
     }
 }
 
@@ -392,7 +394,7 @@ class Pagination extends React.Component {
   }
 }
 
-class ModalBodyComponent extends React.Component {
+class ModalSearchBodyComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -441,19 +443,19 @@ class ModalFooterComponent extends React.Component {
     this.handleClose = this.handleClose.bind(this);
   }
   handleClose() {
-    this.props.bindingValueOfComponent("showModalSearch", false);
+      this.props.bindingValueOfComponent("showModalSearch", false);
   }
   render(){
     return (
-      <ReactBootstrap.Button variant="secondary" onClick={this.handleClose}>
-        <span className="glyphicon glyphicon-remove"></span>
-         Close
-      </ReactBootstrap.Button>
+        <ReactBootstrap.Button className="btn-primary text-white" onClick={this.handleClose}>
+          <span className="glyphicon glyphicon-remove text-white"></span>
+          &nbsp;Close
+        </ReactBootstrap.Button>
     )
   }
 }
 
-class ModalComponent extends React.Component {
+class ModalSearchComponent extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -473,21 +475,143 @@ class ModalComponent extends React.Component {
     return (
       <ReactBootstrap.Modal show={this.state.show} onHide={this.handleClose} dialogClassName="feedback-mail-modal">
         <ReactBootstrap.Modal.Body className="feedback-mail-modal-body">
-          <ModalBodyComponent addEmailToList = {this.props.addEmailToList}/>
+          <ModalSearchBodyComponent addEmailToList = {this.props.addEmailToList}/>
         </ReactBootstrap.Modal.Body>
         <ReactBootstrap.Modal.Footer>
-          <ModalFooterComponent bindingValueOfComponent = {this.props.bindingValueOfComponent}/>
+          <ModalFooterComponent bindingValueOfComponent = {this.props.bindingValueOfComponent} modal = "modalSearch"/>
         </ReactBootstrap.Modal.Footer>
       </ReactBootstrap.Modal>
     )
   }
 }
 
+const ModalFooterResendComponent = function(props){
+  function handleClose() {
+    props.bindingValueOfComponent("showModalResend", false);
+  }
+  function handleSend(){
+    props.bindingValueOfComponent("showModalResend", false);
+    props.bindingValueOfComponent("resendMail", true);
+  }
+  return (
+    <div>
+      <ReactBootstrap.Button className="btn-success text-white left-align" onClick={() => handleSend()}>
+        <span className="glyphicon glyphicon-send text-white"></span>
+        &nbsp;Resend
+      </ReactBootstrap.Button>
+      <ReactBootstrap.Button className="btn-primary text-white" onClick={() => handleClose()}>
+        <span className="glyphicon glyphicon-remove text-white"></span>
+        &nbsp;Close
+      </ReactBootstrap.Button>
+    </div>
+  )
+}
+
+const TableSendErrorComponent = function(props){
+  const [data, setData] = useState([
+    {
+      'name': 'ABC',
+      'mail': 'abc@gcs.com'
+    },
+    {
+      'name': 'ABC',
+      'mail': 'abc@gcs.com'
+    }
+  ]);
+
+  useEffect(() => {
+    console.log(props.id);
+  });
+
+  function generateBodyTableUser(){
+    let listRow = data.map((rowData, index) =>
+    <tr>
+      <td>{index+1}</td>
+      <td>{rowData.name}</td>
+      <td>{rowData.mail}</td>
+    </tr>);
+    return(
+      <tbody>
+        {listRow}
+      </tbody>
+    )
+  }
+  return (
+    <div>
+      <table class="table table-striped resend-mail-table">
+        <thead>
+          <tr>
+            <th className = "width-small">#</th>
+            <th className = "width-long">Name</th>
+            <th>Mail Address</th>
+          </tr>
+        </thead>
+        {generateBodyTableUser()}
+      </table>
+    </div>
+  )
+}
+
+const PaginationResendComponent = function(props){
+  return (
+    <div  className="row">
+      <div  className="col-sm-12 col-md-12 text-center">
+        <ul class="pagination">
+          <li class="page-item"><a class="page-lin " href="#">&lt;</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+          <li class="page-item"><a class="page-link" href="#">&gt;</a></li>
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+const ModalResendBodyComponent = function(props) {
+  const [numOfResult, setNumOfResult] = useState(props.numOfResult)
+  return (
+    <div>
+      <div className = "row">
+        <label className="label-resend-email">List of authors who failed to send</label>
+      </div>
+      <div className = "row">
+        <TableSendErrorComponent id = {props.id}/>
+      </div>
+      <div className = "row">
+        <PaginationResendComponent />
+      </div>
+    </div>
+  )
+}
+
+const ModalResendComponent = function(props){
+  const [showModal, setShowModal] = useState(props.showModalResend)
+
+  useEffect(() => {
+    setShowModal(props.showModalResend);
+  }, [props])
+
+  function handleClose() {
+    this.props.bindingValueOfComponent("showModalResend", false);
+  }
+
+  return (
+    <ReactBootstrap.Modal show={showModal} onHide={() => handleClose()} dialogClassName="resend-mail-modal">
+      <ReactBootstrap.Modal.Body className="feedback-mail-modal-body">
+        <ModalResendBodyComponent id = {props.id}/>
+      </ReactBootstrap.Modal.Body>
+      <ReactBootstrap.Modal.Footer>
+        <ModalFooterResendComponent bindingValueOfComponent = {props.bindingValueOfComponent}/>
+      </ReactBootstrap.Modal.Footer>
+    </ReactBootstrap.Modal>
+  )
+}
+
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
         super(props);
         this.saveCommand = this.saveCommand.bind(this);
-        this.sendCommand = this.sendCommand.bind(this);
     }
 
     saveCommand(event) {
@@ -517,10 +641,6 @@ class ComponentButtonLayout extends React.Component {
       });
     }
 
-    sendCommand(event){
-
-    }
-
     render() {
       return (
         <div className="form-group style-component ">
@@ -531,17 +651,89 @@ class ComponentButtonLayout extends React.Component {
               {SAVE_BUTTON_NAME}
             </button>
           </div>
-          <div className="col-xs-offset-8">
-            <button className="btn btn-primary style-button" onClick={this.sendCommand}>
-              <span class="glyphicon glyphicon-send"></span>
-              &nbsp;
-              {SEND_BUTTON_NAME}
-            </button>
-          </div>
         </div>
       )
 
     }
+}
+
+const ComponentLogsTable = function(props){
+  const [data, setData] = useState([
+    {
+      'id' : '1',
+      'start_time': '2019-06-01 18:00:00.000',
+      'end_time': '2019-06-01 18:30:00.000',
+      'count': '100',
+      'success': '100',
+      'error': '0'
+    },
+    {
+      'id' : '2',
+      'start_time': '2019-07-01 18:00:00.000',
+      'end_time': '2019-07-01 18:35:00.000',
+      'count': '110',
+      'success': '95',
+      'error': '15'
+    },
+    {
+      'id' : '3',
+      'start_time': '2019-07-01 18:00:00.000',
+      'end_time': '2019-07-01 18:35:00.000',
+      'count': '110',
+      'success': '95',
+      'error': '15'
+    }
+  ]);
+
+  function showErrorMail(id){
+    props.bindingValueOfComponent("showModalResend", true)
+    props.bindingValueOfComponent("mailId", id);
+  }
+
+  function generateTableBody() {
+    let listRow = data.map((rowData, index) => {
+      let error = 0;
+      if (rowData.error != '0') {
+        error = <a data-id={rowData.id} href="#" onClick = {() => showErrorMail(rowData.id)}>{rowData.error}</a>
+      }
+      return (
+        <tr key={rowData.id}>
+          <td>{index + 1}</td>
+          <td>{rowData.start_time}</td>
+          <td>{rowData.end_time}</td>
+          <td>{rowData.count}</td>
+          <td>{rowData.success}</td>
+          <td>{error}</td>
+        </tr>
+      )
+    }
+    );
+    return (
+      <tbody>
+        {listRow}
+      </tbody>
+    )
+  }
+
+  return (
+    <div className = "form-group style-component">
+      <div className="control-label col-xs-2">Send logs</div>
+      <br/>
+      <table class="table table-striped style-table-send-logs">
+        <thead>
+          <tr>
+            <th className = "width-small">#</th>
+            <th className = "width-long">Start Time</th>
+            <th className = "width-long">End Time</th>
+            <th className = "width-medium">Counts</th>
+            <th className = "width-medium">Success</th>
+            <th className = "width-medium">Error</th>
+          </tr>
+        </thead>
+        {generateTableBody()}
+      </table>
+    </div>
+  )
 }
 
 class MainLayout extends React.Component {
@@ -549,8 +741,11 @@ class MainLayout extends React.Component {
         super(props);
         this.state = {
           showModalSearch: false,
+          showModalResend: false,
           listEmail: [],
           flagSend: false,
+          mailId: "",
+          resendMail: false
         }
         this.bindingValueOfComponent = this.bindingValueOfComponent.bind(this);
         this.addEmailToList = this.addEmailToList.bind(this);
@@ -566,6 +761,15 @@ class MainLayout extends React.Component {
             break;
         case "flagSend":
             this.setState({flagSend: value});
+            break;
+        case "showModalResend":
+          this.setState({showModalResend: value})
+          break;
+        case "mailId":
+            this.setState({mailId: value})
+            break;
+        case "resendMail":
+            this.setState({resendMail: value})
             break;
       }
     }
@@ -584,16 +788,22 @@ class MainLayout extends React.Component {
             <div>
                 <div id="alerts"></div>
                 <div className="row">
-                    <ComponentFeedbackMail flagSend = {this.state.flagSend} bindingValueOfComponent = {this.bindingValueOfComponent}/>
+                  <ComponentFeedbackMail flagSend = {this.state.flagSend} bindingValueOfComponent = {this.bindingValueOfComponent}/>
                 </div>
                 <div className="row">
-                    <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} removeEmailFromList = {this.removeEmailFromList} listEmail={this.state.listEmail}/>
+                  <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} removeEmailFromList = {this.removeEmailFromList} listEmail={this.state.listEmail}/>
+                </div>
+                <div className = "row">
+                  <ComponentLogsTable bindingValueOfComponent = {this.bindingValueOfComponent}/>
                 </div>
                 <div className="row">
-                    <ComponentButtonLayout listEmail = {this.state.listEmail} flagSend={this.state.flagSend}/>
+                  <ComponentButtonLayout listEmail = {this.state.listEmail} flagSend={this.state.flagSend}/>
                 </div>
                 <div className="row">
-                    <ModalComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent} addEmailToList={this.addEmailToList}/>
+                  <ModalSearchComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent} addEmailToList={this.addEmailToList}/>
+                </div>
+                <div className = "row">
+                  <ModalResendComponent showModalResend = {this.state.showModalResend} bindingValueOfComponent = {this.bindingValueOfComponent} id = {this.state.mailId}/>
                 </div>
             </div>
         )
