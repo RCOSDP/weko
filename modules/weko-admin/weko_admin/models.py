@@ -24,7 +24,7 @@ from datetime import datetime
 
 from flask import current_app
 from invenio_db import db
-from sqlalchemy import asc
+from sqlalchemy import asc, Sequence
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
@@ -1011,6 +1011,21 @@ class FeedbackMailSetting(db.Model, Timestamp):
     )
     """Author identifier."""
 
+    manual_mail = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
     is_sending_feedback = db.Column(
         db.Boolean(name='is_sending_feedback'),
         nullable=False,
@@ -1018,7 +1033,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
     """Setting to send or not send feedback mail."""
 
     @classmethod
-    def create(cls, account_author, is_sending_feedback):
+    def create(cls, account_author, manual_mail, is_sending_feedback):
         """Create a feedback mail setting.
 
         Arguments:
@@ -1033,6 +1048,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
             new_record = FeedbackMailSetting()
             with db.session.begin_nested():
                 new_record.account_author = account_author
+                new_record.manual_mail = manual_mail
                 new_record.is_sending_feedback = is_sending_feedback
                 db.session.add(new_record)
             db.session.commit()
@@ -1057,7 +1073,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
             return []
 
     @classmethod
-    def update(cls, account_author, is_sending_feedback):
+    def update(cls, account_author, manual_mail, is_sending_feedback):
         """Update existed feedback mail setting.
 
         Arguments:
@@ -1075,6 +1091,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
             with db.session.begin_nested():
                 settings = cls.query.all()[0]
                 settings.account_author = account_author
+                settings.manual_mail = manual_mail
                 settings.is_sending_feedback = is_sending_feedback
                 db.session.merge(settings)
             db.session.commit()
@@ -1195,6 +1212,201 @@ class AdminSettings(db.Model):
             raise ex
 
         return cls
+
+
+class FeedbackMailHistory(db.Model):
+    """History, Logs of sending mail."""
+
+    __tablename__ = 'feedback_mail_history'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        nullable=False
+    )
+
+    parent_id = db.Column(
+        db.Integer
+    )
+
+    start_time = db.Column(
+        db.DateTime,
+        nullable=False
+    )
+
+    end_time = db.Column(
+        db.DateTime,
+        nullable=False
+    )
+
+    stats_time = db.Column(
+        db.String(7),
+        nullable=False
+    )
+
+    count = db.Column(
+        db.Integer,
+        nullable=False
+    )
+
+    error = db.Column(
+        db.Integer
+    )
+
+    @classmethod
+    def get_sequence(cls, session):
+        """Get session sequence.
+        
+        Arguments:
+            session {sessiosn} -- The DB session
+        
+        Returns:
+            number -- The next id
+        """
+        if not session:
+            session = db.session
+        seq = Sequence('feedback_mail_history_id_seq')
+        next_id = session.execute(seq)
+        return next_id
+
+    @classmethod
+    def get_all_history(cls):
+        """Get all history record.
+
+        Returns:
+            list -- history
+
+        """
+        result = cls.query.all()
+        return result
+
+    @classmethod
+    def create(cls,
+               session,
+               id,
+               start_time,
+               end_time,
+               stats_time,
+               count,
+               error,
+               parent_id=None):
+        """Create history record.
+
+        Arguments:
+            start_time {timestamp} -- Start time
+            end_time {timestamp} -- End time
+            stats_time {string} -- Statistic time
+            count {integer} -- Total sent mail
+            error {integer} -- Total failed mail
+
+        Keyword Arguments:
+            parent_id {integer} -- Parent id if resend (default: {None})
+
+        """
+        if not session:
+            session = db.session
+        try:
+            data = FeedbackMailHistory()
+            with session.begin_nested():
+                data.id = id
+                if parent_id:
+                    data.parent_id = parent_id
+                data.start_time = start_time
+                data.end_time = end_time
+                data.stats_time = stats_time
+                data.count = count
+                data.error = error
+                session.add(data)
+            session.commit()
+        except BaseException as ex:
+            session.rollback()
+            current_app.logger.debug(ex)
+
+
+class FeedbackMailFailed(db.Model):
+    """Storage of mail which failed to send."""
+
+    __tablename__ = 'feedback_mail_failed'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    history_id = db.Column(
+        db.Integer,
+        nullable=False
+    )
+
+    author_id = db.Column(
+        db.String(50)
+    )
+
+    mail = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    @classmethod
+    def get_by_history_id(cls, history_id):
+        """Get list mail by history id.
+
+        Arguments:
+            history_id {integer} -- The history id
+
+        Returns:
+            list -- list of mail
+
+        """
+        result = cls.query.filter_by(
+            history_id=history_id
+        ).all()
+        return result
+
+    @classmethod
+    def delete_by_history_id(cls, session, history_id):
+        """Delete all mail by history id
+
+        Arguments:
+            history_id {integer} -- The history id
+
+        """
+        if not session:
+            session = db.session
+        try:
+            with session.begin_nested():
+                cls.query.filter_by(
+                    history_id=history_id
+                ).delete()
+            session.commit()
+        except BaseException as ex:
+            session.rollback()
+            current_app.logger.debug(ex)
+
+    @classmethod
+    def create(cls, session, history_id, author_id, mail):
+        """Create mail record.
+
+        Arguments:
+            history_id {integer} -- history_id
+            author_id {string} -- The author id
+            mail {string} -- mail
+
+        """
+        if not session:
+            session = db.session
+        try:
+            with session.begin_nested():
+                data = FeedbackMailFailed()
+                data.history_id = history_id
+                data.author_id = author_id
+                data.mail = mail
+                session.add(data)
+            session.commit()
+        except BaseException as ex:
+            session.rollback()
+            current_app.logger.debug(ex)
 
 
 __all__ = ([
