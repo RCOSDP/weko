@@ -153,7 +153,6 @@ class ComponentExclusionTarget extends React.Component {
         }
         if (this.props.addEmailToList(new_email)) {
           $('#custom_input_email').val('');
-          console.log("1");
           $('#sltBoxListEmail').animate({
             scrollTop: $("#custom_input_email").offset().top
           }, 1000);
@@ -382,6 +381,7 @@ class Pagination extends React.Component {
     }
     return null;
   }
+
   locatePageResult(pageNumber){
     if(pageNumber < 1 || pageNumber > this.state.numOfPage){
       return;
@@ -578,26 +578,39 @@ const ModalFooterResendComponent = function(props){
   )
 }
 
-const TableSendErrorComponent = function(props){
-  const [data, setData] = useState([
-    {
-      'name': 'ABC',
-      'mail': 'abc@gcs.com'
-    },
-    {
-      'name': 'ABC',
-      'mail': 'abc@gcs.com'
-    }
-  ]);
+const TableResendErrorComponent = function(props){
+  const [data, setData] = useState([]);
+  const [numOfPage, setNumOfPage] = useState(1);
+  const [currentIndex, setIndex] = useState(0);
 
   useEffect(() => {
-    console.log(props.id);
-  });
+    fetch("/api/admin/get_failed_mail?page=1&id="+ props.id)
+    .then(res => res.json())
+    .then(
+      (result) => {
+        if (result.error) {
+          alert(result.error);
+          return;
+        }
+        setNumOfPage(result.total_page);
+        setData(result.data);
+      },
+
+      (error) => {
+        console.log(error);
+      }
+    );
+  },[]);
+
+  function getData(data){
+    setData(data.data);
+    setIndex(data.selected_page-1);
+  }
 
   function generateBodyTableUser(){
     let listRow = data.map((rowData, index) =>
     <tr>
-      <td>{index+1}</td>
+      <td>{(currentIndex * 10) + index+1}</td>
       <td>{rowData.name}</td>
       <td>{rowData.mail}</td>
     </tr>);
@@ -619,21 +632,101 @@ const TableSendErrorComponent = function(props){
         </thead>
         {generateBodyTableUser()}
       </table>
+      <div className = "row">
+        <PaginationResendLogsTable bindURL = "/api/admin/get_failed_mail" bindID = {props.id} bindNumOfPage = {numOfPage} bindGetData = {getData}/>
+      </div>
     </div>
   )
 }
 
-const PaginationResendComponent = function(props){
-  return (
+const PaginationResendLogsTable = function(props){
+  const[numOfPage, setNumOfPage] = useState(props.bindNumOfPage);
+  const[startPage, setStartPage] = useState(1);
+  const[endPage, setEndPage] = useState(1);
+  const[currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setNumOfPage(props.bindNumOfPage);
+    if(numOfPage > 5){
+      setEndPage(5);
+    }
+    else{
+      setEndPage(props.bindNumOfPage);
+    }
+  }, [props]);
+
+  function locatePageResult(pageNumber){
+    if(pageNumber < 1 || pageNumber > numOfPage){
+      return;
+    }
+    if (numOfPage > 5 ){
+      if(pageNumber > 2 && pageNumber < numOfPage -2){
+        setStartPage(pageNumber -2);
+        setEndPage(pageNumber + 2);
+      }
+      else {
+        if(pageNumber < 3){
+          setStartPage(1);
+          setEndPage(5);
+        }
+        if (pageNumber >numOfPage -2){
+          setStartPage(numOfPage - 4);
+          setEndPage(numOfPage);
+        }
+      }
+    }
+    setCurrentPage(pageNumber);
+    let extendData = "";
+    if(props.bindID){
+      extendData +="&id=" + props.bindID;
+    }
+    fetch(props.bindURL + "?page=" + pageNumber + extendData)
+    .then(res => res.json())
+    .then((result) => {
+      if (result.error) {
+        alter(result.error);
+        return;
+      }
+      props.bindGetData(result);
+    });
+    (error) => {
+      console.log(error);
+    }
+  }
+
+  function generatePagination(){
+    let listPage = [];
+    for (let i = startPage; i <= endPage; i++){
+      listPage.push(
+        <li  key = {i.toString()} className = {currentPage == i ? 'active' : ''}>
+          <a  href="#" onClick = {() => locatePageResult(i)}>{i}</a>
+        </li>
+      )
+    }
+    return (
+      <ul  className="pagination">
+        {numOfPage > LIMIT_PAGINATION_NUMBER ?
+        <li >
+          <a  href="#" onClick = {() => locatePageResult(1)} className = {currentPage == 1 ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8810;</span></a>
+        </li> : null }
+        <li >
+          <a  href="#" onClick = {() => locatePageResult(currentPage - 1)} className = {currentPage == 1 ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&lt;</span></a>
+        </li>
+        {listPage}
+        <li >
+          <a  href="#" onClick = {() => locatePageResult(currentPage + 1)} className = {currentPage == numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&gt;</span></a>
+        </li>
+        {numOfPage > LIMIT_PAGINATION_NUMBER ?
+        <li >
+          <a  href="#" onClick = {() => locatePageResult(tnumOfPage)} className = {currentPage == numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8811;</span></a>
+        </li> : null }
+      </ul>
+    )
+  }
+  return(
     <div  className="row">
       <div  className="col-sm-12 col-md-12 text-center">
-        <ul class="pagination">
-          <li class="page-item"><a class="page-lin " href="#">&lt;</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item"><a class="page-link" href="#">2</a></li>
-          <li class="page-item"><a class="page-link" href="#">3</a></li>
-          <li class="page-item"><a class="page-link" href="#">&gt;</a></li>
-        </ul>
+        {generatePagination()}
       </div>
     </div>
   )
@@ -647,10 +740,7 @@ const ModalResendBodyComponent = function(props) {
         <label className="label-resend-email">List of authors who failed to send</label>
       </div>
       <div className = "row">
-        <TableSendErrorComponent id = {props.id}/>
-      </div>
-      <div className = "row">
-        <PaginationResendComponent />
+        <TableResendErrorComponent id = {props.id}/>
       </div>
     </div>
   )
@@ -661,7 +751,7 @@ const ModalResendComponent = function(props){
 
   useEffect(() => {
     setShowModal(props.showModalResend);
-  }, [props])
+  }, [props.showModalResend])
 
   function handleClose() {
     this.props.bindingValueOfComponent("showModalResend", false);
@@ -729,36 +819,37 @@ class ComponentButtonLayout extends React.Component {
 }
 
 const ComponentLogsTable = function(props){
-  const [data, setData] = useState([
-    {
-      'id' : '1',
-      'start_time': '2019-06-01 18:00:00.000',
-      'end_time': '2019-06-01 18:30:00.000',
-      'count': '100',
-      'success': '100',
-      'error': '0'
-    },
-    {
-      'id' : '2',
-      'start_time': '2019-07-01 18:00:00.000',
-      'end_time': '2019-07-01 18:35:00.000',
-      'count': '110',
-      'success': '95',
-      'error': '15'
-    },
-    {
-      'id' : '3',
-      'start_time': '2019-07-01 18:00:00.000',
-      'end_time': '2019-07-01 18:35:00.000',
-      'count': '110',
-      'success': '95',
-      'error': '15'
-    }
-  ]);
+  const [data, setData] = useState([]);
+  const [numOfPage, setNumOfPage] = useState(1);
+  const [currentIndex, setIndex] = useState(0);
 
   function showErrorMail(id){
     props.bindingValueOfComponent("showModalResend", true)
     props.bindingValueOfComponent("mailId", id);
+  }
+
+  useEffect(() => {
+    fetch("/api/admin/get_send_mail_history?page=1")
+    .then(res => res.json())
+    .then(
+      (result) => {
+        if (result.error) {
+          alert(result.error);
+          return;
+        }
+        setNumOfPage(result.total_page);
+        setData(result.data);
+      },
+
+      (error) => {
+        console.log(error);
+      }
+    );
+  }, []);
+
+  function getData(data){
+    setData(data.data);
+    setIndex(data.selected_page-1);
   }
 
   function generateTableBody() {
@@ -769,7 +860,7 @@ const ComponentLogsTable = function(props){
       }
       return (
         <tr key={rowData.id}>
-          <td>{index + 1}</td>
+          <td>{(currentIndex * 10) + index + 1}</td>
           <td>{rowData.start_time}</td>
           <td>{rowData.end_time}</td>
           <td>{rowData.count}</td>
@@ -803,6 +894,9 @@ const ComponentLogsTable = function(props){
         </thead>
         {generateTableBody()}
       </table>
+      <div className = "row">
+        <PaginationResendLogsTable bindURL="/api/admin/get_send_mail_history" bindNumOfPage = {numOfPage} bindGetData = {getData}/>
+      </div>
     </div>
   )
 }
