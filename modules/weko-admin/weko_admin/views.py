@@ -38,10 +38,10 @@ from werkzeug.local import LocalProxy
 from . import config
 from .models import SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
-    get_current_api_certification, get_feed_back_email_setting, \
+    get_current_api_certification, FeedbackMail, \
     get_initial_stats_report, get_selected_language, get_unit_stats_report, \
     save_api_certification, update_admin_lang_setting, \
-    update_feedback_email_setting, validate_certification
+    validate_certification
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -393,7 +393,7 @@ def update_feedback_mail():
         'error': ''
     }
     data = request.get_json()
-    response = update_feedback_email_setting(
+    response = FeedbackMail.update_feedback_email_setting(
         data.get('data', ''),
         data.get('is_sending_feedback', False))
 
@@ -420,10 +420,129 @@ def get_feedback_mail():
         'error': ''
     }
 
-    data = get_feed_back_email_setting()
+    data = FeedbackMail.get_feed_back_email_setting()
     if data.get('error'):
         result['error'] = data.get('error')
         return jsonify(result)
     result['data'] = data.get('data')
     result['is_sending_feedback'] = data.get('is_sending_feedback')
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_send_mail_history', methods=['GET'])
+def get_send_mail_history():
+    """API allow to get send mail history.
+
+    Returns:
+        json -- response list mail data if no error occurs
+
+    """
+    try:
+        data = request.args
+        page = int(data.get('page'))
+    except Exception as ex:
+        current_app.logger.debug('Cannot convert paramater', ex)
+        page = 1
+    # FIXME: FAKE DATA:
+    if page != 1:
+        error = {
+            'data': [],
+            'error': 'Wrong parameter'
+        }
+        return jsonify(error)
+    result = {
+        'data': [
+            {
+                'id': 1,
+                'start_time': '2019-06-01 18:00:00.000',
+                'end_time': '2019-06-01 18:30:00.00',
+                'count': 100,
+                'success': 90,
+                'error': 10
+            },
+            {
+                'id': 2,
+                'start_time': '2019-07-01 18:00:00.000',
+                'end_time': '2019-07-01 18:30:00.00',
+                'count': 110,
+                'success': 100,
+                'error': 0
+            }
+        ],
+        'error': ''
+    }
+    # ==================================
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_failed_mail', methods=['GET'])
+def get_failed_mail():
+    """Get list failed mail.
+
+    Returns:
+        json -- List data if no error occurs
+
+    """
+    try:
+        data = request.args
+        page = int(data.get('page'))
+        id = int(data.get('id'))
+    except Exception as ex:
+        current_app.logger.debug('Cannot convert paramater', ex)
+        page = 1
+        id = 1
+
+    # FIXME: FAKE DATA:
+    if page != 1 or id != 1:
+        error = {
+            'data': [],
+            'error': 'Wrong parameter'
+        }
+        return jsonify(error)
+    result = {
+        'data': [
+            {
+                'name': 'Zannaghazi',
+                'mail': 'zannaghazi@yahoo.com'
+            },
+            {
+                'name': 'ABC',
+                'mail': 'abc@yahoo.com'
+            },
+            {
+                'name': 'DEF',
+                'mail': 'def@yahoo.com'
+            },
+            {
+                'name': 'GHI',
+                'mail': 'ghi@yahoo.com'
+            },
+            {
+                'name': 'JKL',
+                'mail': 'jkl@yahoo.com'
+            },
+            {
+                'name': 'MNO',
+                'mail': 'mno@yahoo.com'
+            },
+            {
+                'name': 'PQRS',
+                'mail': 'pqrs@yahoo.com'
+            },
+            {
+                'name': 'TUV',
+                'mail': 'tuv@yahoo.com'
+            },
+            {
+                'name': 'XYZ',
+                'mail': 'xyz@yahoo.com'
+            },
+            {
+                'name': '123',
+                'mail': '123@yahoo.com'
+            }
+        ],
+        'error': ''
+    }
+    # ========================
     return jsonify(result)
