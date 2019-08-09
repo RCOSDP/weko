@@ -328,3 +328,224 @@ def get_admin_coverpage_setting():
     except Exception as ex:
         current_app.logger.debug(ex)
     return avail == 'enable'
+
+
+def get_ES_records_data_by_index():
+    """Delete item in preview widget design.
+
+    Arguments:
+        data_id {widget_item} -- [id of widget item]
+        json_data {dict} -- [data to be updated]
+
+    Returns:
+        [data] -- [data after updated]
+
+    """
+    pass
+    hits = [
+        {
+            "_index": "tenant1-weko-item-v1.0.0",
+            "_type": "item-v1.0.0",
+            "_id": "4e617296-33b4-4982-9177-cd4dfc484aca",
+            "_score": 1.0,
+            "_source": {
+                "itemtype": "BaseView",
+                "control_number": "1",
+                "publish_date": "2019-08-09",
+                "language": [
+                    "eng"
+                ],
+                "weko_creator_id": "1",
+                "_updated": "2019-08-08T03:03:12.713911+00:00",
+                "subject": [
+                    {
+                        "subjectScheme": "BSH",
+                        "value": "A-20190808-00001"
+                    }
+                ],
+                "_item_metadata": {
+                    "item_1554881483002": {
+                        "attribute_name": "Language",
+                        "attribute_value_mlt": [
+                            {
+                                "subitem_1551255818386": "eng"
+                            }
+                        ]
+                    },
+                    "item_1554881612371": {
+                        "attribute_name": "Keyword",
+                        "attribute_value_mlt": [
+                            {
+                                "subitem_1522299896455": "en",
+                                "subitem_1522300014469": "BSH",
+                                "subitem_1522300048512": "A-20190808-00001",
+                                "subitem_1523261968819": "A-20190808-00001"
+                            }
+                        ]
+                    },
+                    "item_1554881204737": {
+                        "attribute_name": "Title",
+                        "attribute_value_mlt": [
+                            {
+                                "subitem_1551255647225": "A-20190808-00001",
+                                "subitem_1551255648112": "en"
+                            }
+                        ]
+                    },
+                    "pubdate": {
+                        "attribute_name": "公開日",
+                        "attribute_value": "2019-08-09"
+                    },
+                    "item_1560938217591": {
+                        "attribute_name": "課金ファイル",
+                        "attribute_value_mlt": [
+                            {
+                                "groupsprice": [
+                                    {}
+                                ]
+                            }
+                        ]
+                    },
+                    "item_title": "A-20190808-00001",
+                    "item_type_id": "122",
+                    "control_number": "1",
+                    "_oai": {
+                        "id": "oai:invenio:recid/1"
+                    },
+                    "weko_shared_id": -1,
+                    "owner": "1",
+                    "custom_sort": {
+                        "1565232963910": "",
+                        "1565232975358": "",
+                        "1565232962231": ""
+                    },
+                    "path": [
+                        "1565232962231",
+                        "1565232962231/1565232963910",
+                        "1565232962231/1565232975358"
+                    ],
+                    "publish_status": "1"
+                },
+                "_oai": {
+                    "id": "oai:invenio:recid/1"
+                },
+                "custom_sort": {
+                    "1565232963910": "",
+                    "1565232975358": "",
+                    "1565232962231": ""
+                },
+                "weko_shared_id": -1,
+                "_created": "2019-08-08T03:02:56.831423+00:00",
+                "path": [
+                    "1565232962231",
+                    "1565232962231/1565232963910",
+                    "1565232962231/1565232975358"
+                ],
+                "title": [
+                    "A-20190808-00001"
+                ],
+                "publish_status": "0",
+                "relation_version_is_last": True
+            }
+        },
+        {
+            "_index": "tenant1-weko-item-v1.0.0",
+            "_type": "item-v1.0.0",
+            "_id": "c2e6edac-78c0-4c00-a558-cbfab3e0880c",
+            "_score": 1.0,
+            "_source": {
+                "title": [
+                    "A-20190808-00002"
+                ],
+                "path": [
+                    "1565232962231/1565232963910/1565232973014",
+                    "1565232962231/1565239208766/1565239213221",
+                    "1565232962231/1565239209917/1565239216893"
+                ],
+                "custom_sort": {
+                    "1565239216893": "",
+                    "1565232973014": "",
+                    "1565239213221": ""
+                },
+                "language": [
+                    "eng"
+                ],
+                "subject": [],
+                "_created": "2019-08-08T08:37:05.302483+00:00",
+                "_oai": {
+                    "id": "oai:invenio:recid/3"
+                },
+                "weko_shared_id": -1,
+                "itemtype": "BaseView",
+                "weko_creator_id": "1",
+                "_item_metadata": {
+                    "item_1560938217591": {
+                        "attribute_name": "課金ファイル",
+                        "attribute_value_mlt": [
+                            {
+                                "groupsprice": [
+                                    {}
+                                ]
+                            }
+                        ]
+                    },
+                    "pubdate": {
+                        "attribute_name": "公開日",
+                        "attribute_value": "2019-08-08"
+                    },
+                    "item_1554881612371": {
+                        "attribute_name": "Keyword",
+                        "attribute_value_mlt": [
+                            {
+                                "subitem_1522299896455": "en",
+                                "subitem_1522300014469": "NDLC"
+                            }
+                        ]
+                    },
+                    "item_1554881204737": {
+                        "attribute_name": "Title",
+                        "attribute_value_mlt": [
+                            {
+                                "subitem_1551255647225": "A-20190808-00002",
+                                "subitem_1551255648112": "en"
+                            }
+                        ]
+                    },
+                    "item_1554881483002": {
+                        "attribute_name": "Language",
+                        "attribute_value_mlt": [
+                            {
+                                "subitem_1551255818386": "eng"
+                            }
+                        ]
+                    },
+                    "item_title": "A-20190808-00002",
+                    "item_type_id": "122",
+                    "control_number": "3",
+                    "_oai": {
+                        "id": "oai:invenio:recid/3"
+                    },
+                    "weko_shared_id": -1,
+                    "owner": "1",
+                    "custom_sort": {
+                        "1565239216893": "",
+                        "1565232973014": "",
+                        "1565239213221": ""
+                    },
+                    "path": [
+                        "1565232962231/1565232963910/1565232973014",
+                        "1565232962231/1565239208766/1565239213221",
+                        "1565232962231/1565239209917/1565239216893"
+                    ],
+                    "publish_status": "1"
+                },
+                "publish_status": "0",
+                "_updated": "2019-08-08T08:37:16.108872+00:00",
+                "publish_date": "2019-08-08",
+                "control_number": "3",
+                "relation_version_is_last": True
+            }
+        }
+    ]
+
+    return hits

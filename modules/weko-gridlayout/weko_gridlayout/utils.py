@@ -25,6 +25,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from xml.etree.ElementTree import tostring
 
+from elasticsearch.exceptions import NotFoundError
 from flask import Response, current_app, request
 from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
@@ -644,8 +645,14 @@ def get_ES_result_by_date(start_date, end_date):
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(
         version=False)
-    search_instance, qs_kwargs = item_search_factory(
-        None, records_search, start_date, end_date)
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd
+    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    result = None
+    try:
+        search_instance, _ = item_search_factory(
+            None, records_search, start_date, end_date)
+        search_result = search_instance.execute()
+        result = search_result.to_dict()
+    except NotFoundError:
+        current_app.logger.debug('Indexes do not exist yet!')
+
+    return result
