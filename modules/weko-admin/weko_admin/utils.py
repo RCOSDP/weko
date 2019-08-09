@@ -574,6 +574,12 @@ class StatisticMail:
     @classmethod
     def send_mail_to_all(cls):
         """Send mail to all setting email."""
+        session = db.session
+        id = FeedbackMailHistory.get_sequence(session)
+        start_time = datetime.now()
+        stats_time = cls.get_send_time()
+        failed_mail = 0
+        total_mail = 0
         try:
             from weko_theme import config as theme_config
             from weko_search_ui.utils import get_feedback_mail_list, \
@@ -586,9 +592,11 @@ class StatisticMail:
             title = theme_config.THEME_SITENAME
             stat_date = cls.get_send_time()
             for k, v in list_mail_data.items():
+                total_mail += 1
                 mail_data = {
-                    'user_name': cls.get_author_name(str(k),
-                                                     v.get('author_id')),
+                    'user_name': cls.get_author_name(
+                        str(k),
+                        v.get('author_id')),
                     'organization': '',
                     'time': stat_date
                 }
@@ -598,9 +606,27 @@ class StatisticMail:
                 body = str(cls.fill_email_data(
                     cls.get_list_statistic_data(v.get("item"), stat_date),
                     mail_data))
-                cls.send_mail(recipient, body, subject)
+                send_result = cls.send_mail(recipient, body, subject)
+                if not send_result:
+                    FeedbackMailFailed.create(
+                        session,
+                        id,
+                        v.get('author_id'),
+                        str(k)
+                    )
+                    failed_mail += 1
         except Exception as ex:
             current_app.logger.error('Error has occurred', ex)
+        end_time = datetime.now()
+        FeedbackMailHistory.create(
+            session,
+            id,
+            start_time,
+            end_time,
+            stats_time,
+            total_mail,
+            failed_mail
+        )
 
     @classmethod
     def convert_download_count_to_int(cls, download_count):
@@ -681,8 +707,7 @@ class StatisticMail:
 
         """
         result = db.session.query(RecordMetadata).filter(
-            RecordMetadata.id ==
-            "30cab97b-dd22-4a32-a6f6-ddadac7aa67a").one_or_none()
+            RecordMetadata.id == item_id).one_or_none()
         data = result.json
         count_item_view = cls.get_item_view(item_id, time)
         count_item_download = cls.get_item_download(data, time)
