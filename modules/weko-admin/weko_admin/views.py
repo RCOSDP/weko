@@ -31,7 +31,6 @@ from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
 from invenio_admin.proxies import current_admin
-from invenio_indexer.api import RecordIndexer
 from sqlalchemy.orm import session
 from werkzeug.local import LocalProxy
 
@@ -313,69 +312,7 @@ def get_init_selection(selection=""):
 def get_email_author():
     """Get all authors."""
     data = request.get_json()
-
-    search_key = data.get('searchKey') or ''
-    query = {"match": {"gather_flg": 0}}
-
-    if search_key:
-        search_keys = search_key.split(" ")
-        match = []
-        for key in search_keys:
-            if key:
-                match.append({"match_phrase_prefix": {"emailInfo.email": key}})
-        query = {
-            "bool":
-            {
-                "should": match, "minimum_should_match": 1
-            }
-        }
-
-    size = config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE
-    num = data.get('pageNumber') or 1
-    offset = (int(num) - 1) * size if int(num) > 1 else 0
-
-    sort_key = data.get('sortKey') or ''
-    sort_order = data.get('sortOrder') or ''
-    sort = {}
-    if sort_key and sort_order:
-        sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
-
-    body = {
-        "query": query,
-        "from": offset,
-        "size": size,
-        "sort": sort
-    }
-    query_item = {
-        "size": 0,
-        "query": {
-            "bool": {
-                "must_not": {
-                    "match": {
-                        "weko_id": "",
-                    }
-                }
-            }
-        }, "aggs": {
-            "item_count": {
-                "terms": {
-                    "field": "weko_id"
-                }
-            }
-        }
-    }
-
-    indexer = RecordIndexer()
-    result = indexer.client.search(
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        body=body
-    )
-    result_item_cnt = indexer.client.search(
-        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-        body=query_item
-    )
-
-    result['item_cnt'] = result_item_cnt
+    result = FeedbackMail.search_author_mail(data)
 
     return jsonify(result)
 

@@ -33,6 +33,7 @@ from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
+from invenio_indexer.api import RecordIndexer
 from invenio_mail.admin import MailSettingView
 from invenio_records.models import RecordMetadata
 from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
@@ -43,9 +44,9 @@ from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
-    SearchManagement, StatisticTarget, StatisticUnit, FeedbackMailHistory, \
-    FeedbackMailFailed
+from .models import AdminLangSettings, ApiCertificate, FeedbackMailFailed, \
+    FeedbackMailHistory, FeedbackMailSetting, SearchManagement, \
+    StatisticTarget, StatisticUnit
 
 
 def get_response_json(result_list, n_lst):
@@ -949,6 +950,72 @@ def str_to_bool(str):
 
 class FeedbackMail:
     """The feedback mail service."""
+
+    @classmethod
+    def search_author_mail(cls, request_data: dict) -> dict:
+        """Search author mail.
+
+        :param request_data: request data
+        :return: author mail
+        """
+        search_key = request_data.get('searchKey') or ''
+        query = {"match": {"gather_flg": 0}}
+        if search_key:
+            search_keys = search_key.split(" ")
+            match = []
+            for key in search_keys:
+                if key:
+                    match.append(
+                        {"match_phrase_prefix": {"emailInfo.email": key}})
+            query = {
+                "bool":
+                    {
+                        "should": match, "minimum_should_match": 1
+                    }
+            }
+        size = config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE
+        num = request_data.get('pageNumber') or 1
+        offset = (int(num) - 1) * size if int(num) > 1 else 0
+        sort_key = request_data.get('sortKey') or ''
+        sort_order = request_data.get('sortOrder') or ''
+        sort = {}
+        if sort_key and sort_order:
+            sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
+        body = {
+            "query": query,
+            "from": offset,
+            "size": size,
+            "sort": sort
+        }
+        query_item = {
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must_not": {
+                        "match": {
+                            "weko_id": "",
+                        }
+                    }
+                }
+            }, "aggs": {
+                "item_count": {
+                    "terms": {
+                        "field": "weko_id"
+                    }
+                }
+            }
+        }
+        indexer = RecordIndexer()
+        result = indexer.client.search(
+            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            body=body
+        )
+        result_item_cnt = indexer.client.search(
+            index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+            body=query_item
+        )
+        result['item_cnt'] = result_item_cnt
+        return result
 
     @classmethod
     def get_feed_back_email_setting(cls):
