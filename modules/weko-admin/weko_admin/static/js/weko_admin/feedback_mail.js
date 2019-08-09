@@ -73,7 +73,7 @@ class ComponentExclusionTarget extends React.Component {
         this.setWrapperRef = this.setWrapperRef.bind(this);
         this.setDeleteWrapperRef = this.setDeleteWrapperRef.bind(this);
         this.handleClickOutside = this.handleClickOutside.bind(this);
-        this.handleClick = this.handleClick.bind(this)
+        this.handleClick = this.handleClick.bind(this);
     }
 
     componentDidMount(){
@@ -145,17 +145,27 @@ class ComponentExclusionTarget extends React.Component {
       }
     }
 
+    validateEmail(email) {
+      var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+      return re.test(String(email).toLowerCase());
+    }
+
     handleKeyPress(event){
       if (event.key =='Enter') {
         let new_email = {
           author_id: "",
           email: event.target.value.trim()
         }
-        if (this.props.addEmailToList(new_email)) {
-          $('#custom_input_email').val('');
-          $('#sltBoxListEmail').animate({
-            scrollTop: $("#custom_input_email").offset().top
-          }, 1000);
+        if (!this.validateEmail(new_email.email)){
+          alert("Pleased input a valid email.");
+        }
+        else{
+          if (this.props.addEmailToList(new_email)) {
+            $('#custom_input_email').val('');
+            $('#sltBoxListEmail').animate({
+              scrollTop: $("#custom_input_email").offset().top
+            }, 1000);
+          }
         }
       }
     }
