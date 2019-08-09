@@ -46,15 +46,15 @@ class ComponentFeedbackMail extends React.Component {
 
     render() {
         return (
-            <div className="form-group style-component">
-                <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
-                <div class="controls col-xs-10">
-                    <div className="form-group">
-                        <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>&nbsp;{SEND_RADIO_BUTTON_NAME}</span>
-                        <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>&nbsp;{NOT_SEND_RADIO_BUTTON_NAME}</span>
-                    </div>
-                </div>
+          <div className="form-group style-component">
+            <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
+            <div class="controls col-xs-10">
+              <div className="form-group">
+                <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>&nbsp;{SEND_RADIO_BUTTON_NAME}</span>
+                <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>&nbsp;{NOT_SEND_RADIO_BUTTON_NAME}</span>
+              </div>
             </div>
+          </div>
         )
     }
 }
@@ -571,6 +571,24 @@ const ModalFooterResendComponent = function(props){
     props.bindingValueOfComponent("showModalResend", false);
   }
   function handleSend(){
+    addAlert("Mail Sending...", 2);
+    let id = "" + props.bindID;
+    let request = {
+      'history_id': id
+    };
+    console.log(id);
+    $.ajax({
+      url: "/api/admin/resend_failed_mail",
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: JSON.stringify(request),
+      dataType: "json",
+      success: function (data, status) {
+        closeAlert();
+      }
+    });
     props.bindingValueOfComponent("showModalResend", false);
     props.bindingValueOfComponent("resendMail", true);
   }
@@ -743,7 +761,6 @@ const PaginationResendLogsTable = function(props){
 }
 
 const ModalResendBodyComponent = function(props) {
-  const [numOfResult, setNumOfResult] = useState(props.numOfResult)
   return (
     <div>
       <div className = "row">
@@ -773,7 +790,7 @@ const ModalResendComponent = function(props){
         <ModalResendBodyComponent id = {props.id}/>
       </ReactBootstrap.Modal.Body>
       <ReactBootstrap.Modal.Footer>
-        <ModalFooterResendComponent bindingValueOfComponent = {props.bindingValueOfComponent}/>
+        <ModalFooterResendComponent bindingValueOfComponent = {props.bindingValueOfComponent} bindID = {props.bindID}/>
       </ReactBootstrap.Modal.Footer>
     </ReactBootstrap.Modal>
   )
@@ -805,10 +822,13 @@ class ComponentButtonLayout extends React.Component {
       .then(res => res.json())
       .then((result) => {
         let message = MESSAGE_SUCCESS;
+        let type = 0;
         if (!result.success) {
           message = result.error;
+          type = 1;
         }
-        addAlert(message, !result.success);
+
+        addAlert(message, type);
       });
     }
 
@@ -991,7 +1011,7 @@ class MainLayout extends React.Component {
                   <ModalSearchComponent showModalSearch = {this.state.showModalSearch} bindingValueOfComponent = {this.bindingValueOfComponent} addEmailToList={this.addEmailToList}/>
                 </div>
                 <div className = "row">
-                  <ModalResendComponent showModalResend = {this.state.showModalResend} bindingValueOfComponent = {this.bindingValueOfComponent} id = {this.state.mailId}/>
+                  <ModalResendComponent showModalResend = {this.state.showModalResend} bindingValueOfComponent = {this.bindingValueOfComponent} bindID = {this.state.mailId}/>
                 </div>
             </div>
         )
@@ -1005,13 +1025,21 @@ $(function () {
     )
 });
 
-function addAlert(message, isError) {
-  let className = "alert alert-info";
-  if(isError){
-    className = "alert alert-danger alert-dismissable";
+function addAlert(message, type) {
+  let className = "alert alert-success alert-boder";
+  let closeButton = '<button type="button" class="close" data-dismiss="alert">&times;</button>'
+  if(type==1){
+    className = "alert alert-danger alert-dismissable alert-boder";
+  }
+  if(type==2){
+    className = "alert alert-info alert-dismissable alert-boder";
+    closeButton = "";
   }
   $('#alerts').append(
     '<div class="' + className + '">'
-    + '<button type="button" class="close" data-dismiss="alert">'
-    + '&times;</button>' + message + '</div>');
+    + closeButton + message + '</div>');
+}
+
+function closeAlert(){
+  $('#alerts').empty();
 }

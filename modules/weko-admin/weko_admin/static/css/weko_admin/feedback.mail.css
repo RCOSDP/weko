@@ -76,9 +76,7 @@
     margin-left: 15px;
   }
 
-  .alert-info {
-    background-color: #00a65a !important;
-    border-color: #008d4c !important;
+  .alert-boder{
     border-radius: 3px;
   }
 
