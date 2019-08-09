@@ -587,6 +587,10 @@ const ModalFooterResendComponent = function(props){
       dataType: "json",
       success: function (data, status) {
         closeAlert();
+      },
+      error: function (data, status) {
+        closeAlert();
+        addAlert("Failed to resend email.", 1);
       }
     });
     props.bindingValueOfComponent("showModalResend", false);
