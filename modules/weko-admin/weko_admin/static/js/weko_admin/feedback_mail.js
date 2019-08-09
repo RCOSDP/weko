@@ -576,7 +576,6 @@ const ModalFooterResendComponent = function(props){
     let request = {
       'history_id': id
     };
-    console.log(id);
     $.ajax({
       url: "/api/admin/resend_failed_mail",
       method: "POST",
@@ -679,13 +678,13 @@ const PaginationResendLogsTable = function(props){
 
   useEffect(() => {
     setNumOfPage(props.bindNumOfPage);
-    if(numOfPage > 5){
+    if(props.bindNumOfPage > 5){
       setEndPage(5);
     }
     else{
       setEndPage(props.bindNumOfPage);
     }
-  }, [props]);
+  }, [props.bindNumOfPage]);
 
   function locatePageResult(pageNumber){
     if(pageNumber < 1 || pageNumber > numOfPage){
@@ -693,8 +692,8 @@ const PaginationResendLogsTable = function(props){
     }
     if (numOfPage > 5 ){
       if(pageNumber > 2 && pageNumber < numOfPage -2){
-        setStartPage(pageNumber -2);
         setEndPage(pageNumber + 2);
+        setStartPage(pageNumber -2);
       }
       else {
         if(pageNumber < 3){
@@ -750,7 +749,7 @@ const PaginationResendLogsTable = function(props){
         </li>
         {numOfPage > LIMIT_PAGINATION_NUMBER ?
         <li >
-          <a  href="#" onClick = {() => locatePageResult(tnumOfPage)} className = {currentPage == numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8811;</span></a>
+          <a  href="#" onClick = {() => locatePageResult(numOfPage)} className = {currentPage == numOfPage ? 'my-pagination-disabled' : ''}><span  aria-hidden="true">&#8811;</span></a>
         </li> : null }
       </ul>
     )
