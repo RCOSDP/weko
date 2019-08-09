@@ -218,7 +218,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 paths = []
             agp = rd["aggregations"]["path"]["buckets"]
             nlst = []
-            
+
             for p in paths:
                 m = 0
                 for k in range(len(agp)):
@@ -239,7 +239,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         break
                 if m == 0:
                     index_id = p.path if '/' not in p.path \
-                                else p.path.split('/').pop()
+                        else p.path.split('/').pop()
                     index_info = Indexes.get_index(index_id=index_id)
                     rss_status = index_info.rss_status
                     nd = {
