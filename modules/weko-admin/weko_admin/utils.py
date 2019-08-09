@@ -971,6 +971,8 @@ class FeedbackMail:
         result['is_sending_feedback'] = setting[0].is_sending_feedback
         list_data = list()
         for author_id in list_author_id:
+            if not author_id:
+                continue
             email = Authors.get_first_email_by_id(author_id)
             new_data = dict()
             new_data['author_id'] = author_id
