@@ -132,6 +132,7 @@ def _due_to_run(schedule):
 
 @shared_task(ignore_results=True)
 def check_send_site_access_report():
+    """Check send site access report."""
     settings = AdminSettings.get('site_license_mail_settings')
     if settings and settings.auto_send_flag:
         agg_month = \

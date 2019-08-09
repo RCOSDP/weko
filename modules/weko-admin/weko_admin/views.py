@@ -435,6 +435,7 @@ def get_feedback_mail():
 @blueprint_api.route('/sitelicensesendmail/send/<start_month>/<end_month>',
                      methods=['POST'])
 def manual_send_site_license_mail(start_month, end_month):
+    """Send site license mail by manual."""
     send_list = SiteLicenseInfo.query.filter_by(receive_mail_flag='T').all()
     if send_list:
         start_date = start_month + '-01'
