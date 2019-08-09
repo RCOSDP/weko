@@ -99,3 +99,8 @@ msgstr ""
 #~ msgid "Cancle"
 #~ msgstr "Cancle"
 
+#~ msgid "RSS_Icon"
+#~ msgstr "RSS Icon"
+
+#~ msgid "Display"
+#~ msgstr "Display"

@@ -154,5 +154,13 @@
     "Set_CoverPage_Recursively": [
         null,
         "Also reflect recursively on child index. (JA)"
+    ],
+    "RSS_Icon": [
+        null,
+        "RSSアイコン"
+    ],
+    "Display": [
+        null,
+        "表示する"
     ]
 }
