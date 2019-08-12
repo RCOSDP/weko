@@ -615,7 +615,7 @@ const TableResendErrorComponent = function(props){
   const [currentIndex, setIndex] = useState(0);
 
   useEffect(() => {
-    fetch("/api/admin/get_failed_mail?page=1&id="+ props.id)
+    fetch("/api/admin/get_failed_mail?page=1&id="+ props.bindID)
     .then(res => res.json())
     .then(
       (result) => {
@@ -664,7 +664,7 @@ const TableResendErrorComponent = function(props){
         {generateBodyTableUser()}
       </table>
       <div className = "row">
-        <PaginationResendLogsTable bindURL = "/api/admin/get_failed_mail" bindID = {props.id} bindNumOfPage = {numOfPage} bindGetData = {getData}/>
+        <PaginationResendLogsTable bindURL = "/api/admin/get_failed_mail" bindID = {props.bindID} bindNumOfPage = {numOfPage} bindGetData = {getData}/>
       </div>
     </div>
   )
@@ -770,7 +770,7 @@ const ModalResendBodyComponent = function(props) {
         <label className="label-resend-email">List of authors who failed to send</label>
       </div>
       <div className = "row">
-        <TableResendErrorComponent id = {props.id}/>
+        <TableResendErrorComponent bindID = {props.bindID}/>
       </div>
     </div>
   )
@@ -790,7 +790,7 @@ const ModalResendComponent = function(props){
   return (
     <ReactBootstrap.Modal show={showModal} onHide={() => handleClose()} dialogClassName="resend-mail-modal">
       <ReactBootstrap.Modal.Body className="feedback-mail-modal-body">
-        <ModalResendBodyComponent id = {props.id}/>
+        <ModalResendBodyComponent bindID = {props.bindID}/>
       </ReactBootstrap.Modal.Body>
       <ReactBootstrap.Modal.Footer>
         <ModalFooterResendComponent bindingValueOfComponent = {props.bindingValueOfComponent} bindID = {props.bindID}/>
@@ -888,7 +888,7 @@ const ComponentLogsTable = function(props){
   function generateTableBody() {
     let listRow = data.map((rowData, index) => {
       let error = 0;
-      if (rowData.error != '0') {
+      if (rowData.error != '0' && rowData.is_latest) {
         error = <a data-id={rowData.id} href="#" onClick = {() => showErrorMail(rowData.id)}>{rowData.error}</a>
       }
       return (
