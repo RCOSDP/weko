@@ -575,6 +575,12 @@ class StatisticMail:
     @classmethod
     def send_mail_to_all(cls,  list_mail_data=None, stats_date=None):
         """Send mail to all setting email."""
+        # Load setting:
+        setting = FeedbackMail.get_feed_back_email_setting()
+        if not setting.get('is_sending_feedback'):
+            return
+        banned_mail = cls.get_banned_mail(setting.get('data'))
+
         session = db.session
         id = FeedbackMailHistory.get_sequence(session)
         start_time = datetime.now()
@@ -608,6 +614,8 @@ class StatisticMail:
                 body = str(cls.fill_email_data(
                     cls.get_list_statistic_data(v.get("item"), stats_date),
                     mail_data))
+                if recipient in banned_mail:
+                    continue
                 send_result = cls.send_mail(recipient, body, subject)
                 if not send_result:
                     FeedbackMailFailed.create(
@@ -629,6 +637,24 @@ class StatisticMail:
             total_mail,
             failed_mail
         )
+
+    @classmethod
+    def get_banned_mail(cls, list_banned_mail):
+        """Get banned mail from list of setting.
+
+        Arguments:
+            list_banned_mail {list} -- list banned mail setting
+
+        Returns:
+            list -- banned mail
+
+        """
+        result = list()
+        if len(list_banned_mail) == 0:
+            return result
+        for data in list_banned_mail:
+            result.append(data.get('email'))
+        return result
 
     @classmethod
     def convert_download_count_to_int(cls, download_count):
@@ -1035,10 +1061,13 @@ class FeedbackMail:
         if len(setting) == 0:
             return result
         list_author_id = setting[0].account_author.split(',')
+
         list_manual_mail = setting[0].manual_mail.get('email')
         result['is_sending_feedback'] = setting[0].is_sending_feedback
         list_data = list()
         for author_id in list_author_id:
+            if not author_id:
+                continue
             email = Authors.get_first_email_by_id(author_id)
             new_data = dict()
             new_data['author_id'] = author_id
