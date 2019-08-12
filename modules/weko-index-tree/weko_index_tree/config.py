@@ -59,14 +59,10 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
         item_tree_route='/tree/<int:pid_value>',
         index_move_route='/tree/move/<int:index_id>',
         default_media_type='application/json',
-        create_permission_factory_imp='weko_index_tree.\
-            permissions:index_tree_permission',
-        read_permission_factory_imp='weko_index_tree.\
-            permissions:index_tree_permission',
-        update_permission_factory_imp='weko_index_tree.\
-            permissions:index_tree_permission',
-        delete_permission_factory_imp='weko_index_tree.\
-            permissions:index_tree_permission',
+        create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+        read_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+        update_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+        delete_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
     )
 )
 
