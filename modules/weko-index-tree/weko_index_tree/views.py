@@ -30,7 +30,6 @@ from .config import WEKO_INDEX_TREE_RSS_DEFAULT_COUNT, \
     WEKO_INDEX_TREE_RSS_DEFAULT_PAGE, WEKO_INDEX_TREE_RSS_DEFAULT_TERM
 from .utils import generate_path, get_ES_records_data_by_indexes
 
-
 blueprint = Blueprint(
     'weko_index_tree',
     __name__,
@@ -54,21 +53,18 @@ def get_rss_data():
     Returns:
         xml -- RSS data
     """
+    from weko_gridlayout.utils import build_rss_xml
+
     data = request.args
     index_id = int(data.get('index_id') or WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID)
-    # page = int(data.get('page') or WEKO_INDEX_TREE_RSS_DEFAULT_PAGE)
+    page = int(data.get('page') or WEKO_INDEX_TREE_RSS_DEFAULT_PAGE)
     count = int(data.get('count') or WEKO_INDEX_TREE_RSS_DEFAULT_COUNT)
     term = int(data.get('term') or WEKO_INDEX_TREE_RSS_DEFAULT_TERM)
-    # lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
+    lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
     
     idx_tree_ids = generate_path(Indexes.get_recursive_tree(index_id))
     records_data = get_ES_records_data_by_indexes(idx_tree_ids)
 
-    if records_data:
-        from weko_gridlayout.utils import build_rss_xml
-
-        hits = records_data.get('hits')
-        rss_data = hits.get('hits')
-        return build_rss_xml(rss_data, term, count)
-
-    return jsonify(records_data)
+    hits = records_data.get('hits')
+    rss_data = hits.get('hits')
+    return build_rss_xml(rss_data, index_id, page, count, term, lang)

@@ -23,7 +23,8 @@
 from datetime import date, datetime
 from functools import wraps
 
-from flask import current_app, flash
+from elasticsearch.exceptions import NotFoundError
+from flask import Response, current_app, flash, request
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
@@ -34,6 +35,7 @@ from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
 from werkzeug.datastructures import MultiDict
 
+from . import config
 from .models import Index
 
 
@@ -344,18 +346,23 @@ def get_ES_records_data_by_indexes(index_ids):
         dictionary -- elastic search data
 
     """
+
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(version=False)
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    result = None
+    try:
+        from weko_search_ui.query import item_search_by_list_index_id
+        search_instance, _qs_kwargs = item_search_by_list_index_id(None,
+                                                                records_search,
+                                                                index_ids)
+        search_result = search_instance.execute()
+        result = search_result.to_dict()
+    except NotFoundError:
+        current_app.logger.debug('Indexes do not exist yet!')
 
-    from weko_search_ui.query import item_search_by_list_index_id
+    return result
 
-    search_instance, _qs_kwargs = item_search_by_list_index_id(None,
-                                                               records_search,
-                                                               index_ids)
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd
 
 def generate_path(index_ids):
     """Get data from elastic search.
@@ -368,7 +375,6 @@ def generate_path(index_ids):
         dictionary -- elastic search data
 
     """
-    current_app.logger.debug(index_ids)
     path = dict()
     result = []
     for index in index_ids:

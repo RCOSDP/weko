@@ -36,6 +36,7 @@ from weko_theme import config as theme_config
 
 from . import config
 from .models import WidgetDesignSetting, WidgetType
+from weko_index_tree.api import Indexes
 
 
 def get_widget_type_list():
@@ -399,7 +400,7 @@ def convert_data_to_edit_pack(data):
     return result
 
 
-def build_rss_xml(data, term, count):
+def build_rss_xml(data, index_id=None, page=0, count=0, term=0, lang=''):
     """Build RSS data as XML format.
 
     Arguments:
@@ -410,8 +411,7 @@ def build_rss_xml(data, term, count):
         xml response -- RSS data as XML
 
     """
-    root_url = request.url_root
-    root_url = str(root_url).replace('/api/', '')
+    root_url = str(request.url_root).replace('/api/', '/')
     root = ET.Element('rdf:RDF')
     root.set('xmlns', config.WEKO_XMLNS)
     root.set('xmlns:rdf', config.WEKO_XMLNS_RDF)
@@ -429,7 +429,13 @@ def build_rss_xml(data, term, count):
     # Channel layer
     ET.SubElement(channel, 'title').text = 'WEKO3'
     ET.SubElement(channel, 'link').text = requested_url
-    ET.SubElement(channel, 'description').text = theme_config.THEME_SITENAME
+    if index_id:
+        index_detail = Indexes.get_index(index_id)
+        ET.SubElement(channel, 'description').text = index_detail.comment \
+                                            or index_detail.index_name \
+                                            or index_detail.index_name_english
+    else:
+        ET.SubElement(channel, 'description').text = theme_config.THEME_SITENAME
     current_time = datetime.now()
     ET.SubElement(
         channel,
@@ -536,7 +542,7 @@ def find_rss_value(data, keyword):
         return meta_data.get('item_title')
     elif keyword == 'link':
         root_url = request.url_root
-        root_url = str(root_url).replace('/api/', '')
+        root_url = str(root_url).replace('/api/', '/')
         record_number = get_rss_data_source(
             meta_data,
             'control_number')
