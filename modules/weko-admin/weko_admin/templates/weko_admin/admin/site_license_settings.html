@@ -54,6 +54,7 @@
                     <input type="text" class="form-control" size="50" name="organization_name"
                                                                       ng-model="ipDetail.organization_name"
                                                                       placeholder="{{_('Organization Name')}}">
+                    <input type="hidden" ng-model="ipDetail.receive_mail_flag" hide>
                   </td>
                   <td rowspan="4" class="width_15 btnMiddle">
                     <button type="button" class="btn btn-default" ng-click="moveSiteLicenseUp($index)" ><span class="glyphicon glyphicon-arrow-up"></span>

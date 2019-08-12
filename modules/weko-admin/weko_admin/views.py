@@ -20,7 +20,7 @@
 
 """Views for weko-admin."""
 
-
+import calendar
 import sys
 from datetime import timedelta
 
@@ -32,10 +32,13 @@ from flask_login import current_user, login_required
 from flask_menu import register_menu
 from invenio_admin.proxies import current_admin
 from invenio_indexer.api import RecordIndexer
+from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm import session
+from weko_records.models import SiteLicenseInfo
 from werkzeug.local import LocalProxy
 
 from . import config
+from .api import send_site_license_mail
 from .models import SessionLifetime
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_feed_back_email_setting, \
@@ -427,3 +430,36 @@ def get_feedback_mail():
     result['data'] = data.get('data')
     result['is_sending_feedback'] = data.get('is_sending_feedback')
     return jsonify(result)
+
+
+@blueprint_api.route('/sitelicensesendmail/send/<start_month>/<end_month>',
+                     methods=['POST'])
+def manual_send_site_license_mail(start_month, end_month):
+    """Send site license mail by manual."""
+    send_list = SiteLicenseInfo.query.filter_by(receive_mail_flag='T').all()
+    if send_list:
+        start_date = start_month + '-01'
+        _, lastday = calendar.monthrange(int(end_month[:4]),
+                                         int(end_month[5:]))
+        end_date = end_month + '-' + str(lastday).zfill(2)
+
+        agg_date = start_month.replace('-', '.') + '-' + \
+            end_month.replace('-', '.')
+        res = QueryCommonReportsHelper.get(start_date=start_date,
+                                           end_date=end_date,
+                                           event='site_access')
+        for s in send_list:
+            mail_list = s.mail_address.split('\n')
+            for r in res['institution_name']:
+                if s.organization_name == r['name']:
+                    send_site_license_mail(r['name'], mail_list, agg_date, r)
+                    break
+            data = {'file_download': 0,
+                    'file_preview': 0,
+                    'record_view': 0,
+                    'search': 0,
+                    'top_view': 0}
+            send_site_license_mail(s.organization_name,
+                                   mail_list, agg_date, data)
+
+        return 'finished'

@@ -359,4 +359,7 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        2 "storage_check_settings" \
        "{'threshold_rate': 80, 'cycle': 'weekly', 'day': 0}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       3 "site_license_mail_settings" \
+       "{'auto_send_flag': False}"
 # create-admin-settings-end

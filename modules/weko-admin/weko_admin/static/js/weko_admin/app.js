@@ -13,6 +13,7 @@
                             organization_name:"",
                             mail_address:"",
                             domain_name:"",
+                            receive_mail_flag:"F",
                             addresses:[{start_ip_address:[],finish_ip_address:[]}]
                             }],
                      item_type:{
@@ -60,6 +61,7 @@
                             organization_name:"",
                             mail_address:"",
                             domain_name:"",
+                            receive_mail_flag:"F",
                             addresses:[{start_ip_address:[],finish_ip_address:[]}]
                             };
         $scope.dbJson.site_license.push(siteLicenseJson);
