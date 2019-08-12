@@ -400,7 +400,7 @@ def convert_data_to_edit_pack(data):
     return result
 
 
-def build_rss_xml(data, index_id=None, page=0, count=0, term=0, lang=''):
+def build_rss_xml(data=None, index_id=None, page=0, count=0, term=0, lang=''):
     """Build RSS data as XML format.
 
     Arguments:

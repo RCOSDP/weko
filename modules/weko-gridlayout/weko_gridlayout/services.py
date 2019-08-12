@@ -729,7 +729,7 @@ class WidgetDataLoaderServices:
 
         """
         if not data or not data.get('hits'):
-            return build_rss_xml(None, term, 0)
+            return build_rss_xml(data=None, term=term, count=0)
         hits = data.get('hits')
         rss_data = hits.get('hits')
-        return build_rss_xml(rss_data, term, count)
+        return build_rss_xml(data=rss_data, term=term, count=count)
