@@ -767,10 +767,10 @@ def item_search_by_list_index_id(self, search, list_index_id):
         query_filter = []
         for index in list_index_id:
             q_wildcard = {
-                            "wildcard": {
-                                "path": "*{}*".format(index)
-                            }
-                         }
+                "wildcard": {
+                    "path": "*{}*".format(index)
+                }
+            }
             query_filter.append(q_wildcard)
         query_q = {
             "query": {

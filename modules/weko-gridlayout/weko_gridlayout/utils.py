@@ -452,8 +452,7 @@ def build_rss_xml(data=None, index_id=None, page=0, count=0, term=0, lang=''):
     number_of_item = 0
     # add item layer
     for data_item in data:
-        if number_of_item >= count or not data_item \
-                or not data_item.get('source'):
+        if number_of_item >= count:
             break
         item = Et.Element('item')
         item.set('rdf:about', find_rss_value(
@@ -533,6 +532,9 @@ def find_rss_value(data, keyword):
         string -- data for the keyword
 
     """
+    if not data or not data.get('_source'):
+        return None
+
     source = data.get('_source')
     meta_data = source.get('_item_metadata')
 
