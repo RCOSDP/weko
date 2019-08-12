@@ -23,7 +23,8 @@
 WEKO_INDEX_TREE_BASE_TEMPLATE = 'weko_index_tree/base.html'
 """Default base template for the index tree page."""
 
-WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html'
+WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = \
+    'weko_index_tree/admin/index_edit_setting.html'
 """Index template for the index tree page."""
 
 WEKO_INDEX_TREE_EDIT_ADMIN_TEMPLATE = 'weko_index_tree/admin/tree_edit.html'
@@ -32,7 +33,8 @@ WEKO_INDEX_TREE_EDIT_ADMIN_TEMPLATE = 'weko_index_tree/admin/tree_edit.html'
 WEKO_INDEX_TREE_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_setting.html'
 """Index area setting page."""
 
-WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_link_setting.html'
+WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE = \
+    'weko_index_tree/admin/index_link_setting.html'
 """Index link setting page."""
 
 WEKO_INDEX_TREE_STYLE_OPTIONS = {
@@ -57,10 +59,14 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
         item_tree_route='/tree/<int:pid_value>',
         index_move_route='/tree/move/<int:index_id>',
         default_media_type='application/json',
-        create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
-        read_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
-        update_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
-        delete_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
+        create_permission_factory_imp=
+        'weko_index_tree.permissions:index_tree_permission',
+        read_permission_factory_imp=
+        'weko_index_tree.permissions:index_tree_permission',
+        update_permission_factory_imp=
+        'weko_index_tree.permissions:index_tree_permission',
+        delete_permission_factory_imp=
+        'weko_index_tree.permissions:index_tree_permission',
     )
 )
 

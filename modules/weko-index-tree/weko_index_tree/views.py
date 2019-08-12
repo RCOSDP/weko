@@ -20,15 +20,13 @@
 
 """Blueprint for weko-index-tree."""
 
-import os
-
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request
 
 from .api import Indexes
 from .config import WEKO_INDEX_TREE_RSS_DEFAULT_COUNT, \
     WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID, WEKO_INDEX_TREE_RSS_DEFAULT_LANG, \
     WEKO_INDEX_TREE_RSS_DEFAULT_PAGE, WEKO_INDEX_TREE_RSS_DEFAULT_TERM
-from .utils import generate_path, get_ES_records_data_by_indexes
+from .utils import generate_path, get_elasticsearch_records_data_by_indexes
 
 blueprint = Blueprint(
     'weko_index_tree',
@@ -52,6 +50,7 @@ def get_rss_data():
 
     Returns:
         xml -- RSS data
+
     """
     from weko_gridlayout.utils import build_rss_xml
 
@@ -61,10 +60,11 @@ def get_rss_data():
     count = int(data.get('count') or WEKO_INDEX_TREE_RSS_DEFAULT_COUNT)
     term = int(data.get('term') or WEKO_INDEX_TREE_RSS_DEFAULT_TERM)
     lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
-    
+
     idx_tree_ids = generate_path(Indexes.get_recursive_tree(index_id))
-    records_data = get_ES_records_data_by_indexes(idx_tree_ids)
+    records_data = get_elasticsearch_records_data_by_indexes(idx_tree_ids)
 
     hits = records_data.get('hits')
     rss_data = hits.get('hits')
+
     return build_rss_xml(rss_data, index_id, page, count, term, lang)

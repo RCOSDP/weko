@@ -21,22 +21,21 @@
 """Utilities for convert response json."""
 import copy
 import json
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as Et
 from datetime import datetime
 from xml.etree.ElementTree import tostring
 
 from elasticsearch.exceptions import NotFoundError
 from flask import Response, current_app, request
-from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
+from weko_index_tree.api import Indexes
 from weko_search_ui.query import item_search_factory
 from weko_theme import config as theme_config
 
 from . import config
 from .models import WidgetDesignSetting, WidgetType
-from weko_index_tree.api import Indexes
 
 
 def get_widget_type_list():
@@ -412,36 +411,37 @@ def build_rss_xml(data=None, index_id=None, page=0, count=0, term=0, lang=''):
 
     """
     root_url = str(request.url_root).replace('/api/', '/')
-    root = ET.Element('rdf:RDF')
+    root = Et.Element('rdf:RDF')
     root.set('xmlns', config.WEKO_XMLNS)
     root.set('xmlns:rdf', config.WEKO_XMLNS_RDF)
     root.set('xmlns:rdfs', config.WEKO_XMLNS_RDFS)
     root.set('xmlns:dc', config.WEKO_XMLNS_DC)
     root.set('xmlns:prism', config.WEKO_XMLNS_PRISM)
-    root.set('xmlns:lang', current_i18n.language)
+    root.set('xmlns:lang', lang)
 
     # First layer
     requested_url = root_url + 'rss/records?term=' + \
         str(term) + '&count=' + str(count)
-    channel = ET.SubElement(root, 'channel')
+    channel = Et.SubElement(root, 'channel')
     channel.set('rdf:about', requested_url)
 
     # Channel layer
-    ET.SubElement(channel, 'title').text = 'WEKO3'
-    ET.SubElement(channel, 'link').text = requested_url
+    Et.SubElement(channel, 'title').text = 'WEKO3'
+    Et.SubElement(channel, 'link').text = requested_url
     if index_id:
         index_detail = Indexes.get_index(index_id)
-        ET.SubElement(channel, 'description').text = index_detail.comment \
-                                            or index_detail.index_name \
-                                            or index_detail.index_name_english
+        Et.SubElement(channel, 'description').text = index_detail.comment \
+            or index_detail.index_name \
+            or index_detail.index_name_english
     else:
-        ET.SubElement(channel, 'description').text = theme_config.THEME_SITENAME
+        Et.SubElement(channel, 'description').text = \
+            theme_config.THEME_SITENAME
     current_time = datetime.now()
-    ET.SubElement(
+    Et.SubElement(
         channel,
         'dc:date').text = current_time.isoformat() + '+00:00'
-    items = ET.SubElement(channel, 'items')
-    seq = ET.SubElement(items, 'rdf:Seq')
+    items = Et.SubElement(channel, 'items')
+    seq = Et.SubElement(items, 'rdf:Seq')
     if not data or not isinstance(data, list):
         xml_str = tostring(root, encoding='utf-8')
         xml_str = str.encode(
@@ -452,62 +452,63 @@ def build_rss_xml(data=None, index_id=None, page=0, count=0, term=0, lang=''):
     number_of_item = 0
     # add item layer
     for data_item in data:
-        if number_of_item >= count:
+        if number_of_item >= count or not data_item \
+                or not data_item.get('source'):
             break
-        item = ET.Element('item')
+        item = Et.Element('item')
         item.set('rdf:about', find_rss_value(
             data_item,
             'link'))
-        ET.SubElement(item, 'title').text = find_rss_value(
+        Et.SubElement(item, 'title').text = find_rss_value(
             data_item,
             'title')
-        ET.SubElement(item, 'link').text = find_rss_value(
+        Et.SubElement(item, 'link').text = find_rss_value(
             data_item,
             'link')
-        see_also = ET.SubElement(item, 'rdfs:seeAlso')
+        see_also = Et.SubElement(item, 'rdfs:seeAlso')
         see_also.set('rdf:resource', find_rss_value(
             data_item,
             'seeAlso'))
 
         if isinstance(find_rss_value(data_item, 'creator'), list):
             for creator in find_rss_value(data_item, 'creator'):
-                ET.SubElement(item, 'dc:creator').text = creator
+                Et.SubElement(item, 'dc:creator').text = creator
         else:
-            ET.SubElement(item, 'dc:creator').text = find_rss_value(
+            Et.SubElement(item, 'dc:creator').text = find_rss_value(
                 data_item,
                 'creator')
-        ET.SubElement(item, 'dc:publisher').text = find_rss_value(
+        Et.SubElement(item, 'dc:publisher').text = find_rss_value(
             data_item,
             'publisher')
-        ET.SubElement(item, 'prism:publicationName').text = find_rss_value(
+        Et.SubElement(item, 'prism:publicationName').text = find_rss_value(
             data_item,
             'sourceTitle')
-        ET.SubElement(item, 'prism:issn').text = find_rss_value(
+        Et.SubElement(item, 'prism:issn').text = find_rss_value(
             data_item,
             'issn')
-        ET.SubElement(item, 'prism:volume').text = find_rss_value(
+        Et.SubElement(item, 'prism:volume').text = find_rss_value(
             data_item,
             'volume')
-        ET.SubElement(item, 'prism:number').text = find_rss_value(
+        Et.SubElement(item, 'prism:number').text = find_rss_value(
             data_item,
             'issue')
-        ET.SubElement(item, 'prism:startingPage').text = find_rss_value(
+        Et.SubElement(item, 'prism:startingPage').text = find_rss_value(
             data_item,
             'pageStart')
-        ET.SubElement(item, 'prism:endingPage').text = find_rss_value(
+        Et.SubElement(item, 'prism:endingPage').text = find_rss_value(
             data_item,
             'pageEnd')
-        ET.SubElement(item, 'prism:publicationDate').text = find_rss_value(
+        Et.SubElement(item, 'prism:publicationDate').text = find_rss_value(
             data_item,
             'date')
-        ET.SubElement(item, 'description').text = find_rss_value(
+        Et.SubElement(item, 'description').text = find_rss_value(
             data_item,
             'description')
-        ET.SubElement(item, 'dc:date').text = find_rss_value(
+        Et.SubElement(item, 'dc:date').text = find_rss_value(
             data_item,
             '_updated'
         )
-        li = ET.SubElement(seq, 'rdf:li')
+        li = Et.SubElement(seq, 'rdf:li')
         li.set('rdf:resource', find_rss_value(
             data_item,
             'link'))
@@ -532,9 +533,6 @@ def find_rss_value(data, keyword):
         string -- data for the keyword
 
     """
-    if not data or not data.get('_source'):
-        return None
-
     source = data.get('_source')
     meta_data = source.get('_item_metadata')
 
@@ -546,10 +544,8 @@ def find_rss_value(data, keyword):
         record_number = get_rss_data_source(
             meta_data,
             'control_number')
-        if record_number == '':
-            return ''
-        else:
-            return root_url + 'records/' + record_number
+        return '' if record_number == '' else \
+            root_url + 'records/' + record_number
     elif keyword == 'seeAlso':
         return config.WEKO_RDF_SCHEMA
     elif keyword == 'creator':
@@ -587,11 +583,10 @@ def find_rss_value(data, keyword):
                     and relation.get('relatedIdentifier')[0]):
                 related_identifier = relation.get('relatedIdentifier')[0]
                 result = get_rss_data_source(related_identifier, 'value')
-        if result == '':
-            if (source.get('sourceIdentifier')
-                    and source.get('sourceIdentifier')[0]):
-                source_identifier = source.get('sourceIdentifier')[0]
-                result = get_rss_data_source(source_identifier, 'value')
+        if not result and source.get('sourceIdentifier') and source.get(
+                'sourceIdentifier')[0]:
+            source_identifier = source.get('sourceIdentifier')[0]
+            result = get_rss_data_source(source_identifier, 'value')
         return result
     elif keyword == 'volume':
         return get_rss_data_source(source, 'volume')
@@ -637,7 +632,7 @@ def get_rss_data_source(source, keyword):
         return ''
 
 
-def get_ES_result_by_date(start_date, end_date):
+def get_elasticsearch_result_by_date(start_date, end_date):
     """Get data from elastic search.
 
     Arguments:

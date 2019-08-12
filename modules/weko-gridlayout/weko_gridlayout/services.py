@@ -25,6 +25,7 @@ from datetime import date, timedelta
 
 from flask import current_app
 from invenio_db import db
+from invenio_i18n.ext import current_i18n
 
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
@@ -32,7 +33,7 @@ from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
     convert_data_to_desgin_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
-    get_ES_result_by_date, update_general_item
+    get_elasticsearch_result_by_date, update_general_item
 
 
 class WidgetItemServices:
@@ -696,7 +697,7 @@ class WidgetDataLoaderServices:
             end_date = current_date.strftime("%Y-%m-%d")
             start_date = (current_date - timedelta(days=term)).strftime(
                 "%Y-%m-%d")
-            rd = get_ES_result_by_date(start_date, end_date)
+            rd = get_elasticsearch_result_by_date(start_date, end_date)
             hits = rd.get('hits')
             if not hits:
                 result['error'] = 'Cannot search data'
@@ -728,8 +729,9 @@ class WidgetDataLoaderServices:
         :dictionary: elastic search data
 
         """
+        lang = current_i18n.language
         if not data or not data.get('hits'):
-            return build_rss_xml(data=None, term=term, count=0)
+            return build_rss_xml(data=None, term=term, count=0, lang=lang)
         hits = data.get('hits')
         rss_data = hits.get('hits')
-        return build_rss_xml(data=rss_data, term=term, count=count)
+        return build_rss_xml(data=rss_data, term=term, count=count, lang=lang)

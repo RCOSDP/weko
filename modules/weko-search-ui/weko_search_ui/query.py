@@ -751,25 +751,26 @@ def item_search_factory(self, search, start_date, end_date):
 
     return search, urlkwargs
 
-    
-def item_search_by_list_index_id(self, search, list_index_id):
-    """Factory for opensearch.
 
-    :param self:
+def item_search_by_list_index_id(self, search, list_index_id):
+    """Records searching by index_id.
+
     :param search:
+    :param list_index_id:
     :return:
     """
     def _get_query(list_index_id):
         query_string = "_type:{} AND " \
                        "relation_version_is_last:true AND " \
-                       "publish_status:0 ".format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
+                       "publish_status:0 ".\
+                       format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
         query_filter = []
         for index in list_index_id:
             q_wildcard = {
-                            "wildcard":{
+                            "wildcard": {
                                 "path": "*{}*".format(index)
                             }
-                        }
+                         }
             query_filter.append(q_wildcard)
         query_q = {
             "query": {
