@@ -413,8 +413,14 @@ def resend_failed_mail():
         'error': ''
     }
     try:
-        StatisticMail.send_mail_to_all()
+        mail_data = FeedbackMail.get_mail_data_by_history_id(history_id)
+        StatisticMail.send_mail_to_all(
+            mail_data.get('data'),
+            mail_data.get('stats_date')
+        )
+        FeedbackMail.update_history_after_resend(history_id)
     except Exception as ex:
         current_app.logger.debug('Cannot resend mail', ex)
+        result['success'] = False
         result['error'] = 'Request package is invalid'
     return jsonify(result)

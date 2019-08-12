@@ -1352,3 +1352,53 @@ class FeedbackMail:
             return int(data_length / 10) + 1
         else:
             return int(data_length / 10)
+
+    @classmethod
+    def get_mail_data_by_history_id(cls, history_id):
+        """Get list failed mail data.
+
+        Arguments:
+            history_id {string} -- The history id
+
+        Returns:
+            dictionary -- resend mail data
+
+        """
+        result = {
+            'data': dict(),
+            'stats_date': ''
+        }
+        history_data = FeedbackMailHistory.get_by_id(history_id)
+        if not history_data:
+            return None
+        stats_time = history_data.stats_time
+        list_failed_mail = FeedbackMailFailed.get_mail_by_history_id(
+            history_id)
+        if len(list_failed_mail) == 0:
+            return None
+
+        from weko_search_ui.utils import get_feedback_mail_list, \
+            parse_feedback_mail_data
+        feedback_mail_data = get_feedback_mail_list()
+        if not feedback_mail_data:
+            return None
+        list_mail_data = parse_feedback_mail_data(
+            feedback_mail_data)
+
+        resend_mail_data = dict()
+        for k, v in list_mail_data.items():
+            if k in list_failed_mail:
+                resend_mail_data[k] = v
+        result['data'] = resend_mail_data
+        result['stats_date'] = stats_time
+        return result
+
+    @classmethod
+    def update_history_after_resend(cls, history_id):
+        """Update latest status after resend.
+
+        Arguments:
+            history_id {string} -- The history id
+
+        """
+        FeedbackMailHistory.update_lastest_status(history_id, False)

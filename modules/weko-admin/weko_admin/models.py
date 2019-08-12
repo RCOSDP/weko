@@ -1260,6 +1260,20 @@ class FeedbackMailHistory(db.Model):
     )
 
     @classmethod
+    def get_by_id(cls, id):
+        """Get history by id.
+
+        Arguments:
+            id {string} -- The history id
+
+        Returns:
+            dictionary -- history data
+
+        """
+        result = cls.query.filter_by(id=id).one_or_none()
+        return result
+
+    @classmethod
     def get_sequence(cls, session):
         """Get session sequence.
 
@@ -1333,6 +1347,26 @@ class FeedbackMailHistory(db.Model):
             session.rollback()
             current_app.logger.debug(ex)
 
+    @classmethod
+    def update_lastest_status(cls, id, status):
+        """Update latest status by id.
+
+        Arguments:
+            id {string} -- History id
+            status {boolean} -- Lastest status
+
+        """
+        try:
+            with db.session.begin_nested():
+                data = cls.query.filter_by(id=id).one_or_none()
+                data.is_latest = status
+                db.session.merge(data)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
 
 class FeedbackMailFailed(db.Model):
     """Storage of mail which failed to send."""
@@ -1373,6 +1407,25 @@ class FeedbackMailFailed(db.Model):
         result = cls.query.filter_by(
             history_id=history_id
         ).all()
+        return result
+
+    @classmethod
+    def get_mail_by_history_id(cls, history_id):
+        """Get list mail by history id.
+
+        Arguments:
+            history_id {integer} -- The history id
+
+        Returns:
+            list -- list of mail
+
+        """
+        data = cls.query.filter_by(
+            history_id=history_id
+        ).all()
+        result = list()
+        for item in data:
+            result.append(item.mail)
         return result
 
     @classmethod
