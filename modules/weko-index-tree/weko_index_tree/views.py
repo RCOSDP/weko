@@ -22,16 +22,14 @@
 
 import os
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
+
 from .api import Indexes
+from .config import WEKO_INDEX_TREE_RSS_DEFAULT_COUNT, \
+    WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID, WEKO_INDEX_TREE_RSS_DEFAULT_LANG, \
+    WEKO_INDEX_TREE_RSS_DEFAULT_PAGE, WEKO_INDEX_TREE_RSS_DEFAULT_TERM
+from .utils import generate_path, get_ES_records_data_by_indexes
 
-from .utils import get_ES_records_data_by_index
-from .config import WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID, \
-    WEKO_INDEX_TREE_RSS_DEFAULT_PAGE, WEKO_INDEX_TREE_RSS_DEFAULT_COUNT, \
-    WEKO_INDEX_TREE_RSS_DEFAULT_TERM, WEKO_INDEX_TREE_RSS_DEFAULT_LANG
-
-
-# Left available to be used in the future
 
 blueprint = Blueprint(
     'weko_index_tree',
@@ -59,11 +57,18 @@ def get_rss_data():
     data = request.args
     index_id = int(data.get('index_id') or WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID)
     # page = int(data.get('page') or WEKO_INDEX_TREE_RSS_DEFAULT_PAGE)
-    # count = int(data.get('count') or WEKO_INDEX_TREE_RSS_DEFAULT_COUNT)
-    # term = int(data.get('term') or WEKO_INDEX_TREE_RSS_DEFAULT_TERM)
+    count = int(data.get('count') or WEKO_INDEX_TREE_RSS_DEFAULT_COUNT)
+    term = int(data.get('term') or WEKO_INDEX_TREE_RSS_DEFAULT_TERM)
     # lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
     
+    idx_tree_ids = generate_path(Indexes.get_recursive_tree(index_id))
+    records_data = get_ES_records_data_by_indexes(idx_tree_ids)
 
-    recursive_tree_ids = Indexes.get_recursive_tree_ids(index_id)
+    if records_data:
+        from weko_gridlayout.utils import build_rss_xml
 
-    return jsonify(recursive_tree_ids)
+        hits = records_data.get('hits')
+        rss_data = hits.get('hits')
+        return build_rss_xml(rss_data, term, count)
+
+    return jsonify(records_data)

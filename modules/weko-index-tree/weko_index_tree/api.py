@@ -1119,27 +1119,3 @@ class Indexes(object):
     def get_index_count(cls):
         """Get the total number of indexes."""
         return Index.query.count()
-
-    @classmethod
-    def get_recursive_tree_ids(cls, index_id):
-        index_info = cls.get_index(index_id=index_id)
-        current_app.logger.debug(index_info)
-        id_list = [str(index.cid) for index in
-                           cls.get_recursive_tree(index_id)]
-        return id_list
-
-
-# class IndexRSSServices:
-#     """Services for RSS information on Index Tree."""
-
-#     @classmethod
-#     def get_arrivals_rss(cls, data, term, count):
-#         """Parsing records data to XML.
-
-#         :dictionary: elastic search data
-#         """
-#         if not data or not data.get('hits'):
-#             return build_rss_xml(None, term, 0)
-#         hits = data.get('hits')
-#         rss_data = hits.get('hits')
-#         return build_rss_xml(rss_data, term, count)

@@ -750,3 +750,67 @@ def item_search_factory(self, search, start_date, end_date):
         raise InvalidQueryRESTError()
 
     return search, urlkwargs
+
+    
+def item_search_by_list_index_id(self, search, list_index_id):
+    """Factory for opensearch.
+
+    :param self:
+    :param search:
+    :return:
+    """
+    def _get_query(list_index_id):
+        query_string = "_type:{} AND " \
+                       "relation_version_is_last:true AND " \
+                       "publish_status:0 ".format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
+        query_filter = []
+        for index in list_index_id:
+            q_wildcard = {
+                            "wildcard":{
+                                "path": "*{}*".format(index)
+                            }
+                        }
+            query_filter.append(q_wildcard)
+        query_q = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "query_string": {
+                                "query": query_string
+                            }
+                        },
+                        {
+                            "bool": {
+                                "should": query_filter
+                            }
+                        }
+                    ]
+                }
+            },
+            "sort":
+            [
+                {
+                    "publish_date":
+                    {
+                        "order": "desc"
+                    }
+                }
+            ]
+        }
+        return query_q
+
+    query_q = _get_query(list_index_id)
+    urlkwargs = MultiDict()
+    try:
+        # Aggregations.
+        extr = search._extra.copy()
+        search.update_from_dict(query_q)
+        search._extra.update(extr)
+    except SyntaxError:
+        current_app.logger.debug(
+            "Failed parsing query: {0}".format(query_q),
+            exc_info=True)
+        raise InvalidQueryRESTError()
+
+    return search, urlkwargs

@@ -28,8 +28,11 @@ from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_records_rest.errors import InvalidQueryRESTError
+from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
+from werkzeug.datastructures import MultiDict
 
 from .models import Index
 
@@ -330,222 +333,50 @@ def get_admin_coverpage_setting():
     return avail == 'enable'
 
 
-def get_ES_records_data_by_index():
-    """Delete item in preview widget design.
+def get_ES_records_data_by_indexes(index_ids):
+    """Get data from elastic search.
 
     Arguments:
-        data_id {widget_item} -- [id of widget item]
-        json_data {dict} -- [data to be updated]
+        start_date {string} -- start date
+        end_date {string} -- end date
 
     Returns:
-        [data] -- [data after updated]
+        dictionary -- elastic search data
 
     """
-    pass
-    hits = [
-        {
-            "_index": "tenant1-weko-item-v1.0.0",
-            "_type": "item-v1.0.0",
-            "_id": "4e617296-33b4-4982-9177-cd4dfc484aca",
-            "_score": 1.0,
-            "_source": {
-                "itemtype": "BaseView",
-                "control_number": "1",
-                "publish_date": "2019-08-09",
-                "language": [
-                    "eng"
-                ],
-                "weko_creator_id": "1",
-                "_updated": "2019-08-08T03:03:12.713911+00:00",
-                "subject": [
-                    {
-                        "subjectScheme": "BSH",
-                        "value": "A-20190808-00001"
-                    }
-                ],
-                "_item_metadata": {
-                    "item_1554881483002": {
-                        "attribute_name": "Language",
-                        "attribute_value_mlt": [
-                            {
-                                "subitem_1551255818386": "eng"
-                            }
-                        ]
-                    },
-                    "item_1554881612371": {
-                        "attribute_name": "Keyword",
-                        "attribute_value_mlt": [
-                            {
-                                "subitem_1522299896455": "en",
-                                "subitem_1522300014469": "BSH",
-                                "subitem_1522300048512": "A-20190808-00001",
-                                "subitem_1523261968819": "A-20190808-00001"
-                            }
-                        ]
-                    },
-                    "item_1554881204737": {
-                        "attribute_name": "Title",
-                        "attribute_value_mlt": [
-                            {
-                                "subitem_1551255647225": "A-20190808-00001",
-                                "subitem_1551255648112": "en"
-                            }
-                        ]
-                    },
-                    "pubdate": {
-                        "attribute_name": "公開日",
-                        "attribute_value": "2019-08-09"
-                    },
-                    "item_1560938217591": {
-                        "attribute_name": "課金ファイル",
-                        "attribute_value_mlt": [
-                            {
-                                "groupsprice": [
-                                    {}
-                                ]
-                            }
-                        ]
-                    },
-                    "item_title": "A-20190808-00001",
-                    "item_type_id": "122",
-                    "control_number": "1",
-                    "_oai": {
-                        "id": "oai:invenio:recid/1"
-                    },
-                    "weko_shared_id": -1,
-                    "owner": "1",
-                    "custom_sort": {
-                        "1565232963910": "",
-                        "1565232975358": "",
-                        "1565232962231": ""
-                    },
-                    "path": [
-                        "1565232962231",
-                        "1565232962231/1565232963910",
-                        "1565232962231/1565232975358"
-                    ],
-                    "publish_status": "1"
-                },
-                "_oai": {
-                    "id": "oai:invenio:recid/1"
-                },
-                "custom_sort": {
-                    "1565232963910": "",
-                    "1565232975358": "",
-                    "1565232962231": ""
-                },
-                "weko_shared_id": -1,
-                "_created": "2019-08-08T03:02:56.831423+00:00",
-                "path": [
-                    "1565232962231",
-                    "1565232962231/1565232963910",
-                    "1565232962231/1565232975358"
-                ],
-                "title": [
-                    "A-20190808-00001"
-                ],
-                "publish_status": "0",
-                "relation_version_is_last": True
-            }
-        },
-        {
-            "_index": "tenant1-weko-item-v1.0.0",
-            "_type": "item-v1.0.0",
-            "_id": "c2e6edac-78c0-4c00-a558-cbfab3e0880c",
-            "_score": 1.0,
-            "_source": {
-                "title": [
-                    "A-20190808-00002"
-                ],
-                "path": [
-                    "1565232962231/1565232963910/1565232973014",
-                    "1565232962231/1565239208766/1565239213221",
-                    "1565232962231/1565239209917/1565239216893"
-                ],
-                "custom_sort": {
-                    "1565239216893": "",
-                    "1565232973014": "",
-                    "1565239213221": ""
-                },
-                "language": [
-                    "eng"
-                ],
-                "subject": [],
-                "_created": "2019-08-08T08:37:05.302483+00:00",
-                "_oai": {
-                    "id": "oai:invenio:recid/3"
-                },
-                "weko_shared_id": -1,
-                "itemtype": "BaseView",
-                "weko_creator_id": "1",
-                "_item_metadata": {
-                    "item_1560938217591": {
-                        "attribute_name": "課金ファイル",
-                        "attribute_value_mlt": [
-                            {
-                                "groupsprice": [
-                                    {}
-                                ]
-                            }
-                        ]
-                    },
-                    "pubdate": {
-                        "attribute_name": "公開日",
-                        "attribute_value": "2019-08-08"
-                    },
-                    "item_1554881612371": {
-                        "attribute_name": "Keyword",
-                        "attribute_value_mlt": [
-                            {
-                                "subitem_1522299896455": "en",
-                                "subitem_1522300014469": "NDLC"
-                            }
-                        ]
-                    },
-                    "item_1554881204737": {
-                        "attribute_name": "Title",
-                        "attribute_value_mlt": [
-                            {
-                                "subitem_1551255647225": "A-20190808-00002",
-                                "subitem_1551255648112": "en"
-                            }
-                        ]
-                    },
-                    "item_1554881483002": {
-                        "attribute_name": "Language",
-                        "attribute_value_mlt": [
-                            {
-                                "subitem_1551255818386": "eng"
-                            }
-                        ]
-                    },
-                    "item_title": "A-20190808-00002",
-                    "item_type_id": "122",
-                    "control_number": "3",
-                    "_oai": {
-                        "id": "oai:invenio:recid/3"
-                    },
-                    "weko_shared_id": -1,
-                    "owner": "1",
-                    "custom_sort": {
-                        "1565239216893": "",
-                        "1565232973014": "",
-                        "1565239213221": ""
-                    },
-                    "path": [
-                        "1565232962231/1565232963910/1565232973014",
-                        "1565232962231/1565239208766/1565239213221",
-                        "1565232962231/1565239209917/1565239216893"
-                    ],
-                    "publish_status": "1"
-                },
-                "publish_status": "0",
-                "_updated": "2019-08-08T08:37:16.108872+00:00",
-                "publish_date": "2019-08-08",
-                "control_number": "3",
-                "relation_version_is_last": True
-            }
-        }
-    ]
+    records_search = RecordsSearch()
+    records_search = records_search.with_preference_param().params(version=False)
+    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
 
-    return hits
+    from weko_search_ui.query import item_search_by_list_index_id
+
+    search_instance, _qs_kwargs = item_search_by_list_index_id(None,
+                                                               records_search,
+                                                               index_ids)
+    search_result = search_instance.execute()
+    rd = search_result.to_dict()
+    return rd
+
+def generate_path(index_ids):
+    """Get data from elastic search.
+
+    Arguments:
+        start_date {string} -- start date
+        end_date {string} -- end date
+
+    Returns:
+        dictionary -- elastic search data
+
+    """
+    current_app.logger.debug(index_ids)
+    path = dict()
+    result = []
+    for index in index_ids:
+        if index.pid == 0:
+            path[str(index.cid)] = str(index.cid)
+            result.append(path[str(index.cid)])
+        else:
+            parent_path = path.get(str(index.pid)) or ""
+            path[str(index.cid)] = (parent_path + "/" + str(index.cid)) if parent_path != "" else "" + str(index.cid)
+            result.append(path[str(index.cid)])
+    return result
