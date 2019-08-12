@@ -636,6 +636,7 @@ const TableResendErrorComponent = function(props){
   function getData(data){
     setData(data.data);
     setIndex(data.selected_page-1);
+    setNumOfPage(data.total_page);
   }
 
   function generateBodyTableUser(){
@@ -830,6 +831,9 @@ class ComponentButtonLayout extends React.Component {
           message = result.error;
           type = 1;
         }
+        else{
+          props.bindingValueOfComponent("resendMail", true);
+        }
 
         addAlert(message, type);
       });
@@ -880,6 +884,26 @@ const ComponentLogsTable = function(props){
     );
   }, []);
 
+  useEffect(() => {
+    fetch("/api/admin/get_send_mail_history?page=1")
+    .then(res => res.json())
+    .then(
+      (result) => {
+        if (result.error) {
+          alert(result.error);
+          return;
+        }
+        setNumOfPage(result.total_page);
+        setData(result.data);
+      },
+
+      (error) => {
+        console.log(error);
+      }
+    );
+    props.bindingValueOfComponent("resendMail", false);
+  }, [props.bindResendMail]);
+
   function getData(data){
     setData(data.data);
     setIndex(data.selected_page-1);
@@ -887,7 +911,7 @@ const ComponentLogsTable = function(props){
 
   function generateTableBody() {
     let listRow = data.map((rowData, index) => {
-      let error = 0;
+      let error = rowData.error;
       if (rowData.error != '0' && rowData.is_latest) {
         error = <a data-id={rowData.id} href="#" onClick = {() => showErrorMail(rowData.id)}>{rowData.error}</a>
       }
@@ -914,6 +938,7 @@ const ComponentLogsTable = function(props){
     <div className = "form-group style-component">
       <div className="control-label col-xs-2">Send logs</div>
       <br/>
+      {!data ? <div>There is no data.</div> : null}
       <table class="table table-striped style-table-send-logs">
         <thead>
           <tr>
@@ -927,9 +952,10 @@ const ComponentLogsTable = function(props){
         </thead>
         {generateTableBody()}
       </table>
+      {data ?
       <div className = "row">
         <PaginationResendLogsTable bindURL="/api/admin/get_send_mail_history" bindNumOfPage = {numOfPage} bindGetData = {getData}/>
-      </div>
+      </div> : null}
     </div>
   )
 }
@@ -1005,7 +1031,7 @@ class MainLayout extends React.Component {
                   <ComponentExclusionTarget bindingValueOfComponent = {this.bindingValueOfComponent} removeEmailFromList = {this.removeEmailFromList} listEmail={this.state.listEmail} addEmailToList= {this.addEmailToList}/>
                 </div>
                 <div className = "row">
-                  <ComponentLogsTable bindingValueOfComponent = {this.bindingValueOfComponent}/>
+                  <ComponentLogsTable bindingValueOfComponent = {this.bindingValueOfComponent} bindResendMail = {this.state.resendMail}/>
                 </div>
                 <div className="row">
                   <ComponentButtonLayout listEmail = {this.state.listEmail} flagSend={this.state.flagSend}/>
