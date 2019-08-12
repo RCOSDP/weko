@@ -1254,6 +1254,11 @@ class FeedbackMailHistory(db.Model):
         db.Integer
     )
 
+    is_latest = db.Column(
+        db.Boolean(name='lastest'),
+        nullable=False
+    )
+
     @classmethod
     def get_sequence(cls, session):
         """Get session sequence.
@@ -1293,7 +1298,8 @@ class FeedbackMailHistory(db.Model):
                stats_time,
                count,
                error,
-               parent_id=None):
+               parent_id=None,
+               is_latest=True):
         """Create history record.
 
         Arguments:
@@ -1320,6 +1326,7 @@ class FeedbackMailHistory(db.Model):
                 data.stats_time = stats_time
                 data.count = count
                 data.error = error
+                data.is_latest = is_latest
                 session.add(data)
             session.commit()
         except BaseException as ex:

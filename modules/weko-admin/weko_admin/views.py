@@ -40,7 +40,7 @@ from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, FeedbackMail, \
     get_initial_stats_report, get_selected_language, get_unit_stats_report, \
     save_api_certification, update_admin_lang_setting, \
-    validate_certification
+    validate_certification, StatisticMail
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -401,4 +401,20 @@ def get_failed_mail():
         page = 1
         id = 1
     result = FeedbackMail.load_feedback_failed_mail(id, page)
+    return jsonify(result)
+
+
+@blueprint_api.route('/resend_failed_mail', methods=['POST'])
+def resend_failed_mail():
+    data = request.get_json()
+    history_id = data.get('history_id')
+    result = {
+        'success': True,
+        'error': ''
+    }
+    try:
+        StatisticMail.send_mail_to_all()
+    except Exception as ex:
+        current_app.logger.debug('Cannot resend mail', ex)
+        result['error'] = 'Request package is invalid'
     return jsonify(result)

@@ -44,9 +44,9 @@ from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, FeedbackMailFailed, \
-    FeedbackMailHistory, FeedbackMailSetting, SearchManagement, \
-    StatisticTarget, StatisticUnit
+from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
+    SearchManagement, StatisticTarget, StatisticUnit, FeedbackMailHistory, \
+    FeedbackMailFailed
 
 
 def get_response_json(result_list, n_lst):
@@ -573,25 +573,26 @@ class StatisticMail:
         return str(datetime.now().year) + '-' + month
 
     @classmethod
-    def send_mail_to_all(cls):
+    def send_mail_to_all(cls,  list_mail_data=None, stats_date=None):
         """Send mail to all setting email."""
         session = db.session
         id = FeedbackMailHistory.get_sequence(session)
         start_time = datetime.now()
-        stats_time = cls.get_send_time()
+        if not stats_date:
+            stats_date = cls.get_send_time()
         failed_mail = 0
         total_mail = 0
         try:
             from weko_theme import config as theme_config
-            from weko_search_ui.utils import get_feedback_mail_list, \
-                parse_feedback_mail_data
-            feedback_mail_data = get_feedback_mail_list()
-            if not feedback_mail_data:
-                return
-            list_mail_data = parse_feedback_mail_data(
-                feedback_mail_data)
+            if not list_mail_data:
+                from weko_search_ui.utils import get_feedback_mail_list, \
+                    parse_feedback_mail_data
+                feedback_mail_data = get_feedback_mail_list()
+                if not feedback_mail_data:
+                    return
+                list_mail_data = parse_feedback_mail_data(
+                    feedback_mail_data)
             title = theme_config.THEME_SITENAME
-            stat_date = cls.get_send_time()
             for k, v in list_mail_data.items():
                 total_mail += 1
                 mail_data = {
@@ -599,13 +600,13 @@ class StatisticMail:
                         str(k),
                         v.get('author_id')),
                     'organization': '',
-                    'time': stat_date
+                    'time': stats_date
                 }
                 recipient = str(k)
                 subject = str(
-                    cls.build_statistic_mail_subject(title, stat_date))
+                    cls.build_statistic_mail_subject(title, stats_date))
                 body = str(cls.fill_email_data(
-                    cls.get_list_statistic_data(v.get("item"), stat_date),
+                    cls.get_list_statistic_data(v.get("item"), stats_date),
                     mail_data))
                 send_result = cls.send_mail(recipient, body, subject)
                 if not send_result:
@@ -624,7 +625,7 @@ class StatisticMail:
             id,
             start_time,
             end_time,
-            stats_time,
+            stats_date,
             total_mail,
             failed_mail
         )
@@ -1038,8 +1039,6 @@ class FeedbackMail:
         result['is_sending_feedback'] = setting[0].is_sending_feedback
         list_data = list()
         for author_id in list_author_id:
-            if not author_id:
-                continue
             email = Authors.get_first_email_by_id(author_id)
             new_data = dict()
             new_data['author_id'] = author_id
@@ -1227,13 +1226,14 @@ class FeedbackMail:
                 new_data = dict()
                 new_data['id'] = data[index].id
                 new_data['start_time'] = data[index].start_time.strftime(
-                    '%Y-%m-%d %H:%M:%S.%f')
+                    '%Y-%m-%d %H:%M:%S.%f')[:-3]
                 new_data['end_time'] = data[index].end_time.strftime(
-                    '%Y-%m-%d %H:%M:%S.%f')
+                    '%Y-%m-%d %H:%M:%S.%f')[:-3]
                 new_data['count'] = int(data[index].count)
                 new_data['error'] = int(data[index].error)
                 new_data['success'] = int(
                     data[index].count) - int(data[index].error)
+                new_data['is_latest'] = data[index].is_latest
                 list_history.append(new_data)
             result['data'] = list_history
             result['total_page'] = cls.get_total_page(len(data))
