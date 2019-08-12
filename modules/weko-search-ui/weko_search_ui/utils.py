@@ -143,16 +143,13 @@ def parse_feedback_mail_data(data):
         for author in data:
             if author.get('doc_count'):
                 email = author.get('key')
-                buckets = author.get('author_id').get('buckets')
+                hits = author.get('top_tag_hits').get('hits').get('hits')
                 result[email] = {
                                     'author_id': '',
                                     'item': []
                                 }
-                for index in buckets:
+                for index in hits:
                     if not result[email]['author_id']:
-                        result[email]['author_id'] = index.get('key')
-                    for hit in index.get('top_tag_hits').get('hits')\
-                        .get('hits'):
-                        if hit.get('_id'):
-                            result[email]['item'].append(hit.get('_id'))
+                        result[email]['author_id'] = index.get('_source').get('author_id')
+                    result[email]['item'].append(index.get('_id'))
     return result

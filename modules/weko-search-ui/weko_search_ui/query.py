@@ -94,6 +94,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
     :param query_parser: Query parser. (Default: ``None``)
     :returns: Tuple with search instance and URL arguments.
     """
+
     def _get_search_qs_query(qs=None):
         """Qs of search bar keywords for detail simple search.
 
@@ -109,6 +110,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
         :return: Query parser.
         """
+
         def _get_keywords_query(k, v):
             qry = None
             kv = request.values.get(k)
@@ -130,7 +132,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                         kvl = [x for x in kv.split(',')
                                if x.isdecimal() and int(x) < len(vlst)]
                         for j in map(
-                                partial(lambda x, y: x[int(y)], vlst), kvl):
+                            partial(lambda x, y: x[int(y)], vlst), kvl):
                             name_dict = dict(operator="and")
                             name_dict.update(dict(query=j))
                             shud.append(Q('match', **{key: name_dict}))
@@ -188,11 +190,11 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             qt = None
                                             if '=*' not in alst[1]:
                                                 name = alst[0] + \
-                                                    "." + val_attr_lst[0]
+                                                       "." + val_attr_lst[0]
                                                 qt = [
                                                     Q('term',
                                                       **{name:
-                                                         val_attr_lst[1]})]
+                                                             val_attr_lst[1]})]
 
                                             mut.extend(qt or [])
                                             qry = Q('bool', must=mut)
@@ -207,7 +209,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                 if isinstance(vlst, list):
                                     attr_val = [x for x in attr_val_str.split(
                                         ',') if x.isdecimal()
-                                        and int(x) < len(vlst)]
+                                                and int(x) < len(vlst)]
                                     if attr_val:
                                         shud = []
                                         name = v[0] + ".value"
@@ -216,16 +218,17 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                         qm = Q('match', **{name: name_dict})
 
                                         for j in map(
-                                                partial(lambda m, n:
-                                                        m[int(n)], vlst),
-                                                attr_val):
+                                            partial(lambda m, n:
+                                                    m[int(n)], vlst),
+                                            attr_val):
                                             name = attr_key_hit[0]
                                             qm = Q('term', **{name: j})
                                             shud.append(qm)
 
                                         shuld.append(Q('nested', path=v[0],
                                                        query=Q(
-                                            'bool', should=shud, must=[qm])))
+                                                           'bool', should=shud,
+                                                           must=[qm])))
 
             return Q('bool', should=shuld) if shuld else None
 
@@ -268,9 +271,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
                                             x for x in attr_val_str.split(',')]
                                         shud = []
                                         for j in map(
-                                                partial(lambda m, n:
-                                                        m[int(n)], vlst),
-                                                attr_val):
+                                            partial(lambda m, n:
+                                                    m[int(n)], vlst),
+                                            attr_val):
                                             qt = Q(
                                                 'term', **{attr_key_hit[0]: j})
                                             shud.append(qt)
@@ -491,6 +494,7 @@ def item_path_search_factory(self, search, index_id=None):
     :param search: Elastic search DSL search instance.
     :returns: Tuple with search instance and URL arguments.
     """
+
     def _get_index_earch_query():
 
         query_q = {
@@ -713,6 +717,7 @@ def item_search_factory(self, search, start_date, end_date):
     :param search:
     :return:
     """
+
     def _get_query(start_date, end_date):
         query_string = "_type:item AND " \
                        "relation_version_is_last:true AND " \
@@ -725,14 +730,14 @@ def item_search_factory(self, search, start_date, end_date):
                 }
             },
             "sort":
-            [
-                {
-                    "publish_date":
+                [
                     {
-                        "order": "desc"
+                        "publish_date":
+                            {
+                                "order": "desc"
+                            }
                     }
-                }
-            ]
+                ]
         }
         return query_q
 
@@ -759,9 +764,11 @@ def feedback_email_search_factory(self, search):
     :param search:
     :return:
     """
+
     def _get_query():
-        query_string = "_type:item AND " \
-                       "relation_version_is_last:true "
+        query_string = "_type:{} AND " \
+                       "relation_version_is_last:true " \
+            .format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
         query_q = {
             "size": 0,
             "query": {
@@ -770,11 +777,18 @@ def feedback_email_search_factory(self, search):
                         {"nested":
                             {
                                 "path": "feedback_mail_list",
-                                "query": {"match_all": {}},
-                                "filter": {
-                                    "exists": {
-                                        "field": "feedback_mail_list.email"}
+                                "query": {
+                                    "bool": {
+                                        "must": [
+                                            {
+                                                "exists": {
+                                                    "field": "feedback_mail_list.email"
+                                                }
+                                            }
+                                        ]
                                     }
+                                }
+
                             }
                         },
                         {"query_string":
@@ -796,15 +810,8 @@ def feedback_email_search_factory(self, search):
                                 "field": "feedback_mail_list.email"
                             },
                             "aggs": {
-                                "author_id": {
-                                    "terms": {
-                                        "field": "feedback_mail_list.author_id"
-                                    },
-                                    "aggs": {
-                                        "top_tag_hits": {
-                                            "top_hits": {}
-                                        }
-                                    }
+                                "top_tag_hits": {
+                                    "top_hits": {}
                                 }
                             }
                         }
