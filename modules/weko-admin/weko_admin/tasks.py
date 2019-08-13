@@ -35,7 +35,8 @@ from invenio_stats.utils import QueryCommonReportsHelper, \
 
 from . import config
 from .models import AdminSettings, StatisticsEmail
-from .utils import get_redis_cache, get_user_report_data, package_reports, StatisticEmail
+from .utils import get_redis_cache, get_user_report_data, package_reports, \
+    StatisticMail
 from .views import manual_send_site_license_mail
 
 logger = get_task_logger(__name__)
@@ -122,7 +123,7 @@ def check_send_all_reports():
 def send_feedback_mail():
     """Check Redis periodically for when to run a task."""
     with current_app.app_context():
-        StatisticEmail.send_mail_to_all()
+        StatisticMail.send_mail_to_all()
 
 
 def _due_to_run(schedule):
