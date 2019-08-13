@@ -828,10 +828,6 @@ class ComponentButtonLayout extends React.Component {
           message = result.error;
           type = 1;
         }
-        else{
-          props.bindingValueOfComponent("resendMail", true);
-        }
-
         addAlert(message, type);
       });
     }

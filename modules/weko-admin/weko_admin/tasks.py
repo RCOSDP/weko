@@ -118,6 +118,13 @@ def check_send_all_reports():
             send_all_reports.delay()
 
 
+@shared_task(ignore_results=True)  # Set for timedelta(days=1)
+def send_feedback_mail():
+    """Check Redis periodically for when to run a task."""
+    with current_app.app_context():
+        StatisticsEmail.send_mail_to_all()
+
+
 def _due_to_run(schedule):
     """Check if a task needs to be ran."""
     if not schedule['enabled']:
