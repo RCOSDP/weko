@@ -769,6 +769,7 @@ def feedback_email_search_factory(self, search):
         query_string = "_type:{} AND " \
                        "relation_version_is_last:true " \
             .format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
+        size = 1000
         query_q = {
             "size": 0,
             "query": {
@@ -807,7 +808,8 @@ def feedback_email_search_factory(self, search):
                     "aggs": {
                         "email_list": {
                             "terms": {
-                                "field": "feedback_mail_list.email"
+                                "field": "feedback_mail_list.email",
+                                "size": size
                             },
                             "aggs": {
                                 "top_tag_hits": {
