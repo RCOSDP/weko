@@ -409,6 +409,10 @@ def get_failed_mail():
 
 @blueprint_api.route('/resend_failed_mail', methods=['POST'])
 def resend_failed_mail():
+    """Resend failed mail.
+
+    :return:
+    """
     data = request.get_json()
     history_id = data.get('history_id')
     result = {
