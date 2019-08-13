@@ -39,6 +39,8 @@ WEKO_SEARCH_UI_THEME_FRONTPAGE_TEMPLATE = \
 
 WEKO_SEARCH_UI_SEARCH_TEMPLATE = 'weko_search_ui/search.html'
 
+WEKO_SEARCH_UI_SEARCH_RESULTS_TEMPLATE = 'weko_search_ui/search_results.html'
+
 WEKO_SEARCH_UI_ADMIN_BULK_DELETE = \
     'weko_search_ui/admin/item_management_display.html'
 

@@ -1,0 +1,43 @@
+<div class="row" ng-controller="itemExportCtrl">
+  <div class="col-sm-12">
+    <h6 class="text-danger" ng-show="item_export_checkboxes.length > max_export_num">
+        Exceeded number of selectable items.
+    </h6>
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered table-responsive">
+        <thead>
+          <tr>
+            <th class="text-center">
+              <input type="checkbox" id="item_export_check_all"
+                ng-click="checkAllExportItems($event)" />
+            </th>
+            <th>Item</th>
+            <th>Message</th>
+            <th>No. of Files</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
+            <td class="text-center">  <!-- TODO: Add the item id here to pass to server. -->
+              <input type="checkbox" name="" value="{{ record.id }}"
+                ng-checked="item_export_checkboxes.indexOf(record.id) != -1"
+                ng-click="checkExportItem(record.id)" />
+            </td>
+            <td>
+              <a target="_self" ng-href="/records/{{record.id}}{{commInfo}}">
+                <span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+                {{ record.metadata.hasOwnProperty('title') ? record.metadata.title[0] : record.metadata['dc:title'][0] }}
+              </a>
+            </td>
+            <td>
+                <p class="text-danger" ng-show="items_with_restricted_content.indexOf(record.id) != -1">Contains restricted content</p>
+              </td>
+            <td>
+              {{ (record.metadata.hasOwnProperty('file') && record.metadata.file.hasOwnProperty('URI')) ? record.metadata.file.URI.length : '0' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
