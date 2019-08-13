@@ -83,3 +83,6 @@ WEKO_INDEX_TREE_RSS_DEFAULT_TERM = 14
 
 WEKO_INDEX_TREE_RSS_DEFAULT_LANG = 'en'
 """Default number of the language in RSS."""
+
+WEKO_INDEX_TREE_RSS_COUNT_LIMIT = 100
+"""Default number of count upper limit in RSS."""
