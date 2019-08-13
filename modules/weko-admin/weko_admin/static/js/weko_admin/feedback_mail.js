@@ -116,11 +116,8 @@ class ComponentExclusionTarget extends React.Component {
     }
 
     handleClickOutside(event) {
-      if (this.wrapperRef) {
-        if (this.deleteRef && this.deleteRef.contains(event.target)){
-        } else if (!this.wrapperRef.contains(event.target)) {
-          this.setState({selectedId: []})
-        }
+      if (this.wrapperRef && this.deleteRef && !this.wrapperRef.contains(event.target) && !this.deleteRef.contains(event.target)) {
+        this.setState({ selectedId: [] });
       }
     }
 
