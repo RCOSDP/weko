@@ -938,7 +938,7 @@ const ComponentLogsTable = function(props){
     <div className = "form-group style-component">
       <div className="control-label col-xs-2">Send logs</div>
       <br/>
-      {!data ? <div>There is no data.</div> : null}
+      {!data.length ? <div className = "no-data-message">There is no data.</div> : null}
       <table class="table table-striped style-table-send-logs">
         <thead>
           <tr>
@@ -952,7 +952,7 @@ const ComponentLogsTable = function(props){
         </thead>
         {generateTableBody()}
       </table>
-      {data ?
+      {data.length ?
       <div className = "row">
         <PaginationResendLogsTable bindURL="/api/admin/get_send_mail_history" bindNumOfPage = {numOfPage} bindGetData = {getData}/>
       </div> : null}

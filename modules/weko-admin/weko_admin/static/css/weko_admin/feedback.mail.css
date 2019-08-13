@@ -13,7 +13,7 @@
 
 .resend-mail-table {
   width: 94%;
-  margin: 15px 3%;
+  margin-left: 3%;
 }
 
 .label-resend-email{
@@ -104,6 +104,11 @@
 
   .left-align {
     float: left;
+  }
+
+  .no-data-message {
+    margin-left: 3%;
+    margin-top: 15px;
   }
 
   
