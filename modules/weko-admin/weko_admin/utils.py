@@ -577,7 +577,7 @@ class StatisticMail:
         """Send mail to all setting email."""
         # Load setting:
         setting = FeedbackMail.get_feed_back_email_setting()
-        if not setting.get('is_sending_feedback'):
+        if not setting.get('is_sending_feedback') and not stats_date:
             return
         banned_mail = cls.get_banned_mail(setting.get('data'))
 
