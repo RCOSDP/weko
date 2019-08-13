@@ -12,6 +12,17 @@ const SAVE_BUTTON_NAME = document.getElementById("save-button-name").value;
 const SEND_BUTTON_NAME = document.getElementById("manual-send-name").value;
 const MESSAGE_SUCCESS = document.getElementById("message-success").value;
 const DUPLICATE_ERROR_MESSAGE = document.getElementById("duplicate-error-message").value;
+const MAIL_ADDRESS_LABEL = document.getElementById("mail-address-label").value;
+const SEND_LOGS_LABEL = document.getElementById("send-logs-label").value;
+const START_TIME_LABEL = document.getElementById("start-time-label").value;
+const END_TIME_LABEL = document.getElementById("end-time-label").value;
+const COUNTS_LABEL = document.getElementById("counts-label").value;
+const SUCCESS_LABEL = document.getElementById("success-label").value;
+const ERROR_LABEL = document.getElementById("error-label").value;
+const TITLE_TABLE_RESEND_EMAIL = document.getElementById("title-table-resend-email").value;
+const NAME_LABEL = document.getElementById("name-label").value;
+const RESEND_BUTTON_NAME = document.getElementById("resend-button-name").value;
+const CLOSE_BUTTON_NAME = document.getElementById("close-button-name").value;
 
 
 class ComponentFeedbackMail extends React.Component {
@@ -527,7 +538,7 @@ class ModalFooterComponent extends React.Component {
     return (
         <ReactBootstrap.Button className="btn-primary text-white" onClick={this.handleClose}>
           <span className="glyphicon glyphicon-remove text-white"></span>
-          &nbsp;Close
+          &nbsp;{CLOSE_BUTTON_NAME}
         </ReactBootstrap.Button>
     )
   }
@@ -600,7 +611,7 @@ const ModalFooterResendComponent = function(props){
       </ReactBootstrap.Button>
       <ReactBootstrap.Button className="btn-primary text-white" onClick={() => handleClose()}>
         <span className="glyphicon glyphicon-remove text-white"></span>
-        &nbsp;Close
+        &nbsp;{CLOSE_BUTTON_NAME}
       </ReactBootstrap.Button>
     </div>
   )
@@ -655,8 +666,8 @@ const TableResendErrorComponent = function(props){
         <thead>
           <tr>
             <th className = "width-small">#</th>
-            <th className = "width-long">Name</th>
-            <th>Mail Address</th>
+            <th className = "width-long">{NAME_LABEL}</th>
+            <th>{MAIL_ADDRESS_LABEL}</th>
           </tr>
         </thead>
         {generateBodyTableUser()}
@@ -765,7 +776,7 @@ const ModalResendBodyComponent = function(props) {
   return (
     <div>
       <div className = "row">
-        <label className="label-resend-email">List of authors who failed to send</label>
+        <label className="label-resend-email">{TITLE_TABLE_RESEND_EMAIL}</label>
       </div>
       <div className = "row">
         <TableResendErrorComponent bindID = {props.bindID}/>
@@ -929,18 +940,18 @@ const ComponentLogsTable = function(props){
 
   return (
     <div className = "form-group style-component">
-      <div className="control-label col-xs-2">Send logs</div>
+      <div className="control-label col-xs-2">{SEND_LOGS_LABEL}</div>
       <br/>
       {!data.length ? <div className = "no-data-message">There is no data.</div> : null}
       <table class="table table-striped style-table-send-logs">
         <thead>
           <tr>
             <th className = "width-small">#</th>
-            <th className = "width-long">Start Time</th>
-            <th className = "width-long">End Time</th>
-            <th className = "width-medium">Counts</th>
-            <th className = "width-medium">Success</th>
-            <th className = "width-medium">Error</th>
+            <th className = "width-long">{START_TIME_LABEL}</th>
+            <th className = "width-long">{END_TIME_LABEL}</th>
+            <th className = "width-medium">{COUNTS_LABEL}</th>
+            <th className = "width-medium">{SUCCESS_LABEL}</th>
+            <th className = "width-medium">{ERROR_LABEL}</th>
           </tr>
         </thead>
         {generateTableBody()}
