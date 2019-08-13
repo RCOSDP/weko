@@ -554,11 +554,11 @@ def find_rss_value(data, keyword):
         if source.get('creator'):
             creator = source.get('creator')
             if (not creator
-                    or not creator.get('creatorName')
+                    or not creator.get('familyName')
                     or not creator.get('givenName')):
                 return ''
             else:
-                creator_name = creator.get('creatorName')
+                creator_name = creator.get('familyName')
                 given_name = creator.get('givenName')
                 list_creator = list()
                 for i in range(0, len(creator_name)):
