@@ -44,9 +44,9 @@ from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
-    SearchManagement, StatisticTarget, StatisticUnit, FeedbackMailHistory, \
-    FeedbackMailFailed
+from .models import AdminLangSettings, ApiCertificate, FeedbackMailFailed, \
+    FeedbackMailHistory, FeedbackMailSetting, SearchManagement, \
+    StatisticTarget, StatisticUnit
 
 
 def get_response_json(result_list, n_lst):
@@ -1273,7 +1273,7 @@ class FeedbackMail:
             return result
 
     @classmethod
-    def load_feedback_failed_mail(cls, id, page_num):
+    def load_feedback_failed_mail(cls, history_id, page_num):
         """Load all failed mail by history id.
 
         Arguments:
@@ -1294,7 +1294,7 @@ class FeedbackMail:
             'error': ''
         }
         try:
-            data = FeedbackMailFailed.get_by_history_id(id)
+            data = FeedbackMailFailed.get_by_history_id(history_id)
             list_mail = list()
             page_num_end = page_num * 10
             page_num_start = page_num_end - 10

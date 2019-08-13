@@ -36,11 +36,11 @@ from werkzeug.local import LocalProxy
 
 from . import config
 from .models import SessionLifetime
-from .utils import get_admin_lang_setting, get_api_certification_type, \
-    get_current_api_certification, FeedbackMail, \
+from .utils import FeedbackMail, StatisticMail, get_admin_lang_setting, \
+    get_api_certification_type, get_current_api_certification, \
     get_initial_stats_report, get_selected_language, get_unit_stats_report, \
     save_api_certification, update_admin_lang_setting, \
-    validate_certification, StatisticMail
+    validate_certification
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -378,7 +378,7 @@ def get_send_mail_history():
         data = request.args
         page = int(data.get('page'))
     except Exception as ex:
-        current_app.logger.debug('Cannot convert paramater', ex)
+        current_app.logger.debug('Cannot convert parameter', ex)
         page = 1
     result = FeedbackMail.load_feedback_mail_history(page)
     return jsonify(result)
@@ -395,12 +395,12 @@ def get_failed_mail():
     try:
         data = request.args
         page = int(data.get('page'))
-        id = int(data.get('id'))
+        history_id = int(data.get('id'))
     except Exception as ex:
-        current_app.logger.debug('Cannot convert paramater', ex)
+        current_app.logger.debug('Cannot convert parameter', ex)
         page = 1
-        id = 1
-    result = FeedbackMail.load_feedback_failed_mail(id, page)
+        history_id = 1
+    result = FeedbackMail.load_feedback_failed_mail(history_id, page)
     return jsonify(result)
 
 
