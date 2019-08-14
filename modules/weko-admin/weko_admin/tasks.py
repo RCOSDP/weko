@@ -21,7 +21,7 @@
 """Task for sending scheduled report emails."""
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from celery import shared_task, task
 from celery.utils.log import get_task_logger
@@ -34,8 +34,9 @@ from invenio_stats.utils import QueryCommonReportsHelper, \
     QueryRecordViewReportHelper, QuerySearchReportHelper
 
 from . import config
-from .models import StatisticsEmail
+from .models import AdminSettings, StatisticsEmail
 from .utils import get_redis_cache, get_user_report_data, package_reports
+from .views import manual_send_site_license_mail
 
 logger = get_task_logger(__name__)
 
@@ -127,3 +128,24 @@ def _due_to_run(schedule):
          and int(schedule['details']) == now.weekday()) or \
         (schedule['frequency'] == 'monthly'
          and int(schedule['details']) == now.day)
+
+
+@shared_task(ignore_results=True)
+def check_send_site_access_report():
+    """Check send site access report."""
+    settings = AdminSettings.get('site_license_mail_settings')
+    if settings and settings.auto_send_flag:
+        agg_month = \
+            current_app.config.get('WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH', 1)
+        # Previous months
+        end_date = datetime.utcnow().replace(day=1) - timedelta(days=1)
+        count = 1
+        start_date = end_date.replace(day=1)
+        while count < agg_month:
+            start_date = (start_date - timedelta(days=1)).replace(day=1)
+            count = count + 1
+        end_month = end_date.strftime('%Y-%m')
+        start_month = start_date.strftime('%Y-%m')
+        # send mail api
+        manual_send_site_license_mail(start_month=start_month,
+                                      end_month=end_month)

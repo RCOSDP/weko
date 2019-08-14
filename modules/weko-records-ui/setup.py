@@ -107,6 +107,7 @@ setup(
             'weko_records_ui_css = weko_records_ui.bundles:style',
             'weko_records_ui_dependencies_js = weko_records_ui.bundles:js_dependecies',
             'weko_records_ui_js = weko_records_ui.bundles:js',
+            'weko_records_ui_preview_carousel_js = weko_records_ui.bundles:preview_carousel',
         ],
         'invenio_access.actions': [
             'detail_page_access'

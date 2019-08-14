@@ -1,0 +1,199 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+{% block javascript %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/weko_admin/site_license_send_mail_settings.js') }}"></script>
+{% endblock %}
+
+{%- block body %}
+<div class="row">
+  <div class="col-sm-offset-2 col-sm-8">
+    <div class="table-responsive">
+        <p>{{_('Please classify a check into the organization send a use of site license statistics eamil.')}}</p>
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th></th>
+            <th>{{_('Organization')}}</th>
+            <th>{{_('Email Address')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+        {%- for s in sitelicenses %}
+          <tr>
+            <td align="center" valign="middle">
+              <input type="checkbox" name={{s.organization_name}} id="send_mail_flag_{{s.organization_id}}"
+                {% if s.receive_mail_flag == 'T' and s.mail_address %}
+                  checked
+                {% endif %}
+                {% if not s.mail_address  %}
+                  disabled="true"
+                {% endif %}
+              >
+            </td>
+            <td>{{s.organization_name}}</td>
+            <td>
+              {% if s.mail_address.split("\n")|count >= 3%}
+                <textarea class="form-control" rows="3" cols="52" name="mail_address" readonly>{{s.mail_address}}</textarea>
+              {% else %}
+                {% for mail in s.mail_address.split("\n") %}
+                  {{ mail }}<br>
+                {% endfor %}
+              {% endif %}
+            </td>
+          </tr>
+        {%- endfor %}
+        </tbody>
+      </table>
+      <table class="table">
+        <tr>
+          <td rowspan="2" style="width:150px">
+            <h4>{{_('Automatic Send')}}</h4>
+          </td>
+          <td colspan="6">
+            <p>{{_('Select "Send" to automatically send a use of site license statistics email to the checked the organization.')}}</p>
+          </td>
+        </tr>
+        <tr>
+          <td align="center"  style="width:150px">
+            <label class="radio-inline" for="enable_auto_send">
+              <input type="radio" name="dis_enable_auto_send" id="enable_auto_send" value="True" {{ 'checked' if auto_send else '' }}>
+              {{_('Send')}}
+            </label>
+          </td>
+          <td align="center" style="width:150px">
+            <label class="radio-inline" for="disable_auto_send">
+              <input type="radio" name="dis_enable_auto_send" id="disable_auto_send" value="False" {{ 'checked' if not auto_send else '' }} >
+              {{_('Do not send')}}
+            </label>
+          </td>
+          <td colspan="4">
+          </td>
+        </tr>
+        <tr>
+          <td colspan="7">
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="2">
+            <h4>{{_('Manual Send')}}</h4>
+          </td>
+          <td colspan="6">
+            <p>{{_('When manually send a use of site license statistics email to the checked the organization, select the aggregation period and press the [Manual Send] button.')}}</p>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            {{_('Aggregation month')}}
+          </td>
+          <td>
+            <select class="form-control" id="from_year_select" name="year">
+              {% for x in range(5) %}
+                {% set year = now.year - x %}
+                {% if year == last_month.year %}
+                  <option value="{{ year }}" selected="selected">{{ year }}</option>
+                {% else %}
+                  <option value="{{ year }}">{{ year }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </td>
+          <td>
+            <select class="form-control" id="from_month_select" name="month">
+              {% for x in range(1, 13) %}
+                {% set mon = '%02d' % x %}
+                {% if x == last_month.month %}
+                  <option value="{{ x }}" selected="selected">{{ _('%(mon)s', mon=mon) }}</option>
+                {% else %}
+                  <option value="{{ x }}">{{ _('%(mon)s', mon=mon) }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </td>
+          <td>
+            -
+          </td>                        
+          <td>
+            <select class="form-control" id="to_year_select" name="year">
+              {% for x in range(5) %}
+                {% set year = now.year - x %}
+                {% if year == last_month.year %}
+                  <option value="{{ year }}" selected="selected">{{ year }}</option>
+                {% else %}
+                  <option value="{{ year }}">{{ year }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </td>
+          <td>
+            <select class="form-control" id="to_month_select" name="month">
+              {% for x in range(1, 13) %}
+                {% set mon = '%02d' % x %}
+                {% if x == last_month.month %}
+                  <option value="{{ x }}" selected="selected">{{ _('%(mon)s', mon=mon) }}</option>
+                {% else %}
+                  <option value="{{ x }}">{{ _('%(mon)s', mon=mon) }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="7">
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <a id="save_settings" class="btn btn-primary">
+              <span class="glyphicon glyphicon-save"></span>&nbsp
+                {{_('Save')}}
+            </a>
+          </td>
+          <td colspan="5">
+          </td>
+          <td align="right">
+            <a id="manual_send_mail" class="btn btn-primary"
+              data-toggle="modal" data-target="#send_mail_confirm_modal">
+              <span class="glyphicon glyphicon-send"></span>&nbsp
+                {{_('Manual Send')}}
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Confirm Modal -->
+{% from "weko_theme/macros/modal_page.html" import confirm_modal %}
+{{ confirm_modal(modal_id="send_mail_confirm_modal",
+                 button_id="confirm_send_button",
+                 button_text="Confirm",
+                 title=_('Confirmation'),
+                 body=_('Are you sure you want to send an email?'))}}
+{%- endblock %}

@@ -86,10 +86,12 @@
   <div class="panel panel-default">
     <div class="panel-heading clearfix">
       <span class="panel-title">
-        {%- if index_id %}
-        {{_('Item Lists')}}
+        {%- if item_export %}
+          {{_('Items to Export')}}
+        {%- elif index_id %}
+          {{_('Item Lists')}}
         {%- else %}
-        {{_('Search Results')}}
+          {{_('Search Results')}}
         {%- endif %}
       </span>
       {%- block search_count %}
@@ -117,6 +119,11 @@
             <option value="all_print">{{_('Print All Items Of This Index')}}</option>
           </select>
           <button type="button" class="btn btn-primary hide">{{_('Execution')}}</button>
+          {%- if not item_export %}
+            <a href="{{ url_for('weko_items_ui.export', **request.args) }}" class="btn btn-primary">
+              <i class="fa fa-download"></i>{{ _('Export') }}
+            </a>
+          {%- endif %}
           <div class="pull-right">
             <div class="form-group hide">
               <label for="sort_item">{{_('Display Order')}}</label>
@@ -144,24 +151,24 @@
             {%- block search_sort %}
               {%- set sort_options = sort_option.get(config.SEARCH_UI_SEARCH_INDEX) %}
               {%- if sort_options %}
-              <div class="form-group">
-                {%- block search_sort_select scoped %}
-                {{_('Display Order')}}:
-                <invenio-search-select-box
+                <div class="form-group">
+                  {%- block search_sort_select scoped %}
+                  {{_('Display Order')}}:
+                  <invenio-search-select-box
+                     sort-key="sort"
+                     available-options='{{ sort_options|format_sortoptions|safe }}'
+                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SELECT_BOX) }}"
+                    >
+                  </invenio-search-select-box>
+                  {%- endblock search_sort_select %}
+                  {%- block search_sort_order scoped %}
+                  <invenio-search-sort-order
                    sort-key="sort"
-                   available-options='{{ sort_options|format_sortoptions|safe }}'
-                   template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SELECT_BOX) }}"
+                   template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SORT_ORDER) }}"
                   >
-                </invenio-search-select-box>
-                {%- endblock search_sort_select %}
-                {%- block search_sort_order scoped %}
-                <invenio-search-sort-order
-                 sort-key="sort"
-                 template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_SORT_ORDER) }}"
-                >
-                </invenio-search-sort-order>
-                {%- endblock search_sort_order %}
-              </div>
+                  </invenio-search-sort-order>
+                  {%- endblock search_sort_order %}
+                </div>
               {%- endif %}
             {%- endblock search_sort %}
             <div class="form-group">
@@ -182,21 +189,21 @@
                 {%- block search_item_result %}
                   <div class="col-xs-12 col-md-12">
                     {%- block search_error %}
-                    <invenio-search-error
-                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
-                     message="{{ _('Search failed.') }}">
-                    </invenio-search-error>
+                      <invenio-search-error
+                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
+                       message="{{ _('Search failed.') }}">
+                      </invenio-search-error>
                     {%- endblock search_error %}
                     {%- block search_loading %}
-                    <invenio-search-loading
-                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
-                     message="{{ _('Loading...') }}">
-                    </invenio-search-loading>
+                      <invenio-search-loading
+                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
+                       message="{{ _('Loading...') }}">
+                      </invenio-search-loading>
                     {%- endblock search_loading %}
                     {%- block search_results %}
-                    <invenio-search-results
-                     template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_RESULTS) }}">
-                    </invenio-search-results>
+                      <invenio-search-results
+                       template="{{ url_for('static', filename=(custom_results_template or config.SEARCH_UI_JSTEMPLATE_RESULTS)) }}">
+                      </invenio-search-results>
                     {%- endblock search_results %}
                   </div>
                 {%- endblock search_item_result %}
@@ -212,6 +219,11 @@
         </invenio-search-pagination>
         {%- endblock search_pagination_top %}
       </div>
+
+      {%- if item_export %}
+        {%- include 'weko_items_ui/macros/export_controls.html' %}
+      {%- endif %}
+
     </div>
   </div>
   </div>

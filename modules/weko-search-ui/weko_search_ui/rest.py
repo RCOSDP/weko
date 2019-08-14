@@ -238,13 +238,18 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                             m = 1
                         break
                 if m == 0:
+                    index_id = p.path if '/' not in p.path \
+                        else p.path.split('/').pop()
+                    index_info = Indexes.get_index(index_id=index_id)
+                    rss_status = index_info.rss_status
                     nd = {
                         'doc_count': 0,
                         'key': p.path,
                         'name': p.name if lang == "ja" else p.name_en,
                         'date_range': {
                             'pub_cnt': 0,
-                            'un_pub_cnt': 0}}
+                            'un_pub_cnt': 0},
+                        'rss_status': rss_status}
                     nlst.append(nd)
             agp.clear()
             # process index tree image info
@@ -257,6 +262,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 if len(index_info.image_name) > 0:
                     nlst[0]['img'] = index_info.image_name
                 nlst[0]['display_format'] = index_info.display_format
+                nlst[0]['rss_status'] = index_info.rss_status
             agp.append(nlst)
             # Register comment
             try:

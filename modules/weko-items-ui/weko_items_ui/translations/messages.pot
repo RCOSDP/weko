@@ -54,6 +54,10 @@ msgstr ""
 msgid "An error has occurred."
 msgstr ""
 
+#: weko_items_ui/views.py:929
+msgid "PID does not meet the conditions."
+msgstr ""
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 msgid "Itemtype List"
 msgstr ""
@@ -252,3 +256,11 @@ msgstr ""
 msgid "place"
 msgstr ""
 
+msgid "The following items is required. Please recheck and input."
+msgstr ""
+
+msgid "Please input all required item."
+msgstr ""
+
+msgid "Please input the correct data."
+msgstr ""

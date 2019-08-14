@@ -32,6 +32,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
+from .config import ITEM_REGISTRATION_FLOW_ID
 from .models import Action as _Action
 from .models import ActionCommentPolicy, ActionIdentifier, ActionJournal, \
     ActionStatusPolicy
@@ -247,6 +248,19 @@ class Flow(object):
                 last_action = flow_actions.pop()
                 return last_action
         return None
+
+    def get_item_registration_flow_action(self, flow_id):
+        """Return Item Registration action info.
+
+        :param flow_id: item_registration's flow id
+        :return flow_action: flow action's object
+        """
+        with db.session.no_autoflush:
+            flow_action = _FlowAction.query.filter_by(
+                flow_id=flow_id,
+                action_id=ITEM_REGISTRATION_FLOW_ID).all()
+            current_app.logger.debug(flow_action)
+            return flow_action
 
 
 class WorkFlow(object):
