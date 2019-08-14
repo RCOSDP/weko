@@ -631,3 +631,6 @@ msgstr ""
 msgid "Resend"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
+msgid "There is no data."
+msgstr ""

@@ -1059,3 +1059,6 @@ msgstr "メールアドレス"
 msgid "Resend"
 msgstr "再送信"
 
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
+msgid "There is no data."
+msgstr "検索結果はありません."
