@@ -604,7 +604,7 @@ class StatisticMail:
                     'user_name': cls.get_author_name(
                         str(k),
                         v.get('author_id')),
-                    'organization': '',
+                    'organization': title,
                     'time': stats_date
                 }
                 recipient = str(k)
