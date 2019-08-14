@@ -702,7 +702,7 @@ class StatisticMail:
         total_view = 0
         total_download = 0
         for item_id in list_item_id:
-            data = cls.get_item_information(item_id, time)
+            data = cls.get_item_information(item_id, time, root_url)
             file_download = data.get('file_download')
             list_file_download = list()
             for k, v in file_download.items():
