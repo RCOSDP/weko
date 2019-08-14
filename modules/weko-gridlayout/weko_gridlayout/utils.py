@@ -562,16 +562,16 @@ def find_rss_value(data, keyword):
                     or not creator.get('givenName')):
                 return ''
             else:
-                familyName = creator.get('familyName')
+                family_name = creator.get('familyName')
                 given_name = creator.get('givenName')
                 list_creator = list()
-                for i in range(0, len(familyName)):
-                    if familyName[i]:
+                for i in range(0, len(family_name)):
+                    if family_name[i]:
                         if given_name[i]:
                             list_creator.append(
-                                familyName[i] + '.' + given_name[i])
+                                family_name[i] + '.' + given_name[i])
                         else:
-                            list_creator.append(familyName[i])
+                            list_creator.append(family_name[i])
                     else:
                         continue
                 return list_creator
