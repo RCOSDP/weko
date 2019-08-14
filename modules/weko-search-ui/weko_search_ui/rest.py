@@ -20,6 +20,7 @@
 
 """Blueprint for Index Search rest."""
 
+import copy
 import json
 import os.path
 import shutil
@@ -282,11 +283,11 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     item_type_id = \
                         hit['_source']['_item_metadata']['item_type_id']
                     if item_type_id in item_type_list:
-                        item_type = item_type_list[item_type_id]
+                        item_type = copy.deepcopy(item_type_list[item_type_id])
                     else:
                         item_type = ItemType.query.filter_by(
                             id=item_type_id).first()
-                        item_type_list[item_type_id] = item_type
+                        item_type_list[item_type_id] = copy.deepcopy(item_type)
                     # heading
                     heading = get_heading_info(hit, lang, item_type)
                     hit['_source']['heading'] = heading

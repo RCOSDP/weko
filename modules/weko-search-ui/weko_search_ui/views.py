@@ -147,6 +147,8 @@ def search():
                 index_info = Indexes.get_index(cur_index_id)
                 if index_info:
                     index_display_format = index_info.display_format
+                    if index_display_format == '2':
+                        disply_setting = dict(size=100)
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
             render_widgets=True,
