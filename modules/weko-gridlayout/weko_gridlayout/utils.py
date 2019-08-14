@@ -451,11 +451,12 @@ def build_rss_xml(data=None, index_id=None, page=1, count=20, term=0, lang=''):
             xml_str,
             mimetype='text/xml')
     items = [idx for idx in range((page - 1) * count, page * count)]
-    item_idx = items[0]
+    item_idx = 0
 
     # add item layer
     for data_item in data:
         if item_idx not in items:
+            item_idx = item_idx + 1
             continue
         item = Et.Element('item')
         item.set('rdf:about', find_rss_value(
