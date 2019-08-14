@@ -455,8 +455,6 @@ def build_rss_xml(data=None, index_id=None, page=1, count=20, term=0, lang=''):
 
     # add item layer
     for data_item in data:
-        if item_idx >= count:
-            break
         if item_idx not in items:
             continue
         item = Et.Element('item')
