@@ -420,8 +420,9 @@ def build_rss_xml(data=None, index_id=None, page=1, count=20, term=0, lang=''):
     root.set('xmlns:lang', lang)
 
     # First layer
-    requested_url = root_url + 'rss/records?term=' + \
-        str(term) + '&count=' + str(count)
+    requested_url = root_url + 'rss/records?index_id=' + str(index_id) + \
+        '&page=' + str(page) + '&term=' + str(term) + \
+        '&count=' + str(count) + '&lang=' + str(lang)
     channel = Et.SubElement(root, 'channel')
     channel.set('rdf:about', requested_url)
 
