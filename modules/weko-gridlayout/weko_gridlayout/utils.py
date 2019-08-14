@@ -449,8 +449,8 @@ def build_rss_xml(data=None, index_id=None, page=1, count=20, term=0, lang=''):
         return Response(
             xml_str,
             mimetype='text/xml')
-    item_idx = 0
-    items = [idx + 1 for idx in range((page - 1) * count, (page + 1) * count)]
+    items = [idx for idx in range((page - 1) * count, (page + 1) * count)]
+    item_idx = items[0]
 
     # add item layer
     for data_item in data:
