@@ -943,7 +943,7 @@ const ComponentLogsTable = function(props){
     <div className = "form-group style-component">
       <div className="control-label col-xs-2">{SEND_LOGS_LABEL}</div>
       <br/>
-      {!data.length ? <div className = "no-data-message">There is no data.</div> : null}
+      {!data.length ? <div className = "no-data-message">{NO_DATA_LABEL}</div> : null}
       <table class="table table-striped style-table-send-logs">
         <thead>
           <tr>
