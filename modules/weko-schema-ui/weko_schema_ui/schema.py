@@ -24,6 +24,7 @@ import copy
 import json
 from collections import OrderedDict
 from functools import partial
+import re
 
 import redis
 import xmlschema
@@ -403,7 +404,8 @@ class SchemaTree:
 
         def get_mapping_value(mpdic, atr_vm, k):
             def remove_empty_tag(mp):
-                if type(mp) == str and 'item_' in mp:
+                pattern = '(sub)?item_\d{13}$'
+                if type(mp) == str and re.match(pattern, mp):
                     return True
                 elif type(mp) == dict:
                     remove_list = []
