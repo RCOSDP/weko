@@ -23,6 +23,7 @@ const TITLE_TABLE_RESEND_EMAIL = document.getElementById("title-table-resend-ema
 const NAME_LABEL = document.getElementById("name-label").value;
 const RESEND_BUTTON_NAME = document.getElementById("resend-button-name").value;
 const CLOSE_BUTTON_NAME = document.getElementById("close-button-name").value;
+const NO_DATA_LABEL = document.getElementById("no-data-label").value;
 
 
 class ComponentFeedbackMail extends React.Component {
@@ -302,8 +303,8 @@ class TableUserEmailComponent extends React.Component {
           <caption ></caption>
           <thead >
             <tr  className="success">
-              <th  className="thWidth style-column">Name</th>
-              <th  className="thWidth style-column">Mail Address</th>
+              <th  className="thWidth style-column">{NAME_LABEL}</th>
+              <th  className="thWidth style-column">{MAIL_ADDRESS_LABEL}</th>
               <th  className="alignCenter" ></th>
             </tr>
           </thead>
@@ -356,7 +357,7 @@ class SearchComponent extends React.Component {
           <button class="btn btn-primary search-button" type="button" onClick = {this.searchEmail}>&nbsp;&nbsp;
             <i class="fa fa-search-plus"></i>
             &nbsp;
-            Search &nbsp;&nbsp;
+            {SEARCH_BUTTON_NAME} &nbsp;&nbsp;
           </button>
         </div>
       </div>
