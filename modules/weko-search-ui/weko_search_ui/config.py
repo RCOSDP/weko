@@ -44,7 +44,9 @@ WEKO_SEARCH_UI_ADMIN_BULK_DELETE = \
 
 """Reset search_ui_search config"""
 
-WEKO_SEARCH_UI_JSTEMPLATE_RESULTS = 'templates/weko_search_ui/itemlist.html'
+WEKO_SEARCH_UI_JSTEMPLATE_LIST_RESULTS = 'templates/weko_search_ui/itemlist.html'
+
+WEKO_SEARCH_UI_JSTEMPLATE_TABLE_RESULTS = 'templates/weko_search_ui/itemtablecontents.html'
 
 WEKO_ITEM_MANAGEMENT_JSTEMPLATE_RESULTS_EDIT = 'templates/weko_search_ui/itemListItemManagementEdit.html'
 

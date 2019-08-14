@@ -1,0 +1,69 @@
+<div ng-repeat="record in vm.invenioSearchResults.hits.hits track by $index">
+  <span ng-if="record.metadata.heading!='' && ($index==0 || record.metadata.heading!=vm.invenioSearchResults.hits.hits[$index-1].metadata.heading)">
+    <div class="panel panel-info">
+      <div class="panel-heading">
+        <div class="form-inline">
+          {{record.metadata.heading}}
+        </div>
+      </div>
+    </div>
+  </span>
+  <span ng-if="record.metadata.heading=='' && $index!=0">
+    {{record.metadata.heading=vm.invenioSearchResults.hits.hits[$index-1].metadata.heading;""}}
+  </span>
+  <div class="panel">
+    <div class="panel-heading">
+      <div class="form-inline">
+        <ul class="leaders">
+          <li>
+            <span>
+              <a target="_self" ng-href="/records/{{ record.id }}{{commInfo}}">
+                <p class="glyphicon glyphicon-file" aria-hidden="true"></p>
+                {{record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0]}}
+              </a>
+            </span>
+            <span ng-if="record.metadata.pageStart.length > 0 && record.metadata.pageEnd.length > 0">
+              <p ng-if="record.metadata.pageStart[0] != '' && record.metadata.pageEnd[0] != ''">
+                {{record.metadata.pageStart[0]}} - {{record.metadata.pageEnd[0]}}
+              </p>
+              <p ng-if="record.metadata.pageStart[0] == '' || record.metadata.pageEnd[0] == ''">
+                {{record.metadata.pageStart[0]}}
+                {{record.metadata.pageEnd[0]}}
+              </p>
+            </span>
+            <span ng-if="record.metadata.pageStart.length == 0 || record.metadata.pageEnd.length == 0">
+              <p>.</p>
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="panel-body">
+    <pre class="hide">{{record.metadata._comment}}</pre>
+      <div class="pull-right">
+        <ul class="list-inline">
+          <li ng-show="record.metadata.publisher.length > 0">
+            <a ng-click="showAuthors=!showAuthors">
+              {{ showAuthors ? 'Hide authors' : 'Show authors' }}
+            </a>
+          </li>
+          <li>
+            <a ng-click="showSource=!showSource">
+              {{ showSource ? 'Hide source' : 'Show source' }}
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div ng-hide="!showAuthors">
+        <ul>
+          <div ng-repeat='author in record.metadata.creator'>
+            <li>{{ author }}</li>
+          </div>
+        </ul>
+      </div>
+      <div ng-hide="!showSource">
+        <pre class="pre-scrollable">{{ record | json }}</pre>
+      </div>
+    </div>
+  </div>
+</div>
