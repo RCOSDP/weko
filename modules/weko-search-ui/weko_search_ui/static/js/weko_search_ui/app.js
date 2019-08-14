@@ -180,18 +180,38 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
   $rootScope.item_export_checkboxes = [];
   $rootScope.max_export_num=$("#max_export_num").val();
   $rootScope.items_with_restricted_content = [];
+  $rootScope.check_all = false;
+
+
+  // Check if current hits in selected array
+  $scope.checkIfAllInArray = function() {
+    all_in_array = true;
+    angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
+      item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
+      if(item_index == -1) {
+        all_in_array = false;
+      }
+    });
+    return all_in_array;
+  }
+
+  $scope.checkAll = function() {
+    angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
+      item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
+      if(item_index == -1){
+        $rootScope.item_export_checkboxes.push(record.id);
+      }
+    });
+  }
 
   $scope.checkAllExportItems = function(event) {
     if(event.target.checked) {
-      angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
-        item_index = $rootScope.item_export_checkboxes.indexOf(record.id);
-        if(item_index == -1){
-          $rootScope.item_export_checkboxes.push(record.id);
-        }
-      });
+      $scope.checkAll();
+      $rootScope.check_all = true;
     }
     else {
       $rootScope.item_export_checkboxes = [];
+      $rootScope.check_all = false;
     }
   }
 
@@ -199,9 +219,11 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
     item_index = $rootScope.item_export_checkboxes.indexOf(record_id);
     if(item_index == -1) {
       $rootScope.item_export_checkboxes.push(record_id);
+      $rootScope.check_all = $scope.checkIfAllInArray() ? true : false;
     }
     else {
       $rootScope.item_export_checkboxes.splice(item_index, 1);
+      $rootScope.check_all = false;
     }
   }
 
@@ -215,7 +237,7 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
   $scope.checkForRestrictedContent = function(record_id) {
     record_ids = [];
     angular.forEach($scope.vm.invenioSearchResults.hits.hits, function(record) {
-      record_ids.push(record.id)
+      record_ids.push(record.id);
     });
 
     $http({
@@ -234,6 +256,12 @@ function itemExportCtrl($scope, $rootScope, $http, $location) {
   // Check all records for restricted content
   $scope.$on('invenio.search.finished', function(evt) {
     $scope.checkForRestrictedContent();
+    if($scope.checkIfAllInArray()) {
+      $rootScope.check_all = true;
+    }
+    else {
+      $rootScope.check_all = false;
+    }
   });
 }
 
