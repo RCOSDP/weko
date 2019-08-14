@@ -402,6 +402,22 @@ class SchemaTree:
                     node[k1] = klst
 
         def get_mapping_value(mpdic, atr_vm, k):
+            def remove_empty_tag(mp):
+                if type(mp) == str and 'item_' in mp:
+                    return True
+                elif type(mp) == dict:
+                    remove_list = []
+                    for it in mp:
+                        if remove_empty_tag(mp[it]):
+                            remove_list.append(it)
+                    for it in remove_list:
+                        mp.pop(it)
+                elif type(mp) == list:
+                    for it in mp:
+                        if remove_empty_tag(it):
+                            mp.remove(it)
+                return False
+
             vlst = []
             for ky, vl in mpdic.items():
                 vlc = copy.deepcopy(vl)
@@ -462,6 +478,7 @@ class SchemaTree:
                                             vst.append(ava[1:])
 
                                 z[self._v] = mlst
+                remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
             return vlst
 
