@@ -449,11 +449,15 @@ def build_rss_xml(data=None, index_id=None, page=0, count=0, term=0, lang=''):
         return Response(
             xml_str,
             mimetype='text/xml')
-    number_of_item = 0
+    item_idx = 0
+    items = [idx + 1 for idx in range((page - 1) * count, (page + 1) * count)]
+
     # add item layer
     for data_item in data:
-        if number_of_item >= count:
+        if item_idx >= count:
             break
+        if item_idx not in items:
+            continue
         item = Et.Element('item')
         item.set('rdf:about', find_rss_value(
             data_item,
@@ -512,7 +516,7 @@ def build_rss_xml(data=None, index_id=None, page=0, count=0, term=0, lang=''):
             data_item,
             'link'))
         root.append(item)
-        number_of_item = number_of_item + 1
+        item_idx = item_idx + 1
     xml_str = tostring(root, encoding='utf-8')
     xml_str = str.encode(config.WEKO_XML_FORMAT) + xml_str
     response = current_app.response_class()

@@ -56,18 +56,20 @@ def get_rss_data():
     from weko_gridlayout.utils import build_rss_xml
 
     data = request.args
-    index_id = int(
-        data.get('index_id')
-        or WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID)
-    page = int(data.get('page') or WEKO_INDEX_TREE_RSS_DEFAULT_PAGE)
-    count = int(data.get('count') or WEKO_INDEX_TREE_RSS_DEFAULT_COUNT)
-    term = int(data.get('term') or WEKO_INDEX_TREE_RSS_DEFAULT_TERM)
-    lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
 
-    if index_id < WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID:
+    index_id = int(data.get('index_id'))
+    if not index_id or index_id < WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID:
         index_id = WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID
-    count = WEKO_INDEX_TREE_RSS_COUNT_LIMIT \
-        if count > WEKO_INDEX_TREE_RSS_COUNT_LIMIT else count
+    page = int(data.get('page'))
+    if not page or page < WEKO_INDEX_TREE_RSS_DEFAULT_PAGE:
+        page = WEKO_INDEX_TREE_RSS_DEFAULT_PAGE
+    count = int(data.get('count'))
+    if not count or count < 0 or count > WEKO_INDEX_TREE_RSS_COUNT_LIMIT:
+        count = WEKO_INDEX_TREE_RSS_DEFAULT_COUNT
+    term = int(data.get('term'))
+    if not term or term < 0:
+        term = WEKO_INDEX_TREE_RSS_DEFAULT_TERM
+    lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
 
     idx_tree_ids = generate_path(Indexes.get_recursive_tree(index_id))
     records_data = get_elasticsearch_records_data_by_indexes(idx_tree_ids)
