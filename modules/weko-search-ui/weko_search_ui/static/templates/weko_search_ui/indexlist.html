@@ -91,13 +91,13 @@
           </a>
           <span ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].rss_status"
             style="position: absolute;top: 9px;right: 15px;">
-            <a ng-href="/api/rss.xml?index_id={{ index_path.key.split('/').pop() }}&page=0&count=20&term=14&lang=en"
+            <a ng-href="/api/rss.xml?index_id={{ index_path.key.split('/').pop() }}&page=1&count=20&term=14&lang=en"
               target="_blank">
               <i class="fa fa-rss rss_icon"></i>
             </a>
           </span>
           <span ng-if="index_path.rss_status" style="position: absolute;top: 9px;right: 15px;">
-            <a ng-href="/api/rss.xml?index_id={{ index_path.key.split('/').pop() }}&page=0&count=20&term=14&lang=en"
+            <a ng-href="/api/rss.xml?index_id={{ index_path.key.split('/').pop() }}&page=1&count=20&term=14&lang=en"
               target="_blank">
               <i class="fa fa-rss rss_icon"></i>
             </a>
