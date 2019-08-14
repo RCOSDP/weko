@@ -64,6 +64,8 @@ def get_rss_data():
     term = int(data.get('term') or WEKO_INDEX_TREE_RSS_DEFAULT_TERM)
     lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
 
+    if index_id < WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID:
+        index_id = WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID
     count = WEKO_INDEX_TREE_RSS_COUNT_LIMIT \
         if count > WEKO_INDEX_TREE_RSS_COUNT_LIMIT else count
 
