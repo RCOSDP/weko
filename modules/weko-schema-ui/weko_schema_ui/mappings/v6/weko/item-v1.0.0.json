@@ -119,7 +119,7 @@
           }
         },
         "control_number": {
-          "type": "keyword",
+          "type": "integer",
           "index": true
         },
         "custom_sort": {
