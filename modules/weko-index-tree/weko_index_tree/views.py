@@ -77,4 +77,9 @@ def get_rss_data():
     hits = records_data.get('hits')
     rss_data = hits.get('hits')
 
-    return build_rss_xml(rss_data, index_id, page, count, term, lang)
+    return build_rss_xml(data=rss_data,
+                         index_id=index_id,
+                         page=page,
+                         count=count,
+                         term=term,
+                         lang=lang)
