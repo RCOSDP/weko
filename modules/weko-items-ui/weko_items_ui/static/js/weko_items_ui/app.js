@@ -702,7 +702,6 @@ function handleSharePermission(value) {
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.initContributorData();
-        $scope.autofillJournal();
         $scope.initUserGroups();
         $scope.initFilenameList();
         $scope.searchTypeKey();
@@ -716,11 +715,19 @@ function handleSharePermission(value) {
             );
           }
         }
+
         $scope.showError();
+
+        // Delay 3s after page render
+        setTimeout(() => {
+          $scope.autofillJournal();
+        }, 3000);
       });
+
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
       });
+
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
         $scope.initFilenameList();
       });
