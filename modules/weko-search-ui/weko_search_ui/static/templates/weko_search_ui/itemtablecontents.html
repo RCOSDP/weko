@@ -22,16 +22,16 @@
                 {{record.metadata.hasOwnProperty('title')?record.metadata.title[0]:record.metadata['dc:title'][0]}}
               </a>
             </span>
-            <span ng-if="record.metadata.pageStart.length > 0 && record.metadata.pageEnd.length > 0">
-              <p ng-if="record.metadata.pageStart[0] != '' && record.metadata.pageEnd[0] != ''">
+            <span ng-if="record.metadata.pageStart.length > 0 || record.metadata.pageEnd.length > 0">
+              <p ng-if="record.metadata.pageStart[0] != '' && record.metadata.pageStart.length > 0 && record.metadata.pageEnd[0] != '' && record.metadata.pageEnd.length > 0">
                 {{record.metadata.pageStart[0]}} - {{record.metadata.pageEnd[0]}}
               </p>
-              <p ng-if="record.metadata.pageStart[0] == '' || record.metadata.pageEnd[0] == ''">
+              <p ng-if="record.metadata.pageStart[0] == '' || record.metadata.pageStart.length == 0 || record.metadata.pageEnd[0] == '' || record.metadata.pageEnd.length == 0">
                 {{record.metadata.pageStart[0]}}
                 {{record.metadata.pageEnd[0]}}
               </p>
             </span>
-            <span ng-if="record.metadata.pageStart.length == 0 || record.metadata.pageEnd.length == 0">
+            <span ng-if="record.metadata.pageStart.length == 0 && record.metadata.pageEnd.length == 0">
               <p>.</p>
             </span>
           </li>
