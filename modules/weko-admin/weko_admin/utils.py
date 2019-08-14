@@ -611,7 +611,10 @@ class StatisticMail:
                 subject = str(
                     cls.build_statistic_mail_subject(title, stats_date))
                 body = str(cls.fill_email_data(
-                    cls.get_list_statistic_data(v.get("item"), stats_date),
+                    cls.get_list_statistic_data(
+                        v.get("item"),
+                        stats_date,
+                        setting.get('root_url')),
                     mail_data))
                 if recipient in banned_mail:
                     continue
@@ -678,7 +681,7 @@ class StatisticMail:
             return 0
 
     @classmethod
-    def get_list_statistic_data(cls, list_item_id, time):
+    def get_list_statistic_data(cls, list_item_id, time, root_url):
         """Get list statistic data for user.
 
         Arguments:
@@ -723,7 +726,7 @@ class StatisticMail:
         return list_result
 
     @classmethod
-    def get_item_information(cls, item_id, time):
+    def get_item_information(cls, item_id, time, root_url):
         """Get information of item.
 
         Arguments:
@@ -740,9 +743,10 @@ class StatisticMail:
         count_item_view = cls.get_item_view(item_id, time)
         count_item_download = cls.get_item_download(data, time)
         title = data.get("item_title")
+        url = root_url + '/records/' + data.get('control_number')
         result = {
             'title': title,
-            'url': 'weko3.com',  # FIXME: Fake data
+            'url': url,
             'detail_view': count_item_view,
             'file_download': count_item_download
         }
@@ -1055,6 +1059,7 @@ class FeedbackMail:
         result = {
             'data': '',
             'is_sending_feedback': '',
+            'root_url': '',
             'error': ''
         }
         setting = FeedbackMailSetting.get_all_feedback_email_setting()
@@ -1064,6 +1069,7 @@ class FeedbackMail:
 
         list_manual_mail = setting[0].manual_mail.get('email')
         result['is_sending_feedback'] = setting[0].is_sending_feedback
+        result['root_url'] = setting[0].root_url
         list_data = list()
         for author_id in list_author_id:
             if not author_id:
@@ -1083,7 +1089,7 @@ class FeedbackMail:
         return result
 
     @classmethod
-    def update_feedback_email_setting(cls, data, is_sending_feedback):
+    def update_feedback_email_setting(cls, data, is_sending_feedback, root_url):
         """Update feedback email setting.
 
         Arguments:
@@ -1113,13 +1119,15 @@ class FeedbackMail:
             update_result = FeedbackMailSetting.create(
                 cls.convert_feedback_email_data_to_string(data),
                 cls.get_list_manual_email(data),
-                is_sending_feedback
+                is_sending_feedback,
+                root_url
             )
         else:
             update_result = FeedbackMailSetting.update(
                 cls.convert_feedback_email_data_to_string(data),
                 cls.get_list_manual_email(data),
-                is_sending_feedback
+                is_sending_feedback,
+                root_url
             )
         return cls.handle_update_message(
             result,

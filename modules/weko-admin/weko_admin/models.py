@@ -1033,8 +1033,13 @@ class FeedbackMailSetting(db.Model, Timestamp):
         default=False)
     """Setting to send or not send feedback mail."""
 
+    root_url = db.Column(
+        db.String(100)
+    )
+    """Store system root url."""
+
     @classmethod
-    def create(cls, account_author, manual_mail, is_sending_feedback):
+    def create(cls, account_author, manual_mail, is_sending_feedback, root_url):
         """Create a feedback mail setting.
 
         Arguments:
@@ -1051,6 +1056,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
                 new_record.account_author = account_author
                 new_record.manual_mail = manual_mail
                 new_record.is_sending_feedback = is_sending_feedback
+                new_record.root_url = root_url
                 db.session.add(new_record)
             db.session.commit()
         except BaseException:
@@ -1074,7 +1080,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
             return []
 
     @classmethod
-    def update(cls, account_author, manual_mail, is_sending_feedback):
+    def update(cls, account_author, manual_mail, is_sending_feedback, root_url):
         """Update existed feedback mail setting.
 
         Arguments:
@@ -1094,6 +1100,7 @@ class FeedbackMailSetting(db.Model, Timestamp):
                 settings.account_author = account_author
                 settings.manual_mail = manual_mail
                 settings.is_sending_feedback = is_sending_feedback
+                settings.root_url = root_url
                 db.session.merge(settings)
             db.session.commit()
             return True

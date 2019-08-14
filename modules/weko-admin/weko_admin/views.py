@@ -332,10 +332,13 @@ def update_feedback_mail():
         'success': '',
         'error': ''
     }
+    root_url = request.url_root
+    root_url = str(root_url).replace('/api/', '')
     data = request.get_json()
     response = FeedbackMail.update_feedback_email_setting(
         data.get('data', ''),
-        data.get('is_sending_feedback', False))
+        data.get('is_sending_feedback', False),
+        root_url)
 
     if not response.get('error'):
         result['success'] = True
