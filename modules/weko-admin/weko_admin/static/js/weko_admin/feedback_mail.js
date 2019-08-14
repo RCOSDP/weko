@@ -43,17 +43,17 @@ class ComponentFeedbackMail extends React.Component {
     }
 
     render() {
-        return (
-            <div className="form-group style-component">
-                <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
-                <div class="controls col-xs-10">
-                    <div className="form-group">
-                        <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>&nbsp;{SEND_RADIO_BUTTON_NAME}</span>
-                        <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>&nbsp;{NOT_SEND_RADIO_BUTTON_NAME}</span>
-                    </div>
+      return (
+        <div className="form-group style-component">
+            <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
+            <div class="controls col-xs-10">
+                <div className="form-group">
+                    <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>&nbsp;{SEND_RADIO_BUTTON_NAME}</span>
+                    <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>&nbsp;{NOT_SEND_RADIO_BUTTON_NAME}</span>
                 </div>
             </div>
-        )
+        </div>
+      )
     }
 }
 
@@ -447,7 +447,7 @@ class ModalFooterComponent extends React.Component {
     return (
       <ReactBootstrap.Button variant="secondary" onClick={this.handleClose}>
         <span className="glyphicon glyphicon-remove"></span>
-        Close
+         Close
       </ReactBootstrap.Button>
     )
   }

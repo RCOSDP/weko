@@ -119,6 +119,31 @@ msgstr "メタデータ自動入力"
 msgid "Get"
 msgstr "取得"
 
+#: weko_items_ui/templates/weko_items_ui/edit.html:212
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:213
+msgid "Feedback Mail Destination"
+msgstr "フィードバックメール送信先"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:213
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:214
+msgid "From author DB"
+msgstr "著者DBから入力"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:215
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:216
+msgid "Input text"
+msgstr "テキスト入力可"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:216
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:217
+msgid "Duplicate Email Addresses."
+msgstr "メールアドレスが重複しています。"
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:217
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:218
+msgid "Invalid email format."
+msgstr "メールアドレスのフォーマットが正しくありません。"
+
 #: weko_items_ui/templates/weko_items_ui/error.html:33
 #: weko_items_ui/templates/weko_items_ui/iframe/error.html:41
 msgid "No itemtype to register."

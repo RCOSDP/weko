@@ -79,6 +79,9 @@ IDENTIFIER_ITEMSMETADATA_FORM = {
 IDENTIFIER_GRANT_IS_WITHDRAWING = -2
 """Identifier grant is withdrawing."""
 
+ITEM_REGISTRATION_ACTION_ID = 3
+"""Item Registration action id default."""
+
 ITEM_REGISTRATION_FLOW_ID = 3
 """Identifier grant is withdrawing."""
 
@@ -87,3 +90,4 @@ IDENTIFIER_GRANT_SELECT_DICT = {
     'JaLCDOI': '1',
     'CrossRefDOI': '2'
 }
+"""Identifier grant selected enum."""
