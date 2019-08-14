@@ -1098,7 +1098,7 @@ class FeedbackMail:
             'error': ''
         }
         update_result = False
-        if not data:
+        if not data and not is_sending_feedback:
             update_result = FeedbackMailSetting.delete()
             return cls.handle_update_message(
                 result,
