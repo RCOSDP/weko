@@ -718,10 +718,10 @@ def item_search_factory(self, search, start_date, end_date):
     def _get_query(start_date, end_date):
         query_string = "_type:{} AND " \
                        "relation_version_is_last:true AND " \
-                       "publish_status:0 AND publish_date:[{} TO {}]".\
-                    format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'],
-                           start_date,
-                           end_date)
+                       "publish_status:0 AND publish_date:[{} TO {}]".format(
+                        current_app.config['INDEXER_DEFAULT_DOC_TYPE'],
+                        start_date,
+                        end_date)
         query_q = {
             "query": {
                 "query_string": {

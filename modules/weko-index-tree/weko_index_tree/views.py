@@ -23,10 +23,10 @@
 from flask import Blueprint, request
 
 from .api import Indexes
-from .config import WEKO_INDEX_TREE_RSS_DEFAULT_COUNT, \
-    WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID, WEKO_INDEX_TREE_RSS_DEFAULT_LANG, \
-    WEKO_INDEX_TREE_RSS_DEFAULT_PAGE, WEKO_INDEX_TREE_RSS_DEFAULT_TERM, \
-    WEKO_INDEX_TREE_RSS_COUNT_LIMIT
+from .config import WEKO_INDEX_TREE_RSS_COUNT_LIMIT, \
+    WEKO_INDEX_TREE_RSS_DEFAULT_COUNT, WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID, \
+    WEKO_INDEX_TREE_RSS_DEFAULT_LANG, WEKO_INDEX_TREE_RSS_DEFAULT_PAGE, \
+    WEKO_INDEX_TREE_RSS_DEFAULT_TERM
 from .utils import generate_path, get_elasticsearch_records_data_by_indexes
 
 blueprint = Blueprint(
