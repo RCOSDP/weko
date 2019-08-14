@@ -34,6 +34,7 @@ from werkzeug.datastructures import MultiDict
 
 from .api import SearchSetting
 from .permissions import search_permission
+from . import config
 
 
 def get_item_type_aggs(search_index):
@@ -769,7 +770,6 @@ def feedback_email_search_factory(self, search):
         query_string = "_type:{} AND " \
                        "relation_version_is_last:true " \
             .format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
-        size = 1000
         query_q = {
             "size": 0,
             "query": {
@@ -809,7 +809,7 @@ def feedback_email_search_factory(self, search):
                         "email_list": {
                             "terms": {
                                 "field": "feedback_mail_list.email",
-                                "size": size
+                                "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL
                             },
                             "aggs": {
                                 "top_tag_hits": {

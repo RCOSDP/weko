@@ -1244,8 +1244,10 @@ class FeedbackMail:
         try:
             data = FeedbackMailHistory.get_all_history()
             list_history = list()
-            page_num_end = page_num * 10
-            page_num_start = page_num_end - 10
+            page_num_end = \
+                page_num * config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
+            page_num_start = \
+                page_num_end - config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
             if page_num_start > len(data):
                 raise ValueError('Page out of range')
 
@@ -1296,8 +1298,9 @@ class FeedbackMail:
         try:
             data = FeedbackMailFailed.get_by_history_id(id)
             list_mail = list()
-            page_num_end = page_num * 10
-            page_num_start = page_num_end - 10
+            page_num_end = page_num * config.WEKO_ADMIN_NUMBER_OF_FAILED_MAIL
+            page_num_start = \
+                page_num_end - config.WEKO_ADMIN_NUMBER_OF_FAILED_MAIL
             if page_num_start > len(data):
                 raise ValueError('Page out of range')
 
