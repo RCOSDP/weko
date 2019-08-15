@@ -300,6 +300,7 @@ function handleSharePermission(value) {
       $scope.bibliographic_title_key = '';
       $scope.bibliographic_title_lang_key = '';
       $scope.is_item_owner = false;
+      $scope.feedback_emails = []
       $scope.render_requirements = false;
       $scope.error_list = [];
       $scope.searchFilemetaKey = function () {
@@ -624,7 +625,6 @@ function handleSharePermission(value) {
         const bibliographicKey = $scope.bibliographic_key;
         const title = $scope.bibliographic_title_key;
         const titleLanguage = $scope.bibliographic_title_lang_key;
-        // const activityId = $("#hidden_activity_id").val();
         const activityId = $("#activity_id").text();
         if (bibliographicKey && $rootScope.recordsVM.invenioRecordsModel && activityId) {
           let request = {
@@ -702,7 +702,6 @@ function handleSharePermission(value) {
 
       $rootScope.$on('invenio.records.loading.stop', function (ev) {
         $scope.initContributorData();
-        $scope.autofillJournal();
         $scope.initUserGroups();
         $scope.initFilenameList();
         $scope.searchTypeKey();
@@ -716,11 +715,19 @@ function handleSharePermission(value) {
             );
           }
         }
+
         $scope.showError();
+
+        // Delay 3s after page render
+        setTimeout(() => {
+          $scope.autofillJournal();
+        }, 3000);
       });
+
       $rootScope.$on('invenio.uploader.upload.completed', function (ev) {
         $scope.initFilenameList();
       });
+
       $scope.$on('invenio.uploader.file.deleted', function (ev, f) {
         $scope.initFilenameList();
       });
@@ -1168,6 +1175,30 @@ function handleSharePermission(value) {
         });
       }
 
+      $scope.getFeedbackMailList = function() {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        $scope.feedback_emails = []
+        invalid_emails = [];
+        emails = []
+        emails = $('#sltBoxListEmail').children('a');
+        if (emails.length === 0) {
+          return invalid_emails;
+        }
+        emails.each(idx => {
+          email = emails[idx]
+          result = re.test(String(email.text).toLowerCase());
+          if (result) {
+            $scope.feedback_emails.push({
+              "author_id": email.attributes[1]['value'],
+              "email": email.text
+            })
+          } else {
+            invalid_emails.push(email.text);
+          }
+        });
+        return invalid_emails;
+      }
+
       $scope.validateInputData = function () {
         if (!this.validateRequiredItem()) {
           // Check required item
@@ -1212,7 +1243,6 @@ function handleSharePermission(value) {
           });
           return isValid;
         }
-
       }
 
       $scope.priceValidator = function () {
@@ -1297,7 +1327,12 @@ function handleSharePermission(value) {
 
       $scope.updateDataJson = async function () {
         if (!$scope.priceValidator()) {
-          var modalcontent = "Billing price is required half-width numbers.";
+            var modalcontent = "Billing price is required half-width numbers.";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+            return false;
+        }else if ($scope.getFeedbackMailList().length > 0){
+          let modalcontent = $('#invalid-email-format').val();
           $("#inputModal").html(modalcontent);
           $("#allModal").modal("show");
           return false;
@@ -1317,6 +1352,10 @@ function handleSharePermission(value) {
               if (indexOfLink != -1) {
                 str = str.split(',"authorLink":[]').join('');
               }
+              if (!$scope.saveFeedbackMailListCallback()) {
+                return;
+              }
+              $scope.saveFeedbackMailListCallback();
               $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
               $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
             }
@@ -1326,6 +1365,9 @@ function handleSharePermission(value) {
             if (indexOfLink != -1) {
               str = str.split(',"authorLink":[]').join('');
             }
+            if (!$scope.saveFeedbackMailListCallback()) {
+              return;
+            }
             $rootScope.recordsVM.invenioRecordsModel = JSON.parse(str);
             $rootScope.recordsVM.actionHandler(['index', 'PUT'], next_frame);
           }
@@ -1333,16 +1375,27 @@ function handleSharePermission(value) {
       }
 
       $scope.saveDataJson = function (item_save_uri) {
-        $scope.$broadcast('schemaFormValidate');
         var invalidFlg = $('form[name="depositionForm"]').hasClass("ng-invalid");
+        let permission = false;
+        $scope.$broadcast('schemaFormValidate');
         if (!invalidFlg && $scope.is_item_owner) {
           if (!this.registerUserPermission()) {
             // Do nothing
           } else {
-            this.saveDataJsonCallback(item_save_uri);
+            permission = true;
           }
-        } else {
+        }else {
+          permission = true;
+        }
+        if (permission) {
+          if ($scope.getFeedbackMailList().length > 0) {
+            let modalcontent = $('#invalid-email-format').val();
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+            return;
+          }
           this.saveDataJsonCallback(item_save_uri);
+          this.saveFeedbackMailListCallback();
         }
       }
 
@@ -1377,6 +1430,31 @@ function handleSharePermission(value) {
             $("#allModal").modal("show");
           }
         );
+      }
+      $scope.saveFeedbackMailListCallback = function () {
+        const activityID = $("#activity_id").text();
+        const actionID = 3 // Item Registration's Action ID
+        let emails = $scope.feedback_emails;
+        let result = true;
+        $.ajax({
+          url: '/workflow/save_feedback_maillist/'+ activityID+ '/'+ actionID,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: 'POST',
+          async: false,
+          data: JSON.stringify(emails),
+          dataType: "json",
+          success: function(data, stauts) {
+          },
+          error: function(data, status) {
+            var modalcontent =  "Cannot save Feedback-Mail list!";
+            $("#inputModal").html(modalcontent);
+            $("#allModal").modal("show");
+            result = false;
+          }
+        });
+        return result;
       }
     }
     // Inject depedencies

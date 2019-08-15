@@ -128,6 +128,7 @@ def search():
             **ctx)
     else:
         journal_info = None
+        index_display_format = '1'
         check_site_license_permission()
         send_info = {}
         send_info['site_license_flag'] = True \
@@ -143,6 +144,11 @@ def search():
             if search_type == '2':
                 cur_index_id = request.args.get('q', '0')
                 journal_info = get_journal_info(cur_index_id)
+                index_info = Indexes.get_index(cur_index_id)
+                if index_info:
+                    index_display_format = index_info.display_format
+                    if index_display_format == '2':
+                        disply_setting = dict(size=100)
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
             render_widgets=True,
@@ -156,6 +162,7 @@ def search():
             index_link_enabled=style.index_link_enabled,
             index_link_list=index_link_list,
             journal_info=journal_info,
+            index_display_format=index_display_format,
             **ctx)
 
 

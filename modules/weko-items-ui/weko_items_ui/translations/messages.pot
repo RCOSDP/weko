@@ -116,6 +116,31 @@ msgstr ""
 msgid "Get"
 msgstr ""
 
+#: weko_items_ui/templates/weko_items_ui/edit.html:212
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:213
+msgid "Feedback Mail Destination"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:213
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:214
+msgid "From author DB"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:215
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:216
+msgid "Input text"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:216
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:217
+msgid "Duplicate Email Addresses."
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:217
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:218
+msgid "Invalid email format."
+msgstr ""
+
 #: weko_items_ui/templates/weko_items_ui/error.html:33
 #: weko_items_ui/templates/weko_items_ui/iframe/error.html:41
 msgid "No itemtype to register."

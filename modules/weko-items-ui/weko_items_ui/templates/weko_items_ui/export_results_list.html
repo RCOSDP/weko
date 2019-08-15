@@ -1,0 +1,35 @@
+<div class="row">
+  <div class="col-sm-12">
+    {%- block search_error %}
+      <invenio-search-error
+        template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_ERROR) }}"
+        message="{{ _('Failed to retrieve items.') }}">
+      </invenio-search-error>
+    {%- endblock search_error %}
+    {%- block search_loading %}
+      <invenio-search-loading
+        template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LOADING) }}"
+        message="{{ _('Loading...') }}">
+      </invenio-search-loading>
+    {%- endblock search_loading %}
+    <div class="table-responsive">
+      <table class="table table-striped table-bordered table-responsive">
+        <thead>
+          <tr>
+            <th>
+              <input type="checkbox" id="item_export_check_all" />
+            </th>
+            <th>{{_('Item')}}</th>
+            <th>{{_('Message')}}</th>
+            <th>{{_('No. of Files')}}</th>
+          </tr>
+        </thead>
+          {%- block search_results %}
+            <invenio-search-results
+              template="{{ url_for('static', filename=config.WEKO_ITEMS_UI_JSTEMPLATE_EXPORT_LIST) }}">
+            </invenio-search-results>
+          {%- endblock search_results %}
+      </table>
+    </div>
+  </div>
+</div>
