@@ -617,9 +617,7 @@ def next_action(activity_id='0', action_id=0):
             return jsonify(code=-1,
                            msg=_(error_list))
 
-        if post_json.get('temporary_save') != 1:
-            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
-        else:
+        if post_json.get('temporary_save') == 1:
             return jsonify(code=0, msg=_('success'))
 
         if error_list:
@@ -633,6 +631,8 @@ def next_action(activity_id='0', action_id=0):
             if session.get('update_json_schema') \
                     and session['update_json_schema'].get(activity_id):
                 session['update_json_schema'][activity_id] = {}
+
+        pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
@@ -827,16 +827,16 @@ def cancel_action(activity_id='0', action_id=0):
 
     # clear deposit
     activity_detail = work_activity.get_activity_detail(activity_id)
-    if activity_detail is not None:
+    if activity_detail:
         cancel_item_id = activity_detail.item_id
-        if cancel_item_id is None:
+        if not cancel_item_id:
             pid_value = post_json.get('pid_value')
-            if pid_value is not None:
+            if pid_value:
                 pid = PersistentIdentifier.get('recid', pid_value)
                 cancel_item_id = pid.object_uuid
-        if cancel_item_id is not None:
+        if cancel_item_id:
             cancel_record = WekoDeposit.get_record(cancel_item_id)
-            if cancel_record is not None:
+            if cancel_record:
                 cancel_deposit = WekoDeposit(
                     cancel_record, cancel_record.model)
                 cancel_deposit.clear()
@@ -847,7 +847,7 @@ def cancel_action(activity_id='0', action_id=0):
                 cancel_pv = PIDVersioning(child=cancel_pid)
                 if cancel_pv.exists:
                     previous_pid = cancel_pv.previous
-                    if previous_pid is not None:
+                    if previous_pid:
                         activity.update(dict(item_id=previous_pid.object_uuid))
                     cancel_pv.remove_child(cancel_pid)
 
@@ -857,7 +857,7 @@ def cancel_action(activity_id='0', action_id=0):
 
     rtn = work_activity.quit_activity(activity)
 
-    if rtn is None:
+    if not rtn:
         work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=action_id,
             action_status=ActionStatusPolicy.ACTION_DOING)
