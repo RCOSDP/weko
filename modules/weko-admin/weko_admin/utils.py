@@ -1089,12 +1089,14 @@ class FeedbackMail:
         return result
 
     @classmethod
-    def update_feedback_email_setting(cls, data, is_sending_feedback, root_url):
+    def update_feedback_email_setting(cls, data,
+                                      is_sending_feedback, root_url):
         """Update feedback email setting.
 
         Arguments:
             data {list} -- data list
             is_sending_feedback {bool} -- is sending feedback
+            root_url (string) -- Root URL
 
         Returns:
             dict -- error message

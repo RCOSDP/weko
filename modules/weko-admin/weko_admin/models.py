@@ -24,7 +24,7 @@ from datetime import datetime
 
 from flask import current_app
 from invenio_db import db
-from sqlalchemy import asc, Sequence
+from sqlalchemy import Sequence, asc
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
@@ -887,7 +887,7 @@ class StatisticsEmail(db.Model):
 
     @classmethod
     def get_all_emails(cls):
-        """Get all recepient emails as a list."""
+        """Get all recipient emails as a list."""
         all_objects = cls.query.all()
         return [row.email_address for row in all_objects]
 
@@ -1039,7 +1039,8 @@ class FeedbackMailSetting(db.Model, Timestamp):
     """Store system root url."""
 
     @classmethod
-    def create(cls, account_author, manual_mail, is_sending_feedback, root_url):
+    def create(cls, account_author, manual_mail,
+               is_sending_feedback, root_url):
         """Create a feedback mail setting.
 
         Arguments:
@@ -1080,7 +1081,8 @@ class FeedbackMailSetting(db.Model, Timestamp):
             return []
 
     @classmethod
-    def update(cls, account_author, manual_mail, is_sending_feedback, root_url):
+    def update(cls, account_author,
+               manual_mail, is_sending_feedback, root_url):
         """Update existed feedback mail setting.
 
         Arguments:
