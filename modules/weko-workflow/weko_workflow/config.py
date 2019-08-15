@@ -60,15 +60,11 @@ IDENTIFIER_GRANT_SUFFIX_METHOD = 0
     :case 2: Free input
 """
 
-IDENTIFIER_ITEMSMETADATA_FORM = {
-    'item_1551265147138': {
-        'subitem_1551256116088': '',
-        'subitem_1551256122128': ''
-    },
-    'item_1551265178780': {
-        'subitem_1551256250276': '',
-        'subitem_1551256259586': ''
-    }
+IDENTIFIER_ITEMSMETADATA_KEY = {
+    'identifier.@value': '',
+    'identifier.@attributes.identifierType': '',
+    'identifierRegistration.@value': '',
+    'identifierRegistration.@attributes.identifierType': ''
 }
 """ItemsMetadata format for Identifier Grant action."""
 

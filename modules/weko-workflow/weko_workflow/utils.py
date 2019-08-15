@@ -33,7 +33,7 @@ from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 
 from .api import WorkActivity
-from .config import IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_FORM
+from .config import IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY
 
 
 def get_community_id_by_index(index_name):
@@ -66,8 +66,12 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     activity_detail = activity_obj.get_activity_detail(activity_id)
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
 
-    tempdata = deepcopy(IDENTIFIER_ITEMSMETADATA_FORM)
-    attrs = list(IDENTIFIER_ITEMSMETADATA_FORM.keys())
+    attrs = IDENTIFIER_ITEMSMETADATA_KEY
+    temp_form = { attrs[0]: '',
+                  attrs[1]: '',
+                  attrs[2]: '',
+                  attrs[3]: ''}
+    tempdata = deepcopy(temp_form)
     flag_del_pidstore = False
     identifier_value = ''
     identifier_type = ''
@@ -113,7 +117,8 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     try:
         tempdata[attrs[0]] = identifier_value
         tempdata[attrs[1]] = identifier_type
-        if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
+        if tempdata.get(attrs[2]) is not None \
+            and tempdata.get(attrs[3]) is not None:
             tempdata[attrs[2]] = identifierReg_value
             tempdata[attrs[3]] = identifierReg_type
 
@@ -121,7 +126,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             reg_invenio_pidstore(tempdata[attrs[0]], item.id)
 
         # Update metadata
-        if tempdata != IDENTIFIER_ITEMSMETADATA_FORM:
+        if tempdata != temp_form:
             # transfer to JPCOAR format
             record = WekoDeposit.get_record(activity_detail.item_id)
             item_type = ItemsMetadata.get_by_object_id(activity_detail.item_id)
@@ -142,7 +147,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             res['pidstore_identifier']['identifier_value'] = tempdata[attrs[0]]
             if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
                 identifierReg_map = identifier_jpcoar_mapping(
-                    item_type.item_type_id,attrs[0:2])
+                    item_type.item_type_id,attrs[2:4])
                 res[identifierReg_map['id']] = ({
                     identifierReg_map['val']: tempdata[attrs[2]],
                     identifierReg_map['type']: tempdata[attrs[3]]
