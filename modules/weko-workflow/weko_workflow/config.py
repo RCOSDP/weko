@@ -60,12 +60,12 @@ IDENTIFIER_GRANT_SUFFIX_METHOD = 0
     :case 2: Free input
 """
 
-IDENTIFIER_ITEMSMETADATA_KEY = {
-    'identifier.@value': '',
-    'identifier.@attributes.identifierType': '',
-    'identifierRegistration.@value': '',
-    'identifierRegistration.@attributes.identifierType': ''
-}
+IDENTIFIER_ITEMSMETADATA_KEY = [
+    'identifier.@value',
+    'identifier.@attributes.identifierType',
+    'identifierRegistration.@value',
+    'identifierRegistration.@attributes.identifierType'
+]
 """ItemsMetadata format for Identifier Grant action."""
 
 IDENTIFIER_GRANT_IS_WITHDRAWING = -2
