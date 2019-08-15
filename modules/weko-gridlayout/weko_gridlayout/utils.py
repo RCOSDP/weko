@@ -109,6 +109,9 @@ def update_access_counter_item(item, data_result):
         data_result {dict} -- [data to update]
     """
     item['access_counter'] = data_result.get('access_counter')
+    item['preceding_message'] = data_result.get('preceding_message')
+    item['following_message'] = data_result.get('following_message')
+    item['other_message'] = data_result.get('other_message')
 
 
 def update_new_arrivals_item(item, data_result):
@@ -245,6 +248,12 @@ def build_data_setting(data):
     if str(data.get('widget_type')) == 'Access counter':
         result['access_counter'] = data['settings'] \
             .get('access_counter') or '0'
+        result['following_message'] = data['settings'] \
+            .get('following_message') or '0'
+        result['other_message'] = data['settings'] \
+            .get('other_message') or '0'
+        result['preceding_message'] = data['settings'] \
+            .get('preceding_message') or '0'
     if str(data.get('widget_type')) == 'New arrivals':
         result['new_dates'] = data['settings'].get('new_dates') or '5'
         result['display_result'] = data['settings'].get(
@@ -390,6 +399,9 @@ def convert_data_to_edit_pack(data):
     result['widget_type'] = data.get('widget_type')
     if str(data.get('widget_type')) == 'Access counter':
         result_settings['access_counter'] = settings.get('access_counter')
+        result_settings['preceding_message'] = settings.get('preceding_message')
+        result_settings['following_message'] = settings.get('following_message')
+        result_settings['other_message'] = settings.get('other_message')
     if str(data.get('widget_type')) == 'New arrivals':
         result_settings['new_dates'] = settings.get('new_dates')
         result_settings['display_result'] = settings.get('display_result')

@@ -1,3 +1,5 @@
+const { useState, useEffect  } = React;
+
 const MAIN_CONTENT_TYPE = "Main contents";
 const FREE_DESCRIPTION_TYPE = "Free description";
 const NOTICE_TYPE = "Notice";
@@ -109,6 +111,38 @@ class ComponentTextboxField extends React.Component {
             </div>
         )
     }
+}
+
+const ComponentTextboxForAccessCounter = function(props){
+    const [value, setValue] = useState(props.value);
+
+    function handleChange(event){
+        console.log(event.target.value);
+        setValue(event.target.value);
+        props.handleChange(props.key_binding, event.target.value.trim());
+        event.preventDefault();
+    }
+
+    useEffect(() => {
+        if(props.data_change){
+            let data = props.value || "";
+            setValue(data);
+        }
+        props.getValueOfField("language", false);
+      }, [props.data_change]);
+
+    useEffect(() => {
+        setValue(props.value);
+      }, [props.value])
+
+    return(
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
+            <div class="controls col-xs-6">
+                <input name={props.name} type="text" value={value} onChange={(event) => handleChange(event)} className="form-control" />
+            </div>
+        </div>
+    )
 }
 
 class ComponentSelectColorFiled extends React.Component {
@@ -629,6 +663,15 @@ class ExtendComponent extends React.Component {
             case "rss_feed":
                 data["rss_feed"] = value;
                 break;
+            case "preceding_message":
+                data["preceding_message"] = value;
+                break;
+            case "following_message":
+                data["following_message"] = value;
+                break;
+            case "other_message":
+                data["other_message"] = value;
+                break;
         }
         this.setState({
             settings: data
@@ -752,10 +795,21 @@ class ExtendComponent extends React.Component {
         }
         else if(this.state.type == ACCESS_COUNTER){
             return(
-                <div className="form-group row">
-                    <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
-                    <div class="controls col-xs-3">
-                        <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter} onChange={this.handleChangeAccessCounter} className="form-control" />
+                <div>
+                    <div className="form-group row">
+                        <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
+                        <div class="controls col-xs-3">
+                            <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter || ""} onChange={this.handleChangeAccessCounter} className="form-control" />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <ComponentTextboxForAccessCounter name = "Preceding message" key_binding="preceding_message" handleChange={this.handleChange} getValueOfField={this.props.getValueOfField} value = {this.state.settings.preceding_message || ""} data_change={this.props.data_change}/>
+                    </div>
+                    <div className="form-group">
+                        <ComponentTextboxForAccessCounter name = "Following message" key_binding="following_message" handleChange={this.handleChange} getValueOfField={this.props.getValueOfField} value = {this.state.settings.following_message || ""} data_change={this.props.data_change}/>
+                    </div>
+                    <div className="form-group">
+                        <ComponentTextboxForAccessCounter name = "Other message to display" key_binding="other_message" handleChange={this.handleChange} getValueOfField={this.props.getValueOfField} value = {this.state.settings.other_message || ""} data_change={this.props.data_change}/>
                     </div>
                 </div>
             )
@@ -1295,7 +1349,7 @@ class MainLayout extends React.Component {
         }
         let multiLangData = this.state.multiLangSetting[selectedLang];
         if (multiLangData) {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER){
                 this.setState({
                     multiLanguageChange: true,
                     label: multiLangData['label'],
@@ -1330,7 +1384,7 @@ class MainLayout extends React.Component {
         let setting = {
             label: this.state.label,
         };
-        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER ){
             setting["description"] = this.state.settings
         }
         let storage = this.state.multiLangSetting;
@@ -1344,7 +1398,7 @@ class MainLayout extends React.Component {
         if (this.state.multiLangSetting[newLanguage]) {
             let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
             let currentSetting = this.state.multiLangSetting[newLanguage]['description'];
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type + "") == ACCESS_COUNTER){
                 this.setState({
                     label: currentLabel,
                     multiLanguageChange: true,
@@ -1360,7 +1414,7 @@ class MainLayout extends React.Component {
                 });
             }
         } else {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type + "") == ACCESS_COUNTER){
                 this.setState({
                     label: '',
                     settings: {},
@@ -1376,6 +1430,7 @@ class MainLayout extends React.Component {
                 });
             }
         }
+        console.log(storage);
         this.setState({
             multiLangSetting: storage
         });
