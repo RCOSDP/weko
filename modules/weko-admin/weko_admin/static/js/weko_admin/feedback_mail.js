@@ -6,7 +6,7 @@ const COMPONENT_SEND_NAME = document.getElementById("component-send").value;
 const SEND_RADIO_BUTTON_NAME = document.getElementById("first-radio-name").value;
 const NOT_SEND_RADIO_BUTTON_NAME = document.getElementById("second-radio-name").value;
 const COMPONENT_SEARCH_EMAIL_NAME = document.getElementById("component-search-email-name").value;
-const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
+const OPEN_MODAL_SEARCH_BUTTON_NAME = document.getElementById("open-modal-search-button-name").value;
 const DELETE_BUTTON_NAME = document.getElementById("delete-button-name").value;
 const SAVE_BUTTON_NAME = document.getElementById("save-button-name").value;
 const SEND_BUTTON_NAME = document.getElementById("manual-send-name").value;
@@ -24,7 +24,7 @@ const NAME_LABEL = document.getElementById("name-label").value;
 const RESEND_BUTTON_NAME = document.getElementById("resend-button-name").value;
 const CLOSE_BUTTON_NAME = document.getElementById("close-button-name").value;
 const NO_DATA_LABEL = document.getElementById("no-data-label").value;
-
+const SEARCH_BUTTON_NAME = document.getElementById("search-button-name").value;
 
 class ComponentFeedbackMail extends React.Component {
     constructor(props) {
@@ -215,7 +215,7 @@ class ComponentExclusionTarget extends React.Component {
                 <div className="controls col-xs-10">
                     <div>
                         <ReactBootstrap.Button variant="primary" onClick={this.searchCommand}>
-                            <i className = "glyphicon glyphicon-search"></i>&nbsp;{SEARCH_BUTTON_NAME}
+                            <i className = "glyphicon glyphicon-search"></i>&nbsp;{OPEN_MODAL_SEARCH_BUTTON_NAME}
                         </ReactBootstrap.Button>
                     </div>
                     <div className="style-full-size">
