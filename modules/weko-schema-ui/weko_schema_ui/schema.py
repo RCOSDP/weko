@@ -308,7 +308,7 @@ class SchemaTree:
         from .utils import json_merge_all
         return json_merge_all(vlst)
 
-    def __get_value_list(self):
+    def __get_value_list(self, remove_empty=False):
         """Find values to a list."""
         def analysis(field):
             exp = (',',)
@@ -480,7 +480,8 @@ class SchemaTree:
                                             vst.append(ava[1:])
 
                                 z[self._v] = mlst
-                remove_empty_tag(vlc)
+                if remove_empty:
+                    remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
             return vlst
 
@@ -619,7 +620,7 @@ class SchemaTree:
             root.text = "Sorry! This Item has not been mappinged."
             return root
 
-        node_tree = self.find_nodes(self.__get_value_list())
+        node_tree = self.find_nodes(self.__get_value_list(remove_empty=True))
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
         ns.update({'xml': "http://www.w3.org/XML/1998/namespace"})
