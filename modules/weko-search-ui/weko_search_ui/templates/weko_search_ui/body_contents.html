@@ -148,9 +148,10 @@
                 <option value="18">{{_('Custom(Descending)')}}</option>
               </select>
             </div>
-            {%- block search_sort %}
-              {%- set sort_options = sort_option.get(config.SEARCH_UI_SEARCH_INDEX) %}
-              {%- if sort_options %}
+            {%- if index_display_format == '1' %}
+              {%- block search_sort %}
+                {%- set sort_options = sort_option.get(config.SEARCH_UI_SEARCH_INDEX) %}
+                {%- if sort_options %}
                 <div class="form-group">
                   {%- block search_sort_select scoped %}
                   {{_('Display Order')}}:
@@ -169,17 +170,18 @@
                   </invenio-search-sort-order>
                   {%- endblock search_sort_order %}
                 </div>
-              {%- endif %}
-            {%- endblock search_sort %}
-            <div class="form-group">
-              <label for="page_count">{{_('Display Number')}}</label>
-              <select class="form-control" id="page_count">
-                <option value="20">20</option>
-                <option value="50">50</option>
-                <option value="75">75</option>
-                <option value="100">100</option>
-              </select>
-            </div>
+                {%- endif %}
+              {%- endblock search_sort %}
+              <div class="form-group">
+                <label for="page_count">{{_('Display Number')}}</label>
+                <select class="form-control" id="page_count">
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="75">75</option>
+                  <option value="100">100</option>
+                </select>
+              </div>
+            {%- endif %}
           </div>
         </div>
         <div class="panel-group m-top-5">
@@ -201,9 +203,15 @@
                       </invenio-search-loading>
                     {%- endblock search_loading %}
                     {%- block search_results %}
+                      {%- if index_display_format == '1' %}
                       <invenio-search-results
-                       template="{{ url_for('static', filename=(custom_results_template or config.SEARCH_UI_JSTEMPLATE_RESULTS)) }}">
+                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LIST_RESULTS) }}">
                       </invenio-search-results>
+                      {% else %}
+                      <invenio-search-results
+                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_TABLE_RESULTS) }}">
+                      </invenio-search-results>
+                      {%- endif %}
                     {%- endblock search_results %}
                   </div>
                 {%- endblock search_item_result %}

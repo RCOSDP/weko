@@ -1,0 +1,40 @@
+ul.leaders {
+    max-width: 100%;
+    padding: 0;
+    overflow-x: hidden;
+    list-style: none
+}
+
+ul.leaders li:after {
+    float: left;
+    width: 0;
+    white-space: nowrap;
+    color:#d3d3d3;
+    height:100%;
+    content:
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+    "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
+}
+
+ul.leaders span:first-child {
+    padding-right: 1.5em;
+    background: #fff;
+    height:100%;
+}
+
+ul.leaders span + span {
+    float: right;
+    padding-left: 1.5em;
+    background: #fff;
+    position: relative;
+    z-index: 1;
+    height:100;
+}
