@@ -107,3 +107,8 @@ msgstr "アップロード開始"
 #~ msgid "Cancel"
 #~ msgstr "キャンセル"
 
+#~ msgid "RSS_Icon"
+#~ msgstr "RSSアイコン"
+
+#~ msgid "Display"
+#~ msgstr "表示する"

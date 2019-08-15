@@ -556,6 +556,12 @@ class SiteLicenseInfo(db.Model, Timestamp):
         nullable=True
     )
 
+    receive_mail_flag = db.Column(
+        db.String(1),
+        default='F',
+        nullable=False
+    )
+
     # Relationships definitions
     addresses = db.relationship(
         'SiteLicenseIpAddress', backref='SiteLicenseInfo')

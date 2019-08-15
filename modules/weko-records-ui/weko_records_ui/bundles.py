@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+from flask_assets import Bundle
 from invenio_assets import NpmBundle
 
 style = NpmBundle(
@@ -75,4 +76,9 @@ js = NpmBundle(
     npm={
         'angular-ui-bootstrap': '~0.13.2',
     },
+)
+
+preview_carousel = Bundle(
+    'js/weko_records_ui/preview_carousel.js',
+    output="gen/weko_records_ui_preview_carousel.%(version)s.js",
 )

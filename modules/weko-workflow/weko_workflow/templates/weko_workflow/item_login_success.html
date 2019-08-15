@@ -23,6 +23,7 @@
 
 {%- block css %}
 {{ super() }}
+{% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {% assets "workflow_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
@@ -31,6 +32,7 @@
   {% assets "workflow_iframe_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "workflow_quit_confirmation_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}

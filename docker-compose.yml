@@ -96,7 +96,7 @@ nginx:
     - "8001:80"
     - "4401:443"
   volumes_from:
-    - static
+    - static0.0.json
   links:
     - web
 

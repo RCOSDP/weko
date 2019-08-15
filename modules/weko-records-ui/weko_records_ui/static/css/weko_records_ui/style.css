@@ -40,3 +40,29 @@
   margin-left: 0.25em;
   margin-right: 0.25em;
 }
+
+.carousel-control.left, .carousel-control.right {
+    background-image: none !important;
+}
+
+.carousel-control {
+    font-size: 20px;
+    color: #ffffff;
+    position: unset;
+}
+
+.weko-carousel-navbar {
+  background-color: #3b3838;
+  /* height: 26px; */
+  -webkit-box-shadow: 0 5px 1px -1px #ccc;
+  -moz-box-shadow: 0 5px 1px -1px #ccc;
+  box-shadow: 0 2px 1px -1px #ccc;
+}
+
+.carousel-indicators li {
+  background-color: #949494;
+}
+
+.carousel-indicators .active {
+  background-color: #333333;
+}

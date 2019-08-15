@@ -253,7 +253,7 @@ class Flow(object):
         """Return Item Registration action info.
 
         :param flow_id: item_registration's flow id
-        :return flow_action: flow action's object 
+        :return flow_action: flow action's object
         """
         with db.session.no_autoflush:
             flow_action = _FlowAction.query.filter_by(

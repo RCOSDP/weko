@@ -22,11 +22,14 @@
 from __future__ import absolute_import, print_function
 
 import requests
-from flask import current_app
+from flask import current_app, render_template
+from flask_babelex import lazy_gettext as _
 from invenio_db import db
+from invenio_mail.api import send_mail
+from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy import text
 
-from .models import LogAnalysisRestrictedCrawlerList, \
+from .models import AdminLangSettings, LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress
 
 
@@ -68,3 +71,24 @@ def _is_crawler(user_info):
            user_info['ip_address'] in restrict_list:
             return True
     return False
+
+
+def send_site_license_mail(organization_name, mail_list, agg_date, data):
+    """Send site license statistics mail."""
+    try:
+        # mail title
+        subject = '[{0}] {1} '.format(organization_name, agg_date) + \
+            _('statistics report')
+
+        with current_app.test_request_context() as ctx:
+            default_lang = AdminLangSettings.get_registered_language()[0]
+            # setting locale
+            setattr(ctx, 'babel_locale', default_lang['lang_code'])
+            # send alert mail
+            send_mail(subject, mail_list,
+                      html=render_template('weko_admin/email_templates/site_license_report.html',
+                                           agg_date=agg_date,
+                                           data=data,
+                                           lang_code=default_lang['lang_code']))
+    except Exception as ex:
+        current_app.logger.error(ex)

@@ -65,15 +65,9 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     activity_obj = WorkActivity()
     activity_detail = activity_obj.get_activity_detail(activity_id)
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
-    record = WekoDeposit.get_record(activity_detail.item_id)
 
-    # transfer to JPCOAR format
-    attrs = ['item_1551265147138', 'item_1551265178780']
-    res = {
-        attrs[0]: record.get(attrs[0]).get('attribute_value_mlt'),
-        'pidstore_identifier': {}
-        }
     tempdata = deepcopy(IDENTIFIER_ITEMSMETADATA_FORM)
+    attrs = list(IDENTIFIER_ITEMSMETADATA_FORM.keys())
     flag_del_pidstore = False
     identifier_value = ''
     identifier_type = ''
@@ -105,7 +99,8 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
         jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
         identifier_value = jalcdoi_crni_link
         identifier_type = 'HDL'
-        del tempdata[attrs[1]]
+        del tempdata[attrs[2]]
+        del tempdata[attrs[3]]
     elif idf_grant == -1:  # with draw identifier_grant
         pidstore_identifier = item.get('pidstore_identifier')
         flag_del_pidstore = del_invenio_pidstore(
@@ -116,22 +111,42 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
         flag_del_pidstore = del_invenio_pidstore(
             pidstore_identifier['identifier_value'])
     try:
-        tempdata[attrs[0]]['subitem_1551256116088'] = identifier_value
-        tempdata[attrs[0]]['subitem_1551256122128'] = identifier_type
-        if tempdata.get(attrs[1]):
-            tempdata[attrs[1]]['subitem_1551256250276'] = identifierReg_value
-            tempdata[attrs[1]]['subitem_1551256259586'] = identifierReg_type
+        tempdata[attrs[0]] = identifier_value
+        tempdata[attrs[1]] = identifier_type
+        if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
+            tempdata[attrs[2]] = identifierReg_value
+            tempdata[attrs[3]] = identifierReg_type
 
         if not flag_del_pidstore:
-            reg_invenio_pidstore(
-                tempdata[attrs[0]]['subitem_1551256116088'], item.id)
+            reg_invenio_pidstore(tempdata[attrs[0]], item.id)
 
         # Update metadata
         if tempdata != IDENTIFIER_ITEMSMETADATA_FORM:
-            res[attrs[0]].append(tempdata[attrs[0]])
-            res['pidstore_identifier']['identifier_value'] = identifier_value
-            if tempdata.get(attrs[1]):
-                res[attrs[1]] = (tempdata[attrs[1]])
+            # transfer to JPCOAR format
+            record = WekoDeposit.get_record(activity_detail.item_id)
+            item_type = ItemsMetadata.get_by_object_id(activity_detail.item_id)
+            identifier_map = identifier_jpcoar_mapping(item_type.item_type_id,
+                                                       attrs[0:2])
+            _identifier_data = record.get(identifier_map['id']).\
+                get('attribute_value_mlt')
+            # data DOI generate
+            _identifier_data.append({
+                    identifier_map['val']: tempdata[attrs[0]],
+                    identifier_map['type']: tempdata[attrs[1]]
+                })
+            res = {
+                identifier_map['id']: _identifier_data,
+                'pidstore_identifier': {}
+            }
+
+            res['pidstore_identifier']['identifier_value'] = tempdata[attrs[0]]
+            if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
+                identifierReg_map = identifier_jpcoar_mapping(
+                    item_type.item_type_id,attrs[0:2])
+                res[identifierReg_map['id']] = ({
+                    identifierReg_map['val']: tempdata[attrs[2]],
+                    identifierReg_map['type']: tempdata[attrs[3]]
+                    })
             with db.session.begin_nested():
                 item.update(res)
                 item.commit()
@@ -257,12 +272,15 @@ def item_metadata_validation(item_id, identifier_type):
         # 別表2-3 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【書籍】
         # 別表2-4 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【e-learning】
         # 別表2-6 JaLC DOI登録メタデータのJPCOAR/JaLCマッピング【汎用データ】
-        if (item_type.name_id == journalarticle_nameid or resource_type ==
-                journalarticle_type) or (item_type.name_id == thesis_nameid) \
-            or (item_type.name_id == report_nameid or resource_type in
-                report_types) or (resource_type == elearning_type) or (
-            item_type.name_id in datageneral_nameid or resource_type in
-                datageneral_types) or item_type.name_id < 10:
+        if (item_type.name_id == journalarticle_nameid
+            or resource_type == journalarticle_type) \
+            or (item_type.name_id == thesis_nameid) \
+            or (item_type.name_id == report_nameid
+                or resource_type in report_types) \
+            or (resource_type == elearning_type) \
+            or (item_type.name_id in datageneral_nameid
+                or resource_type in datageneral_types) \
+                or item_type.name_id < 10:
             properties = ['title',
                           'identifier',
                           'identifierRegistration']
@@ -367,7 +385,9 @@ def validation_item_property(mapping_data, identifier_type, properties):
 
         repeatable = True
         requirements = check_required_data(data, key, repeatable)
-        type_requirements = check_required_data(type_data, type_key, repeatable)
+        type_requirements = check_required_data(type_data,
+                                                type_key,
+                                                repeatable)
         if requirements:
             error_list['required'] += requirements
         if type_requirements:
@@ -399,18 +419,16 @@ def validation_item_property(mapping_data, identifier_type, properties):
             error_list['required'] += type_requirements
         else:
             for item in type_data:
-                if identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']\
-                        and not item == 'JaLC':
+                if (identifier_type == IDENTIFIER_GRANT_SELECT_DICT['JaLCDOI']
+                        and not item == 'JaLC') or \
+                    (identifier_type == IDENTIFIER_GRANT_SELECT_DICT[
+                        'CrossRefDOI'] and not item == 'Crossref'):
                     error_list['required'].append(type_key)
-                    # error_list['doi'] = 'JaLC'
-                elif identifier_type == IDENTIFIER_GRANT_SELECT_DICT[
-                        'CrossRefDOI'] and not item == 'Crossref':
-                    error_list['required'].append(type_key)
-                    # error_list['doi'] = 'Crossref'
 
     # check 収録物識別子 jpcoar:sourceIdentifier
     if 'sourceIdentifier' in properties:
-        data, key = mapping_data.get_data_by_property("sourceIdentifier.@value")
+        data, key = mapping_data.get_data_by_property(
+            "sourceIdentifier.@value")
         type_data, type_key = mapping_data.get_data_by_property(
             "sourceIdentifier.@attributes.identifierType")
 
@@ -486,6 +504,27 @@ def check_required_data(data, key, repeatable=False):
         return None
     else:
         return error_list
+
+
+def identifier_jpcoar_mapping(item_type_id, keys):
+    """
+    Mapping jpcoar for identifier.
+
+    :param item_type_id: id of item_type
+    :param keys: a list key of attribute mapping
+    :return: res_dict
+    """
+    res_dict = {}
+    if item_type_id:
+        type_mapping = Mapping.get_record(item_type_id)
+        item_map = get_mapping(type_mapping, "jpcoar_mapping")
+        if keys[0] in item_map:
+            _identifier_map = item_map[keys[0]].split('.')
+            res_dict['id'] = _identifier_map[0]
+            res_dict['val'] = _identifier_map[1]
+        if keys[1] in item_map:
+            res_dict['type'] = item_map[keys[1]].split('.')[1]
+    return res_dict
 
 
 class MappingData(object):
