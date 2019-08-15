@@ -205,7 +205,7 @@
                     {%- block search_results %}
                       {%- if index_display_format == '1' %}
                       <invenio-search-results
-                       template="{{ url_for('static', filename=config.SEARCH_UI_JSTEMPLATE_LIST_RESULTS) }}">
+                       template="{{ url_for('static', filename=(custom_results_template or config.SEARCH_UI_JSTEMPLATE_LIST_RESULTS)) }}">
                       </invenio-search-results>
                       {% else %}
                       <invenio-search-results
