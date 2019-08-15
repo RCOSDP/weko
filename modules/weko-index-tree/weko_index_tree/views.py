@@ -20,6 +20,8 @@
 
 """Blueprint for weko-index-tree."""
 
+from datetime import date, timedelta
+
 from flask import Blueprint, request
 
 from .api import Indexes
@@ -67,12 +69,17 @@ def get_rss_data():
     if count < 0 or count > WEKO_INDEX_TREE_RSS_COUNT_LIMIT:
         count = WEKO_INDEX_TREE_RSS_DEFAULT_COUNT
     term = int(data.get('term') or WEKO_INDEX_TREE_RSS_DEFAULT_TERM)
-    if term < 0:
+    if term <= 0:
         term = WEKO_INDEX_TREE_RSS_DEFAULT_TERM
     lang = data.get('lang') or WEKO_INDEX_TREE_RSS_DEFAULT_LANG
 
     idx_tree_ids = generate_path(Indexes.get_recursive_tree(index_id))
-    records_data = get_elasticsearch_records_data_by_indexes(idx_tree_ids)
+    current_date = date.today()
+    end_date = current_date.strftime("%Y-%m-%d")
+    start_date = (current_date - timedelta(days=term)).strftime("%Y-%m-%d")
+    records_data = get_elasticsearch_records_data_by_indexes(idx_tree_ids,
+                                                             start_date,
+                                                             end_date)
 
     hits = records_data.get('hits')
     rss_data = hits.get('hits')

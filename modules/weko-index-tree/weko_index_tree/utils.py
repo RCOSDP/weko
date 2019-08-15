@@ -339,7 +339,7 @@ def get_admin_coverpage_setting():
     return avail == 'enable'
 
 
-def get_elasticsearch_records_data_by_indexes(index_ids):
+def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
     """Get data from elastic search.
 
     Arguments:
@@ -355,10 +355,13 @@ def get_elasticsearch_records_data_by_indexes(index_ids):
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
     result = None
     try:
-        from weko_search_ui.query import item_search_by_list_index_id
-        search_instance, _qs_kwargs = item_search_by_list_index_id(
+        from weko_search_ui.query import item_search_factory
+
+        search_instance, _qs_kwargs = item_search_factory(
             None,
             records_search,
+            start_date,
+            end_date,
             index_ids
         )
         search_result = search_instance.execute()

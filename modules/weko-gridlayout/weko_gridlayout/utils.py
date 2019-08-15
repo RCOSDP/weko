@@ -31,6 +31,8 @@ from invenio_search import RecordsSearch
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
 from weko_index_tree.api import Indexes
+from weko_records.api import Mapping
+from weko_records.serializers.utils import get_mapping
 from weko_search_ui.query import item_search_factory
 from weko_theme import config as theme_config
 
@@ -583,13 +585,7 @@ def find_rss_value(data, keyword):
         return get_rss_data_source(source, 'sourceTitle')
     elif keyword == 'issn':
         result = ''
-        if source.get('relation'):
-            relation = source.get('relation')
-            if (relation.get('relatedIdentifier')
-                    and relation.get('relatedIdentifier')[0]):
-                related_identifier = relation.get('relatedIdentifier')[0]
-                result = get_rss_data_source(related_identifier, 'value')
-        if not result and source.get('sourceIdentifier') and source.get(
+        if source.get('sourceIdentifier') and source.get(
                 'sourceIdentifier')[0]:
             source_identifier = source.get('sourceIdentifier')[0]
             result = get_rss_data_source(source_identifier, 'value')
@@ -603,14 +599,24 @@ def find_rss_value(data, keyword):
     elif keyword == 'pageEnd':
         return get_rss_data_source(source, 'pageEnd')
     elif keyword == 'date':
-        if source.get('date') and source.get('date')[0]:
-            date = source.get('date')[0]
-            return get_rss_data_source(date, 'value')
-        else:
-            return ''
+        result = ''
+        if source.get('date') and source.get('date')[0] and \
+                get_rss_data_source(source.get('date')[0], 'dateType') ==  \
+                'Issued':
+            result = get_rss_data_source(source.get('date')[0], 'value')
+        return result
     elif keyword == 'description':
         if source.get('description') and source.get('description')[0]:
-            return source.get('description')[0]
+            item_type_mapping = Mapping.get_record(source.get(
+                '_item_metadata').get('item_type_id'))
+            item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
+            desc_typ = item_map.get('description.@attributes.descriptionType')
+            desc_val = item_map.get('description.@value')
+            desc_dat = source.get('_item_metadata').get(desc_typ.split('.')[0])
+            if desc_dat and desc_dat.get('attribute_value_mlt'):
+                for desc in desc_dat.get('attribute_value_mlt'):
+                    if desc.get(desc_typ.split('.')[1]) == 'Abstract':
+                        return desc.get(desc_val.split('.')[1])
         else:
             return ''
     elif keyword == '_updated':
@@ -655,7 +661,7 @@ def get_elasticsearch_result_by_date(start_date, end_date):
     records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
     result = None
     try:
-        search_instance, _ = item_search_factory(
+        search_instance, _qs_kwargs = item_search_factory(
             None, records_search, start_date, end_date)
         search_result = search_instance.execute()
         result = search_result.to_dict()
