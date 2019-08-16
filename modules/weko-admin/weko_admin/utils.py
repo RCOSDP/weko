@@ -1394,10 +1394,10 @@ class FeedbackMail:
             integer -- total page number
 
         """
-        if data_length % 10 != 0:
-            return int(data_length / 10) + 1
+        if data_length % page_max_record != 0:
+            return int(data_length / page_max_record) + 1
         else:
-            return int(data_length / 10)
+            return int(data_length / page_max_record)
 
     @classmethod
     def get_mail_data_by_history_id(cls, history_id):
