@@ -1277,7 +1277,9 @@ class FeedbackMail:
                 new_data['is_latest'] = data[index].is_latest
                 list_history.append(new_data)
             result['data'] = list_history
-            result['total_page'] = cls.get_total_page(len(data))
+            result['total_page'] = cls.get_total_page(
+                len(data),
+                config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY)
             result['selected_page'] = page_num
             return result
         except Exception as ex:
@@ -1328,7 +1330,9 @@ class FeedbackMail:
                 )
                 list_mail.append(new_data)
             result['data'] = list_mail
-            result['total_page'] = cls.get_total_page(len(data))
+            result['total_page'] = cls.get_total_page(
+                len(data),
+                config.WEKO_ADMIN_NUMBER_OF_FAILED_MAIL)
             result['selected_page'] = page_num
             return result
         except Exception as ex:
@@ -1380,7 +1384,7 @@ class FeedbackMail:
         return email_info[0].get('email')
 
     @classmethod
-    def get_total_page(cls, data_length):
+    def get_total_page(cls, data_length, page_max_record):
         """Get total page.
 
         Arguments:

@@ -650,7 +650,7 @@ WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS = {
 }
 """Access table for different admin roles."""
 
-WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY = 10
+WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY = 20
 """Number of history display per page."""
 
 WEKO_ADMIN_NUMBER_OF_FAILED_MAIL = 10
