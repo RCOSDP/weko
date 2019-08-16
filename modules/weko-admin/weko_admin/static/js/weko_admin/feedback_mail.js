@@ -68,8 +68,18 @@ class ComponentFeedbackMail extends React.Component {
             <span className="control-label col-xs-2">{COMPONENT_SEND_NAME}</span>
             <div class="controls col-xs-10">
               <div className="form-group">
-                <span><input className= "style-radioBtn" type="radio"  name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>&nbsp;{SEND_RADIO_BUTTON_NAME}</span>
-                <span  className = "margin-left"><input className= "style-radioBtn" type="radio" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>&nbsp;{NOT_SEND_RADIO_BUTTON_NAME}</span>
+                <span>
+                  <label class="radio-inline" for="feedback_mail_send_id">
+                    <input className= "style-radioBtn" type="radio" id="feedback_mail_send_id" name="feedback_mail" value="send" checked = {this.state.flagSend ? "checked" : ""} onChange= {this.handleChangeSend}/>
+                    {SEND_RADIO_BUTTON_NAME}
+                  </label>
+                </span>
+                <span  className = "margin-left">
+                  <label class="radio-inline" for="feedback_mail_not_send_id">
+                    <input className= "style-radioBtn" type="radio" id="feedback_mail_not_send_id" name="feedback_mail" value="not_send" checked = {this.state.flagSend ? "" : "checked"} onChange= {this.handleChangeNotSend}/>
+                    {NOT_SEND_RADIO_BUTTON_NAME}
+                  </label>
+                </span>
               </div>
             </div>
           </div>
