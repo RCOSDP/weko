@@ -30,7 +30,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
 from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
-
+from sqlalchemy.exc import SQLAlchemyError
 
 class SessionLifetime(db.Model):
     """Session Lifetime model.
@@ -1196,6 +1196,101 @@ class AdminSettings(db.Model):
 
         return cls
 
+class SiteInfo(db.Model):
+    """Site information.
+
+    The SiteInfo object contains a ``created``, a ``updated``
+    properties that are automatically updated.
+    """
+
+    __tablename__ = 'site_info'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True)
+    """SiteInfo identifier."""
+
+    copy_right = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """copy right."""
+
+    description = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """description."""
+
+    keyword = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """keyword."""
+
+    favicon = db.Column(
+        db.Text,
+        nullable=False
+    )
+    """url of favicon file."""
+
+    site_name = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=False
+    )
+    """site name info."""
+
+    @classmethod
+    def get(cls):
+        """Get site infomation."""
+        try:
+            with db.session.no_autoflush:
+                query_object = SiteInfo.query.filter_by().one_or_none()
+                if query_object:
+                    return query_object
+                else:
+                    return {}
+        except SQLAlchemyError:
+            return {}
+
+    @classmethod
+    def update(cls, site_info):
+        """Update/Create settings."""
+        try:
+            with db.session.begin_nested():
+                new_site_info_flag = False
+                query_object = SiteInfo.query.filter_by().one_or_none()
+                if not query_object:
+                    query_object = SiteInfo()
+                    new_site_info_flag = True
+                query_object.copy_right = site_info.get("copy_right")
+                query_object.description = site_info.get("description")
+                query_object.keyword = site_info.get("keyword")
+                query_object.favicon = site_info.get("favicon")
+                query_object.site_name = site_info.get("site_name")
+                if new_site_info_flag:
+                    db.session.add(query_object)
+                else:
+                    db.session.merge(query_object)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+
+        return cls
+
+
 
 __all__ = ([
     'SearchManagement',
@@ -1209,5 +1304,6 @@ __all__ = ([
     'RankingSettings',
     'BillingPermission',
     'FeedbackMailSetting',
-    'AdminSettings'
+    'AdminSettings',
+    'SiteInfo'
 ])

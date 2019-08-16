@@ -680,3 +680,59 @@ def validate_feedback_mail_setting(data):
 def str_to_bool(str):
     """Convert string to bool."""
     return str.lower() in ['true', 't']
+
+
+def validation_site_info(site_info):
+    """Validate site_info"""
+    list_lang_admin = get_admin_lang_setting()
+    list_lang_register = [lang for lang in list_lang_admin if lang.get('is_registered')]
+    list_lang_code = [lang.get('lang_code') for lang in list_lang_register]
+    site_name = site_info.get("site_name")
+
+    """check site_name len"""
+    if not site_name:
+        return {
+            "error": "site name is not null",
+            "data" :""
+        }
+
+    """check language len"""
+    if len(site_name) > len(list_lang_code):
+        return {
+            "error": "site name is more than the number of languages available",
+            "data" :""
+        }
+
+    """check site name language matching"""
+    for sn in site_name:
+        if not sn.get("language") in list_lang_code:
+            return {
+                "error": "no matching language",
+                "data": sn
+            }
+        if not sn.get("name").strip():
+            return {
+                "error": "site_name's name is required",
+                "data": sn
+            }
+    return {
+        "error": "",
+        "data": ""
+    }
+
+
+def format_site_info_data(site_info):
+    result = dict()
+    site_name = []
+    for sn in site_info.get('site_name'):
+        site_name.append({
+            "index": sn.get('index'),
+            "name": sn.get('name').strip(),
+            "language": sn.get('language'),
+        })
+    result['site_name'] = site_name
+    result['copy_right'] = site_info.get('copy_right').strip()
+    result['description'] = site_info.get('description').strip()
+    result['keyword'] = site_info.get('keyword').strip()
+    result['favicon'] = site_info.get('favicon')
+    return result

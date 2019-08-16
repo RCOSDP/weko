@@ -785,6 +785,15 @@ class ItemExportSettingsView(BaseView):
             AdminSettings.Dict2Obj(
                 current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
 
+class SiteInfoView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_SITE_INFO"]
+        )
+
+
+
 
 style_adminview = {
     'view_class': StyleSettingView,
@@ -903,6 +912,16 @@ item_export_settings_adminview = {
     }
 }
 
+site_info_settings_adminview = {
+    'view_class': SiteInfoView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Site info'),
+        'endpoint': 'site_info'
+    }
+}
+
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -917,4 +936,5 @@ __all__ = (
     'site_license_send_mail_settings_adminview',
     'file_preview_settings_adminview',
     'item_export_settings_adminview',
+    'site_info_settings_adminview'
 )

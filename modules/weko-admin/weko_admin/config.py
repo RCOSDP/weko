@@ -103,6 +103,11 @@ WEKO_ADMIN_VALIDATION_MESSAGE = 'The login you supplied is not recognized'
 WEKO_ADMIN_DISPLAY_FILE_STATS = True  # TODO: Delete if not used
 """Display record stats or not."""
 
+WEKO_ADMIN_SITE_INFO = 'weko_admin/admin/site_info.html'
+"""Site info template."""
+
+
+
 WEKO_ADMIN_DEFAULT_CRAWLER_LISTS = [
     'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_ip_blacklist.txt',
     'https://bitbucket.org/niijp/jairo-crawler-list/raw/master/JAIRO_Crawler-List_useragent.txt'

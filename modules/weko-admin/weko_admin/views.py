@@ -39,12 +39,14 @@ from werkzeug.local import LocalProxy
 
 from . import config
 from .api import send_site_license_mail
-from .models import SessionLifetime
+from .models import SessionLifetime, SiteInfo
 from .utils import get_admin_lang_setting, get_api_certification_type, \
     get_current_api_certification, get_feed_back_email_setting, \
     get_initial_stats_report, get_selected_language, get_unit_stats_report, \
     save_api_certification, update_admin_lang_setting, \
-    update_feedback_email_setting, validate_certification
+    update_feedback_email_setting, validate_certification, \
+    validation_site_info, format_site_info_data
+
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -463,3 +465,36 @@ def manual_send_site_license_mail(start_month, end_month):
                                    mail_list, agg_date, data)
 
         return 'finished'
+
+
+@blueprint_api.route('/update_site_info', methods=['POST'])
+# @login_required
+# @author_permission.require(http_exception=403)
+def update_site_info():
+    site_info = request.get_json()
+    format_data = format_site_info_data(site_info)
+    validate = validation_site_info(format_data)
+    if validate.get('error'):
+        return jsonify(validate)
+    else:
+        result = SiteInfo.update(format_data)
+        return jsonify(format_data)
+
+
+
+@blueprint_api.route('/get_site_info', methods=['GET'])
+# @login_required
+# @author_permission.require(http_exception=403)
+def get_site_info():
+    site_info = SiteInfo.get()
+    result = dict()
+    if not site_info:
+        return jsonify({})
+    result['copy_right'] = site_info.copy_right
+    result['description'] = site_info.description
+    result['keyword'] = site_info.keyword
+    result['favicon'] = site_info.favicon
+    result['site_name'] = site_info.site_name
+    print(result)
+    print(type(result))
+    return jsonify(result)
