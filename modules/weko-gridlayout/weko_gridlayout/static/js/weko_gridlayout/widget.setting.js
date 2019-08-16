@@ -117,7 +117,6 @@ const ComponentTextboxForAccessCounter = function(props){
     const [value, setValue] = useState(props.value);
 
     function handleChange(event){
-        console.log(event.target.value);
         setValue(event.target.value);
         props.handleChange(props.key_binding, event.target.value.trim());
         event.preventDefault();
@@ -552,7 +551,7 @@ class ExtendComponent extends React.Component {
         this.generateDisplayResult = this.generateDisplayResult.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.write_more && nextProps.data_load.more_description) {
+        if (nextProps.data_load && !prevState.write_more && nextProps.data_load.more_description) {
             return {
                 write_more: true,
                 settings: nextProps.data_load
@@ -592,6 +591,9 @@ class ExtendComponent extends React.Component {
                 } else {
                     hide_the_rest.value = '';
                 }
+            }
+            if (nextProps.type == ACCESS_COUNTER) {
+                setting["access_counter"] = nextProps.init_value
             }
             return {
                 settings: setting
@@ -882,7 +884,7 @@ class ComponentButtonLayout extends React.Component {
             let currentLangData = {
                 label: currentLabel,
             }
-            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE){
+            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE || data['widget_type'] == ACCESS_COUNTER){
                 currentLangData["description"] = currentDescription;
             }
             multiLangData[currentLanguage] = currentLangData;
@@ -892,7 +894,7 @@ class ComponentButtonLayout extends React.Component {
 
         this.props.getValueOfField('multiLangData', multiLangData);
         data['multiLangSetting'] = multiLangData;
-
+        delete data['accessInitValue']
         let request = {
             flag_edit: this.props.is_edit,
             data: data,
@@ -1282,10 +1284,12 @@ class MainLayout extends React.Component {
             language: this.props.data_load.language,
             multiLangSetting: this.props.data_load.multiLangSetting,
             multiLanguageChange: false,
+            accessInitValue: 0
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
         this.initEditData = this.initEditData.bind(this);
+        this.accessCounterValidation = this.accessCounterValidation.bind(this);
     }
 
     getValueOfField(key, value) {
@@ -1348,12 +1352,17 @@ class MainLayout extends React.Component {
             return;
         }
         let multiLangData = this.state.multiLangSetting[selectedLang];
+        let accessInitValue = 0
+        if ((this.state.widget_type+ "") == ACCESS_COUNTER && multiLangData.description) {
+            accessInitValue = multiLangData.description.access_counter
+        }
         if (multiLangData) {
             if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER){
                 this.setState({
                     multiLanguageChange: true,
                     label: multiLangData['label'],
-                    settings: multiLangData['description']
+                    settings: multiLangData['description'],
+                    accessInitValue: accessInitValue
                 });
             }
             else{
@@ -1381,14 +1390,27 @@ class MainLayout extends React.Component {
                 result = !noData;
             }
         }
+
         let setting = {
             label: this.state.label,
         };
         if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER ){
-            setting["description"] = this.state.settings
+            setting["description"] = this.state.settings;
+        }
+        let accessInitValue = this.state.accessInitValue;
+        if ((this.state.widget_type+ "") == ACCESS_COUNTER) {
+            if (setting.description.access_counter) {
+                accessInitValue = setting.description.access_counter;
+            }else {
+                setting.description.access_counter = accessInitValue;
+            }
+        }
+        if ((this.state.widget_type+ "") == ACCESS_COUNTER && this.accessCounterValidation(setting)) {
+            delete setting.description["access_counter"]
+            result = false;
         }
         let storage = this.state.multiLangSetting;
-        if (this.state.label || !$.isEmptyObject(this.state.settings)) {
+        if (setting.label || !$.isEmptyObject(setting.description)) {
             storage[lang] = setting;
         } else {
             if (storage[lang]) {
@@ -1403,7 +1425,8 @@ class MainLayout extends React.Component {
                     label: currentLabel,
                     multiLanguageChange: true,
                     language: newLanguage,
-                    settings: currentSetting
+                    settings: currentSetting,
+                    accessInitValue: accessInitValue
                 });
             }
             else{
@@ -1411,6 +1434,7 @@ class MainLayout extends React.Component {
                     label: currentLabel,
                     multiLanguageChange: true,
                     language: newLanguage,
+                    accessInitValue: accessInitValue
                 });
             }
         } else {
@@ -1430,11 +1454,26 @@ class MainLayout extends React.Component {
                 });
             }
         }
-        console.log(storage);
         this.setState({
             multiLangSetting: storage
         });
         return result;
+    }
+
+    accessCounterValidation(setting) {
+        if (setting.label != "" ) {
+            return false;
+        }
+        if (setting.description.preceding_message) {
+            return false;
+        }
+        if (setting.description.following_message) {
+            return false;
+        }
+        if (setting.description.other_message) {
+            return false;
+        }
+        return true;
     }
 
     render() {
@@ -1479,7 +1518,7 @@ class MainLayout extends React.Component {
                     <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding="enable" data_load={this.state.enable} />
                 </div>
                 <div className="row">
-                    <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings} data_change={this.state.multiLanguageChange} />
+                    <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings} data_change={this.state.multiLanguageChange} init_value={this.state.accessInitValue}/>
                 </div>
                 <div className="row">
                     <ComponentButtonLayout data={this.state} getValueOfField={this.getValueOfField} url_request="/api/admin/save_widget_item" is_edit={this.props.is_edit} return_url={this.props.return_url} data_id={this.props.data_id} />
