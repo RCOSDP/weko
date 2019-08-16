@@ -1249,6 +1249,7 @@ class FeedbackMail:
             'data': [],
             'total_page': 0,
             'selected_page': 0,
+            'records_per_page': 0,
             'error': ''
         }
         try:
@@ -1281,6 +1282,8 @@ class FeedbackMail:
                 len(data),
                 config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY)
             result['selected_page'] = page_num
+            result['records_per_page'] = \
+                config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
             return result
         except Exception as ex:
             result['error'] = 'Cannot get data. Detail: ' + str(ex)
@@ -1305,6 +1308,7 @@ class FeedbackMail:
             'data': [],
             'total_page': 0,
             'selected_page': 0,
+            'records_per_page': 0,
             'error': ''
         }
         try:
@@ -1334,6 +1338,8 @@ class FeedbackMail:
                 len(data),
                 config.WEKO_ADMIN_NUMBER_OF_FAILED_MAIL)
             result['selected_page'] = page_num
+            result['records_per_page'] = \
+                config.WEKO_ADMIN_NUMBER_OF_FAILED_MAIL
             return result
         except Exception as ex:
             result['error'] = 'Cannot get data. Detail: ' + str(ex)
