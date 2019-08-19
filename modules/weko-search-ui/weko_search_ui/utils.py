@@ -138,18 +138,19 @@ def get_feedback_mail_list():
 
 def parse_feedback_mail_data(data):
     """Parse data."""
-    result={}
+    result = {}
     if data is not None and isinstance(data, list):
         for author in data:
             if author.get('doc_count'):
                 email = author.get('key')
                 hits = author.get('top_tag_hits').get('hits').get('hits')
                 result[email] = {
-                                    'author_id': '',
-                                    'item': []
-                                }
+                    'author_id': '',
+                    'item': []
+                }
                 for index in hits:
                     if not result[email]['author_id']:
-                        result[email]['author_id'] = index.get('_source').get('author_id')
+                        result[email]['author_id'] = index.get(
+                            '_source').get('author_id')
                     result[email]['item'].append(index.get('_id'))
     return result

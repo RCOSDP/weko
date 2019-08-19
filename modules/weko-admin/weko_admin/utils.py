@@ -573,7 +573,7 @@ class StatisticMail:
         return str(datetime.now().year) + '-' + month
 
     @classmethod
-    def send_mail_to_all(cls,  list_mail_data=None, stats_date=None):
+    def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
         """Send mail to all setting email."""
         # Load setting:
         setting = FeedbackMail.get_feed_back_email_setting()

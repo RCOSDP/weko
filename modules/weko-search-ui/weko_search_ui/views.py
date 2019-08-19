@@ -228,5 +228,5 @@ def search_feedback_mail_list():
     data = get_feedback_mail_list()
     result = {}
     if data:
-        result =  parse_feedback_mail_data(data)
+        result = parse_feedback_mail_data(data)
     return jsonify(result)
