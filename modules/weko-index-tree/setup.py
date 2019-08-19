@@ -91,7 +91,8 @@ setup(
         ],
         'invenio_admin.views': [
             'weko_index_tree_indextree = weko_index_tree.admin:index_adminview',
-            'weko_index_tree_indexlink = weko_index_tree.admin:index_link_adminview',
+            'weko_index_tree_indexlink = '
+            'weko_index_tree.admin:index_link_adminview',
             'weko_index_tree_edit = weko_index_tree.admin:index_edit_adminview',
         ],
         'invenio_i18n.translations': [
@@ -112,6 +113,10 @@ setup(
             'index_tree_access = '
             'weko_index_tree.permissions:action_index_tree_access',
         ],
+        'invenio_base.api_blueprints': [
+            'weko_index_tree = weko_index_tree.views:blueprint_api',
+        ],
+
     },
     extras_require=extras_require,
     install_requires=install_requires,
