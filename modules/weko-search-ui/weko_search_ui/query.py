@@ -706,22 +706,52 @@ def opensearch_factory(self, search, query_parser=None):
                                       search_type='0')
 
 
-def item_search_factory(self, search, start_date, end_date):
+def item_search_factory(self,
+                        search,
+                        start_date,
+                        end_date,
+                        list_index_id=None):
     """Factory for opensearch.
 
     :param self:
-    :param search:
+    :param search: Record Search's instance
+    :param start_date: Start date for search
+    :param end_date: End date for search
+    :param list_index_id: index tree list or None
     :return:
     """
-    def _get_query(start_date, end_date):
-        query_string = "_type:item AND " \
+    def _get_query(start_term, end_term, indexes):
+        query_string = "_type:{} AND " \
                        "relation_version_is_last:true AND " \
                        "publish_status:0 AND " \
-                       "publish_date:[{} TO {}]".format(start_date, end_date)
+                       "publish_date:[{} TO {}]".format(current_app.config[
+                           "INDEXER_DEFAULT_DOC_TYPE"],
+                           start_term,
+                           end_term)
+        query_filter = []
+        if indexes:
+            for index in indexes:
+                q_wildcard = {
+                    "wildcard": {
+                        "path": "*{}*".format(index)
+                    }
+                }
+                query_filter.append(q_wildcard)
         query_q = {
             "query": {
-                "query_string": {
-                    "query": query_string
+                "bool": {
+                    "must": [
+                        {
+                            "query_string": {
+                                "query": query_string
+                            }
+                        },
+                        {
+                            "bool": {
+                                "should": query_filter
+                            }
+                        }
+                    ]
                 }
             },
             "sort":
@@ -736,10 +766,9 @@ def item_search_factory(self, search, start_date, end_date):
         }
         return query_q
 
-    query_q = _get_query(start_date, end_date)
+    query_q = _get_query(start_date, end_date, list_index_id)
     urlkwargs = MultiDict()
     try:
-        # Aggregations.
         extr = search._extra.copy()
         search.update_from_dict(query_q)
         search._extra.update(extr)

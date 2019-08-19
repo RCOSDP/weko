@@ -17,7 +17,7 @@ from flask_login import login_required
 from .api import WidgetItems
 from .services import WidgetDataLoaderServices, WidgetDesignServices, \
     WidgetItemServices
-from .utils import get_default_language, get_ES_result_by_date, \
+from .utils import get_default_language, get_elasticsearch_result_by_date, \
     get_system_language, get_widget_type_list
 
 blueprint = Blueprint(
@@ -217,5 +217,5 @@ def get_rss_data():
     current_date = date.today()
     end_date = current_date.strftime("%Y-%m-%d")
     start_date = (current_date - timedelta(days=term)).strftime("%Y-%m-%d")
-    rd = get_ES_result_by_date(start_date, end_date)
+    rd = get_elasticsearch_result_by_date(start_date, end_date)
     return WidgetDataLoaderServices.get_arrivals_rss(rd, term, count)
