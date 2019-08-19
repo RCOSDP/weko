@@ -23,6 +23,7 @@ import ast
 
 import click
 from flask.cli import with_appcontext
+from weko_authors.models import AuthorsPrefixSettings
 
 from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     BillingPermission, SessionLifetime, StatisticTarget, StatisticUnit
@@ -202,6 +203,24 @@ def create_settings(id, name, settings):
     try:
         data = ast.literal_eval(settings)
         AdminSettings.update(name, data, id)
+        click.secho('insert setting success')
+    except Exception as ex:
+        click.secho(str(ex))
+
+
+@click.group()
+def authors_prefix():
+    """Authors prefix settings commands."""
+
+
+@authors_prefix.command('default_settings')
+@click.argument('name')
+@click.argument('url')
+@with_appcontext
+def create_default_settings(name, url):
+    """Create default settings."""
+    try:
+        AuthorsPrefixSettings.create(name, url)
         click.secho('insert setting success')
     except Exception as ex:
         click.secho(str(ex))
