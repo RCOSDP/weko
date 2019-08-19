@@ -33,7 +33,7 @@ from invenio_search import RecordsSearch
 from weko_deposit.api import WekoIndexer
 from weko_indextree_journal.api import Journals
 
-from .query import item_path_search_factory
+from .query import feedback_email_search_factory, item_path_search_factory
 
 
 def get_tree_items(index_tree_id):
@@ -121,4 +121,35 @@ def get_journal_info(index_id=0):
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
         abort(500)
+    return result
+
+
+def get_feedback_mail_list():
+    """Get tree items."""
+    records_search = RecordsSearch()
+    records_search = records_search.with_preference_param().params(version=False)
+    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    search_instance = feedback_email_search_factory(None, records_search)
+    search_result = search_instance.execute()
+    rd = search_result.to_dict()
+    return rd.get('aggregations').get('feedback_mail_list')\
+        .get('email_list').get('buckets')
+
+
+def parse_feedback_mail_data(data):
+    """Parse data."""
+    result={}
+    if data is not None and isinstance(data, list):
+        for author in data:
+            if author.get('doc_count'):
+                email = author.get('key')
+                hits = author.get('top_tag_hits').get('hits').get('hits')
+                result[email] = {
+                                    'author_id': '',
+                                    'item': []
+                                }
+                for index in hits:
+                    if not result[email]['author_id']:
+                        result[email]['author_id'] = index.get('_source').get('author_id')
+                    result[email]['item'].append(index.get('_id'))
     return result

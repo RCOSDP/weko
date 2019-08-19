@@ -39,7 +39,8 @@ from weko_search_ui.api import get_search_detail_keyword
 
 from .api import SearchSetting
 from .query import item_path_search_factory
-from .utils import get_journal_info
+from .utils import get_feedback_mail_list, get_journal_info, \
+    parse_feedback_mail_data
 
 _signals = Namespace()
 searched = _signals.signal('searched')
@@ -218,4 +219,14 @@ def opensearch_description():
 def journal_detail(index_id=0):
     """Render a check view."""
     result = get_journal_info(index_id)
+    return jsonify(result)
+
+
+@blueprint.route("/search/feedback_mail_list", methods=['GET'])
+def search_feedback_mail_list():
+    """Render a check view."""
+    data = get_feedback_mail_list()
+    result = {}
+    if data:
+        result =  parse_feedback_mail_data(data)
     return jsonify(result)

@@ -32,6 +32,7 @@ from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
 from werkzeug.datastructures import MultiDict
 
+from . import config
 from .api import SearchSetting
 from .permissions import search_permission
 
@@ -225,7 +226,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
                                         shuld.append(Q('nested', path=v[0],
                                                        query=Q(
-                                            'bool', should=shud, must=[qm])))
+                                                           'bool', should=shud,
+                                                           must=[qm])))
 
             return Q('bool', should=shuld) if shuld else None
 
@@ -755,13 +757,13 @@ def item_search_factory(self,
                 }
             },
             "sort":
-            [
-                {
-                    "publish_date":
+                [
                     {
-                        "order": "desc"
+                        "publish_date":
+                            {
+                                "order": "desc"
+                            }
                     }
-                }
             ]
         }
         return query_q
@@ -779,3 +781,82 @@ def item_search_factory(self,
         raise InvalidQueryRESTError()
 
     return search, urlkwargs
+
+
+def feedback_email_search_factory(self, search):
+    """Factory for search feedback email list.
+
+    :param self:
+    :param search:
+    :return:
+    """
+    def _get_query():
+        query_string = "_type:{} AND " \
+                       "relation_version_is_last:true " \
+            .format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
+        query_q = {
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must": [
+                        {"nested":
+                            {
+                                "path": "feedback_mail_list",
+                                "query": {
+                                    "bool": {
+                                        "must": [
+                                            {
+                                                "exists": {
+                                                    "field": "feedback_mail_list.email"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+
+                            }
+                         },
+                        {"query_string":
+                            {
+                                "query": query_string
+                            }
+                         }
+                    ]
+                }
+            },
+            "aggs": {
+                "feedback_mail_list": {
+                    "nested": {
+                        "path": "feedback_mail_list"
+                    },
+                    "aggs": {
+                        "email_list": {
+                            "terms": {
+                                "field": "feedback_mail_list.email",
+                                "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL
+                            },
+                            "aggs": {
+                                "top_tag_hits": {
+                                    "top_hits": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return query_q
+
+    query_q = _get_query()
+    try:
+        # Aggregations.
+        extr = search._extra.copy()
+        search.update_from_dict(query_q)
+        search._extra.update(extr)
+    except SyntaxError:
+        current_app.logger.debug(
+            "Failed parsing query: {0}".format(query_q),
+            exc_info=True)
+        raise InvalidQueryRESTError()
+
+    return search
