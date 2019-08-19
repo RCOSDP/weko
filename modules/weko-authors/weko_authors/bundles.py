@@ -49,3 +49,17 @@ author_search_js = NpmBundle(
     filters='jsmin',
     output="gen/authorSearch.%(version)s.js",
 )
+
+author_prefix_css = Bundle(
+    'css/weko_authors/styles.prefix.bundle.css',
+    filters='cleancss',
+    output="gen/authorPrefix.%(version)s.css",
+)
+
+author_prefix_js = Bundle(
+    'js/weko_authors/inline.prefix.bundle.js',
+    'js/weko_authors/polyfills.prefix.bundle.js',
+    'js/weko_authors/main.prefix.bundle.js',
+    filters='jsmin',
+    output="gen/authorPrefix.%(version)s.js",
+)
