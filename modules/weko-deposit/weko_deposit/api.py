@@ -825,8 +825,7 @@ class WekoDeposit(Deposit):
             self.indexer.update_feedback_mail_list(feedback_mail)
 
     def update_jpcoar_identifier(self):
-        """Update JPCOAR meta data item for grant DOI
-        which added at the Identifier Grant screen."""
+        """Update JPCOAR meta data item for grant DOI which added at the Identifier Grant screen."""
         obj = ItemsMetadata.get_record(self.id)
         attrs = ['attribute_value_mlt',
                  'item_1551265147138',

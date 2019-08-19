@@ -67,10 +67,10 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
     item = ItemsMetadata.get_record(id_=activity_detail.item_id)
 
     attrs = IDENTIFIER_ITEMSMETADATA_KEY
-    temp_form = { attrs[0]: '',
-                  attrs[1]: '',
-                  attrs[2]: '',
-                  attrs[3]: ''}
+    temp_form = {attrs[0]: '',
+                 attrs[1]: '',
+                 attrs[2]: '',
+                 attrs[3]: ''}
     tempdata = deepcopy(temp_form)
     flag_del_pidstore = False
     identifier_value = ''
@@ -118,7 +118,7 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
         tempdata[attrs[0]] = identifier_value
         tempdata[attrs[1]] = identifier_type
         if tempdata.get(attrs[2]) is not None \
-            and tempdata.get(attrs[3]) is not None:
+                and tempdata.get(attrs[3]) is not None:
             tempdata[attrs[2]] = identifierReg_value
             tempdata[attrs[3]] = identifierReg_type
 
@@ -136,9 +136,9 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
                 get('attribute_value_mlt')
             # data DOI generate
             _identifier_data.append({
-                    identifier_map['val']: tempdata[attrs[0]],
-                    identifier_map['type']: tempdata[attrs[1]]
-                })
+                identifier_map['val']: tempdata[attrs[0]],
+                identifier_map['type']: tempdata[attrs[1]]
+            })
             res = {
                 identifier_map['id']: _identifier_data,
                 'pidstore_identifier': {}
@@ -147,11 +147,11 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
             res['pidstore_identifier']['identifier_value'] = tempdata[attrs[0]]
             if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
                 identifierReg_map = identifier_jpcoar_mapping(
-                    item_type.item_type_id,attrs[2:4])
+                    item_type.item_type_id, attrs[2:4])
                 res[identifierReg_map['id']] = ({
                     identifierReg_map['val']: tempdata[attrs[2]],
                     identifierReg_map['type']: tempdata[attrs[3]]
-                    })
+                })
             with db.session.begin_nested():
                 item.update(res)
                 item.commit()
