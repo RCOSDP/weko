@@ -79,7 +79,7 @@ let PageBodyGrid = function () {
         return description;
     };
 
-    this.buildAccessCounter = function (initNumber, node) {
+    this.buildAccessCounter = function (initNumber, languageDescription) {
         let data = this.getAccessTopPageValue();
         // Convert to display-able number
         let initNum = Number(initNumber);
@@ -87,12 +87,17 @@ let PageBodyGrid = function () {
         if (!Number.isNaN(initNum)) {
             result = result + initNumber;
         }
+
+        let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + "&nbsp;" : "";
+        let followingMessage = languageDescription.following_message ? "&nbsp;" + languageDescription.following_message : "";
+        let otherMessage = languageDescription.other_message ? languageDescription.other_message : "";
+
         return '<div>'
-                + '<div> <span style = "float: left;">'+ node.preceding_message
-                + '</span><span style = "float: right;"><span data-init-number="' + initNumber + '" class = "text-access-counter" style="font-size: 20px; font-weight: bold; margin: auto;">'
-                + result + '</span><span>' + node.following_message + '</span></span>'
-                + '</div> <div>' + node.other_message
-                + '</div></div>';
+                + ' <div class="counter-container">'
+                +       precedingMessage + '<span data-init-number="' + initNumber + '" class = "text-access-counter">' + result + '</span>' + followingMessage
+                + ' </div>'
+                + ' <div>' + otherMessage + '</div>'
+                + '</div>';
     };
 
     this.buildNewArrivals = function (widgetID, term, rss, id, count) {
@@ -164,7 +169,7 @@ let PageBodyGrid = function () {
                 !Number.isNaN(Number(node.access_counter))) {
                 initNumber = Number(node.access_counter);
             }
-            content = this.buildAccessCounter(initNumber, node);
+            content = this.buildAccessCounter(initNumber, languageDescription);
             rightStyle = "right: unset; ";
             paddingHeading = "";
             overFlowBody = "overflow-y: hidden; ";
