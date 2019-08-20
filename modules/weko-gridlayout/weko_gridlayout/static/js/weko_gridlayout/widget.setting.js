@@ -5,22 +5,33 @@ const FREE_DESCRIPTION_TYPE = "Free description";
 const NOTICE_TYPE = "Notice";
 const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
-class ComponentSelectField extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            repositoryId: '0',
-            selectOptions: [],
-        };
-        this.handleChange = this.handleChange.bind(this);
-    }
+const THEME_SETTING = [{"value" : 'default', "text": "Default"}, {"value": "simple", "text":"Simple"}, {"value": "side_line", "text":"Side Line"}];
+const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}];
 
-    componentDidMount() {
-        fetch(this.props.url_request)
+function useSelectedInput(initialValue, getValueOfField, key_binding) {
+    const [value, setValue] = useState(initialValue);
+    function handleChange(e) {
+        setValue(e.target.value);
+        getValueOfField(key_binding, event.target.value);
+        event.preventDefault();
+    }
+    return {
+      value,
+      onChange: handleChange,
+    };
+  }
+
+const ComponentSelectField = function(props){
+    const selectedData = useSelectedInput('0', props.getValueOfField, props.key_binding);
+    const [selectOptions, setSelectOptions] = useState([]);
+
+    useEffect(() => {
+        let options = []
+        if(props.url_request){
+            fetch(props.url_request)
             .then(res => res.json())
             .then(
                 (result) => {
-                    let options = []
                     if (result.options) {
                         options = result.options.map((option) => {
                             return (
@@ -34,38 +45,35 @@ class ComponentSelectField extends React.Component {
                             )
                         });
                     }
-                    this.setState({
-                        selectOptions: options,
-                        repositoryId: this.props.data_load
-                    });
+                    setSelectOptions(options);
                 },
 
                 (error) => {
                     console.log(error);
                 }
             )
+        }
+        else{
+            options = props.data.map((option) => {
+                return (
+                    <option key={option.value} value={option.value}>{option.text}</option>
+                )
+            });
+            setSelectOptions(options);
+        }
+    },[]);
 
-    }
-
-    handleChange(event) {
-        this.setState({ repositoryId: event.target.value });
-        this.props.getValueOfField(this.props.key_binding, event.target.value);
-        event.preventDefault();
-    }
-
-    render() {
-        return (
-            <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
-                <div class="controls col-xs-6">
-                    <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name}>
-                        <option value="0">Please select the&nbsp;{this.props.key_binding}</option>
-                        {this.state.selectOptions}
-                    </select>
-                </div>
+    return (
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}{props.is_required ? <span className="style-red">*</span>:null}</label>
+            <div class="controls col-xs-6">
+                <select onChange={(event) => this.handleChange(event)} className="form-control" name={props.name} {...selectedData}>
+                    {props.url_request ? <option value="0">Please select the&nbsp;{props.key_binding}</option> : null}
+                    {selectOptions}
+                </select>
             </div>
-        )
-    }
+        </div>
+    )
 }
 
 class ComponentTextboxField extends React.Component {
@@ -104,7 +112,7 @@ class ComponentTextboxField extends React.Component {
     render() {
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}{this.props.is_required ? <span className="style-red">*</span>:null}</label>
                 <div class="controls col-xs-6">
                     <input name={this.props.name} id='label' type="text" value={this.state.value} onChange={this.handleChange} className="form-control" />
                 </div>
@@ -1254,7 +1262,7 @@ class ComponentLanguage extends React.Component {
     render() {
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}{this.props.is_required ? <span className="style-red">*</span>:null}</label>
                 <div class="controls col-xs-6">
                     <select onChange={this.handleChange} className="form-control" id="language">
                         {this.state.options}
@@ -1272,6 +1280,7 @@ class MainLayout extends React.Component {
             repository: this.props.data_load.repository_id,
             widget_type: this.props.data_load.widget_type,
             label: '',
+            theme: this.props.data_load.theme,
             label_color: this.props.data_load.label_color,
             frame_border: this.props.data_load.frame_border,
             frame_border_color: this.props.data_load.frame_border_color,
@@ -1343,6 +1352,9 @@ class MainLayout extends React.Component {
                 break;
             case 'multiLangData':
                 this.setState({ multiLangSetting: value });
+                break;
+            case "theme":
+                this.setState({theme: value});
                 break;
         }
     }
@@ -1484,14 +1496,17 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository} />
                 </div>
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} />
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} is_required = {true}/>
                 </div>
                 <div className="row">
                     <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit} initEditData={this.initEditData}
-                        storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} loaded_data={this.props.data_load.multiLangSetting} />
+                        storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} loaded_data={this.props.data_load.multiLangSetting} is_required = {true}/>
                 </div>
                 <div className="row">
-                    <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding="label" data_load={this.state.label} data_change={this.state.multiLanguageChange} type={this.state.widget_type} />
+                    <ComponentTextboxField getValueOfField={this.getValueOfField} name="Name" key_binding="label" data_load={this.state.label} data_change={this.state.multiLanguageChange} type={this.state.widget_type} is_required = {true}/>
+                </div>
+                <div className="row">
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Theme" data = {THEME_SETTING} key_binding="theme" data_load={this.state.theme} is_required = {false}/>
                 </div>
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Color" key_binding="label_color" data_load={this.state.label_color} />
