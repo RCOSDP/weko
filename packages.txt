@@ -125,6 +125,7 @@ urllib3==1.22
 validators==0.12.0
 vine==1.1.4
 wcwidth==0.1.7
+marshmallow==2.20.1
 webargs==1.8.1
 webassets==0.12.1
 webencodings==0.5.1

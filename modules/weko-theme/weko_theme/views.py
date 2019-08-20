@@ -93,6 +93,19 @@ def index():
         if hasattr(current_user, 'site_license_name') else ''
     top_viewed.send(current_app._get_current_object(),
                     info=send_info)
+
+    from weko_admin.models import SiteInfo
+    from weko_admin.utils import get_site_name_for_current_language
+    site_info = SiteInfo.get()
+    title = get_site_name_for_current_language(site_info.site_name)
+    current_app.config.setdefault(
+        'WEKO_SITE_INFO',
+        site_info,
+    )
+    current_app.config.setdefault(
+        'WEKO_TITLE',
+        title,
+    )
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         render_widgets=True,

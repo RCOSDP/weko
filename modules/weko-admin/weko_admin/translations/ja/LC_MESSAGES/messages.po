@@ -1019,3 +1019,48 @@ msgstr " 著者が重複しています。"
 #~ msgid "12"
 #~ msgstr ""
 
+msgid "Site Name"
+msgstr "サイト名"
+
+msgid "Favicon"
+msgstr "ファビコン"
+
+msgid "CopyRight"
+msgstr "版権"
+
+msgid "Description"
+msgstr "記述"
+
+msgid "Keyword"
+msgstr "キーワード"
+
+msgid "Selected icon"
+msgstr ""
+
+msgid "Select icon file"
+msgstr "アイコンファイルの選択"
+
+msgid "Add site name"
+msgstr "サイト名の追加"
+
+msgid "Site name not set"
+msgstr "サイト名が設定されていません。"
+
+msgid "Must set at least 1 site name."
+msgstr "サイト名は少くとも１つ設定する必要があります。"
+
+msgid "Please input site information for empty field."
+msgstr "サイト情報を空のフィールドに入力してください。"
+
+msgid "The same language is set for many site names."
+msgstr "同一言語を複数のサイト名に設定されています。"
+
+msgid "Error when get languages."
+msgstr ""
+
+msgid "Error when get site infomation."
+msgstr ""
+
+msgid "Language not match."
+msgstr ""
+

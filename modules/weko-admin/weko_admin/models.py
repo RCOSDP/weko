@@ -1230,7 +1230,12 @@ class SiteInfo(db.Model):
 
     favicon = db.Column(
         db.Text,
-        nullable=False
+        nullable=True
+    )
+
+    favicon_name = db.Column(
+        db.Text,
+        nullable=True
     )
     """url of favicon file."""
 
@@ -1277,7 +1282,9 @@ class SiteInfo(db.Model):
                 query_object.description = site_info.get("description")
                 query_object.keyword = site_info.get("keyword")
                 query_object.favicon = site_info.get("favicon")
+                query_object.favicon_name = site_info.get("favicon_name")
                 query_object.site_name = site_info.get("site_name")
+
                 if new_site_info_flag:
                     db.session.add(query_object)
                 else:

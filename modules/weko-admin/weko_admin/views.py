@@ -468,7 +468,7 @@ def manual_send_site_license_mail(start_month, end_month):
 
 
 @blueprint_api.route('/update_site_info', methods=['POST'])
-# @login_required
+@login_required
 # @author_permission.require(http_exception=403)
 def update_site_info():
     site_info = request.get_json()
@@ -483,7 +483,7 @@ def update_site_info():
 
 
 @blueprint_api.route('/get_site_info', methods=['GET'])
-# @login_required
+@login_required
 # @author_permission.require(http_exception=403)
 def get_site_info():
     site_info = SiteInfo.get()
@@ -494,7 +494,6 @@ def get_site_info():
     result['description'] = site_info.description
     result['keyword'] = site_info.keyword
     result['favicon'] = site_info.favicon
+    result['favicon_name'] = site_info.favicon_name
     result['site_name'] = site_info.site_name
-    print(result)
-    print(type(result))
     return jsonify(result)

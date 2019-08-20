@@ -27,6 +27,7 @@ import redis
 import requests
 from flask import current_app, session
 from flask_babelex import lazy_gettext as _
+from flask_babelex import gettext as __
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -279,7 +280,7 @@ def create_crossref_url(pid):
     if not pid:
         raise ValueError('PID is required')
     url = config.WEKO_ADMIN_CROSSREF_API_URL + config.WEKO_ADMIN_ENDPOINT + \
-        '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
+          '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
     return url
 
 
@@ -291,7 +292,7 @@ def validate_certification(cert_data):
     """
     response = requests.get(create_crossref_url(cert_data))
     return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
-        str(vars(response).get('_content', None))
+           str(vars(response).get('_content', None))
 
 
 def get_initial_stats_report():
@@ -402,7 +403,8 @@ def make_stats_tsv(raw_stats, file_type, year, month):
 
     if file_type in ['billing_file_download', 'billing_file_preview']:
         col_dict_key = file_type.split('_', 1)[1]
-        cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key, [])
+        cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(col_dict_key,
+                                                                [])
         cols[3:1] = raw_stats['all_groups']  # Insert group columns
     else:
         cols = current_app.config['WEKO_ADMIN_REPORT_COLS'].get(file_type, [])
@@ -449,8 +451,8 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
         records = list(records.values())
     for record in records:
         if file_type is None or \
-                file_type == 'file_download' or \
-                file_type == 'file_preview':
+            file_type == 'file_download' or \
+            file_type == 'file_preview':
             writer.writerow([record['file_key'], record['index_list'],
                              record['total'], record['no_login'],
                              record['login'], record['site_license'],
@@ -475,7 +477,7 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
         elif file_type == 'user_roles':
             writer.writerow([record['role_name'], record['count']])
         elif file_type == 'detail_view':
-            item_metadata_json = ItemsMetadata.\
+            item_metadata_json = ItemsMetadata. \
                 get_record(record['record_id'])
             writer.writerow([
                 item_metadata_json['title'], record['index_names'],
@@ -685,40 +687,71 @@ def str_to_bool(str):
 def validation_site_info(site_info):
     """Validate site_info"""
     list_lang_admin = get_admin_lang_setting()
-    list_lang_register = [lang for lang in list_lang_admin if lang.get('is_registered')]
+    list_lang_register = [lang for lang in list_lang_admin if
+                          lang.get('is_registered')]
     list_lang_code = [lang.get('lang_code') for lang in list_lang_register]
     site_name = site_info.get("site_name")
+    errors_mess = []
+    errors = dict()
+
+    WEKO_ADMIN_SITE_INFO_MESSAGE = {
+        'must_set_at_least_1_site_name_label': __(
+            'Must set at least 1 site name.'),
+        'please_input_site_infomation_for_empty_field_label': __(
+            'Please input site information for empty field.'),
+        'the_same_language_is_set_for_many_site_names_label': __(
+            'The same language is set for many site names.'),
+        'site_name_is_required_label': __('Site name is required.'),
+        'language_not_match_label': __('Language not match.'),
+    }
 
     """check site_name len"""
     if not site_name:
-        return {
-            "error": "site name is not null",
-            "data" :""
-        }
+        errors_mess.append(WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+            'must_set_at_least_1_site_name_label'))
+    elif len(list(filter(lambda a: not a.get('name'), site_name))) == len(
+        site_name):
+        errors_mess.append(WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+            'must_set_at_least_1_site_name_label'))
+        errors["site_name_0"] = WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+            'must_set_at_least_1_site_name_label')
+    for item in site_name:
+        if not item.get("name").strip():
+            errors_mess.append(WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'please_input_site_infomation_for_empty_field_label'))
+            errors["site_name_" + str(
+                item.get("index"))] = WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'please_input_site_infomation_for_empty_field_label')
+        check_dub = list(
+            filter(lambda a: a.get("language") == item.get("language"),
+                   site_name))
+        if len(check_dub) >= 2:
+            errors_mess.append(WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'the_same_language_is_set_for_many_site_names_label'))
+            for cd in check_dub:
+                errors["site_name_" + str(cd.get(
+                    "index"))] = WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                    'the_same_language_is_set_for_many_site_names_label')
+        if item.get("index") > len(list_lang_register):
+            errors["site_name_" + str(item.get(
+                "index"))] = WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'language_not_match_label')
+        if not item.get("language") in list_lang_code:
+            errors["site_name_" + str(item.get(
+                "index"))] = WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'language_not_match_label')
 
-    """check language len"""
-    if len(site_name) > len(list_lang_code):
+    list_error = list(set(errors_mess))
+    if list_error:
         return {
-            "error": "site name is more than the number of languages available",
-            "data" :""
+            'error': list_error,
+            'data': errors
         }
-
-    """check site name language matching"""
-    for sn in site_name:
-        if not sn.get("language") in list_lang_code:
-            return {
-                "error": "no matching language",
-                "data": sn
-            }
-        if not sn.get("name").strip():
-            return {
-                "error": "site_name's name is required",
-                "data": sn
-            }
-    return {
-        "error": "",
-        "data": ""
-    }
+    else:
+        return {
+            "error": "",
+            "data": ""
+        }
 
 
 def format_site_info_data(site_info):
@@ -735,4 +768,19 @@ def format_site_info_data(site_info):
     result['description'] = site_info.get('description').strip()
     result['keyword'] = site_info.get('keyword').strip()
     result['favicon'] = site_info.get('favicon')
+    result['favicon_name'] = site_info.get('favicon_name')
     return result
+
+
+def get_site_name_for_current_language(site_name):
+    from invenio_i18n.ext import current_i18n
+    if hasattr(current_i18n, 'language'):
+        list_lang_code = [lang.get('language') for lang in site_name]
+        if current_i18n.language not in list_lang_code:
+            return site_name[0].get("name")
+        else:
+            for sn in site_name:
+                if sn.get('language') == current_i18n.language:
+                    return sn.get("name")
+    else:
+        return site_name[0].get("name")

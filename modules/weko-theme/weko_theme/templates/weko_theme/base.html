@@ -39,11 +39,11 @@
     {%- endif %}
     {%- endblock head_meta %}
     {%- block head_title %}
-    {%- set title = _(title) or _(config.THEME_SITENAME) or _('Weko3') %}
-    <title>{{title}}</title>
+<!--    {%- set title = _(title) or _(config.THEME_SITENAME) or _('Weko3') %}-->
+    <title>{{config.get('WEKO_TITLE')}}</title>
     {%- endblock head_title %}
     {%- block head_links %}
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}"/>
+    <link rel="shortcut icon" href="{{ config.get('WEKO_SITE_INFO').favicon }}"/>
     {%- if keywords %}<link rel="canonical" href="{{ canonical_url }}"/>{% endif %}
     {%- block head_links_langs %}
       {%- if alternate_urls %}

@@ -916,7 +916,7 @@ site_info_settings_adminview = {
     'view_class': SiteInfoView,
     'kwargs': {
         'category': _('Setting'),
-        'name': _('Site info'),
+        'name': _('Site Information Registration'),
         'endpoint': 'site_info'
     }
 }

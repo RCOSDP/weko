@@ -917,3 +917,50 @@ msgstr ""
 msgid "Author is duplicated."
 msgstr ""
 
+msgid "Site Name"
+msgstr ""
+
+msgid "Favicon"
+msgstr ""
+
+msgid "CopyRight"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Keyword"
+msgstr ""
+
+msgid "Selected icon"
+msgstr ""
+
+msgid "Select icon file"
+msgstr ""
+
+msgid "Add site name"
+msgstr ""
+
+msgid "Site name not set"
+msgstr ""
+
+msgid "Must set at least 1 site name."
+msgstr ""
+
+msgid "Please input site information for empty field."
+msgstr ""
+
+msgid "The same language is set for many site names."
+msgstr ""
+
+msgid "Site name is required."
+msgstr ""
+
+msgid "Error when get languages."
+msgstr ""
+
+msgid "Error when get site infomation."
+msgstr ""
+
+msgid "Language not match."
+msgstr ""
