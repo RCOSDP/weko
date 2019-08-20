@@ -2,7 +2,7 @@
   overflow: auto;
 }
 
-.widget{
+.widget {
   /* border-radius: 0px !important; */
   left: 15px !important;
   right: 15px !important;
@@ -20,7 +20,7 @@
 }
 
 .writeMoreNoT:hover {
-  text-decoration:underline;
+  text-decoration: underline;
 }
 
 .widget-footer {
@@ -50,7 +50,7 @@
   padding-right: 0px;
 }
 
-.rss a{
+.rss a {
   background-color: orange;
   padding: 5px;
   padding-top: 3px !important;
@@ -63,8 +63,8 @@
   text-decoration: none;
 }
 
-.rss a > i {
-  color:white;
+.rss a>i {
+  color: white;
 }
 
 .arrival-scale {
@@ -80,6 +80,21 @@
   padding-right: 0px !important;
 }
 
-.widget-resize{
+.widget-resize {
   position: absolute !important;
+}
+
+.drop-line-span span {
+  display: inline-block;
+}
+
+.counter-container {
+  word-wrap: break-word;
+  margin-top: -15px;
+}
+
+.text-access-counter {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: -3px;
 }
