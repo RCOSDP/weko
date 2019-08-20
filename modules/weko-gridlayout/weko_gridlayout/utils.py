@@ -21,15 +21,18 @@
 """Utilities for convert response json."""
 import copy
 import json
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as Et
 from datetime import datetime
 from xml.etree.ElementTree import tostring
 
+from elasticsearch.exceptions import NotFoundError
 from flask import Response, current_app, request
-from invenio_i18n.ext import current_i18n
 from invenio_search import RecordsSearch
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
+from weko_index_tree.api import Indexes
+from weko_records.api import Mapping
+from weko_records.serializers.utils import get_mapping
 from weko_search_ui.query import item_search_factory
 from weko_theme import config as theme_config
 
@@ -410,7 +413,7 @@ def convert_data_to_edit_pack(data):
     return result
 
 
-def build_rss_xml(data, term, count):
+def build_rss_xml(data=None, index_id=0, page=1, count=20, term=0, lang=''):
     """Build RSS data as XML format.
 
     Arguments:
@@ -421,32 +424,39 @@ def build_rss_xml(data, term, count):
         xml response -- RSS data as XML
 
     """
-    root_url = request.url_root
-    root_url = str(root_url).replace('/api/', '')
-    root = ET.Element('rdf:RDF')
+    root_url = str(request.url_root).replace('/api/', '/')
+    root = Et.Element('rdf:RDF')
     root.set('xmlns', config.WEKO_XMLNS)
     root.set('xmlns:rdf', config.WEKO_XMLNS_RDF)
     root.set('xmlns:rdfs', config.WEKO_XMLNS_RDFS)
     root.set('xmlns:dc', config.WEKO_XMLNS_DC)
     root.set('xmlns:prism', config.WEKO_XMLNS_PRISM)
-    root.set('xmlns:lang', current_i18n.language)
+    root.set('xmlns:lang', lang)
 
     # First layer
-    requested_url = root_url + 'rss/records?term=' + \
-        str(term) + '&count=' + str(count)
-    channel = ET.SubElement(root, 'channel')
+    requested_url = root_url + 'rss/records?index_id=' + str(index_id) + \
+        '&page=' + str(page) + '&term=' + str(term) + \
+        '&count=' + str(count) + '&lang=' + str(lang)
+    channel = Et.SubElement(root, 'channel')
     channel.set('rdf:about', requested_url)
 
     # Channel layer
-    ET.SubElement(channel, 'title').text = 'WEKO3'
-    ET.SubElement(channel, 'link').text = requested_url
-    ET.SubElement(channel, 'description').text = theme_config.THEME_SITENAME
+    Et.SubElement(channel, 'title').text = 'WEKO3'
+    Et.SubElement(channel, 'link').text = requested_url
+    if index_id:
+        index_detail = Indexes.get_index(index_id)
+        Et.SubElement(channel, 'description').text = index_detail.comment \
+            or index_detail.index_name \
+            or index_detail.index_name_english
+    else:
+        Et.SubElement(channel, 'description').text = \
+            theme_config.THEME_SITENAME
     current_time = datetime.now()
-    ET.SubElement(
+    Et.SubElement(
         channel,
         'dc:date').text = current_time.isoformat() + '+00:00'
-    items = ET.SubElement(channel, 'items')
-    seq = ET.SubElement(items, 'rdf:Seq')
+    items = Et.SubElement(channel, 'items')
+    seq = Et.SubElement(items, 'rdf:Seq')
     if not data or not isinstance(data, list):
         xml_str = tostring(root, encoding='utf-8')
         xml_str = str.encode(
@@ -454,70 +464,73 @@ def build_rss_xml(data, term, count):
         return Response(
             xml_str,
             mimetype='text/xml')
-    number_of_item = 0
+    items = [idx for idx in range((page - 1) * count, page * count)]
+    item_idx = 0
+
     # add item layer
     for data_item in data:
-        if number_of_item >= count:
-            break
-        item = ET.Element('item')
+        if item_idx not in items:
+            item_idx = item_idx + 1
+            continue
+        item = Et.Element('item')
         item.set('rdf:about', find_rss_value(
             data_item,
             'link'))
-        ET.SubElement(item, 'title').text = find_rss_value(
+        Et.SubElement(item, 'title').text = find_rss_value(
             data_item,
             'title')
-        ET.SubElement(item, 'link').text = find_rss_value(
+        Et.SubElement(item, 'link').text = find_rss_value(
             data_item,
             'link')
-        see_also = ET.SubElement(item, 'rdfs:seeAlso')
+        see_also = Et.SubElement(item, 'rdfs:seeAlso')
         see_also.set('rdf:resource', find_rss_value(
             data_item,
             'seeAlso'))
 
         if isinstance(find_rss_value(data_item, 'creator'), list):
             for creator in find_rss_value(data_item, 'creator'):
-                ET.SubElement(item, 'dc:creator').text = creator
+                Et.SubElement(item, 'dc:creator').text = creator
         else:
-            ET.SubElement(item, 'dc:creator').text = find_rss_value(
+            Et.SubElement(item, 'dc:creator').text = find_rss_value(
                 data_item,
                 'creator')
-        ET.SubElement(item, 'dc:publisher').text = find_rss_value(
+        Et.SubElement(item, 'dc:publisher').text = find_rss_value(
             data_item,
             'publisher')
-        ET.SubElement(item, 'prism:publicationName').text = find_rss_value(
+        Et.SubElement(item, 'prism:publicationName').text = find_rss_value(
             data_item,
             'sourceTitle')
-        ET.SubElement(item, 'prism:issn').text = find_rss_value(
+        Et.SubElement(item, 'prism:issn').text = find_rss_value(
             data_item,
             'issn')
-        ET.SubElement(item, 'prism:volume').text = find_rss_value(
+        Et.SubElement(item, 'prism:volume').text = find_rss_value(
             data_item,
             'volume')
-        ET.SubElement(item, 'prism:number').text = find_rss_value(
+        Et.SubElement(item, 'prism:number').text = find_rss_value(
             data_item,
             'issue')
-        ET.SubElement(item, 'prism:startingPage').text = find_rss_value(
+        Et.SubElement(item, 'prism:startingPage').text = find_rss_value(
             data_item,
             'pageStart')
-        ET.SubElement(item, 'prism:endingPage').text = find_rss_value(
+        Et.SubElement(item, 'prism:endingPage').text = find_rss_value(
             data_item,
             'pageEnd')
-        ET.SubElement(item, 'prism:publicationDate').text = find_rss_value(
+        Et.SubElement(item, 'prism:publicationDate').text = find_rss_value(
             data_item,
             'date')
-        ET.SubElement(item, 'description').text = find_rss_value(
+        Et.SubElement(item, 'description').text = find_rss_value(
             data_item,
             'description')
-        ET.SubElement(item, 'dc:date').text = find_rss_value(
+        Et.SubElement(item, 'dc:date').text = find_rss_value(
             data_item,
             '_updated'
         )
-        li = ET.SubElement(seq, 'rdf:li')
+        li = Et.SubElement(seq, 'rdf:li')
         li.set('rdf:resource', find_rss_value(
             data_item,
             'link'))
         root.append(item)
-        number_of_item = number_of_item + 1
+        item_idx = item_idx + 1
     xml_str = tostring(root, encoding='utf-8')
     xml_str = str.encode(config.WEKO_XML_FORMAT) + xml_str
     response = current_app.response_class()
@@ -547,34 +560,32 @@ def find_rss_value(data, keyword):
         return meta_data.get('item_title')
     elif keyword == 'link':
         root_url = request.url_root
-        root_url = str(root_url).replace('/api/', '')
+        root_url = str(root_url).replace('/api/', '/')
         record_number = get_rss_data_source(
             meta_data,
             'control_number')
-        if record_number == '':
-            return ''
-        else:
-            return root_url + 'records/' + record_number
+        return '' if record_number == '' else \
+            root_url + 'records/' + record_number
     elif keyword == 'seeAlso':
         return config.WEKO_RDF_SCHEMA
     elif keyword == 'creator':
         if source.get('creator'):
             creator = source.get('creator')
             if (not creator
-                    or not creator.get('creatorName')
+                    or not creator.get('familyName')
                     or not creator.get('givenName')):
                 return ''
             else:
-                creator_name = creator.get('creatorName')
+                family_name = creator.get('familyName')
                 given_name = creator.get('givenName')
                 list_creator = list()
-                for i in range(0, len(creator_name)):
-                    if creator_name[i]:
+                for i in range(0, len(family_name)):
+                    if family_name[i]:
                         if given_name[i]:
                             list_creator.append(
-                                given_name[i] + '.' + creator_name[i])
+                                family_name[i] + '.' + given_name[i])
                         else:
-                            list_creator.append(creator_name[i])
+                            list_creator.append(family_name[i])
                     else:
                         continue
                 return list_creator
@@ -586,17 +597,10 @@ def find_rss_value(data, keyword):
         return get_rss_data_source(source, 'sourceTitle')
     elif keyword == 'issn':
         result = ''
-        if source.get('relation'):
-            relation = source.get('relation')
-            if (relation.get('relatedIdentifier')
-                    and relation.get('relatedIdentifier')[0]):
-                related_identifier = relation.get('relatedIdentifier')[0]
-                result = get_rss_data_source(related_identifier, 'value')
-        if result == '':
-            if (source.get('sourceIdentifier')
-                    and source.get('sourceIdentifier')[0]):
-                source_identifier = source.get('sourceIdentifier')[0]
-                result = get_rss_data_source(source_identifier, 'value')
+        if source.get('sourceIdentifier') and source.get(
+                'sourceIdentifier')[0]:
+            source_identifier = source.get('sourceIdentifier')[0]
+            result = get_rss_data_source(source_identifier, 'value')
         return result
     elif keyword == 'volume':
         return get_rss_data_source(source, 'volume')
@@ -607,14 +611,24 @@ def find_rss_value(data, keyword):
     elif keyword == 'pageEnd':
         return get_rss_data_source(source, 'pageEnd')
     elif keyword == 'date':
-        if source.get('date') and source.get('date')[0]:
-            date = source.get('date')[0]
-            return get_rss_data_source(date, 'value')
-        else:
-            return ''
+        result = ''
+        if source.get('date') and source.get('date')[0] and \
+                get_rss_data_source(source.get('date')[0], 'dateType') ==  \
+                'Issued':
+            result = get_rss_data_source(source.get('date')[0], 'value')
+        return result
     elif keyword == 'description':
         if source.get('description') and source.get('description')[0]:
-            return source.get('description')[0]
+            item_type_mapping = Mapping.get_record(source.get(
+                '_item_metadata').get('item_type_id'))
+            item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
+            desc_typ = item_map.get('description.@attributes.descriptionType')
+            desc_val = item_map.get('description.@value')
+            desc_dat = source.get('_item_metadata').get(desc_typ.split('.')[0])
+            if desc_dat and desc_dat.get('attribute_value_mlt'):
+                for desc in desc_dat.get('attribute_value_mlt'):
+                    if desc.get(desc_typ.split('.')[1]) == 'Abstract':
+                        return desc.get(desc_val.split('.')[1])
         else:
             return ''
     elif keyword == '_updated':
@@ -642,7 +656,7 @@ def get_rss_data_source(source, keyword):
         return ''
 
 
-def get_ES_result_by_date(start_date, end_date):
+def get_elasticsearch_result_by_date(start_date, end_date):
     """Get data from elastic search.
 
     Arguments:
@@ -656,8 +670,14 @@ def get_ES_result_by_date(start_date, end_date):
     records_search = RecordsSearch()
     records_search = records_search.with_preference_param().params(
         version=False)
-    search_instance, qs_kwargs = item_search_factory(
-        None, records_search, start_date, end_date)
-    search_result = search_instance.execute()
-    rd = search_result.to_dict()
-    return rd
+    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    result = None
+    try:
+        search_instance, _qs_kwargs = item_search_factory(
+            None, records_search, start_date, end_date)
+        search_result = search_instance.execute()
+        result = search_result.to_dict()
+    except NotFoundError:
+        current_app.logger.debug('Indexes do not exist yet!')
+
+    return result

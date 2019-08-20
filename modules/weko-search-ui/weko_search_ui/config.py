@@ -312,3 +312,6 @@ WEKO_SEARCH_KEYWORDS_DICT = {
 WEKO_SEARCH_TYPE_KEYWORD = 'keyword'
 
 WEKO_SEARCH_TYPE_INDEX = 'index'
+
+WEKO_SEARCH_MAX_FEEDBACK_MAIL = 100
+"""Maximum number of feedback mail could be send."""
