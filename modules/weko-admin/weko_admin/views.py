@@ -454,16 +454,19 @@ def manual_send_site_license_mail(start_month, end_month):
                                            event='site_access')
         for s in send_list:
             mail_list = s.mail_address.split('\n')
+            send_flag = False
             for r in res['institution_name']:
                 if s.organization_name == r['name']:
                     send_site_license_mail(r['name'], mail_list, agg_date, r)
+                    send_flag = True
                     break
-            data = {'file_download': 0,
-                    'file_preview': 0,
-                    'record_view': 0,
-                    'search': 0,
-                    'top_view': 0}
-            send_site_license_mail(s.organization_name,
-                                   mail_list, agg_date, data)
+            if not send_flag:
+                data = {'file_download': 0,
+                        'file_preview': 0,
+                        'record_view': 0,
+                        'search': 0,
+                        'top_view': 0}
+                send_site_license_mail(s.organization_name,
+                                       mail_list, agg_date, data)
 
         return 'finished'

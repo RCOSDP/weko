@@ -18,41 +18,12 @@
 # MA 02111-1307, USA.
 #}
 
-<!DOCTYPE html>
-<html lang="{{ lang_code }}">
-    <head>
-        <meta charset="utf-8" />
-    </head>
-    <body>
-        <p>{{ _('Access Count By Site License') }}</p>
-        <p>{{ _('Aggregation') }} : {{agg_date}}</p>
-        <table>
-            <tr>
-                <th style="text-align: right;">[{{ _('WEKO Top Page Access Count') }}]</th>
-                <td style="width:1%"></td>
-                <td>{{ data['top_view']|int }}</td>
-            </tr>
-            <tr>
-                <th style="text-align: right;">[{{ _('Number Of Searches') }}]</th>
-                <td></td>
-                <td>{{ data['search']|int }}</td>
-            </tr>
-            <tr>
-                <th style="text-align: right;">[{{ _('Number Of Views') }}]</th>
-                <td></td>
-                <td>{{ data['record_view']|int }}</td>
-            </tr>
-            <tr>
-                <th style="text-align: right;">[{{ _('Number Of File download') }}]</th>
-                <td></td>
-                <td>{{ data['file_download']|int }}</td>
-            </tr>
-            <tr>
-                <th style="text-align: right;">[{{ _('Number Of File Regeneration') }}]</th>
-                <td></td>
-                <td>{{ data['file_preview']|int }}</td>
-            </tr>
-        </table>
-    </body>
-</html>
+{{ _('Access Count By Site License') }}
+{{ _('Aggregation') }} : {{agg_date}}
+
+[{{ _('WEKO Top Page Access Count') }}] : {{ data['top_view']|int }}
+[{{ _('Number Of Searches') }}] : {{ data['search']|int }}
+[{{ _('Number Of Views') }}] : {{ data['record_view']|int }}
+[{{ _('Number Of File download') }}] : {{ data['file_download']|int }}
+[{{ _('Number Of File Regeneration') }}] : {{ data['file_preview']|int }}
 
