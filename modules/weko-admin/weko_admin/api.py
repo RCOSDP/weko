@@ -29,9 +29,9 @@ from invenio_mail.api import send_mail
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy import text
 
-from .utils import get_system_default_language
 from .models import AdminLangSettings, LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress
+from .utils import get_system_default_language
 
 
 def is_restricted_user(user_info):
