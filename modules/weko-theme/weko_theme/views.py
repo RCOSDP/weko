@@ -94,18 +94,6 @@ def index():
     top_viewed.send(current_app._get_current_object(),
                     info=send_info)
 
-    from weko_admin.models import SiteInfo
-    from weko_admin.utils import get_site_name_for_current_language
-    site_info = SiteInfo.get()
-    title = get_site_name_for_current_language(site_info.site_name)
-    current_app.config.setdefault(
-        'WEKO_SITE_INFO',
-        site_info,
-    )
-    current_app.config.setdefault(
-        'WEKO_TITLE',
-        title,
-    )
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         render_widgets=True,
@@ -122,3 +110,18 @@ def edit():
     return render_template(
         current_app.config['BASE_EDIT_TEMPLATE'],
     )
+
+@blueprint.app_template_filter('get_site_name')
+def get_site_name(title):
+    from weko_admin.models import SiteInfo
+    from weko_admin.utils import get_site_name_for_current_language
+    site_info = SiteInfo.get()
+    site_name = get_site_name_for_current_language(site_info.site_name)
+    return site_name
+
+@blueprint.app_template_filter('get_site_info')
+def get_site_info(title):
+    from weko_admin.models import SiteInfo
+    from weko_admin.utils import get_site_name_for_current_language
+    site_info = SiteInfo.get()
+    return site_info

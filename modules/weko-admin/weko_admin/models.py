@@ -1259,7 +1259,7 @@ class SiteInfo(db.Model):
     def get(cls):
         """Get site infomation."""
         try:
-            with db.session.no_autoflush:
+            with db.session.begin_nested():
                 query_object = SiteInfo.query.filter_by().one_or_none()
                 if query_object:
                     return query_object
