@@ -55,6 +55,7 @@ from .permissions import check_created_id, check_file_download_permission, \
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_item_pidstore_identifier, get_min_price_billing_file_download
 from .utils import soft_delete as soft_delete_imp
+from .utils import restore as restore_imp
 
 
 blueprint = Blueprint(
@@ -520,6 +521,20 @@ def soft_delete(recid):
             abort(403)
         soft_delete_imp(recid)
         return make_response('PID: ' + str(recid) + ' DELETED', 200)
+    except Exception as ex:
+        print(str(ex))
+        abort(500)
+
+
+@blueprint.route("/records/restore/<recid>", methods=['POST'])
+@login_required
+def restore(recid):
+    try:
+        from invenio_files_rest.permissions import has_update_version_role
+        if not has_update_version_role(current_user):
+            abort(403)
+        restore_imp(recid)
+        return make_response('PID: ' + str(recid) + ' RESTORED', 200)
     except Exception as ex:
         print(str(ex))
         abort(500)
