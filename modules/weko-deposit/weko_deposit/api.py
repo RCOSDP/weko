@@ -349,8 +349,8 @@ class WekoDeposit(Deposit):
         """Publish the deposit."""
         if self.data is None:
             self.data = self.get('_deposit', {})
-        if 'control_number' in self:
-            self.pop('control_number')
+#        if 'control_number' in self:
+#            self.pop('control_number')
         if '$schema' not in self:
             self['$schema'] = current_app.extensions['invenio-jsonschemas'].\
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
@@ -443,6 +443,8 @@ class WekoDeposit(Deposit):
         else:
             dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
+        if 'pid' in self['_deposit']:
+            self['_deposit']['pid']['revision_id'] += 1
         if has_request_context():
             if current_user:
                 user_id = current_user.get_id()
