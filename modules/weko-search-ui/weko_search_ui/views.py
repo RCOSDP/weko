@@ -31,6 +31,7 @@ from flask import Blueprint, abort, current_app, jsonify, make_response, \
 from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui.ipaddr import check_site_license_permission
@@ -86,6 +87,10 @@ def search():
 
     detail_condition = get_search_detail_keyword('')
 
+    export_settings = AdminSettings.get('item_export_settings') or \
+        AdminSettings.Dict2Obj(
+            current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
+
     height = style.height if style else None
 
     index_link_list = []
@@ -126,6 +131,7 @@ def search():
             community_id=community_id,
             width=width,
             height=height,
+            allow_item_exporting=export_settings.allow_item_exporting,
             **ctx)
     else:
         journal_info = None
@@ -164,6 +170,7 @@ def search():
             index_link_list=index_link_list,
             journal_info=journal_info,
             index_display_format=index_display_format,
+            allow_item_exporting=export_settings.allow_item_exporting,
             **ctx)
 
 

@@ -119,7 +119,7 @@
             <option value="all_print">{{_('Print All Items Of This Index')}}</option>
           </select>
           <button type="button" class="btn btn-primary hide">{{_('Execution')}}</button>
-          {%- if not item_export %}
+          {%- if not item_export and allow_item_exporting %}
             <a href="{{ url_for('weko_items_ui.export', **request.args) }}" class="btn btn-primary">
               <i class="fa fa-download"></i>{{ _('Export') }}
             </a>
