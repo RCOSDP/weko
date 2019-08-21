@@ -54,6 +54,8 @@ from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
 from .utils import get_billing_file_download_permission, get_groups_price, \
     get_item_pidstore_identifier, get_min_price_billing_file_download
+from .utils import soft_delete as soft_delete_imp
+
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -507,3 +509,17 @@ def citation(record, pid, style=None, ln=None):
         current_app.logger.exception(
             'Citation formatting for record {0} failed.'.format(str(record.id)))
         return None
+
+
+@blueprint.route("/records/soft_delete/<recid>", methods=['POST'])
+@login_required
+def soft_delete(recid):
+    try:
+        from invenio_files_rest.permissions import has_update_version_role
+        if not has_update_version_role(current_user):
+            abort(403)
+        soft_delete_imp(recid)
+        return make_response('PID: ' + str(recid) + ' DELETED', 200)
+    except Exception as ex:
+        print(str(ex))
+        abort(500)
