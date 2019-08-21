@@ -713,6 +713,7 @@ class ExtendComponent extends React.Component {
         setting['access_counter'] = event.target.value;
         this.setState({ settings: setting });
         this.handleChange("access_counter", event.target.value);
+        this.props.getValueOfField('accessInitValue', event.target.value);
     }
 
     handleChangeNewDates(event) {
@@ -891,8 +892,13 @@ class ComponentButtonLayout extends React.Component {
         }else {
             delete multiLangData[currentLanguage];
         }
-
+        if ((data['widget_type'] + "") == ACCESS_COUNTER) {
+            for (let [key, value] of Object.entries(multiLangData)) {
+                value.description['access_counter'] = data.accessInitValue
+            }
+        }
         this.props.getValueOfField('multiLangData', multiLangData);
+        this.props.getValueOfField('accessInitValue', data.accessInitValue);
         data['multiLangSetting'] = multiLangData;
         delete data['accessInitValue']
         let request = {
@@ -1184,9 +1190,9 @@ class ComponentLanguage extends React.Component {
             registeredLanguage.forEach(function (lang) {
                 let innerHTML;
                 if (lang == selected) {
-                    innerHTML = <option value={lang} style={{ fontWeight: 'bold' }} selected>{languageNameList[lang]}&nbsp;(Registered)</option>;
+                    innerHTML = <option key={lang} value={lang} style={{ fontWeight: 'bold' }} selected>{languageNameList[lang]}&nbsp;(Registered)</option>;
                 }else {
-                    innerHTML = <option value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
+                    innerHTML = <option key={lang} value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
                 }
                 optionList.push(innerHTML);
             });
@@ -1194,11 +1200,11 @@ class ComponentLanguage extends React.Component {
         languageList.forEach(function (lang) {
             let innerHTML;
             if ($.isEmptyObject(registeredLanguage) && lang == state.defaultLanguage && isReset) {
-                innerHTML = <option value={lang} selected>{languageNameList[lang]}</option>;
+                innerHTML = <option key={lang} value={lang} selected>{languageNameList[lang]}</option>;
             } else if (lang == selected) {
-                innerHTML = <option value={lang} selected>{languageNameList[lang]}</option>;
+                innerHTML = <option key={lang} value={lang} selected>{languageNameList[lang]}</option>;
             } else {
-                innerHTML = <option value={lang}>{languageNameList[lang]}</option>;
+                innerHTML = <option key={lang} value={lang}>{languageNameList[lang]}</option>;
             }
             optionList.push(innerHTML);
         });
@@ -1344,6 +1350,9 @@ class MainLayout extends React.Component {
             case 'multiLangData':
                 this.setState({ multiLangSetting: value });
                 break;
+            case 'accessInitValue':
+                this.setState({ accessInitValue: value })
+                break;
         }
     }
 
@@ -1443,14 +1452,16 @@ class MainLayout extends React.Component {
                     label: '',
                     settings: {},
                     multiLanguageChange: true,
-                    language: newLanguage
+                    language: newLanguage,
+                    accessInitValue: accessInitValue
                 });
             }
             else{
                 this.setState({
                     label: '',
                     multiLanguageChange: true,
-                    language: newLanguage
+                    language: newLanguage,
+                    accessInitValue: accessInitValue
                 });
             }
         }
