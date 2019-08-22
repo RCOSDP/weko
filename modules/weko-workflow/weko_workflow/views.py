@@ -60,7 +60,8 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
-    item_metadata_validation, pidstore_identifier_mapping
+    item_metadata_validation, pidstore_identifier_mapping, \
+    registrer_cnri
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -242,7 +243,7 @@ def display_activity(activity_id=0):
             index_address = path.pop(-1).split('/')
             index_id = Index.query.filter_by(id=index_address.pop()).one()
             community_id = get_community_id_by_index(
-                index_id.index_name_english)
+                index_id.index_name)
         idf_grant_data = Identifier.query.filter_by(
             repository=community_id).one_or_none()
 
@@ -512,8 +513,8 @@ def next_action(activity_id='0', action_id=0):
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
 
-    if (1 == post_json.get('temporary_save')
-            and action_endpoint != 'identifier_grant'):
+    if post_json.get('temporary_save') == 1 \
+            and action_endpoint != 'identifier_grant':
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
@@ -633,6 +634,28 @@ def next_action(activity_id='0', action_id=0):
                 session['update_json_schema'][activity_id] = {}
 
         pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+
+    if action_endpoint == 'item_login':
+        activity_obj = WorkActivity()
+        activity_detail = activity_obj.get_activity_detail(activity_id)
+        item_id = activity_detail.item_id
+        record = WekoRecord.get_record(activity_detail.item_id)
+        path = record.get('path')
+        record_id = record.get('_deposit')['id']
+        if len(path) > 1:
+            community_id = 'Root Index'
+        else:
+            index_address = path.pop(-1).split('/')
+            index_id = Index.query.filter_by(id=index_address.pop()).one()
+            community_id = get_community_id_by_index(
+                index_id.index_name)
+            idf_index_setting = Identifier.query.filter_by(
+                repository=community_id).one_or_none()
+
+        if idf_index_setting:
+            registrer_cnri(item_uuid=item_id,
+                          deposit_id=int(record_id),
+                          cnri_prefix=idf_index_setting.cnri)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:

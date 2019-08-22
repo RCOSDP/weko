@@ -200,5 +200,13 @@ class Identifier(db.Model):
         return '<Identifier {}, Repository: {}>'.format(self.id,
                                                         self.repository)
 
+    @classmethod
+    def get(cls, community_name):
+        """Get Identifier by community's name."""
+        try:
+            return cls.query.filter_by(repository=community_name).one_or_none()
+        except Exception as ex:
+            current_app.logger.error(ex)
+
 
 __all__ = ('Identifier', 'PDFCoverPageSettings')

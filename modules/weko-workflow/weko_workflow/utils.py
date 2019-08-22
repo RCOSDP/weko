@@ -31,6 +31,9 @@ from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_records_ui.models import Identifier
+
+from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import WorkActivity
 from .config import IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY
@@ -46,6 +49,8 @@ def get_community_id_by_index(index_name):
     communities = Community.query.all()
     ret_community = []
     for community in communities:
+        if community.index.index_name == index_name:
+            ret_community.append(community.id)
         if community.index.index_name_english == index_name:
             ret_community.append(community.id)
 
@@ -231,6 +236,55 @@ def reg_invenio_pidstore(pid_value, item_id):
                                     PIDStatus.REGISTERED, 'rec', item_id)
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
+
+
+def registrer_cnri(item_uuid, deposit_id, cnri_prefix):
+    """
+    Register CNRI with Persistent Identifiers.
+
+    :param item_id: Record's UUID
+    :param record_id: Record deposited identifier
+    :param identifier_setting
+    """
+    cnri_link = IDENTIFIER_GRANT_LIST[4][2] + '/' + cnri_prefix + '/' \
+        + "{:010d}".format(deposit_id)
+    try:
+        prev_cnri = PersistentIdentifier.query.filter_by(pid_type='cnri',
+            object_uuid=item_uuid).one_or_none()
+
+        if prev_cnri:
+            return
+
+        PersistentIdentifier.create(
+            'cnri',
+            str(cnri_link),
+            object_type='rec',
+            object_uuid=item_uuid,
+            status=PIDStatus.REGISTERED
+        )
+    except PIDDoesNotExistError as pidNotEx:
+        current_app.logger.error(pidNotEx)
+
+
+def identifier_jpcoar_mapping(item_type_id, keys):
+    """
+    Mapping jpcoar for identifier.
+
+    :param item_type_id: id of item_type
+    :param keys: a list key of attribute mapping
+    :return: res_dict
+    """
+    res_dict = {}
+    if item_type_id:
+        type_mapping = Mapping.get_record(item_type_id)
+        item_map = get_mapping(type_mapping, "jpcoar_mapping")
+        if keys[0] in item_map:
+            _identifier_map = item_map[keys[0]].split('.')
+            res_dict['id'] = _identifier_map[0]
+            res_dict['val'] = _identifier_map[1]
+        if keys[1] in item_map:
+            res_dict['type'] = item_map[keys[1]].split('.')[1]
+    return res_dict
 
 
 def item_metadata_validation(item_id, identifier_type):
@@ -509,27 +563,6 @@ def check_required_data(data, key, repeatable=False):
         return None
     else:
         return error_list
-
-
-def identifier_jpcoar_mapping(item_type_id, keys):
-    """
-    Mapping jpcoar for identifier.
-
-    :param item_type_id: id of item_type
-    :param keys: a list key of attribute mapping
-    :return: res_dict
-    """
-    res_dict = {}
-    if item_type_id:
-        type_mapping = Mapping.get_record(item_type_id)
-        item_map = get_mapping(type_mapping, "jpcoar_mapping")
-        if keys[0] in item_map:
-            _identifier_map = item_map[keys[0]].split('.')
-            res_dict['id'] = _identifier_map[0]
-            res_dict['val'] = _identifier_map[1]
-        if keys[1] in item_map:
-            res_dict['type'] = item_map[keys[1]].split('.')[1]
-    return res_dict
 
 
 class MappingData(object):
