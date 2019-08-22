@@ -31,7 +31,7 @@ from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
 from .models import WidgetDesignSetting, WidgetItem, WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
-    convert_data_to_desgin_pack, convert_data_to_edit_pack, \
+    convert_data_to_design_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
     get_elasticsearch_result_by_date, update_general_item
 
@@ -82,7 +82,7 @@ class WidgetItemServices:
         if data.get('flag_edit'):
             old_repo = cls.get_repo_by_id(current_id)
             if (str(old_repo) != str(widget_data.get('repository'))
-                    and WidgetDesignServices.validate_admin_widget_item_setting(
+                and WidgetDesignServices.validate_admin_widget_item_setting(
                     data.get('data_id'))):
                 result['message'] = "Cannot update repository " \
                     "of this widget because " \
@@ -325,7 +325,7 @@ class WidgetItemServices:
         widget_data = convert_widget_data_to_dict(
             WidgetItem.get_by_id(widget_id))
         multi_lang_data = WidgetMultiLangData.get_by_widget_id(widget_id)
-        result = convert_data_to_desgin_pack(widget_data, multi_lang_data)
+        result = convert_data_to_design_pack(widget_data, multi_lang_data)
         return result
 
     @classmethod
@@ -344,7 +344,7 @@ class WidgetItemServices:
         widget_data = convert_widget_data_to_dict(
             WidgetItem.get_by_id(widget_id))
         multi_lang_data = WidgetMultiLangData.get_by_widget_id(widget_id)
-        converted_data = convert_data_to_desgin_pack(
+        converted_data = convert_data_to_design_pack(
             widget_data,
             multi_lang_data)
         result = convert_data_to_edit_pack(converted_data)

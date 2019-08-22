@@ -26,7 +26,7 @@ from datetime import datetime
 from xml.etree.ElementTree import tostring
 
 from elasticsearch.exceptions import NotFoundError
-from flask import Response, current_app, request
+from flask import Markup, Response, current_app, request
 from invenio_search import RecordsSearch
 from sqlalchemy import asc
 from weko_admin.models import AdminLangSettings
@@ -257,22 +257,44 @@ def build_data_setting(data):
     """
     result = dict()
     convert_popular_data(data, result)
+    setting = data['settings']
     if str(data.get('widget_type')) == 'Access counter':
-        result['access_counter'] = data['settings'] \
-                                       .get('access_counter') or '0'
-        result['following_message'] = data['settings'] \
-            .get('following_message') or '0'
-        result['other_message'] = data['settings'] \
-            .get('other_message') or '0'
-        result['preceding_message'] = data['settings'] \
-            .get('preceding_message') or '0'
+        _build_access_counter_setting_data(result, setting)
     if str(data.get('widget_type')) == 'New arrivals':
-        result['new_dates'] = data['settings'].get('new_dates') or '5'
-        result['display_result'] = data['settings'].get(
-            'display_result') or '5'
-        result['rss_feed'] = data['settings'].get('rss_feed') or False
+        _build_new_arrivals_setting_data(result, setting)
 
     return result
+
+
+def _build_access_counter_setting_data(result, setting):
+    """Build Access Counter setting data
+
+    :param result:
+    :param setting:
+    """
+    result['access_counter'] = Markup.escape(
+        setting.get('access_counter')) or '0'
+    result['following_message'] = Markup.escape(
+        setting.get('following_message')) or ''
+    result['other_message'] = Markup.escape(
+        setting.get('other_message')) or ''
+    result['preceding_message'] = Markup.escape(
+        setting.get('preceding_message')) or ''
+
+
+def _build_new_arrivals_setting_data(result, setting):
+    """Build New Arrivals setting data
+
+    :param result:
+    :param setting:
+    """
+    result['new_dates'] = Markup.escape(
+        setting.get('new_dates')) or current_app.config[
+                                    'WEKO_GRIDLAYOUT_DEFAULT_NEW_DATE']
+    result['display_result'] = Markup.escape(
+        setting.get('display_result')) or current_app.config[
+                                   'WEKO_GRIDLAYOUT_DEFAULT_DISPLAY_RESULT']
+    result['rss_feed'] = Markup.escape(setting.get('rss_feed')) or False
 
 
 def build_multi_lang_data(widget_id, multi_lang_json):
@@ -294,7 +316,7 @@ def build_multi_lang_data(widget_id, multi_lang_json):
         new_lang_data = dict()
         new_lang_data['widget_id'] = widget_id
         new_lang_data['lang_code'] = k
-        new_lang_data['label'] = v.get('label')
+        new_lang_data['label'] = Markup.escape(v.get('label'))
         new_lang_data['description_data'] = json.dumps(v.get('description'))
         result.append(new_lang_data)
     return result
@@ -345,7 +367,7 @@ def convert_widget_multi_lang_to_dict(multi_lang_data):
     return result
 
 
-def convert_data_to_desgin_pack(widget_data, list_multi_lang_data):
+def convert_data_to_design_pack(widget_data, list_multi_lang_data):
     """Convert loaded data to widget design data pack.
 
     Arguments:
