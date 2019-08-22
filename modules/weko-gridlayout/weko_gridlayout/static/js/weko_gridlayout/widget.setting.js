@@ -33,12 +33,14 @@ const ComponentSelectField = function(props){
             .then(
                 (result) => {
                     if (result.options) {
+                        props.getValueOfField(props.key_binding, props.data_load || result.options[0].text);
                         options = result.options.map((option) => {
                             return (
                                 <option key={option.value} value={option.value}>{option.text}</option>
                             )
                         });
                     } else {
+                        props.getValueOfField(props.key_binding, props.data_load || result.repositories[0].id);
                         options = result.repositories.map((repository) => {
                             return (
                                 <option key={repository.id} value={repository.id}>{repository.id}</option>
@@ -54,6 +56,7 @@ const ComponentSelectField = function(props){
             )
         }
         else{
+            props.getValueOfField(props.key_binding, props.data_load || props.data[0].text);
             options = props.data.map((option) => {
                 return (
                     <option key={option.value} value={option.value}>{option.text}</option>
@@ -154,6 +157,10 @@ const ComponentTextboxForAccessCounter = function(props){
 
 const ComponentSelectColorFiled = function(props){
     const color = userSelectedInput(props.data_load || '#4169E1', props.getValueOfField, props.key_binding);
+
+    useEffect(() => {
+        props.getValueOfField(props.key_binding, props.data_load || '#4169E1');
+    }, [])
 
     return (
         <div className="form-group row">
@@ -755,7 +762,7 @@ class ExtendComponent extends React.Component {
                     <div className="form-group row">
                         <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
                         <div class="controls col-xs-3">
-                            <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter || ""} onChange={this.handleChangeAccessCounter} className="form-control" />
+                            <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter || "0"} onChange={this.handleChangeAccessCounter} className="form-control" />
                         </div>
                     </div>
                     <div className="form-group">
