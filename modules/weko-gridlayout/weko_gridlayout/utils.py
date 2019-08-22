@@ -82,18 +82,31 @@ def delete_item_in_preview_widget_item(data_id, json_data):
     return data
 
 
+def convert_popular_data(source_data, des_data):
+    """Convert popular data.
+
+    Arguments:
+        source_data {dict} -- Source data
+        des_data {dict} -- Destination data
+    """
+    des_data['background_color'] = source_data.get('background_color')
+    des_data['label_enable'] = source_data.get('label_enable')
+    des_data['theme'] = source_data.get('theme')
+    if des_data['theme'] != "simple":
+        des_data['frame_border_color'] = source_data.get('frame_border_color')
+        des_data['border_style'] = source_data.get('border_style')
+    if des_data['label_enable']:
+        des_data['label_text_color'] = source_data.get('label_text_color')
+        des_data['label_color'] = source_data.get('label_color')
+
+
 def update_general_item(item, data_result):
     """Update general field item.
 
     :param item: item need to be update
     :param data_result: result
     """
-    item['frame_border'] = data_result.get('frame_border')
-    item['frame_border_color'] = data_result.get(
-        'frame_border_color')
-    item['background_color'] = data_result.get('background_color')
-    item['label_color'] = data_result.get('label_color')
-    item['text_color'] = data_result.get('text_color')
+    convert_popular_data(data_result, item)
     item['name'] = data_result.get('label')
     item['type'] = data_result.get('widget_type')
     item['multiLangSetting'] = data_result.get('multiLangSetting')
@@ -243,14 +256,10 @@ def build_data_setting(data):
 
     """
     result = dict()
-    result['background_color'] = data.get('background_color')
-    result['frame_border'] = data.get('frame_border')
-    result['frame_border_color'] = data.get('frame_border_color')
-    result['label_color'] = data.get('label_color')
-    result['text_color'] = data.get('text_color')
+    convert_popular_data(data, result)
     if str(data.get('widget_type')) == 'Access counter':
         result['access_counter'] = data['settings'] \
-            .get('access_counter') or '0'
+                                       .get('access_counter') or '0'
         result['following_message'] = data['settings'] \
             .get('following_message') or '0'
         result['other_message'] = data['settings'] \
@@ -387,23 +396,21 @@ def convert_data_to_edit_pack(data):
     result = dict()
     result_settings = dict()
     settings = copy.deepcopy(data.get('settings'))
+    convert_popular_data(settings, result)
     result['widget_id'] = data.get('widget_id')
-    result['background_color'] = settings.get('background_color')
     result['browsing_role'] = data.get('browsing_role')
     result['edit_role'] = data.get('edit_role')
     result['is_enabled'] = data.get('is_enabled')
     result['enable'] = data.get('is_enabled')
-    result['frame_border'] = settings.get('frame_border')
-    result['frame_border_color'] = settings.get('frame_border_color')
-    result['label_color'] = settings.get('label_color')
     result['multiLangSetting'] = settings.get('multiLangSetting')
     result['repository_id'] = data.get('repository_id')
-    result['text_color'] = settings.get('text_color')
     result['widget_type'] = data.get('widget_type')
     if str(data.get('widget_type')) == 'Access counter':
         result_settings['access_counter'] = settings.get('access_counter')
-        result_settings['preceding_message'] = settings.get('preceding_message')
-        result_settings['following_message'] = settings.get('following_message')
+        result_settings['preceding_message'] = settings.get(
+            'preceding_message')
+        result_settings['following_message'] = settings.get(
+            'following_message')
         result_settings['other_message'] = settings.get('other_message')
     if str(data.get('widget_type')) == 'New arrivals':
         result_settings['new_dates'] = settings.get('new_dates')
@@ -571,8 +578,7 @@ def find_rss_value(data, keyword):
     elif keyword == 'creator':
         if source.get('creator'):
             creator = source.get('creator')
-            if (not creator
-                    or not creator.get('familyName')
+            if (not creator or not creator.get('familyName')
                     or not creator.get('givenName')):
                 return ''
             else:
@@ -613,7 +619,7 @@ def find_rss_value(data, keyword):
     elif keyword == 'date':
         result = ''
         if source.get('date') and source.get('date')[0] and \
-                get_rss_data_source(source.get('date')[0], 'dateType') ==  \
+            get_rss_data_source(source.get('date')[0], 'dateType') == \
                 'Issued':
             result = get_rss_data_source(source.get('date')[0], 'value')
         return result

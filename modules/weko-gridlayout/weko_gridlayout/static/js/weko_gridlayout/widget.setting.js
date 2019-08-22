@@ -22,7 +22,7 @@ function useSelectedInput(initialValue, getValueOfField, key_binding) {
   }
 
 const ComponentSelectField = function(props){
-    const selectedData = useSelectedInput('0', props.getValueOfField, props.key_binding);
+    const selectedData = useSelectedInput(props.data_load, props.getValueOfField, props.key_binding);
     const [selectOptions, setSelectOptions] = useState([]);
 
     useEffect(() => {
@@ -152,62 +152,54 @@ const ComponentTextboxForAccessCounter = function(props){
     )
 }
 
-class ComponentSelectColorFiled extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            color: '#4169E1',
-        };
-        this.handleChange = this.handleChange.bind(this);
-    }
-
-    componentDidMount() {
-        this.setState({
-            color: this.props.data_load
-        })
-    }
-
-    handleChange(event) {
-        this.setState({ color: event.target.value });
-        this.props.getValueOfField(this.props.key_binding, event.target.value);
+function useSelectedColorInput(initialValue, getValueOfField, key_binding) {
+    const [value, setValue] = useState(initialValue);
+    function handleChange(e) {
+        setValue(e.target.value);
+        getValueOfField(key_binding, event.target.value);
         event.preventDefault();
     }
+    return {
+      value,
+      onChange: handleChange,
+    };
+  }
 
-    render() {
-        return (
-            <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                <div className="controls col-xs-2">
-                    <input name={this.props.name} type="color" className="style-select-color" name="favcolor" value={this.state.color} onChange={this.handleChange} />
-                </div>
+const ComponentSelectColorFiled = function(props){
+    const color = useSelectedColorInput(props.data_load || '#4169E1', props.getValueOfField, props.key_binding);
+
+    return (
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
+            <div className="controls col-xs-2">
+                <input name={props.name} type="color" className="style-select-color" {...color} />
             </div>
-        )
-    }
+        </div>
+    )
 }
 
-class ComponentCheckboxField extends React.Component {
-    constructor(props) {
-        super(props);
-        this.handleChange = this.handleChange.bind(this);
-        this.state = {
-            is_default_Checked: this.props.data_load || false,
-        }
+function userCheckboxInput(initialValue, getValueOfField, key_binding) {
+    const [value, setValue] = useState(initialValue);
+    function handleChange(e) {
+        getValueOfField(key_binding, event.target.checked);
     }
+    return {
+        defaultChecked: value,
+        onChange: handleChange,
+    };
+  }
 
-    handleChange(event) {
-        this.props.getValueOfField(this.props.key_binding, event.target.checked);
-    }
+const ComponentCheckboxField = function(props){
+    const is_default_Checked = userCheckboxInput(props.data_load || false, props.getValueOfField, props.key_binding);
 
-    render() {
-        return (
-            <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                <div class="controls col-xs-1">
-                    <input name={this.props.name} type="checkbox" onChange={this.handleChange} defaultChecked={this.state.is_default_Checked} />
-                </div>
+    return (
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
+            <div class="controls col-xs-1">
+                <input name={props.name} type="checkbox" {...is_default_Checked}/>
             </div>
-        )
-    }
+        </div>
+    )
 }
 
 class ComponentFieldContainSelectMultiple extends React.Component {
@@ -1288,9 +1280,10 @@ class MainLayout extends React.Component {
             label: '',
             theme: this.props.data_load.theme,
             label_color: this.props.data_load.label_color,
-            frame_border: this.props.data_load.frame_border,
+            label_text_color: this.props.data_load.label_text_color,
+            border_style: this.props.data_load.border_style,
+            label_enable: this.props.data_load.label_enable,
             frame_border_color: this.props.data_load.frame_border_color,
-            text_color: this.props.data_load.text_color,
             background_color: this.props.data_load.background_color,
             browsing_role: this.props.data_load.browsing_role,
             edit_role: this.props.data_load.edit_role,
@@ -1326,14 +1319,14 @@ class MainLayout extends React.Component {
             case 'label_color':
                 this.setState({ label_color: value });
                 break;
-            case 'frame_border':
-                this.setState({ frame_border: value });
+            case 'label_text_color':
+                this.setState({ label_text_color: value });
+                    break;
+            case 'label_enable':
+                this.setState({ label_enable: value });
                 break;
             case 'frame_border_color':
                 this.setState({ frame_border_color: value });
-                break;
-            case 'text_color':
-                this.setState({ text_color: value });
                 break;
             case 'background_color':
                 this.setState({ background_color: value });
@@ -1362,8 +1355,8 @@ class MainLayout extends React.Component {
             case "theme":
                 this.setState({theme: value});
                 break;
-            case 'accessInitValue':
-                this.setState({ accessInitValue: value })
+            case "border_style":
+                this.setState({border_style: value});
                 break;
         }
     }
@@ -1504,7 +1497,7 @@ class MainLayout extends React.Component {
             <div>
                 <br />
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository} />
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository || '0'}  is_required = {true}/>
                 </div>
                 <div className="row">
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} is_required = {true}/>
@@ -1520,17 +1513,24 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Theme" data = {THEME_SETTING} key_binding="theme" data_load={this.state.theme} is_required = {false}/>
                 </div>
                 <div className="row">
+                    <ComponentCheckboxField name="Label Enable" getValueOfField={this.getValueOfField} key_binding="label_enable" data_load={this.state.label_enable} />
+                </div>
+                {this.state.label_enable ?
+                <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Color" key_binding="label_color" data_load={this.state.label_color} />
-                </div>
+                </div> : null }
+                {this.state.label_enable ?
                 <div className="row">
-                    <ComponentCheckboxField name="Frame Border" getValueOfField={this.getValueOfField} key_binding="frame_border" data_load={this.state.frame_border} />
-                </div>
+                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Text Color" key_binding="label_text_color" data_load={this.state.label_text_color} />
+                </div> : null }
+                {this.state.theme != "simple" ?
                 <div className="row">
-                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Frame Border Color" key_binding="frame_border_color" data_load={this.state.frame_border_color} />
-                </div>
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Border Style" data = {BORDER_STYLE_SETTING} key_binding="border_style" data_load={this.state.border_style} is_required = {false}/>
+                </div> : null }
+                {this.state.theme != "simple" ?
                 <div className="row">
-                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Text Color" key_binding="text_color" data_load={this.state.text_color} />
-                </div>
+                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Border Color" key_binding="frame_border_color" data_load={this.state.frame_border_color} />
+                </div> :null}
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding="background_color" data_load={this.state.background_color} />
                 </div>
@@ -1568,9 +1568,11 @@ $(function () {
             widget_type: '',
             label: '',
             label_color: '#4169E1',
-            frame_border: true,
+            label_text_color: '#4169E1',
+            border_style: 'none',
+            theme: 'default',
+            label_enable: true,
             frame_border_color: '#4169E1',
-            text_color: '#4169E1',
             background_color: '#4169E1',
             browsing_role: [1, 2, 3, 4, 99],
             edit_role: [1, 2, 3, 4, 99],
