@@ -758,7 +758,7 @@ class WekoDeposit(Deposit):
             pubs = '0'
         elif 'id' in data:
             recid = PersistentIdentifier.query.filter_by(
-                pid_type='recid', pid_value = data['id']).first()
+                pid_type='recid', pid_value=data['id']).first()
             rec = RecordMetadata.query.filter_by(id=recid.object_uuid).first()
             pubs = rec.json['publish_status']
 
