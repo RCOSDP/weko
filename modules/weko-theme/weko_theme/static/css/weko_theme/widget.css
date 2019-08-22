@@ -10,8 +10,7 @@
 }
 
 .widget-header {
-  border-top-right-radius: 0px !important;
-  border-top-left-radius: 0px !important;
+  margin-left: 10px;
   z-index: 999;
 }
 
@@ -34,7 +33,6 @@
   position: inherit;
   width: 100%;
   top: 0;
-  right: inherit;
 }
 
 .pad-top-30 {

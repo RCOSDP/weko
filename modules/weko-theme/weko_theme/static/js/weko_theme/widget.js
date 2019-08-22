@@ -129,17 +129,9 @@ let PageBodyGrid = function () {
     };
 
     this.widgetTemplate = function (node, index) {
-        let labelColor = "";
-        let frameBorderColor = "";
-        let backgroundColor = "";
         let content = "";
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
-        let leftStyle = "left: initial; ";
-        let rightStyle = "";
-        let paddingHeading = "padding: inherit; ";
-        let overFlowBody = "overflow-y: scroll; ";
-        let id = '';
         // Handle css style
         if (node.background_color) {
             backgroundColor = "background-color: " + node.background_color + "; ";
@@ -181,19 +173,12 @@ let PageBodyGrid = function () {
             this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
         }
 
-        let template =
-            '<div class="grid-stack-item widget-resize">' +
-            ' <div class="grid-stack-item-content panel panel-default widget" style="' +
-            backgroundColor + frameBorderColor + '">' +
-            '     <div " class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + rightStyle + '">' +
-            '       <strong style="' + paddingHeading + '">' + multiLangSetting.label + '</strong>' +
-            '     </div>' +
-            '     <div class="panel-body ql-editor"' + id +' style="' + overFlowBody + '">' +
-            content + '</div>' +
-            '   </div>' +
-            '</div>';
-
-        return template;
+        let widgetTheme = new WidgetTheme();
+        let widget_data = {
+            'header': multiLangSetting.label,
+            'body': content
+        }
+        return widgetTheme.buildTemplate(widget_data, node, widgetTheme.TEMPLATE_SIDE_LINE);
     };
 
     this.setAccessCounterValue = function(){
@@ -220,6 +205,91 @@ let PageBodyGrid = function () {
               })
          return data;
     };
+};
+
+let WidgetTheme = function() {
+	this.TEMPLATE_DEFAULT = {
+		'border': {
+			'border-radius': '5px',
+			'border-style': 'outset'
+		},
+		'scroll-bar': ''
+	};
+	this.TEMPLATE_SIDE_LINE = {
+		'border': {
+            'border-radius': '0px !important',
+			'border-left-style': 'groove',
+			'border-right-style': 'none',
+			'border-top-style': 'none',
+			'border-bottom-style': 'none'
+		},
+		'scroll-bar': ''
+	};
+	this.TEMPLATE_SIMPLE = {
+		'border': {
+			'border-style': 'none'
+		},
+		'scroll-bar': ''
+	};
+
+	this.buildTemplate = function (widget_data, widget_settings, template) {
+		if (!widget_data || !widget_settings) {
+			return undefined;
+		}
+		let id = (widget_data.id) ? widget_data.id : '';
+		let labelColor = (widget_settings.label_color) ? widget_settings.label_color : '';
+		let borderColor = (widget_settings.frame_border_color) ? widget_settings.frame_border_color : '';
+		if (template == this.TEMPLATE_SIDE_LINE) {
+			template.border['border-left-style'] = (widget_settings.border_style) ? widget_settings.border_style : 'groove';
+		}else {
+			template.border['border-style'] = (widget_settings.border_style) ? widget_settings.border_style : template.border['border-style'];
+		}
+        let borderStyle = (template == this.TEMPLATE_SIMPLE) ? '' : this.buildBorderCss(template.border, borderColor);
+		let backgroundColor = (widget_settings.background_color) ? widget_settings.background_color : '';
+
+		let result = '<div class="grid-stack-item widget-resize">' +
+			'    <div class="grid-stack-item-content panel widget" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
+			'        <div class="panel-heading widget-header widget-header-position" style="' + this.buildCssText('color', labelColor) + '">' +
+			'            <strong>' + widget_data.header + '</strong>' +
+			'        </div>' +
+			'        <div class="panel-body ql-editor"' + this.buildCssText('id', id)+ '">' + widget_data.body +
+			'        </div>' +
+			'    </div>' +
+            '</div>';
+        return result
+	}
+
+	this.buildCssText = function(keyword, data) {
+		let cssStr = '';
+		if (data == '') {
+			return cssStr;
+		}
+		switch (keyword) {
+			case 'color':
+				cssStr = 'color: ' + data + '; ';
+				break;
+			case 'background-color':
+				cssStr = 'background-color: ' + data + '; ';
+				break;
+			case 'id':
+				let innerID = 'new_arrivals' + '_' + index;
+				cssStr = 'id="' + innerID + '"';
+			default:
+				break;
+		}
+		return cssStr;
+	}
+
+	this.buildBorderCss = function(borderSettings, borderColor) {
+        let borderStyle = '';
+		for (let [key, value] of Object.entries(borderSettings)) {
+			if (key && value) {
+				borderStyle += key + ': ' + value + '; '
+			}
+		}
+		borderStyle += 'border-color:' + borderColor + '; ';
+		return borderStyle;
+	}
 };
 
 function getWidgetDesignSetting() {
