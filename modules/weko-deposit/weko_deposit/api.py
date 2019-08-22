@@ -360,8 +360,8 @@ class WekoDeposit(Deposit):
         """Publish the deposit."""
         if self.data is None:
             self.data = self.get('_deposit', {})
-#        if 'control_number' in self:
-#            self.pop('control_number')
+        if 'control_number' in self:
+            self.pop('control_number')
         if '$schema' not in self:
             self['$schema'] = current_app.extensions['invenio-jsonschemas'].\
                 path_to_url(current_app.config['DEPOSIT_DEFAULT_JSONSCHEMA'])
@@ -454,8 +454,8 @@ class WekoDeposit(Deposit):
         else:
             dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
-        if 'pid' in self['_deposit']:
-            self['_deposit']['pid']['revision_id'] += 1
+#        if 'pid' in self['_deposit']:
+#            self['_deposit']['pid']['revision_id'] += 1
         if has_request_context():
             if current_user:
                 user_id = current_user.get_id()
@@ -706,7 +706,6 @@ class WekoDeposit(Deposit):
         self.delete_es_index_attempt(self.pid)
 
         try:
-            actions = index_obj.get('actions', 'private')
             if not data:
                 datastore = RedisStore(redis.StrictRedis.from_url(
                     current_app.config['CACHE_REDIS_URL']))
@@ -755,8 +754,15 @@ class WekoDeposit(Deposit):
         jrc.update(dict(custom_sort=sub_sort))
         dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
-
-        pubs = '1' if 'private' in actions else '0'
+        pubs = '1'
+        actions = index_obj.get('actions')
+        if actions == 'publish':
+            pubs = '0'
+        elif 'id' in data:
+            recid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', pid_value = data['id']).first()
+            rec = RecordMetadata.query.filter_by(id=recid.object_uuid).first()
+            pubs = rec.json['publish_status']
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
