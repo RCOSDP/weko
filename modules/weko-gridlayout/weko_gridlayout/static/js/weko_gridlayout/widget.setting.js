@@ -1311,6 +1311,9 @@ class MainLayout extends React.Component {
             case "border_style":
                 this.setState({border_style: value});
                 break;
+            case 'accessInitValue':
+                this.setState({ accessInitValue: value });
+                break;
         }
     }
 
