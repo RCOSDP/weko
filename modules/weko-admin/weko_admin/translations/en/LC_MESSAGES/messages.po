@@ -552,7 +552,7 @@ msgstr "Update"
 #~ msgstr "Condition Name"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:41
-msgid "ON/OFF"
+msgid "Automatic Transmission ON/OFF"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:42
@@ -591,3 +591,46 @@ msgstr ""
 msgid "Duplicate Email Addresses."
 msgstr ""
 
+#: weko_admin/utils.py:50
+msgid "Send logs"
+msgstr ""
+
+#: weko_admin/utils.py:50
+msgid "Start time"
+msgstr ""
+
+#: weko_admin/utils.py:50
+msgid "End time"
+msgstr ""
+
+#: weko_admin/utils.py:50
+msgid "Counts"
+msgstr ""
+
+#: weko_admin/utils.py:50
+msgid "Success"
+msgstr ""
+
+#: weko_admin/utils.py:50
+msgid "Error"
+msgstr ""
+
+#: weko_admin/utils.py:50
+msgid "List of authors who failed to send"
+msgstr ""
+
+#: weko_admin/utils.py:50
+msgid "Name"
+msgstr ""
+
+#: weko_admin/utils.py:50
+msgid "Mail Address"
+msgstr ""
+
+#: weko_admin/utils.py:50
+msgid "Resend"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
+msgid "There is no data."
+msgstr ""

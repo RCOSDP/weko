@@ -23,7 +23,8 @@
 WEKO_INDEX_TREE_BASE_TEMPLATE = 'weko_index_tree/base.html'
 """Default base template for the index tree page."""
 
-WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html'
+WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = \
+    'weko_index_tree/admin/index_edit_setting.html'
 """Index template for the index tree page."""
 
 WEKO_INDEX_TREE_EDIT_ADMIN_TEMPLATE = 'weko_index_tree/admin/tree_edit.html'
@@ -32,7 +33,8 @@ WEKO_INDEX_TREE_EDIT_ADMIN_TEMPLATE = 'weko_index_tree/admin/tree_edit.html'
 WEKO_INDEX_TREE_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_setting.html'
 """Index area setting page."""
 
-WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_link_setting.html'
+WEKO_INDEX_TREE_LINK_ADMIN_TEMPLATE = \
+    'weko_index_tree/admin/index_link_setting.html'
 """Index link setting page."""
 
 WEKO_INDEX_TREE_STYLE_OPTIONS = {
@@ -66,3 +68,21 @@ WEKO_INDEX_TREE_REST_ENDPOINTS = dict(
 
 WEKO_INDEX_TREE_UPDATED = True
 """For index tree cache."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_INDEX_ID = 0
+"""Default number of the index_id in RSS."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_PAGE = 1
+"""Default number of the page in RSS."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_COUNT = 20
+"""Default number of the count in RSS."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_TERM = 14
+"""Default number of the term in RSS."""
+
+WEKO_INDEX_TREE_RSS_DEFAULT_LANG = 'en'
+"""Default number of the language in RSS."""
+
+WEKO_INDEX_TREE_RSS_COUNT_LIMIT = 100
+"""Default number of count upper limit in RSS."""

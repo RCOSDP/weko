@@ -23,15 +23,15 @@
 from datetime import date, datetime
 from functools import wraps
 
-from flask import current_app, flash
+from elasticsearch.exceptions import NotFoundError
+from flask import current_app
 from flask_login import current_user
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_search import RecordsSearch
 from sqlalchemy import MetaData, Table
 from weko_groups.models import Group
-
-from .models import Index
 
 
 def is_index_tree_updated():
@@ -52,14 +52,17 @@ def cached_index_tree_json(timeout=50, key_prefix='index_tree_json'):
     return caching
 
 
-def reset_tree(tree, path=None, more_ids=[]):
+def reset_tree(tree, path=None, more_ids=None):
     """
     Reset the state of checked.
 
-    :param path:
     :param tree:
+    :param path:
+    :param more_ids:
     :return: The dict of index tree.
     """
+    if more_ids is None:
+        more_ids = []
     roles = get_user_roles()
     groups = get_user_groups()
     if path is not None:
@@ -83,6 +86,7 @@ def get_tree_json(obj, pid=0):
     """Get Tree Json.
 
     :param obj:
+    :param pid:
     :return:
     """
     def get_settings():
@@ -136,7 +140,7 @@ def get_tree_json(obj, pid=0):
         return lst
 
     # update by ryuu for invenio community start
-    # parent = [remove_keys(x) for x in filter(lambda node: node.pid == 0, obj)]
+    # parent = [remove_keys(x) for x in filter(lambda node: node.pid == 0,obj)]
     if pid != 0:
         parent = [
             remove_keys(x) for x in filter(
@@ -232,7 +236,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         if public_state or (
                             isinstance(
                                 public_date,
-                                datetime) and date.today() >= public_date.date()):
+                                datetime)
+                                and date.today() >= public_date.date()):
                             reduce_index_by_role(children, roles, groups)
                             i += 1
                         else:
@@ -265,8 +270,10 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         tree.pop(i)
 
 
-def get_index_id_list(indexes, id_list=[]):
+def get_index_id_list(indexes, id_list=None):
     """Get index id list."""
+    if id_list is None:
+        id_list = []
     if isinstance(indexes, list):
         for index in indexes:
             if isinstance(index, dict):
@@ -285,18 +292,20 @@ def get_index_id_list(indexes, id_list=[]):
     return id_list
 
 
-def reduce_index_by_more(tree, more_ids=[]):
+def reduce_index_by_more(tree, more_ids=None):
     """Reduce index by more."""
+    if more_ids is None:
+        more_ids = []
     for node in tree:
         if isinstance(node, dict):
-            id = node.get('id')
+            index_id = node.get('id')
             children = node.get('children')
             more_check = node.get('more_check')
             display_no = node.get('display_no')
 
             if more_check and \
                     len(children) > display_no and \
-                    (len(more_ids) == 0 or id not in more_ids):
+                    (len(more_ids) == 0 or index_id not in more_ids):
 
                 # Delete child node
                 i = display_no
@@ -328,3 +337,57 @@ def get_admin_coverpage_setting():
     except Exception as ex:
         current_app.logger.debug(ex)
     return avail == 'enable'
+
+
+def get_elasticsearch_records_data_by_indexes(index_ids, start_date, end_date):
+    """Get data from elastic search.
+
+    Arguments:
+        index_ids -- index tree identifier list
+
+    Returns:
+        dictionary -- elastic search data
+
+    """
+    records_search = RecordsSearch()
+    records_search = records_search.with_preference_param().\
+        params(version=False)
+    records_search._index[0] = current_app.config['SEARCH_UI_SEARCH_INDEX']
+    result = None
+    try:
+        from weko_search_ui.query import item_search_factory
+
+        search_instance, _qs_kwargs = item_search_factory(
+            None,
+            records_search,
+            start_date,
+            end_date,
+            index_ids
+        )
+        search_result = search_instance.execute()
+        result = search_result.to_dict()
+    except NotFoundError:
+        current_app.logger.debug('Indexes do not exist yet!')
+
+    return result
+
+
+def generate_path(index_ids):
+    """Get data from elastic search.
+
+    Arguments:
+        index_ids -- index tree identifier
+
+    Returns:
+        dictionary -- elastic search data
+
+    """
+    path = dict()
+    result = []
+    for index in index_ids:
+        parent_path = path.get(str(index.pid)) or ""
+        path[str(index.cid)] = (parent_path + "/" + str(index.cid)) \
+            if parent_path != "" else "" + str(index.cid)
+        result.append(path[str(index.cid)])
+
+    return result

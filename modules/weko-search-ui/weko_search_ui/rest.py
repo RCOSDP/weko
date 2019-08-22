@@ -265,6 +265,13 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     nlst[0]['img'] = index_info.image_name
                 nlst[0]['display_format'] = index_info.display_format
                 nlst[0]['rss_status'] = index_info.rss_status
+            # Update rss_status for index child
+            for idx in range(0, len(nlst)):
+                index_id = nlst[idx].get('key')
+                index_id = index_id if '/' not in index_id \
+                    else index_id.split('/').pop()
+                index_info = Indexes.get_index(index_id=index_id)
+                nlst[idx]['rss_status'] = index_info.rss_status
             agp.append(nlst)
             # Register comment
             try:

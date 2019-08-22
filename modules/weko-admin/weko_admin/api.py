@@ -31,6 +31,7 @@ from sqlalchemy import text
 
 from .models import AdminLangSettings, LogAnalysisRestrictedCrawlerList, \
     LogAnalysisRestrictedIpAddress
+from .utils import get_system_default_language
 
 
 def is_restricted_user(user_info):
@@ -81,14 +82,15 @@ def send_site_license_mail(organization_name, mail_list, agg_date, data):
             _('statistics report')
 
         with current_app.test_request_context() as ctx:
-            default_lang = AdminLangSettings.get_registered_language()[0]
+            default_lang = get_system_default_language()
             # setting locale
-            setattr(ctx, 'babel_locale', default_lang['lang_code'])
+            setattr(ctx, 'babel_locale', default_lang)
             # send alert mail
             send_mail(subject, mail_list,
-                      html=render_template('weko_admin/email_templates/site_license_report.html',
-                                           agg_date=agg_date,
-                                           data=data,
-                                           lang_code=default_lang['lang_code']))
+                      body=str(
+                          render_template('weko_admin/email_templates/site_license_report.html',
+                                          agg_date=agg_date,
+                                          data=data,
+                                          lang_code=default_lang)))
     except Exception as ex:
         current_app.logger.error(ex)

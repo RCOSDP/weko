@@ -36,10 +36,17 @@ class AuthorManagementView(BaseView):
     @expose('/', methods=['GET'])
     def index(self):
         """Render author list view."""
+        tab_value = request.args.get('tab', 'author')
+        template = current_app.config['WEKO_AUTHORS_ADMIN_LIST_TEMPLATE']
+        if tab_value == 'prefix':
+            template = \
+                current_app.config['WEKO_AUTHORS_ADMIN_PREFIX_TEMPLATE']
         return self.render(
-            current_app.config['WEKO_AUTHORS_ADMIN_LIST_TEMPLATE'],
+            template,
             render_widgets=False,  # Moved to admin, no need for widgets
-            lang_code=session.get('selected_language', 'en')  # Set default lang
+            lang_code=session.get(
+                'selected_language',
+                'en')  # Set default lang
         )
 
     @author_permission.require(http_exception=403)
@@ -49,7 +56,9 @@ class AuthorManagementView(BaseView):
         return self.render(
             current_app.config['WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE'],
             render_widgets=False,  # Moved to admin, no need for widgets
-            lang_code=session.get('selected_language', 'en')  # Set default lang
+            lang_code=session.get(
+                'selected_language',
+                'en')  # Set default lang
         )
 
     @author_permission.require(http_exception=403)

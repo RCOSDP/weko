@@ -931,8 +931,8 @@ msgstr "更新"
 #~ msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:41
-msgid "ON/OFF"
-msgstr "フィードバックメール"
+msgid "Automatic Transmission ON/OFF"
+msgstr "自動送信設定"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:42
 msgid "Send"
@@ -1019,3 +1019,46 @@ msgstr " 著者が重複しています。"
 #~ msgid "12"
 #~ msgstr ""
 
+#: weko_admin/utils.py:50
+msgid "Send logs"
+msgstr "送信履歴"
+
+#: weko_admin/utils.py:50
+msgid "Start time"
+msgstr "送信開始日時"
+
+#: weko_admin/utils.py:50
+msgid "End time"
+msgstr "送信終了日時"
+
+#: weko_admin/utils.py:50
+msgid "Counts"
+msgstr "送信件数"
+
+#: weko_admin/utils.py:50
+msgid "Success"
+msgstr "成功"
+
+#: weko_admin/utils.py:50
+msgid "Error"
+msgstr "失敗"
+
+#: weko_admin/utils.py:50
+msgid "List of authors who failed to send"
+msgstr "送信失敗した著者一覧"
+
+#: weko_admin/utils.py:50
+msgid "Name"
+msgstr "名前"
+
+#: weko_admin/utils.py:50
+msgid "Mail Address"
+msgstr "メールアドレス"
+
+#: weko_admin/utils.py:50
+msgid "Resend"
+msgstr "再送信"
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
+msgid "There is no data."
+msgstr "検索結果はありません."
