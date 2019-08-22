@@ -6,9 +6,9 @@ const NOTICE_TYPE = "Notice";
 const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
 const THEME_SETTING = [{"value" : 'default', "text": "Default"}, {"value": "simple", "text":"Simple"}, {"value": "side_line", "text":"Side Line"}];
-const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}];
+const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}, {"value": "outset", "text":"Outset"}];
 
-function useSelectedInput(initialValue, getValueOfField, key_binding) {
+function userSelectedInput(initialValue, getValueOfField, key_binding) {
     const [value, setValue] = useState(initialValue);
     function handleChange(e) {
         setValue(e.target.value);
@@ -22,7 +22,7 @@ function useSelectedInput(initialValue, getValueOfField, key_binding) {
   }
 
 const ComponentSelectField = function(props){
-    const selectedData = useSelectedInput(props.data_load, props.getValueOfField, props.key_binding);
+    const selectedData = userSelectedInput(props.data_load, props.getValueOfField, props.key_binding);
     const [selectOptions, setSelectOptions] = useState([]);
 
     useEffect(() => {
@@ -152,21 +152,8 @@ const ComponentTextboxForAccessCounter = function(props){
     )
 }
 
-function useSelectedColorInput(initialValue, getValueOfField, key_binding) {
-    const [value, setValue] = useState(initialValue);
-    function handleChange(e) {
-        setValue(e.target.value);
-        getValueOfField(key_binding, event.target.value);
-        event.preventDefault();
-    }
-    return {
-      value,
-      onChange: handleChange,
-    };
-  }
-
 const ComponentSelectColorFiled = function(props){
-    const color = useSelectedColorInput(props.data_load || '#4169E1', props.getValueOfField, props.key_binding);
+    const color = userSelectedInput(props.data_load || '#4169E1', props.getValueOfField, props.key_binding);
 
     return (
         <div className="form-group row">
@@ -640,41 +627,7 @@ class ExtendComponent extends React.Component {
 
     handleChange(field, value) {
         let data = this.state.settings;
-        switch (field) {
-            case "description":
-                data["description"] = value;
-                break;
-            case "read_more":
-                data["read_more"] = value;
-                break;
-            case "more_description":
-                data["more_description"] = value;
-                break;
-            case "hide_the_rest":
-                data["hide_the_rest"] = value;
-                break;
-            case "access_counter":
-                data["access_counter"] = value;
-                break;
-            case "new_dates":
-                data["new_dates"] = value;
-                break;
-            case "display_result":
-                data["display_result"] = value;
-                break;
-            case "rss_feed":
-                data["rss_feed"] = value;
-                break;
-            case "preceding_message":
-                data["preceding_message"] = value;
-                break;
-            case "following_message":
-                data["following_message"] = value;
-                break;
-            case "other_message":
-                data["other_message"] = value;
-                break;
-        }
+        data[field] = value;
         this.setState({
             settings: data
         })
