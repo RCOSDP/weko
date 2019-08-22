@@ -19,9 +19,16 @@
 #}
 
 {% macro site_info() %}
-    {%- set title = title|get_site_name %}
-     <title>{{title}}</title>
     {%- set site_info = favicon|get_site_info %}
-     <link rel="shortcut icon" href="{{ site_info.favicon }}"/>
-    <meta name="description" content="weko_3">
+    <title>{{site_info.get("title")}}</title>
+    <link rel="shortcut icon" href="{{ site_info.get('favicon') or url_for('static', filename='favicon.ico') }}"/>
+    <meta name="description" content="{{ site_info.get('description') }}">
+    <meta name="keyword" content="{{ site_info.get('keyword') }}">
+    <meta name="copyright" content="{{ site_info.get('copy_right') }}">
+    <meta property="og:title" content="{{ site_info.get('title') }}" />
+    <meta property="og:url" content="{{ site_info.get('url') }}" />
+    <meta property="og:image" content="{{ site_info.get('favicon') }}" />
+    <meta property="og:description" content="{{ site_info.get('description') }}" />
+    <meta property="og:locale" content="ja_JA" />
+    <meta property="og:locale:alternate" content="en_EN" />
 {% endmacro %}

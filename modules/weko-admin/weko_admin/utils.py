@@ -25,7 +25,7 @@ from io import BytesIO, StringIO
 
 import redis
 import requests
-from flask import current_app, session
+from flask import current_app, session, escape
 from flask_babelex import lazy_gettext as _
 from flask_babelex import gettext as __
 from invenio_accounts.models import Role, userrole
@@ -702,7 +702,7 @@ def validation_site_info(site_info):
         'the_same_language_is_set_for_many_site_names_label': __(
             'The same language is set for many site names.'),
         'site_name_is_required_label': __('Site name is required.'),
-        'language_not_match_label': __('Language not match.'),
+        'language_not_match_label': __('Language is deleted from Registered Language of system.'),
     }
 
     """check site_name len"""
@@ -736,10 +736,14 @@ def validation_site_info(site_info):
             errors["site_name_" + str(item.get(
                 "index"))] = WEKO_ADMIN_SITE_INFO_MESSAGE.get(
                 'language_not_match_label')
+            errors_mess.append(WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'language_not_match_label'))
         if not item.get("language") in list_lang_code:
             errors["site_name_" + str(item.get(
                 "index"))] = WEKO_ADMIN_SITE_INFO_MESSAGE.get(
                 'language_not_match_label')
+            errors_mess.append(WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'language_not_match_label'))
 
     list_error = list(set(errors_mess))
     if list_error:
@@ -757,7 +761,8 @@ def validation_site_info(site_info):
 def format_site_info_data(site_info):
     result = dict()
     site_name = []
-    for sn in site_info.get('site_name'):
+    list_site_name = site_info.get('site_name') or []
+    for sn in list_site_name:
         site_name.append({
             "index": sn.get('index'),
             "name": sn.get('name').strip(),
@@ -774,13 +779,16 @@ def format_site_info_data(site_info):
 
 def get_site_name_for_current_language(site_name):
     from invenio_i18n.ext import current_i18n
-    if hasattr(current_i18n, 'language'):
-        list_lang_code = [lang.get('language') for lang in site_name]
-        if current_i18n.language not in list_lang_code:
-            return site_name[0].get("name")
+    if site_name :
+        if hasattr(current_i18n, 'language'):
+            list_lang_code = [lang.get('language') for lang in site_name]
+            if current_i18n.language not in list_lang_code:
+                return site_name[0].get("name")
+            else:
+                for sn in site_name:
+                    if sn.get('language') == current_i18n.language:
+                        return sn.get("name")
         else:
-            for sn in site_name:
-                if sn.get('language') == current_i18n.language:
-                    return sn.get("name")
+            return site_name[0].get("name")
     else:
-        return site_name[0].get("name")
+        return []

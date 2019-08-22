@@ -962,5 +962,5 @@ msgstr ""
 msgid "Error when get site infomation."
 msgstr ""
 
-msgid "Language not match."
+msgid "Language is deleted from Registered Language of system."
 msgstr ""

@@ -1,6 +1,6 @@
 const urlLoadLang = '/api/admin/load_lang';
 const urlLoadSiteInfo = '/api/admin/get_site_info';
-
+const default_favicon = 'https://community.repo.nii.ac.jp/images/common/favicon.ico'
 const site_name_label = document.getElementById("site_name_label").value;
 const favicon_label = document.getElementById("favicon_label").value;
 const copyright_label = document.getElementById("copyright_label").value;
@@ -80,10 +80,16 @@ class MainLayout extends React.Component {
           url: urlLoadSiteInfo,
           type: 'GET',
           success: function (data) {
-            const results = data;
+            const result = data;
             that.setState({
-              ...results
+              ...result,
+              favicon: (result && result.favicon) ? result.favicon :  default_favicon,
+              favicon_name: (result && result.favicon_name) ? result.favicon_name :  default_favicon,
             })
+            if(!result  || !result.site_name ||!result.site_name.length){
+
+              that.handleAddSiteName()
+            }
           },
           error: function (error) {
             console.log(error);
@@ -196,9 +202,11 @@ class MainLayout extends React.Component {
         }
         if(item.index>=list_lang_register.length) {
           errors[`site_name_${item.index}`] = language_not_match_label
+          errors_mess.push(language_not_match_label)
         }
         if(!list_lang_code.includes(item.language)){
            errors[`site_name_${item.index}`] = language_not_match_label
+           errors_mess.push(language_not_match_label)
         }
       })
       const list_error = Array.from(new Set(errors_mess))
@@ -207,7 +215,8 @@ class MainLayout extends React.Component {
       },()=>{
         this.handle_focus_error()
       })
-
+      console.log('list_error',list_error)
+      console.log('errors',errors)
       if(list_error.length){
         alert(list_error.join('\r\n'))
         return false
@@ -297,7 +306,6 @@ class MainLayout extends React.Component {
                             this.handleChangeSiteName(key, 'language', e.target.value)
                           }}
                           >
-                            <option disabled value="">{language_label}</option>
                             {
                               list_lang_register.map((item,index)=>{
                                 return(
@@ -342,7 +350,9 @@ class MainLayout extends React.Component {
                     <div className="row">
                       <div className="col-md-6"><p style={{ wordBreak: 'break-all'}}>{favicon_name ? favicon_name: favicon ? favicon : selected_icon_label}</p></div>
                       <div className="col-md-6">
-                        <img src={favicon} alt="favicon" className="img-response" style={{ maxWidth: "50px", maxHeight: "50px"}}/>
+                      {
+                        favicon && <img src={favicon} alt="favicon" className="img-response" style={{ maxWidth: "50px", maxHeight: "50px"}}/>
+                      }
                       </div>
                     </div>
                   </div>
