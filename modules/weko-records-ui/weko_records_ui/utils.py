@@ -185,6 +185,7 @@ def restore(recid):
         dep = WekoDeposit(rec.json, rec)
         indexes = dep['path'].copy()
         dep.update({'actions': 'publish', 'index': indexes}, itm.json)
+        dep['_deposit']['pid']['revision_id'] += 1
         dep.commit()
         dep.publish()
         db.session.commit()
