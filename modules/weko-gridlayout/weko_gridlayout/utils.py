@@ -230,7 +230,11 @@ def build_data(data):
     result['widget_type'] = data.get('widget_type')
     result['settings'] = json.dumps(build_data_setting(data))
     result['is_enabled'] = data.get('enable')
-    result['multiLangSetting'] = data.get('multiLangSetting')
+
+    multi_lang_data = data.get('multiLangSetting').copy()
+    _escape_html_multi_lang_setting(multi_lang_data)
+    result['multiLangSetting'] = multi_lang_data
+
     result['is_deleted'] = False
     role = data.get('browsing_role')
     if isinstance(role, list):
@@ -243,6 +247,15 @@ def build_data(data):
     else:
         result['edit_role'] = role
     return result
+
+
+def _escape_html_multi_lang_setting(multi_lang_setting: dict):
+    for k, v in multi_lang_setting.items():
+        if isinstance(v, dict):
+            _escape_html_multi_lang_setting(v)
+        else:
+            if k not in ["description", "more_description"]:
+                multi_lang_setting[k] = Markup.escape(v)
 
 
 def build_data_setting(data):
@@ -258,10 +271,15 @@ def build_data_setting(data):
     result = dict()
     convert_popular_data(data, result)
     setting = data['settings']
-    if str(data.get('widget_type')) == 'Access counter':
+    if (str(data.get('widget_type'))
+            == config.WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE):
         _build_access_counter_setting_data(result, setting)
-    if str(data.get('widget_type')) == 'New arrivals':
+    elif (str(data.get('widget_type'))
+            == config.WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE):
         _build_new_arrivals_setting_data(result, setting)
+    elif (str(data.get('widget_type'))
+            == config.WEKO_GRIDLAYOUT_NOTICE_TYPE):
+        _build_notice_setting_data(result, setting)
 
     return result
 
@@ -289,12 +307,15 @@ def _build_new_arrivals_setting_data(result, setting):
     :param setting:
     """
     result['new_dates'] = Markup.escape(
-        setting.get('new_dates')) or current_app.config[
-                                    'WEKO_GRIDLAYOUT_DEFAULT_NEW_DATE']
-    result['display_result'] = Markup.escape(
-        setting.get('display_result')) or current_app.config[
-                                   'WEKO_GRIDLAYOUT_DEFAULT_DISPLAY_RESULT']
+        setting.get('new_dates')) or config.WEKO_GRIDLAYOUT_DEFAULT_NEW_DATE
+    result['display_result'] = Markup.escape(setting.get(
+        'display_result')) or config.WEKO_GRIDLAYOUT_DEFAULT_DISPLAY_RESULT
     result['rss_feed'] = Markup.escape(setting.get('rss_feed')) or False
+
+
+def _build_notice_setting_data(result, setting):
+    result['hide_the_rest'] = Markup.escape(setting.get('setting'))
+    result['read_more'] = Markup.escape(setting.get('read_more'))
 
 
 def build_multi_lang_data(widget_id, multi_lang_json):

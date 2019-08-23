@@ -33,6 +33,15 @@ WEKO_GRIDLAYOUT_DEFAULT_DISPLAY_RESULT = "5"
 WEKO_GRIDLAYOUT_DEFAULT_NEW_DATE = "5"
 """Default new arrivals new date"""
 
+WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE = "Access counter"
+"""Access counter type"""
+
+WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE = "New arrivals"
+"""New arrivals type"""
+
+WEKO_GRIDLAYOUT_NOTICE_TYPE = "Notice"
+"""Notice type"""
+
 WEKO_XML_FORMAT = \
     '<?xml version="1.0" encoding="UTF-8"?>'
 """Default setting for xml"""
