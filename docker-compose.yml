@@ -45,6 +45,7 @@ web:
     - INVENIO_ROLE_CONTRIBUTOR=Contributor
     - INVENIO_ROLE_COMMUNITY=Community Administrator
     - FLASK_DEBUG=1
+    - SEARCH_INDEX_PREFIX=tenant1
   volumes_from:
     - static
   links:
@@ -75,6 +76,8 @@ elasticsearch:
   restart: "always"
   build: .
   dockerfile: ./elasticsearch/Dockerfile
+  environment:
+    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
   ports:
     - "29201:9200"
     - "29301:9300"
@@ -146,5 +149,6 @@ kibana:
     - "5601:5601"
   environment:
     - "ELASTICSEARCH_URL=http://elasticsearch:9200"
+    - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
   links:
     - elasticsearch

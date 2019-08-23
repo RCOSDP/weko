@@ -23,6 +23,7 @@
 
 {%- block css %}
   {{ super() }}
+  {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_items_ui_indextree_css" %}
   <link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   <link href="/static/css/weko_workflow/style.css" rel="stylesheet">
@@ -33,6 +34,7 @@
   {% assets "weko_items_ui_js_dependencies" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "workflow_quit_confirmation_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -164,7 +166,7 @@
                   <ul class="list-group workflow-ul">
                     <li
                       class="list-group-item break-word {% if cur_step == step.ActionEndpoint %} style_li {% endif %}">
-                      <span class="action-name {% if cur_step == step.ActionEndpoint %} cur_step style_a {% endif %} 
+                      <span class="action-name {% if cur_step == step.ActionEndpoint %} cur_step style_a {% endif %}
                                   workflow-span"
                         data-action-version="{{step.ActionVersion}}"
                         data-cancel-uri="{{ url_for('weko_workflow.cancel_action', activity_id=step.ActivityId, action_id=step.ActionId) }}"

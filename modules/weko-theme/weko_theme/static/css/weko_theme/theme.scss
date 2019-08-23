@@ -174,3 +174,14 @@ tree-internal ul .value-container {
 .panel-toggle.collapsed .show-on-collapsed {
   display:block
 }
+
+/* For weko search ui*/
+.rss_icon {
+    background-color: orange;
+    padding: 5px;
+    padding-top: 3px !important;
+    padding-bottom: 3px !important;
+    text-decoration: none;
+    border-radius: 25%;
+    color: white;
+}

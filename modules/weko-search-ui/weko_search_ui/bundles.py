@@ -28,6 +28,7 @@ from pkg_resources import resource_filename
 
 css = Bundle(
     'node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.css',
+    'css/weko_search_ui/dot_leaders.css',
     filters='cleancss',
     output='gen/weko_search_ui.%(version)s.css',
 )

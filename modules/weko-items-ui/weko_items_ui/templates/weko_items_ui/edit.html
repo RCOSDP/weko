@@ -25,6 +25,7 @@
   {% assets "weko_items_authors_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {{ super() }}
   <link href="{{ url_for('static', filename='css/weko_items_ui/contributor.search.css') }}" rel="stylesheet">
+  {% assets "weko_items_ui_feedback_maillist_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
 {%- endblock css %}
 
 {%- block javascript %}
@@ -34,6 +35,8 @@
   <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <script src="{{ url_for('static', filename='js/weko_items_ui/item.autofill.js') }}" type="text/babel"></script>
   {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_items_ui_feedback_maillist_js" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -204,6 +207,15 @@
                 form-templates-base="{{ url_for('static', filename=config.DEPOSIT_FORM_TEMPLATES_BASE) }}"
                 template="{{ url_for('static', filename=config.DEPOSIT_UI_JSTEMPLATE_FORM) }}">
               </invenio-records-form>
+              {%- block feedback_mail_list %}
+                <div id="react"></div>
+                <input id="component-search-email-name" type="hidden" value="{{_('フィードバックメール送信先')}}" />
+                <input id="search-button-name" type="hidden" value="{{_('From author DB')}}" />
+                <input id="delete-button-name" type="hidden" value="{{_('Delete')}}" />
+                <input id="input-text-placeholder" type="hidden" value="{{_('Input text')}}" />
+                <input id="duplicate-error-message" type="hidden" value="{{_('Duplicate Email Addresses.')}}" />
+                <input id="invalid-email-format" type="hidden" value="{{_('Invalid email format.')}}" />
+              {%- endblock feedback_mail_list %}
               <div class="row" ng-hide="false">
                 <div class="col-sm-9" ng-show="true">
                   <ul class="list-inline text-right">
@@ -270,6 +282,8 @@
           <input type="hidden" id="autofill_select_meta" name="autofill_select_meta"
             value="{{_('Automatic metadata input')}}">
           <input type="hidden" id="autofill_get_value" name="autofill_get_value" value="{{_('Get')}}">
+          <input type="hidden" id="validate_error" name="validate_error"
+            value="{{_('The following items is required. Please recheck and input.')}}">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-info close-button" id="meta-search-close" data-dismiss="modal">

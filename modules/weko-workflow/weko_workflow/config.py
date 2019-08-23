@@ -51,7 +51,7 @@ IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          ]
 """Options list for Identifier Grant action."""
 
-IDENTIFIER_GRANT_SUFFIX_METHOD = 2
+IDENTIFIER_GRANT_SUFFIX_METHOD = 0
 """
     Suffix input method for Identifier Grant action
 
@@ -60,21 +60,26 @@ IDENTIFIER_GRANT_SUFFIX_METHOD = 2
     :case 2: Free input
 """
 
-IDENTIFIER_ITEMSMETADATA_FORM = {
-    'identifier': {
-        'value': '',
-        'properties': {
-            'identifierType': ''
-        }
-    },
-    'identifierRegistration': {
-        "value": '',
-        "properties": {
-            "identifierType": ''
-        }
-    }
-}
+IDENTIFIER_ITEMSMETADATA_KEY = [
+    'identifier.@value',
+    'identifier.@attributes.identifierType',
+    'identifierRegistration.@value',
+    'identifierRegistration.@attributes.identifierType'
+]
 """ItemsMetadata format for Identifier Grant action."""
 
 IDENTIFIER_GRANT_IS_WITHDRAWING = -2
 """Identifier grant is withdrawing."""
+
+ITEM_REGISTRATION_ACTION_ID = 3
+"""Item Registration action id default."""
+
+ITEM_REGISTRATION_FLOW_ID = 3
+"""Identifier grant is withdrawing."""
+
+IDENTIFIER_GRANT_SELECT_DICT = {
+    'NotGrant': '0',
+    'JaLCDOI': '1',
+    'CrossRefDOI': '2'
+}
+"""Identifier grant selected enum."""

@@ -28,13 +28,15 @@ from flask_login import current_user
 from invenio_accounts.models import Role, User, userrole
 from invenio_db import db
 from sqlalchemy import asc, desc, types
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_records.models import ItemMetadata
 
+from .config import ITEM_REGISTRATION_FLOW_ID
 from .models import Action as _Action
-from .models import ActionCommentPolicy, ActionIdentifier, ActionJournal, \
-    ActionStatusPolicy
+from .models import ActionCommentPolicy, ActionFeedbackMail, \
+    ActionIdentifier, ActionJournal, ActionStatusPolicy
 from .models import Activity as _Activity
 from .models import ActivityAction, ActivityHistory, ActivityStatusPolicy
 from .models import FlowAction as _FlowAction
@@ -247,6 +249,19 @@ class Flow(object):
                 last_action = flow_actions.pop()
                 return last_action
         return None
+
+    def get_item_registration_flow_action(self, flow_id):
+        """Return Item Registration action info.
+
+        :param flow_id: item_registration's flow id
+        :return flow_action: flow action's object
+        """
+        with db.session.no_autoflush:
+            flow_action = _FlowAction.query.filter_by(
+                flow_id=flow_id,
+                action_id=ITEM_REGISTRATION_FLOW_ID).all()
+            current_app.logger.debug(flow_action)
+            return flow_action
 
 
 class WorkFlow(object):
@@ -701,6 +716,36 @@ class WorkActivity(object):
 
         db.session.commit()
 
+    def create_or_update_action_feedbackmail(self,
+                                             activity_id,
+                                             action_id,
+                                             feedback_maillist):
+        """Create or update action ActionFeedbackMail's model.
+
+        :param activity_id: activity identifier
+        :param action_id:   action identifier
+        :param feedback_maillist: list of feedback mail in json format
+        :return:
+        """
+        try:
+            with db.session.begin_nested():
+                action_feedbackmail = ActionFeedbackMail.query.filter_by(
+                    activity_id=activity_id).one_or_none()
+                if action_feedbackmail:
+                    action_feedbackmail.feedback_maillist = feedback_maillist
+                    db.session.merge(action_feedbackmail)
+                else:
+                    action_feedbackmail = ActionFeedbackMail(
+                        activity_id=activity_id,
+                        action_id=action_id,
+                        feedback_maillist=feedback_maillist
+                    )
+                    db.session.add(action_feedbackmail)
+            db.session.commit()
+        except SQLAlchemyError as ex:
+            db.session.rollback()
+            current_app.logger.exception(str(ex))
+
     def get_action_journal(self, activity_id, action_id):
         """Get action journal info.
 
@@ -741,6 +786,18 @@ class WorkActivity(object):
             else:
                 identifier = action_identifier
         return identifier
+
+    def get_action_feedbackmail(self, activity_id, action_id):
+        """Get ActionFeedbackMail object from model base on activity's id.
+
+        :param activity_id: acitivity identifier
+        :param action_id:   action identifier
+        :return:    object's model or none
+        """
+        with db.session.no_autoflush:
+            action_feedbackmail = ActionFeedbackMail.query.filter_by(
+                activity_id=activity_id).one_or_none()
+            return action_feedbackmail
 
     def get_activity_action_status(self, activity_id, action_id):
         """Get activity action status."""

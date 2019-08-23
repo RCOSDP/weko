@@ -108,6 +108,29 @@ sleep 20
 ${INVENIO_WEB_INSTANCE} index queue init
 # sphinxdoc-index-initialisation-end
 
+# sphinxdoc-pipeline-registration-begin
+curl -XPUT 'http://elasticsearch:9200/_ingest/pipeline/item-file-pipeline' -H 'Content-Type: application/json' -d '{
+ "description" : "Index contents of each file.",
+ "processors" : [
+   {
+     "foreach": {
+       "field": "content",
+       "processor": {
+         "attachment": {
+           "indexed_chars" : -1,
+           "target_field": "_ingest._value.attachment",
+           "field": "_ingest._value.file",
+           "properties": [
+             "content"
+           ]
+         }
+       }
+     }
+   }
+ ]
+}'
+# sphinxdoc-pipeline-registration-end
+
 # sphinxdoc-populate-with-demo-records-begin
 #${INVENIO_WEB_INSTANCE} demo init
 # sphinxdoc-populate-with-demo-records-end
@@ -336,4 +359,7 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
 ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        2 "storage_check_settings" \
        "{'threshold_rate': 80, 'cycle': 'weekly', 'day': 0}"
+${INVENIO_WEB_INSTANCE} admin_settings create_settings \
+       3 "site_license_mail_settings" \
+       "{'auto_send_flag': False}"
 # create-admin-settings-end

@@ -24,10 +24,11 @@ from datetime import datetime
 
 from flask import current_app
 from invenio_db import db
-from sqlalchemy import asc
+from sqlalchemy import Sequence, asc
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
+from sqlalchemy.sql.expression import desc
 from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
 
@@ -886,7 +887,7 @@ class StatisticsEmail(db.Model):
 
     @classmethod
     def get_all_emails(cls):
-        """Get all recepient emails as a list."""
+        """Get all recipient emails as a list."""
         all_objects = cls.query.all()
         return [row.email_address for row in all_objects]
 
@@ -1011,14 +1012,35 @@ class FeedbackMailSetting(db.Model, Timestamp):
     )
     """Author identifier."""
 
+    manual_mail = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
     is_sending_feedback = db.Column(
         db.Boolean(name='is_sending_feedback'),
         nullable=False,
         default=False)
     """Setting to send or not send feedback mail."""
 
+    root_url = db.Column(
+        db.String(100)
+    )
+    """Store system root url."""
+
     @classmethod
-    def create(cls, account_author, is_sending_feedback):
+    def create(cls, account_author, manual_mail,
+               is_sending_feedback, root_url):
         """Create a feedback mail setting.
 
         Arguments:
@@ -1033,7 +1055,9 @@ class FeedbackMailSetting(db.Model, Timestamp):
             new_record = FeedbackMailSetting()
             with db.session.begin_nested():
                 new_record.account_author = account_author
+                new_record.manual_mail = manual_mail
                 new_record.is_sending_feedback = is_sending_feedback
+                new_record.root_url = root_url
                 db.session.add(new_record)
             db.session.commit()
         except BaseException:
@@ -1057,7 +1081,8 @@ class FeedbackMailSetting(db.Model, Timestamp):
             return []
 
     @classmethod
-    def update(cls, account_author, is_sending_feedback):
+    def update(cls, account_author,
+               manual_mail, is_sending_feedback, root_url):
         """Update existed feedback mail setting.
 
         Arguments:
@@ -1075,7 +1100,9 @@ class FeedbackMailSetting(db.Model, Timestamp):
             with db.session.begin_nested():
                 settings = cls.query.all()[0]
                 settings.account_author = account_author
+                settings.manual_mail = manual_mail
                 settings.is_sending_feedback = is_sending_feedback
+                settings.root_url = root_url
                 db.session.merge(settings)
             db.session.commit()
             return True
@@ -1137,6 +1164,12 @@ class AdminSettings(db.Model):
             for key in data:
                 setattr(self, key, data[key])
 
+    def _get_count():
+        count = db.session.query(db.func.max(AdminSettings.id)).first()
+        if count[0]:
+            return count[0]
+        return 0
+
     @classmethod
     def get(cls, name):
         """Get settings by name."""
@@ -1144,6 +1177,7 @@ class AdminSettings(db.Model):
             o = cls.query.filter_by(name=name).first()
             return cls.Dict2Obj(o.settings)
         except Exception as ex:
+            current_app.logger.debug('dict to object')
             current_app.logger.error(ex)
 
         return None
@@ -1157,6 +1191,7 @@ class AdminSettings(db.Model):
                 o = cls.query.filter_by(name=name).first()
                 if not o:
                     o = AdminSettings()
+                    o.id = AdminSettings._get_count() + 1
                     new_setting_flag = True
                 if id:
                     o.id = id
@@ -1189,6 +1224,264 @@ class AdminSettings(db.Model):
         return cls
 
 
+class FeedbackMailHistory(db.Model):
+    """History, Logs of sending mail."""
+
+    __tablename__ = 'feedback_mail_history'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        nullable=False
+    )
+
+    parent_id = db.Column(
+        db.Integer
+    )
+
+    start_time = db.Column(
+        db.DateTime,
+        nullable=False
+    )
+
+    end_time = db.Column(
+        db.DateTime,
+        nullable=False
+    )
+
+    stats_time = db.Column(
+        db.String(7),
+        nullable=False
+    )
+
+    count = db.Column(
+        db.Integer,
+        nullable=False
+    )
+
+    error = db.Column(
+        db.Integer
+    )
+
+    is_latest = db.Column(
+        db.Boolean(name='lastest'),
+        nullable=False
+    )
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get history by id.
+
+        Arguments:
+            id {string} -- The history id
+
+        Returns:
+            dictionary -- history data
+
+        """
+        result = cls.query.filter_by(id=id).one_or_none()
+        return result
+
+    @classmethod
+    def get_sequence(cls, session):
+        """Get session sequence.
+
+        Arguments:
+            session {sessiosn} -- The DB session
+
+        Returns:
+            number -- The next id
+
+        """
+        if not session:
+            session = db.session
+        seq = Sequence('feedback_mail_history_id_seq')
+        next_id = session.execute(seq)
+        return next_id
+
+    @classmethod
+    def get_all_history(cls):
+        """Get all history record.
+
+        Returns:
+            list -- history
+
+        """
+        result = cls.query.order_by(
+            desc(cls.id)
+        ).all()
+        return result
+
+    @classmethod
+    def create(cls,
+               session,
+               id,
+               start_time,
+               end_time,
+               stats_time,
+               count,
+               error,
+               parent_id=None,
+               is_latest=True):
+        """Create history record.
+
+        Arguments:
+            start_time {timestamp} -- Start time
+            end_time {timestamp} -- End time
+            stats_time {string} -- Statistic time
+            count {integer} -- Total sent mail
+            error {integer} -- Total failed mail
+
+        Keyword Arguments:
+            parent_id {integer} -- Parent id if resend (default: {None})
+
+        """
+        if not session:
+            session = db.session
+        try:
+            data = FeedbackMailHistory()
+            with session.begin_nested():
+                data.id = id
+                if parent_id:
+                    data.parent_id = parent_id
+                data.start_time = start_time
+                data.end_time = end_time
+                data.stats_time = stats_time
+                data.count = count
+                data.error = error
+                data.is_latest = is_latest
+                session.add(data)
+            session.commit()
+        except BaseException as ex:
+            session.rollback()
+            current_app.logger.debug(ex)
+
+    @classmethod
+    def update_lastest_status(cls, id, status):
+        """Update latest status by id.
+
+        Arguments:
+            id {string} -- History id
+            status {boolean} -- Lastest status
+
+        """
+        try:
+            with db.session.begin_nested():
+                data = cls.query.filter_by(id=id).one_or_none()
+                data.is_latest = status
+                db.session.merge(data)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise
+
+
+class FeedbackMailFailed(db.Model):
+    """Storage of mail which failed to send."""
+
+    __tablename__ = 'feedback_mail_failed'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True,
+        autoincrement=True
+    )
+
+    history_id = db.Column(
+        db.Integer,
+        nullable=False
+    )
+
+    author_id = db.Column(
+        db.String(50)
+    )
+
+    mail = db.Column(
+        db.String(255),
+        nullable=False
+    )
+
+    @classmethod
+    def get_by_history_id(cls, history_id):
+        """Get list mail by history id.
+
+        Arguments:
+            history_id {integer} -- The history id
+
+        Returns:
+            list -- list of mail
+
+        """
+        result = cls.query.filter_by(
+            history_id=history_id
+        ).all()
+        return result
+
+    @classmethod
+    def get_mail_by_history_id(cls, history_id):
+        """Get list mail by history id.
+
+        Arguments:
+            history_id {integer} -- The history id
+
+        Returns:
+            list -- list of mail
+
+        """
+        data = cls.query.filter_by(
+            history_id=history_id
+        ).all()
+        result = list()
+        for item in data:
+            result.append(item.mail)
+        return result
+
+    @classmethod
+    def delete_by_history_id(cls, session, history_id):
+        """Delete all mail by history id.
+
+        Arguments:
+            history_id {integer} -- The history id
+
+        """
+        if not session:
+            session = db.session
+        try:
+            with session.begin_nested():
+                cls.query.filter_by(
+                    history_id=history_id
+                ).delete()
+            session.commit()
+        except BaseException as ex:
+            session.rollback()
+            current_app.logger.debug(ex)
+
+    @classmethod
+    def create(cls, session, history_id, author_id, mail):
+        """Create mail record.
+
+        Arguments:
+            history_id {integer} -- history_id
+            author_id {string} -- The author id
+            mail {string} -- mail
+
+        """
+        if not session:
+            session = db.session
+        try:
+            with session.begin_nested():
+                data = FeedbackMailFailed()
+                data.history_id = history_id
+                data.author_id = author_id
+                data.mail = mail
+                session.add(data)
+            session.commit()
+        except BaseException as ex:
+            session.rollback()
+            current_app.logger.debug(ex)
+
+
 __all__ = ([
     'SearchManagement',
     'AdminLangSettings',
@@ -1201,5 +1494,7 @@ __all__ = ([
     'RankingSettings',
     'BillingPermission',
     'FeedbackMailSetting',
-    'AdminSettings'
+    'AdminSettings',
+    'FeedbackMailHistory',
+    'FeedbackMailFailed'
 ])

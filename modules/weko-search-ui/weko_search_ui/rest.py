@@ -20,6 +20,7 @@
 
 """Blueprint for Index Search rest."""
 
+import copy
 import json
 import os.path
 import shutil
@@ -50,6 +51,7 @@ from webargs import fields
 from webargs.flaskparser import use_kwargs
 from weko_admin.models import SearchManagement as sm
 from weko_index_tree.api import Indexes
+from weko_records.models import ItemType
 from werkzeug.utils import secure_filename
 
 from . import config
@@ -178,9 +180,6 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         page = request.values.get('page', 1, type=int)
         size = request.values.get('size', 20, type=int)
 
-        current_app.logger.debug(page)
-        current_app.logger.debug(size)
-
         if page * size >= self.max_result_window:
             raise MaxResultWindowRESTError()
         urlkwargs = dict()
@@ -241,13 +240,18 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                             m = 1
                         break
                 if m == 0:
+                    index_id = p.path if '/' not in p.path \
+                        else p.path.split('/').pop()
+                    index_info = Indexes.get_index(index_id=index_id)
+                    rss_status = index_info.rss_status
                     nd = {
                         'doc_count': 0,
                         'key': p.path,
                         'name': p.name if lang == "ja" else p.name_en,
                         'date_range': {
                             'pub_cnt': 0,
-                            'un_pub_cnt': 0}}
+                            'un_pub_cnt': 0},
+                        'rss_status': rss_status}
                     nlst.append(nd)
             agp.clear()
             # process index tree image info
@@ -260,6 +264,14 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 if len(index_info.image_name) > 0:
                     nlst[0]['img'] = index_info.image_name
                 nlst[0]['display_format'] = index_info.display_format
+                nlst[0]['rss_status'] = index_info.rss_status
+            # Update rss_status for index child
+            for idx in range(0, len(nlst)):
+                index_id = nlst[idx].get('key')
+                index_id = index_id if '/' not in index_id \
+                    else index_id.split('/').pop()
+                index_info = Indexes.get_index(index_id=index_id)
+                nlst[idx]['rss_status'] = index_info.rss_status
             agp.append(nlst)
             # Register comment
             try:
@@ -269,9 +281,103 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     hit['_source']['_comment'] = _comment
             except Exception:
                 pass
+
+            # add info (headings & page info)
+            try:
+                item_type_list = {}
+                for hit in rd['hits']['hits']:
+                    # get item type schema
+                    item_type_id = \
+                        hit['_source']['_item_metadata']['item_type_id']
+                    if item_type_id in item_type_list:
+                        item_type = copy.deepcopy(item_type_list[item_type_id])
+                    else:
+                        item_type = ItemType.query.filter_by(
+                            id=item_type_id).first()
+                        item_type_list[item_type_id] = copy.deepcopy(item_type)
+                    # heading
+                    heading = get_heading_info(hit, lang, item_type)
+                    hit['_source']['heading'] = heading
+                    # page info
+                    if 'pageStart' not in hit['_source']:
+                        hit['_source']['pageStart'] = []
+                    if 'pageEnd' not in hit['_source']:
+                        hit['_source']['pageEnd'] = []
+            except Exception as ex:
+                current_app.logger.error(ex)
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,
             links=links,
             item_links_factory=self.links_factory,
         )
+
+
+def get_heading_info(data, lang, item_type):
+    """Get heading info."""
+    heading_id = None
+    lheading_id = None
+    sheading_id = None
+    lang_id = None
+    # get item id of heading
+    if item_type and 'properties' in item_type.schema:
+        for key, value in item_type.schema['properties'].items():
+            flag = False
+            if 'properties' in value and value['type'] == 'object':
+                for k, v in value['properties'].items():
+                    if v['title'] == 'Banner Headline':
+                        lheading_id = k
+                        flag = True
+                    elif v['title'] == 'Subheading':
+                        sheading_id = k
+                        flag = True
+                    elif v['title'] == 'Language':
+                        lang_id = k
+            elif 'items' in value \
+                    and value['type'] == 'array' \
+                    and 'properties' in value['items']:
+                for k, v in value['items']['properties'].items():
+                    if v['title'] == 'Banner Headline':
+                        lheading_id = k
+                        flag = True
+                    elif v['title'] == 'Subheading':
+                        sheading_id = k
+                        flag = True
+                    elif v['title'] == 'Language':
+                        lang_id = k
+            if flag:
+                heading_id = key
+                break
+            else:
+                lang_id = None
+
+    # get heading data
+    lheading = ''
+    sheading = ''
+    if heading_id \
+            and heading_id in data['_source']['_item_metadata']:
+        temp = \
+            data['_source']['_item_metadata'][heading_id]['attribute_value_mlt']
+        if len(temp) > 1:
+            for v in temp:
+                lheading_tmp = ''
+                sheading_tmp = ''
+                if lheading_id in v:
+                    lheading_tmp = v[lheading_id]
+                if sheading_id in v:
+                    sheading_tmp = v[sheading_id]
+                if lang and lang_id in v and v[lang_id] == lang:
+                    lheading = lheading_tmp
+                    sheading = sheading_tmp
+                    break
+        elif len(temp) == 1 or (lheading and sheading):
+            if lheading_id in temp[0]:
+                lheading = temp[0][lheading_id]
+            if sheading_id in temp[0]:
+                sheading = temp[0][sheading_id]
+    if sheading:
+        heading = lheading + ' : ' + sheading
+    else:
+        heading = lheading
+
+    return heading

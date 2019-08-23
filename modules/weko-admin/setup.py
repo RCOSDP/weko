@@ -118,6 +118,9 @@ setup(
             'weko_admin_ranking_settings = weko_admin.admin:ranking_settings_adminview',
             'weko_admin_search_settings = weko_admin.admin:search_settings_adminview',
             'weko_admin_site_license_settings = weko_admin.admin:site_license_settings_adminview',
+            'weko_admin_site_license_send_mail_settings = weko_admin.admin:site_license_send_mail_settings_adminview',
+            'weko_admin_file_preview_settings = weko_admin.admin:file_preview_settings_adminview',
+            'weko_admin_item_export_settings = weko_admin.admin:item_export_settings_adminview'
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -136,18 +139,12 @@ setup(
             'weko_admin_feedback_mail_css = weko_admin.bundles:weko_admin_feedback_mail_css',
             'weko_admin_date_picker_js = weko_admin.bundles:date_picker_js',
             'weko_admin_date_picker_css = weko_admin.bundles:date_picker_css',
-            'weko_admin_custom_report = '
-            'weko_admin.bundles:custom_report_js',
-            'weko_admin_feedback_mail = '
-            'weko_admin.bundles:feedback_mail_js',
-            'weko_admin_statistics_reactjs_lib = '
-            'weko_admin.bundles:statistics_reactjs_lib',
-            'weko_admin_log_analysis_js = '
-            'weko_admin.bundles:log_analysis_js',
-            'weko_admin_admin_lte_js_dependecies = '
-            'weko_admin.bundles:admin_lte_js_dependecies',
-            'weko_admin_admin_lte_js = '
-            'weko_admin.bundles:admin_lte_js',
+            'weko_admin_custom_report = weko_admin.bundles:custom_report_js',
+            'weko_admin_feedback_mail = weko_admin.bundles:feedback_mail_js',
+            'weko_admin_statistics_reactjs_lib = weko_admin.bundles:statistics_reactjs_lib',
+            'weko_admin_log_analysis_js = weko_admin.bundles:log_analysis_js',
+            'weko_admin_admin_lte_js_dependecies = weko_admin.bundles:admin_lte_js_dependecies',
+            'weko_admin_admin_lte_js = weko_admin.bundles:admin_lte_js',
             'weko_admin_angular_js = weko_admin.bundles:angular_js',
         ],
         'invenio_db.models': [

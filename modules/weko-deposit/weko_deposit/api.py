@@ -43,7 +43,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_index_tree.api import Indexes
-from weko_records.api import ItemsMetadata, ItemTypes
+from weko_records.api import FeedbackMailList, ItemsMetadata, ItemTypes
 from weko_records.models import ItemMetadata
 from weko_records.utils import get_all_items, get_options_and_order_list, \
     json_loader, set_timestamp
@@ -107,13 +107,17 @@ class WekoIndexer(RecordIndexer):
         #                       doc_type=self.es_doc_type):
         #     self.client.delete(id=str(item_id), index=self.es_index,
         #                        doc_type=self.es_doc_type)
-        self.client.index(id=str(item_id),
-                          index=self.es_index,
-                          doc_type=self.es_doc_type,
-                          version=revision_id + 1,
-                          version_type=self._version_type,
-                          body=jrc,
-                          )
+        full_body = dict(id=str(item_id),
+                         index=self.es_index,
+                         doc_type=self.es_doc_type,
+                         version=revision_id + 1,
+                         version_type=self._version_type,
+                         body=jrc)
+
+        if 'content' in jrc:  # Only pass through pipeline if file exists
+            full_body['pipeline'] = 'item-file-pipeline'
+
+        self.client.index(**full_body)
 
     def delete_file_index(self, body, parent_id):
         """Delete file index in Elastic search.
@@ -183,6 +187,7 @@ class WekoIndexer(RecordIndexer):
     def get_item_link_info(self, pid):
         """Get item link info."""
         try:
+            self.get_es_index()
             item_link_info = None
             get_item_link_q = {
                 "query": {
@@ -195,7 +200,7 @@ class WekoIndexer(RecordIndexer):
                 "@control_number", pid)
             query_q = json.loads(query_q)
             indexer = RecordIndexer()
-            res = indexer.client.search(index="weko", body=query_q)
+            res = indexer.client.search(index=self.es_index, body=query_q)
             item_link_info = res.get("hits").get(
                 "hits")[0].get('_source').get("relation")
         except Exception as ex:
@@ -300,6 +305,33 @@ class WekoIndexer(RecordIndexer):
                     yield res
 
             self.client.clear_scroll(scroll_id=scroll_id)
+
+    def update_feedback_mail_list(self, feedback_mail):
+        """Update feedback mail info.
+
+        :param feedback_mail: mail list in json format.
+        :return: _feedback_mail_id.
+        """
+        self.get_es_index()
+        pst = 'feedback_mail_list'
+        body = {'doc': {pst: feedback_mail.get('mail_list')}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(feedback_mail.get('id')),
+            body=body
+        )
+
+    def update_jpcoar_identifier(self, dc, item_id):
+        """Update JPCOAR meta data item."""
+        self.get_es_index()
+        body = {'doc': {'_item_metadata': dc}}
+        return self.client.update(
+            index=self.es_index,
+            doc_type=self.es_doc_type,
+            id=str(item_id),
+            body=body
+        )
 
 
 class WekoDeposit(Deposit):
@@ -416,6 +448,7 @@ class WekoDeposit(Deposit):
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def update(self, *args, **kwargs):
         """Update only drafts."""
+        self['_deposit']['status'] = 'draft'
         if len(args) > 1:
             dc = self.convert_item_metadata(args[0], args[1])
         else:
@@ -436,6 +469,8 @@ class WekoDeposit(Deposit):
     @preserve(result=False, fields=PRESERVE_FIELDS)
     def clear(self, *args, **kwargs):
         """Clear only drafts."""
+        if self['_deposit']['status'] != 'draft':
+            return
         super(WekoDeposit, self).clear(*args, **kwargs)
 
     @index(delete=True)
@@ -669,7 +704,6 @@ class WekoDeposit(Deposit):
         self.delete_es_index_attempt(self.pid)
 
         try:
-            actions = index_obj.get('actions', 'private')
             if not data:
                 datastore = RedisStore(redis.StrictRedis.from_url(
                     current_app.config['CACHE_REDIS_URL']))
@@ -718,8 +752,16 @@ class WekoDeposit(Deposit):
         jrc.update(dict(custom_sort=sub_sort))
         dc.update(dict(custom_sort=sub_sort))
         dc.update(dict(path=index_lst))
+        pubs = '1'
+        actions = index_obj.get('actions')
+        if actions == 'publish':
+            pubs = '0'
+        elif 'id' in data:
+            recid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', pid_value=data['id']).first()
+            rec = RecordMetadata.query.filter_by(id=recid.object_uuid).first()
+            pubs = rec.json['publish_status']
 
-        pubs = '1' if 'private' in actions else '0'
         ps = dict(publish_status=pubs)
         jrc.update(ps)
         dc.update(ps)
@@ -777,6 +819,41 @@ class WekoDeposit(Deposit):
             except BaseException:
                 pass
             raise PIDResolveRESTError(description='This item has been deleted')
+
+    def update_feedback_mail(self):
+        """Index feedback mail list."""
+        item_id = self.id
+        mail_list = FeedbackMailList.get_mail_list_by_item_id(item_id)
+        if mail_list:
+            feedback_mail = {
+                "id": item_id,
+                "mail_list": mail_list
+            }
+            self.indexer.update_feedback_mail_list(feedback_mail)
+
+    def update_jpcoar_identifier(self):
+        """Update JPCOAR meta data item for grant DOI which added at the Identifier Grant screen."""
+        obj = ItemsMetadata.get_record(self.id)
+        attrs = ['attribute_value_mlt',
+                 'item_1551265147138',
+                 'item_1551265178780']
+        dc = {
+            attrs[1]: {attrs[0]: obj.get(attrs[1])},
+            attrs[2]: {attrs[0]: [obj.get(attrs[2])]}
+        }
+        self.indexer.update_jpcoar_identifier(dc, self.id)
+        record = RecordMetadata.query.get(self.id)
+        if record and record.json:
+            try:
+                with db.session.begin_nested():
+                    record.json[attrs[1]][attrs[0]] = obj.get(attrs[1])
+                    record.json[attrs[2]][attrs[0]] = [obj.get(attrs[2])]
+                    flag_modified(record, 'json')
+                    db.session.merge(record)
+                db.session.commit()
+            except Exception as ex:
+                current_app.logger.debug(ex)
+                db.session.rollback()
 
 
 class WekoRecord(Record):

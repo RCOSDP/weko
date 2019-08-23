@@ -1,0 +1,81 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends config.WEKO_ITEMS_UI_BASE_TEMPLATE %}
+
+{%- from "invenio_communities/macros.html" import community_header %}
+
+{%- block css %}
+  {{ super() }}
+  {% assets "invenio_search_ui_search_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_search_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{%- endblock css %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "invenio_search_ui_search_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_search_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_search_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block page_body_tabs %}
+  {% from "weko_theme/macros/tabs_selector.html" import tabs_selector %}
+  {{ tabs_selector('top', community_id) }}
+{%- endblock page_body_tabs %}
+
+{% block page_body %}
+  {%- if not community_id %}
+    {{ super() }}
+  {%- else%}
+    <div class="communities">  <!-- REFACTOR THIS for both here and body_contents.html -->
+      <div id="community-id" name="community-id" hidden>{{ community_id }}</div>
+      {{ community_header(community, subtitle='') }}
+      <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
+        <div id="main_contents">
+          {{ super() }}
+        </div>
+      </div>
+      {%- from "weko_theme/macros/footer-community.html" import community_footer_widget %}
+      {{ community_footer_widget(render_widgets, community, link=False, subtitle='') }}
+    </div>
+    <div class="communities">
+    </div>
+  {%- endif %}
+{% endblock page_body %}
+
+{%- block page_body_main %}
+  <input type="hidden" id="q" name="q" />
+  <input type="hidden" id="community" name="community" value="{{ community_id }}">
+  <input type="hidden" id="max_export_num" name="max_export_num" value="{{ max_export_num }}">
+  <div class="row">
+    <div class="col-sm-12 col-md-12 col-lg-12">
+      {%- with item_export=True, custom_results_template=config.WEKO_ITEMS_UI_JSTEMPLATE_EXPORT_LIST %}
+        {% include "weko_search_ui/body_contents.html" %}
+      {%- endwith %}
+      <a class="btn btn-info pull-left back-button" href="{{ url_for('weko_search_ui.search', **request.args) }}">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+        {{_('Back')}}
+      </a>
+    </div>
+  </div>
+  {%- from "weko_theme/macros/modal_page.html" import all_modal %}
+  {{ all_modal() }}
+{%- endblock page_body_main %}

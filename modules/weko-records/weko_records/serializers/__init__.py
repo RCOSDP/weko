@@ -20,11 +20,11 @@
 
 """Record serialization."""
 
+from invenio_records_rest.schemas.json import RecordSchemaJSONV1
 from invenio_records_rest.serializers.citeproc import CiteprocSerializer
 from invenio_records_rest.serializers.json import JSONSerializer
 from invenio_records_rest.serializers.response import record_responsify, \
     search_responsify
-from invenio_records_rest.serializers.schemas.json import RecordSchemaJSONV1
 from pkg_resources import resource_filename
 
 from .depositschema import DepositSchemaV1
@@ -53,7 +53,6 @@ csl_v1 = WekoJSONSerializer(RecordSchemaCSLJSON, replace_refs=True)
 citeproc_v1 = CiteprocSerializer(csl_v1)
 
 #: CSL-JSON record serializer for individual records.
-csl_v1_response = record_responsify(
-    csl_v1, 'application/vnd.citationstyles.csl+json')
+csl_v1_response = record_responsify(csl_v1, 'application/vnd.citationstyles.csl+json')
 #: CSL Citation Formatter serializer for individual records.
 citeproc_v1_response = record_responsify(citeproc_v1, 'text/x-bibliography')

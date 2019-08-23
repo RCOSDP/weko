@@ -92,11 +92,13 @@ class SearchSetting(object):
             factor_obj = Indexes.get_item_sort(index_id)
             script_str = {
                 "_script": {
-                    "script": "factor.get(doc[\"control_number\"].value)&&factor.get(doc[\"control_number\"].value) !=0 ? factor.get(doc[\"control_number\"].value):Integer.MAX_VALUE",
-                    "type": "number",
-                    "params": {
-                        "factor": factor_obj
+                    "script": {
+                        "source": "params.factor.containsKey(doc[\"control_number\"].value)&&params.factor.get(doc[\"control_number\"].value) !=0 ? params.factor.get(doc[\"control_number\"].value):Integer.MAX_VALUE",
+                        "params": {
+                            "factor": factor_obj
+                        }
                     },
+                    "type": "number",
                     "order": "asc"
                 }
             }
@@ -105,11 +107,13 @@ class SearchSetting(object):
             factor_obj = Indexes.get_item_sort(index_id)
             script_str = {
                 "_script": {
-                    "script": "factor.get(doc[\"control_number\"].value)&&factor.get(doc[\"control_number\"].value) !=0 ? factor.get(doc[\"control_number\"].value):0",
-                    "type": "number",
-                    "params": {
-                        "factor": factor_obj
+                    "script": {
+                        "source": "params.factor.containsKey(doc[\"control_number\"].value)&&params.factor.get(doc[\"control_number\"].value) !=0 ? params.factor.get(doc[\"control_number\"].value):0",
+                        "params": {
+                            "factor": factor_obj
+                        }
                     },
+                    "type": "number",
                     "order": "desc"
                 }
             }

@@ -41,9 +41,36 @@ WEKO_ITEMS_UI_ERROR_TEMPLATE = 'weko_items_ui/error.html'
 WEKO_ITEMS_UI_UPLOAD_TEMPLATE = 'weko_items_ui/upload.html'
 """Demo template for the item page post test data."""
 
+WEKO_ITEMS_UI_EXPORT_TEMPLATE = 'weko_items_ui/export.html'
+"""Item export template."""
+
+WEKO_ITEMS_UI_EXPORT_RESULTS_LIST_TEMPLATE = 'weko_items_ui/export_results_list.html'
+"""Item export results list template."""
+
+WEKO_ITEMS_UI_JSTEMPLATE_EXPORT_LIST = 'templates/weko_items_ui/export_list.html'
+"""Javascript template for item export list."""
+
 WEKO_ITEMS_UI_INDEX_URL = '/items/index/{pid_value}'
 
 WEKO_ITEMS_UI_RANKING_TEMPLATE = 'weko_items_ui/ranking.html'
+
+WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM = 100
+"""Default max number of allowed to be exported."""
+
+WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE = {
+    'System Administrator': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,
+    'Repository Administrator': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,
+    'Contributor': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,
+    'General': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,
+    'Community Administrator': WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM
+}
+"""Max number of items that can be exported per role."""
+
+WEKO_ITEMS_UI_EXPORT_FORMAT_JSON = 'JSON'
+"""Format for exporting items -- JSON. """
+
+WEKO_ITEMS_UI_EXPORT_FORMAT_BIBTEX = 'BIBTEX'
+"""Format for exporting items -- BIBTEX. """
 
 IDENTIFIER_GRANT_DOI = 0
 """Identifier grant was select."""

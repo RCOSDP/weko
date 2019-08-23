@@ -11,8 +11,7 @@
 from __future__ import absolute_import
 
 from flask import current_app, request
-from marshmallow import Schema, ValidationError, fields, utils, \
-    validates_schema
+from marshmallow import Schema, ValidationError, fields, validates_schema
 from marshmallow.fields import DateTime as _DateTime
 
 from .resumption_token import ResumptionTokenSchema
@@ -25,9 +24,23 @@ def validate_metadata_prefix(value):
         ``OAISERVER_METADATA_FORMATS``.
     """
     metadataFormats = current_app.config['OAISERVER_METADATA_FORMATS']
+    message = 'The metadataPrefix "{0}" is not supported ' \
+        'by this repository.'.format(value)
     if value not in metadataFormats:
-        raise ValidationError('metadataPrefix does not exist',
+        raise ValidationError({'cannotDisseminateFormat': [message]},
                               field_names=['metadataPrefix'])
+
+
+def validate_duplicate_argument(field_name):
+    """Check duplicate of argument.
+
+    :param field_name: name of field.
+    """
+    all_verbs = set(request.args.getlist(field_name))
+    if len(all_verbs) > 1:
+        raise ValidationError(
+            'Illegal duplicate of argument "{0}".'.format(field_name),
+            field_names=[field_name])
 
 
 class DateTime(_DateTime):
@@ -64,7 +77,10 @@ class DateTime(_DateTime):
 class OAISchema(Schema):
     """Base OAI argument schema."""
 
-    verb = fields.Str(required=True, load_only=True)
+    verb = fields.Str(
+        required=True,
+        load_only=True,
+        error_messages={'required': 'Missing data for required field "verb".'})
 
     class Meta:
         """Schema configuration."""
@@ -85,11 +101,13 @@ class OAISchema(Schema):
                 data['from_'] > data['until']:
             raise ValidationError('Date "from" must be before "until".')
 
-        extra = set(request.values.keys()) - set([
-            f.load_from or f.name for f in self.fields.values()
-        ])
+        list_argument = [f.load_from or f.name for f in self.fields.values()]
+        extra = set(request.values.keys()) - set(list_argument)
         if extra:
             raise ValidationError('You have passed too many arguments.')
+
+        for arg in list_argument:
+            validate_duplicate_argument(arg)
 
 
 class Verbs(object):
@@ -98,9 +116,13 @@ class Verbs(object):
     class GetRecord(OAISchema):
         """Arguments for GetRecord verb."""
 
-        identifier = fields.Str(required=True)
-        metadataPrefix = fields.Str(required=True,
-                                    validate=validate_metadata_prefix)
+        identifier = fields.Str(
+            required=True,
+            error_messages={'required': 'Missing data for required field "identifier".'})
+        metadataPrefix = fields.Str(
+            required=True,
+            validate=validate_metadata_prefix,
+            error_messages={'required': 'Missing data for required field "metadataPrefix".'})
 
     class GetMetadata(OAISchema):
         """Arguments for GetMetadata verb."""
@@ -118,8 +140,10 @@ class Verbs(object):
         from_ = DateTime(format='permissive', load_from='from', dump_to='from')
         until = DateTime(format='permissive')
         set = fields.Str()
-        metadataPrefix = fields.Str(required=True,
-                                    validate=validate_metadata_prefix)
+        metadataPrefix = fields.Str(
+            required=True,
+            validate=validate_metadata_prefix,
+            error_messages={'required': 'Missing data for required field "metadataPrefix".'})
 
     class ListMetadataFormats(OAISchema):
         """Arguments for ListMetadataFormats verb."""

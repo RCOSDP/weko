@@ -32,6 +32,7 @@ from invenio_records_rest.errors import InvalidQueryRESTError
 from weko_index_tree.api import Indexes
 from werkzeug.datastructures import MultiDict
 
+from . import config
 from .api import SearchSetting
 from .permissions import search_permission
 
@@ -225,7 +226,8 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
 
                                         shuld.append(Q('nested', path=v[0],
                                                        query=Q(
-                                            'bool', should=shud, must=[qm])))
+                                                           'bool', should=shud,
+                                                           must=[qm])))
 
             return Q('bool', should=shuld) if shuld else None
 
@@ -341,6 +343,21 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         mt.extend(_get_detail_keywords_query())
         return Q('bool', must=mt) if mt else Q()
 
+    def _get_file_content_query(qstr):
+        """Query for searching indexed file contents."""
+        multi_cont_q = Q('multi_match', query=qstr, operator='and',
+                         fields=['content.attachment.content^1.5',
+                                 'content.attachment.content.ja^1.2'],
+                         type='most_fields', minimum_should_match='75%')
+
+        # Search fields may increase so leaving as multi
+        multi_q = Q('multi_match', query=qstr, operator='and',
+                    fields=['search_string'], type='most_fields',
+                    minimum_should_match='75%')
+
+        nested_content = Q('nested', query=multi_cont_q, path='content')
+        return Q('bool', should=[nested_content, multi_q])
+
     def _default_parser(qstr=None):
         """Default parser that uses the Q() from elasticsearch_dsl.
 
@@ -364,11 +381,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         else:
             # Full Text Search
             if qstr:
-                q_s = Q('multi_match', query=qstr, operator='and',
-                        fields=['content.file.content^1.5',
-                                'content.file.content.ja^1.2',
-                                '_all', 'search_string'],
-                        type='most_fields', minimum_should_match='75%')
+                q_s = _get_file_content_query(qstr)
                 mt.append(q_s)
         return Q('bool', must=mt) if mt else Q()
 
@@ -398,11 +411,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None):
         else:
             # Full Text Search
             if qstr:
-                q_s = Q('multi_match', query=qstr, operator='and',
-                        fields=['content.file.content^1.5',
-                                'content.file.content.ja^1.2',
-                                '_all', 'search_string'],
-                        type='most_fields', minimum_should_match='75%')
+                q_s = _get_file_content_query(qstr)
                 mt.append(q_s)
         return Q('bool', must=mt) if mt else Q()
 
@@ -699,38 +708,147 @@ def opensearch_factory(self, search, query_parser=None):
                                       search_type='0')
 
 
-def item_search_factory(self, search, start_date, end_date):
+def item_search_factory(self,
+                        search,
+                        start_date,
+                        end_date,
+                        list_index_id=None):
     """Factory for opensearch.
+
+    :param self:
+    :param search: Record Search's instance
+    :param start_date: Start date for search
+    :param end_date: End date for search
+    :param list_index_id: index tree list or None
+    :return:
+    """
+    def _get_query(start_term, end_term, indexes):
+        query_string = "_type:{} AND " \
+                       "relation_version_is_last:true AND " \
+                       "publish_status:0 AND " \
+                       "publish_date:[{} TO {}]".format(current_app.config[
+                           "INDEXER_DEFAULT_DOC_TYPE"],
+                           start_term,
+                           end_term)
+        query_filter = []
+        if indexes:
+            for index in indexes:
+                q_wildcard = {
+                    "wildcard": {
+                        "path": "*{}*".format(index)
+                    }
+                }
+                query_filter.append(q_wildcard)
+        query_q = {
+            "size": 10000,
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "query_string": {
+                                "query": query_string
+                            }
+                        },
+                        {
+                            "bool": {
+                                "should": query_filter
+                            }
+                        }
+                    ]
+                }
+            },
+            "sort":
+                [
+                    {
+                        "publish_date":
+                            {
+                                "order": "desc"
+                            }
+                    }
+            ]
+        }
+        return query_q
+
+    query_q = _get_query(start_date, end_date, list_index_id)
+    urlkwargs = MultiDict()
+    try:
+        extr = search._extra.copy()
+        search.update_from_dict(query_q)
+        search._extra.update(extr)
+    except SyntaxError:
+        current_app.logger.debug(
+            "Failed parsing query: {0}".format(query_q),
+            exc_info=True)
+        raise InvalidQueryRESTError()
+
+    return search, urlkwargs
+
+
+def feedback_email_search_factory(self, search):
+    """Factory for search feedback email list.
 
     :param self:
     :param search:
     :return:
     """
-    def _get_query(start_date, end_date):
-        query_string = "_type:item AND " \
-                       "relation_version_is_last:true AND " \
-                       "publish_status:0 AND " \
-                       "publish_date:[{} TO {}]".format(start_date, end_date)
+    def _get_query():
+        query_string = "_type:{} AND " \
+                       "relation_version_is_last:true " \
+            .format(current_app.config['INDEXER_DEFAULT_DOC_TYPE'])
         query_q = {
+            "size": 0,
             "query": {
-                "query_string": {
-                    "query": query_string
+                "bool": {
+                    "must": [
+                        {"nested":
+                            {
+                                "path": "feedback_mail_list",
+                                "query": {
+                                    "bool": {
+                                        "must": [
+                                            {
+                                                "exists": {
+                                                    "field": "feedback_mail_list.email"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+
+                            }
+                         },
+                        {"query_string":
+                            {
+                                "query": query_string
+                            }
+                         }
+                    ]
                 }
             },
-            "sort":
-            [
-                {
-                    "publish_date":
-                    {
-                        "order": "desc"
+            "aggs": {
+                "feedback_mail_list": {
+                    "nested": {
+                        "path": "feedback_mail_list"
+                    },
+                    "aggs": {
+                        "email_list": {
+                            "terms": {
+                                "field": "feedback_mail_list.email",
+                                "size": config.WEKO_SEARCH_MAX_FEEDBACK_MAIL
+                            },
+                            "aggs": {
+                                "top_tag_hits": {
+                                    "top_hits": {}
+                                }
+                            }
+                        }
                     }
                 }
-            ]
+            }
         }
         return query_q
 
-    query_q = _get_query(start_date, end_date)
-    urlkwargs = MultiDict()
+    query_q = _get_query()
     try:
         # Aggregations.
         extr = search._extra.copy()
@@ -742,4 +860,4 @@ def item_search_factory(self, search, start_date, end_date):
             exc_info=True)
         raise InvalidQueryRESTError()
 
-    return search, urlkwargs
+    return search

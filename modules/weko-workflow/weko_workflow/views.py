@@ -42,12 +42,13 @@ from sqlalchemy import types
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql.expression import cast
 from weko_accounts.api import ShibUser
+from weko_authors.models import Authors
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_items_ui.api import item_login
 from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
-from weko_records.api import ItemsMetadata
+from weko_records.api import FeedbackMailList, ItemsMetadata
 from weko_records.models import ItemMetadata
 from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
@@ -55,11 +56,11 @@ from werkzeug.utils import import_string
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
-    IDENTIFIER_GRANT_SUFFIX_METHOD
+    IDENTIFIER_GRANT_SUFFIX_METHOD, ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
-    pidstore_identifier_mapping
+    item_metadata_validation, pidstore_identifier_mapping
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -203,7 +204,7 @@ def display_activity(activity_id=0):
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
     item = None
-    if activity_detail is not None and activity_detail.item_id is not None:
+    if activity_detail and activity_detail.item_id:
         try:
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
         except NoResultFound as ex:
@@ -214,7 +215,9 @@ def display_activity(activity_id=0):
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
     workflow = WorkFlow()
-    workflow_detail = workflow.get_workflow_by_id(activity_detail.workflow_id)
+    workflow_detail = workflow.get_workflow_by_id(
+        activity_detail.workflow_id)
+
     if activity_detail.activity_status == \
         ActivityStatusPolicy.ACTIVITY_FINALLY \
         or activity_detail.activity_status == \
@@ -304,6 +307,11 @@ def display_activity(activity_id=0):
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
+
+        if session.get('update_json_schema') and session[
+                'update_json_schema'].get(activity_id):
+            json_schema = (json_schema + "/{}").format(activity_id)
+
     # if 'approval' == action_endpoint:
     if item:
         # get record data for the first time access to editing item screen
@@ -537,7 +545,7 @@ def next_action(activity_id='0', action_id=0):
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
         item = None
-        if activity_detail is not None and activity_detail.item_id is not None:
+        if activity_detail and activity_detail.item_id:
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
@@ -546,6 +554,20 @@ def next_action(activity_id='0', action_id=0):
                                 getter=record_class.get_record)
             pid, approval_record = resolver.resolve(pid_identifier.pid_value)
 
+            action_feedbackmail = activity_obj.get_action_feedbackmail(
+                activity_id=activity_id,
+                action_id=ITEM_REGISTRATION_ACTION_ID)
+            if action_feedbackmail:
+                FeedbackMailList.update(
+                    item_id=activity_detail.item_id,
+                    feedback_maillist=action_feedbackmail.feedback_maillist
+                )
+
+            record = WekoDeposit.get_record(activity_detail.item_id)
+            if record is not None:
+                deposit = WekoDeposit(record, record.model)
+                deposit.update_feedback_mail()
+                deposit.update_jpcoar_identifier()
             # TODO: Make private as default.
             # UpdateItem.publish(pid, approval_record)
 
@@ -586,10 +608,31 @@ def next_action(activity_id='0', action_id=0):
             action_id=action_id,
             identifier=identifier_grant
         )
-        if post_json.get('temporary_save') != 1:
-            pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
-        else:
+
+        activity_obj = WorkActivity()
+        activity_detail = activity_obj.get_activity_detail(activity_id)
+        error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
+
+        if isinstance(error_list, str):
+            return jsonify(code=-1,
+                           msg=_(error_list))
+
+        if post_json.get('temporary_save') == 1:
             return jsonify(code=0, msg=_('success'))
+
+        if error_list:
+            if not session.get('update_json_schema'):
+                session['update_json_schema'] = {}
+            session['update_json_schema'][activity_id] = error_list
+            return previous_action(activity_id=activity_id,
+                                   action_id=action_id,
+                                   req=-1)
+        else:
+            if session.get('update_json_schema') \
+                    and session['update_json_schema'].get(activity_id):
+                session['update_json_schema'][activity_id] = {}
+
+        pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
@@ -679,7 +722,10 @@ def previous_action(activity_id='0', action_id=0, req=0):
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.info(pidNotEx)
 
-    if req == 0:
+    if req == -1:
+        pre_action = flow.get_item_registration_flow_action(
+            activity_detail.flow_define.flow_id)
+    elif req == 0:
         pre_action = flow.get_previous_flow_action(
             activity_detail.flow_define.flow_id, action_id)
     else:
@@ -781,16 +827,16 @@ def cancel_action(activity_id='0', action_id=0):
 
     # clear deposit
     activity_detail = work_activity.get_activity_detail(activity_id)
-    if activity_detail is not None:
+    if activity_detail:
         cancel_item_id = activity_detail.item_id
-        if cancel_item_id is None:
+        if not cancel_item_id:
             pid_value = post_json.get('pid_value')
-            if pid_value is not None:
+            if pid_value:
                 pid = PersistentIdentifier.get('recid', pid_value)
                 cancel_item_id = pid.object_uuid
-        if cancel_item_id is not None:
+        if cancel_item_id:
             cancel_record = WekoDeposit.get_record(cancel_item_id)
-            if cancel_record is not None:
+            if cancel_record:
                 cancel_deposit = WekoDeposit(
                     cancel_record, cancel_record.model)
                 cancel_deposit.clear()
@@ -801,7 +847,7 @@ def cancel_action(activity_id='0', action_id=0):
                 cancel_pv = PIDVersioning(child=cancel_pid)
                 if cancel_pv.exists:
                     previous_pid = cancel_pv.previous
-                    if previous_pid is not None:
+                    if previous_pid:
                         activity.update(dict(item_id=previous_pid.object_uuid))
                     cancel_pv.remove_child(cancel_pid)
 
@@ -811,7 +857,7 @@ def cancel_action(activity_id='0', action_id=0):
 
     rtn = work_activity.quit_activity(activity)
 
-    if rtn is None:
+    if not rtn:
         work_activity.upt_activity_action_status(
             activity_id=activity_id, action_id=action_id,
             action_status=ActionStatusPolicy.ACTION_DOING)
@@ -867,7 +913,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
             return jsonify(code=-1, msg=_('Invalid password'))
     except BaseException:
         current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
-    return jsonify(code=-1, msg=_('Error! Relogin'))
+    return jsonify(code=-1, msg=_('Error!'))
 
 
 @blueprint.route('/findDOI', methods=['POST'])
@@ -895,3 +941,62 @@ def check_existed_doi():
             data['msg'] = _('success')
         data['code'] = 0
     return jsonify(data)
+
+@blueprint.route('/save_feedback_maillist/<string:activity_id>/<int:action_id>',
+                 methods=['POST'])
+@login_required
+@check_authority
+def save_feedback_maillist(activity_id='0', action_id='0'):
+    """Save feedback_mail's list to Activity History models.
+
+    :return:
+    """
+    try:
+        if request.headers['Content-Type'] != 'application/json':
+            """Check header of request"""
+            return jsonify(code=-1, msg=_('Header Error'))
+
+        feedback_maillist = request.get_json()
+
+        work_activity = WorkActivity()
+        work_activity.create_or_update_action_feedbackmail(
+            activity_id=activity_id,
+            action_id=action_id,
+            feedback_maillist=feedback_maillist
+        )
+        return jsonify(code=0, msg=_('Success'))
+    except (ValueError, Exception):
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return jsonify(code=-1, msg=_('Error'))
+
+@blueprint.route('/get_feedback_maillist/<string:activity_id>',
+                 methods=['GET'])
+@login_required
+def get_feedback_maillist(activity_id='0'):
+    """Get feedback_mail's list base on Activity Identifier.
+
+    :param activity_id: Acitivity Identifier.
+    :return: Return code and mail list in json format.
+    """
+    try:
+        work_activity = WorkActivity()
+        action_feedbackmail = work_activity.get_action_feedbackmail(
+            activity_id=activity_id,
+            action_id=ITEM_REGISTRATION_ACTION_ID)
+        if action_feedbackmail:
+            mail_list = action_feedbackmail.feedback_maillist
+            for mail in mail_list:
+                if mail.get('author_id'):
+                    email = Authors.get_first_email_by_id(mail.get('author_id'))
+                    if email:
+                        mail['email'] = email
+                    else:
+                        mail_list.remove(mail)
+            return jsonify(code=1,
+                           msg=_('Success'),
+                           data=mail_list)
+        else:
+            return jsonify(code=0, msg=_('Empty!'))
+    except (ValueError, Exception):
+        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    return jsonify(code=-1, msg=_('Error'))

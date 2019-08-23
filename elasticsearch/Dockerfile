@@ -18,8 +18,8 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-# Use Elasticsearch 2.
-FROM elasticsearch:2
+# Use Elasticsearch 6.
+FROM docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.2
 WORKDIR /usr/share/elasticsearch
 RUN mkdir -p backups && \
     chown -R elasticsearch:elasticsearch ./backups

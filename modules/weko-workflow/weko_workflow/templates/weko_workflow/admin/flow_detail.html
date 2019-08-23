@@ -28,8 +28,8 @@
 {%- block body %}
 {% from "weko_theme/macros/modal_page.html" import all_modal %}
 {{ all_modal() }}
+<div id="alerts"></div>
 <div class="row">
- <div id="alerts"></div>
   <div class="col-sm-offset-2">
     <div class="col-sm-4">
       <div class="form-horizontal">
@@ -71,19 +71,18 @@
         <div class="form-group">
           <div class="col-sm-offset-3 col-sm-9">
             {%- if flow_id == '0' %}
-            <button type="button" class="btn btn-primary save-button" id="btn-new-flow">
-              <span class="glyphicon glyphicon-saved"
-                  aria-hidden="true"></span>
+            <button type="button" class="btn btn-primary" id="btn-new-flow">
+              <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
                   {{_('Save')}}
             </button>
             {%- else %}
-            <button type="button" class="btn btn-primary update-button" id="btn-upt-flow">
-              <span class="glyphicon glyphicon-saved" aria-hidden="true"></span>
+            <button type="button" class="btn btn-primary" id="btn-upt-flow">
+              <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
                      {{_('Save')}}
             </button>
             {% endif %}
-            <button type="button" class="btn btn-danger delete-button" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
-              <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+            <button type="button" class="btn btn-danger" id="btn-del-flow" {%- if flow_id == '0' %} disabled {% endif %}>
+              <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>&nbsp
                    {{_('Delete')}}
             </button>
           </div>
@@ -98,12 +97,9 @@
 <div class="row">
   <div class="col-sm-offset-2 col-sm-8">
     <label>{{_('Action List')}}</label><br>
-    <a href="{{url_for('flowsetting.action')}}" class="btn btn-light hide
-        more-big-button" id="btn_more_action">
-      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>{{_('More Action')}}</a>
-    <button class="btn btn-primary pull-right more-big-button" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
-      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-             {{_('More Action')}}
+    <button class="btn btn-success pull-right" id="btn_pop_action" {%- if flow_id == '0' %} disabled {% endif %}>
+      <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>&nbsp
+      {{_('More Action')}}
     </button><br/><br/><br/>
     <div class="table-responsive">
       <table class="table table-striped table-bordered table-hover">
@@ -164,10 +160,10 @@
               <td class="hide"><span id="td_action_ver_{{action.action_id}}">{{action.action_version|default(action.action.action_version)}}</span></td>
               <td>
                 <div class="btn-group" role="group" aria-label="Swap">
-                 <button type="button" class="btn btn-default icon-button sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>
+                 <button type="button" class="btn btn-default btn-sm sortable sortable_up" {%- if loop.first %}disabled{%- endif %}>
                         <i class="fa fa-angle-up"></i>
                  </button><br/><br/>
-                 <button type="button" class="btn btn-default icon-button sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>
+                 <button type="button" class="btn btn-default btn-sm sortable sortable_down" {%- if loop.last %}disabled{%- endif %}>
                         <i class="fa fa-angle-down"></i>
                  </button>
                 </div>
@@ -182,12 +178,15 @@
 </div>
 <div class="row">
   <div class="col-sm-offset-2 col-sm-8">
-   <button type="button" class="btn btn-info back-button" id="btn_back">
-      <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>{{_('Back')}}</button>
-  <button type="button" class="btn btn-primary pull-right save-button" id="btn_submit" data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
-      <span class="glyphicon glyphicon-saved" aria-hidden="true"></span>
-                {{_('Save')}}
-    </button>
+   <button type="button" class="btn btn-default" id="btn_back">
+      <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>&nbsp
+      {{_('Back')}}
+   </button>
+  <button type="button" class="btn btn-primary pull-right" id="btn_submit" 
+      data-uri="{{url_for('flowsetting.upt_flow_action', flow_id=flow_id)}}" {%- if flow_id == '0' %} disabled {% endif %}>
+      <span class="glyphicon glyphicon-save" aria-hidden="true"></span>&nbsp
+       {{_('Save')}}
+  </button>
   </div>
 </div>
 {%- endblock %}
@@ -465,10 +464,10 @@
                 +apply_action.version+'</span></td>'
               +'<td>'
                 +'<div class="btn-group" role="group" aria-label="Swap">'
-                  +'<button type="button" class="btn btn-default icon-button sortable sortable_up">'
+                  +'<button type="button" class="btn btn-default btn-sm sortable sortable_up">'
                       +'<i class="fa fa-angle-up"></i>'
                    +'</button><br/><br/>'
-                  +'<button type="button" class="btn btn-default icon-button sortable sortable_down">'
+                  +'<button type="button" class="btn btn-default btn-sm sortable sortable_down">'
                       +'<i class="fa fa-angle-down"></i>'
                   +'</button>'
                 +'</div>'

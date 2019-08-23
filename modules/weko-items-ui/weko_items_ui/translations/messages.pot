@@ -54,6 +54,10 @@ msgstr ""
 msgid "An error has occurred."
 msgstr ""
 
+#: weko_items_ui/views.py:929
+msgid "PID does not meet the conditions."
+msgstr ""
+
 #: weko_items_ui/templates/weko_items_ui/edit.html:55
 msgid "Itemtype List"
 msgstr ""
@@ -110,6 +114,31 @@ msgstr ""
 #: weko_items_ui/templates/weko_items_ui/edit.html:272
 #: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:285
 msgid "Get"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:212
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:213
+msgid "Feedback Mail Destination"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:213
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:214
+msgid "From author DB"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:215
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:216
+msgid "Input text"
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:216
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:217
+msgid "Duplicate Email Addresses."
+msgstr ""
+
+#: weko_items_ui/templates/weko_items_ui/edit.html:217
+#: weko_items_ui/templates/weko_items_ui/iframe/item_edit.html:218
+msgid "Invalid email format."
 msgstr ""
 
 #: weko_items_ui/templates/weko_items_ui/error.html:33
@@ -252,3 +281,11 @@ msgstr ""
 msgid "place"
 msgstr ""
 
+msgid "The following items is required. Please recheck and input."
+msgstr ""
+
+msgid "Please input all required item."
+msgstr ""
+
+msgid "Please input the correct data."
+msgstr ""

@@ -32,11 +32,13 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     after_record_revert, after_record_update, before_record_delete, \
     before_record_insert, before_record_revert, before_record_update
 from jsonpatch import apply_patch
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
 from werkzeug.local import LocalProxy
 
 from .fetchers import weko_record_fetcher
+from .models import FeedbackMailList as _FeedbackMailList
 from .models import FileMetadata, ItemMetadata, ItemType
 from .models import ItemTypeEditHistory as ItemTypeEditHistoryModel
 from .models import ItemTypeMapping, ItemTypeName, ItemTypeProperty, \
@@ -950,7 +952,23 @@ class ItemTypeProps(RecordBase):
                                                    delflg=False).first()
             if obj is None:
                 return None
+            cls.helper_remove_empty_required(obj.schema)
             return obj
+
+    @classmethod
+    def helper_remove_empty_required(cls, data):
+        """Help to remove required key if it is empty.
+
+        Arguments:
+            data {dict} -- schema to remove required key
+        """
+        if "required" in data:
+            if not data.get("required"):
+                data.pop("required", None)
+        if "properties" in data:
+            for k, v in data.get("properties").items():
+                if v.get("items"):
+                    cls.helper_remove_empty_required(v.get("items"))
 
     @classmethod
     def get_records(cls, ids):
@@ -1522,25 +1540,31 @@ class SiteLicense(RecordBase):
         # update has_site_license field on item type name tbl
         ItemTypeNames.update(obj.get('item_type'))
         site_license = obj.get('site_license')
-        if site_license and isinstance(site_license, list):
-            sif = []
-            for i in range(len(site_license)):
-                lst = site_license[i]
-                slif = SiteLicenseInfo(
-                    organization_id=i + 1,
-                    organization_name=lst.get('organization_name'),
-                    mail_address=lst.get('mail_address'),
-                    domain_name=lst.get('domain_name'),
-                    addresses=get_addr(
-                        lst.get('addresses'),
-                        i))
-                sif.append(slif)
-
+        if isinstance(site_license, list):
             # delete all rows first
             SiteLicenseIpAddress.query.delete()
             SiteLicenseInfo.query.delete()
             # add new rows
-            db.session.add_all(sif)
+            if site_license:
+                sif = []
+                for i in range(len(site_license)):
+                    lst = site_license[i]
+                    if lst.get('mail_address'):
+                        receive_mail_flag = lst.get('receive_mail_flag')
+                    else:
+                        receive_mail_flag = 'F'
+                    slif = SiteLicenseInfo(
+                        organization_id=i + 1,
+                        organization_name=lst.get('organization_name'),
+                        receive_mail_flag=receive_mail_flag,
+                        mail_address=lst.get('mail_address'),
+                        domain_name=lst.get('domain_name'),
+                        addresses=get_addr(
+                            lst.get('addresses'),
+                            i))
+                    sif.append(slif)
+                # add new rows
+                db.session.add_all(sif)
         db.session.commit()
 
 
@@ -1625,3 +1649,70 @@ class WekoRecord(Record):
             pid_type='depid',
             pid_value=self.get('_deposit', {}).get('id')
         )
+
+
+class FeedbackMailList(object):
+    """Feedback-Mail List API."""
+
+    @classmethod
+    def update(cls, item_id, feedback_maillist):
+        """Create a new instance feedback_mail_list.
+
+        :param item_id: Item Identifier
+        :param feedback_maillist: list mail feedback
+        :return boolean: True if success
+        """
+        try:
+            with db.session.begin_nested():
+                query_object = _FeedbackMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if not query_object:
+                    query_object = _FeedbackMailList(
+                        item_id=item_id,
+                        mail_list=feedback_maillist
+                    )
+                    db.session.add(query_object)
+                else:
+                    query_object.mail_list = feedback_maillist
+                    db.session.merge(query_object)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def get_mail_list_by_item_id(cls, item_id):
+        """Get a FeedbackMail list by item_id.
+
+        :param item_id:
+        :return feedback_mail_list
+
+        """
+        try:
+            with db.session.no_autoflush:
+                query_object = _FeedbackMailList.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if query_object and query_object.mail_list:
+                    return query_object.mail_list
+                else:
+                    return []
+        except SQLAlchemyError:
+            return []
+
+    @classmethod
+    def delete(cls, item_id):
+        """Delete a feedback_mail_list by item_id.
+
+        :param item_id: item_id of target feed_back_mail_list
+        :return: bool: True if success
+        """
+        try:
+            with db.session.begin_nested():
+                _FeedbackMailList.query.filter_by(
+                    item_id=item_id).delete()
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
