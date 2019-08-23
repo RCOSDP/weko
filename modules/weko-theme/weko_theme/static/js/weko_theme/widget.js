@@ -88,8 +88,8 @@ let PageBodyGrid = function () {
             result = result + initNumber;
         }
 
-        let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + "&nbsp;" : "";
-        let followingMessage = languageDescription.following_message ? "&nbsp;" + languageDescription.following_message : "";
+        let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + " " : "";
+        let followingMessage = languageDescription.following_message ? " " + languageDescription.following_message : "";
         let otherMessage = languageDescription.other_message ? languageDescription.other_message : "";
 
         return '<div>'
