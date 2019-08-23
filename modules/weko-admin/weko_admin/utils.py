@@ -280,7 +280,7 @@ def create_crossref_url(pid):
     if not pid:
         raise ValueError('PID is required')
     url = config.WEKO_ADMIN_CROSSREF_API_URL + config.WEKO_ADMIN_ENDPOINT + \
-    '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
+        '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
     return url
 
 
@@ -292,7 +292,7 @@ def validate_certification(cert_data):
     """
     response = requests.get(create_crossref_url(cert_data))
     return config.WEKO_ADMIN_VALIDATION_MESSAGE not in \
-           str(vars(response).get('_content', None))
+        str(vars(response).get('_content', None))
 
 
 def get_initial_stats_report():
@@ -771,6 +771,7 @@ def validation_site_info(site_info):
 
 
 def format_site_info_data(site_info):
+    """format site info data."""
     result = dict()
     site_name = []
     list_site_name = site_info.get('site_name') or []
@@ -790,6 +791,7 @@ def format_site_info_data(site_info):
 
 
 def get_site_name_for_current_language(site_name):
+    """get site name for current language system."""
     from invenio_i18n.ext import current_i18n
     lang_code_english = 'en'
     if site_name:

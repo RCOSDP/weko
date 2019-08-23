@@ -47,7 +47,6 @@ from .utils import format_site_info_data, get_admin_lang_setting, \
     update_admin_lang_setting, update_feedback_email_setting, \
     validate_certification, validation_site_info
 
-
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
 
