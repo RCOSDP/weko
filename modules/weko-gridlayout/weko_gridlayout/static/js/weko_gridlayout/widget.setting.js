@@ -33,14 +33,12 @@ const ComponentSelectField = function(props){
             .then(
                 (result) => {
                     if (result.options) {
-                        props.getValueOfField(props.key_binding, props.data_load || result.options[0].text);
                         options = result.options.map((option) => {
                             return (
                                 <option key={option.value} value={option.value}>{option.text}</option>
                             )
                         });
                     } else {
-                        props.getValueOfField(props.key_binding, props.data_load || result.repositories[0].id);
                         options = result.repositories.map((repository) => {
                             return (
                                 <option key={repository.id} value={repository.id}>{repository.id}</option>
