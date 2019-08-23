@@ -250,6 +250,10 @@ def build_data(data):
 
 
 def _escape_html_multi_lang_setting(multi_lang_setting: dict):
+    """Escape unsafe html.
+
+    :param multi_lang_setting:
+    """
     for k, v in multi_lang_setting.items():
         if isinstance(v, dict):
             _escape_html_multi_lang_setting(v)
@@ -285,7 +289,7 @@ def build_data_setting(data):
 
 
 def _build_access_counter_setting_data(result, setting):
-    """Build Access Counter setting data
+    """Build Access Counter setting data.
 
     :param result:
     :param setting:
@@ -301,7 +305,7 @@ def _build_access_counter_setting_data(result, setting):
 
 
 def _build_new_arrivals_setting_data(result, setting):
-    """Build New Arrivals setting data
+    """Build New Arrivals setting data.
 
     :param result:
     :param setting:
@@ -314,6 +318,11 @@ def _build_new_arrivals_setting_data(result, setting):
 
 
 def _build_notice_setting_data(result, setting):
+    """Build notice setting data.
+
+    :param result:
+    :param setting:
+    """
     result['hide_the_rest'] = Markup.escape(setting.get('setting'))
     result['read_more'] = Markup.escape(setting.get('read_more'))
 
