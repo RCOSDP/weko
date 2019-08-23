@@ -685,7 +685,12 @@ def str_to_bool(str):
 
 
 def validation_site_info(site_info):
-    """Validate site_info."""
+    """
+    Validate site_info.
+
+    :param site_info:
+    :return: result
+    """
 
     list_lang_admin = get_admin_lang_setting()
     list_lang_register = [lang for lang in list_lang_admin if
@@ -771,7 +776,12 @@ def validation_site_info(site_info):
 
 
 def format_site_info_data(site_info):
-    """format site info data."""
+    """
+    Format site info data.
+
+    :param site_info:
+    :return: result
+    """
     result = dict()
     site_name = []
     list_site_name = site_info.get('site_name') or []
@@ -791,7 +801,12 @@ def format_site_info_data(site_info):
 
 
 def get_site_name_for_current_language(site_name):
-    """get site name for current language system."""
+    """
+    Get site name for current language system.
+
+    :param site_name:
+    :return: title
+    """
     from invenio_i18n.ext import current_i18n
     lang_code_english = 'en'
     if site_name:

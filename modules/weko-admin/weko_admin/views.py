@@ -469,6 +469,11 @@ def manual_send_site_license_mail(start_month, end_month):
 @blueprint_api.route('/update_site_info', methods=['POST'])
 @login_required
 def update_site_info():
+    """Update site info.
+
+        :return: result
+
+    """
     site_info = request.get_json()
     format_data = format_site_info_data(site_info)
     validate = validation_site_info(format_data)
@@ -482,6 +487,11 @@ def update_site_info():
 @blueprint_api.route('/get_site_info', methods=['GET'])
 @login_required
 def get_site_info():
+    """Get site info.
+
+        :return: result
+
+    """
     site_info = SiteInfo.get()
     result = dict()
     if not site_info:
