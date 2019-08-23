@@ -68,6 +68,9 @@ IDENTIFIER_ITEMSMETADATA_KEY = [
 ]
 """ItemsMetadata format for Identifier Grant action."""
 
+IDENTIFIER_GRANT_CAN_WITHDRAW = -1
+"""Identifier grant can withdraw."""
+
 IDENTIFIER_GRANT_IS_WITHDRAWING = -2
 """Identifier grant is withdrawing."""
 

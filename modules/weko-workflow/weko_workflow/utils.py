@@ -37,7 +37,8 @@ from weko_records_ui.models import Identifier
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import WorkActivity
-from .config import IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY
+from .config import IDENTIFIER_GRANT_SELECT_DICT, \
+    IDENTIFIER_ITEMSMETADATA_KEY, IDENTIFIER_GRANT_CAN_WITHDRAW
 
 
 def get_community_id_by_index(index_name):
@@ -84,34 +85,39 @@ def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
     doi_register_val = ''
     doi_register_typ = ''
 
-    if idf_grant == 1 and post_json.get('identifier_grant_jalc_doi_link'):
+    if idf_grant == IDENTIFIER_GRANT_LIST[1][0] and post_json.get(
+            'identifier_grant_jalc_doi_link'):
         jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_link
         identifier_type = 'DOI'
         doi_register_val = '/'.join(jalcdoi_tail[1:])
         doi_register_typ = 'JaLC'
-    elif idf_grant == 2 and post_json.get('identifier_grant_jalc_cr_doi_link'):
+    elif idf_grant == IDENTIFIER_GRANT_LIST[2][0] and post_json.get(
+            'identifier_grant_jalc_cr_doi_link'):
         jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_cr_link
         identifier_type = 'DOI'
         doi_register_val = '/'.join(jalcdoi_cr_tail[1:])
         doi_register_typ = 'Crossref'
-    elif idf_grant == 3 and post_json.get('identifier_grant_jalc_dc_doi_link'):
+    elif idf_grant == IDENTIFIER_GRANT_LIST[3][0] and post_json.get(
+            'identifier_grant_jalc_dc_doi_link'):
         jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_dc_link
         identifier_type = 'DOI'
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'Datacite'
-    elif idf_grant == 4 and post_json.get('identifier_grant_crni_link'):
-        jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
-        identifier_value = jalcdoi_crni_link
-        identifier_type = 'HDL'
-        del tempdata[attrs[2]]
-        del tempdata[attrs[3]]
-    elif idf_grant == -1:  # with draw identifier_grant
+    # elif idf_grant == IDENTIFIER_GRANT_LIST[4][0] and post_json.get(
+    # 'identifier_grant_crni_link'):
+    #     jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
+    #     identifier_value = jalcdoi_crni_link
+    #     identifier_type = 'HDL'
+    #     del tempdata[attrs[2]]
+    #     del tempdata[attrs[3]]
+    elif idf_grant == IDENTIFIER_GRANT_CAN_WITHDRAW:  # with draw
+        # identifier_grant
         pidstore_identifier = item.get('pidstore_identifier')
         flag_del_pidstore = delete_doi_pidstore(
             pidstore_identifier['identifier_value'])
