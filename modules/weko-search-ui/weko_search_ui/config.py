@@ -46,7 +46,9 @@ WEKO_SEARCH_UI_ADMIN_BULK_DELETE = \
 
 """Reset search_ui_search config"""
 
-WEKO_SEARCH_UI_JSTEMPLATE_RESULTS = 'templates/weko_search_ui/itemlist.html'
+WEKO_SEARCH_UI_JSTEMPLATE_LIST_RESULTS = 'templates/weko_search_ui/itemlist.html'
+
+WEKO_SEARCH_UI_JSTEMPLATE_TABLE_RESULTS = 'templates/weko_search_ui/itemtablecontents.html'
 
 WEKO_ITEM_MANAGEMENT_JSTEMPLATE_RESULTS_EDIT = 'templates/weko_search_ui/itemListItemManagementEdit.html'
 
@@ -310,3 +312,6 @@ WEKO_SEARCH_KEYWORDS_DICT = {
 WEKO_SEARCH_TYPE_KEYWORD = 'keyword'
 
 WEKO_SEARCH_TYPE_INDEX = 'index'
+
+WEKO_SEARCH_MAX_FEEDBACK_MAIL = 100
+"""Maximum number of feedback mail could be send."""

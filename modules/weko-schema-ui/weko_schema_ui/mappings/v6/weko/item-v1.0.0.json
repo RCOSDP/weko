@@ -119,7 +119,7 @@
           }
         },
         "control_number": {
-          "type": "keyword",
+          "type": "integer",
           "index": true
         },
         "custom_sort": {
@@ -139,6 +139,19 @@
           "copy_to": [
             "search_title"
           ]
+        },
+        "feedback_mail_list": {
+          "type": "nested",
+          "properties": {
+            "author_id": {
+              "type": "keyword",
+              "index": true
+            },
+            "email": {
+              "type": "keyword",
+              "index": true
+            }
+          }
         },
         "alternative": {
           "type": "keyword",
