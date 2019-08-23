@@ -81,30 +81,30 @@ def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
     flag_del_pidstore = False
     identifier_value = ''
     identifier_type = ''
-    identifierReg_value = ''
-    identifierReg_type = ''
+    doi_register_val = ''
+    doi_register_typ = ''
 
     if idf_grant == 1 and post_json.get('identifier_grant_jalc_doi_link'):
         jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_link
         identifier_type = 'DOI'
-        identifierReg_value = '/'.join(jalcdoi_tail[1:])
-        identifierReg_type = 'JaLC'
+        doi_register_val = '/'.join(jalcdoi_tail[1:])
+        doi_register_typ = 'JaLC'
     elif idf_grant == 2 and post_json.get('identifier_grant_jalc_cr_doi_link'):
         jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_cr_link
         identifier_type = 'DOI'
-        identifierReg_value = '/'.join(jalcdoi_cr_tail[1:])
-        identifierReg_type = 'Crossref'
+        doi_register_val = '/'.join(jalcdoi_cr_tail[1:])
+        doi_register_typ = 'Crossref'
     elif idf_grant == 3 and post_json.get('identifier_grant_jalc_dc_doi_link'):
         jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_dc_link
         identifier_type = 'DOI'
-        identifierReg_value = '/'.join(jalcdoi_dc_tail[1:])
-        identifierReg_type = 'Datacite'
+        doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
+        doi_register_typ = 'Datacite'
     elif idf_grant == 4 and post_json.get('identifier_grant_crni_link'):
         jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
         identifier_value = jalcdoi_crni_link
@@ -126,8 +126,8 @@ def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
         tempdata[attrs[1]] = identifier_type
         if tempdata.get(attrs[2]) is not None \
                 and tempdata.get(attrs[3]) is not None:
-            tempdata[attrs[2]] = identifierReg_value
-            tempdata[attrs[3]] = identifierReg_type
+            tempdata[attrs[2]] = doi_register_val
+            tempdata[attrs[3]] = doi_register_typ
 
         if not flag_del_pidstore:
             reg_invenio_pidstore(tempdata[attrs[0]], item.id)
@@ -153,11 +153,11 @@ def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
 
             res['pidstore_identifier']['identifier_value'] = tempdata[attrs[0]]
             if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
-                identifierReg_map = identifier_jpcoar_mapping(
+                doi_register_map = identifier_jpcoar_mapping(
                     item_type.item_type_id, attrs[2:4])
-                res[identifierReg_map['id']] = ({
-                    identifierReg_map['val']: tempdata[attrs[2]],
-                    identifierReg_map['type']: tempdata[attrs[3]]
+                res[doi_register_map['id']] = ({
+                    doi_register_map['val']: tempdata[attrs[2]],
+                    doi_register_map['type']: tempdata[attrs[3]]
                 })
             with db.session.begin_nested():
                 item.update(res)
@@ -243,13 +243,13 @@ def reg_invenio_pidstore(pid_value, item_id):
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
 
+
 def register_cnri(activity_id):
     """
     Register CNRI with Persistent Identifiers.
 
-    :param item_id: Record's UUID
-    :param record_id: Record deposited identifier
-    :param identifier_setting
+    :param activity_id: Workflow Activity Identifier
+    :return cnri_pidstore: CNRI pidstore object or None
     """
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
@@ -269,26 +269,29 @@ def register_cnri(activity_id):
             repository=community_id).one_or_none()
 
     if not identifier or not identifier.cnri or not identifier.cnri_flag:
-        return
+        return None
 
     cnri_link = IDENTIFIER_GRANT_LIST[4][2] + '/' + identifier.cnri \
         + '/' + "{:010d}".format(int(deposit_id))
     try:
-        prev_cnri = PersistentIdentifier.query.filter_by(pid_type='cnri',
+        prev_cnri = PersistentIdentifier.query.filter_by(
+            pid_type='cnri',
             object_uuid=item_uuid).one_or_none()
 
         if prev_cnri:
-            return
+            return None
 
-        PersistentIdentifier.create(
+        cnri_pidstore = PersistentIdentifier.create(
             'cnri',
             str(cnri_link),
             object_type='rec',
             object_uuid=item_uuid,
             status=PIDStatus.REGISTERED
         )
+        return cnri_pidstore
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.error(pidNotEx)
+        return None
 
 
 def identifier_jpcoar_mapping(item_type_id, keys):
@@ -569,20 +572,18 @@ def check_required_data(data, key, repeatable=False):
     Check whether data exist or not.
 
     :param data: request data
-    :param key: key of attribute contain data
+    :param key:  key of attribute contain data
+    :param repeatable: whether allow input more than one data
     :return: error_list or None
     """
     error_list = []
 
-    if not data:
+    if not data or not repeatable and len(data) > 1:
         error_list.append(key)
     else:
-        if not repeatable and len(data) > 1:
-            error_list.append(key)
-        else:
-            for item in data:
-                if not item:
-                    error_list.append(key)
+        for item in data:
+            if not item:
+                error_list.append(key)
 
     if not error_list:
         return None
