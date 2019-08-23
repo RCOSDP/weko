@@ -1,2 +1,1 @@
-FROM kibana:4.6
-RUN gosu kibana kibana plugin --install elastic/sense
+FROM docker.elastic.co/kibana/kibana-oss:6.2.2

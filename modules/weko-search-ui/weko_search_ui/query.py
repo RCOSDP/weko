@@ -740,6 +740,7 @@ def item_search_factory(self,
                 }
                 query_filter.append(q_wildcard)
         query_q = {
+            "size": 10000,
             "query": {
                 "bool": {
                     "must": [

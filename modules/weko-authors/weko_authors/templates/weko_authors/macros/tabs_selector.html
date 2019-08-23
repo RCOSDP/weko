@@ -1,5 +1,4 @@
-{#
-# This file is part of WEKO3.
+s file is part of WEKO3.
 # Copyright (C) 2017 National Institute of Informatics.
 #
 # WEKO3 is free software; you can redistribute it
@@ -18,12 +17,10 @@
 # MA 02111-1307, USA.
 #}
 
-{{ _('Access Count By Site License') }}
-{{ _('Aggregation') }} : {{agg_date}}
-
-[{{ _('WEKO Top Page Access Count') }}] : {{ data['top_view']|int }}
-[{{ _('Number Of Searches') }}] : {{ data['search']|int }}
-[{{ _('Number Of Views') }}] : {{ data['record_view']|int }}
-[{{ _('Number Of File download') }}] : {{ data['file_download']|int }}
-[{{ _('Number Of File Regeneration') }}] : {{ data['file_preview']|int }}
+{% macro tabs_selector(tab_value='author_list') %}
+  <ul class="nav nav-tabs">
+    <li role="presentation" {% if tab_value=='author_list' %}class="active"{% endif %}><a href="/admin/authors/">{{ _('Author ID') }}</a></li>
+    <li role="presentation" {% if tab_value=='prefix_list' %}class="active"{% endif %}><a href="/admin/authors/?tab=prefix">{{ _('ID Prefix') }}</a></li>
+  </ul>
+{% endmacro %}
 
