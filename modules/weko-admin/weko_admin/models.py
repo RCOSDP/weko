@@ -26,11 +26,12 @@ from flask import current_app, escape
 from invenio_db import db
 from sqlalchemy import asc
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
 from sqlalchemy_utils import Timestamp
 from sqlalchemy_utils.types import JSONType
-from sqlalchemy.exc import SQLAlchemyError
+
 
 class SessionLifetime(db.Model):
     """Session Lifetime model.
@@ -1196,6 +1197,7 @@ class AdminSettings(db.Model):
 
         return cls
 
+
 class SiteInfo(db.Model):
     """Site information.
 
@@ -1286,11 +1288,14 @@ class SiteInfo(db.Model):
                         "name": escape(sn.get('name').strip()),
                         "language": escape(sn.get('language')),
                     })
-                query_object.copy_right = escape(site_info.get("copy_right").strip())
-                query_object.description = escape(site_info.get("description").strip())
+                query_object.copy_right = escape(site_info.get(
+                    "copy_right").strip())
+                query_object.description = escape(site_info.get(
+                    "description").strip())
                 query_object.keyword = escape(site_info.get("keyword").strip())
                 query_object.favicon = escape(site_info.get("favicon").strip())
-                query_object.favicon_name = escape(site_info.get("favicon_name").strip())
+                query_object.favicon_name = escape(site_info.get(
+                    "favicon_name").strip())
                 query_object.site_name = site_name
 
                 if new_site_info_flag:
@@ -1304,7 +1309,6 @@ class SiteInfo(db.Model):
             raise
 
         return cls
-
 
 
 __all__ = ([

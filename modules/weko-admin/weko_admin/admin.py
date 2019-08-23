@@ -740,8 +740,10 @@ class FilePreviewSettingsView(BaseView):
         settings = AdminSettings.get('convert_pdf_settings')
         if not settings:
             temp = {}
-            temp['path'] = current_app.config.get('FILES_REST_DEFAULT_PDF_SAVE_PATH')
-            temp['pdf_ttl'] = current_app.config.get('FILES_REST_DEFAULT_PDF_TTL')
+            temp['path'] = current_app.config.get(
+                'FILES_REST_DEFAULT_PDF_SAVE_PATH')
+            temp['pdf_ttl'] = current_app.config.get(
+                'FILES_REST_DEFAULT_PDF_TTL')
             settings = AdminSettings.Dict2Obj(temp)
 
         return self.render(
@@ -785,14 +787,13 @@ class ItemExportSettingsView(BaseView):
             AdminSettings.Dict2Obj(
                 current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
 
+
 class SiteInfoView(BaseView):
     @expose('/', methods=['GET', 'POST'])
     def index(self):
         return self.render(
             current_app.config["WEKO_ADMIN_SITE_INFO"]
         )
-
-
 
 
 style_adminview = {
@@ -920,7 +921,6 @@ site_info_settings_adminview = {
         'endpoint': 'site_info'
     }
 }
-
 
 __all__ = (
     'style_adminview',

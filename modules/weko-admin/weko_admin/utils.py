@@ -25,9 +25,9 @@ from io import BytesIO, StringIO
 
 import redis
 import requests
-from flask import current_app, session, escape
-from flask_babelex import lazy_gettext as _
+from flask import current_app, escape, session
 from flask_babelex import gettext as __
+from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -280,7 +280,7 @@ def create_crossref_url(pid):
     if not pid:
         raise ValueError('PID is required')
     url = config.WEKO_ADMIN_CROSSREF_API_URL + config.WEKO_ADMIN_ENDPOINT + \
-          '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
+    '?pid=' + pid + config.WEKO_ADMIN_TEST_DOI + config.WEKO_ADMIN_FORMAT
     return url
 
 
@@ -452,7 +452,7 @@ def write_report_tsv_rows(writer, records, file_type=None, other_info=None):
     for record in records:
         if file_type is None or \
             file_type == 'file_download' or \
-            file_type == 'file_preview':
+                file_type == 'file_preview':
             writer.writerow([record['file_key'], record['index_list'],
                              record['total'], record['no_login'],
                              record['login'], record['site_license'],
@@ -685,7 +685,8 @@ def str_to_bool(str):
 
 
 def validation_site_info(site_info):
-    """Validate site_info"""
+    """Validate site_info."""
+
     list_lang_admin = get_admin_lang_setting()
     list_lang_register = [lang for lang in list_lang_admin if
                           lang.get('is_registered')]
@@ -694,7 +695,7 @@ def validation_site_info(site_info):
     errors_mess = []
     errors = []
 
-    WEKO_ADMIN_SITE_INFO_MESSAGE = {
+    weko_admin_site_info_message = {
         'must_set_at_least_1_site_name_label': __(
             'Must set at least 1 site name.'),
         'please_input_site_infomation_for_empty_field_label': __(
@@ -702,21 +703,22 @@ def validation_site_info(site_info):
         'the_same_language_is_set_for_many_site_names_label': __(
             'The same language is set for many site names.'),
         'site_name_is_required_label': __('Site name is required.'),
-        'language_not_match_label': __('Language is deleted from Registered Language of system.'),
+        'language_not_match_label': __(
+            'Language is deleted from Registered Language of system.'),
     }
 
     """check site_name len"""
     if not site_name:
         return {
-            'error': WEKO_ADMIN_SITE_INFO_MESSAGE.get(
-            'must_set_at_least_1_site_name_label'),
+            'error': weko_admin_site_info_message.get(
+                'must_set_at_least_1_site_name_label'),
             'data': [],
             'status': False
         }
     elif len(list(filter(lambda a: not a.get('name'), site_name))) == len(
-        site_name):
+            site_name):
         return {
-            'error': WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+            'error': weko_admin_site_info_message.get(
                 'must_set_at_least_1_site_name_label'),
             'data': ['site_name_0'],
             'status': False
@@ -724,38 +726,38 @@ def validation_site_info(site_info):
     for item in site_name:
         if not item.get("name").strip():
             return {
-                'error': WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'error': weko_admin_site_info_message.get(
                     'please_input_site_infomation_for_empty_field_label'),
                 'data': ["site_name_" + str(
-                item.get("index"))],
+                    item.get("index"))],
                 'status': False
             }
         check_dub = list(
             filter(lambda a: a.get("language") == item.get("language"),
                    site_name))
         if len(check_dub) >= 2:
-            errors_mess.append(WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+            errors_mess.append(weko_admin_site_info_message.get(
                 'the_same_language_is_set_for_many_site_names_label'))
             for cd in check_dub:
                 errors.append("site_name_" + str(cd.get(
                     "index")))
             return {
-                'error': WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'error': weko_admin_site_info_message.get(
                     'the_same_language_is_set_for_many_site_names_label'),
                 'data': errors,
                 'status': False
             }
         if item.get("index") > len(list_lang_register):
             return {
-                'error': WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'error': weko_admin_site_info_message.get(
                     'language_not_match_label'),
                 'data': ["site_name_" + str(item.get(
-                "index"))],
+                    "index"))],
                 'status': False
             }
         if not item.get("language") in list_lang_code:
             return {
-                'error': WEKO_ADMIN_SITE_INFO_MESSAGE.get(
+                'error': weko_admin_site_info_message.get(
                     'language_not_match_label'),
                 'data': ["site_name_" + str(item.get(
                     "index"))],
@@ -789,12 +791,8 @@ def format_site_info_data(site_info):
 
 def get_site_name_for_current_language(site_name):
     from invenio_i18n.ext import current_i18n
-    list_lang_admin = get_admin_lang_setting()
-    list_lang_register = [lang for lang in list_lang_admin if
-                          lang.get('is_registered')]
-    list_lang_code_register = [lang.get('lang_code') for lang in list_lang_register]
     lang_code_english = 'en'
-    if site_name :
+    if site_name:
         if hasattr(current_i18n, 'language'):
             for sn in site_name:
                 if sn.get('language') == current_i18n.language:
