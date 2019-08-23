@@ -60,8 +60,8 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
 from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
-    item_metadata_validation, pidstore_identifier_mapping, \
-    registrer_cnri
+    item_metadata_validation, saving_doi_pidstore, \
+    register_cnri
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -610,16 +610,15 @@ def next_action(activity_id='0', action_id=0):
             identifier=identifier_grant
         )
 
-        activity_obj = WorkActivity()
-        activity_detail = activity_obj.get_activity_detail(activity_id)
-        error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
+        item_id = WorkActivity().get_activity_detail(activity_id).item_id
+        error_list = item_metadata_validation(item_id, idf_grant)
+
+        if post_json.get('temporary_save') == 1:
+            return jsonify(code=0, msg=_('success'))
 
         if isinstance(error_list, str):
             return jsonify(code=-1,
                            msg=_(error_list))
-
-        if post_json.get('temporary_save') == 1:
-            return jsonify(code=0, msg=_('success'))
 
         if error_list:
             if not session.get('update_json_schema'):
@@ -633,29 +632,11 @@ def next_action(activity_id='0', action_id=0):
                     and session['update_json_schema'].get(activity_id):
                 session['update_json_schema'][activity_id] = {}
 
-        pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+        if idf_grant != '0':
+            saving_doi_pidstore(post_json, int(idf_grant), activity_id)
 
     if action_endpoint == 'item_login':
-        activity_obj = WorkActivity()
-        activity_detail = activity_obj.get_activity_detail(activity_id)
-        item_id = activity_detail.item_id
-        record = WekoRecord.get_record(activity_detail.item_id)
-        path = record.get('path')
-        record_id = record.get('_deposit')['id']
-        if len(path) > 1:
-            community_id = 'Root Index'
-        else:
-            index_address = path.pop(-1).split('/')
-            index_id = Index.query.filter_by(id=index_address.pop()).one()
-            community_id = get_community_id_by_index(
-                index_id.index_name)
-            idf_index_setting = Identifier.query.filter_by(
-                repository=community_id).one_or_none()
-
-        if idf_index_setting:
-            registrer_cnri(item_uuid=item_id,
-                          deposit_id=int(record_id),
-                          cnri_prefix=idf_index_setting.cnri)
+        register_cnri(activity_id)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
@@ -918,7 +899,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                 identifier_actionid)
 
             # Clear identifier in ItemMetadata
-            pidstore_identifier_mapping(None, -1, activity_id)
+            saving_doi_pidstore(None, -1, activity_id)
             identifier['action_identifier_select'] = \
                 IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
@@ -935,7 +916,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
     except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+        current_app.logger.error('Unexpected error: {}', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error!'))
 
 

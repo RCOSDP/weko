@@ -29,6 +29,7 @@ from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_index_tree.models import Index
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records_ui.models import Identifier
@@ -59,9 +60,9 @@ def get_community_id_by_index(index_name):
     return None
 
 
-def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
+def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
     """
-    Mapp pidstore identifier data to ItemMetadata.
+    Mapp doi pidstore data to ItemMetadata.
 
     :param post_json: request data
     :param idf_grant: identifier selected
@@ -112,13 +113,14 @@ def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
         del tempdata[attrs[3]]
     elif idf_grant == -1:  # with draw identifier_grant
         pidstore_identifier = item.get('pidstore_identifier')
-        flag_del_pidstore = del_invenio_pidstore(
+        flag_del_pidstore = delete_doi_pidstore(
             pidstore_identifier['identifier_value'])
-    elif idf_grant != 0:
+    else:
         current_app.logger.error(_('Identifier datas are empty!'))
         pidstore_identifier = item.get('pidstore_identifier')
-        flag_del_pidstore = del_invenio_pidstore(
+        flag_del_pidstore = delete_doi_pidstore(
             pidstore_identifier['identifier_value'])
+
     try:
         tempdata[attrs[0]] = identifier_value
         tempdata[attrs[1]] = identifier_type
@@ -205,20 +207,24 @@ def find_doi(doi_link):
         return is_existed
 
 
-def del_invenio_pidstore(link_doi):
+def delete_doi_pidstore(link_doi):
     """
-    Change status of pids_tore has been registed.
+    Change status of registed doi_pidstore.
 
-    :param: link_doi
+    :param link_doi:
     :return: True/False
     """
     try:
-        pid_identifier = PersistentIdentifier.query.\
-            filter_by(pid_type='doi', object_type='rec', pid_value=link_doi,
-                      status=PIDStatus.REGISTERED).one()
-        if pid_identifier:
-            pid_identifier.delete()
-            return pid_identifier.status == PIDStatus.DELETED
+        with db.session.no_autoflush:
+            doi_pidstore = PersistentIdentifier.query.filter_by(
+                pid_type='doi',
+                object_type='rec',
+                pid_value=link_doi,
+                status=PIDStatus.REGISTERED).one_or_none()
+
+        if doi_pidstore:
+            doi_pidstore.delete()
+            return doi_pidstore.status == PIDStatus.DELETED
         return False
     except PIDDoesNotExistError as pidNotEx:
         current_app.logger.error(pidNotEx)
@@ -237,8 +243,7 @@ def reg_invenio_pidstore(pid_value, item_id):
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
 
-
-def registrer_cnri(item_uuid, deposit_id, cnri_prefix):
+def register_cnri(activity_id):
     """
     Register CNRI with Persistent Identifiers.
 
@@ -246,8 +251,28 @@ def registrer_cnri(item_uuid, deposit_id, cnri_prefix):
     :param record_id: Record deposited identifier
     :param identifier_setting
     """
-    cnri_link = IDENTIFIER_GRANT_LIST[4][2] + '/' + cnri_prefix + '/' \
-        + "{:010d}".format(deposit_id)
+    activity = WorkActivity().get_activity_detail(activity_id)
+    item_uuid = activity.item_id
+    record = WekoRecord.get_record(item_uuid)
+    path = record.get('path')
+    deposit_id = record.get('_deposit')['id']
+    if len(path) > 1:
+        community_id = 'Root Index'
+    else:
+        index_address = path.pop(-1).split('/')
+        index_id = Index.query.filter_by(id=index_address.pop()).one()
+        community_id = get_community_id_by_index(
+            index_id.index_name)
+
+    with db.session.no_autoflush:
+        identifier = Identifier.query.filter_by(
+            repository=community_id).one_or_none()
+
+    if not identifier or not identifier.cnri or not identifier.cnri_flag:
+        return
+
+    cnri_link = IDENTIFIER_GRANT_LIST[4][2] + '/' + identifier.cnri \
+        + '/' + "{:010d}".format(int(deposit_id))
     try:
         prev_cnri = PersistentIdentifier.query.filter_by(pid_type='cnri',
             object_uuid=item_uuid).one_or_none()

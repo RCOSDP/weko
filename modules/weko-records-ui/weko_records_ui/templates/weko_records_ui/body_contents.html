@@ -46,18 +46,22 @@
                 <div class="row col-xs-6 col-md-6 col-lg-10 col-xl-12"><div
                     style="overflow:hidden;">
                 <ol class="breadcrumb" style="display: inline; padding-left: 0.25em; padding-right: 0.25em; background-color: inherit;">
-                  {%- set name = nav.name.split('/') -%}
+                  {%- if nav.name == None %}
+                    {%- set name = nav.name_en.split('/') -%}
+                  {%- else %} 
+                    {%- set name = nav.name.split('/') -%}
+                  {%- endif -%}
                   {%- set p = nav.path.split('/') -%}
                   {%- for n in name -%}
-                  {%- if community_id%}
-                  <li>
-                    <a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]+"&community="+community_id}}>{{n}}</a>
-                  </li>
-                  {%-else%}
-                  <li>
-                    <a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}>{{n}}</a>
-                  </li>
-                  {%- endif -%}
+                    {%- if community_id %}
+                      <li>
+                        <a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]+"&community="+community_id}}>{{n}}</a>
+                      </li>
+                    {%-else%}
+                      <li>
+                        <a href={{url_for("invenio_search_ui.search")+"?search_type=2&q="+p[loop.index-1]}}>{{n}}</a>
+                      </li>
+                    {%- endif -%}
                   {%- endfor -%}
                 </ol>
                 </div></div>
