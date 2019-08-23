@@ -37,8 +37,8 @@ from weko_records_ui.models import Identifier
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import WorkActivity
-from .config import IDENTIFIER_GRANT_SELECT_DICT, \
-    IDENTIFIER_ITEMSMETADATA_KEY, IDENTIFIER_GRANT_CAN_WITHDRAW
+from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, \
+    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY
 
 
 def get_community_id_by_index(index_name):
@@ -51,9 +51,8 @@ def get_community_id_by_index(index_name):
     communities = Community.query.all()
     ret_community = []
     for community in communities:
-        if community.index.index_name == index_name:
-            ret_community.append(community.id)
-        if community.index.index_name_english == index_name:
+        if community.index.index_name == index_name \
+                or community.index.index_name_english == index_name:
             ret_community.append(community.id)
 
     if len(ret_community) > 0:
