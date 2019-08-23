@@ -471,7 +471,7 @@ def manual_send_site_license_mail(start_month, end_month):
 def update_site_info():
     """Update site info.
 
-        :return: result
+    :return: result
 
     """
     site_info = request.get_json()
@@ -489,7 +489,7 @@ def update_site_info():
 def get_site_info():
     """Get site info.
 
-        :return: result
+    :return: result
 
     """
     site_info = SiteInfo.get()

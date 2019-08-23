@@ -114,6 +114,11 @@ def edit():
 
 @blueprint.app_template_filter('get_site_info')
 def get_site_info():
+    """Get site info.
+
+    :return: result
+
+    """
     from weko_admin.models import SiteInfo
     from weko_admin.utils import get_site_name_for_current_language
     site_info = SiteInfo.get()

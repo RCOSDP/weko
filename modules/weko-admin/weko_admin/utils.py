@@ -685,8 +685,8 @@ def str_to_bool(str):
 
 
 def validation_site_info(site_info):
-    """
-    Validate site_info.
+
+    """Validate site_info.
 
     :param site_info:
     :return: result
