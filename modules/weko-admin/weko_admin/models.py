@@ -1278,20 +1278,20 @@ class SiteInfo(db.Model):
                 if not query_object:
                     query_object = SiteInfo()
                     new_site_info_flag = True
-                    site_name = []
-                    list_site_name = site_info.get('site_name') or []
-                    for sn in list_site_name:
-                        site_name.append({
-                            "index": escape(sn.get('index')),
-                            "name": escape(sn.get('name').strip()),
-                            "language": escape(sn.get('language')),
-                        })
-                    query_object.copy_right = escape(site_info.get("copy_right").strip())
-                    query_object.description = escape(site_info.get("description").strip())
-                    query_object.keyword = escape(site_info.get("keyword").strip())
-                    query_object.favicon = escape(site_info.get("favicon").strip())
-                    query_object.favicon_name = escape(site_info.get("favicon_name").strip())
-                    query_object.site_name = site_name
+                site_name = []
+                list_site_name = site_info.get('site_name') or []
+                for sn in list_site_name:
+                    site_name.append({
+                        "index": escape(sn.get('index')),
+                        "name": escape(sn.get('name').strip()),
+                        "language": escape(sn.get('language')),
+                    })
+                query_object.copy_right = escape(site_info.get("copy_right").strip())
+                query_object.description = escape(site_info.get("description").strip())
+                query_object.keyword = escape(site_info.get("keyword").strip())
+                query_object.favicon = escape(site_info.get("favicon").strip())
+                query_object.favicon_name = escape(site_info.get("favicon_name").strip())
+                query_object.site_name = site_name
 
                 if new_site_info_flag:
                     db.session.add(query_object)

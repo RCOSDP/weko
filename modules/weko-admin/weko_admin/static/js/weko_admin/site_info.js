@@ -1,6 +1,7 @@
 const urlLoadLang = '/api/admin/load_lang';
 const urlLoadSiteInfo = '/api/admin/get_site_info';
 const default_favicon = 'https://community.repo.nii.ac.jp/images/common/favicon.ico'
+const default_favicon_name = 'JAIRO Cloud icon'
 const site_name_label = document.getElementById("site_name_label").value;
 const favicon_label = document.getElementById("favicon_label").value;
 const copyright_label = document.getElementById("copyright_label").value;
@@ -20,7 +21,7 @@ const language_not_match_label = document.getElementById("language_not_match_lab
 const delete_label = document.getElementById("delete_label").value;
 const select_icon_file_label = document.getElementById("select_icon_file_label").value;
 const success_mess = document.getElementById("success_mess").value;
-
+const lang_code_ja = 'ja'
 class MainLayout extends React.Component {
 
     constructor(props) {
@@ -33,7 +34,9 @@ class MainLayout extends React.Component {
            description: "",
            favicon_name: "",
            favicon: "",
-           errors: {}
+           errors: [],
+           show_alert: false,
+           success: true,
         }
         this.get_list_lang_register = this.get_list_lang_register.bind(this)
         this.get_site_info = this.get_site_info.bind(this)
@@ -47,6 +50,7 @@ class MainLayout extends React.Component {
         this.handleChangeFavicon = this.handleChangeFavicon.bind(this)
         this.getLastString = this.getLastString.bind(this)
         this.handle_focus_error = this.handle_focus_error.bind(this)
+        this.handleDimiss = this.handleDimiss.bind(this)
     }
 
     componentDidMount() {
@@ -84,7 +88,7 @@ class MainLayout extends React.Component {
             that.setState({
               ...result,
               favicon: (result && result.favicon) ? result.favicon :  default_favicon,
-              favicon_name: (result && result.favicon_name) ? result.favicon_name :  default_favicon,
+              favicon_name: (result && result.favicon_name) ? result.favicon_name :  default_favicon_name,
             })
             if(!result  || !result.site_name ||!result.site_name.length){
 
@@ -113,9 +117,10 @@ class MainLayout extends React.Component {
     }
 
     handleAddSiteName() {
+      const {list_lang_register} = this.state
       const new_site_name = {
         name: "",
-        language: ""
+        language: lang_code_ja
       }
       let {site_name} = this.state
       this.setState({
@@ -134,7 +139,7 @@ class MainLayout extends React.Component {
       const {site_name,copy_right,keyword,description,favicon_name,favicon} = this.state
       const validate = this.handleValidation()
       console.log("validate",validate)
-      if(validate) {
+      if(validate.status) {
       const new_site_name = Array.from(site_name, (item,index) => {return {
         ...item,
         index: index
@@ -158,16 +163,29 @@ class MainLayout extends React.Component {
         console.log(result)
         if(result.error) {
           this.setState({
-            errors: result.data
+            errors: result.data,
+            success: false,
+            list_error: error,
+            show_alert: true
           },()=>{
             this.handle_focus_error()
           })
-          alert(result.error.join('\r\n'))
-
         } else {
-          alert(success_mess)
+        this.setState({
+          success: true,
+          show_alert: true
+        })
         }
       });
+      } else {
+        this.setState({
+            errors: validate.item,
+            success: false,
+            list_error: validate.message,
+            show_alert: true
+          },()=>{
+            this.handle_focus_error()
+          })
       }
     }
 
@@ -184,44 +202,48 @@ class MainLayout extends React.Component {
       const errors_mess = []
       if(!site_name.length) {
         errors_mess.push(must_set_at_least_1_site_name_label)
+        return {
+          message : must_set_at_least_1_site_name_label,
+          item: [],
+          status: false
+        }
       }
       if(site_name.filter(item => !item.name).length === site_name.length) {
-        errors_mess.push(must_set_at_least_1_site_name_label)
+         return {
+          message : must_set_at_least_1_site_name_label,
+          item: ["site_name_0"],
+          status: false
+        }
       }
-      site_name_test.map(item => {
+      for (let index in site_name_test) {
+        const item = site_name_test[index];
         if(!item.name.trim()) {
-          errors_mess.push(please_input_site_infomation_for_empty_field_label)
-          errors[`site_name_${item.index}`] = please_input_site_infomation_for_empty_field_label
+          return {
+            message : please_input_site_infomation_for_empty_field_label,
+            item: [`site_name_${item.index}`],
+            status: false
+          }
         }
         const check_dub = site_name_test.filter(sn => sn.language === item.language && sn.language)
         if(check_dub.length>=2) {
-          errors_mess.push(the_same_language_is_set_for_many_site_names_label)
-          check_dub.map(cd => {
-            errors[`site_name_${cd.index}`] = the_same_language_is_set_for_many_site_names_label
-          })
-        }
-        if(item.index>=list_lang_register.length) {
-          errors[`site_name_${item.index}`] = language_not_match_label
-          errors_mess.push(language_not_match_label)
+          return {
+            message : the_same_language_is_set_for_many_site_names_label,
+            item: [`site_name_${item.index}`],
+            status: false
+          }
         }
         if(!list_lang_code.includes(item.language)){
-           errors[`site_name_${item.index}`] = language_not_match_label
-           errors_mess.push(language_not_match_label)
+          return {
+            message : language_not_match_label,
+            item: [`site_name_${item.index}`],
+            status: false
+          }
         }
-      })
-      const list_error = Array.from(new Set(errors_mess))
-      this.setState({
-        errors: errors
-      },()=>{
-        this.handle_focus_error()
-      })
-      console.log('list_error',list_error)
-      console.log('errors',errors)
-      if(list_error.length){
-        alert(list_error.join('\r\n'))
-        return false
       }
-      else return true
+      return {
+        status: true
+      }
+
     }
 
     handleChangeFavicon(e) {
@@ -230,7 +252,7 @@ class MainLayout extends React.Component {
             reader = new FileReader();
         const favicon_name = this.getLastString(e.target.value, "\\")
         if (this.getLastString(favicon_name,".") !== 'ico') {
-          alert("Incorect type file.")
+
           return false
         }
 
@@ -264,25 +286,42 @@ class MainLayout extends React.Component {
         }
       }
     }
+
+    handleDimiss(){
+      this.setState({
+        show_alert: false
+      })
+    }
     render() {
-        const {errors,site_name,list_lang_register,copy_right,description,keyword, favicon,favicon_name,success} = this.state
+        const {errors,site_name,list_lang_register,copy_right,description,keyword, favicon,favicon_name,success, show_alert, list_error} = this.state
         return (
             <div className="site_info row">
-              <div className="col-md-8 col-sm-12">
+            {
+              show_alert && (
+                <div className={`alert ${success ? 'alert-success' : 'alert-danger'}`} role="alert">
+                <button type="button" class="close" onClick={this.handleDimiss}>×</button>
+                {
+                  success ? success_mess : list_error
+                }
+              </div>
+              )
+            }
+
+              <div className="col-md-12 col-sm-12">
                 <div className="row form-group">
                   <div className="col-md-2 col-md-offset-8">
                       <button
                        className="btn btn-default"
                        onClick={this.handleAddSiteName}
                        disabled={!this.isEnableAddSiteName()}
-                       ><span className="glyphicon glyphicon-plus"></span>{add_site_name_label}</button>
+                       ><span className="glyphicon glyphicon-plus icon"></span>{add_site_name_label}</button>
                   </div>
                 </div>
 
                 {
                   site_name.map((site_name,key) => {
                     return(
-                      <div className={`row form-group ${errors[`site_name_${key}`] && "has-error"}`} key={key}>
+                      <div className={`row form-group ${errors.includes(`site_name_${key}`) && "has-error"}`} key={key}>
                         <div className="col-md-2">
                           <label>{site_name_label}</label>
                         </div>
@@ -321,7 +360,7 @@ class MainLayout extends React.Component {
                             <button
                              className="btn btn-danger"
                              onClick={()=>{this.handleRemoveSiteName(key)}}
-                             ><span className="glyphicon glyphicon-trash"></span>{delete_label}</button>
+                             ><span className="glyphicon glyphicon-trash icon"></span>{delete_label}</button>
                           </div>
                         }
 
@@ -348,8 +387,8 @@ class MainLayout extends React.Component {
                       </div>
                     </div>
                     <div className="row">
-                      <div className="col-md-6"><p style={{ wordBreak: 'break-all'}}>{favicon_name ? favicon_name: favicon ? favicon : selected_icon_label}</p></div>
-                      <div className="col-md-6">
+                      <div className="col-md-9"><p style={{ wordBreak: 'break-all'}}>{favicon_name ? favicon_name: favicon ? favicon : selected_icon_label}</p></div>
+                      <div className="col-md-3">
                       {
                         favicon && <img src={favicon} alt="favicon" className="img-response" style={{ maxWidth: "50px", maxHeight: "50px"}}/>
                       }
@@ -408,7 +447,12 @@ class MainLayout extends React.Component {
                      />
                   </div>
                 </div>
-                <div className="text-center"><button className="btn btn-primary" style={{width: "100px"}} onClick={this.handleSave}><span className="glyphicon glyphicon-saved"></span>{save_label}</button></div>
+                <div className="row">
+                  <div className="col-md-2"></div>
+                  <div className="col-md-6">
+                    <button className="btn btn-primary" style={{width: "100px"}} onClick={this.handleSave}><span className="glyphicon glyphicon-saved icon"></span>{save_label}</button>
+                  </div>
+                </div>
               </div>
             </div>
         )

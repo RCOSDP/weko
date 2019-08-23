@@ -1043,8 +1043,8 @@ msgstr "アイコンファイルの選択"
 msgid "Add site name"
 msgstr "サイト名の追加"
 
-msgid "Site name not set"
-msgstr "サイト名が設定されていません。"
+msgid "Site name is not set."
+msgstr "サイト名未設定。"
 
 msgid "Must set at least 1 site name."
 msgstr "サイト名は少くとも１つ設定する必要があります。"
@@ -1063,4 +1063,7 @@ msgstr ""
 
 msgid "Language is deleted from Registered Language of system."
 msgstr "言語が登録言語から削除されました。"
+
+msgid "Site info is saved successfully"
+msgstr "サイト情報が正常に保存されました。"
 

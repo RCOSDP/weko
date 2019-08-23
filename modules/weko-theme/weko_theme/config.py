@@ -80,4 +80,7 @@ WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE = \
 
 ADMIN_BASE_TEMPLATE = 'weko_theme/page_admin.html'
 
-THEME_BASE_TEMPLATE = 'weko_theme/page.html'
+SETTINGS_TEMPLATE = 'weko_theme/page_setting.html'
+
+COVER_TEMPLATE  = 'weko_theme/page_cover.html'
+
