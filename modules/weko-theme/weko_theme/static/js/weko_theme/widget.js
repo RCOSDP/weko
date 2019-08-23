@@ -69,7 +69,7 @@ let PageBodyGrid = function () {
             templateWriteMoreNotice = '</br>' +
                 '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
                 '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
-                linkID + '\',\'' + readMore + '\', \'' + hideRest + '\')">' + readMore +
+                linkID + '\',\'' + escapeHtml(readMore) + '\', \'' + escapeHtml(hideRest) + '\')">' + readMore +
                 '</a>';
         }
 
@@ -281,3 +281,11 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
     }
 }
 
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+ }
