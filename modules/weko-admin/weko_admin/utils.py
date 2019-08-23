@@ -685,13 +685,11 @@ def str_to_bool(str):
 
 
 def validation_site_info(site_info):
-
     """Validate site_info.
 
     :param site_info:
     :return: result
     """
-
     list_lang_admin = get_admin_lang_setting()
     list_lang_register = [lang for lang in list_lang_admin if
                           lang.get('is_registered')]
