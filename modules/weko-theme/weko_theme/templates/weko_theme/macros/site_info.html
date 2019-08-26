@@ -18,22 +18,22 @@
 # MA 02111-1307, USA.
 #}
 
-{% macro site_info() %}
+{%- macro site_info() %}
       {%- set site_info = favicon|get_site_info %}
       <title>{{site_info.get("title")}}</title>
-      {% if site_info.get('keyword') %}
+      {%- if site_info.get('keyword') %}
       <meta name="keyword" content="{{ site_info.get('keyword') }}"/>
-      {% endif %}
+      {%- endif %}
       {% if site_info.get('copy_right') %}
       <meta name="copyright" content="{{ site_info.get('copy_right') }}"/>
-      {% endif %}
-      {% if site_info.get('description') %}
+      {%- endif %}
+      {%- if site_info.get('description') %}
       <meta property="og:description" content="{{ site_info.get('description') }}" />
       <meta name="description" content="{{ site_info.get('description') }}"/>
-      {% endif %}
-      {% if site_info.get('title') %}
+      {%- endif %}
+      {%- if site_info.get('title') %}
       <meta property="og:title" content="{{ site_info.get('title') }}" />
-      {% endif %}
+      {%- endif %}
       <meta property="og:locale" content="ja_JA" />
       <meta property="og:locale:alternate" content="en_EN" />
       <meta property="og:url" content="{{ site_info.get('url') }}" />
