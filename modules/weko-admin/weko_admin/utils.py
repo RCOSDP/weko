@@ -1449,6 +1449,7 @@ class FeedbackMail:
     @classmethod
     def update_history_after_resend(cls, history_id):
         """Update latest status after resend.
+
         Arguments:
             history_id {string} -- The history id
 
