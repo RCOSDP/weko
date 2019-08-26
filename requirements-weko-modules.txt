@@ -24,6 +24,7 @@
 -e /code/modules/weko-user-profiles
 -e /code/modules/weko-deposit
 -e /code/modules/weko-authors
+-e /code/modules/weko-handle
 -e /code/modules/weko-workflow
 -e /code/modules/weko-indextree-journal
 -e /code/modules/weko-bulkupdate
