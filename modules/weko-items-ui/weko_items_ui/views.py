@@ -44,7 +44,7 @@ from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_groups.api import Group
 from weko_index_tree.utils import get_user_roles
-from weko_records.api import FeedbackMailList, ItemTypes
+from weko_records.api import FeedbackMailList, ItemTypes, Mapping
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
 from weko_workflow.api import GetCommunity, WorkActivity
@@ -257,6 +257,14 @@ def get_json_schema(item_type_id=0, activity_id=""):
                     filemeta_group = result.get('properties').get(
                         'filemeta').get('items').get('properties').get('groups')
                     filemeta_group['enum'] = group_enum
+            # hidden option
+            hidden_subitem = 'subitem_thumbnail'
+            properties = result.get('properties')
+            hidden_items = [key for key, dic in properties.items()
+                            for val in dic.values() if isinstance(val, dict)
+                            and hidden_subitem in val]
+            if hidden_items and hidden_subitem in json.dumps(result):
+                result = update_schema_remove_hidden_item(result, hidden_items)
 
         if result is None:
             return '{}'
@@ -1092,3 +1100,21 @@ def check_validation_error_msg(activity_id):
                        error_list=error_list)
     else:
         return jsonify(code=0)
+
+
+def update_schema_remove_hidden_item(schema, items_name):
+    """Update schema: remove hidden items.
+
+    :param schema: json schema
+    :param items_name: list items which has hidden flg
+    :return: The json object.
+    """
+    if not schema or not items_name:
+        return '{}'
+    render = schema.model.render
+    for item in items_name:
+        hidden_flg = render['meta_list'][item]['option']['hidden']
+        if hidden_flg:
+            schema['properties'].pop(item)
+
+    return schema

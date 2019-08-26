@@ -81,6 +81,23 @@
             extra-params='{"headers":{"Content-Type": "application/json"}}'
           >
         {%- endif %}
+        {%- if need_thumbnail %}
+          <div class="row">
+            <div class="col-sm-9" ng-hide="recordsVM.invenioRecordsLoading">
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h3 class="panel-title">{{_('Thumbnail')}}</h3>
+                </div>
+                <div class="panel-body">
+                  <div class="row">
+                    <div class="col-sm-12" id="app">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {%- endif %}
           <invenio-records
             {%- if pid %}
               initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"

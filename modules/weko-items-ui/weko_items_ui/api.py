@@ -66,9 +66,11 @@ def item_login(item_type_id=0):
                 endpoints = item_json.get('endpoints')
         if 'filename' in json.dumps(item_type.schema):
             need_file = True
+        if 'subitem_thumbnail' in json.dumps(item_type.schema):
+            need_thumbnail = True
     except Exception as e:
         template_url = 'weko_items_ui/iframe/error.html'
         current_app.logger.debug(str(e))
 
     return template_url, need_file, record, json_schema, \
-        schema_form, item_save_uri, files, endpoints
+        schema_form, item_save_uri, files, endpoints, need_thumbnail

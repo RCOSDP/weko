@@ -300,8 +300,8 @@ def display_activity(activity_id=0):
         )
         session['activity_info'] = activity_session
         # get item edit page info.
-        step_item_login_url, need_file, record, json_schema, \
-            schema_form, item_save_uri, files, endpoints = item_login(
+        step_item_login_url, need_file, record, json_schema, schema_form, \
+            item_save_uri, files, endpoints, need_thumbnail = item_login(
                 item_type_id=workflow_detail.itemtype_id)
         if item:
             pid_identifier = PersistentIdentifier.get_by_object(
@@ -397,6 +397,7 @@ def display_activity(activity_id=0):
         res_check=res_check,
         pid=pid,
         community_id=community_id,
+        need_thumbnail=need_thumbnail,
         **ctx
     )
 
