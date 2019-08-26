@@ -38,8 +38,8 @@
       {%- endfor %}
     {%- endif %}
     {%- endblock head_meta %}
-    {% from "weko_theme/macros/site_info.html" import site_info %}
-    {{ site_info() }}
+    {%- from "weko_theme/macros/site_info.html" import site_info %}
+      {{ site_info() }}
     {%- block head_links %}
 <!--    <link rel="shortcut icon" href="{{ config.get('WEKO_SITE_INFO').favicon }}"/>-->
     {%- if keywords %}<link rel="canonical" href="{{ canonical_url }}"/>{% endif %}

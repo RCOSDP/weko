@@ -20,9 +20,9 @@
 {%- extends config.THEME_BASE_TEMPLATE %}
 {%- block head_title %}{%- endblock head_title %}
 {%- block header %}
-    {% from "weko_theme/macros/site_info.html" import site_info %}
+    {%- from "weko_theme/macros/site_info.html" import site_info %}
     {{ site_info() }}
-{% endblock header %}
+{%- endblock header %}
 {%- block page_body scoped %}
 <div class="container">
   <div class="row">

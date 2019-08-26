@@ -42,7 +42,7 @@
         {%- endif %}
       {%- endblock head_meta %}
       {%- block site_info %}
-        {% from "weko_theme/macros/site_info.html" import site_info %}
+        {%- from "weko_theme/macros/site_info.html" import site_info %}
         {{ site_info() }}
       {%- endblock %}
 

@@ -21,9 +21,9 @@
 {%- block head_title %}{%- endblock head_title %}
 
 {%- block header %}
-    {% from "weko_theme/macros/site_info.html" import site_info %}
-    {{ site_info() }}
-{% endblock header %}
+    {%- from "weko_theme/macros/site_info.html" import site_info %}
+      {{ site_info() }}
+{%- endblock header %}
 {%- set html_css_classes=['cover-page'] %}
 {%- set body_css_classes=['cover-page'] %}
 
