@@ -2,6 +2,7 @@
   position: absolute;
   opacity: 0;
   height: 100%;
+  display: none;
 }
 .site_info .icon {
   padding-right: 5px;

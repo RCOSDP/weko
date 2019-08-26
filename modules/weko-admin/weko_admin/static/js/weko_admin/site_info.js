@@ -372,13 +372,18 @@ class MainLayout extends React.Component {
                     <div className="row"  style={{marginBottom: "10px"}}>
                       <div className="col-md-6" >
                        <input
+                        ref="input"
                         type="file"
                         className="input-favicon"
                         id="favicon"
                         accept=".ico"
                         onChange={this.handleChangeFavicon}
                         />
-                       <button className="btn btn-default btn-block">{select_icon_file_label}</button>
+                       <button className="btn btn-default btn-block"
+                        onClick={()=> {
+                          this.refs.input.click()
+                        }}
+                       >{select_icon_file_label}</button>
                       </div>
                     </div>
                     <div className="row">
