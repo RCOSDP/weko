@@ -38,7 +38,6 @@ class MainLayout extends React.Component {
            show_alert: false,
            success: true,
         }
-        this.get_list_lang_register = this.get_list_lang_register.bind(this)
         this.get_site_info = this.get_site_info.bind(this)
         this.handleChange = this.handleChange.bind(this)
         this.handleChangeSiteName = this.handleChangeSiteName.bind(this)
@@ -51,37 +50,32 @@ class MainLayout extends React.Component {
         this.getLastString = this.getLastString.bind(this)
         this.handle_focus_error = this.handle_focus_error.bind(this)
         this.handleDimiss = this.handleDimiss.bind(this)
+        const that = this
+        $.ajax({
+          url: urlLoadLang,
+          type: 'GET',
+          success: function (data) {
+            const results = data.results;
+            const list_lang_register = results.filter(item => item.is_registered)
+            that.setState({
+              list_lang_register: list_lang_register,
+              default_lang_code: list_lang_register[0].lang_code
+            })
+            that.get_site_info()
+          },
+          error: function (error) {
+            console.log(error);
+            alert(error_when_get_languages_label);
+          }
+        });
     }
 
-    async componentDidMount() {
-      await this.get_list_lang_register()
-      await this.get_site_info()
+    componentDidMount() {
     }
 
-    async get_list_lang_register() {
+    get_site_info() {
       const that = this
-      await $.ajax({
-        url: urlLoadLang,
-        type: 'GET',
-        success: function (data) {
-          const results = data.results;
-
-          const list_lang_register = results.filter(item => item.is_registered)
-          that.setState({
-            list_lang_register: list_lang_register,
-            default_lang_code: list_lang_register[0].lang_code
-          })
-        },
-        error: function (error) {
-          console.log(error);
-          alert(error_when_get_languages_label);
-        }
-      });
-    }
-
-    async get_site_info() {
-      const that = this
-      await $.ajax({
+      $.ajax({
           url: urlLoadSiteInfo,
           type: 'GET',
           success: function (data) {

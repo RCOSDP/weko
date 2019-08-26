@@ -960,6 +960,10 @@ msgstr ""
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:59
 msgid "There is no data."
 
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
+msgid "There is no data."
+msgstr ""
+
 #: weko_admin/template/weko_admin/admin/site_info.html:39
 msgid "Site Name"
 msgstr ""
@@ -993,7 +997,7 @@ msgid "Add site name"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/site_info.html:47
-msgid "Site name not set"
+msgid "Site name is not set."
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/site_info.html:50
@@ -1009,17 +1013,17 @@ msgid "The same language is set for many site names."
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/site_info.html:53
-msgid "Site name is required."
-msgstr ""
-
-#: weko_admin/template/weko_admin/admin/site_info.html:54
 msgid "Error when get languages."
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/site_info.html:55
+#: weko_admin/template/weko_admin/admin/site_info.html:54
 msgid "Error when get site infomation."
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/site_info.html:56
+#: weko_admin/template/weko_admin/admin/site_info.html:55
 msgid "Language is deleted from Registered Language of system."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:56
+msgid "Site info is saved successfully"
 msgstr ""
