@@ -1598,4 +1598,3 @@ def get_site_name_for_current_language(site_name):
             return site_name[0].get("name")
     else:
         return ''
-
