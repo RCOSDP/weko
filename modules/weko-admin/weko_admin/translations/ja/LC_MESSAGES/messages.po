@@ -1124,5 +1124,5 @@ msgid "Language is deleted from Registered Language of system."
 msgstr "言語が登録言語から削除されました。"
 
 #: weko_admin/template/weko_admin/admin/site_info.html:56
-msgid "Site info is saved successfully"
+msgid "Site info is saved successfully."
 msgstr "サイト情報が正常に保存されました。"
