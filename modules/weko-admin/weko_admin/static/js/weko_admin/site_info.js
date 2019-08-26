@@ -53,14 +53,14 @@ class MainLayout extends React.Component {
         this.handleDimiss = this.handleDimiss.bind(this)
     }
 
-    componentDidMount() {
-      this.get_list_lang_register()
-      this.get_site_info()
+    async componentDidMount() {
+      await this.get_list_lang_register()
+      await this.get_site_info()
     }
 
-    get_list_lang_register() {
+    async get_list_lang_register() {
       const that = this
-      $.ajax({
+      await $.ajax({
         url: urlLoadLang,
         type: 'GET',
         success: function (data) {
@@ -68,7 +68,8 @@ class MainLayout extends React.Component {
 
           const list_lang_register = results.filter(item => item.is_registered)
           that.setState({
-            list_lang_register: list_lang_register
+            list_lang_register: list_lang_register,
+            default_lang_code: list_lang_register[0].lang_code
           })
         },
         error: function (error) {
@@ -78,9 +79,9 @@ class MainLayout extends React.Component {
       });
     }
 
-    get_site_info() {
+    async get_site_info() {
       const that = this
-      $.ajax({
+      await $.ajax({
           url: urlLoadSiteInfo,
           type: 'GET',
           success: function (data) {
@@ -117,10 +118,10 @@ class MainLayout extends React.Component {
     }
 
     handleAddSiteName() {
-      const {list_lang_register} = this.state
+      const {default_lang_code} = this.state
       const new_site_name = {
         name: "",
-        language: lang_code_ja
+        language: default_lang_code
       }
       let {site_name} = this.state
       this.setState({
