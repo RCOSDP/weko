@@ -42,10 +42,9 @@ from .api import send_site_license_mail
 from .models import SessionLifetime, SiteInfo
 from .utils import format_site_info_data, get_admin_lang_setting, \
     get_api_certification_type, get_current_api_certification, \
-    get_feed_back_email_setting, get_initial_stats_report, \
-    get_selected_language, get_unit_stats_report, save_api_certification, \
-    update_admin_lang_setting, update_feedback_email_setting, \
-    validate_certification, validation_site_info, FeedbackMail, StatisticMail
+    get_initial_stats_report, get_selected_language, get_unit_stats_report, \
+    save_api_certification, update_admin_lang_setting, validate_certification, \
+    validation_site_info, FeedbackMail, StatisticMail
 
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
