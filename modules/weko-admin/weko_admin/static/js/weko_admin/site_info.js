@@ -317,7 +317,7 @@ class MainLayout extends React.Component {
                   site_name.map((site_name,key) => {
                     return(
                       <div className={`row form-group`} key={key}>
-                        <div className="col-md-2">
+                        <div className="col-md-2 text-right">
                           <label>{site_name_label}</label>
                         </div>
                         <div className="col-md-6">
@@ -332,7 +332,7 @@ class MainLayout extends React.Component {
                             }}
                           />
                         </div>
-                        <div className="col-md-2">
+                        <div className="col-md-2 text-right">
                           <select
                           className="form-control"
                           value={site_name.language}
@@ -351,7 +351,7 @@ class MainLayout extends React.Component {
                         </div>
                         {
                           key > 0 &&
-                          <div className="col-md-2">
+                          <div className="col-md-2 text-right">
                             <button
                              className="btn btn-danger"
                              onClick={()=>{this.handleRemoveSiteName(key)}}
@@ -365,7 +365,7 @@ class MainLayout extends React.Component {
                 }
 
                 <div className={`row form-group ${errors[`favicon`] && "has-error"}`}>
-                  <div className="col-md-2">
+                  <div className="col-md-2 text-right">
                     <label>{favicon_label}</label>
                   </div>
                   <div className="col-md-6" >
@@ -398,7 +398,7 @@ class MainLayout extends React.Component {
                 </div>
 
                 <div className={`row form-group ${errors[`copy_right`] && "has-error"}`}>
-                  <div className="col-md-2">
+                  <div className="col-md-2 text-right">
                     <label>{copyright_label}</label>
                   </div>
                   <div className="col-md-6">
@@ -415,7 +415,7 @@ class MainLayout extends React.Component {
                 </div>
 
                 <div className={`row form-group ${errors[`description`] && "has-error"}`}>
-                  <div className="col-md-2">
+                  <div className="col-md-2 text-right">
                     <label>{description_label}</label>
                   </div>
                   <div className="col-md-6">
@@ -432,7 +432,7 @@ class MainLayout extends React.Component {
                 </div>
 
                 <div className={`row form-group ${errors[`keyword`] && "has-error"}`}>
-                  <div className="col-md-2">
+                  <div className="col-md-2 text-right">
                     <label>{keyword_label}</label>
                   </div>
                   <div className="col-md-6">
@@ -448,7 +448,7 @@ class MainLayout extends React.Component {
                   </div>
                 </div>
                 <div className="row">
-                  <div className="col-md-2"></div>
+                  <div className="col-md-2 text-right"></div>
                   <div className="col-md-6">
                     <button className="btn btn-primary" style={{width: "100px"}} onClick={this.handleSave}><span className="glyphicon glyphicon-saved icon"></span>{save_label}</button>
                   </div>
