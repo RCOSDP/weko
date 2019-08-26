@@ -113,7 +113,7 @@ def edit():
 
 
 @blueprint.app_template_filter('get_site_info')
-def get_site_info():
+def get_site_info(site_info):
     """Get site info.
 
     :return: result

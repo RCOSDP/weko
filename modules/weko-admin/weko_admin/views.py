@@ -45,8 +45,6 @@ from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
     get_selected_language, get_unit_stats_report, save_api_certification, \
     update_admin_lang_setting, validate_certification, validation_site_info
 
-
-
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
 
