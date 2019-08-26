@@ -25,11 +25,14 @@ from invenio_stats.config import SEARCH_INDEX_PREFIX as index_prefix
 WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'
 """Default base template for the author page."""
 
-WEKO_AUTHORS_ADMIN_LIST_TEMPLATE = 'weko_authors/admin/list.html'
+WEKO_AUTHORS_ADMIN_LIST_TEMPLATE = 'weko_authors/admin/author_list.html'
 """List template for the admin author page."""
 
-WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE = 'weko_authors/admin/edit.html'
+WEKO_AUTHORS_ADMIN_EDIT_TEMPLATE = 'weko_authors/admin/author_edit.html'
 """Edit template for the admin author page."""
+
+WEKO_AUTHORS_ADMIN_PREFIX_TEMPLATE = 'weko_authors/admin/prefix_list.html'
+"""template for the id prefix settings page."""
 
 WEKO_AUTHORS_NUM_OF_PAGE = 25
 """Default number of author search results that display in one page."""

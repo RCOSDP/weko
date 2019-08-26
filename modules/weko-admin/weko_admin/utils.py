@@ -20,7 +20,9 @@
 
 """Utilities for convert response json."""
 import csv
+import os
 import zipfile
+from datetime import datetime
 from io import BytesIO, StringIO
 
 import redis
@@ -32,14 +34,20 @@ from invenio_accounts.models import Role, userrole
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_i18n.views import set_lang
+from invenio_indexer.api import RecordIndexer
+from invenio_mail.admin import MailSettingView
+from invenio_records.models import RecordMetadata
+from invenio_stats.views import QueryFileStatsCount, QueryRecordViewCount
+from jinja2 import Template
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy import func
 from weko_authors.models import Authors
 from weko_records.api import ItemsMetadata
 
 from . import config
-from .models import AdminLangSettings, ApiCertificate, FeedbackMailSetting, \
-    SearchManagement, StatisticTarget, StatisticUnit
+from .models import AdminLangSettings, ApiCertificate, FeedbackMailFailed, \
+    FeedbackMailHistory, FeedbackMailSetting, SearchManagement, \
+    StatisticTarget, StatisticUnit
 
 
 def get_response_json(result_list, n_lst):
@@ -536,147 +544,916 @@ def get_redis_cache(cache_key):
     return None
 
 
-def get_feed_back_email_setting():
-    """Get list feedback email setting.
+def get_system_default_language():
+    """Get system default language.
 
     Returns:
-        dictionary -- feedback email setting
+        string -- language code
 
     """
-    result = {
-        'data': '',
-        'is_sending_feedback': '',
-        'error': ''
-    }
-    setting = FeedbackMailSetting.get_all_feedback_email_setting()
-    if len(setting) == 0:
+    registered_languages = AdminLangSettings.get_registered_language()
+    if not registered_languages:
+        return 'en'
+    default_language = registered_languages[0].get('lang_code')
+    return default_language
+
+
+class StatisticMail:
+    """Pack of function to send statistic mail."""
+
+    @classmethod
+    def get_send_time(cls):
+        """Get statistic time.
+
+        Returns:
+            string -- time with format yyyy-MM
+
+        """
+        month = str(datetime.now().month - 1)
+        month = month.zfill(2)
+        return str(datetime.now().year) + '-' + month
+
+    @classmethod
+    def send_mail_to_all(cls, list_mail_data=None, stats_date=None):
+        """Send mail to all setting email."""
+        # Load setting:
+        setting = FeedbackMail.get_feed_back_email_setting()
+        if not setting.get('is_sending_feedback') and not stats_date:
+            return
+        banned_mail = cls.get_banned_mail(setting.get('data'))
+
+        session = db.session
+        id = FeedbackMailHistory.get_sequence(session)
+        start_time = datetime.now()
+        if not stats_date:
+            stats_date = cls.get_send_time()
+        failed_mail = 0
+        total_mail = 0
+        try:
+            from weko_theme import config as theme_config
+            if not list_mail_data:
+                from weko_search_ui.utils import get_feedback_mail_list, \
+                    parse_feedback_mail_data
+                feedback_mail_data = get_feedback_mail_list()
+                if not feedback_mail_data:
+                    return
+                list_mail_data = parse_feedback_mail_data(
+                    feedback_mail_data)
+            title = theme_config.THEME_SITENAME
+            for k, v in list_mail_data.items():
+                mail_data = {
+                    'user_name': cls.get_author_name(
+                        str(k),
+                        v.get('author_id')),
+                    'organization': title,
+                    'time': stats_date
+                }
+                recipient = str(k)
+                subject = str(
+                    cls.build_statistic_mail_subject(title, stats_date))
+                body = str(cls.fill_email_data(
+                    cls.get_list_statistic_data(
+                        v.get("item"),
+                        stats_date,
+                        setting.get('root_url')),
+                    mail_data))
+                if recipient in banned_mail:
+                    continue
+                send_result = cls.send_mail(recipient, body, subject)
+                total_mail += 1
+                if not send_result:
+                    FeedbackMailFailed.create(
+                        session,
+                        id,
+                        v.get('author_id'),
+                        str(k)
+                    )
+                    failed_mail += 1
+        except Exception as ex:
+            current_app.logger.error('Error has occurred', ex)
+        end_time = datetime.now()
+        FeedbackMailHistory.create(
+            session,
+            id,
+            start_time,
+            end_time,
+            stats_date,
+            total_mail,
+            failed_mail
+        )
+
+    @classmethod
+    def get_banned_mail(cls, list_banned_mail):
+        """Get banned mail from list of setting.
+
+        Arguments:
+            list_banned_mail {list} -- list banned mail setting
+
+        Returns:
+            list -- banned mail
+
+        """
+        result = list()
+        if len(list_banned_mail) == 0:
+            return result
+        for data in list_banned_mail:
+            result.append(data.get('email'))
         return result
-    list_author_id = setting[0].account_author.split(',')
-    result['is_sending_feedback'] = setting[0].is_sending_feedback
-    list_data = list()
-    for author_id in list_author_id:
-        email = Authors.get_first_email_by_id(author_id)
-        new_data = dict()
-        new_data['author_id'] = author_id
-        new_data['email'] = email
-        list_data.append(new_data)
-    result['data'] = list_data
-    return result
+
+    @classmethod
+    def convert_download_count_to_int(cls, download_count):
+        """Convert statistic float string to int string.
+
+        Arguments:
+            download_count {string} -- float string
+
+        Returns:
+            string -- int string
+
+        """
+        try:
+            if '.' in download_count:
+                index = download_count.index('.')
+                download_count = download_count[0:index]
+            return int(download_count)
+        except Exception as ex:
+            current_app.logger.error(
+                'Cannot convert download count to int', ex)
+            return 0
+
+    @classmethod
+    def get_list_statistic_data(cls, list_item_id, time, root_url):
+        """Get list statistic data for user.
+
+        Arguments:
+            list_item_id {list} -- item id
+            time {string} -- statistic time
+
+        Returns:
+            dictionary -- The statistic data
+
+        """
+        list_result = {
+            'data': [],
+            'summary': {}
+        }
+        statistic_data = list()
+        total_item = 0
+        total_files = 0
+        total_view = 0
+        total_download = 0
+        for item_id in list_item_id:
+            data = cls.get_item_information(item_id, time, root_url)
+            file_download = data.get('file_download')
+            list_file_download = list()
+            for k, v in file_download.items():
+                total_download += cls.convert_download_count_to_int(v)
+                list_file_download.append(str(
+                    k + '(' + str(cls.convert_download_count_to_int(v)) + ')'))
+            total_item += 1
+            total_files += len(list_file_download)
+            total_view += cls.convert_download_count_to_int(
+                data.get('detail_view'))
+            data['file_download'] = list_file_download
+            statistic_data.append(data)
+        summary_data = {
+            'total_item': total_item,
+            'total_files': total_files,
+            'total_view': total_view,
+            'total_download': total_download
+        }
+        list_result['data'] = statistic_data
+        list_result['summary'] = summary_data
+        return list_result
+
+    @classmethod
+    def get_item_information(cls, item_id, time, root_url):
+        """Get information of item.
+
+        Arguments:
+            item_id {string} -- id of item
+            time {string} -- time to statistic data
+
+        Returns:
+            [dictionary] -- data template insert to email
+
+        """
+        result = db.session.query(RecordMetadata).filter(
+            RecordMetadata.id == item_id).one_or_none()
+        data = result.json
+        count_item_view = cls.get_item_view(item_id, time)
+        count_item_download = cls.get_item_download(data, time)
+        title = data.get("item_title")
+        url = root_url + '/records/' + data.get('control_number')
+        result = {
+            'title': title,
+            'url': url,
+            'detail_view': count_item_view,
+            'file_download': count_item_download
+        }
+        return result
+
+    @classmethod
+    def get_item_view(cls, item_id, time):
+        """Get view of item.
+
+        Arguments:
+            item_id {string} -- id of item
+            time {string} -- time to statistic data
+
+        Returns:
+            [string] -- viewed of item
+
+        """
+        query_file_view = QueryRecordViewCount()
+        return str(query_file_view.get_data(item_id, time).get("total"))
+
+    @classmethod
+    def get_item_download(cls, data, time):
+        """Get download of item.
+
+        Arguments:
+            data {dictionary} -- data of item in records_metadata
+            time {string} -- time to statistic data
+
+        Returns:
+            [dictionary] -- dictionary of file and it's downloaded
+
+        """
+        list_file = cls.get_file_in_item(data)
+        result = {}
+        if list_file:
+            for file_key in list_file.get("list_file_key"):
+                query_file_download = QueryFileStatsCount()
+                count_file_download = query_file_download.get_data(
+                    list_file.get("bucket_id"), file_key, time).get(
+                    "download_total")
+                result[file_key] = str(count_file_download)
+        return result
+
+    @classmethod
+    def find_value_in_dict(cls, key, data):
+        """Find value of key in dictionary.
+
+        Arguments:
+            key {string} -- key of dictionary to find
+            data {dictionary} -- data to find key
+
+        """
+        for k, v in data.items():
+            if k == key:
+                yield v
+            if isinstance(v, dict):
+                for result in cls.find_value_in_dict(key, v):
+                    yield result
+            elif isinstance(v, list):
+                for d in v:
+                    if isinstance(d, dict):
+                        for result in cls.find_value_in_dict(key, d):
+                            yield result
+
+    @classmethod
+    def get_file_in_item(cls, data):
+        """Get all file in item.
+
+        Arguments:
+            data {dictionary} -- data of item in records_metadata
+
+        Returns:
+            [dictionary] -- bucket id and file key of all file in item
+
+        """
+        bucket_id = data.get("_buckets").get("deposit")
+        list_file_key = list(cls.find_value_in_dict("filename", data))
+        return {
+            "bucket_id": bucket_id,
+            "list_file_key": list_file_key,
+        }
+
+    @classmethod
+    def fill_email_data(cls, statistic_data, mail_data):
+        """Fill data to template.
+
+        Arguments:
+            mail_data {string} -- data for mail content.
+
+        Returns:
+            string -- mail content
+
+        """
+        current_path = os.path.dirname(os.path.abspath(__file__))
+        file_name = 'statistic_mail_template_en.tpl'  # default template file
+        if get_system_default_language() == 'ja':
+            file_name = 'statistic_mail_template_ja.tpl'
+        elif get_system_default_language() == 'en':
+            file_name = 'statistic_mail_template_en.tpl'
+
+        file_path = os.path.join(
+            current_path,
+            'templates',
+            'weko_admin',
+            'email_templates',
+            file_name)
+        with open(file_path, 'r') as file:
+            data = file.read()
+
+        data_content = cls.build_mail_data_to_string(
+            statistic_data.get('data'))
+        summary_data = statistic_data.get('summary')
+        mail_data = {
+            'user_name': mail_data.get('user_name'),
+            'organization': mail_data.get('organization'),
+            'time': mail_data.get('time'),
+            'data': data_content,
+            'total_item': summary_data.get('total_item'),
+            'total_file': summary_data.get('total_files'),
+            'total_detail_view': summary_data.get('total_view'),
+            'total_download': summary_data.get('total_download')
+        }
+        return Template(data).render(mail_data)
+
+    @classmethod
+    def send_mail(cls, recipient, body, subject):
+        """Send mail to receiver.
+
+        Arguments:
+            receiver {string} -- receiver mail address
+            body {string} -- mail content
+            subject {string} -- mail subject
+
+        Returns:
+            boolean -- True if send success
+
+        """
+        current_app.logger.debug("START Prepare Feedback Mail Data")
+        current_app.logger.debug('Recipient: {0}'.format(recipient))
+        current_app.logger.debug('Mail data: \n{0}'.format(body))
+        rf = {
+            'subject': subject,
+            'body': body,
+            'recipient': recipient
+        }
+        current_app.logger.debug("END Prepare Feedback Mail Data")
+        return MailSettingView.send_statistic_mail(rf)
+
+    @classmethod
+    def build_statistic_mail_subject(cls, title, send_date):
+        """Build mail subject.
+
+        Arguments:
+            title {string} -- The site name
+            send_date {string} -- statistic time
+
+        Returns:
+            string -- The mail subject
+
+        """
+        result = '[' + title + ']' + send_date
+        if get_system_default_language() == 'ja':
+            result += ' 利用統計レポート'
+        elif get_system_default_language() == 'en':
+            result += ' Usage Statistics Report'
+        return result
+
+    @classmethod
+    def build_mail_data_to_string(cls, data):
+        """Build statistic data as string.
+
+        Arguments:
+            data {dictionary} -- mail data
+
+        Returns:
+            string -- statistic data as string
+
+        """
+        result = ''
+        if not data:
+            return result  # Return null string, avoid exception
+
+        for item in data:
+            file_down_str = ''
+            for str_count in item['file_download']:
+                file_down_str += '    ' + str_count + '\n'
+            result += '----------------------------------------\n'
+            if get_system_default_language() == 'ja':
+                result += '[タイトル] : ' + item['title'] + '\n'
+                result += '[URL] : ' + item['url'] + '\n'
+                result += '[閲覧回数] : ' + str(
+                    cls.convert_download_count_to_int(
+                        item['detail_view'])) + '\n'
+                result += '[ファイルダウンロード回数] : ' + file_down_str
+
+            else:
+                result += '[Title] : ' + item['title'] + '\n'
+                result += '[URL] : ' + item['url'] + '\n'
+                result += '[DetailView] : ' + str(
+                    cls.convert_download_count_to_int(
+                        item['detail_view'])) + '\n'
+                result += '[FileDownload] : \n' + file_down_str
+        return result
+
+    @classmethod
+    def get_author_name(cls, mail, author_id):
+        """Get author name by id.
+
+        Arguments:
+            mail {string} -- default email if author not exist
+            author_id {string} -- author id
+
+        Returns:
+            string -- author name
+
+        """
+        if not author_id:
+            return mail
+        author_data = Authors.get_author_by_id(author_id)
+        if not author_data:
+            return mail
+        author_info = author_data.get('authorNameInfo')
+        if not author_info:
+            return mail
+        return author_info[0].get('fullName')
 
 
-def update_feedback_email_setting(data, is_sending_feedback):
-    """Update feedback email setting.
+def str_to_bool(str):
+    """Convert string to bool."""
+    return str.lower() in ['true', 't']
 
-    Arguments:
-        data {list} -- data list
-        is_sending_feedback {bool} -- is sending feedback
 
-    Returns:
-        dict -- error message
+class FeedbackMail:
+    """The feedback mail service."""
 
-    """
-    result = {
-        'error': ''
-    }
-    update_result = False
-    if not data:
-        update_result = FeedbackMailSetting.delete()
-        return handle_update_message(
+    @classmethod
+    def search_author_mail(cls, request_data: dict) -> dict:
+        """Search author mail.
+
+        :param request_data: request data
+        :return: author mail
+        """
+        search_key = request_data.get('searchKey') or ''
+        query = {"match": {"gather_flg": 0}}
+        if search_key:
+            search_keys = search_key.split(" ")
+            match = []
+            for key in search_keys:
+                if key:
+                    match.append(
+                        {"match_phrase_prefix": {"emailInfo.email": key}})
+            query = {
+                "bool":
+                    {
+                        "should": match, "minimum_should_match": 1
+                    }
+            }
+        size = config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE
+        num = request_data.get('pageNumber') or 1
+        offset = (int(num) - 1) * size if int(num) > 1 else 0
+        sort_key = request_data.get('sortKey') or ''
+        sort_order = request_data.get('sortOrder') or ''
+        sort = {}
+        if sort_key and sort_order:
+            sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
+        body = {
+            "query": query,
+            "from": offset,
+            "size": size,
+            "sort": sort
+        }
+        query_item = {
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must_not": {
+                        "match": {
+                            "weko_id": "",
+                        }
+                    }
+                }
+            }, "aggs": {
+                "item_count": {
+                    "terms": {
+                        "field": "weko_id"
+                    }
+                }
+            }
+        }
+        indexer = RecordIndexer()
+        result = indexer.client.search(
+            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+            body=body
+        )
+        result_item_cnt = indexer.client.search(
+            index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
+            body=query_item
+        )
+        result['item_cnt'] = result_item_cnt
+        return result
+
+    @classmethod
+    def get_feed_back_email_setting(cls):
+        """Get list feedback email setting.
+
+        Returns:
+            dictionary -- feedback email setting
+
+        """
+        result = {
+            'data': '',
+            'is_sending_feedback': '',
+            'root_url': '',
+            'error': ''
+        }
+        setting = FeedbackMailSetting.get_all_feedback_email_setting()
+        if len(setting) == 0:
+            return result
+        list_author_id = setting[0].account_author.split(',')
+
+        list_manual_mail = setting[0].manual_mail.get('email')
+        result['is_sending_feedback'] = setting[0].is_sending_feedback
+        result['root_url'] = setting[0].root_url
+        list_data = list()
+        for author_id in list_author_id:
+            if not author_id:
+                continue
+            email = Authors.get_first_email_by_id(author_id)
+            new_data = dict()
+            new_data['author_id'] = author_id
+            new_data['email'] = email
+            list_data.append(new_data)
+        if list_manual_mail:
+            for mail in list_manual_mail:
+                new_data = dict()
+                new_data['author_id'] = ''
+                new_data['email'] = mail
+                list_data.append(new_data)
+        result['data'] = list_data
+        return result
+
+    @classmethod
+    def update_feedback_email_setting(cls, data,
+                                      is_sending_feedback, root_url):
+        """Update feedback email setting.
+
+        Arguments:
+            data {list} -- data list
+            is_sending_feedback {bool} -- is sending feedback
+            root_url (string) -- Root URL
+
+        Returns:
+            dict -- error message
+
+        """
+        result = {
+            'error': ''
+        }
+        update_result = False
+        if not data and not is_sending_feedback:
+            update_result = FeedbackMailSetting.delete()
+            return cls.handle_update_message(
+                result,
+                update_result
+            )
+        error_message = cls.validate_feedback_mail_setting(data)
+        if error_message:
+            result['error'] = error_message
+            return result
+        current_setting = FeedbackMailSetting.get_all_feedback_email_setting()
+        if len(current_setting) == 0:
+            update_result = FeedbackMailSetting.create(
+                cls.convert_feedback_email_data_to_string(data),
+                cls.get_list_manual_email(data),
+                is_sending_feedback,
+                root_url
+            )
+        else:
+            update_result = FeedbackMailSetting.update(
+                cls.convert_feedback_email_data_to_string(data),
+                cls.get_list_manual_email(data),
+                is_sending_feedback,
+                root_url
+            )
+        return cls.handle_update_message(
             result,
             update_result
         )
-    error_message = validate_feedback_mail_setting(data)
-    if error_message:
-        result['error'] = error_message
+
+    @classmethod
+    def convert_feedback_email_data_to_string(cls, data, keyword='author_id'):
+        """Convert feedback email data to string.
+
+        Arguments:
+            data {list} -- Data list
+
+        Keyword Arguments:
+            keyword {str} -- search keyword (default: {'author_id'})
+
+        Returns:
+            string -- list as string
+
+        """
+        if not isinstance(data, list):
+            return None
+        result = ''
+        for item in data:
+            if item.get(keyword):
+                result = result + ',' + item.get(keyword)
+        return result[1:]
+
+    @classmethod
+    def get_list_manual_email(cls, data):
+        """Get list manual email from request data.
+
+        Arguments:
+            data {dictionary} -- request data
+
+        Returns:
+            dictionary -- list manual email
+
+        """
+        if not isinstance(data, list):
+            return None
+        list_mail = list()
+        for item in data:
+            if not item.get('author_id'):
+                list_mail.append(item.get('email'))
+        result = {
+            'email': list_mail
+        }
         return result
-    current_setting = FeedbackMailSetting.get_all_feedback_email_setting()
-    if len(current_setting) == 0:
-        update_result = FeedbackMailSetting.create(
-            convert_feedback_email_data_to_string(data),
-            is_sending_feedback
-        )
-    else:
-        update_result = FeedbackMailSetting.update(
-            convert_feedback_email_data_to_string(data),
-            is_sending_feedback
-        )
-    return handle_update_message(
-        result,
-        update_result
-    )
 
+    @classmethod
+    def handle_update_message(cls, result, success):
+        """Check query result and return message.
 
-def convert_feedback_email_data_to_string(data, keyword='author_id'):
-    """Convert feedback email data to string.
+        Arguments:
+            result {dict} -- message
+            success {bool} -- query result
 
-    Arguments:
-        data {list} -- Data list
+        Returns:
+            dict -- message
 
-    Keyword Arguments:
-        keyword {str} -- search keyword (default: {'author_id'})
+        """
+        if not success:
+            result['error'] = _('Cannot update Feedback email settings.')
+        return result
 
-    Returns:
-        string -- list as string
+    @classmethod
+    def validate_feedback_mail_setting(cls, data):
+        """Validate duplicate email and author id.
 
-    """
-    if not isinstance(data, list):
-        return None
-    result = ''
-    for item in data:
-        if item.get(keyword):
-            result = result + ',' + item.get(keyword)
-    return result[1:]
+        Arguments:
+            data {list} -- data list
 
+        Returns:
+            string -- error message
 
-def handle_update_message(result, success):
-    """Check query result and return message.
+        """
+        error_message = None
+        list_author = cls.convert_feedback_email_data_to_string(
+            data
+        ).split(',')
+        list_email = cls.convert_feedback_email_data_to_string(
+            data,
+            'email'
+        ).split(',')
+        new_list = list()
+        for item in list_author:
+            if len(new_list) == 0 or item not in new_list:
+                new_list.append(item)
+            else:
+                error_message = _('Author is duplicated.')
+                return error_message
+        new_list = list()
+        for item in list_email:
+            if len(new_list) == 0 or item not in new_list:
+                new_list.append(item)
+            else:
+                error_message = _('Duplicate Email Addresses.')
+                return error_message
+        return error_message
 
-    Arguments:
-        result {dict} -- message
-        success {bool} -- query result
+    @classmethod
+    def load_feedback_mail_history(cls, page_num):
+        """Load all history of send mail.
 
-    Returns:
-        dict -- message
+        Arguments:
+            page_num {integer} -- The page number
 
-    """
-    if not success:
-        result['error'] = _('Cannot update Feedback email settings.')
-    return result
+        Raises:
+            ValueError: Parameter error
 
+        Returns:
+            dictionary -- List of send mail history
 
-def validate_feedback_mail_setting(data):
-    """Validate duplicate email and author id.
+        """
+        result = {
+            'data': [],
+            'total_page': 0,
+            'selected_page': 0,
+            'records_per_page': 0,
+            'error': ''
+        }
+        try:
+            data = FeedbackMailHistory.get_all_history()
+            list_history = list()
+            page_num_end = \
+                page_num * config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
+            page_num_start = \
+                page_num_end - config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
+            if page_num_start > len(data):
+                raise ValueError('Page out of range')
 
-    Arguments:
-        data {list} -- data list
+            for index in range(page_num_start, page_num_end):
+                if index >= len(data):
+                    break
+                new_data = dict()
+                new_data['id'] = data[index].id
+                new_data['start_time'] = data[index].start_time.strftime(
+                    '%Y-%m-%d %H:%M:%S.%f')[:-3]
+                new_data['end_time'] = data[index].end_time.strftime(
+                    '%Y-%m-%d %H:%M:%S.%f')[:-3]
+                new_data['count'] = int(data[index].count)
+                new_data['error'] = int(data[index].error)
+                new_data['success'] = int(
+                    data[index].count) - int(data[index].error)
+                new_data['is_latest'] = data[index].is_latest
+                list_history.append(new_data)
+            result['data'] = list_history
+            result['total_page'] = cls.get_total_page(
+                len(data),
+                config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY)
+            result['selected_page'] = page_num
+            result['records_per_page'] = \
+                config.WEKO_ADMIN_NUMBER_OF_SEND_MAIL_HISTORY
+            return result
+        except Exception as ex:
+            result['error'] = 'Cannot get data. Detail: ' + str(ex)
+            return result
 
-    Returns:
-        string -- error message
+    @classmethod
+    def load_feedback_failed_mail(cls, id, page_num):
+        """Load all failed mail by history id.
 
-    """
-    error_message = None
-    list_author = convert_feedback_email_data_to_string(
-        data
-    ).split(',')
-    list_email = convert_feedback_email_data_to_string(
-        data,
-        'email'
-    ).split(',')
-    new_list = list()
-    for item in list_author:
-        if len(new_list) == 0 or item not in new_list:
-            new_list.append(item)
+        Arguments:
+            id {integer} -- History id
+            page_num {integer} -- Page number
+
+        Raises:
+            ValueError: Parameter error
+
+        Returns:
+            dictionary -- List email
+
+        """
+        result = {
+            'data': [],
+            'total_page': 0,
+            'selected_page': 0,
+            'records_per_page': 0,
+            'error': ''
+        }
+        try:
+            data = FeedbackMailFailed.get_by_history_id(id)
+            list_mail = list()
+            page_num_end = page_num * config.WEKO_ADMIN_NUMBER_OF_FAILED_MAIL
+            page_num_start = \
+                page_num_end - config.WEKO_ADMIN_NUMBER_OF_FAILED_MAIL
+            if page_num_start > len(data):
+                raise ValueError('Page out of range')
+
+            for index in range(page_num_start, page_num_end):
+                if index >= len(data):
+                    break
+                new_data = dict()
+                new_data['name'] = cls.get_email_name(
+                    data[index].author_id,
+                    data[index].mail
+                )
+                new_data['mail'] = cls.get_newest_email(
+                    data[index].author_id,
+                    data[index].mail
+                )
+                list_mail.append(new_data)
+            result['data'] = list_mail
+            result['total_page'] = cls.get_total_page(
+                len(data),
+                config.WEKO_ADMIN_NUMBER_OF_FAILED_MAIL)
+            result['selected_page'] = page_num
+            result['records_per_page'] = \
+                config.WEKO_ADMIN_NUMBER_OF_FAILED_MAIL
+            return result
+        except Exception as ex:
+            result['error'] = 'Cannot get data. Detail: ' + str(ex)
+            return result
+
+    @classmethod
+    def get_email_name(cls, author_id, mail):
+        """Get name when author have id.
+
+        Arguments:
+            author_id {string} -- author id
+            mail {string} -- email
+
+        Returns:
+            string -- name of author
+
+        """
+        if not author_id:
+            return mail
+        author_data = Authors.get_author_by_id(author_id)
+        if not author_data:
+            return mail
+        author_info = author_data.get('authorNameInfo')
+        if not author_info:
+            return mail
+        return author_info[0].get('fullName')
+
+    @classmethod
+    def get_newest_email(cls, author_id, mail):
+        """Get newest email of author.
+
+        Arguments:
+            author_id {string} -- author id
+            mail {string} -- email
+
+        Returns:
+            string -- newest email
+
+        """
+        if not author_id:
+            return mail
+        author_data = Authors.get_author_by_id(author_id)
+        if not author_data:
+            return mail
+        email_info = author_data.get('emailInfo')
+        if not email_info:
+            return mail
+        return email_info[0].get('email')
+
+    @classmethod
+    def get_total_page(cls, data_length, page_max_record):
+        """Get total page.
+
+        Arguments:
+            data_length {integer} -- length of data
+
+        Returns:
+            integer -- total page number
+
+        """
+        if data_length % page_max_record != 0:
+            return int(data_length / page_max_record) + 1
         else:
-            error_message = _('Author is duplicated.')
-            return error_message
-    new_list = list()
-    for item in list_email:
-        if len(new_list) == 0 or item not in new_list:
-            new_list.append(item)
-        else:
-            error_message = _('Duplicate Email Addresses.')
-            return error_message
-    return error_message
+            return int(data_length / page_max_record)
+
+    @classmethod
+    def get_mail_data_by_history_id(cls, history_id):
+        """Get list failed mail data.
+
+        Arguments:
+            history_id {string} -- The history id
+
+        Returns:
+            dictionary -- resend mail data
+
+        """
+        result = {
+            'data': dict(),
+            'stats_date': ''
+        }
+        history_data = FeedbackMailHistory.get_by_id(history_id)
+        if not history_data:
+            return None
+        stats_time = history_data.stats_time
+        list_failed_mail = FeedbackMailFailed.get_mail_by_history_id(
+            history_id)
+        if len(list_failed_mail) == 0:
+            return None
+
+        from weko_search_ui.utils import get_feedback_mail_list, \
+            parse_feedback_mail_data
+        feedback_mail_data = get_feedback_mail_list()
+        if not feedback_mail_data:
+            return None
+        list_mail_data = parse_feedback_mail_data(
+            feedback_mail_data)
+
+        resend_mail_data = dict()
+        for k, v in list_mail_data.items():
+            if k in list_failed_mail:
+                resend_mail_data[k] = v
+        result['data'] = resend_mail_data
+        result['stats_date'] = stats_time
+        return result
+
+    @classmethod
+    def update_history_after_resend(cls, history_id):
+        """Update latest status after resend.
+        Arguments:
+            history_id {string} -- The history id
+
+        """
+        FeedbackMailHistory.update_lastest_status(history_id, False)
 
 
 def str_to_bool(str):
@@ -820,3 +1597,4 @@ def get_site_name_for_current_language(site_name):
             return site_name[0].get("name")
     else:
         return ''
+

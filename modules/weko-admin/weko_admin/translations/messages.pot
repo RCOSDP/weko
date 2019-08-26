@@ -873,43 +873,43 @@ msgstr ""
 msgid "Update"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:41
-msgid "ON/OFF"
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:39
+msgid "Automatic Transmission ON/OFF"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:42
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:40
 msgid "Send"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:43
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:41
 msgid "Do not send"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:44
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:42
 msgid "Send exclusion target persons"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:45
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:43
 msgid "From author DB"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:46
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:44
 msgid "Delete"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:47
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:45
 msgid "Save"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:48
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:46
 msgid "Manual Send"
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:49
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:47
 msgid "Update successfully."
 msgstr ""
 
-#: weko_admin/template/weko_admin/admin/feedback_mail.html:50
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:58
 msgid "Duplicate Email Addresses."
 msgstr ""
 
@@ -917,50 +917,109 @@ msgstr ""
 msgid "Author is duplicated."
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
+msgid "Send logs"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:50
+msgid "Start time"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:51
+msgid "End time"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:52
+msgid "Counts"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:53
+msgid "Success"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:54
+msgid "Error"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:55
+msgid "List of authors who failed to send"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:56
+msgid "Name"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:57
+msgid "Mail Address"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:58
+msgid "Resend"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
+msgid "There is no data."
+
+#: weko_admin/template/weko_admin/admin/site_info.html:39
 msgid "Site Name"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:40
 msgid "Favicon"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:41
 msgid "CopyRight"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:42
 msgid "Description"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:43
 msgid "Keyword"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:44
 msgid "Selected icon"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:45
 msgid "Select icon file"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:46
 msgid "Add site name"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:47
 msgid "Site name not set"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:50
 msgid "Must set at least 1 site name."
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:51
 msgid "Please input site information for empty field."
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:52
 msgid "The same language is set for many site names."
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:53
 msgid "Site name is required."
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:54
 msgid "Error when get languages."
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:55
 msgid "Error when get site infomation."
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:56
 msgid "Language is deleted from Registered Language of system."
 msgstr ""

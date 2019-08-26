@@ -27,7 +27,7 @@ from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from weko_records.models import ItemMetadata
 
-from .models import Authors
+from .models import Authors, AuthorsPrefixSettings
 from .permissions import author_permission
 
 blueprint = Blueprint(
@@ -58,9 +58,11 @@ def create():
     data = request.get_json()
     data["gather_flg"] = 0
     indexer = RecordIndexer()
-    indexer.client.index(index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-                         doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
-                         body=data,)
+    indexer.client.index(
+        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
+        doc_type=current_app.config['WEKO_AUTHORS_ES_DOC_TYPE'],
+        body=data,
+    )
 
     author_data = dict()
 
@@ -374,3 +376,49 @@ def gatherById():
         return jsonify({'code': 204, 'msg': 'Faild'})
 
     return jsonify({'code': 0, 'msg': 'Success'})
+
+
+@blueprint_api.route("/search_prefix", methods=['get'])
+@login_required
+@author_permission.require(http_exception=403)
+def get_prefix_list():
+    """Get all authors prefix settings."""
+    settings = AuthorsPrefixSettings.query.order_by(
+        AuthorsPrefixSettings.id).all()
+    data = []
+    if settings:
+        for s in settings:
+            tmp = s.__dict__
+            if '_sa_instance_state' in tmp:
+                tmp.pop('_sa_instance_state')
+            data.append(tmp)
+    return jsonify(data)
+
+
+@blueprint_api.route("/edit_prefix", methods=['post'])
+@login_required
+@author_permission.require(http_exception=403)
+def update_prefix():
+    """Update authors prefix settings."""
+    data = request.get_json()
+    AuthorsPrefixSettings.update(**data)
+    return jsonify(msg=_('Success'))
+
+
+@blueprint_api.route("/delete_prefix/<id>", methods=['delete'])
+@login_required
+@author_permission.require(http_exception=403)
+def delete_prefix(id):
+    """Delete authors prefix settings."""
+    AuthorsPrefixSettings.delete(id)
+    return jsonify(msg=_('Success'))
+
+
+@blueprint_api.route("/add_prefix", methods=['put'])
+@login_required
+@author_permission.require(http_exception=403)
+def create_prefix():
+    """Add new authors prefix settings."""
+    data = request.get_json()
+    AuthorsPrefixSettings.create(**data)
+    return jsonify(msg=_('Success'))

@@ -931,8 +931,8 @@ msgstr "更新"
 #~ msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:41
-msgid "ON/OFF"
-msgstr "フィードバックメール"
+msgid "Automatic Transmission ON/OFF"
+msgstr "自動送信設定"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:42
 msgid "Send"
@@ -1019,51 +1019,110 @@ msgstr " 著者が重複しています。"
 #~ msgid "12"
 #~ msgstr ""
 
+#: weko_admin/utils.py:50
+msgid "Send logs"
+msgstr "送信履歴"
+
+#: weko_admin/utils.py:50
+msgid "Start time"
+msgstr "送信開始日時"
+
+#: weko_admin/utils.py:50
+msgid "End time"
+msgstr "送信終了日時"
+
+#: weko_admin/utils.py:50
+msgid "Counts"
+msgstr "送信件数"
+
+#: weko_admin/utils.py:50
+msgid "Success"
+msgstr "成功"
+
+#: weko_admin/utils.py:50
+msgid "Error"
+msgstr "失敗"
+
+#: weko_admin/utils.py:50
+msgid "List of authors who failed to send"
+msgstr "送信失敗した著者一覧"
+
+#: weko_admin/utils.py:50
+msgid "Name"
+msgstr "名前"
+
+#: weko_admin/utils.py:50
+msgid "Mail Address"
+msgstr "メールアドレス"
+
+#: weko_admin/utils.py:50
+msgid "Resend"
+msgstr "再送信"
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
+msgid "There is no data."
+msgstr "検索結果はありません."
+
+#: weko_admin/template/weko_admin/admin/site_info.html:39
 msgid "Site Name"
 msgstr "サイト名"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:40
 msgid "Favicon"
 msgstr "ファビコン"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:41
 msgid "CopyRight"
 msgstr "版権"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:42
 msgid "Description"
 msgstr "記述"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:43
 msgid "Keyword"
 msgstr "キーワード"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:44
 msgid "Selected icon"
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:45
 msgid "Select icon file"
 msgstr "アイコンファイルの選択"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:46
 msgid "Add site name"
 msgstr "サイト名の追加"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:47
 msgid "Site name is not set."
 msgstr "サイト名未設定。"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:50
 msgid "Must set at least 1 site name."
 msgstr "サイト名は少くとも１つ設定する必要があります。"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:51
 msgid "Please input site information for empty field."
 msgstr "サイト情報を空のフィールドに入力してください。"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:52
 msgid "The same language is set for many site names."
 msgstr "同一言語を複数のサイト名に設定されています。"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:53
 msgid "Error when get languages."
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:54
 msgid "Error when get site infomation."
 msgstr ""
 
+#: weko_admin/template/weko_admin/admin/site_info.html:55
 msgid "Language is deleted from Registered Language of system."
 msgstr "言語が登録言語から削除されました。"
 
+#: weko_admin/template/weko_admin/admin/site_info.html:56
 msgid "Site info is saved successfully"
 msgstr "サイト情報が正常に保存されました。"
-

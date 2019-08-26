@@ -31,7 +31,6 @@ from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
 from flask_menu import register_menu
 from invenio_admin.proxies import current_admin
-from invenio_indexer.api import RecordIndexer
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm import session
 from weko_records.models import SiteLicenseInfo
@@ -39,13 +38,15 @@ from werkzeug.local import LocalProxy
 
 from . import config
 from .api import send_site_license_mail
+
 from .models import SessionLifetime, SiteInfo
 from .utils import format_site_info_data, get_admin_lang_setting, \
     get_api_certification_type, get_current_api_certification, \
     get_feed_back_email_setting, get_initial_stats_report, \
     get_selected_language, get_unit_stats_report, save_api_certification, \
     update_admin_lang_setting, update_feedback_email_setting, \
-    validate_certification, validation_site_info
+    validate_certification, validation_site_info, FeedbackMail, StatisticMail,
+
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -317,69 +318,7 @@ def get_init_selection(selection=""):
 def get_email_author():
     """Get all authors."""
     data = request.get_json()
-
-    search_key = data.get('searchKey') or ''
-    query = {"match": {"gather_flg": 0}}
-
-    if search_key:
-        search_keys = search_key.split(" ")
-        match = []
-        for key in search_keys:
-            if key:
-                match.append({"match_phrase_prefix": {"emailInfo.email": key}})
-        query = {
-            "bool":
-            {
-                "should": match, "minimum_should_match": 1
-            }
-        }
-
-    size = config.WEKO_ADMIN_FEEDBACK_MAIL_NUM_OF_PAGE
-    num = data.get('pageNumber') or 1
-    offset = (int(num) - 1) * size if int(num) > 1 else 0
-
-    sort_key = data.get('sortKey') or ''
-    sort_order = data.get('sortOrder') or ''
-    sort = {}
-    if sort_key and sort_order:
-        sort = {sort_key + '.raw': {"order": sort_order, "mode": "min"}}
-
-    body = {
-        "query": query,
-        "from": offset,
-        "size": size,
-        "sort": sort
-    }
-    query_item = {
-        "size": 0,
-        "query": {
-            "bool": {
-                "must_not": {
-                    "match": {
-                        "weko_id": "",
-                    }
-                }
-            }
-        }, "aggs": {
-            "item_count": {
-                "terms": {
-                    "field": "weko_id"
-                }
-            }
-        }
-    }
-
-    indexer = RecordIndexer()
-    result = indexer.client.search(
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        body=body
-    )
-    result_item_cnt = indexer.client.search(
-        index=current_app.config['SEARCH_UI_SEARCH_INDEX'],
-        body=query_item
-    )
-
-    result['item_cnt'] = result_item_cnt
+    result = FeedbackMail.search_author_mail(data)
 
     return jsonify(result)
 
@@ -396,10 +335,13 @@ def update_feedback_mail():
         'success': '',
         'error': ''
     }
+    root_url = request.url_root
+    root_url = str(root_url).replace('/api/', '')
     data = request.get_json()
-    response = update_feedback_email_setting(
+    response = FeedbackMail.update_feedback_email_setting(
         data.get('data', ''),
-        data.get('is_sending_feedback', False))
+        data.get('is_sending_feedback', False),
+        root_url)
 
     if not response.get('error'):
         result['success'] = True
@@ -424,12 +366,76 @@ def get_feedback_mail():
         'error': ''
     }
 
-    data = get_feed_back_email_setting()
+    data = FeedbackMail.get_feed_back_email_setting()
     if data.get('error'):
         result['error'] = data.get('error')
         return jsonify(result)
     result['data'] = data.get('data')
     result['is_sending_feedback'] = data.get('is_sending_feedback')
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_send_mail_history', methods=['GET'])
+def get_send_mail_history():
+    """API allow to get send mail history.
+
+    Returns:
+        json -- response list mail data if no error occurs
+
+    """
+    try:
+        data = request.args
+        page = int(data.get('page'))
+    except Exception as ex:
+        current_app.logger.debug('Cannot convert parameter', ex)
+        page = 1
+    result = FeedbackMail.load_feedback_mail_history(page)
+    return jsonify(result)
+
+
+@blueprint_api.route('/get_failed_mail', methods=['GET'])
+def get_failed_mail():
+    """Get list failed mail.
+
+    Returns:
+        json -- List data if no error occurs
+
+    """
+    try:
+        data = request.args
+        page = int(data.get('page'))
+        history_id = int(data.get('id'))
+    except Exception as ex:
+        current_app.logger.debug('Cannot convert parameter', ex)
+        page = 1
+        history_id = 1
+    result = FeedbackMail.load_feedback_failed_mail(history_id, page)
+    return jsonify(result)
+
+
+@blueprint_api.route('/resend_failed_mail', methods=['POST'])
+def resend_failed_mail():
+    """Resend failed mail.
+
+    :return:
+    """
+    data = request.get_json()
+    history_id = data.get('history_id')
+    result = {
+        'success': True,
+        'error': ''
+    }
+    try:
+        mail_data = FeedbackMail.get_mail_data_by_history_id(history_id)
+        StatisticMail.send_mail_to_all(
+            mail_data.get('data'),
+            mail_data.get('stats_date')
+        )
+        FeedbackMail.update_history_after_resend(history_id)
+    except Exception as ex:
+        current_app.logger.debug('Cannot resend mail', ex)
+        result['success'] = False
+        result['error'] = 'Request package is invalid'
     return jsonify(result)
 
 
@@ -451,17 +457,20 @@ def manual_send_site_license_mail(start_month, end_month):
                                            event='site_access')
         for s in send_list:
             mail_list = s.mail_address.split('\n')
+            send_flag = False
             for r in res['institution_name']:
                 if s.organization_name == r['name']:
                     send_site_license_mail(r['name'], mail_list, agg_date, r)
+                    send_flag = True
                     break
-            data = {'file_download': 0,
-                    'file_preview': 0,
-                    'record_view': 0,
-                    'search': 0,
-                    'top_view': 0}
-            send_site_license_mail(s.organization_name,
-                                   mail_list, agg_date, data)
+            if not send_flag:
+                data = {'file_download': 0,
+                        'file_preview': 0,
+                        'record_view': 0,
+                        'search': 0,
+                        'top_view': 0}
+                send_site_license_mail(s.organization_name,
+                                       mail_list, agg_date, data)
 
         return 'finished'
 
