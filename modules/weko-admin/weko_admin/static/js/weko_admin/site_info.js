@@ -316,7 +316,7 @@ class MainLayout extends React.Component {
                 {
                   site_name.map((site_name,key) => {
                     return(
-                      <div className={`row form-group ${errors.includes(`site_name_${key}`) && "has-error"}`} key={key}>
+                      <div className={`row form-group`} key={key}>
                         <div className="col-md-2">
                           <label>{site_name_label}</label>
                         </div>
