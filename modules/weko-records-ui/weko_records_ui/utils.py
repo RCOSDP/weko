@@ -165,10 +165,17 @@ def soft_delete(recid):
     try:
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=recid).first()
-        rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
-        dep = WekoDeposit(rec.json, rec)
+        if pid.status == PIDStatus.DELETED:
+            return
         pid.status = PIDStatus.DELETED
-        dep.indexer.delete(dep)
+        depid = PersistentIdentifier.query.filter_by(
+            pid_type='depid', object_uuid=pid.object_uuid).first()
+        if depid:
+            rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+            dep = WekoDeposit(rec.json, rec)
+            dep['path'] = []
+            dep.indexer.update_path(dep, update_revision=False)
+            depid.status = PIDStatus.DELETED
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
@@ -179,15 +186,16 @@ def restore(recid):
     try:
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=recid).first()
-        rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
-        itm = ItemMetadata.query.filter_by(id=pid.object_uuid).first()
+        if pid.status != PIDStatus.DELETED:
+            return
         pid.status = PIDStatus.REGISTERED
-        dep = WekoDeposit(rec.json, rec)
-        indexes = dep['path'].copy()
-        dep.update({'actions': 'publish', 'index': indexes}, itm.json)
-        dep['_deposit']['pid']['revision_id'] += 1
-        dep.commit()
-        dep.publish()
+        depid = PersistentIdentifier.query.filter_by(
+            pid_type='depid', object_uuid=pid.object_uuid).first()
+        if depid:
+            depid.status = PIDStatus.REGISTERED
+            rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+            dep = WekoDeposit(rec.json, rec)
+            dep.indexer.update_path(dep, update_revision=False)
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
