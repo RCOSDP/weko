@@ -509,3 +509,18 @@ def get_site_info():
     result['favicon_name'] = site_info.favicon_name
     result['site_name'] = site_info.site_name
     return jsonify(result)
+
+
+@blueprint_api.route('/favicon', methods=['GET'])
+def get_avatar():
+    """Get site info.
+
+    :return: result
+
+    """
+    site_info = SiteInfo.get()
+    result = dict()
+    if not site_info:
+        return jsonify({})
+    result['favicon'] = site_info.favicon
+    return result
