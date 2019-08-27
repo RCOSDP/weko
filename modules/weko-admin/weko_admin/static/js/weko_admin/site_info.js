@@ -379,7 +379,7 @@ class MainLayout extends React.Component {
                         accept=".ico"
                         onChange={this.handleChangeFavicon}
                         />
-                       <button className="btn btn-primary btn-block"
+                       <button className="btn btn-primary"
                         onClick={()=> {
                           this.refs.input.click()
                         }}
