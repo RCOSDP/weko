@@ -154,10 +154,20 @@ const ComponentTextboxForAccessCounter = function(props){
 }
 
 const ComponentSelectColorFiled = function(props){
-    const color = userSelectedInput(props.data_load || '#4169E1', props.getValueOfField, props.key_binding);
+    let initColor = '';
+    if(props.key_binding == "label_text_color"){
+        initColor = '#4169E1';
+    }
+    else if(props.key_binding == "background_color"){
+        initColor = '#FFFFFF';
+    }
+    else{
+        initColor = '#808080';
+    }
+    const color = userSelectedInput(props.data_load || initColor, props.getValueOfField, props.key_binding);
 
     useEffect(() => {
-        props.getValueOfField(props.key_binding, props.data_load || '#4169E1');
+        props.getValueOfField(props.key_binding, props.data_load || initColor);
     }, [])
 
     return (
@@ -1528,13 +1538,13 @@ $(function () {
             repository_id: '',
             widget_type: '',
             label: '',
-            label_color: '#4169E1',
+            label_color: '#808080',
             label_text_color: '#4169E1',
             border_style: 'none',
             theme: 'default',
             label_enable: true,
-            frame_border_color: '#4169E1',
-            background_color: '#4169E1',
+            frame_border_color: '#808080',
+            background_color: '#FFFFFF',
             browsing_role: [1, 2, 3, 4, 99],
             edit_role: [1, 2, 3, 4, 99],
             is_enabled: true,
