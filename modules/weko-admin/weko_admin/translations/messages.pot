@@ -997,7 +997,7 @@ msgid "Add site name"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/site_info.html:47
-msgid "Site name is not set."
+msgid "Site name is not set"
 msgstr ""
 
 #: weko_admin/template/weko_admin/admin/site_info.html:50
