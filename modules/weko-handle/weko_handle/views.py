@@ -12,16 +12,18 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, current_app, jsonify
 from flask_babelex import gettext as _
+
+from .api import Handle
 
 blueprint = Blueprint(
     'weko_handle',
     __name__,
     template_folder='templates',
     static_folder='static',
+    url_prefix='/handle',
 )
-
 
 @blueprint.route("/")
 def index():
