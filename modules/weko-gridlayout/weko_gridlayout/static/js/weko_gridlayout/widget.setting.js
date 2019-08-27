@@ -1,3 +1,5 @@
+const { useState, useEffect  } = React;
+
 const MAIN_CONTENT_TYPE = "Main contents";
 const FREE_DESCRIPTION_TYPE = "Free description";
 const NOTICE_TYPE = "Notice";
@@ -109,6 +111,37 @@ class ComponentTextboxField extends React.Component {
             </div>
         )
     }
+}
+
+const ComponentTextboxForAccessCounter = function(props){
+    const [value, setValue] = useState(props.value);
+
+    function handleChange(event){
+        setValue(event.target.value);
+        props.handleChange(props.key_binding, event.target.value.trim());
+        event.preventDefault();
+    }
+
+    useEffect(() => {
+        if(props.data_change){
+            let data = props.value || "";
+            setValue(data);
+        }
+        props.getValueOfField("language", false);
+      }, [props.data_change]);
+
+    useEffect(() => {
+        setValue(props.value);
+      }, [props.value])
+
+    return(
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
+            <div class="controls col-xs-6">
+                <input name={props.name} type="text" value={value} onChange={(event) => handleChange(event)} className="form-control" />
+            </div>
+        </div>
+    )
 }
 
 class ComponentSelectColorFiled extends React.Component {
@@ -518,7 +551,7 @@ class ExtendComponent extends React.Component {
         this.generateDisplayResult = this.generateDisplayResult.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.write_more && nextProps.data_load.more_description) {
+        if (nextProps.data_load && !prevState.write_more && nextProps.data_load.more_description) {
             return {
                 write_more: true,
                 settings: nextProps.data_load
@@ -558,6 +591,9 @@ class ExtendComponent extends React.Component {
                 } else {
                     hide_the_rest.value = '';
                 }
+            }
+            if (nextProps.type == ACCESS_COUNTER) {
+                setting["access_counter"] = nextProps.init_value
             }
             return {
                 settings: setting
@@ -629,6 +665,15 @@ class ExtendComponent extends React.Component {
             case "rss_feed":
                 data["rss_feed"] = value;
                 break;
+            case "preceding_message":
+                data["preceding_message"] = value;
+                break;
+            case "following_message":
+                data["following_message"] = value;
+                break;
+            case "other_message":
+                data["other_message"] = value;
+                break;
         }
         this.setState({
             settings: data
@@ -668,6 +713,7 @@ class ExtendComponent extends React.Component {
         setting['access_counter'] = event.target.value;
         this.setState({ settings: setting });
         this.handleChange("access_counter", event.target.value);
+        this.props.getValueOfField('accessInitValue', event.target.value);
     }
 
     handleChangeNewDates(event) {
@@ -752,10 +798,21 @@ class ExtendComponent extends React.Component {
         }
         else if(this.state.type == ACCESS_COUNTER){
             return(
-                <div className="form-group row">
-                    <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
-                    <div class="controls col-xs-3">
-                        <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter} onChange={this.handleChangeAccessCounter} className="form-control" />
+                <div>
+                    <div className="form-group row">
+                        <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
+                        <div class="controls col-xs-3">
+                            <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter || ""} onChange={this.handleChangeAccessCounter} className="form-control" />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <ComponentTextboxForAccessCounter name = "Preceding message" key_binding="preceding_message" handleChange={this.handleChange} getValueOfField={this.props.getValueOfField} value = {this.state.settings.preceding_message || ""} data_change={this.props.data_change}/>
+                    </div>
+                    <div className="form-group">
+                        <ComponentTextboxForAccessCounter name = "Following message" key_binding="following_message" handleChange={this.handleChange} getValueOfField={this.props.getValueOfField} value = {this.state.settings.following_message || ""} data_change={this.props.data_change}/>
+                    </div>
+                    <div className="form-group">
+                        <ComponentTextboxForAccessCounter name = "Other message to display" key_binding="other_message" handleChange={this.handleChange} getValueOfField={this.props.getValueOfField} value = {this.state.settings.other_message || ""} data_change={this.props.data_change}/>
                     </div>
                 </div>
             )
@@ -828,17 +885,22 @@ class ComponentButtonLayout extends React.Component {
             let currentLangData = {
                 label: currentLabel,
             }
-            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE){
+            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE || data['widget_type'] == ACCESS_COUNTER){
                 currentLangData["description"] = currentDescription;
             }
             multiLangData[currentLanguage] = currentLangData;
         }else {
             delete multiLangData[currentLanguage];
         }
-
+        if ((data['widget_type'] + "") == ACCESS_COUNTER) {
+            for (let [key, value] of Object.entries(multiLangData)) {
+                value.description['access_counter'] = data.accessInitValue
+            }
+        }
         this.props.getValueOfField('multiLangData', multiLangData);
+        this.props.getValueOfField('accessInitValue', data.accessInitValue);
         data['multiLangSetting'] = multiLangData;
-
+        delete data['accessInitValue']
         let request = {
             flag_edit: this.props.is_edit,
             data: data,
@@ -1128,9 +1190,9 @@ class ComponentLanguage extends React.Component {
             registeredLanguage.forEach(function (lang) {
                 let innerHTML;
                 if (lang == selected) {
-                    innerHTML = <option value={lang} style={{ fontWeight: 'bold' }} selected>{languageNameList[lang]}&nbsp;(Registered)</option>;
+                    innerHTML = <option key={lang} value={lang} style={{ fontWeight: 'bold' }} selected>{languageNameList[lang]}&nbsp;(Registered)</option>;
                 }else {
-                    innerHTML = <option value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
+                    innerHTML = <option key={lang} value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
                 }
                 optionList.push(innerHTML);
             });
@@ -1138,11 +1200,11 @@ class ComponentLanguage extends React.Component {
         languageList.forEach(function (lang) {
             let innerHTML;
             if ($.isEmptyObject(registeredLanguage) && lang == state.defaultLanguage && isReset) {
-                innerHTML = <option value={lang} selected>{languageNameList[lang]}</option>;
+                innerHTML = <option key={lang} value={lang} selected>{languageNameList[lang]}</option>;
             } else if (lang == selected) {
-                innerHTML = <option value={lang} selected>{languageNameList[lang]}</option>;
+                innerHTML = <option key={lang} value={lang} selected>{languageNameList[lang]}</option>;
             } else {
-                innerHTML = <option value={lang}>{languageNameList[lang]}</option>;
+                innerHTML = <option key={lang} value={lang}>{languageNameList[lang]}</option>;
             }
             optionList.push(innerHTML);
         });
@@ -1228,10 +1290,12 @@ class MainLayout extends React.Component {
             language: this.props.data_load.language,
             multiLangSetting: this.props.data_load.multiLangSetting,
             multiLanguageChange: false,
+            accessInitValue: 0
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
         this.initEditData = this.initEditData.bind(this);
+        this.accessCounterValidation = this.accessCounterValidation.bind(this);
     }
 
     getValueOfField(key, value) {
@@ -1286,6 +1350,9 @@ class MainLayout extends React.Component {
             case 'multiLangData':
                 this.setState({ multiLangSetting: value });
                 break;
+            case 'accessInitValue':
+                this.setState({ accessInitValue: value })
+                break;
         }
     }
 
@@ -1294,12 +1361,17 @@ class MainLayout extends React.Component {
             return;
         }
         let multiLangData = this.state.multiLangSetting[selectedLang];
+        let accessInitValue = 0
+        if ((this.state.widget_type+ "") == ACCESS_COUNTER && multiLangData.description) {
+            accessInitValue = multiLangData.description.access_counter
+        }
         if (multiLangData) {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER){
                 this.setState({
                     multiLanguageChange: true,
                     label: multiLangData['label'],
-                    settings: multiLangData['description']
+                    settings: multiLangData['description'],
+                    accessInitValue: accessInitValue
                 });
             }
             else{
@@ -1327,14 +1399,27 @@ class MainLayout extends React.Component {
                 result = !noData;
             }
         }
+
         let setting = {
             label: this.state.label,
         };
-        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
-            setting["description"] = this.state.settings
+        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER ){
+            setting["description"] = this.state.settings;
+        }
+        let accessInitValue = this.state.accessInitValue;
+        if ((this.state.widget_type+ "") == ACCESS_COUNTER) {
+            if (setting.description.access_counter) {
+                accessInitValue = setting.description.access_counter;
+            }else {
+                setting.description.access_counter = accessInitValue;
+            }
+        }
+        if ((this.state.widget_type+ "") == ACCESS_COUNTER && this.accessCounterValidation(setting)) {
+            delete setting.description["access_counter"]
+            result = false;
         }
         let storage = this.state.multiLangSetting;
-        if (this.state.label || !$.isEmptyObject(this.state.settings)) {
+        if (setting.label || !$.isEmptyObject(setting.description)) {
             storage[lang] = setting;
         } else {
             if (storage[lang]) {
@@ -1344,12 +1429,13 @@ class MainLayout extends React.Component {
         if (this.state.multiLangSetting[newLanguage]) {
             let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
             let currentSetting = this.state.multiLangSetting[newLanguage]['description'];
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type + "") == ACCESS_COUNTER){
                 this.setState({
                     label: currentLabel,
                     multiLanguageChange: true,
                     language: newLanguage,
-                    settings: currentSetting
+                    settings: currentSetting,
+                    accessInitValue: accessInitValue
                 });
             }
             else{
@@ -1357,22 +1443,25 @@ class MainLayout extends React.Component {
                     label: currentLabel,
                     multiLanguageChange: true,
                     language: newLanguage,
+                    accessInitValue: accessInitValue
                 });
             }
         } else {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type + "") == ACCESS_COUNTER){
                 this.setState({
                     label: '',
                     settings: {},
                     multiLanguageChange: true,
-                    language: newLanguage
+                    language: newLanguage,
+                    accessInitValue: accessInitValue
                 });
             }
             else{
                 this.setState({
                     label: '',
                     multiLanguageChange: true,
-                    language: newLanguage
+                    language: newLanguage,
+                    accessInitValue: accessInitValue
                 });
             }
         }
@@ -1380,6 +1469,22 @@ class MainLayout extends React.Component {
             multiLangSetting: storage
         });
         return result;
+    }
+
+    accessCounterValidation(setting) {
+        if (setting.label != "" ) {
+            return false;
+        }
+        if (setting.description.preceding_message) {
+            return false;
+        }
+        if (setting.description.following_message) {
+            return false;
+        }
+        if (setting.description.other_message) {
+            return false;
+        }
+        return true;
     }
 
     render() {
@@ -1424,7 +1529,7 @@ class MainLayout extends React.Component {
                     <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding="enable" data_load={this.state.enable} />
                 </div>
                 <div className="row">
-                    <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings} data_change={this.state.multiLanguageChange} />
+                    <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings} data_change={this.state.multiLanguageChange} init_value={this.state.accessInitValue}/>
                 </div>
                 <div className="row">
                     <ComponentButtonLayout data={this.state} getValueOfField={this.getValueOfField} url_request="/api/admin/save_widget_item" is_edit={this.props.is_edit} return_url={this.props.return_url} data_id={this.props.data_id} />

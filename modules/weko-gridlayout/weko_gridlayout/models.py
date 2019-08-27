@@ -283,7 +283,7 @@ class WidgetMultiLangData(db.Model):
             data -- List widget multilanguage data
 
         """
-        list_data = cls.query.filter_by(widget_id=widget_id).all()
+        list_data = cls.query.filter_by(widget_id=widget_id, is_deleted=False).all()
         return list_data
 
     @classmethod
