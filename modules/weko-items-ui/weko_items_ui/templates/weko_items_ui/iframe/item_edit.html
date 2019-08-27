@@ -81,23 +81,6 @@
             extra-params='{"headers":{"Content-Type": "application/json"}}'
           >
         {%- endif %}
-        {%- if need_thumbnail %}
-          <div class="row">
-            <div class="col-sm-9" ng-hide="recordsVM.invenioRecordsLoading">
-              <div class="panel panel-default">
-                <div class="panel-heading">
-                  <h3 class="panel-title">{{_('Thumbnail')}}</h3>
-                </div>
-                <div class="panel-body">
-                  <div class="row">
-                    <div class="col-sm-12" id="app">
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        {%- endif %}
           <invenio-records
             {%- if pid %}
               initialization="{{ config.DEPOSIT_RECORDS_EDIT_API.format(pid_value=pid.pid_value) }}"
@@ -150,13 +133,43 @@
                 <invenio-files-upload-zone
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
                 </invenio-files-upload-zone>
-                <invenio-files-list
+                <invenio-files-listinvenio_base.api_blueprints
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
-                ></invenio-files-list>
+                ></invenio-files-listinvenio_base.api_blueprints>
               </div>
             </div>
             {%- endif %}
             <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
+              {%- if need_thumbnail %}
+                <div class="row">
+                  <script src="file-upload.js"></script>
+                  <script src="{{ url_for('static', filename='js/weko_items_ui/file-upload.js') }}" type="text/babel"></script>
+                  <div class="col-sm-9" ng-hide="recordsVM.invenioRecordsLoading">
+                    <div class="panel panel-default">
+                      <div class="panel-heading">
+                        <h3 class="panel-title">{{_('Thumbnail')}}</h3>
+                      </div>
+                      <div class="panel-body">
+                        <div class="row">
+                          <div class="col-sm-12" id="app">
+                            <div>
+                              <label>
+                                  <p>Drop files or folders here</p>
+                              </label>
+                              <p><strong>— OR —</strong></p>
+                              <form name="uploadThumbnail"
+                                sf-schema="schema"
+                                sf-form="form"
+                                sf-model="model">
+                              </form>
+                             </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {%- endif %}
               <div class="row">
                 <div class="col-sm-9">
                 <p class="text-center">

@@ -290,6 +290,7 @@ def display_activity(activity_id=0):
     files = []
     endpoints = {}
     links = None
+    need_thumbnail = False
     if 'item_login' == action_endpoint or 'file_upload' == action_endpoint:
         activity_session = dict(
             activity_id=activity_id,

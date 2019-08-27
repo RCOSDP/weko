@@ -281,6 +281,41 @@
                 </td>
               </tr>
               {% endif %}
+              {%- if files -%}
+              <tr>
+                <th>{{_('Thumbnail')}}</th>
+                <td>
+                  <div>
+                    {%- for file in files|sort(attribute='key') -%}
+                    {%- if file.filename -%}
+                    {%- set img = file.mimetype | get_image_src -%}
+                    {%- set file_url = url_for('invenio_records_ui.recid_files', pid_value=pid.pid_value,
+                      filename=file.key) %}
+                    {%- set is_billing_file = False -%}
+                    {%- set billing_file_data = "" -%}
+                    {%- set billing_file_url = "" -%}
+                    {%- set billing_file_class = "" -%}
+                    {%- set billing_file_access_permission = True -%}
+                    {%- if billing_files_permission -%}
+                    {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
+                    {%- set is_billing_file = True -%}
+                    {%- set billing_file_class = " billing-file" -%}
+                    {%- set file_url = "JavaScript:void(0);" -%}
+                    {%- endif %}
+                    {%- set access_permission = record | check_file_permission(file.info()) -%}
+                    {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value,
+                      filename=file.key) %}
+                    <p>{{file.filename}}</p>
+                    <p>
+                      <a class="forcewrap{{billing_file_class}}" {{billing_file_data}} {{billing_file_url}} href="{{url_for('workflowsetting.workflow_detail', workflow_id=0)}}">{{ file.filename }}
+                            ({{ file.size|filesizeformat }})</a><br>
+                    </p>
+                    {%- endif -%}
+                    {%- endfor -%}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
               {% if record.pubdate %}
               <tr>
                 <th>{{_('Publish Status')}}</th>

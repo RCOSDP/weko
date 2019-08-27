@@ -1456,12 +1456,33 @@ function handleSharePermission(value) {
         });
         return result;
       }
+      $scope.schema = {
+            type: 'object',
+            title: 'Upload',
+            properties: {
+                "archivo": {
+                    "title": 'Upload Images',
+                    "type": 'string',
+                    "format": 'file',
+                    "description": 'This is a upload element'
+                }
+            }
+        };
+        $scope.model = {};
+        $scope.form = [
+            {
+                "key": "archivo",
+                "type": "fileUpload"
+                }
+            }
+        ];
     }
     // Inject depedencies
     WekoRecordsCtrl.$inject = [
       '$scope',
       '$rootScope',
       'InvenioRecordsAPI',
+      'uploadThumbnailForm',
     ];
     angular.module('wekoRecords.controllers')
       .controller('WekoRecordsCtrl', WekoRecordsCtrl);
