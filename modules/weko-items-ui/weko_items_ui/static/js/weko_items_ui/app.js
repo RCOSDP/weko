@@ -291,7 +291,7 @@ function handleSharePermission(value) {
   }
   // Bootstrap it!
   angular.element(document).ready(function () {
-    angular.module('wekoRecords.controllers', []);
+    // angular.module('wekoRecords.controllers', []);
     function WekoRecordsCtrl($scope, $rootScope, InvenioRecordsAPI) {
       $scope.resourceTypeKey = "";
       $scope.groups = [];
@@ -1473,7 +1473,6 @@ function handleSharePermission(value) {
             {
                 "key": "archivo",
                 "type": "fileUpload"
-                }
             }
         ];
     }
@@ -1482,9 +1481,8 @@ function handleSharePermission(value) {
       '$scope',
       '$rootScope',
       'InvenioRecordsAPI',
-      'uploadThumbnailForm',
     ];
-    angular.module('wekoRecords.controllers')
+    angular.module('wekoRecords.controllers', ['schemaForm'])
       .controller('WekoRecordsCtrl', WekoRecordsCtrl);
 
     var ModalInstanceCtrl = function ($scope, $modalInstance, items) {

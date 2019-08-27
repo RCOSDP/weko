@@ -1,5 +1,6 @@
 require([
-  'jquery'
+  'jquery',
+  'bootstrap'
 ],function () {
   $('#myModal').modal({
     show: false
@@ -275,15 +276,18 @@ require([
     $('#result-label').html("Error List:<br>&nbsp;&nbsp;" + errorList.length + " error(s) of " + totalNo +" item(s)");
     $('#result').removeClass('hidden');
   }
+});
+
 (function (angular) {
   angular.element(document).ready(function () {
-    angular.module("uploadThumbnailForm").run(["$templateCache", function($templateCache) {$templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html","<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <label class=\"control-label\" ng-show=\"showTitle()\">{{form.title}}</label>\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" on-read-file/>\n        <img ng-show=\"$$value$$\" id=\"myimage\" src=\"\" alt=\"your image\" />\n        <span ng-show=\"!$$value$$\" class=\"bg-danger\">It has not yet uploaded a file</span>\n    </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>");}]);
-    angular.module('uploadThumbnailForm').config(
-    ['uploadThumbnailFormProvider', 'uploadThumbnailFormDecoratorsProvider', 'sfPathProvider',
-      function (uploadThumbnailFormProvider, uploadThumbnailFormDecoratorsProvider, sfPathProvider) {
+    angular.module('schemaForm', [])
+    .run(["$templateCache", function($templateCache) {$templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html","<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <label class=\"control-label\" ng-show=\"showTitle()\">{{form.title}}</label>\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" on-read-file/>\n        <img ng-show=\"$$value$$\" id=\"myimage\" src=\"\" alt=\"your image\" />\n        <span ng-show=\"!$$value$$\" class=\"bg-danger\">It has not yet uploaded a file</span>\n    </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>");}])
+    .config(
+    ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
+      function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
                 var fileUpload = function (name, schema, options) {
                     if (schema.type === 'string' && schema.format === 'file') {
-                        var f = uploadThumbnailFormProvider.stdFormObj(name, schema, options);
+                        var f = schemaFormProvider.stdFormObj(name, schema, options);
                         f.key = options.path;
                         f.type = 'fileUpload';
                         options.lookup[sfPathProvider.stringify(options.path)] = f;
@@ -291,21 +295,20 @@ require([
                     }
                 };
 
-                uploadThumbnailFormProvider.defaults.string.unshift(fileUpload);
+                schemaFormProvider.defaults.string.unshift(fileUpload);
 
-                uploadThumbnailFormDecoratorsProvider.addMapping(
+                schemaFormDecoratorsProvider.addMapping(
                     'bootstrapDecorator',
                     'fileUpload',
                     'directives/decorators/bootstrap/fileUpload/file-upload.html'
                 );
 
-                uploadThumbnailFormDecoratorsProvider.createDirective(
+                schemaFormDecoratorsProvider.createDirective(
                     'fileUpload',
                     'directives/decorators/bootstrap/fileUpload/file-upload.html'
                 );
-      }]);
-
-    angular.module('uploadThumbnailForm').directive('onReadFile', function ($parse) {
+      }])
+    .directive('onReadFile', function ($parse) {
         return {
             restrict: 'A',
             require: ['ngModel'],
@@ -327,4 +330,3 @@ require([
     });
   });
 })(angular);
-});
