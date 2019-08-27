@@ -99,3 +99,8 @@
 .no-before-content::before {
   display: none;
 }
+
+.no-padding-side {
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+}

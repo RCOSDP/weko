@@ -260,26 +260,27 @@ let WidgetTheme = function () {
             if (widget_settings.border_style == 'double') {
                 delete template.border['border-style-left'];
                 template.border['border-left'] = '3px double'; //3px is necessary to display double type
-            } else if (widget_settings.border_style == 'outset') {
-                delete template.border['border-style-left'];
-                template.border['border-left'] = 'outset'; //3px is necessary to display outset type
             }
         } else {
             template.border['border-style'] = (widget_settings.border_style) ? widget_settings.border_style : template.border['border-style'];
             if (widget_settings.border_style == 'double') {
                 delete template.border['border-style'];
                 template.border['border'] = '3px double'; //3px is necessary to display double type
-             }else if (widget_settings.border_style == 'outset') {
-                delete template.border['border-style'];
-                template.border['border'] = 'outset'; //3px is necessary to display outset type
-            }
+             }
         }
         let headerBorder = '';
         if (template == this.TEMPLATE_SIMPLE || template == this.TEMPLATE_SIDE_LINE) {
             headerBorder = 'border-top-right-radius: 0px; border-top-left-radius: 0px; ';
+        }else {
+            headerBorder = 'border-bottom:';
+            if (widget_settings.border_style == 'double') {
+                headerBorder += ' 3px double ' + borderColor + ';'
+            }else {
+                headerBorder += ' 1px ' + widget_settings.border_style + ' ' + borderColor + ';'
+            }
         }
         let header = (widget_settings.label_enable) ?
-            '        <div class="panel-heading widget-header widget-header-position" style="' + headerBorder + this.buildCssText('color', labelTextColor) + this.buildCssText('background-color', labelColor) + '">' +
+            '        <div class="panel-heading no-padding-side widget-header widget-header-position" style="' + headerBorder + this.buildCssText('color', labelTextColor) + this.buildCssText('background-color', labelColor) + '">' +
             '            <strong>' + widget_data.header + '</strong>' +
             '        </div>' : ''
         let headerClass = (widget_settings.label_enable) ? '' : 'no-pad-top-30';
@@ -293,7 +294,7 @@ let WidgetTheme = function () {
         let result = '<div class="grid-stack-item widget-resize">' +
             '    <div class="grid-stack-item-content panel widget" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
             header +
-            '        <div class="panel-body ql-editor ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; ' + overFlowBody + '"' + id + '">' + widget_data.body +
+            '        <div class="panel-body no-padding-side ql-editor ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; ' + overFlowBody + '"' + id + '">' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
