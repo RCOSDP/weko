@@ -25,7 +25,7 @@ import sys
 from datetime import timedelta
 
 from flask import Blueprint, abort, current_app, flash, jsonify, \
-    render_template, request
+    render_template, request, Response
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -513,14 +513,19 @@ def get_site_info():
 
 @blueprint_api.route('/favicon', methods=['GET'])
 def get_avatar():
-    """Get site info.
+    """Get favicon.
 
     :return: result
 
     """
+    import base64
+    import io
+    from werkzeug import FileWrapper
     site_info = SiteInfo.get()
-    result = dict()
     if not site_info:
         return jsonify({})
-    result['favicon'] = site_info.favicon
-    return result
+    favicon = site_info.favicon.split(',')[1]
+    favicon = base64.b64decode(favicon)
+    b = io.BytesIO(favicon)
+    w = FileWrapper(b)
+    return Response(b, mimetype="image/x-icon", direct_passthrough=True)

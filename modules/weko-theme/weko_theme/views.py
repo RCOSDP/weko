@@ -125,6 +125,13 @@ def get_site_info(site_info):
     site_name = site_info.site_name if site_info and site_info.site_name else []
     title = get_site_name_for_current_language(site_name) \
         or current_app.config['THEME_SITENAME']
+    favicon = request.url_root + 'api/admin/favicon'
+    prefix = ''
+    if site_info and site_info.favicon:
+        prefix = site_info.favicon.split(",")[0] == 'data:image/x-icon;base64'
+    if not prefix:
+        favicon = site_info.favicon if site_info and site_info.favicon else ''
+
     result = {
         'title': title,
         'site_name': site_info.site_name if site_info
@@ -134,7 +141,7 @@ def get_site_info(site_info):
         'copy_right': site_info.copy_right if site_info
         and site_info.copy_right else '',
         'keyword': site_info.keyword if site_info and site_info.keyword else '',
-        'favicon': site_info.favicon if site_info and site_info.favicon else '',
+        'favicon': favicon,
         'url': request.url
     }
     return result
