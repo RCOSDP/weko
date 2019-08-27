@@ -306,7 +306,7 @@ class MainLayout extends React.Component {
                 <div className="row form-group">
                   <div className="col-md-2 col-md-offset-8">
                       <button
-                       className="btn btn-default"
+                       className="btn btn-success"
                        onClick={this.handleAddSiteName}
                        disabled={!this.isEnableAddSiteName()}
                        ><span className="glyphicon glyphicon-plus icon"></span>{add_site_name_label}</button>
@@ -351,7 +351,7 @@ class MainLayout extends React.Component {
                         </div>
                         {
                           key > 0 &&
-                          <div className="col-md-2 text-right">
+                          <div className="col-md-2">
                             <button
                              className="btn btn-danger"
                              onClick={()=>{this.handleRemoveSiteName(key)}}
@@ -379,7 +379,7 @@ class MainLayout extends React.Component {
                         accept=".ico"
                         onChange={this.handleChangeFavicon}
                         />
-                       <button className="btn btn-default btn-block"
+                       <button className="btn btn-primary btn-block"
                         onClick={()=> {
                           this.refs.input.click()
                         }}
