@@ -77,6 +77,9 @@ setup(
         'invenio_i18n.translations': [
             'messages = weko_handle',
         ],
+        'invenio_base.api_blueprints': [
+            'weko_handle = weko_handle.views:blueprint_api',
+        ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],
         # 'invenio_admin.actions': [],

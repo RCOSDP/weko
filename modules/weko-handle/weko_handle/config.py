@@ -15,3 +15,5 @@ WEKO_HANDLE_DEFAULT_VALUE = 'foobar'
 
 WEKO_HANDLE_BASE_TEMPLATE = 'weko_handle/base.html'
 """Default base template for the demo page."""
+
+WEKO_HANDLE_CREDS_JSON_PATH = '/code/scripts/demo/handle_configuration/creds.json'
