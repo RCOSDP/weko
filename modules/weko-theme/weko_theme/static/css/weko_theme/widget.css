@@ -3,15 +3,13 @@
 }
 
 .widget {
-  /* border-radius: 0px !important; */
+  border-radius: 0px !important;
   left: 15px !important;
   right: 15px !important;
   margin-top: 5px !important;
 }
 
 .widget-header {
-  border-top-right-radius: 0px !important;
-  border-top-left-radius: 0px !important;
   z-index: 999;
 }
 
@@ -34,11 +32,10 @@
   position: inherit;
   width: 100%;
   top: 0;
-  right: inherit;
 }
 
-.pad-top-30 {
-  padding-top: 30px !important;
+.no-pad-top-30 {
+  padding-top: 0px !important;
 }
 
 .no-li-style {
@@ -97,4 +94,13 @@
   font-size: 20px;
   font-weight: bold;
   margin-bottom: -3px;
+}
+
+.no-before-content::before {
+  display: none;
+}
+
+.no-padding-side {
+  padding-left: 4px !important;
+  padding-right: 4px !important;
 }

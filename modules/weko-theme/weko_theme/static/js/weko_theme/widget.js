@@ -5,6 +5,8 @@ const HIDE_REST_DEFAULT = "Hide the rest";
 const READ_MORE_DEFAULT = "Read more";
 const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
+const THEME_SIMPLE = 'simple'
+const THEME_SIDE_LINE = 'side_line'
 const INTERVAL_TIME = 60000; //one minute
 
 (function () {
@@ -118,34 +120,27 @@ let PageBodyGrid = function () {
                     rssHtml = '<a class="" target="_blank" rel="noopener noreferrer" href="' + rssURL + '"><i class="fa fa-rss"></i></a>';
                 }
                 let innerHTML = '<div class= "rss text-right">' + rssHtml + '</div>'
-                                +'<div>';
+                    + '<div>';
                 for (let data in result) {
                     innerHTML += '<div class="no-li-style no-padding-col"><li><a class="a-new-arrivals arrival-scale" href="' + result[data].url + '">' + result[data].name + '</a></li></div>';
                 }
-                innerHTML +='</div>';
+                innerHTML += '</div>';
                 $("#" + id).append(innerHTML);
             }
         });
     };
 
     this.widgetTemplate = function (node, index) {
-        let labelColor = "";
-        let frameBorderColor = "";
-        let backgroundColor = "";
         let content = "";
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
-        let leftStyle = "left: initial; ";
-        let rightStyle = "";
-        let paddingHeading = "padding: inherit; ";
-        let overFlowBody = "overflow-y: scroll; ";
         let id = '';
         // Handle css style
         if (node.background_color) {
             backgroundColor = "background-color: " + node.background_color + "; ";
         }
 
-        if(node.frame_border && node.frame_border_color) {
+        if (node.frame_border && node.frame_border_color) {
             frameBorderColor = "border-color: " + node.frame_border_color + "; ";
         }
 
@@ -158,7 +153,7 @@ let PageBodyGrid = function () {
         }
 
         if (node.type == FREE_DESCRIPTION_TYPE) {
-            if (!$.isEmptyObject(languageDescription)){
+            if (!$.isEmptyObject(languageDescription)) {
                 content = languageDescription.description;
             }
         } else if (node.type == NOTICE_TYPE) {
@@ -170,9 +165,6 @@ let PageBodyGrid = function () {
                 initNumber = Number(node.access_counter);
             }
             content = this.buildAccessCounter(initNumber, languageDescription);
-            rightStyle = "right: unset; ";
-            paddingHeading = "";
-            overFlowBody = "overflow-y: hidden; ";
             setInterval(() => { this.setAccessCounterValue(); }, INTERVAL_TIME);
         } else if (node.type == NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
@@ -180,46 +172,163 @@ let PageBodyGrid = function () {
 
             this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
         }
-
-        let template =
-            '<div class="grid-stack-item widget-resize">' +
-            ' <div class="grid-stack-item-content panel panel-default widget" style="' +
-            backgroundColor + frameBorderColor + '">' +
-            '     <div " class="panel-heading widget-header widget-header-position" style="' + labelColor + leftStyle + rightStyle + '">' +
-            '       <strong style="' + paddingHeading + '">' + multiLangSetting.label + '</strong>' +
-            '     </div>' +
-            '     <div class="panel-body ql-editor"' + id +' style="' + overFlowBody + '">' +
-            content + '</div>' +
-            '   </div>' +
-            '</div>';
-
-        return template;
+        let dataTheme = '';
+        let widgetTheme = new WidgetTheme();
+        if (node.theme) {
+            if (node.theme == THEME_SIMPLE) {
+                dataTheme = widgetTheme.TEMPLATE_SIMPLE;
+            } else if (node.theme == THEME_SIDE_LINE) {
+                dataTheme = widgetTheme.TEMPLATE_SIDE_LINE;
+            } else {
+                // Default
+                dataTheme = widgetTheme.TEMPLATE_DEFAULT;
+            }
+        }
+        let widget_data = {
+            'header': multiLangSetting.label,
+            'body': content
+        }
+        if (id != '') {
+            widget_data['id'] = id
+        }
+        return widgetTheme.buildTemplate(widget_data, node, dataTheme);
     };
 
-    this.setAccessCounterValue = function(){
-      let data = this.getAccessTopPageValue();
-      let result = Number(data);
-      $(".text-access-counter").each(function(){
-        let initNumber = $(this).data("initNumber");
-        let accessCounter = result + initNumber;
-        $(this).text(accessCounter);
-      });
+    this.setAccessCounterValue = function () {
+        let data = this.getAccessTopPageValue();
+        let result = Number(data);
+        $(".text-access-counter").each(function () {
+            let initNumber = $(this).data("initNumber");
+            let accessCounter = result + initNumber;
+            $(this).text(accessCounter);
+        });
     };
 
-    this.getAccessTopPageValue = function(){
-        let data= 0;
+    this.getAccessTopPageValue = function () {
+        let data = 0;
         $.ajax({
-                  url: '/api/stats/top_page_access/0/0',
-                  method: 'GET',
-                  async: false,
-                  success: (response) => {
-                      if (response.all && response.all.count) {
-                          data = response.all.count;
-                      }
-                  }
-              })
-         return data;
+            url: '/api/stats/top_page_access/0/0',
+            method: 'GET',
+            async: false,
+            success: (response) => {
+                if (response.all && response.all.count) {
+                    data = response.all.count;
+                }
+            }
+        })
+        return data;
     };
+};
+
+let WidgetTheme = function () {
+    this.TEMPLATE_DEFAULT = {
+        'border': {
+            'border-radius': '5px !important',
+            'border-style': 'outset'
+        },
+        'scroll-bar': ''
+    };
+    this.TEMPLATE_SIDE_LINE = {
+        'border': {
+            'border-radius': '0px !important',
+            'border-style-left': 'groove',
+            'border-right-style': 'none',
+            'border-top-style': 'none',
+            'border-bottom-style': 'none'
+        },
+        'scroll-bar': ''
+    };
+    this.TEMPLATE_SIMPLE = {
+        'border': {
+            'border-style': 'none',
+            'border-radius': '0px !important'
+        },
+        'scroll-bar': ''
+    };
+
+    this.buildTemplate = function (widget_data, widget_settings, template) {
+        if (!widget_data || !widget_settings) {
+            return undefined;
+        }
+        let id = (widget_data.id) ? widget_data.id : '';
+        let labelTextColor = (widget_settings.label_text_color) ? widget_settings.label_text_color : '';
+        let labelColor = (widget_settings.label_color) ? widget_settings.label_color : '';
+        let borderColor = (widget_settings.frame_border_color) ? widget_settings.frame_border_color : '';
+        let overFlowBody = "";
+        if (template == this.TEMPLATE_SIDE_LINE) {
+            template.border['border-left-style'] = (widget_settings.border_style) ? widget_settings.border_style : 'groove';
+            if (widget_settings.border_style == 'double') {
+                delete template.border['border-style-left'];
+                template.border['border-left'] = '3px double'; //3px is necessary to display double type
+            }
+        } else {
+            template.border['border-style'] = (widget_settings.border_style) ? widget_settings.border_style : template.border['border-style'];
+            if (widget_settings.border_style == 'double') {
+                delete template.border['border-style'];
+                template.border['border'] = '3px double'; //3px is necessary to display double type
+             }
+        }
+        let headerBorder = '';
+        if (template == this.TEMPLATE_SIMPLE || template == this.TEMPLATE_SIDE_LINE) {
+            headerBorder = 'border-top-right-radius: 0px; border-top-left-radius: 0px; ';
+        }else {
+            headerBorder = 'border-bottom:';
+            if (widget_settings.border_style == 'double') {
+                headerBorder += ' 3px double ' + borderColor + ';'
+            }else {
+                headerBorder += ' 1px ' + widget_settings.border_style + ' ' + borderColor + ';'
+            }
+        }
+        let header = (widget_settings.label_enable) ?
+            '        <div class="panel-heading no-padding-side widget-header widget-header-position" style="' + headerBorder + this.buildCssText('color', labelTextColor) + this.buildCssText('background-color', labelColor) + '">' +
+            '            <strong>' + widget_data.header + '</strong>' +
+            '        </div>' : ''
+        let headerClass = (widget_settings.label_enable) ? '' : 'no-pad-top-30';
+        headerClass += (widget_settings.type == NEW_ARRIVALS) ? 'no-before-content' : '';
+        if (widget_settings.type == ACCESS_COUNTER) {
+            overFlowBody = "overflow-y: hidden; ";
+        }
+        let borderStyle = (template == this.TEMPLATE_SIMPLE) ? '' : this.buildBorderCss(template.border, borderColor);
+        let backgroundColor = (widget_settings.background_color) ? widget_settings.background_color : '';
+
+        let result = '<div class="grid-stack-item widget-resize">' +
+            '    <div class="grid-stack-item-content panel widget" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
+            header +
+            '        <div class="panel-body no-padding-side ql-editor ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; ' + overFlowBody + '"' + id + '">' + widget_data.body +
+            '        </div>' +
+            '    </div>' +
+            '</div>';
+        return result;
+    }
+
+    this.buildCssText = function (keyword, data) {
+        let cssStr = '';
+        if (data == '') {
+            return cssStr;
+        }
+        switch (keyword) {
+            case 'color':
+                cssStr = 'color: ' + data + '; ';
+                break;
+            case 'background-color':
+                cssStr = 'background-color: ' + data + '; ';
+                break;
+            default:
+                break;
+        }
+        return cssStr;
+    }
+
+    this.buildBorderCss = function (borderSettings, borderColor) {
+        let borderStyle = '';
+        for (let [key, value] of Object.entries(borderSettings)) {
+            if (key && value) {
+                borderStyle += key + ': ' + value + '; ';
+            }
+        }
+        borderStyle += 'border-color:' + borderColor + '; ';
+        return borderStyle;
+    }
 };
 
 function getWidgetDesignSetting() {
@@ -247,10 +356,11 @@ function getWidgetDesignSetting() {
                     let pageBodyGrid = new PageBodyGrid();
                     pageBodyGrid.init();
                     pageBodyGrid.loadGrid(widgetList);
-                    new ResizeSensor($('.widget-resize'), function(){
-                        $('.widget-resize').each(function(){
+                    new ResizeSensor($('.widget-resize'), function () {
+                        $('.widget-resize').each(function () {
                             let headerElementHeight = $(this).find('.panel-heading').height();
-                            $(this).find('.panel-body').css("padding-top", String(headerElementHeight+11) + "px");
+                            $(this).find('.panel-body').css("padding-top", String(headerElementHeight + 11) + "px");
+                            $(this).find('.panel-body').css("bottom", "10px");
                         });
                     });
                 }
