@@ -41,11 +41,6 @@
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- if need_thumbnail %}
-    <script src="{{ url_for('static', filename='node_modules/angular-sanitize/angular-sanitize.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='node_modules/angular-schema-form/node_modules/tv4/tv4.js') }}"></script>
-    <script src="{{ url_for('static', filename='node_modules/angular-schema-form/node_modules/objectpath/lib/ObjectPath.js') }}"></script>
-    <script src="{{ url_for('static', filename='node_modules/angular-schema-form/dist/schema-form.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='node_modules/angular-schema-form/dist/bootstrap-decorator.min.js') }}"></script>
     {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% endif %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
