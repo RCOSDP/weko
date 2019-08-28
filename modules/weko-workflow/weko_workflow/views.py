@@ -293,8 +293,9 @@ def display_activity(activity_id=0):
             schema_form, item_save_uri, files, endpoints = item_login(
                 item_type_id=workflow_detail.itemtype_id)
         if item:
-            _pid_identifier = PersistentIdentifier.get_by_object(
-                pid_type='depid', object_type='rec', object_uuid=item.id)
+            # Remove the unused local variable
+            # _pid_identifier = PersistentIdentifier.get_by_object(
+            #     pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
 
         if session.get('update_json_schema') and session[
@@ -331,7 +332,7 @@ def display_activity(activity_id=0):
         from weko_deposit.links import base_factory
         links = base_factory(pid)
 
-    res_check = check_authority_action(activity_id, action_id)
+    res_check = check_authority_action(str(activity_id), str(action_id))
 
     getargs = request.args
     ctx = {'community': None}

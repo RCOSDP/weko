@@ -51,6 +51,7 @@ def get_identifier_setting(community_id):
         return Identifier.query.filter_by(
             repository=community_id).one_or_none()
 
+
 def get_community_id_by_index(index_name):
     """
     Get community use indexName input is index_name_english.
