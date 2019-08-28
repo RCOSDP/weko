@@ -22,6 +22,7 @@
 
 import copy
 import json
+import re
 from collections import OrderedDict
 from functools import partial
 
@@ -307,7 +308,7 @@ class SchemaTree:
         from .utils import json_merge_all
         return json_merge_all(vlst)
 
-    def __get_value_list(self):
+    def __get_value_list(self, remove_empty=False):
         """Find values to a list."""
         def analysis(field):
             exp = (',',)
@@ -402,6 +403,23 @@ class SchemaTree:
                     node[k1] = klst
 
         def get_mapping_value(mpdic, atr_vm, k):
+            def remove_empty_tag(mp):
+                pattern = r'(sub)?item_\d{13}$'
+                if type(mp) == str and re.match(pattern, mp):
+                    return True
+                elif type(mp) == dict:
+                    remove_list = []
+                    for it in mp:
+                        if remove_empty_tag(mp[it]):
+                            remove_list.append(it)
+                    for it in remove_list:
+                        mp.pop(it)
+                elif type(mp) == list:
+                    for it in mp:
+                        if remove_empty_tag(it):
+                            mp.remove(it)
+                return False
+
             vlst = []
             for ky, vl in mpdic.items():
                 vlc = copy.deepcopy(vl)
@@ -462,6 +480,8 @@ class SchemaTree:
                                             vst.append(ava[1:])
 
                                 z[self._v] = mlst
+                if remove_empty:
+                    remove_empty_tag(vlc)
                 vlst.append({ky: vlc})
             return vlst
 
@@ -600,7 +620,7 @@ class SchemaTree:
             root.text = "Sorry! This Item has not been mappinged."
             return root
 
-        node_tree = self.find_nodes(self.__get_value_list())
+        node_tree = self.find_nodes(self.__get_value_list(remove_empty=True))
         ns = self._ns
         xsi = 'http://www.w3.org/2001/XMLSchema-instance'
         ns.update({'xml': "http://www.w3.org/XML/1998/namespace"})

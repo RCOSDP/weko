@@ -959,4 +959,71 @@ msgstr ""
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:59
 msgid "There is no data."
+
+#: weko_admin/template/weko_admin/admin/feedback_mail.html:59
+msgid "There is no data."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:39
+msgid "Site Name"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:40
+msgid "Favicon"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:41
+msgid "CopyRight"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:42
+msgid "Description"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:43
+msgid "Keyword"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:44
+msgid "Selected icon"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:45
+msgid "Select icon file"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:46
+msgid "Add site name"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:47
+msgid "Site name is not set"
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:50
+msgid "Must set at least 1 site name."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:51
+msgid "Please input site information for empty field."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:52
+msgid "The same language is set for many site names."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:53
+msgid "Error when get languages."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:54
+msgid "Error when get site infomation."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:55
+msgid "Language is deleted from Registered Language of system."
+msgstr ""
+
+#: weko_admin/template/weko_admin/admin/site_info.html:56
+msgid "Site info is saved successfully"
 msgstr ""

@@ -1,0 +1,42 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- macro site_info() %}
+      {%- set site_info = favicon|get_site_info %}
+      <title>{{site_info.get("title")}}</title>
+      {%- if site_info.get('keyword') %}
+      <meta name="keyword" content="{{ site_info.get('keyword') }}"/>
+      {%- endif %}
+      {%- if site_info.get('copy_right') %}
+      <meta name="copyright" content="{{ site_info.get('copy_right') }}"/>
+      {%- endif %}
+      {%- if site_info.get('description') %}
+      <meta name="description" content="{{ site_info.get('description') }}"/>
+      <meta property="og:description" content="{{ site_info.get('description') }}" />
+      {%- endif %}
+      {%- if site_info.get('title') %}
+      <meta property="og:title" content="{{ site_info.get('title') }}" />
+      {%- endif %}
+      <meta property="og:locale" content="ja_JA" />
+      <meta property="og:locale:alternate" content="en_EN" />
+      <meta property="og:url" content="{{ site_info.get('url') }}" />
+      <link rel="shortcut icon" href="{{ site_info.get('favicon') or url_for('static', filename='favicon.ico') }}"/>
+      <meta property="og:image" content="{{ site_info.get('favicon') }}" />
+{% endmacro %}

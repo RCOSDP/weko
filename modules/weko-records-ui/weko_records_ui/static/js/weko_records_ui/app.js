@@ -280,7 +280,7 @@
 
       $scope.ok = function() {
         $scope.modalInstance.hide();
-        $http.delete(url).then(
+        $http.post(url).then(
          function(response) {
           // success callback
           $window.location.href = rdt;

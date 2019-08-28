@@ -41,7 +41,7 @@ from wtforms.fields import StringField
 from . import config
 from .models import WidgetItem, WidgetMultiLangData
 from .services import WidgetDesignServices, WidgetItemServices
-from .utils import convert_data_to_desgin_pack, convert_data_to_edit_pack, \
+from .utils import convert_data_to_design_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, get_register_language, \
     get_unregister_language
 
@@ -252,7 +252,7 @@ class WidgetSettingView(ModelView):
 
         widget_data = convert_widget_data_to_dict(self.get_one(id_list))
         multi_lang_data = WidgetMultiLangData.get_by_widget_id(id_list)
-        converted_data = convert_data_to_desgin_pack(
+        converted_data = convert_data_to_design_pack(
             widget_data,
             multi_lang_data)
         model = convert_data_to_edit_pack(converted_data)

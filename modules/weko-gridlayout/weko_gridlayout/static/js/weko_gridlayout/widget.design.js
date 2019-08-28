@@ -77,7 +77,7 @@ class Repository extends React.Component {
     render() {
         return (
             <div className="form-group row">
-              <div id="alerts"></div>  
+              <div id="alerts"></div>
               <label htmlFor="input_type" className="control-label col-xs-1">Repository<span style={this.styleRed}>*</span></label>
                 <div class="controls col-xs-5">
                     <select id="repository-id" value={this.state.repositoryId} onChange={this.handleChange} className="form-control">
@@ -404,7 +404,7 @@ function loadWidgetList(widgetListItems) {
             + ' <span class="widget-label" >&lt;' + widget.widgetType + '&gt;</span>'
             + ' <span class="widget-label">' + widget.label + '</span>'
             + ' <button ' + buttonId + ' data-widget-type="' + widget.widgetType
-            + '" data-widget-name="' + widget.label + '" data-widget-id="' + widget.widgetId
+            + '" data-widget-name="' + escapeHtml(widget.label) + '" data-widget-id="' + widget.widgetId
             + '" data-id="' + widget.Id +  '" class="btn btn-default add-new-widget">'
             + ' Add Widget'
             + ' </button>'
@@ -554,3 +554,13 @@ function saveWidgetDesignSetting(widgetDesignData) {
         return;
     }
 }
+
+
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+ }

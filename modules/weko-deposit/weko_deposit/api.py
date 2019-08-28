@@ -454,6 +454,8 @@ class WekoDeposit(Deposit):
         else:
             dc = self.convert_item_metadata(args[0])
         super(WekoDeposit, self).update(dc)
+#        if 'pid' in self['_deposit']:
+#            self['_deposit']['pid']['revision_id'] += 1
         if has_request_context():
             if current_user:
                 user_id = current_user.get_id()
