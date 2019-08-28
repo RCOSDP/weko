@@ -31,27 +31,22 @@ from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
+from weko_records_ui.models import Identifier
 
 from .api import WorkActivity
 from .config import IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY
 
 
-def get_community_id_by_index(index_name):
+def get_identifier_setting(community_id):
     """
-    Get community use indexName input is index_name_english.
+    Get Identifier Setting of current Community.
 
-    :param: index_name_english
-    :return: dict of item type info
+    :param community_id: Community Identifier
+    :return: Dict or None
     """
-    communities = Community.query.all()
-    ret_community = []
-    for community in communities:
-        if community.index.index_name_english == index_name:
-            ret_community.append(community.id)
-
-    if len(ret_community) > 0:
-        return ret_community[0]
-    return None
+    with db.session.no_autoflush:
+        return Identifier.query.filter_by(
+            repository=community_id).one_or_none()
 
 
 def pidstore_identifier_mapping(post_json, idf_grant=0, activity_id='0'):
