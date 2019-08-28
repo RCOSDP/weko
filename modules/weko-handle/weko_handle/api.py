@@ -58,6 +58,6 @@ class Handle(object):
             pid = client.generate_PID_name(credential.get_prefix())
             new_handle = pid
             handle = client.register_handle(new_handle, location)
-            return jsonify(handle)
+            return handle
         except Exception as e:
             current_app.logger.error('Unexpected error: ', e)
