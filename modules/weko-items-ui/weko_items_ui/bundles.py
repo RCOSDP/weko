@@ -66,7 +66,10 @@ js = Bundle(
 
 upload_js = Bundle(
     'js/weko_items_ui/upload.js',
-    output="gen/items_ui_upload.js",
+    npm={
+        'angular-schema-form': '~0.8.3',
+    },
+    output="gen/items_ui_upload.%(version)s.js",
 )
 
 feedback_maillist_js = Bundle(

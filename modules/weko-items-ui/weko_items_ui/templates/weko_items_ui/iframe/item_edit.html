@@ -41,9 +41,11 @@
   {{ super() }}
   {% assets "invenio_deposit_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {%- if need_thumbnail %}
-    <script src="{{ url_for('static', filename='js/weko_items_ui/upload_thumbnail/ObjectPath.js') }}" type="text/babel"></script>
-    <script src="{{ url_for('static', filename='js/weko_items_ui/upload_thumbnail/schema-form.min.js') }}" type="text/babel"></script>
-    <script src="{{ url_for('static', filename='js/weko_items_ui/upload_thumbnail/bootstrap-decorator.min.js') }}" type="text/babel"></script>
+    <script src="{{ url_for('static', filename='node_modules/angular-sanitize/angular-sanitize.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='node_modules/angular-schema-form/node_modules/tv4/tv4.js') }}"></script>
+    <script src="{{ url_for('static', filename='node_modules/angular-schema-form/node_modules/objectpath/lib/ObjectPath.js') }}"></script>
+    <script src="{{ url_for('static', filename='node_modules/angular-schema-form/dist/schema-form.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='node_modules/angular-schema-form/dist/bootstrap-decorator.min.js') }}"></script>
     {% assets "weko_items_ui_upload_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% endif %}
   {% assets "weko_items_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
@@ -145,35 +147,35 @@
               </div>
             </div>
             {%- endif %}
-            <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
-              {%- if need_thumbnail %}
-                <div class="row">
-                  <div class="col-sm-9" ng-hide="recordsVM.invenioRecordsLoading">
-                    <div class="panel panel-default">
-                      <div class="panel-heading">
-                        <h3 class="panel-title">{{_('Thumbnail')}}</h3>
-                      </div>
-                      <div class="panel-body">
-                        <div class="row">
-                          <div class="col-sm-12" id="app">
-                            <div>
-                              <label>
-                                  <p>Drop files or folders here</p>
-                              </label>
-                              <p><strong>— OR —</strong></p>
-                              <form name="uploadThumbnail"
-                                sf-schema="schema"
-                                sf-form="form"
-                                sf-model="model">
-                              </form>
-                             </div>
-                          </div>
+            {%- if need_thumbnail %}
+              <div class="row">
+                <div class="col-sm-9" ng-hide="recordsVM.invenioRecordsLoading">
+                  <div class="panel panel-default">
+                    <div class="panel-heading">
+                      <h3 class="panel-title">{{_('Thumbnail')}}</h3>
+                    </div>
+                    <div ng-controller='UploadController' class="panel-body">
+                      <div class="row">
+                        <div class="col-sm-12" id="app">
+                          <div>
+                            <label>
+                                <p>Drop files or folders here</p>
+                            </label>
+                            <p><strong>— OR —</strong></p>
+                            <form name="uploadThumbnail"
+                              sf-schema="schema"
+                              sf-form="form"
+                              sf-model="model">
+                            </form>
+                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              {%- endif %}
+              </div>
+            {%- endif %}
+            <div ng-controller="WekoRecordsCtrl" ng-cloak="" ng-hide="recordsVM.invenioRecordsLoading">
               <div class="row">
                 <div class="col-sm-9">
                 <p class="text-center">

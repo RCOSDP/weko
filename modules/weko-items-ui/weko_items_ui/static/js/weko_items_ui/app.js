@@ -1456,25 +1456,6 @@ function handleSharePermission(value) {
         });
         return result;
       }
-      $scope.schema = {
-            type: 'object',
-            title: 'Upload',
-            properties: {
-                "archivo": {
-                    "title": 'Upload Images',
-                    "type": 'string',
-                    "format": 'file',
-                    "description": 'This is a upload element'
-                }
-            }
-        };
-        $scope.model = {};
-        $scope.form = [
-            {
-                "key": "archivo",
-                "type": "fileUpload"
-            }
-        ];
     }
     // Inject depedencies
     WekoRecordsCtrl.$inject = [
@@ -1482,7 +1463,7 @@ function handleSharePermission(value) {
       '$rootScope',
       'InvenioRecordsAPI',
     ];
-    angular.module('wekoRecords.controllers', ['schemaForm'])
+    angular.module('wekoRecords.controllers', [])
       .controller('WekoRecordsCtrl', WekoRecordsCtrl);
 
     var ModalInstanceCtrl = function ($scope, $modalInstance, items) {
@@ -1506,14 +1487,38 @@ function handleSharePermission(value) {
       'invenioRecords',
       'wekoRecords.controllers',
     ]);
+    
+    angular.module('uploadThumbnail', ['schemaForm'])
+    .controller('UploadController', function ($scope, $rootScope) {
+        'use strict';
+        $scope.schema = {
+            type: 'object',
+            title: 'Upload',
+            properties: {
+                "archivo": {
+                    "title": 'Upload Images',
+                    "type": 'string',
+                    "format": 'file',
+                    "description": 'This is a upload element'
+                }
+            }
+        };
+        $scope.model = {};
+        $scope.form = [
+            {
+                "key": "archivo",
+                "type": "fileUpload"
+            }
+        ];
+    });
 
     angular.bootstrap(
       document.getElementById('weko-records'), [
-        'wekoRecords', 'invenioRecords', 'schemaForm', 'mgcrea.ngStrap',
+        'wekoRecords', 'invenioRecords', 'mgcrea.ngStrap',
         'mgcrea.ngStrap.modal', 'pascalprecht.translate', 'ui.sortable',
         'ui.select', 'mgcrea.ngStrap.select', 'mgcrea.ngStrap.datepicker',
         'mgcrea.ngStrap.helpers.dateParser', 'mgcrea.ngStrap.tooltip',
-        'invenioFiles'
+        'invenioFiles', 'uploadThumbnail'
       ]
     );
   });
