@@ -41,12 +41,24 @@ from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, \
     IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY
 
 
+def get_identifier_setting(community_id):
+    """
+    Get Identifier Setting of current Community.
+
+    :param community_id: Community Identifier
+    :return: Dict or None
+    """
+    with db.session.no_autoflush:
+        return Identifier.query.filter_by(
+            repository=community_id).one_or_none()
+
+
 def get_community_id_by_index(index_name):
     """
     Get community use indexName input is index_name_english.
 
-    :param: index_name_english
-    :return: dict of item type info
+    :param index_name: Index Tree's Name
+    :return: None or Item Type's info
     """
     communities = Community.query.all()
     ret_community = []
