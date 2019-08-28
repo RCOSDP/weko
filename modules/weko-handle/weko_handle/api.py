@@ -33,7 +33,10 @@ from .config import WEKO_HANDLE_CREDS_JSON_PATH
 
 class Handle(object):
     """Operated on the Flow."""
-    credential_path = WEKO_HANDLE_CREDS_JSON_PATH
+
+    def __init__(self):
+        """Bind to current bucket."""
+        self.credential_path = WEKO_HANDLE_CREDS_JSON_PATH
 
     def retrieve_handle(self, handle):
         """Retrieve a handle."""

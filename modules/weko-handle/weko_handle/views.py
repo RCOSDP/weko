@@ -43,7 +43,7 @@ def index():
         module_name=_('WEKO-Handle'))
 
 @blueprint.route('/retrieve/<handle>', methods=['GET'])
-def retrieve_handle(handle):
+def retrieve_handle(handle=""):
     """Retrieve a handle."""
     try:
         handle_obj = Handle()
@@ -58,7 +58,10 @@ def register_handle():
     try:
         location = request.form['location']
         handle_obj = Handle()
-        handle = handle_obj.register_handle(location)
-        return jsonify(handle)
+        if location:
+            handle = handle_obj.register_handle(location)
+            return jsonify(handle)
+
+        return jsonify({'code': -1, 'msg': 'error'})
     except Exception as e:
         current_app.logger.error('Unexpected error: ', e)
