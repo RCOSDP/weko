@@ -33,6 +33,7 @@ from weko_index_tree.models import Index
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 from weko_records_ui.models import Identifier
+
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import WorkActivity
@@ -56,8 +57,8 @@ def get_community_id_by_index(index_name):
     """
     Get community use indexName input is index_name_english.
 
-    :param index_name: 
-    :return: Dict of Item Type's info
+    :param index_name: Index Tree's Name
+    :return: None or Item Type's info
     """
     communities = Community.query.all()
     ret_community = []
