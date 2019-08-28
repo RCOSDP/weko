@@ -19,7 +19,6 @@
 # MA 02111-1307, USA.
 
 """Configuration for weko-theme."""
-
 BASE_PAGE_TEMPLATE = 'weko_theme/page.html'
 """Base template for user facing pages."""
 
@@ -31,6 +30,7 @@ embedding header metadata and define basic template blocks. All other user
 facing templates usually extends from this template and thus changing this
 template allows to change design and layout of WEKO3.
 """
+
 THEME_HEADER_TEMPLATE = 'weko_theme/header.html'
 """Header template which is normally included in :data:`BASE_TEMPLATE`."""
 
@@ -77,3 +77,9 @@ WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE = \
 WEKO_THEME_ADMIN_ITEM_MANAGEMENT_TEMPLATE = \
     'weko_theme/admin/item_management_display.html'
 """Template for Admin Item Management."""
+
+ADMIN_BASE_TEMPLATE = 'weko_theme/page_admin.html'
+
+SETTINGS_TEMPLATE = 'weko_theme/page_setting.html'
+
+COVER_TEMPLATE = 'weko_theme/page_cover.html'

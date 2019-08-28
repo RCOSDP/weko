@@ -46,10 +46,10 @@ blueprint = Blueprint(
 @blueprint.route('/')
 def index():
     """Simplistic front page view."""
-    getArgs = request.args
+    get_args = request.args
     ctx = {'community': None}
     community_id = ""
-    if 'community' in getArgs:
+    if 'community' in get_args:
         from weko_workflow.api import GetCommunity
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
@@ -93,6 +93,7 @@ def index():
         if hasattr(current_user, 'site_license_name') else ''
     top_viewed.send(current_app._get_current_object(),
                     info=send_info)
+
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
         render_widgets=True,
@@ -109,3 +110,38 @@ def edit():
     return render_template(
         current_app.config['BASE_EDIT_TEMPLATE'],
     )
+
+
+@blueprint.app_template_filter('get_site_info')
+def get_site_info(site_info):
+    """Get site info.
+
+    :return: result
+
+    """
+    from weko_admin.models import SiteInfo
+    from weko_admin.utils import get_site_name_for_current_language
+    site_info = SiteInfo.get()
+    site_name = site_info.site_name if site_info and site_info.site_name else []
+    title = get_site_name_for_current_language(site_name) \
+        or current_app.config['THEME_SITENAME']
+    favicon = request.url_root + 'api/admin/favicon'
+    prefix = ''
+    if site_info and site_info.favicon:
+        prefix = site_info.favicon.split(",")[0] == 'data:image/x-icon;base64'
+    if not prefix:
+        favicon = site_info.favicon if site_info and site_info.favicon else ''
+
+    result = {
+        'title': title,
+        'site_name': site_info.site_name if site_info
+        and site_info.site_name else [],
+        'description': site_info.description if site_info
+        and site_info.description else '',
+        'copy_right': site_info.copy_right if site_info
+        and site_info.copy_right else '',
+        'keyword': site_info.keyword if site_info and site_info.keyword else '',
+        'favicon': favicon,
+        'url': request.url
+    }
+    return result

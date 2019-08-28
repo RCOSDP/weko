@@ -24,7 +24,7 @@ import calendar
 import sys
 from datetime import timedelta
 
-from flask import Blueprint, abort, current_app, flash, jsonify, \
+from flask import Blueprint, Response, abort, current_app, flash, jsonify, \
     render_template, request
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
@@ -38,12 +38,12 @@ from werkzeug.local import LocalProxy
 
 from . import config
 from .api import send_site_license_mail
-from .models import SessionLifetime
-from .utils import FeedbackMail, StatisticMail, get_admin_lang_setting, \
-    get_api_certification_type, get_current_api_certification, \
-    get_initial_stats_report, get_selected_language, get_unit_stats_report, \
-    save_api_certification, update_admin_lang_setting, \
-    validate_certification
+from .models import SessionLifetime, SiteInfo
+from .utils import FeedbackMail, StatisticMail, format_site_info_data, \
+    get_admin_lang_setting, get_api_certification_type, \
+    get_current_api_certification, get_initial_stats_report, \
+    get_selected_language, get_unit_stats_report, save_api_certification, \
+    update_admin_lang_setting, validate_certification, validation_site_info
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -470,3 +470,62 @@ def manual_send_site_license_mail(start_month, end_month):
                                        mail_list, agg_date, data)
 
         return 'finished'
+
+
+@blueprint_api.route('/update_site_info', methods=['POST'])
+@login_required
+def update_site_info():
+    """Update site info.
+
+    :return: result
+
+    """
+    site_info = request.get_json()
+    format_data = format_site_info_data(site_info)
+    validate = validation_site_info(format_data)
+    if validate.get('error'):
+        return jsonify(validate)
+    else:
+        SiteInfo.update(format_data)
+        return jsonify(format_data)
+
+
+@blueprint_api.route('/get_site_info', methods=['GET'])
+@login_required
+def get_site_info():
+    """Get site info.
+
+    :return: result
+
+    """
+    site_info = SiteInfo.get()
+    result = dict()
+    if not site_info:
+        return jsonify({})
+    result['copy_right'] = site_info.copy_right
+    result['description'] = site_info.description
+    result['keyword'] = site_info.keyword
+    result['favicon'] = site_info.favicon
+    result['favicon_name'] = site_info.favicon_name
+    result['site_name'] = site_info.site_name
+    return jsonify(result)
+
+
+@blueprint_api.route('/favicon', methods=['GET'])
+def get_avatar():
+    """Get favicon.
+
+    :return: result
+
+    """
+    import base64
+    import io
+    from werkzeug import FileWrapper
+    site_info = SiteInfo.get()
+    if not site_info:
+        return jsonify({})
+    favicon = site_info.favicon.split(',')[1]
+    favicon = base64.b64decode(favicon)
+    b = io.BytesIO(favicon)
+    w = FileWrapper(b)
+    return Response(b, mimetype="image/x-icon", direct_passthrough=True)

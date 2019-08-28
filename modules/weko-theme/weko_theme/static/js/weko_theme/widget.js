@@ -69,7 +69,7 @@ let PageBodyGrid = function () {
             templateWriteMoreNotice = '</br>' +
                 '<div id="' + moreDescriptionID + '" style="display: none;">' + moreDescription + '</div>' +
                 '<a id="' + linkID + '" class="writeMoreNoT" onclick="handleMoreNoT(\'' + moreDescriptionID + '\',\'' +
-                linkID + '\',\'' + readMore + '\', \'' + hideRest + '\')">' + readMore +
+                linkID + '\',\'' + escapeHtml(readMore) + '\', \'' + escapeHtml(hideRest) + '\')">' + readMore +
                 '</a>';
         }
 
@@ -79,7 +79,7 @@ let PageBodyGrid = function () {
         return description;
     };
 
-    this.buildAccessCounter = function (initNumber) {
+    this.buildAccessCounter = function (initNumber, languageDescription) {
         let data = this.getAccessTopPageValue();
         // Convert to display-able number
         let initNum = Number(initNumber);
@@ -87,7 +87,17 @@ let PageBodyGrid = function () {
         if (!Number.isNaN(initNum)) {
             result = result + initNumber;
         }
-        return '<div class="widget-access-counter" data-init-number="' + initNumber + '" style="text-align: center; font-size: 20px; font-weight: bold; margin: auto;">' + result + '</div>';
+
+        let precedingMessage = languageDescription.preceding_message ? languageDescription.preceding_message + " " : "";
+        let followingMessage = languageDescription.following_message ? " " + languageDescription.following_message : "";
+        let otherMessage = languageDescription.other_message ? languageDescription.other_message : "";
+
+        return '<div>'
+                + ' <div class="counter-container">'
+                +       precedingMessage + '<span data-init-number="' + initNumber + '" class = "text-access-counter">' + result + '</span>' + followingMessage
+                + ' </div>'
+                + ' <div>' + otherMessage + '</div>'
+                + '</div>';
     };
 
     this.buildNewArrivals = function (widgetID, term, rss, id, count) {
@@ -159,7 +169,7 @@ let PageBodyGrid = function () {
                 !Number.isNaN(Number(node.access_counter))) {
                 initNumber = Number(node.access_counter);
             }
-            content = this.buildAccessCounter(initNumber);
+            content = this.buildAccessCounter(initNumber, languageDescription);
             rightStyle = "right: unset; ";
             paddingHeading = "";
             overFlowBody = "overflow-y: hidden; ";
@@ -189,7 +199,7 @@ let PageBodyGrid = function () {
     this.setAccessCounterValue = function(){
       let data = this.getAccessTopPageValue();
       let result = Number(data);
-      $(".widget-access-counter").each(function(){
+      $(".text-access-counter").each(function(){
         let initNumber = $(this).data("initNumber");
         let accessCounter = result + initNumber;
         $(this).text(accessCounter);
@@ -271,3 +281,11 @@ function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
     }
 }
 
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+ }
