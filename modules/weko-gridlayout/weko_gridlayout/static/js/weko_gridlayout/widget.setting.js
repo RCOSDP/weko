@@ -9,6 +9,9 @@ const THEME_SETTING = [{"value" : 'default', "text": "Default"}, {"value": "simp
 const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}];
 
 function userSelectedInput(initialValue, getValueOfField, key_binding) {
+    if(key_binding == "border_style" && !initialValue){
+        initialValue = "solid";
+    }
     const [value, setValue] = useState(initialValue);
     function handleChange(e) {
         setValue(e.target.value);
@@ -54,7 +57,12 @@ const ComponentSelectField = function(props){
             )
         }
         else{
-            props.getValueOfField(props.key_binding, props.data_load || props.data[0].text);
+            if (props.key_binding == "border_style"){
+                props.getValueOfField(props.key_binding, props.data_load || "solid");
+            }
+            else{
+                props.getValueOfField(props.key_binding, props.data_load || props.data[0].text);
+            }
             options = props.data.map((option) => {
                 return (
                     <option key={option.value} value={option.value}>{option.text}</option>
@@ -156,13 +164,16 @@ const ComponentTextboxForAccessCounter = function(props){
 const ComponentSelectColorFiled = function(props){
     let initColor = '';
     if(props.key_binding == "label_text_color"){
-        initColor = '#4169E1';
+        initColor = '#333333';
     }
     else if(props.key_binding == "background_color"){
         initColor = '#FFFFFF';
     }
+    else if(props.key_binding == "label_color"){
+        initColor = '#F5F5F5';
+    }
     else{
-        initColor = '#808080';
+        initColor = '#DDDDDD';
     }
     const color = userSelectedInput(props.data_load || initColor, props.getValueOfField, props.key_binding);
 
@@ -1538,12 +1549,12 @@ $(function () {
             repository_id: '',
             widget_type: '',
             label: '',
-            label_color: '#808080',
-            label_text_color: '#4169E1',
-            border_style: 'none',
+            label_color: '#F5F5F5',
+            label_text_color: '#333333',
+            border_style: 'solid',
             theme: 'default',
             label_enable: true,
-            frame_border_color: '#808080',
+            frame_border_color: '#DDDDDD',
             background_color: '#FFFFFF',
             browsing_role: [1, 2, 3, 4, 99],
             edit_role: [1, 2, 3, 4, 99],
