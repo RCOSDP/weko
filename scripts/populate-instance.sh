@@ -328,6 +328,9 @@ ${INVENIO_WEB_INSTANCE} widget_type create \
 
 ${INVENIO_WEB_INSTANCE} widget_type create \
         "Main contents" "Main contents"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Menu" "Menu"
 ### sphinxdoc-create-widget_type-data-end
 
 # sphinxdoc-set-report-unit-and-target-begin

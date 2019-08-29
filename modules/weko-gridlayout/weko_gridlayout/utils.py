@@ -113,8 +113,27 @@ def update_general_item(item, data_result):
     settings = data_result.get('settings')
     if str(data_result.get('widget_type')) == "Access counter":
         update_access_counter_item(item, settings)
-    if str(data_result.get('widget_type')) == "New arrivals":
+    elif str(data_result.get('widget_type')) == "New arrivals":
         update_new_arrivals_item(item, settings)
+    elif str(data_result.get('widget_type')) == "Menu":
+        update_menu_item(item, settings)
+
+
+def update_menu_item(item, data_result):
+    """Update widget item type Menu.
+
+    Arguments:
+        item {WidgetItem} -- Item need to be update
+        data_result {dict} -- [data to update]
+    """
+    item['menu_orientation'] = data_result.get('menu_orientation')
+    item['menu_bg_color'] = data_result.get('menu_bg_color')
+    item['menu_active_bg_color'] = data_result.get('menu_active_bg_color')
+    item['menu_default_color'] = data_result.get('menu_default_color')
+    item['menu_active_color'] = data_result.get('menu_active_color')
+    # item['menu_show_pages'] = data_result.get('show_pages')  # Was this before
+    item['menu_show_pages'] = data_result.get('menu_show_pages')
+    # item['menu_multi_lang_data'] = data_result.get('menu_multi_lang_data')
 
 
 def update_access_counter_item(item, data_result):
@@ -272,6 +291,7 @@ def build_data_setting(data):
         dictionary -- setting pack
 
     """
+
     result = dict()
     convert_popular_data(data, result)
     setting = data['settings']
@@ -284,7 +304,14 @@ def build_data_setting(data):
     elif (str(data.get('widget_type'))
             == config.WEKO_GRIDLAYOUT_NOTICE_TYPE):
         _build_notice_setting_data(result, setting)
-
+    elif str(data.get('widget_type')) == 'Menu':  # TODO: Change to constant
+        color = '#4169E1'  # current_app.config['WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR']
+        result['menu_orientation'] = data['settings'].get('menu_orientation') or 'horizontal'
+        result['menu_bg_color'] = data['settings'].get('menu_bg_color') or color
+        result['menu_active_bg_color'] = data['settings'].get('menu_active_bg_color') or color
+        result['menu_default_color'] = data['settings'].get('menu_default_color') or color
+        result['menu_active_color'] = data['settings'].get('menu_active_color') or color
+        result['menu_show_pages'] = data['settings'].get('menu_show_pages') or []
     return result
 
 
@@ -468,6 +495,14 @@ def convert_data_to_edit_pack(data):
         result_settings['new_dates'] = settings.get('new_dates')
         result_settings['display_result'] = settings.get('display_result')
         result_settings['rss_feed'] = settings.get('rss_feed')
+    if str(data.get('widget_type')) == 'Menu':  # TODO: Change to constant
+        result_settings['menu_orientation'] = settings.get('menu_orientation')
+        result_settings['menu_bg_color'] = settings.get('menu_bg_color')
+        result_settings['menu_active_bg_color'] = settings.get('menu_active_bg_color')
+        result_settings['menu_default_color'] = settings.get('menu_default_color')
+        result_settings['menu_active_color'] = settings.get('menu_active_color')
+        result_settings['menu_show_pages'] = settings.get('menu_show_pages')
+        # result_settings['menu_multi_lang_data'] = settings.get('menu_multi_lang_data')
     result['settings'] = result_settings
     return result
 

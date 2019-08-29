@@ -7,6 +7,8 @@ const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
 const THEME_SIMPLE = 'simple'
 const THEME_SIDE_LINE = 'side_line'
+const MENU_TYPE = "Menu";
+const DEFAULT_REPOSITORY = "Root Index";
 const INTERVAL_TIME = 60000; //one minute
 
 (function () {
@@ -40,12 +42,19 @@ let PageBodyGrid = function () {
 
     this.loadGrid = function (widgetListItems) {
         let items = GridStackUI.Utils.sort(widgetListItems);
+        let hasMainContent = false;
         items.forEach(function (node) {
             if (MAIN_CONTENT_TYPE == node.type) {
                 this.updateMainContent(node);
+                hasMainContent = true;
                 return false;
             }
         }, this);
+
+        ///Pages do not have to have main content, so hide if not in list
+        if(!hasMainContent) {
+            $("#main_contents").hide();  // remove(); or empty() ?
+        }
 
         for (var i = 0; i < items.length; i++) {
             let node = items[i];
@@ -130,11 +139,80 @@ let PageBodyGrid = function () {
         });
     };
 
+    this.buildMenu = function (repoID, widgetID, menuID, settings) {
+        let current_language = $("#current_language").val() || 'en';
+        $.ajax({
+            method: 'GET',
+            url: '/api/admin/get_page_endpoints/' + widgetID + '/' + current_language,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            success: (response) => {
+                let endpoints = response.endpoints;
+                let navbarID = 'widgetNav_' + widgetID;  // Re-use to build unique class ids
+                let navbarClass = settings.menu_orientation == 'vertical' ?
+                    'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
+                let navbar =
+                '<style>' +  // Renaming classes allows for multiple menus on page
+                '.navbar-default.' + navbarID + ' .navbar-brand {' +
+                '    color:' + settings.menu_default_color + ';' +
+                '}' +
+                '  .navbar-default.' + navbarID + ' .navbar-nav > li > a, .nav-pills > li > a {' +
+                '    color:' +  settings.menu_default_color + ';' +
+                '  }' +
+                '  .navbar-default.' + navbarID + ' .navbar-nav > li > a:hover, .nav-pills.' + navbarID + ' > li > a:hover,' +
+                '  .navbar-default.' + navbarID + ' .navbar-nav > li > a:active, .nav-pills.' + navbarID + '> li > a:active,' +
+                '  .navbar-default.' + navbarID + ' .navbar-nav > li > a:focus, .nav-pills.' + navbarID + ' > li > a:focus,' +
+                '  .nav-pills.' + navbarID + '>li.active>a, .nav-pills.' + navbarID + '>li.active>a:focus, .nav-pills.'+ navbarID + '>li.active>a:hover {' +
+                '    background-color:' + settings.menu_active_bg_color + ';' +
+                '    color:' +  settings.menu_active_color + ';' +
+                '  }' +
+                '  .navbar-default.' + navbarID + ' .navbar-nav > .active > a,' +
+                '  .navbar-default.' + navbarID + ' .navbar-nav > .active > a:hover,' +
+                '  .navbar-default.' + navbarID + ' .navbar-nav > .active > a:focus {' +
+                '    background-color:' + settings.menu_active_bg_color + ';' +
+                '    color:' +  settings.menu_active_color + ';' +
+                '  }' +
+                '.navbar-default.' + navbarID + ' .navbar-brand:focus, .navbar-default.' + navbarID + ' .navbar-brand:hover {' +
+                '    color:' + settings.menu_active_color + ';' +
+                '    background-color: transparent;' +
+                '}' +
+                '</style>' +
+                '<nav class="widget-nav navbar navbar-default ' + navbarID + '" style="background-color:' + settings.menu_bg_color + ';">' +
+                '  <div class="container-fluid">' +
+                '    <div class="navbar-header">' +
+                '      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#' + navbarID + '" aria-expanded="false">' +
+                '        <span class="icon-bar"></span>' +
+                '        <span class="icon-bar"></span>' +
+                '        <span class="icon-bar"></span>' +
+                '      </button>' +
+                '      <a class="navbar-brand" href="#">' + repoID + '</a>' +
+                '    </div>' +
+                '    <div class="collapse navbar-collapse" id="' + navbarID + '">' +
+                '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
+
+                for (let i in endpoints) {  // Create links
+                  let liClass = '';
+                  let linkStyle = ''; //'color:' + settings.menu_default_color + ';';
+                  let communityArgs = (repoID == DEFAULT_REPOSITORY) ? '' : '?community=' + repoID;
+                  if (window.location.pathname == endpoints[i].url) {
+                    liClass = 'active';
+                    linkStyle = 'color:' + settings.menu_active_color + ';';
+                  }
+                  navbar += '<li class="' + liClass + '"><a href="' + endpoints[i].url + communityArgs + '">' + endpoints[i].title + '</a></li>';
+                }
+                navbar +='</ul></div></div></nav>';
+                $("#" + menuID).append(navbar);
+            }
+        });
+    };
+
     this.widgetTemplate = function (node, index) {
         let content = "";
         let multiLangSetting = node.multiLangSetting;
         let languageDescription = "";
         let id = '';
+        let panelClasses = "panel-body no-padding-side ql-editor";
         // Handle css style
         if (node.background_color) {
             backgroundColor = "background-color: " + node.background_color + "; ";
@@ -169,9 +247,17 @@ let PageBodyGrid = function () {
         } else if (node.type == NEW_ARRIVALS) {
             let innerID = 'new_arrivals' + '_' + index;
             id = 'id="' + innerID + '"';
-
             this.buildNewArrivals(node.widget_id, node.new_dates, node.rss_feed, innerID, node.display_result);
+        } else if (node.type == MENU_TYPE) {
+          let innerID = 'widget_pages_menu_' + node.widget_id;  // Allow multiple menus
+          panelClasses = "panel-body";
+          id = 'id="' + innerID + '"';
+          // Extract only the settings we want:
+          let menuSettings = {};
+          Object.keys(node).forEach((k) => {if (k.startsWith('menu_')) menuSettings[k] = node[k]});
+          this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
         }
+
         let dataTheme = '';
         let widgetTheme = new WidgetTheme();
         if (node.theme) {
@@ -254,6 +340,7 @@ let WidgetTheme = function () {
         let labelTextColor = (widget_settings.label_text_color) ? widget_settings.label_text_color : '';
         let labelColor = (widget_settings.label_color) ? widget_settings.label_color : '';
         let borderColor = (widget_settings.frame_border_color) ? widget_settings.frame_border_color : '';
+        let panelClasses = "panel-body no-padding-side ql-editor";
         let overFlowBody = "";
         if (template == this.TEMPLATE_SIDE_LINE) {
             template.border['border-left-style'] = (widget_settings.border_style) ? widget_settings.border_style : 'groove';
@@ -288,13 +375,16 @@ let WidgetTheme = function () {
         if (widget_settings.type == ACCESS_COUNTER) {
             overFlowBody = "overflow-y: hidden; ";
         }
+        if (widget_settings.type == MENU_TYPE) {
+            panelClasses = "panel-body";
+        }
         let borderStyle = (template == this.TEMPLATE_SIMPLE) ? '' : this.buildBorderCss(template.border, borderColor);
         let backgroundColor = (widget_settings.background_color) ? widget_settings.background_color : '';
 
         let result = '<div class="grid-stack-item widget-resize">' +
             '    <div class="grid-stack-item-content panel widget" style="' + this.buildCssText('background-color', backgroundColor) + borderStyle + '">' +
             header +
-            '        <div class="panel-body no-padding-side ql-editor ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; ' + overFlowBody + '"' + id + '">' + widget_data.body +
+            '        <div class="'+ panelClasses + ' ' + headerClass + '" style="padding-top: 30px; bottom: 10px; overflow: auto; ' + overFlowBody + '"' + id + '">' + widget_data.body +
             '        </div>' +
             '    </div>' +
             '</div>';
@@ -334,17 +424,27 @@ let WidgetTheme = function () {
 function getWidgetDesignSetting() {
     let community_id = $("#community-id").text();
     let current_language = $("#current_language").val();
+    let url;
     if (!community_id) {
         community_id = 'Root Index';
     }
     if (!current_language) {
         current_language = "en";
     }
-    let url = '/api/admin/load_widget_design_setting/' + community_id + '/' + current_language;
+
+    // If the current page is a widget page get
+    if($('#widget-page-id').length) {
+        let page_id = $('#widget-page-id').text();
+        url = '/api/admin/load_widget_design_page_setting/' + page_id + '/' + current_language;
+    }
+    else {
+        url = '/api/admin/load_widget_design_setting/' + community_id + '/' + current_language;
+    }
+
     $.ajax({
         type: 'GET',
         url: url,
-        success: function (data) {
+        success: function (data) {  // TODO: If no settings default to main layout
             if (data.error) {
                 console.log(data.error);
                 toggleWidgetUI();
@@ -363,6 +463,9 @@ function getWidgetDesignSetting() {
                             $(this).find('.panel-body').css("bottom", "10px");
                         });
                     });
+                }
+                else {  // Pages are able to not have main content, so hide if widget is not present
+                    $("#main_contents").hide();
                 }
             }
             toggleWidgetUI();

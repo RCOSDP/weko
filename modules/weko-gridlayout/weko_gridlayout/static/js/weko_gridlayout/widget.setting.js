@@ -7,6 +7,8 @@ const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
 const THEME_SETTING = [{"value" : 'default', "text": "Default"}, {"value": "simple", "text":"Simple"}, {"value": "side_line", "text":"Side Line"}];
 const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}];
+const MENU_TYPE = "Menu";
+const DEFAULT_COLOR = "#4169E1";
 
 function userSelectedInput(initialValue, getValueOfField, key_binding) {
     if(key_binding == "border_style" && !initialValue){
@@ -85,6 +87,33 @@ const ComponentSelectField = function(props){
     )
 }
 
+class ComponentRadioSelect extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+          menu_orientation: this.props.data_load,
+        }
+    }
+
+    render() {
+        return (
+            <div class="form-group row">
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">Orientation</label>
+                <div className="controls col-xs-2">
+                    <label className="radio-inline" htmlFor="input_type">
+                        <input name="menu_orientation" value="horizontal" type="radio" onChange={this.props.handleChange} defaultChecked={this.state.menu_orientation == 'horizontal'} />
+                        Horizontal
+                    </label>
+                    <label class="radio-inline" htmlFor="input_type">
+                        <input name="menu_orientation" value="vertical" type="radio" onChange={this.props.handleChange} defaultChecked={this.state.menu_orientation == 'vertical'} />
+                        Vertical
+                     </label>
+                </div>
+            </div>
+        )
+    }
+}
+
 class ComponentTextboxField extends React.Component {
     constructor(props) {
         super(props);
@@ -129,6 +158,7 @@ class ComponentTextboxField extends React.Component {
         )
     }
 }
+
 
 const ComponentTextboxForAccessCounter = function(props){
     const [value, setValue] = useState(props.value);
@@ -179,6 +209,9 @@ const ComponentSelectColorFiled = function(props){
 
     useEffect(() => {
         props.getValueOfField(props.key_binding, props.data_load || initColor);
+        // if(this.props.handleChange != undefined) {
+        //     this.props.handleChange(this.props.key_binding, event.target.value);
+        // }
     }, [])
 
     return (
@@ -221,28 +254,55 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.state = {
             selectOptions: [],
             UnauthorizedOptions: [],
-            unauthorList: []
+            unauthorList: [],
+            language: this.props.language,
         };
         this.handleChange = this.handleChange.bind(this);
+        this.updateGlobalValues = this.updateGlobalValues.bind(this);
         this.handleMoveRightClick = this.handleMoveRightClick.bind(this);
         this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
+        this.handleMoveUpClick = this.handleMoveUpClick.bind(this);
+        this.handleMoveDownClick = this.handleMoveDownClick.bind(this);
         this.onSelect = this.onSelect.bind(this);
+        this.initSelectBox = this.initSelectBox.bind(this);
     }
     componentDidMount() {
-        fetch(this.props.url_request)
+        this.initSelectBox(this.props.url_request);
+    }
+
+    handleChange(event) {
+        this.setState({ repositoryId: event.target.value });
+        event.preventDefault();
+    }
+
+
+    initSelectBox(url) {
+        fetch(url)
             .then(res => res.json())
             .then(
                 (result) => {
                     let unOptions = [];
-                    let options = result.map((option) => {
-                        if (this.props.is_edit == true) {
-                            let role_array = this.props.data_load.split(',');
-                            if (role_array.includes(option.id.toString())) {
-                                return (
-                                    <option key={option.id} value={option.id}>{option.name}</option>
-                                )
+                    let options = [];
+                    let orderedOptions = [];
+
+                    // Special case for when we use this for page services
+                    if(typeof result == 'object' && 'page-list' in result) {
+                        result = result['page-list']['data'];
+                    }
+
+                    // Display in order according to saved settings FIXME: High complexity, find another way
+                    let current_selections = this.props.data_load;
+                    for (let i = 0; i < current_selections.length; i++) {
+                        for (let j = 0; j < result.length; j++) {
+                            if(current_selections[i] == result[j].id.toString()) {
+                                orderedOptions.push(<option key={result[j].id} value={result[j].id}>{result[j].name}</option>);
                             }
-                            else {
+                        }
+                    }
+
+                    options = result.map((option) => {
+                        if (this.props.is_edit == true) {
+                            if (!current_selections.includes(option.id.toString())) {
                                 let innerhtml = <option key={option.id} value={option.id}>{option.name}</option>;
                                 unOptions.push(innerhtml);
                             }
@@ -253,22 +313,21 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                             )
                         }
                     });
+
+                    if(this.props.is_edit == true) {  // Only add ordered options if editing
+                        options = orderedOptions.concat(options);
+                    }
+
                     this.setState({
                         selectOptions: options,
                         UnauthorizedOptions: unOptions
                     });
                 },
-
                 (error) => {
                     console.log(error);
                 }
             )
 
-    }
-
-    handleChange(event) {
-        this.setState({ repositoryId: event.target.value });
-        event.preventDefault();
     }
 
     getListOption(id) {
@@ -281,6 +340,17 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             }
         }
         return result;
+    }
+
+    // Get the new page titles on change of lang
+    componentWillReceiveProps(nextProps) {
+        if(nextProps.language != this.state.language &&
+           this.props.key_binding == "menu_show_pages" ) {
+              this.setState({language: nextProps.language});
+              let loadPagesURL = "/api/admin/load_widget_design_pages/" +
+                  this.props.repositoryId + "/" + nextProps.language;
+              this.initSelectBox(loadPagesURL); // Re-ender tables select box
+        }
     }
 
     isValueExist(item, array) {
@@ -299,6 +369,14 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             return false;
         }
         return true;
+    }
+
+    updateGlobalValues(optionsList) {
+        let data = [];
+        for (let option in optionsList) {
+            data.push(optionsList[option].props.value);
+        }
+        this.props.getValueOfField(this.props.key_binding, data);
     }
 
     handleMoveRightClick(event) {
@@ -323,11 +401,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             UnauthorizedOptions: selectedOptions,
             unauthorList: []
         });
-        let data = [];
-        for (let option in nonSelectOptions) {
-            data.push(nonSelectOptions[option].props.value);
-        }
-        this.props.getValueOfField(this.props.key_binding, data);
+        this.updateGlobalValues(nonSelectOptions);
     }
 
     handleMoveLeftClick(event) {
@@ -358,11 +432,44 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             selectOptions: authorizedOptions,
             UnauthorizedOptions: remainOption
         });
-        let data = [];
-        for (let option in authorizedOptions) {
-            data.push(authorizedOptions[option].props.value);
+        this.updateGlobalValues(authorizedOptions);
+    }
+
+    handleMoveUpClick(event) {
+        let options = document.getElementById(this.props.authorSelect).options;
+        let reOrderedOptions = this.getListOption(this.props.authorSelect);
+        for (let option in options) {
+            if(options[option].value) {
+                if (options[option].selected && option > 0) {
+                    let prevOption = reOrderedOptions.splice((option - 1), 1)[0];
+                    reOrderedOptions.splice(option, 0, prevOption);
+                }
+            }
         }
-        this.props.getValueOfField(this.props.key_binding, data);
+        this.setState({ selectOptions: reOrderedOptions });
+        this.updateGlobalValues(reOrderedOptions);
+    }
+
+    handleMoveDownClick(event) {
+      let options = document.getElementById(this.props.authorSelect).options;
+      let reOrderedOptions = this.getListOption(this.props.authorSelect);
+      for (let option in options) {
+          if(options[option].value) {
+              if (options[option].selected && option < (options.length - 1)) {
+                  let selectedOption = reOrderedOptions.splice(option, 1)[0];
+                  reOrderedOptions.splice((option + 1), 0, selectedOption);
+              }
+          }
+      }
+      this.setState({ selectOptions: reOrderedOptions });
+
+      let data = [];
+      for (let i = 0;  i < reOrderedOptions.length; i++) {
+          data.push(reOrderedOptions[i].props.value);
+      }
+      this.props.getValueOfField(this.props.key_binding, data);
+
+      // this.updateGlobalValues(reOrderedOptions);
     }
 
     onSelect(event) {
@@ -379,14 +486,30 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     render() {
+        let rowClass = "col-xs-5";
+        let upDownArrows = null;
+        if(this.props.enableUpDownArrows) {
+          rowClass = "col-xs-4";
+          upDownArrows = (
+              <div className="col-xs-2">
+                  <br />
+                  <div className="style-center-align">
+                      <div className="buttons style-button-container">
+                          <input type="button" value="&uarr;" className="style-button-element" onClick={this.handleMoveUpClick} />
+                          <input type="button" value="&darr;" className="style-button-element" onClick={this.handleMoveDownClick} />
+                      </div>
+                  </div>
+              </div>
+          );
+        }
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right" >{this.props.name}</label>
                 <div class="controls col-xs-9">
-                    <fieldset className="form-group style-container" >
-                        <span>Role</span><br />
-                        <div className="col-xs-5 style-element" >
-                            <span >Authorized</span><br />
+                    <fieldset className="form-group style-container">
+                        { upDownArrows }
+                        <div className={"style-element " + rowClass}>
+                            <span>{this.props.leftBoxTitle}</span><br />
                             <select name={this.props.name} multiple className="style-select-left" id={this.props.authorSelect} name={this.props.authorSelect}>
                                 {this.state.selectOptions}
                             </select>
@@ -400,9 +523,10 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                                 </div>
                             </div>
                         </div>
-                        <div className="col-xs-5 style-element style-element-right">
-                            <span>Unauthorized</span><br />
-                            <select multiple value={this.state.unauthorList} className="style-select-right" onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
+                        <div className={"style-element style-element-right " + rowClass }>
+                            <span>{this.props.rightBoxTitle}</span><br />
+                            <select multiple value={this.state.unauthorList} className="style-select-right"
+                                onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
                                 {this.state.UnauthorizedOptions}
                             </select>
                         </div>
@@ -562,6 +686,8 @@ class ExtendComponent extends React.Component {
         this.handleChangeRssFeed = this.handleChangeRssFeed.bind(this);
         this.generateNewDate = this.generateNewDate.bind(this);
         this.generateDisplayResult = this.generateDisplayResult.bind(this);
+        this.handleOrientationRadio = this.handleOrientationRadio.bind(this);
+        this.handleChangeMenuColor = this.handleChangeMenuColor.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
         if (nextProps.data_load && !prevState.write_more && nextProps.data_load.more_description) {
@@ -701,17 +827,33 @@ class ExtendComponent extends React.Component {
         this.setState({ settings: setting });
         this.handleChange("new_dates", event.target.value);
     }
+
     handleChangeDisplayResult(event){
         let setting = this.state.settings;
         setting['display_result'] = event.target.value;
         this.setState({ settings: setting });
         this.handleChange("display_result", event.target.value);
     }
+
     handleChangeRssFeed(event){
         let setting = this.state.settings;
         setting['rss_feed'] = event.target.checked;
         this.setState({ settings: setting });
         this.handleChange("rss_feed", event.target.checked);
+    }
+
+    handleChangeMenuColor(event, part){  //No longer used???
+        let setting = this.state.settings;
+        setting[part] = event.target.value;
+        this.setState({ settings: setting });
+        this.handleChange(part, event.target.value);
+    }
+
+    handleOrientationRadio(event){
+        let setting = this.state.settings;
+        setting['menu_orientation'] = event.target.value;
+        this.setState({ settings: setting });
+        this.handleChange('menu_orientation', event.target.value);
     }
 
     render() {
@@ -820,6 +962,24 @@ class ExtendComponent extends React.Component {
                 </div>
             )
         }
+        else if(this.state.type == MENU_TYPE){
+            let loadPagesURL = "/api/admin/load_widget_design_pages/" +
+                this.props.repositoryId + "/" + this.props.language;
+            return(
+                <div>
+                  <ComponentRadioSelect handleChange={this.handleOrientationRadio} getValueOfField={this.props.getValueOfField} name="Display Orientation" key_binding="menu_orientation" data_load={this.state.settings.menu_orientation || 'horizontal'} />
+                  <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Background Color" key_binding="menu_bg_color" data_load={this.state.settings.menu_bg_color} />
+                  <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Active Background Color" key_binding="menu_active_bg_color" data_load={this.state.settings.menu_active_bg_color} />
+                  <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Default Color" key_binding="menu_default_color" data_load={this.state.settings.menu_default_color} />
+                  <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Active Color" key_binding="menu_active_color" data_load={this.state.settings.menu_active_color} />
+                  <ComponentFieldContainSelectMultiple getValueOfField={this.handleChange} name="Show/Hide Pages"
+                      authorSelect="showPageSelect" unauthorSelect="hidePageSelect" url_request={loadPagesURL}
+                      key_binding="menu_show_pages" data_load={this.state.settings.menu_show_pages || []} is_edit={this.props.is_edit}
+                      leftBoxTitle="Show" rightBoxTitle="Hide" enableUpDownArrows={true} data_change={this.props.data_change}
+                      language={this.props.language} repositoryId={this.props.repositoryId} />
+                </div>
+            )
+        }
         else {
             return (
                 <div>
@@ -828,7 +988,6 @@ class ExtendComponent extends React.Component {
         }
     }
 }
-
 
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
@@ -880,6 +1039,7 @@ class ComponentButtonLayout extends React.Component {
         this.props.getValueOfField('accessInitValue', data.accessInitValue);
         data['multiLangSetting'] = multiLangData;
         delete data['accessInitValue']
+
         let request = {
             flag_edit: this.props.is_edit,
             data: data,
@@ -1138,7 +1298,8 @@ class ComponentLanguage extends React.Component {
                         this.props.initEditData(selectedLang);
                     }
                     this.displayOptions(langList, registeredLang, langName, true, selectedLang);
-                    this.props.getValueOfField('lang', langList[0]);
+                    // this.props.getValueOfField('lang', langList[0]);
+                    this.props.getValueOfField('lang', defaultLang);
                     this.setState({
                         languageList: langList,
                         registeredLanguage: registeredLang,
@@ -1194,6 +1355,7 @@ class ComponentLanguage extends React.Component {
 
     handleChange(event) {
         var language = event.target.value;
+        this.props.getValueOfField('lang', language);  // Update what language is selected for other portions
         if (this.state.selectedLanguage == "0") {
             this.setState({
                 selectedLanguage: language
@@ -1327,6 +1489,7 @@ class MainLayout extends React.Component {
                 break;
             case 'lang':
                 this.setState({ language: value });
+                console.log('Current selected lang: ' + value);
                 break;
             case 'multiLangData':
                 this.setState({ multiLangSetting: value });
@@ -1517,16 +1680,25 @@ class MainLayout extends React.Component {
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding="background_color" data_load={this.state.background_color} />
                 </div>
                 <div className="row">
-                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Browsing Privilege" authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin/get_account_role" key_binding="browsing_role" data_load={this.state.browsing_role} is_edit={this.props.is_edit} />
+                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Browsing Privilege"
+                      authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin/get_account_role"
+                      key_binding="browsing_role" data_load={(typeof this.state.browsing_role == 'string') ? this.state.browsing_role.split(',') : this.state.browsing_role}
+                      is_edit={this.props.is_edit} leftBoxTitle="Authorized Roles" rightBoxTitle="Unauthorized Roles" />
                 </div>
                 <div className="row">
-                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege" authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect" url_request="/api/admin/get_account_role" key_binding="edit_role" data_load={this.state.edit_role} is_edit={this.props.is_edit} />
+                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege"
+                        authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect" url_request="/api/admin/get_account_role"
+                        key_binding="edit_role" data_load={(typeof this.state.edit_role == 'string') ? this.state.edit_role.split(',') : this.state.edit_role}
+                        is_edit={this.props.is_edit} leftBoxTitle="Authorized Roles" rightBoxTitle="Unauthorized Roles" />
                 </div>
                 <div className="row">
                     <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding="enable" data_load={this.state.enable} />
                 </div>
                 <div className="row">
-                    <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings} data_change={this.state.multiLanguageChange} init_value={this.state.accessInitValue}/>
+                    <ExtendComponent type={this.state.widget_type} is_edit={this.props.is_edit} repositoryId={this.state.repository}
+                        getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings}
+                        language={this.state.language} data_change={this.state.multiLanguageChange}
+                        init_value={this.state.accessInitValue}/>
                 </div>
                 <div className="row">
                     <ComponentButtonLayout data={this.state} getValueOfField={this.getValueOfField} url_request="/api/admin/save_widget_item" is_edit={this.props.is_edit} return_url={this.props.return_url} data_id={this.props.data_id} />
