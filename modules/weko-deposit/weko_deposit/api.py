@@ -773,7 +773,7 @@ class WekoDeposit(Deposit):
     def delete_by_index_tree_id(cls, path):
         """Delete by index tree id."""
         # first update target pid when index tree id was deleted
-        #if cls.update_pid_by_index_tree_id(cls, path):
+        # if cls.update_pid_by_index_tree_id(cls, path):
         #    from .tasks import delete_items_by_id
         #    delete_items_by_id.delay(path)
         obj_ids = next(cls.indexer.get_pid_by_es_scroll(path))
@@ -783,7 +783,7 @@ class WekoDeposit(Deposit):
                 try:
                     r.json['path'].remove(path)
                     flag_modified(r, 'json')
-                except:
+                except BaseException:
                     pass
                 if r.json['path'] == []:
                     from weko_records_ui.utils import soft_delete
