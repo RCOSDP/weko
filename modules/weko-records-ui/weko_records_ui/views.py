@@ -46,14 +46,17 @@ from weko_workflow.api import WorkActivity
 from weko_workflow.models import ActionStatusPolicy
 
 from weko_records_ui.models import InstitutionName
-# from weko_records_ui.utils import check_items_settings
 
 from .ipaddr import check_site_license_permission
 from .models import PDFCoverPageSettings
 from .permissions import check_created_id, check_file_download_permission, \
     check_original_pdf_download_permission
-from .utils import get_billing_file_download_permission, get_groups_price, \
-    get_item_pidstore_identifier, get_min_price_billing_file_download
+from .utils import get_item_pidstore_identifier
+
+from invenio_pidstore.errors import PIDDoesNotExistError
+from invenio_pidrelations.contrib.versioning import PIDVersioning
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+
 
 blueprint = Blueprint(
     'weko_records_ui',
@@ -62,6 +65,16 @@ blueprint = Blueprint(
     static_folder='static',
 )
 
+
+@blueprint.app_template_filter()
+def record_from_pid(pid_value):
+    """Get record from PID."""
+    try:
+        return WekoRecord.get_record_by_pid(pid_value)
+    except Exception as e:
+        current_app.logger.debug('Unable to get version record: ')
+        current_app.logger.debug(e)
+        return {}
 
 def publish(pid, record, template=None, **kwargs):
     r"""Record publish  status change view.
@@ -329,8 +342,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param \*\*kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+
     check_site_license_permission()
-    # check_items_settings()
     send_info = {}
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False
@@ -366,7 +379,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     else:
         record["relation"] = {}
 
-    google_scholar_meta = _get_google_scholar_meta(record)  # _googe_scholar_meta
+    google_scholar_meta = _get_google_scholar_meta(record)
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file
@@ -396,19 +409,17 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     else:
         display_stats = True
 
-    groups_price = get_groups_price(record)
-    billing_files_permission = None
-    billing_files_prices = None
-    if groups_price:
-        billing_files_permission = \
-            get_billing_file_download_permission(groups_price)
-        billing_files_prices = \
-            get_min_price_billing_file_download(groups_price,
-                                                billing_files_permission)
+    # Get PID version object to retrieve all versions of item
+    pid_ver = PIDVersioning(child=pid)
+    all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
+    active_versions = list(pid_ver.children)
 
     return render_template(
         template,
         pid=pid,
+        pid_versioning=pid_ver,
+        active_versions=active_versions,
+        all_versions=all_versions,
         record=record,
         display_stats=display_stats,
         filename=filename,
@@ -420,16 +431,70 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         detail_condition=detail_condition,
         height=height,
         google_scholar_meta=google_scholar_meta,
-        billing_files_permission=billing_files_permission,
-        billing_files_prices=billing_files_prices,
         **ctx,
         **kwargs
     )
+
+@blueprint.route('/r/<parent_pid_value>', methods=['GET'])
+@blueprint.route('/r/<parent_pid_value>.<int:version>', methods=['GET'])
+@login_required
+def doi_ish_view_method(parent_pid_value=0, version=0):
+    r"""DOI-like item version endpoint view.
+
+    :param pid: PID value.
+    :returns: Redirect to correct version.
+    """
+
+    try:
+        p_pid = PersistentIdentifier.get('parent',
+                                         'parent:' + str(parent_pid_value))
+    except PIDDoesNotExistError:
+        p_pid = None
+
+    if p_pid:
+        pid_ver = PIDVersioning(parent=p_pid)
+        all_versions = list(pid_ver.get_children(ordered=True, pid_status=None))
+        if version == 0 or version == len(all_versions):
+            return redirect(url_for('invenio_records_ui.recid',
+                                    pid_value=pid_ver.last_child.pid_value))
+        elif version <= len(all_versions):
+            version_pid = all_versions[(version-1)]
+            current_app.logger.info(version_pid.__dict__)
+            if version_pid.status == PIDStatus.REGISTERED:
+                return redirect(url_for('invenio_records_ui.recid',
+                                        pid_value=version_pid.pid_value))
+
+    return abort(404)
+
+
+@blueprint.route('/records/parent:<pid_value>', methods=['GET'])
+@login_required
+def parent_view_method(pid_value=0):
+    r"""Parent view method to display latest version.
+
+    :param pid_value: PID value.
+    :returns: Redirect to original view.
+    """
+
+    try:
+        p_pid = PersistentIdentifier.get('parent', 'parent:' + str(pid_value))
+    except PIDDoesNotExistError:
+        p_pid = None
+
+    if p_pid:
+        pid_version = PIDVersioning(parent=p_pid)
+        if pid_version.last_child:
+            return redirect(url_for('invenio_records_ui.recid',
+                                    pid_value=pid_version.last_child.pid_value))
+    return abort(404)
 
 
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
 def set_pdfcoverpage_header():
     """Set pdfcoverage header."""
+    # limit upload file size : 1MB
+    current_app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+
     @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
     def handle_over_max_file_size(error):
         return 'result : file size is overed.'
