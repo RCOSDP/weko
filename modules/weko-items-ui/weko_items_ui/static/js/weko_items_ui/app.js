@@ -1496,7 +1496,7 @@ function handleSharePermission(value) {
             title: 'Upload',
             properties: {
                 "archivo": {
-                    "title": 'Upload Images',
+                    "title": '',
                     "type": 'string',
                     "format": 'file',
                     "description": 'This is a upload element'

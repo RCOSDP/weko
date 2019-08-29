@@ -72,12 +72,7 @@ dependencies_upload_js = NpmBundle(
 upload_js = NpmBundle(
     'node_modules/angular-sanitize/angular-sanitize.min.js',
     dependencies_upload_js,
-    'node_modules/angular-schema-form/dist/schema-form.min.js',
-    'node_modules/angular-schema-form/dist/bootstrap-decorator.min.js',
     'js/weko_items_ui/upload.js',
-    npm={
-        'angular-schema-form': '~0.8.3',
-    },
     output="gen/items_ui_upload.%(version)s.js",
 )
 

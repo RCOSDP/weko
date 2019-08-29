@@ -152,17 +152,20 @@
                     <div ng-controller='UploadController' class="panel-body">
                       <div class="row">
                         <div class="col-sm-12" id="app">
-                          <div>
-                            <label>
-                                <p>Drop files or folders here</p>
-                            </label>
-                            <p><strong>— OR —</strong></p>
+                          <div class="well">
+                            <center>
+                              Drop files or folders here
+                            </center>
+                          </div>
+                          <p class="text-center legend"><strong>— OR —</strong></p>
+                          <p class="text-center">
                             <form name="uploadThumbnail"
                               sf-schema="schema"
                               sf-form="form"
                               sf-model="model">
                             </form>
-                           </div>
+                          </p>
+                          <hr />
                         </div>
                       </div>
                     </div>
