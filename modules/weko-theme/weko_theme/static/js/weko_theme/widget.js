@@ -433,9 +433,11 @@ function getWidgetDesignSetting() {
     }
 
     // If the current page is a widget page get
+    let is_page = false;
     if($('#widget-page-id').length) {
         let page_id = $('#widget-page-id').text();
         url = '/api/admin/load_widget_design_page_setting/' + page_id + '/' + current_language;
+        is_page = true;
     }
     else {
         url = '/api/admin/load_widget_design_setting/' + community_id + '/' + current_language;
@@ -465,7 +467,9 @@ function getWidgetDesignSetting() {
                     });
                 }
                 else {  // Pages are able to not have main content, so hide if widget is not present
-                    $("#main_contents").hide();
+                    if(is_page){
+                        $("#main_contents").hide();
+                    }
                 }
             }
             toggleWidgetUI();

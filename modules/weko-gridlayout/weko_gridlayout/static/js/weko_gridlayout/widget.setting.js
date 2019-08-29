@@ -10,7 +10,7 @@ const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "sol
 const MENU_TYPE = "Menu";
 const DEFAULT_COLOR = "#4169E1";
 
-function userSelectedInput(initialValue, getValueOfField, key_binding) {
+function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
     if(key_binding == "border_style" && !initialValue){
         initialValue = "solid";
     }
@@ -18,6 +18,9 @@ function userSelectedInput(initialValue, getValueOfField, key_binding) {
     function handleChange(e) {
         setValue(e.target.value);
         getValueOfField(key_binding, event.target.value);
+        if(componentHandle) {
+            componentHandle(key_binding, event.target.value);
+        }
         event.preventDefault();
     }
     return {
@@ -205,7 +208,7 @@ const ComponentSelectColorFiled = function(props){
     else{
         initColor = '#DDDDDD';
     }
-    const color = userSelectedInput(props.data_load || initColor, props.getValueOfField, props.key_binding);
+    const color = userSelectedInput(props.data_load || initColor, props.getValueOfField, props.key_binding, props.handleChange);
 
     useEffect(() => {
         props.getValueOfField(props.key_binding, props.data_load || initColor);
