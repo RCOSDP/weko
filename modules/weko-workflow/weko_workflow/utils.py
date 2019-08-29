@@ -29,10 +29,11 @@ from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_handle.api import Handle
 from weko_index_tree.models import Index
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_records_ui.models import Identifier
+from weko_admin.models import Identifier
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
@@ -260,7 +261,6 @@ def reg_invenio_pidstore(pid_value, item_id):
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
 
-from weko_handle.api import Handle
 
 def register_cnri(activity_id):
     """
@@ -269,48 +269,38 @@ def register_cnri(activity_id):
     :param activity_id: Workflow Activity Identifier
     :return cnri_pidstore: CNRI pidstore object or None
     """
-    current_app.logger.debug(request)
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
     record = WekoRecord.get_record(item_uuid)
-    path = record.get('path')
     deposit_id = record.get('_deposit')['id']
-    if len(path) > 1:
-        community_id = 'Root Index'
+
+    record_url = request.url.split('/workflow/')[0] \
+        + '/record/' + str(deposit_id)
+
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
+
+    if handle:
+        try:
+            prev_cnri = PersistentIdentifier.query.filter_by(
+                pid_type='cnri',
+                object_uuid=item_uuid).one_or_none()
+
+            if prev_cnri:
+                return
+
+            cnri_pidstore = PersistentIdentifier.create(
+                'cnri',
+                str(handle),
+                object_type='rec',
+                object_uuid=item_uuid,
+                status=PIDStatus.REGISTERED
+            )
+            return cnri_pidstore
+        except PIDDoesNotExistError as pidNotEx:
+            current_app.logger.error(pidNotEx)
     else:
-        index_address = path.pop(-1).split('/')
-        index_id = Index.query.filter_by(id=index_address.pop()).one()
-        community_id = get_community_id_by_index(
-            index_id.index_name)
-
-    with db.session.no_autoflush:
-        identifier = Identifier.query.filter_by(
-            repository=community_id).one_or_none()
-
-    if not identifier or not identifier.cnri or not identifier.cnri_flag:
-        return None
-
-    cnri_link = IDENTIFIER_GRANT_LIST[4][2] + '/' + identifier.cnri \
-        + '/' + "{:010d}".format(int(deposit_id))
-    try:
-        prev_cnri = PersistentIdentifier.query.filter_by(
-            pid_type='cnri',
-            object_uuid=item_uuid).one_or_none()
-
-        if prev_cnri:
-            return None
-
-        cnri_pidstore = PersistentIdentifier.create(
-            'cnri',
-            str(cnri_link),
-            object_type='rec',
-            object_uuid=item_uuid,
-            status=PIDStatus.REGISTERED
-        )
-        return cnri_pidstore
-    except PIDDoesNotExistError as pidNotEx:
-        current_app.logger.error(pidNotEx)
-        return None
+        current_app.logger.error('Handle not found!')
 
 
 def identifier_jpcoar_mapping(item_type_id, keys):

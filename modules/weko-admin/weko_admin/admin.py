@@ -45,7 +45,7 @@ from weko_records.models import SiteLicenseInfo
 
 from .models import AdminSettings, FeedbackMailSetting, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
-    RankingSettings, SearchManagement, StatisticsEmail
+    RankingSettings, SearchManagement, StatisticsEmail, Identifier
 from .permissions import admin_permission_factory
 from .utils import allowed_file, get_redis_cache, get_response_json, \
     get_search_setting
@@ -796,6 +796,180 @@ class SiteInfoView(BaseView):
         )
 
 
+class IdentifierSettingView(ModelView):
+    """Pidstore Identifier admin view."""
+
+    can_create = True
+    can_edit = True
+    can_delete = False
+    can_view_details = True
+    create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR
+    edit_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
+
+    column_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'suffix',
+        'jalc_flag',
+        'jalc_crossref_flag',
+        'jalc_datacite_flag')
+
+    column_searchable_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'suffix')
+
+    column_details_list = (
+        'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',
+        'suffix', 'created_userId', 'created_date', 'updated_userId',
+        'updated_date')
+
+    form_extra_fields = {
+        'repo_selected': StringField('Repository Selector'),
+    }
+
+    form_create_rules = [rules.Header(_('Prefix')),
+                         'repository',
+                         'jalc_doi',
+                         'jalc_crossref_doi',
+                         'jalc_datacite_doi',
+                         rules.Header(_('Suffix')),
+                         'suffix',
+                         rules.Header(_('Enable/Disable')),
+                         'jalc_flag',
+                         'jalc_crossref_flag',
+                         'jalc_datacite_flag',
+                         'repo_selected',
+                         ]
+
+    form_edit_rules = form_create_rules
+
+    column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
+                         jalc_crossref_doi=_('JaLC CrossRef DOI'),
+                         jalc_datacite_doi=_('JaLC DataCite DOI'),
+                         suffix=_('Semi-automatic Suffix')
+                         )
+
+    def _validator_halfwidth_input(form, field):
+        """
+        Valid input character set.
+
+        :param form: Form used to create/update model
+        :param field: Template fields contain data need validator
+        """
+        if field.data is None:
+            return
+        else:
+            try:
+                for inchar in field.data:
+                    if unicodedata.east_asian_width(inchar) in 'FWA':
+                        raise ValidationError(
+                            _('Only allow half with 1-bytes character in input'))
+            except Exception as ex:
+                raise ValidationError('{}'.format(ex))
+
+    form_args = {
+        'jalc_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'jalc_crossref_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'jalc_datacite_doi': {
+            'validators': [_validator_halfwidth_input]
+        },
+        'suffix': {
+            'validators': [_validator_halfwidth_input]
+        }
+    }
+
+    form_widget_args = {
+        'jalc_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'jalc_crossref_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'jalc_datacite_doi': {
+            'maxlength': 100,
+            'readonly': True,
+        },
+        'suffix': {
+            'maxlength': 100,
+        }
+    }
+
+    form_overrides = {
+        'repository': QuerySelectField,
+    }
+
+    def on_model_change(self, form, model, is_created):
+        """
+        Perform some actions before a model is created or updated.
+
+        Called from create_model and update_model in the same transaction
+        (if it has any meaning for a store backend).
+        By default does nothing.
+
+        :param form: Form used to create/update model
+        :param model: Model that will be created/updated
+        :param is_created: Will be set to True if model was created
+            and to False if edited
+        """
+        # Update hidden data automation
+        if is_created:
+            model.created_userId = current_user.get_id()
+            model.created_date = datetime.utcnow().replace(microsecond=0)
+        model.updated_userId = current_user.get_id()
+        model.updated_date = datetime.utcnow().replace(microsecond=0)
+        model.repository = str(model.repository.id)
+        pass
+
+    def on_form_prefill(self, form, id):
+        form.repo_selected.data = form.repository.data
+        pass
+
+    def create_form(self, obj=None):
+        """
+        Instantiate model delete form and return it.
+
+        Override to implement custom behavior.
+        The delete form originally used a GET request, so delete_form
+        accepts both GET and POST request for backwards compatibility.
+
+        :param obj: input object
+        """
+        return self._use_append_repository(
+            super(IdentifierSettingView, self).create_form()
+        )
+
+    def edit_form(self, obj):
+        """
+        Instantiate model editing form and return it.
+
+        Override to implement custom behavior.
+
+        :param obj: input object
+        """
+        return self._use_append_repository(
+            super(IdentifierSettingView, self).edit_form(obj)
+        )
+
+    def _use_append_repository(self, form):
+        form.repository.query_factory = self._get_community_list
+        form.repo_selected.data = 'Root Index'
+        return form
+
+    def _get_community_list(self):
+        try:
+            query_data = Community.query.all()
+            query_data.insert(0, Community(id='Root Index'))
+        except Exception as ex:
+            current_app.logger.debug(ex)
+
+        return query_data
+
+
 style_adminview = {
     'view_class': StyleSettingView,
     'kwargs': {
@@ -922,6 +1096,14 @@ site_info_settings_adminview = {
     }
 }
 
+identifier_adminview = dict(
+    modelview=IdentifierSettingView,
+    model=Identifier,
+    category=_('Setting'),
+    name=_('Identifier'),
+    endpoint='identifier'
+)
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -936,5 +1118,6 @@ __all__ = (
     'site_license_send_mail_settings_adminview',
     'file_preview_settings_adminview',
     'item_export_settings_adminview',
-    'site_info_settings_adminview'
+    'site_info_settings_adminview',
+    'identifier_adminview'
 )

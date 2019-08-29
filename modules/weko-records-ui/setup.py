@@ -94,7 +94,6 @@ setup(
             'weko_records_ui_setting = weko_records_ui.admin:item_adminview',
             'weko_records_ui_pdfcoverpage = weko_records_ui.admin:pdfcoverpage_adminview',
             'weko_records_ui_institution = weko_records_ui.admin:institution_adminview',
-            'weko_records_ui_identifier = weko_records_ui.admin:identifier_adminview',
             'weko_records_ui_bulk_update = weko_records_ui.admin:item_management_bulk_update_adminview',
         ],
         'invenio_i18n.translations': [

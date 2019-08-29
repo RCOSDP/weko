@@ -631,7 +631,6 @@ def next_action(activity_id='0', action_id=0):
 
     if action_endpoint == 'item_login':
         current_app.logger.debug('====================================')
-        current_app.logger.debug(request.url)
         register_cnri(activity_id)
 
     rtn = history.create_activity_history(activity)
