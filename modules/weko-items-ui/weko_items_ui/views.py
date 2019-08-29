@@ -26,6 +26,7 @@ import random
 import re
 import shutil
 import sys
+import tempfile
 from datetime import date, datetime, timedelta
 
 import bagit
@@ -1017,12 +1018,11 @@ def export_items(post_data):
         return abort(400)
 
     result = {'items': []}
+    temp_path = tempfile.TemporaryDirectory()
     try:
         # Set export folder
-        default_path = '/var/tmp/export/'
-        export_path = default_path + \
-            datetime.utcnow().strftime("%Y%m%d%H%M%S") + \
-            str(random.randrange(1000))
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
         # Double check for limits
         for id in record_ids:
             record_path = export_path + '/recid_' + str(id)
@@ -1038,24 +1038,10 @@ def export_items(post_data):
         bagit.make_bag(export_path)
         # Create download file
         shutil.make_archive(export_path, 'zip', export_path)
-        # Delete temp file
-        shutil.rmtree(export_path, ignore_errors=True)
     except Exception as e:
         current_app.logger.error(e)
-        # Delete temp file
-        shutil.rmtree(export_path, ignore_errors=True)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
-
-    @after_this_request
-    def remove_file(response):
-        """Remove file after download."""
-        try:
-            os.remove(export_path + '.zip')
-        except Exception as error:
-            current_app.logger.error(
-                "Error removing or closing downloaded file handle", error)
-        return response
 
     return send_file(export_path + '.zip')
 
