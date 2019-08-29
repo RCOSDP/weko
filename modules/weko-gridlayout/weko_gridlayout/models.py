@@ -284,7 +284,8 @@ class WidgetMultiLangData(db.Model):
             data -- List widget multilanguage data
 
         """
-        list_data = cls.query.filter_by(widget_id=widget_id, is_deleted=False).all()
+        list_data = cls.query.filter_by(
+            widget_id=widget_id, is_deleted=False).all()
         return list_data
 
     @classmethod
@@ -588,7 +589,7 @@ class WidgetDesignPage(db.Model):
 
         :return: List of all pages.
         """
-        return db.session.query(cls).filter(cls.settings != None).all()
+        return db.session.query(cls).filter(cls.settings is not None).all()
 
     @classmethod
     def get_by_id(cls, id):
@@ -642,12 +643,13 @@ class WidgetDesignPageMultiLangData(db.Model):
         nullable=False
     )
 
-    lang_code = db.Column(db.String(3), nullable=False)  # FIXME: Shouldn't this be a foreign key
+    # FIXME: Shouldn't this be a foreign key
+    lang_code = db.Column(db.String(3), nullable=False)
 
     title = db.Column(db.String(100))
 
     def __init__(self, lang_code, title):
-        """Initialize """
+        """Initialize."""
         self.lang_code = lang_code
         self.title = title
 

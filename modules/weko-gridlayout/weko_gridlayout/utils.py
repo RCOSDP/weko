@@ -291,7 +291,6 @@ def build_data_setting(data):
         dictionary -- setting pack
 
     """
-
     result = dict()
     convert_popular_data(data, result)
     setting = data['settings']

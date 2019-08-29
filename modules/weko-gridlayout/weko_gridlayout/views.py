@@ -8,22 +8,20 @@
 """Module of weko-gridlayout."""
 from __future__ import absolute_import, print_function
 
-import six
-
 from datetime import date, timedelta
 
+import six
 from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
 from flask_login import login_required
-from werkzeug.exceptions import NotFound
 from sqlalchemy.orm.exc import NoResultFound
+from werkzeug.exceptions import NotFound
 
 from .api import WidgetItems
 from .models import WidgetDesignPage, WidgetDesignSetting
-from .services import WidgetDataLoaderServices, \
-    WidgetDesignPageServices, WidgetDesignServices, \
-    WidgetItemServices
+from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
+    WidgetDesignServices, WidgetItemServices
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
     get_system_language, get_widget_type_list
 
@@ -157,7 +155,7 @@ def load_widget_list_design_setting(repository_id):
 
     result["error"] = result["widget-list"].get("error") or \
         result["widget-preview"].get("error")
-        #result["page-list"].get("error")
+    # result["page-list"].get("error")
 
     return jsonify(result)
 
@@ -349,7 +347,8 @@ def get_rss_data():
 
 
 @blueprint_api.route('/get_page_endpoints/<int:widget_id>', methods=['GET'])
-@blueprint_api.route('/get_page_endpoints/<int:widget_id>/<string:lang>', methods=['GET'])
+@blueprint_api.route(
+    '/get_page_endpoints/<int:widget_id>/<string:lang>', methods=['GET'])
 def get_widget_page_endpoints(widget_id, lang=''):
     """Get menu pages urls and data."""
     if request.headers['Content-Type'] == 'application/json':
@@ -370,8 +369,8 @@ def view_widget_page():
     try:
         page = WidgetDesignPage.get_by_url(request.path)
         return render_template(
-            page.template_name or \
-                current_app.config['WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE'],
+            page.template_name
+            or current_app.config['WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE'],
             page=page,
             community_id=community_id,
             **ctx,
@@ -395,8 +394,8 @@ def handle_not_found(exception, **extra):
     if page:
         _add_url_rule(page.url)
         return render_template(
-            page.template_name or \
-                current_app.config['WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE'],
+            page.template_name
+            or current_app.config['WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE'],
             page=page,
             community_id=community_id,
             **ctx,
@@ -415,9 +414,9 @@ def _add_url_rule(url_or_urls):
     current_app._got_first_request = False
     if isinstance(url_or_urls, six.string_types):
         url_or_urls = [url_or_urls]
-    map(lambda url: \
+    map(lambda url:
         current_app.add_url_rule(url, 'weko_gridlayout.view_widget_page',
-        view_widget_page), url_or_urls)
+                                 view_widget_page), url_or_urls)
     current_app._got_first_request = old
 
 

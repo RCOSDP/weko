@@ -32,7 +32,8 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .config import WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE, \
     WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
-from .models import WidgetDesignPage, WidgetDesignSetting, WidgetItem, WidgetMultiLangData
+from .models import WidgetDesignPage, WidgetDesignSetting, WidgetItem, \
+    WidgetMultiLangData
 from .utils import build_data, build_multi_lang_data, build_rss_xml, \
     convert_data_to_design_pack, convert_data_to_edit_pack, \
     convert_widget_data_to_dict, convert_widget_multi_lang_to_dict, \
@@ -436,7 +437,7 @@ class WidgetDesignServices:
 
         return result
 
-     # TODO: Change to allow specifying which model to retrieve from
+    # TODO: Change to allow specifying which model to retrieve from
     @classmethod
     def get_widget_preview(cls, repository_id, default_language,
                            model=WidgetDesignSetting):
@@ -563,7 +564,8 @@ class WidgetDesignServices:
         return widget
 
     @classmethod
-    def update_widget_design_setting(cls, data):  # TODO: Edit this or create a new fn
+    # TODO: Edit this or create a new fn
+    def update_widget_design_setting(cls, data):
         """Update Widget layout setting.
 
         :param data: json data is submitted from client side.
@@ -597,7 +599,8 @@ class WidgetDesignServices:
                     result["result"] = WidgetDesignSetting.create(
                         repository_id, setting_data)
             else:
-                result['error'] = _('Failed to save design: Check input values.')
+                result['error'] = _(
+                    'Failed to save design: Check input values.')
         except Exception as e:
             result['error'] = _('Failed to save design: Unexpected error.')
         return result
@@ -643,7 +646,7 @@ class WidgetDesignServices:
             data += [{'repository_id': page.repository_id,
                       'settings': page.settings,
                       'page_id': page.id}
-                for page in WidgetDesignPage.get_by_repository_id(repo_id)]
+                     for page in WidgetDesignPage.get_by_repository_id(repo_id)]
 
             success = True
             for model in data:  # FIXME: May be confusing to update both here
@@ -653,10 +656,11 @@ class WidgetDesignServices:
                         widget_id, data_result, json_data)
                     if model.get('page_id'):  # Update page
                         if not WidgetDesignPage.update_settings(
-                            model.get('page_id', 0), update_data):
+                                model.get('page_id', 0), update_data):
                             success = False
                     else:  # Update main layout
-                        if not WidgetDesignSetting.update(repo_id, update_data):
+                        if not WidgetDesignSetting.update(
+                                repo_id, update_data):
                             success = False
             return success
         except Exception as e:
@@ -676,17 +680,17 @@ class WidgetDesignServices:
                 repo_id = WidgetItemServices.get_repo_by_id(widget_id)
                 data = [WidgetDesignSetting.select_by_repository_id(repo_id)]
 
-                 # Must check all pages too
+                # Must check all pages too
                 data += [{'repository_id': page.repository_id,
                           'settings': page.settings}
-                    for page in WidgetDesignPage.get_by_repository_id(repo_id)]
+                         for page in WidgetDesignPage.get_by_repository_id(repo_id)]
 
                 for model in data:
                     if model.get('settings'):
                         json_data = json.loads(model.get('settings'))
                         for item in json_data:
                             if str(item.get('widget_id')) == \
-                                str(widget_item_id):
+                                    str(widget_item_id):
                                 return True
             return False
         except Exception as e:
@@ -770,7 +774,8 @@ class WidgetDesignPageServices:
         return result
 
     @classmethod
-    def get_page_list(cls, repository_id, language):  # TODO: Return the selected language title here!
+    # TODO: Return the selected language title here!
+    def get_page_list(cls, repository_id, language):
         """Get WidgetDesignPage list.
 
         :param repository_id: Identifier of the repository.
@@ -791,7 +796,7 @@ class WidgetDesignPageServices:
                 result['data'].append({
                     'id': page.id,
                     'name': title,
-                });
+                })
 
         except Exception as e:
             result['error'] = _('Unable to retrieve page list.')
@@ -812,8 +817,8 @@ class WidgetDesignPageServices:
         try:
             page = WidgetDesignPage.get_by_id(page_id)
             multi_lang_data = {
-                lang: page.multi_lang_data[lang].title \
-                    for lang in page.multi_lang_data
+                lang: page.multi_lang_data[lang].title
+                for lang in page.multi_lang_data
             }
             result['data'] = {
                 'id': page.id,
@@ -917,7 +922,8 @@ class WidgetDataLoaderServices:
         result = {'endpoints': []}
 
         if widget_id:
-            menu_type = 'Menu'# current_app.config['WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE']
+            # current_app.config['WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE']
+            menu_type = 'Menu'
             try:
                 widget = \
                     WidgetItemServices.get_widget_data_by_widget_id(widget_id)
@@ -925,7 +931,7 @@ class WidgetDataLoaderServices:
                 show_pages_ids = widget['settings'].get('menu_show_pages')
                 # Allow for pages with no settings to display
                 if show_pages_ids and repository_id and \
-                    widget.get('widget_type') == menu_type:
+                        widget.get('widget_type') == menu_type:
                     for page_id in show_pages_ids:
                         try:
                             page = WidgetDesignPage.get_by_id(page_id)
