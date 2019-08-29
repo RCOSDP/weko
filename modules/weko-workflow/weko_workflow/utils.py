@@ -22,7 +22,7 @@
 
 from copy import deepcopy
 
-from flask import current_app
+from flask import current_app, request
 from flask_babelex import gettext as _
 from invenio_communities.models import Community
 from invenio_db import db
@@ -260,6 +260,7 @@ def reg_invenio_pidstore(pid_value, item_id):
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
 
+from weko_handle.api import Handle
 
 def register_cnri(activity_id):
     """
@@ -268,6 +269,7 @@ def register_cnri(activity_id):
     :param activity_id: Workflow Activity Identifier
     :return cnri_pidstore: CNRI pidstore object or None
     """
+    current_app.logger.debug(request)
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
     record = WekoRecord.get_record(item_uuid)
