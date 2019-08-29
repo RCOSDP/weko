@@ -21,6 +21,10 @@ WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN = \
     'weko_gridlayout/admin/widget_design.html'
 """Widget Design templates."""
 
+WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE = \
+    'weko_gridlayout/pages/default_page.html'
+"""Widget Design templates."""
+
 WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL = "No Title"
 """Default widget label"""
 
@@ -69,3 +73,9 @@ WEKO_XMLNS_PRISM = \
 WEKO_RDF_SCHEMA = \
     'https://www.w3.org/TR/rdf-schema/'
 """Defaul RDF Schema"""
+
+WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
+"""Menu widget type name."""
+
+WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR = '#4169E1'
+"""Default HTML color for widget components."""

@@ -33,3 +33,31 @@
   cursor: pointer;
   margin-right: 10px;
 }
+
+/* For page list */
+a.icon {
+  text-decoration: none;
+  color: inherit;
+}
+
+button.icon {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+  border: 0;
+  background: transparent;
+}
+
+.list-group-item input[type="radio"] {
+  display: none;
+}
+
+.list-group-item input[type="radio"]:checked + label {
+  font-weight: 700;
+}
+
+.list-group-item label {
+  font-weight: inherit;
+  cursor: pointer;
+}
