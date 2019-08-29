@@ -41,6 +41,7 @@ def item_login(item_type_id=0):
     item_save_uri = url_for('weko_items_ui.iframe_save_model')
     files = []
     endpoints = {}
+    need_thumbnail = False
 
     try:
         item_type = ItemTypes.get_by_id(item_type_id)

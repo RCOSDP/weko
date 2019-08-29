@@ -1,0 +1,51 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+<div ng-show="model.length > 0" class="panel panel-default">
+  <div class="panel-heading">
+    <div class="row">
+      <p ng-show="model.length > 0" class="text-muted"></p>
+    </div>
+  </div>
+  <table class="table">
+    <tr>
+      <th>Filename</th>
+      <th>Size</th>
+      <th class="text-center">Progress</th>
+      <th class="text-center">Actions</th>
+    </tr>
+    <tr class="sel-file" ng-repeat="f in model">
+      <td>{{ f.key | limitTo:40 }} <span ng-show="f.key.length > 50">...</span></td>
+      <td>{{ f.size | bytesToHumanReadable }}</td>
+      <td class="text-center">
+        <span ng-show="f.errored" class="text-danger">Error</span>
+        <span class="text-success">✓</span>
+      </td>
+      <td class="text-center"><a ng-click="filesVM.remove(f)">✗</a></td>
+    </tr>
+    <tr ng-show="model.length == 0">
+      <td colspan="4" class="text-center text-muted"> No results.</td>
+    </tr>
+  </table>
+  <div class="panel-footer">
+    <p ng-show="model.length > 0" class="text-muted">
+        </p>
+  </div>
+</div>

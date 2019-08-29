@@ -136,9 +136,9 @@
                 <invenio-files-upload-zone
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
                 </invenio-files-upload-zone>
-                <invenio-files-listinvenio_base.api_blueprints
+                <invenio-files-list
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
-                ></invenio-files-listinvenio_base.api_blueprints>
+                ></invenio-files-list>
               </div>
             </div>
             {%- endif %}
@@ -153,18 +153,20 @@
                       <div class="row">
                         <div class="col-sm-12" id="app">
                           <div class="well">
-                            <center>
-                              Drop files or folders here
-                            </center>
+                            <center>{{_('Drop files or folders here')}}</center>
                           </div>
                           <p class="text-center legend"><strong>— OR —</strong></p>
                           <p class="text-center">
-                            <form name="uploadThumbnail"
-                              sf-schema="schema"
-                              sf-form="form"
-                              sf-model="model">
-                            </form>
+                            <button class="btn btn-primary">{{_('Click to select')}}</button>
                           </p>
+                          <p class="text-center">
+                            <button class="btn btn-primary">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp, tiff, tif」')}}</button>
+                          </p>
+                          <form name="uploadThumbnail"
+                            sf-schema="schema"
+                            sf-form="form"
+                            sf-model="model">
+                          </form>
                           <hr />
                         </div>
                       </div>

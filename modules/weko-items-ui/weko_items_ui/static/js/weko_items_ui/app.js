@@ -1495,21 +1495,26 @@ function handleSharePermission(value) {
             type: 'object',
             title: 'Upload',
             properties: {
-                "archivo": {
-                    "title": '',
+                "thumbnail": {
+                    "title": "thumbnail",
                     "type": 'string',
-                    "format": 'file',
-                    "description": 'This is a upload element'
+                    "format": 'file'
                 }
             }
         };
         $scope.model = {};
         $scope.form = [
             {
-                "key": "archivo",
+                "key": "thumbnail",
                 "type": "fileUpload"
             }
         ];
+        $scope.uploadThumbnail = function() {
+            console.log($scope.model);
+            setTimeout(function() {
+                document.getElementById('selectThumbnail').click();
+            }, 0);
+        };
     });
 
     angular.bootstrap(
