@@ -3,7 +3,7 @@
 -e git+https://github.com/RCOSDP/invenio-s3.git@edc776d322d15cb34ef965895ab3d26a9f2bbc69#egg=invenio_s3
 -e /code/modules/invenio-oaiserver
 -e git+https://github.com/RCOSDP/invenio-oaiharvester.git@5266c0b29e323eaefc1f5fa8b748d79ccf2cff34#egg=invenio_oaiharvester
--e git+https://github.com/RCOSDP/invenio-records.git@cb74693acee3e83e5e71d18391bcfa5eec49b781#egg=invenio_records_rest
+-e git+https://github.com/RCOSDP/invenio-records.git@c4f85af582dd8edc2c20341b237f06304505e43c#egg=invenio_records
 -e git+https://github.com/RCOSDP/invenio-previewer.git@475ef25748cbea1cc3d72ec9b5672b12bd6bb3d7#egg=invenio_previewer
 -e git+https://github.com/RCOSDP/invenio-stats.git@6f93877563e70d34a20a80c040c28eecabfb63a1#egg=invenio_stats
 -e git+https://github.com/RCOSDP/invenio-records-rest.git@cb74693acee3e83e5e71d18391bcfa5eec49b781#egg=invenio_records_rest
