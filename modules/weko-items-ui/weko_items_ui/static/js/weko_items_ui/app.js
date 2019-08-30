@@ -1402,6 +1402,11 @@ function handleSharePermission(value) {
       $scope.saveDataJsonCallback = function (item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
+          if (!angular.isUndefined($rootScope.$$childHead.model)) {
+            console.log($rootScope.$$childHead.model);
+            $rootScope.filesVM.addFiles($rootScope.$$childHead.model.thumbnailsInfor);
+            $rootScope.filesVM.upload();
+          }
           metainfo = angular.merge(
             {},
             metainfo,

@@ -280,7 +280,7 @@ require([
 (function (angular) {
   angular.element(document).ready(function () {
     angular.module('schemaForm')
-    .run(["$templateCache", function($templateCache) {$templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html","<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" id=\"selectThumbnail\" on-read-file/>\n        </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>");}]);
+    .run(["$templateCache", function($templateCache) {$templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html","<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" id=\"selectThumbnail\" on-read-file/>\n        <img ng-show=\"$$value$$\" id=\"myimage\" src=\"\" alt=\"your image\" />\n    </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>");}]);
     angular.module('schemaForm').config(
     ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
       function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
@@ -307,7 +307,7 @@ require([
                     'directives/decorators/bootstrap/fileUpload/file-upload.html'
                 );
       }]);
-      angular.module('schemaForm').directive('onReadFile', function ($parse) {
+      angular.module('schemaForm').directive('onReadFile', function ($parse, $rootScope) {
         return {
             restrict: 'A',
             require: ['ngModel'],
@@ -320,8 +320,11 @@ require([
                         ngModelCtrl[0].$setViewValue(onLoadEvent.target.result);
                     };
                     var files = (onChangeEvent.srcElement || onChangeEvent.target).files;
-                    $scope.$parent.model.thumbnailsInfor=files;
-                    reader.readAsDataURL(files[0]);
+                    if (!angular.isUndefined(files) && files.length>0) {
+                        files[0].is_thumbnail=true;
+                        angular.extend($scope.$parent.model.thumbnailsInfor, files);
+                        reader.readAsDataURL(files[0]);
+                    }
                 });
             }
         };
