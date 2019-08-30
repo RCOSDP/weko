@@ -798,6 +798,12 @@ class SiteInfoView(BaseView):
             current_app.config["WEKO_ADMIN_SITE_INFO"]
         )
 
+from wtforms.fields import StringField
+from flask_admin.form import rules
+from invenio_communities.models import Community
+import unicodedata
+from wtforms.validators import ValidationError
+from flask_admin.contrib.sqla.fields import QuerySelectField
 
 class IdentifierSettingView(ModelView):
     """Pidstore Identifier admin view."""
@@ -851,7 +857,7 @@ class IdentifierSettingView(ModelView):
                          suffix=_('Semi-automatic Suffix')
                          )
 
-    def _validator_halfwidth_input(form, field):
+    def _validator_halfwidth_input(self, form, field):
         """
         Valid input character set.
 
@@ -865,7 +871,8 @@ class IdentifierSettingView(ModelView):
                 for inchar in field.data:
                     if unicodedata.east_asian_width(inchar) in 'FWA':
                         raise ValidationError(
-                            _('Only allow half with 1-bytes character in input'))
+                            _('Only allow half with 1-bytes character in'
+                            ' input'))
             except Exception as ex:
                 raise ValidationError('{}'.format(ex))
 

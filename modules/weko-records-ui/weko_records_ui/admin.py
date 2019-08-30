@@ -27,11 +27,8 @@ from datetime import datetime
 from flask import abort, current_app, flash, jsonify, request
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
-from flask_admin.contrib.sqla.fields import QuerySelectField
-from flask_admin.form import rules
 from flask_babelex import gettext as _
 from flask_login import current_user
-from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from sqlalchemy.orm import load_only
@@ -40,8 +37,6 @@ from weko_deposit.api import WekoRecord
 from weko_records.api import ItemsMetadata
 from weko_search_ui.api import get_search_detail_keyword
 from werkzeug.local import LocalProxy
-from wtforms.fields import StringField
-from wtforms.validators import ValidationError
 
 from . import config
 from models import InstitutionName, PDFCoverPageSettings
