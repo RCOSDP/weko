@@ -93,6 +93,11 @@ def index(item_type_id=0):
     :return: The rendered template.
     """
     try:
+        from weko_theme.utils import get_design_layout
+        # Get the design for widget rendering
+        page, render_widgets = get_design_layout(
+            current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
         lists = ItemTypes.get_latest()
         if lists is None or len(lists) == 0:
             return render_template(
@@ -111,7 +116,8 @@ def index(item_type_id=0):
 
         return render_template(
             current_app.config['WEKO_ITEMS_UI_FORM_TEMPLATE'],
-            render_widgets=True,
+            page=page,
+            render_widgets=render_widgets,
             need_file=need_file,
             record={},
             jsonschema=json_schema,
@@ -350,18 +356,25 @@ def items_index(pid_value=0):
         action = 'private' if record.get('publish_status', '1') == '1' \
             else 'publish'
 
+        from weko_theme.utils import get_design_layout
+        # Get the design for widget rendering
+        page, render_widgets = get_design_layout(
+            current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
         if request.method == 'GET':
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
-                render_widgets=True,
+                page=page,
+                render_widgets=render_widgets,
                 pid_value=pid_value,
                 action=action)
 
         if request.headers['Content-Type'] != 'application/json':
-            flash(_('invalide request'), 'error')
+            flash(_('Invalid request'), 'error')
             return render_template(
                 current_app.config['WEKO_ITEMS_UI_INDEX_TEMPLATE'],
-                render_widgets=True)
+                page=page,
+                render_widgets=render_widgets)
 
         data = request.get_json()
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -402,10 +415,18 @@ def iframe_items_index(pid_value=0):
         action = 'private' if record.get('publish_status', '1') == '1' \
             else 'publish'
 
+
+
         if request.method == 'GET':
+            # Get the design for widget rendering
+            from weko_theme.utils import get_design_layout
+            page, render_widgets = get_design_layout(
+                session['itemlogin_community_id'] or
+                current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
-                render_widgets=True,
+                page=page,
+                render_widgets=render_widgets,
                 pid_value=pid_value,
                 action=action,
                 activity=session['itemlogin_activity'],
@@ -421,9 +442,13 @@ def iframe_items_index(pid_value=0):
 
         if request.headers['Content-Type'] != 'application/json':
             flash(_('Invalid Request'), 'error')
+            from weko_theme.utils import get_design_layout
+            page, render_widgets = get_design_layout(
+                current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
-                render_widgets=True)
+                page=page,
+                render_widgets=render_widgets)
 
         data = request.get_json()
         sessionstore = RedisStore(redis.StrictRedis.from_url(
@@ -842,6 +867,11 @@ def ranking():
     start_date = end_date - \
         timedelta(days=int(settings.statistical_period) - 1)
 
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering -- Always default
+    page, render_widgets = get_design_layout(
+        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     rankings = {}
     # most_reviewed_items
     if settings.rankings['most_reviewed_items']:
@@ -918,7 +948,8 @@ def ranking():
 
     return render_template(
         current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         is_show=settings.is_show,
         start_date=start_date,
         end_date=end_date,
@@ -1058,6 +1089,7 @@ def export():
     if request.method == 'POST':
         return export_items(request.form.to_dict())
 
+
     from weko_search_ui.api import SearchSetting
     search_type = request.args.get('search_type', '0')  # TODO: Refactor
     community_id = ""
@@ -1069,12 +1101,19 @@ def export():
         ctx = {'community': comm}
         community_id = comm.id
 
+
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(community_id or
+        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     sort_options, display_number = SearchSetting.get_results_setting()
     disply_setting = dict(size=display_number)
 
     return render_template(
         current_app.config['WEKO_ITEMS_UI_EXPORT_TEMPLATE'],
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         index_id=cur_index_id,
         community_id=community_id,
         sort_option=sort_options,

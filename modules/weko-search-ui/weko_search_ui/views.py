@@ -32,11 +32,15 @@ from flask_security import current_user
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
+from weko_gridlayout.models import WidgetDesignPage
+from weko_gridlayout.utils import get_widget_design_page_with_main, \
+    main_design_has_main_widget
+from weko_theme.utils import get_design_layout
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui.ipaddr import check_site_license_permission
-
 from weko_search_ui.api import get_search_detail_keyword
+from sqlalchemy.orm.exc import NoResultFound
 
 from .api import SearchSetting
 from .query import item_path_search_factory
@@ -76,9 +80,13 @@ def search():
         ctx = {'community': comm}
         community_id = comm.id
 
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(community_id or
+        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     # Get index style
     style = IndexStyle.get(
-        current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
+            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
     width = style.width if style else '3'
 
     # add at 1206 for search management
@@ -115,7 +123,8 @@ def search():
             = workFlowActivity.get_activity_index_search(activity_id=activity_id)
         return render_template(
             'weko_workflow/activity_detail.html',
-            render_widgets=True,
+            page=page,
+            render_widgets=render_widgets,
             activity=activity_detail,
             item=item,
             steps=steps,
@@ -156,9 +165,12 @@ def search():
                     index_display_format = index_info.display_format
                     if index_display_format == '2':
                         disply_setting = dict(size=100)
+
+
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
-            render_widgets=True,
+            page=page,
+            render_widgets=render_widgets,
             index_id=cur_index_id,
             community_id=community_id,
             sort_option=sort_options,

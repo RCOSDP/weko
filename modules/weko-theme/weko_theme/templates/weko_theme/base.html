@@ -84,6 +84,9 @@
     {%- block page_header %}
       {% include config.THEME_HEADER_TEMPLATE %}
     {%- endblock page_header %}
+    {%- if page %}
+        <div id="widget-page-id" hidden>{{ page.id }}</div>
+    {%- endif %}
     {%- if not community_id %}
     <div id="page_body" class="grid-stack" {%- if render_widgets %}style="display: None;"{%- endif %}>
       <div id="main_contents">

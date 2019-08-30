@@ -46,6 +46,9 @@ WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE = "New arrivals"
 WEKO_GRIDLAYOUT_NOTICE_TYPE = "Notice"
 """Notice type"""
 
+WEKO_GRIDLAYOUT_MAIN_TYPE = "Main contents"
+"""Main contents widget type."""
+
 WEKO_XML_FORMAT = \
     '<?xml version="1.0" encoding="UTF-8"?>'
 """Default setting for xml"""
