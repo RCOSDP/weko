@@ -42,6 +42,9 @@ from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
+from flask_admin.contrib.sqla import ModelView
+from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
+    WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
 
 from .models import AdminSettings, FeedbackMailSetting, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
@@ -803,8 +806,8 @@ class IdentifierSettingView(ModelView):
     can_edit = True
     can_delete = False
     can_view_details = True
-    create_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR
-    edit_template = config.WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
+    create_template = WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR
+    edit_template = WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
 
     column_list = (
         'repository', 'jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi',

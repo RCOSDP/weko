@@ -72,12 +72,6 @@ WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE = 'weko_records_ui/admin/pdfcoverpage.html'
 INSTITUTION_NAME_SETTING_TEMPLATE = 'weko_records_ui/admin/institution_name_setting.html'
 # institution name setting page template
 
-WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR = 'weko_records_ui/admin/pidstore_identifier_creator.html'
-# pidstore identifier creator template
-
-WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR = 'weko_records_ui/admin/pidstore_identifier_editor.html'
-# pidstore identifier editor template
-
 ITEM_SEARCH_FLG = 'name'
 # setting author name search type: name or id
 
