@@ -50,7 +50,6 @@ from weko_items_ui.utils import get_actionid
 from weko_items_ui.views import to_files_js
 from weko_records.api import FeedbackMailList, ItemsMetadata
 from weko_records.models import ItemMetadata
-from weko_records_ui.models import Identifier
 from werkzeug.utils import import_string
 
 from .api import Action, Flow, GetCommunity, UpdateItem, WorkActivity, \
@@ -59,8 +58,8 @@ from .config import IDENTIFIER_GRANT_IS_WITHDRAWING, IDENTIFIER_GRANT_LIST, \
     IDENTIFIER_GRANT_SUFFIX_METHOD, ITEM_REGISTRATION_ACTION_ID
 from .models import ActionStatusPolicy, ActivityStatusPolicy
 from .romeo import search_romeo_issn, search_romeo_jtitles
-from .utils import find_doi, get_community_id_by_index, is_withdrawn_doi, \
-    item_metadata_validation, pidstore_identifier_mapping
+from .utils import find_doi, get_identifier_setting, is_withdrawn_doi, \
+    item_metadata_validation, register_cnri, saving_doi_pidstore
 
 blueprint = Blueprint(
     'weko_workflow',
@@ -233,45 +232,35 @@ def display_activity(activity_id=0):
         activity_id=activity_id, action_id=action_id)
 
     # display_activity of Identifier grant
-    idf_grant_data = None
+    identifier_setting = None
     if 'identifier_grant' == action_endpoint and item:
-        path = WekoRecord.get_record(item.id).get('path')
-        if len(path) > 1:
+        community_id = request.args.get('community', None)
+        if not community_id:
             community_id = 'Root Index'
-        else:
-            index_address = path.pop(-1).split('/')
-            index_id = Index.query.filter_by(id=index_address.pop()).one()
-            community_id = get_community_id_by_index(
-                index_id.index_name_english)
-        idf_grant_data = Identifier.query.filter_by(
-            repository=community_id).one_or_none()
+        identifier_setting = get_identifier_setting(community_id)
 
         # valid date pidstore_identifier data
-        if idf_grant_data is not None:
-            if not idf_grant_data.jalc_doi:
-                idf_grant_data.jalc_doi = '<Empty>'
-            if not idf_grant_data.jalc_crossref_doi:
-                idf_grant_data.jalc_crossref_doi = '<Empty>'
-            if not idf_grant_data.jalc_datacite_doi:
-                idf_grant_data.jalc_datacite_doi = '<Empty>'
-            if not idf_grant_data.cnri:
-                idf_grant_data.cnri = '<Empty>'
-            if not idf_grant_data.suffix:
-                idf_grant_data.suffix = '<Empty>'
+        if identifier_setting:
+            if not identifier_setting.jalc_doi:
+                identifier_setting.jalc_doi = '<Empty>'
+            if not identifier_setting.jalc_crossref_doi:
+                identifier_setting.jalc_crossref_doi = '<Empty>'
+            if not identifier_setting.jalc_datacite_doi:
+                identifier_setting.jalc_datacite_doi = '<Empty>'
 
-    temporary_idf_grant = 0
-    temporary_idf_grant_suffix = []
-    temporary_identifier = activity.get_action_identifier_grant(
+    temporary_identifier_select = 0
+    temporary_identifier_inputs = []
+    last_identifier_setting = activity.get_action_identifier_grant(
         activity_id=activity_id, action_id=action_id)
-    if temporary_identifier:
-        temporary_idf_grant = temporary_identifier.get(
+    if last_identifier_setting:
+        temporary_identifier_select = last_identifier_setting.get(
             'action_identifier_select')
-        temporary_idf_grant_suffix.append(
-            temporary_identifier.get('action_identifier_jalc_doi'))
-        temporary_idf_grant_suffix.append(
-            temporary_identifier.get('action_identifier_jalc_cr_doi'))
-        temporary_idf_grant_suffix.append(
-            temporary_identifier.get('action_identifier_jalc_dc_doi'))
+        temporary_identifier_inputs.append(
+            last_identifier_setting.get('action_identifier_jalc_doi'))
+        temporary_identifier_inputs.append(
+            last_identifier_setting.get('action_identifier_jalc_cr_doi'))
+        temporary_identifier_inputs.append(
+            last_identifier_setting.get('action_identifier_jalc_dc_doi'))
 
     temporary_journal = activity.get_action_journal(
         activity_id=activity_id, action_id=action_id)
@@ -304,8 +293,9 @@ def display_activity(activity_id=0):
             schema_form, item_save_uri, files, endpoints = item_login(
                 item_type_id=workflow_detail.itemtype_id)
         if item:
-            pid_identifier = PersistentIdentifier.get_by_object(
-                pid_type='depid', object_type='rec', object_uuid=item.id)
+            # Remove the unused local variable
+            # _pid_identifier = PersistentIdentifier.get_by_object(
+            #     pid_type='depid', object_type='rec', object_uuid=item.id)
             record = item
 
         if session.get('update_json_schema') and session[
@@ -342,14 +332,13 @@ def display_activity(activity_id=0):
         from weko_deposit.links import base_factory
         links = base_factory(pid)
 
-    res_check = check_authority_action(activity_id, action_id)
+    res_check = check_authority_action(str(activity_id), str(action_id))
 
     getargs = request.args
     ctx = {'community': None}
     community_id = ""
     if 'community' in getargs:
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        community_id = request.args.get('community')
         ctx = {'community': comm}
         community_id = comm.id
     # be use for index tree and comment page.
@@ -376,9 +365,9 @@ def display_activity(activity_id=0):
         cur_step=cur_step,
         temporary_comment=temporary_comment,
         temporary_journal=temporary_journal,
-        temporary_idf_grant=temporary_idf_grant,
-        temporary_idf_grant_suffix=temporary_idf_grant_suffix,
-        idf_grant_data=idf_grant_data,
+        temporary_idf_grant=temporary_identifier_select,
+        temporary_idf_grant_suffix=temporary_identifier_inputs,
+        idf_grant_data=identifier_setting,
         idf_grant_input=IDENTIFIER_GRANT_LIST,
         idf_grant_method=IDENTIFIER_GRANT_SUFFIX_METHOD,
         record=approval_record,
@@ -441,14 +430,16 @@ def check_authority_action(activity_id='0', action_id=0):
     # If current_user is in allowed action_user
     if users['allow'] and int(cur_user) in users['allow']:
         return 0
-    # Else if action_user is not set or action_user does not contain current_user:
+    # Else if action_user is not set
+    # or action_user does not contain current_user:
     for role in cur_role:
         if roles['deny'] and role.id in roles['deny']:
             return 1
         if roles['allow'] and role.id not in roles['allow']:
             return 1
 
-    # If action_roles is not set or action roles does not contain any role of current_user:
+    # If action_roles is not set
+    # or action roles does not contain any role of current_user:
     # Gather information
     from .models import User, Activity
     activity = Activity.query.filter_by(
@@ -461,7 +452,9 @@ def check_authority_action(activity_id='0', action_id=0):
     for role in list(current_user.roles or []):
         if role.name in supers:
             return 0
-    # If user has community role and the user who created activity is member of community role -> has permission:
+    # If user has community role
+    # and the user who created activity is member of community
+    # role -> has permission:
     community_role_name = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
     # Get the list of users who has the community role
     community_users = User.query.outerjoin(userrole).outerjoin(Role) \
@@ -480,10 +473,12 @@ def check_authority_action(activity_id='0', action_id=0):
 
     # Check if this activity has contributor equaling to current user
     im = ItemMetadata.query.filter_by(id=activity.item_id)\
-        .filter(cast(ItemMetadata.json['shared_user_id'], types.INT) == int(cur_user))\
+        .filter(
+        cast(ItemMetadata.json['shared_user_id'], types.INT) == int(cur_user))\
         .one_or_none()
     if im:
-        # There is an ItemMetadata with contributor equaling to current user, allow to access
+        # There is an ItemMetadata with contributor equaling to current user,
+        # allow to access
         return 0
 
     # Otherwise, user has no permission
@@ -512,8 +507,8 @@ def next_action(activity_id='0', action_id=0):
     action = Action().get_action_detail(action_id)
     action_endpoint = action.action_endpoint
 
-    if (1 == post_json.get('temporary_save')
-            and action_endpoint != 'identifier_grant'):
+    if post_json.get('temporary_save') == 1 \
+            and action_endpoint != 'identifier_grant':
         if 'journal' in post_json:
             work_activity.create_or_update_action_journal(
                 activity_id=activity_id,
@@ -544,7 +539,6 @@ def next_action(activity_id='0', action_id=0):
     if 'approval' == action_endpoint:
         activity_obj = WorkActivity()
         activity_detail = activity_obj.get_activity_detail(activity_id)
-        item = None
         if activity_detail and activity_detail.item_id:
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
             pid_identifier = PersistentIdentifier.get_by_object(
@@ -552,7 +546,7 @@ def next_action(activity_id='0', action_id=0):
             record_class = import_string('weko_deposit.api:WekoRecord')
             resolver = Resolver(pid_type='recid', object_type='rec',
                                 getter=record_class.get_record)
-            pid, approval_record = resolver.resolve(pid_identifier.pid_value)
+            _pid, _approval_record = resolver.resolve(pid_identifier.pid_value)
 
             action_feedbackmail = activity_obj.get_action_feedbackmail(
                 activity_id=activity_id,
@@ -609,16 +603,15 @@ def next_action(activity_id='0', action_id=0):
             identifier=identifier_grant
         )
 
-        activity_obj = WorkActivity()
-        activity_detail = activity_obj.get_activity_detail(activity_id)
-        error_list = item_metadata_validation(activity_detail.item_id, idf_grant)
+        item_id = WorkActivity().get_activity_detail(activity_id).item_id
+        error_list = item_metadata_validation(item_id, idf_grant)
+
+        if post_json.get('temporary_save') == 1:
+            return jsonify(code=0, msg=_('success'))
 
         if isinstance(error_list, str):
             return jsonify(code=-1,
                            msg=_(error_list))
-
-        if post_json.get('temporary_save') == 1:
-            return jsonify(code=0, msg=_('success'))
 
         if error_list:
             if not session.get('update_json_schema'):
@@ -632,7 +625,11 @@ def next_action(activity_id='0', action_id=0):
                     and session['update_json_schema'].get(activity_id):
                 session['update_json_schema'][activity_id] = {}
 
-        pidstore_identifier_mapping(post_json, int(idf_grant), activity_id)
+        if idf_grant != '0':
+            saving_doi_pidstore(post_json, int(idf_grant), activity_id)
+
+    if action_endpoint == 'item_login':
+        register_cnri(activity_id)
 
     rtn = history.create_activity_history(activity)
     if rtn is None:
@@ -895,7 +892,7 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                 identifier_actionid)
 
             # Clear identifier in ItemMetadata
-            pidstore_identifier_mapping(None, -1, activity_id)
+            saving_doi_pidstore(None, -1, activity_id)
             identifier['action_identifier_select'] = \
                 IDENTIFIER_GRANT_IS_WITHDRAWING
             if identifier:
@@ -911,36 +908,37 @@ def withdraw_confirm(activity_id='0', action_id='0'):
                                activity_id=activity_id)})
         else:
             return jsonify(code=-1, msg=_('Invalid password'))
-    except BaseException:
-        current_app.logger.error('Unexpected error: ', sys.exc_info()[0])
+    except ValueError:
+        current_app.logger.error('Unexpected error: {}', sys.exc_info()[0])
     return jsonify(code=-1, msg=_('Error!'))
 
 
+# noinspection PyDictCreation
 @blueprint.route('/findDOI', methods=['POST'])
 @login_required
 def check_existed_doi():
     """Next action."""
     doi_link = request.get_json()
-    data = {}
-    data['isExistDOI'] = False
-    data['isWithdrawnDoi'] = False
-    data['code'] = 1
-    data['msg'] = 'error'
+    respon = dict()
+    respon['isExistDOI'] = False
+    respon['isWithdrawnDoi'] = False
+    respon['code'] = 1
+    respon['msg'] = 'error'
     if doi_link is not None:
         is_exist_doi = find_doi(doi_link)
         doi_withdrawn = is_withdrawn_doi(doi_link)
         if is_exist_doi:
-            data['isExistDOI'] = is_exist_doi
-            data['msg'] = _('This DOI has been used already for another item. '
-                            'Please input another DOI.')
+            respon['isExistDOI'] = is_exist_doi
+            respon['msg'] = _('This DOI has been used already for another '
+                              'item. Please input another DOI.')
         elif doi_withdrawn:
-            data['isWithdrawnDoi'] = doi_withdrawn
-            data['msg'] = _(
+            respon['isWithdrawnDoi'] = doi_withdrawn
+            respon['msg'] = _(
                 'This DOI was withdrawn. Please input another DOI.')
         else:
-            data['msg'] = _('success')
-        data['code'] = 0
-    return jsonify(data)
+            respon['msg'] = _('success')
+        respon['code'] = 0
+    return jsonify(respon)
 
 @blueprint.route('/save_feedback_maillist/<string:activity_id>/<int:action_id>',
                  methods=['POST'])

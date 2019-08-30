@@ -131,3 +131,15 @@ angular_js = NpmBundle(  # Already included in front-end
     },
     output='gen/weko_admin_ui.angular_js.%(version)s.js',
 )
+
+
+weko_admin_site_info_js = Bundle(
+    'js/weko_admin/site_info.js',
+    filters='jsmin',
+    output="gen/weko_admin_site_info_js.%(version)s.js",
+)
+
+weko_admin_site_info_css = Bundle(
+    'css/weko_admin/site.info.css',
+    output="gen/weko_site_info_css.%(version)s.css",
+)

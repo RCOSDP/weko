@@ -22,13 +22,18 @@
 
 import operator
 import os
+import random
 import re
+import shutil
 import sys
-from datetime import date, timedelta
+import tempfile
+from datetime import date, datetime, timedelta
 
+import bagit
 import redis
-from flask import Blueprint, abort, current_app, flash, json, jsonify, \
-    redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, after_this_request, current_app, flash, \
+    json, jsonify, redirect, render_template, request, send_file, session, \
+    url_for
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -840,11 +845,11 @@ def ranking():
     rankings = {}
     # most_reviewed_items
     if settings.rankings['most_reviewed_items']:
-        result = QueryRecordViewReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
-                                                 end_date=end_date.strftime(
-                                                     '%Y-%m-%d'),
-                                                 agg_size=settings.display_rank,
-                                                 agg_sort={'value': 'desc'})
+        result = QueryRecordViewReportHelper.get(
+            start_date=start_date.strftime('%Y-%m-%d'),
+            end_date=end_date.strftime('%Y-%m-%d'),
+            agg_size=settings.display_rank,
+            agg_sort={'value': 'desc'})
         rankings['most_reviewed_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='all', title_key='record_name',
@@ -852,13 +857,13 @@ def ranking():
 
     # most_downloaded_items
     if settings.rankings['most_downloaded_items']:
-        result = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
-                                              end_date=end_date.strftime(
-                                                  '%Y-%m-%d'),
-                                              target_report='3',
-                                              unit='Item',
-                                              agg_size=settings.display_rank,
-                                              agg_sort={'_count': 'desc'})
+        result = QueryItemRegReportHelper.get(
+            start_date=start_date.strftime('%Y-%m-%d'),
+            end_date=end_date.strftime('%Y-%m-%d'),
+            target_report='3',
+            unit='Item',
+            agg_size=settings.display_rank,
+            agg_sort={'_count': 'desc'})
         rankings['most_downloaded_items'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='data', title_key='col2',
@@ -866,14 +871,13 @@ def ranking():
 
     # created_most_items_user
     if settings.rankings['created_most_items_user']:
-        result \
-            = QueryItemRegReportHelper.get(start_date=start_date.strftime('%Y-%m-%d'),
-                                           end_date=end_date.strftime(
-                                               '%Y-%m-%d'),
-                                           target_report='0',
-                                           unit='User',
-                                           agg_size=settings.display_rank,
-                                           agg_sort={'_count': 'desc'})
+        result = QueryItemRegReportHelper.get(
+            start_date=start_date.strftime('%Y-%m-%d'),
+            end_date=end_date.strftime('%Y-%m-%d'),
+            target_report='0',
+            unit='User',
+            agg_size=settings.display_rank,
+            agg_sort={'_count': 'desc'})
         rankings['created_most_items_user'] = \
             parse_ranking_results(result, settings.display_rank,
                                   list_name='data',
@@ -912,12 +916,13 @@ def ranking():
                                   list_name='all', title_key='record_name',
                                   pid_key='pid_value', date_key='create_date')
 
-    return render_template(current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
-                           render_widgets=True,
-                           is_show=settings.is_show,
-                           start_date=start_date,
-                           end_date=end_date,
-                           rankings=rankings)
+    return render_template(
+        current_app.config['WEKO_ITEMS_UI_RANKING_TEMPLATE'],
+        render_widgets=True,
+        is_show=settings.is_show,
+        start_date=start_date,
+        end_date=end_date,
+        rankings=rankings)
 
 
 def check_ranking_show():
@@ -973,7 +978,7 @@ def _get_max_export_items():
     return current_max
 
 
-def _export_item(record_id, format, include_contents):
+def _export_item(record_id, format, include_contents, tmp_path=None):
     """Exports files for record according to view permissions."""
     exported_item = {}
     record = WekoRecord.get_record_by_pid(record_id)
@@ -981,13 +986,21 @@ def _export_item(record_id, format, include_contents):
     if record:
         exported_item['record_id'] = record.id
         exported_item['files'] = []
+        exported_item['path'] = 'recid_' + str(record_id)
 
+        # Create metadata file.
+        with open(tmp_path + "/metadata.json", "w") as file:
+            file.write('{ [metadata] }')
         # First get all of the files, checking for permissions while doing so
         if include_contents:
+            # Get files
             for file in record.files:  # TODO: Temporary processing
                 if check_file_download_permission(record, file.info()):
                     exported_item['files'].append(file.info())
                     # TODO: Then convert the item into the desired format
+                    if file:
+                        shutil.copy2(file.obj.file.uri,
+                                     tmp_path + '/' + file.obj.basename)
 
     return exported_item
 
@@ -1005,16 +1018,32 @@ def export_items(post_data):
         return abort(400)
 
     result = {'items': []}
+    temp_path = tempfile.TemporaryDirectory()
     try:
+        # Set export folder
+        export_path = temp_path.name + '/' + \
+            datetime.utcnow().strftime("%Y%m%d%H%M%S")
         # Double check for limits
         for id in record_ids:
-            result['items'].append(_export_item(id, format, include_contents))
-
+            record_path = export_path + '/recid_' + str(id)
+            os.makedirs(record_path, exist_ok=True)
+            result['items'].append(_export_item(id,
+                                                format,
+                                                include_contents,
+                                                record_path))
+        # Create export info file
+        with open(export_path + "/export.json", "w") as file:
+            file.write(json.dumps(result))
+        # Create bag
+        bagit.make_bag(export_path)
+        # Create download file
+        shutil.make_archive(export_path, 'zip', export_path)
     except Exception as e:
         current_app.logger.error(e)
         flash(_('Error occurred during item export.'), 'error')
         return redirect(url_for('weko_items_ui.export'))
-    return jsonify(result)  # TODO: Change this to file download code
+
+    return send_file(export_path + '.zip')
 
 
 @blueprint.route('/export', methods=['GET', 'POST'])

@@ -21,11 +21,30 @@ WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN = \
     'weko_gridlayout/admin/widget_design.html'
 """Widget Design templates."""
 
+WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE = \
+    'weko_gridlayout/pages/default_page.html'
+"""Widget Design templates."""
+
 WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL = "No Title"
 """Default widget label"""
 
 WEKO_GRIDLAYOUT_DEFAULT_LANGUAGE_CODE = "en"
 """Default widget language code"""
+
+WEKO_GRIDLAYOUT_DEFAULT_DISPLAY_RESULT = "5"
+"""Default new arrivals display result"""
+
+WEKO_GRIDLAYOUT_DEFAULT_NEW_DATE = "5"
+"""Default new arrivals new date"""
+
+WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE = "Access counter"
+"""Access counter type"""
+
+WEKO_GRIDLAYOUT_NEW_ARRIVALS_TYPE = "New arrivals"
+"""New arrivals type"""
+
+WEKO_GRIDLAYOUT_NOTICE_TYPE = "Notice"
+"""Notice type"""
 
 WEKO_XML_FORMAT = \
     '<?xml version="1.0" encoding="UTF-8"?>'
@@ -54,3 +73,9 @@ WEKO_XMLNS_PRISM = \
 WEKO_RDF_SCHEMA = \
     'https://www.w3.org/TR/rdf-schema/'
 """Defaul RDF Schema"""
+
+WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE = 'Menu'
+"""Menu widget type name."""
+
+WEKO_GRIDLAYOUT_WIDGET_DEFAULT_COLOR = '#4169E1'
+"""Default HTML color for widget components."""

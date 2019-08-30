@@ -34,7 +34,7 @@
             {%- set ignore_meta = ('_buckets', '_deposit', '_oai', 'path', 'filemeta', 'item_title', 'item_type_id') -%}
             {%- if files -%}
             <!-- Preview Carousel -->
-            {{ preview_carousel(files=files, pid=pid, el_id=preview_carousel_id, edit_page_prev=True) }}
+            {{ preview_carousel(record=record, files=files, pid=pid, el_id=preview_carousel_id, edit_page_prev=True) }}
             <hr />
             <table class="table table-bordered table-striped">
               <thead>

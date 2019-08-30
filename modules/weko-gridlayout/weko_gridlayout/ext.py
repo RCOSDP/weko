@@ -10,8 +10,10 @@
 from __future__ import absolute_import, print_function
 
 from flask_babelex import gettext as _
+from werkzeug.exceptions import NotFound
 
 from . import config
+from .views import handle_not_found
 
 
 class WekoGridLayout(object):
@@ -19,17 +21,23 @@ class WekoGridLayout(object):
 
     def __init__(self, app=None):
         """Extension initialization."""
-        # TODO: This is an example of translation string with comment. Please
-        # remove it.
-        # NOTE: This is a note to a translator.
-        _('A translation string')
         if app:
             self.init_app(app)
 
     def init_app(self, app):
         """Flask application initialization."""
         self.init_config(app)
+
+        try:  # Check if handler already exists
+            current_handler = app.error_handler_spec[None][404][NotFound]
+        except (KeyError, TypeError):
+            current_handler = None
+
         app.extensions['weko-gridlayout'] = self
+
+        # For widget pages
+        app.register_error_handler(404, lambda error:
+                                   handle_not_found(error, current_handler=current_handler))
 
     def init_config(self, app):
         """Initialize configuration."""

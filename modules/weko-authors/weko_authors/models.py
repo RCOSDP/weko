@@ -111,4 +111,74 @@ class Authors(db.Model, Timestamp):
             return None
 
 
-__all__ = ('Authors', )
+class AuthorsPrefixSettings(db.Model, Timestamp):
+    """Represent an author prefix setting."""
+
+    __tablename__ = 'authors_prefix_settings'
+
+    id = db.Column(db.Integer, primary_key=True, unique=True)
+    """ Id of the authors prefix settings."""
+
+    name = db.Column(db.Text, nullable=False)
+    """ The name of prefix organization."""
+
+    url = db.Column(db.Text, nullable=True)
+    """ The url of prefix organization."""
+
+    created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    """ Created date."""
+
+    updated = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow)
+    """ Updated date."""
+
+    @classmethod
+    def create(cls, name, url):
+        """Create settings."""
+        try:
+            data = AuthorsPrefixSettings()
+            with db.session.begin_nested():
+                data.name = name
+                data.url = url
+                db.session.add(data)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+        return cls
+
+    @classmethod
+    def update(cls, id, name, url):
+        """Update settings."""
+        try:
+            with db.session.begin_nested():
+                data = cls.query.filter_by(id=id).first()
+                data.name = name
+                data.url = url
+                db.session.merge(data)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+        return cls
+
+    @classmethod
+    def delete(cls, id):
+        """Delete settings."""
+        try:
+            with db.session.begin_nested():
+                cls.query.filter_by(id=id).delete()
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+        return cls
+
+
+__all__ = ('Authors', 'AuthorsPrefixSettings', )

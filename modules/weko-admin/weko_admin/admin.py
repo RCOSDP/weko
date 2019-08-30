@@ -235,11 +235,25 @@ class ReportView(BaseView):
         try:
             aggs_query = {
                 "size": 0,
+                "post_filter": {
+                    "term": {
+                        "relation_version_is_last": True
+                    }
+                },
                 "aggs": {
-                    "aggs_term": {
-                        "terms": {
-                            "field": "publish_status",
-                            "order": {"_count": "desc"}
+                    "aggs_filter": {
+                        "filter": {
+                            "term": {
+                                "relation_version_is_last": True
+                            }
+                        },
+                        "aggs": {
+                            "aggs_term": {
+                                "terms": {
+                                    "field": "publish_status",
+                                    "order": {"_count": "desc"}
+                                }
+                            }
                         }
                     }
                 }
@@ -251,11 +265,14 @@ class ReportView(BaseView):
 
             total = 0
             result = {}
-            if aggs_results and 'aggs_term' in aggs_results:
-                for bucket in aggs_results['aggs_term']['buckets']:
-                    bkt = {
-                        'open': bucket['doc_count']} if bucket['key'] == '0' else {
-                        'private': bucket['doc_count']}
+            if aggs_results \
+                    and 'aggs_filter' in aggs_results \
+                    and 'aggs_term' in aggs_results['aggs_filter']:
+                for bucket \
+                        in aggs_results['aggs_filter']['aggs_term']['buckets']:
+                    bkt = {'open': bucket['doc_count']} \
+                        if bucket['key'] == '0' \
+                        else {'private': bucket['doc_count']}
                     result.update(bkt)
                     total = total + bucket['doc_count']
 
@@ -740,8 +757,10 @@ class FilePreviewSettingsView(BaseView):
         settings = AdminSettings.get('convert_pdf_settings')
         if not settings:
             temp = {}
-            temp['path'] = current_app.config.get('FILES_REST_DEFAULT_PDF_SAVE_PATH')
-            temp['pdf_ttl'] = current_app.config.get('FILES_REST_DEFAULT_PDF_TTL')
+            temp['path'] = current_app.config.get(
+                'FILES_REST_DEFAULT_PDF_SAVE_PATH')
+            temp['pdf_ttl'] = current_app.config.get(
+                'FILES_REST_DEFAULT_PDF_TTL')
             settings = AdminSettings.Dict2Obj(temp)
 
         return self.render(
@@ -784,6 +803,14 @@ class ItemExportSettingsView(BaseView):
         return AdminSettings.get('item_export_settings') or \
             AdminSettings.Dict2Obj(
                 current_app.config['WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS'])
+
+
+class SiteInfoView(BaseView):
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        return self.render(
+            current_app.config["WEKO_ADMIN_SITE_INFO"]
+        )
 
 
 style_adminview = {
@@ -903,6 +930,15 @@ item_export_settings_adminview = {
     }
 }
 
+site_info_settings_adminview = {
+    'view_class': SiteInfoView,
+    'kwargs': {
+        'category': _('Setting'),
+        'name': _('Site Info'),
+        'endpoint': 'site_info'
+    }
+}
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -917,4 +953,5 @@ __all__ = (
     'site_license_send_mail_settings_adminview',
     'file_preview_settings_adminview',
     'item_export_settings_adminview',
+    'site_info_settings_adminview'
 )

@@ -328,6 +328,9 @@ ${INVENIO_WEB_INSTANCE} widget_type create \
 
 ${INVENIO_WEB_INSTANCE} widget_type create \
         "Main contents" "Main contents"
+
+${INVENIO_WEB_INSTANCE} widget_type create \
+        "Menu" "Menu"
 ### sphinxdoc-create-widget_type-data-end
 
 # sphinxdoc-set-report-unit-and-target-begin
@@ -363,3 +366,12 @@ ${INVENIO_WEB_INSTANCE} admin_settings create_settings \
        3 "site_license_mail_settings" \
        "{'auto_send_flag': False}"
 # create-admin-settings-end
+
+# create-default-authors-prefix-settings-begin
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "ORCID" "https://orcid.org/"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "CiNii" "https://ci.nii.ac.jp/"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "KAKEN2" "https://kaken.nii.ac.jp/"
+# create-default-authors-prefix-settings-end

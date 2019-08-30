@@ -27,7 +27,8 @@ from io import BytesIO, StringIO
 
 import redis
 import requests
-from flask import current_app, session
+from flask import current_app, escape, session
+from flask_babelex import gettext as __
 from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import Role, userrole
 from invenio_db import db
@@ -1454,3 +1455,146 @@ class FeedbackMail:
 
         """
         FeedbackMailHistory.update_lastest_status(history_id, False)
+
+
+def str_to_bool(str):
+    """Convert string to bool."""
+    return str.lower() in ['true', 't']
+
+
+def validation_site_info(site_info):
+    """Validate site_info.
+
+    :param site_info:
+    :return: result
+    """
+    list_lang_admin = get_admin_lang_setting()
+    list_lang_register = [lang for lang in list_lang_admin if
+                          lang.get('is_registered')]
+    list_lang_code = [lang.get('lang_code') for lang in list_lang_register]
+    site_name = site_info.get("site_name")
+    errors_mess = []
+    errors = []
+
+    weko_admin_site_info_message = {
+        'must_set_at_least_1_site_name_label': __(
+            'Must set at least 1 site name.'),
+        'please_input_site_infomation_for_empty_field_label': __(
+            'Please input site information for empty field.'),
+        'the_same_language_is_set_for_many_site_names_label': __(
+            'The same language is set for many site names.'),
+        'site_name_is_required_label': __('Site name is required.'),
+        'language_not_match_label': __(
+            'Language is deleted from Registered Language of system.'),
+    }
+
+    """check site_name len"""
+    if not site_name:
+        return {
+            'error': weko_admin_site_info_message.get(
+                'must_set_at_least_1_site_name_label'),
+            'data': [],
+            'status': False
+        }
+    elif len(list(filter(lambda a: not a.get('name'), site_name))) == len(
+            site_name):
+        return {
+            'error': weko_admin_site_info_message.get(
+                'must_set_at_least_1_site_name_label'),
+            'data': ['site_name_0'],
+            'status': False
+        }
+    for item in site_name:
+        if not item.get("name").strip():
+            return {
+                'error': weko_admin_site_info_message.get(
+                    'please_input_site_infomation_for_empty_field_label'),
+                'data': ["site_name_" + str(
+                    item.get("index"))],
+                'status': False
+            }
+        check_dub = list(
+            filter(lambda a: a.get("language") == item.get("language"),
+                   site_name))
+        if len(check_dub) >= 2:
+            errors_mess.append(weko_admin_site_info_message.get(
+                'the_same_language_is_set_for_many_site_names_label'))
+            for cd in check_dub:
+                errors.append("site_name_" + str(cd.get(
+                    "index")))
+            return {
+                'error': weko_admin_site_info_message.get(
+                    'the_same_language_is_set_for_many_site_names_label'),
+                'data': errors,
+                'status': False
+            }
+        if item.get("index") > len(list_lang_register):
+            return {
+                'error': weko_admin_site_info_message.get(
+                    'language_not_match_label'),
+                'data': ["site_name_" + str(item.get(
+                    "index"))],
+                'status': False
+            }
+        if not item.get("language") in list_lang_code:
+            return {
+                'error': weko_admin_site_info_message.get(
+                    'language_not_match_label'),
+                'data': ["site_name_" + str(item.get(
+                    "index"))],
+                'status': False
+            }
+    return {
+        'error': '',
+        'data': [],
+        'status': True
+    }
+
+
+def format_site_info_data(site_info):
+    """
+    Format site info data.
+
+    :param site_info:
+    :return: result
+    """
+    result = dict()
+    site_name = []
+    list_site_name = site_info.get('site_name') or []
+    for sn in list_site_name:
+        site_name.append({
+            "index": sn.get('index'),
+            "name": sn.get('name').strip(),
+            "language": sn.get('language'),
+        })
+    result['site_name'] = site_name
+    result['copy_right'] = site_info.get('copy_right').strip()
+    result['description'] = site_info.get('description').strip()
+    result['keyword'] = site_info.get('keyword').strip()
+    result['favicon'] = site_info.get('favicon')
+    result['favicon_name'] = site_info.get('favicon_name')
+    return result
+
+
+def get_site_name_for_current_language(site_name):
+    """
+    Get site name for current language system.
+
+    :param site_name:
+    :return: title
+    """
+    from invenio_i18n.ext import current_i18n
+    lang_code_english = 'en'
+    if site_name:
+        if hasattr(current_i18n, 'language'):
+            for sn in site_name:
+                if sn.get('language') == current_i18n.language:
+                    return sn.get("name")
+            for sn in site_name:
+                if sn.get('language') == lang_code_english:
+                    return sn.get("name")
+            return site_name[0].get("name")
+        else:
+            return site_name[0].get("name")
+    else:
+        return ''

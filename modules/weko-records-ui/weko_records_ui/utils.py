@@ -24,8 +24,12 @@ from decimal import Decimal
 
 from flask import current_app
 from invenio_db import db
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records.models import RecordMetadata
 from weko_admin.models import AdminSettings
+from weko_deposit.api import WekoDeposit
 from weko_records.api import ItemsMetadata, ItemTypes
+from weko_records.models import ItemMetadata
 from weko_workflow.models import ActionStatusPolicy, Activity
 
 from .permissions import check_user_group_permission
@@ -154,3 +158,56 @@ def is_billing_item(item_type_id):
                     'groupsprice' in properties[meta_key]['items']['properties']:
                 return True
         return False
+
+
+def soft_delete(recid):
+    """Soft delete item."""
+    try:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=recid).first()
+        if not pid:
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', object_uuid=recid).first()
+        if pid.status == PIDStatus.DELETED:
+            return
+        depid = PersistentIdentifier.query.filter_by(
+            pid_type='depid', object_uuid=pid.object_uuid).first()
+        if depid:
+            rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+            dep = WekoDeposit(rec.json, rec)
+            dep['path'] = []
+            dep.indexer.update_path(dep, update_revision=False)
+        pids = PersistentIdentifier.query.filter_by(object_uuid=pid.object_uuid)
+        for p in pids:
+            p.status = PIDStatus.DELETED
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        raise(ex)
+
+
+def restore(recid):
+    """Restore item."""
+    try:
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=recid).first()
+        if not pid:
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', object_uuid=recid).first()
+        if pid.status != PIDStatus.DELETED:
+            return
+        pid.status = PIDStatus.REGISTERED
+        depid = PersistentIdentifier.query.filter_by(
+            pid_type='depid', object_uuid=pid.object_uuid).first()
+        if depid:
+            depid.status = PIDStatus.REGISTERED
+            rec = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+            dep = WekoDeposit(rec.json, rec)
+            dep.indexer.update_path(dep, update_revision=False)
+        pids = PersistentIdentifier.query.filter_by(object_uuid=pid.object_uuid)
+        for p in pids:
+            p.status = PIDStatus.REGISTERED
+        db.session.commit()
+    except Exception as ex:
+        db.session.rollback()
+        raise(ex)

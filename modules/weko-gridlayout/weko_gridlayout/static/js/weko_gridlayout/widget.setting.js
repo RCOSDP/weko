@@ -1,24 +1,45 @@
+const { useState, useEffect  } = React;
+
 const MAIN_CONTENT_TYPE = "Main contents";
 const FREE_DESCRIPTION_TYPE = "Free description";
 const NOTICE_TYPE = "Notice";
 const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
-class ComponentSelectField extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            repositoryId: '0',
-            selectOptions: [],
-        };
-        this.handleChange = this.handleChange.bind(this);
-    }
+const THEME_SETTING = [{"value" : 'default', "text": "Default"}, {"value": "simple", "text":"Simple"}, {"value": "side_line", "text":"Side Line"}];
+const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}];
+const MENU_TYPE = "Menu";
+const DEFAULT_COLOR = "#4169E1";
 
-    componentDidMount() {
-        fetch(this.props.url_request)
+function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
+    if(key_binding == "border_style" && !initialValue){
+        initialValue = "solid";
+    }
+    const [value, setValue] = useState(initialValue);
+    function handleChange(e) {
+        setValue(e.target.value);
+        getValueOfField(key_binding, event.target.value);
+        if(componentHandle) {
+            componentHandle(key_binding, event.target.value);
+        }
+        event.preventDefault();
+    }
+    return {
+      value,
+      onChange: handleChange,
+    };
+  }
+
+const ComponentSelectField = function(props){
+    const selectedData = userSelectedInput(props.data_load, props.getValueOfField, props.key_binding);
+    const [selectOptions, setSelectOptions] = useState([]);
+
+    useEffect(() => {
+        let options = []
+        if(props.url_request){
+            fetch(props.url_request)
             .then(res => res.json())
             .then(
                 (result) => {
-                    let options = []
                     if (result.options) {
                         options = result.options.map((option) => {
                             return (
@@ -32,34 +53,64 @@ class ComponentSelectField extends React.Component {
                             )
                         });
                     }
-                    this.setState({
-                        selectOptions: options,
-                        repositoryId: this.props.data_load
-                    });
+                    setSelectOptions(options);
                 },
 
                 (error) => {
                     console.log(error);
                 }
             )
+        }
+        else{
+            if (props.key_binding == "border_style"){
+                props.getValueOfField(props.key_binding, props.data_load || "solid");
+            }
+            else{
+                props.getValueOfField(props.key_binding, props.data_load || props.data[0].text);
+            }
+            options = props.data.map((option) => {
+                return (
+                    <option key={option.value} value={option.value}>{option.text}</option>
+                )
+            });
+            setSelectOptions(options);
+        }
+    },[]);
 
-    }
+    return (
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}{props.is_required ? <span className="style-red">*</span>:null}</label>
+            <div class="controls col-xs-6">
+                <select onChange={(event) => this.handleChange(event)} className="form-control" name={props.name} {...selectedData}>
+                    {props.url_request ? <option value="0">Please select the&nbsp;{props.key_binding}</option> : null}
+                    {selectOptions}
+                </select>
+            </div>
+        </div>
+    )
+}
 
-    handleChange(event) {
-        this.setState({ repositoryId: event.target.value });
-        this.props.getValueOfField(this.props.key_binding, event.target.value);
-        event.preventDefault();
+class ComponentRadioSelect extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+          menu_orientation: this.props.data_load,
+        }
     }
 
     render() {
         return (
-            <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
-                <div class="controls col-xs-6">
-                    <select value={this.state.repositoryId} onChange={this.handleChange} className="form-control" name={this.props.name}>
-                        <option value="0">Please select the&nbsp;{this.props.key_binding}</option>
-                        {this.state.selectOptions}
-                    </select>
+            <div class="form-group row">
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">Orientation</label>
+                <div className="controls col-xs-2">
+                    <label className="radio-inline" htmlFor="input_type">
+                        <input name="menu_orientation" value="horizontal" type="radio" onChange={this.props.handleChange} defaultChecked={this.state.menu_orientation == 'horizontal'} />
+                        Horizontal
+                    </label>
+                    <label class="radio-inline" htmlFor="input_type">
+                        <input name="menu_orientation" value="vertical" type="radio" onChange={this.props.handleChange} defaultChecked={this.state.menu_orientation == 'vertical'} />
+                        Vertical
+                     </label>
                 </div>
             </div>
         )
@@ -102,7 +153,7 @@ class ComponentTextboxField extends React.Component {
     render() {
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}{this.props.is_required ? <span className="style-red">*</span>:null}</label>
                 <div class="controls col-xs-6">
                     <input name={this.props.name} id='label' type="text" value={this.state.value} onChange={this.handleChange} className="form-control" />
                 </div>
@@ -111,62 +162,93 @@ class ComponentTextboxField extends React.Component {
     }
 }
 
-class ComponentSelectColorFiled extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            color: '#4169E1',
-        };
-        this.handleChange = this.handleChange.bind(this);
-    }
 
-    componentDidMount() {
-        this.setState({
-            color: this.props.data_load
-        })
-    }
+const ComponentTextboxForAccessCounter = function(props){
+    const [value, setValue] = useState(props.value);
 
-    handleChange(event) {
-        this.setState({ color: event.target.value });
-        this.props.getValueOfField(this.props.key_binding, event.target.value);
+    function handleChange(event){
+        setValue(event.target.value);
+        props.handleChange(props.key_binding, event.target.value.trim());
         event.preventDefault();
     }
 
-    render() {
-        return (
-            <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                <div className="controls col-xs-2">
-                    <input name={this.props.name} type="color" className="style-select-color" name="favcolor" value={this.state.color} onChange={this.handleChange} />
-                </div>
+    useEffect(() => {
+        if(props.data_change){
+            let data = props.value || "";
+            setValue(data);
+        }
+        props.getValueOfField("language", false);
+      }, [props.data_change]);
+
+    useEffect(() => {
+        setValue(props.value);
+      }, [props.value])
+
+    return(
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
+            <div class="controls col-xs-6">
+                <input name={props.name} type="text" value={value} onChange={(event) => handleChange(event)} className="form-control" />
             </div>
-        )
-    }
+        </div>
+    )
 }
 
-class ComponentCheckboxField extends React.Component {
-    constructor(props) {
-        super(props);
-        this.handleChange = this.handleChange.bind(this);
-        this.state = {
-            is_default_Checked: this.props.data_load || false,
-        }
+const ComponentSelectColorFiled = function(props){
+    let initColor = '';
+    if(props.key_binding == "label_text_color"){
+        initColor = '#333333';
     }
-
-    handleChange(event) {
-        this.props.getValueOfField(this.props.key_binding, event.target.checked);
+    else if(props.key_binding == "background_color"){
+        initColor = '#FFFFFF';
     }
+    else if(props.key_binding == "label_color"){
+        initColor = '#F5F5F5';
+    }
+    else{
+        initColor = '#DDDDDD';
+    }
+    const color = userSelectedInput(props.data_load || initColor, props.getValueOfField, props.key_binding, props.handleChange);
 
-    render() {
-        return (
-            <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
-                <div class="controls col-xs-1">
-                    <input name={this.props.name} type="checkbox" onChange={this.handleChange} defaultChecked={this.state.is_default_Checked} />
-                </div>
+    useEffect(() => {
+        props.getValueOfField(props.key_binding, props.data_load || initColor);
+        // if(this.props.handleChange != undefined) {
+        //     this.props.handleChange(this.props.key_binding, event.target.value);
+        // }
+    }, [])
+
+    return (
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
+            <div className="controls col-xs-2">
+                <input name={props.name} type="color" className="style-select-color" {...color} />
             </div>
-        )
+        </div>
+    )
+}
+
+function userCheckboxInput(initialValue, getValueOfField, key_binding) {
+    const [value, setValue] = useState(initialValue);
+    function handleChange(e) {
+        getValueOfField(key_binding, event.target.checked);
     }
+    return {
+        defaultChecked: value,
+        onChange: handleChange,
+    };
+  }
+
+const ComponentCheckboxField = function(props){
+    const is_default_Checked = userCheckboxInput(props.data_load || false, props.getValueOfField, props.key_binding);
+
+    return (
+        <div className="form-group row">
+            <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}</label>
+            <div class="controls col-xs-1">
+                <input name={props.name} type="checkbox" {...is_default_Checked}/>
+            </div>
+        </div>
+    )
 }
 
 class ComponentFieldContainSelectMultiple extends React.Component {
@@ -175,28 +257,55 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.state = {
             selectOptions: [],
             UnauthorizedOptions: [],
-            unauthorList: []
+            unauthorList: [],
+            language: this.props.language,
         };
         this.handleChange = this.handleChange.bind(this);
+        this.updateGlobalValues = this.updateGlobalValues.bind(this);
         this.handleMoveRightClick = this.handleMoveRightClick.bind(this);
         this.handleMoveLeftClick = this.handleMoveLeftClick.bind(this);
+        this.handleMoveUpClick = this.handleMoveUpClick.bind(this);
+        this.handleMoveDownClick = this.handleMoveDownClick.bind(this);
         this.onSelect = this.onSelect.bind(this);
+        this.initSelectBox = this.initSelectBox.bind(this);
     }
     componentDidMount() {
-        fetch(this.props.url_request)
+        this.initSelectBox(this.props.url_request);
+    }
+
+    handleChange(event) {
+        this.setState({ repositoryId: event.target.value });
+        event.preventDefault();
+    }
+
+
+    initSelectBox(url) {
+        fetch(url)
             .then(res => res.json())
             .then(
                 (result) => {
                     let unOptions = [];
-                    let options = result.map((option) => {
-                        if (this.props.is_edit == true) {
-                            let role_array = this.props.data_load.split(',');
-                            if (role_array.includes(option.id.toString())) {
-                                return (
-                                    <option key={option.id} value={option.id}>{option.name}</option>
-                                )
+                    let options = [];
+                    let orderedOptions = [];
+
+                    // Special case for when we use this for page services
+                    if(typeof result == 'object' && 'page-list' in result) {
+                        result = result['page-list']['data'];
+                    }
+
+                    // Display in order according to saved settings FIXME: High complexity, find another way
+                    let current_selections = this.props.data_load;
+                    for (let i = 0; i < current_selections.length; i++) {
+                        for (let j = 0; j < result.length; j++) {
+                            if(current_selections[i] == result[j].id.toString()) {
+                                orderedOptions.push(<option key={result[j].id} value={result[j].id}>{result[j].name}</option>);
                             }
-                            else {
+                        }
+                    }
+
+                    options = result.map((option) => {
+                        if (this.props.is_edit == true) {
+                            if (!current_selections.includes(option.id.toString())) {
                                 let innerhtml = <option key={option.id} value={option.id}>{option.name}</option>;
                                 unOptions.push(innerhtml);
                             }
@@ -207,22 +316,21 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                             )
                         }
                     });
+
+                    if(this.props.is_edit == true) {  // Only add ordered options if editing
+                        options = orderedOptions.concat(options);
+                    }
+
                     this.setState({
                         selectOptions: options,
                         UnauthorizedOptions: unOptions
                     });
                 },
-
                 (error) => {
                     console.log(error);
                 }
             )
 
-    }
-
-    handleChange(event) {
-        this.setState({ repositoryId: event.target.value });
-        event.preventDefault();
     }
 
     getListOption(id) {
@@ -235,6 +343,17 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             }
         }
         return result;
+    }
+
+    // Get the new page titles on change of lang
+    componentWillReceiveProps(nextProps) {
+        if(nextProps.language != this.state.language &&
+           this.props.key_binding == "menu_show_pages" ) {
+              this.setState({language: nextProps.language});
+              let loadPagesURL = "/api/admin/load_widget_design_pages/" +
+                  this.props.repositoryId + "/" + nextProps.language;
+              this.initSelectBox(loadPagesURL); // Re-ender tables select box
+        }
     }
 
     isValueExist(item, array) {
@@ -253,6 +372,14 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             return false;
         }
         return true;
+    }
+
+    updateGlobalValues(optionsList) {
+        let data = [];
+        for (let option in optionsList) {
+            data.push(optionsList[option].props.value);
+        }
+        this.props.getValueOfField(this.props.key_binding, data);
     }
 
     handleMoveRightClick(event) {
@@ -277,11 +404,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             UnauthorizedOptions: selectedOptions,
             unauthorList: []
         });
-        let data = [];
-        for (let option in nonSelectOptions) {
-            data.push(nonSelectOptions[option].props.value);
-        }
-        this.props.getValueOfField(this.props.key_binding, data);
+        this.updateGlobalValues(nonSelectOptions);
     }
 
     handleMoveLeftClick(event) {
@@ -312,11 +435,44 @@ class ComponentFieldContainSelectMultiple extends React.Component {
             selectOptions: authorizedOptions,
             UnauthorizedOptions: remainOption
         });
-        let data = [];
-        for (let option in authorizedOptions) {
-            data.push(authorizedOptions[option].props.value);
+        this.updateGlobalValues(authorizedOptions);
+    }
+
+    handleMoveUpClick(event) {
+        let options = document.getElementById(this.props.authorSelect).options;
+        let reOrderedOptions = this.getListOption(this.props.authorSelect);
+        for (let option in options) {
+            if(options[option].value) {
+                if (options[option].selected && option > 0) {
+                    let prevOption = reOrderedOptions.splice((option - 1), 1)[0];
+                    reOrderedOptions.splice(option, 0, prevOption);
+                }
+            }
         }
-        this.props.getValueOfField(this.props.key_binding, data);
+        this.setState({ selectOptions: reOrderedOptions });
+        this.updateGlobalValues(reOrderedOptions);
+    }
+
+    handleMoveDownClick(event) {
+      let options = document.getElementById(this.props.authorSelect).options;
+      let reOrderedOptions = this.getListOption(this.props.authorSelect);
+      for (let option in options) {
+          if(options[option].value) {
+              if (options[option].selected && option < (options.length - 1)) {
+                  let selectedOption = reOrderedOptions.splice(option, 1)[0];
+                  reOrderedOptions.splice((option + 1), 0, selectedOption);
+              }
+          }
+      }
+      this.setState({ selectOptions: reOrderedOptions });
+
+      let data = [];
+      for (let i = 0;  i < reOrderedOptions.length; i++) {
+          data.push(reOrderedOptions[i].props.value);
+      }
+      this.props.getValueOfField(this.props.key_binding, data);
+
+      // this.updateGlobalValues(reOrderedOptions);
     }
 
     onSelect(event) {
@@ -333,14 +489,30 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
     render() {
+        let rowClass = "col-xs-5";
+        let upDownArrows = null;
+        if(this.props.enableUpDownArrows) {
+          rowClass = "col-xs-4";
+          upDownArrows = (
+              <div className="col-xs-2">
+                  <br />
+                  <div className="style-center-align">
+                      <div className="buttons style-button-container">
+                          <input type="button" value="&uarr;" className="style-button-element" onClick={this.handleMoveUpClick} />
+                          <input type="button" value="&darr;" className="style-button-element" onClick={this.handleMoveDownClick} />
+                      </div>
+                  </div>
+              </div>
+          );
+        }
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}</label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right" >{this.props.name}</label>
                 <div class="controls col-xs-9">
-                    <fieldset className="form-group style-container" >
-                        <span>Role</span><br />
-                        <div className="col-xs-5 style-element" >
-                            <span >Authorized</span><br />
+                    <fieldset className="form-group style-container">
+                        { upDownArrows }
+                        <div className={"style-element " + rowClass}>
+                            <span>{this.props.leftBoxTitle}</span><br />
                             <select name={this.props.name} multiple className="style-select-left" id={this.props.authorSelect} name={this.props.authorSelect}>
                                 {this.state.selectOptions}
                             </select>
@@ -354,9 +526,10 @@ class ComponentFieldContainSelectMultiple extends React.Component {
                                 </div>
                             </div>
                         </div>
-                        <div className="col-xs-5 style-element style-element-right">
-                            <span>Unauthorized</span><br />
-                            <select multiple value={this.state.unauthorList} className="style-select-right" onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
+                        <div className={"style-element style-element-right " + rowClass }>
+                            <span>{this.props.rightBoxTitle}</span><br />
+                            <select multiple value={this.state.unauthorList} className="style-select-right"
+                                onChange={this.onSelect} id={this.props.unauthorSelect} name={this.props.unauthorSelect}>
                                 {this.state.UnauthorizedOptions}
                             </select>
                         </div>
@@ -516,9 +689,11 @@ class ExtendComponent extends React.Component {
         this.handleChangeRssFeed = this.handleChangeRssFeed.bind(this);
         this.generateNewDate = this.generateNewDate.bind(this);
         this.generateDisplayResult = this.generateDisplayResult.bind(this);
+        this.handleOrientationRadio = this.handleOrientationRadio.bind(this);
+        this.handleChangeMenuColor = this.handleChangeMenuColor.bind(this);
     }
     static getDerivedStateFromProps(nextProps, prevState) {
-        if (!prevState.write_more && nextProps.data_load.more_description) {
+        if (nextProps.data_load && !prevState.write_more && nextProps.data_load.more_description) {
             return {
                 write_more: true,
                 settings: nextProps.data_load
@@ -558,6 +733,9 @@ class ExtendComponent extends React.Component {
                 } else {
                     hide_the_rest.value = '';
                 }
+            }
+            if (nextProps.type == ACCESS_COUNTER) {
+                setting["access_counter"] = nextProps.init_value
             }
             return {
                 settings: setting
@@ -604,32 +782,7 @@ class ExtendComponent extends React.Component {
 
     handleChange(field, value) {
         let data = this.state.settings;
-        switch (field) {
-            case "description":
-                data["description"] = value;
-                break;
-            case "read_more":
-                data["read_more"] = value;
-                break;
-            case "more_description":
-                data["more_description"] = value;
-                break;
-            case "hide_the_rest":
-                data["hide_the_rest"] = value;
-                break;
-            case "access_counter":
-                data["access_counter"] = value;
-                break;
-            case "new_dates":
-                data["new_dates"] = value;
-                break;
-            case "display_result":
-                data["display_result"] = value;
-                break;
-            case "rss_feed":
-                data["rss_feed"] = value;
-                break;
-        }
+        data[field] = value;
         this.setState({
             settings: data
         })
@@ -668,6 +821,7 @@ class ExtendComponent extends React.Component {
         setting['access_counter'] = event.target.value;
         this.setState({ settings: setting });
         this.handleChange("access_counter", event.target.value);
+        this.props.getValueOfField('accessInitValue', event.target.value);
     }
 
     handleChangeNewDates(event) {
@@ -676,17 +830,33 @@ class ExtendComponent extends React.Component {
         this.setState({ settings: setting });
         this.handleChange("new_dates", event.target.value);
     }
+
     handleChangeDisplayResult(event){
         let setting = this.state.settings;
         setting['display_result'] = event.target.value;
         this.setState({ settings: setting });
         this.handleChange("display_result", event.target.value);
     }
+
     handleChangeRssFeed(event){
         let setting = this.state.settings;
         setting['rss_feed'] = event.target.checked;
         this.setState({ settings: setting });
         this.handleChange("rss_feed", event.target.checked);
+    }
+
+    handleChangeMenuColor(event, part){  //No longer used???
+        let setting = this.state.settings;
+        setting[part] = event.target.value;
+        this.setState({ settings: setting });
+        this.handleChange(part, event.target.value);
+    }
+
+    handleOrientationRadio(event){
+        let setting = this.state.settings;
+        setting['menu_orientation'] = event.target.value;
+        this.setState({ settings: setting });
+        this.handleChange('menu_orientation', event.target.value);
     }
 
     render() {
@@ -752,10 +922,21 @@ class ExtendComponent extends React.Component {
         }
         else if(this.state.type == ACCESS_COUNTER){
             return(
-                <div className="form-group row">
-                    <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
-                    <div class="controls col-xs-3">
-                        <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter} onChange={this.handleChangeAccessCounter} className="form-control" />
+                <div>
+                    <div className="form-group row">
+                        <label htmlFor="Access_counter" className="control-label col-xs-2 text-right">Access counter initial value</label>
+                        <div class="controls col-xs-3">
+                            <input name="Access_counter" id='Access_counter' type="input" value={this.state.settings.access_counter || "0"} onChange={this.handleChangeAccessCounter} className="form-control" />
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <ComponentTextboxForAccessCounter name = "Preceding message" key_binding="preceding_message" handleChange={this.handleChange} getValueOfField={this.props.getValueOfField} value = {this.state.settings.preceding_message || ""} data_change={this.props.data_change}/>
+                    </div>
+                    <div className="form-group">
+                        <ComponentTextboxForAccessCounter name = "Following message" key_binding="following_message" handleChange={this.handleChange} getValueOfField={this.props.getValueOfField} value = {this.state.settings.following_message || ""} data_change={this.props.data_change}/>
+                    </div>
+                    <div className="form-group">
+                        <ComponentTextboxForAccessCounter name = "Other message to display" key_binding="other_message" handleChange={this.handleChange} getValueOfField={this.props.getValueOfField} value = {this.state.settings.other_message || ""} data_change={this.props.data_change}/>
                     </div>
                 </div>
             )
@@ -784,6 +965,24 @@ class ExtendComponent extends React.Component {
                 </div>
             )
         }
+        else if(this.state.type == MENU_TYPE){
+            let loadPagesURL = "/api/admin/load_widget_design_pages/" +
+                this.props.repositoryId + "/" + this.props.language;
+            return(
+                <div>
+                  <ComponentRadioSelect handleChange={this.handleOrientationRadio} getValueOfField={this.props.getValueOfField} name="Display Orientation" key_binding="menu_orientation" data_load={this.state.settings.menu_orientation || 'horizontal'} />
+                  <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Background Color" key_binding="menu_bg_color" data_load={this.state.settings.menu_bg_color} />
+                  <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Active Background Color" key_binding="menu_active_bg_color" data_load={this.state.settings.menu_active_bg_color} />
+                  <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Default Color" key_binding="menu_default_color" data_load={this.state.settings.menu_default_color} />
+                  <ComponentSelectColorFiled getValueOfField={this.props.getValueOfField} handleChange={this.handleChange} name="Active Color" key_binding="menu_active_color" data_load={this.state.settings.menu_active_color} />
+                  <ComponentFieldContainSelectMultiple getValueOfField={this.handleChange} name="Show/Hide Pages"
+                      authorSelect="showPageSelect" unauthorSelect="hidePageSelect" url_request={loadPagesURL}
+                      key_binding="menu_show_pages" data_load={this.state.settings.menu_show_pages || []} is_edit={this.props.is_edit}
+                      leftBoxTitle="Show" rightBoxTitle="Hide" enableUpDownArrows={true} data_change={this.props.data_change}
+                      language={this.props.language} repositoryId={this.props.repositoryId} />
+                </div>
+            )
+        }
         else {
             return (
                 <div>
@@ -792,7 +991,6 @@ class ExtendComponent extends React.Component {
         }
     }
 }
-
 
 class ComponentButtonLayout extends React.Component {
     constructor(props) {
@@ -828,16 +1026,22 @@ class ComponentButtonLayout extends React.Component {
             let currentLangData = {
                 label: currentLabel,
             }
-            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE){
+            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE || data['widget_type'] == ACCESS_COUNTER){
                 currentLangData["description"] = currentDescription;
             }
             multiLangData[currentLanguage] = currentLangData;
         }else {
             delete multiLangData[currentLanguage];
         }
-
+        if ((data['widget_type'] + "") == ACCESS_COUNTER) {
+            for (let [key, value] of Object.entries(multiLangData)) {
+                value.description['access_counter'] = data.accessInitValue
+            }
+        }
         this.props.getValueOfField('multiLangData', multiLangData);
+        this.props.getValueOfField('accessInitValue', data.accessInitValue);
         data['multiLangSetting'] = multiLangData;
+        delete data['accessInitValue']
 
         let request = {
             flag_edit: this.props.is_edit,
@@ -1097,7 +1301,8 @@ class ComponentLanguage extends React.Component {
                         this.props.initEditData(selectedLang);
                     }
                     this.displayOptions(langList, registeredLang, langName, true, selectedLang);
-                    this.props.getValueOfField('lang', langList[0]);
+                    // this.props.getValueOfField('lang', langList[0]);
+                    this.props.getValueOfField('lang', defaultLang);
                     this.setState({
                         languageList: langList,
                         registeredLanguage: registeredLang,
@@ -1128,9 +1333,9 @@ class ComponentLanguage extends React.Component {
             registeredLanguage.forEach(function (lang) {
                 let innerHTML;
                 if (lang == selected) {
-                    innerHTML = <option value={lang} style={{ fontWeight: 'bold' }} selected>{languageNameList[lang]}&nbsp;(Registered)</option>;
+                    innerHTML = <option key={lang} value={lang} style={{ fontWeight: 'bold' }} selected>{languageNameList[lang]}&nbsp;(Registered)</option>;
                 }else {
-                    innerHTML = <option value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
+                    innerHTML = <option key={lang} value={lang} style={{ fontWeight: 'bold' }}>{languageNameList[lang]}&nbsp;(Registered)</option>;
                 }
                 optionList.push(innerHTML);
             });
@@ -1138,11 +1343,11 @@ class ComponentLanguage extends React.Component {
         languageList.forEach(function (lang) {
             let innerHTML;
             if ($.isEmptyObject(registeredLanguage) && lang == state.defaultLanguage && isReset) {
-                innerHTML = <option value={lang} selected>{languageNameList[lang]}</option>;
+                innerHTML = <option key={lang} value={lang} selected>{languageNameList[lang]}</option>;
             } else if (lang == selected) {
-                innerHTML = <option value={lang} selected>{languageNameList[lang]}</option>;
+                innerHTML = <option key={lang} value={lang} selected>{languageNameList[lang]}</option>;
             } else {
-                innerHTML = <option value={lang}>{languageNameList[lang]}</option>;
+                innerHTML = <option key={lang} value={lang}>{languageNameList[lang]}</option>;
             }
             optionList.push(innerHTML);
         });
@@ -1153,6 +1358,7 @@ class ComponentLanguage extends React.Component {
 
     handleChange(event) {
         var language = event.target.value;
+        this.props.getValueOfField('lang', language);  // Update what language is selected for other portions
         if (this.state.selectedLanguage == "0") {
             this.setState({
                 selectedLanguage: language
@@ -1198,7 +1404,7 @@ class ComponentLanguage extends React.Component {
     render() {
         return (
             <div className="form-group row">
-                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}<span className="style-red">*</span></label>
+                <label htmlFor="input_type" className="control-label col-xs-2 text-right">{this.props.name}{this.props.is_required ? <span className="style-red">*</span>:null}</label>
                 <div class="controls col-xs-6">
                     <select onChange={this.handleChange} className="form-control" id="language">
                         {this.state.options}
@@ -1216,10 +1422,12 @@ class MainLayout extends React.Component {
             repository: this.props.data_load.repository_id,
             widget_type: this.props.data_load.widget_type,
             label: '',
+            theme: this.props.data_load.theme,
             label_color: this.props.data_load.label_color,
-            frame_border: this.props.data_load.frame_border,
+            label_text_color: this.props.data_load.label_text_color,
+            border_style: this.props.data_load.border_style,
+            label_enable: this.props.data_load.label_enable,
             frame_border_color: this.props.data_load.frame_border_color,
-            text_color: this.props.data_load.text_color,
             background_color: this.props.data_load.background_color,
             browsing_role: this.props.data_load.browsing_role,
             edit_role: this.props.data_load.edit_role,
@@ -1228,10 +1436,12 @@ class MainLayout extends React.Component {
             language: this.props.data_load.language,
             multiLangSetting: this.props.data_load.multiLangSetting,
             multiLanguageChange: false,
+            accessInitValue: 0
         };
         this.getValueOfField = this.getValueOfField.bind(this);
         this.storeMultiLangSetting = this.storeMultiLangSetting.bind(this);
         this.initEditData = this.initEditData.bind(this);
+        this.accessCounterValidation = this.accessCounterValidation.bind(this);
     }
 
     getValueOfField(key, value) {
@@ -1253,14 +1463,14 @@ class MainLayout extends React.Component {
             case 'label_color':
                 this.setState({ label_color: value });
                 break;
-            case 'frame_border':
-                this.setState({ frame_border: value });
+            case 'label_text_color':
+                this.setState({ label_text_color: value });
+                    break;
+            case 'label_enable':
+                this.setState({ label_enable: value });
                 break;
             case 'frame_border_color':
                 this.setState({ frame_border_color: value });
-                break;
-            case 'text_color':
-                this.setState({ text_color: value });
                 break;
             case 'background_color':
                 this.setState({ background_color: value });
@@ -1282,9 +1492,19 @@ class MainLayout extends React.Component {
                 break;
             case 'lang':
                 this.setState({ language: value });
+                console.log('Current selected lang: ' + value);
                 break;
             case 'multiLangData':
                 this.setState({ multiLangSetting: value });
+                break;
+            case "theme":
+                this.setState({theme: value});
+                break;
+            case "border_style":
+                this.setState({border_style: value});
+                break;
+            case 'accessInitValue':
+                this.setState({ accessInitValue: value });
                 break;
         }
     }
@@ -1294,12 +1514,17 @@ class MainLayout extends React.Component {
             return;
         }
         let multiLangData = this.state.multiLangSetting[selectedLang];
+        let accessInitValue = 0
+        if ((this.state.widget_type+ "") == ACCESS_COUNTER && multiLangData.description) {
+            accessInitValue = multiLangData.description.access_counter
+        }
         if (multiLangData) {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER){
                 this.setState({
                     multiLanguageChange: true,
                     label: multiLangData['label'],
-                    settings: multiLangData['description']
+                    settings: multiLangData['description'],
+                    accessInitValue: accessInitValue
                 });
             }
             else{
@@ -1327,14 +1552,27 @@ class MainLayout extends React.Component {
                 result = !noData;
             }
         }
+
         let setting = {
             label: this.state.label,
         };
-        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
-            setting["description"] = this.state.settings
+        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER ){
+            setting["description"] = this.state.settings;
+        }
+        let accessInitValue = this.state.accessInitValue;
+        if ((this.state.widget_type+ "") == ACCESS_COUNTER) {
+            if (setting.description.access_counter) {
+                accessInitValue = setting.description.access_counter;
+            }else {
+                setting.description.access_counter = accessInitValue;
+            }
+        }
+        if ((this.state.widget_type+ "") == ACCESS_COUNTER && this.accessCounterValidation(setting)) {
+            delete setting.description["access_counter"]
+            result = false;
         }
         let storage = this.state.multiLangSetting;
-        if (this.state.label || !$.isEmptyObject(this.state.settings)) {
+        if (setting.label || !$.isEmptyObject(setting.description)) {
             storage[lang] = setting;
         } else {
             if (storage[lang]) {
@@ -1344,12 +1582,13 @@ class MainLayout extends React.Component {
         if (this.state.multiLangSetting[newLanguage]) {
             let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
             let currentSetting = this.state.multiLangSetting[newLanguage]['description'];
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type + "") == ACCESS_COUNTER){
                 this.setState({
                     label: currentLabel,
                     multiLanguageChange: true,
                     language: newLanguage,
-                    settings: currentSetting
+                    settings: currentSetting,
+                    accessInitValue: accessInitValue
                 });
             }
             else{
@@ -1357,22 +1596,25 @@ class MainLayout extends React.Component {
                     label: currentLabel,
                     multiLanguageChange: true,
                     language: newLanguage,
+                    accessInitValue: accessInitValue
                 });
             }
         } else {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type + "") == ACCESS_COUNTER){
                 this.setState({
                     label: '',
                     settings: {},
                     multiLanguageChange: true,
-                    language: newLanguage
+                    language: newLanguage,
+                    accessInitValue: accessInitValue
                 });
             }
             else{
                 this.setState({
                     label: '',
                     multiLanguageChange: true,
-                    language: newLanguage
+                    language: newLanguage,
+                    accessInitValue: accessInitValue
                 });
             }
         }
@@ -1382,49 +1624,84 @@ class MainLayout extends React.Component {
         return result;
     }
 
+    accessCounterValidation(setting) {
+        if (setting.label != "" ) {
+            return false;
+        }
+        if (setting.description.preceding_message) {
+            return false;
+        }
+        if (setting.description.following_message) {
+            return false;
+        }
+        if (setting.description.other_message) {
+            return false;
+        }
+        return true;
+    }
+
     render() {
         return (
             <div>
                 <br />
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository} />
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository || '0'}  is_required = {true}/>
                 </div>
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} />
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} is_required = {true}/>
                 </div>
                 <div className="row">
                     <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit} initEditData={this.initEditData}
-                        storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} loaded_data={this.props.data_load.multiLangSetting} />
+                        storeMultiLangSetting={this.storeMultiLangSetting} data_load={this.state.multiLangSetting} type={this.state.widget_type} loaded_data={this.props.data_load.multiLangSetting} is_required = {true}/>
                 </div>
                 <div className="row">
-                    <ComponentTextboxField getValueOfField={this.getValueOfField} name="Label" key_binding="label" data_load={this.state.label} data_change={this.state.multiLanguageChange} type={this.state.widget_type} />
+                    <ComponentTextboxField getValueOfField={this.getValueOfField} name="Name" key_binding="label" data_load={this.state.label} data_change={this.state.multiLanguageChange} type={this.state.widget_type} is_required = {true}/>
                 </div>
+                <div className="row">
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Theme" data = {THEME_SETTING} key_binding="theme" data_load={this.state.theme} is_required = {false}/>
+                </div>
+                <div className="row">
+                    <ComponentCheckboxField name="Label Enable" getValueOfField={this.getValueOfField} key_binding="label_enable" data_load={this.state.label_enable} />
+                </div>
+                {this.state.label_enable ?
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Color" key_binding="label_color" data_load={this.state.label_color} />
-                </div>
+                </div> : null }
+                {this.state.label_enable ?
                 <div className="row">
-                    <ComponentCheckboxField name="Frame Border" getValueOfField={this.getValueOfField} key_binding="frame_border" data_load={this.state.frame_border} />
-                </div>
+                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Text Color" key_binding="label_text_color" data_load={this.state.label_text_color} />
+                </div> : null }
+                {this.state.theme != "simple" ?
                 <div className="row">
-                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Frame Border Color" key_binding="frame_border_color" data_load={this.state.frame_border_color} />
-                </div>
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Border Style" data = {BORDER_STYLE_SETTING} key_binding="border_style" data_load={this.state.border_style} is_required = {false}/>
+                </div> : null }
+                {this.state.theme != "simple" ?
                 <div className="row">
-                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Text Color" key_binding="text_color" data_load={this.state.text_color} />
-                </div>
+                    <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Border Color" key_binding="frame_border_color" data_load={this.state.frame_border_color} />
+                </div> :null}
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding="background_color" data_load={this.state.background_color} />
                 </div>
                 <div className="row">
-                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Browsing Privilege" authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin/get_account_role" key_binding="browsing_role" data_load={this.state.browsing_role} is_edit={this.props.is_edit} />
+                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Browsing Privilege"
+                      authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin/get_account_role"
+                      key_binding="browsing_role" data_load={(typeof this.state.browsing_role == 'string') ? this.state.browsing_role.split(',') : this.state.browsing_role}
+                      is_edit={this.props.is_edit} leftBoxTitle="Authorized Roles" rightBoxTitle="Unauthorized Roles" />
                 </div>
                 <div className="row">
-                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege" authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect" url_request="/api/admin/get_account_role" key_binding="edit_role" data_load={this.state.edit_role} is_edit={this.props.is_edit} />
+                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege"
+                        authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect" url_request="/api/admin/get_account_role"
+                        key_binding="edit_role" data_load={(typeof this.state.edit_role == 'string') ? this.state.edit_role.split(',') : this.state.edit_role}
+                        is_edit={this.props.is_edit} leftBoxTitle="Authorized Roles" rightBoxTitle="Unauthorized Roles" />
                 </div>
                 <div className="row">
                     <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding="enable" data_load={this.state.enable} />
                 </div>
                 <div className="row">
-                    <ExtendComponent type={this.state.widget_type} getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings} data_change={this.state.multiLanguageChange} />
+                    <ExtendComponent type={this.state.widget_type} is_edit={this.props.is_edit} repositoryId={this.state.repository}
+                        getValueOfField={this.getValueOfField} key_binding="settings" data_load={this.state.settings}
+                        language={this.state.language} data_change={this.state.multiLanguageChange}
+                        init_value={this.state.accessInitValue}/>
                 </div>
                 <div className="row">
                     <ComponentButtonLayout data={this.state} getValueOfField={this.getValueOfField} url_request="/api/admin/save_widget_item" is_edit={this.props.is_edit} return_url={this.props.return_url} data_id={this.props.data_id} />
@@ -1447,11 +1724,13 @@ $(function () {
             repository_id: '',
             widget_type: '',
             label: '',
-            label_color: '#4169E1',
-            frame_border: true,
-            frame_border_color: '#4169E1',
-            text_color: '#4169E1',
-            background_color: '#4169E1',
+            label_color: '#F5F5F5',
+            label_text_color: '#333333',
+            border_style: 'solid',
+            theme: 'default',
+            label_enable: true,
+            frame_border_color: '#DDDDDD',
+            background_color: '#FFFFFF',
             browsing_role: [1, 2, 3, 4, 99],
             edit_role: [1, 2, 3, 4, 99],
             is_enabled: true,

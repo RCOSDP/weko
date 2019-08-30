@@ -22,10 +22,11 @@
 
 from datetime import datetime
 
-from flask import current_app
+from flask import current_app, escape
 from invenio_db import db
 from sqlalchemy import Sequence, asc
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import desc
@@ -1224,6 +1225,119 @@ class AdminSettings(db.Model):
         return cls
 
 
+class SiteInfo(db.Model):
+    """Site information.
+
+    The SiteInfo object contains a ``created``, a ``updated``
+    properties that are automatically updated.
+    """
+
+    __tablename__ = 'site_info'
+
+    id = db.Column(
+        db.Integer,
+        primary_key=True)
+    """SiteInfo identifier."""
+
+    copy_right = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """copy right."""
+
+    description = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """description."""
+
+    keyword = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """keyword."""
+
+    favicon = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    favicon_name = db.Column(
+        db.Text,
+        nullable=True
+    )
+    """url of favicon file."""
+
+    site_name = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=False
+    )
+    """site name info."""
+
+    @classmethod
+    def get(cls):
+        """Get site infomation."""
+        try:
+            with db.session.begin_nested():
+                query_object = SiteInfo.query.filter_by().one_or_none()
+                if query_object:
+                    return query_object
+                else:
+                    return {}
+        except SQLAlchemyError:
+            return {}
+
+    @classmethod
+    def update(cls, site_info):
+        """Update/Create settings."""
+        try:
+            with db.session.begin_nested():
+                new_site_info_flag = False
+                query_object = SiteInfo.query.filter_by().one_or_none()
+                if not query_object:
+                    query_object = SiteInfo()
+                    new_site_info_flag = True
+                site_name = []
+                list_site_name = site_info.get('site_name') or []
+                for sn in list_site_name:
+                    site_name.append({
+                        "index": escape(sn.get('index')),
+                        "name": escape(sn.get('name').strip()),
+                        "language": escape(sn.get('language')),
+                    })
+                query_object.copy_right = escape(site_info.get(
+                    "copy_right").strip())
+                query_object.description = escape(site_info.get(
+                    "description").strip())
+                query_object.keyword = escape(site_info.get("keyword").strip())
+                query_object.favicon = escape(site_info.get("favicon").strip())
+                query_object.favicon_name = escape(site_info.get(
+                    "favicon_name").strip())
+                query_object.site_name = site_name
+
+                if new_site_info_flag:
+                    db.session.add(query_object)
+                else:
+                    db.session.merge(query_object)
+            db.session.commit()
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
+            raise
+
+        return cls
+
+
 class FeedbackMailHistory(db.Model):
     """History, Logs of sending mail."""
 
@@ -1495,6 +1609,7 @@ __all__ = ([
     'BillingPermission',
     'FeedbackMailSetting',
     'AdminSettings',
+    'SiteInfo',
     'FeedbackMailHistory',
     'FeedbackMailFailed'
 ])

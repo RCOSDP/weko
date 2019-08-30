@@ -96,7 +96,8 @@ setup(
             'cert = weko_admin.cli:cert',
             'report = weko_admin.cli:report',
             'billing = weko_admin.cli:billing',
-            'admin_settings = weko_admin.cli:admin_settings'
+            'admin_settings = weko_admin.cli:admin_settings',
+            'authors_prefix = weko_admin.cli:authors_prefix'
         ],
         'invenio_celery.tasks': [
             'weko_admin = weko_admin.tasks',
@@ -120,7 +121,8 @@ setup(
             'weko_admin_site_license_settings = weko_admin.admin:site_license_settings_adminview',
             'weko_admin_site_license_send_mail_settings = weko_admin.admin:site_license_send_mail_settings_adminview',
             'weko_admin_file_preview_settings = weko_admin.admin:file_preview_settings_adminview',
-            'weko_admin_item_export_settings = weko_admin.admin:item_export_settings_adminview'
+            'weko_admin_item_export_settings = weko_admin.admin:item_export_settings_adminview',
+            'weko_admin_site_info = weko_admin.admin:site_info_settings_adminview',
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',
@@ -146,6 +148,8 @@ setup(
             'weko_admin_admin_lte_js_dependecies = weko_admin.bundles:admin_lte_js_dependecies',
             'weko_admin_admin_lte_js = weko_admin.bundles:admin_lte_js',
             'weko_admin_angular_js = weko_admin.bundles:angular_js',
+            'weko_admin_site_info = weko_admin.bundles:weko_admin_site_info_js',
+            'weko_admin_site_info_css = weko_admin.bundles:weko_admin_site_info_css',
         ],
         'invenio_db.models': [
             'weko_admin = weko_admin.models',
