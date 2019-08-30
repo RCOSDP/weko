@@ -27,6 +27,9 @@ from flask import current_app, request, session, url_for, jsonify, current_app
 from flask_login import current_user
 from b2handle.clientcredentials import PIDClientCredentials
 from b2handle.handleclient import EUDATHandleClient
+from b2handle.handleexceptions import GenericHandleError
+from b2handle.handleexceptions import HandleAuthenticationError, \
+    HandleSyntaxError
 
 from .config import WEKO_HANDLE_CREDS_JSON_PATH
 
@@ -46,8 +49,10 @@ class Handle(object):
             client = EUDATHandleClient.instantiate_with_credentials(credential)
             handle_record_json = client.retrieve_handle_record_json(handle)
             return handle_record_json
-        except Exception as e:
-            current_app.logger.error('Unexpected error: ', e)
+        except GenericHandleError as e:
+            current_app.logger.error(
+                '{} in HandleClient.retrieve_handle_record_json({})'.format(e,
+                                                                        handle))
 
     def register_handle(self, location):
         """Register a handle."""
@@ -57,6 +62,10 @@ class Handle(object):
             client = EUDATHandleClient.instantiate_with_credentials(credential)
             pid = client.generate_PID_name(credential.get_prefix())
             handle = client.register_handle(pid, location)
+            current_app.logger.info(
+                'Successful registration of handle {}'.format(pid))
             return handle
-        except Exception as e:
-            current_app.logger.error('Unexpected error: ', e)
+        except (GenericHandleError, HandleAuthenticationError, HandleSyntaxError) as e:
+            current_app.logger.error(
+                'Registration failed of handle {}\n{} in HandleClient.register_handle'.format(pid,  e))
+

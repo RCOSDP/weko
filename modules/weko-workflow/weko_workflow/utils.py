@@ -74,12 +74,12 @@ def get_community_id_by_index(index_name):
     return None
 
 
-def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
+def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
     """
     Mapp doi pidstore data to ItemMetadata.
 
-    :param post_json: request data
-    :param idf_grant: identifier selected
+    :param data: request data
+    :param doi_select: identifier selected
     :param activity_id: activity id number
     """
     activity_obj = WorkActivity()
@@ -98,38 +98,31 @@ def saving_doi_pidstore(post_json, idf_grant=0, activity_id='0'):
     doi_register_val = ''
     doi_register_typ = ''
 
-    if idf_grant == IDENTIFIER_GRANT_LIST[1][0] and post_json.get(
+    if doi_select == IDENTIFIER_GRANT_LIST[1][0] and data.get(
             'identifier_grant_jalc_doi_link'):
-        jalcdoi_link = post_json.get('identifier_grant_jalc_doi_link')
+        jalcdoi_link = data.get('identifier_grant_jalc_doi_link')
         jalcdoi_tail = (jalcdoi_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_link
         identifier_type = 'DOI'
         doi_register_val = '/'.join(jalcdoi_tail[1:])
         doi_register_typ = 'JaLC'
-    elif idf_grant == IDENTIFIER_GRANT_LIST[2][0] and post_json.get(
+    elif doi_select == IDENTIFIER_GRANT_LIST[2][0] and data.get(
             'identifier_grant_jalc_cr_doi_link'):
-        jalcdoi_cr_link = post_json.get('identifier_grant_jalc_cr_doi_link')
+        jalcdoi_cr_link = data.get('identifier_grant_jalc_cr_doi_link')
         jalcdoi_cr_tail = (jalcdoi_cr_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_cr_link
         identifier_type = 'DOI'
         doi_register_val = '/'.join(jalcdoi_cr_tail[1:])
         doi_register_typ = 'Crossref'
-    elif idf_grant == IDENTIFIER_GRANT_LIST[3][0] and post_json.get(
+    elif doi_select == IDENTIFIER_GRANT_LIST[3][0] and data.get(
             'identifier_grant_jalc_dc_doi_link'):
-        jalcdoi_dc_link = post_json.get('identifier_grant_jalc_dc_doi_link')
+        jalcdoi_dc_link = data.get('identifier_grant_jalc_dc_doi_link')
         jalcdoi_dc_tail = (jalcdoi_dc_link.split('//')[1]).split('/')
         identifier_value = jalcdoi_dc_link
         identifier_type = 'DOI'
         doi_register_val = '/'.join(jalcdoi_dc_tail[1:])
         doi_register_typ = 'Datacite'
-    # elif idf_grant == IDENTIFIER_GRANT_LIST[4][0] and post_json.get(
-    # 'identifier_grant_crni_link'):
-    #     jalcdoi_crni_link = post_json.get('identifier_grant_crni_link')
-    #     identifier_value = jalcdoi_crni_link
-    #     identifier_type = 'HDL'
-    #     del tempdata[attrs[2]]
-    #     del tempdata[attrs[3]]
-    elif idf_grant == IDENTIFIER_GRANT_CAN_WITHDRAW:  # with draw
+    elif doi_select == IDENTIFIER_GRANT_CAN_WITHDRAW:  # with draw
         # identifier_grant
         pidstore_identifier = item.get('pidstore_identifier')
         flag_del_pidstore = delete_doi_pidstore(
@@ -273,10 +266,12 @@ def register_cnri(activity_id):
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
     record = WekoRecord.get_record(item_uuid)
+    item_type = ItemsMetadata.get_by_object_id(item_uuid)
+
     deposit_id = record.get('_deposit')['id']
 
     record_url = request.url.split('/workflow/')[0] \
-        + '/record/' + str(deposit_id)
+        + '/records/' + str(deposit_id)
 
     weko_handle = Handle()
     handle = weko_handle.register_handle(location=record_url)
@@ -298,6 +293,13 @@ def register_cnri(activity_id):
                 object_uuid=item_uuid,
                 status=PIDStatus.REGISTERED
             )
+
+            identifier_map = identifier_jpcoar_mapping(item_type.item_type_id, IDENTIFIER_ITEMSMETADATA_KEY[0:2])
+            identifier_data = record.get(identifier_map['id']).\
+                get('attribute_value_mlt')
+            current_app.logger.debug(identifier_map)
+            current_app.logger.debug(identifier_data)
+
             return cnri_pidstore
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
