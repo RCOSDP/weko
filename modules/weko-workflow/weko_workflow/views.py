@@ -630,7 +630,6 @@ def next_action(activity_id='0', action_id=0):
             saving_doi_pidstore(post_json, int(identifier_select), activity_id)
 
     if action_endpoint == 'item_login':
-        current_app.logger.debug('====================================')
         register_cnri(activity_id)
 
     rtn = history.create_activity_history(activity)

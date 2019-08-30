@@ -39,7 +39,8 @@ from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
 from .api import WorkActivity
 from .config import IDENTIFIER_GRANT_CAN_WITHDRAW, \
-    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY
+    IDENTIFIER_GRANT_SELECT_DICT, IDENTIFIER_ITEMSMETADATA_KEY, \
+    WEKO_SERVER_CNRI_HOST_LINK
 
 
 def get_identifier_setting(community_id):
@@ -282,6 +283,7 @@ def register_cnri(activity_id):
 
     if handle:
         try:
+            handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
             prev_cnri = PersistentIdentifier.query.filter_by(
                 pid_type='cnri',
                 object_uuid=item_uuid).one_or_none()
@@ -300,7 +302,7 @@ def register_cnri(activity_id):
         except PIDDoesNotExistError as pidNotEx:
             current_app.logger.error(pidNotEx)
     else:
-        current_app.logger.error('Handle not found!')
+        current_app.logger.error('Cannot connect Handle server!')
 
 
 def identifier_jpcoar_mapping(item_type_id, keys):

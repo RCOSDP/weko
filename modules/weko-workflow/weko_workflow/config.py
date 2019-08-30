@@ -85,3 +85,6 @@ IDENTIFIER_GRANT_SELECT_DICT = {
     'CrossRefDOI': '2'
 }
 """Identifier grant selected enum."""
+
+WEKO_SERVER_CNRI_HOST_LINK = 'http://hdl.handle.net/'
+"""Host server of CNRI"""

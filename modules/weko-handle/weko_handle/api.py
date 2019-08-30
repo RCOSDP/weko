@@ -56,8 +56,7 @@ class Handle(object):
                 self.credential_path)
             client = EUDATHandleClient.instantiate_with_credentials(credential)
             pid = client.generate_PID_name(credential.get_prefix())
-            new_handle = pid
-            handle = client.register_handle(new_handle, location)
+            handle = client.register_handle(pid, location)
             return handle
         except Exception as e:
             current_app.logger.error('Unexpected error: ', e)
