@@ -144,7 +144,7 @@
             {%- endif %}
             {%- if need_thumbnail %}
               <div class="row">
-                <div class="col-sm-9" ng-hide="recordsVM.invenioRecordsLoading">
+                <div class="col-sm-9">
                   <div class="panel panel-default">
                     <div class="panel-heading">
                       <h3 class="panel-title">{{_('Thumbnail')}}</h3>
@@ -157,17 +157,16 @@
                           </div>
                           <p class="text-center legend"><strong>— OR —</strong></p>
                           <p class="text-center">
-                            <button class="btn btn-primary">{{_('Click to select')}}</button>
+                            <button class="btn btn-primary" ng-click="uploadThumbnail()">{{_('Click to select')}}</button>
                           </p>
-                          <p class="text-center">
-                            <button class="btn btn-primary">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp, tiff, tif」')}}</button>
-                          </p>
-                          <form name="uploadThumbnail"
+                          <p class="text-center">{{_('Registerable file: 「gif, jpg, jpe, jpeg, png, bmp, tiff, tif」')}}</p>
+                          <form name="uploadThumbnailForm" class="collapse"
                             sf-schema="schema"
                             sf-form="form"
                             sf-model="model">
                           </form>
                           <hr />
+                          {%- include 'weko_items_ui/iframe/upload_list.html' %}
                         </div>
                       </div>
                     </div>
@@ -282,7 +281,7 @@
                               class="btn btn-danger" id="btn_quit">
                         <i class="fa fa-sign-out"></i>
                         {{_('Quit')}}</button>&nbsp
-                  </ul>
+                  </div>
                 </div>
               </div>
               {% include "weko_workflow/modal_quit_confirmation.html" %}
@@ -291,7 +290,6 @@
           {%- if need_file %}
           </invenio-files-uploader>
           {%- endif %}
-        </div>
       </div>
     </div>
   </div>

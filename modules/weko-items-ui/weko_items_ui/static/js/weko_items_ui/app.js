@@ -1502,7 +1502,9 @@ function handleSharePermission(value) {
                 }
             }
         };
-        $scope.model = {};
+        $scope.model = {
+            thumbnailsInfor: {}
+        };
         $scope.form = [
             {
                 "key": "thumbnail",

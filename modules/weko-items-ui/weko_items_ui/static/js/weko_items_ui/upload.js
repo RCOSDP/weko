@@ -280,7 +280,7 @@ require([
 (function (angular) {
   angular.element(document).ready(function () {
     angular.module('schemaForm')
-    .run(["$templateCache", function($templateCache) {$templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html","<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" id=\"selectThumbnail\" on-read-file/>\n        <img ng-show=\"$$value$$\" id=\"myimage\" src=\"\" alt=\"your image\" />\n    </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>");}]);
+    .run(["$templateCache", function($templateCache) {$templateCache.put("directives/decorators/bootstrap/fileUpload/file-upload.html","<div class=\"form-group\" ng-class=\"{\'has-error\': hasError()}\">\n    <div>\n        <input ng-model=\"$$value$$\" type=\"file\" id=\"selectThumbnail\" on-read-file/>\n        </div>\n    <span class=\"help-block\">{{ (hasError() && errorMessage(schemaError())) || form.description}}</span>\n</div>");}]);
     angular.module('schemaForm').config(
     ['schemaFormProvider', 'schemaFormDecoratorsProvider', 'sfPathProvider',
       function (schemaFormProvider, schemaFormDecoratorsProvider, sfPathProvider) {
@@ -311,18 +311,17 @@ require([
         return {
             restrict: 'A',
             require: ['ngModel'],
-            scope: false,
-            link: function (scope, element, attrs, ngModelCtrl) {
+            scope: true,
+            link: function ($scope, element, attrs, ngModelCtrl) {
                 element.on('change', function (onChangeEvent) {
                     var reader = new FileReader();
                     reader.onload = function (onLoadEvent) {
                         // put into ngModel the file content.
                         ngModelCtrl[0].$setViewValue(onLoadEvent.target.result);
-                        var myImg = document.getElementById("myimage");
-                        myImg.src= onLoadEvent.target.result;
-                        console.log(onLoadEvent.target);
                     };
-                    reader.readAsDataURL((onChangeEvent.srcElement || onChangeEvent.target).files[0]);
+                    var files = (onChangeEvent.srcElement || onChangeEvent.target).files;
+                    $scope.$parent.model.thumbnailsInfor=files;
+                    reader.readAsDataURL(files[0]);
                 });
             }
         };
