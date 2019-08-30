@@ -39,7 +39,7 @@ from weko_search_ui.api import get_search_detail_keyword
 from werkzeug.local import LocalProxy
 
 from . import config
-from models import InstitutionName, PDFCoverPageSettings
+from .models import InstitutionName, PDFCoverPageSettings
 from .utils import check_items_settings
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)

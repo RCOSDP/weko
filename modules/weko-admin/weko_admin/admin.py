@@ -857,7 +857,7 @@ class IdentifierSettingView(ModelView):
                          suffix=_('Semi-automatic Suffix')
                          )
 
-    def _validator_halfwidth_input(self, form, field):
+    def _validator_halfwidth_input(form, field):
         """
         Valid input character set.
 
