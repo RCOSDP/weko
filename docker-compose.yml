@@ -63,6 +63,8 @@ postgresql:
     - POSTGRES_USER=invenio
     - POSTGRES_DB=invenio
     - POSTGRES_PASSWORD=dbpass123
+  volumes:
+    - ./pgsql-data:/var/lib/postgresql/data
   ports:
     - "25401:5432"
 
@@ -76,6 +78,8 @@ elasticsearch:
   restart: "always"
   build: .
   dockerfile: ./elasticsearch/Dockerfile
+  volumes:
+    - ./es-data:/usr/share/elasticsearch/data
   environment:
     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
   ports:
