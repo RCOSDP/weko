@@ -27,11 +27,12 @@ from flask import current_app, request, session, url_for, jsonify, current_app
 from flask_login import current_user
 from b2handle.clientcredentials import PIDClientCredentials
 from b2handle.handleclient import EUDATHandleClient
-from b2handle.handleexceptions import GenericHandleError
+from b2handle.handleexceptions import GenericHandleError, CredentialsFormatError
 from b2handle.handleexceptions import HandleAuthenticationError, \
     HandleSyntaxError
 
 from .config import WEKO_HANDLE_CREDS_JSON_PATH
+import os
 
 
 class Handle(object):
@@ -49,7 +50,7 @@ class Handle(object):
             client = EUDATHandleClient.instantiate_with_credentials(credential)
             handle_record_json = client.retrieve_handle_record_json(handle)
             return handle_record_json
-        except GenericHandleError as e:
+        except (CredentialsFormatError, FileNotFoundError) as e:
             current_app.logger.error(
                 '{} in HandleClient.retrieve_handle_record_json({})'.format(e,
                                                                         handle))

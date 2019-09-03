@@ -255,6 +255,8 @@ def reg_invenio_pidstore(pid_value, item_id):
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
 
+import random
+from invenio_records.api import Record
 
 def register_cnri(activity_id):
     """
@@ -265,8 +267,10 @@ def register_cnri(activity_id):
     """
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
-    record = WekoRecord.get_record(item_uuid)
-    item_type = ItemsMetadata.get_by_object_id(item_uuid)
+    # record = WekoDeposit.get_record(item_uuid)
+    record = Record.get_record(item_uuid)
+    item = ItemsMetadata.get_record(item_uuid)
+    _identifier_data = {}
 
     deposit_id = record.get('_deposit')['id']
 
@@ -279,6 +283,7 @@ def register_cnri(activity_id):
     if handle:
         try:
             handle = WEKO_SERVER_CNRI_HOST_LINK + str(handle)
+            item_type = ItemsMetadata.get_by_object_id(activity.item_id)
             prev_cnri = PersistentIdentifier.query.filter_by(
                 pid_type='cnri',
                 object_uuid=item_uuid).one_or_none()
@@ -295,13 +300,40 @@ def register_cnri(activity_id):
             )
 
             identifier_map = identifier_jpcoar_mapping(item_type.item_type_id, IDENTIFIER_ITEMSMETADATA_KEY[0:2])
-            identifier_data = record.get(identifier_map['id']).\
-                get('attribute_value_mlt')
-            current_app.logger.debug(identifier_map)
-            current_app.logger.debug(identifier_data)
+            record_data = record.get(identifier_map['id'])
 
+            if not record_data:
+                record_data = {
+                    identifier_map['id']: {
+                        "attribute_name": "Identifier",
+                        "attribute_value_mlt": [
+                            {
+                                "subitem_1551256116088": str(handle),
+                                "subitem_1551256122128": "HDL"
+                            }
+                        ]
+                    }
+                }
+
+            identifier_data = {
+                identifier_map['val']: str(handle),
+                identifier_map['type']: 'HDL'
+            }
+            res = {
+                identifier_map['id']: identifier_data,
+                'pidstore_identifier': {}
+            }
+
+            res['pidstore_identifier']['identifier_value'] = str(handle)
+            with db.session.begin_nested():
+                item.update(res)
+                item.commit()
+
+            record.update(record_data)
+            record.commit()
+            db.session.commit()
             return cnri_pidstore
-        except PIDDoesNotExistError as pidNotEx:
+        except Exception as pidNotEx:
             current_app.logger.error(pidNotEx)
     else:
         current_app.logger.error('Cannot connect Handle server!')
