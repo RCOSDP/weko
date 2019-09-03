@@ -20,6 +20,7 @@
 
 """Module of weko-workflow utils."""
 
+import random
 from copy import deepcopy
 
 from flask import current_app, request
@@ -28,12 +29,13 @@ from invenio_communities.models import Community
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDAlreadyExists, \
     PIDDoesNotExistError, PIDStatus
+from invenio_records.api import Record
+from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
 from weko_index_tree.models import Index
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
-from weko_admin.models import Identifier
 
 from weko_workflow.config import IDENTIFIER_GRANT_LIST
 
@@ -255,8 +257,6 @@ def reg_invenio_pidstore(pid_value, item_id):
     except PIDAlreadyExists as pidArlEx:
         current_app.logger.error(pidArlEx)
 
-import random
-from invenio_records.api import Record
 
 def register_cnri(activity_id):
     """
@@ -273,9 +273,7 @@ def register_cnri(activity_id):
     identifier_data = {}
     handle = None
 
-
     deposit_id = record.get('_deposit')['id']
-
     record_url = request.url.split('/workflow/')[0] \
         + '/records/' + str(deposit_id)
 

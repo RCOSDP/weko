@@ -12,11 +12,10 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, render_template, current_app, jsonify, request
+from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
 
 from .api import Handle
-
 
 blueprint = Blueprint(
     'weko_handle',
@@ -41,6 +40,7 @@ def index():
     return render_template(
         "weko_handle/index.html",
         module_name=_('WEKO-Handle'))
+
 
 @blueprint.route('/retrieve/<handle>', methods=['GET'])
 def retrieve_handle(handle=""):

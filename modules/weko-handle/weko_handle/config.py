@@ -7,7 +7,6 @@
 
 """Module of weko-handle."""
 
-# TODO: This is an example file. Remove it if your package does not use any
 # extra configuration variables.
 
 WEKO_HANDLE_DEFAULT_VALUE = 'foobar'
@@ -16,4 +15,5 @@ WEKO_HANDLE_DEFAULT_VALUE = 'foobar'
 WEKO_HANDLE_BASE_TEMPLATE = 'weko_handle/base.html'
 """Default base template for the demo page."""
 
-WEKO_HANDLE_CREDS_JSON_PATH = '/code/scripts/demo/handle_configuration/creds.json'
+WEKO_HANDLE_CREDS_JSON_PATH = '/code/scripts/demo/handle_configuration/creds' \
+                              '.json'

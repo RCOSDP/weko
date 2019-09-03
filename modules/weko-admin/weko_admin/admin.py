@@ -20,38 +20,41 @@
 
 """WEKO3 module docstring."""
 
-import csv
 import hashlib
 import json
 import os
 import re
 import sys
+import unicodedata
 from datetime import datetime, timedelta
 
 import redis
 from flask import abort, current_app, flash, jsonify, make_response, \
     redirect, render_template, request, url_for
 from flask_admin import BaseView, expose
+from flask_admin.contrib.sqla import ModelView
+from flask_admin.contrib.sqla.fields import QuerySelectField
+from flask_admin.form import rules
 from flask_babelex import gettext as _
 from flask_login import current_user
 from flask_mail import Attachment
+from invenio_communities.models import Community
 from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
-from invenio_indexer.api import RecordIndexer
 from invenio_mail.api import send_mail
 from simplekv.memory.redisstore import RedisStore
 from weko_records.api import ItemTypes, SiteLicense
 from weko_records.models import SiteLicenseInfo
-from flask_admin.contrib.sqla import ModelView
+from wtforms.fields import StringField
+from wtforms.validators import ValidationError
+
 from .config import WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_CREATOR, \
     WEKO_PIDSTORE_IDENTIFIER_TEMPLATE_EDITOR
-
-from .models import AdminSettings, FeedbackMailSetting, \
+from .models import AdminSettings, Identifier, \
     LogAnalysisRestrictedCrawlerList, LogAnalysisRestrictedIpAddress, \
-    RankingSettings, SearchManagement, StatisticsEmail, Identifier
+    RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory
-from .utils import allowed_file, get_redis_cache, get_response_json, \
-    get_search_setting
+from .utils import get_redis_cache, get_response_json, get_search_setting
 from .utils import get_user_report_data as get_user_report
 from .utils import package_reports, reset_redis_cache, str_to_bool
 
@@ -178,7 +181,8 @@ class StyleSettingView(BaseView):
             if 'footer' == temp:
                 if 'True' == str(data.get('isEmpty')):
                     read_path = os.path.join(
-                        folder_path, current_app.config['THEME_FOOTER_EDITOR_TEMPLATE'])
+                        folder_path, current_app.config[
+                            'THEME_FOOTER_EDITOR_TEMPLATE'])
                     wysiwyg_html = self.get_contents(read_path)
 
                 write_path = os.path.join(folder_path,
@@ -187,12 +191,12 @@ class StyleSettingView(BaseView):
             elif 'header' == temp:
                 if 'True' == str(data.get('isEmpty')):
                     read_path = os.path.join(
-                        folder_path, current_app.config['THEME_HEADER_EDITOR_TEMPLATE'])
+                        folder_path, current_app.config[
+                            'THEME_HEADER_EDITOR_TEMPLATE'])
                     wysiwyg_html = self.get_contents(read_path)
 
-                write_path = os.path.join(folder_path,
-                                          current_app.config[
-                                              'THEME_HEADER_WYSIWYG_TEMPLATE'])
+                write_path = os.path.join(folder_path, current_app.config[
+                    'THEME_HEADER_WYSIWYG_TEMPLATE'])
             else:
                 abort(400)
 
@@ -257,8 +261,8 @@ class ReportView(BaseView):
             if aggs_results and 'aggs_term' in aggs_results:
                 for bucket in aggs_results['aggs_term']['buckets']:
                     bkt = {
-                        'open': bucket['doc_count']} if bucket['key'] == '0' else {
-                        'private': bucket['doc_count']}
+                        'open': bucket['doc_count']} if bucket['key'] == '0' \
+                        else {'private': bucket['doc_count']}
                     result.update(bkt)
                     total = total + bucket['doc_count']
 
@@ -271,22 +275,20 @@ class ReportView(BaseView):
                 current_schedule else \
                 current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
 
-            # current_schedule = self.get_current_email_schedule() or \
-            #     current_app.config['WEKO_ADMIN_REPORT_DELIVERY_SCHED']
-
             # Emails to send reports to
-            all_emailAddress = StatisticsEmail().get_all()
-            current_app.logger.info(all_emailAddress)
+            all_email_address = StatisticsEmail().get_all()
+            current_app.logger.info(all_email_address)
             return self.render(
                 current_app.config['WEKO_ADMIN_REPORT_TEMPLATE'],
                 result=result,
                 now=datetime.utcnow(),
-                emails=all_emailAddress,
+                emails=all_email_address,
                 days_of_week=[_('Monday'), _('Tuesday'), _('Wednesday'),
                               _('Thursday'), _('Friday'), _('Saturday'),
                               _('Sunday')],
                 current_schedule=current_schedule,
-                frequency_options=current_app.config['WEKO_ADMIN_REPORT_FREQUENCIES'])
+                frequency_options=current_app.config[
+                    'WEKO_ADMIN_REPORT_FREQUENCIES'])
         except Exception as e:
             current_app.logger.error('Unexpected error: ', e)
         return abort(400)
@@ -326,8 +328,8 @@ class ReportView(BaseView):
                 resp = make_response()
                 resp.data = zip_stream.getvalue()
                 resp.headers['Content-Type'] = 'application/x-zip-compressed'
-                resp.headers['Content-Disposition'] = 'attachment; filename=' + \
-                    zip_name
+                resp.headers['Content-Disposition'] = 'attachment; filename='\
+                                                      + zip_name
                 return resp
         except Exception as e:
             current_app.logger.error('Unexpected error: ', e)
@@ -374,14 +376,14 @@ class ReportView(BaseView):
     @expose('/get_email_address', methods=['POST'])
     def get_email_address(self):
         """Save Email Address."""
-        inputEmail = request.form.getlist('inputEmail')
+        input_email = request.form.getlist('input_email')
         StatisticsEmail.delete_all_row()
         alert_msg = 'Successfully saved email addresses.'
         category = 'info'
-        for input in inputEmail:
+        for input in input_email:
             if input:
-                match = re.match(
-                    r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
+                match = re.match(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+('
+                                 r'\.[a-z0-9-]+)*(\.[a-z]{2,4})$', input)
                 if match:
                     StatisticsEmail.insert_email_address(input)
                 else:
@@ -462,8 +464,8 @@ class LogAnalysisSettings(BaseView):
             shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
             # current_app.logger.info(LogAnalysisRestrictedCrawlerList.get_all_active())
             if not shared_crawlers:
-                LogAnalysisRestrictedCrawlerList \
-                    .add_list(current_app.config["WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
+                LogAnalysisRestrictedCrawlerList.add_list(current_app.config[
+                    "WEKO_ADMIN_DEFAULT_CRAWLER_LISTS"])
                 shared_crawlers = LogAnalysisRestrictedCrawlerList.get_all()
         except Exception as e:
             current_app.logger.error(_('Could not get restricted data: '), e)
@@ -587,14 +589,14 @@ class SearchSettingsView(BaseView):
             jfy = {}
             try:
                 # update search setting
-                dbData = request.get_json()
+                db_data = request.get_json()
                 res = SearchManagement.get()
 
                 if res:
                     id = res.id
-                    SearchManagement.update(id, dbData)
+                    SearchManagement.update(id, db_data)
                 else:
-                    SearchManagement.create(dbData)
+                    SearchManagement.create(db_data)
                 jfy['status'] = 201
                 jfy['message'] = 'Search setting was successfully updated.'
             except BaseException:
@@ -798,12 +800,6 @@ class SiteInfoView(BaseView):
             current_app.config["WEKO_ADMIN_SITE_INFO"]
         )
 
-from wtforms.fields import StringField
-from flask_admin.form import rules
-from invenio_communities.models import Community
-import unicodedata
-from wtforms.validators import ValidationError
-from flask_admin.contrib.sqla.fields import QuerySelectField
 
 class IdentifierSettingView(ModelView):
     """Pidstore Identifier admin view."""
@@ -871,8 +867,8 @@ class IdentifierSettingView(ModelView):
                 for inchar in field.data:
                     if unicodedata.east_asian_width(inchar) in 'FWA':
                         raise ValidationError(
-                            _('Only allow half with 1-bytes character in'
-                            ' input'))
+                            _('Only allow half with 1-bytes character in '
+                              'input'))
             except Exception as ex:
                 raise ValidationError('{}'.format(ex))
 
@@ -933,11 +929,9 @@ class IdentifierSettingView(ModelView):
         model.updated_userId = current_user.get_id()
         model.updated_date = datetime.utcnow().replace(microsecond=0)
         model.repository = str(model.repository.id)
-        pass
 
     def on_form_prefill(self, form, id):
         form.repo_selected.data = form.repository.data
-        pass
 
     def create_form(self, obj=None):
         """

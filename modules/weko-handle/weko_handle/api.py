@@ -20,19 +20,13 @@
 
 """WEKO3 module docstring."""
 
-import uuid
-from datetime import datetime
-
-from flask import current_app, request, session, url_for, jsonify, current_app
-from flask_login import current_user
 from b2handle.clientcredentials import PIDClientCredentials
 from b2handle.handleclient import EUDATHandleClient
-from b2handle.handleexceptions import GenericHandleError, CredentialsFormatError
-from b2handle.handleexceptions import HandleAuthenticationError, \
-    HandleSyntaxError
+from b2handle.handleexceptions import CredentialsFormatError, \
+    GenericHandleError, HandleAuthenticationError, HandleSyntaxError
+from flask import current_app
 
 from .config import WEKO_HANDLE_CREDS_JSON_PATH
-import os
 
 
 class Handle(object):
@@ -52,11 +46,12 @@ class Handle(object):
             return handle_record_json
         except (CredentialsFormatError, FileNotFoundError) as e:
             current_app.logger.error(
-                '{} in HandleClient.retrieve_handle_record_json({})'.format(e,
-                                                                        handle))
+                '{} in HandleClient.retrieve_handle_record_json({})'.format(
+                    e, handle))
 
     def register_handle(self, location):
         """Register a handle."""
+        pid = ''
         try:
             credential = PIDClientCredentials.load_from_JSON(
                 self.credential_path)
@@ -66,7 +61,8 @@ class Handle(object):
             current_app.logger.info(
                 'Successful registration of handle {}'.format(pid))
             return handle
-        except (GenericHandleError, HandleAuthenticationError, HandleSyntaxError) as e:
+        except (GenericHandleError, HandleAuthenticationError,
+                HandleSyntaxError) as e:
             current_app.logger.error(
-                'Registration failed of handle {}\n{} in HandleClient.register_handle'.format(pid,  e))
-
+                'Registration failed of handle {}\n{} in '
+                'HandleClient.register_handle'.format(pid, e))
