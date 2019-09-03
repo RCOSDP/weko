@@ -24,6 +24,7 @@ from flask import current_app
 from invenio_db import db
 from sqlalchemy import Sequence
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.orm.collections import attribute_mapped_collection
 from sqlalchemy_utils.types import JSONType
 
 
@@ -283,7 +284,8 @@ class WidgetMultiLangData(db.Model):
             data -- List widget multilanguage data
 
         """
-        list_data = cls.query.filter_by(widget_id=widget_id, is_deleted=False).all()
+        list_data = cls.query.filter_by(
+            widget_id=widget_id, is_deleted=False).all()
         return list_data
 
     @classmethod
@@ -324,13 +326,13 @@ class WidgetMultiLangData(db.Model):
         return True
 
 
+# FIXME: Shouldn't repository_id be a foreignkey?
 class WidgetDesignSetting(db.Model):
     """Database for admin WidgetDesignSetting."""
 
     __tablename__ = 'widget_design_setting'
 
-    repository_id = db.Column(db.String(100),
-                              nullable=False, primary_key=True)
+    repository_id = db.Column(db.String(100), nullable=False, primary_key=True)
 
     settings = db.Column(
         db.JSON().with_variant(
@@ -426,9 +428,264 @@ class WidgetDesignSetting(db.Model):
             return False
 
 
+class WidgetDesignPage(db.Model):
+    """Database for menu pages."""
+
+    __tablename__ = 'widget_design_page'
+
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+
+    title = db.Column(db.String(100), nullable=True)
+
+    repository_id = db.Column(db.String(100), nullable=False)
+
+    url = db.Column(db.String(100), nullable=False, unique=True)
+
+    template_name = db.Column(  # May be used in the future
+        db.String(100),
+        nullable=True
+    )
+
+    content = db.Column(db.Text(), nullable=True, default='')
+
+    settings = db.Column(
+        db.JSON().with_variant(
+            postgresql.JSONB(none_as_null=True),
+            'postgresql',
+        ).with_variant(
+            JSONType(),
+            'sqlite',
+        ).with_variant(
+            JSONType(),
+            'mysql',
+        ),
+        default=lambda: dict(),
+        nullable=True
+    )
+
+    multi_lang_data = db.relationship(
+        'WidgetDesignPageMultiLangData',
+        backref='widget_design_page',
+        cascade='all, delete-orphan',
+        collection_class=attribute_mapped_collection('lang_code')
+    )
+
+    @classmethod
+    def create_or_update(cls, repository_id, title, url, content,
+                         page_id=0, settings=None, multi_lang_data={}):
+        """Insert new widget design page.
+
+        :param repository_id: Identifier of the repository
+        :param title: Page title
+        :param content: HTML content
+        :param is_visible: Display flag
+        :param settings: Page widget setting data
+        :return: True if successful, otherwise False
+        """
+        try:
+            prev = cls.query.filter_by(id=int(page_id)).one_or_none()
+            if prev:
+                repository_id = prev.repository_id
+            page = prev or WidgetDesignPage()
+
+            if not repository_id or not url:
+                return False
+
+            with db.session.begin_nested():
+                page.repository_id = repository_id
+                page.title = title
+                page.url = url
+                page.content = content
+                page.settings = settings
+                for lang in multi_lang_data:
+                    page.multi_lang_data[lang] = \
+                        WidgetDesignPageMultiLangData(
+                            lang, multi_lang_data[lang])
+                db.session.merge(page)
+            db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise ex
+
+    @classmethod
+    def delete(cls, page_id):
+        """Delete widget design page.
+
+        :param page_id: Page model's id
+        :return: True if successful or False
+        """
+        if page_id:
+            try:
+                with db.session.begin_nested():
+                    cls.query.filter_by(id=int(page_id)).delete()
+                db.session.commit()
+                return True
+            except BaseException as ex:
+                db.session.rollback()
+                current_app.logger.debug(ex)
+                raise ex
+        return False
+
+    @classmethod
+    def update_settings(cls, page_id, settings=None):
+        """Update design page setting.
+
+        :param page_id: Identifier of the page.
+        :param settings: Page widget setting data.
+        :return: True if successful, otherwise False.
+        """
+        try:
+            page = cls.query.filter_by(id=int(page_id)).one_or_none()
+            if page:
+                with db.session.begin_nested():
+                    page.settings = settings
+                    db.session.merge(page)
+                db.session.commit()
+                return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            raise ex
+        return False
+
+    @classmethod
+    def update_settings_by_repository_id(cls, repository_id, settings=None):
+        """Update design page setting by repository id.
+
+        Note: ALL pages belonging to repository will have the same settings.
+        Could be used to make all pages uniform in design.
+        :param repository_id: Repository id.
+        :param settings: Page widget setting data.
+        :return: True if successful, otherwise False.
+        """
+        try:
+            pages = cls.query.filter_by(repository_id=int(repository_id)).all()
+            for page in pages:
+                with db.session.begin_nested():
+                    page.settings = settings
+                    db.session.merge(page)
+                db.session.commit()
+            return True
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.debug(ex)
+            return False
+
+    @classmethod
+    def get_all(cls):
+        """
+        Get all pages.
+
+        :return: List of all pages.
+        """
+        return db.session.query(cls).all()
+
+    @classmethod
+    def get_all_valid(cls):
+        """
+        Get all pages with widget settings.
+
+        :return: List of all pages.
+        """
+        return db.session.query(cls).filter(cls.settings is not None).all()
+
+    @classmethod
+    def get_by_id(cls, id):
+        """
+        Get widget page by id.
+
+        Raises error if not found etc.
+        :return: Single page object or exception raised.
+        """
+        return db.session.query(cls).filter_by(id=int(id)).one()
+
+    @classmethod
+    def get_by_id_or_none(cls, id):
+        """
+        Get widget page by id without raising exception.
+
+        :return: Single page object or none.
+        """
+        return db.session.query(cls).filter_by(id=int(id)).one_or_none()
+
+    @classmethod
+    def get_by_url(cls, url):
+        """
+        Get widget page by url.
+
+        :return: Single page objects or none.
+        """
+        return db.session.query(cls).filter_by(url=url).one()
+
+    @classmethod
+    def get_by_repository_id(cls, repository_id):
+        """
+        Get widget pages for community/repo.
+
+        :return: Multiple page objects or empty list.
+        """
+        return db.session.query(cls).filter_by(
+            repository_id=repository_id).all()
+
+
+class WidgetDesignPageMultiLangData(db.Model):
+    """Table for widget multiple language data for pages."""
+
+    __tablename__ = 'widget_design_page_multi_lang_data'
+
+    id = db.Column(db.Integer, primary_key=True, nullable=False)
+
+    widget_design_page_id = db.Column(
+        db.Integer(),
+        db.ForeignKey(WidgetDesignPage.id),
+        nullable=False
+    )
+
+    # FIXME: Shouldn't this be a foreign key
+    lang_code = db.Column(db.String(3), nullable=False)
+
+    title = db.Column(db.String(100))
+
+    def __init__(self, lang_code, title):
+        """Initialize."""
+        self.lang_code = lang_code
+        self.title = title
+
+    @classmethod
+    def get_by_id(cls, id):
+        """Get widget multi language data by id."""
+        return cls.query.filter_by(id=id).one_or_none()
+
+    # @classmethod
+    # def create_or_update(cls, page_id, lang_code, title, id=0):
+    #     """Insert or update translations for page title."""
+    #     try:
+    #         prev = cls.query.filter_by(id=int(id)).one_or_none()
+    #         page_multi_lang_data = prev or WidgetDesignPageMultiLangData()
+    #
+    #         if not page_id or not lang_code:
+    #             return False
+    #
+    #         with db.session.begin_nested():
+    #             page_multi_lang_data.widget_design_page_id = page_id
+    #             page_multi_lang_data.lang_code = lang_code
+    #             page_multi_lang_data.title = title
+    #             db.session.merge(page_multi_lang_data)
+    #         db.session.commit()
+    #         return True
+    #     except Exception as ex:
+    #         db.session.rollback()
+    #         current_app.logger.debug(ex)
+    #         raise ex
+
+
 __all__ = ([
     'WidgetType',
     'WidgetItem',
     'WidgetDesignSetting',
-    'WidgetMultiLangData'
+    'WidgetMultiLangData',
+    'WidgetDesignPage',
+    'WidgetDesignPageMultiLangData'
 ])

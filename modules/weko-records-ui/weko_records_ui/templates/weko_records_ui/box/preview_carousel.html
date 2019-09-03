@@ -19,7 +19,7 @@
 #}
 
 
-{% macro preview_carousel(files=[], pid=None, filename=None, nav=True, el_id='preview_carousel', edit_page_prev=False) %}
+{% macro preview_carousel(record=None, files=[], pid=None, filename=None, nav=True, el_id='preview_carousel', edit_page_prev=False) %}
   <!-- Preview Carousel -->
   <div class="panel panel-default" id="{{ el_id }}_panel">
     <div class="panel-heading">

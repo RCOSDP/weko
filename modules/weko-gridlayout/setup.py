@@ -92,6 +92,7 @@ setup(
         'invenio_base.blueprints': [
             'weko_gridlayout = weko_gridlayout.views:blueprint',
             'weko_gridlayout_rss = weko_gridlayout.views:blueprint_rss',
+            'weko_gridlayout_pages = weko_gridlayout.views:blueprint_pages',
         ],
         # TODO: Edit these entry points to fit your needs.
         # 'invenio_access.actions': [],

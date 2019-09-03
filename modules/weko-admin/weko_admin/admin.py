@@ -242,11 +242,25 @@ class ReportView(BaseView):
         try:
             aggs_query = {
                 "size": 0,
+                "post_filter": {
+                    "term": {
+                        "relation_version_is_last": True
+                    }
+                },
                 "aggs": {
-                    "aggs_term": {
-                        "terms": {
-                            "field": "publish_status",
-                            "order": {"_count": "desc"}
+                    "aggs_filter": {
+                        "filter": {
+                            "term": {
+                                "relation_version_is_last": True
+                            }
+                        },
+                        "aggs": {
+                            "aggs_term": {
+                                "terms": {
+                                    "field": "publish_status",
+                                    "order": {"_count": "desc"}
+                                }
+                            }
                         }
                     }
                 }
@@ -258,10 +272,13 @@ class ReportView(BaseView):
 
             total = 0
             result = {}
-            if aggs_results and 'aggs_term' in aggs_results:
-                for bucket in aggs_results['aggs_term']['buckets']:
-                    bkt = {
-                        'open': bucket['doc_count']} if bucket['key'] == '0' \
+            if aggs_results \
+                    and 'aggs_filter' in aggs_results \
+                    and 'aggs_term' in aggs_results['aggs_filter']:
+                for bucket \
+                        in aggs_results['aggs_filter']['aggs_term']['buckets']:
+                    bkt = {'open': bucket['doc_count']} \
+                        if bucket['key'] == '0' \
                         else {'private': bucket['doc_count']}
                     result.update(bkt)
                     total = total + bucket['doc_count']

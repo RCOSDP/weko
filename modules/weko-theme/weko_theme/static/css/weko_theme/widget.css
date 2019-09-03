@@ -104,3 +104,8 @@
   padding-left: 4px !important;
   padding-right: 4px !important;
 }
+
+.widget-nav {
+  white-space: pre-line !important;
+  margin-top: 25px;
+}

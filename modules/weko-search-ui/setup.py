@@ -64,6 +64,7 @@ install_requires = [
     'invenio-db>=1.0.0b9',
     'invenio-records-rest>=1.0.0b3',
     'invenio-search>=1.0.0b4',
+    'bagit>=1.7.0',
 ]
 
 packages = find_packages()

@@ -18,7 +18,6 @@ invenio-oauth2server==1.0.0b2
 invenio-oauthclient==1.0.0b3
 invenio-pidrelations==1.0.0a4
 invenio-pidstore==1.0.0
-invenio-pages==1.0.0a4
 invenio-query-parser==0.6.0
 invenio-queues==1.0.0a1
 invenio-records==1.0.0
