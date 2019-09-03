@@ -9,6 +9,8 @@ const THEME_SIMPLE = 'simple'
 const THEME_SIDE_LINE = 'side_line'
 const MENU_TYPE = "Menu";
 const DEFAULT_REPOSITORY = "Root Index";
+const HEADER_TYPE = "Header";
+const FOOTER_TYPE = "Footer";
 const INTERVAL_TIME = 60000; //one minute
 
 (function () {
@@ -40,6 +42,18 @@ let PageBodyGrid = function () {
         this.grid.update(mainContents, node.x, node.y, node.width, node.height);
     };
 
+    this.updateHeaderRootIndex = function(node){
+        let headerRootIndex = $("#header");
+        console.log(headerRootIndex);
+        this.grid.update(headerRootIndex, node.x, node.y, node.width, node.height);
+    }
+
+    this.updateFooterRootIndex = function(node){
+        let footerRootIndex = $("#footer");
+        console.log(footerRootIndex);
+        this.grid.update(footerRootIndex, node.x, node.y, node.width, node.height);
+    }
+
     this.loadGrid = function (widgetListItems) {
         let items = GridStackUI.Utils.sort(widgetListItems);
         let hasMainContent = false;
@@ -47,6 +61,14 @@ let PageBodyGrid = function () {
             if (MAIN_CONTENT_TYPE == node.type) {
                 this.updateMainContent(node);
                 hasMainContent = true;
+                return false;
+            }
+            else if (HEADER_TYPE == node.type && DEFAULT_REPOSITORY == node.id){
+                this.updateHeaderRootIndex(node);
+                return false;
+            }
+            else if(FOOTER_TYPE == node.type && DEFAULT_REPOSITORY == node.id){
+                this.updateFooterRootIndex(node);
                 return false;
             }
         }, this);
@@ -59,7 +81,9 @@ let PageBodyGrid = function () {
         for (var i = 0; i < items.length; i++) {
             let node = items[i];
             if (MAIN_CONTENT_TYPE != node.type) {
-                this.addNewWidget(node, i);
+                if((DEFAULT_REPOSITORY != node.id || HEADER_TYPE != node.type) && (DEFAULT_REPOSITORY != node.id || FOOTER_TYPE != node.type)){
+                    this.addNewWidget(node, i);
+                }
             }
         }
         return false;
@@ -455,6 +479,10 @@ function getWidgetDesignSetting() {
                 let widgetList = data['widget-settings'];
                 if (Array.isArray(widgetList) && widgetList.length) {
                     $("#main_contents").addClass("grid-stack-item");
+                    $("#header").addClass("grid-stack-item");
+                    $("#header").addClass("no-scroll-bar")
+                    $("#footer").addClass("grid-stack-item");
+                    $("#footer").addClass("no-scroll-bar")
                     let pageBodyGrid = new PageBodyGrid();
                     pageBodyGrid.init();
                     pageBodyGrid.loadGrid(widgetList);

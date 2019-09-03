@@ -9,6 +9,7 @@ const THEME_SETTING = [{"value" : 'default', "text": "Default"}, {"value": "simp
 const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}];
 const MENU_TYPE = "Menu";
 const DEFAULT_COLOR = "#4169E1";
+const DEFAULT_REPOSITORY = "Root Index";
 
 function userSelectedInput(initialValue, getValueOfField, key_binding, componentHandle) {
     if(key_binding == "border_style" && !initialValue){
@@ -41,6 +42,10 @@ const ComponentSelectField = function(props){
             .then(
                 (result) => {
                     if (result.options) {
+                        if(props.repository != DEFAULT_REPOSITORY){
+                            result.options.push({"text":"Header", "value":"Header"});
+                            result.options.push({"text":"Footer", "value":"Footer"});
+                        }
                         options = result.options.map((option) => {
                             return (
                                 <option key={option.value} value={option.value}>{option.text}</option>
@@ -1648,7 +1653,7 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository || '0'}  is_required = {true}/>
                 </div>
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} is_required = {true}/>
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} is_required = {true} repository = {this.state.repository_id}/>
                 </div>
                 <div className="row">
                     <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit} initEditData={this.initEditData}

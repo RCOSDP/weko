@@ -2,6 +2,18 @@
 const MAIN_CONTENT_TYPE = "Main contents";
 const MAIN_CONTENT_BUTTON_ID = "main_content_id";
 let isHasMainContent = false;
+const ROOT_INDEX_HEADER = {
+    "Id" : 0,
+    "label": "Header",
+    "widgetId": "Root Index",
+    "widgetType": "Header"
+}
+const ROOT_INDEX_FOOTER = {
+    "Id" : 0,
+    "label": "Footer",
+    "widgetId": "Root Index",
+    "widgetType": "Footer"
+}
 
 /**
  * Repository combo box.
@@ -61,6 +73,10 @@ class Repository extends React.Component {
                     let data = widgetPreview['data'];
                     loadWidgetPreview(data);  // TODO: Reuse below
                     data = widgetList['data'];
+                    if (repositoryId == "Root Index"){
+                        data.push(ROOT_INDEX_HEADER);
+                        data.push(ROOT_INDEX_FOOTER);
+                    }
                     loadWidgetList(data);
                 },
                 (error) => {

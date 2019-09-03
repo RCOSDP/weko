@@ -582,6 +582,14 @@ class WidgetDesignServices:
             json_data = json.loads(setting_data)
             if isinstance(json_data, list):
                 for item in json_data:
+                    if item.get('id') == "Root Index":
+                        root_index_settings = {}
+                        if item.get("type") == "Header":
+                            item.update(root_index_settings)
+                            continue
+                        if item.get("type") == "Footer":
+                            item.update(root_index_settings)
+                            continue
                     widget_item = \
                         WidgetItemServices.get_widget_data_by_widget_id(
                             item.get('widget_id'))
