@@ -154,4 +154,3 @@ xmltodict==0.12.0
 ftfy==4.4.3
 attrs==17.4.0
 b2handle==1.1.1
-bagit==1.7.0

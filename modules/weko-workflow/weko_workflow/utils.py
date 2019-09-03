@@ -277,11 +277,8 @@ def register_cnri(activity_id):
     record_url = request.url.split('/workflow/')[0] \
         + '/records/' + str(deposit_id)
 
-    try:
-        weko_handle = Handle()
-        handle = weko_handle.register_handle(location=record_url)
-    except Exception as pidNotEx:
-        current_app.logger.error(pidNotEx)
+    weko_handle = Handle()
+    handle = weko_handle.register_handle(location=record_url)
 
     if handle:
         try:
@@ -294,7 +291,7 @@ def register_cnri(activity_id):
             if prev_cnri:
                 return
 
-            cnri_pidstore = PersistentIdentifier.create(
+            PersistentIdentifier.create(
                 'cnri',
                 str(handle),
                 object_type='rec',
@@ -311,8 +308,8 @@ def register_cnri(activity_id):
                         "attribute_name": "Identifier",
                         "attribute_value_mlt": [
                             {
-                                "subitem_1551256116088": str(handle),
-                                "subitem_1551256122128": "HDL"
+                                identifier_map['val']: str(handle),
+                                identifier_map['type']: "HDL"
                             }
                         ]
                     }
@@ -329,14 +326,13 @@ def register_cnri(activity_id):
 
             res['pidstore_identifier']['identifier_value'] = str(handle)
             with db.session.begin_nested():
-                item.update(res)
-                item.commit()
-
+                    item.update(res)
+                    item.commit()
             record.update(record_data)
             record.commit()
             db.session.commit()
-            return cnri_pidstore
         except Exception as pidNotEx:
+            db.session.rollback()
             current_app.logger.error(pidNotEx)
     else:
         current_app.logger.error('Cannot connect Handle server!')

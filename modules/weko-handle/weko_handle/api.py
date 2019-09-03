@@ -61,8 +61,14 @@ class Handle(object):
             current_app.logger.info(
                 'Successful registration of handle {}'.format(pid))
             return handle
-        except (GenericHandleError, HandleAuthenticationError,
-                HandleSyntaxError) as e:
+        except (FileNotFoundError, CredentialsFormatError, HandleAuthenticationError, GenericHandleError) as e:
             current_app.logger.error(
                 'Registration failed of handle {}\n{} in '
                 'HandleClient.register_handle'.format(pid, e))
+            return None
+        except AttributeError:
+            current_app.logger.error('Missing Private Key!')
+            return None
+        except Exception as e:
+            current_app.logger.error(e)
+            return None
