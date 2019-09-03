@@ -270,15 +270,20 @@ def register_cnri(activity_id):
     # record = WekoDeposit.get_record(item_uuid)
     record = Record.get_record(item_uuid)
     item = ItemsMetadata.get_record(item_uuid)
-    _identifier_data = {}
+    identifier_data = {}
+    handle = None
+
 
     deposit_id = record.get('_deposit')['id']
 
     record_url = request.url.split('/workflow/')[0] \
         + '/records/' + str(deposit_id)
 
-    weko_handle = Handle()
-    handle = weko_handle.register_handle(location=record_url)
+    try:
+        weko_handle = Handle()
+        handle = weko_handle.register_handle(location=record_url)
+    except Exception as pidNotEx:
+        current_app.logger.error(pidNotEx)
 
     if handle:
         try:
