@@ -61,7 +61,8 @@ class Handle(object):
             current_app.logger.info(
                 'Successful registration of handle {}'.format(pid))
             return handle
-        except (FileNotFoundError, CredentialsFormatError, HandleAuthenticationError, GenericHandleError) as e:
+        except (FileNotFoundError, CredentialsFormatError,
+                HandleAuthenticationError, GenericHandleError) as e:
             current_app.logger.error(
                 'Registration failed of handle {}\n{} in '
                 'HandleClient.register_handle'.format(pid, e))

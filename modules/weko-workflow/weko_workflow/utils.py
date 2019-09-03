@@ -20,7 +20,6 @@
 
 """Module of weko-workflow utils."""
 
-import random
 from copy import deepcopy
 
 from flask import current_app, request
@@ -33,7 +32,6 @@ from invenio_records.api import Record
 from weko_admin.models import Identifier
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_handle.api import Handle
-from weko_index_tree.models import Index
 from weko_records.api import ItemsMetadata, ItemTypes, Mapping
 from weko_records.serializers.utils import get_mapping
 
@@ -267,11 +265,8 @@ def register_cnri(activity_id):
     """
     activity = WorkActivity().get_activity_detail(activity_id)
     item_uuid = activity.item_id
-    # record = WekoDeposit.get_record(item_uuid)
     record = Record.get_record(item_uuid)
     item = ItemsMetadata.get_record(item_uuid)
-    identifier_data = {}
-    handle = None
 
     deposit_id = record.get('_deposit')['id']
     record_url = request.url.split('/workflow/')[0] \
@@ -299,7 +294,8 @@ def register_cnri(activity_id):
                 status=PIDStatus.REGISTERED
             )
 
-            identifier_map = identifier_jpcoar_mapping(item_type.item_type_id, IDENTIFIER_ITEMSMETADATA_KEY[0:2])
+            identifier_map = identifier_jpcoar_mapping(
+                item_type.item_type_id, IDENTIFIER_ITEMSMETADATA_KEY[0:2])
             record_data = record.get(identifier_map['id'])
 
             if not record_data:
@@ -326,10 +322,10 @@ def register_cnri(activity_id):
 
             res['pidstore_identifier']['identifier_value'] = str(handle)
             with db.session.begin_nested():
-                    item.update(res)
-                    item.commit()
-            record.update(record_data)
-            record.commit()
+                item.update(res)
+                item.commit()
+                record.update(record_data)
+                record.commit()
             db.session.commit()
         except Exception as pidNotEx:
             db.session.rollback()
