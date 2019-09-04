@@ -39,6 +39,7 @@ const ComponentSelectField = function(props){
     const [isRootIndex, setIsRootIndex] = useState(false);
 
 
+
     useEffect(() => {
         let options = []
         if(props.url_request){
@@ -887,6 +888,7 @@ class ExtendComponent extends React.Component {
     }
 
     render() {
+        console.log(this.state.settings.description);
         if (this.state.type == FREE_DESCRIPTION_TYPE) {
             return (
                 <div>
@@ -1060,7 +1062,7 @@ class ComponentButtonLayout extends React.Component {
             let currentLangData = {
                 label: currentLabel,
             }
-            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE || data['widget_type'] == ACCESS_COUNTER){
+            if((data['widget_type'] + "") == FREE_DESCRIPTION_TYPE || (data['widget_type'] + "") == NOTICE_TYPE || data['widget_type'] == ACCESS_COUNTER || data['widget_type'] == HEADER_TYPE || data['widget_type'] == FOOTER_TYPE){
                 currentLangData["description"] = currentDescription;
             }
             multiLangData[currentLanguage] = currentLangData;
@@ -1544,7 +1546,7 @@ class MainLayout extends React.Component {
             accessInitValue = multiLangData.description.access_counter
         }
         if (multiLangData) {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER || (this.state.widget_type +"") == HEADER_TYPE || (this.state.widget_type +"") == FOOTER_TYPE){
                 this.setState({
                     multiLanguageChange: true,
                     label: multiLangData['label'],
@@ -1581,7 +1583,7 @@ class MainLayout extends React.Component {
         let setting = {
             label: this.state.label,
         };
-        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER ){
+        if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER || (this.state.widget_type +"") == HEADER_TYPE || (this.state.widget_type +"") == FOOTER_TYPE){
             setting["description"] = this.state.settings;
         }
         let accessInitValue = this.state.accessInitValue;
@@ -1607,7 +1609,7 @@ class MainLayout extends React.Component {
         if (this.state.multiLangSetting[newLanguage]) {
             let currentLabel = this.state.multiLangSetting[newLanguage]['label'];
             let currentSetting = this.state.multiLangSetting[newLanguage]['description'];
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type + "") == ACCESS_COUNTER){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER || (this.state.widget_type +"") == HEADER_TYPE || (this.state.widget_type +"") == FOOTER_TYPE){
                 this.setState({
                     label: currentLabel,
                     multiLanguageChange: true,
@@ -1625,7 +1627,7 @@ class MainLayout extends React.Component {
                 });
             }
         } else {
-            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type + "") == ACCESS_COUNTER){
+            if((this.state.widget_type +"") == FREE_DESCRIPTION_TYPE || (this.state.widget_type+ "") == NOTICE_TYPE || (this.state.widget_type+ "") == ACCESS_COUNTER || (this.state.widget_type +"") == HEADER_TYPE || (this.state.widget_type +"") == FOOTER_TYPE){
                 this.setState({
                     label: '',
                     settings: {},
