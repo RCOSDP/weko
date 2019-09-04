@@ -59,8 +59,16 @@ class Repository extends React.Component {
 
     handleChange(event) {
         let repositoryId = event.target.value;
-        let url = "/api/admin/load_widget_list_design_setting/" + repositoryId;
-        fetch(url)
+        let data = {
+            repository_id: repositoryId
+        };
+        let url = "/api/admin/load_widget_list_design_setting";
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data)})
             .then(res => res.json())
             .then(
                 (result) => {
@@ -166,7 +174,15 @@ class WidgetList extends React.Component {
 
     getPages() {
       if(this.props.repositoryId) {
-          fetch('/api/admin/load_widget_design_pages/' + this.props.repositoryId)
+          let data = {
+              repository_id: this.props.repositoryId
+          };
+          fetch('/api/admin/load_widget_design_pages', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data)})
              .then(res => res.json())
              .then((result) => {
                  if (result.error) {
