@@ -85,9 +85,16 @@ def index():
         community_id = comm.id
     else:
         activities = activity.get_activity_list()
+
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(request.args.get('community')
+                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     return render_template(
         'weko_workflow/activity_list.html',
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         activities=activities, community_id=community_id, **ctx
     )
 
@@ -123,8 +130,14 @@ def iframe_success():
     del session['itemlogin_pid']
     del session['itemlogin_community_id']
 
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(community_id
+                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     return render_template('weko_workflow/item_login_success.html',
-                           render_widgets=True,
+                           page=page,
+                           render_widgets=render_widgets,
                            activity=activity,
                            item=item,
                            steps=steps,
@@ -150,9 +163,16 @@ def new_activity():
         comm = GetCommunity.get_community_by_id(request.args.get('community'))
         ctx = {'community': comm}
         community_id = comm.id
+
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(community_id
+                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     return render_template(
         'weko_workflow/workflow_list.html',
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         workflows=workflows, community_id=community_id, **ctx
     )
 
@@ -189,9 +209,15 @@ def list_activity():
     """List activity."""
     activity = WorkActivity()
     activities = activity.get_activity_list()
+
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(
+        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
     return render_template(
         'weko_workflow/activity_list.html',
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         activities=activities
     )
 
@@ -355,9 +381,15 @@ def display_activity(activity_id=0):
         session['itemlogin_pid'] = pid
         session['itemlogin_community_id'] = community_id
 
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(community_id
+                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     return render_template(
         'weko_workflow/activity_detail.html',
-        render_widgets=True,
+        page=page,
+        render_widgets=render_widgets,
         activity=activity_detail,
         item=item,
         steps=steps,
@@ -985,7 +1017,8 @@ def get_feedback_maillist(activity_id='0'):
             mail_list = action_feedbackmail.feedback_maillist
             for mail in mail_list:
                 if mail.get('author_id'):
-                    email = Authors.get_first_email_by_id(mail.get('author_id'))
+                    email = Authors.get_first_email_by_id(
+                        mail.get('author_id'))
                     if email:
                         mail['email'] = email
                     else:

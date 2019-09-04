@@ -32,6 +32,8 @@ from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword
 
+from .utils import get_design_layout, get_weko_contents
+
 _signals = Namespace()
 top_viewed = _signals.signal('top-viewed')
 
@@ -46,46 +48,6 @@ blueprint = Blueprint(
 @blueprint.route('/')
 def index():
     """Simplistic front page view."""
-    get_args = request.args
-    ctx = {'community': None}
-    community_id = ""
-    if 'community' in get_args:
-        from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        ctx = {'community': comm}
-        community_id = comm.id
-    # In case user opens the web for the first time,
-    # set default language base on Admin language setting
-    set_default_language()
-    # Get index style
-    style = IndexStyle.get(
-        current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    if not style:
-        IndexStyle.create(
-            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'],
-            width=3,
-            height=None)
-        style = IndexStyle.get(
-            current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
-    width = style.width
-    height = style.height
-    index_link_enabled = style.index_link_enabled
-
-    index_link_list = []
-    for index in Index.query.all():
-        if index.index_link_enabled and index.public_state:
-            if hasattr(current_i18n, 'language'):
-                if current_i18n.language == 'ja' and index.index_link_name:
-                    index_link_list.append((index.id, index.index_link_name))
-                else:
-                    index_link_list.append(
-                        (index.id, index.index_link_name_english))
-            else:
-                index_link_list.append(
-                    (index.id, index.index_link_name_english))
-
-    detail_condition = get_search_detail_keyword('')
-    check_site_license_permission()
     send_info = {}
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False
@@ -94,14 +56,15 @@ def index():
     top_viewed.send(current_app._get_current_object(),
                     info=send_info)
 
+    # For front page, always use main layout
+    page = None
+    render_widgets = True
+
     return render_template(
         current_app.config['THEME_FRONTPAGE_TEMPLATE'],
-        render_widgets=True,
-        community_id=community_id,
-        detail_condition=detail_condition,
-        width=width, height=height,
-        index_link_list=index_link_list,
-        index_link_enabled=index_link_enabled, **ctx)
+        page=page,
+        render_widgets=render_widgets,
+        **get_weko_contents(request.args))
 
 
 @blueprint.route('/edit')

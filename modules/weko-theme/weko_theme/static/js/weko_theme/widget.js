@@ -173,6 +173,7 @@ let PageBodyGrid = function () {
             },
             success: (response) => {
                 let endpoints = response.endpoints;
+                let repoHomeURL = (repoID == DEFAULT_REPOSITORY) ? '/' : ('/' + '?community=' + repoID);
                 let navbarID = 'widgetNav_' + widgetID;  // Re-use to build unique class ids
                 let navbarClass = settings.menu_orientation == 'vertical' ?
                     'nav nav-pills nav-stacked pull-left ' + navbarID : 'nav navbar-nav';
@@ -210,7 +211,7 @@ let PageBodyGrid = function () {
                 '        <span class="icon-bar"></span>' +
                 '        <span class="icon-bar"></span>' +
                 '      </button>' +
-                '      <a class="navbar-brand" href="#">' + repoID + '</a>' +
+                '      <a class="navbar-brand" href="' + repoHomeURL + '">' + repoID + '</a>' +
                 '    </div>' +
                 '    <div class="collapse navbar-collapse" id="' + navbarID + '">' +
                 '      <ul class="' + navbarClass + '">';  // Use id to make unique class names
