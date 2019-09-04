@@ -313,7 +313,9 @@ def _get_google_scholar_meta(record):
             'jpcoar:file/jpcoar:URI',
             namespaces=mtdata.nsmap)
         if pdf_url is not None:
-            res.append({'name': 'citation_pdf_url', 'data': pdf_url.text})
+            res.append({'name': 'citation_pdf_url', 
+                'data': request.url.replace('records', 'record') +
+                    '/files/' + pdf_url.text})
     res.append({'name': 'citation_dissertation_institution',
                 'data': InstitutionName.get_institution_name()})
     res.append({'name': 'citation_abstract_html_url', 'data': request.url})
