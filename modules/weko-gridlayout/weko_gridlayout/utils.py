@@ -255,16 +255,6 @@ def build_data(data):
     result['multiLangSetting'] = multi_lang_data
 
     result['is_deleted'] = False
-    role = data.get('browsing_role')
-    if isinstance(role, list):
-        result['browsing_role'] = ','.join(str(e) for e in role)
-    else:
-        result['browsing_role'] = role
-    role = data.get('edit_role')
-    if isinstance(role, list):
-        result['edit_role'] = ','.join(str(e) for e in role)
-    else:
-        result['edit_role'] = role
     return result
 
 
@@ -395,8 +385,6 @@ def convert_widget_data_to_dict(widget_data):
     result['repository_id'] = widget_data.repository_id
     result['widget_type'] = widget_data.widget_type
     result['settings'] = settings
-    result['browsing_role'] = widget_data.browsing_role
-    result['edit_role'] = widget_data.edit_role
     result['is_enabled'] = widget_data.is_enabled
     result['is_deleted'] = widget_data.is_deleted
     return result
@@ -440,8 +428,6 @@ def convert_data_to_design_pack(widget_data, list_multi_lang_data):
     result['widget_id'] = widget_data.get('widget_id')
     result['repository_id'] = widget_data.get('repository_id')
     result['widget_type'] = widget_data.get('widget_type')
-    result['browsing_role'] = widget_data.get('browsing_role')
-    result['edit_role'] = widget_data.get('edit_role')
     result['is_enabled'] = widget_data.get('is_enabled')
     result['is_deleted'] = widget_data.get('is_deleted')
 
@@ -476,8 +462,6 @@ def convert_data_to_edit_pack(data):
     settings = copy.deepcopy(data.get('settings'))
     convert_popular_data(settings, result)
     result['widget_id'] = data.get('widget_id')
-    result['browsing_role'] = data.get('browsing_role')
-    result['edit_role'] = data.get('edit_role')
     result['is_enabled'] = data.get('is_enabled')
     result['enable'] = data.get('is_enabled')
     result['multiLangSetting'] = settings.get('multiLangSetting')

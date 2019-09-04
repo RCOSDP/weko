@@ -84,7 +84,6 @@ class WidgetItem(db.Model):
     repository_id = db.Column(db.String(100),
                               nullable=False)
     widget_type = db.Column(db.String(100),
-                            db.ForeignKey(WidgetType.type_id),
                             nullable=False)
     settings = db.Column(db.JSON().with_variant(
         postgresql.JSONB(
@@ -97,22 +96,10 @@ class WidgetItem(db.Model):
                       'mysql',),
         default=lambda: dict(),
         nullable=True)
-    browsing_role = db.Column(db.Text,
-                              nullable=True)
-    edit_role = db.Column(db.Text,
-                          nullable=True)
     is_enabled = db.Column(db.Boolean(name='enable'),
                            default=True)
     is_deleted = db.Column(db.Boolean(name='deleted'),
                            default=False)
-
-    #
-    # Relation
-    #
-    widgettype = db.relationship(WidgetType,
-                                 backref=db.backref('repositories',
-                                                    cascade='all, \
-                                                    delete-orphan'))
 
     #
     # Query Operation

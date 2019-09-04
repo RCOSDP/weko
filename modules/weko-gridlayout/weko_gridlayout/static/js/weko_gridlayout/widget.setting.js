@@ -5,6 +5,8 @@ const FREE_DESCRIPTION_TYPE = "Free description";
 const NOTICE_TYPE = "Notice";
 const NEW_ARRIVALS = "New arrivals";
 const ACCESS_COUNTER = "Access counter";
+const HEADER_TYPE = "Header";
+const FOOTER_TYPE = "Footer";
 const THEME_SETTING = [{"value" : 'default', "text": "Default"}, {"value": "simple", "text":"Simple"}, {"value": "side_line", "text":"Side Line"}];
 const BORDER_STYLE_SETTING = [{"value" : "none", "text": "None"}, {"value": "solid", "text":"Solid"}, {"value":"dotted", "text":"Dotted"}, {"value": "double", "text":"Double"}];
 const MENU_TYPE = "Menu";
@@ -33,6 +35,9 @@ function userSelectedInput(initialValue, getValueOfField, key_binding, component
 const ComponentSelectField = function(props){
     const selectedData = userSelectedInput(props.data_load, props.getValueOfField, props.key_binding);
     const [selectOptions, setSelectOptions] = useState([]);
+    const [otherSelectOptions, setOtherSelectOptions] = useState([]);
+    const [isRootIndex, setIsRootIndex] = useState(false);
+
 
     useEffect(() => {
         let options = []
@@ -42,15 +47,16 @@ const ComponentSelectField = function(props){
             .then(
                 (result) => {
                     if (result.options) {
-                        if(props.repository != DEFAULT_REPOSITORY){
-                            result.options.push({"text":"Header", "value":"Header"});
-                            result.options.push({"text":"Footer", "value":"Footer"});
-                        }
                         options = result.options.map((option) => {
                             return (
                                 <option key={option.value} value={option.value}>{option.text}</option>
                             )
                         });
+                        let temp = Array.from(options);
+                        setSelectOptions(options);
+                        temp.push(<option key="Header" value="Header">Header</option>);
+                        temp.push(<option key="Footer" value="Footer">Footer</option>);
+                        setOtherSelectOptions(temp);
                     } else {
                         options = result.repositories.map((repository) => {
                             return (
@@ -82,13 +88,21 @@ const ComponentSelectField = function(props){
         }
     },[]);
 
+    useEffect(() => {
+        if(props.repository == DEFAULT_REPOSITORY){
+            setIsRootIndex(true);
+        }else{
+            setIsRootIndex(false);
+        }
+    },[props.repository]);
+
     return (
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}{props.is_required ? <span className="style-red">*</span>:null}</label>
             <div class="controls col-xs-6">
                 <select onChange={(event) => this.handleChange(event)} className="form-control" name={props.name} {...selectedData}>
                     {props.url_request ? <option value="0">Please select the&nbsp;{props.key_binding}</option> : null}
-                    {selectOptions}
+                    {!isRootIndex && props.key_binding == "type" ? otherSelectOptions : selectOptions}
                 </select>
             </div>
         </div>
@@ -872,6 +886,13 @@ class ExtendComponent extends React.Component {
                 </div>
             )
         }
+        else if (this.state.type == HEADER_TYPE || this.state.type == FOOTER_TYPE){
+            return (
+                <div>
+                    <ComponentFieldEditor handleChange={this.handleChange} name={this.state.type == HEADER_TYPE ? "Header setting" : "Footer setting"} key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                </div>
+            )
+        }
         else if (this.state.type == NOTICE_TYPE) {
             if (this.state.write_more == false) {
                 return (
@@ -1434,8 +1455,6 @@ class MainLayout extends React.Component {
             label_enable: this.props.data_load.label_enable,
             frame_border_color: this.props.data_load.frame_border_color,
             background_color: this.props.data_load.background_color,
-            browsing_role: this.props.data_load.browsing_role,
-            edit_role: this.props.data_load.edit_role,
             enable: this.props.data_load.is_enabled,
             settings: this.props.data_load.settings,
             language: this.props.data_load.language,
@@ -1480,12 +1499,6 @@ class MainLayout extends React.Component {
             case 'background_color':
                 this.setState({ background_color: value });
                 break;
-            case 'browsing_role':
-                this.setState({ browsing_role: value });
-                break;
-            case 'edit_role':
-                this.setState({ edit_role: value });
-                break;
             case 'enable':
                 this.setState({ enable: value });
                 break;
@@ -1497,7 +1510,6 @@ class MainLayout extends React.Component {
                 break;
             case 'lang':
                 this.setState({ language: value });
-                console.log('Current selected lang: ' + value);
                 break;
             case 'multiLangData':
                 this.setState({ multiLangSetting: value });
@@ -1653,7 +1665,7 @@ class MainLayout extends React.Component {
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Repository" url_request="/api/admin/load_repository" key_binding="repository" data_load={this.state.repository || '0'}  is_required = {true}/>
                 </div>
                 <div className="row">
-                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} is_required = {true} repository = {this.state.repository_id}/>
+                    <ComponentSelectField getValueOfField={this.getValueOfField} name="Type" url_request="/api/admin/load_widget_type" key_binding="type" data_load={this.state.widget_type} is_required = {true} repository = {this.state.repository}/>
                 </div>
                 <div className="row">
                     <ComponentLanguage getValueOfField={this.getValueOfField} key_binding="language" name="Language" is_edit={this.props.is_edit} initEditData={this.initEditData}
@@ -1686,18 +1698,6 @@ class MainLayout extends React.Component {
                 </div> :null}
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Background Color" key_binding="background_color" data_load={this.state.background_color} />
-                </div>
-                <div className="row">
-                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Browsing Privilege"
-                      authorSelect="browseAuthorSelect" unauthorSelect="browseUnauthorSelect" url_request="/api/admin/get_account_role"
-                      key_binding="browsing_role" data_load={(typeof this.state.browsing_role == 'string') ? this.state.browsing_role.split(',') : this.state.browsing_role}
-                      is_edit={this.props.is_edit} leftBoxTitle="Authorized Roles" rightBoxTitle="Unauthorized Roles" />
-                </div>
-                <div className="row">
-                    <ComponentFieldContainSelectMultiple getValueOfField={this.getValueOfField} name="Edit Privilege"
-                        authorSelect="editAuthorSelect" unauthorSelect="editUnauthorSelect" url_request="/api/admin/get_account_role"
-                        key_binding="edit_role" data_load={(typeof this.state.edit_role == 'string') ? this.state.edit_role.split(',') : this.state.edit_role}
-                        is_edit={this.props.is_edit} leftBoxTitle="Authorized Roles" rightBoxTitle="Unauthorized Roles" />
                 </div>
                 <div className="row">
                     <ComponentCheckboxField name="Enable" getValueOfField={this.getValueOfField} key_binding="enable" data_load={this.state.enable} />
@@ -1736,8 +1736,6 @@ $(function () {
             label_enable: true,
             frame_border_color: '#DDDDDD',
             background_color: '#FFFFFF',
-            browsing_role: [1, 2, 3, 4, 99],
-            edit_role: [1, 2, 3, 4, 99],
             is_enabled: true,
             language: '',
             multiLangSetting: {},
