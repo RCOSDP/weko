@@ -480,9 +480,9 @@ function getWidgetDesignSetting() {
 function toggleWidgetUI() {
     $("div#page_body").each(function () {
         $(this).css("display", "block");
-        $('footer#footer').css("display", "block");
-        $('footer-fix#footer').remove();
     });
+    $('footer#footer').css("display", "block");
+    $('footer-fix#footer').remove();
 }
 
 function handleMoreNoT(moreDescriptionID, linkID, readMore, hideRest) {
