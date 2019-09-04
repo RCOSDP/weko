@@ -61,3 +61,8 @@ button.icon {
   font-weight: inherit;
   cursor: pointer;
 }
+
+.modal-body {
+    /* max-height: calc(100vh - 210px);*/
+    overflow-y: auto;
+}

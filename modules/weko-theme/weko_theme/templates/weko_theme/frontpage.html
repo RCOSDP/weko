@@ -21,7 +21,7 @@
 {%- extends config.BASE_PAGE_TEMPLATE %}
 
 {%- from "invenio_communities/macros.html" import community_header %}
-{% set render_widgets = True %}
+{# set render_widgets = True #}
 
 {%- block css %}
   {{ super() }}
@@ -58,6 +58,9 @@
 {%- endblock page_footer %}
 
 {% block page_body %}
+  {%- if page %}
+      <div id="widget-page-id" hidden>{{ page.id }}</div>
+  {%- endif %}
   {%-if not community_id %}
     {{ super() }}
   {%- else%}

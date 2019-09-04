@@ -37,7 +37,7 @@ from weko_search_ui.query import item_search_factory
 from weko_theme import config as theme_config
 
 from . import config
-from .models import WidgetDesignSetting, WidgetType
+from .models import WidgetDesignPage, WidgetDesignSetting, WidgetType
 
 
 def get_widget_type_list():
@@ -773,3 +773,61 @@ def get_elasticsearch_result_by_date(start_date, end_date):
         current_app.logger.debug('Indexes do not exist yet!')
 
     return result
+
+
+# Validation
+def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
+    """Validate that no page or main layout contains main widget."""
+    # If the main_settings has no main, no need to check anyway
+    if not has_main_contents_widget(new_settings):
+        return True
+
+    # Check if main design has main widget
+    main_design = \
+        WidgetDesignSetting.select_by_repository_id(repository_id or '')
+    main_has_main = has_main_contents_widget(
+        json.loads(main_design.get('settings', '[]'))) if main_design else False
+
+    # Get page which has main
+    page_with_main = get_widget_design_page_with_main(repository_id)
+    existing_page = WidgetDesignPage.get_by_id_or_none(page_id or 0)
+
+    # Case 1 Neither main design or page design has main widget
+    if not main_has_main and not page_with_main:
+        return True
+
+    # Case 2: Updating main widget design which already has main
+    elif main_has_main and not page_with_main and not existing_page:
+        return True
+
+    # Case 3: We are updating a page which already has main -- if not False
+    elif not main_has_main and page_with_main and existing_page:
+        return page_with_main.id == existing_page.id
+    return False
+
+
+def get_widget_design_page_with_main(repository_id):
+    """Get the page which contains Main contents widget."""
+    if repository_id:
+        for page in WidgetDesignPage.get_by_repository_id(repository_id):
+            if has_main_contents_widget(json.loads(page.settings)):
+                return page
+    return None
+
+
+def main_design_has_main_widget(repository_id):
+    """Check if main design has main widget."""
+    main_design = WidgetDesignSetting.select_by_repository_id(repository_id)
+    if main_design:
+        return has_main_contents_widget(
+            json.loads(main_design.get('settings', '[]')))
+    return False
+
+
+def has_main_contents_widget(settings):
+    """Check if settings contains the main contents widget."""
+    if settings:
+        for item in settings:
+            if item.get('type') == config.WEKO_GRIDLAYOUT_MAIN_TYPE:
+                return True
+    return False

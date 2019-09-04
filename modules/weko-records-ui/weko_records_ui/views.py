@@ -408,6 +408,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             get_min_price_billing_file_download(groups_price,
                                                 billing_files_permission)
 
+    from weko_theme.utils import get_design_layout
+    # Get the design for widget rendering
+    page, render_widgets = get_design_layout(request.args.get('community')
+                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+
     return render_template(
         template,
         pid=pid,
@@ -417,6 +422,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         can_download_original_pdf=can_download_original,
         is_logged_in=current_user and current_user.is_authenticated,
         can_update_version=can_update_version,
+        page=page,
+        render_widgets=render_widgets,
         community_id=community_id,
         width=width,
         detail_condition=detail_condition,

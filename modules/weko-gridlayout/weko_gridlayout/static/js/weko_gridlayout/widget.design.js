@@ -534,15 +534,6 @@ class AddPageForm extends React.Component {
                       handleChange={this.props.handleInputChange}
                       pageModalOpen={this.props.pageModalOpen}/>
               </div>
-              <div className="form-group row">
-                  <label htmlFor="" className="control-label col-xs-2 text-right">
-                      Content
-                  </label>
-                  <div class="col-xs-9">
-                      <ComponentFieldEditor content={this.props.values.content}
-                          handleChange={this.props.handleInputChange} />
-                  </div>
-              </div>
           </div>
         )
     }
@@ -1248,12 +1239,13 @@ function saveWidgetDesignSetting(widgetDesignData) {
         var modalcontent =  "Please add Widget to Preview panel";
         alertModal(modalcontent);
         return false;
-    } else if(!isHasMainContent && (pageId == "0" || !pageId)) {  // Allow for pages not to have main contents
-        //alert('Please add Main Content to Preview panel.');
-        var modalcontent =  "Please add Main Content to Preview panel.";
-        alertModal(modalcontent);
-        return false;
     }
+    // else if(!isHasMainContent && (pageId == "0" || !pageId)) {  // Allow for pages not to have main contents
+    //     //alert('Please add Main Content to Preview panel.');
+    //     var modalcontent =  "Please add Main Content to Preview panel.";
+    //     alertModal(modalcontent);
+    //     return false;
+    // }
 
     let saveData = JSON.stringify(widgetDesignData);
     let postData = {
