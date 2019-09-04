@@ -452,6 +452,7 @@ class ItemTypes(RecordBase):
     def get_latest_custorm_harvesting(cls, with_deleted=False,
                                       harvesting_type=False):
         """Retrieve the latest item types.
+
         :param
         with_deleted: If `True` then it includes deleted item types.
         harvesting_type: If `True` then it includes multy item types.
