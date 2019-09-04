@@ -289,7 +289,7 @@ class ComponentFieldContainSelectMultiple extends React.Component {
         this.initSelectBox = this.initSelectBox.bind(this);
     }
     componentDidMount() {
-        this.initSelectBox(this.props.url_request);
+        this.initSelectBox(this.props.url_request, this.props.repositoryId);
     }
 
     handleChange(event) {
@@ -298,8 +298,16 @@ class ComponentFieldContainSelectMultiple extends React.Component {
     }
 
 
-    initSelectBox(url) {
-        fetch(url)
+    initSelectBox(url, repositoryId) {
+        let data = {
+          repository_id: repositoryId
+        };
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data)})
             .then(res => res.json())
             .then(
                 (result) => {
@@ -370,8 +378,8 @@ class ComponentFieldContainSelectMultiple extends React.Component {
            this.props.key_binding == "menu_show_pages" ) {
               this.setState({language: nextProps.language});
               let loadPagesURL = "/api/admin/load_widget_design_pages/" +
-                  this.props.repositoryId + "/" + nextProps.language;
-              this.initSelectBox(loadPagesURL); // Re-ender tables select box
+                  nextProps.language;
+              this.initSelectBox(loadPagesURL, this.props.repositoryId); // Re-ender tables select box
         }
     }
 
@@ -993,7 +1001,7 @@ class ExtendComponent extends React.Component {
         }
         else if(this.state.type == MENU_TYPE){
             let loadPagesURL = "/api/admin/load_widget_design_pages/" +
-                this.props.repositoryId + "/" + this.props.language;
+                this.props.language;
             return(
                 <div>
                   <ComponentRadioSelect handleChange={this.handleOrientationRadio} getValueOfField={this.props.getValueOfField} name="Display Orientation" key_binding="menu_orientation" data_load={this.state.settings.menu_orientation || 'horizontal'} />
