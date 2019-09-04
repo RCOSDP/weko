@@ -31,20 +31,17 @@
       <th class="text-center">Progress</th>
       <th class="text-center">Actions</th>
     </tr>
-    <tr class="sel-file" ng-repeat="f in model.thumbnailsInfor">
+    <tr class="sel-file" ng-repeat="f in model.thumbnailsInfor | filter:{is_thumbnail: 'true'}">
       <td>
-        <span ng-bind="f.name | limitTo: 40"></span>
+        <span ng-bind="f.name || f.key | limitTo: 40"></span>
         <span ng-show="f.name.length > 50">...</span>
       </td>
       <td ng-bind="f.size | bytesToHumanReadable"></td>
       <td class="text-center">
         <span ng-show="f.errored" class="text-danger">Error</span>
-        <span class="text-success">✓</span>
+        <span ng-show="f" class="text-success">✓</span>
       </td>
-      <td class="text-center"><a ng-click="filesVM.remove(f)">✗</a></td>
-    </tr>
-    <tr ng-show="!model.thumbnailsInfor[0]">
-      <td colspan="4" class="text-center text-muted"> No results.</td>
+      <td ng-show="f" class="text-center"><a ng-click="filesVM.remove(f)">✗</a></td>
     </tr>
   </table>
   <div class="panel-footer">

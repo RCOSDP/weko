@@ -42,6 +42,7 @@ def item_login(item_type_id=0):
     files = []
     endpoints = {}
     need_thumbnail = False
+    files_thumbnail = []
 
     try:
         item_type = ItemTypes.get_by_id(item_type_id)
@@ -62,7 +63,9 @@ def item_login(item_type_id=0):
             if 'metainfo' in item_json:
                 record = item_json.get('metainfo')
             if 'files' in item_json:
-                files = item_json.get('files')
+                all_files = item_json.get('files')
+                files_thumbnail = [i for i in all_files if 'is_thumbnail' in i.keys()]
+                files = [i for i in all_files if i not in files_thumbnail]
             if 'endpoints' in item_json:
                 endpoints = item_json.get('endpoints')
         if 'filename' in json.dumps(item_type.schema):
@@ -73,5 +76,5 @@ def item_login(item_type_id=0):
         template_url = 'weko_items_ui/iframe/error.html'
         current_app.logger.debug(str(e))
 
-    return template_url, need_file, record, json_schema, \
-        schema_form, item_save_uri, files, endpoints, need_thumbnail
+    return template_url, need_file, record, json_schema, schema_form, \
+        item_save_uri, files, endpoints, need_thumbnail, files_thumbnail

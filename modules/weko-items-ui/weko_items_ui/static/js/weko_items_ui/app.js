@@ -1402,11 +1402,6 @@ function handleSharePermission(value) {
       $scope.saveDataJsonCallback = function (item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
-          if (!angular.isUndefined($rootScope.$$childHead.model)) {
-            console.log($rootScope.$$childHead.model);
-            $rootScope.filesVM.addFiles($rootScope.$$childHead.model.thumbnailsInfor);
-            $rootScope.filesVM.upload();
-          }
           metainfo = angular.merge(
             {},
             metainfo,
@@ -1507,15 +1502,22 @@ function handleSharePermission(value) {
                 }
             }
         };
-        $scope.model = {
-            thumbnailsInfor: {}
-        };
         $scope.form = [
             {
                 "key": "thumbnail",
                 "type": "fileUpload"
             }
         ];
+        $scope.model = {
+            thumbnailsInfor: [],
+        };
+
+        // set current data thumbnail if has
+        let thumbnailsInfor = $("form[name='uploadThumbnailForm']").data('files-thumbnail');
+        if (thumbnailsInfor.length > 0) {
+          $scope.model.thumbnailsInfor = angular.fromJson(thumbnailsInfor);
+        }
+        // click input upload files
         $scope.uploadThumbnail = function() {
             console.log($scope.model);
             setTimeout(function() {

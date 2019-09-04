@@ -137,7 +137,7 @@
                   template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/upload.html') }}">
                 </invenio-files-upload-zone>
                 <invenio-files-list
-                  template="{{ url_for('static', filename='node_modules/invenio-files-js/dist/templates/list.html') }}"
+                  template="{{ url_for('static', filename='templates/weko_items_ui/upload_file_list.html') }}"
                 ></invenio-files-list>
               </div>
             </div>
@@ -163,7 +163,8 @@
                           <form name="uploadThumbnailForm" class="collapse"
                             sf-schema="schema"
                             sf-form="form"
-                            sf-model="model">
+                            sf-model="model"
+                            data-files-thumbnail="{{ files_thumbnail }}">
                           </form>
                           <hr />
                           {%- include 'weko_items_ui/iframe/upload_list.html' %}

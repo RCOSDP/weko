@@ -264,7 +264,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
                             for val in dic.values() if isinstance(val, dict)
                             and hidden_subitem in val]
             if hidden_items and hidden_subitem in json.dumps(result):
-                result = update_schema_remove_hidden_item(result, hidden_items)
+                result['properties'] = update_schema_remove_hidden_item(properties, result.model.render, hidden_items)
 
         if result is None:
             return '{}'
@@ -305,6 +305,15 @@ def get_schema_form(item_type_id=0):
             filemeta_form_group = filemeta_form.get('items')[-1]
             filemeta_form_group['type'] = 'select'
             filemeta_form_group['titleMap'] = group_list
+
+        # hidden option
+        hidden_subitem = 'subitem_thumbnail'
+        hidden_items = [schema_form.index(form) for form in schema_form
+                        if form.get('items') 
+                        and form['items'][0]['key'].split('.')[1] == hidden_subitem]
+        if hidden_items and hidden_subitem in json.dumps(schema_form):
+            result = update_schema_remove_hidden_item(schema_form, result.render, hidden_items)
+
         if 'default' != cur_lang:
             for elem in schema_form:
                 if 'title_i18n' in elem and cur_lang in elem['title_i18n']\
@@ -1102,7 +1111,7 @@ def check_validation_error_msg(activity_id):
         return jsonify(code=0)
 
 
-def update_schema_remove_hidden_item(schema, items_name):
+def update_schema_remove_hidden_item(schema, render, items_name):
     """Update schema: remove hidden items.
 
     :param schema: json schema
@@ -1111,10 +1120,14 @@ def update_schema_remove_hidden_item(schema, items_name):
     """
     if not schema or not items_name:
         return '{}'
-    render = schema.model.render
     for item in items_name:
-        hidden_flg = render['meta_list'][item]['option']['hidden']
+        hidden_flg = False
+        if render['meta_list'].get(item):
+            hidden_flg = render['meta_list'][item]['option']['hidden']
+        else:
+            key = schema[item]['key']
+            if render['meta_list'].get(key):
+                hidden_flg = render['meta_list'][key]['option']['hidden']
         if hidden_flg:
-            schema['properties'].pop(item)
-
+            schema.pop(item)
     return schema

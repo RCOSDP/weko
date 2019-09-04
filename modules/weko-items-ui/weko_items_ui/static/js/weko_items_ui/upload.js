@@ -322,7 +322,9 @@ require([
                     var files = (onChangeEvent.srcElement || onChangeEvent.target).files;
                     if (!angular.isUndefined(files) && files.length>0) {
                         files[0].is_thumbnail=true;
-                        angular.extend($scope.$parent.model.thumbnailsInfor, files);
+                        Array.prototype.push.apply($scope.$parent.model.thumbnailsInfor,files);
+                        $rootScope.filesVM.addFiles(files);
+                        $rootScope.filesVM.upload();
                         reader.readAsDataURL(files[0]);
                     }
                 });
