@@ -136,8 +136,7 @@ def saving_doi_pidstore(data=None, doi_select=0, activity_id='0'):
     try:
         tempdata[attrs[0]] = identifier_value
         tempdata[attrs[1]] = identifier_type
-        if tempdata.get(attrs[2]) is not None \
-                and tempdata.get(attrs[3]) is not None:
+        if tempdata.get(attrs[2]) and tempdata.get(attrs[3]):
             tempdata[attrs[2]] = doi_register_val
             tempdata[attrs[3]] = doi_register_typ
 

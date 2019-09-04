@@ -59,12 +59,12 @@ class Handle(object):
             pid = client.generate_PID_name(credential.get_prefix())
             handle = client.register_handle(pid, location)
             current_app.logger.info(
-                'Successful registration of handle {}'.format(pid))
+                'Registered successfully handle {}'.format(pid))
             return handle
         except (FileNotFoundError, CredentialsFormatError,
                 HandleAuthenticationError, GenericHandleError) as e:
             current_app.logger.error(
-                'Registration failed of handle {}\n{} in '
+                'Registration failed of handle {}. {} in '
                 'HandleClient.register_handle'.format(pid, e))
             return None
         except AttributeError:
