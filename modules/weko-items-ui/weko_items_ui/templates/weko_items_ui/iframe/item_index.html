@@ -56,6 +56,9 @@
 
 {%- block page_body_main %}
 <div class="row">
+  {%- if page %}
+    <div id="widget-page-id" hidden>{{ page.id }}</div>
+  {%- endif %}
   {%-if community%}
   <div id="community_id" class="hide">{{community.id}}</div>
   {%-else %}

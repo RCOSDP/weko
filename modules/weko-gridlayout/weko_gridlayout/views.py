@@ -11,11 +11,14 @@ from __future__ import absolute_import, print_function
 from datetime import date, timedelta
 
 import six
+import json
+
 from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from sqlalchemy.orm.exc import NoResultFound
+from weko_theme.utils import get_community_id, get_weko_contents
 from werkzeug.exceptions import NotFound
 
 from .api import WidgetItems
@@ -24,6 +27,7 @@ from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
     get_system_language, get_widget_type_list
+
 
 blueprint = Blueprint(
     'weko_gridlayout',
@@ -365,27 +369,40 @@ def get_widget_page_endpoints(widget_id, lang=''):
 # Based on invenio_pages.views
 def view_widget_page():
     """View user-created WidgetDesignPages."""
-    community_id, ctx = _get_community_id(request.args)
+    community_id, ctx = get_community_id(request.args)
     try:
         page = WidgetDesignPage.get_by_url(request.path)
+
+        # Check if has main and if it does use different template
+        if page.settings:
+            main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
+            settings = json.loads(page.settings)
+            for item in settings:
+                if item['type'] == main_type:
+                    return render_template(
+                        current_app.config['THEME_FRONTPAGE_TEMPLATE'],
+                        page=page,
+                        render_widgets=True,
+                        **get_weko_contents(request.args))
+
         return render_template(
             page.template_name
             or current_app.config['WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE'],
             page=page,
             community_id=community_id,
-            **ctx,
-        )
+            **ctx,)
     except Exception as e:
         current_app.logger.error(e)
         abort(404)
 
 
 # Based on invenio_pages.views
+# FIXME: Refactor with above
 def handle_not_found(exception, **extra):
     """Custom blueprint exception handler."""
     assert isinstance(exception, NotFound)  # Only handle 404 errors
 
-    community_id, ctx = _get_community_id(request.args)
+    community_id, ctx = get_community_id(request.args)
     try:  # Check if the page exists
         page = WidgetDesignPage.get_by_url(request.path)
     except NoResultFound:
@@ -393,6 +410,16 @@ def handle_not_found(exception, **extra):
 
     if page:
         _add_url_rule(page.url)
+        if page.settings:
+            main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
+            settings = json.loads(page.settings)
+            for item in settings:
+                if item['type'] == main_type:
+                    return render_template(
+                        current_app.config['THEME_FRONTPAGE_TEMPLATE'],
+                        page=page,
+                        **get_weko_contents(request.args))
+
         return render_template(
             page.template_name
             or current_app.config['WEKO_GRIDLAYOUT_DEFAULT_PAGES_TEMPLATE'],
@@ -418,15 +445,3 @@ def _add_url_rule(url_or_urls):
         current_app.add_url_rule(url, 'weko_gridlayout.view_widget_page',
                                  view_widget_page), url_or_urls)
     current_app._got_first_request = old
-
-
-def _get_community_id(getargs):
-    """Get the community data for specific args."""
-    ctx = {'community': None}
-    community_id = ""
-    if 'community' in getargs:  # TODO: Put into a function and use it EVERYWHERE
-        from weko_workflow.api import GetCommunity
-        comm = GetCommunity.get_community_by_id(request.args.get('community'))
-        ctx = {'community': comm}
-        community_id = comm.id
-    return community_id, ctx

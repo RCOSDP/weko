@@ -70,6 +70,9 @@ THEME_SEARCHBAR = True
 THEME_FRONTPAGE_TEMPLATE = 'weko_theme/frontpage.html'
 """Template for front page."""
 
+WEKO_THEME_DEFAULT_COMMUNITY = 'Root Index'
+"""Default community identifier."""
+
 WEKO_THEME_ADMIN_ITEM_MANAGEMENT_INIT_TEMPLATE = \
     'weko_theme/admin/item_management_init.html'
 """Template for Item Management."""
