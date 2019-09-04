@@ -23,8 +23,8 @@
 from flask import current_app
 from invenio_i18n.ext import current_i18n
 from weko_admin.utils import set_default_language
-from weko_gridlayout.utils import main_design_has_main_widget, \
-    get_widget_design_page_with_main
+from weko_gridlayout.utils import get_widget_design_page_with_main, \
+    main_design_has_main_widget
 from weko_index_tree.models import Index, IndexStyle
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_search_ui.api import get_search_detail_keyword

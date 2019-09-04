@@ -588,15 +588,14 @@ class WidgetDesignServices:
                     item.update(widget_item.get('settings'))
             setting_data = json.dumps(json_data)
 
-
             # Main contents can only be in one page design or main design
             valid = validate_main_widget_insertion(
                 repository_id, json_data, page_id=page_id)
 
-            if page_id and repository_id and setting_data and valid: # Page
+            if page_id and repository_id and setting_data and valid:  # Page
                 result["result"] = WidgetDesignPage.update_settings(
                     page_id, setting_data)
-            elif repository_id and setting_data and valid: # Main design
+            elif repository_id and setting_data and valid:  # Main design
                 if WidgetDesignSetting.select_by_repository_id(repository_id):
                     result["result"] = WidgetDesignSetting.update(
                         repository_id, setting_data)

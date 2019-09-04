@@ -410,8 +410,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(request.args.get('community') or
-        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(request.args.get('community')
+                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     return render_template(
         template,

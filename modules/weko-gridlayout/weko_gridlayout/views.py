@@ -8,11 +8,10 @@
 """Module of weko-gridlayout."""
 from __future__ import absolute_import, print_function
 
+import json
 from datetime import date, timedelta
 
 import six
-import json
-
 from flask import Blueprint, abort, current_app, jsonify, render_template, \
     request
 from flask_babelex import gettext as _
@@ -27,7 +26,6 @@ from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import get_default_language, get_elasticsearch_result_by_date, \
     get_system_language, get_widget_type_list
-
 
 blueprint = Blueprint(
     'weko_gridlayout',

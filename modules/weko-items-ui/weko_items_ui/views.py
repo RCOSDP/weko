@@ -415,14 +415,12 @@ def iframe_items_index(pid_value=0):
         action = 'private' if record.get('publish_status', '1') == '1' \
             else 'publish'
 
-
-
         if request.method == 'GET':
             # Get the design for widget rendering
             from weko_theme.utils import get_design_layout
             page, render_widgets = get_design_layout(
-                session['itemlogin_community_id'] or
-                current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+                session['itemlogin_community_id']
+                or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
@@ -1089,7 +1087,6 @@ def export():
     if request.method == 'POST':
         return export_items(request.form.to_dict())
 
-
     from weko_search_ui.api import SearchSetting
     search_type = request.args.get('search_type', '0')  # TODO: Refactor
     community_id = ""
@@ -1101,11 +1098,10 @@ def export():
         ctx = {'community': comm}
         community_id = comm.id
 
-
     from weko_theme.utils import get_design_layout
     # Get the design for widget rendering
-    page, render_widgets = get_design_layout(community_id or
-        current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+    page, render_widgets = get_design_layout(community_id
+                                             or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
 
     sort_options, display_number = SearchSetting.get_results_setting()
     disply_setting = dict(size=display_number)
