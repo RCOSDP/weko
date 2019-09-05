@@ -302,9 +302,9 @@ def display_activity(activity_id=0):
         )
         session['activity_info'] = activity_session
         # get item edit page info.
-        step_item_login_url, need_file, record, json_schema, schema_form, \
-            item_save_uri, files, endpoints, need_thumbnail, files_thumbnail = item_login(
-                item_type_id=workflow_detail.itemtype_id)
+        step_item_login_url, need_file, record, json_schema, schema_form,\
+            item_save_uri, files, endpoints, need_thumbnail, files_thumbnail \
+            = item_login(item_type_id=workflow_detail.itemtype_id)
         if item:
             pid_identifier = PersistentIdentifier.get_by_object(
                 pid_type='depid', object_type='rec', object_uuid=item.id)
@@ -336,7 +336,8 @@ def display_activity(activity_id=0):
             item_json = json.loads(item_str.decode('utf-8'))
             if 'files' in item_json:
                 all_files = item_json.get('files')
-                files_thumbnail = [i for i in all_files if 'is_thumbnail' in i.keys()]
+                files_thumbnail = [i for i in all_files
+                                   if 'is_thumbnail' in i.keys()]
                 files = [i for i in all_files if i not in files_thumbnail]
         if not files:
             deposit = WekoDeposit.get_record(item.id)

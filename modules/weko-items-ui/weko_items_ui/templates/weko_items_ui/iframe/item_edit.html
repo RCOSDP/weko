@@ -167,6 +167,7 @@
                             data-files-thumbnail="{{ files_thumbnail }}">
                           </form>
                           <hr />
+                          <input type="hidden" id="deposit-files-api" value="{{ config.DEPOSIT_FILES_API }}">
                           {%- include 'weko_items_ui/iframe/upload_list.html' %}
                         </div>
                       </div>

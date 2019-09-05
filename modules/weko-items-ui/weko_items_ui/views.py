@@ -257,14 +257,6 @@ def get_json_schema(item_type_id=0, activity_id=""):
                     filemeta_group = result.get('properties').get(
                         'filemeta').get('items').get('properties').get('groups')
                     filemeta_group['enum'] = group_enum
-            # hidden option
-            hidden_subitem = 'subitem_thumbnail'
-            properties = result.get('properties')
-            hidden_items = [key for key, dic in properties.items()
-                            for val in dic.values() if isinstance(val, dict)
-                            and hidden_subitem in val]
-            if hidden_items and hidden_subitem in json.dumps(result):
-                result['properties'] = update_schema_remove_hidden_item(properties, result.model.render, hidden_items)
 
         if result is None:
             return '{}'
@@ -308,11 +300,14 @@ def get_schema_form(item_type_id=0):
 
         # hidden option
         hidden_subitem = 'subitem_thumbnail'
-        hidden_items = [schema_form.index(form) for form in schema_form
-                        if form.get('items') 
-                        and form['items'][0]['key'].split('.')[1] == hidden_subitem]
+        hidden_items = [
+            schema_form.index(form) for form in schema_form
+            if form.get('items')
+            and form['items'][0]['key'].split('.')[1] == hidden_subitem]
         if hidden_items and hidden_subitem in json.dumps(schema_form):
-            result = update_schema_remove_hidden_item(schema_form, result.render, hidden_items)
+            schema_form = update_schema_remove_hidden_item(schema_form,
+                                                           result.render,
+                                                           hidden_items)
 
         if 'default' != cur_lang:
             for elem in schema_form:
@@ -567,7 +562,8 @@ def to_files_js(record):
                             key=f.key,
                             version_id=f.version_id,
                         )),
-                }
+                },
+                'is_show': f.is_show
             })
 
     return res
@@ -1115,6 +1111,7 @@ def update_schema_remove_hidden_item(schema, render, items_name):
     """Update schema: remove hidden items.
 
     :param schema: json schema
+    :param render: json render
     :param items_name: list items which has hidden flg
     :return: The json object.
     """
@@ -1122,12 +1119,10 @@ def update_schema_remove_hidden_item(schema, render, items_name):
         return '{}'
     for item in items_name:
         hidden_flg = False
-        if render['meta_list'].get(item):
-            hidden_flg = render['meta_list'][item]['option']['hidden']
-        else:
-            key = schema[item]['key']
-            if render['meta_list'].get(key):
-                hidden_flg = render['meta_list'][key]['option']['hidden']
+        key = schema[item]['key']
+        if render['meta_list'].get(key):
+            hidden_flg = render['meta_list'][key]['option']['hidden']
         if hidden_flg:
-            schema.pop(item)
+            schema[item]['condition'] = 1
+
     return schema

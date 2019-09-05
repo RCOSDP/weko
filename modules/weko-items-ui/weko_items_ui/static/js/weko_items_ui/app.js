@@ -1342,6 +1342,7 @@ function handleSharePermission(value) {
           return false;
         } else {
           $scope.genTitleAndPubDate();
+          this.mappingThumbnailInfor();
           let next_frame = $('#next-frame').val();
           if ($scope.is_item_owner) {
             if (!this.registerUserPermission()) {
@@ -1402,6 +1403,7 @@ function handleSharePermission(value) {
       $scope.saveDataJsonCallback = function (item_save_uri) {
         var metainfo = { 'metainfo': $rootScope.recordsVM.invenioRecordsModel };
         if (!angular.isUndefined($rootScope.filesVM)) {
+          this.mappingThumbnailInfor();
           metainfo = angular.merge(
             {},
             metainfo,
@@ -1455,6 +1457,42 @@ function handleSharePermission(value) {
           }
         });
         return result;
+      }
+
+      // mapping URL & Name of file
+      $scope.mappingThumbnailInfor = function () {
+        if (!angular.isUndefined($rootScope.filesVM)
+          && !angular.isUndefined($rootScope.$$childHead.model)
+          && !angular.equals([], $rootScope.$$childHead.model.thumbnailsInfor)) {
+          // search thumbnail form
+          thumbnail_item = this.searchThumbnailForm("Thumbnail");
+          if (!angular.equals([], thumbnail_item)) {
+            var thumbnail_list = [];
+
+            $rootScope.$$childHead.model.thumbnailsInfor.forEach(file => {
+              var file_form = {};
+              file_form[thumbnail_item[2][0]] = file.key;
+              var deposit_files_api = $("#deposit-files-api").val();
+              file_form[thumbnail_item[2][1]] = deposit_files_api + file.links ? file.links.version.split(deposit_files_api)[1] || '';
+              thumbnail_list.push(file_form);
+            });
+            if (thumbnail_list.length > 0) {
+              $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]] = {};
+              $rootScope.recordsVM.invenioRecordsModel[thumbnail_item[0]][thumbnail_item[1]] = thumbnail_list;
+            }
+          }
+        }
+      }
+
+      $scope.searchThumbnailForm = function (title) {
+        var thumbnail_attrs = [];
+        $rootScope.recordsVM.invenioRecordsForm.forEach(RecordForm => {
+          if (RecordForm.title == title) {
+            var subItem = Object.keys(RecordForm.schema.properties)[0] || 'subitem_thumbnail';
+            thumbnail_attrs = [RecordForm.key[0], subItem, Object.keys(RecordForm.schema.properties[subItem].items.properties)];
+          }
+        });
+        return thumbnail_attrs;
       }
     }
     // Inject depedencies
@@ -1519,7 +1557,6 @@ function handleSharePermission(value) {
         }
         // click input upload files
         $scope.uploadThumbnail = function() {
-            console.log($scope.model);
             setTimeout(function() {
                 document.getElementById('selectThumbnail').click();
             }, 0);
