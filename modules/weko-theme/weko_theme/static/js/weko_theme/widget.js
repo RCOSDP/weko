@@ -75,14 +75,27 @@ let PageBodyGrid = function () {
         if(!hasMainContent) {
             $("#main_contents").hide();  // remove(); or empty() ?
         }
-
+        let noHeader = true;
+        let noFooter = true;
         for (var i = 0; i < items.length; i++) {
             let node = items[i];
             if (MAIN_CONTENT_TYPE != node.type) {
+                if (HEADER_TYPE == node.type) {
+                    noHeader = false;
+                }
+                if (FOOTER_TYPE == node.type) {
+                    noFooter = false;
+                }
                 if(!(DEFAULT_REPOSITORY == node.id && HEADER_TYPE == node.type) && !(DEFAULT_REPOSITORY == node.id && FOOTER_TYPE == node.type)){
                     this.addNewWidget(node, i);
                 }
             }
+        }
+        if (noHeader) {
+            $("#community_header").attr("hidden", false);
+        }
+        if (noFooter) {
+            $("#community_footer").attr("hidden", false);
         }
         return false;
     }.bind(this);
@@ -280,10 +293,12 @@ let PageBodyGrid = function () {
           Object.keys(node).forEach((k) => {if (k.startsWith('menu_')) menuSettings[k] = node[k]});
           this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
         } else if (node.type == HEADER_TYPE) {
+            $("#community_header").attr("hidden", true);
             if (!$.isEmptyObject(languageDescription)) {
                 content = languageDescription.description;
             }
         } else if (node.type == FOOTER_TYPE) {
+            $("#community_footer").attr("hidden", true);
             if (!$.isEmptyObject(languageDescription)) {
                 content = languageDescription.description;
             }
@@ -404,7 +419,7 @@ let WidgetTheme = function () {
         let headerClass = (widget_settings.label_enable) ? '' : 'no-pad-top-30';
         headerClass += (widget_settings.type == NEW_ARRIVALS || widget_settings.type == HEADER_TYPE || widget_settings.type == FOOTER_TYPE) ? ' no-before-content' : '';
         if (widget_settings.type == ACCESS_COUNTER || widget_settings.type == HEADER_TYPE || widget_settings.type == FOOTER_TYPE) {
-            overFlowBody = "overflow-y: hidden; ";
+            overFlowBody = "overflow-y: hidden; overflow-x: hidden; ";
         }
         if (widget_settings.type == MENU_TYPE) {
             panelClasses = "panel-body";
@@ -518,6 +533,8 @@ function getWidgetDesignSetting() {
                     });
                 }
                 else {  // Pages are able to not have main content, so hide if widget is not present
+                    $("#community_header").attr("hidden", false);
+                    $("#community_footer").attr("hidden", false);
                     if(is_page){
                         $("#main_contents").hide();
                     }

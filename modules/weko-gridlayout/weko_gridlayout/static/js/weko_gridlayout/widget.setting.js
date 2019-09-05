@@ -1704,11 +1704,11 @@ class MainLayout extends React.Component {
                 <div className="row">
                     <ComponentCheckboxField name="Label Enable" getValueOfField={this.getValueOfField} key_binding="label_enable" data_load={this.state.label_enable} />
                 </div> : null}
-                {this.state.label_enable || (this.state.widget_type != HEADER_TYPE && this.state.widget_type != FOOTER_TYPE) ?
+                {this.state.label_enable ?
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Color" key_binding="label_color" data_load={this.state.label_color} />
                 </div> : null }
-                {this.state.label_enable || (this.state.widget_type != HEADER_TYPE && this.state.widget_type != FOOTER_TYPE) ?
+                {this.state.label_enable ?
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Text Color" key_binding="label_text_color" data_load={this.state.label_text_color} />
                 </div> : null }
