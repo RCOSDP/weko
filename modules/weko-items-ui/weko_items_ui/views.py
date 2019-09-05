@@ -564,6 +564,7 @@ def to_files_js(record):
                 'displaytype': f.get('displaytype', ''),
                 'filename': f.get('filename', ''),
                 'mimetype': f.mimetype,
+                'licensetype': f.get('licensetype', ''),
                 'key': f.key,
                 'version_id': f.version_id,
                 'checksum': f.file.checksum,
