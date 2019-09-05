@@ -55,7 +55,7 @@ class Handle(object):
             credential = PIDClientCredentials.load_from_JSON(
                 self.credential_path)
             client = EUDATHandleClient.instantiate_with_credentials(credential)
-            pid = credential.get_prefix() \
+            pid = credential.get_prefix() + '/' \
                 + "{:010d}".format(int(location.split('/records/')[1]))
             handle = client.register_handle(pid, location)
             current_app.logger.info(
