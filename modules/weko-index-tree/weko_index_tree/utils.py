@@ -107,8 +107,16 @@ def get_tree_json(obj, pid=0):
                 lst['children'] = []
                 if isinstance(lst, dict):
                     key = lst.get('id')
-                    while ntree and str(ntree[0].pid) == key:
-                        index_obj = ntree.pop(0)
+                    i = 0
+                    while ntree:
+                        if str(ntree[i].pid) == key:
+                            index_obj = ntree.pop(i)
+                            i = 0
+                        elif i < len(ntree) - 1:
+                            i = i + 1
+                            continue
+                        else:
+                            break
                         if isinstance(index_obj, tuple):
                             cid = str(index_obj.cid)
                             pid = str(index_obj.pid)
