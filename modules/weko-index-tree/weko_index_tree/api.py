@@ -504,16 +504,17 @@ class Indexes(object):
     @classmethod
     def get_index_with_role(cls, index_id):
         """Get Index with role."""
-        def _get_allow_deny(allow, role):
+        def _get_allow_deny(allow, role, browse_flag=False):
             alw = []
             deny = []
             if isinstance(role, list):
                 while role:
                     tmp = role.pop(0)
-                    if str(tmp["id"]) in allow:
-                        alw.append(tmp)
-                    else:
-                        deny.append(tmp)
+                    if not 'Administrator' in tmp["name"] or not browse_flag:
+                        if str(tmp["id"]) in allow:
+                            alw.append(tmp)
+                        else:
+                            deny.append(tmp)
             return alw, deny
 
         def _get_group_allow_deny(allow_group_id=[], groups=[]):
@@ -535,7 +536,7 @@ class Indexes(object):
         allow = index["browsing_role"].split(',') \
             if len(index["browsing_role"]) else None
         if allow:
-            allow, deny = _get_allow_deny(allow, deepcopy(role))
+            allow, deny = _get_allow_deny(allow, deepcopy(role), True)
         else:
             allow = role
             deny = []
@@ -614,7 +615,9 @@ class Indexes(object):
         try:
             with db.session.no_autoflush:
                 role = Role.query.all()
-            return list(map(_get_dict, role)) + [{"id": 99, "name": "Guest"}]
+            return list(map(_get_dict, role)) \
+                + [{"id": 98, "name": "Authenticated User"}] \
+                + [{"id": 99, "name": "Guest"}]
         except SQLAlchemyError:
             return
 
