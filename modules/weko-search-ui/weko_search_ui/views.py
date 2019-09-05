@@ -33,7 +33,8 @@ from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from weko_admin.models import AdminSettings
 from weko_index_tree.api import Indexes
-from weko_index_tree.models import Index, IndexStyle
+from weko_index_tree.models import IndexStyle
+from weko_index_tree.utils import get_index_link_list
 from weko_records_ui.ipaddr import check_site_license_permission
 
 from weko_search_ui.api import get_search_detail_keyword
@@ -93,19 +94,6 @@ def search():
 
     height = style.height if style else None
 
-    index_link_list = []
-    for index in Index.query.all():
-        if index.index_link_enabled and index.public_state:
-            if hasattr(current_i18n, 'language'):
-                if current_i18n.language == 'ja' and index.index_link_name:
-                    index_link_list.append((index.id, index.index_link_name))
-                else:
-                    index_link_list.append(
-                        (index.id, index.index_link_name_english))
-            else:
-                index_link_list.append(
-                    (index.id, index.index_link_name_english))
-
     if 'item_link' in getArgs:
         activity_id = request.args.get('item_link')
         from weko_workflow.api import WorkActivity
@@ -156,6 +144,12 @@ def search():
                     index_display_format = index_info.display_format
                     if index_display_format == '2':
                         disply_setting = dict(size=100)
+
+        if hasattr(current_i18n, 'language'):
+            index_link_list = get_index_link_list(current_i18n.language)
+        else:
+            index_link_list = get_index_link_list()
+
         return render_template(
             current_app.config['SEARCH_UI_SEARCH_TEMPLATE'],
             render_widgets=True,
