@@ -23,7 +23,7 @@
 from b2handle.clientcredentials import PIDClientCredentials
 from b2handle.handleclient import EUDATHandleClient
 from b2handle.handleexceptions import CredentialsFormatError, \
-    GenericHandleError, HandleAuthenticationError, HandleSyntaxError
+    GenericHandleError, HandleAuthenticationError
 from flask import current_app
 
 from .config import WEKO_HANDLE_CREDS_JSON_PATH
@@ -51,6 +51,7 @@ class Handle(object):
 
     def register_handle(self, location):
         """Register a handle."""
+        pid = ''
         try:
             credential = PIDClientCredentials.load_from_JSON(
                 self.credential_path)
