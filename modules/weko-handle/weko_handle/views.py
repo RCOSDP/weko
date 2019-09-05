@@ -49,7 +49,7 @@ def retrieve_handle():
         handle = request.form['handle']
         handle_obj = Handle()
         if handle:
-            return jsonify(handle_obj.retrieve_handle(handle))
+            return handle_obj.retrieve_handle(handle)
         else:
             return jsonify(code=0, msg='Retrieved handle not found!')
     except Exception as e:
