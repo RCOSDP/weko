@@ -51,12 +51,12 @@ class Handle(object):
 
     def register_handle(self, location):
         """Register a handle."""
-        pid = ''
         try:
             credential = PIDClientCredentials.load_from_JSON(
                 self.credential_path)
             client = EUDATHandleClient.instantiate_with_credentials(credential)
-            pid = client.generate_PID_name(credential.get_prefix())
+            pid = credential.get_prefix() \
+                + "{:010d}".format(int(location.split('/records/')[1]))
             handle = client.register_handle(pid, location)
             current_app.logger.info(
                 'Registered successfully handle {}'.format(pid))
