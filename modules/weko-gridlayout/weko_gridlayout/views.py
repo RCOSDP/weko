@@ -100,17 +100,18 @@ def load_repository():
 
 
 @blueprint_api.route(
-    '/load_widget_design_setting/<string:repository_id>', methods=['GET'])
-@blueprint_api.route('/load_widget_design_setting/<string:repository_id>/'
-                     '<string:current_language>', methods=['GET'])
-def load_widget_design_setting(repository_id: str, current_language='',
-                               page_id=''):
+    '/load_widget_design_setting', methods=['POST'])
+@blueprint_api.route('/load_widget_design_setting/'
+                     '<string:current_language>', methods=['POST'])
+def load_widget_design_setting(current_language=''):
     """Load  Widget design setting from DB by repository id.
 
     :param repository_id: Identifier of the repository.
     :param current_language: The language default
     :return:
     """
+    data = request.get_json()
+    repository_id = data.get('repository_id')
     return jsonify(WidgetDesignServices.get_widget_design_setting(
         repository_id, current_language or get_default_language()))
 

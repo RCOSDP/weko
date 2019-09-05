@@ -20,11 +20,11 @@ function userSelectedInput(initialValue, getValueOfField, key_binding, component
     const [value, setValue] = useState(initialValue);
     function handleChange(e) {
         setValue(e.target.value);
-        getValueOfField(key_binding, event.target.value);
+        getValueOfField(key_binding, e.target.value);
         if(componentHandle) {
-            componentHandle(key_binding, event.target.value);
+            componentHandle(key_binding, e.target.value);
         }
-        event.preventDefault();
+        e.preventDefault();
     }
     return {
       value,
@@ -101,7 +101,7 @@ const ComponentSelectField = function(props){
         <div className="form-group row">
             <label htmlFor="input_type" className="control-label col-xs-2 text-right">{props.name}{props.is_required ? <span className="style-red">*</span>:null}</label>
             <div class="controls col-xs-6">
-                <select onChange={(event) => this.handleChange(event)} className="form-control" name={props.name} {...selectedData}>
+                <select className="form-control" name={props.name} {...selectedData}>
                     {props.url_request ? <option value="0">Please select the&nbsp;{props.key_binding}</option> : null}
                     {!isRootIndex && props.key_binding == "type" ? otherSelectOptions : selectOptions}
                 </select>
@@ -888,18 +888,17 @@ class ExtendComponent extends React.Component {
     }
 
     render() {
-        console.log(this.state.settings.description);
         if (this.state.type == FREE_DESCRIPTION_TYPE) {
             return (
                 <div>
-                    <ComponentFieldEditor handleChange={this.handleChange} name="Free description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                    <ComponentFieldEditor key={this.state.type} handleChange={this.handleChange} name="Free description" key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
         else if (this.state.type == HEADER_TYPE || this.state.type == FOOTER_TYPE){
             return (
                 <div>
-                    <ComponentFieldEditor handleChange={this.handleChange} name={this.state.type == HEADER_TYPE ? "Header setting" : "Footer setting"} key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
+                    <ComponentFieldEditor key={this.state.type} handleChange={this.handleChange} name={this.state.type == HEADER_TYPE ? "Header setting" : "Footer setting"} key_binding="description" data_load={this.state.settings.description} data_change={this.props.data_change} getValueOfField={this.props.getValueOfField} />
                 </div>
             )
         }
@@ -1484,12 +1483,25 @@ class MainLayout extends React.Component {
                 this.setState({ repository: value });
                 break;
             case 'type':
-                this.setState({
-                    widget_type: value,
-                    multiLangSetting: {},
-                    label: '',
-                    settings: {}
-                });
+                if (value == HEADER_TYPE || value == FOOTER_TYPE) {
+                    this.setState({
+                        label_enable: false,
+                        theme: "simple",
+                        widget_type: value,
+                        multiLangSetting: {},
+                        label: '',
+                        settings: {}
+                    });
+                } else {
+                    this.setState({
+                        label_enable: true,
+                        theme: "default",
+                        widget_type: value,
+                        multiLangSetting: {},
+                        label: '',
+                        settings: {}
+                    });
+                }
                 break;
             case 'label':
                 this.setState({ label: value });
@@ -1684,17 +1696,19 @@ class MainLayout extends React.Component {
                 <div className="row">
                     <ComponentTextboxField getValueOfField={this.getValueOfField} name="Name" key_binding="label" data_load={this.state.label} data_change={this.state.multiLanguageChange} type={this.state.widget_type} is_required = {true}/>
                 </div>
+                {this.state.widget_type != HEADER_TYPE && this.state.widget_type != FOOTER_TYPE ?
                 <div className="row">
                     <ComponentSelectField getValueOfField={this.getValueOfField} name="Theme" data = {THEME_SETTING} key_binding="theme" data_load={this.state.theme} is_required = {false}/>
-                </div>
+                </div> : null}
+                {this.state.widget_type != HEADER_TYPE && this.state.widget_type != FOOTER_TYPE ?
                 <div className="row">
                     <ComponentCheckboxField name="Label Enable" getValueOfField={this.getValueOfField} key_binding="label_enable" data_load={this.state.label_enable} />
-                </div>
-                {this.state.label_enable ?
+                </div> : null}
+                {this.state.label_enable || (this.state.widget_type != HEADER_TYPE && this.state.widget_type != FOOTER_TYPE) ?
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Color" key_binding="label_color" data_load={this.state.label_color} />
                 </div> : null }
-                {this.state.label_enable ?
+                {this.state.label_enable || (this.state.widget_type != HEADER_TYPE && this.state.widget_type != FOOTER_TYPE) ?
                 <div className="row">
                     <ComponentSelectColorFiled getValueOfField={this.getValueOfField} name="Label Text Color" key_binding="label_text_color" data_load={this.state.label_text_color} />
                 </div> : null }

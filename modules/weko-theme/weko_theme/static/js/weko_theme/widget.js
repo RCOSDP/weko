@@ -44,13 +44,11 @@ let PageBodyGrid = function () {
 
     this.updateHeaderRootIndex = function(node){
         let headerRootIndex = $("#header");
-        console.log(headerRootIndex);
         this.grid.update(headerRootIndex, node.x, node.y, node.width, node.height);
     }
 
     this.updateFooterRootIndex = function(node){
         let footerRootIndex = $("#footer");
-        console.log(footerRootIndex);
         this.grid.update(footerRootIndex, node.x, node.y, node.width, node.height);
     }
 
@@ -81,7 +79,7 @@ let PageBodyGrid = function () {
         for (var i = 0; i < items.length; i++) {
             let node = items[i];
             if (MAIN_CONTENT_TYPE != node.type) {
-                if((DEFAULT_REPOSITORY != node.id || HEADER_TYPE != node.type) && (DEFAULT_REPOSITORY != node.id || FOOTER_TYPE != node.type)){
+                if(!(DEFAULT_REPOSITORY == node.id && HEADER_TYPE == node.type) && !(DEFAULT_REPOSITORY == node.id && FOOTER_TYPE == node.type)){
                     this.addNewWidget(node, i);
                 }
             }
@@ -281,6 +279,14 @@ let PageBodyGrid = function () {
           let menuSettings = {};
           Object.keys(node).forEach((k) => {if (k.startsWith('menu_')) menuSettings[k] = node[k]});
           this.buildMenu(node.id, node.widget_id, innerID, menuSettings);
+        } else if (node.type == HEADER_TYPE) {
+            if (!$.isEmptyObject(languageDescription)) {
+                content = languageDescription.description;
+            }
+        } else if (node.type == FOOTER_TYPE) {
+            if (!$.isEmptyObject(languageDescription)) {
+                content = languageDescription.description;
+            }
         }
 
         let dataTheme = '';
@@ -396,8 +402,8 @@ let WidgetTheme = function () {
             '            <strong>' + widget_data.header + '</strong>' +
             '        </div>' : ''
         let headerClass = (widget_settings.label_enable) ? '' : 'no-pad-top-30';
-        headerClass += (widget_settings.type == NEW_ARRIVALS) ? 'no-before-content' : '';
-        if (widget_settings.type == ACCESS_COUNTER) {
+        headerClass += (widget_settings.type == NEW_ARRIVALS || widget_settings.type == HEADER_TYPE || widget_settings.type == FOOTER_TYPE) ? ' no-before-content' : '';
+        if (widget_settings.type == ACCESS_COUNTER || widget_settings.type == HEADER_TYPE || widget_settings.type == FOOTER_TYPE) {
             overFlowBody = "overflow-y: hidden; ";
         }
         if (widget_settings.type == MENU_TYPE) {
@@ -459,18 +465,34 @@ function getWidgetDesignSetting() {
 
     // If the current page is a widget page get
     let is_page = false;
+    let request_param = {};
     if($('#widget-page-id').length) {
         let page_id = $('#widget-page-id').text();
         url = '/api/admin/load_widget_design_page_setting/' + page_id + '/' + current_language;
         is_page = true;
+        request_param = {
+            type: 'GET',
+            url: url
+        }
     }
     else {
-        url = '/api/admin/load_widget_design_setting/' + community_id + '/' + current_language;
+        let data = {
+            repository_id: community_id
+        }
+        url = '/api/admin/load_widget_design_setting/' + current_language;
+        request_param = {
+            url: url,
+            type: "POST",
+            contentType: "application/json",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            data: JSON.stringify(data)
+        }
     }
 
     $.ajax({
-        type: 'GET',
-        url: url,
+        ...request_param,
         success: function (data) {  // TODO: If no settings default to main layout
             if (data.error) {
                 console.log(data.error);

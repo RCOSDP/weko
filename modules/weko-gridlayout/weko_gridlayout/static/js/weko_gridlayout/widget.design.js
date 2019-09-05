@@ -2,6 +2,15 @@
 const MAIN_CONTENT_TYPE = "Main contents";
 const MAIN_CONTENT_BUTTON_ID = "main_content_id";
 let isHasMainContent = false;
+
+const HEADER_CLASS = "header_class";
+const HEADER_TYPE = "Header";
+let isHasHeader = false;
+
+const FOOTER_CLASS = "footer_class";
+const FOOTER_TYPE = "Footer";
+let isHasFooter = false;
+
 const ROOT_INDEX_HEADER = {
     "Id" : 0,
     "label": "Header",
@@ -1021,12 +1030,26 @@ var PreviewGrid = new function () {
                 isHasMainContent = true;
                 disableMainContentButton(true); // Figure this out
             }
+            if(node.type == HEADER_TYPE){
+                isHasHeader = true;
+                disableHeaderButton(true);
+            }
+            if(node.type == FOOTER_TYPE){
+                isHasFooter = true;
+                disableFooterButton(true);
+            }
             this.grid.addWidget($(this.widgetTemplate(node, false)),
                 node.x, node.y, node.width, node.height);
         }, this);
         // Re enable button if Main content not true
         if(!isHasMainContent) {
             disableMainContentButton(false);
+        }
+        if(!isHasHeader){
+            disableHeaderButton(false);
+        }
+        if(!isHasFooter){
+            disableFooterButton(false);
         }
 
         return false;
@@ -1115,6 +1138,16 @@ function addWidget() {
                 disableMainContentButton(true);
                 return false;
             }
+            if(HEADER_TYPE == widgetType && isHasHeader){
+                alert("Header has been existed in Preview panel.");
+                disableHeaderButton(true);
+                return false;
+            }
+            if(FOOTER_TYPE == widgetType && isHasFooter){
+                alert("Footer has been existed in Preview panel.");
+                disableFooterButton(true);
+                return false;
+            }
             let node = {
                 x: 0,
                 y: 0,
@@ -1130,6 +1163,14 @@ function addWidget() {
             if(MAIN_CONTENT_TYPE == widgetType){
                 isHasMainContent = true;
                 disableMainContentButton(true);
+            }
+            if(HEADER_TYPE == widgetType){
+                isHasHeader = true;
+                disableHeaderButton(true);
+            }
+            if(FOOTER_TYPE == widgetType){
+                isHasFooter = true;
+                disableFooterButton(true);
             }
             removeWidget();
         });
@@ -1155,8 +1196,15 @@ function loadWidgetList(widgetListItems) {
     let y = 0;
     _.each(widgetListItems, function (widget) {
         let buttonId = "";
+        let buttonClass = "";
         if(MAIN_CONTENT_TYPE ==  widget.widgetType) {
             buttonId = 'id="' + MAIN_CONTENT_BUTTON_ID + '"';
+        }else
+        if(widget.widgetType == HEADER_TYPE){
+            buttonClass = HEADER_CLASS;
+        }else
+        if(widget.widgetType == FOOTER_TYPE){
+            buttonClass = FOOTER_CLASS;
         }
         widgetList.addWidget($(
             '<div>'
@@ -1165,7 +1213,7 @@ function loadWidgetList(widgetListItems) {
             + ' <span class="widget-label">' + widget.label + '</span>'
             + ' <button ' + buttonId + ' data-widget-type="' + widget.widgetType
             + '" data-widget-name="' + escapeHtml(widget.label) + '" data-widget-id="' + widget.widgetId
-            + '" data-id="' + widget.Id +  '" class="btn btn-default add-new-widget">'
+            + '" data-id="' + widget.Id +  '" class="btn btn-default add-new-widget ' + buttonClass +'">'
             + ' Add Widget'
             + ' </button>'
             + '</div>'
@@ -1198,6 +1246,14 @@ function removeWidget() {
         if(MAIN_CONTENT_TYPE == widgetType){
             isHasMainContent = false;
             disableMainContentButton(false);
+        }
+        if(HEADER_TYPE == widgetType){
+            isHasHeader = false;
+            disableHeaderButton(false);
+        }
+        if(FOOTER_TYPE == widgetType){
+            isHasFooter = false;
+            disableFooterButton(false);
         }
         return false;
     });
@@ -1238,6 +1294,22 @@ function disableMainContentButton(isDisable){
         $("#" + MAIN_CONTENT_BUTTON_ID).attr('disabled','disabled');
     } else {
         $("#" + MAIN_CONTENT_BUTTON_ID).removeAttr('disabled');
+    }
+}
+
+function disableHeaderButton(isDisable){
+    if(isDisable){
+        $("." + HEADER_CLASS).attr("disabled", "disabled");
+    } else {
+        $("." + HEADER_CLASS).removeAttr("disabled");
+    }
+}
+
+function disableFooterButton(isDisable){
+    if(isDisable){
+        $("." + FOOTER_CLASS).attr("disabled", "disabled");
+    } else {
+        $("." + FOOTER_CLASS).removeAttr("disabled");
     }
 }
 
