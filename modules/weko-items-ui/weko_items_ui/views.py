@@ -415,9 +415,16 @@ def iframe_items_index(pid_value=0):
         action = 'private' if record.get('publish_status', '1') == '1' \
             else 'publish'
 
+        community_id = session.get('itemlogin_community_id')
+        ctx = {'community': None}
+        if community_id:
+            comm = GetCommunity.get_community_by_id(community_id)
+            ctx = {'community': comm}
+
         if request.method == 'GET':
             # Get the design for widget rendering
             from weko_theme.utils import get_design_layout
+
             page, render_widgets = get_design_layout(
                 session['itemlogin_community_id']
                 or current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
@@ -436,7 +443,9 @@ def iframe_items_index(pid_value=0):
                 histories=session['itemlogin_histories'],
                 res_check=session['itemlogin_res_check'],
                 pid=session['itemlogin_pid'],
-                community_id=session['itemlogin_community_id'])
+                community_id=community_id,
+                **ctx
+            )
 
         if request.headers['Content-Type'] != 'application/json':
             flash(_('Invalid Request'), 'error')
@@ -446,7 +455,10 @@ def iframe_items_index(pid_value=0):
             return render_template(
                 'weko_items_ui/iframe/item_index.html',
                 page=page,
-                render_widgets=render_widgets)
+                render_widgets=render_widgets,
+                community_id=community_id,
+                **ctx
+            )
 
         data = request.get_json()
         sessionstore = RedisStore(redis.StrictRedis.from_url(

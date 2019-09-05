@@ -116,7 +116,12 @@ def iframe_success():
     record = session['itemlogin_record']
     res_check = session['itemlogin_res_check']
     pid = session['itemlogin_pid']
-    community_id = session['itemlogin_community_id']
+    community_id = session.get('itemlogin_community_id')
+
+    ctx = {'community': None}
+    if community_id:
+        comm = GetCommunity.get_community_by_id(community_id)
+        ctx = {'community': comm}
 
     # delete session value
     del session['itemlogin_id']
@@ -147,7 +152,9 @@ def iframe_success():
                            histories=histories,
                            res_check=res_check,
                            pid=pid,
-                           community_id=community_id)
+                           community_id=community_id,
+                           **ctx
+    )
 
 
 @blueprint.route('/activity/new', methods=['GET'])
